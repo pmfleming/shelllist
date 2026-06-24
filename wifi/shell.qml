@@ -30,7 +30,12 @@ ShellRoot {
         const ap = selectedNetwork();
         if (!ap) return;
         status = "Connecting to " + ap.ssid + "…";
-        connectProc.exec(["nm-wifi-rofi", "connect", ap.ssid]);
+        const command = ["nm-wifi-rofi", "connect", ap.ssid];
+        if (ap.bssid) {
+            command.push("--bssid");
+            command.push(ap.bssid);
+        }
+        connectProc.exec(command);
     }
 
     Component.onCompleted: refresh()
@@ -144,15 +149,19 @@ ShellRoot {
                 }
 
                 Text {
+                    width: parent.width
                     text: root.status + "   •   Enter connect   •   Up/Down select   •   F5 refresh   •   Esc close"
                     color: "#94a3b8"
                     font.pixelSize: 14
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 3
+                    elide: Text.ElideRight
                 }
 
                 ListView {
                     id: list
                     width: parent.width
-                    height: parent.height - 130
+                    height: parent.height - 160
                     clip: true
                     model: root.filteredNetworks
                     spacing: 4
