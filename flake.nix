@@ -12,12 +12,12 @@
   outputs = { self, nixpkgs, nm-wifi-rofi }:
     let
       systems = [ "x86_64-linux" ];
-      forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+      forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
     in
     {
-      packages = forAllSystems (pkgs:
+      packages = forAllSystems (system: pkgs:
         let
-          nmWifiRofi = nm-wifi-rofi.packages.${pkgs.system}.default;
+          nmWifiRofi = nm-wifi-rofi.packages.${system}.default;
         in
         {
           default = pkgs.writeShellApplication {
@@ -27,7 +27,7 @@
               nmWifiRofi
             ];
             text = ''
-              exec quickshell --no-duplicate --path ${self.packages.${pkgs.system}.wifiConfig}/share/shelllist/wifi "$@"
+              exec quickshell --no-duplicate --path ${self.packages.${system}.wifiConfig}/share/shelllist/wifi "$@"
             '';
           };
 
@@ -44,10 +44,10 @@
           };
         });
 
-      apps = forAllSystems (pkgs: {
+      apps = forAllSystems (system: pkgs: {
         default = {
           type = "app";
-          program = "${self.packages.${pkgs.system}.default}/bin/shelllist-wifi";
+          program = "${self.packages.${system}.default}/bin/shelllist-wifi";
         };
       });
     };
