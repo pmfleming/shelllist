@@ -16,27 +16,27 @@
         "type": "github"
       }
     },
-    "nm-wifi-rofi": {
+    "nm-wifi": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1782304450,
-        "narHash": "sha256-zRAF+beQd3V9fSuFeunOQgVoFFf2NjjRc/z0NTbVN4s=",
-        "path": "/home/laufan/Projects/nm-wifi-rofi-rust",
+        "lastModified": 1782337826,
+        "narHash": "sha256-IGY2oJXrtgjTTvwlZmfOZoPrypQ3qzPufkShM2aF0kM=",
+        "path": "/home/laufan/Projects/nm-wifi",
         "type": "path"
       },
       "original": {
-        "path": "/home/laufan/Projects/nm-wifi-rofi-rust",
+        "path": "/home/laufan/Projects/nm-wifi",
         "type": "path"
       }
     },
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "nm-wifi-rofi": "nm-wifi-rofi"
+        "nm-wifi": "nm-wifi"
       }
     }
   },

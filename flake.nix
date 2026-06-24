@@ -3,13 +3,13 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nm-wifi-rofi = {
-      url = "path:/home/laufan/Projects/nm-wifi-rofi-rust";
+    nm-wifi = {
+      url = "path:/home/laufan/Projects/nm-wifi";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, nm-wifi-rofi }:
+  outputs = { self, nixpkgs, nm-wifi }:
     let
       systems = [ "x86_64-linux" ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
@@ -17,25 +17,30 @@
     {
       packages = forAllSystems (system: pkgs:
         let
-          nmWifiRofi = nm-wifi-rofi.packages.${system}.default;
+          nmWifi = nm-wifi.packages.${system}.default;
+          mkMeta = description: mainProgram: {
+            inherit description mainProgram;
+            platforms = pkgs.lib.platforms.linux;
+          };
         in
         {
           default = pkgs.writeShellApplication {
             name = "shelllist-wifi";
+            meta = mkMeta "Quickshell Wi-Fi popup backed by nm-wifi" "shelllist-wifi";
             runtimeInputs = [
               pkgs.gawk
               pkgs.gnugrep
               pkgs.networkmanager
               pkgs.quickshell
               self.packages.${system}.captivePortalBrowser
-              nmWifiRofi
+              nmWifi
             ];
             text = ''
               config_path=${self.packages.${system}.wifiConfig}/share/shelllist/wifi
 
               # Quickshell identifies path configs by the immutable Nix store path,
               # so each rebuild can leave an older Shelllist instance alive. Make
-              # SUPER+M a predictable "show fresh Wi-Fi popup" action while the UI
+              # SUPER+N a predictable "show fresh Wi-Fi popup" action while the UI
               # is still a prototype.
               quickshell list --all 2>/dev/null \
                 | awk '
@@ -46,7 +51,8 @@
                   ' \
                 | while read -r pid; do
                     [ -n "$pid" ] && quickshell kill --pid "$pid" >/dev/null 2>&1 || true
-                  done
+                  done \
+                || true
 
               exec quickshell --path "$config_path" "$@"
             '';
@@ -54,6 +60,7 @@
 
           captivePortalBrowser = pkgs.writeShellApplication {
             name = "shelllist-captive-portal";
+            meta = mkMeta "Open browser pages that trigger captive portal login flows" "shelllist-captive-portal";
             runtimeInputs = [ pkgs.coreutils ];
             text = ''
               profile_dir="''${XDG_DATA_HOME:-$HOME/.local/share}/shelllist-captive-portal-browser"
@@ -99,6 +106,10 @@
             pname = "shelllist-wifi-config";
             version = "0.1.0";
             src = ./wifi;
+            meta = {
+              description = "QML configuration for the Shelllist Wi-Fi popup";
+              platforms = pkgs.lib.platforms.linux;
+            };
             installPhase = ''
               runHook preInstall
               mkdir -p $out/share/shelllist/wifi
@@ -112,7 +123,21 @@
         default = {
           type = "app";
           program = "${self.packages.${system}.default}/bin/shelllist-wifi";
+          meta.description = "Run the Shelllist Wi-Fi Quickshell popup";
         };
       });
+
+      devShells = forAllSystems (system: pkgs: {
+        default = pkgs.mkShell {
+          packages = [
+            pkgs.nixpkgs-fmt
+            pkgs.qt6.qtdeclarative # qmlformat
+            pkgs.quickshell
+            pkgs.shellcheck
+          ];
+        };
+      });
+
+      formatter = forAllSystems (system: pkgs: pkgs.nixpkgs-fmt);
     };
 }
