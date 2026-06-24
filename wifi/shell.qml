@@ -21,9 +21,14 @@ ShellRoot {
         return filteredNetworks[selectedIndex];
     }
 
+    property bool triedCachedList: false
+
     function refresh() {
-        status = "Loading Wi-Fi networks…";
-        listProc.exec(["nm-wifi-rofi", "list", "--cached", "--json"]);
+        status = "Loading live Wi-Fi networks…";
+        triedCachedList = false;
+        // Use live NetworkManager AP objects, not the rofi cache, so selected BSSID/AP path
+        // is current when Enter connects. The cache can be minutes stale in busy areas.
+        listProc.exec(["nm-wifi-rofi", "list", "--json"]);
     }
 
     function connectSelected() {
@@ -57,9 +62,12 @@ ShellRoot {
         }
         stderr: StdioCollector { id: listErr; waitForEnd: true }
         onExited: function(exitCode, exitStatus) {
-            if (exitCode !== 0) {
-                root.status = "Cached list failed; trying live list…";
-                listProc.exec(["nm-wifi-rofi", "list", "--json"]);
+            if (exitCode !== 0 && !root.triedCachedList) {
+                root.triedCachedList = true;
+                root.status = "Live list failed; trying cached list…";
+                listProc.exec(["nm-wifi-rofi", "list", "--cached", "--json"]);
+            } else if (exitCode !== 0) {
+                root.status = "List failed: " + listErr.text;
             }
         }
     }
@@ -81,8 +89,8 @@ ShellRoot {
     FloatingWindow {
         id: window
         visible: true
-        width: 760
-        height: 640
+        implicitWidth: 900
+        implicitHeight: 720
         title: "Shelllist Wi-Fi"
         color: "transparent"
 
