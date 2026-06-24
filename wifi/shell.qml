@@ -115,11 +115,12 @@ ShellRoot {
     property bool triedCachedList: false
 
     function refresh() {
-        status = "Loading live Wi-Fi networks…";
+        status = "Scanning Wi-Fi networks…";
         triedCachedList = false;
-        // Use live NetworkManager AP objects, not the rofi cache, so selected BSSID/AP path
-        // is current when Enter connects. The cache can be minutes stale in busy areas.
-        listProc.exec(["nm-wifi-rofi", "list", "--json"]);
+        // NetworkManager may only expose the currently-associated AP until a scan is
+        // requested. Scan first, then read the live AP objects so the selected BSSID
+        // remains current when Enter connects.
+        scanProc.exec(["nm-wifi-rofi", "scan", "--cache", "--timeout", "10"]);
         refreshSavedProfiles();
     }
 
@@ -172,6 +173,20 @@ ShellRoot {
     }
 
     Component.onCompleted: refresh()
+
+    Process {
+        id: scanProc
+        stdout: StdioCollector { id: scanOut; waitForEnd: true }
+        stderr: StdioCollector { id: scanErr; waitForEnd: true }
+        onExited: function(exitCode, exitStatus) {
+            if (exitCode === 0) {
+                root.status = "Loading scanned Wi-Fi networks…";
+            } else {
+                root.status = "Scan failed; loading current NetworkManager list…";
+            }
+            listProc.exec(["nm-wifi-rofi", "list", "--json"]);
+        }
+    }
 
     Process {
         id: listProc
