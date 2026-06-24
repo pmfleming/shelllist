@@ -35,6 +35,28 @@ ShellRoot {
         return true;
     }
 
+    function applyNetworks(newNetworks, resetSelection) {
+        const previous = selectedNetwork();
+        networks = newNetworks;
+
+        if (resetSelection || !previous) {
+            selectedIndex = 0;
+        } else {
+            let nextIndex = -1;
+            for (let i = 0; i < filteredNetworks.length; i++) {
+                const ap = filteredNetworks[i];
+                if ((previous.bssid && ap.bssid === previous.bssid)
+                    || ((ap.ssid || "") === (previous.ssid || "") && (ap.security || "") === (previous.security || ""))) {
+                    nextIndex = i;
+                    break;
+                }
+            }
+            selectedIndex = nextIndex >= 0 ? nextIndex : Math.min(selectedIndex, Math.max(filteredNetworks.length - 1, 0));
+        }
+
+        if (optionsOpen) rebuildOptions();
+    }
+
     function profilesFor(ap) {
         if (!ap) return [];
         const apBytes = ap.ssid_bytes || [];
@@ -115,13 +137,36 @@ ShellRoot {
     property bool triedCachedList: false
 
     function refresh() {
-        status = "Scanning Wi-Fi networks…";
+        status = "Loading cached Wi-Fi networks…";
         triedCachedList = false;
-        // NetworkManager may only expose the currently-associated AP until a scan is
-        // requested. Scan first, then read the live AP objects so the selected BSSID
-        // remains current when Enter connects.
-        scanProc.exec(["nm-wifi-rofi", "scan", "--cache", "--timeout", "10"]);
+        // Shelllist opens from the backend-owned cache, then starts a backend
+        // streaming scan that updates this list while the user interacts.
+        listProc.exec(["nm-wifi-rofi", "list", "--cached", "--json"]);
+        startScanStream();
         refreshSavedProfiles();
+    }
+
+    function startScanStream() {
+        if (scanStreamProc.running) return;
+        scanStreamProc.exec(["nm-wifi-rofi", "scan", "--stream", "--cache", "--timeout", "12"]);
+    }
+
+    function handleScanEvent(line) {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+        try {
+            const event = JSON.parse(trimmed);
+            if (event.event === "snapshot") {
+                applyNetworks(event.networks || [], false);
+                status = event.networks_found + (event.scanning ? " networks found; scanning…" : " networks available");
+            } else if (event.event === "status" || event.event === "warning") {
+                status = event.message || status;
+            } else if (event.event === "complete") {
+                status = event.networks_found + (event.timed_out ? " networks available; scan timed out" : " networks available");
+            }
+        } catch (error) {
+            status = "Could not parse scan event: " + error;
+        }
     }
 
     function refreshSavedProfiles() {
@@ -175,30 +220,15 @@ ShellRoot {
     Component.onCompleted: refresh()
 
     Process {
-        id: scanProc
-        stdout: StdioCollector { id: scanOut; waitForEnd: true }
-        stderr: StdioCollector { id: scanErr; waitForEnd: true }
-        onExited: function(exitCode, exitStatus) {
-            if (exitCode === 0) {
-                root.status = "Loading scanned Wi-Fi networks…";
-            } else {
-                root.status = "Scan failed; loading current NetworkManager list…";
-            }
-            listProc.exec(["nm-wifi-rofi", "list", "--json"]);
-        }
-    }
-
-    Process {
         id: listProc
         stdout: StdioCollector {
             id: listOut
             waitForEnd: true
             onStreamFinished: {
                 try {
-                    root.networks = JSON.parse(text);
-                    root.selectedIndex = 0;
-                    root.status = root.networks.length + " networks available";
-                    if (root.optionsOpen) root.rebuildOptions();
+                    const networks = JSON.parse(text);
+                    root.applyNetworks(networks, true);
+                    root.status = networks.length + " cached networks; scanning in background…";
                 } catch (error) {
                     root.status = "Could not parse nm-wifi-rofi list output: " + error;
                 }
@@ -212,6 +242,20 @@ ShellRoot {
                 listProc.exec(["nm-wifi-rofi", "list", "--cached", "--json"]);
             } else if (exitCode !== 0) {
                 root.status = "List failed: " + listErr.text;
+            }
+        }
+    }
+
+    Process {
+        id: scanStreamProc
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: function(data) { root.handleScanEvent(data); }
+        }
+        stderr: StdioCollector { id: scanStreamErr; waitForEnd: true }
+        onExited: function(exitCode, exitStatus) {
+            if (exitCode !== 0 && scanStreamErr.text.length > 0) {
+                root.status = "Background scan failed: " + scanStreamErr.text;
             }
         }
     }
