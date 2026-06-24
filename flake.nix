@@ -23,11 +23,30 @@
           default = pkgs.writeShellApplication {
             name = "shelllist-wifi";
             runtimeInputs = [
+              pkgs.gawk
+              pkgs.gnugrep
               pkgs.quickshell
               nmWifiRofi
             ];
             text = ''
-              exec quickshell --no-duplicate --path ${self.packages.${system}.wifiConfig}/share/shelllist/wifi "$@"
+              config_path=${self.packages.${system}.wifiConfig}/share/shelllist/wifi
+
+              # Quickshell identifies path configs by the immutable Nix store path,
+              # so each rebuild can leave an older Shelllist instance alive. Make
+              # SUPER+M a predictable "show fresh Wi-Fi popup" action while the UI
+              # is still a prototype.
+              quickshell list --all 2>/dev/null \
+                | awk '
+                    /^Instance / { pid = ""; shelllist = 0 }
+                    /Process ID:/ { pid = $3 }
+                    /Config path: .*shelllist-wifi-config.*\/share\/shelllist\/wifi\/shell.qml/ { shelllist = 1 }
+                    shelllist && pid != "" { print pid; pid = ""; shelllist = 0 }
+                  ' \
+                | while read -r pid; do
+                    [ -n "$pid" ] && quickshell kill --pid "$pid" >/dev/null 2>&1 || true
+                  done
+
+              exec quickshell --path "$config_path" "$@"
             '';
           };
 
