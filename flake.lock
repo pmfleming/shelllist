@@ -23,8 +23,8 @@
         ]
       },
       "locked": {
-        "lastModified": 1782301140,
-        "narHash": "sha256-BbFZxXvuzDLkGKDgjZuuuBWdDXa5EGtGTle1bpFVaG0=",
+        "lastModified": 1782303054,
+        "narHash": "sha256-xSLEscaWbh7jYZWrUmitmUtw1IwZhqKTqyWx9tl6/ho=",
         "path": "/home/laufan/Projects/nm-wifi-rofi-rust",
         "type": "path"
       },
