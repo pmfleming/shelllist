@@ -9,6 +9,8 @@ ShellRoot {
     property string filterText: ""
     property int selectedIndex: 0
     property string status: "Loading Wi-Fi networks…"
+    property bool lastConnectWasOpenNetwork: false
+    property string lastConnectedSsid: ""
 
     readonly property var filteredNetworks: networks.filter(function(ap) {
         return !root.filterText || (ap.ssid || "").toLowerCase().indexOf(root.filterText.toLowerCase()) !== -1;
@@ -35,6 +37,8 @@ ShellRoot {
         const ap = selectedNetwork();
         if (!ap) return;
         status = "Connecting to " + ap.ssid + "…";
+        lastConnectWasOpenNetwork = ap.security === "--";
+        lastConnectedSsid = ap.ssid || "";
         const command = ["nm-wifi-rofi", "connect", ap.ssid];
         if (ap.bssid) {
             command.push("--bssid");
@@ -78,10 +82,51 @@ ShellRoot {
         stderr: StdioCollector { id: connectErr; waitForEnd: true }
         onExited: function(exitCode, exitStatus) {
             if (exitCode === 0) {
-                root.status = "Connected";
+                root.status = "Connected to " + root.lastConnectedSsid + "; checking captive portal…";
+                connectivityCheckTimer.restart();
+                if (root.lastConnectWasOpenNetwork) {
+                    // Open networks in cafes/hotels/shops often need a portal even
+                    // before NetworkManager has classified connectivity as portal.
+                    portalProc.exec(["shelllist-captive-portal"]);
+                }
                 root.refresh();
             } else {
                 root.status = "Connect failed: " + connectErr.text;
+            }
+        }
+    }
+
+    Timer {
+        id: connectivityCheckTimer
+        interval: 2500
+        repeat: false
+        onTriggered: connectivityProc.exec(["nmcli", "networking", "connectivity", "check"])
+    }
+
+    Process {
+        id: connectivityProc
+        stdout: StdioCollector { id: connectivityOut; waitForEnd: true }
+        stderr: StdioCollector { id: connectivityErr; waitForEnd: true }
+        onExited: function(exitCode, exitStatus) {
+            const state = connectivityOut.text.trim();
+            if (state === "portal" || state === "limited") {
+                root.status = "Captive portal detected for " + root.lastConnectedSsid + "; opening login pages…";
+                portalProc.exec(["shelllist-captive-portal"]);
+            } else if (state === "full") {
+                root.status = "Connected to " + root.lastConnectedSsid + " with full connectivity";
+            } else if (state.length > 0) {
+                root.status = "Connected to " + root.lastConnectedSsid + "; connectivity: " + state;
+            }
+        }
+    }
+
+    Process {
+        id: portalProc
+        stdout: StdioCollector { waitForEnd: false }
+        stderr: StdioCollector { id: portalErr; waitForEnd: false }
+        onExited: function(exitCode, exitStatus) {
+            if (exitCode !== 0 && portalErr.text.length > 0) {
+                root.status = "Could not open captive portal browser: " + portalErr.text;
             }
         }
     }

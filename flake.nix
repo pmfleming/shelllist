@@ -25,7 +25,9 @@
             runtimeInputs = [
               pkgs.gawk
               pkgs.gnugrep
+              pkgs.networkmanager
               pkgs.quickshell
+              self.packages.${system}.captivePortalBrowser
               nmWifiRofi
             ];
             text = ''
@@ -47,6 +49,49 @@
                   done
 
               exec quickshell --path "$config_path" "$@"
+            '';
+          };
+
+          captivePortalBrowser = pkgs.writeShellApplication {
+            name = "shelllist-captive-portal";
+            runtimeInputs = [ pkgs.coreutils ];
+            text = ''
+              profile_dir="''${XDG_DATA_HOME:-$HOME/.local/share}/shelllist-captive-portal-browser"
+              mkdir -p "$profile_dir"
+
+              urls=(
+                "http://neverssl.com/"
+                "http://example.com/"
+                "http://captive.apple.com/hotspot-detect.html"
+                "http://detectportal.firefox.com/canonical.html"
+                "http://www.msftconnecttest.com/connecttest.txt"
+                "http://nmcheck.gnome.org/check_network_status.txt"
+              )
+
+              if command -v google-chrome-stable >/dev/null 2>&1; then
+                browser=google-chrome-stable
+              elif command -v google-chrome >/dev/null 2>&1; then
+                browser=google-chrome
+              elif command -v chromium >/dev/null 2>&1; then
+                browser=chromium
+              elif command -v xdg-open >/dev/null 2>&1; then
+                exec xdg-open "''${urls[0]}"
+              else
+                echo "No supported browser found for captive portal" >&2
+                exit 1
+              fi
+
+              exec "$browser" \
+                --user-data-dir="$profile_dir" \
+                --no-first-run \
+                --no-default-browser-check \
+                --disable-search-engine-choice-screen \
+                --new-window \
+                --disable-extensions \
+                --disable-quic \
+                --disable-features=HttpsUpgrades,HttpsFirstBalancedModeAutoEnable,HttpsFirstModeV2,DnsOverHttpsUpgrade \
+                --no-proxy-server \
+                "''${urls[@]}"
             '';
           };
 
