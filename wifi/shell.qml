@@ -7,11 +7,10 @@ ShellRoot {
     id: root
 
     property var networks: []
-    property var optionItems: []
     property var activeStatus: null
     property string filterText: ""
     property int selectedIndex: 0
-    property bool statusRefreshInFlight: false
+    property bool pendingRefresh: false
     property string status: "Loading Wi-Fi networks…"
     property string lastConnectedSsid: ""
     property bool scanSnapshotSeen: false
@@ -23,8 +22,11 @@ ShellRoot {
     property bool promptPassword: false
     property var promptNetwork: null
     property string pendingHiddenSsid: ""
+    property bool pendingConnectUsesStdin: false
+    property string pendingConnectPassword: ""
 
     readonly property string helpText: "Enter connect   •   F6 hidden network   •   F5 refresh   •   Esc close"
+    readonly property bool actionInFlight: connectProc.running || disconnectProc.running || profileProc.running
     readonly property var filteredNetworks: networks.filter(function (ap) {
         return !root.filterText || (ap.ssid || "").toLowerCase().indexOf(root.filterText.toLowerCase()) !== -1;
     })
@@ -70,10 +72,30 @@ ShellRoot {
         return canConnect(ap) || needsPassword(ap);
     }
 
+    function accessPointPath(ap) {
+        return ap ? (ap.path || ap.ap_path || "") : "";
+    }
+
+    function hasSsidIdentity(ap) {
+        return !!(ap && ((ap.ssid_bytes && ap.ssid_bytes.length > 0) || (ap.ssid && ap.ssid.length > 0)));
+    }
+
     function sameAccessPoint(left, right) {
         if (!left || !right)
             return false;
-        return (left.path && right.path === left.path) || (left.bssid && right.bssid === left.bssid) || ((left.ssid || "") === (right.ssid || "") && (left.security || "") === (right.security || ""));
+
+        const leftPath = accessPointPath(left);
+        const rightPath = accessPointPath(right);
+        if (leftPath && rightPath)
+            return leftPath === rightPath;
+
+        if (left.bssid && right.bssid)
+            return left.bssid === right.bssid;
+
+        if (!hasSsidIdentity(left) || !hasSsidIdentity(right))
+            return false;
+
+        return (left.ssid || "") === (right.ssid || "") && (left.security || "") === (right.security || "");
     }
 
     function activeAccessPoint() {
@@ -144,6 +166,28 @@ ShellRoot {
         return wireless && wireless.mac_address ? wireless.mac_address : "—";
     }
 
+    function activeIp4Value(field) {
+        const ip4 = activeStatus && activeStatus.ip4 ? activeStatus.ip4 : null;
+        return isActive(detailAp) && ip4 && ip4[field] ? ip4[field] : "—";
+    }
+
+    function activeDetailValue(value) {
+        return isActive(detailAp) ? value : "—";
+    }
+
+    function autoconnectEnabled() {
+        const profile = profileFor(detailAp);
+        return !!(profile && profile.autoconnect);
+    }
+
+    function canEditProfile() {
+        return !actionInFlight && !!profileFor(detailAp);
+    }
+
+    function canUsePrimaryAction() {
+        return !actionInFlight && (isActive(detailAp) || canStartConnection(detailAp));
+    }
+
     function applyNetworks(newNetworks, resetSelection) {
         const previous = selectedNetwork();
         networks = newNetworks;
@@ -162,11 +206,24 @@ ShellRoot {
     }
 
     function refresh() {
+        if (listProc.running || scanStreamProc.running) {
+            pendingRefresh = true;
+            status = "Refresh already running; queued another refresh…";
+            refreshStatus();
+            return;
+        }
+
+        pendingRefresh = false;
         status = "Loading cached Wi-Fi networks…";
         scanSnapshotSeen = false;
         listProc.exec(["nm-wifi", "networks", "--cached", "--json"]);
         refreshStatus();
         startScanStream();
+    }
+
+    function maybeRunPendingRefresh() {
+        if (pendingRefresh && !listProc.running && !scanStreamProc.running)
+            Qt.callLater(refresh);
     }
 
     function refreshStatus() {
@@ -210,7 +267,17 @@ ShellRoot {
         }
     }
 
+    function beginAction() {
+        if (!actionInFlight)
+            return true;
+        status = "Wait for the current Wi-Fi action to finish…";
+        return false;
+    }
+
     function connectSelected() {
+        if (!beginAction())
+            return;
+
         const ap = selectedNetwork();
         if (!ap)
             return;
@@ -226,32 +293,85 @@ ShellRoot {
         runConnect(["nm-wifi", "connect-target", JSON.stringify(ap), "--json"], networkName(ap));
     }
 
-    function runConnect(args, displayName) {
+    function runConnect(args, displayName, password) {
+        if (!beginAction())
+            return;
+
+        pendingConnectUsesStdin = password !== undefined && password !== null;
+        pendingConnectPassword = pendingConnectUsesStdin ? password : "";
+        const commandArgs = args.slice();
+        if (pendingConnectUsesStdin)
+            commandArgs.push("--password-stdin");
+
         status = "Connecting to " + displayName + "…";
         lastConnectedSsid = displayName;
-        connectProc.exec(args);
+        connectProc.stdinEnabled = pendingConnectUsesStdin;
+        connectProc.exec(commandArgs);
+    }
+
+    function connectFailureMessage(result, fallbackText) {
+        const reasonLabels = {
+            "secret-required": "Password required",
+            "authorization-required": "Authorization required",
+            "unsupported-auth": "Unsupported Wi-Fi authentication",
+            "validation-error": "Invalid Wi-Fi target",
+            "timeout": "Connection timed out",
+            "activation-failed": "Connection activation failed",
+            "unknown": "Connect failed"
+        };
+        const label = reasonLabels[result.reason || "unknown"] || "Connect failed";
+        const detail = result.message || fallbackText || "unknown error";
+        return label + ": " + detail;
+    }
+
+    function applyConnectResult(result) {
+        const connectivity = result.connectivity || {};
+        if (result.status === "error") {
+            status = connectFailureMessage(result, connectErr.text);
+            return;
+        }
+        if (result.suggest_open_portal) {
+            status = result.message + "; opening captive portal…";
+            openPortal();
+        } else if (connectivity.state === "full") {
+            status = "Connected to " + result.ssid + " with full connectivity";
+        } else if (connectivity.state) {
+            status = "Connected to " + result.ssid + "; connectivity: " + connectivity.state;
+        } else {
+            status = result.message;
+        }
     }
 
     function disconnectSelected() {
+        if (!beginAction())
+            return;
+
         status = "Disconnecting Wi-Fi…";
         disconnectProc.exec(["nm-wifi", "disconnect", "--json"]);
     }
 
-    function forgetSelected() {
-        const profile = profileFor(selectedNetwork());
-        if (!profile)
+    function runProfileAction(action) {
+        if (!beginAction())
             return;
-        status = "Forgetting saved profile " + profile.id + "…";
-        profileProc.exec(["nm-wifi", "profile", "delete", profile.path]);
+
+        const profile = profileFor(selectedNetwork());
+        if (profile)
+            action(profile);
+    }
+
+    function forgetSelected() {
+        runProfileAction(function (profile) {
+            status = "Forgetting saved profile " + profile.id + "…";
+            profileProc.exec(["nm-wifi", "profile", "delete", profile.path]);
+        });
     }
 
     function toggleAutoconnectSelected() {
-        const profile = profileFor(selectedNetwork());
-        if (!profile)
-            return;
-        const enabled = !profile.autoconnect;
-        status = (enabled ? "Enabling" : "Disabling") + " autoconnect for " + profile.id + "…";
-        profileProc.exec(["nm-wifi", "profile", "autoconnect", profile.path, enabled ? "true" : "false"]);
+        runProfileAction(function (profile) {
+            const enabled = !profile.autoconnect;
+            status = (enabled ? "Enabling" : "Disabling") + " autoconnect for " + profile.id + "…";
+            profileProc.exec(["nm-wifi", "profile", "autoconnect", profile.path, enabled ? "true" : "false"]);
+        });
     }
 
     function openPortal() {
@@ -259,35 +379,27 @@ ShellRoot {
         portalProc.exec(["shelllist-captive-portal"]);
     }
 
-    function openPasswordPrompt(ap) {
-        promptNetwork = ap;
-        promptMode = "network-password";
-        promptTitle = "Password for " + networkName(ap);
-        promptDetail = "Enter the Wi-Fi password, then press Enter.";
+    function openPrompt(mode, title, detail, password, network, hiddenSsid) {
+        promptNetwork = network || null;
+        pendingHiddenSsid = hiddenSsid || "";
+        promptMode = mode;
+        promptTitle = title;
+        promptDetail = detail;
         promptText = "";
-        promptPassword = true;
+        promptPassword = password;
         promptOpen = true;
+    }
+
+    function openPasswordPrompt(ap) {
+        openPrompt("network-password", "Password for " + networkName(ap), "Enter the Wi-Fi password, then press Enter.", true, ap, "");
     }
 
     function openHiddenNetworkPrompt() {
-        promptNetwork = null;
-        pendingHiddenSsid = "";
-        promptMode = "hidden-ssid";
-        promptTitle = "Connect hidden network";
-        promptDetail = "Enter the hidden SSID, then press Enter.";
-        promptText = "";
-        promptPassword = false;
-        promptOpen = true;
+        openPrompt("hidden-ssid", "Connect hidden network", "Enter the hidden SSID, then press Enter.", false, null, "");
     }
 
     function openHiddenPasswordPrompt(ssid) {
-        pendingHiddenSsid = ssid;
-        promptMode = "hidden-password";
-        promptTitle = "Password for hidden network";
-        promptDetail = "Enter the password for " + ssid + ", or leave blank for an open network.";
-        promptText = "";
-        promptPassword = true;
-        promptOpen = true;
+        openPrompt("hidden-password", "Password for hidden network", "Enter the password for " + ssid + ", or leave blank for an open network.", true, null, ssid);
     }
 
     function cancelPrompt() {
@@ -298,39 +410,41 @@ ShellRoot {
         pendingHiddenSsid = "";
     }
 
+    function submitNetworkPasswordPrompt(value) {
+        if (value.length === 0) {
+            status = "Enter a password for this network.";
+            return;
+        }
+
+        const ap = promptNetwork;
+        cancelPrompt();
+        if (ap)
+            runConnect(["nm-wifi", "connect-target", JSON.stringify(ap), "--json"], networkName(ap), value);
+    }
+
+    function submitHiddenSsidPrompt(value) {
+        if (value.length === 0) {
+            status = "Enter an SSID for the hidden network.";
+            return;
+        }
+        openHiddenPasswordPrompt(value);
+    }
+
+    function submitHiddenPasswordPrompt(value) {
+        const ssid = pendingHiddenSsid;
+        const password = value.length > 0 ? value : null;
+        cancelPrompt();
+        runConnect(["nm-wifi", "connect", ssid, "--hidden", "--json"], ssid, password);
+    }
+
     function submitPrompt() {
-        const value = promptText;
-        if (promptMode === "network-password") {
-            if (value.length === 0) {
-                status = "Enter a password for this network.";
-                return;
-            }
-            const ap = promptNetwork;
-            cancelPrompt();
-            if (!ap)
-                return;
-            runConnect(["nm-wifi", "connect-target", JSON.stringify(ap), "--password", value, "--json"], networkName(ap));
-            return;
-        }
-
-        if (promptMode === "hidden-ssid") {
-            const ssid = value;
-            if (ssid.length === 0) {
-                status = "Enter an SSID for the hidden network.";
-                return;
-            }
-            openHiddenPasswordPrompt(ssid);
-            return;
-        }
-
-        if (promptMode === "hidden-password") {
-            const ssid = pendingHiddenSsid;
-            const args = ["nm-wifi", "connect", ssid, "--hidden", "--json"];
-            if (value.length > 0)
-                args.push("--password", value);
-            cancelPrompt();
-            runConnect(args, ssid);
-        }
+        const handlers = {
+            "hidden-password": submitHiddenPasswordPrompt,
+            "hidden-ssid": submitHiddenSsidPrompt,
+            "network-password": submitNetworkPasswordPrompt
+        };
+        if (handlers[promptMode])
+            handlers[promptMode](promptText);
     }
 
     function acceptKey(event, action) {
@@ -402,6 +516,7 @@ ShellRoot {
         onExited: function (exitCode, exitStatus) {
             if (exitCode !== 0 && !root.scanSnapshotSeen)
                 root.status = "Cached list failed: " + listErr.text;
+            root.maybeRunPendingRefresh();
         }
     }
 
@@ -444,6 +559,7 @@ ShellRoot {
         onExited: function (exitCode, exitStatus) {
             if (exitCode !== 0 && scanStreamErr.text.length > 0)
                 root.status = "Background scan failed: " + scanStreamErr.text;
+            root.maybeRunPendingRefresh();
         }
     }
 
@@ -457,26 +573,27 @@ ShellRoot {
             id: connectErr
             waitForEnd: true
         }
-        onExited: function (exitCode, exitStatus) {
-            if (exitCode !== 0) {
-                root.status = "Connect failed: " + connectErr.text;
-                return;
+        onStarted: {
+            if (root.pendingConnectUsesStdin) {
+                connectProc.write(root.pendingConnectPassword + "\n");
+                root.pendingConnectPassword = "";
             }
+        }
+        onExited: function (exitCode, exitStatus) {
+            root.pendingConnectPassword = "";
+            root.pendingConnectUsesStdin = false;
+            connectProc.stdinEnabled = false;
 
             try {
                 const result = JSON.parse(connectOut.text);
-                const connectivity = result.connectivity || {};
-                if (result.suggest_open_portal) {
-                    root.status = result.message + "; opening captive portal…";
-                    root.openPortal();
-                } else if (connectivity.state === "full") {
-                    root.status = "Connected to " + result.ssid + " with full connectivity";
-                } else if (connectivity.state) {
-                    root.status = "Connected to " + result.ssid + "; connectivity: " + connectivity.state;
-                } else {
-                    root.status = result.message;
-                }
+                root.applyConnectResult(result);
+                root.refresh();
+                return;
             } catch (error) {
+                if (exitCode !== 0) {
+                    root.status = "Connect failed: " + (connectErr.text || error);
+                    return;
+                }
                 root.status = "Connected to " + root.lastConnectedSsid + "; could not parse connect result: " + error;
             }
             root.refresh();
@@ -688,71 +805,14 @@ ShellRoot {
                                 model: root.filteredNetworks
                                 spacing: 3
 
-                                delegate: Rectangle {
-                                    required property int index
-                                    required property var modelData
-
-                                    width: ListView.view.width
-                                    height: 43
-                                    radius: 8
-                                    color: index === root.selectedIndex ? "#15335f" : "transparent"
-                                    border.color: index === root.selectedIndex ? "#3b82f6" : "transparent"
-                                    border.width: index === root.selectedIndex ? 1 : 0
-
-                                    Row {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 12
-                                        anchors.rightMargin: 12
-                                        spacing: 10
-
-                                        Text {
-                                            width: 42
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: (modelData.strength || 0) + "%"
-                                            color: "#bfdbfe"
-                                            font.pixelSize: 14
-                                        }
-
-                                        Text {
-                                            width: 22
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: "▂▄▆"
-                                            color: root.isActive(modelData) ? "#38bdf8" : "#94a3b8"
-                                            font.pixelSize: 13
-                                        }
-
-                                        Text {
-                                            width: 16
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: root.isActive(modelData) ? "●" : (modelData.security === "--" ? "Open" : "🔒")
-                                            color: root.isActive(modelData) ? "#22c55e" : (modelData.security === "--" ? "#fbbf24" : "#94a3b8")
-                                            font.pixelSize: modelData.security === "--" && !root.isActive(modelData) ? 8 : 13
-                                        }
-
-                                        Text {
-                                            width: parent.width - 122
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: root.networkName(modelData)
-                                            color: "#d1d5db"
-                                            font.pixelSize: 15
-                                            font.bold: root.isActive(modelData)
-                                            elide: Text.ElideRight
-                                        }
-
-                                        Text {
-                                            width: 14
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: "›"
-                                            color: "#94a3b8"
-                                            font.pixelSize: 25
-                                        }
+                                delegate: NetworkListRow {
+                                    active: root.isActive(modelData)
+                                    name: root.networkName(modelData)
+                                    selectedIndex: root.selectedIndex
+                                    onPicked: function (rowIndex) {
+                                        root.selectedIndex = rowIndex;
                                     }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        onClicked: root.selectedIndex = index
-                                        onDoubleClicked: root.connectSelected()
-                                    }
+                                    onConnectRequested: root.connectSelected()
                                 }
                             }
                         }
@@ -814,75 +874,34 @@ ShellRoot {
                                     height: 46
                                     spacing: 8
 
-                                    Rectangle {
+                                    ActionButton {
                                         width: 112
-                                        height: 42
-                                        radius: 8
-                                        color: root.isActive(root.detailAp) ? "#1e3a5f" : "#1d4ed8"
-                                        border.color: "#3b82f6"
-                                        opacity: root.canStartConnection(root.detailAp) || root.isActive(root.detailAp) ? 1.0 : 0.45
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: root.isActive(root.detailAp) ? "Disconnect" : "Connect"
-                                            color: "#dbeafe"
-                                            font.pixelSize: 13
-                                        }
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            onClicked: root.isActive(root.detailAp) ? root.disconnectSelected() : root.connectSelected()
-                                        }
+                                        label: root.isActive(root.detailAp) ? "Disconnect" : "Connect"
+                                        backgroundColor: root.isActive(root.detailAp) ? "#1e3a5f" : "#1d4ed8"
+                                        borderColor: "#3b82f6"
+                                        labelColor: "#dbeafe"
+                                        enabled: root.canUsePrimaryAction()
+                                        onClicked: root.isActive(root.detailAp) ? root.disconnectSelected() : root.connectSelected()
                                     }
 
-                                    Rectangle {
+                                    ActionButton {
                                         width: 90
-                                        height: 42
-                                        radius: 8
-                                        color: "#111827"
-                                        border.color: "#233247"
-                                        opacity: root.profileFor(root.detailAp) ? 1.0 : 0.45
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "Forget"
-                                            color: "#cbd5e1"
-                                            font.pixelSize: 13
-                                        }
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            onClicked: root.forgetSelected()
-                                        }
+                                        label: "Forget"
+                                        enabled: root.canEditProfile()
+                                        onClicked: root.forgetSelected()
                                     }
 
-                                    Rectangle {
+                                    ActionButton {
                                         width: 90
-                                        height: 42
-                                        radius: 8
-                                        color: "#111827"
-                                        border.color: "#233247"
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "Sign in"
-                                            color: "#cbd5e1"
-                                            font.pixelSize: 13
-                                        }
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            onClicked: root.openPortal()
-                                        }
+                                        label: "Sign in"
+                                        onClicked: root.openPortal()
                                     }
 
-                                    Rectangle {
+                                    ActionButton {
                                         width: 90
-                                        height: 42
-                                        radius: 8
-                                        color: "#111827"
-                                        border.color: "#233247"
-                                        opacity: 0.45
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "Share"
-                                            color: "#94a3b8"
-                                            font.pixelSize: 13
-                                        }
+                                        label: "Share"
+                                        labelColor: "#94a3b8"
+                                        enabled: false
                                     }
 
                                     Item {
@@ -890,285 +909,90 @@ ShellRoot {
                                         height: 1
                                     }
 
-                                    Rectangle {
+                                    ActionButton {
                                         width: 150
-                                        height: 42
-                                        radius: 8
-                                        color: "#111827"
-                                        border.color: "#233247"
-                                        opacity: root.profileFor(root.detailAp) ? 1.0 : 0.45
-                                        Row {
-                                            anchors.centerIn: parent
-                                            spacing: 10
-                                            Text {
-                                                text: "Auto-connect"
-                                                color: "#cbd5e1"
-                                                font.pixelSize: 13
-                                            }
-                                            Rectangle {
-                                                width: 34
-                                                height: 20
-                                                radius: 10
-                                                color: root.profileFor(root.detailAp) && root.profileFor(root.detailAp).autoconnect ? "#3b82f6" : "#334155"
-                                                Rectangle {
-                                                    width: 14
-                                                    height: 14
-                                                    radius: 7
-                                                    y: 3
-                                                    x: root.profileFor(root.detailAp) && root.profileFor(root.detailAp).autoconnect ? 17 : 3
-                                                    color: "#dbeafe"
-                                                }
-                                            }
-                                        }
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            onClicked: root.toggleAutoconnectSelected()
-                                        }
+                                        label: root.autoconnectEnabled() ? "Auto-connect on" : "Auto-connect off"
+                                        enabled: root.canEditProfile()
+                                        onClicked: root.toggleAutoconnectSelected()
                                     }
                                 }
 
-                                Rectangle {
-                                    width: parent.width
+                                DetailCard {
                                     height: 250
-                                    radius: 10
-                                    color: "#0b1320"
-                                    border.color: "#1f2a3a"
+                                    title: "Connection"
 
-                                    Column {
-                                        anchors.fill: parent
-                                        anchors.margins: 14
-                                        spacing: 12
-
-                                        Text {
-                                            text: "Connection"
-                                            color: "#e5e7eb"
-                                            font.pixelSize: 16
-                                            font.bold: true
+                                    DetailGrid {
+                                        DetailField {
+                                            label: "Signal strength"
+                                            value: (root.detailAp.strength || 0) + "%"
+                                            valueColor: "#60a5fa"
+                                            valueBold: true
                                         }
-
-                                        Grid {
-                                            width: parent.width
-                                            columns: 2
-                                            columnSpacing: 46
-                                            rowSpacing: 14
-
-                                            Column {
-                                                width: 245
-                                                spacing: 3
-                                                Text {
-                                                    text: "Signal strength"
-                                                    color: "#94a3b8"
-                                                    font.pixelSize: 13
-                                                }
-                                                Text {
-                                                    text: (root.detailAp.strength || 0) + "%"
-                                                    color: "#60a5fa"
-                                                    font.pixelSize: 14
-                                                    font.bold: true
-                                                }
-                                            }
-                                            Column {
-                                                width: 245
-                                                spacing: 3
-                                                Text {
-                                                    text: "IP address"
-                                                    color: "#94a3b8"
-                                                    font.pixelSize: 13
-                                                }
-                                                Text {
-                                                    text: root.isActive(root.detailAp) && root.activeStatus && root.activeStatus.ip4 && root.activeStatus.ip4.address ? root.activeStatus.ip4.address : "—"
-                                                    color: "#cbd5e1"
-                                                    font.pixelSize: 14
-                                                }
-                                            }
-                                            Column {
-                                                width: 245
-                                                spacing: 3
-                                                Text {
-                                                    text: "Frequency"
-                                                    color: "#94a3b8"
-                                                    font.pixelSize: 13
-                                                }
-                                                Text {
-                                                    text: root.frequencyLabel(root.detailAp)
-                                                    color: "#cbd5e1"
-                                                    font.pixelSize: 14
-                                                }
-                                            }
-                                            Column {
-                                                width: 245
-                                                spacing: 3
-                                                Text {
-                                                    text: "Gateway"
-                                                    color: "#94a3b8"
-                                                    font.pixelSize: 13
-                                                }
-                                                Text {
-                                                    text: root.isActive(root.detailAp) && root.activeStatus && root.activeStatus.ip4 && root.activeStatus.ip4.gateway ? root.activeStatus.ip4.gateway : "—"
-                                                    color: "#cbd5e1"
-                                                    font.pixelSize: 14
-                                                }
-                                            }
-                                            Column {
-                                                width: 245
-                                                spacing: 3
-                                                Text {
-                                                    text: "Security"
-                                                    color: "#94a3b8"
-                                                    font.pixelSize: 13
-                                                }
-                                                Text {
-                                                    text: root.securityLabel(root.detailAp.security)
-                                                    color: "#cbd5e1"
-                                                    font.pixelSize: 14
-                                                }
-                                            }
-                                            Column {
-                                                width: 245
-                                                spacing: 3
-                                                Text {
-                                                    text: "Subnet"
-                                                    color: "#94a3b8"
-                                                    font.pixelSize: 13
-                                                }
-                                                Text {
-                                                    text: root.isActive(root.detailAp) ? root.subnetLabel(root.activeStatus ? root.activeStatus.ip4 : null) : "—"
-                                                    color: "#cbd5e1"
-                                                    font.pixelSize: 14
-                                                }
-                                            }
-                                            Column {
-                                                width: 245
-                                                spacing: 3
-                                                Text {
-                                                    text: "Network usage"
-                                                    color: "#94a3b8"
-                                                    font.pixelSize: 13
-                                                }
-                                                Text {
-                                                    text: "Detect automatically"
-                                                    color: "#cbd5e1"
-                                                    font.pixelSize: 14
-                                                }
-                                            }
-                                            Column {
-                                                width: 245
-                                                spacing: 3
-                                                Text {
-                                                    text: "DNS"
-                                                    color: "#94a3b8"
-                                                    font.pixelSize: 13
-                                                }
-                                                Text {
-                                                    width: 220
-                                                    text: root.isActive(root.detailAp) ? root.dnsLabel(root.activeStatus ? root.activeStatus.ip4 : null) : "—"
-                                                    color: "#cbd5e1"
-                                                    font.pixelSize: 14
-                                                    elide: Text.ElideRight
-                                                }
-                                            }
+                                        DetailField {
+                                            label: "IP address"
+                                            value: root.activeIp4Value("address")
+                                        }
+                                        DetailField {
+                                            label: "Frequency"
+                                            value: root.frequencyLabel(root.detailAp)
+                                        }
+                                        DetailField {
+                                            label: "Gateway"
+                                            value: root.activeIp4Value("gateway")
+                                        }
+                                        DetailField {
+                                            label: "Security"
+                                            value: root.securityLabel(root.detailAp.security)
+                                        }
+                                        DetailField {
+                                            label: "Subnet"
+                                            value: root.activeDetailValue(root.subnetLabel(root.activeStatus ? root.activeStatus.ip4 : null))
+                                        }
+                                        DetailField {
+                                            label: "Network usage"
+                                            value: "Detect automatically"
+                                        }
+                                        DetailField {
+                                            label: "DNS"
+                                            value: root.activeDetailValue(root.dnsLabel(root.activeStatus ? root.activeStatus.ip4 : null))
+                                            valueWidth: 220
                                         }
                                     }
                                 }
 
-                                Rectangle {
-                                    width: parent.width
+                                DetailCard {
                                     height: 145
-                                    radius: 10
-                                    color: "#0b1320"
-                                    border.color: "#1f2a3a"
+                                    title: "Network details"
 
-                                    Column {
-                                        anchors.fill: parent
-                                        anchors.margins: 14
-                                        spacing: 12
-
-                                        Text {
-                                            text: "Network details"
-                                            color: "#e5e7eb"
-                                            font.pixelSize: 16
-                                            font.bold: true
+                                    DetailGrid {
+                                        DetailField {
+                                            label: "Type"
+                                            value: root.wifiType(root.detailAp)
                                         }
-
-                                        Grid {
-                                            width: parent.width
-                                            columns: 2
-                                            columnSpacing: 46
-                                            rowSpacing: 14
-                                            Column {
-                                                width: 245
-                                                spacing: 3
-                                                Text {
-                                                    text: "Type"
-                                                    color: "#94a3b8"
-                                                    font.pixelSize: 13
-                                                }
-                                                Text {
-                                                    text: root.wifiType(root.detailAp)
-                                                    color: "#cbd5e1"
-                                                    font.pixelSize: 14
-                                                }
-                                            }
-                                            Column {
-                                                width: 245
-                                                spacing: 3
-                                                Text {
-                                                    text: "Transmit link speed"
-                                                    color: "#94a3b8"
-                                                    font.pixelSize: 13
-                                                }
-                                                Text {
-                                                    text: root.isActive(root.detailAp) ? root.bitrateLabel() : "—"
-                                                    color: "#cbd5e1"
-                                                    font.pixelSize: 14
-                                                }
-                                            }
-                                            Column {
-                                                width: 245
-                                                spacing: 3
-                                                Text {
-                                                    text: "MAC address"
-                                                    color: "#94a3b8"
-                                                    font.pixelSize: 13
-                                                }
-                                                Text {
-                                                    text: root.isActive(root.detailAp) ? root.macLabel() : (root.detailAp.bssid || "—")
-                                                    color: "#cbd5e1"
-                                                    font.pixelSize: 14
-                                                }
-                                            }
-                                            Column {
-                                                width: 245
-                                                spacing: 3
-                                                Text {
-                                                    text: "Receive link speed"
-                                                    color: "#94a3b8"
-                                                    font.pixelSize: 13
-                                                }
-                                                Text {
-                                                    text: root.isActive(root.detailAp) ? root.bitrateLabel() : "—"
-                                                    color: "#cbd5e1"
-                                                    font.pixelSize: 14
-                                                }
-                                            }
+                                        DetailField {
+                                            label: "Transmit link speed"
+                                            value: root.activeDetailValue(root.bitrateLabel())
+                                        }
+                                        DetailField {
+                                            label: "MAC address"
+                                            value: root.isActive(root.detailAp) ? root.macLabel() : (root.detailAp.bssid || "—")
+                                        }
+                                        DetailField {
+                                            label: "Receive link speed"
+                                            value: root.activeDetailValue(root.bitrateLabel())
                                         }
                                     }
                                 }
 
-                                Rectangle {
-                                    width: parent.width
+                                DetailCard {
                                     height: 58
-                                    radius: 10
-                                    color: "#0b1320"
-                                    border.color: "#1f2a3a"
 
                                     Row {
                                         anchors.fill: parent
-                                        anchors.margins: 12
                                         spacing: 12
 
                                         Column {
-                                            width: parent.width - 70
+                                            width: parent.width - 58
                                             anchors.verticalCenter: parent.verticalCenter
                                             Text {
                                                 text: "Auto-connect"
@@ -1183,23 +1007,16 @@ ShellRoot {
                                             }
                                         }
 
-                                        Rectangle {
+                                        TogglePill {
                                             width: 40
                                             height: 22
-                                            radius: 11
                                             anchors.verticalCenter: parent.verticalCenter
-                                            color: root.profileFor(root.detailAp) && root.profileFor(root.detailAp).autoconnect ? "#3b82f6" : "#334155"
-                                            opacity: root.profileFor(root.detailAp) ? 1.0 : 0.45
-                                            Rectangle {
-                                                width: 16
-                                                height: 16
-                                                radius: 8
-                                                y: 3
-                                                x: root.profileFor(root.detailAp) && root.profileFor(root.detailAp).autoconnect ? 21 : 3
-                                                color: "#dbeafe"
-                                            }
+                                            checked: root.autoconnectEnabled()
+                                            opacity: root.canEditProfile() ? 1.0 : 0.45
+
                                             MouseArea {
                                                 anchors.fill: parent
+                                                enabled: root.canEditProfile()
                                                 onClicked: root.toggleAutoconnectSelected()
                                             }
                                         }

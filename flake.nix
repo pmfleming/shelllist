@@ -29,7 +29,6 @@
             meta = mkMeta "Quickshell Wi-Fi popup backed by nm-wifi" "shelllist-wifi";
             runtimeInputs = [
               pkgs.gawk
-              pkgs.gnugrep
               pkgs.networkmanager
               pkgs.quickshell
               self.packages.${system}.captivePortalBrowser

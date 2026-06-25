@@ -14,7 +14,7 @@ nix run
 
 Desktop integration target: bind this command to `SUPER+N` as the Wi-Fi chooser, replacing the old rofi Wi-Fi menu.
 
-The current flake intentionally uses a local `nm-wifi` path input, so it is expected to run on this development machine until that dependency is made portable.
+The current flake intentionally uses a local `nm-wifi` path input, so it is expected to run on this development machine until that dependency is made portable. Shelllist uses `nm-wifi --password-stdin` for safer password prompts.
 
 ## Wi-Fi popup keybindings
 
@@ -25,7 +25,7 @@ The current flake intentionally uses a local `nm-wifi` path input, so it is expe
 - `F5`: refresh cached networks, active status, saved profiles, and start a background scan.
 - `Esc`: close the popup, or cancel an open prompt.
 
-The right pane shows selected-network actions and details. Connected networks expose disconnect, captive-portal sign-in, forget, autoconnect, IPv4, DNS, frequency, link-speed, and MAC details when `nm-wifi status --json` can read them from NetworkManager. Password-protected unsaved networks prompt for a password before Shelllist calls `nm-wifi connect-target`. Hidden SSIDs can be connected with `F6`; leave the password prompt blank for open hidden networks.
+The right pane shows selected-network actions and details. Connected networks expose disconnect, captive-portal sign-in, forget, autoconnect, IPv4, DNS, frequency, link-speed, and MAC details when `nm-wifi status --json` can read them from NetworkManager. Password-protected unsaved networks prompt for a password before Shelllist calls `nm-wifi connect-target`; Shelllist sends the password over stdin to avoid exposing it in process arguments. Hidden SSIDs can be connected with `F6`; leave the password prompt blank for open hidden networks.
 
 ## Requirements
 
@@ -61,4 +61,4 @@ portal=$(nix build .#captivePortalBrowser --no-link --print-out-paths)
 shellcheck "$portal/bin/shelllist-captive-portal"
 ```
 
-The Wi-Fi UI entry point is `wifi/shell.qml`; reusable list delegates live beside it as local QML components.
+The Wi-Fi UI entry point is `wifi/shell.qml`.
