@@ -2,7 +2,7 @@
 
 Quickshell experiments and UI components for desktop menus.
 
-Initial goal: build a Hyprland-friendly Wi-Fi/network popup backed by the existing `nm-wifi` NetworkManager D-Bus helper.
+Initial goal: build a Hyprland-friendly Wi-Fi/network popup backed by the existing `nm-wifi` NetworkManager D-Bus helper. The Wi-Fi popup is a two-pane network chooser and connection detail dashboard.
 
 ## Usage
 
@@ -21,14 +21,11 @@ The current flake intentionally uses a local `nm-wifi` path input, so it is expe
 - Type to filter visible SSIDs.
 - `Enter`: connect to the selected network.
 - `Down` / `Up`: move selection.
-- `Right`: open options for the selected network.
-- `Left` or `Esc` while options are open: close options.
-- `Enter` while options are open: run the selected option.
 - `F6`: connect to a hidden SSID.
-- `F5`: refresh cached networks, saved profiles, and start a background scan.
-- `Esc` while options are closed: close the popup.
+- `F5`: refresh cached networks, active status, saved profiles, and start a background scan.
+- `Esc`: close the popup, or cancel an open prompt.
 
-Password-protected unsaved networks prompt for a password before Shelllist calls `nm-wifi connect-target`. Hidden SSIDs can be connected with `F6`; leave the password prompt blank for open hidden networks.
+The right pane shows selected-network actions and details. Connected networks expose disconnect, captive-portal sign-in, forget, autoconnect, IPv4, DNS, frequency, link-speed, and MAC details when `nm-wifi status --json` can read them from NetworkManager. Password-protected unsaved networks prompt for a password before Shelllist calls `nm-wifi connect-target`. Hidden SSIDs can be connected with `F6`; leave the password prompt blank for open hidden networks.
 
 ## Requirements
 

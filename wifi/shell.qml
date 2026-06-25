@@ -8,10 +8,10 @@ ShellRoot {
 
     property var networks: []
     property var optionItems: []
+    property var activeStatus: null
     property string filterText: ""
     property int selectedIndex: 0
-    property int selectedOptionIndex: 0
-    property bool optionsOpen: false
+    property bool statusRefreshInFlight: false
     property string status: "Loading Wi-Fi networks…"
     property string lastConnectedSsid: ""
     property bool scanSnapshotSeen: false
@@ -24,17 +24,20 @@ ShellRoot {
     property var promptNetwork: null
     property string pendingHiddenSsid: ""
 
-    readonly property string helpText: "Enter connect   •   Right options   •   F6 hidden network   •   F5 refresh   •   Esc close"
-    readonly property var filteredNetworks: networks.filter(function(ap) {
+    readonly property string helpText: "Enter connect   •   F6 hidden network   •   F5 refresh   •   Esc close"
+    readonly property var filteredNetworks: networks.filter(function (ap) {
         return !root.filterText || (ap.ssid || "").toLowerCase().indexOf(root.filterText.toLowerCase()) !== -1;
     })
+    readonly property var detailAp: selectedNetwork() || ({})
+    readonly property bool hasSelection: filteredNetworks.length > 0
 
     function clampIndex(index, length) {
         return length <= 0 ? 0 : Math.max(0, Math.min(index, length - 1));
     }
 
     function selectedNetwork() {
-        if (filteredNetworks.length === 0) return null;
+        if (filteredNetworks.length === 0)
+            return null;
         selectedIndex = clampIndex(selectedIndex, filteredNetworks.length);
         return filteredNetworks[selectedIndex];
     }
@@ -43,14 +46,20 @@ ShellRoot {
         return ap && ap.ssid ? ap.ssid : "<hidden>";
     }
 
-    function canConnect(ap) {
-        if (!ap) return false;
-        if (ap.capabilities) return ap.capabilities.can_connect;
-        return !!(ap.ssid && ap.ssid.length > 0);
+    function securityLabel(security) {
+        return security === "--" ? "Open" : (security || "Unknown");
     }
 
     function hasNetworkIdentity(ap) {
         return !!(ap && ((ap.ssid_bytes && ap.ssid_bytes.length > 0) || (ap.ssid && ap.ssid.length > 0)));
+    }
+
+    function canConnect(ap) {
+        if (!ap)
+            return false;
+        if (ap.capabilities)
+            return ap.capabilities.can_connect;
+        return hasNetworkIdentity(ap);
     }
 
     function needsPassword(ap) {
@@ -62,8 +71,77 @@ ShellRoot {
     }
 
     function sameAccessPoint(left, right) {
-        return (left.bssid && right.bssid === left.bssid)
-            || ((left.ssid || "") === (right.ssid || "") && (left.security || "") === (right.security || ""));
+        if (!left || !right)
+            return false;
+        return (left.path && right.path === left.path) || (left.bssid && right.bssid === left.bssid) || ((left.ssid || "") === (right.ssid || "") && (left.security || "") === (right.security || ""));
+    }
+
+    function activeAccessPoint() {
+        if (!activeStatus)
+            return null;
+        return activeStatus.access_point || (activeStatus.network || null);
+    }
+
+    function isActive(ap) {
+        const active = activeAccessPoint();
+        return !!(ap && (ap.active || sameAccessPoint(ap, active)));
+    }
+
+    function profileFor(ap) {
+        if (!ap)
+            return null;
+        if (ap.primary_profile)
+            return ap.primary_profile;
+        if (ap.profiles && ap.profiles.length > 0)
+            return ap.profiles[0];
+        if (isActive(ap) && activeStatus && activeStatus.profile)
+            return activeStatus.profile;
+        return null;
+    }
+
+    function frequencyLabel(ap) {
+        const frequency = ap && ap.frequency ? ap.frequency : 0;
+        if (frequency <= 0)
+            return "Unknown";
+        const band = frequency >= 5925 ? "6 GHz" : frequency >= 4900 ? "5 GHz" : "2.4 GHz";
+        return band + " (" + frequency + " MHz)";
+    }
+
+    function wifiType(ap) {
+        const frequency = ap && ap.frequency ? ap.frequency : 0;
+        if (frequency >= 5925)
+            return "Wi-Fi 6E/7";
+        if (frequency >= 4900)
+            return "Wi-Fi 5/6";
+        if (frequency > 0)
+            return "Wi-Fi 4/6";
+        return "Unknown";
+    }
+
+    function subnetLabel(ip4) {
+        if (!ip4)
+            return "—";
+        if (ip4.prefix !== null && ip4.prefix !== undefined)
+            return "/" + ip4.prefix;
+        return "—";
+    }
+
+    function dnsLabel(ip4) {
+        if (!ip4 || !ip4.dns || ip4.dns.length === 0)
+            return "—";
+        return ip4.dns.join(", ");
+    }
+
+    function bitrateLabel() {
+        const wireless = activeStatus && activeStatus.wireless ? activeStatus.wireless : null;
+        if (!wireless || !wireless.bitrate_mbps)
+            return "—";
+        return wireless.bitrate_mbps + " Mbps";
+    }
+
+    function macLabel() {
+        const wireless = activeStatus && activeStatus.wireless ? activeStatus.wireless : null;
+        return wireless && wireless.mac_address ? wireless.mac_address : "—";
     }
 
     function applyNetworks(newNetworks, resetSelection) {
@@ -71,102 +149,71 @@ ShellRoot {
         networks = newNetworks;
 
         if (resetSelection || !previous) {
-            selectedIndex = 0;
+            const activeIndex = filteredNetworks.findIndex(function (ap) {
+                return root.isActive(ap);
+            });
+            selectedIndex = activeIndex >= 0 ? activeIndex : 0;
         } else {
-            const nextIndex = filteredNetworks.findIndex(function(ap) { return sameAccessPoint(previous, ap); });
+            const nextIndex = filteredNetworks.findIndex(function (ap) {
+                return sameAccessPoint(previous, ap);
+            });
             selectedIndex = nextIndex >= 0 ? nextIndex : clampIndex(selectedIndex, filteredNetworks.length);
         }
-
-        if (optionsOpen) rebuildOptions();
-    }
-
-    function option(label, detail, action, enabled, extra) {
-        const item = { label: label, detail: detail, action: action, enabled: enabled !== false };
-        if (extra) Object.keys(extra).forEach(function(key) { item[key] = extra[key]; });
-        return item;
-    }
-
-    function setOptions(items) {
-        optionItems = items;
-        selectedOptionIndex = clampIndex(selectedOptionIndex, optionItems.length);
-    }
-
-    function rebuildOptions() {
-        const ap = selectedNetwork();
-        if (!ap) return setOptions([]);
-
-        const profiles = ap.profiles || [];
-        const profile = ap.primary_profile || (profiles.length > 0 ? profiles[0] : null);
-        const connectable = canStartConnection(ap);
-        const connectDetail = canConnect(ap)
-            ? "Attempt connection to this access point"
-            : needsPassword(ap)
-                ? "Enter the network password before connecting"
-                : "This access point cannot be connected from Shelllist yet";
-        const items = [
-            option("Connect", connectDetail, "connect", connectable),
-            option("Connect hidden network", "Enter an SSID that is not broadcasting", "hidden"),
-            option("Open captive portal", "Open plain-HTTP login trigger pages", "portal"),
-            option("Refresh", "Reload networks and saved profile state", "refresh")
-        ];
-
-        if (profile) {
-            items.push(option(profile.autoconnect ? "Disable autoconnect" : "Enable autoconnect", profile.id, "toggle-autoconnect", true, { profile: profile }));
-            items.push(option("Forget saved profile", profile.id, "forget", true, { profile: profile, destructive: true }));
-            if (profiles.length > 1) items.push(option(profiles.length + " saved profiles match this SSID", "Using first profile: " + profile.id, "none", false));
-        } else {
-            items.push(option("No saved profile", "Connect once before autoconnect/forget options are available", "none", false));
-        }
-
-        items.push(option("Details", (ap.bssid || "no BSSID") + "  •  " + (ap.security === "--" ? "open" : ap.security) + "  •  " + (ap.strength || 0) + "%", "none", false));
-        setOptions(items);
     }
 
     function refresh() {
         status = "Loading cached Wi-Fi networks…";
         scanSnapshotSeen = false;
-        // Shelllist opens from the backend-owned cache, then starts a backend
-        // streaming scan that updates this list while the user interacts.
         listProc.exec(["nm-wifi", "networks", "--cached", "--json"]);
+        refreshStatus();
         startScanStream();
     }
 
+    function refreshStatus() {
+        if (!statusProc.running)
+            statusProc.exec(["nm-wifi", "status", "--json"]);
+    }
+
     function startScanStream() {
-        if (!scanStreamProc.running) scanStreamProc.exec(["nm-wifi", "scan", "--stream", "--cache", "--timeout", "12"]);
+        if (!scanStreamProc.running)
+            scanStreamProc.exec(["nm-wifi", "scan", "--stream", "--cache", "--timeout", "12"]);
     }
 
     function handleScanEvent(line) {
         const trimmed = line.trim();
-        if (!trimmed) return;
+        if (!trimmed)
+            return;
 
         try {
             const event = JSON.parse(trimmed);
             const handlers = {
-                snapshot: function(e) {
+                snapshot: function (e) {
                     scanSnapshotSeen = true;
                     applyNetworks(e.networks || [], false);
                     status = e.networks_found + (e.scanning ? " networks found; scanning…" : " networks available");
                 },
-                status: function(e) { status = e.message || status; },
-                warning: function(e) { status = e.message || status; },
-                complete: function(e) { status = e.networks_found + (e.timed_out ? " networks available; scan timed out" : " networks available"); }
+                status: function (e) {
+                    status = e.message || status;
+                },
+                warning: function (e) {
+                    status = e.message || status;
+                },
+                complete: function (e) {
+                    status = e.networks_found + (e.timed_out ? " networks available; scan timed out" : " networks available");
+                    refreshStatus();
+                }
             };
-            if (handlers[event.event]) handlers[event.event](event);
+            if (handlers[event.event])
+                handlers[event.event](event);
         } catch (error) {
             status = "Could not parse scan event: " + error;
         }
     }
 
-    function openOptions() {
-        if (!selectedNetwork()) return;
-        optionsOpen = true;
-        selectedOptionIndex = 0;
-        rebuildOptions();
-    }
-
     function connectSelected() {
         const ap = selectedNetwork();
-        if (!ap) return;
+        if (!ap)
+            return;
         if (needsPassword(ap)) {
             openPasswordPrompt(ap);
             return;
@@ -183,6 +230,33 @@ ShellRoot {
         status = "Connecting to " + displayName + "…";
         lastConnectedSsid = displayName;
         connectProc.exec(args);
+    }
+
+    function disconnectSelected() {
+        status = "Disconnecting Wi-Fi…";
+        disconnectProc.exec(["nm-wifi", "disconnect", "--json"]);
+    }
+
+    function forgetSelected() {
+        const profile = profileFor(selectedNetwork());
+        if (!profile)
+            return;
+        status = "Forgetting saved profile " + profile.id + "…";
+        profileProc.exec(["nm-wifi", "profile", "delete", profile.path]);
+    }
+
+    function toggleAutoconnectSelected() {
+        const profile = profileFor(selectedNetwork());
+        if (!profile)
+            return;
+        const enabled = !profile.autoconnect;
+        status = (enabled ? "Enabling" : "Disabling") + " autoconnect for " + profile.id + "…";
+        profileProc.exec(["nm-wifi", "profile", "autoconnect", profile.path, enabled ? "true" : "false"]);
+    }
+
+    function openPortal() {
+        status = "Opening captive portal pages…";
+        portalProc.exec(["shelllist-captive-portal"]);
     }
 
     function openPasswordPrompt(ap) {
@@ -233,7 +307,8 @@ ShellRoot {
             }
             const ap = promptNetwork;
             cancelPrompt();
-            if (!ap) return;
+            if (!ap)
+                return;
             runConnect(["nm-wifi", "connect-target", JSON.stringify(ap), "--password", value, "--json"], networkName(ap));
             return;
         }
@@ -251,35 +326,11 @@ ShellRoot {
         if (promptMode === "hidden-password") {
             const ssid = pendingHiddenSsid;
             const args = ["nm-wifi", "connect", ssid, "--hidden", "--json"];
-            if (value.length > 0) args.push("--password", value);
+            if (value.length > 0)
+                args.push("--password", value);
             cancelPrompt();
             runConnect(args, ssid);
         }
-    }
-
-    function executeOption(item) {
-        if (!item || !item.enabled) return;
-
-        const actions = {
-            connect: connectSelected,
-            hidden: openHiddenNetworkPrompt,
-            portal: function() {
-                status = "Opening captive portal pages…";
-                portalProc.exec(["shelllist-captive-portal"]);
-            },
-            refresh: refresh,
-            "toggle-autoconnect": function() {
-                const enabled = !item.profile.autoconnect;
-                status = (enabled ? "Enabling" : "Disabling") + " autoconnect for " + item.profile.id + "…";
-                profileProc.exec(["nm-wifi", "profile", "autoconnect", item.profile.path, enabled ? "true" : "false"]);
-            },
-            forget: function() {
-                status = "Forgetting saved profile " + item.profile.id + "…";
-                profileProc.exec(["nm-wifi", "profile", "delete", item.profile.path]);
-            }
-        };
-
-        if (actions[item.action]) actions[item.action]();
     }
 
     function acceptKey(event, action) {
@@ -295,43 +346,35 @@ ShellRoot {
         selectedIndex = clampIndex(selectedIndex + delta, filteredNetworks.length);
     }
 
-    function moveOption(delta) {
-        selectedOptionIndex = clampIndex(selectedOptionIndex + delta, optionItems.length);
-    }
-
     function handleBinding(event, bindings) {
         for (let i = 0; i < bindings.length; i++) {
-            if (event.key === bindings[i][0]) return acceptKey(event, bindings[i][1]);
+            if (event.key === bindings[i][0])
+                return acceptKey(event, bindings[i][1]);
         }
     }
 
     function handleSearchKey(event) {
-        if (optionsOpen) {
-            if (isEnterKey(event.key)) return acceptKey(event, function() { executeOption(optionItems[selectedOptionIndex]); });
-            return handleBinding(event, [
-                [Qt.Key_Escape, function() { optionsOpen = false; }],
-                [Qt.Key_Left, function() { optionsOpen = false; }],
-                [Qt.Key_Down, function() { moveOption(1); }],
-                [Qt.Key_Up, function() { moveOption(-1); }],
-                [Qt.Key_F6, openHiddenNetworkPrompt],
-                [Qt.Key_F5, refresh]
-            ]);
-        }
-
-        if (isEnterKey(event.key)) return acceptKey(event, connectSelected);
-        return handleBinding(event, [
-            [Qt.Key_Escape, Qt.quit],
-            [Qt.Key_Down, function() { moveSelection(1); }],
-            [Qt.Key_Up, function() { moveSelection(-1); }],
-            [Qt.Key_Right, openOptions],
-            [Qt.Key_F6, openHiddenNetworkPrompt],
-            [Qt.Key_F5, refresh]
-        ]);
+        if (promptOpen)
+            return;
+        if (isEnterKey(event.key))
+            return acceptKey(event, connectSelected);
+        return handleBinding(event, [[Qt.Key_Escape, Qt.quit], [Qt.Key_Down, function () {
+                    moveSelection(1);
+                }], [Qt.Key_Up, function () {
+                    moveSelection(-1);
+                }], [Qt.Key_F6, openHiddenNetworkPrompt], [Qt.Key_F5, refresh]]);
     }
 
     onPromptOpenChanged: {
-        if (promptOpen) Qt.callLater(function() { promptInput.forceActiveFocus(); promptInput.selectAll(); });
-        else Qt.callLater(function() { search.forceActiveFocus(); });
+        if (promptOpen)
+            Qt.callLater(function () {
+                promptInput.forceActiveFocus();
+                promptInput.selectAll();
+            });
+        else
+            Qt.callLater(function () {
+                search.forceActiveFocus();
+            });
     }
 
     Component.onCompleted: refresh()
@@ -342,7 +385,8 @@ ShellRoot {
             waitForEnd: true
             onStreamFinished: {
                 try {
-                    if (root.scanSnapshotSeen) return;
+                    if (root.scanSnapshotSeen)
+                        return;
                     const networks = JSON.parse(text);
                     root.applyNetworks(networks, true);
                     root.status = networks.length + " cached networks; scanning in background…";
@@ -351,9 +395,37 @@ ShellRoot {
                 }
             }
         }
-        stderr: StdioCollector { id: listErr; waitForEnd: true }
-        onExited: function(exitCode, exitStatus) {
-            if (exitCode !== 0 && !root.scanSnapshotSeen) root.status = "Cached list failed: " + listErr.text;
+        stderr: StdioCollector {
+            id: listErr
+            waitForEnd: true
+        }
+        onExited: function (exitCode, exitStatus) {
+            if (exitCode !== 0 && !root.scanSnapshotSeen)
+                root.status = "Cached list failed: " + listErr.text;
+        }
+    }
+
+    Process {
+        id: statusProc
+        stdout: StdioCollector {
+            id: statusOut
+            waitForEnd: true
+        }
+        stderr: StdioCollector {
+            id: statusErr
+            waitForEnd: true
+        }
+        onExited: function (exitCode, exitStatus) {
+            if (exitCode !== 0) {
+                root.status = "Status failed: " + statusErr.text;
+                return;
+            }
+            try {
+                root.activeStatus = JSON.parse(statusOut.text);
+                root.applyNetworks(root.networks, false);
+            } catch (error) {
+                root.status = "Could not parse nm-wifi status output: " + error;
+            }
         }
     }
 
@@ -361,19 +433,31 @@ ShellRoot {
         id: scanStreamProc
         stdout: SplitParser {
             splitMarker: "\n"
-            onRead: function(data) { root.handleScanEvent(data); }
+            onRead: function (data) {
+                root.handleScanEvent(data);
+            }
         }
-        stderr: StdioCollector { id: scanStreamErr; waitForEnd: true }
-        onExited: function(exitCode, exitStatus) {
-            if (exitCode !== 0 && scanStreamErr.text.length > 0) root.status = "Background scan failed: " + scanStreamErr.text;
+        stderr: StdioCollector {
+            id: scanStreamErr
+            waitForEnd: true
+        }
+        onExited: function (exitCode, exitStatus) {
+            if (exitCode !== 0 && scanStreamErr.text.length > 0)
+                root.status = "Background scan failed: " + scanStreamErr.text;
         }
     }
 
     Process {
         id: connectProc
-        stdout: StdioCollector { id: connectOut; waitForEnd: true }
-        stderr: StdioCollector { id: connectErr; waitForEnd: true }
-        onExited: function(exitCode, exitStatus) {
+        stdout: StdioCollector {
+            id: connectOut
+            waitForEnd: true
+        }
+        stderr: StdioCollector {
+            id: connectErr
+            waitForEnd: true
+        }
+        onExited: function (exitCode, exitStatus) {
             if (exitCode !== 0) {
                 root.status = "Connect failed: " + connectErr.text;
                 return;
@@ -384,7 +468,7 @@ ShellRoot {
                 const connectivity = result.connectivity || {};
                 if (result.suggest_open_portal) {
                     root.status = result.message + "; opening captive portal…";
-                    portalProc.exec(["shelllist-captive-portal"]);
+                    root.openPortal();
                 } else if (connectivity.state === "full") {
                     root.status = "Connected to " + result.ssid + " with full connectivity";
                 } else if (connectivity.state) {
@@ -400,9 +484,37 @@ ShellRoot {
     }
 
     Process {
+        id: disconnectProc
+        stdout: StdioCollector {
+            id: disconnectOut
+            waitForEnd: true
+        }
+        stderr: StdioCollector {
+            id: disconnectErr
+            waitForEnd: true
+        }
+        onExited: function (exitCode, exitStatus) {
+            if (exitCode !== 0) {
+                root.status = "Disconnect failed: " + disconnectErr.text;
+                return;
+            }
+            try {
+                const result = JSON.parse(disconnectOut.text);
+                root.status = result.message || "Disconnected Wi-Fi";
+            } catch (error) {
+                root.status = "Disconnected Wi-Fi";
+            }
+            root.refresh();
+        }
+    }
+
+    Process {
         id: profileProc
-        stderr: StdioCollector { id: profileErr; waitForEnd: true }
-        onExited: function(exitCode, exitStatus) {
+        stderr: StdioCollector {
+            id: profileErr
+            waitForEnd: true
+        }
+        onExited: function (exitCode, exitStatus) {
             if (exitCode !== 0) {
                 root.status = "Profile action failed: " + profileErr.text;
                 return;
@@ -414,16 +526,20 @@ ShellRoot {
 
     Process {
         id: portalProc
-        stderr: StdioCollector { id: portalErr; waitForEnd: false }
-        onExited: function(exitCode, exitStatus) {
-            if (exitCode !== 0 && portalErr.text.length > 0) root.status = "Could not open captive portal browser: " + portalErr.text;
+        stderr: StdioCollector {
+            id: portalErr
+            waitForEnd: false
+        }
+        onExited: function (exitCode, exitStatus) {
+            if (exitCode !== 0 && portalErr.text.length > 0)
+                root.status = "Could not open captive portal browser: " + portalErr.text;
         }
     }
 
     FloatingWindow {
         id: window
         visible: true
-        implicitWidth: 980
+        implicitWidth: 1040
         implicitHeight: 720
         title: "Shelllist Wi-Fi"
         color: "transparent"
@@ -431,130 +547,691 @@ ShellRoot {
         Rectangle {
             anchors.fill: parent
             radius: 18
-            color: "#151821"
-            border.color: root.optionsOpen ? "#f59e0b" : "#3b82f6"
+            color: "#0b1220"
+            border.color: "#243244"
             border.width: 1
 
             Column {
                 anchors.fill: parent
-                anchors.margins: 22
-                spacing: 14
-
-                Text {
-                    text: "Shelllist Wi-Fi"
-                    color: "#e5e7eb"
-                    font.pixelSize: 26
-                    font.bold: true
-                }
-
-                TextInput {
-                    id: search
-                    width: parent.width
-                    height: 42
-                    focus: true
-                    color: "#e5e7eb"
-                    selectionColor: "#2563eb"
-                    selectedTextColor: "white"
-                    font.pixelSize: 20
-                    text: root.filterText
-                    onTextChanged: {
-                        root.filterText = text;
-                        root.selectedIndex = 0;
-                        if (root.optionsOpen) root.rebuildOptions();
-                    }
-                    Keys.onPressed: function(event) { root.handleSearchKey(event); }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        anchors.verticalCenter: parent.verticalCenter
-                        radius: 10
-                        color: "#0f172a"
-                        border.color: root.optionsOpen ? "#f59e0b" : "#334155"
-                        z: -1
-                    }
-                }
-
-                Text {
-                    width: parent.width
-                    text: root.status + "   •   " + root.helpText
-                    color: "#94a3b8"
-                    font.pixelSize: 14
-                    wrapMode: Text.Wrap
-                    maximumLineCount: 3
-                    elide: Text.ElideRight
-                }
+                anchors.margins: 14
+                spacing: 12
 
                 Row {
                     width: parent.width
-                    height: parent.height - 160
-                    spacing: 14
+                    height: 46
+                    spacing: 12
 
-                    ListView {
-                        id: list
-                        width: root.optionsOpen ? Math.round(parent.width * 0.60) : parent.width
-                        height: parent.height
-                        clip: true
-                        model: root.filteredNetworks
-                        spacing: 4
+                    Rectangle {
+                        width: 34
+                        height: 34
+                        radius: 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: "#15335f"
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰤨"
+                            color: "#7dd3fc"
+                            font.pixelSize: 18
+                        }
+                    }
 
-                        delegate: NetworkRow {
-                            selectedIndex: root.selectedIndex
-                            networkName: root.networkName
-                            onPicked: function(rowIndex, open) {
-                                root.selectedIndex = rowIndex;
-                                if (open) root.openOptions();
-                                else if (root.optionsOpen) root.rebuildOptions();
-                            }
-                            onConnectRequested: root.connectSelected()
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Shelllist Wi-Fi"
+                        color: "#dbeafe"
+                        font.pixelSize: 17
+                        font.bold: true
+                    }
+
+                    TextInput {
+                        id: search
+                        width: 270
+                        height: 34
+                        anchors.verticalCenter: parent.verticalCenter
+                        focus: true
+                        leftPadding: 38
+                        rightPadding: 12
+                        color: "#dbeafe"
+                        selectionColor: "#2563eb"
+                        selectedTextColor: "white"
+                        font.pixelSize: 15
+                        text: root.filterText
+                        onTextChanged: {
+                            root.filterText = text;
+                            root.selectedIndex = 0;
+                        }
+                        Keys.onPressed: function (event) {
+                            root.handleSearchKey(event);
+                        }
+
+                        Text {
+                            x: 12
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "⌕"
+                            color: "#64748b"
+                            font.pixelSize: 22
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 8
+                            color: "#111827"
+                            border.color: "#233247"
+                            z: -1
                         }
                     }
 
                     Rectangle {
-                        visible: root.optionsOpen
-                        width: root.optionsOpen ? parent.width - list.width - parent.spacing : 0
+                        width: 34
+                        height: 34
+                        radius: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: "transparent"
+                        border.color: "#233247"
+                        Text {
+                            anchors.centerIn: parent
+                            text: "↻"
+                            color: "#94a3b8"
+                            font.pixelSize: 20
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.refresh()
+                        }
+                    }
+
+                    Item {
+                        width: parent.width - 34 - 140 - 270 - 34 - 72
+                        height: 1
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "☰   –   ◻   ×"
+                        color: "#94a3b8"
+                        font.pixelSize: 16
+                    }
+                }
+
+                Row {
+                    width: parent.width
+                    height: parent.height - 58
+                    spacing: 12
+
+                    Rectangle {
+                        width: 425
                         height: parent.height
                         radius: 12
                         color: "#0f172a"
-                        border.color: "#f59e0b"
-                        border.width: 1
+                        border.color: "#1f2a3a"
 
                         Column {
                             anchors.fill: parent
-                            anchors.margins: 14
-                            spacing: 10
+                            anchors.margins: 8
+                            spacing: 6
 
                             Text {
                                 width: parent.width
-                                text: {
-                                    const ap = root.selectedNetwork();
-                                    return ap ? root.networkName(ap) : "Network options";
-                                }
-                                color: "#f8fafc"
-                                font.pixelSize: 20
-                                font.bold: true
+                                text: root.status + "   •   " + root.helpText
+                                color: "#94a3b8"
+                                font.pixelSize: 13
+                                maximumLineCount: 2
+                                wrapMode: Text.Wrap
                                 elide: Text.ElideRight
                             }
 
-                            Text {
+                            ListView {
+                                id: list
                                 width: parent.width
-                                text: "Enter run option  •  Left close"
-                                color: "#94a3b8"
-                                font.pixelSize: 13
+                                height: parent.height - 42
+                                clip: true
+                                model: root.filteredNetworks
+                                spacing: 3
+
+                                delegate: Rectangle {
+                                    required property int index
+                                    required property var modelData
+
+                                    width: ListView.view.width
+                                    height: 43
+                                    radius: 8
+                                    color: index === root.selectedIndex ? "#15335f" : "transparent"
+                                    border.color: index === root.selectedIndex ? "#3b82f6" : "transparent"
+                                    border.width: index === root.selectedIndex ? 1 : 0
+
+                                    Row {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 12
+                                        anchors.rightMargin: 12
+                                        spacing: 10
+
+                                        Text {
+                                            width: 42
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: (modelData.strength || 0) + "%"
+                                            color: "#bfdbfe"
+                                            font.pixelSize: 14
+                                        }
+
+                                        Text {
+                                            width: 22
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: "▂▄▆"
+                                            color: root.isActive(modelData) ? "#38bdf8" : "#94a3b8"
+                                            font.pixelSize: 13
+                                        }
+
+                                        Text {
+                                            width: 16
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: root.isActive(modelData) ? "●" : (modelData.security === "--" ? "Open" : "🔒")
+                                            color: root.isActive(modelData) ? "#22c55e" : (modelData.security === "--" ? "#fbbf24" : "#94a3b8")
+                                            font.pixelSize: modelData.security === "--" && !root.isActive(modelData) ? 8 : 13
+                                        }
+
+                                        Text {
+                                            width: parent.width - 122
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: root.networkName(modelData)
+                                            color: "#d1d5db"
+                                            font.pixelSize: 15
+                                            font.bold: root.isActive(modelData)
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            width: 14
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: "›"
+                                            color: "#94a3b8"
+                                            font.pixelSize: 25
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: root.selectedIndex = index
+                                        onDoubleClicked: root.connectSelected()
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: parent.width - 437
+                        height: parent.height
+                        radius: 12
+                        color: "#0f172a"
+                        border.color: "#1f2a3a"
+
+                        Item {
+                            anchors.fill: parent
+                            anchors.margins: 18
+
+                            Column {
+                                visible: root.hasSelection
+                                anchors.fill: parent
+                                spacing: 14
+
+                                Row {
+                                    width: parent.width
+                                    height: 72
+                                    spacing: 16
+
+                                    Text {
+                                        width: 54
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "󰤨"
+                                        color: "#dbeafe"
+                                        font.pixelSize: 42
+                                    }
+
+                                    Column {
+                                        width: parent.width - 70
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 5
+
+                                        Text {
+                                            width: parent.width
+                                            text: root.networkName(root.detailAp)
+                                            color: "#f8fafc"
+                                            font.pixelSize: 24
+                                            font.bold: true
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            text: root.isActive(root.detailAp) ? "Connected · " + (root.detailAp.strength || 0) + "% signal" : root.securityLabel(root.detailAp.security) + " · " + (root.detailAp.strength || 0) + "% signal"
+                                            color: root.isActive(root.detailAp) ? "#4ade80" : "#94a3b8"
+                                            font.pixelSize: 14
+                                        }
+                                    }
+                                }
+
+                                Row {
+                                    width: parent.width
+                                    height: 46
+                                    spacing: 8
+
+                                    Rectangle {
+                                        width: 112
+                                        height: 42
+                                        radius: 8
+                                        color: root.isActive(root.detailAp) ? "#1e3a5f" : "#1d4ed8"
+                                        border.color: "#3b82f6"
+                                        opacity: root.canStartConnection(root.detailAp) || root.isActive(root.detailAp) ? 1.0 : 0.45
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: root.isActive(root.detailAp) ? "Disconnect" : "Connect"
+                                            color: "#dbeafe"
+                                            font.pixelSize: 13
+                                        }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: root.isActive(root.detailAp) ? root.disconnectSelected() : root.connectSelected()
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        width: 90
+                                        height: 42
+                                        radius: 8
+                                        color: "#111827"
+                                        border.color: "#233247"
+                                        opacity: root.profileFor(root.detailAp) ? 1.0 : 0.45
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "Forget"
+                                            color: "#cbd5e1"
+                                            font.pixelSize: 13
+                                        }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: root.forgetSelected()
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        width: 90
+                                        height: 42
+                                        radius: 8
+                                        color: "#111827"
+                                        border.color: "#233247"
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "Sign in"
+                                            color: "#cbd5e1"
+                                            font.pixelSize: 13
+                                        }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: root.openPortal()
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        width: 90
+                                        height: 42
+                                        radius: 8
+                                        color: "#111827"
+                                        border.color: "#233247"
+                                        opacity: 0.45
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "Share"
+                                            color: "#94a3b8"
+                                            font.pixelSize: 13
+                                        }
+                                    }
+
+                                    Item {
+                                        width: parent.width - 112 - 90 - 90 - 90 - 164
+                                        height: 1
+                                    }
+
+                                    Rectangle {
+                                        width: 150
+                                        height: 42
+                                        radius: 8
+                                        color: "#111827"
+                                        border.color: "#233247"
+                                        opacity: root.profileFor(root.detailAp) ? 1.0 : 0.45
+                                        Row {
+                                            anchors.centerIn: parent
+                                            spacing: 10
+                                            Text {
+                                                text: "Auto-connect"
+                                                color: "#cbd5e1"
+                                                font.pixelSize: 13
+                                            }
+                                            Rectangle {
+                                                width: 34
+                                                height: 20
+                                                radius: 10
+                                                color: root.profileFor(root.detailAp) && root.profileFor(root.detailAp).autoconnect ? "#3b82f6" : "#334155"
+                                                Rectangle {
+                                                    width: 14
+                                                    height: 14
+                                                    radius: 7
+                                                    y: 3
+                                                    x: root.profileFor(root.detailAp) && root.profileFor(root.detailAp).autoconnect ? 17 : 3
+                                                    color: "#dbeafe"
+                                                }
+                                            }
+                                        }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: root.toggleAutoconnectSelected()
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: parent.width
+                                    height: 250
+                                    radius: 10
+                                    color: "#0b1320"
+                                    border.color: "#1f2a3a"
+
+                                    Column {
+                                        anchors.fill: parent
+                                        anchors.margins: 14
+                                        spacing: 12
+
+                                        Text {
+                                            text: "Connection"
+                                            color: "#e5e7eb"
+                                            font.pixelSize: 16
+                                            font.bold: true
+                                        }
+
+                                        Grid {
+                                            width: parent.width
+                                            columns: 2
+                                            columnSpacing: 46
+                                            rowSpacing: 14
+
+                                            Column {
+                                                width: 245
+                                                spacing: 3
+                                                Text {
+                                                    text: "Signal strength"
+                                                    color: "#94a3b8"
+                                                    font.pixelSize: 13
+                                                }
+                                                Text {
+                                                    text: (root.detailAp.strength || 0) + "%"
+                                                    color: "#60a5fa"
+                                                    font.pixelSize: 14
+                                                    font.bold: true
+                                                }
+                                            }
+                                            Column {
+                                                width: 245
+                                                spacing: 3
+                                                Text {
+                                                    text: "IP address"
+                                                    color: "#94a3b8"
+                                                    font.pixelSize: 13
+                                                }
+                                                Text {
+                                                    text: root.isActive(root.detailAp) && root.activeStatus && root.activeStatus.ip4 && root.activeStatus.ip4.address ? root.activeStatus.ip4.address : "—"
+                                                    color: "#cbd5e1"
+                                                    font.pixelSize: 14
+                                                }
+                                            }
+                                            Column {
+                                                width: 245
+                                                spacing: 3
+                                                Text {
+                                                    text: "Frequency"
+                                                    color: "#94a3b8"
+                                                    font.pixelSize: 13
+                                                }
+                                                Text {
+                                                    text: root.frequencyLabel(root.detailAp)
+                                                    color: "#cbd5e1"
+                                                    font.pixelSize: 14
+                                                }
+                                            }
+                                            Column {
+                                                width: 245
+                                                spacing: 3
+                                                Text {
+                                                    text: "Gateway"
+                                                    color: "#94a3b8"
+                                                    font.pixelSize: 13
+                                                }
+                                                Text {
+                                                    text: root.isActive(root.detailAp) && root.activeStatus && root.activeStatus.ip4 && root.activeStatus.ip4.gateway ? root.activeStatus.ip4.gateway : "—"
+                                                    color: "#cbd5e1"
+                                                    font.pixelSize: 14
+                                                }
+                                            }
+                                            Column {
+                                                width: 245
+                                                spacing: 3
+                                                Text {
+                                                    text: "Security"
+                                                    color: "#94a3b8"
+                                                    font.pixelSize: 13
+                                                }
+                                                Text {
+                                                    text: root.securityLabel(root.detailAp.security)
+                                                    color: "#cbd5e1"
+                                                    font.pixelSize: 14
+                                                }
+                                            }
+                                            Column {
+                                                width: 245
+                                                spacing: 3
+                                                Text {
+                                                    text: "Subnet"
+                                                    color: "#94a3b8"
+                                                    font.pixelSize: 13
+                                                }
+                                                Text {
+                                                    text: root.isActive(root.detailAp) ? root.subnetLabel(root.activeStatus ? root.activeStatus.ip4 : null) : "—"
+                                                    color: "#cbd5e1"
+                                                    font.pixelSize: 14
+                                                }
+                                            }
+                                            Column {
+                                                width: 245
+                                                spacing: 3
+                                                Text {
+                                                    text: "Network usage"
+                                                    color: "#94a3b8"
+                                                    font.pixelSize: 13
+                                                }
+                                                Text {
+                                                    text: "Detect automatically"
+                                                    color: "#cbd5e1"
+                                                    font.pixelSize: 14
+                                                }
+                                            }
+                                            Column {
+                                                width: 245
+                                                spacing: 3
+                                                Text {
+                                                    text: "DNS"
+                                                    color: "#94a3b8"
+                                                    font.pixelSize: 13
+                                                }
+                                                Text {
+                                                    width: 220
+                                                    text: root.isActive(root.detailAp) ? root.dnsLabel(root.activeStatus ? root.activeStatus.ip4 : null) : "—"
+                                                    color: "#cbd5e1"
+                                                    font.pixelSize: 14
+                                                    elide: Text.ElideRight
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: parent.width
+                                    height: 145
+                                    radius: 10
+                                    color: "#0b1320"
+                                    border.color: "#1f2a3a"
+
+                                    Column {
+                                        anchors.fill: parent
+                                        anchors.margins: 14
+                                        spacing: 12
+
+                                        Text {
+                                            text: "Network details"
+                                            color: "#e5e7eb"
+                                            font.pixelSize: 16
+                                            font.bold: true
+                                        }
+
+                                        Grid {
+                                            width: parent.width
+                                            columns: 2
+                                            columnSpacing: 46
+                                            rowSpacing: 14
+                                            Column {
+                                                width: 245
+                                                spacing: 3
+                                                Text {
+                                                    text: "Type"
+                                                    color: "#94a3b8"
+                                                    font.pixelSize: 13
+                                                }
+                                                Text {
+                                                    text: root.wifiType(root.detailAp)
+                                                    color: "#cbd5e1"
+                                                    font.pixelSize: 14
+                                                }
+                                            }
+                                            Column {
+                                                width: 245
+                                                spacing: 3
+                                                Text {
+                                                    text: "Transmit link speed"
+                                                    color: "#94a3b8"
+                                                    font.pixelSize: 13
+                                                }
+                                                Text {
+                                                    text: root.isActive(root.detailAp) ? root.bitrateLabel() : "—"
+                                                    color: "#cbd5e1"
+                                                    font.pixelSize: 14
+                                                }
+                                            }
+                                            Column {
+                                                width: 245
+                                                spacing: 3
+                                                Text {
+                                                    text: "MAC address"
+                                                    color: "#94a3b8"
+                                                    font.pixelSize: 13
+                                                }
+                                                Text {
+                                                    text: root.isActive(root.detailAp) ? root.macLabel() : (root.detailAp.bssid || "—")
+                                                    color: "#cbd5e1"
+                                                    font.pixelSize: 14
+                                                }
+                                            }
+                                            Column {
+                                                width: 245
+                                                spacing: 3
+                                                Text {
+                                                    text: "Receive link speed"
+                                                    color: "#94a3b8"
+                                                    font.pixelSize: 13
+                                                }
+                                                Text {
+                                                    text: root.isActive(root.detailAp) ? root.bitrateLabel() : "—"
+                                                    color: "#cbd5e1"
+                                                    font.pixelSize: 14
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: parent.width
+                                    height: 58
+                                    radius: 10
+                                    color: "#0b1320"
+                                    border.color: "#1f2a3a"
+
+                                    Row {
+                                        anchors.fill: parent
+                                        anchors.margins: 12
+                                        spacing: 12
+
+                                        Column {
+                                            width: parent.width - 70
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            Text {
+                                                text: "Auto-connect"
+                                                color: "#e5e7eb"
+                                                font.pixelSize: 15
+                                                font.bold: true
+                                            }
+                                            Text {
+                                                text: root.profileFor(root.detailAp) ? "Allow connection to this network when in range" : "Connect once before autoconnect is available"
+                                                color: "#64748b"
+                                                font.pixelSize: 12
+                                            }
+                                        }
+
+                                        Rectangle {
+                                            width: 40
+                                            height: 22
+                                            radius: 11
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            color: root.profileFor(root.detailAp) && root.profileFor(root.detailAp).autoconnect ? "#3b82f6" : "#334155"
+                                            opacity: root.profileFor(root.detailAp) ? 1.0 : 0.45
+                                            Rectangle {
+                                                width: 16
+                                                height: 16
+                                                radius: 8
+                                                y: 3
+                                                x: root.profileFor(root.detailAp) && root.profileFor(root.detailAp).autoconnect ? 21 : 3
+                                                color: "#dbeafe"
+                                            }
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                onClicked: root.toggleAutoconnectSelected()
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Row {
+                                    width: parent.width
+                                    height: 20
+                                    Text {
+                                        text: root.isActive(root.detailAp) && root.activeStatus && root.activeStatus.active_since_ms ? "Connected" : ""
+                                        color: "#64748b"
+                                        font.pixelSize: 12
+                                    }
+                                    Item {
+                                        width: parent.width - 170
+                                        height: 1
+                                    }
+                                    Text {
+                                        text: root.detailAp.last_seen >= 0 ? "Last seen: just now" : ""
+                                        color: "#64748b"
+                                        font.pixelSize: 12
+                                    }
+                                }
                             }
 
-                            ListView {
-                                id: optionsList
-                                width: parent.width
-                                height: parent.height - 60
-                                clip: true
-                                model: root.optionItems
-                                spacing: 6
-
-                                delegate: OptionRow {
-                                    selectedIndex: root.selectedOptionIndex
-                                    onPicked: function(rowIndex) { root.selectedOptionIndex = rowIndex; }
-                                    onRunRequested: function(item) { root.executeOption(item); }
-                                }
+                            Text {
+                                visible: !root.hasSelection
+                                anchors.centerIn: parent
+                                text: "Select a network"
+                                color: "#94a3b8"
+                                font.pixelSize: 22
                             }
                         }
                     }
@@ -567,7 +1244,9 @@ ShellRoot {
                 z: 10
                 color: "#99000000"
 
-                MouseArea { anchors.fill: parent }
+                MouseArea {
+                    anchors.fill: parent
+                }
 
                 Rectangle {
                     width: Math.min(parent.width - 80, 560)
@@ -613,9 +1292,11 @@ ShellRoot {
                             text: root.promptText
                             echoMode: root.promptPassword ? TextInput.Password : TextInput.Normal
                             onTextChanged: root.promptText = text
-                            Keys.onPressed: function(event) {
-                                if (root.isEnterKey(event.key)) return root.acceptKey(event, root.submitPrompt);
-                                if (event.key === Qt.Key_Escape) return root.acceptKey(event, root.cancelPrompt);
+                            Keys.onPressed: function (event) {
+                                if (root.isEnterKey(event.key))
+                                    return root.acceptKey(event, root.submitPrompt);
+                                if (event.key === Qt.Key_Escape)
+                                    return root.acceptKey(event, root.cancelPrompt);
                             }
 
                             Rectangle {
