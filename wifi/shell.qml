@@ -15,8 +15,16 @@ ShellRoot {
     property string status: "Loading Wi-Fi networks…"
     property string lastConnectedSsid: ""
     property bool scanSnapshotSeen: false
+    property bool promptOpen: false
+    property string promptMode: ""
+    property string promptTitle: ""
+    property string promptDetail: ""
+    property string promptText: ""
+    property bool promptPassword: false
+    property var promptNetwork: null
+    property string pendingHiddenSsid: ""
 
-    readonly property string helpText: "Enter connect   •   Right options   •   Left close options   •   F5 refresh   •   Esc close"
+    readonly property string helpText: "Enter connect   •   Right options   •   F6 hidden network   •   F5 refresh   •   Esc close"
     readonly property var filteredNetworks: networks.filter(function(ap) {
         return !root.filterText || (ap.ssid || "").toLowerCase().indexOf(root.filterText.toLowerCase()) !== -1;
     })
@@ -39,6 +47,18 @@ ShellRoot {
         if (!ap) return false;
         if (ap.capabilities) return ap.capabilities.can_connect;
         return !!(ap.ssid && ap.ssid.length > 0);
+    }
+
+    function hasNetworkIdentity(ap) {
+        return !!(ap && ((ap.ssid_bytes && ap.ssid_bytes.length > 0) || (ap.ssid && ap.ssid.length > 0)));
+    }
+
+    function needsPassword(ap) {
+        return !!(ap && hasNetworkIdentity(ap) && ap.capabilities && ap.capabilities.needs_password);
+    }
+
+    function canStartConnection(ap) {
+        return canConnect(ap) || needsPassword(ap);
     }
 
     function sameAccessPoint(left, right) {
@@ -77,14 +97,15 @@ ShellRoot {
 
         const profiles = ap.profiles || [];
         const profile = ap.primary_profile || (profiles.length > 0 ? profiles[0] : null);
-        const connectable = canConnect(ap);
-        const connectDetail = connectable
+        const connectable = canStartConnection(ap);
+        const connectDetail = canConnect(ap)
             ? "Attempt connection to this access point"
-            : (ap.capabilities && ap.capabilities.needs_password)
-                ? "Password entry is not implemented in Shelllist yet"
+            : needsPassword(ap)
+                ? "Enter the network password before connecting"
                 : "This access point cannot be connected from Shelllist yet";
         const items = [
             option("Connect", connectDetail, "connect", connectable),
+            option("Connect hidden network", "Enter an SSID that is not broadcasting", "hidden"),
             option("Open captive portal", "Open plain-HTTP login trigger pages", "portal"),
             option("Refresh", "Reload networks and saved profile state", "refresh")
         ];
@@ -146,17 +167,94 @@ ShellRoot {
     function connectSelected() {
         const ap = selectedNetwork();
         if (!ap) return;
+        if (needsPassword(ap)) {
+            openPasswordPrompt(ap);
+            return;
+        }
         if (!canConnect(ap)) {
-            status = ap.capabilities && ap.capabilities.needs_password
-                ? "Password entry is not implemented in Shelllist yet."
-                : "This access point cannot be connected from Shelllist yet.";
+            status = "This access point cannot be connected from Shelllist yet. Use F6 for hidden SSIDs.";
             return;
         }
 
-        status = "Connecting to " + networkName(ap) + "…";
-        lastConnectedSsid = networkName(ap);
+        runConnect(["nm-wifi", "connect-target", JSON.stringify(ap), "--json"], networkName(ap));
+    }
 
-        connectProc.exec(["nm-wifi", "connect-target", JSON.stringify(ap), "--json"]);
+    function runConnect(args, displayName) {
+        status = "Connecting to " + displayName + "…";
+        lastConnectedSsid = displayName;
+        connectProc.exec(args);
+    }
+
+    function openPasswordPrompt(ap) {
+        promptNetwork = ap;
+        promptMode = "network-password";
+        promptTitle = "Password for " + networkName(ap);
+        promptDetail = "Enter the Wi-Fi password, then press Enter.";
+        promptText = "";
+        promptPassword = true;
+        promptOpen = true;
+    }
+
+    function openHiddenNetworkPrompt() {
+        promptNetwork = null;
+        pendingHiddenSsid = "";
+        promptMode = "hidden-ssid";
+        promptTitle = "Connect hidden network";
+        promptDetail = "Enter the hidden SSID, then press Enter.";
+        promptText = "";
+        promptPassword = false;
+        promptOpen = true;
+    }
+
+    function openHiddenPasswordPrompt(ssid) {
+        pendingHiddenSsid = ssid;
+        promptMode = "hidden-password";
+        promptTitle = "Password for hidden network";
+        promptDetail = "Enter the password for " + ssid + ", or leave blank for an open network.";
+        promptText = "";
+        promptPassword = true;
+        promptOpen = true;
+    }
+
+    function cancelPrompt() {
+        promptOpen = false;
+        promptText = "";
+        promptMode = "";
+        promptNetwork = null;
+        pendingHiddenSsid = "";
+    }
+
+    function submitPrompt() {
+        const value = promptText;
+        if (promptMode === "network-password") {
+            if (value.length === 0) {
+                status = "Enter a password for this network.";
+                return;
+            }
+            const ap = promptNetwork;
+            cancelPrompt();
+            if (!ap) return;
+            runConnect(["nm-wifi", "connect-target", JSON.stringify(ap), "--password", value, "--json"], networkName(ap));
+            return;
+        }
+
+        if (promptMode === "hidden-ssid") {
+            const ssid = value;
+            if (ssid.length === 0) {
+                status = "Enter an SSID for the hidden network.";
+                return;
+            }
+            openHiddenPasswordPrompt(ssid);
+            return;
+        }
+
+        if (promptMode === "hidden-password") {
+            const ssid = pendingHiddenSsid;
+            const args = ["nm-wifi", "connect", ssid, "--hidden", "--json"];
+            if (value.length > 0) args.push("--password", value);
+            cancelPrompt();
+            runConnect(args, ssid);
+        }
     }
 
     function executeOption(item) {
@@ -164,6 +262,7 @@ ShellRoot {
 
         const actions = {
             connect: connectSelected,
+            hidden: openHiddenNetworkPrompt,
             portal: function() {
                 status = "Opening captive portal pages…";
                 portalProc.exec(["shelllist-captive-portal"]);
@@ -214,6 +313,7 @@ ShellRoot {
                 [Qt.Key_Left, function() { optionsOpen = false; }],
                 [Qt.Key_Down, function() { moveOption(1); }],
                 [Qt.Key_Up, function() { moveOption(-1); }],
+                [Qt.Key_F6, openHiddenNetworkPrompt],
                 [Qt.Key_F5, refresh]
             ]);
         }
@@ -224,8 +324,14 @@ ShellRoot {
             [Qt.Key_Down, function() { moveSelection(1); }],
             [Qt.Key_Up, function() { moveSelection(-1); }],
             [Qt.Key_Right, openOptions],
+            [Qt.Key_F6, openHiddenNetworkPrompt],
             [Qt.Key_F5, refresh]
         ]);
+    }
+
+    onPromptOpenChanged: {
+        if (promptOpen) Qt.callLater(function() { promptInput.forceActiveFocus(); promptInput.selectAll(); });
+        else Qt.callLater(function() { search.forceActiveFocus(); });
     }
 
     Component.onCompleted: refresh()
@@ -450,6 +556,82 @@ ShellRoot {
                                     onRunRequested: function(item) { root.executeOption(item); }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                visible: root.promptOpen
+                anchors.fill: parent
+                z: 10
+                color: "#99000000"
+
+                MouseArea { anchors.fill: parent }
+
+                Rectangle {
+                    width: Math.min(parent.width - 80, 560)
+                    height: 230
+                    anchors.centerIn: parent
+                    radius: 16
+                    color: "#0f172a"
+                    border.color: "#38bdf8"
+                    border.width: 1
+
+                    Column {
+                        anchors.fill: parent
+                        anchors.margins: 20
+                        spacing: 12
+
+                        Text {
+                            width: parent.width
+                            text: root.promptTitle
+                            color: "#f8fafc"
+                            font.pixelSize: 22
+                            font.bold: true
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            width: parent.width
+                            text: root.promptDetail
+                            color: "#94a3b8"
+                            font.pixelSize: 14
+                            wrapMode: Text.Wrap
+                            maximumLineCount: 2
+                            elide: Text.ElideRight
+                        }
+
+                        TextInput {
+                            id: promptInput
+                            width: parent.width
+                            height: 44
+                            color: "#e5e7eb"
+                            selectionColor: "#2563eb"
+                            selectedTextColor: "white"
+                            font.pixelSize: 19
+                            text: root.promptText
+                            echoMode: root.promptPassword ? TextInput.Password : TextInput.Normal
+                            onTextChanged: root.promptText = text
+                            Keys.onPressed: function(event) {
+                                if (root.isEnterKey(event.key)) return root.acceptKey(event, root.submitPrompt);
+                                if (event.key === Qt.Key_Escape) return root.acceptKey(event, root.cancelPrompt);
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: 10
+                                color: "#111827"
+                                border.color: "#334155"
+                                z: -1
+                            }
+                        }
+
+                        Text {
+                            width: parent.width
+                            text: "Enter continue/connect   •   Esc cancel"
+                            color: "#64748b"
+                            font.pixelSize: 13
                         }
                     }
                 }

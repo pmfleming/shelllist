@@ -24,10 +24,11 @@ The current flake intentionally uses a local `nm-wifi` path input, so it is expe
 - `Right`: open options for the selected network.
 - `Left` or `Esc` while options are open: close options.
 - `Enter` while options are open: run the selected option.
+- `F6`: connect to a hidden SSID.
 - `F5`: refresh cached networks, saved profiles, and start a background scan.
 - `Esc` while options are closed: close the popup.
 
-Hidden SSIDs are shown as `<hidden>` but connection is disabled for them until explicit hidden-network support is added to the UI/backend flow.
+Password-protected unsaved networks prompt for a password before Shelllist calls `nm-wifi connect-target`. Hidden SSIDs can be connected with `F6`; leave the password prompt blank for open hidden networks.
 
 ## Requirements
 
