@@ -1,6 +1,7 @@
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import QtQuick.Layouts
 import "."
 
 ShellRoot {
@@ -24,8 +25,8 @@ ShellRoot {
     property string pendingHiddenSsid: ""
     property bool pendingConnectUsesStdin: false
     property string pendingConnectPassword: ""
+    property string pendingEnterpriseIdentity: ""
 
-    readonly property string helpText: "Enter connect   •   F6 hidden network   •   F5 refresh   •   Esc close"
     readonly property bool actionInFlight: connectProc.running || disconnectProc.running || profileProc.running
     readonly property var filteredNetworks: networks.filter(function (ap) {
         return !root.filterText || (ap.ssid || "").toLowerCase().indexOf(root.filterText.toLowerCase()) !== -1;
@@ -40,8 +41,7 @@ ShellRoot {
     function selectedNetwork() {
         if (filteredNetworks.length === 0)
             return null;
-        selectedIndex = clampIndex(selectedIndex, filteredNetworks.length);
-        return filteredNetworks[selectedIndex];
+        return filteredNetworks[clampIndex(selectedIndex, filteredNetworks.length)];
     }
 
     function networkName(ap) {
@@ -68,8 +68,12 @@ ShellRoot {
         return !!(ap && hasNetworkIdentity(ap) && ap.capabilities && ap.capabilities.needs_password);
     }
 
+    function needsCredentials(ap) {
+        return !!(ap && hasNetworkIdentity(ap) && ap.capabilities && ap.capabilities.needs_credentials);
+    }
+
     function canStartConnection(ap) {
-        return canConnect(ap) || needsPassword(ap);
+        return canConnect(ap) || needsPassword(ap) || needsCredentials(ap);
     }
 
     function accessPointPath(ap) {
@@ -154,15 +158,75 @@ ShellRoot {
         return ip4.dns.join(", ");
     }
 
-    function bitrateLabel() {
-        const wireless = activeStatus && activeStatus.wireless ? activeStatus.wireless : null;
-        if (!wireless || !wireless.bitrate_mbps)
+    function networkUsageLabel() {
+        const metered = activeStatus && activeStatus.metered ? activeStatus.metered : null;
+        if (!metered)
             return "—";
-        return wireless.bitrate_mbps + " Mbps";
+        if (metered.state === "yes")
+            return "Metered";
+        if (metered.state === "no")
+            return "Unmetered";
+        if (metered.state === "guess-yes")
+            return "Probably metered";
+        if (metered.state === "guess-no")
+            return "Probably unmetered";
+        return "Unknown";
+    }
+
+    function lastSeenLabel(ap) {
+        if (!ap || ap.last_seen < 0)
+            return "";
+        if (!hasNumber(ap.last_seen_age_ms))
+            return "Last seen: scan result available";
+        const seconds = Math.max(0, Math.round(ap.last_seen_age_ms / 1000));
+        if (seconds < 5)
+            return "Last seen: just now";
+        if (seconds < 60)
+            return "Last seen: " + seconds + "s ago";
+        const minutes = Math.round(seconds / 60);
+        if (minutes < 60)
+            return "Last seen: " + minutes + "m ago";
+        const hours = Math.round(minutes / 60);
+        return "Last seen: " + hours + "h ago";
+    }
+
+    function hasNumber(value) {
+        return value !== null && value !== undefined && !isNaN(value);
+    }
+
+    function formatMbps(value) {
+        if (!hasNumber(value))
+            return "—";
+        const rounded = Math.round(value * 10) / 10;
+        return (Math.abs(rounded - Math.round(rounded)) < 0.01 ? Math.round(rounded) : rounded) + " Mbps";
+    }
+
+    function wirelessStatus() {
+        return activeStatus && activeStatus.wireless ? activeStatus.wireless : null;
+    }
+
+    function hasDirectionalBitrates() {
+        const wireless = wirelessStatus();
+        return !!(wireless && (hasNumber(wireless.tx_bitrate_mbps) || hasNumber(wireless.rx_bitrate_mbps)));
+    }
+
+    function bitrateLabel() {
+        const wireless = wirelessStatus();
+        return wireless ? formatMbps(wireless.bitrate_mbps) : "—";
+    }
+
+    function txBitrateLabel() {
+        const wireless = wirelessStatus();
+        return wireless ? formatMbps(wireless.tx_bitrate_mbps) : "—";
+    }
+
+    function rxBitrateLabel() {
+        const wireless = wirelessStatus();
+        return wireless ? formatMbps(wireless.rx_bitrate_mbps) : "—";
     }
 
     function macLabel() {
-        const wireless = activeStatus && activeStatus.wireless ? activeStatus.wireless : null;
+        const wireless = wirelessStatus();
         return wireless && wireless.mac_address ? wireless.mac_address : "—";
     }
 
@@ -178,6 +242,20 @@ ShellRoot {
     function autoconnectEnabled() {
         const profile = profileFor(detailAp);
         return !!(profile && profile.autoconnect);
+    }
+
+    function privacyFor(ap) {
+        const profile = profileFor(ap);
+        return profile && profile.privacy ? profile.privacy : ({});
+    }
+
+    function randomizedMacEnabled() {
+        return !!privacyFor(detailAp).randomized_mac;
+    }
+
+    function sendHostnameEnabled() {
+        const privacy = privacyFor(detailAp);
+        return privacy.send_hostname !== false;
     }
 
     function canEditProfile() {
@@ -285,6 +363,10 @@ ShellRoot {
             openPasswordPrompt(ap);
             return;
         }
+        if (needsCredentials(ap)) {
+            openEnterpriseIdentityPrompt(ap);
+            return;
+        }
         if (!canConnect(ap)) {
             status = "This access point cannot be connected from Shelllist yet. Use F6 for hidden SSIDs.";
             return;
@@ -374,6 +456,21 @@ ShellRoot {
         });
     }
 
+    function setMacRandomizedSelected(enabled) {
+        runProfileAction(function (profile) {
+            status = (enabled ? "Using randomized MAC for " : "Using device MAC for ") + profile.id + "…";
+            profileProc.exec(["nm-wifi", "profile", "mac-randomization", profile.path, enabled ? "true" : "false"]);
+        });
+    }
+
+    function toggleSendHostnameSelected() {
+        runProfileAction(function (profile) {
+            const enabled = !(profile.privacy && profile.privacy.send_hostname !== false);
+            status = (enabled ? "Sending" : "Hiding") + " device name for " + profile.id + "…";
+            profileProc.exec(["nm-wifi", "profile", "send-hostname", profile.path, enabled ? "true" : "false"]);
+        });
+    }
+
     function openPortal() {
         status = "Opening captive portal pages…";
         portalProc.exec(["shelllist-captive-portal"]);
@@ -408,6 +505,28 @@ ShellRoot {
         promptMode = "";
         promptNetwork = null;
         pendingHiddenSsid = "";
+        pendingEnterpriseIdentity = "";
+    }
+
+    function openEnterpriseIdentityPrompt(ap) {
+        const auth = ap && ap.auth ? ap.auth : ({});
+        const detail = auth.note || "Enter your enterprise Wi-Fi identity. Shelllist will use PEAP/MSCHAPv2 defaults for now.";
+        openPrompt("enterprise-identity", "Enterprise identity for " + networkName(ap), detail, false, ap, "");
+    }
+
+    function openEnterprisePasswordPrompt(ap, identity) {
+        pendingEnterpriseIdentity = identity;
+        openPrompt("enterprise-password", "Enterprise password for " + identity, "Enter your enterprise Wi-Fi password, then press Enter.", true, ap, "");
+    }
+
+    function enterpriseTarget(ap, identity) {
+        const target = JSON.parse(JSON.stringify(ap));
+        target.enterprise = {
+            eap: ["peap"],
+            identity: identity,
+            phase2_auth: "mschapv2"
+        };
+        return target;
     }
 
     function submitNetworkPasswordPrompt(value) {
@@ -437,8 +556,32 @@ ShellRoot {
         runConnect(["nm-wifi", "connect", ssid, "--hidden", "--json"], ssid, password);
     }
 
+    function submitEnterpriseIdentityPrompt(value) {
+        if (value.length === 0) {
+            status = "Enter an enterprise Wi-Fi identity.";
+            return;
+        }
+        const ap = promptNetwork;
+        if (ap)
+            openEnterprisePasswordPrompt(ap, value);
+    }
+
+    function submitEnterprisePasswordPrompt(value) {
+        if (value.length === 0) {
+            status = "Enter an enterprise Wi-Fi password.";
+            return;
+        }
+        const ap = promptNetwork;
+        const identity = pendingEnterpriseIdentity;
+        cancelPrompt();
+        if (ap && identity.length > 0)
+            runConnect(["nm-wifi", "connect-target", JSON.stringify(enterpriseTarget(ap, identity)), "--json"], networkName(ap), value);
+    }
+
     function submitPrompt() {
         const handlers = {
+            "enterprise-identity": submitEnterpriseIdentityPrompt,
+            "enterprise-password": submitEnterprisePasswordPrompt,
             "hidden-password": submitHiddenPasswordPrompt,
             "hidden-ssid": submitHiddenSsidPrompt,
             "network-password": submitNetworkPasswordPrompt
@@ -587,7 +730,8 @@ ShellRoot {
             try {
                 const result = JSON.parse(connectOut.text);
                 root.applyConnectResult(result);
-                root.refresh();
+                if (result.status !== "error")
+                    root.refresh();
                 return;
             } catch (error) {
                 if (exitCode !== 0) {
@@ -668,21 +812,21 @@ ShellRoot {
             border.color: "#243244"
             border.width: 1
 
-            Column {
+            ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 14
                 spacing: 12
 
-                Row {
-                    width: parent.width
-                    height: 46
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 46
                     spacing: 12
 
                     Rectangle {
-                        width: 34
-                        height: 34
+                        Layout.preferredWidth: 34
+                        Layout.preferredHeight: 34
                         radius: 10
-                        anchors.verticalCenter: parent.verticalCenter
+                        Layout.alignment: Qt.AlignVCenter
                         color: "#15335f"
                         Text {
                             anchors.centerIn: parent
@@ -693,7 +837,7 @@ ShellRoot {
                     }
 
                     Text {
-                        anchors.verticalCenter: parent.verticalCenter
+                        Layout.alignment: Qt.AlignVCenter
                         text: "Shelllist Wi-Fi"
                         color: "#dbeafe"
                         font.pixelSize: 17
@@ -702,9 +846,9 @@ ShellRoot {
 
                     TextInput {
                         id: search
-                        width: 270
-                        height: 34
-                        anchors.verticalCenter: parent.verticalCenter
+                        Layout.preferredWidth: 270
+                        Layout.preferredHeight: 34
+                        Layout.alignment: Qt.AlignVCenter
                         focus: true
                         leftPadding: 38
                         rightPadding: 12
@@ -712,6 +856,7 @@ ShellRoot {
                         selectionColor: "#2563eb"
                         selectedTextColor: "white"
                         font.pixelSize: 15
+                        verticalAlignment: TextInput.AlignVCenter
                         text: root.filterText
                         onTextChanged: {
                             root.filterText = text;
@@ -739,10 +884,10 @@ ShellRoot {
                     }
 
                     Rectangle {
-                        width: 34
-                        height: 34
+                        Layout.preferredWidth: 34
+                        Layout.preferredHeight: 34
                         radius: 8
-                        anchors.verticalCenter: parent.verticalCenter
+                        Layout.alignment: Qt.AlignVCenter
                         color: "transparent"
                         border.color: "#233247"
                         Text {
@@ -758,26 +903,25 @@ ShellRoot {
                     }
 
                     Item {
-                        width: parent.width - 34 - 140 - 270 - 34 - 72
-                        height: 1
+                        Layout.fillWidth: true
                     }
 
                     Text {
-                        anchors.verticalCenter: parent.verticalCenter
+                        Layout.alignment: Qt.AlignVCenter
                         text: "☰   –   ◻   ×"
                         color: "#94a3b8"
                         font.pixelSize: 16
                     }
                 }
 
-                Row {
-                    width: parent.width
-                    height: parent.height - 58
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
                     spacing: 12
 
                     Rectangle {
-                        width: 425
-                        height: parent.height
+                        Layout.preferredWidth: 425
+                        Layout.fillHeight: true
                         radius: 12
                         color: "#0f172a"
                         border.color: "#1f2a3a"
@@ -787,20 +931,10 @@ ShellRoot {
                             anchors.margins: 8
                             spacing: 6
 
-                            Text {
-                                width: parent.width
-                                text: root.status + "   •   " + root.helpText
-                                color: "#94a3b8"
-                                font.pixelSize: 13
-                                maximumLineCount: 2
-                                wrapMode: Text.Wrap
-                                elide: Text.ElideRight
-                            }
-
                             ListView {
                                 id: list
                                 width: parent.width
-                                height: parent.height - 42
+                                height: parent.height
                                 clip: true
                                 model: root.filteredNetworks
                                 spacing: 3
@@ -819,8 +953,8 @@ ShellRoot {
                     }
 
                     Rectangle {
-                        width: parent.width - 437
-                        height: parent.height
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
                         radius: 12
                         color: "#0f172a"
                         border.color: "#1f2a3a"
@@ -834,22 +968,22 @@ ShellRoot {
                                 anchors.fill: parent
                                 spacing: 14
 
-                                Row {
+                                RowLayout {
                                     width: parent.width
                                     height: 72
                                     spacing: 16
 
                                     Text {
-                                        width: 54
-                                        anchors.verticalCenter: parent.verticalCenter
+                                        Layout.preferredWidth: 54
+                                        Layout.alignment: Qt.AlignVCenter
                                         text: "󰤨"
                                         color: "#dbeafe"
                                         font.pixelSize: 42
                                     }
 
                                     Column {
-                                        width: parent.width - 70
-                                        anchors.verticalCenter: parent.verticalCenter
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
                                         spacing: 5
 
                                         Text {
@@ -869,13 +1003,13 @@ ShellRoot {
                                     }
                                 }
 
-                                Row {
+                                RowLayout {
                                     width: parent.width
                                     height: 46
                                     spacing: 8
 
                                     ActionButton {
-                                        width: 112
+                                        Layout.preferredWidth: 112
                                         label: root.isActive(root.detailAp) ? "Disconnect" : "Connect"
                                         backgroundColor: root.isActive(root.detailAp) ? "#1e3a5f" : "#1d4ed8"
                                         borderColor: "#3b82f6"
@@ -885,35 +1019,27 @@ ShellRoot {
                                     }
 
                                     ActionButton {
-                                        width: 90
+                                        Layout.preferredWidth: 90
                                         label: "Forget"
                                         enabled: root.canEditProfile()
                                         onClicked: root.forgetSelected()
                                     }
 
                                     ActionButton {
-                                        width: 90
+                                        Layout.preferredWidth: 90
                                         label: "Sign in"
                                         onClicked: root.openPortal()
                                     }
 
                                     ActionButton {
-                                        width: 90
+                                        Layout.preferredWidth: 90
                                         label: "Share"
                                         labelColor: "#94a3b8"
                                         enabled: false
                                     }
 
                                     Item {
-                                        width: parent.width - 112 - 90 - 90 - 90 - 164
-                                        height: 1
-                                    }
-
-                                    ActionButton {
-                                        width: 150
-                                        label: root.autoconnectEnabled() ? "Auto-connect on" : "Auto-connect off"
-                                        enabled: root.canEditProfile()
-                                        onClicked: root.toggleAutoconnectSelected()
+                                        Layout.fillWidth: true
                                     }
                                 }
 
@@ -950,7 +1076,7 @@ ShellRoot {
                                         }
                                         DetailField {
                                             label: "Network usage"
-                                            value: "Detect automatically"
+                                            value: root.activeDetailValue(root.networkUsageLabel())
                                         }
                                         DetailField {
                                             label: "DNS"
@@ -970,8 +1096,8 @@ ShellRoot {
                                             value: root.wifiType(root.detailAp)
                                         }
                                         DetailField {
-                                            label: "Transmit link speed"
-                                            value: root.activeDetailValue(root.bitrateLabel())
+                                            label: root.hasDirectionalBitrates() ? "Transmit link speed" : "Link speed"
+                                            value: root.activeDetailValue(root.hasDirectionalBitrates() ? root.txBitrateLabel() : root.bitrateLabel())
                                         }
                                         DetailField {
                                             label: "MAC address"
@@ -979,51 +1105,148 @@ ShellRoot {
                                         }
                                         DetailField {
                                             label: "Receive link speed"
-                                            value: root.activeDetailValue(root.bitrateLabel())
+                                            value: root.activeDetailValue(root.rxBitrateLabel())
                                         }
                                     }
                                 }
 
                                 DetailCard {
-                                    height: 58
+                                    height: 208
+                                    title: "Profile settings"
 
-                                    Row {
+                                    Column {
                                         anchors.fill: parent
-                                        spacing: 12
+                                        spacing: 8
 
-                                        Column {
-                                            width: parent.width - 58
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            Text {
-                                                text: "Auto-connect"
-                                                color: "#e5e7eb"
-                                                font.pixelSize: 15
-                                                font.bold: true
+                                        RowLayout {
+                                            width: parent.width
+                                            height: 34
+                                            spacing: 12
+
+                                            Column {
+                                                Layout.fillWidth: true
+                                                Layout.alignment: Qt.AlignVCenter
+                                                Text {
+                                                    text: "Auto-connect"
+                                                    color: "#e5e7eb"
+                                                    font.pixelSize: 14
+                                                }
+                                                Text {
+                                                    text: root.profileFor(root.detailAp) ? "Connect automatically when this network is in range" : "Connect once before autoconnect is available"
+                                                    color: "#64748b"
+                                                    font.pixelSize: 11
+                                                }
                                             }
-                                            Text {
-                                                text: root.profileFor(root.detailAp) ? "Allow connection to this network when in range" : "Connect once before autoconnect is available"
-                                                color: "#64748b"
-                                                font.pixelSize: 12
+
+                                            TogglePill {
+                                                Layout.preferredWidth: 40
+                                                Layout.preferredHeight: 22
+                                                Layout.alignment: Qt.AlignVCenter
+                                                checked: root.autoconnectEnabled()
+                                                opacity: root.canEditProfile() ? 1.0 : 0.45
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    enabled: root.canEditProfile()
+                                                    onClicked: root.toggleAutoconnectSelected()
+                                                }
                                             }
                                         }
 
-                                        TogglePill {
-                                            width: 40
-                                            height: 22
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            checked: root.autoconnectEnabled()
-                                            opacity: root.canEditProfile() ? 1.0 : 0.45
+                                        RowLayout {
+                                            width: parent.width
+                                            height: 26
+                                            spacing: 12
 
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                enabled: root.canEditProfile()
-                                                onClicked: root.toggleAutoconnectSelected()
+                                            Text {
+                                                Layout.fillWidth: true
+                                                Layout.alignment: Qt.AlignVCenter
+                                                text: "Use randomised MAC"
+                                                color: "#e5e7eb"
+                                                font.pixelSize: 14
+                                            }
+
+                                            TogglePill {
+                                                Layout.preferredWidth: 40
+                                                Layout.preferredHeight: 22
+                                                Layout.alignment: Qt.AlignVCenter
+                                                checked: root.randomizedMacEnabled()
+                                                opacity: root.canEditProfile() ? 1.0 : 0.45
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    enabled: root.canEditProfile()
+                                                    onClicked: root.setMacRandomizedSelected(!root.randomizedMacEnabled())
+                                                }
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            width: parent.width
+                                            height: 26
+                                            spacing: 12
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                Layout.alignment: Qt.AlignVCenter
+                                                text: "Use device MAC"
+                                                color: "#cbd5e1"
+                                                font.pixelSize: 14
+                                            }
+
+                                            TogglePill {
+                                                Layout.preferredWidth: 40
+                                                Layout.preferredHeight: 22
+                                                Layout.alignment: Qt.AlignVCenter
+                                                checked: !root.randomizedMacEnabled()
+                                                opacity: root.canEditProfile() ? 1.0 : 0.45
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    enabled: root.canEditProfile()
+                                                    onClicked: root.setMacRandomizedSelected(false)
+                                                }
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            width: parent.width
+                                            height: 26
+                                            spacing: 12
+
+                                            Column {
+                                                Layout.fillWidth: true
+                                                Layout.alignment: Qt.AlignVCenter
+                                                Text {
+                                                    text: "Send device name"
+                                                    color: "#e5e7eb"
+                                                    font.pixelSize: 14
+                                                }
+                                                Text {
+                                                    text: "Share this device's name with the network"
+                                                    color: "#64748b"
+                                                    font.pixelSize: 11
+                                                }
+                                            }
+
+                                            TogglePill {
+                                                Layout.preferredWidth: 40
+                                                Layout.preferredHeight: 22
+                                                Layout.alignment: Qt.AlignVCenter
+                                                checked: root.sendHostnameEnabled()
+                                                opacity: root.canEditProfile() ? 1.0 : 0.45
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    enabled: root.canEditProfile()
+                                                    onClicked: root.toggleSendHostnameSelected()
+                                                }
                                             }
                                         }
                                     }
                                 }
 
-                                Row {
+                                RowLayout {
                                     width: parent.width
                                     height: 20
                                     Text {
@@ -1032,11 +1255,10 @@ ShellRoot {
                                         font.pixelSize: 12
                                     }
                                     Item {
-                                        width: parent.width - 170
-                                        height: 1
+                                        Layout.fillWidth: true
                                     }
                                     Text {
-                                        text: root.detailAp.last_seen >= 0 ? "Last seen: just now" : ""
+                                        text: root.lastSeenLabel(root.detailAp)
                                         color: "#64748b"
                                         font.pixelSize: 12
                                     }
@@ -1066,7 +1288,7 @@ ShellRoot {
                 }
 
                 Rectangle {
-                    width: Math.min(parent.width - 80, 560)
+                    width: Math.min(parent.width * 0.9, 560)
                     height: 230
                     anchors.centerIn: parent
                     radius: 16

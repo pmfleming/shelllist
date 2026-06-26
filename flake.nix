@@ -118,6 +118,21 @@
           };
         });
 
+      checks = forAllSystems (system: pkgs:
+        let
+          nmWifi = nm-wifi.packages.${system}.default;
+        in
+        {
+          nmWifiContract = pkgs.runCommand "shelllist-nm-wifi-contract" {
+            nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
+          } ''
+            ${pkgs.bash}/bin/bash ${./tests/check-nm-wifi-contract.sh} \
+              ${nmWifi}/bin/nm-wifi \
+              ${./contracts/nm-wifi-ui-contract.fixture.json}
+            touch $out
+          '';
+        });
+
       apps = forAllSystems (system: pkgs: {
         default = {
           type = "app";

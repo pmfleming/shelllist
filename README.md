@@ -25,7 +25,7 @@ The current flake intentionally uses a local `nm-wifi` path input, so it is expe
 - `F5`: refresh cached networks, active status, saved profiles, and start a background scan.
 - `Esc`: close the popup, or cancel an open prompt.
 
-The right pane shows selected-network actions and details. Connected networks expose disconnect, captive-portal sign-in, forget, autoconnect, IPv4, DNS, frequency, link-speed, and MAC details when `nm-wifi status --json` can read them from NetworkManager. Password-protected unsaved networks prompt for a password before Shelllist calls `nm-wifi connect-target`; Shelllist sends the password over stdin to avoid exposing it in process arguments. Hidden SSIDs can be connected with `F6`; leave the password prompt blank for open hidden networks.
+The right pane shows selected-network actions and details. Connected networks expose disconnect, captive-portal sign-in, forget, autoconnect, per-profile privacy toggles, IPv4, DNS, frequency, link-speed, and MAC details when `nm-wifi status --json` can read them from NetworkManager. Privacy toggles cover stable randomized MAC vs device MAC and whether DHCP sends this device's hostname. Password-protected unsaved networks prompt for a password before Shelllist calls `nm-wifi connect-target`; Shelllist sends the password over stdin to avoid exposing it in process arguments. Enterprise/802.1X networks now get an initial identity/password prompt using PEAP/MSCHAPv2 defaults from Shelllist while `nm-wifi` owns the NetworkManager settings. Hidden SSIDs can be connected with `F6`; leave the password prompt blank for open hidden networks.
 
 ## Requirements
 
@@ -62,3 +62,5 @@ shellcheck "$portal/bin/shelllist-captive-portal"
 ```
 
 The Wi-Fi UI entry point is `wifi/shell.qml`.
+
+The JSON boundary with `nm-wifi` is pinned by `contracts/nm-wifi-ui-contract.fixture.json`. `nix flake check` regenerates the fixture with the local `nm-wifi contract-fixture` command and diffs it, so backend field renames used by QML fail during development instead of at runtime.
