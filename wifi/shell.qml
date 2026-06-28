@@ -1,7 +1,9 @@
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
+import "Wifi.js" as Wifi
 import "."
 
 ShellRoot {
@@ -21,21 +23,35 @@ ShellRoot {
     property string promptDetail: ""
     property string promptText: ""
     property bool promptPassword: false
+    property bool detailsOpen: false
+    property int floatingPlacementAttempts: 0
+    readonly property int closedWindowWidth: 453
+    readonly property int openWindowWidth: 1040
+    readonly property int currentWindowWidth: detailsOpen ? openWindowWidth : closedWindowWidth
+    readonly property int currentWindowHeight: Math.round((((window && window.screen && window.screen.height > 0) ? window.screen.height : 960) * 0.75))
     property var promptNetwork: null
     property string pendingHiddenSsid: ""
     property bool pendingConnectUsesStdin: false
     property string pendingConnectPassword: ""
     property string pendingEnterpriseIdentity: ""
+    property bool shareAvailable: false
+    property string sharePayload: ""
+    property string shareProfilePath: ""
+    property string shareStatus: "Wi-Fi QR sharing is not available for this network."
 
     readonly property bool actionInFlight: connectProc.running || disconnectProc.running || profileProc.running
     readonly property var filteredNetworks: networks.filter(function (ap) {
         return !root.filterText || (ap.ssid || "").toLowerCase().indexOf(root.filterText.toLowerCase()) !== -1;
+    }).sort(function (left, right) {
+        const leftActive = root.isActive(left);
+        const rightActive = root.isActive(right);
+        return leftActive === rightActive ? 0 : leftActive ? -1 : 1;
     })
     readonly property var detailAp: selectedNetwork() || ({})
     readonly property bool hasSelection: filteredNetworks.length > 0
 
     function clampIndex(index, length) {
-        return length <= 0 ? 0 : Math.max(0, Math.min(index, length - 1));
+        return Wifi.clampIndex(index, length);
     }
 
     function selectedNetwork() {
@@ -44,73 +60,19 @@ ShellRoot {
         return filteredNetworks[clampIndex(selectedIndex, filteredNetworks.length)];
     }
 
-    function networkName(ap) {
-        return ap && ap.ssid ? ap.ssid : "<hidden>";
-    }
-
-    function securityLabel(security) {
-        return security === "--" ? "Open" : (security || "Unknown");
-    }
-
-    function hasNetworkIdentity(ap) {
-        return !!(ap && ((ap.ssid_bytes && ap.ssid_bytes.length > 0) || (ap.ssid && ap.ssid.length > 0)));
-    }
-
-    function canConnect(ap) {
-        if (!ap)
-            return false;
-        if (ap.capabilities)
-            return ap.capabilities.can_connect;
-        return hasNetworkIdentity(ap);
-    }
-
-    function needsPassword(ap) {
-        return !!(ap && hasNetworkIdentity(ap) && ap.capabilities && ap.capabilities.needs_password);
-    }
-
-    function needsCredentials(ap) {
-        return !!(ap && hasNetworkIdentity(ap) && ap.capabilities && ap.capabilities.needs_credentials);
-    }
-
-    function canStartConnection(ap) {
-        return canConnect(ap) || needsPassword(ap) || needsCredentials(ap);
-    }
-
-    function accessPointPath(ap) {
-        return ap ? (ap.path || ap.ap_path || "") : "";
-    }
-
-    function hasSsidIdentity(ap) {
-        return !!(ap && ((ap.ssid_bytes && ap.ssid_bytes.length > 0) || (ap.ssid && ap.ssid.length > 0)));
-    }
-
-    function sameAccessPoint(left, right) {
-        if (!left || !right)
-            return false;
-
-        const leftPath = accessPointPath(left);
-        const rightPath = accessPointPath(right);
-        if (leftPath && rightPath)
-            return leftPath === rightPath;
-
-        if (left.bssid && right.bssid)
-            return left.bssid === right.bssid;
-
-        if (!hasSsidIdentity(left) || !hasSsidIdentity(right))
-            return false;
-
-        return (left.ssid || "") === (right.ssid || "") && (left.security || "") === (right.security || "");
-    }
-
     function activeAccessPoint() {
-        if (!activeStatus)
-            return null;
-        return activeStatus.access_point || (activeStatus.network || null);
+        return activeStatus ? activeStatus.access_point || (activeStatus.network || null) : null;
     }
 
     function isActive(ap) {
+        if (!ap)
+            return false;
         const active = activeAccessPoint();
-        return !!(ap && (ap.active || sameAccessPoint(ap, active)));
+        if (ap.active || Wifi.sameAccessPoint(ap, active))
+            return true;
+        return (ap.access_points || []).some(function (child) {
+            return child.active || Wifi.sameAccessPoint(child, active);
+        });
     }
 
     function profileFor(ap) {
@@ -125,137 +87,17 @@ ShellRoot {
         return null;
     }
 
-    function frequencyLabel(ap) {
-        const frequency = ap && ap.frequency ? ap.frequency : 0;
-        if (frequency <= 0)
-            return "Unknown";
-        const band = frequency >= 5925 ? "6 GHz" : frequency >= 4900 ? "5 GHz" : "2.4 GHz";
-        return band + " (" + frequency + " MHz)";
-    }
-
-    function wifiType(ap) {
-        const frequency = ap && ap.frequency ? ap.frequency : 0;
-        if (frequency >= 5925)
-            return "Wi-Fi 6E/7";
-        if (frequency >= 4900)
-            return "Wi-Fi 5/6";
-        if (frequency > 0)
-            return "Wi-Fi 4/6";
-        return "Unknown";
-    }
-
-    function subnetLabel(ip4) {
-        if (!ip4)
-            return "—";
-        if (ip4.prefix !== null && ip4.prefix !== undefined)
-            return "/" + ip4.prefix;
-        return "—";
-    }
-
-    function dnsLabel(ip4) {
-        if (!ip4 || !ip4.dns || ip4.dns.length === 0)
-            return "—";
-        return ip4.dns.join(", ");
-    }
-
-    function networkUsageLabel() {
-        const metered = activeStatus && activeStatus.metered ? activeStatus.metered : null;
-        if (!metered)
-            return "—";
-        if (metered.state === "yes")
-            return "Metered";
-        if (metered.state === "no")
-            return "Unmetered";
-        if (metered.state === "guess-yes")
-            return "Probably metered";
-        if (metered.state === "guess-no")
-            return "Probably unmetered";
-        return "Unknown";
-    }
-
-    function lastSeenLabel(ap) {
-        if (!ap || ap.last_seen < 0)
-            return "";
-        if (!hasNumber(ap.last_seen_age_ms))
-            return "Last seen: scan result available";
-        const seconds = Math.max(0, Math.round(ap.last_seen_age_ms / 1000));
-        if (seconds < 5)
-            return "Last seen: just now";
-        if (seconds < 60)
-            return "Last seen: " + seconds + "s ago";
-        const minutes = Math.round(seconds / 60);
-        if (minutes < 60)
-            return "Last seen: " + minutes + "m ago";
-        const hours = Math.round(minutes / 60);
-        return "Last seen: " + hours + "h ago";
-    }
-
-    function hasNumber(value) {
-        return value !== null && value !== undefined && !isNaN(value);
-    }
-
-    function formatMbps(value) {
-        if (!hasNumber(value))
-            return "—";
-        const rounded = Math.round(value * 10) / 10;
-        return (Math.abs(rounded - Math.round(rounded)) < 0.01 ? Math.round(rounded) : rounded) + " Mbps";
-    }
-
-    function wirelessStatus() {
-        return activeStatus && activeStatus.wireless ? activeStatus.wireless : null;
-    }
-
-    function hasDirectionalBitrates() {
-        const wireless = wirelessStatus();
-        return !!(wireless && (hasNumber(wireless.tx_bitrate_mbps) || hasNumber(wireless.rx_bitrate_mbps)));
-    }
-
-    function bitrateLabel() {
-        const wireless = wirelessStatus();
-        return wireless ? formatMbps(wireless.bitrate_mbps) : "—";
-    }
-
-    function txBitrateLabel() {
-        const wireless = wirelessStatus();
-        return wireless ? formatMbps(wireless.tx_bitrate_mbps) : "—";
-    }
-
-    function rxBitrateLabel() {
-        const wireless = wirelessStatus();
-        return wireless ? formatMbps(wireless.rx_bitrate_mbps) : "—";
-    }
-
-    function macLabel() {
-        const wireless = wirelessStatus();
-        return wireless && wireless.mac_address ? wireless.mac_address : "—";
-    }
-
-    function activeIp4Value(field) {
-        const ip4 = activeStatus && activeStatus.ip4 ? activeStatus.ip4 : null;
-        return isActive(detailAp) && ip4 && ip4[field] ? ip4[field] : "—";
-    }
-
-    function activeDetailValue(value) {
-        return isActive(detailAp) ? value : "—";
-    }
-
     function autoconnectEnabled() {
         const profile = profileFor(detailAp);
         return !!(profile && profile.autoconnect);
     }
 
-    function privacyFor(ap) {
-        const profile = profileFor(ap);
-        return profile && profile.privacy ? profile.privacy : ({});
-    }
-
     function randomizedMacEnabled() {
-        return !!privacyFor(detailAp).randomized_mac;
+        return !!Wifi.privacyFor(profileFor(detailAp)).randomized_mac;
     }
 
     function sendHostnameEnabled() {
-        const privacy = privacyFor(detailAp);
-        return privacy.send_hostname !== false;
+        return Wifi.privacyFor(profileFor(detailAp)).send_hostname !== false;
     }
 
     function canEditProfile() {
@@ -263,7 +105,51 @@ ShellRoot {
     }
 
     function canUsePrimaryAction() {
-        return !actionInFlight && (isActive(detailAp) || canStartConnection(detailAp));
+        return !actionInFlight && (isActive(detailAp) || Wifi.canStartConnection(detailAp));
+    }
+
+    function canShareSelected() {
+        return shareAvailable && sharePayload.length > 0;
+    }
+
+    function refreshShareAvailability() {
+        shareAvailable = false;
+        sharePayload = "";
+        shareProfilePath = "";
+        shareStatus = "Wi-Fi QR sharing is not available for this network.";
+
+        if (!hasSelection)
+            return;
+
+        if (Wifi.canShareQr(detailAp)) {
+            sharePayload = Wifi.wifiQrPayload(detailAp);
+            shareAvailable = true;
+            shareStatus = "Wi-Fi QR payload is ready.";
+            return;
+        }
+
+        const profile = profileFor(detailAp);
+        if (!profile || !profile.path) {
+            shareStatus = "Wi-Fi QR sharing requires an open network or a saved profile with a readable password.";
+            return;
+        }
+
+        if (shareCheckProc.running)
+            return;
+
+        shareProfilePath = profile.path;
+        shareStatus = "Checking saved Wi-Fi password availability…";
+        shareCheckProc.exec(["nm-wifi", "profile", "share", profile.path, "--json"]);
+    }
+
+    function shareSelected() {
+        if (!canShareSelected()) {
+            status = shareStatus;
+            return;
+        }
+
+        Quickshell.clipboardText = sharePayload;
+        status = "Wi-Fi QR payload for " + Wifi.networkName(detailAp) + " copied to clipboard";
     }
 
     function applyNetworks(newNetworks, resetSelection) {
@@ -277,7 +163,7 @@ ShellRoot {
             selectedIndex = activeIndex >= 0 ? activeIndex : 0;
         } else {
             const nextIndex = filteredNetworks.findIndex(function (ap) {
-                return sameAccessPoint(previous, ap);
+                return Wifi.sameAccessPoint(previous, ap);
             });
             selectedIndex = nextIndex >= 0 ? nextIndex : clampIndex(selectedIndex, filteredNetworks.length);
         }
@@ -352,6 +238,13 @@ ShellRoot {
         return false;
     }
 
+    function primarySelected() {
+        const ap = selectedNetwork();
+        if (isActive(ap))
+            return disconnectSelected();
+        return connectSelected();
+    }
+
     function connectSelected() {
         if (!beginAction())
             return;
@@ -359,20 +252,20 @@ ShellRoot {
         const ap = selectedNetwork();
         if (!ap)
             return;
-        if (needsPassword(ap)) {
+        if (Wifi.needsPassword(ap)) {
             openPasswordPrompt(ap);
             return;
         }
-        if (needsCredentials(ap)) {
+        if (Wifi.needsCredentials(ap)) {
             openEnterpriseIdentityPrompt(ap);
             return;
         }
-        if (!canConnect(ap)) {
+        if (!Wifi.canConnect(ap)) {
             status = "This access point cannot be connected from Shelllist yet. Use F6 for hidden SSIDs.";
             return;
         }
 
-        runConnect(["nm-wifi", "connect-target", JSON.stringify(ap), "--json"], networkName(ap));
+        runConnect(["nm-wifi", "connect-target", JSON.stringify(ap), "--json"], Wifi.networkName(ap));
     }
 
     function runConnect(args, displayName, password) {
@@ -391,25 +284,10 @@ ShellRoot {
         connectProc.exec(commandArgs);
     }
 
-    function connectFailureMessage(result, fallbackText) {
-        const reasonLabels = {
-            "secret-required": "Password required",
-            "authorization-required": "Authorization required",
-            "unsupported-auth": "Unsupported Wi-Fi authentication",
-            "validation-error": "Invalid Wi-Fi target",
-            "timeout": "Connection timed out",
-            "activation-failed": "Connection activation failed",
-            "unknown": "Connect failed"
-        };
-        const label = reasonLabels[result.reason || "unknown"] || "Connect failed";
-        const detail = result.message || fallbackText || "unknown error";
-        return label + ": " + detail;
-    }
-
     function applyConnectResult(result) {
         const connectivity = result.connectivity || {};
         if (result.status === "error") {
-            status = connectFailureMessage(result, connectErr.text);
+            status = Wifi.connectFailureMessage(result, connectErr.text);
             return;
         }
         if (result.suggest_open_portal) {
@@ -488,7 +366,7 @@ ShellRoot {
     }
 
     function openPasswordPrompt(ap) {
-        openPrompt("network-password", "Password for " + networkName(ap), "Enter the Wi-Fi password, then press Enter.", true, ap, "");
+        openPrompt("network-password", "Password for " + Wifi.networkName(ap), "Enter the Wi-Fi password, then press Enter.", true, ap, "");
     }
 
     function openHiddenNetworkPrompt() {
@@ -511,22 +389,12 @@ ShellRoot {
     function openEnterpriseIdentityPrompt(ap) {
         const auth = ap && ap.auth ? ap.auth : ({});
         const detail = auth.note || "Enter your enterprise Wi-Fi identity. Shelllist will use PEAP/MSCHAPv2 defaults for now.";
-        openPrompt("enterprise-identity", "Enterprise identity for " + networkName(ap), detail, false, ap, "");
+        openPrompt("enterprise-identity", "Enterprise identity for " + Wifi.networkName(ap), detail, false, ap, "");
     }
 
     function openEnterprisePasswordPrompt(ap, identity) {
         pendingEnterpriseIdentity = identity;
         openPrompt("enterprise-password", "Enterprise password for " + identity, "Enter your enterprise Wi-Fi password, then press Enter.", true, ap, "");
-    }
-
-    function enterpriseTarget(ap, identity) {
-        const target = JSON.parse(JSON.stringify(ap));
-        target.enterprise = {
-            eap: ["peap"],
-            identity: identity,
-            phase2_auth: "mschapv2"
-        };
-        return target;
     }
 
     function submitNetworkPasswordPrompt(value) {
@@ -538,7 +406,7 @@ ShellRoot {
         const ap = promptNetwork;
         cancelPrompt();
         if (ap)
-            runConnect(["nm-wifi", "connect-target", JSON.stringify(ap), "--json"], networkName(ap), value);
+            runConnect(["nm-wifi", "connect-target", JSON.stringify(ap), "--json"], Wifi.networkName(ap), value);
     }
 
     function submitHiddenSsidPrompt(value) {
@@ -575,7 +443,7 @@ ShellRoot {
         const identity = pendingEnterpriseIdentity;
         cancelPrompt();
         if (ap && identity.length > 0)
-            runConnect(["nm-wifi", "connect-target", JSON.stringify(enterpriseTarget(ap, identity)), "--json"], networkName(ap), value);
+            runConnect(["nm-wifi", "connect-target", JSON.stringify(Wifi.enterpriseTarget(ap, identity)), "--json"], Wifi.networkName(ap), value);
     }
 
     function submitPrompt() {
@@ -603,6 +471,55 @@ ShellRoot {
         selectedIndex = clampIndex(selectedIndex + delta, filteredNetworks.length);
     }
 
+    function targetWindowX() {
+        const currentScreen = window && window.screen ? window.screen : null;
+        const screenX = currentScreen ? currentScreen.x || 0 : 0;
+        const screenWidth = currentScreen && currentScreen.width > 0 ? currentScreen.width : 1280;
+        return Math.round(screenX + (screenWidth - currentWindowWidth) / 2);
+    }
+
+    function targetWindowY() {
+        const currentScreen = window && window.screen ? window.screen : null;
+        const screenY = currentScreen ? currentScreen.y || 0 : 0;
+        const screenHeight = currentScreen && currentScreen.height > 0 ? currentScreen.height : 960;
+        return Math.round(screenY + screenHeight * 0.125);
+    }
+
+    function requestFloatingPlacement() {
+        if (!Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE"))
+            return;
+        floatingPlacementAttempts = 0;
+        floatingPlacementTimer.restart();
+    }
+
+    function openDetailsPane() {
+        if (!detailsOpen) {
+            detailsOpen = true;
+            Qt.callLater(requestFloatingPlacement);
+        }
+    }
+
+    function closeDetailsPane() {
+        if (detailsOpen) {
+            detailsOpen = false;
+            Qt.callLater(requestFloatingPlacement);
+        }
+    }
+
+    function toggleDetailsPane() {
+        detailsOpen = !detailsOpen;
+        Qt.callLater(requestFloatingPlacement);
+    }
+
+    function focusNetworkListTop() {
+        selectedIndex = 0;
+        Qt.callLater(listPane.focusTop);
+    }
+
+    function focusSearchBox() {
+        Qt.callLater(header.focusSearch);
+    }
+
     function handleBinding(event, bindings) {
         for (let i = 0; i < bindings.length; i++) {
             if (event.key === bindings[i][0])
@@ -614,27 +531,59 @@ ShellRoot {
         if (promptOpen)
             return;
         if (isEnterKey(event.key))
-            return acceptKey(event, connectSelected);
+            return acceptKey(event, primarySelected);
+        return handleBinding(event, [[Qt.Key_Escape, Qt.quit], [Qt.Key_Down, focusNetworkListTop], [Qt.Key_Up, function () {
+                    moveSelection(-1);
+                }], [Qt.Key_Right, openDetailsPane], [Qt.Key_Left, closeDetailsPane], [Qt.Key_F6, openHiddenNetworkPrompt], [Qt.Key_F5, refresh]]);
+    }
+
+    function handleListKey(event) {
+        if (isEnterKey(event.key))
+            return acceptKey(event, primarySelected);
+        if (event.key === Qt.Key_Up && selectedIndex <= 0)
+            return acceptKey(event, focusSearchBox);
         return handleBinding(event, [[Qt.Key_Escape, Qt.quit], [Qt.Key_Down, function () {
                     moveSelection(1);
                 }], [Qt.Key_Up, function () {
                     moveSelection(-1);
-                }], [Qt.Key_F6, openHiddenNetworkPrompt], [Qt.Key_F5, refresh]]);
+                }], [Qt.Key_Right, openDetailsPane], [Qt.Key_Left, closeDetailsPane], [Qt.Key_F6, openHiddenNetworkPrompt], [Qt.Key_F5, refresh]]);
     }
 
     onPromptOpenChanged: {
-        if (promptOpen)
-            Qt.callLater(function () {
-                promptInput.forceActiveFocus();
-                promptInput.selectAll();
-            });
-        else
-            Qt.callLater(function () {
-                search.forceActiveFocus();
-            });
+        if (!promptOpen)
+            Qt.callLater(header.focusSearch);
+    }
+
+    onDetailsOpenChanged: {
+        if (detailsOpen) {
+            Qt.callLater(refreshStatus);
+            Qt.callLater(refreshShareAvailability);
+        }
+    }
+
+    onSelectedIndexChanged: {
+        if (detailsOpen) {
+            Qt.callLater(refreshStatus);
+            Qt.callLater(refreshShareAvailability);
+        }
     }
 
     Component.onCompleted: refresh()
+
+    Timer {
+        id: floatingPlacementTimer
+        interval: 150
+        repeat: true
+        onTriggered: {
+            root.floatingPlacementAttempts += 1;
+            Hyprland.dispatch("focuswindow title:Shelllist Wi-Fi");
+            Hyprland.dispatch("setfloating");
+            Hyprland.dispatch("resizewindowpixel exact " + root.currentWindowWidth + " " + root.currentWindowHeight + ",title:Shelllist Wi-Fi");
+            Hyprland.dispatch("movewindowpixel exact " + root.targetWindowX() + " " + root.targetWindowY() + ",title:Shelllist Wi-Fi");
+            if (root.floatingPlacementAttempts >= 8)
+                stop();
+        }
+    }
 
     Process {
         id: listProc
@@ -681,6 +630,8 @@ ShellRoot {
             try {
                 root.activeStatus = JSON.parse(statusOut.text);
                 root.applyNetworks(root.networks, false);
+                if (root.detailsOpen)
+                    Qt.callLater(root.refreshShareAvailability);
             } catch (error) {
                 root.status = "Could not parse nm-wifi status output: " + error;
             }
@@ -786,6 +737,35 @@ ShellRoot {
     }
 
     Process {
+        id: shareCheckProc
+        stdout: StdioCollector {
+            id: shareCheckOut
+            waitForEnd: true
+        }
+        stderr: StdioCollector {
+            id: shareCheckErr
+            waitForEnd: true
+        }
+        onExited: function (exitCode, exitStatus) {
+            try {
+                const result = JSON.parse(shareCheckOut.text);
+                if (result.path !== root.shareProfilePath) {
+                    if (root.detailsOpen)
+                        Qt.callLater(root.refreshShareAvailability);
+                    return;
+                }
+                root.shareAvailable = !!result.shareable && !!result.qr_payload;
+                root.sharePayload = root.shareAvailable ? result.qr_payload : "";
+                root.shareStatus = root.shareAvailable ? "Wi-Fi QR payload is ready." : (result.reason || "Wi-Fi QR sharing is not available for this network.");
+            } catch (error) {
+                root.shareAvailable = false;
+                root.sharePayload = "";
+                root.shareStatus = "Could not check Wi-Fi QR sharing: " + (shareCheckErr.text || error);
+            }
+        }
+    }
+
+    Process {
         id: portalProc
         stderr: StdioCollector {
             id: portalErr
@@ -800,10 +780,11 @@ ShellRoot {
     FloatingWindow {
         id: window
         visible: true
-        implicitWidth: 1040
-        implicitHeight: 720
+        implicitWidth: root.currentWindowWidth
+        implicitHeight: root.currentWindowHeight
         title: "Shelllist Wi-Fi"
         color: "transparent"
+        onWindowConnected: root.requestFloatingPlacement()
 
         Rectangle {
             anchors.fill: parent
@@ -812,549 +793,56 @@ ShellRoot {
             border.color: "#243244"
             border.width: 1
 
-            ColumnLayout {
+            RowLayout {
                 anchors.fill: parent
                 anchors.margins: 14
                 spacing: 12
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 46
-                    spacing: 12
-
-                    Rectangle {
-                        Layout.preferredWidth: 34
-                        Layout.preferredHeight: 34
-                        radius: 10
-                        Layout.alignment: Qt.AlignVCenter
-                        color: "#15335f"
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰤨"
-                            color: "#7dd3fc"
-                            font.pixelSize: 18
-                        }
-                    }
-
-                    Text {
-                        Layout.alignment: Qt.AlignVCenter
-                        text: "Shelllist Wi-Fi"
-                        color: "#dbeafe"
-                        font.pixelSize: 17
-                        font.bold: true
-                    }
-
-                    TextInput {
-                        id: search
-                        Layout.preferredWidth: 270
-                        Layout.preferredHeight: 34
-                        Layout.alignment: Qt.AlignVCenter
-                        focus: true
-                        leftPadding: 38
-                        rightPadding: 12
-                        color: "#dbeafe"
-                        selectionColor: "#2563eb"
-                        selectedTextColor: "white"
-                        font.pixelSize: 15
-                        verticalAlignment: TextInput.AlignVCenter
-                        text: root.filterText
-                        onTextChanged: {
-                            root.filterText = text;
-                            root.selectedIndex = 0;
-                        }
-                        Keys.onPressed: function (event) {
-                            root.handleSearchKey(event);
-                        }
-
-                        Text {
-                            x: 12
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "⌕"
-                            color: "#64748b"
-                            font.pixelSize: 22
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 8
-                            color: "#111827"
-                            border.color: "#233247"
-                            z: -1
-                        }
-                    }
-
-                    Rectangle {
-                        Layout.preferredWidth: 34
-                        Layout.preferredHeight: 34
-                        radius: 8
-                        Layout.alignment: Qt.AlignVCenter
-                        color: "transparent"
-                        border.color: "#233247"
-                        Text {
-                            anchors.centerIn: parent
-                            text: "↻"
-                            color: "#94a3b8"
-                            font.pixelSize: 20
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: root.refresh()
-                        }
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-
-                    Text {
-                        Layout.alignment: Qt.AlignVCenter
-                        text: "☰   –   ◻   ×"
-                        color: "#94a3b8"
-                        font.pixelSize: 16
-                    }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
+                ColumnLayout {
+                    Layout.preferredWidth: 425
+                    Layout.maximumWidth: 425
                     Layout.fillHeight: true
                     spacing: 12
 
-                    Rectangle {
-                        Layout.preferredWidth: 425
-                        Layout.fillHeight: true
-                        radius: 12
-                        color: "#0f172a"
-                        border.color: "#1f2a3a"
-
-                        Column {
-                            anchors.fill: parent
-                            anchors.margins: 8
-                            spacing: 6
-
-                            ListView {
-                                id: list
-                                width: parent.width
-                                height: parent.height
-                                clip: true
-                                model: root.filteredNetworks
-                                spacing: 3
-
-                                delegate: NetworkListRow {
-                                    active: root.isActive(modelData)
-                                    name: root.networkName(modelData)
-                                    selectedIndex: root.selectedIndex
-                                    onPicked: function (rowIndex) {
-                                        root.selectedIndex = rowIndex;
-                                    }
-                                    onConnectRequested: root.connectSelected()
-                                }
-                            }
+                    WifiHeader {
+                        id: header
+                        filterText: root.filterText
+                        onFilterEdited: function (text) {
+                            root.filterText = text;
+                            root.selectedIndex = 0;
                         }
+                        onKeyPressed: function (event) {
+                            root.handleSearchKey(event);
+                        }
+                        onRefreshRequested: root.refresh()
                     }
 
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        radius: 12
-                        color: "#0f172a"
-                        border.color: "#1f2a3a"
-
-                        Item {
-                            anchors.fill: parent
-                            anchors.margins: 18
-
-                            Column {
-                                visible: root.hasSelection
-                                anchors.fill: parent
-                                spacing: 14
-
-                                RowLayout {
-                                    width: parent.width
-                                    height: 72
-                                    spacing: 16
-
-                                    Text {
-                                        Layout.preferredWidth: 54
-                                        Layout.alignment: Qt.AlignVCenter
-                                        text: "󰤨"
-                                        color: "#dbeafe"
-                                        font.pixelSize: 42
-                                    }
-
-                                    Column {
-                                        Layout.fillWidth: true
-                                        Layout.alignment: Qt.AlignVCenter
-                                        spacing: 5
-
-                                        Text {
-                                            width: parent.width
-                                            text: root.networkName(root.detailAp)
-                                            color: "#f8fafc"
-                                            font.pixelSize: 24
-                                            font.bold: true
-                                            elide: Text.ElideRight
-                                        }
-
-                                        Text {
-                                            text: root.isActive(root.detailAp) ? "Connected · " + (root.detailAp.strength || 0) + "% signal" : root.securityLabel(root.detailAp.security) + " · " + (root.detailAp.strength || 0) + "% signal"
-                                            color: root.isActive(root.detailAp) ? "#4ade80" : "#94a3b8"
-                                            font.pixelSize: 14
-                                        }
-                                    }
-                                }
-
-                                RowLayout {
-                                    width: parent.width
-                                    height: 46
-                                    spacing: 8
-
-                                    ActionButton {
-                                        Layout.preferredWidth: 112
-                                        label: root.isActive(root.detailAp) ? "Disconnect" : "Connect"
-                                        backgroundColor: root.isActive(root.detailAp) ? "#1e3a5f" : "#1d4ed8"
-                                        borderColor: "#3b82f6"
-                                        labelColor: "#dbeafe"
-                                        enabled: root.canUsePrimaryAction()
-                                        onClicked: root.isActive(root.detailAp) ? root.disconnectSelected() : root.connectSelected()
-                                    }
-
-                                    ActionButton {
-                                        Layout.preferredWidth: 90
-                                        label: "Forget"
-                                        enabled: root.canEditProfile()
-                                        onClicked: root.forgetSelected()
-                                    }
-
-                                    ActionButton {
-                                        Layout.preferredWidth: 90
-                                        label: "Sign in"
-                                        onClicked: root.openPortal()
-                                    }
-
-                                    ActionButton {
-                                        Layout.preferredWidth: 90
-                                        label: "Share"
-                                        labelColor: "#94a3b8"
-                                        enabled: false
-                                    }
-
-                                    Item {
-                                        Layout.fillWidth: true
-                                    }
-                                }
-
-                                DetailCard {
-                                    height: 250
-                                    title: "Connection"
-
-                                    DetailGrid {
-                                        DetailField {
-                                            label: "Signal strength"
-                                            value: (root.detailAp.strength || 0) + "%"
-                                            valueColor: "#60a5fa"
-                                            valueBold: true
-                                        }
-                                        DetailField {
-                                            label: "IP address"
-                                            value: root.activeIp4Value("address")
-                                        }
-                                        DetailField {
-                                            label: "Frequency"
-                                            value: root.frequencyLabel(root.detailAp)
-                                        }
-                                        DetailField {
-                                            label: "Gateway"
-                                            value: root.activeIp4Value("gateway")
-                                        }
-                                        DetailField {
-                                            label: "Security"
-                                            value: root.securityLabel(root.detailAp.security)
-                                        }
-                                        DetailField {
-                                            label: "Subnet"
-                                            value: root.activeDetailValue(root.subnetLabel(root.activeStatus ? root.activeStatus.ip4 : null))
-                                        }
-                                        DetailField {
-                                            label: "Network usage"
-                                            value: root.activeDetailValue(root.networkUsageLabel())
-                                        }
-                                        DetailField {
-                                            label: "DNS"
-                                            value: root.activeDetailValue(root.dnsLabel(root.activeStatus ? root.activeStatus.ip4 : null))
-                                            valueWidth: 220
-                                        }
-                                    }
-                                }
-
-                                DetailCard {
-                                    height: 145
-                                    title: "Network details"
-
-                                    DetailGrid {
-                                        DetailField {
-                                            label: "Type"
-                                            value: root.wifiType(root.detailAp)
-                                        }
-                                        DetailField {
-                                            label: root.hasDirectionalBitrates() ? "Transmit link speed" : "Link speed"
-                                            value: root.activeDetailValue(root.hasDirectionalBitrates() ? root.txBitrateLabel() : root.bitrateLabel())
-                                        }
-                                        DetailField {
-                                            label: "MAC address"
-                                            value: root.isActive(root.detailAp) ? root.macLabel() : (root.detailAp.bssid || "—")
-                                        }
-                                        DetailField {
-                                            label: "Receive link speed"
-                                            value: root.activeDetailValue(root.rxBitrateLabel())
-                                        }
-                                    }
-                                }
-
-                                DetailCard {
-                                    height: 208
-                                    title: "Profile settings"
-
-                                    Column {
-                                        anchors.fill: parent
-                                        spacing: 8
-
-                                        RowLayout {
-                                            width: parent.width
-                                            height: 34
-                                            spacing: 12
-
-                                            Column {
-                                                Layout.fillWidth: true
-                                                Layout.alignment: Qt.AlignVCenter
-                                                Text {
-                                                    text: "Auto-connect"
-                                                    color: "#e5e7eb"
-                                                    font.pixelSize: 14
-                                                }
-                                                Text {
-                                                    text: root.profileFor(root.detailAp) ? "Connect automatically when this network is in range" : "Connect once before autoconnect is available"
-                                                    color: "#64748b"
-                                                    font.pixelSize: 11
-                                                }
-                                            }
-
-                                            TogglePill {
-                                                Layout.preferredWidth: 40
-                                                Layout.preferredHeight: 22
-                                                Layout.alignment: Qt.AlignVCenter
-                                                checked: root.autoconnectEnabled()
-                                                opacity: root.canEditProfile() ? 1.0 : 0.45
-
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    enabled: root.canEditProfile()
-                                                    onClicked: root.toggleAutoconnectSelected()
-                                                }
-                                            }
-                                        }
-
-                                        RowLayout {
-                                            width: parent.width
-                                            height: 26
-                                            spacing: 12
-
-                                            Text {
-                                                Layout.fillWidth: true
-                                                Layout.alignment: Qt.AlignVCenter
-                                                text: "Use randomised MAC"
-                                                color: "#e5e7eb"
-                                                font.pixelSize: 14
-                                            }
-
-                                            TogglePill {
-                                                Layout.preferredWidth: 40
-                                                Layout.preferredHeight: 22
-                                                Layout.alignment: Qt.AlignVCenter
-                                                checked: root.randomizedMacEnabled()
-                                                opacity: root.canEditProfile() ? 1.0 : 0.45
-
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    enabled: root.canEditProfile()
-                                                    onClicked: root.setMacRandomizedSelected(!root.randomizedMacEnabled())
-                                                }
-                                            }
-                                        }
-
-                                        RowLayout {
-                                            width: parent.width
-                                            height: 26
-                                            spacing: 12
-
-                                            Text {
-                                                Layout.fillWidth: true
-                                                Layout.alignment: Qt.AlignVCenter
-                                                text: "Use device MAC"
-                                                color: "#cbd5e1"
-                                                font.pixelSize: 14
-                                            }
-
-                                            TogglePill {
-                                                Layout.preferredWidth: 40
-                                                Layout.preferredHeight: 22
-                                                Layout.alignment: Qt.AlignVCenter
-                                                checked: !root.randomizedMacEnabled()
-                                                opacity: root.canEditProfile() ? 1.0 : 0.45
-
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    enabled: root.canEditProfile()
-                                                    onClicked: root.setMacRandomizedSelected(false)
-                                                }
-                                            }
-                                        }
-
-                                        RowLayout {
-                                            width: parent.width
-                                            height: 26
-                                            spacing: 12
-
-                                            Column {
-                                                Layout.fillWidth: true
-                                                Layout.alignment: Qt.AlignVCenter
-                                                Text {
-                                                    text: "Send device name"
-                                                    color: "#e5e7eb"
-                                                    font.pixelSize: 14
-                                                }
-                                                Text {
-                                                    text: "Share this device's name with the network"
-                                                    color: "#64748b"
-                                                    font.pixelSize: 11
-                                                }
-                                            }
-
-                                            TogglePill {
-                                                Layout.preferredWidth: 40
-                                                Layout.preferredHeight: 22
-                                                Layout.alignment: Qt.AlignVCenter
-                                                checked: root.sendHostnameEnabled()
-                                                opacity: root.canEditProfile() ? 1.0 : 0.45
-
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    enabled: root.canEditProfile()
-                                                    onClicked: root.toggleSendHostnameSelected()
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                RowLayout {
-                                    width: parent.width
-                                    height: 20
-                                    Text {
-                                        text: root.isActive(root.detailAp) && root.activeStatus && root.activeStatus.active_since_ms ? "Connected" : ""
-                                        color: "#64748b"
-                                        font.pixelSize: 12
-                                    }
-                                    Item {
-                                        Layout.fillWidth: true
-                                    }
-                                    Text {
-                                        text: root.lastSeenLabel(root.detailAp)
-                                        color: "#64748b"
-                                        font.pixelSize: 12
-                                    }
-                                }
-                            }
-
-                            Text {
-                                visible: !root.hasSelection
-                                anchors.centerIn: parent
-                                text: "Select a network"
-                                color: "#94a3b8"
-                                font.pixelSize: 22
-                            }
-                        }
+                    NetworkListPane {
+                        id: listPane
+                        controller: root
                     }
+                }
+
+                NetworkDetailsPane {
+                    controller: root
+                    visible: root.detailsOpen
+                    Layout.fillWidth: root.detailsOpen
+                    Layout.preferredWidth: root.detailsOpen ? root.openWindowWidth - root.closedWindowWidth - 12 : 0
+                    Layout.maximumWidth: root.detailsOpen ? 9999 : 0
                 }
             }
 
-            Rectangle {
+            PromptDialog {
                 visible: root.promptOpen
-                anchors.fill: parent
-                z: 10
-                color: "#99000000"
-
-                MouseArea {
-                    anchors.fill: parent
+                title: root.promptTitle
+                detail: root.promptDetail
+                inputText: root.promptText
+                password: root.promptPassword
+                onInputEdited: function (text) {
+                    root.promptText = text;
                 }
-
-                Rectangle {
-                    width: Math.min(parent.width * 0.9, 560)
-                    height: 230
-                    anchors.centerIn: parent
-                    radius: 16
-                    color: "#0f172a"
-                    border.color: "#38bdf8"
-                    border.width: 1
-
-                    Column {
-                        anchors.fill: parent
-                        anchors.margins: 20
-                        spacing: 12
-
-                        Text {
-                            width: parent.width
-                            text: root.promptTitle
-                            color: "#f8fafc"
-                            font.pixelSize: 22
-                            font.bold: true
-                            elide: Text.ElideRight
-                        }
-
-                        Text {
-                            width: parent.width
-                            text: root.promptDetail
-                            color: "#94a3b8"
-                            font.pixelSize: 14
-                            wrapMode: Text.Wrap
-                            maximumLineCount: 2
-                            elide: Text.ElideRight
-                        }
-
-                        TextInput {
-                            id: promptInput
-                            width: parent.width
-                            height: 44
-                            color: "#e5e7eb"
-                            selectionColor: "#2563eb"
-                            selectedTextColor: "white"
-                            font.pixelSize: 19
-                            text: root.promptText
-                            echoMode: root.promptPassword ? TextInput.Password : TextInput.Normal
-                            onTextChanged: root.promptText = text
-                            Keys.onPressed: function (event) {
-                                if (root.isEnterKey(event.key))
-                                    return root.acceptKey(event, root.submitPrompt);
-                                if (event.key === Qt.Key_Escape)
-                                    return root.acceptKey(event, root.cancelPrompt);
-                            }
-
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: 10
-                                color: "#111827"
-                                border.color: "#334155"
-                                z: -1
-                            }
-                        }
-
-                        Text {
-                            width: parent.width
-                            text: "Enter continue/connect   •   Esc cancel"
-                            color: "#64748b"
-                            font.pixelSize: 13
-                        }
-                    }
-                }
+                onAccepted: root.submitPrompt()
+                onCancelled: root.cancelPrompt()
             }
         }
     }

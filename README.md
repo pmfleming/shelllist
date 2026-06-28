@@ -2,7 +2,7 @@
 
 Quickshell experiments and UI components for desktop menus.
 
-Initial goal: build a Hyprland-friendly Wi-Fi/network popup backed by the existing `nm-wifi` NetworkManager D-Bus helper. The Wi-Fi popup is a two-pane network chooser and connection detail dashboard.
+Initial goal: build a Hyprland-friendly Wi-Fi/network popup backed by the existing `nm-wifi` NetworkManager D-Bus helper. The Wi-Fi popup opens as a floating search/list chooser with an optional connection detail dashboard.
 
 ## Usage
 
@@ -19,13 +19,15 @@ The current flake intentionally uses a local `nm-wifi` path input, so it is expe
 ## Wi-Fi popup keybindings
 
 - Type to filter visible SSIDs.
-- `Enter`: connect to the selected network.
+- `Enter`: run the primary action for the selected network (connect, or disconnect when already connected).
 - `Down` / `Up`: move selection.
+- `Right`: open the details pane.
+- `Left`: close the details pane.
 - `F6`: connect to a hidden SSID.
 - `F5`: refresh cached networks, active status, saved profiles, and start a background scan.
 - `Esc`: close the popup, or cancel an open prompt.
 
-The right pane shows selected-network actions and details. Connected networks expose disconnect, captive-portal sign-in, forget, autoconnect, per-profile privacy toggles, IPv4, DNS, frequency, link-speed, and MAC details when `nm-wifi status --json` can read them from NetworkManager. Privacy toggles cover stable randomized MAC vs device MAC and whether DHCP sends this device's hostname. Password-protected unsaved networks prompt for a password before Shelllist calls `nm-wifi connect-target`; Shelllist sends the password over stdin to avoid exposing it in process arguments. Enterprise/802.1X networks now get an initial identity/password prompt using PEAP/MSCHAPv2 defaults from Shelllist while `nm-wifi` owns the NetworkManager settings. Hidden SSIDs can be connected with `F6`; leave the password prompt blank for open hidden networks.
+Click the chevron beside the list to show or hide the right pane. The right pane shows selected-network actions and details. Connected networks expose disconnect, captive-portal sign-in, QR sharing when `nm-wifi profile share` can produce a payload, forget, autoconnect, per-profile privacy toggles, IPv4, DNS, frequency, link-speed, and MAC details when `nm-wifi status --json` can read them from NetworkManager. Privacy toggles cover stable randomized MAC vs device MAC and whether DHCP sends this device's hostname. Password-protected unsaved networks prompt for a password before Shelllist calls `nm-wifi connect-target`; Shelllist sends the password over stdin to avoid exposing it in process arguments. Enterprise/802.1X networks now get an initial identity/password prompt using PEAP/MSCHAPv2 defaults from Shelllist while `nm-wifi` owns the NetworkManager settings. Hidden SSIDs can be connected with `F6`; leave the password prompt blank for open hidden networks.
 
 ## Requirements
 

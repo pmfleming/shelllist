@@ -8,16 +8,18 @@ Rectangle {
     property bool active: false
     property string name: modelData.ssid || "<hidden>"
     property int selectedIndex: 0
+    property bool detailsOpen: false
 
     signal picked(int rowIndex)
     signal connectRequested
+    signal detailsToggled(int rowIndex)
 
     width: ListView.view.width
     height: 43
     radius: 8
-    color: index === selectedIndex ? "#15335f" : "transparent"
-    border.color: index === selectedIndex ? "#3b82f6" : "transparent"
-    border.width: index === selectedIndex ? 1 : 0
+    color: index === selectedIndex ? "#15335f" : active ? "#0f2b3a" : "transparent"
+    border.color: index === selectedIndex ? "#3b82f6" : active ? "#22c55e" : "transparent"
+    border.width: index === selectedIndex || active ? 1 : 0
 
     Row {
         anchors.fill: parent
@@ -50,7 +52,7 @@ Rectangle {
         }
 
         Text {
-            width: parent.width - 122
+            width: parent.width - 144
             anchors.verticalCenter: parent.verticalCenter
             text: row.name
             color: "#d1d5db"
@@ -60,16 +62,27 @@ Rectangle {
         }
 
         Text {
-            width: 14
+            id: detailsChevron
+            width: 24
             anchors.verticalCenter: parent.verticalCenter
-            text: "›"
-            color: "#94a3b8"
+            text: row.detailsOpen ? "‹" : "›"
+            color: row.index === row.selectedIndex ? "#bfdbfe" : "#94a3b8"
             font.pixelSize: 25
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    row.picked(row.index);
+                    row.detailsToggled(row.index);
+                }
+            }
         }
     }
 
     MouseArea {
         anchors.fill: parent
+        anchors.rightMargin: 36
         onClicked: row.picked(row.index)
         onDoubleClicked: row.connectRequested()
     }

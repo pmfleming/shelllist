@@ -74,15 +74,18 @@
                 "http://nmcheck.gnome.org/check_network_status.txt"
               )
 
-              if command -v google-chrome-stable >/dev/null 2>&1; then
-                browser=google-chrome-stable
-              elif command -v google-chrome >/dev/null 2>&1; then
-                browser=google-chrome
-              elif command -v chromium >/dev/null 2>&1; then
-                browser=chromium
-              elif command -v xdg-open >/dev/null 2>&1; then
-                exec xdg-open "''${urls[0]}"
-              else
+              browser=
+              for candidate in google-chrome-stable google-chrome chromium; do
+                if command -v "$candidate" >/dev/null 2>&1; then
+                  browser=$candidate
+                  break
+                fi
+              done
+
+              if [ -z "$browser" ]; then
+                if command -v xdg-open >/dev/null 2>&1; then
+                  exec xdg-open "''${urls[0]}"
+                fi
                 echo "No supported browser found for captive portal" >&2
                 exit 1
               fi
