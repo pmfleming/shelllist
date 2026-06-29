@@ -139,7 +139,7 @@ ShellRoot {
 
         shareProfilePath = profile.path;
         shareStatus = "Checking saved Wi-Fi password availability…";
-        shareCheckProc.exec(["nm-api", "profile", "share", profile.path]);
+        shareCheckProc.exec(["nm-api", "wifi", "profile", "share", profile.path]);
     }
 
     function shareSelected() {
@@ -180,7 +180,7 @@ ShellRoot {
         pendingRefresh = false;
         status = "Loading cached Wi-Fi networks…";
         scanSnapshotSeen = false;
-        listProc.exec(["nm-api", "networks", "--cached"]);
+        listProc.exec(["nm-api", "wifi", "networks", "--cached"]);
         refreshStatus();
         startScanStream();
     }
@@ -192,12 +192,12 @@ ShellRoot {
 
     function refreshStatus() {
         if (!statusProc.running)
-            statusProc.exec(["nm-api", "status"]);
+            statusProc.exec(["nm-api", "wifi", "status"]);
     }
 
     function startScanStream() {
         if (!scanStreamProc.running)
-            scanStreamProc.exec(["nm-api", "scan", "--stream", "--cache", "--timeout", "12"]);
+            scanStreamProc.exec(["nm-api", "wifi", "scan", "--stream", "--cache", "--timeout", "12"]);
     }
 
     function handleScanEvent(line) {
@@ -276,7 +276,7 @@ ShellRoot {
     }
 
     function runConnectTarget(ap, displayName, password) {
-        runConnect(["nm-api", "connect-target"], displayName, connectTargetRequest(ap, password));
+        runConnect(["nm-api", "wifi", "connect-target"], displayName, connectTargetRequest(ap, password));
     }
 
     function runConnect(args, displayName, stdinText) {
@@ -316,7 +316,7 @@ ShellRoot {
             return;
 
         status = "Disconnecting Wi-Fi…";
-        disconnectProc.exec(["nm-api", "disconnect"]);
+        disconnectProc.exec(["nm-api", "wifi", "disconnect"]);
     }
 
     function runProfileAction(action) {
@@ -331,7 +331,7 @@ ShellRoot {
     function forgetSelected() {
         runProfileAction(function (profile) {
             status = "Forgetting saved profile " + profile.id + "…";
-            profileProc.exec(["nm-api", "profile", "delete", profile.path]);
+            profileProc.exec(["nm-api", "wifi", "profile", "delete", profile.path]);
         });
     }
 
@@ -339,14 +339,14 @@ ShellRoot {
         runProfileAction(function (profile) {
             const enabled = !profile.autoconnect;
             status = (enabled ? "Enabling" : "Disabling") + " autoconnect for " + profile.id + "…";
-            profileProc.exec(["nm-api", "profile", "autoconnect", profile.path, enabled ? "true" : "false"]);
+            profileProc.exec(["nm-api", "wifi", "profile", "autoconnect", profile.path, enabled ? "true" : "false"]);
         });
     }
 
     function setMacRandomizedSelected(enabled) {
         runProfileAction(function (profile) {
             status = (enabled ? "Using randomized MAC for " : "Using device MAC for ") + profile.id + "…";
-            profileProc.exec(["nm-api", "profile", "mac-randomization", profile.path, enabled ? "true" : "false"]);
+            profileProc.exec(["nm-api", "wifi", "profile", "mac-randomization", profile.path, enabled ? "true" : "false"]);
         });
     }
 
@@ -354,7 +354,7 @@ ShellRoot {
         runProfileAction(function (profile) {
             const enabled = !(profile.privacy && profile.privacy.send_hostname !== false);
             status = (enabled ? "Sending" : "Hiding") + " device name for " + profile.id + "…";
-            profileProc.exec(["nm-api", "profile", "send-hostname", profile.path, enabled ? "true" : "false"]);
+            profileProc.exec(["nm-api", "wifi", "profile", "send-hostname", profile.path, enabled ? "true" : "false"]);
         });
     }
 
@@ -430,7 +430,7 @@ ShellRoot {
         const ssid = pendingHiddenSsid;
         const password = value.length > 0 ? value : null;
         cancelPrompt();
-        const args = ["nm-api", "connect", ssid, "--hidden"];
+        const args = ["nm-api", "wifi", "connect", ssid, "--hidden"];
         if (password !== null)
             args.push("--password-stdin");
         runConnect(args, ssid, password);
