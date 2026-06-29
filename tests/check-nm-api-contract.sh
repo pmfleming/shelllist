@@ -11,7 +11,7 @@ fixture=$2
 actual=$(mktemp)
 trap 'rm -f "$actual"' EXIT
 
-"$nm_api" contract-fixture > "$actual"
+"$nm_api" debug contract-fixture > "$actual"
 diff -u "$fixture" "$actual"
 
 jq -e '

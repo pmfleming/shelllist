@@ -58,4 +58,4 @@ shellcheck "$portal/bin/shelllist-captive-portal"
 
 The Wi-Fi UI entry point is `wifi/shell.qml`.
 
-The JSON boundary with `nm-api` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture with the local `nm-api contract-fixture` command and diffs it.
+The JSON boundary with `nm-api` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture with the local `nm-api debug contract-fixture` command and diffs it.
