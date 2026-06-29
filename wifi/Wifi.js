@@ -167,7 +167,7 @@ function enterpriseTarget(ap, identity) {
 }
 
 function connectFailureMessage(result, fallbackText) {
-    const reasonLabels = { "secret-required": "Password required", "authorization-required": "Authorization required", "unsupported-auth": "Unsupported Wi-Fi authentication", "validation-error": "Invalid Wi-Fi target", timeout: "Connection timed out", "activation-failed": "Connection activation failed", unknown: "Connect failed" };
+    const reasonLabels = { "secret-required": "Password required", "authorization-required": "Authorization required", "unsupported-auth": "Unsupported Wi-Fi authentication", "validation-error": "Invalid Wi-Fi target", "not-found": "Wi-Fi network not found", timeout: "Connection timed out", "activation-failed": "Connection activation failed", unknown: "Connect failed" };
     const label = reasonLabels[result.reason || "unknown"] || "Connect failed";
     return label + ": " + (result.message || fallbackText || "unknown error");
 }
