@@ -32,7 +32,7 @@ ShellRoot {
     property var promptNetwork: null
     property string pendingHiddenSsid: ""
     property bool pendingConnectUsesStdin: false
-    property string pendingConnectPassword: ""
+    property string pendingConnectStdinText: ""
     property string pendingEnterpriseIdentity: ""
     property bool shareAvailable: false
     property string sharePayload: ""
@@ -265,18 +265,27 @@ ShellRoot {
             return;
         }
 
-        runConnect(["nm-api", "connect-target", JSON.stringify(ap), "--json"], Wifi.networkName(ap));
+        runConnectTarget(ap, Wifi.networkName(ap));
     }
 
-    function runConnect(args, displayName, password) {
+    function connectTargetRequest(ap, password) {
+        const request = { target: ap };
+        if (password !== undefined && password !== null)
+            request.password = password;
+        return JSON.stringify(request);
+    }
+
+    function runConnectTarget(ap, displayName, password) {
+        runConnect(["nm-api", "connect-target", "--json"], displayName, connectTargetRequest(ap, password));
+    }
+
+    function runConnect(args, displayName, stdinText) {
         if (!beginAction())
             return;
 
-        pendingConnectUsesStdin = password !== undefined && password !== null;
-        pendingConnectPassword = pendingConnectUsesStdin ? password : "";
+        pendingConnectUsesStdin = stdinText !== undefined && stdinText !== null;
+        pendingConnectStdinText = pendingConnectUsesStdin ? stdinText : "";
         const commandArgs = args.slice();
-        if (pendingConnectUsesStdin)
-            commandArgs.push("--password-stdin");
 
         status = "Connecting to " + displayName + "…";
         lastConnectedSsid = displayName;
@@ -406,7 +415,7 @@ ShellRoot {
         const ap = promptNetwork;
         cancelPrompt();
         if (ap)
-            runConnect(["nm-api", "connect-target", JSON.stringify(ap), "--json"], Wifi.networkName(ap), value);
+            runConnectTarget(ap, Wifi.networkName(ap), value);
     }
 
     function submitHiddenSsidPrompt(value) {
@@ -421,7 +430,10 @@ ShellRoot {
         const ssid = pendingHiddenSsid;
         const password = value.length > 0 ? value : null;
         cancelPrompt();
-        runConnect(["nm-api", "connect", ssid, "--hidden", "--json"], ssid, password);
+        const args = ["nm-api", "connect", ssid, "--hidden", "--json"];
+        if (password !== null)
+            args.push("--password-stdin");
+        runConnect(args, ssid, password);
     }
 
     function submitEnterpriseIdentityPrompt(value) {
@@ -443,7 +455,7 @@ ShellRoot {
         const identity = pendingEnterpriseIdentity;
         cancelPrompt();
         if (ap && identity.length > 0)
-            runConnect(["nm-api", "connect-target", JSON.stringify(Wifi.enterpriseTarget(ap, identity)), "--json"], Wifi.networkName(ap), value);
+            runConnectTarget(Wifi.enterpriseTarget(ap, identity), Wifi.networkName(ap), value);
     }
 
     function submitPrompt() {
@@ -669,12 +681,12 @@ ShellRoot {
         }
         onStarted: {
             if (root.pendingConnectUsesStdin) {
-                connectProc.write(root.pendingConnectPassword + "\n");
-                root.pendingConnectPassword = "";
+                connectProc.write(root.pendingConnectStdinText + "\n");
+                root.pendingConnectStdinText = "";
             }
         }
         onExited: function (exitCode, exitStatus) {
-            root.pendingConnectPassword = "";
+            root.pendingConnectStdinText = "";
             root.pendingConnectUsesStdin = false;
             connectProc.stdinEnabled = false;
 
