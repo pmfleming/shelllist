@@ -139,7 +139,7 @@ ShellRoot {
 
         shareProfilePath = profile.path;
         shareStatus = "Checking saved Wi-Fi password availability…";
-        shareCheckProc.exec(["nm-api", "profile", "share", profile.path, "--json"]);
+        shareCheckProc.exec(["nm-api", "profile", "share", profile.path]);
     }
 
     function shareSelected() {
@@ -180,7 +180,7 @@ ShellRoot {
         pendingRefresh = false;
         status = "Loading cached Wi-Fi networks…";
         scanSnapshotSeen = false;
-        listProc.exec(["nm-api", "networks", "--cached", "--json"]);
+        listProc.exec(["nm-api", "networks", "--cached"]);
         refreshStatus();
         startScanStream();
     }
@@ -192,7 +192,7 @@ ShellRoot {
 
     function refreshStatus() {
         if (!statusProc.running)
-            statusProc.exec(["nm-api", "status", "--json"]);
+            statusProc.exec(["nm-api", "status"]);
     }
 
     function startScanStream() {
@@ -276,7 +276,7 @@ ShellRoot {
     }
 
     function runConnectTarget(ap, displayName, password) {
-        runConnect(["nm-api", "connect-target", "--json"], displayName, connectTargetRequest(ap, password));
+        runConnect(["nm-api", "connect-target"], displayName, connectTargetRequest(ap, password));
     }
 
     function runConnect(args, displayName, stdinText) {
@@ -316,7 +316,7 @@ ShellRoot {
             return;
 
         status = "Disconnecting Wi-Fi…";
-        disconnectProc.exec(["nm-api", "disconnect", "--json"]);
+        disconnectProc.exec(["nm-api", "disconnect"]);
     }
 
     function runProfileAction(action) {
@@ -430,7 +430,7 @@ ShellRoot {
         const ssid = pendingHiddenSsid;
         const password = value.length > 0 ? value : null;
         cancelPrompt();
-        const args = ["nm-api", "connect", ssid, "--hidden", "--json"];
+        const args = ["nm-api", "connect", ssid, "--hidden"];
         if (password !== null)
             args.push("--password-stdin");
         runConnect(args, ssid, password);

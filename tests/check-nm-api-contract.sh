@@ -9,10 +9,12 @@ fi
 nm_api=$1
 fixture=$2
 actual=$(mktemp)
-trap 'rm -f "$actual"' EXIT
+method_actual=$(mktemp)
+trap 'rm -f "$actual" "$method_actual"' EXIT
 
 "$nm_api" debug contract-fixture > "$actual"
 diff -u "$fixture" "$actual"
+"$nm_api" debug contract-fixtures > "$method_actual"
 
 jq -e '
   .protocol == "nm-api" and
@@ -32,3 +34,19 @@ jq -e '
   .data.fixture.connect_error.status == "error" and
   .data.fixture.connect_error.reason == "secret-required"
 ' "$fixture" >/dev/null
+
+jq -e '
+  .protocol == "nm-api" and
+  .version == 1 and
+  .ok == true and
+  (.data.fixtures."wifi-networks.saved".networks | type == "array") and
+  .data.fixtures."wifi-networks.password-required".networks[0].capabilities.needs_password == true and
+  .data.fixtures."wifi-networks.enterprise-required".networks[0].capabilities.needs_credentials == true and
+  .data.fixtures."wifi-status.active".status.active == true and
+  .data.fixtures."wifi-status.inactive".status.active == false and
+  .data.fixtures."wifi-connect.success".result.status == "connected" and
+  .data.fixtures."wifi-connect.secret-required".result.reason == "secret-required" and
+  .data.fixtures."wifi-scan.stream".events[0].protocol == "nm-api" and
+  .data.fixtures."wifi-scan.stream".events[0].stream == "wifi-scan" and
+  .data.fixtures."wifi-profile.share".payload.shareable == true
+' "$method_actual" >/dev/null
