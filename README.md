@@ -2,7 +2,7 @@
 
 Quickshell experiments and UI components for desktop menus.
 
-Initial goal: build a Hyprland-friendly Wi-Fi/network popup backed by the existing `nm-wifi` NetworkManager D-Bus helper. The Wi-Fi popup opens as a floating search/list chooser with an optional connection detail dashboard.
+Current focus: a Hyprland-friendly Wi-Fi/network popup backed by the local `nm-api` NetworkManager JSON/JSONL adapter. Shelllist owns the interface; `nm-api` owns NetworkManager behavior.
 
 ## Usage
 
@@ -12,14 +12,14 @@ Run the Wi-Fi popup with Nix:
 nix run
 ```
 
-Desktop integration target: bind this command to `SUPER+N` as the Wi-Fi chooser, replacing the old rofi Wi-Fi menu.
+Desktop integration target: bind this command to `SUPER+N` as the Wi-Fi chooser.
 
-The current flake intentionally uses a local `nm-wifi` path input, so it is expected to run on this development machine until that dependency is made portable. Shelllist uses `nm-wifi --password-stdin` for safer password prompts.
+The current flake intentionally uses a local `nm-api` path input, so it is expected to run on this development machine until that dependency is made portable. Shelllist sends Wi-Fi secrets through `--password-stdin` only.
 
 ## Wi-Fi popup keybindings
 
 - Type to filter visible SSIDs.
-- `Enter`: run the primary action for the selected network (connect, or disconnect when already connected).
+- `Enter`: run the primary action for the selected network.
 - `Down` / `Up`: move selection.
 - `Right`: open the details pane.
 - `Left`: close the details pane.
@@ -27,31 +27,24 @@ The current flake intentionally uses a local `nm-wifi` path input, so it is expe
 - `F5`: refresh cached networks, active status, saved profiles, and start a background scan.
 - `Esc`: close the popup, or cancel an open prompt.
 
-Click the chevron beside the list to show or hide the right pane. The right pane shows selected-network actions and details. Connected networks expose disconnect, captive-portal sign-in, QR sharing when `nm-wifi profile share` can produce a payload, forget, autoconnect, per-profile privacy toggles, IPv4, DNS, frequency, link-speed, and MAC details when `nm-wifi status --json` can read them from NetworkManager. Privacy toggles cover stable randomized MAC vs device MAC and whether DHCP sends this device's hostname. Password-protected unsaved networks prompt for a password before Shelllist calls `nm-wifi connect-target`; Shelllist sends the password over stdin to avoid exposing it in process arguments. Enterprise/802.1X networks now get an initial identity/password prompt using PEAP/MSCHAPv2 defaults from Shelllist while `nm-wifi` owns the NetworkManager settings. Hidden SSIDs can be connected with `F6`; leave the password prompt blank for open hidden networks.
+The popup consumes `nm-api` protocol v1 envelopes:
+
+```json
+{ "protocol": "nm-api", "version": 1, "ok": true, "data": {} }
+```
 
 ## Requirements
 
 - A running NetworkManager service.
 - A Wi-Fi device managed by NetworkManager.
-- User permissions to control NetworkManager connections through the system D-Bus policy/polkit setup.
-  - On many desktop NixOS systems this works for active local sessions through polkit.
-  - If profile changes or connections fail with permission errors, check NetworkManager/polkit permissions for the user/session.
-- The local `nm-wifi` helper input must be present at the path configured in `flake.nix`.
+- User permissions to control NetworkManager connections through D-Bus/polkit.
+- The local `nm-api` helper input at the path configured in `flake.nix`.
 
 ## Development
-
-Enter the development shell:
 
 ```sh
 nix develop
 ```
-
-Included tools:
-
-- `quickshell`
-- `shellcheck`
-- `nixpkgs-fmt`
-- `qmlformat` from Qt declarative tools
 
 Useful checks:
 
@@ -65,4 +58,4 @@ shellcheck "$portal/bin/shelllist-captive-portal"
 
 The Wi-Fi UI entry point is `wifi/shell.qml`.
 
-The JSON boundary with `nm-wifi` is pinned by `contracts/nm-wifi-ui-contract.fixture.json`. `nix flake check` regenerates the fixture with the local `nm-wifi contract-fixture` command and diffs it, so backend field renames used by QML fail during development instead of at runtime.
+The JSON boundary with `nm-api` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture with the local `nm-api contract-fixture` command and diffs it.

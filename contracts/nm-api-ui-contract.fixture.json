@@ -1,0 +1,375 @@
+{
+  "data": {
+    "fixture": {
+      "connect_error": {
+        "connectivity": null,
+        "message": "password required for Example",
+        "reason": "secret-required",
+        "ssid": "Example",
+        "status": "error",
+        "suggest_open_portal": false
+      },
+      "connect_success": {
+        "connectivity": {
+          "captive_portal": false,
+          "code": 4,
+          "full": true,
+          "state": "full"
+        },
+        "message": "Connected to Example via D-Bus",
+        "ssid": "Example",
+        "status": "connected",
+        "suggest_open_portal": false
+      },
+      "network": {
+        "access_points": [
+          {
+            "active": true,
+            "band": "5 GHz",
+            "bandwidth_mhz": 80,
+            "bssid": "00:11:22:33:44:55",
+            "channel": 36,
+            "device_iface": "wlan0",
+            "device_path": "/org/freedesktop/NetworkManager/Devices/1",
+            "flags": 1,
+            "frequency": 5180,
+            "last_seen": 1234,
+            "last_seen_age_ms": 2500,
+            "max_bitrate_mbps": 866,
+            "mode": "Infra",
+            "path": "/org/freedesktop/NetworkManager/AccessPoint/1",
+            "rsn_flags": 256,
+            "rsn_flags_label": "psk",
+            "security": "WPA2/3",
+            "ssid": "Example",
+            "ssid_bytes": [
+              69,
+              120,
+              97,
+              109,
+              112,
+              108,
+              101
+            ],
+            "ssid_hex": "4578616d706c65",
+            "strength": 82,
+            "wpa_flags": 0,
+            "wpa_flags_label": "(none)"
+          }
+        ],
+        "active": true,
+        "auth": {
+          "key_management": [],
+          "kind": "saved-profile",
+          "note": "A compatible saved NetworkManager profile can be activated without collecting new credentials",
+          "optional_fields": [],
+          "required_fields": [],
+          "supported": true
+        },
+        "band": "5 GHz",
+        "bandwidth_mhz": 80,
+        "bssid": "00:11:22:33:44:55",
+        "capabilities": {
+          "can_connect": true,
+          "can_connect_now": true,
+          "can_connect_with_credentials": false,
+          "can_connect_with_password": false,
+          "can_forget": true,
+          "can_toggle_autoconnect": true,
+          "needs_credentials": false,
+          "needs_password": false,
+          "supported_auth": true,
+          "unsupported_reason": null
+        },
+        "channel": 36,
+        "device_iface": "wlan0",
+        "device_path": "/org/freedesktop/NetworkManager/Devices/1",
+        "flags": 1,
+        "frequency": 5180,
+        "last_seen": 1234,
+        "last_seen_age_ms": 2500,
+        "max_bitrate_mbps": 866,
+        "mode": "Infra",
+        "path": "/org/freedesktop/NetworkManager/AccessPoint/1",
+        "primary_profile": {
+          "autoconnect": true,
+          "id": "Example",
+          "path": "/org/freedesktop/NetworkManager/Settings/1",
+          "privacy": {
+            "mac_address_policy": "stable",
+            "randomized_mac": true,
+            "send_hostname": false
+          },
+          "ssid": "Example",
+          "ssid_bytes": [
+            69,
+            120,
+            97,
+            109,
+            112,
+            108,
+            101
+          ]
+        },
+        "profiles": [
+          {
+            "autoconnect": true,
+            "id": "Example",
+            "path": "/org/freedesktop/NetworkManager/Settings/1",
+            "privacy": {
+              "mac_address_policy": "stable",
+              "randomized_mac": true,
+              "send_hostname": false
+            },
+            "ssid": "Example",
+            "ssid_bytes": [
+              69,
+              120,
+              97,
+              109,
+              112,
+              108,
+              101
+            ]
+          }
+        ],
+        "rsn_flags": 256,
+        "rsn_flags_label": "psk",
+        "security": "WPA2/3",
+        "ssid": "Example",
+        "ssid_bytes": [
+          69,
+          120,
+          97,
+          109,
+          112,
+          108,
+          101
+        ],
+        "ssid_hex": "4578616d706c65",
+        "strength": 82,
+        "wpa_flags": 0,
+        "wpa_flags_label": "(none)"
+      },
+      "status": {
+        "access_point": {
+          "active": true,
+          "band": "5 GHz",
+          "bandwidth_mhz": 80,
+          "bssid": "00:11:22:33:44:55",
+          "channel": 36,
+          "device_iface": "wlan0",
+          "device_path": "/org/freedesktop/NetworkManager/Devices/1",
+          "flags": 1,
+          "frequency": 5180,
+          "last_seen": 1234,
+          "last_seen_age_ms": 2500,
+          "max_bitrate_mbps": 866,
+          "mode": "Infra",
+          "path": "/org/freedesktop/NetworkManager/AccessPoint/1",
+          "rsn_flags": 256,
+          "rsn_flags_label": "psk",
+          "security": "WPA2/3",
+          "ssid": "Example",
+          "ssid_bytes": [
+            69,
+            120,
+            97,
+            109,
+            112,
+            108,
+            101
+          ],
+          "ssid_hex": "4578616d706c65",
+          "strength": 82,
+          "wpa_flags": 0,
+          "wpa_flags_label": "(none)"
+        },
+        "active": true,
+        "active_connection_path": "/org/freedesktop/NetworkManager/ActiveConnection/1",
+        "active_since_ms": 1762000000000,
+        "connectivity": {
+          "captive_portal": true,
+          "code": 2,
+          "full": false,
+          "state": "portal"
+        },
+        "device_iface": "wlan0",
+        "ip4": {
+          "address": "192.0.2.10",
+          "dns": [
+            "192.0.2.1",
+            "1.1.1.1"
+          ],
+          "gateway": "192.0.2.1",
+          "prefix": 24
+        },
+        "metered": {
+          "code": 4,
+          "guessed": true,
+          "metered": false,
+          "state": "guess-no"
+        },
+        "network": {
+          "access_points": [
+            {
+              "active": true,
+              "band": "5 GHz",
+              "bandwidth_mhz": 80,
+              "bssid": "00:11:22:33:44:55",
+              "channel": 36,
+              "device_iface": "wlan0",
+              "device_path": "/org/freedesktop/NetworkManager/Devices/1",
+              "flags": 1,
+              "frequency": 5180,
+              "last_seen": 1234,
+              "last_seen_age_ms": 2500,
+              "max_bitrate_mbps": 866,
+              "mode": "Infra",
+              "path": "/org/freedesktop/NetworkManager/AccessPoint/1",
+              "rsn_flags": 256,
+              "rsn_flags_label": "psk",
+              "security": "WPA2/3",
+              "ssid": "Example",
+              "ssid_bytes": [
+                69,
+                120,
+                97,
+                109,
+                112,
+                108,
+                101
+              ],
+              "ssid_hex": "4578616d706c65",
+              "strength": 82,
+              "wpa_flags": 0,
+              "wpa_flags_label": "(none)"
+            }
+          ],
+          "active": true,
+          "auth": {
+            "key_management": [],
+            "kind": "saved-profile",
+            "note": "A compatible saved NetworkManager profile can be activated without collecting new credentials",
+            "optional_fields": [],
+            "required_fields": [],
+            "supported": true
+          },
+          "band": "5 GHz",
+          "bandwidth_mhz": 80,
+          "bssid": "00:11:22:33:44:55",
+          "capabilities": {
+            "can_connect": true,
+            "can_connect_now": true,
+            "can_connect_with_credentials": false,
+            "can_connect_with_password": false,
+            "can_forget": true,
+            "can_toggle_autoconnect": true,
+            "needs_credentials": false,
+            "needs_password": false,
+            "supported_auth": true,
+            "unsupported_reason": null
+          },
+          "channel": 36,
+          "device_iface": "wlan0",
+          "device_path": "/org/freedesktop/NetworkManager/Devices/1",
+          "flags": 1,
+          "frequency": 5180,
+          "last_seen": 1234,
+          "last_seen_age_ms": 2500,
+          "max_bitrate_mbps": 866,
+          "mode": "Infra",
+          "path": "/org/freedesktop/NetworkManager/AccessPoint/1",
+          "primary_profile": {
+            "autoconnect": true,
+            "id": "Example",
+            "path": "/org/freedesktop/NetworkManager/Settings/1",
+            "privacy": {
+              "mac_address_policy": "stable",
+              "randomized_mac": true,
+              "send_hostname": false
+            },
+            "ssid": "Example",
+            "ssid_bytes": [
+              69,
+              120,
+              97,
+              109,
+              112,
+              108,
+              101
+            ]
+          },
+          "profiles": [
+            {
+              "autoconnect": true,
+              "id": "Example",
+              "path": "/org/freedesktop/NetworkManager/Settings/1",
+              "privacy": {
+                "mac_address_policy": "stable",
+                "randomized_mac": true,
+                "send_hostname": false
+              },
+              "ssid": "Example",
+              "ssid_bytes": [
+                69,
+                120,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          ],
+          "rsn_flags": 256,
+          "rsn_flags_label": "psk",
+          "security": "WPA2/3",
+          "ssid": "Example",
+          "ssid_bytes": [
+            69,
+            120,
+            97,
+            109,
+            112,
+            108,
+            101
+          ],
+          "ssid_hex": "4578616d706c65",
+          "strength": 82,
+          "wpa_flags": 0,
+          "wpa_flags_label": "(none)"
+        },
+        "profile": {
+          "autoconnect": true,
+          "id": "Example",
+          "path": "/org/freedesktop/NetworkManager/Settings/1",
+          "privacy": {
+            "mac_address_policy": "stable",
+            "randomized_mac": true,
+            "send_hostname": false
+          },
+          "ssid": "Example",
+          "ssid_bytes": [
+            69,
+            120,
+            97,
+            109,
+            112,
+            108,
+            101
+          ]
+        },
+        "wireless": {
+          "bitrate_mbps": 144,
+          "mac_address": "02:00:00:00:00:01",
+          "rx_bitrate_mbps": 144.4,
+          "tx_bitrate_mbps": 130.0
+        }
+      }
+    }
+  },
+  "ok": true,
+  "protocol": "nm-api",
+  "version": 1
+}

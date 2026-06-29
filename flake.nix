@@ -3,13 +3,13 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nm-wifi = {
-      url = "path:/home/laufan/Projects/nm-wifi";
+    nm-api = {
+      url = "path:/home/laufan/Projects/nm-api";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, nm-wifi }:
+  outputs = inputs@{ self, nixpkgs, ... }:
     let
       systems = [ "x86_64-linux" ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
@@ -17,7 +17,7 @@
     {
       packages = forAllSystems (system: pkgs:
         let
-          nmWifi = nm-wifi.packages.${system}.default;
+          nmApi = inputs."nm-api".packages.${system}.default;
           mkMeta = description: mainProgram: {
             inherit description mainProgram;
             platforms = pkgs.lib.platforms.linux;
@@ -26,13 +26,13 @@
         {
           default = pkgs.writeShellApplication {
             name = "shelllist-wifi";
-            meta = mkMeta "Quickshell Wi-Fi popup backed by nm-wifi" "shelllist-wifi";
+            meta = mkMeta "Quickshell Wi-Fi popup backed by nm-api" "shelllist-wifi";
             runtimeInputs = [
               pkgs.gawk
               pkgs.networkmanager
               pkgs.quickshell
               self.packages.${system}.captivePortalBrowser
-              nmWifi
+              nmApi
             ];
             text = ''
               config_path=${self.packages.${system}.wifiConfig}/share/shelllist/wifi
@@ -123,15 +123,16 @@
 
       checks = forAllSystems (system: pkgs:
         let
-          nmWifi = nm-wifi.packages.${system}.default;
+          nmApi = inputs."nm-api".packages.${system}.default;
         in
         {
-          nmWifiContract = pkgs.runCommand "shelllist-nm-wifi-contract" {
-            nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
-          } ''
-            ${pkgs.bash}/bin/bash ${./tests/check-nm-wifi-contract.sh} \
-              ${nmWifi}/bin/nm-wifi \
-              ${./contracts/nm-wifi-ui-contract.fixture.json}
+          nmApiContract = pkgs.runCommand "shelllist-nm-api-contract"
+            {
+              nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
+            } ''
+            ${pkgs.bash}/bin/bash ${./tests/check-nm-api-contract.sh} \
+              ${nmApi}/bin/nm-api \
+              ${./contracts/nm-api-ui-contract.fixture.json}
             touch $out
           '';
         });

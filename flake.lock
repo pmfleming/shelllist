@@ -16,27 +16,27 @@
         "type": "github"
       }
     },
-    "nm-wifi": {
+    "nm-api": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1782601205,
-        "narHash": "sha256-jdNGehyXLl2OvPxfXIACNFTwzjIyBEM84w9KkYCRgxU=",
-        "path": "/home/laufan/Projects/nm-wifi",
+        "lastModified": 1782732493,
+        "narHash": "sha256-+PWg7Gr/fpoNBYcMqDpEFrz6A+DIcL4Vt75I+ZU7E/4=",
+        "path": "/home/laufan/Projects/nm-api",
         "type": "path"
       },
       "original": {
-        "path": "/home/laufan/Projects/nm-wifi",
+        "path": "/home/laufan/Projects/nm-api",
         "type": "path"
       }
     },
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "nm-wifi": "nm-wifi"
+        "nm-api": "nm-api"
       }
     }
   },

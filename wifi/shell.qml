@@ -139,7 +139,7 @@ ShellRoot {
 
         shareProfilePath = profile.path;
         shareStatus = "Checking saved Wi-Fi password availability…";
-        shareCheckProc.exec(["nm-wifi", "profile", "share", profile.path, "--json"]);
+        shareCheckProc.exec(["nm-api", "profile", "share", profile.path, "--json"]);
     }
 
     function shareSelected() {
@@ -180,7 +180,7 @@ ShellRoot {
         pendingRefresh = false;
         status = "Loading cached Wi-Fi networks…";
         scanSnapshotSeen = false;
-        listProc.exec(["nm-wifi", "networks", "--cached", "--json"]);
+        listProc.exec(["nm-api", "networks", "--cached", "--json"]);
         refreshStatus();
         startScanStream();
     }
@@ -192,12 +192,12 @@ ShellRoot {
 
     function refreshStatus() {
         if (!statusProc.running)
-            statusProc.exec(["nm-wifi", "status", "--json"]);
+            statusProc.exec(["nm-api", "status", "--json"]);
     }
 
     function startScanStream() {
         if (!scanStreamProc.running)
-            scanStreamProc.exec(["nm-wifi", "scan", "--stream", "--cache", "--timeout", "12"]);
+            scanStreamProc.exec(["nm-api", "scan", "--stream", "--cache", "--timeout", "12"]);
     }
 
     function handleScanEvent(line) {
@@ -265,7 +265,7 @@ ShellRoot {
             return;
         }
 
-        runConnect(["nm-wifi", "connect-target", JSON.stringify(ap), "--json"], Wifi.networkName(ap));
+        runConnect(["nm-api", "connect-target", JSON.stringify(ap), "--json"], Wifi.networkName(ap));
     }
 
     function runConnect(args, displayName, password) {
@@ -307,7 +307,7 @@ ShellRoot {
             return;
 
         status = "Disconnecting Wi-Fi…";
-        disconnectProc.exec(["nm-wifi", "disconnect", "--json"]);
+        disconnectProc.exec(["nm-api", "disconnect", "--json"]);
     }
 
     function runProfileAction(action) {
@@ -322,7 +322,7 @@ ShellRoot {
     function forgetSelected() {
         runProfileAction(function (profile) {
             status = "Forgetting saved profile " + profile.id + "…";
-            profileProc.exec(["nm-wifi", "profile", "delete", profile.path]);
+            profileProc.exec(["nm-api", "profile", "delete", profile.path]);
         });
     }
 
@@ -330,14 +330,14 @@ ShellRoot {
         runProfileAction(function (profile) {
             const enabled = !profile.autoconnect;
             status = (enabled ? "Enabling" : "Disabling") + " autoconnect for " + profile.id + "…";
-            profileProc.exec(["nm-wifi", "profile", "autoconnect", profile.path, enabled ? "true" : "false"]);
+            profileProc.exec(["nm-api", "profile", "autoconnect", profile.path, enabled ? "true" : "false"]);
         });
     }
 
     function setMacRandomizedSelected(enabled) {
         runProfileAction(function (profile) {
             status = (enabled ? "Using randomized MAC for " : "Using device MAC for ") + profile.id + "…";
-            profileProc.exec(["nm-wifi", "profile", "mac-randomization", profile.path, enabled ? "true" : "false"]);
+            profileProc.exec(["nm-api", "profile", "mac-randomization", profile.path, enabled ? "true" : "false"]);
         });
     }
 
@@ -345,7 +345,7 @@ ShellRoot {
         runProfileAction(function (profile) {
             const enabled = !(profile.privacy && profile.privacy.send_hostname !== false);
             status = (enabled ? "Sending" : "Hiding") + " device name for " + profile.id + "…";
-            profileProc.exec(["nm-wifi", "profile", "send-hostname", profile.path, enabled ? "true" : "false"]);
+            profileProc.exec(["nm-api", "profile", "send-hostname", profile.path, enabled ? "true" : "false"]);
         });
     }
 
@@ -406,7 +406,7 @@ ShellRoot {
         const ap = promptNetwork;
         cancelPrompt();
         if (ap)
-            runConnect(["nm-wifi", "connect-target", JSON.stringify(ap), "--json"], Wifi.networkName(ap), value);
+            runConnect(["nm-api", "connect-target", JSON.stringify(ap), "--json"], Wifi.networkName(ap), value);
     }
 
     function submitHiddenSsidPrompt(value) {
@@ -421,7 +421,7 @@ ShellRoot {
         const ssid = pendingHiddenSsid;
         const password = value.length > 0 ? value : null;
         cancelPrompt();
-        runConnect(["nm-wifi", "connect", ssid, "--hidden", "--json"], ssid, password);
+        runConnect(["nm-api", "connect", ssid, "--hidden", "--json"], ssid, password);
     }
 
     function submitEnterpriseIdentityPrompt(value) {
@@ -443,7 +443,7 @@ ShellRoot {
         const identity = pendingEnterpriseIdentity;
         cancelPrompt();
         if (ap && identity.length > 0)
-            runConnect(["nm-wifi", "connect-target", JSON.stringify(Wifi.enterpriseTarget(ap, identity)), "--json"], Wifi.networkName(ap), value);
+            runConnect(["nm-api", "connect-target", JSON.stringify(Wifi.enterpriseTarget(ap, identity)), "--json"], Wifi.networkName(ap), value);
     }
 
     function submitPrompt() {
@@ -593,11 +593,11 @@ ShellRoot {
                 try {
                     if (root.scanSnapshotSeen)
                         return;
-                    const networks = JSON.parse(text);
+                    const networks = Wifi.apiData(JSON.parse(text), "networks") || [];
                     root.applyNetworks(networks, true);
                     root.status = networks.length + " cached networks; scanning in background…";
                 } catch (error) {
-                    root.status = "Could not parse nm-wifi networks output: " + error;
+                    root.status = "Could not parse nm-api networks response: " + error;
                 }
             }
         }
@@ -628,12 +628,12 @@ ShellRoot {
                 return;
             }
             try {
-                root.activeStatus = JSON.parse(statusOut.text);
+                root.activeStatus = Wifi.apiData(JSON.parse(statusOut.text), "status");
                 root.applyNetworks(root.networks, false);
                 if (root.detailsOpen)
                     Qt.callLater(root.refreshShareAvailability);
             } catch (error) {
-                root.status = "Could not parse nm-wifi status output: " + error;
+                root.status = "Could not parse nm-api status response: " + error;
             }
         }
     }
@@ -679,7 +679,7 @@ ShellRoot {
             connectProc.stdinEnabled = false;
 
             try {
-                const result = JSON.parse(connectOut.text);
+                const result = Wifi.apiResult(JSON.parse(connectOut.text), "result");
                 root.applyConnectResult(result);
                 if (result.status !== "error")
                     root.refresh();
@@ -711,7 +711,7 @@ ShellRoot {
                 return;
             }
             try {
-                const result = JSON.parse(disconnectOut.text);
+                const result = Wifi.apiResult(JSON.parse(disconnectOut.text), "result");
                 root.status = result.message || "Disconnected Wi-Fi";
             } catch (error) {
                 root.status = "Disconnected Wi-Fi";
@@ -748,7 +748,7 @@ ShellRoot {
         }
         onExited: function (exitCode, exitStatus) {
             try {
-                const result = JSON.parse(shareCheckOut.text);
+                const result = Wifi.apiData(JSON.parse(shareCheckOut.text), "payload");
                 if (result.path !== root.shareProfilePath) {
                     if (root.detailsOpen)
                         Qt.callLater(root.refreshShareAvailability);

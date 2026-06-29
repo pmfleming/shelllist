@@ -16,6 +16,34 @@ function privacyFor(profile) { return profile && profile.privacy ? profile.priva
 function isOpenNetwork(ap) { return !!(ap && ap.security === "--" && hasNetworkIdentity(ap)); }
 function canShareQr(ap) { return isOpenNetwork(ap); }
 
+function apiData(response, key) {
+    if (!response || response.protocol !== "nm-api")
+        return key ? response[key] : response;
+    if (response.version !== 1)
+        throw new Error("Unsupported nm-api protocol version " + response.version);
+    if (!response.ok) {
+        const error = response.error || {};
+        throw new Error((error.code || "api-error") + ": " + (error.message || "nm-api request failed"));
+    }
+    const data = response.data || {};
+    return key ? data[key] : data;
+}
+
+function apiResult(response, key) {
+    if (!response || response.protocol !== "nm-api")
+        return key ? response[key] : response;
+    if (response.version !== 1)
+        throw new Error("Unsupported nm-api protocol version " + response.version);
+    const data = response.data || {};
+    if (!response.ok && data[key])
+        return data[key];
+    if (!response.ok) {
+        const error = response.error || {};
+        return { status: "error", reason: error.code || "unknown", message: error.message || "nm-api request failed" };
+    }
+    return key ? data[key] : data;
+}
+
 function escapeWifiQr(value) {
     return (value || "").replace(/([\\;,:\"])/g, "\\$1");
 }
