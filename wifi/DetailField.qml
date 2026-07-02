@@ -1,11 +1,12 @@
 import QtQuick
+import "."
 
 Column {
     id: field
 
     property string label: ""
     property string value: "—"
-    property color valueColor: "#cbd5e1"
+    property color valueColor: Theme.text
     property bool valueBold: false
     property int valueWidth: width
 
@@ -14,7 +15,7 @@ Column {
 
     Text {
         text: field.label
-        color: "#94a3b8"
+        color: Theme.mutedText
         font.pixelSize: 13
     }
 

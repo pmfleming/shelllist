@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "."
 
 RowLayout {
     id: header
@@ -20,18 +21,14 @@ RowLayout {
         search.forceActiveFocus();
     }
 
-    Rectangle {
+    IconTile {
         Layout.preferredWidth: 34
         Layout.preferredHeight: 34
-        radius: 10
         Layout.alignment: Qt.AlignVCenter
-        color: "#15335f"
-        Text {
-            anchors.centerIn: parent
-            text: "󰤨"
-            color: "#7dd3fc"
-            font.pixelSize: 18
-        }
+        radius: Theme.cardRadius
+        backgroundColor: Theme.selected
+        icon: "󰤨"
+        iconColor: Theme.accent
     }
 
     TextInput {
@@ -42,9 +39,9 @@ RowLayout {
         focus: true
         leftPadding: 38
         rightPadding: 12
-        color: "#dbeafe"
-        selectionColor: "#2563eb"
-        selectedTextColor: "white"
+        color: Theme.inputText
+        selectionColor: Theme.accent
+        selectedTextColor: Theme.accentText
         font.pixelSize: 15
         verticalAlignment: TextInput.AlignVCenter
         text: header.filterText
@@ -57,35 +54,22 @@ RowLayout {
             x: 12
             anchors.verticalCenter: parent.verticalCenter
             text: "⌕"
-            color: "#64748b"
+            color: Theme.subtleText
             font.pixelSize: 22
         }
 
-        Rectangle {
-            anchors.fill: parent
-            radius: 8
-            color: "#111827"
-            border.color: "#233247"
-            z: -1
-        }
+        InputBackground {}
     }
 
-    Rectangle {
+    IconTile {
         Layout.preferredWidth: 34
         Layout.preferredHeight: 34
-        radius: 8
         Layout.alignment: Qt.AlignVCenter
-        color: "transparent"
-        border.color: "#233247"
-        Text {
-            anchors.centerIn: parent
-            text: "↻"
-            color: "#94a3b8"
-            font.pixelSize: 20
-        }
-        MouseArea {
-            anchors.fill: parent
-            onClicked: header.refreshRequested()
-        }
+        borderColor: Theme.border
+        icon: "↻"
+        iconColor: Theme.mutedText
+        iconSize: 20
+        clickable: true
+        onClicked: header.refreshRequested()
     }
 }

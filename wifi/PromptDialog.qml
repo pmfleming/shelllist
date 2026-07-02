@@ -1,4 +1,5 @@
 import QtQuick
+import "."
 
 Rectangle {
     id: dialog
@@ -14,7 +15,7 @@ Rectangle {
 
     anchors.fill: parent
     z: 10
-    color: "#99000000"
+    color: Theme.overlay
 
     function focusInput() {
         promptInput.forceActiveFocus();
@@ -34,9 +35,9 @@ Rectangle {
         width: Math.min(parent.width * 0.9, 560)
         height: 230
         anchors.centerIn: parent
-        radius: 16
-        color: "#0f172a"
-        border.color: "#38bdf8"
+        radius: Theme.windowRadius
+        color: Theme.surface
+        border.color: Theme.strongBorder
         border.width: 1
 
         Column {
@@ -47,7 +48,7 @@ Rectangle {
             Text {
                 width: parent.width
                 text: dialog.title
-                color: "#f8fafc"
+                color: Theme.text
                 font.pixelSize: 22
                 font.bold: true
                 elide: Text.ElideRight
@@ -56,7 +57,7 @@ Rectangle {
             Text {
                 width: parent.width
                 text: dialog.detail
-                color: "#94a3b8"
+                color: Theme.mutedText
                 font.pixelSize: 14
                 wrapMode: Text.Wrap
                 maximumLineCount: 2
@@ -67,9 +68,9 @@ Rectangle {
                 id: promptInput
                 width: parent.width
                 height: 44
-                color: "#e5e7eb"
-                selectionColor: "#2563eb"
-                selectedTextColor: "white"
+                color: Theme.inputText
+                selectionColor: Theme.accent
+                selectedTextColor: Theme.accentText
                 font.pixelSize: 19
                 text: dialog.inputText
                 echoMode: dialog.password ? TextInput.Password : TextInput.Normal
@@ -84,19 +85,13 @@ Rectangle {
                     }
                 }
 
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 10
-                    color: "#111827"
-                    border.color: "#334155"
-                    z: -1
-                }
+                InputBackground {}
             }
 
             Text {
                 width: parent.width
                 text: "Enter continue/connect   •   Esc cancel"
-                color: "#64748b"
+                color: Theme.subtleText
                 font.pixelSize: 13
             }
         }

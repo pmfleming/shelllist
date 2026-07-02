@@ -1,12 +1,13 @@
 import QtQuick
+import "."
 
 Rectangle {
     id: pill
 
     property bool checked: false
-    property color checkedColor: "#3b82f6"
-    property color uncheckedColor: "#334155"
-    property color handleColor: "#dbeafe"
+    property color checkedColor: Theme.accent
+    property color uncheckedColor: Theme.border
+    property color handleColor: Theme.accentText
 
     width: 34
     height: 20

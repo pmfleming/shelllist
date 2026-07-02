@@ -1,11 +1,14 @@
 import QtQuick
 import QtQuick.Layouts
+import "Wifi.js" as Wifi
+import "."
 
 RowLayout {
     id: row
 
     property string title: ""
     property string subtitle: ""
+    property string hotkey: ""
     property bool checked: false
     property bool interactive: true
 
@@ -20,13 +23,14 @@ RowLayout {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
         Text {
-            text: row.title
-            color: "#e5e7eb"
+            text: Wifi.highlightHotkey(row.title, row.hotkey)
+            textFormat: Text.RichText
+            color: Theme.text
             font.pixelSize: 14
         }
         Text {
             text: row.subtitle
-            color: "#64748b"
+            color: Theme.subtleText
             font.pixelSize: 11
         }
     }
@@ -35,8 +39,9 @@ RowLayout {
         visible: row.subtitle.length === 0
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
-        text: row.title
-        color: "#e5e7eb"
+        text: Wifi.highlightHotkey(row.title, row.hotkey)
+        textFormat: Text.RichText
+        color: Theme.text
         font.pixelSize: 14
     }
 

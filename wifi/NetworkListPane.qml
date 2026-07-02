@@ -1,20 +1,18 @@
 import QtQuick
 import QtQuick.Layouts
-import "Wifi.js" as Wifi
+import "."
 
 Rectangle {
-    id: pane
-
     required property var controller
 
     Layout.preferredWidth: 425
     Layout.fillHeight: true
-    radius: 12
-    color: "#0f172a"
-    border.color: "#1f2a3a"
+    radius: Theme.panelRadius
+    color: Theme.surface
+    border.color: Theme.border
 
     function focusTop() {
-        pane.controller.selectedIndex = 0;
+        controller.selectedIndex = 0;
         list.forceActiveFocus();
         list.positionViewAtBeginning();
     }
@@ -27,14 +25,14 @@ Rectangle {
         ListView {
             id: list
             width: parent.width
-            height: parent.height
+            height: parent.height - statusLine.height - parent.spacing
             clip: true
-            model: pane.controller.filteredNetworks
+            model: controller.filteredNetworks
             spacing: 3
-            currentIndex: pane.controller.selectedIndex
+            currentIndex: controller.selectedIndex
             activeFocusOnTab: true
             Keys.onPressed: function (event) {
-                pane.controller.handleListKey(event);
+                controller.handleListKey(event);
             }
             onCurrentIndexChanged: {
                 if (currentIndex >= 0 && count > 0)
@@ -42,21 +40,34 @@ Rectangle {
             }
 
             delegate: NetworkListRow {
-                active: pane.controller.isActive(modelData)
-                name: Wifi.networkName(modelData)
-                selectedIndex: pane.controller.selectedIndex
-                detailsOpen: pane.controller.detailsOpen
+                active: controller.isActive(modelData)
+                name: controller.networkName(modelData)
+                selectedIndex: controller.selectedIndex
+                detailsOpen: controller.detailsOpen
+                connecting: controller.isConnecting(modelData)
+                progressTick: controller.connectingProgressTick
                 onPicked: function (rowIndex) {
-                    pane.controller.selectedIndex = rowIndex;
+                    controller.selectedIndex = rowIndex;
                     list.forceActiveFocus();
                 }
                 onDetailsToggled: function (rowIndex) {
-                    pane.controller.selectedIndex = rowIndex;
-                    pane.controller.toggleDetailsPane();
+                    controller.selectedIndex = rowIndex;
+                    controller.toggleDetailsPane();
                     list.forceActiveFocus();
                 }
-                onConnectRequested: pane.controller.primarySelected()
+                onConnectRequested: controller.primarySelected()
             }
+        }
+
+        Text {
+            id: statusLine
+            width: parent.width
+            height: 24
+            text: controller.status
+            color: controller.actionInFlight ? Theme.accent : Theme.subtleText
+            font.pixelSize: 12
+            elide: Text.ElideRight
+            verticalAlignment: Text.AlignVCenter
         }
     }
 }

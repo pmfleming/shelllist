@@ -1,4 +1,5 @@
 import QtQuick
+import "."
 
 Rectangle {
     id: row
@@ -9,6 +10,9 @@ Rectangle {
     property string name: modelData.ssid || "<hidden>"
     property int selectedIndex: 0
     property bool detailsOpen: false
+    property bool connecting: false
+    property int progressTick: 0
+    readonly property var spinnerFrames: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
     signal picked(int rowIndex)
     signal connectRequested
@@ -16,10 +20,10 @@ Rectangle {
 
     width: ListView.view.width
     height: 43
-    radius: 8
-    color: index === selectedIndex ? "#15335f" : active ? "#0f2b3a" : "transparent"
-    border.color: index === selectedIndex ? "#3b82f6" : active ? "#22c55e" : "transparent"
-    border.width: index === selectedIndex || active ? 1 : 0
+    radius: Theme.controlRadius
+    color: index === selectedIndex ? Theme.selected : "transparent"
+    border.color: index === selectedIndex ? Theme.strongBorder : "transparent"
+    border.width: index === selectedIndex ? 1 : 0
 
     Row {
         anchors.fill: parent
@@ -31,7 +35,7 @@ Rectangle {
             width: 42
             anchors.verticalCenter: parent.verticalCenter
             text: (row.modelData.strength || 0) + "%"
-            color: "#bfdbfe"
+            color: Theme.accent
             font.pixelSize: 14
         }
 
@@ -39,34 +43,33 @@ Rectangle {
             width: 22
             anchors.verticalCenter: parent.verticalCenter
             text: "▂▄▆"
-            color: row.active ? "#38bdf8" : "#94a3b8"
+            color: row.active ? Theme.accent : Theme.mutedText
             font.pixelSize: 13
         }
 
         Text {
             width: 16
             anchors.verticalCenter: parent.verticalCenter
-            text: row.active ? "●" : (row.modelData.security === "--" ? "Open" : "🔒")
-            color: row.active ? "#22c55e" : (row.modelData.security === "--" ? "#fbbf24" : "#94a3b8")
-            font.pixelSize: row.modelData.security === "--" && !row.active ? 8 : 13
+            text: row.connecting ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length] : (row.active ? "●" : (row.modelData.security === "--" ? "Open" : "🔒"))
+            color: row.connecting ? Theme.accent : (row.active ? Theme.active : (row.modelData.security === "--" ? Theme.warning : Theme.mutedText))
+            font.pixelSize: row.modelData.security === "--" && !row.active && !row.connecting ? 8 : 13
         }
 
         Text {
             width: parent.width - 144
             anchors.verticalCenter: parent.verticalCenter
-            text: row.name
-            color: "#d1d5db"
+            text: row.connecting ? row.name + " — connecting…" : row.name
+            color: row.connecting ? Theme.accent : Theme.text
             font.pixelSize: 15
-            font.bold: row.active
+            font.bold: row.active || row.connecting
             elide: Text.ElideRight
         }
 
         Text {
-            id: detailsChevron
             width: 24
             anchors.verticalCenter: parent.verticalCenter
             text: row.detailsOpen ? "‹" : "›"
-            color: row.index === row.selectedIndex ? "#bfdbfe" : "#94a3b8"
+            color: row.index === row.selectedIndex ? Theme.accent : Theme.mutedText
             font.pixelSize: 25
 
             MouseArea {

@@ -1,18 +1,34 @@
 import QtQuick
 import QtQuick.Layouts
 import "Wifi.js" as Wifi
+import "."
 
 Rectangle {
-    id: pane
-
     required property var controller
     readonly property var ap: controller.detailAp
+    readonly property var connectionRows: [
+        { label: "Signal strength", value: (ap.strength || 0) + "%", valueColor: Theme.accent, valueBold: true },
+        { label: "IP address", value: Wifi.activeIp4Value(controller, "address") },
+        { label: "Frequency", value: Wifi.frequencyLabel(ap) },
+        { label: "Gateway", value: Wifi.activeIp4Value(controller, "gateway") },
+        { label: "Security", value: Wifi.securityLabel(ap.security) },
+        { label: "Subnet", value: Wifi.activeDetailValue(controller, Wifi.subnetLabel(Wifi.detailIp4(controller))) },
+        { label: "Network usage", value: Wifi.activeDetailValue(controller, Wifi.networkUsageLabel(Wifi.detailConnectionStatus(controller))) },
+        { label: "DNS", value: Wifi.activeDetailValue(controller, Wifi.dnsLabel(Wifi.detailIp4(controller))), valueWidth: 220 }
+    ]
+    readonly property var networkRows: [
+        { label: "Type", value: Wifi.wifiType(ap) },
+        { label: Wifi.hasDirectionalBitrates(controller) ? "Transmit link speed" : "Link speed", value: Wifi.activeDetailValue(controller, Wifi.hasDirectionalBitrates(controller) ? Wifi.txBitrateLabel(controller) : Wifi.bitrateLabel(controller)) },
+        { label: "MAC address", value: Wifi.macLabel(controller) !== "—" ? Wifi.macLabel(controller) : (ap.bssid || "—") },
+        { label: "Receive link speed", value: Wifi.activeDetailValue(controller, Wifi.rxBitrateLabel(controller)) }
+    ]
 
     Layout.fillWidth: true
     Layout.fillHeight: true
-    radius: 12
-    color: "#0f172a"
-    border.color: "#1f2a3a"
+    radius: Theme.panelRadius
+    color: Theme.surface
+    border.color: Theme.border
+    clip: true
 
     Item {
         anchors.fill: parent
@@ -22,7 +38,7 @@ Rectangle {
         anchors.bottomMargin: 18
 
         Column {
-            visible: pane.controller.hasSelection
+            visible: controller.hasSelection
             anchors.fill: parent
             spacing: 14
 
@@ -31,12 +47,13 @@ Rectangle {
                 height: 44
                 spacing: 16
 
-                Text {
+                IconTile {
                     Layout.preferredWidth: 54
+                    Layout.preferredHeight: 44
                     Layout.alignment: Qt.AlignVCenter
-                    text: "󰤨"
-                    color: "#dbeafe"
-                    font.pixelSize: 32
+                    icon: "󰤨"
+                    iconColor: Theme.accent
+                    iconSize: 32
                 }
 
                 Column {
@@ -46,13 +63,12 @@ Rectangle {
 
                     Text {
                         width: parent.width
-                        text: Wifi.networkName(pane.ap)
-                        color: "#f8fafc"
+                        text: Wifi.networkName(ap)
+                        color: Theme.text
                         font.pixelSize: 22
                         font.bold: true
                         elide: Text.ElideRight
                     }
-
                 }
             }
 
@@ -63,32 +79,36 @@ Rectangle {
 
                 ActionButton {
                     Layout.preferredWidth: 112
-                    label: pane.controller.isActive(pane.ap) ? "Disconnect" : "Connect"
-                    backgroundColor: pane.controller.isActive(pane.ap) ? "#1e3a5f" : "#1d4ed8"
-                    borderColor: "#3b82f6"
-                    labelColor: "#dbeafe"
-                    enabled: pane.controller.canUsePrimaryAction()
-                    onClicked: pane.controller.isActive(pane.ap) ? pane.controller.disconnectSelected() : pane.controller.connectSelected()
+                    label: controller.isConnecting(ap) ? "Connecting…" : (controller.isActive(ap) ? "Disconnect" : "Connect")
+                    hotkey: controller.isActive(ap) ? "D" : "C"
+                    backgroundColor: controller.isActive(ap) ? Theme.danger : Theme.active
+                    borderColor: controller.isActive(ap) ? Theme.danger : Theme.active
+                    labelColor: controller.isActive(ap) ? Theme.dangerText : Theme.activeText
+                    enabled: controller.canUsePrimaryAction()
+                    onClicked: controller.isActive(ap) ? controller.disconnectSelected() : controller.connectSelected()
                 }
 
                 ActionButton {
                     Layout.preferredWidth: 90
                     label: "Forget"
-                    enabled: pane.controller.canEditProfile()
-                    onClicked: pane.controller.forgetSelected()
+                    hotkey: "F"
+                    enabled: controller.canEditProfile()
+                    onClicked: controller.forgetSelected()
                 }
 
                 ActionButton {
                     Layout.preferredWidth: 90
                     label: "Sign in"
-                    onClicked: pane.controller.openPortal()
+                    hotkey: "I"
+                    onClicked: controller.openPortal()
                 }
 
                 ActionButton {
                     Layout.preferredWidth: 90
                     label: "Share"
-                    enabled: pane.controller.canShareSelected()
-                    onClicked: pane.controller.shareSelected()
+                    hotkey: "S"
+                    enabled: controller.canShareSelected()
+                    onClicked: controller.shareSelected()
                 }
 
                 Item {
@@ -100,71 +120,18 @@ Rectangle {
                 height: 250
                 title: "Connection"
 
-                DetailGrid {
-                    DetailField {
-                        label: "Signal strength"
-                        value: (pane.ap.strength || 0) + "%"
-                        valueColor: "#60a5fa"
-                        valueBold: true
-                    }
-                    DetailField {
-                        label: "IP address"
-                        value: Wifi.activeIp4Value(pane.controller, "address")
-                    }
-                    DetailField {
-                        label: "Frequency"
-                        value: Wifi.frequencyLabel(pane.ap)
-                    }
-                    DetailField {
-                        label: "Gateway"
-                        value: Wifi.activeIp4Value(pane.controller, "gateway")
-                    }
-                    DetailField {
-                        label: "Security"
-                        value: Wifi.securityLabel(pane.ap.security)
-                    }
-                    DetailField {
-                        label: "Subnet"
-                        value: Wifi.activeDetailValue(pane.controller, Wifi.subnetLabel(Wifi.detailIp4(pane.controller)))
-                    }
-                    DetailField {
-                        label: "Network usage"
-                        value: Wifi.activeDetailValue(pane.controller, Wifi.networkUsageLabel(Wifi.detailConnectionStatus(pane.controller)))
-                    }
-                    DetailField {
-                        label: "DNS"
-                        value: Wifi.activeDetailValue(pane.controller, Wifi.dnsLabel(Wifi.detailIp4(pane.controller)))
-                        valueWidth: 220
-                    }
-                }
+                DetailGrid { entries: connectionRows }
             }
 
             DetailCard {
                 height: 145
                 title: "Network details"
 
-                DetailGrid {
-                    DetailField {
-                        label: "Type"
-                        value: Wifi.wifiType(pane.ap)
-                    }
-                    DetailField {
-                        label: Wifi.hasDirectionalBitrates(pane.controller) ? "Transmit link speed" : "Link speed"
-                        value: Wifi.activeDetailValue(pane.controller, Wifi.hasDirectionalBitrates(pane.controller) ? Wifi.txBitrateLabel(pane.controller) : Wifi.bitrateLabel(pane.controller))
-                    }
-                    DetailField {
-                        label: "MAC address"
-                        value: Wifi.macLabel(pane.controller) !== "—" ? Wifi.macLabel(pane.controller) : (pane.ap.bssid || "—")
-                    }
-                    DetailField {
-                        label: "Receive link speed"
-                        value: Wifi.activeDetailValue(pane.controller, Wifi.rxBitrateLabel(pane.controller))
-                    }
-                }
+                DetailGrid { entries: networkRows }
             }
 
             DetailCard {
-                height: 208
+                height: 174
                 title: "Profile settings"
 
                 Column {
@@ -173,32 +140,29 @@ Rectangle {
 
                     ProfileToggleRow {
                         title: "Auto-connect"
-                        subtitle: pane.controller.profileFor(pane.ap) ? "Connect automatically when this network is in range" : "Connect once before autoconnect is available"
-                        checked: pane.controller.autoconnectEnabled()
-                        interactive: pane.controller.canEditProfile()
-                        onClicked: pane.controller.toggleAutoconnectSelected()
+                        hotkey: "A"
+                        subtitle: controller.profileFor(ap) ? "Connect automatically when this network is in range" : "Connect once before autoconnect is available"
+                        checked: controller.autoconnectEnabled()
+                        interactive: controller.canEditProfile()
+                        onClicked: controller.toggleAutoconnectSelected()
                     }
 
                     ProfileToggleRow {
-                        title: "Use randomised MAC"
-                        checked: pane.controller.randomizedMacEnabled()
-                        interactive: pane.controller.canEditProfile()
-                        onClicked: pane.controller.setMacRandomizedSelected(!pane.controller.randomizedMacEnabled())
-                    }
-
-                    ProfileToggleRow {
-                        title: "Use device MAC"
-                        checked: !pane.controller.randomizedMacEnabled()
-                        interactive: pane.controller.canEditProfile()
-                        onClicked: pane.controller.setMacRandomizedSelected(false)
+                        title: "Randomise MAC address"
+                        hotkey: "R"
+                        subtitle: controller.randomizedMacEnabled() ? "Use a stable private MAC for this network" : "Use this device's hardware MAC for this network"
+                        checked: controller.randomizedMacEnabled()
+                        interactive: controller.canEditProfile()
+                        onClicked: controller.toggleRandomizedMacSelected()
                     }
 
                     ProfileToggleRow {
                         title: "Send device name"
+                        hotkey: "N"
                         subtitle: "Share this device's name with the network"
-                        checked: pane.controller.sendHostnameEnabled()
-                        interactive: pane.controller.canEditProfile()
-                        onClicked: pane.controller.toggleSendHostnameSelected()
+                        checked: controller.sendHostnameEnabled()
+                        interactive: controller.canEditProfile()
+                        onClicked: controller.toggleSendHostnameSelected()
                     }
                 }
             }
@@ -207,26 +171,26 @@ Rectangle {
                 width: parent.width
                 height: 20
                 Text {
-                    text: pane.controller.isActive(pane.ap) && pane.controller.activeStatus && pane.controller.activeStatus.active_since_ms ? "Connected" : ""
-                    color: "#64748b"
+                    text: controller.isActive(ap) && controller.activeStatus && controller.activeStatus.active_since_ms ? "Connected" : ""
+                    color: Theme.subtleText
                     font.pixelSize: 12
                 }
                 Item {
                     Layout.fillWidth: true
                 }
                 Text {
-                    text: Wifi.lastSeenLabel(pane.ap)
-                    color: "#64748b"
+                    text: Wifi.lastSeenLabel(ap)
+                    color: Theme.subtleText
                     font.pixelSize: 12
                 }
             }
         }
 
         Text {
-            visible: !pane.controller.hasSelection
+            visible: !controller.hasSelection
             anchors.centerIn: parent
             text: "Select a network"
-            color: "#94a3b8"
+            color: Theme.mutedText
             font.pixelSize: 22
         }
     }
