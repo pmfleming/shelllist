@@ -14,84 +14,66 @@ Item {
     readonly property string launchMode: (Quickshell.env("SHELLLIST_WIFI_MODE") || "floating").toLowerCase()
     readonly property bool popoverMode: launchMode === "popover"
     readonly property bool floatingMode: !popoverMode
-    readonly property bool floatingWindowVisible: floatingMode
     readonly property bool popoverWindowVisible: popoverMode && popoverVisible
     property bool popoverVisible: false
-    property bool windowNoAnimRule: false
     property int floatingPlacementAttempts: 0
     readonly property bool noAnimations: Theme.noAnimations
+    property int popoverNoAnimRuleState: -1
+    property var pendingPopoverLayerRuleArgs: []
     readonly property var placementScreen: floatingMode
         ? (wifiWindow && wifiWindow.screen ? wifiWindow.screen : null)
         : (popoverAnchor && popoverAnchor.screen ? popoverAnchor.screen : null)
-    readonly property int currentWindowHeight: Math.round((((placementScreen && placementScreen.height > 0) ? placementScreen.height : 960) * 0.75))
+    readonly property int currentWindowHeight: Math.round(screenGeometry().height * 0.75)
 
-    function targetWindowX() {
+    function screenGeometry() {
         const screen = placementScreen;
-        const screenX = screen ? screen.x || 0 : 0;
-        const screenWidth = screen && screen.width > 0 ? screen.width : 1280;
-        return Math.round(screenX + (screenWidth - controller.surfaceWindowWidth) / 2);
+        return {
+            x: screen ? screen.x || 0 : 0,
+            y: screen ? screen.y || 0 : 0,
+            width: screen && screen.width > 0 ? screen.width : 1280,
+            height: screen && screen.height > 0 ? screen.height : 960
+        };
     }
 
-    function targetWindowY() {
-        const screen = placementScreen;
-        const screenY = screen ? screen.y || 0 : 0;
-        const screenHeight = screen && screen.height > 0 ? screen.height : 960;
-        return Math.round(screenY + (screenHeight - currentWindowHeight) / 2);
-    }
+    function targetLayerMarginX() { return Math.round((screenGeometry().width - controller.surfaceWindowWidth) / 2); }
+    function targetLayerMarginY() { return Math.round((screenGeometry().height - currentWindowHeight) / 2); }
+    function targetWindowX() { return screenGeometry().x + targetLayerMarginX(); }
+    function targetWindowY() { return screenGeometry().y + targetLayerMarginY(); }
 
-    function targetLayerMarginX() {
-        const screen = placementScreen;
-        const screenWidth = screen && screen.width > 0 ? screen.width : 1280;
-        return Math.round((screenWidth - controller.surfaceWindowWidth) / 2);
-    }
-
-    function targetLayerMarginY() {
-        const screen = placementScreen;
-        const screenHeight = screen && screen.height > 0 ? screen.height : 960;
-        return Math.round((screenHeight - currentWindowHeight) / 2);
-    }
-
-    function requestFloatingPlacement() {
-        if (!floatingMode || !floatingWindowVisible || !Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE"))
+    // In popover mode placement is pure bindings on the PanelWindow margins;
+    // only the floating window needs Hyprland dispatch nudges.
+    function requestWindowPlacement() {
+        if (!floatingMode || !Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE"))
             return;
         floatingPlacementAttempts = 0;
         floatingPlacementTimer.restart();
     }
 
-    function requestPopoverReposition() {
-        // The popover is a centered PanelWindow; Quickshell reapplies the
-        // margins and implicit size as bindings change.
-    }
-
-    function requestWindowPlacement() {
-        if (popoverMode)
-            requestPopoverReposition();
-        else
-            requestFloatingPlacement();
-    }
-
-    function refreshWindowNoAnimRule() {
-        if (!floatingMode || !Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") || noAnimPropProc.running)
+    function syncPopoverAnimationRule() {
+        const desiredState = noAnimations ? 1 : 0;
+        if (!popoverMode || !Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") || popoverNoAnimRuleState === desiredState)
             return;
-        noAnimPropProc.exec(["hyprctl", "-j", "getprop", "title:Shelllist.*", "no_anim"]);
+        if (Theme.noAnimationsOverride === null && Theme.hyprland && !Theme.hyprAnimationsKnown)
+            return;
+        applyPopoverLayerAnimationRule(noAnimations ? "animation 0 shelllist-wifi" : "animation unset shelllist-wifi");
+        popoverNoAnimRuleState = desiredState;
     }
 
-    function applyCompositorNoAnimRule() {
+    function applyPopoverLayerAnimationRule(rule) {
+        const args = ["hyprctl", "keyword", "layerrule", rule];
+        if (popoverLayerRuleProc.running) {
+            pendingPopoverLayerRuleArgs = args;
+            return;
+        }
+        popoverLayerRuleProc.exec(args);
+    }
+
+    function applyCompositorWindowRules() {
         if (!floatingMode || !Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE"))
             return;
-        Hyprland.dispatch("setprop title:Shelllist.* noanim 1");
+        Hyprland.dispatch("setprop title:Shelllist.* noanim " + (noAnimations ? "1" : "0"));
         Hyprland.dispatch("setprop title:Shelllist.* noborder 1");
         Hyprland.dispatch("setprop title:Shelllist.* noshadow 1");
-        windowNoAnimRule = true;
-    }
-
-    function applyWindowNoAnimRule(text) {
-        try {
-            const value = JSON.parse(text).no_anim;
-            windowNoAnimRule = value === true || value === 1 || value === "true" || value === "1";
-        } catch (error) {
-            windowNoAnimRule = /(?:^|\s)(true|1)(?:\s|$)/i.test(text);
-        }
     }
 
     function closeRequested() {
@@ -105,9 +87,10 @@ Item {
     function showPopover() {
         if (!popoverMode)
             return;
+        Theme.refreshHyprAnimations();
+        syncPopoverAnimationRule();
         popoverVisible = true;
         controller.refresh();
-        Qt.callLater(requestPopoverReposition);
         Qt.callLater(controller.focusSearchBox);
     }
 
@@ -117,7 +100,6 @@ Item {
     }
 
     function togglePopover() { popoverVisible ? hidePopover() : showPopover(); }
-    function ping(): string { return "pong"; }
 
     Timer {
         id: floatingPlacementTimer
@@ -126,31 +108,24 @@ Item {
         triggeredOnStart: true
         onTriggered: {
             host.floatingPlacementAttempts += 1;
-            if (host.floatingPlacementAttempts === 1) {
-                host.applyCompositorNoAnimRule();
-                host.refreshWindowNoAnimRule();
-            }
+            if (host.floatingPlacementAttempts === 1)
+                host.applyCompositorWindowRules();
             Hyprland.dispatch("focuswindow title:Shelllist Wi-Fi");
             Hyprland.dispatch("setfloating");
-            // Qt owns the toplevel size through FloatingWindow.implicitWidth/Height.
-            // Keep Hyprland placement limited to moving the already-rendered surface;
-            // forcing compositor-side resizes here can expose an unpainted region
-            // before Qt commits the matching frame.
             Hyprland.dispatch("movewindowpixel exact " + host.targetWindowX() + " " + host.targetWindowY() + ",title:Shelllist Wi-Fi");
             if (host.floatingPlacementAttempts >= 24)
                 stop();
         }
     }
 
+    onNoAnimationsChanged: syncPopoverAnimationRule()
+
     Process {
-        id: noAnimPropProc
-        stdout: StdioCollector {
-            id: noAnimPropOut
-            waitForEnd: true
-        }
-        onExited: function (exitCode, exitStatus) {
-            if (exitCode === 0)
-                host.applyWindowNoAnimRule(noAnimPropOut.text);
+        id: popoverLayerRuleProc
+        onRunningChanged: if (!running && host.pendingPopoverLayerRuleArgs.length > 0) {
+            const args = host.pendingPopoverLayerRuleArgs;
+            host.pendingPopoverLayerRuleArgs = [];
+            popoverLayerRuleProc.exec(args);
         }
     }
 
@@ -158,7 +133,7 @@ Item {
         enabled: host.popoverMode
         target: "wifi"
         readonly property bool visible: host.popoverVisible
-        function ping(): string { return host.ping(); }
+        function ping(): string { return "pong"; }
         function open(): void { host.showPopover(); }
         function hide(): void { host.hidePopover(); }
         function toggle(): void { host.togglePopover(); }
@@ -166,8 +141,7 @@ Item {
 
     // Quickshell's generated type info marks PanelWindow as an interface and
     // does not give the linter enough information for its margins group.
-    // qmllint disable uncreatable-type unresolved-type unqualified
-    PanelWindow {
+    PanelWindow { // qmllint disable uncreatable-type
         id: popoverAnchor
         visible: host.popoverWindowVisible
         implicitWidth: host.controller.surfaceWindowWidth
@@ -182,51 +156,36 @@ Item {
             top: true
             left: true
         }
-        margins {
+        margins { // qmllint disable unresolved-type unqualified
             top: host.targetLayerMarginY()
             left: host.targetLayerMarginX()
         }
         onVisibleChanged: if (visible) Qt.callLater(host.controller.focusSearchBox)
 
-        Item {
+        VisualSurface {
             id: popoverVisualSurface
-            x: Math.round((host.controller.surfaceWindowWidth - host.controller.currentWindowWidth) / 2)
-            y: 0
-            width: host.controller.currentWindowWidth
-            height: parent.height
-            clip: true
-
-            SurfaceLoader { loadWhen: host.popoverWindowVisible; content: host.content }
+            controller: host.controller
+            loadWhen: host.popoverWindowVisible
+            content: host.content
         }
     }
 
-    // qmllint enable uncreatable-type unresolved-type unqualified
     FloatingWindow {
         id: wifiWindow
-        visible: host.floatingWindowVisible
+        visible: host.floatingMode
         implicitWidth: host.controller.surfaceWindowWidth
         implicitHeight: host.currentWindowHeight
         title: "Shelllist Wi-Fi"
-        // Keep the real toplevel at the maximum size and transparent; the
-        // clipped visual surface below paints the actual rounded popup. This
-        // avoids compositor resize artifacts during details-pane transitions.
         color: "transparent"
         mask: Region { item: floatingVisualSurface }
-        onWindowConnected: {
-            host.requestFloatingPlacement();
-            Qt.callLater(host.refreshWindowNoAnimRule);
-        }
-        onVisibleChanged: if (visible) Qt.callLater(host.requestFloatingPlacement)
+        onWindowConnected: host.requestWindowPlacement()
+        onVisibleChanged: if (visible) Qt.callLater(host.requestWindowPlacement)
 
-        Item {
+        VisualSurface {
             id: floatingVisualSurface
-            x: Math.round((host.controller.surfaceWindowWidth - host.controller.currentWindowWidth) / 2)
-            y: 0
-            width: host.controller.currentWindowWidth
-            height: parent.height
-            clip: true
-
-            SurfaceLoader { loadWhen: host.floatingWindowVisible; content: host.content }
+            controller: host.controller
+            loadWhen: host.floatingMode
+            content: host.content
         }
     }
 

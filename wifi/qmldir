@@ -1,17 +1,22 @@
 singleton Theme 1.0 Theme.qml
 ActionButton 1.0 ActionButton.qml
+CommandProcess 1.0 CommandProcess.qml
 DetailCard 1.0 DetailCard.qml
 DetailField 1.0 DetailField.qml
 DetailGrid 1.0 DetailGrid.qml
 IconTile 1.0 IconTile.qml
 InputBackground 1.0 InputBackground.qml
 SurfaceLoader 1.0 SurfaceLoader.qml
+NmDaemonEvents 1.0 NmDaemonEvents.qml
+NetworkDetailsActions 1.0 NetworkDetailsActions.qml
 NetworkDetailsPane 1.0 NetworkDetailsPane.qml
+NetworkProfileSettingsCard 1.0 NetworkProfileSettingsCard.qml
 NetworkListPane 1.0 NetworkListPane.qml
 NetworkListRow 1.0 NetworkListRow.qml
 ProfileToggleRow 1.0 ProfileToggleRow.qml
 PromptDialog 1.0 PromptDialog.qml
 TogglePill 1.0 TogglePill.qml
+VisualSurface 1.0 VisualSurface.qml
 WifiHeader 1.0 WifiHeader.qml
 WifiActionProcesses 1.0 WifiActionProcesses.qml
 WifiContent 1.0 WifiContent.qml

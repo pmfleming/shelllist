@@ -7,11 +7,13 @@ Rectangle {
     required property int index
     required property var modelData
     property bool active: false
-    property string name: modelData.ssid || "<hidden>"
+    property string name: ""
     property int selectedIndex: 0
     property bool detailsOpen: false
     property bool connecting: false
     property int progressTick: 0
+    readonly property bool selected: index === selectedIndex
+    readonly property bool openNetwork: modelData.security === "--"
     readonly property var spinnerFrames: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
     signal picked(int rowIndex)
@@ -21,9 +23,9 @@ Rectangle {
     width: ListView.view.width
     height: 43
     radius: Theme.controlRadius
-    color: index === selectedIndex ? Theme.selected : "transparent"
-    border.color: index === selectedIndex ? Theme.strongBorder : "transparent"
-    border.width: index === selectedIndex ? 1 : 0
+    color: selected ? Theme.selected : "transparent"
+    border.color: selected ? Theme.strongBorder : "transparent"
+    border.width: selected ? 1 : 0
 
     Row {
         anchors.fill: parent
@@ -50,9 +52,9 @@ Rectangle {
         Text {
             width: 16
             anchors.verticalCenter: parent.verticalCenter
-            text: row.connecting ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length] : (row.active ? "●" : (row.modelData.security === "--" ? "Open" : "🔒"))
-            color: row.connecting ? Theme.accent : (row.active ? Theme.active : (row.modelData.security === "--" ? Theme.warning : Theme.mutedText))
-            font.pixelSize: row.modelData.security === "--" && !row.active && !row.connecting ? 8 : 13
+            text: row.connecting ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length] : (row.active ? "●" : (row.openNetwork ? "Open" : "🔒"))
+            color: row.connecting ? Theme.accent : (row.active ? Theme.active : (row.openNetwork ? Theme.warning : Theme.mutedText))
+            font.pixelSize: row.openNetwork && !row.active && !row.connecting ? 8 : 13
         }
 
         Text {
@@ -69,16 +71,13 @@ Rectangle {
             width: 24
             anchors.verticalCenter: parent.verticalCenter
             text: row.detailsOpen ? "‹" : "›"
-            color: row.index === row.selectedIndex ? Theme.accent : Theme.mutedText
+            color: row.selected ? Theme.accent : Theme.mutedText
             font.pixelSize: 25
 
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    row.picked(row.index);
-                    row.detailsToggled(row.index);
-                }
+                onClicked: row.detailsToggled(row.index)
             }
         }
     }

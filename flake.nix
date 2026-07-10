@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nm-api = {
+    nm-daemon = {
       url = "path:/home/laufan/Projects/nm-api";
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -17,26 +17,104 @@
     {
       packages = forAllSystems (system: pkgs:
         let
-          nmApi = inputs."nm-api".packages.${system}.default;
-          nmApiConnectParityProbe = inputs."nm-api".packages.${system}.connectParityProbe;
+          nmDaemon = inputs."nm-daemon".packages.${system}.default;
+          nmDaemonConnectParityProbe = inputs."nm-daemon".packages.${system}.connectParityProbe;
+          nmDaemonPython = pkgs.python3.withPackages (ps: [ ps.dbus-python ps.pygobject3 ]);
+          nmDaemonCallPy = pkgs.writeText "shelllist-nm-daemon-call.py" ''
+            import sys
+            import dbus
+
+            BUS_NAME = "org.laufan.NmDaemon"
+            OBJECT_PATH = "/org/laufan/NmDaemon"
+            INTERFACE = "org.laufan.NmDaemon1"
+
+            method = sys.argv[1]
+            if len(sys.argv) > 2 and sys.argv[2] == "--stdin":
+                params = sys.stdin.read().strip() or "{}"
+            else:
+                params = sys.argv[2] if len(sys.argv) > 2 else "{}"
+
+            bus = dbus.SessionBus()
+            proxy = bus.get_object(BUS_NAME, OBJECT_PATH)
+            iface = dbus.Interface(proxy, dbus_interface=INTERFACE)
+            print(str(iface.Call(method, params)))
+          '';
+          nmDaemonEventsPy = pkgs.writeText "shelllist-nm-daemon-events.py" ''
+            import sys
+            import dbus
+            import dbus.mainloop.glib
+            from gi.repository import GLib
+
+            BUS_NAME = "org.laufan.NmDaemon"
+            OBJECT_PATH = "/org/laufan/NmDaemon"
+            INTERFACE = "org.laufan.NmDaemon1"
+
+            streams = sys.argv[1:] or ["wifi.scan", "wifi.connect", "wifi.secret"]
+            stream_set = set(streams)
+
+            dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+            bus = dbus.SessionBus()
+            loop = GLib.MainLoop()
+
+            def handle_event(stream, event_json):
+                stream = str(stream)
+                if stream in stream_set:
+                    print(str(event_json), flush=True)
+
+            bus.add_signal_receiver(
+                handle_event,
+                signal_name="Event",
+                dbus_interface=INTERFACE,
+                bus_name=BUS_NAME,
+                path=OBJECT_PATH,
+            )
+            proxy = bus.get_object(BUS_NAME, OBJECT_PATH)
+            iface = dbus.Interface(proxy, dbus_interface=INTERFACE)
+            iface.Subscribe(dbus.Array(streams, signature="s"))
+            loop.run()
+          '';
           mkMeta = description: mainProgram: {
             inherit description mainProgram;
             platforms = pkgs.lib.platforms.linux;
           };
         in
         {
-          connectParityProbe = nmApiConnectParityProbe;
+          connectParityProbe = nmDaemonConnectParityProbe;
+
+          nmDaemonCall = pkgs.writeShellApplication {
+            name = "shelllist-nm-daemon-call";
+            meta = mkMeta "Call the Shelllist nm-daemon D-Bus API" "shelllist-nm-daemon-call";
+            runtimeInputs = [ nmDaemonPython ];
+            text = ''
+              if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+                echo "usage: $0 <method> [<params-json>|--stdin]" >&2
+                exit 2
+              fi
+              exec python3 ${nmDaemonCallPy} "$@"
+            '';
+          };
+
+          nmDaemonEvents = pkgs.writeShellApplication {
+            name = "shelllist-nm-daemon-events";
+            meta = mkMeta "Stream Shelllist nm-daemon D-Bus events as JSON Lines" "shelllist-nm-daemon-events";
+            runtimeInputs = [ nmDaemonPython ];
+            text = ''
+              exec python3 ${nmDaemonEventsPy} "$@"
+            '';
+          };
 
           default = pkgs.writeShellApplication {
             name = "shelllist-wifi";
-            meta = mkMeta "Quickshell Wi-Fi popup backed by nm-api" "shelllist-wifi";
+            meta = mkMeta "Quickshell Wi-Fi popup backed by nm-daemon" "shelllist-wifi";
             runtimeInputs = [
               pkgs.coreutils
               pkgs.gawk
               pkgs.networkmanager
               pkgs.quickshell
               self.packages.${system}.captivePortalBrowser
-              nmApi
+              self.packages.${system}.nmDaemonCall
+              self.packages.${system}.nmDaemonEvents
+              nmDaemon
             ];
             text = ''
               config_path=${self.packages.${system}.wifiConfig}/share/shelllist/wifi
@@ -66,6 +144,39 @@
 
               popover_ipc() {
                 quickshell ipc --path "$config_path" --newest call wifi "$@"
+              }
+
+              shelllist_no_animations_enabled() {
+                case "$(printf '%s' "''${SHELLLIST_NO_ANIMATIONS:-}" | tr '[:upper:]' '[:lower:]')" in
+                  1|true|yes|on|disabled|disable|no-animation|no-animations)
+                    return 0
+                    ;;
+                  0|false|no|off|enabled|enable)
+                    return 1
+                    ;;
+                esac
+
+                [ -n "''${HYPRLAND_INSTANCE_SIGNATURE:-}" ] || return 1
+                command -v hyprctl >/dev/null 2>&1 || return 1
+                hyprctl getoption animations:enabled 2>/dev/null \
+                  | awk '
+                      /^(int|bool):/ {
+                        value = tolower($2)
+                        disabled = (value == "0" || value == "false" || value == "off" || value == "no")
+                        found = 1
+                      }
+                      END { exit found && disabled ? 0 : 1 }
+                    '
+              }
+
+              sync_popover_animation_rule() {
+                [ -n "''${HYPRLAND_INSTANCE_SIGNATURE:-}" ] || return 0
+                command -v hyprctl >/dev/null 2>&1 || return 0
+                if shelllist_no_animations_enabled; then
+                  hyprctl keyword layerrule "animation 0 shelllist-wifi" >/dev/null 2>&1 || true
+                else
+                  hyprctl keyword layerrule "animation unset shelllist-wifi" >/dev/null 2>&1 || true
+                fi
               }
 
               ensure_popover_daemon() {
@@ -99,6 +210,7 @@
                   action=open
                 fi
                 ensure_popover_daemon || return 1
+                sync_popover_animation_rule
                 popover_ipc "$action" >/dev/null
               }
 
@@ -196,15 +308,15 @@
 
       checks = forAllSystems (system: pkgs:
         let
-          nmApi = inputs."nm-api".packages.${system}.default;
+          nmDaemon = inputs."nm-daemon".packages.${system}.default;
         in
         {
-          nmApiContract = pkgs.runCommand "shelllist-nm-api-contract"
+          nmDaemonContract = pkgs.runCommand "shelllist-nm-daemon-contract"
             {
               nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
             } ''
             ${pkgs.bash}/bin/bash ${./tests/check-nm-api-contract.sh} \
-              ${nmApi}/bin/nm-api \
+              ${nmDaemon}/bin/nm-daemon \
               ${./contracts/nm-api-ui-contract.fixture.json}
             touch $out
           '';
@@ -218,8 +330,8 @@
         };
         connectParityProbe = {
           type = "app";
-          program = "${self.packages.${system}.connectParityProbe}/bin/nm-api-connect-parity-probe";
-          meta.description = "Destructively compare nm-api and nmcli connection attempts for visible Wi-Fi networks";
+          program = "${self.packages.${system}.connectParityProbe}/bin/nm-daemon-connect-parity-probe";
+          meta.description = "Destructively compare nm-daemon and nmcli connection attempts for visible Wi-Fi networks";
         };
       });
 

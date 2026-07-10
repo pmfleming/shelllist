@@ -38,13 +38,13 @@ Rectangle {
 
             WifiHeader {
                 id: header
-                filterText: controller.filterText
+                filterText: content.controller.filterText
                 onFilterEdited: function (text) {
-                    controller.filterText = text;
-                    controller.selectedIndex = 0;
+                    content.controller.filterText = text;
+                    content.controller.selectedIndex = 0;
                 }
-                onKeyPressed: function (event) { controller.handleSearchKey(event); }
-                onRefreshRequested: controller.refresh()
+                onKeyPressed: function (event) { content.controller.handleSearchKey(event); }
+                onRefreshRequested: content.controller.refresh()
             }
 
             NetworkListPane {
@@ -54,31 +54,35 @@ Rectangle {
         }
 
         Item {
-            visible: controller.detailsRendered
-            Layout.preferredWidth: controller.detailsPaneGapWidth
-            Layout.minimumWidth: controller.detailsPaneGapWidth
-            Layout.maximumWidth: controller.detailsPaneGapWidth
+            visible: content.controller.detailsRendered
+            Layout.preferredWidth: content.controller.detailsPaneGapWidth
+            Layout.minimumWidth: content.controller.detailsPaneGapWidth
+            Layout.maximumWidth: content.controller.detailsPaneGapWidth
             Layout.fillHeight: true
         }
 
         NetworkDetailsPane {
             controller: content.controller
-            visible: controller.detailsRendered
-            Layout.preferredWidth: controller.detailsPaneWidth
-            Layout.minimumWidth: controller.detailsPaneWidth
-            Layout.maximumWidth: controller.detailsPaneWidth
+            visible: content.controller.detailsRendered
+            Layout.preferredWidth: content.controller.detailsPaneWidth
+            Layout.minimumWidth: content.controller.detailsPaneWidth
+            Layout.maximumWidth: content.controller.detailsPaneWidth
             Layout.fillHeight: true
         }
     }
 
     PromptDialog {
-        visible: controller.prompt.open
-        title: controller.prompt.title
-        detail: controller.prompt.detail
-        inputText: controller.prompt.text
-        password: controller.prompt.password
-        onInputEdited: function (text) { controller.prompt.text = text; }
-        onAccepted: controller.prompt.submit(controller)
-        onCancelled: controller.prompt.cancel()
+        visible: content.controller.prompt.open
+        title: content.controller.prompt.title
+        detail: content.controller.prompt.detail
+        inputText: content.controller.prompt.text
+        password: content.controller.prompt.password
+        onInputEdited: function (text) { content.controller.prompt.text = text; }
+        onAccepted: content.controller.prompt.submit(content.controller)
+        onCancelled: {
+            if (content.controller.prompt.mode === "daemon-secret" && content.controller.prompt.secretRequestId.length > 0)
+                content.controller.provideSecret(content.controller.prompt.secretRequestId, "", false);
+            content.controller.prompt.cancel();
+        }
     }
 }

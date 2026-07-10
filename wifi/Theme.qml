@@ -1,19 +1,24 @@
 pragma Singleton
 
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import QtQuick
 
 Item {
+    id: theme
+
     readonly property bool hyprland: !!Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
     property color hyprActiveBorder: "transparent"
     property color hyprInactiveBorder: "transparent"
     property int hyprRounding: -1
     property bool hyprAnimationsEnabled: true
+    property bool hyprAnimationsKnown: false
     property var hyprQueue: []
     property string hyprRequest: ""
 
-    readonly property bool noAnimations: envBool("SHELLLIST_NO_ANIMATIONS", true)
+    readonly property var noAnimationsOverride: envBoolOrNull("SHELLLIST_NO_ANIMATIONS")
+    readonly property bool noAnimations: noAnimationsOverride === null ? (!hyprland || !hyprAnimationsKnown || !hyprAnimationsEnabled) : noAnimationsOverride
     readonly property bool hyprAccentAvailable: alpha(hyprActiveBorder) > 0.01
     readonly property bool hyprInactiveAvailable: alpha(hyprInactiveBorder) > 0.01
     readonly property bool dark: luminance(window) < 0.5
@@ -69,15 +74,15 @@ Item {
         return Number.isNaN(parsed) ? fallback : parsed;
     }
 
-    function envBool(name, fallback) {
+    function envBoolOrNull(name) {
         const value = envText(name).toLowerCase();
         if (value.length === 0)
-            return fallback;
+            return null;
         if (["1", "true", "yes", "on", "disabled", "disable", "no-animation", "no-animations"].indexOf(value) >= 0)
             return true;
         if (["0", "false", "no", "off", "enabled", "enable"].indexOf(value) >= 0)
             return false;
-        return fallback;
+        return null;
     }
 
     function channel(value) {
@@ -137,6 +142,7 @@ Item {
         const match = /(?:int|bool):\s*(\S+)/.exec(text);
         if (!match)
             return;
+        hyprAnimationsKnown = true;
         hyprAnimationsEnabled = ["0", "false", "off", "no"].indexOf(match[1].toLowerCase()) < 0;
     }
 
@@ -150,12 +156,31 @@ Item {
         else if (name === "animations") applyHyprAnimations(text);
     }
 
-    Component.onCompleted: if (hyprland) {
+    function refreshHyprOptions() {
+        if (!hyprland)
+            return;
         queueHyprOption("active", "general:col.active_border");
         queueHyprOption("inactive", "general:col.inactive_border");
         queueHyprOption("rounding", "decoration:rounding");
         queueHyprOption("animations", "animations:enabled");
         startNextHyprOption();
+    }
+
+    function refreshHyprAnimations() {
+        if (!hyprland)
+            return;
+        queueHyprOption("animations", "animations:enabled");
+        startNextHyprOption();
+    }
+
+    Component.onCompleted: refreshHyprOptions()
+
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            if (event.name === "configreloaded")
+                theme.refreshHyprOptions();
+        }
     }
 
     SystemPalette {
@@ -169,10 +194,10 @@ Item {
             id: hyprOut
             waitForEnd: true
         }
-        onExited: function (exitCode, exitStatus) {
+        onExited: function (exitCode) { // qmllint disable signal-handler-parameters
             if (exitCode === 0)
-                applyHyprOption(hyprRequest, hyprOut.text);
-            startNextHyprOption();
+                theme.applyHyprOption(theme.hyprRequest, hyprOut.text);
+            theme.startNextHyprOption();
         }
     }
 }

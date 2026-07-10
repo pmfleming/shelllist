@@ -1,129 +1,156 @@
 import Quickshell.Io
 import QtQuick
 import "Wifi.js" as Wifi
+import "."
 
-// Quickshell 0.3's qmltypes expose Process.exited(exitCode,
-// QProcess::ExitStatus), but QProcess::ExitStatus is not resolvable to
-// the linter in this package set. The handlers below only need exitCode.
-// qmllint disable signal-handler-parameters
 Item {
-    required property var controller
-    property bool connectUsesStdin: false
-    property string connectStdinText: ""
-    property bool replacingConnect: false
-    property var pendingConnectArgs: []
-    property string pendingConnectStdinText: ""
-    property bool pendingConnectUsesStdin: false
+    id: actions
 
-    readonly property bool nonConnectRunning: disconnectProc.running || profileProc.running
-    readonly property bool running: connectProc.running || nonConnectRunning
-    readonly property bool connectRunning: connectProc.running
+    required property var controller
+    // Both are null when no stdin payload is involved.
+    property var connectStdinText: null
+    property var secretProvideStdinText: null
+
+    readonly property bool nonConnectRunning: disconnectProc.running || profileProc.running || secretProvideProc.running
+    readonly property bool running: connectRunning || nonConnectRunning
+    readonly property bool connectRunning: connectStartProc.running || controller.activeConnectRequestId.length > 0
 
     function startConnect(args, stdinText) {
-        connectUsesStdin = stdinText !== undefined && stdinText !== null;
-        connectStdinText = connectUsesStdin ? stdinText : "";
-        connectProc.stdinEnabled = connectUsesStdin;
-        connectProc.exec(args);
-    }
-    function queueReplacementConnect(args, stdinText) {
-        pendingConnectArgs = args;
-        pendingConnectUsesStdin = stdinText !== undefined && stdinText !== null;
-        pendingConnectStdinText = pendingConnectUsesStdin ? stdinText : "";
-        replacingConnect = true;
-        connectProc.signal(15);
-    }
-    function runPendingConnect() {
-        const args = pendingConnectArgs;
-        const stdinText = pendingConnectUsesStdin ? pendingConnectStdinText : undefined;
-        pendingConnectArgs = [];
-        pendingConnectStdinText = "";
-        pendingConnectUsesStdin = false;
-        replacingConnect = false;
-        startConnect(args, stdinText);
+        connectStdinText = stdinText === undefined ? null : stdinText;
+        connectStartProc.stdinEnabled = connectStdinText !== null;
+        connectStartProc.exec(args);
     }
     function runConnect(args, stdinText) {
-        if (connectProc.running)
-            return queueReplacementConnect(args, stdinText);
-        startConnect(args, stdinText);
+        if (!connectRunning)
+            return startConnect(args, stdinText);
+        controller.status = "Wait for the current Wi-Fi connection attempt to finish…";
     }
-    function disconnect() { disconnectProc.exec(Wifi.nmApiArgs("wifi", "disconnect")); }
-    function deleteProfile(path) { profileProc.exec(Wifi.nmApiArgs("wifi", "profile", "delete", path)); }
-    function setAutoconnect(path, enabled) { profileProc.exec(Wifi.nmApiArgs("wifi", "profile", "autoconnect", path, enabled ? "true" : "false")); }
-    function setMacRandomization(path, enabled) { profileProc.exec(Wifi.nmApiArgs("wifi", "profile", "mac-randomization", path, enabled ? "true" : "false")); }
-    function setSendHostname(path, enabled) { profileProc.exec(Wifi.nmApiArgs("wifi", "profile", "send-hostname", path, enabled ? "true" : "false")); }
+    function disconnect() { disconnectProc.exec(Wifi.nmDaemonArgs("wifi", "disconnect")); }
+    function deleteProfile(path) { profileProc.exec(Wifi.nmDaemonArgs("wifi", "profile", "delete", path)); }
+    function setAutoconnect(path, enabled) { profileProc.exec(Wifi.nmDaemonArgs("wifi", "profile", "autoconnect", path, enabled ? "true" : "false")); }
+    function setMacRandomization(path, enabled) { profileProc.exec(Wifi.nmDaemonArgs("wifi", "profile", "mac-randomization", path, enabled ? "true" : "false")); }
+    function setSendHostname(path, enabled) { profileProc.exec(Wifi.nmDaemonArgs("wifi", "profile", "send-hostname", path, enabled ? "true" : "false")); }
+    function provideSecret(requestId, password, save) {
+        secretProvideStdinText = JSON.stringify({ request_id: requestId, password: password, save: !!save });
+        secretProvideProc.stdinEnabled = true;
+        secretProvideProc.exec(["shelllist-nm-daemon-call", "wifi.secret.provide", "--stdin"]);
+    }
     function openPortal() { if (!portalProc.running) portalProc.exec(["shelllist-captive-portal"]); }
-    function resetConnectAttempt() { connectStdinText = ""; connectUsesStdin = false; controller.resetConnectProgress(); connectProc.stdinEnabled = false; }
-    function finishParsedConnect(result, errorText) { controller.applyConnectResult(result, errorText); if (result.status !== "error") controller.refresh(); }
-    function finishUnparsedConnect(exitCode, networkName, errorText, parseError) { if (exitCode !== 0) { controller.status = "Connect failed: " + (errorText || parseError); return; } controller.status = "Connected to " + networkName + "; could not parse connect result: " + parseError; controller.refresh(); }
-    function finishConnect(exitCode, networkName, outputText, errorText) { resetConnectAttempt(); try { finishParsedConnect(Wifi.apiResult(JSON.parse(outputText), "result"), errorText); } catch (error) { finishUnparsedConnect(exitCode, networkName, errorText, error); } }
-    function finishOrReplaceConnect(exitCode, networkName, outputText, errorText) { if (replacingConnect) return runPendingConnect(); finishConnect(exitCode, networkName, outputText, errorText); }
+
+    function finishConnectStart(exitCode, networkName, outputText, errorText) {
+        connectStdinText = null;
+        connectStartProc.stdinEnabled = false;
+        if (exitCode !== 0) {
+            controller.resetConnectProgress();
+            controller.status = "Connect failed to start: " + errorText;
+            controller.maybeRunPendingRefresh();
+            return;
+        }
+        try {
+            const result = Wifi.apiResult(JSON.parse(outputText), "result") || ({});
+            if (result.status === "error") {
+                controller.resetConnectProgress();
+                controller.applyConnectResult(result, errorText);
+                return;
+            }
+            controller.activeConnectRequestId = result.request_id || "";
+            controller.status = result.message || ("Connecting to " + networkName + "…");
+        } catch (parseError) {
+            controller.resetConnectProgress();
+            controller.status = "Connect failed: could not parse connect start response: " + parseError;
+            controller.maybeRunPendingRefresh();
+        }
+    }
+
+    function finishDisconnect(exitCode, outputText, errorText) {
+        if (exitCode !== 0) {
+            controller.status = "Disconnect failed: " + errorText;
+            return;
+        }
+        try {
+            const result = Wifi.apiResult(JSON.parse(outputText), "result");
+            controller.status = result.message || "Disconnected Wi-Fi";
+        } catch (error) {
+            controller.status = "Disconnected Wi-Fi";
+        }
+        controller.refresh();
+    }
+
+    function failProfileAction(message) { controller.status = "Profile action failed: " + message; }
+    function finishProfileAction(exitCode, outputText, errorText) {
+        try {
+            const result = Wifi.apiResult(JSON.parse(outputText), "result");
+            if (exitCode !== 0 || result.status === "error")
+                return failProfileAction(result.message || errorText);
+            controller.status = result.message || "Saved profile updated";
+        } catch (error) {
+            if (exitCode !== 0)
+                return failProfileAction(errorText || error);
+            controller.status = "Saved profile updated";
+        }
+        controller.refresh();
+    }
+
+    function finishSecretProvide(exitCode, outputText, errorText) {
+        secretProvideStdinText = null;
+        secretProvideProc.stdinEnabled = false;
+        if (exitCode !== 0) {
+            controller.status = "Could not provide Wi-Fi secret: " + errorText;
+            return;
+        }
+        try {
+            const result = Wifi.apiResult(JSON.parse(outputText), "result") || ({});
+            if (result.status === "error")
+                controller.status = result.message || "Wi-Fi secret was not accepted";
+        } catch (error) {
+            controller.status = "Could not parse Wi-Fi secret response: " + error;
+        }
+    }
 
     Process {
-        id: connectProc
+        id: connectStartProc
         stdout: StdioCollector { id: connectOut; waitForEnd: true }
         stderr: StdioCollector { id: connectErr; waitForEnd: true }
         onStarted: {
-            if (connectUsesStdin) {
-                connectProc.write(connectStdinText + "\n");
-                connectStdinText = "";
-                // The network API connect-target reads stdin with read_to_string(),
-                // so it must see EOF before it can connect and exit. Quickshell
-                // Process.write() only writes bytes; disabling stdin closes the
-                // write channel after the queued payload.
-                connectProc.stdinEnabled = false;
+            if (actions.connectStdinText !== null) {
+                connectStartProc.write(actions.connectStdinText + "\n");
+                actions.connectStdinText = null;
+                connectStartProc.stdinEnabled = false;
             }
         }
-        onExited: function (exitCode) { finishOrReplaceConnect(exitCode, controller.connectingNetworkName || "network", connectOut.text, connectErr.text); }
+        onExited: function (exitCode) { actions.finishConnectStart(exitCode, actions.controller.connectingNetworkName || "network", connectOut.text, connectErr.text); } // qmllint disable signal-handler-parameters
     }
 
     Process {
+        id: secretProvideProc
+        stdout: StdioCollector { id: secretProvideOut; waitForEnd: true }
+        stderr: StdioCollector { id: secretProvideErr; waitForEnd: true }
+        onStarted: {
+            if (actions.secretProvideStdinText !== null) {
+                secretProvideProc.write(actions.secretProvideStdinText + "\n");
+                actions.secretProvideStdinText = null;
+                secretProvideProc.stdinEnabled = false;
+            }
+        }
+        onExited: function (exitCode) { actions.finishSecretProvide(exitCode, secretProvideOut.text, secretProvideErr.text); } // qmllint disable signal-handler-parameters
+    }
+
+    CommandProcess {
         id: disconnectProc
-        stdout: StdioCollector { id: disconnectOut; waitForEnd: true }
-        stderr: StdioCollector { id: disconnectErr; waitForEnd: true }
-        onExited: function (exitCode) {
-            if (exitCode !== 0) {
-                controller.status = "Disconnect failed: " + disconnectErr.text;
-                return;
-            }
-            try {
-                const result = Wifi.apiResult(JSON.parse(disconnectOut.text), "result");
-                controller.status = result.message || "Disconnected Wi-Fi";
-            } catch (error) {
-                controller.status = "Disconnected Wi-Fi";
-            }
-            controller.refresh();
-        }
+        onFinished: function (exitCode, outputText, errorText) { actions.finishDisconnect(exitCode, outputText, errorText); }
     }
 
-    Process {
+    CommandProcess {
         id: profileProc
-        stdout: StdioCollector { id: profileOut; waitForEnd: true }
-        stderr: StdioCollector { id: profileErr; waitForEnd: true }
-        onExited: function (exitCode) {
-            try {
-                const result = Wifi.apiResult(JSON.parse(profileOut.text), "result");
-                if (exitCode !== 0 || result.status === "error") {
-                    controller.status = "Profile action failed: " + (result.message || profileErr.text);
-                    return;
-                }
-                controller.status = result.message || "Saved profile updated";
-            } catch (error) {
-                if (exitCode !== 0) {
-                    controller.status = "Profile action failed: " + (profileErr.text || error);
-                    return;
-                }
-                controller.status = "Saved profile updated";
-            }
-            controller.refresh();
-        }
+        onFinished: function (exitCode, outputText, errorText) { actions.finishProfileAction(exitCode, outputText, errorText); }
     }
 
-    Process {
+    CommandProcess {
         id: portalProc
-        stderr: StdioCollector { id: portalErr; waitForEnd: false }
-        onExited: function (exitCode) {
-            if (exitCode !== 0 && portalErr.text.length > 0)
-                controller.status = "Could not open captive portal browser: " + portalErr.text;
+        stderrWaitForEnd: false
+        onFinished: function (exitCode, outputText, errorText) {
+            if (exitCode !== 0 && errorText.length > 0)
+                actions.controller.status = "Could not open captive portal browser: " + errorText;
         }
     }
 }

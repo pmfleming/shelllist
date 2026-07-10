@@ -16,15 +16,15 @@
         "type": "github"
       }
     },
-    "nm-api": {
+    "nm-daemon": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1782904958,
-        "narHash": "sha256-wcqM2tLH9WS39rCkfZOkNrGiIZu2E4/7ImFORgBqO8M=",
+        "lastModified": 1783697619,
+        "narHash": "sha256-XZyQNtEO/lSCvlf9/HtNKtjqDmECxR4UcirvU3TEQp8=",
         "path": "/home/laufan/Projects/nm-api",
         "type": "path"
       },
@@ -36,7 +36,7 @@
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "nm-api": "nm-api"
+        "nm-daemon": "nm-daemon"
       }
     }
   },

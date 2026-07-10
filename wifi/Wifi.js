@@ -4,9 +4,10 @@ function clampIndex(index, length) { return length <= 0 ? 0 : Math.max(0, Math.m
 function networkName(ap) { return ap && ap.ssid ? ap.ssid : "<hidden>"; }
 function securityLabel(security) { return security === "--" ? "Open" : (security || "Unknown"); }
 function hasNetworkIdentity(ap) { return !!(ap && ((ap.ssid_bytes && ap.ssid_bytes.length > 0) || (ap.ssid && ap.ssid.length > 0))); }
+function connectPromptKind(ap) { return ap && ap.connect_prompt ? (ap.connect_prompt.kind || "none") : "none"; }
 function canConnect(ap) { return !!ap && (ap.capabilities ? ap.capabilities.can_connect : hasNetworkIdentity(ap)); }
-function needsPassword(ap) { return !!(ap && hasNetworkIdentity(ap) && ap.capabilities && ap.capabilities.needs_password); }
-function needsCredentials(ap) { return !!(ap && hasNetworkIdentity(ap) && ap.capabilities && ap.capabilities.needs_credentials); }
+function needsPassword(ap) { return !!(ap && hasNetworkIdentity(ap) && (connectPromptKind(ap) === "password" || (ap.capabilities && ap.capabilities.needs_password))); }
+function needsCredentials(ap) { return !!(ap && hasNetworkIdentity(ap) && (connectPromptKind(ap) === "enterprise" || (ap.capabilities && ap.capabilities.needs_credentials))); }
 function canStartConnection(ap) { return canConnect(ap) || needsPassword(ap) || needsCredentials(ap); }
 function accessPointPath(ap) { return ap ? (ap.path || ap.ap_path || "") : ""; }
 function activeAccessPoint(status) { return status ? status.access_point || (status.network || null) : null; }
@@ -14,8 +15,21 @@ function subnetLabel(ip4) { return ip4 && ip4.prefix !== null && ip4.prefix !== 
 function dnsLabel(ip4) { return ip4 && ip4.dns && ip4.dns.length > 0 ? ip4.dns.join(", ") : "—"; }
 function hasNumber(value) { return value !== null && value !== undefined && !isNaN(value); }
 function privacyFor(profile) { return profile && profile.privacy ? profile.privacy : ({}); }
-function isOpenNetwork(ap) { return !!(ap && ap.security === "--" && hasNetworkIdentity(ap)); }
-function canShareQr(ap) { return isOpenNetwork(ap); }
+function shareHint(ap) { return ap && ap.share ? ap.share : ({}); }
+function canShareQr(ap) { const share = shareHint(ap); return !!share.shareable && !!share.qr_payload; }
+function isWrongPasswordReason(reason) { return reason === "wrong-password" || reason === "secret-invalid"; }
+function isSecretFailureReason(reason) { return isWrongPasswordReason(reason) || reason === "password-unavailable" || reason === "secret-required"; }
+function connectFailureRetryMs(reason) { return isWrongPasswordReason(reason) ? 10000 : 0; }
+function secretKey(ap) { return (ap && (ap.ssid || "")) + "\n" + (ap && (ap.security || "")); }
+function connectAttemptKey(ap) { return secretKey(ap) + "\n" + (ap && (ap.bssid || "")); }
+function passwordFingerprint(password) {
+    if (password === undefined || password === null)
+        return "saved";
+    let hash = 0;
+    for (let i = 0; i < password.length; i++)
+        hash = ((hash << 5) - hash + password.charCodeAt(i)) | 0;
+    return "pw:" + password.length + ":" + hash;
+}
 
 function escapeHtml(value) {
     return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -30,7 +44,8 @@ function hotkeyStartIndex(label, key) {
     return match ? match.index + match[1].length : label.indexOf(key);
 }
 
-function nmApiArgs() { const args = ["nm-api"]; for (let i = 0; i < arguments.length; i++) args.push(arguments[i]); return args; }
+function nmDaemonArgs() { const args = ["nm-daemon"]; for (let i = 0; i < arguments.length; i++) args.push(arguments[i]); return args; }
+function nmApiArgs() { return nmDaemonArgs.apply(null, arguments); }
 
 function highlightHotkey(text, hotkey) {
     const labelText = String(text);
@@ -81,22 +96,10 @@ function apiResult(response, key) {
     return pick(data, key);
 }
 
-function escapeWifiQr(value) {
-    const text = String(value || "");
-    let escaped = "";
-    const special = "\\;,:\"";
-    for (let i = 0; i < text.length; i++) {
-        const char = text.charAt(i);
-        escaped += special.indexOf(char) >= 0 ? "\\" + char : char;
-    }
-    return escaped;
-}
-
 function wifiQrPayload(ap) {
     if (!canShareQr(ap))
         return "";
-    const hidden = ap.hidden ? ";H:true" : "";
-    return "WIFI:T:nopass;S:" + escapeWifiQr(networkName(ap)) + hidden + ";;";
+    return shareHint(ap).qr_payload || "";
 }
 
 function sameNonEmpty(left, right) { return !!left && !!right && left === right; }
@@ -106,6 +109,8 @@ function sameAccessPointIdentity(left, right) { return sameNonEmpty(accessPointI
 function sameAccessPoint(left, right) {
     if (!left || !right)
         return false;
+    if (sameNonEmpty(left.key, right.key))
+        return true;
     const leftPath = accessPointPath(left);
     const rightPath = accessPointPath(right);
     if (leftPath || rightPath)
@@ -120,6 +125,8 @@ function accessPointMatches(ap, active) {
 }
 
 function isActiveAccessPoint(ap, active) {
+    if (ap && ap.active)
+        return true;
     if (accessPointMatches(ap, active))
         return true;
     const children = ap && ap.access_points ? ap.access_points : [];
@@ -136,6 +143,20 @@ function profileForAccessPoint(ap, active, activeStatus) {
     return active && activeStatus && activeStatus.profile ? activeStatus.profile : null;
 }
 
+function visibleNetworks(networks, filterText, active) {
+    const query = (filterText || "").toLowerCase();
+    return networks.filter(function (ap) {
+        return !query || (ap.ssid || "").toLowerCase().indexOf(query) !== -1;
+    }).sort(function (left, right) {
+        const leftActive = isActiveAccessPoint(left, active);
+        const rightActive = isActiveAccessPoint(right, active);
+        if (leftActive !== rightActive)
+            return leftActive ? -1 : 1;
+        const strengthDelta = (right.strength || 0) - (left.strength || 0);
+        return strengthDelta !== 0 ? strengthDelta : networkName(left).localeCompare(networkName(right));
+    });
+}
+
 function selectedNetwork(networks, selectedIndex) {
     return networks.length === 0 ? null : networks[clampIndex(selectedIndex, networks.length)];
 }
@@ -149,12 +170,18 @@ function selectedIndexAfterUpdate(previous, networks, selectedIndex, resetSelect
     return nextIndex >= 0 ? nextIndex : clampIndex(selectedIndex, networks.length);
 }
 
+function bandLabel(ap) {
+    if (ap && ap.band)
+        return ap.band;
+    const frequency = ap && ap.frequency ? ap.frequency : 0;
+    return frequency >= 5925 ? "6 GHz" : frequency >= 4900 ? "5 GHz" : frequency > 0 ? "2.4 GHz" : "Unknown";
+}
+
 function frequencyLabel(ap) {
     const frequency = ap && ap.frequency ? ap.frequency : 0;
     if (frequency <= 0)
         return "Unknown";
-    const band = frequency >= 5925 ? "6 GHz" : frequency >= 4900 ? "5 GHz" : "2.4 GHz";
-    return band + " (" + frequency + " MHz)";
+    return bandLabel(ap) + " (" + frequency + " MHz)";
 }
 
 function wifiType(ap) {
@@ -167,50 +194,6 @@ function detailConnectionStatus(controller) {
     if (controller.isActive(ap) && controller.activeStatus)
         return controller.activeStatus;
     return ap && ap.last_connection ? ap.last_connection : null;
-}
-
-function detailIp4(controller) {
-    const status = detailConnectionStatus(controller);
-    return status && status.ip4 ? status.ip4 : null;
-}
-
-function activeIp4Value(controller, field) {
-    const ip4 = detailIp4(controller);
-    return ip4 && ip4[field] ? ip4[field] : "—";
-}
-
-function activeDetailValue(controller, value) {
-    return detailConnectionStatus(controller) ? value : "—";
-}
-
-function wirelessStatus(controller) {
-    const status = detailConnectionStatus(controller);
-    return status && status.wireless ? status.wireless : null;
-}
-
-function hasDirectionalBitrates(controller) {
-    const wireless = wirelessStatus(controller);
-    return !!(wireless && (hasNumber(wireless.tx_bitrate_mbps) || hasNumber(wireless.rx_bitrate_mbps)));
-}
-
-function bitrateLabel(controller) {
-    const wireless = wirelessStatus(controller);
-    return wireless ? formatMbps(wireless.bitrate_mbps) : "—";
-}
-
-function txBitrateLabel(controller) {
-    const wireless = wirelessStatus(controller);
-    return wireless ? formatMbps(wireless.tx_bitrate_mbps) : "—";
-}
-
-function rxBitrateLabel(controller) {
-    const wireless = wirelessStatus(controller);
-    return wireless ? formatMbps(wireless.rx_bitrate_mbps) : "—";
-}
-
-function macLabel(controller) {
-    const wireless = wirelessStatus(controller);
-    return wireless && wireless.mac_address ? wireless.mac_address : "—";
 }
 
 function networkUsageLabel(activeStatus) {
@@ -226,6 +209,8 @@ function relativeAgeLabel(seconds) {
     return minutes < 60 ? minutes + "m ago" : Math.round(minutes / 60) + "h ago";
 }
 
+function connectionStateLabel(controller, ap) { return controller.isActive(ap) && controller.activeStatus && controller.activeStatus.active_since_ms ? "Connected" : ""; }
+
 function lastSeenLabel(ap) {
     if (!ap || ap.last_seen < 0)
         return "";
@@ -235,6 +220,38 @@ function lastSeenLabel(ap) {
     return "Last seen: " + relativeAgeLabel(seconds);
 }
 
+function connectionDetailRows(controller, ap, accentColor) {
+    const status = detailConnectionStatus(controller);
+    const ip4 = status && status.ip4 ? status.ip4 : null;
+    const present = function (value) { return status ? value : "—"; };
+    const ip4Value = function (field) { return ip4 && ip4[field] ? ip4[field] : "—"; };
+    return [
+        { label: "Signal strength", value: (ap.strength || 0) + "%", valueColor: accentColor, valueBold: true },
+        { label: "IP address", value: ip4Value("address") },
+        { label: "Frequency", value: frequencyLabel(ap) },
+        { label: "Gateway", value: ip4Value("gateway") },
+        { label: "Band", value: bandLabel(ap) },
+        { label: "Security", value: securityLabel(ap.security) },
+        { label: "Subnet", value: present(subnetLabel(ip4)) },
+        { label: "Network usage", value: present(networkUsageLabel(status)) },
+        { label: "DNS", value: present(dnsLabel(ip4)), valueWidth: 220 }
+    ];
+}
+
+function networkDetailRows(controller, ap) {
+    const status = detailConnectionStatus(controller);
+    const wireless = status && status.wireless ? status.wireless : null;
+    const bitrate = function (field) { return status && wireless ? formatMbps(wireless[field]) : "—"; };
+    const directional = !!(wireless && (hasNumber(wireless.tx_bitrate_mbps) || hasNumber(wireless.rx_bitrate_mbps)));
+    return [
+        { label: "Type", value: wifiType(ap) },
+        { label: directional ? "Transmit link speed" : "Link speed", value: bitrate(directional ? "tx_bitrate_mbps" : "bitrate_mbps") },
+        { label: "BSSID", value: ap && ap.bssid ? ap.bssid : "—" },
+        { label: "Receive link speed", value: bitrate("rx_bitrate_mbps") },
+        { label: "Device MAC", value: wireless && wireless.mac_address ? wireless.mac_address : "—" }
+    ];
+}
+
 function formatMbps(value) {
     if (!hasNumber(value))
         return "—";
@@ -242,14 +259,37 @@ function formatMbps(value) {
     return (Math.abs(rounded - Math.round(rounded)) < 0.01 ? Math.round(rounded) : rounded) + " Mbps";
 }
 
+function connectTarget(ap) {
+    const target = {
+        ssid: ap.ssid || "",
+        ssid_bytes: ap.ssid_bytes || [],
+        path: ap.path || ap.ap_path || "",
+        bssid: ap.bssid || "",
+        device_iface: ap.device_iface || "",
+        device_path: ap.device_path || "",
+        security: ap.security || null
+    };
+    if (ap.hidden)
+        target.hidden = true;
+    if (ap.key_mgmt)
+        target.key_mgmt = ap.key_mgmt;
+    if (ap.enterprise)
+        target.enterprise = ap.enterprise;
+    if (ap.profile)
+        target.profile = ap.profile;
+    return target;
+}
+
 function enterpriseTarget(ap, identity) {
-    const target = JSON.parse(JSON.stringify(ap));
-    target.enterprise = { eap: ["peap"], identity: identity, phase2_auth: "mschapv2" };
+    const target = connectTarget(ap);
+    const defaults = ap && ap.connect_prompt && ap.connect_prompt.enterprise_defaults ? ap.connect_prompt.enterprise_defaults : ({ eap: ["peap"], phase2_auth: "mschapv2" });
+    target.enterprise = JSON.parse(JSON.stringify(defaults));
+    target.enterprise.identity = identity;
     return target;
 }
 
 function connectFailureMessage(result, fallbackText) {
-    const reasonLabels = { "secret-required": "Password required", "authorization-required": "Authorization required", "unsupported-auth": "Unsupported Wi-Fi authentication", "validation-error": "Invalid Wi-Fi target", "not-found": "Wi-Fi network not found", timeout: "Connection timed out", "activation-failed": "Connection activation failed", unknown: "Connect failed" };
+    const reasonLabels = { "secret-required": "Password required", "secret-invalid": "Wrong password", "wrong-password": "Wrong password", "password-unavailable": "Password unavailable", "authorization-required": "Authorization required", "unsupported-auth": "Unsupported Wi-Fi authentication", "validation-error": "Invalid Wi-Fi target", "not-found": "Wi-Fi network not found", "ssid-not-found": "Wi-Fi network not found", timeout: "AP unreachable or weak signal", "dhcp-failed": "Connected to Wi-Fi but no IP", "ip-config-failed": "Connected to Wi-Fi but no IP", "activation-failed": "Connection activation failed", unknown: "Connect failed" };
     const label = reasonLabels[result.reason || "unknown"] || "Connect failed";
     return label + ": " + (result.message || fallbackText || "unknown error");
 }

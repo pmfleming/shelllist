@@ -1,16 +1,17 @@
-import Quickshell.Io
 import QtQuick
+import "Wifi.js" as Wifi
+import "."
 
 Item {
+    id: sharing
+
     required property var controller
     readonly property bool running: shareCheckProc.running
 
-    function check(path) { shareCheckProc.exec(Wifi.nmApiArgs("wifi", "profile", "share", path)); }
+    function check(path) { shareCheckProc.exec(Wifi.nmDaemonArgs("wifi", "profile", "share", path)); }
 
-    Process {
+    CommandProcess {
         id: shareCheckProc
-        stdout: StdioCollector { id: shareCheckOut; waitForEnd: true }
-        stderr: StdioCollector { id: shareCheckErr; waitForEnd: true }
-        onExited: function (exitCode, exitStatus) { controller.applyShareCheckOutput(shareCheckOut.text, shareCheckErr.text); }
+        onFinished: function (exitCode, outputText, errorText) { sharing.controller.applyShareCheckOutput(outputText, errorText); }
     }
 }
