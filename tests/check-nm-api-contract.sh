@@ -1,20 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$#" -ne 2 ]; then
-  echo "usage: $0 <nm-daemon-bin> <fixture>" >&2
+if [ "$#" -ne 3 ]; then
+  echo "usage: $0 <nm-daemon-bin> <fixture> <frontend-api-js>" >&2
   exit 2
 fi
 
 nm_daemon=$1
 fixture=$2
+frontend_api_js=$3
 actual=$(mktemp)
 method_actual=$(mktemp)
-trap 'rm -f "$actual" "$method_actual"' EXIT
+registry_actual=$(mktemp)
+frontend_actual=$(mktemp)
+daemon_log=$(mktemp)
+trap 'rm -f "$actual" "$method_actual" "$registry_actual" "$frontend_actual" "$daemon_log"' EXIT
 
-"$nm_daemon" debug contract-fixture > "$actual"
+"$nm_daemon" --log-file "$daemon_log" debug contract-fixture > "$actual"
 diff -u "$fixture" "$actual"
-"$nm_daemon" debug contract-fixtures > "$method_actual"
+"$nm_daemon" --log-file "$daemon_log" debug contract-fixtures > "$method_actual"
+"$nm_daemon" --log-file "$daemon_log" debug protocol-registry > "$registry_actual"
 
 jq -e '
   .protocol == "nm-api" and
@@ -54,6 +59,38 @@ jq -e '
   .data.fixtures."wifi-connect.success".result.path == "dbus" and
   .data.fixtures."wifi-connect.secret-required".result.reason == "secret-required" and
   .data.fixtures."wifi-scan.stream".events[0].protocol == "nm-api" and
-  .data.fixtures."wifi-scan.stream".events[0].stream == "wifi-scan" and
+  .data.fixtures."wifi-scan.stream".events[0].stream == "wifi.scan" and
   .data.fixtures."wifi-profile.share".payload.shareable == true
 ' "$method_actual" >/dev/null
+
+jq -e '
+  .protocol == "nm-api" and
+  .version == 1 and
+  .ok == true and
+  ([.data.protocol.methods[].name] | contains([
+    "wifi.status", "network.connectivity", "wifi.networks", "wifi.scan",
+    "wifi.connectTarget", "wifi.disconnect", "wifi.profile.operation",
+    "wifi.secret.capabilities", "wifi.secret.provide"
+  ])) and
+  ([.data.protocol.streams[] | select(.subscribable) | .name] | contains([
+    "wifi.status", "network.connectivity", "wifi.scan", "wifi.connect", "wifi.secret"
+  ]))
+' "$registry_actual" >/dev/null
+
+jq -r '
+  def identifier: gsub("[.-]"; "_");
+  ".pragma library\n\n"
+  + "var protocol = " + (.protocol | tojson) + ";\n"
+  + "var version = " + (.version | tostring) + ";\n\n"
+  + "var methods = {\n"
+  + ([.data.protocol.methods[] | "    " + (.name | identifier) + ": " + (.name | tojson)] | join(",\n"))
+  + "\n};\n\n"
+  + "var streams = {\n"
+  + ([.data.protocol.streams[] | select(.subscribable) | "    " + (.name | identifier) + ": " + (.name | tojson)] | join(",\n"))
+  + "\n};\n\n"
+  + "var subscribedStreams = [\n"
+  + ([.data.protocol.streams[] | select(.subscribable) | "    streams." + (.name | identifier)] | join(",\n"))
+  + "\n];"
+' "$registry_actual" > "$frontend_actual"
+
+diff -u "$frontend_api_js" "$frontend_actual"

@@ -1,0 +1,3302 @@
+{
+  "schema_version": "0.1.0",
+  "task_id": "map.architecture",
+  "project": {
+    "name": "shelllist",
+    "root": "/home/laufan/Projects/shelllist"
+  },
+  "provenance": {
+    "generated_at": "2026-07-10T16:52:05.180Z",
+    "command": "qmlqualitylens measure all --config /home/laufan/Projects/qmlqualitylens/examples/shelllist.config.json",
+    "config_path": "/home/laufan/Projects/qmlqualitylens/examples/shelllist.config.json",
+    "project_root": "/home/laufan/Projects/shelllist",
+    "lens": "qmlqualitylens",
+    "lens_version": "0.1.0"
+  },
+  "confidence": {
+    "complete": false,
+    "partial": true,
+    "confidence_scope": "static QML parser with project-wide qmldir/type resolution and heuristic JavaScript analysis",
+    "observed_inputs": [
+      "qml_files",
+      "js_files",
+      "project_resolution",
+      "qmldir"
+    ],
+    "qmllint_source": "none",
+    "qmllint_command": null,
+    "qmllint_report": null,
+    "qmllint_exit_code": null,
+    "qmllint_error": null,
+    "qmllint_findings": 0,
+    "unresolved_imports": 0,
+    "unresolved_types": 5,
+    "unsupported_pattern": []
+  },
+  "summary": {
+    "nodes": 31,
+    "edges": 451,
+    "entrypoints": 1,
+    "high_risk_nodes": 1
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "wifi/ActionButton.qml",
+        "label": "ActionButton.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 33,
+          "objects": 3,
+          "effort": 47,
+          "locality": 92,
+          "leverage": 100,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 22,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/CommandProcess.qml",
+        "label": "CommandProcess.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 16,
+          "objects": 4,
+          "effort": 50,
+          "locality": 74,
+          "leverage": 100,
+          "process_boundary_calls": 1
+        },
+        "risk": {
+          "score": 48,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/DetailCard.qml",
+        "label": "DetailCard.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 29,
+          "objects": 4,
+          "effort": 45,
+          "locality": 92,
+          "leverage": 88,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 21,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/DetailField.qml",
+        "label": "DetailField.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 25,
+          "objects": 3,
+          "effort": 33,
+          "locality": 96,
+          "leverage": 60,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 13,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/DetailGrid.qml",
+        "label": "DetailGrid.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 18,
+          "objects": 3,
+          "effort": 34,
+          "locality": 96,
+          "leverage": 73,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 14,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/IconTile.qml",
+        "label": "IconTile.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 11,
+          "objects": 3,
+          "effort": 30,
+          "locality": 96,
+          "leverage": 91,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 13,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/InputBackground.qml",
+        "label": "InputBackground.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 3,
+          "objects": 1,
+          "effort": 9,
+          "locality": 100,
+          "leverage": 79,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 2,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/NetworkDetailsActions.qml",
+        "label": "NetworkDetailsActions.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 43,
+          "objects": 6,
+          "effort": 69,
+          "locality": 92,
+          "leverage": 53,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 22,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/NetworkDetailsPane.qml",
+        "label": "NetworkDetailsPane.qml",
+        "kind": "container_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 82,
+          "objects": 17,
+          "effort": 109,
+          "locality": 68,
+          "leverage": 39,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 32,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/NetworkListPane.qml",
+        "label": "NetworkListPane.qml",
+        "kind": "container_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 68,
+          "objects": 5,
+          "effort": 115,
+          "locality": 76,
+          "leverage": 46,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 44,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/NetworkListRow.qml",
+        "label": "NetworkListRow.qml",
+        "kind": "delegate_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 84,
+          "objects": 9,
+          "effort": 120,
+          "locality": 62,
+          "leverage": 47,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 35,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/NetworkProfileSettingsCard.qml",
+        "label": "NetworkProfileSettingsCard.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 37,
+          "objects": 5,
+          "effort": 56,
+          "locality": 96,
+          "leverage": 53,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 19,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/NmDaemonEvents.qml",
+        "label": "NmDaemonEvents.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 28,
+          "objects": 5,
+          "effort": 76,
+          "locality": 74,
+          "leverage": 54,
+          "process_boundary_calls": 1
+        },
+        "risk": {
+          "score": 54,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/ProfileToggleRow.qml",
+        "label": "ProfileToggleRow.qml",
+        "kind": "delegate_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 53,
+          "objects": 7,
+          "effort": 68,
+          "locality": 87,
+          "leverage": 83,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 22,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/PromptDialog.qml",
+        "label": "PromptDialog.qml",
+        "kind": "container_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 86,
+          "objects": 9,
+          "effort": 128,
+          "locality": 68,
+          "leverage": 44,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 42,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/qmldir",
+        "label": "qmldir",
+        "kind": "qmldir",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 28
+        },
+        "risk": {
+          "score": 0,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/shell.qml",
+        "label": "shell.qml",
+        "kind": "shell_entrypoint",
+        "entrypoint": true,
+        "metrics": {
+          "source_lines": 27,
+          "objects": 5,
+          "effort": 38,
+          "locality": 88,
+          "leverage": 36,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 25,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/StdinCommandProcess.qml",
+        "label": "StdinCommandProcess.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 19,
+          "objects": 3,
+          "effort": 52,
+          "locality": 82,
+          "leverage": 72,
+          "process_boundary_calls": 1
+        },
+        "risk": {
+          "score": 38,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/SurfaceLoader.qml",
+        "label": "SurfaceLoader.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 5,
+          "objects": 1,
+          "effort": 9,
+          "locality": 100,
+          "leverage": 64,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 2,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/Theme.qml",
+        "label": "Theme.qml",
+        "kind": "theme",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 171,
+          "objects": 5,
+          "effort": 291,
+          "locality": 47,
+          "leverage": 6,
+          "process_boundary_calls": 1
+        },
+        "risk": {
+          "score": 108,
+          "level": "medium"
+        }
+      },
+      {
+        "id": "wifi/TogglePill.qml",
+        "label": "TogglePill.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 21,
+          "objects": 2,
+          "effort": 30,
+          "locality": 96,
+          "leverage": 61,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 13,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/VisualSurface.qml",
+        "label": "VisualSurface.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 12,
+          "objects": 2,
+          "effort": 23,
+          "locality": 96,
+          "leverage": 75,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 11,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/Wifi.js",
+        "label": "Wifi.js",
+        "kind": "js",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 313
+        },
+        "risk": {
+          "score": 0,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/WifiActionProcesses.qml",
+        "label": "WifiActionProcesses.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 99,
+          "objects": 6,
+          "effort": 197,
+          "locality": 76,
+          "leverage": 31,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 79,
+          "level": "medium"
+        }
+      },
+      {
+        "id": "wifi/WifiContent.qml",
+        "label": "WifiContent.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 76,
+          "objects": 8,
+          "effort": 131,
+          "locality": 72,
+          "leverage": 37,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 48,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/WifiController.qml",
+        "label": "WifiController.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 456,
+          "objects": 10,
+          "effort": 890,
+          "locality": 24,
+          "leverage": 0,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 283,
+          "level": "high"
+        }
+      },
+      {
+        "id": "wifi/WifiDiscoveryProcesses.qml",
+        "label": "WifiDiscoveryProcesses.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 87,
+          "objects": 5,
+          "effort": 150,
+          "locality": 80,
+          "leverage": 41,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 63,
+          "level": "medium"
+        }
+      },
+      {
+        "id": "wifi/WifiHeader.qml",
+        "label": "WifiHeader.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 65,
+          "objects": 6,
+          "effort": 81,
+          "locality": 74,
+          "leverage": 49,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 30,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/WifiPromptController.qml",
+        "label": "WifiPromptController.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 143,
+          "objects": 1,
+          "effort": 247,
+          "locality": 100,
+          "leverage": 28,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 62,
+          "level": "medium"
+        }
+      },
+      {
+        "id": "wifi/WifiShareProcess.qml",
+        "label": "WifiShareProcess.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 13,
+          "objects": 2,
+          "effort": 25,
+          "locality": 92,
+          "leverage": 59,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 16,
+          "level": "low"
+        }
+      },
+      {
+        "id": "wifi/WifiWindowHost.qml",
+        "label": "WifiWindowHost.qml",
+        "kind": "visual_component",
+        "entrypoint": false,
+        "metrics": {
+          "source_lines": 171,
+          "objects": 11,
+          "effort": 290,
+          "locality": 37,
+          "leverage": 18,
+          "process_boundary_calls": 0
+        },
+        "risk": {
+          "score": 108,
+          "level": "medium"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "wifi/DetailGrid.qml",
+        "to": "wifi/DetailField.qml",
+        "kind": "component_use",
+        "line": 11
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/ActionButton.qml",
+        "kind": "component_use",
+        "line": 16
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/ActionButton.qml",
+        "kind": "component_use",
+        "line": 27
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/ActionButton.qml",
+        "kind": "component_use",
+        "line": 35
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/ActionButton.qml",
+        "kind": "component_use",
+        "line": 42
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/IconTile.qml",
+        "kind": "component_use",
+        "line": 35
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsActions.qml",
+        "kind": "component_use",
+        "line": 55
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/DetailCard.qml",
+        "kind": "component_use",
+        "line": 57
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/DetailGrid.qml",
+        "kind": "component_use",
+        "line": 60
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/DetailCard.qml",
+        "kind": "component_use",
+        "line": 63
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/DetailGrid.qml",
+        "kind": "component_use",
+        "line": 66
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml",
+        "kind": "component_use",
+        "line": 69
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListRow.qml",
+        "kind": "component_use",
+        "line": 46
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/DetailCard.qml",
+        "kind": "component_use",
+        "line": 4
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/ProfileToggleRow.qml",
+        "kind": "component_use",
+        "line": 17
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/ProfileToggleRow.qml",
+        "kind": "component_use",
+        "line": 26
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/ProfileToggleRow.qml",
+        "kind": "component_use",
+        "line": 35
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/TogglePill.qml",
+        "kind": "component_use",
+        "line": 48
+      },
+      {
+        "from": "wifi/PromptDialog.qml",
+        "to": "wifi/InputBackground.qml",
+        "kind": "component_use",
+        "line": 89
+      },
+      {
+        "from": "wifi/shell.qml",
+        "to": "wifi/WifiPromptController.qml",
+        "kind": "component_use",
+        "line": 10
+      },
+      {
+        "from": "wifi/shell.qml",
+        "to": "wifi/WifiController.qml",
+        "kind": "component_use",
+        "line": 14
+      },
+      {
+        "from": "wifi/shell.qml",
+        "to": "wifi/WifiWindowHost.qml",
+        "kind": "component_use",
+        "line": 20
+      },
+      {
+        "from": "wifi/shell.qml",
+        "to": "wifi/WifiContent.qml",
+        "kind": "component_use",
+        "line": 29
+      },
+      {
+        "from": "wifi/VisualSurface.qml",
+        "to": "wifi/SurfaceLoader.qml",
+        "kind": "component_use",
+        "line": 12
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/StdinCommandProcess.qml",
+        "kind": "component_use",
+        "line": 84
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/StdinCommandProcess.qml",
+        "kind": "component_use",
+        "line": 89
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/CommandProcess.qml",
+        "kind": "component_use",
+        "line": 94
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/CommandProcess.qml",
+        "kind": "component_use",
+        "line": 99
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/CommandProcess.qml",
+        "kind": "component_use",
+        "line": 104
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiHeader.qml",
+        "kind": "component_use",
+        "line": 39
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/NetworkListPane.qml",
+        "kind": "component_use",
+        "line": 50
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/NetworkDetailsPane.qml",
+        "kind": "component_use",
+        "line": 64
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/PromptDialog.qml",
+        "kind": "component_use",
+        "line": 74
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/NmDaemonEvents.qml",
+        "kind": "component_use",
+        "line": 475
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml",
+        "kind": "component_use",
+        "line": 476
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiActionProcesses.qml",
+        "kind": "component_use",
+        "line": 477
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiShareProcess.qml",
+        "kind": "component_use",
+        "line": 478
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/CommandProcess.qml",
+        "kind": "component_use",
+        "line": 84
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/CommandProcess.qml",
+        "kind": "component_use",
+        "line": 89
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/CommandProcess.qml",
+        "kind": "component_use",
+        "line": 94
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/CommandProcess.qml",
+        "kind": "component_use",
+        "line": 99
+      },
+      {
+        "from": "wifi/WifiHeader.qml",
+        "to": "wifi/IconTile.qml",
+        "kind": "component_use",
+        "line": 24
+      },
+      {
+        "from": "wifi/WifiHeader.qml",
+        "to": "wifi/InputBackground.qml",
+        "kind": "component_use",
+        "line": 61
+      },
+      {
+        "from": "wifi/WifiHeader.qml",
+        "to": "wifi/IconTile.qml",
+        "kind": "component_use",
+        "line": 64
+      },
+      {
+        "from": "wifi/WifiShareProcess.qml",
+        "to": "wifi/CommandProcess.qml",
+        "kind": "component_use",
+        "line": 13
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/CommandProcess.qml",
+        "kind": "component_use",
+        "line": 128
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/VisualSurface.qml",
+        "kind": "component_use",
+        "line": 166
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/VisualSurface.qml",
+        "kind": "component_use",
+        "line": 185
+      },
+      {
+        "from": "wifi/ActionButton.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/ActionButton.qml",
+        "to": "wifi/Wifi.js",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/ActionButton.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/CommandProcess.qml",
+        "to": "Quickshell.Io",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/CommandProcess.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/DetailCard.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/DetailCard.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/DetailField.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/DetailField.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/DetailGrid.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/DetailGrid.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/IconTile.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/IconTile.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/InputBackground.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/InputBackground.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "QtQuick.Layouts",
+        "kind": "external_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "QtQuick.Layouts",
+        "kind": "external_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/Wifi.js",
+        "kind": "local_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 4
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "QtQuick.Layouts",
+        "kind": "external_import",
+        "line": 4
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 5
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/NmDaemonEvents.qml",
+        "to": "Quickshell.Io",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/NmDaemonEvents.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "QtQuick.Layouts",
+        "kind": "external_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/Wifi.js",
+        "kind": "local_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 4
+      },
+      {
+        "from": "wifi/PromptDialog.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/PromptDialog.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/shell.qml",
+        "to": "Quickshell",
+        "kind": "external_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/shell.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 4
+      },
+      {
+        "from": "wifi/shell.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 5
+      },
+      {
+        "from": "wifi/StdinCommandProcess.qml",
+        "to": "Quickshell.Io",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/SurfaceLoader.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "Quickshell",
+        "kind": "external_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "Quickshell.Hyprland",
+        "kind": "external_import",
+        "line": 4
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "Quickshell.Io",
+        "kind": "external_import",
+        "line": 5
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 6
+      },
+      {
+        "from": "wifi/TogglePill.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/TogglePill.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/VisualSurface.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/VisualSurface.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/Wifi.js",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "QtQuick.Layouts",
+        "kind": "external_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "Quickshell",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/Wifi.js",
+        "kind": "local_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 4
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/Wifi.js",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/WifiHeader.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/WifiHeader.qml",
+        "to": "QtQuick.Layouts",
+        "kind": "external_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/WifiHeader.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/WifiPromptController.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/WifiPromptController.qml",
+        "to": "wifi/Wifi.js",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/WifiShareProcess.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/WifiShareProcess.qml",
+        "to": "wifi/Wifi.js",
+        "kind": "local_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/WifiShareProcess.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "Quickshell",
+        "kind": "external_import",
+        "line": 1
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "Quickshell.Hyprland",
+        "kind": "external_import",
+        "line": 2
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "Quickshell.Io",
+        "kind": "external_import",
+        "line": 3
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "Quickshell.Wayland",
+        "kind": "external_import",
+        "line": 4
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "QtQuick",
+        "kind": "external_import",
+        "line": 5
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/qmldir",
+        "kind": "local_import",
+        "line": 6
+      },
+      {
+        "from": "wifi/ActionButton.qml",
+        "to": "wifi/ActionButton.qml#area",
+        "kind": "id_reference",
+        "line": 18
+      },
+      {
+        "from": "wifi/ActionButton.qml",
+        "to": "wifi/ActionButton.qml#control",
+        "kind": "id_reference",
+        "line": 25
+      },
+      {
+        "from": "wifi/ActionButton.qml",
+        "to": "wifi/ActionButton.qml#control",
+        "kind": "id_reference",
+        "line": 25
+      },
+      {
+        "from": "wifi/ActionButton.qml",
+        "to": "wifi/ActionButton.qml#control",
+        "kind": "id_reference",
+        "line": 27
+      },
+      {
+        "from": "wifi/ActionButton.qml",
+        "to": "wifi/ActionButton.qml#control",
+        "kind": "id_reference",
+        "line": 34
+      },
+      {
+        "from": "wifi/ActionButton.qml",
+        "to": "wifi/ActionButton.qml#control",
+        "kind": "id_reference",
+        "line": 37
+      },
+      {
+        "from": "wifi/CommandProcess.qml",
+        "to": "wifi/CommandProcess.qml#process",
+        "kind": "id_reference",
+        "line": 7
+      },
+      {
+        "from": "wifi/CommandProcess.qml",
+        "to": "wifi/CommandProcess.qml#process",
+        "kind": "id_reference",
+        "line": 12
+      },
+      {
+        "from": "wifi/CommandProcess.qml",
+        "to": "wifi/CommandProcess.qml#command",
+        "kind": "id_reference",
+        "line": 15
+      },
+      {
+        "from": "wifi/CommandProcess.qml",
+        "to": "wifi/CommandProcess.qml#command",
+        "kind": "id_reference",
+        "line": 16
+      },
+      {
+        "from": "wifi/CommandProcess.qml",
+        "to": "wifi/CommandProcess.qml#command",
+        "kind": "id_reference",
+        "line": 17
+      },
+      {
+        "from": "wifi/CommandProcess.qml",
+        "to": "wifi/CommandProcess.qml#stdoutCollector",
+        "kind": "id_reference",
+        "line": 17
+      },
+      {
+        "from": "wifi/CommandProcess.qml",
+        "to": "wifi/CommandProcess.qml#stderrCollector",
+        "kind": "id_reference",
+        "line": 17
+      },
+      {
+        "from": "wifi/DetailCard.qml",
+        "to": "wifi/DetailCard.qml#contentSlot",
+        "kind": "id_reference",
+        "line": 8
+      },
+      {
+        "from": "wifi/DetailCard.qml",
+        "to": "wifi/DetailCard.qml#card",
+        "kind": "id_reference",
+        "line": 20
+      },
+      {
+        "from": "wifi/DetailCard.qml",
+        "to": "wifi/DetailCard.qml#card",
+        "kind": "id_reference",
+        "line": 22
+      },
+      {
+        "from": "wifi/DetailCard.qml",
+        "to": "wifi/DetailCard.qml#card",
+        "kind": "id_reference",
+        "line": 32
+      },
+      {
+        "from": "wifi/DetailField.qml",
+        "to": "wifi/DetailField.qml#field",
+        "kind": "id_reference",
+        "line": 17
+      },
+      {
+        "from": "wifi/DetailField.qml",
+        "to": "wifi/DetailField.qml#field",
+        "kind": "id_reference",
+        "line": 23
+      },
+      {
+        "from": "wifi/DetailField.qml",
+        "to": "wifi/DetailField.qml#field",
+        "kind": "id_reference",
+        "line": 24
+      },
+      {
+        "from": "wifi/DetailField.qml",
+        "to": "wifi/DetailField.qml#field",
+        "kind": "id_reference",
+        "line": 25
+      },
+      {
+        "from": "wifi/DetailField.qml",
+        "to": "wifi/DetailField.qml#field",
+        "kind": "id_reference",
+        "line": 27
+      },
+      {
+        "from": "wifi/DetailGrid.qml",
+        "to": "wifi/DetailGrid.qml#grid",
+        "kind": "id_reference",
+        "line": 10
+      },
+      {
+        "from": "wifi/IconTile.qml",
+        "to": "wifi/IconTile.qml#tile",
+        "kind": "id_reference",
+        "line": 10
+      },
+      {
+        "from": "wifi/IconTile.qml",
+        "to": "wifi/IconTile.qml#tile",
+        "kind": "id_reference",
+        "line": 10
+      },
+      {
+        "from": "wifi/IconTile.qml",
+        "to": "wifi/IconTile.qml#tile",
+        "kind": "id_reference",
+        "line": 10
+      },
+      {
+        "from": "wifi/IconTile.qml",
+        "to": "wifi/IconTile.qml#tile",
+        "kind": "id_reference",
+        "line": 11
+      },
+      {
+        "from": "wifi/IconTile.qml",
+        "to": "wifi/IconTile.qml#tile",
+        "kind": "id_reference",
+        "line": 11
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 18
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 18
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 18
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 19
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 20
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 21
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 22
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 23
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 24
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 24
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 24
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 31
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 32
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 39
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 46
+      },
+      {
+        "from": "wifi/NetworkDetailsActions.qml",
+        "to": "wifi/NetworkDetailsActions.qml#row",
+        "kind": "id_reference",
+        "line": 47
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsPane.qml#pane",
+        "kind": "id_reference",
+        "line": 26
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsPane.qml#pane",
+        "kind": "id_reference",
+        "line": 47
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsPane.qml#pane",
+        "kind": "id_reference",
+        "line": 55
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsPane.qml#pane",
+        "kind": "id_reference",
+        "line": 60
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsPane.qml#pane",
+        "kind": "id_reference",
+        "line": 60
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsPane.qml#pane",
+        "kind": "id_reference",
+        "line": 66
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsPane.qml#pane",
+        "kind": "id_reference",
+        "line": 66
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsPane.qml#pane",
+        "kind": "id_reference",
+        "line": 69
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsPane.qml#pane",
+        "kind": "id_reference",
+        "line": 76
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsPane.qml#pane",
+        "kind": "id_reference",
+        "line": 76
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsPane.qml#pane",
+        "kind": "id_reference",
+        "line": 84
+      },
+      {
+        "from": "wifi/NetworkDetailsPane.qml",
+        "to": "wifi/NetworkDetailsPane.qml#pane",
+        "kind": "id_reference",
+        "line": 92
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#list",
+        "kind": "id_reference",
+        "line": 20
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#list",
+        "kind": "id_reference",
+        "line": 21
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#statusLine",
+        "kind": "id_reference",
+        "line": 32
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 34
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 36
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 39
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 47
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 48
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 49
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 50
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 51
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 52
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 54
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#list",
+        "kind": "id_reference",
+        "line": 55
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 58
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 59
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#list",
+        "kind": "id_reference",
+        "line": 60
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 62
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 70
+      },
+      {
+        "from": "wifi/NetworkListPane.qml",
+        "to": "wifi/NetworkListPane.qml#pane",
+        "kind": "id_reference",
+        "line": 71
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 40
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 50
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 58
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 58
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 58
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 58
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 58
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 58
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 59
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 59
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 59
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 60
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 60
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 60
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 67
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 67
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 67
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 68
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 70
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 70
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 78
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 79
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 85
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 85
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 93
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 93
+      },
+      {
+        "from": "wifi/NetworkListRow.qml",
+        "to": "wifi/NetworkListRow.qml#row",
+        "kind": "id_reference",
+        "line": 94
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml#card",
+        "kind": "id_reference",
+        "line": 20
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml#card",
+        "kind": "id_reference",
+        "line": 20
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml#card",
+        "kind": "id_reference",
+        "line": 21
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml#card",
+        "kind": "id_reference",
+        "line": 22
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml#card",
+        "kind": "id_reference",
+        "line": 23
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml#card",
+        "kind": "id_reference",
+        "line": 29
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml#card",
+        "kind": "id_reference",
+        "line": 30
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml#card",
+        "kind": "id_reference",
+        "line": 31
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml#card",
+        "kind": "id_reference",
+        "line": 32
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml#card",
+        "kind": "id_reference",
+        "line": 39
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml#card",
+        "kind": "id_reference",
+        "line": 40
+      },
+      {
+        "from": "wifi/NetworkProfileSettingsCard.qml",
+        "to": "wifi/NetworkProfileSettingsCard.qml#card",
+        "kind": "id_reference",
+        "line": 41
+      },
+      {
+        "from": "wifi/NmDaemonEvents.qml",
+        "to": "wifi/NmDaemonEvents.qml#eventProc",
+        "kind": "id_reference",
+        "line": 8
+      },
+      {
+        "from": "wifi/NmDaemonEvents.qml",
+        "to": "wifi/NmDaemonEvents.qml#eventProc",
+        "kind": "id_reference",
+        "line": 11
+      },
+      {
+        "from": "wifi/NmDaemonEvents.qml",
+        "to": "wifi/NmDaemonEvents.qml#eventProc",
+        "kind": "id_reference",
+        "line": 12
+      },
+      {
+        "from": "wifi/NmDaemonEvents.qml",
+        "to": "wifi/NmDaemonEvents.qml#daemonEvents",
+        "kind": "id_reference",
+        "line": 19
+      },
+      {
+        "from": "wifi/NmDaemonEvents.qml",
+        "to": "wifi/NmDaemonEvents.qml#eventErr",
+        "kind": "id_reference",
+        "line": 22
+      },
+      {
+        "from": "wifi/NmDaemonEvents.qml",
+        "to": "wifi/NmDaemonEvents.qml#daemonEvents",
+        "kind": "id_reference",
+        "line": 23
+      },
+      {
+        "from": "wifi/NmDaemonEvents.qml",
+        "to": "wifi/NmDaemonEvents.qml#eventErr",
+        "kind": "id_reference",
+        "line": 23
+      },
+      {
+        "from": "wifi/NmDaemonEvents.qml",
+        "to": "wifi/NmDaemonEvents.qml#retryTimer",
+        "kind": "id_reference",
+        "line": 24
+      },
+      {
+        "from": "wifi/NmDaemonEvents.qml",
+        "to": "wifi/NmDaemonEvents.qml#daemonEvents",
+        "kind": "id_reference",
+        "line": 32
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/ProfileToggleRow.qml#row",
+        "kind": "id_reference",
+        "line": 22
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/ProfileToggleRow.qml#row",
+        "kind": "id_reference",
+        "line": 26
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/ProfileToggleRow.qml#row",
+        "kind": "id_reference",
+        "line": 26
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/ProfileToggleRow.qml#row",
+        "kind": "id_reference",
+        "line": 32
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/ProfileToggleRow.qml#row",
+        "kind": "id_reference",
+        "line": 39
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/ProfileToggleRow.qml#row",
+        "kind": "id_reference",
+        "line": 42
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/ProfileToggleRow.qml#row",
+        "kind": "id_reference",
+        "line": 42
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/ProfileToggleRow.qml#row",
+        "kind": "id_reference",
+        "line": 52
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/ProfileToggleRow.qml#row",
+        "kind": "id_reference",
+        "line": 53
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/ProfileToggleRow.qml#row",
+        "kind": "id_reference",
+        "line": 57
+      },
+      {
+        "from": "wifi/ProfileToggleRow.qml",
+        "to": "wifi/ProfileToggleRow.qml#row",
+        "kind": "id_reference",
+        "line": 58
+      },
+      {
+        "from": "wifi/PromptDialog.qml",
+        "to": "wifi/PromptDialog.qml#promptInput",
+        "kind": "id_reference",
+        "line": 21
+      },
+      {
+        "from": "wifi/PromptDialog.qml",
+        "to": "wifi/PromptDialog.qml#promptInput",
+        "kind": "id_reference",
+        "line": 22
+      },
+      {
+        "from": "wifi/PromptDialog.qml",
+        "to": "wifi/PromptDialog.qml#dialog",
+        "kind": "id_reference",
+        "line": 51
+      },
+      {
+        "from": "wifi/PromptDialog.qml",
+        "to": "wifi/PromptDialog.qml#dialog",
+        "kind": "id_reference",
+        "line": 60
+      },
+      {
+        "from": "wifi/PromptDialog.qml",
+        "to": "wifi/PromptDialog.qml#dialog",
+        "kind": "id_reference",
+        "line": 76
+      },
+      {
+        "from": "wifi/PromptDialog.qml",
+        "to": "wifi/PromptDialog.qml#dialog",
+        "kind": "id_reference",
+        "line": 77
+      },
+      {
+        "from": "wifi/PromptDialog.qml",
+        "to": "wifi/PromptDialog.qml#dialog",
+        "kind": "id_reference",
+        "line": 78
+      },
+      {
+        "from": "wifi/PromptDialog.qml",
+        "to": "wifi/PromptDialog.qml#dialog",
+        "kind": "id_reference",
+        "line": 81
+      },
+      {
+        "from": "wifi/PromptDialog.qml",
+        "to": "wifi/PromptDialog.qml#dialog",
+        "kind": "id_reference",
+        "line": 84
+      },
+      {
+        "from": "wifi/shell.qml",
+        "to": "wifi/shell.qml#promptController",
+        "kind": "id_reference",
+        "line": 16
+      },
+      {
+        "from": "wifi/shell.qml",
+        "to": "wifi/shell.qml#windowHost",
+        "kind": "id_reference",
+        "line": 17
+      },
+      {
+        "from": "wifi/shell.qml",
+        "to": "wifi/shell.qml#wifiController",
+        "kind": "id_reference",
+        "line": 22
+      },
+      {
+        "from": "wifi/shell.qml",
+        "to": "wifi/shell.qml#wifiController",
+        "kind": "id_reference",
+        "line": 30
+      },
+      {
+        "from": "wifi/shell.qml",
+        "to": "wifi/shell.qml#wifiController",
+        "kind": "id_reference",
+        "line": 34
+      },
+      {
+        "from": "wifi/StdinCommandProcess.qml",
+        "to": "wifi/StdinCommandProcess.qml#procOut",
+        "kind": "id_reference",
+        "line": 22
+      },
+      {
+        "from": "wifi/StdinCommandProcess.qml",
+        "to": "wifi/StdinCommandProcess.qml#procErr",
+        "kind": "id_reference",
+        "line": 22
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#systemPalette",
+        "kind": "id_reference",
+        "line": 28
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#systemPalette",
+        "kind": "id_reference",
+        "line": 29
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#systemPalette",
+        "kind": "id_reference",
+        "line": 29
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#systemPalette",
+        "kind": "id_reference",
+        "line": 32
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#systemPalette",
+        "kind": "id_reference",
+        "line": 36
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#systemPalette",
+        "kind": "id_reference",
+        "line": 37
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#systemPalette",
+        "kind": "id_reference",
+        "line": 38
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#hyprProc",
+        "kind": "id_reference",
+        "line": 150
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#hyprProc",
+        "kind": "id_reference",
+        "line": 150
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#theme",
+        "kind": "id_reference",
+        "line": 182
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#theme",
+        "kind": "id_reference",
+        "line": 199
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#theme",
+        "kind": "id_reference",
+        "line": 199
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#hyprOut",
+        "kind": "id_reference",
+        "line": 199
+      },
+      {
+        "from": "wifi/Theme.qml",
+        "to": "wifi/Theme.qml#theme",
+        "kind": "id_reference",
+        "line": 200
+      },
+      {
+        "from": "wifi/TogglePill.qml",
+        "to": "wifi/TogglePill.qml#pill",
+        "kind": "id_reference",
+        "line": 21
+      },
+      {
+        "from": "wifi/TogglePill.qml",
+        "to": "wifi/TogglePill.qml#pill",
+        "kind": "id_reference",
+        "line": 21
+      },
+      {
+        "from": "wifi/TogglePill.qml",
+        "to": "wifi/TogglePill.qml#pill",
+        "kind": "id_reference",
+        "line": 23
+      },
+      {
+        "from": "wifi/VisualSurface.qml",
+        "to": "wifi/VisualSurface.qml#surface",
+        "kind": "id_reference",
+        "line": 12
+      },
+      {
+        "from": "wifi/VisualSurface.qml",
+        "to": "wifi/VisualSurface.qml#surface",
+        "kind": "id_reference",
+        "line": 12
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#disconnectProc",
+        "kind": "id_reference",
+        "line": 9
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#profileProc",
+        "kind": "id_reference",
+        "line": 9
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#secretProvideProc",
+        "kind": "id_reference",
+        "line": 9
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#connectStartProc",
+        "kind": "id_reference",
+        "line": 11
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#connectStartProc",
+        "kind": "id_reference",
+        "line": 13
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#disconnectProc",
+        "kind": "id_reference",
+        "line": 19
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#profileProc",
+        "kind": "id_reference",
+        "line": 20
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#profileProc",
+        "kind": "id_reference",
+        "line": 21
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#profileProc",
+        "kind": "id_reference",
+        "line": 22
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#profileProc",
+        "kind": "id_reference",
+        "line": 23
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#secretProvideProc",
+        "kind": "id_reference",
+        "line": 25
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#portalProc",
+        "kind": "id_reference",
+        "line": 27
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#portalProc",
+        "kind": "id_reference",
+        "line": 27
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#actions",
+        "kind": "id_reference",
+        "line": 86
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#actions",
+        "kind": "id_reference",
+        "line": 86
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#actions",
+        "kind": "id_reference",
+        "line": 91
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#actions",
+        "kind": "id_reference",
+        "line": 96
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#actions",
+        "kind": "id_reference",
+        "line": 101
+      },
+      {
+        "from": "wifi/WifiActionProcesses.qml",
+        "to": "wifi/WifiActionProcesses.qml#actions",
+        "kind": "id_reference",
+        "line": 109
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#header",
+        "kind": "id_reference",
+        "line": 17
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#listPane",
+        "kind": "id_reference",
+        "line": 18
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#header",
+        "kind": "id_reference",
+        "line": 22
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#listPane",
+        "kind": "id_reference",
+        "line": 24
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 41
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 43
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 44
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 46
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 47
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 52
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 57
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 58
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 59
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 60
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 65
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 66
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 67
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 68
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 69
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 75
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 76
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 77
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 78
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 79
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 80
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 81
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 81
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 83
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 83
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 84
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 84
+      },
+      {
+        "from": "wifi/WifiContent.qml",
+        "to": "wifi/WifiContent.qml#content",
+        "kind": "id_reference",
+        "line": 85
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 52
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 53
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#sharing",
+        "kind": "id_reference",
+        "line": 89
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#sharing",
+        "kind": "id_reference",
+        "line": 93
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 160
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#discovery",
+        "kind": "id_reference",
+        "line": 166
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#discovery",
+        "kind": "id_reference",
+        "line": 166
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#discovery",
+        "kind": "id_reference",
+        "line": 175
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#discovery",
+        "kind": "id_reference",
+        "line": 177
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 179
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#discovery",
+        "kind": "id_reference",
+        "line": 179
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#discovery",
+        "kind": "id_reference",
+        "line": 179
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#discovery",
+        "kind": "id_reference",
+        "line": 180
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 249
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 254
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 257
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#connectingProgressTimer",
+        "kind": "id_reference",
+        "line": 261
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#connectStatusPollTimer",
+        "kind": "id_reference",
+        "line": 262
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#captivePortalOpenTimer",
+        "kind": "id_reference",
+        "line": 299
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 310
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 324
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 328
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#connectingProgressTimer",
+        "kind": "id_reference",
+        "line": 331
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#connectStatusPollTimer",
+        "kind": "id_reference",
+        "line": 332
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 334
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#connectingProgressTimer",
+        "kind": "id_reference",
+        "line": 336
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#connectStatusPollTimer",
+        "kind": "id_reference",
+        "line": 336
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 357
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 363
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 372
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 373
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 374
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 375
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#actions",
+        "kind": "id_reference",
+        "line": 381
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#controller",
+        "kind": "id_reference",
+        "line": 472
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#controller",
+        "kind": "id_reference",
+        "line": 473
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#controller",
+        "kind": "id_reference",
+        "line": 474
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#controller",
+        "kind": "id_reference",
+        "line": 475
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#controller",
+        "kind": "id_reference",
+        "line": 476
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#controller",
+        "kind": "id_reference",
+        "line": 477
+      },
+      {
+        "from": "wifi/WifiController.qml",
+        "to": "wifi/WifiController.qml#controller",
+        "kind": "id_reference",
+        "line": 478
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml#listProc",
+        "kind": "id_reference",
+        "line": 9
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml#scanStartProc",
+        "kind": "id_reference",
+        "line": 10
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml#listProc",
+        "kind": "id_reference",
+        "line": 13
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml#statusProc",
+        "kind": "id_reference",
+        "line": 17
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml#statusProc",
+        "kind": "id_reference",
+        "line": 18
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml#connectivityProc",
+        "kind": "id_reference",
+        "line": 23
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml#connectivityProc",
+        "kind": "id_reference",
+        "line": 24
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml#scanStartProc",
+        "kind": "id_reference",
+        "line": 29
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml#discovery",
+        "kind": "id_reference",
+        "line": 86
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml#discovery",
+        "kind": "id_reference",
+        "line": 91
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml#discovery",
+        "kind": "id_reference",
+        "line": 96
+      },
+      {
+        "from": "wifi/WifiDiscoveryProcesses.qml",
+        "to": "wifi/WifiDiscoveryProcesses.qml#discovery",
+        "kind": "id_reference",
+        "line": 101
+      },
+      {
+        "from": "wifi/WifiHeader.qml",
+        "to": "wifi/WifiHeader.qml#search",
+        "kind": "id_reference",
+        "line": 21
+      },
+      {
+        "from": "wifi/WifiHeader.qml",
+        "to": "wifi/WifiHeader.qml#header",
+        "kind": "id_reference",
+        "line": 47
+      },
+      {
+        "from": "wifi/WifiHeader.qml",
+        "to": "wifi/WifiHeader.qml#header",
+        "kind": "id_reference",
+        "line": 48
+      },
+      {
+        "from": "wifi/WifiHeader.qml",
+        "to": "wifi/WifiHeader.qml#header",
+        "kind": "id_reference",
+        "line": 50
+      },
+      {
+        "from": "wifi/WifiHeader.qml",
+        "to": "wifi/WifiHeader.qml#header",
+        "kind": "id_reference",
+        "line": 73
+      },
+      {
+        "from": "wifi/WifiShareProcess.qml",
+        "to": "wifi/WifiShareProcess.qml#shareCheckProc",
+        "kind": "id_reference",
+        "line": 9
+      },
+      {
+        "from": "wifi/WifiShareProcess.qml",
+        "to": "wifi/WifiShareProcess.qml#shareCheckProc",
+        "kind": "id_reference",
+        "line": 11
+      },
+      {
+        "from": "wifi/WifiShareProcess.qml",
+        "to": "wifi/WifiShareProcess.qml#sharing",
+        "kind": "id_reference",
+        "line": 15
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#wifiWindow",
+        "kind": "id_reference",
+        "line": 24
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#wifiWindow",
+        "kind": "id_reference",
+        "line": 24
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#wifiWindow",
+        "kind": "id_reference",
+        "line": 24
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#popoverAnchor",
+        "kind": "id_reference",
+        "line": 25
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#popoverAnchor",
+        "kind": "id_reference",
+        "line": 25
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#popoverAnchor",
+        "kind": "id_reference",
+        "line": 25
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#floatingPlacementTimer",
+        "kind": "id_reference",
+        "line": 43
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#popoverLayerRuleProc",
+        "kind": "id_reference",
+        "line": 61
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#popoverLayerRuleProc",
+        "kind": "id_reference",
+        "line": 65
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 115
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 116
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 117
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 120
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 120
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 121
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 130
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 134
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 136
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 138
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 139
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 140
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 147
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 148
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 149
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#popoverVisualSurface",
+        "kind": "id_reference",
+        "line": 151
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 161
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 162
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 164
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 168
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 169
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 170
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 176
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 177
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 178
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#floatingVisualSurface",
+        "kind": "id_reference",
+        "line": 181
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 182
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 183
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 187
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 188
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 189
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 194
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 194
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#popoverAnchor",
+        "kind": "id_reference",
+        "line": 195
+      },
+      {
+        "from": "wifi/WifiWindowHost.qml",
+        "to": "wifi/WifiWindowHost.qml#host",
+        "kind": "id_reference",
+        "line": 196
+      }
+    ]
+  }
+}

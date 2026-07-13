@@ -13,16 +13,10 @@ Rectangle {
     border.color: Theme.strongBorder
     border.width: 1
 
-    Component.onCompleted: {
-        controller.activeHeader = header;
-        controller.activeListPane = listPane;
-    }
-
-    Component.onDestruction: {
-        if (controller.activeHeader === header)
-            controller.activeHeader = null;
-        if (controller.activeListPane === listPane)
-            controller.activeListPane = null;
+    Connections {
+        target: content.controller
+        function onFocusSearchRequested() { Qt.callLater(header.focusSearch); }
+        function onFocusListTopRequested() { Qt.callLater(listPane.focusTop); }
     }
 
     RowLayout {
@@ -77,11 +71,14 @@ Rectangle {
         detail: content.controller.prompt.detail
         inputText: content.controller.prompt.text
         password: content.controller.prompt.password
+        saveVisible: content.controller.prompt.mode === "daemon-secret" && content.controller.prompt.saveSecretSupported
+        saveRequested: content.controller.prompt.saveSecret
         onInputEdited: function (text) { content.controller.prompt.text = text; }
+        onSaveEdited: function (requested) { content.controller.prompt.saveSecret = requested; }
         onAccepted: content.controller.prompt.submit(content.controller)
         onCancelled: {
             if (content.controller.prompt.mode === "daemon-secret" && content.controller.prompt.secretRequestId.length > 0)
-                content.controller.provideSecret(content.controller.prompt.secretRequestId, "", false);
+                content.controller.cancelSecret(content.controller.prompt.secretRequestId);
             content.controller.prompt.cancel();
         }
     }

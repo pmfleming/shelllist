@@ -7,26 +7,32 @@ The current project focus is a Hyprland-friendly Wi-Fi/network popup backed by t
 ## Current status
 
 - Main app: `shelllist-wifi`, a Quickshell Wi-Fi chooser.
-- Default mode: one-shot floating window for a hotkey such as `SUPER+N`.
-- Optional mode: persistent popover daemon toggled through Quickshell IPC, intended for Waybar `on-click` integration.
-- Backend: a local flake input named `nm-daemon`, currently pinned to the local `/home/laufan/Projects/nm-api` path.
+- Default mode: one resident, monitor-aware popover toggled through Quickshell IPC, Waybar, or Hyprland's global-shortcut protocol.
+- Optional mode: an explicit one-shot floating window for development/fallback use.
+- Backend: the pinned `pmfleming/nm-daemon` flake input; sibling-repository development uses a Nix input override.
 - Target platform: `x86_64-linux` with NetworkManager and Quickshell.
 
 ## Usage
 
-Run the default floating popup with Nix:
+Start or toggle the default resident popup with Nix:
 
 ```sh
 nix run
 ```
 
-Equivalent explicit command once the package is on `PATH`:
+While developing against an unpublished sibling `nm-daemon` checkout, override the portable pinned input:
+
+```sh
+nix run --override-input nm-daemon path:../nm-daemon
+```
+
+Run the explicit floating fallback once the package is on `PATH`:
 
 ```sh
 shelllist-wifi floating
 ```
 
-For the Waybar-friendly persistent popover, start/toggle the daemonized mode:
+The resident process can also be controlled explicitly:
 
 ```sh
 SHELLLIST_WIFI_MODE=popover nix run
@@ -43,17 +49,22 @@ shelllist-wifi show     # alias for open
 shelllist-wifi hide
 ```
 
-Waybar can use `shelllist-wifi toggle` for `on-click` once the package is on `PATH`. Popover mode keeps a small Quickshell daemon alive and controls a `PanelWindow` through Quickshell IPC target `wifi`.
+Waybar can use `shelllist-wifi toggle` for `on-click` once the package is on `PATH`. Popover mode keeps one Quickshell process alive and controls a focused-monitor `PanelWindow` through IPC target `wifi`. Hyprland can invoke its registered shortcut directly:
+
+```ini
+bind = SUPER, N, global, shelllist:wifi
+```
 
 ## Wi-Fi features
 
 Shelllist currently supports:
 
-- cached network list refresh plus background scans;
+- cached network snapshots with Shelllist-owned cache refresh while the Wi-Fi UI is visible;
 - active Wi-Fi status, IP/connectivity detail display, and selected-network details;
 - connection to saved, open, password-protected, hidden, and supported enterprise networks;
 - asynchronous `wifi.connect` progress/completion events by `request_id`;
 - NetworkManager SecretAgent prompts through `wifi.secret` events;
+- optional keyring saving with persistence feedback and explicit prompt cancellation;
 - disconnecting Wi-Fi;
 - saved-profile actions: forget, toggle autoconnect, toggle randomized MAC, and toggle hostname sending;
 - Wi-Fi QR payload copying for open networks or saved profiles whose secret can be read;
@@ -71,7 +82,7 @@ General popup keys:
 - `Right`: open the details pane.
 - `Left`: close the details pane.
 - `F6`: connect to a hidden SSID.
-- `F5`: refresh cached networks, active status, saved profiles, and start a background scan.
+- `F5`: refresh cached networks, active status, saved profiles, and start an explicit scan with spinner/progress events.
 - `Esc`: close the popup, or cancel an open prompt.
 
 Details-pane hotkeys are available when the details pane is open and the selected network supports the action:
@@ -87,11 +98,7 @@ Details-pane hotkeys are available when the details pane is open and the selecte
 
 ## Backend/API boundary
 
-The flake packages three helper commands around the backend:
-
-- `shelllist-nm-daemon-call`: calls `org.laufan.NmDaemon1.Call(method, params_json)` on session D-Bus.
-- `shelllist-nm-daemon-events`: subscribes to `org.laufan.NmDaemon1.Event(stream, event_json)` and prints matching events as JSON Lines.
-- `nm-daemon`: the backend CLI/service from the local flake input.
+Shelllist starts one `nm-daemon client` process while the UI or an operation is active. Tagged JSONL requests on stdin multiplex D-Bus calls, subscriptions, cancellation and events. D-Bus ownership, NetworkManager behavior, event filtering and cleanup remain in Rust.
 
 The D-Bus endpoint is:
 
@@ -113,14 +120,20 @@ Current D-Bus methods used by the UI:
 - `wifi.scan`, returning a scan `request_id`;
 - `wifi.connectTarget`, returning a connect `request_id`;
 - `wifi.secret.provide` for SecretAgent responses.
+- `wifi.disconnect`;
+- `wifi.profile.operation` for delete, privacy, autoconnect, hostname and sharing operations.
 
 Current event streams used by the UI:
 
 - `wifi.scan`
 - `wifi.connect`
 - `wifi.secret`
+- `wifi.status`
+- `network.connectivity`
 
-Some imperative operations still call the packaged `nm-daemon` CLI directly: Wi-Fi disconnect, profile delete/autoconnect/privacy changes, and saved-profile QR sharing checks.
+Cache refresh ownership: Shelllist does not rely on an always-on `nm-daemon-cache-refresh.timer`. While the Wi-Fi UI is visible/in use, it calls `wifi.networks` with `{ "cached": true, "refresh_cache": true }` to show the last cached snapshot immediately and warm the next one in the background. Hiding/unfocusing the popover stops Shelllist's UI-owned refresh loop. Explicit refresh uses `wifi.scan` with `cache: true` and filters `wifi.scan` events by `request_id`.
+
+Status and connectivity are continuous subscriptions rather than polling loops. Closing the UI cancels its scan; closing the JSONL session cancels every remaining session-owned request and subscription.
 
 ## Theming and window behavior
 
@@ -134,7 +147,7 @@ Animation behavior:
 
 Supported color/radius environment overrides include `SHELLLIST_BG`, `SHELLLIST_SURFACE`, `SHELLLIST_TEXT`, `SHELLLIST_SUBTEXT`, `SHELLLIST_BORDER`, `SHELLLIST_STRONG_BORDER`, `SHELLLIST_ACCENT`, `SHELLLIST_SELECTED`, `SHELLLIST_SUCCESS`, `SHELLLIST_DANGER`, `SHELLLIST_WARNING`, and `SHELLLIST_RADIUS`.
 
-In floating mode, Shelllist asks Hyprland to focus, float, center, remove border/shadow, and apply the current animation setting to the `Shelllist Wi-Fi` window. In popover mode, it uses a layer-shell `PanelWindow` with namespace `shelllist-wifi` and synchronizes the matching Hyprland layer animation rule.
+In floating mode, Shelllist performs one Hyprland focus/float/center placement action. In popover mode, it uses a focused-monitor layer-shell `PanelWindow` with namespace `shelllist-wifi` and synchronizes the matching Hyprland layer animation rule.
 
 ## Requirements
 
@@ -142,7 +155,7 @@ In floating mode, Shelllist asks Hyprland to focus, float, center, remove border
 - A Wi-Fi device managed by NetworkManager.
 - User permissions to control NetworkManager connections through D-Bus/polkit.
 - A running or D-Bus-activatable `nm-daemon` session service exposing `org.laufan.NmDaemon`.
-- The local `nm-daemon` flake input at the path configured in `flake.nix`.
+- The pinned `nm-daemon` input, or a sibling checkout supplied with `--override-input nm-daemon path:../nm-daemon`.
 
 ## Visible-network connection probe
 
@@ -164,6 +177,7 @@ The executed probe disconnects between attempts and writes logs under `$XDG_STAT
 
 ```sh
 nix develop
+nix flake check --override-input nm-daemon path:../nm-daemon
 ```
 
 Useful checks:
@@ -179,4 +193,4 @@ shelllist-qmllint wifi/*.qml
 
 The Wi-Fi UI entry point is `wifi/shell.qml`.
 
-The JSON boundary with `nm-daemon` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture with `nm-daemon debug contract-fixture` from the local backend input and diffs it.
+The JSON boundary with `nm-daemon` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture, validates the frontend method shapes, regenerates `wifi/NmApi.js` from `nm-daemon debug protocol-registry`, and lints every QML source; any drift or static-analysis failure fails the check.

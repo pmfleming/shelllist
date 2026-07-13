@@ -1,0 +1,304 @@
+{
+  "schema_version": "0.1.0",
+  "task_id": "quality.locality_leverage",
+  "project": {
+    "name": "shelllist",
+    "root": "/home/laufan/Projects/shelllist"
+  },
+  "provenance": {
+    "generated_at": "2026-07-10T16:52:05.179Z",
+    "command": "qmlqualitylens measure all --config /home/laufan/Projects/qmlqualitylens/examples/shelllist.config.json",
+    "config_path": "/home/laufan/Projects/qmlqualitylens/examples/shelllist.config.json",
+    "project_root": "/home/laufan/Projects/shelllist",
+    "lens": "qmlqualitylens",
+    "lens_version": "0.1.0"
+  },
+  "confidence": {
+    "complete": false,
+    "partial": true,
+    "confidence_scope": "static QML parser with project-wide qmldir/type resolution and heuristic JavaScript analysis",
+    "observed_inputs": [
+      "qml_files",
+      "js_files",
+      "project_resolution",
+      "qmldir"
+    ],
+    "qmllint_source": "none",
+    "qmllint_command": null,
+    "qmllint_report": null,
+    "qmllint_exit_code": null,
+    "qmllint_error": null,
+    "qmllint_findings": 0,
+    "unresolved_imports": 0,
+    "unresolved_types": 5,
+    "unsupported_pattern": []
+  },
+  "summary": {
+    "records": 29,
+    "high_leverage": 5,
+    "central_risky": 0
+  },
+  "records": [
+    {
+      "file": "wifi/ActionButton.qml",
+      "component": "ActionButton",
+      "leverage_score": 100,
+      "use_count": 4,
+      "fan_out": 0,
+      "effort": 47,
+      "classification": "high_leverage"
+    },
+    {
+      "file": "wifi/CommandProcess.qml",
+      "component": "CommandProcess",
+      "leverage_score": 100,
+      "use_count": 9,
+      "fan_out": 0,
+      "effort": 50,
+      "classification": "high_leverage"
+    },
+    {
+      "file": "wifi/IconTile.qml",
+      "component": "IconTile",
+      "leverage_score": 91,
+      "use_count": 3,
+      "fan_out": 0,
+      "effort": 30,
+      "classification": "high_leverage"
+    },
+    {
+      "file": "wifi/DetailCard.qml",
+      "component": "DetailCard",
+      "leverage_score": 88,
+      "use_count": 3,
+      "fan_out": 0,
+      "effort": 45,
+      "classification": "high_leverage"
+    },
+    {
+      "file": "wifi/ProfileToggleRow.qml",
+      "component": "ProfileToggleRow",
+      "leverage_score": 83,
+      "use_count": 3,
+      "fan_out": 1,
+      "effort": 68,
+      "classification": "high_leverage"
+    },
+    {
+      "file": "wifi/InputBackground.qml",
+      "component": "InputBackground",
+      "leverage_score": 79,
+      "use_count": 2,
+      "fan_out": 0,
+      "effort": 9,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/VisualSurface.qml",
+      "component": "VisualSurface",
+      "leverage_score": 75,
+      "use_count": 2,
+      "fan_out": 1,
+      "effort": 23,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/DetailGrid.qml",
+      "component": "DetailGrid",
+      "leverage_score": 73,
+      "use_count": 2,
+      "fan_out": 1,
+      "effort": 34,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/StdinCommandProcess.qml",
+      "component": "StdinCommandProcess",
+      "leverage_score": 72,
+      "use_count": 2,
+      "fan_out": 0,
+      "effort": 52,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/SurfaceLoader.qml",
+      "component": "SurfaceLoader",
+      "leverage_score": 64,
+      "use_count": 1,
+      "fan_out": 0,
+      "effort": 9,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/TogglePill.qml",
+      "component": "TogglePill",
+      "leverage_score": 61,
+      "use_count": 1,
+      "fan_out": 0,
+      "effort": 30,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/DetailField.qml",
+      "component": "DetailField",
+      "leverage_score": 60,
+      "use_count": 1,
+      "fan_out": 0,
+      "effort": 33,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/WifiShareProcess.qml",
+      "component": "WifiShareProcess",
+      "leverage_score": 59,
+      "use_count": 1,
+      "fan_out": 1,
+      "effort": 25,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/NmDaemonEvents.qml",
+      "component": "NmDaemonEvents",
+      "leverage_score": 54,
+      "use_count": 1,
+      "fan_out": 0,
+      "effort": 76,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/NetworkDetailsActions.qml",
+      "component": "NetworkDetailsActions",
+      "leverage_score": 53,
+      "use_count": 1,
+      "fan_out": 1,
+      "effort": 69,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/NetworkProfileSettingsCard.qml",
+      "component": "NetworkProfileSettingsCard",
+      "leverage_score": 53,
+      "use_count": 1,
+      "fan_out": 2,
+      "effort": 56,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/WifiHeader.qml",
+      "component": "WifiHeader",
+      "leverage_score": 49,
+      "use_count": 1,
+      "fan_out": 2,
+      "effort": 81,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/NetworkListRow.qml",
+      "component": "NetworkListRow",
+      "leverage_score": 47,
+      "use_count": 1,
+      "fan_out": 0,
+      "effort": 120,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/NetworkListPane.qml",
+      "component": "NetworkListPane",
+      "leverage_score": 46,
+      "use_count": 1,
+      "fan_out": 1,
+      "effort": 115,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/PromptDialog.qml",
+      "component": "PromptDialog",
+      "leverage_score": 44,
+      "use_count": 1,
+      "fan_out": 1,
+      "effort": 128,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/WifiDiscoveryProcesses.qml",
+      "component": "WifiDiscoveryProcesses",
+      "leverage_score": 41,
+      "use_count": 1,
+      "fan_out": 1,
+      "effort": 150,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/NetworkDetailsPane.qml",
+      "component": "NetworkDetailsPane",
+      "leverage_score": 39,
+      "use_count": 1,
+      "fan_out": 5,
+      "effort": 109,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/WifiContent.qml",
+      "component": "WifiContent",
+      "leverage_score": 37,
+      "use_count": 1,
+      "fan_out": 4,
+      "effort": 131,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/shell.qml",
+      "component": "shell",
+      "leverage_score": 36,
+      "use_count": 0,
+      "fan_out": 4,
+      "effort": 38,
+      "classification": "low_reuse"
+    },
+    {
+      "file": "wifi/WifiActionProcesses.qml",
+      "component": "WifiActionProcesses",
+      "leverage_score": 31,
+      "use_count": 1,
+      "fan_out": 2,
+      "effort": 197,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/WifiPromptController.qml",
+      "component": "WifiPromptController",
+      "leverage_score": 28,
+      "use_count": 1,
+      "fan_out": 0,
+      "effort": 247,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/WifiWindowHost.qml",
+      "component": "WifiWindowHost",
+      "leverage_score": 18,
+      "use_count": 1,
+      "fan_out": 2,
+      "effort": 290,
+      "classification": "ordinary"
+    },
+    {
+      "file": "wifi/Theme.qml",
+      "component": "Theme",
+      "leverage_score": 6,
+      "use_count": 0,
+      "fan_out": 0,
+      "effort": 291,
+      "classification": "low_reuse"
+    },
+    {
+      "file": "wifi/WifiController.qml",
+      "component": "WifiController",
+      "leverage_score": 0,
+      "use_count": 1,
+      "fan_out": 4,
+      "effort": 890,
+      "classification": "ordinary"
+    }
+  ]
+}

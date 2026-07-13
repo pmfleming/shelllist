@@ -35,7 +35,8 @@ Rectangle {
 
         Text {
             width: 42
-            anchors.verticalCenter: parent.verticalCenter
+            height: parent.height
+            verticalAlignment: Text.AlignVCenter
             text: (row.modelData.strength || 0) + "%"
             color: Theme.accent
             font.pixelSize: 14
@@ -43,7 +44,8 @@ Rectangle {
 
         Text {
             width: 22
-            anchors.verticalCenter: parent.verticalCenter
+            height: parent.height
+            verticalAlignment: Text.AlignVCenter
             text: "▂▄▆"
             color: row.active ? Theme.accent : Theme.mutedText
             font.pixelSize: 13
@@ -51,7 +53,8 @@ Rectangle {
 
         Text {
             width: 16
-            anchors.verticalCenter: parent.verticalCenter
+            height: parent.height
+            verticalAlignment: Text.AlignVCenter
             text: row.connecting ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length] : (row.active ? "●" : (row.openNetwork ? "Open" : "🔒"))
             color: row.connecting ? Theme.accent : (row.active ? Theme.active : (row.openNetwork ? Theme.warning : Theme.mutedText))
             font.pixelSize: row.openNetwork && !row.active && !row.connecting ? 8 : 13
@@ -59,7 +62,8 @@ Rectangle {
 
         Text {
             width: parent.width - 144
-            anchors.verticalCenter: parent.verticalCenter
+            height: parent.height
+            verticalAlignment: Text.AlignVCenter
             text: row.connecting ? row.name + " — connecting…" : row.name
             color: row.connecting ? Theme.accent : Theme.text
             font.pixelSize: 15
@@ -69,7 +73,8 @@ Rectangle {
 
         Text {
             width: 24
-            anchors.verticalCenter: parent.verticalCenter
+            height: parent.height
+            verticalAlignment: Text.AlignVCenter
             text: row.detailsOpen ? "‹" : "›"
             color: row.selected ? Theme.accent : Theme.mutedText
             font.pixelSize: 25

@@ -52,7 +52,7 @@ RowLayout {
 
         Text {
             x: 12
-            anchors.verticalCenter: parent.verticalCenter
+            y: Math.round((parent.height - height) / 2)
             text: "⌕"
             color: Theme.subtleText
             font.pixelSize: 22

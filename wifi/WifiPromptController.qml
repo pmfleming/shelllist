@@ -14,6 +14,8 @@ Item {
     property string secretRequestId: ""
     property string secretPrimaryKey: ""
     property var secretKeys: []
+    property bool saveSecret: false
+    property bool saveSecretSupported: false
 
     function openPrompt(nextMode, nextTitle, nextDetail, nextPassword, nextNetwork, nextHiddenSsid) {
         network = nextNetwork || null;
@@ -23,6 +25,8 @@ Item {
         detail = nextDetail;
         text = "";
         password = nextPassword;
+        saveSecret = false;
+        saveSecretSupported = false;
         open = true;
     }
 
@@ -75,6 +79,7 @@ Item {
         secretPrimaryKey = primary;
         secretKeys = keys;
         openPrompt("daemon-secret", "Enter " + label, detailText, primary !== "pin", null, "");
+        saveSecretSupported = !!event.save_supported;
     }
 
     function cancel() {
@@ -87,6 +92,8 @@ Item {
         secretRequestId = "";
         secretPrimaryKey = "";
         secretKeys = [];
+        saveSecret = false;
+        saveSecretSupported = false;
     }
 
     function submitNetworkPassword(controller, value) {
@@ -141,9 +148,11 @@ Item {
         if (value.length === 0)
             return controller.status = "Enter the requested " + secretKeyLabel(secretPrimaryKey) + ".";
         const requestId = secretRequestId;
+        const key = secretPrimaryKey;
+        const save = saveSecret;
         cancel();
         if (requestId.length > 0)
-            controller.provideSecret(requestId, value, false);
+            controller.provideSecret(requestId, key, value, save);
     }
 
     function submit(controller) {

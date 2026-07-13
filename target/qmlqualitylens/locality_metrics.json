@@ -1,0 +1,303 @@
+{
+  "schema_version": "0.1.0",
+  "task_id": "quality.locality_dynamic",
+  "project": {
+    "name": "shelllist",
+    "root": "/home/laufan/Projects/shelllist"
+  },
+  "provenance": {
+    "generated_at": "2026-07-10T16:52:05.178Z",
+    "command": "qmlqualitylens measure all --config /home/laufan/Projects/qmlqualitylens/examples/shelllist.config.json",
+    "config_path": "/home/laufan/Projects/qmlqualitylens/examples/shelllist.config.json",
+    "project_root": "/home/laufan/Projects/shelllist",
+    "lens": "qmlqualitylens",
+    "lens_version": "0.1.0"
+  },
+  "confidence": {
+    "complete": false,
+    "partial": true,
+    "confidence_scope": "static QML parser with project-wide qmldir/type resolution and heuristic JavaScript analysis",
+    "observed_inputs": [
+      "qml_files",
+      "js_files",
+      "project_resolution",
+      "qmldir"
+    ],
+    "qmllint_source": "none",
+    "qmllint_command": null,
+    "qmllint_report": null,
+    "qmllint_exit_code": null,
+    "qmllint_error": null,
+    "qmllint_findings": 0,
+    "unresolved_imports": 0,
+    "unresolved_types": 5,
+    "unsupported_pattern": []
+  },
+  "summary": {
+    "records": 29,
+    "low_locality": 3
+  },
+  "records": [
+    {
+      "file": "wifi/WifiController.qml",
+      "component": "WifiController",
+      "locality_score": 24,
+      "id_reference_count": 41,
+      "distinct_id_references": 7,
+      "process_boundary_calls": 0,
+      "fan_out": 4
+    },
+    {
+      "file": "wifi/WifiWindowHost.qml",
+      "component": "WifiWindowHost",
+      "locality_score": 37,
+      "id_reference_count": 44,
+      "distinct_id_references": 7,
+      "process_boundary_calls": 0,
+      "fan_out": 2
+    },
+    {
+      "file": "wifi/Theme.qml",
+      "component": "Theme",
+      "locality_score": 47,
+      "id_reference_count": 14,
+      "distinct_id_references": 4,
+      "process_boundary_calls": 1,
+      "fan_out": 0
+    },
+    {
+      "file": "wifi/NetworkListRow.qml",
+      "component": "NetworkListRow",
+      "locality_score": 62,
+      "id_reference_count": 27,
+      "distinct_id_references": 1,
+      "process_boundary_calls": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "wifi/NetworkDetailsPane.qml",
+      "component": "NetworkDetailsPane",
+      "locality_score": 68,
+      "id_reference_count": 12,
+      "distinct_id_references": 1,
+      "process_boundary_calls": 0,
+      "fan_out": 5
+    },
+    {
+      "file": "wifi/PromptDialog.qml",
+      "component": "PromptDialog",
+      "locality_score": 68,
+      "id_reference_count": 9,
+      "distinct_id_references": 2,
+      "process_boundary_calls": 0,
+      "fan_out": 1
+    },
+    {
+      "file": "wifi/WifiContent.qml",
+      "component": "WifiContent",
+      "locality_score": 72,
+      "id_reference_count": 32,
+      "distinct_id_references": 3,
+      "process_boundary_calls": 0,
+      "fan_out": 4
+    },
+    {
+      "file": "wifi/CommandProcess.qml",
+      "component": "CommandProcess",
+      "locality_score": 74,
+      "id_reference_count": 7,
+      "distinct_id_references": 4,
+      "process_boundary_calls": 1,
+      "fan_out": 0
+    },
+    {
+      "file": "wifi/NmDaemonEvents.qml",
+      "component": "NmDaemonEvents",
+      "locality_score": 74,
+      "id_reference_count": 9,
+      "distinct_id_references": 4,
+      "process_boundary_calls": 1,
+      "fan_out": 0
+    },
+    {
+      "file": "wifi/WifiHeader.qml",
+      "component": "WifiHeader",
+      "locality_score": 74,
+      "id_reference_count": 5,
+      "distinct_id_references": 2,
+      "process_boundary_calls": 0,
+      "fan_out": 2
+    },
+    {
+      "file": "wifi/NetworkListPane.qml",
+      "component": "NetworkListPane",
+      "locality_score": 76,
+      "id_reference_count": 20,
+      "distinct_id_references": 3,
+      "process_boundary_calls": 0,
+      "fan_out": 1
+    },
+    {
+      "file": "wifi/WifiActionProcesses.qml",
+      "component": "WifiActionProcesses",
+      "locality_score": 76,
+      "id_reference_count": 19,
+      "distinct_id_references": 6,
+      "process_boundary_calls": 0,
+      "fan_out": 2
+    },
+    {
+      "file": "wifi/WifiDiscoveryProcesses.qml",
+      "component": "WifiDiscoveryProcesses",
+      "locality_score": 80,
+      "id_reference_count": 12,
+      "distinct_id_references": 5,
+      "process_boundary_calls": 0,
+      "fan_out": 1
+    },
+    {
+      "file": "wifi/StdinCommandProcess.qml",
+      "component": "StdinCommandProcess",
+      "locality_score": 82,
+      "id_reference_count": 2,
+      "distinct_id_references": 2,
+      "process_boundary_calls": 1,
+      "fan_out": 0
+    },
+    {
+      "file": "wifi/ProfileToggleRow.qml",
+      "component": "ProfileToggleRow",
+      "locality_score": 87,
+      "id_reference_count": 11,
+      "distinct_id_references": 1,
+      "process_boundary_calls": 0,
+      "fan_out": 1
+    },
+    {
+      "file": "wifi/shell.qml",
+      "component": "shell",
+      "locality_score": 88,
+      "id_reference_count": 5,
+      "distinct_id_references": 3,
+      "process_boundary_calls": 0,
+      "fan_out": 4
+    },
+    {
+      "file": "wifi/ActionButton.qml",
+      "component": "ActionButton",
+      "locality_score": 92,
+      "id_reference_count": 6,
+      "distinct_id_references": 2,
+      "process_boundary_calls": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "wifi/DetailCard.qml",
+      "component": "DetailCard",
+      "locality_score": 92,
+      "id_reference_count": 4,
+      "distinct_id_references": 2,
+      "process_boundary_calls": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "wifi/NetworkDetailsActions.qml",
+      "component": "NetworkDetailsActions",
+      "locality_score": 92,
+      "id_reference_count": 16,
+      "distinct_id_references": 1,
+      "process_boundary_calls": 0,
+      "fan_out": 1
+    },
+    {
+      "file": "wifi/WifiShareProcess.qml",
+      "component": "WifiShareProcess",
+      "locality_score": 92,
+      "id_reference_count": 3,
+      "distinct_id_references": 2,
+      "process_boundary_calls": 0,
+      "fan_out": 1
+    },
+    {
+      "file": "wifi/DetailField.qml",
+      "component": "DetailField",
+      "locality_score": 96,
+      "id_reference_count": 5,
+      "distinct_id_references": 1,
+      "process_boundary_calls": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "wifi/DetailGrid.qml",
+      "component": "DetailGrid",
+      "locality_score": 96,
+      "id_reference_count": 1,
+      "distinct_id_references": 1,
+      "process_boundary_calls": 0,
+      "fan_out": 1
+    },
+    {
+      "file": "wifi/IconTile.qml",
+      "component": "IconTile",
+      "locality_score": 96,
+      "id_reference_count": 5,
+      "distinct_id_references": 1,
+      "process_boundary_calls": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "wifi/NetworkProfileSettingsCard.qml",
+      "component": "NetworkProfileSettingsCard",
+      "locality_score": 96,
+      "id_reference_count": 12,
+      "distinct_id_references": 1,
+      "process_boundary_calls": 0,
+      "fan_out": 2
+    },
+    {
+      "file": "wifi/TogglePill.qml",
+      "component": "TogglePill",
+      "locality_score": 96,
+      "id_reference_count": 3,
+      "distinct_id_references": 1,
+      "process_boundary_calls": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "wifi/VisualSurface.qml",
+      "component": "VisualSurface",
+      "locality_score": 96,
+      "id_reference_count": 2,
+      "distinct_id_references": 1,
+      "process_boundary_calls": 0,
+      "fan_out": 1
+    },
+    {
+      "file": "wifi/InputBackground.qml",
+      "component": "InputBackground",
+      "locality_score": 100,
+      "id_reference_count": 0,
+      "distinct_id_references": 0,
+      "process_boundary_calls": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "wifi/SurfaceLoader.qml",
+      "component": "SurfaceLoader",
+      "locality_score": 100,
+      "id_reference_count": 0,
+      "distinct_id_references": 0,
+      "process_boundary_calls": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "wifi/WifiPromptController.qml",
+      "component": "WifiPromptController",
+      "locality_score": 100,
+      "id_reference_count": 0,
+      "distinct_id_references": 0,
+      "process_boundary_calls": 0,
+      "fan_out": 0
+    }
+  ]
+}

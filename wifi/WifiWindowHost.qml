@@ -1,5 +1,8 @@
+// Quickshell 0.3's GlobalShortcut qmltypes expose an internal PostReloadHook base without exporting it.
+// qmllint disable import
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Hyprland._GlobalShortcuts // qmllint disable import
 import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
@@ -11,29 +14,30 @@ Item {
     required property var controller
     required property Component content
 
-    readonly property string launchMode: (Quickshell.env("SHELLLIST_WIFI_MODE") || "floating").toLowerCase()
+    readonly property string launchMode: (Quickshell.env("SHELLLIST_WIFI_MODE") || "popover").toLowerCase()
     readonly property bool popoverMode: launchMode === "popover"
     readonly property bool floatingMode: !popoverMode
     readonly property bool popoverWindowVisible: popoverMode && popoverVisible
+    readonly property bool uiActive: floatingMode || popoverWindowVisible
     property bool popoverVisible: false
-    property int floatingPlacementAttempts: 0
     readonly property bool noAnimations: Theme.noAnimations
     property int popoverNoAnimRuleState: -1
-    property var pendingPopoverLayerRuleArgs: []
+    property string pendingPopoverLayerRule: ""
     readonly property var placementScreen: floatingMode
         ? (wifiWindow && wifiWindow.screen ? wifiWindow.screen : null)
         : (popoverAnchor && popoverAnchor.screen ? popoverAnchor.screen : null)
     readonly property int currentWindowHeight: Math.round(screenGeometry().height * 0.75)
 
-    function screenGeometry() {
-        const screen = placementScreen;
-        return {
-            x: screen ? screen.x || 0 : 0,
-            y: screen ? screen.y || 0 : 0,
-            width: screen && screen.width > 0 ? screen.width : 1280,
-            height: screen && screen.height > 0 ? screen.height : 960
-        };
+    function focusedScreen() {
+        const monitor = Hyprland.focusedMonitor;
+        if (!monitor)
+            return null;
+        return Quickshell.screens.find(function (screen) { return screen.name === monitor.name; }) || null;
     }
+
+    function screenValue(key, fallback) { const screen = placementScreen; return screen ? (screen[key] || fallback) : fallback; }
+    function screenDimension(key, fallback) { const value = screenValue(key, fallback); return value > 0 ? value : fallback; }
+    function screenGeometry() { return { x: screenValue("x", 0), y: screenValue("y", 0), width: screenDimension("width", 1280), height: screenDimension("height", 960) }; }
 
     function targetLayerMarginX() { return Math.round((screenGeometry().width - controller.surfaceWindowWidth) / 2); }
     function targetLayerMarginY() { return Math.round((screenGeometry().height - currentWindowHeight) / 2); }
@@ -45,27 +49,37 @@ Item {
     function requestWindowPlacement() {
         if (!floatingMode || !Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE"))
             return;
-        floatingPlacementAttempts = 0;
         floatingPlacementTimer.restart();
     }
 
+    function popoverAnimationRuleReady(desiredState) {
+        return popoverMode
+            && Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
+            && popoverNoAnimRuleState !== desiredState
+            && !(Theme.noAnimationsOverride === null && Theme.hyprland && !Theme.hyprAnimationsKnown);
+    }
     function syncPopoverAnimationRule() {
         const desiredState = noAnimations ? 1 : 0;
-        if (!popoverMode || !Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") || popoverNoAnimRuleState === desiredState)
-            return;
-        if (Theme.noAnimationsOverride === null && Theme.hyprland && !Theme.hyprAnimationsKnown)
+        if (!popoverAnimationRuleReady(desiredState))
             return;
         applyPopoverLayerAnimationRule(noAnimations ? "animation 0 shelllist-wifi" : "animation unset shelllist-wifi");
         popoverNoAnimRuleState = desiredState;
     }
 
     function applyPopoverLayerAnimationRule(rule) {
-        const args = ["hyprctl", "keyword", "layerrule", rule];
         if (popoverLayerRuleProc.running) {
-            pendingPopoverLayerRuleArgs = args;
+            pendingPopoverLayerRule = rule;
             return;
         }
-        popoverLayerRuleProc.exec(args);
+        popoverLayerRuleProc.exec(["hyprctl", "keyword", "layerrule", rule]);
+    }
+
+    function runPendingPopoverLayerRule() {
+        if (pendingPopoverLayerRule.length === 0)
+            return;
+        const rule = pendingPopoverLayerRule;
+        pendingPopoverLayerRule = "";
+        applyPopoverLayerAnimationRule(rule);
     }
 
     function applyCompositorWindowRules() {
@@ -90,43 +104,36 @@ Item {
         Theme.refreshHyprAnimations();
         syncPopoverAnimationRule();
         popoverVisible = true;
-        controller.refresh();
+        controller.activateUi();
         Qt.callLater(controller.focusSearchBox);
     }
 
     function hidePopover() {
-        if (popoverMode)
-            popoverVisible = false;
+        if (!popoverMode)
+            return;
+        popoverVisible = false;
+        controller.deactivateUi();
     }
 
     function togglePopover() { popoverVisible ? hidePopover() : showPopover(); }
 
     Timer {
         id: floatingPlacementTimer
-        interval: 16
-        repeat: true
-        triggeredOnStart: true
+        interval: 30
+        repeat: false
         onTriggered: {
-            host.floatingPlacementAttempts += 1;
-            if (host.floatingPlacementAttempts === 1)
-                host.applyCompositorWindowRules();
+            host.applyCompositorWindowRules();
             Hyprland.dispatch("focuswindow title:Shelllist Wi-Fi");
             Hyprland.dispatch("setfloating");
             Hyprland.dispatch("movewindowpixel exact " + host.targetWindowX() + " " + host.targetWindowY() + ",title:Shelllist Wi-Fi");
-            if (host.floatingPlacementAttempts >= 24)
-                stop();
         }
     }
 
     onNoAnimationsChanged: syncPopoverAnimationRule()
 
-    Process {
+    CommandProcess {
         id: popoverLayerRuleProc
-        onRunningChanged: if (!running && host.pendingPopoverLayerRuleArgs.length > 0) {
-            const args = host.pendingPopoverLayerRuleArgs;
-            host.pendingPopoverLayerRuleArgs = [];
-            popoverLayerRuleProc.exec(args);
-        }
+        onFinished: function () { host.runPendingPopoverLayerRule(); }
     }
 
     IpcHandler {
@@ -139,10 +146,18 @@ Item {
         function toggle(): void { host.togglePopover(); }
     }
 
+    GlobalShortcut { // qmllint disable unresolved-type import
+        appid: "shelllist"
+        name: "wifi"
+        description: "Toggle the Shelllist Wi-Fi chooser"
+        onPressed: host.togglePopover()
+    }
+
     // Quickshell's generated type info marks PanelWindow as an interface and
     // does not give the linter enough information for its margins group.
     PanelWindow { // qmllint disable uncreatable-type
         id: popoverAnchor
+        screen: host.focusedScreen()
         visible: host.popoverWindowVisible
         implicitWidth: host.controller.surfaceWindowWidth
         implicitHeight: host.currentWindowHeight

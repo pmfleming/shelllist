@@ -8,10 +8,13 @@ Rectangle {
     property string detail: ""
     property string inputText: ""
     property bool password: false
+    property bool saveVisible: false
+    property bool saveRequested: false
 
     signal inputEdited(string text)
     signal accepted
     signal cancelled
+    signal saveEdited(bool requested)
 
     anchors.fill: parent
     z: 10
@@ -33,8 +36,9 @@ Rectangle {
 
     Rectangle {
         width: Math.min(parent.width * 0.9, 560)
-        height: 230
-        anchors.centerIn: parent
+        height: dialog.saveVisible ? 274 : 230
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
         radius: Theme.windowRadius
         color: Theme.surface
         border.color: Theme.strongBorder
@@ -86,6 +90,45 @@ Rectangle {
                 }
 
                 InputBackground {}
+            }
+
+            Rectangle {
+                visible: dialog.saveVisible
+                width: parent.width
+                height: visible ? 32 : 0
+                color: "transparent"
+
+                Row {
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 10
+
+                    Rectangle {
+                        width: 20
+                        height: 20
+                        radius: 4
+                        color: dialog.saveRequested ? Theme.accent : Theme.input
+                        border.color: dialog.saveRequested ? Theme.accent : Theme.border
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: dialog.saveRequested ? "✓" : ""
+                            color: Theme.accentText
+                            font.bold: true
+                        }
+                    }
+
+                    Text {
+                        text: "Save in the desktop keyring"
+                        color: Theme.text
+                        font.pixelSize: 14
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: dialog.saveEdited(!dialog.saveRequested)
+                }
             }
 
             Text {

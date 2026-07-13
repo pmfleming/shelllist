@@ -1,15 +1,16 @@
 .pragma library
+.import "NmApi.js" as NmApi
 
 function clampIndex(index, length) { return length <= 0 ? 0 : Math.max(0, Math.min(index, length - 1)); }
 function networkName(ap) { return ap && ap.ssid ? ap.ssid : "<hidden>"; }
 function securityLabel(security) { return security === "--" ? "Open" : (security || "Unknown"); }
 function hasNetworkIdentity(ap) { return !!(ap && ((ap.ssid_bytes && ap.ssid_bytes.length > 0) || (ap.ssid && ap.ssid.length > 0))); }
 function connectPromptKind(ap) { return ap && ap.connect_prompt ? (ap.connect_prompt.kind || "none") : "none"; }
-function canConnect(ap) { return !!ap && (ap.capabilities ? ap.capabilities.can_connect : hasNetworkIdentity(ap)); }
+function canConnect(ap) { return !!(ap && ap.capabilities && ap.capabilities.can_connect); }
 function needsPassword(ap) { return !!(ap && hasNetworkIdentity(ap) && (connectPromptKind(ap) === "password" || (ap.capabilities && ap.capabilities.needs_password))); }
 function needsCredentials(ap) { return !!(ap && hasNetworkIdentity(ap) && (connectPromptKind(ap) === "enterprise" || (ap.capabilities && ap.capabilities.needs_credentials))); }
 function canStartConnection(ap) { return canConnect(ap) || needsPassword(ap) || needsCredentials(ap); }
-function accessPointPath(ap) { return ap ? (ap.path || ap.ap_path || "") : ""; }
+function accessPointPath(ap) { return ap ? (ap.path || "") : ""; }
 function activeAccessPoint(status) { return status ? status.access_point || (status.network || null) : null; }
 function subnetLabel(ip4) { return ip4 && ip4.prefix !== null && ip4.prefix !== undefined ? "/" + ip4.prefix : "—"; }
 function dnsLabel(ip4) { return ip4 && ip4.dns && ip4.dns.length > 0 ? ip4.dns.join(", ") : "—"; }
@@ -44,9 +45,6 @@ function hotkeyStartIndex(label, key) {
     return match ? match.index + match[1].length : label.indexOf(key);
 }
 
-function nmDaemonArgs() { const args = ["nm-daemon"]; for (let i = 0; i < arguments.length; i++) args.push(arguments[i]); return args; }
-function nmApiArgs() { return nmDaemonArgs.apply(null, arguments); }
-
 function highlightHotkey(text, hotkey) {
     const labelText = String(text);
     const keyText = String(hotkey);
@@ -63,9 +61,11 @@ function highlightHotkey(text, hotkey) {
 }
 
 function pick(source, key) { return key && source ? source[key] : source; }
-function isApiEnvelope(response) { return response && response.protocol === "nm-api"; }
+function isApiEnvelope(response) { return response && response.protocol === NmApi.protocol; }
 function apiPayload(response) {
-    if (response.version !== 1)
+    if (!isApiEnvelope(response))
+        throw new Error("Expected nm-api response envelope");
+    if (response.version !== NmApi.version)
         throw new Error("Unsupported nm-api protocol version " + response.version);
     return response.data || {};
 }
@@ -79,8 +79,6 @@ function apiErrorResult(response) {
 }
 
 function apiData(response, key) {
-    if (!isApiEnvelope(response))
-        return pick(response, key);
     const data = apiPayload(response);
     if (!response.ok)
         throw new Error(apiErrorMessage(response));
@@ -88,18 +86,47 @@ function apiData(response, key) {
 }
 
 function apiResult(response, key) {
-    if (!isApiEnvelope(response))
-        return pick(response, key);
     const data = apiPayload(response);
     if (!response.ok)
         return key && data[key] ? data[key] : apiErrorResult(response);
     return pick(data, key);
 }
 
+function requireApiEvent(event) {
+    if (!isApiEnvelope(event) || event.version !== NmApi.version || !event.stream || !event.event)
+        throw new Error("Expected nm-api v1 event envelope");
+    return event;
+}
+
+function scanEventStatus(event, fallback) {
+    const messages = { snapshot: event.networks_found + (event.scanning ? " networks found; scanning…" : " networks available"), complete: event.networks_found + (event.timed_out ? " networks available; scan timed out" : " networks available") };
+    return messages[event.event] || event.message || fallback;
+}
+
+function isTerminalEvent(event) { return event.event === "complete" || event.event === "failed" || event.event === "cancelled"; }
+function requestMatches(event, requestId) { return !!event.request_id && event.request_id === requestId; }
+function connectEventResult(event) { return event.result || ({ status: "error", reason: event.reason || "unknown", message: event.message || "Connection failed" }); }
+function connectEventState(event) { return event.event === "succeeded" ? "succeeded" : (event.event === "failed" || event.event === "cancelled" ? "failed" : "progress"); }
+
 function wifiQrPayload(ap) {
     if (!canShareQr(ap))
         return "";
     return shareHint(ap).qr_payload || "";
+}
+
+function shareAvailability(ap, profile, fallbackMessage) {
+    const share = shareHint(ap);
+    if (canShareQr(ap))
+        return { state: "ready", available: true, payload: wifiQrPayload(ap), message: "Wi-Fi QR payload is ready." };
+    const profilePath = share.profile_path || (profile && profile.path) || "";
+    if (!share.requires_profile_secret_check || profilePath.length === 0)
+        return { state: "unavailable", available: false, payload: "", message: share.reason || fallbackMessage };
+    return { state: "check", profilePath: profilePath };
+}
+
+function shareCheckAvailability(result, fallbackMessage) {
+    const available = !!result.shareable && !!result.qr_payload;
+    return { path: result.path || "", available: available, payload: available ? result.qr_payload : "", message: available ? "Wi-Fi QR payload is ready." : (result.reason || fallbackMessage) };
 }
 
 function sameNonEmpty(left, right) { return !!left && !!right && left === right; }
@@ -259,24 +286,18 @@ function formatMbps(value) {
     return (Math.abs(rounded - Math.round(rounded)) < 0.01 ? Math.round(rounded) : rounded) + " Mbps";
 }
 
+function copyTruthy(target, source, keys) {
+    keys.forEach(function (key) {
+        if (source[key])
+            target[key] = source[key];
+    });
+}
+
 function connectTarget(ap) {
-    const target = {
-        ssid: ap.ssid || "",
-        ssid_bytes: ap.ssid_bytes || [],
-        path: ap.path || ap.ap_path || "",
-        bssid: ap.bssid || "",
-        device_iface: ap.device_iface || "",
-        device_path: ap.device_path || "",
-        security: ap.security || null
-    };
+    const target = { ssid: ap.ssid || "", ssid_bytes: ap.ssid_bytes || [], path: ap.path || "", bssid: ap.bssid || "", device_iface: ap.device_iface || "", device_path: ap.device_path || "", security: ap.security || null };
+    copyTruthy(target, ap, ["key_mgmt", "enterprise", "profile"]);
     if (ap.hidden)
         target.hidden = true;
-    if (ap.key_mgmt)
-        target.key_mgmt = ap.key_mgmt;
-    if (ap.enterprise)
-        target.enterprise = ap.enterprise;
-    if (ap.profile)
-        target.profile = ap.profile;
     return target;
 }
 

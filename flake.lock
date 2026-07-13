@@ -23,14 +23,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1783697619,
-        "narHash": "sha256-XZyQNtEO/lSCvlf9/HtNKtjqDmECxR4UcirvU3TEQp8=",
-        "path": "/home/laufan/Projects/nm-api",
-        "type": "path"
+        "lastModified": 1783948869,
+        "narHash": "sha256-ZFb/OtY9qoXFJ3N/7H78/hZIgvRMeJnqOTLHKI206bA=",
+        "owner": "pmfleming",
+        "repo": "nm-daemon",
+        "rev": "e18afe55492b4ef5dc71085151cf701e065de0c6",
+        "type": "github"
       },
       "original": {
-        "path": "/home/laufan/Projects/nm-api",
-        "type": "path"
+        "owner": "pmfleming",
+        "repo": "nm-daemon",
+        "type": "github"
       }
     },
     "root": {
