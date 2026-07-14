@@ -83,7 +83,14 @@ jq -r '
   + "var protocol = " + (.protocol | tojson) + ";\n"
   + "var version = " + (.version | tostring) + ";\n\n"
   + "var methods = {\n"
-  + ([.data.protocol.methods[] | "    " + (.name | identifier) + ": " + (.name | tojson)] | join(",\n"))
+  + ([.data.protocol.methods[]
+      | select(.name == "wifi.networks"
+          or .name == "wifi.scan"
+          or .name == "wifi.connectTarget"
+          or .name == "wifi.disconnect"
+          or .name == "wifi.profile.operation"
+          or .name == "wifi.secret.provide")
+      | "    " + (.name | identifier) + ": " + (.name | tojson)] | join(",\n"))
   + "\n};\n\n"
   + "var streams = {\n"
   + ([.data.protocol.streams[] | select(.subscribable) | "    " + (.name | identifier) + ": " + (.name | tojson)] | join(",\n"))

@@ -121,23 +121,126 @@
           captivePortalBrowser = pkgs.writeShellApplication {
             name = "shelllist-captive-portal";
             meta = mkMeta "Open browser pages that trigger captive portal login flows" "shelllist-captive-portal";
-            runtimeInputs = [ pkgs.coreutils ];
+            runtimeInputs = [
+              pkgs.coreutils
+              pkgs.hyprland
+              pkgs.jq
+              pkgs.util-linux
+            ];
             text = ''
               state_dir="''${XDG_RUNTIME_DIR:-/tmp}/shelllist-captive-portal"
               profile_dir="$state_dir/browser-profile"
-              stamp_file="$state_dir/last-opened"
+              episode_file="$state_dir/automatic-episode"
+              fallback_index_file="$state_dir/fallback-index"
+              lock_file="$state_dir/lock"
+              window_class="shelllist-captive-portal"
               mkdir -p "$profile_dir"
 
-              now=$(date +%s)
-              if [ -f "$stamp_file" ]; then
-                last=$(cat "$stamp_file")
-                if [ $((now - last)) -lt 12 ]; then
-                  exit 0
-                fi
-              fi
-              printf '%s\n' "$now" > "$stamp_file"
-
+              mode=manual
+              trigger=manual
+              ssid=
+              identity=
+              connectivity=unknown
+              request_id=
+              episode=
+              workspace=
+              fallback=0
               portal_url="http://neverssl.com/"
+
+              require_value() {
+                if [ "$#" -lt 2 ]; then
+                  echo "Missing value for $1" >&2
+                  exit 2
+                fi
+              }
+
+              while [ "$#" -gt 0 ]; do
+                case "$1" in
+                  --automatic) mode=automatic ;;
+                  --manual) mode=manual ;;
+                  --fallback) fallback=1 ;;
+                  --trigger) require_value "$@"; trigger=$2; shift ;;
+                  --ssid) require_value "$@"; ssid=$2; shift ;;
+                  --identity) require_value "$@"; identity=$2; shift ;;
+                  --connectivity) require_value "$@"; connectivity=$2; shift ;;
+                  --request-id) require_value "$@"; request_id=$2; shift ;;
+                  --episode) require_value "$@"; episode=$2; shift ;;
+                  --workspace) require_value "$@"; workspace=$2; shift ;;
+                  *) echo "Unknown option: $1" >&2; exit 2 ;;
+                esac
+                shift
+              done
+
+              if [ "$mode" = automatic ] && [ -z "$episode" ]; then
+                echo "Automatic portal launches require --episode" >&2
+                exit 2
+              fi
+
+              exec 9>"$lock_file"
+              flock -x 9
+
+              if [ "$fallback" -eq 1 ]; then
+                fallback_index=0
+                if [ -f "$fallback_index_file" ]; then
+                  fallback_index=$(cat "$fallback_index_file")
+                fi
+                case "$fallback_index" in
+                  0|1|2) ;;
+                  *) fallback_index=0 ;;
+                esac
+                case "$fallback_index" in
+                  0) portal_url="http://captive.apple.com/hotspot-detect.html" ;;
+                  1) portal_url="http://www.msftconnecttest.com/connecttest.txt" ;;
+                  *) portal_url="http://nmcheck.gnome.org/check_network_status.txt"; fallback_index=2 ;;
+                esac
+                printf '%s\n' $(((fallback_index + 1) % 3)) > "$fallback_index_file"
+              fi
+
+              if [ -z "$workspace" ] && command -v hyprctl >/dev/null 2>&1; then
+                workspace=$(hyprctl activeworkspace -j 2>/dev/null | jq -r '.id // empty' || true)
+              fi
+
+              portal_client() {
+                hyprctl clients -j 2>/dev/null \
+                  | jq -c --arg class "$window_class" 'first(.[] | select((.class // "") == $class or (.initialClass // "") == $class)) // empty' \
+                  || true
+              }
+
+              place_and_focus() {
+                if [ -n "$workspace" ]; then
+                  hyprctl dispatch movetoworkspacesilent "$workspace,class:^($window_class)$" >/dev/null 2>&1 || true
+                fi
+                hyprctl dispatch focuswindow "class:^($window_class)$" >/dev/null 2>&1 || true
+              }
+
+              log_event() {
+                decision=$1
+                browser_pid="''${2:-}"
+                jq -cn \
+                  --arg decision "$decision" \
+                  --arg trigger "$trigger" \
+                  --arg ssid "$ssid" \
+                  --arg identity "$identity" \
+                  --arg connectivity "$connectivity" \
+                  --arg request_id "$request_id" \
+                  --arg episode "$episode" \
+                  --arg workspace "$workspace" \
+                  --arg browser_pid "$browser_pid" \
+                  --arg url "$portal_url" \
+                  '{decision:$decision,trigger:$trigger,ssid:$ssid,identity:$identity,connectivity:$connectivity,request_id:$request_id,episode:$episode,workspace:$workspace,browser_pid:$browser_pid,url:$url}' \
+                  | logger -t shelllist-captive-portal
+              }
+
+              if [ -n "$(portal_client)" ]; then
+                place_and_focus
+                log_event focus-existing
+                exit 0
+              fi
+
+              if [ "$mode" = automatic ] && [ -f "$episode_file" ] && [ "$(cat "$episode_file")" = "$episode" ]; then
+                log_event deduplicated-episode
+                exit 0
+              fi
 
               browser=
               for candidate in google-chrome-stable google-chrome chromium; do
@@ -148,24 +251,44 @@
               done
 
               if [ -z "$browser" ]; then
-                if command -v xdg-open >/dev/null 2>&1; then
-                  exec xdg-open "$portal_url"
-                fi
                 echo "No supported browser found for captive portal" >&2
+                log_event browser-unavailable
                 exit 1
               fi
 
-              exec "$browser" \
+              "$browser" \
                 --user-data-dir="$profile_dir" \
+                --class="$window_class" \
                 --no-first-run \
                 --no-default-browser-check \
                 --disable-search-engine-choice-screen \
                 --new-window \
                 --disable-extensions \
+                --disable-background-mode \
                 --disable-quic \
                 --disable-features=HttpsUpgrades,HttpsFirstBalancedModeAutoEnable,HttpsFirstModeV2,DnsOverHttpsUpgrade \
                 --no-proxy-server \
-                --app="$portal_url"
+                --app="$portal_url" \
+                >/dev/null 2>&1 &
+              browser_pid=$!
+
+              if [ "$mode" = automatic ]; then
+                printf '%s\n' "$episode" > "$episode_file"
+              fi
+              log_event launched "$browser_pid"
+
+              attempts=0
+              while [ "$attempts" -lt 20 ]; do
+                if [ -n "$(portal_client)" ]; then
+                  place_and_focus
+                  log_event placed-and-focused "$browser_pid"
+                  exit 0
+                fi
+                attempts=$((attempts + 1))
+                sleep 0.1
+              done
+
+              log_event window-not-observed "$browser_pid"
             '';
           };
 

@@ -36,7 +36,7 @@ Rectangle {
 
     Rectangle {
         width: Math.min(parent.width * 0.9, 560)
-        height: dialog.saveVisible ? 274 : 230
+        height: dialog.saveVisible ? 304 : 270
         x: Math.round((parent.width - width) / 2)
         y: Math.round((parent.height - height) / 2)
         radius: Theme.windowRadius
@@ -64,7 +64,7 @@ Rectangle {
                 color: Theme.mutedText
                 font.pixelSize: 14
                 wrapMode: Text.Wrap
-                maximumLineCount: 2
+                maximumLineCount: 5
                 elide: Text.ElideRight
             }
 
@@ -133,7 +133,7 @@ Rectangle {
 
             Text {
                 width: parent.width
-                text: "Enter continue/connect   •   Esc cancel"
+                text: "Enter continue   •   Esc cancel"
                 color: Theme.subtleText
                 font.pixelSize: 13
             }

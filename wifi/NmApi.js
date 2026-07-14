@@ -4,14 +4,11 @@ var protocol = "nm-api";
 var version = 1;
 
 var methods = {
-    wifi_status: "wifi.status",
-    network_connectivity: "network.connectivity",
     wifi_networks: "wifi.networks",
     wifi_scan: "wifi.scan",
     wifi_connectTarget: "wifi.connectTarget",
     wifi_disconnect: "wifi.disconnect",
     wifi_profile_operation: "wifi.profile.operation",
-    wifi_secret_capabilities: "wifi.secret.capabilities",
     wifi_secret_provide: "wifi.secret.provide"
 };
 

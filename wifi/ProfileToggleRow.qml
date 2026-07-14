@@ -19,7 +19,6 @@ RowLayout {
     spacing: 12
 
     Column {
-        visible: row.subtitle.length > 0
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
         Text {
@@ -30,19 +29,10 @@ RowLayout {
         }
         Text {
             text: row.subtitle
+            visible: row.subtitle.length > 0
             color: Theme.subtleText
             font.pixelSize: 11
         }
-    }
-
-    Text {
-        visible: row.subtitle.length === 0
-        Layout.fillWidth: true
-        Layout.alignment: Qt.AlignVCenter
-        text: Wifi.highlightHotkey(row.title, row.hotkey)
-        textFormat: Text.RichText
-        color: Theme.text
-        font.pixelSize: 14
     }
 
     TogglePill {

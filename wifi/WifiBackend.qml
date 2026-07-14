@@ -36,7 +36,11 @@ Item {
     function startScan() { return call("scan-start", NmApi.methods.wifi_scan, { timeout: 12, cache: true }); }
     function connect(request) { return call("connect-start", NmApi.methods.wifi_connectTarget, request); }
     function disconnect() { return call("disconnect", NmApi.methods.wifi_disconnect, {}); }
-    function profile(operation) { return call("profile", NmApi.methods.wifi_profile_operation, operation); }
+    function profile(operation) {
+        if (operation.operation === "forget")
+            console.info("shelllist forget request_id=" + operation.request_id + " ssid=" + (operation.target.ssid || "") + " bssid=" + (operation.target.bssid || ""));
+        return call("profile", NmApi.methods.wifi_profile_operation, operation);
+    }
     function share(path) { return call("share", NmApi.methods.wifi_profile_operation, { operation: "share", path: path }); }
     function provideSecret(requestId, key, password, save) {
         const values = ({});
@@ -47,9 +51,10 @@ Item {
     function cancel(requestId) { client.cancel(requestId); }
 
     function finish(id, envelope, transportError) {
-        if (id !== "session-subscribe" && id.indexOf("cancel-") !== 0 && id.indexOf("shutdown-") !== 0)
+        const sessionControl = id === "session-subscribe" || id.indexOf("cancel-") === 0 || id.indexOf("shutdown-") === 0;
+        if (!sessionControl)
             setPending(id, false);
-        if (id === "session-subscribe" || id.indexOf("cancel-") === 0 || id.indexOf("shutdown-") === 0)
+        if (sessionControl)
             return;
         if (transportError.length > 0)
             return controller.failCall(id, "nm-daemon request failed: " + transportError);
@@ -57,7 +62,7 @@ Item {
             if (id === "networks") {
                 const updated = Wifi.apiData(envelope, "networks") || [];
                 if (!controller.scanSnapshotSeen)
-                    controller.applyNetworks(updated, true);
+                    controller.selectionModel.apply(updated, true);
                 controller.setBackgroundStatus(updated.length + " cached networks; scanning…");
             } else if (id === "scan-start") {
                 const scan = Wifi.apiResult(envelope, "result") || ({});
@@ -78,6 +83,15 @@ Item {
                 controller.refresh();
             } else if (id === "profile") {
                 const profileResult = Wifi.apiData(envelope, "result") || ({});
+                if (profileResult.operation === "forget") {
+                    console.info("shelllist forget result request_id=" + (profileResult.request_id || "")
+                        + " ssid=" + (profileResult.ssid || "")
+                        + " status=" + (profileResult.status || "unknown")
+                        + " disconnected=" + !!profileResult.disconnected
+                        + " profiles_found=" + (profileResult.profiles_found || 0)
+                        + " profiles_deleted=" + (profileResult.deleted_profiles ? profileResult.deleted_profiles.length : 0)
+                        + " profiles_failed=" + (profileResult.failed_profiles ? profileResult.failed_profiles.length : 0));
+                }
                 controller.status = profileResult.message || "Saved profile updated";
                 controller.refresh();
             } else if (id === "share") {
@@ -93,9 +107,26 @@ Item {
         controller.maybeRunPendingRefresh();
     }
 
-    function openPortal() {
-        if (!portalProcess.running)
-            portalProcess.exec(["shelllist-captive-portal"]);
+    function openPortal(context) {
+        if (portalProcess.running) {
+            console.info("shelllist portal decision=helper-busy trigger=" + context.trigger + " request_id=" + context.requestId);
+            return;
+        }
+        const args = [
+            "shelllist-captive-portal",
+            context.automatic ? "--automatic" : "--manual",
+            "--trigger", context.trigger,
+            "--ssid", context.ssid,
+            "--identity", context.identity,
+            "--connectivity", context.connectivity,
+            "--request-id", context.requestId,
+            "--workspace", context.workspaceId
+        ];
+        if (context.automatic)
+            args.push("--episode", context.episode);
+        if (context.fallback)
+            args.push("--fallback");
+        portalProcess.exec(args);
     }
 
     NmDaemonClient {

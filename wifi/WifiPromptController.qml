@@ -54,6 +54,14 @@ Item {
         openPrompt("enterprise-password", "Enterprise password for " + identity, "Enter your enterprise Wi-Fi password, then press Enter.", true, ap, "");
     }
 
+    function openForgetPrompt(ap, active, profiles) {
+        const names = (profiles || []).map(function (profile) { return profile.id; });
+        const profileText = names.length === 0 ? "no saved profile is currently listed" : (names.length + " saved profile" + (names.length === 1 ? "" : "s") + ": " + names.join(", "));
+        const action = active ? "Disconnect from this network and remove " : "Remove ";
+        const portalNote = " The hotspot may still recognize this device until its login session expires.";
+        openPrompt("confirm-forget", active ? "Disconnect & forget " + Wifi.networkName(ap) : "Forget " + Wifi.networkName(ap), action + profileText + "." + portalNote + " Type FORGET to confirm.", false, ap, "");
+    }
+
     function secretKeyLabel(key) {
         const labels = {
             "psk": "Wi-Fi password",
@@ -102,7 +110,7 @@ Item {
         if (value.length === 0)
             return controller.status = "Enter a password for this network.";
         const ap = network;
-        const retryDelay = controller.retryDelayRemainingMs(ap, value);
+        const retryDelay = controller.connectPolicy.retryDelayRemainingMs(ap, value);
         if (retryDelay > 0)
             return controller.status = "Waiting " + Math.ceil(retryDelay / 1000) + "s before retrying; NetworkManager is temporarily ignoring this AP.";
         cancel();
@@ -155,8 +163,18 @@ Item {
             controller.provideSecret(requestId, key, value, save);
     }
 
+    function submitForget(controller, value) {
+        if (value.trim().toLowerCase() !== "forget")
+            return controller.status = "Type FORGET to confirm removing this network.";
+        const ap = network;
+        cancel();
+        if (ap)
+            controller.executeForget(ap);
+    }
+
     function submit(controller) {
         const handlers = {
+            "confirm-forget": submitForget,
             "daemon-secret": submitDaemonSecret,
             "enterprise-identity": submitEnterpriseIdentity,
             "enterprise-password": submitEnterprisePassword,

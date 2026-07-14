@@ -9,7 +9,7 @@ Rectangle {
 
     required property var controller
 
-    Layout.preferredWidth: 425
+    Layout.fillWidth: true
     Layout.fillHeight: true
     radius: Theme.panelRadius
     color: Theme.surface
@@ -36,7 +36,7 @@ Rectangle {
             currentIndex: pane.controller.selectedIndex
             activeFocusOnTab: true
             Keys.onPressed: function (event) {
-                pane.controller.handleListKey(event);
+                pane.controller.navigation.handleListKey(event);
             }
             onCurrentIndexChanged: {
                 if (currentIndex >= 0 && count > 0)
@@ -56,7 +56,7 @@ Rectangle {
                 }
                 onDetailsToggled: function (rowIndex) {
                     pane.controller.selectedIndex = rowIndex;
-                    pane.controller.toggleDetailsPane();
+                    pane.controller.navigation.toggleDetails();
                     list.forceActiveFocus();
                 }
                 onConnectRequested: pane.controller.primarySelected()

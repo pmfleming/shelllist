@@ -11,9 +11,7 @@ RowLayout {
     signal keyPressed(var event)
     signal refreshRequested
 
-    Layout.fillWidth: false
-    Layout.preferredWidth: 425
-    Layout.maximumWidth: 425
+    Layout.fillWidth: true
     Layout.preferredHeight: 46
     spacing: 12
 

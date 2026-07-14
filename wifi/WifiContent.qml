@@ -21,12 +21,12 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 14
+        anchors.margins: content.controller.contentMargin
         spacing: 0
 
         ColumnLayout {
-            Layout.preferredWidth: 425
-            Layout.maximumWidth: 425
+            Layout.preferredWidth: content.controller.listPaneWidth
+            Layout.maximumWidth: content.controller.listPaneWidth
             Layout.fillHeight: true
             spacing: 12
 
@@ -37,7 +37,7 @@ Rectangle {
                     content.controller.filterText = text;
                     content.controller.selectedIndex = 0;
                 }
-                onKeyPressed: function (event) { content.controller.handleSearchKey(event); }
+                onKeyPressed: function (event) { content.controller.navigation.handleSearchKey(event); }
                 onRefreshRequested: content.controller.refresh()
             }
 

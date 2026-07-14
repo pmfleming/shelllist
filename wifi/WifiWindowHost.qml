@@ -1,8 +1,5 @@
-// Quickshell 0.3's GlobalShortcut qmltypes expose an internal PostReloadHook base without exporting it.
-// qmllint disable import
 import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Hyprland._GlobalShortcuts // qmllint disable import
 import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
@@ -35,6 +32,12 @@ Item {
         return Quickshell.screens.find(function (screen) { return screen.name === monitor.name; }) || null;
     }
 
+    function shelllistWorkspaceId() {
+        if (!Theme.hyprland || !Hyprland.focusedWorkspace)
+            return "";
+        return String(Hyprland.focusedWorkspace.id);
+    }
+
     function screenValue(key, fallback) { const screen = placementScreen; return screen ? (screen[key] || fallback) : fallback; }
     function screenDimension(key, fallback) { const value = screenValue(key, fallback); return value > 0 ? value : fallback; }
     function screenGeometry() { return { x: screenValue("x", 0), y: screenValue("y", 0), width: screenDimension("width", 1280), height: screenDimension("height", 960) }; }
@@ -47,16 +50,15 @@ Item {
     // In popover mode placement is pure bindings on the PanelWindow margins;
     // only the floating window needs Hyprland dispatch nudges.
     function requestWindowPlacement() {
-        if (!floatingMode || !Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE"))
+        if (!floatingMode || !Theme.hyprland)
             return;
         floatingPlacementTimer.restart();
     }
 
     function popoverAnimationRuleReady(desiredState) {
         return popoverMode
-            && Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
-            && popoverNoAnimRuleState !== desiredState
-            && !(Theme.noAnimationsOverride === null && Theme.hyprland && !Theme.hyprAnimationsKnown);
+            && Theme.hyprland
+            && popoverNoAnimRuleState !== desiredState;
     }
     function syncPopoverAnimationRule() {
         const desiredState = noAnimations ? 1 : 0;
@@ -83,7 +85,7 @@ Item {
     }
 
     function applyCompositorWindowRules() {
-        if (!floatingMode || !Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE"))
+        if (!floatingMode || !Theme.hyprland)
             return;
         Hyprland.dispatch("setprop title:Shelllist.* noanim " + (noAnimations ? "1" : "0"));
         Hyprland.dispatch("setprop title:Shelllist.* noborder 1");
@@ -101,11 +103,10 @@ Item {
     function showPopover() {
         if (!popoverMode)
             return;
-        Theme.refreshHyprAnimations();
         syncPopoverAnimationRule();
         popoverVisible = true;
         controller.activateUi();
-        Qt.callLater(controller.focusSearchBox);
+        Qt.callLater(controller.navigation.focusSearch);
     }
 
     function hidePopover() {
@@ -146,11 +147,8 @@ Item {
         function toggle(): void { host.togglePopover(); }
     }
 
-    GlobalShortcut { // qmllint disable unresolved-type import
-        appid: "shelllist"
-        name: "wifi"
-        description: "Toggle the Shelllist Wi-Fi chooser"
-        onPressed: host.togglePopover()
+    WifiGlobalShortcut {
+        onTriggered: host.togglePopover()
     }
 
     // Quickshell's generated type info marks PanelWindow as an interface and
@@ -175,7 +173,7 @@ Item {
             top: host.targetLayerMarginY()
             left: host.targetLayerMarginX()
         }
-        onVisibleChanged: if (visible) Qt.callLater(host.controller.focusSearchBox)
+        onVisibleChanged: if (visible) Qt.callLater(host.controller.navigation.focusSearch)
 
         VisualSurface {
             id: popoverVisualSurface

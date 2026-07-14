@@ -66,9 +66,13 @@ Shelllist currently supports:
 - NetworkManager SecretAgent prompts through `wifi.secret` events;
 - optional keyring saving with persistence feedback and explicit prompt cancellation;
 - disconnecting Wi-Fi;
-- saved-profile actions: forget, toggle autoconnect, toggle randomized MAC, and toggle hostname sending;
+- saved-profile actions: disconnect-and-forget, toggle autoconnect, toggle randomized MAC, and toggle hostname sending;
 - Wi-Fi QR payload copying for open networks or saved profiles whose secret can be read;
 - captive-portal helper launch when requested by the UI or suggested by the backend.
+
+Shelllist is the sole owner of automatic captive-portal presentation. It opens one plain-HTTP page only after a successful `wifi.connect` result reports captive-portal connectivity. The helper uses a runtime-only Chrome profile, deduplicates automatic opens by network identity plus connect request, and places or focuses its uniquely-classed app window on the workspace where Shelllist initiated the connection. `shelllist-captive-portal --manual --fallback` rotates through additional plain-HTTP probes for manual troubleshooting.
+
+Forget is a confirmed daemon-owned workflow. For an active network the UI presents **Disconnect & forget**; `nm-daemon` cancels a matching connection attempt, disables autoconnect, confirms deactivation, and removes every saved profile with the selected SSID. Forget removes local NetworkManager state only: a captive hotspot may continue recognizing the device until its network-side login session expires. While a connect request is pending, Shelllist exposes **Cancel** rather than leaving the active connection without an escape action.
 
 Shelllist sends user-entered Wi-Fi secrets through stdin-backed JSON requests only; secrets are not placed on command-line arguments.
 
@@ -89,7 +93,7 @@ Details-pane hotkeys are available when the details pane is open and the selecte
 
 - `C`: connect.
 - `D`: disconnect.
-- `F`: forget saved profile.
+- `F`: confirm forgetting all saved profiles for the network; disconnect first when active.
 - `I`: open the captive-portal browser helper.
 - `S`: copy Wi-Fi QR payload to the clipboard.
 - `A`: toggle autoconnect.
@@ -115,8 +119,6 @@ The UI consumes `nm-api` protocol v1 envelopes:
 Current D-Bus methods used by the UI:
 
 - `wifi.networks` with cached-list parameters;
-- `wifi.status`;
-- `network.connectivity`;
 - `wifi.scan`, returning a scan `request_id`;
 - `wifi.connectTarget`, returning a connect `request_id`;
 - `wifi.secret.provide` for SecretAgent responses.
@@ -137,17 +139,17 @@ Status and connectivity are continuous subscriptions rather than polling loops. 
 
 ## Theming and window behavior
 
-The popup uses the Qt/system palette by default. Under Hyprland it also reads compositor active/inactive border colors, `decoration:rounding`, and `animations:enabled` with `hyprctl getoption`.
+The popup uses Nix/Home Manager `SHELLLIST_*` environment values as its single configured theme source, with the Qt/system palette as a portable fallback. It no longer maintains a second asynchronous theme state through `hyprctl getoption`.
 
 Animation behavior:
 
-- Under Hyprland, Shelllist follows the compositor's global `animations:enabled` value.
+- Under Hyprland, animations are enabled unless `SHELLLIST_NO_ANIMATIONS` overrides them.
 - Outside Hyprland, Shelllist defaults to no animations.
 - Set `SHELLLIST_NO_ANIMATIONS=1` or `SHELLLIST_NO_ANIMATIONS=0` to override while testing.
 
 Supported color/radius environment overrides include `SHELLLIST_BG`, `SHELLLIST_SURFACE`, `SHELLLIST_TEXT`, `SHELLLIST_SUBTEXT`, `SHELLLIST_BORDER`, `SHELLLIST_STRONG_BORDER`, `SHELLLIST_ACCENT`, `SHELLLIST_SELECTED`, `SHELLLIST_SUCCESS`, `SHELLLIST_DANGER`, `SHELLLIST_WARNING`, and `SHELLLIST_RADIUS`.
 
-In floating mode, Shelllist performs one Hyprland focus/float/center placement action. In popover mode, it uses a focused-monitor layer-shell `PanelWindow` with namespace `shelllist-wifi` and synchronizes the matching Hyprland layer animation rule.
+In floating mode, Shelllist performs one Hyprland focus/float/center placement action. In popover mode, it uses a focused-monitor layer-shell `PanelWindow` with namespace `shelllist-wifi` and synchronizes the matching Hyprland layer animation rule. Quickshell's private GlobalShortcut compatibility import is isolated in `WifiGlobalShortcut.qml`.
 
 ## Requirements
 
@@ -193,4 +195,4 @@ shelllist-qmllint wifi/*.qml
 
 The Wi-Fi UI entry point is `wifi/shell.qml`.
 
-The JSON boundary with `nm-daemon` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture, validates the frontend method shapes, regenerates `wifi/NmApi.js` from `nm-daemon debug protocol-registry`, and lints every QML source; any drift or static-analysis failure fails the check.
+The JSON boundary with `nm-daemon` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture, validates the frontend method shapes, regenerates the used method and stream entries in `wifi/NmApi.js` from `nm-daemon debug protocol-registry`, and lints every QML source; any drift or static-analysis failure fails the check.

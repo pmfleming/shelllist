@@ -5,7 +5,7 @@ Item {
 
     function accept(event, action) { action(); event.accepted = true; }
     function isEnter(key) { return key === Qt.Key_Return || key === Qt.Key_Enter; }
-    function isPlainHotkey(event, key) { return event.key === key && (event.modifiers === Qt.NoModifier || event.modifiers === Qt.ShiftModifier); }
+    function isPlainHotkey(event, hotkey) { return event.key === hotkey.charCodeAt(0) && (event.modifiers === Qt.NoModifier || event.modifiers === Qt.ShiftModifier); }
     function move(delta) { controller.selectionModel.move(delta); }
 
     function openDetails() {
@@ -36,7 +36,7 @@ Item {
 
     function paneBindings(downAction) {
         return [
-            [Qt.Key_Escape, controller.closeRequested],
+            [Qt.Key_Escape, controller.windowHost.closeRequested],
             [Qt.Key_Down, downAction],
             [Qt.Key_Up, function () { move(-1); }],
             [Qt.Key_Right, openDetails],
@@ -57,20 +57,10 @@ Item {
     function handleDetailHotkey(event) {
         if (!controller.detailsOpen)
             return false;
-        const bindings = [
-            [Qt.Key_C, controller.canConnectDetail, controller.connectSelected],
-            [Qt.Key_D, controller.canDisconnectDetail, controller.disconnectSelected],
-            [Qt.Key_F, controller.canForgetProfile, controller.forgetSelected],
-            [Qt.Key_I, function () { return controller.hasSelection; }, controller.openPortal],
-            [Qt.Key_S, controller.canShareSelected, controller.shareSelected],
-            [Qt.Key_A, controller.canToggleAutoconnectProfile, controller.toggleAutoconnectSelected],
-            [Qt.Key_R, controller.canSetMacRandomizationProfile, controller.toggleRandomizedMacSelected],
-            [Qt.Key_N, controller.canSetSendHostnameProfile, controller.toggleSendHostnameSelected]
-        ];
-        const binding = bindings.find(function (item) { return isPlainHotkey(event, item[0]) && item[1](); });
-        if (!binding)
+        const action = controller.detailActions.find(function (item) { return isPlainHotkey(event, item.hotkey) && item.enabled; });
+        if (!action)
             return false;
-        accept(event, binding[2]);
+        accept(event, function () { controller.triggerDetailAction(action.id); });
         return true;
     }
 

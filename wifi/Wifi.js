@@ -7,22 +7,34 @@ function securityLabel(security) { return security === "--" ? "Open" : (security
 function hasNetworkIdentity(ap) { return !!(ap && ((ap.ssid_bytes && ap.ssid_bytes.length > 0) || (ap.ssid && ap.ssid.length > 0))); }
 function connectPromptKind(ap) { return ap && ap.connect_prompt ? (ap.connect_prompt.kind || "none") : "none"; }
 function canConnect(ap) { return !!(ap && ap.capabilities && ap.capabilities.can_connect); }
-function needsPassword(ap) { return !!(ap && hasNetworkIdentity(ap) && (connectPromptKind(ap) === "password" || (ap.capabilities && ap.capabilities.needs_password))); }
-function needsCredentials(ap) { return !!(ap && hasNetworkIdentity(ap) && (connectPromptKind(ap) === "enterprise" || (ap.capabilities && ap.capabilities.needs_credentials))); }
+function needsPassword(ap) { return !!(ap && hasNetworkIdentity(ap) && connectPromptKind(ap) === "password"); }
+function needsCredentials(ap) { return !!(ap && hasNetworkIdentity(ap) && connectPromptKind(ap) === "enterprise"); }
 function canStartConnection(ap) { return canConnect(ap) || needsPassword(ap) || needsCredentials(ap); }
 function accessPointPath(ap) { return ap ? (ap.path || "") : ""; }
-function activeAccessPoint(status) { return status ? status.access_point || (status.network || null) : null; }
 function subnetLabel(ip4) { return ip4 && ip4.prefix !== null && ip4.prefix !== undefined ? "/" + ip4.prefix : "—"; }
 function dnsLabel(ip4) { return ip4 && ip4.dns && ip4.dns.length > 0 ? ip4.dns.join(", ") : "—"; }
 function hasNumber(value) { return value !== null && value !== undefined && !isNaN(value); }
 function privacyFor(profile) { return profile && profile.privacy ? profile.privacy : ({}); }
 function shareHint(ap) { return ap && ap.share ? ap.share : ({}); }
 function canShareQr(ap) { const share = shareHint(ap); return !!share.shareable && !!share.qr_payload; }
-function isWrongPasswordReason(reason) { return reason === "wrong-password" || reason === "secret-invalid"; }
+function isWrongPasswordReason(reason) { return reason === "wrong-password"; }
 function isSecretFailureReason(reason) { return isWrongPasswordReason(reason) || reason === "password-unavailable" || reason === "secret-required"; }
 function connectFailureRetryMs(reason) { return isWrongPasswordReason(reason) ? 10000 : 0; }
 function secretKey(ap) { return (ap && (ap.ssid || "")) + "\n" + (ap && (ap.security || "")); }
 function connectAttemptKey(ap) { return secretKey(ap) + "\n" + (ap && (ap.bssid || "")); }
+function portalNetworkIdentity(ap, result) {
+    if (ap && ap.key)
+        return ap.key;
+    const profile = ap && (ap.primary_profile || (ap.profiles && ap.profiles.length > 0 ? ap.profiles[0] : null));
+    if (profile && profile.path)
+        return profile.path;
+    const ssid = result && result.ssid ? result.ssid : networkName(ap);
+    return ssid + "|" + securityLabel(ap && ap.security);
+}
+function confirmedPortalResult(result) {
+    const connectivity = result && result.connectivity ? result.connectivity : null;
+    return !!(result && result.status !== "error" && result.suggest_open_portal && connectivity && connectivity.captive_portal);
+}
 function passwordFingerprint(password) {
     if (password === undefined || password === null)
         return "saved";
@@ -145,38 +157,19 @@ function sameAccessPoint(left, right) {
     return sameNonEmpty(left.bssid, right.bssid) || sameAccessPointIdentity(left, right);
 }
 
-function accessPointMatches(ap, active) {
-    if (!ap)
-        return false;
-    return active ? sameAccessPoint(ap, active) : ap.active;
-}
-
-function isActiveAccessPoint(ap, active) {
-    if (ap && ap.active)
-        return true;
-    if (accessPointMatches(ap, active))
-        return true;
-    const children = ap && ap.access_points ? ap.access_points : [];
-    return children.some(function (child) { return accessPointMatches(child, active); });
-}
-
-function profileForAccessPoint(ap, active, activeStatus) {
+function profileForAccessPoint(ap) {
     if (!ap)
         return null;
-    if (ap.primary_profile)
-        return ap.primary_profile;
-    if (ap.profiles && ap.profiles.length > 0)
-        return ap.profiles[0];
-    return active && activeStatus && activeStatus.profile ? activeStatus.profile : null;
+    return ap.primary_profile || (ap.profiles && ap.profiles.length > 0 ? ap.profiles[0] : null);
 }
 
-function visibleNetworks(networks, filterText, active) {
+function visibleNetworks(networks, filterText) {
     const query = (filterText || "").toLowerCase();
     return networks.filter(function (ap) {
         return !query || (ap.ssid || "").toLowerCase().indexOf(query) !== -1;
     }).sort(function (left, right) {
-        const leftActive = isActiveAccessPoint(left, active);
-        const rightActive = isActiveAccessPoint(right, active);
+        const leftActive = !!left.active;
+        const rightActive = !!right.active;
         if (leftActive !== rightActive)
             return leftActive ? -1 : 1;
         const strengthDelta = (right.strength || 0) - (left.strength || 0);
@@ -188,9 +181,9 @@ function selectedNetwork(networks, selectedIndex) {
     return networks.length === 0 ? null : networks[clampIndex(selectedIndex, networks.length)];
 }
 
-function selectedIndexAfterUpdate(previous, networks, selectedIndex, resetSelection, isActiveCallback) {
+function selectedIndexAfterUpdate(previous, networks, selectedIndex, resetSelection) {
     if (resetSelection || !previous) {
-        const activeIndex = networks.findIndex(isActiveCallback);
+        const activeIndex = networks.findIndex(function (network) { return !!network.active; });
         return activeIndex >= 0 ? activeIndex : 0;
     }
     const nextIndex = networks.findIndex(function (ap) { return sameAccessPoint(previous, ap); });
@@ -310,7 +303,7 @@ function enterpriseTarget(ap, identity) {
 }
 
 function connectFailureMessage(result, fallbackText) {
-    const reasonLabels = { "secret-required": "Password required", "secret-invalid": "Wrong password", "wrong-password": "Wrong password", "password-unavailable": "Password unavailable", "authorization-required": "Authorization required", "unsupported-auth": "Unsupported Wi-Fi authentication", "validation-error": "Invalid Wi-Fi target", "not-found": "Wi-Fi network not found", "ssid-not-found": "Wi-Fi network not found", timeout: "AP unreachable or weak signal", "dhcp-failed": "Connected to Wi-Fi but no IP", "ip-config-failed": "Connected to Wi-Fi but no IP", "activation-failed": "Connection activation failed", unknown: "Connect failed" };
+    const reasonLabels = { "secret-required": "Password required", "wrong-password": "Wrong password", "password-unavailable": "Password unavailable", "authorization-required": "Authorization required", "unsupported-auth": "Unsupported Wi-Fi authentication", "validation-error": "Invalid Wi-Fi target", "not-found": "Wi-Fi network not found", timeout: "AP unreachable or weak signal", "dhcp-failed": "Connected to Wi-Fi but no IP", "activation-failed": "Connection activation failed", unknown: "Connect failed" };
     const label = reasonLabels[result.reason || "unknown"] || "Connect failed";
     return label + ": " + (result.message || fallbackText || "unknown error");
 }
