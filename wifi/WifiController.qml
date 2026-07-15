@@ -63,6 +63,7 @@ Item {
     readonly property bool advancedLoading: backend.isPending("advanced-load")
     readonly property bool advancedSaving: backend.isPending("advanced-save")
     readonly property bool advancedSecretLoading: backend.isPending("advanced-secret")
+    readonly property string detailsTab: advancedOpen ? advancedSection : "network"
     readonly property bool scanInFlight: backend.listRunning || backend.scanRunning
     readonly property bool connectRunning: backend.connectStarting || activeConnectRequestId.length > 0
     readonly property var filteredNetworks: selection.filteredNetworks
@@ -93,6 +94,22 @@ Item {
     function canSetSendHostnameProfile() { return canProfileAction("can_set_send_hostname"); }
     function canUsePrimaryAction() { return isActive(detailAp) ? !actionInFlight : canBeginConnectAction(detailAp); }
     function canShareSelected() { return shareAvailable && sharePayload.length > 0; }
+
+    function selectDetailsTab(tab) {
+        if (tab === "network") {
+            closeAdvancedSettings();
+            return;
+        }
+        openAdvancedSettings(tab);
+    }
+
+    function cycleDetailsTab() {
+        if (!detailsOpen)
+            return;
+        const tabs = profileFor(detailAp) ? ["network", "security", "hardware"] : ["network"];
+        const index = Math.max(0, tabs.indexOf(detailsTab));
+        selectDetailsTab(tabs[(index + 1) % tabs.length]);
+    }
 
     function openAdvancedSettings(section) {
         const profile = profileFor(detailAp);

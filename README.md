@@ -88,7 +88,8 @@ General popup keys:
 - `Left`: close the details pane.
 - `F6`: connect to a hidden SSID.
 - `F7`: open Security & Privacy for the selected saved profile.
-- `F8`: open Hardware & IP/DNS for the selected saved profile.
+- `F8`: open Hardware & DNS for the selected saved profile.
+- `Ctrl+Tab`: cycle Network Details, Security & Privacy, and Hardware & DNS tabs.
 - `F5`: refresh cached networks, active status, saved profiles, and start an explicit scan with spinner/progress events.
 - `Esc`: close the popup, or cancel an open prompt.
 

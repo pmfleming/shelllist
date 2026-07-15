@@ -26,6 +26,12 @@ Rectangle {
     }
 
     Shortcut {
+        sequence: "Ctrl+Tab"
+        enabled: content.controller.detailsOpen && content.controller.hasSelection && !content.controller.prompt.open
+        onActivated: content.controller.cycleDetailsTab()
+    }
+
+    Shortcut {
         sequence: "Escape"
         enabled: content.controller.advancedOpen && !content.controller.prompt.open
         onActivated: content.controller.closeAdvancedSettings()

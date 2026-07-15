@@ -146,7 +146,7 @@ Rectangle {
                 id: viewArea
 
                 width: parent.width
-                height: Math.max(0, parent.height - pane.headerHeight - pane.actionsHeight - 2 * parent.spacing)
+                height: Math.max(0, parent.height - pane.headerHeight - pane.actionsHeight - pane.footerHeight - 3 * parent.spacing)
                 clip: true
 
                 Column {
@@ -185,30 +185,6 @@ Rectangle {
                         controller: pane.controller
                         height: pane.profileCardHeight
                     }
-
-                    RowLayout {
-                        width: parent.width
-                        height: pane.footerHeight
-                        spacing: 10
-
-                        ActionButton {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: pane.footerHeight
-                            icon: "󰌾"
-                            label: "Security & Privacy"
-                            enabled: !!pane.controller.profileFor(pane.ap)
-                            onClicked: pane.controller.openAdvancedSettings("security")
-                        }
-
-                        ActionButton {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: pane.footerHeight
-                            icon: "󰍹"
-                            label: "Hardware & IP/DNS"
-                            enabled: !!pane.controller.profileFor(pane.ap)
-                            onClicked: pane.controller.openAdvancedSettings("hardware")
-                        }
-                    }
                 }
 
                 AdvancedSettingsPage {
@@ -224,6 +200,47 @@ Rectangle {
                         enabled: !pane.controller.windowHost.noAnimations
                         NumberAnimation { duration: 240; easing.type: Easing.InOutCubic }
                     }
+                }
+            }
+
+            RowLayout {
+                width: parent.width
+                height: pane.footerHeight
+                spacing: 8
+
+                ActionButton {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: pane.footerHeight
+                    icon: "󰋜"
+                    label: "Network Details"
+                    backgroundColor: pane.controller.detailsTab === "network" ? Theme.selected : Theme.surfaceRaised
+                    borderColor: pane.controller.detailsTab === "network" ? Theme.strongBorder : Theme.mix(Theme.border, Theme.text, 0.16)
+                    labelColor: pane.controller.detailsTab === "network" ? Theme.accent : Theme.text
+                    onClicked: pane.controller.selectDetailsTab("network")
+                }
+
+                ActionButton {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: pane.footerHeight
+                    icon: "󰌾"
+                    label: "Security & Privacy"
+                    backgroundColor: pane.controller.detailsTab === "security" ? Theme.selected : Theme.surfaceRaised
+                    borderColor: pane.controller.detailsTab === "security" ? Theme.strongBorder : Theme.mix(Theme.border, Theme.text, 0.16)
+                    labelColor: pane.controller.detailsTab === "security" ? Theme.accent : Theme.text
+                    enabled: !!pane.controller.profileFor(pane.ap)
+                    onClicked: pane.controller.selectDetailsTab("security")
+                }
+
+                ActionButton {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: pane.footerHeight
+                    icon: "󰍹"
+                    label: "Hardware & DNS"
+                    backgroundColor: pane.controller.detailsTab === "hardware" ? Theme.selected : Theme.surfaceRaised
+                    borderColor: pane.controller.detailsTab === "hardware" ? Theme.strongBorder : Theme.mix(Theme.border, Theme.text, 0.16)
+                    labelColor: pane.controller.detailsTab === "hardware" ? Theme.accent : Theme.text
+                    enabled: !!pane.controller.profileFor(pane.ap)
+                    onClicked: pane.controller.selectDetailsTab("hardware")
                 }
             }
         }

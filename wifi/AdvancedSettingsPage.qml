@@ -206,18 +206,6 @@ Item {
             Layout.preferredHeight: Math.round(70 * page.density)
             spacing: Math.round(10 * page.density)
 
-            IconTile {
-                Layout.preferredWidth: Math.round(38 * page.density)
-                Layout.preferredHeight: Math.round(38 * page.density)
-                icon: "󰁍"
-                iconColor: Theme.text
-                iconSize: Math.round(18 * page.density)
-                backgroundColor: Theme.surfaceRaised
-                borderColor: Theme.border
-                clickable: true
-                onClicked: page.controller.closeAdvancedSettings()
-            }
-
             Column {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
@@ -234,7 +222,7 @@ Item {
 
                 Text {
                     width: parent.width
-                    text: page.securityView ? "Security & Privacy" : "Hardware & IP / DNS"
+                    text: page.securityView ? "Security & Privacy" : "Hardware & DNS"
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Math.round(24 * page.density)
