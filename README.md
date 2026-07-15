@@ -67,6 +67,7 @@ Shelllist currently supports:
 - optional keyring saving with persistence feedback and explicit prompt cancellation;
 - disconnecting Wi-Fi;
 - saved-profile actions: disconnect-and-forget, toggle autoconnect, toggle randomized MAC, and toggle hostname sending;
+- an advanced saved-profile editor for metered/hidden state, MAC policy, hostname privacy, WPA Personal passwords, IPv4/IPv6 assignment, DNS, and technical details;
 - Wi-Fi QR payload copying for open networks or saved profiles whose secret can be read;
 - captive-portal helper launch when requested by the UI or suggested by the backend.
 
@@ -86,6 +87,7 @@ General popup keys:
 - `Right`: open the details pane.
 - `Left`: close the details pane.
 - `F6`: connect to a hidden SSID.
+- `F7`: open advanced settings for the selected saved profile.
 - `F5`: refresh cached networks, active status, saved profiles, and start an explicit scan with spinner/progress events.
 - `Esc`: close the popup, or cancel an open prompt.
 
@@ -123,7 +125,7 @@ Current D-Bus methods used by the UI:
 - `wifi.connectTarget`, returning a connect `request_id`;
 - `wifi.secret.provide` for SecretAgent responses.
 - `wifi.disconnect`;
-- `wifi.profile.operation` for delete, privacy, autoconnect, hostname and sharing operations.
+- `wifi.profile.operation` for profile details, atomic advanced updates, password reveal, delete, privacy, autoconnect, hostname and sharing operations.
 
 Current event streams used by the UI:
 

@@ -23,11 +23,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784044708,
-        "narHash": "sha256-F38z6A7qjaSHPI4YX1WLvMOQ5Q0s0hRjdFVQot5A1dw=",
+        "lastModified": 1784122525,
+        "narHash": "sha256-6i8/+XP8AA82p5lQWbuC4U38UL7fcLXss3XC6tx5tDM=",
         "owner": "pmfleming",
         "repo": "nm-daemon",
-        "rev": "9b8a287d182f3d559b7885b06c4365042d077f3a",
+        "rev": "fa85e35d12fda3ea849398d3f49aa796cb30d138",
         "type": "github"
       },
       "original": {

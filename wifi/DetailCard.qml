@@ -23,7 +23,6 @@ Rectangle {
             id: heading
 
             visible: card.title.length > 0
-            height: visible ? implicitHeight : 0
             text: card.title
             color: Theme.text
             font.family: Theme.fontFamily

@@ -5,6 +5,9 @@ WifiConnectPolicy 1.0 WifiConnectPolicy.qml
 WifiNavigation 1.0 WifiNavigation.qml
 WifiSelectionModel 1.0 WifiSelectionModel.qml
 ActionButton 1.0 ActionButton.qml
+AdvancedChoice 1.0 AdvancedChoice.qml
+AdvancedSettingsPage 1.0 AdvancedSettingsPage.qml
+AdvancedTextField 1.0 AdvancedTextField.qml
 CommandProcess 1.0 CommandProcess.qml
 DetailCard 1.0 DetailCard.qml
 DetailField 1.0 DetailField.qml

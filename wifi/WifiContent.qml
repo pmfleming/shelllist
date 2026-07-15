@@ -13,6 +13,12 @@ Rectangle {
     border.color: Theme.strongBorder
     border.width: 1
 
+    Shortcut {
+        sequence: "F7"
+        enabled: !content.controller.prompt.open && !content.controller.advancedOpen
+        onActivated: content.controller.openAdvancedSettings()
+    }
+
     Connections {
         target: content.controller
         function onFocusSearchRequested() { Qt.callLater(header.focusSearch); }
@@ -20,6 +26,9 @@ Rectangle {
     }
 
     RowLayout {
+        id: mainContent
+
+        visible: !content.controller.advancedOpen
         anchors.fill: parent
         anchors.leftMargin: content.controller.contentMargin
         anchors.rightMargin: content.controller.contentMargin
@@ -74,6 +83,12 @@ Rectangle {
             Layout.maximumWidth: content.controller.detailsPaneWidth
             Layout.fillHeight: true
         }
+    }
+
+    AdvancedSettingsPage {
+        visible: content.controller.advancedOpen
+        anchors.fill: parent
+        controller: content.controller
     }
 
     PromptDialog {

@@ -42,6 +42,7 @@ Item {
             [Qt.Key_Right, openDetails],
             [Qt.Key_Left, closeDetails],
             [Qt.Key_F6, controller.openHiddenNetworkPrompt],
+            [Qt.Key_F7, controller.openAdvancedSettings],
             [Qt.Key_F5, controller.refresh]
         ];
     }

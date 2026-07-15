@@ -12,7 +12,7 @@ Item {
     readonly property bool listRunning: isPending("networks")
     readonly property bool scanRunning: isPending("scan-start") || controller.activeScanRequestId.length > 0
     readonly property bool connectStarting: isPending("connect-start")
-    readonly property bool nonConnectRunning: isPending("disconnect") || isPending("profile") || isPending("secret-provide") || isPending("secret-cancel")
+    readonly property bool nonConnectRunning: isPending("disconnect") || isPending("profile") || isPending("advanced-load") || isPending("advanced-save") || isPending("advanced-secret") || isPending("secret-provide") || isPending("secret-cancel")
     readonly property bool running: connectStarting || nonConnectRunning || controller.activeConnectRequestId.length > 0
 
     function isPending(id) { return !!pending[id]; }
@@ -42,6 +42,9 @@ Item {
         return call("profile", NmApi.methods.wifi_profile_operation, operation);
     }
     function share(path) { return call("share", NmApi.methods.wifi_profile_operation, { operation: "share", path: path }); }
+    function loadAdvancedProfile(path) { return call("advanced-load", NmApi.methods.wifi_profile_operation, { operation: "details", path: path }); }
+    function saveAdvancedProfile(path, settings) { return call("advanced-save", NmApi.methods.wifi_profile_operation, { operation: "update", path: path, settings: settings }); }
+    function revealAdvancedSecret(path) { return call("advanced-secret", NmApi.methods.wifi_profile_operation, { operation: "reveal-secret", path: path }); }
     function provideSecret(requestId, key, password, save) {
         const values = ({});
         values[key] = password;
@@ -81,6 +84,15 @@ Item {
                 const disconnected = Wifi.apiData(envelope, "result") || ({});
                 controller.status = disconnected.message || "Disconnected Wi-Fi";
                 controller.refresh();
+            } else if (id === "advanced-load") {
+                controller.applyAdvancedProfile(Wifi.apiData(envelope, "result") || ({}));
+            } else if (id === "advanced-save") {
+                const advancedResult = Wifi.apiData(envelope, "result") || ({});
+                controller.applyAdvancedSave(advancedResult);
+                controller.invalidateShareAvailabilityCache();
+                controller.refresh();
+            } else if (id === "advanced-secret") {
+                controller.applyAdvancedSecret(Wifi.apiData(envelope, "result") || ({}));
             } else if (id === "profile") {
                 const profileResult = Wifi.apiData(envelope, "result") || ({});
                 if (profileResult.operation === "forget") {

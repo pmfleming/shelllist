@@ -22,6 +22,12 @@ Item {
     property bool scanSnapshotSeen: false
     property bool detailsOpen: false
     property real detailsExpansionProgress: 0
+    property bool advancedOpen: false
+    property string advancedSection: "general"
+    property string advancedProfilePath: ""
+    property var advancedProfile: ({})
+    property string advancedSecret: ""
+    property string advancedError: ""
     property bool shareAvailable: false
     property string sharePayload: ""
     property string shareProfilePath: ""
@@ -54,6 +60,9 @@ Item {
     readonly property bool detailsRendered: detailsOpen || detailsExpansionProgress > detailsRenderCutoff
     readonly property int currentWindowWidth: Math.round(closedWindowWidth + detailsPaintProgress * (openWindowWidth - closedWindowWidth))
     readonly property bool actionInFlight: backend.running
+    readonly property bool advancedLoading: backend.isPending("advanced-load")
+    readonly property bool advancedSaving: backend.isPending("advanced-save")
+    readonly property bool advancedSecretLoading: backend.isPending("advanced-secret")
     readonly property bool scanInFlight: backend.listRunning || backend.scanRunning
     readonly property bool connectRunning: backend.connectStarting || activeConnectRequestId.length > 0
     readonly property var filteredNetworks: selection.filteredNetworks
@@ -84,6 +93,70 @@ Item {
     function canSetSendHostnameProfile() { return canProfileAction("can_set_send_hostname"); }
     function canUsePrimaryAction() { return isActive(detailAp) ? !actionInFlight : canBeginConnectAction(detailAp); }
     function canShareSelected() { return shareAvailable && sharePayload.length > 0; }
+
+    function openAdvancedSettings() {
+        const profile = profileFor(detailAp);
+        if (!profile)
+            return status = "Connect to this network before editing advanced settings.";
+        detailsOpen = true;
+        detailsExpansionProgress = 1;
+        Qt.callLater(windowHost.requestWindowPlacement);
+        advancedOpen = true;
+        advancedSection = "general";
+        advancedProfilePath = profile.path || "";
+        advancedProfile = ({});
+        advancedSecret = "";
+        advancedError = "";
+        if (!backend.loadAdvancedProfile(advancedProfilePath))
+            advancedError = "Advanced profile details are already loading.";
+    }
+
+    function closeAdvancedSettings() {
+        if (advancedSaving)
+            return;
+        advancedOpen = false;
+        advancedProfilePath = "";
+        advancedProfile = ({});
+        advancedSecret = "";
+        advancedError = "";
+        Qt.callLater(navigationModel.focusSearch);
+    }
+
+    function applyAdvancedProfile(profile) {
+        if (!advancedOpen || (profile.path || "") !== advancedProfilePath)
+            return;
+        advancedProfile = profile;
+        advancedError = "";
+    }
+
+    function saveAdvancedSettings(settings) {
+        if (!advancedOpen || advancedProfilePath.length === 0 || advancedSaving)
+            return;
+        advancedError = "";
+        if (!backend.saveAdvancedProfile(advancedProfilePath, settings))
+            advancedError = "Advanced profile settings are already being saved.";
+    }
+
+    function applyAdvancedSave(result) {
+        status = result.message || "Saved advanced Wi-Fi settings";
+        advancedSecret = "";
+        if (advancedOpen && advancedProfilePath.length > 0)
+            backend.loadAdvancedProfile(advancedProfilePath);
+    }
+
+    function revealAdvancedSecret() {
+        if (!advancedOpen || advancedProfilePath.length === 0 || advancedSecretLoading)
+            return;
+        advancedError = "";
+        backend.revealAdvancedSecret(advancedProfilePath);
+    }
+
+    function applyAdvancedSecret(result) {
+        if (!advancedOpen || (result.path || "") !== advancedProfilePath)
+            return;
+        advancedSecret = result.available ? (result.password || "") : "";
+        advancedError = result.available ? "" : "The saved Wi-Fi password is not readable.";
+    }
 
     function resetShareAvailability() {
         shareProfilePath = "";
@@ -318,6 +391,8 @@ Item {
     function failCall(id, message) {
         if (id === "connect-start")
             resetConnectProgress();
+        if (id === "advanced-load" || id === "advanced-save" || id === "advanced-secret")
+            advancedError = message;
         if (id === "share") {
             const failedPath = shareRequestPath;
             const failedGeneration = shareRequestGeneration;

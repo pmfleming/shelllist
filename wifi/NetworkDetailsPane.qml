@@ -15,7 +15,7 @@ Rectangle {
     readonly property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     readonly property int actionsHeight: 44
     readonly property int footerHeight: Math.max(44, Math.round(50 * uiScale))
-    readonly property real cardBudget: Math.max(420, contentColumn.height - headerHeight - actionsHeight - footerHeight - 5 * sectionSpacing)
+    readonly property real cardBudget: Math.max(420, height - 2 - headerHeight - actionsHeight - footerHeight - 5 * sectionSpacing)
     readonly property real connectionCardHeight: Math.round(cardBudget * 0.44)
     readonly property real networkCardHeight: Math.round(cardBudget * 0.255)
     readonly property real profileCardHeight: Math.max(0, cardBudget - connectionCardHeight - networkCardHeight)
@@ -201,6 +201,14 @@ Rectangle {
                         font.family: Theme.iconFontFamily
                         font.pixelSize: 16
                     }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.leftMargin: 48
+                    enabled: !!pane.controller.profileFor(pane.ap)
+                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: pane.controller.openAdvancedSettings()
                 }
             }
         }
