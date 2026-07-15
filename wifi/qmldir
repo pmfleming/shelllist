@@ -24,5 +24,7 @@ VisualSurface 1.0 VisualSurface.qml
 WifiHeader 1.0 WifiHeader.qml
 WifiContent 1.0 WifiContent.qml
 WifiController 1.0 WifiController.qml
+WifiDetailActions 1.0 WifiDetailActions.qml
+WifiGlobalShortcut 1.0 WifiGlobalShortcut.qml
 WifiPromptController 1.0 WifiPromptController.qml
 WifiWindowHost 1.0 WifiWindowHost.qml
