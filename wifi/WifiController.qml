@@ -23,7 +23,7 @@ Item {
     property bool detailsOpen: false
     property real detailsExpansionProgress: 0
     property bool advancedOpen: false
-    property string advancedSection: "general"
+    property string advancedSection: "security"
     property string advancedProfilePath: ""
     property var advancedProfile: ({})
     property string advancedSecret: ""
@@ -94,21 +94,23 @@ Item {
     function canUsePrimaryAction() { return isActive(detailAp) ? !actionInFlight : canBeginConnectAction(detailAp); }
     function canShareSelected() { return shareAvailable && sharePayload.length > 0; }
 
-    function openAdvancedSettings() {
+    function openAdvancedSettings(section) {
         const profile = profileFor(detailAp);
         if (!profile)
-            return status = "Connect to this network before editing advanced settings.";
+            return status = "Connect to this network before editing saved settings.";
         detailsOpen = true;
         detailsExpansionProgress = 1;
         Qt.callLater(windowHost.requestWindowPlacement);
+        advancedSection = section === "hardware" ? "hardware" : "security";
+        if (advancedOpen && advancedProfilePath === (profile.path || ""))
+            return;
         advancedOpen = true;
-        advancedSection = "general";
         advancedProfilePath = profile.path || "";
         advancedProfile = ({});
         advancedSecret = "";
         advancedError = "";
         if (!backend.loadAdvancedProfile(advancedProfilePath))
-            advancedError = "Advanced profile details are already loading.";
+            advancedError = "Saved profile details are already loading.";
     }
 
     function closeAdvancedSettings() {
@@ -119,7 +121,6 @@ Item {
         advancedProfile = ({});
         advancedSecret = "";
         advancedError = "";
-        Qt.callLater(navigationModel.focusSearch);
     }
 
     function applyAdvancedProfile(profile) {
@@ -590,11 +591,18 @@ Item {
     function openHiddenNetworkPrompt() { if (beginAnyConnectAction()) prompt.openHiddenNetworkPrompt(); }
 
     onDetailsOpenChanged: {
-        if (detailsOpen) {
+        if (detailsOpen)
             Qt.callLater(refreshShareAvailability);
-        }
+        else if (advancedOpen)
+            closeAdvancedSettings();
     }
-    onDetailApChanged: if (detailsOpen) Qt.callLater(refreshShareAvailability)
+    onDetailApChanged: {
+        const profile = profileFor(detailAp);
+        if (advancedOpen && (!profile || (profile.path || "") !== advancedProfilePath))
+            closeAdvancedSettings();
+        if (detailsOpen)
+            Qt.callLater(refreshShareAvailability);
+    }
     onActiveStatusChanged: updateVisibleConnectProgress()
     onActiveScanRequestIdChanged: activeScanRequestId.length > 0 ? scanWatchdogTimer.restart() : scanWatchdogTimer.stop()
 

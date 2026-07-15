@@ -142,73 +142,88 @@ Rectangle {
                 height: pane.actionsHeight
             }
 
-            DetailCard {
-                height: pane.connectionCardHeight
-                title: "Connection"
+            Item {
+                id: viewArea
 
-                DetailGrid {
-                    entries: Wifi.connectionDetailRows(pane.controller, pane.ap, Theme.accent).slice(0, 8)
-                }
-            }
-
-            DetailCard {
-                height: pane.networkCardHeight
-                title: "Network details"
-
-                DetailGrid {
-                    entries: Wifi.networkDetailRows(pane.controller, pane.ap).slice(0, 4)
-                }
-            }
-
-            NetworkProfileSettingsCard {
-                controller: pane.controller
-                height: pane.profileCardHeight
-            }
-
-            Rectangle {
                 width: parent.width
-                height: pane.footerHeight
-                radius: Theme.cardRadius
-                color: Theme.withAlpha(Theme.surfaceRaised, 0.96)
-                border.color: Theme.mix(Theme.border, Theme.text, 0.12)
-                border.width: 1
+                height: Math.max(0, parent.height - pane.headerHeight - pane.actionsHeight - 2 * parent.spacing)
+                clip: true
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 16
-                    anchors.rightMargin: 16
-                    spacing: 10
+                Column {
+                    id: normalDetails
 
-                    Text {
-                        text: "󰐲"
-                        color: Theme.mix(Theme.mutedText, Theme.text, 0.22)
-                        font.family: Theme.iconFontFamily
-                        font.pixelSize: 18
+                    enabled: !pane.controller.advancedOpen
+                    width: parent.width
+                    height: parent.height
+                    x: pane.controller.advancedOpen ? -width : 0
+                    spacing: pane.sectionSpacing
+
+                    Behavior on x {
+                        enabled: !pane.controller.windowHost.noAnimations
+                        NumberAnimation { duration: 240; easing.type: Easing.InOutCubic }
                     }
 
-                    Item { Layout.fillWidth: true }
+                    DetailCard {
+                        height: pane.connectionCardHeight
+                        title: "Connection"
 
-                    Text {
-                        text: "More advanced settings"
-                        color: Theme.mix(Theme.mutedText, Theme.text, 0.22)
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 12
+                        DetailGrid {
+                            entries: Wifi.connectionDetailRows(pane.controller, pane.ap, Theme.accent).slice(0, 8)
+                        }
                     }
 
-                    Text {
-                        text: "󰅂"
-                        color: Theme.mix(Theme.mutedText, Theme.text, 0.22)
-                        font.family: Theme.iconFontFamily
-                        font.pixelSize: 16
+                    DetailCard {
+                        height: pane.networkCardHeight
+                        title: "Network details"
+
+                        DetailGrid {
+                            entries: Wifi.networkDetailRows(pane.controller, pane.ap).slice(0, 4)
+                        }
+                    }
+
+                    NetworkProfileSettingsCard {
+                        controller: pane.controller
+                        height: pane.profileCardHeight
+                    }
+
+                    RowLayout {
+                        width: parent.width
+                        height: pane.footerHeight
+                        spacing: 10
+
+                        ActionButton {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: pane.footerHeight
+                            icon: "󰌾"
+                            label: "Security & Privacy"
+                            enabled: !!pane.controller.profileFor(pane.ap)
+                            onClicked: pane.controller.openAdvancedSettings("security")
+                        }
+
+                        ActionButton {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: pane.footerHeight
+                            icon: "󰍹"
+                            label: "Hardware & IP/DNS"
+                            enabled: !!pane.controller.profileFor(pane.ap)
+                            onClicked: pane.controller.openAdvancedSettings("hardware")
+                        }
                     }
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.leftMargin: 48
-                    enabled: !!pane.controller.profileFor(pane.ap)
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: pane.controller.openAdvancedSettings()
+                AdvancedSettingsPage {
+                    id: advancedPane
+
+                    enabled: pane.controller.advancedOpen
+                    width: parent.width
+                    height: Math.min(parent.height, width * 812 / 713)
+                    x: pane.controller.advancedOpen ? 0 : width
+                    controller: pane.controller
+
+                    Behavior on x {
+                        enabled: !pane.controller.windowHost.noAnimations
+                        NumberAnimation { duration: 240; easing.type: Easing.InOutCubic }
+                    }
                 }
             }
         }

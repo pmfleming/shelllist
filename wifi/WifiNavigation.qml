@@ -42,7 +42,8 @@ Item {
             [Qt.Key_Right, openDetails],
             [Qt.Key_Left, closeDetails],
             [Qt.Key_F6, controller.openHiddenNetworkPrompt],
-            [Qt.Key_F7, controller.openAdvancedSettings],
+            [Qt.Key_F7, function () { controller.openAdvancedSettings("security"); }],
+            [Qt.Key_F8, function () { controller.openAdvancedSettings("hardware"); }],
             [Qt.Key_F5, controller.refresh]
         ];
     }

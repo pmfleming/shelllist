@@ -16,7 +16,19 @@ Rectangle {
     Shortcut {
         sequence: "F7"
         enabled: !content.controller.prompt.open && !content.controller.advancedOpen
-        onActivated: content.controller.openAdvancedSettings()
+        onActivated: content.controller.openAdvancedSettings("security")
+    }
+
+    Shortcut {
+        sequence: "F8"
+        enabled: !content.controller.prompt.open && !content.controller.advancedOpen
+        onActivated: content.controller.openAdvancedSettings("hardware")
+    }
+
+    Shortcut {
+        sequence: "Escape"
+        enabled: content.controller.advancedOpen && !content.controller.prompt.open
+        onActivated: content.controller.closeAdvancedSettings()
     }
 
     Connections {
@@ -28,7 +40,6 @@ Rectangle {
     RowLayout {
         id: mainContent
 
-        visible: !content.controller.advancedOpen
         anchors.fill: parent
         anchors.leftMargin: content.controller.contentMargin
         anchors.rightMargin: content.controller.contentMargin
@@ -85,11 +96,6 @@ Rectangle {
         }
     }
 
-    AdvancedSettingsPage {
-        visible: content.controller.advancedOpen
-        anchors.fill: parent
-        controller: content.controller
-    }
 
     PromptDialog {
         visible: content.controller.prompt.open

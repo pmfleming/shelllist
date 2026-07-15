@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import "."
 
-Rectangle {
+Item {
     id: page
 
     required property var controller
@@ -34,17 +34,19 @@ Rectangle {
     property string ipv6Dns: ""
     property string ipv6Search: ""
 
+    readonly property bool securityView: controller.advancedSection === "security"
     readonly property bool personalSecurity: String(profile.security_type || "").indexOf("Personal") >= 0
     readonly property var currentIp: ipFamily === "ipv4" ? (profile.ipv4 || ({})) : (profile.ipv6 || ({}))
     readonly property string currentMethod: ipFamily === "ipv4" ? ipv4Method : ipv6Method
     readonly property bool currentAutoDns: ipFamily === "ipv4" ? ipv4AutoDns : ipv6AutoDns
+    readonly property bool editingIpDetails: currentMethod === "manual" || !currentAutoDns
     readonly property var ap: controller.detailAp
     readonly property var status: controller.activeStatus || ({})
+    readonly property real density: Math.max(0.76, Math.min(1.0, height / 720))
+    readonly property int cardSpacing: Math.max(7, Math.round(10 * density))
+    readonly property color cardBorder: Theme.withAlpha(Theme.accent, 0.78)
 
-    color: Theme.window
-    radius: Theme.windowRadius
-    border.color: Theme.strongBorder
-    border.width: 1
+    clip: true
     focus: visible
     Keys.onEscapePressed: controller.closeAdvancedSettings()
 
@@ -53,8 +55,12 @@ Rectangle {
     }
 
     function syncProfile() {
-        if (!profile || !profile.path)
+        if (!profile || !profile.path) {
+            passwordValue = "";
+            passwordDirty = false;
+            passwordRevealed = false;
             return;
+        }
         autoconnect = !!profile.autoconnect;
         metered = profile.metered || "auto";
         hiddenNetwork = !!profile.hidden;
@@ -95,12 +101,11 @@ Rectangle {
         const autoDns = family === "ipv4" ? ipv4AutoDns : ipv6AutoDns;
         const dnsText = family === "ipv4" ? ipv4Dns : ipv6Dns;
         const searchText = family === "ipv4" ? ipv4Search : ipv6Search;
-        const addresses = method === "manual" && address.length > 0
-            ? [{ address: address, prefix: Math.max(0, parseInt(prefixText || "0", 10) || 0) }]
-            : [];
         return {
             method: method,
-            addresses: addresses,
+            addresses: method === "manual" && address.length > 0
+                ? [{ address: address, prefix: Math.max(0, parseInt(prefixText || "0", 10) || 0) }]
+                : [],
             gateway: gateway.length > 0 ? gateway : null,
             dns: autoDns ? [] : splitValues(dnsText),
             routes: source.routes || [],
@@ -123,6 +128,16 @@ Rectangle {
         });
     }
 
+    function setMethod(value) {
+        if (ipFamily === "ipv4") ipv4Method = value;
+        else ipv6Method = value;
+    }
+
+    function setAutoDns(value) {
+        if (ipFamily === "ipv4") ipv4AutoDns = value === "auto";
+        else ipv6AutoDns = value === "auto";
+    }
+
     onProfileChanged: syncProfile()
 
     Connections {
@@ -136,258 +151,180 @@ Rectangle {
         }
     }
 
-    component SectionHeading: Text {
-        color: Theme.text
-        font.family: Theme.fontFamily
-        font.pixelSize: 20
-        font.bold: true
-    }
-
     component FieldLabel: Text {
         color: Theme.mutedText
         font.family: Theme.fontFamily
-        font.pixelSize: 12
+        font.pixelSize: Math.round(12 * page.density)
     }
 
     component ReadValue: Text {
         color: Theme.text
         font.family: Theme.fontFamily
-        font.pixelSize: 13
+        font.pixelSize: Math.round(13 * page.density)
         elide: Text.ElideRight
+    }
+
+    component CardHeading: Row {
+        property string icon: ""
+        property string title: ""
+        height: Math.round(28 * page.density)
+        spacing: Math.round(10 * page.density)
+
+        Text {
+            height: parent.height
+            verticalAlignment: Text.AlignVCenter
+            text: parent.icon
+            color: Theme.accent
+            font.family: Theme.iconFontFamily
+            font.pixelSize: Math.round(21 * page.density)
+        }
+
+        Text {
+            height: parent.height
+            verticalAlignment: Text.AlignVCenter
+            text: parent.title
+            color: Theme.text
+            font.family: Theme.fontFamily
+            font.pixelSize: Math.round(17 * page.density)
+            font.bold: true
+        }
+    }
+
+    component InfoCard: Rectangle {
+        color: Theme.withAlpha(Theme.surfaceRaised, 0.96)
+        radius: Theme.cardRadius
+        border.width: 1
+        border.color: page.cardBorder
     }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 18
-        spacing: 12
+        spacing: page.cardSpacing
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 54
-            spacing: 12
+            Layout.preferredHeight: Math.round(70 * page.density)
+            spacing: Math.round(10 * page.density)
 
             IconTile {
-                Layout.preferredWidth: 40
-                Layout.preferredHeight: 40
+                Layout.preferredWidth: Math.round(38 * page.density)
+                Layout.preferredHeight: Math.round(38 * page.density)
                 icon: "󰁍"
                 iconColor: Theme.text
-                iconSize: 19
+                iconSize: Math.round(18 * page.density)
                 backgroundColor: Theme.surfaceRaised
                 borderColor: Theme.border
                 clickable: true
                 onClicked: page.controller.closeAdvancedSettings()
             }
 
-            SignalIcon {
-                Layout.preferredWidth: 38
-                Layout.preferredHeight: 32
-                level: 3
-                iconColor: Theme.accent
-            }
-
             Column {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
-                spacing: 3
+                spacing: Math.round(3 * page.density)
 
                 Text {
-                    width: parent.width
-                    text: "Advanced settings — " + (page.profile.ssid || page.controller.networkName(page.ap))
-                    color: Theme.text
+                    text: "ADVANCED SETTINGS"
+                    color: Theme.accent
                     font.family: Theme.fontFamily
-                    font.pixelSize: 20
+                    font.pixelSize: Math.round(11 * page.density)
                     font.bold: true
-                    elide: Text.ElideRight
+                    font.letterSpacing: 0.8
                 }
 
                 Text {
-                    text: page.profile.id ? "Saved profile: " + page.profile.id : "Loading saved profile…"
-                    color: Theme.subtleText
+                    width: parent.width
+                    text: page.securityView ? "Security & Privacy" : "Hardware & IP / DNS"
+                    color: Theme.text
                     font.family: Theme.fontFamily
-                    font.pixelSize: 11
+                    font.pixelSize: Math.round(24 * page.density)
+                    font.weight: Font.Medium
+                    elide: Text.ElideRight
+                }
+            }
+
+            Rectangle {
+                visible: page.controller.isActive(page.ap)
+                Layout.preferredWidth: Math.round(106 * page.density)
+                Layout.preferredHeight: Math.round(34 * page.density)
+                Layout.alignment: Qt.AlignVCenter
+                radius: height / 2
+                color: "transparent"
+                border.width: 1
+                border.color: Theme.accent
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 7
+
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 8
+                        height: 8
+                        radius: 4
+                        color: Theme.accent
+                    }
+
+                    Text {
+                        text: "Connected"
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Math.round(12 * page.density)
+                    }
                 }
             }
         }
 
-        RowLayout {
+        Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 12
+            clip: true
 
-            Rectangle {
-                Layout.preferredWidth: 190
-                Layout.fillHeight: true
-                radius: Theme.cardRadius
-                color: Theme.withAlpha(Theme.surfaceRaised, 0.96)
-                border.color: Theme.mix(Theme.border, Theme.text, 0.12)
+            Column {
+                id: securityCards
+                visible: page.securityView
+                anchors.fill: parent
+                spacing: page.cardSpacing
 
-                Column {
-                    anchors.fill: parent
-                    anchors.margins: 10
-                    spacing: 6
+                readonly property real usableHeight: height - 2 * spacing
 
-                    Repeater {
-                        model: [
-                            { id: "general", label: "General", icon: "󰒓" },
-                            { id: "security", label: "Security", icon: "󰌾" },
-                            { id: "privacy", label: "Privacy", icon: "󰈡" },
-                            { id: "ip", label: "IP & DNS", icon: "󰩠" },
-                            { id: "hardware", label: "Hardware details", icon: "󰍹" }
-                        ]
-
-                        delegate: Rectangle {
-                            id: navItem
-
-                            required property var modelData
-
-                            width: parent.width
-                            height: 42
-                            radius: Theme.controlRadius
-                            color: page.controller.advancedSection === navItem.modelData.id ? Theme.selected : "transparent"
-                            border.color: page.controller.advancedSection === navItem.modelData.id ? Theme.strongBorder : "transparent"
-
-                            Row {
-                                anchors.fill: parent
-                                anchors.leftMargin: 12
-                                spacing: 10
-
-                                Text {
-                                    height: parent.height
-                                    verticalAlignment: Text.AlignVCenter
-                                    text: navItem.modelData.icon
-                                    color: page.controller.advancedSection === navItem.modelData.id ? Theme.accent : Theme.mutedText
-                                    font.family: Theme.iconFontFamily
-                                    font.pixelSize: 16
-                                }
-
-                                Text {
-                                    height: parent.height
-                                    verticalAlignment: Text.AlignVCenter
-                                    text: navItem.modelData.label
-                                    color: Theme.text
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: 13
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: page.controller.advancedSection = navItem.modelData.id
-                            }
-                        }
-                    }
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                radius: Theme.cardRadius
-                color: Theme.withAlpha(Theme.surfaceRaised, 0.96)
-                border.color: Theme.mix(Theme.border, Theme.text, 0.12)
-                clip: true
-
-                Item {
-                    anchors.fill: parent
-                    anchors.margins: 20
+                InfoCard {
+                    width: parent.width
+                    height: Math.round(securityCards.usableHeight * 0.45)
 
                     Column {
-                        visible: page.controller.advancedSection === "general"
-                        width: parent.width
-                        spacing: 14
+                        anchors.fill: parent
+                        anchors.margins: Math.round(15 * page.density)
+                        spacing: Math.max(4, Math.round(7 * page.density))
 
-                        SectionHeading { text: "General" }
-
-                        RowLayout {
-                            width: parent.width
-                            height: 42
-                            FieldLabel { Layout.preferredWidth: 180; text: "Network name (SSID)" }
-                            ReadValue { Layout.fillWidth: true; text: page.profile.ssid || "—" }
-                        }
-
-                        RowLayout {
-                            width: parent.width
-                            height: 48
-
-                            Column {
-                                Layout.fillWidth: true
-                                FieldLabel { text: "Connect automatically" }
-                                ReadValue { text: "Connect whenever this network is in range" }
-                            }
-
-                            TogglePill {
-                                checked: page.autoconnect
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: page.autoconnect = !page.autoconnect
-                                }
-                            }
-                        }
-
-                        RowLayout {
-                            width: parent.width
-                            height: 48
-
-                            Column {
-                                Layout.fillWidth: true
-                                FieldLabel { text: "Metered connection" }
-                                ReadValue { text: "Allow applications to reduce background data usage" }
-                            }
-
-                            AdvancedChoice {
-                                Layout.preferredWidth: 150
-                                value: page.metered
-                                options: [{ value: "auto", label: "Automatic" }, { value: "no", label: "Not metered" }, { value: "yes", label: "Metered" }]
-                                onSelected: function (value) { page.metered = value; }
-                            }
-                        }
-
-                        RowLayout {
-                            width: parent.width
-                            height: 48
-
-                            Column {
-                                Layout.fillWidth: true
-                                FieldLabel { text: "Hidden network" }
-                                ReadValue { text: "Connect even when the SSID is not broadcasting" }
-                            }
-
-                            TogglePill {
-                                checked: page.hiddenNetwork
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: page.hiddenNetwork = !page.hiddenNetwork
-                                }
-                            }
-                        }
-                    }
-
-                    Column {
-                        visible: page.controller.advancedSection === "security"
-                        width: parent.width
-                        spacing: 14
-
-                        SectionHeading { text: "Security" }
+                        CardHeading { icon: "󰌾"; title: "Security" }
                         FieldLabel { text: "Security type" }
-                        AdvancedTextField { width: parent.width; text: page.profile.security_type || "Unknown"; readOnly: true }
+                        ReadValue { width: parent.width; text: page.profile.security_type || "Unknown" }
                         FieldLabel { text: "Network password" }
 
                         RowLayout {
                             width: parent.width
-                            AdvancedTextField { Layout.fillWidth: true; text: page.passwordValue; password: !page.passwordRevealed; placeholder: page.personalSecurity ? "Saved password" : "Not available for this security type"; readOnly: !page.personalSecurity; onEdited: function (value) { page.passwordValue = value; page.passwordDirty = true; } }
+                            height: 38
+                            spacing: 8
+
+                            AdvancedTextField {
+                                Layout.fillWidth: true
+                                text: page.passwordValue
+                                password: !page.passwordRevealed
+                                placeholder: page.personalSecurity ? "Saved password" : "Not available for this security type"
+                                readOnly: !page.personalSecurity
+                                onEdited: function (value) { page.passwordValue = value; page.passwordDirty = true; }
+                            }
+
                             ActionButton {
-                                Layout.preferredWidth: 110
+                                Layout.preferredWidth: 92
+                                Layout.preferredHeight: 38
                                 icon: page.passwordRevealed ? "󰈉" : "󰈈"
                                 label: page.controller.advancedSecretLoading ? "Loading" : (page.passwordRevealed ? "Hide" : "Show")
                                 enabled: page.personalSecurity && !page.controller.advancedSecretLoading
                                 onClicked: {
-                                    if (page.passwordRevealed)
-                                        page.passwordRevealed = false;
-                                    else
-                                        page.controller.revealAdvancedSecret();
+                                    if (page.passwordRevealed) page.passwordRevealed = false;
+                                    else page.controller.revealAdvancedSecret();
                                 }
                             }
                         }
@@ -395,22 +332,29 @@ Rectangle {
                         Text {
                             width: parent.width
                             wrapMode: Text.WordWrap
+                            maximumLineCount: 2
+                            elide: Text.ElideRight
                             text: page.personalSecurity
-                                ? "Entering a new WPA Personal password updates the saved profile. The change takes effect the next time NetworkManager activates it."
-                                : "Password editing is currently available only for WPA Personal profiles."
+                                ? "A new password takes effect the next time NetworkManager activates this profile."
+                                : "Password editing is available for WPA Personal profiles."
                             color: Theme.subtleText
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Math.round(10 * page.density)
                         }
                     }
+                }
+
+                InfoCard {
+                    width: parent.width
+                    height: Math.round(securityCards.usableHeight * 0.34)
 
                     Column {
-                        visible: page.controller.advancedSection === "privacy"
-                        width: parent.width
-                        spacing: 14
+                        anchors.fill: parent
+                        anchors.margins: Math.round(15 * page.density)
+                        spacing: Math.max(5, Math.round(8 * page.density))
 
-                        SectionHeading { text: "Privacy" }
-                        FieldLabel { text: "Hardware address policy" }
+                        CardHeading { icon: "󰈡"; title: "Privacy" }
+                        FieldLabel { text: "Address policy" }
                         AdvancedChoice {
                             width: parent.width
                             value: page.macPolicy
@@ -425,11 +369,11 @@ Rectangle {
 
                         RowLayout {
                             width: parent.width
-                            height: 54
+                            height: Math.round(43 * page.density)
 
                             Column {
                                 Layout.fillWidth: true
-                                FieldLabel { text: "Send device name" }
+                                FieldLabel { text: "Device name sharing" }
                                 ReadValue { text: "Share this device's hostname with the network" }
                             }
 
@@ -442,197 +386,249 @@ Rectangle {
                                 }
                             }
                         }
-
-                        FieldLabel { text: "Current device MAC" }
-                        AdvancedTextField { width: parent.width; text: ((page.status.wireless || {}).mac_address || "Unavailable"); readOnly: true }
                     }
+                }
+
+                InfoCard {
+                    width: parent.width
+                    height: securityCards.usableHeight - securityCards.children[0].height - securityCards.children[1].height
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: Math.round(15 * page.density)
+                        spacing: 12
+
+                        CardHeading { icon: "󰍛"; title: "Device identity" }
+                        Item { Layout.fillWidth: true }
+                        Column {
+                            Layout.alignment: Qt.AlignVCenter
+                            FieldLabel { text: "Current device MAC" }
+                            ReadValue { text: ((page.status.wireless || {}).mac_address || "Unavailable") }
+                        }
+                    }
+                }
+            }
+
+            Column {
+                id: hardwareCards
+                visible: !page.securityView
+                anchors.fill: parent
+                spacing: page.cardSpacing
+
+                readonly property real usableHeight: height - (page.editingIpDetails ? 0 : 2 * spacing)
+
+                InfoCard {
+                    width: parent.width
+                    height: page.editingIpDetails ? parent.height : Math.round(hardwareCards.usableHeight * 0.43)
 
                     Column {
-                        visible: page.controller.advancedSection === "ip"
-                        width: parent.width
-                        spacing: 11
+                        anchors.fill: parent
+                        anchors.margins: Math.round(15 * page.density)
+                        spacing: Math.max(4, Math.round(6 * page.density))
 
                         RowLayout {
                             width: parent.width
-                            SectionHeading { Layout.fillWidth: true; text: "IP & DNS" }
-                            AdvancedChoice { Layout.preferredWidth: 120; value: page.ipFamily; options: [{ value: "ipv4", label: "IPv4" }, { value: "ipv6", label: "IPv6" }]; onSelected: function (value) { page.ipFamily = value; } }
+                            CardHeading { icon: "󰖟"; title: "IP & DNS" }
+                            Item { Layout.fillWidth: true }
+                            AdvancedChoice {
+                                Layout.preferredWidth: 105
+                                value: page.ipFamily
+                                options: [{ value: "ipv4", label: "IPv4" }, { value: "ipv6", label: "IPv6" }]
+                                onSelected: function (value) { page.ipFamily = value; }
+                            }
                         }
 
                         GridLayout {
                             width: parent.width
                             columns: 2
-                            columnSpacing: 14
-                            rowSpacing: 9
+                            columnSpacing: 10
+                            rowSpacing: Math.max(4, Math.round(6 * page.density))
 
-                            Column {
+                            FieldLabel { text: "Assignment" }
+                            AdvancedChoice {
                                 Layout.fillWidth: true
-                                FieldLabel { text: "Assignment" }
-                                AdvancedChoice {
-                                    width: parent.width
-                                    value: page.currentMethod
-                                    options: [{ value: "auto", label: "Automatic (DHCP)" }, { value: "manual", label: "Manual" }, { value: "disabled", label: "Disabled" }]
-                                    onSelected: function (value) {
-                                        if (page.ipFamily === "ipv4") page.ipv4Method = value;
-                                        else page.ipv6Method = value;
-                                    }
-                                }
+                                value: page.currentMethod
+                                options: [{ value: "auto", label: "Automatic" }, { value: "manual", label: "Manual" }, { value: "disabled", label: "Disabled" }]
+                                onSelected: function (value) { page.setMethod(value); }
                             }
 
-                            Column {
+                            FieldLabel { text: "DNS source" }
+                            AdvancedChoice {
                                 Layout.fillWidth: true
-                                FieldLabel { text: "DNS source" }
-                                AdvancedChoice {
-                                    width: parent.width
-                                    value: page.currentAutoDns ? "auto" : "manual"
-                                    options: [{ value: "auto", label: "Automatic" }, { value: "manual", label: "Manual" }]
-                                    onSelected: function (value) {
-                                        if (page.ipFamily === "ipv4") page.ipv4AutoDns = value === "auto";
-                                        else page.ipv6AutoDns = value === "auto";
-                                    }
-                                }
+                                value: page.currentAutoDns ? "auto" : "manual"
+                                options: [{ value: "auto", label: "Automatic" }, { value: "manual", label: "Manual" }]
+                                onSelected: function (value) { page.setAutoDns(value); }
                             }
 
-                            Column {
+                            FieldLabel { visible: page.currentMethod === "manual"; text: "Address" }
+                            AdvancedTextField {
                                 visible: page.currentMethod === "manual"
                                 Layout.fillWidth: true
-                                FieldLabel { text: "Address" }
-                                AdvancedTextField {
-                                    width: parent.width
-                                    text: page.ipFamily === "ipv4" ? page.ipv4Address : page.ipv6Address
-                                    placeholder: page.ipFamily === "ipv4" ? "192.168.1.20" : "2001:db8::20"
-                                    onEdited: function (value) {
-                                        if (page.ipFamily === "ipv4") page.ipv4Address = value;
-                                        else page.ipv6Address = value;
-                                    }
+                                text: page.ipFamily === "ipv4" ? page.ipv4Address : page.ipv6Address
+                                placeholder: page.ipFamily === "ipv4" ? "192.168.1.20" : "2001:db8::20"
+                                onEdited: function (value) {
+                                    if (page.ipFamily === "ipv4") page.ipv4Address = value;
+                                    else page.ipv6Address = value;
                                 }
                             }
 
-                            Column {
+                            FieldLabel { visible: page.currentMethod === "manual"; text: "Prefix length" }
+                            AdvancedTextField {
                                 visible: page.currentMethod === "manual"
                                 Layout.fillWidth: true
-                                FieldLabel { text: "Prefix length" }
-                                AdvancedTextField {
-                                    width: parent.width
-                                    text: page.ipFamily === "ipv4" ? page.ipv4Prefix : page.ipv6Prefix
-                                    onEdited: function (value) {
-                                        if (page.ipFamily === "ipv4") page.ipv4Prefix = value;
-                                        else page.ipv6Prefix = value;
-                                    }
+                                text: page.ipFamily === "ipv4" ? page.ipv4Prefix : page.ipv6Prefix
+                                onEdited: function (value) {
+                                    if (page.ipFamily === "ipv4") page.ipv4Prefix = value;
+                                    else page.ipv6Prefix = value;
                                 }
                             }
 
-                            Column {
+                            FieldLabel { visible: page.currentMethod === "manual"; text: "Gateway" }
+                            AdvancedTextField {
                                 visible: page.currentMethod === "manual"
                                 Layout.fillWidth: true
-                                FieldLabel { text: "Gateway" }
-                                AdvancedTextField {
-                                    width: parent.width
-                                    text: page.ipFamily === "ipv4" ? page.ipv4Gateway : page.ipv6Gateway
-                                    onEdited: function (value) {
-                                        if (page.ipFamily === "ipv4") page.ipv4Gateway = value;
-                                        else page.ipv6Gateway = value;
-                                    }
+                                text: page.ipFamily === "ipv4" ? page.ipv4Gateway : page.ipv6Gateway
+                                onEdited: function (value) {
+                                    if (page.ipFamily === "ipv4") page.ipv4Gateway = value;
+                                    else page.ipv6Gateway = value;
                                 }
                             }
 
-                            Column {
+                            FieldLabel { visible: !page.currentAutoDns; text: "DNS servers" }
+                            AdvancedTextField {
                                 visible: !page.currentAutoDns
                                 Layout.fillWidth: true
-                                FieldLabel { text: "DNS servers" }
-                                AdvancedTextField {
-                                    width: parent.width
-                                    text: page.ipFamily === "ipv4" ? page.ipv4Dns : page.ipv6Dns
-                                    placeholder: "Comma-separated addresses"
-                                    onEdited: function (value) {
-                                        if (page.ipFamily === "ipv4") page.ipv4Dns = value;
-                                        else page.ipv6Dns = value;
-                                    }
+                                text: page.ipFamily === "ipv4" ? page.ipv4Dns : page.ipv6Dns
+                                placeholder: "Comma-separated addresses"
+                                onEdited: function (value) {
+                                    if (page.ipFamily === "ipv4") page.ipv4Dns = value;
+                                    else page.ipv6Dns = value;
                                 }
                             }
 
-                            Column {
-                                Layout.columnSpan: 2
+                            FieldLabel { text: "DNS search domains" }
+                            AdvancedTextField {
                                 Layout.fillWidth: true
-                                FieldLabel { text: "DNS search domains" }
-                                AdvancedTextField {
-                                    width: parent.width
-                                    text: page.ipFamily === "ipv4" ? page.ipv4Search : page.ipv6Search
-                                    placeholder: "Optional, comma-separated"
-                                    onEdited: function (value) {
-                                        if (page.ipFamily === "ipv4") page.ipv4Search = value;
-                                        else page.ipv6Search = value;
-                                    }
+                                text: page.ipFamily === "ipv4" ? page.ipv4Search : page.ipv6Search
+                                placeholder: "Optional, comma-separated"
+                                onEdited: function (value) {
+                                    if (page.ipFamily === "ipv4") page.ipv4Search = value;
+                                    else page.ipv6Search = value;
                                 }
                             }
                         }
+
+                        Text {
+                            visible: !page.editingIpDetails
+                            width: parent.width
+                            text: "This network is using automatic IP and DNS settings."
+                            color: Theme.subtleText
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Math.round(10 * page.density)
+                        }
                     }
+                }
+
+                InfoCard {
+                    visible: !page.editingIpDetails
+                    width: parent.width
+                    height: Math.round(hardwareCards.usableHeight * 0.31)
 
                     Column {
-                        visible: page.controller.advancedSection === "hardware"
-                        width: parent.width
-                        spacing: 10
+                        anchors.fill: parent
+                        anchors.margins: Math.round(15 * page.density)
+                        spacing: Math.max(4, Math.round(6 * page.density))
 
-                        SectionHeading { text: "Hardware details" }
+                        CardHeading { icon: "󰍛"; title: "Adapter & radio" }
 
                         Repeater {
                             model: [
                                 { label: "Interface", value: page.ap.device_iface || page.status.device_iface || "—" },
-                                { label: "BSSID", value: page.ap.bssid || "—" },
-                                { label: "Protocol", value: page.ap.mode ? "Wi-Fi " + page.ap.mode : "Wi-Fi" },
+                                { label: "Mode", value: page.ap.mode ? "Wi-Fi " + page.ap.mode : "Infrastructure" },
                                 { label: "Band / frequency", value: (page.ap.band || "—") + " / " + (page.ap.frequency || "—") + " MHz" },
                                 { label: "Channel", value: page.ap.channel === undefined ? "—" : String(page.ap.channel) },
-                                { label: "Maximum bitrate", value: page.ap.max_bitrate_mbps ? page.ap.max_bitrate_mbps + " Mbps" : "—" },
+                                { label: "Maximum bitrate", value: page.ap.max_bitrate_mbps ? page.ap.max_bitrate_mbps + " Mbps" : "—" }
+                            ]
+
+                            delegate: RowLayout {
+                                id: radioRow
+                                required property var modelData
+                                width: parent.width
+                                height: Math.round(17 * page.density)
+                                FieldLabel { Layout.preferredWidth: Math.round(150 * page.density); text: radioRow.modelData.label }
+                                ReadValue { Layout.fillWidth: true; text: radioRow.modelData.value }
+                            }
+                        }
+                    }
+                }
+
+                InfoCard {
+                    visible: !page.editingIpDetails
+                    width: parent.width
+                    height: hardwareCards.usableHeight - hardwareCards.children[0].height - hardwareCards.children[1].height
+
+                    Column {
+                        anchors.fill: parent
+                        anchors.margins: Math.round(15 * page.density)
+                        spacing: Math.max(4, Math.round(6 * page.density))
+
+                        CardHeading { icon: "󰘚"; title: "Identifiers" }
+
+                        Repeater {
+                            model: [
+                                { label: "BSSID", value: page.ap.bssid || "—" },
                                 { label: "Device MAC", value: ((page.status.wireless || {}).mac_address || "—") },
                                 { label: "Profile path", value: page.profile.path || "—" }
                             ]
 
                             delegate: RowLayout {
-                                id: hardwareRow
-
+                                id: identifierRow
                                 required property var modelData
                                 width: parent.width
-                                height: 32
-                                FieldLabel { Layout.preferredWidth: 180; text: hardwareRow.modelData.label }
-                                ReadValue { Layout.fillWidth: true; text: hardwareRow.modelData.value }
+                                height: Math.round(19 * page.density)
+                                FieldLabel { Layout.preferredWidth: Math.round(150 * page.density); text: identifierRow.modelData.label }
+                                ReadValue { Layout.fillWidth: true; text: identifierRow.modelData.value }
                             }
                         }
                     }
-
-                    Text {
-                        visible: page.controller.advancedLoading
-                        anchors.centerIn: parent
-                        text: "Loading advanced profile…"
-                        color: Theme.mutedText
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 14
-                    }
                 }
+            }
+
+            Text {
+                visible: page.controller.advancedLoading
+                anchors.centerIn: parent
+                text: "Loading saved profile…"
+                color: Theme.mutedText
+                font.family: Theme.fontFamily
+                font.pixelSize: 13
             }
         }
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 48
-            spacing: 10
+            Layout.preferredHeight: 42
+            spacing: 8
 
             Text {
                 Layout.fillWidth: true
                 text: page.controller.advancedError
                 color: Theme.danger
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: 10
                 elide: Text.ElideRight
             }
 
             ActionButton {
-                Layout.preferredWidth: 100
+                Layout.preferredWidth: 88
+                Layout.preferredHeight: 38
                 label: "Cancel"
                 enabled: !page.controller.advancedSaving
                 onClicked: page.controller.closeAdvancedSettings()
             }
 
             ActionButton {
-                Layout.preferredWidth: 110
+                Layout.preferredWidth: 96
+                Layout.preferredHeight: 38
                 icon: "󰆓"
                 label: page.controller.advancedSaving ? "Saving" : "Save"
                 backgroundColor: Theme.accent
