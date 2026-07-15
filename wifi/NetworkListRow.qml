@@ -14,6 +14,9 @@ Rectangle {
     property int progressTick: 0
     readonly property bool selected: index === selectedIndex
     readonly property bool openNetwork: modelData.security === "--"
+    readonly property int signalStrength: Math.max(0, Math.min(100, Number(modelData.strength) || 0))
+    readonly property int signalBarCount: signalStrength >= 67 ? 3 : (signalStrength >= 34 ? 2 : 1)
+    readonly property color signalColor: signalStrength >= 67 ? Theme.active : (signalStrength >= 34 ? Theme.warning : Theme.danger)
     readonly property var spinnerFrames: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
     signal picked(int rowIndex)
@@ -37,18 +40,39 @@ Rectangle {
             width: 42
             height: parent.height
             verticalAlignment: Text.AlignVCenter
-            text: (row.modelData.strength || 0) + "%"
-            color: Theme.accent
+            text: row.signalStrength + "%"
+            color: row.signalColor
             font.pixelSize: 14
         }
 
-        Text {
+        Row {
             width: 22
             height: parent.height
-            verticalAlignment: Text.AlignVCenter
-            text: "▂▄▆"
-            color: row.active ? Theme.accent : Theme.mutedText
-            font.pixelSize: 13
+            spacing: 0
+
+            Text {
+                height: parent.height
+                verticalAlignment: Text.AlignVCenter
+                text: "▂"
+                color: row.signalColor
+                font.pixelSize: 13
+            }
+
+            Text {
+                height: parent.height
+                verticalAlignment: Text.AlignVCenter
+                text: "▄"
+                color: row.signalBarCount >= 2 ? row.signalColor : Theme.mutedText
+                font.pixelSize: 13
+            }
+
+            Text {
+                height: parent.height
+                verticalAlignment: Text.AlignVCenter
+                text: "▆"
+                color: row.signalBarCount >= 3 ? row.signalColor : Theme.mutedText
+                font.pixelSize: 13
+            }
         }
 
         Text {
