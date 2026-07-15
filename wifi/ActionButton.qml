@@ -6,6 +6,7 @@ Rectangle {
     id: control
 
     property string label: ""
+    property string icon: ""
     property string hotkey: ""
     property color backgroundColor: Theme.surfaceRaised
     property color borderColor: Theme.mix(Theme.border, Theme.text, 0.16)
@@ -20,16 +21,32 @@ Rectangle {
     border.width: 1
     opacity: enabled ? 1.0 : 0.45
 
-    Text {
+    Row {
         anchors.centerIn: parent
-        text: Wifi.highlightHotkey(control.label, control.hotkey)
-        textFormat: Text.RichText
-        color: control.labelColor
-        font.pixelSize: 13
+        spacing: 8
+
+        Text {
+            visible: control.icon.length > 0
+            anchors.verticalCenter: parent.verticalCenter
+            text: control.icon
+            color: control.labelColor
+            font.family: Theme.iconFontFamily
+            font.pixelSize: 15
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: Wifi.highlightHotkey(control.label, control.hotkey)
+            textFormat: Text.RichText
+            color: control.labelColor
+            font.family: Theme.fontFamily
+            font.pixelSize: 13
+        }
     }
 
     MouseArea {
         id: area
+
         anchors.fill: parent
         enabled: control.enabled
         hoverEnabled: true

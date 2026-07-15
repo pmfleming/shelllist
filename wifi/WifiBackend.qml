@@ -93,6 +93,7 @@ Item {
                         + " profiles_failed=" + (profileResult.failed_profiles ? profileResult.failed_profiles.length : 0));
                 }
                 controller.status = profileResult.message || "Saved profile updated";
+                controller.invalidateShareAvailabilityCache();
                 controller.refresh();
             } else if (id === "share") {
                 controller.applyShareResponse(envelope, "Saved profile could not be shared");

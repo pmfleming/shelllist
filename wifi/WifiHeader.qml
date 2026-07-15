@@ -12,35 +12,48 @@ RowLayout {
     signal refreshRequested
 
     Layout.fillWidth: true
-    Layout.preferredHeight: 46
-    spacing: 12
+    Layout.preferredHeight: 48
+    spacing: 10
 
     function focusSearch() {
         search.forceActiveFocus();
     }
 
-    IconTile {
-        Layout.preferredWidth: 34
-        Layout.preferredHeight: 34
+    Item {
+        Layout.preferredWidth: 2
+    }
+
+    Rectangle {
+        Layout.preferredWidth: 42
+        Layout.preferredHeight: 42
         Layout.alignment: Qt.AlignVCenter
         radius: Theme.cardRadius
-        backgroundColor: Theme.selected
-        icon: "󰤨"
-        iconColor: Theme.accent
+        color: Theme.selected
+        border.color: Theme.mix(Theme.strongBorder, Theme.surface, 0.40)
+
+        SignalIcon {
+            anchors.centerIn: parent
+            width: 25
+            height: 22
+            level: 3
+            iconColor: Theme.accent
+        }
     }
 
     TextInput {
         id: search
+
         Layout.fillWidth: true
-        Layout.preferredHeight: 34
+        Layout.preferredHeight: 42
         Layout.alignment: Qt.AlignVCenter
         focus: true
-        leftPadding: 38
+        leftPadding: 43
         rightPadding: 12
         color: Theme.inputText
         selectionColor: Theme.accent
         selectedTextColor: Theme.accentText
-        font.pixelSize: 15
+        font.family: Theme.fontFamily
+        font.pixelSize: 14
         verticalAlignment: TextInput.AlignVCenter
         text: header.filterText
         onTextChanged: header.filterEdited(text)
@@ -49,24 +62,36 @@ RowLayout {
         }
 
         Text {
-            x: 12
-            y: Math.round((parent.height - height) / 2)
-            text: "⌕"
+            x: 14
+            anchors.verticalCenter: parent.verticalCenter
+            text: "󰍉"
+            color: Theme.mutedText
+            font.family: Theme.iconFontFamily
+            font.pixelSize: 17
+        }
+
+        Text {
+            x: 43
+            anchors.verticalCenter: parent.verticalCenter
+            visible: search.text.length === 0
+            text: "Search networks…"
             color: Theme.subtleText
-            font.pixelSize: 22
+            font.family: Theme.fontFamily
+            font.pixelSize: 14
         }
 
         InputBackground {}
     }
 
     IconTile {
-        Layout.preferredWidth: 34
-        Layout.preferredHeight: 34
+        Layout.preferredWidth: 42
+        Layout.preferredHeight: 42
         Layout.alignment: Qt.AlignVCenter
+        backgroundColor: Theme.surfaceRaised
         borderColor: Theme.border
-        icon: "↻"
-        iconColor: Theme.mutedText
-        iconSize: 20
+        icon: "󰑐"
+        iconColor: Theme.text
+        iconSize: 19
         clickable: true
         onClicked: header.refreshRequested()
     }

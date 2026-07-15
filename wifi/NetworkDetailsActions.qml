@@ -8,15 +8,29 @@ RowLayout {
     id: row
 
     required property var controller
+    property bool primaryOnly: false
+    property bool alignRight: false
+
     width: parent ? parent.width : 0
-    height: 46
+    height: 44
     spacing: 8
 
+    Item {
+        visible: row.alignRight
+        Layout.fillWidth: true
+    }
+
     Repeater {
-        model: row.controller.detailActions.filter(function (action) { return action.toolbar && action.visible; })
+        model: row.controller.detailActions.filter(function (action) {
+            return action.toolbar && action.visible && (!!action.primary === row.primaryOnly);
+        })
+
         delegate: ActionButton {
             required property var modelData
+
             Layout.preferredWidth: modelData.width
+            Layout.preferredHeight: 42
+            icon: modelData.icon || ""
             label: modelData.label
             hotkey: modelData.hotkey
             backgroundColor: modelData.tone === "danger" ? Theme.danger : (modelData.tone === "active" ? Theme.active : Theme.surfaceRaised)
@@ -27,5 +41,8 @@ RowLayout {
         }
     }
 
-    Item { Layout.fillWidth: true }
+    Item {
+        visible: !row.alignRight
+        Layout.fillWidth: true
+    }
 }

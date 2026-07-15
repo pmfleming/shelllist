@@ -11,11 +11,12 @@ Column {
     property int valueWidth: width
 
     width: 245
-    spacing: 3
+    spacing: 4
 
     Text {
         text: field.label
         color: Theme.mutedText
+        font.family: Theme.fontFamily
         font.pixelSize: 13
     }
 
@@ -23,6 +24,7 @@ Column {
         width: field.valueWidth
         text: field.value
         color: field.valueColor
+        font.family: Theme.fontFamily
         font.pixelSize: 14
         font.bold: field.valueBold
         elide: Text.ElideRight

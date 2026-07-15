@@ -28,12 +28,10 @@ Rectangle {
             Layout.preferredWidth: content.controller.listPaneWidth
             Layout.maximumWidth: content.controller.listPaneWidth
             Layout.fillHeight: true
-            spacing: 12
+            spacing: 10
 
             WifiHeader {
                 id: header
-                Layout.leftMargin: 8
-                Layout.rightMargin: 8
                 filterText: content.controller.filterText
                 onFilterEdited: function (text) {
                     content.controller.filterText = text;
@@ -55,6 +53,14 @@ Rectangle {
             Layout.minimumWidth: content.controller.detailsPaneGapWidth
             Layout.maximumWidth: content.controller.detailsPaneGapWidth
             Layout.fillHeight: true
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: 1
+                height: parent.height
+                color: Theme.border
+                opacity: 0.75
+            }
         }
 
         NetworkDetailsPane {

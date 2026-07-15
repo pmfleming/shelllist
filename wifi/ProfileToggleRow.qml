@@ -11,33 +11,40 @@ RowLayout {
     property string hotkey: ""
     property bool checked: false
     property bool interactive: true
+    property bool showSubtitle: true
 
     signal clicked
 
     width: parent ? parent.width : 0
-    height: subtitle.length > 0 ? 34 : 26
+    height: showSubtitle && subtitle.length > 0 ? 40 : 30
     spacing: 12
 
     Column {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
+        spacing: 2
+
         Text {
             text: Wifi.highlightHotkey(row.title, row.hotkey)
             textFormat: Text.RichText
             color: Theme.text
+            font.family: Theme.fontFamily
             font.pixelSize: 14
         }
+
         Text {
+            visible: row.showSubtitle && row.subtitle.length > 0
             text: row.subtitle
-            visible: row.subtitle.length > 0
             color: Theme.subtleText
+            font.family: Theme.fontFamily
             font.pixelSize: 11
+            elide: Text.ElideRight
         }
     }
 
     TogglePill {
-        Layout.preferredWidth: 40
-        Layout.preferredHeight: 22
+        Layout.preferredWidth: 42
+        Layout.preferredHeight: 24
         Layout.alignment: Qt.AlignVCenter
         checked: row.checked
         opacity: row.interactive ? 1.0 : 0.45
@@ -45,6 +52,7 @@ RowLayout {
         MouseArea {
             anchors.fill: parent
             enabled: row.interactive
+            cursorShape: Qt.PointingHandCursor
             onClicked: row.clicked()
         }
     }

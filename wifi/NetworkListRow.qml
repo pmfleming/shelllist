@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import "."
 
 Rectangle {
@@ -12,11 +13,14 @@ Rectangle {
     property bool detailsOpen: false
     property bool connecting: false
     property int progressTick: 0
+    property real rowHeight: 52
+
     readonly property bool selected: index === selectedIndex
     readonly property bool openNetwork: modelData.security === "--"
     readonly property int signalStrength: Math.max(0, Math.min(100, Number(modelData.strength) || 0))
     readonly property int signalBarCount: signalStrength >= 67 ? 3 : (signalStrength >= 34 ? 2 : 1)
     readonly property color signalColor: signalStrength >= 67 ? Theme.active : (signalStrength >= 34 ? Theme.warning : Theme.danger)
+    readonly property real density: Math.max(0.86, Math.min(1.08, rowHeight / 52))
     readonly property var spinnerFrames: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
     signal picked(int rowIndex)
@@ -24,84 +28,88 @@ Rectangle {
     signal detailsToggled(int rowIndex)
 
     width: ListView.view.width
-    height: 43
-    radius: Theme.controlRadius
+    height: rowHeight
+    radius: selected ? Theme.cardRadius : 0
     color: selected ? Theme.selected : "transparent"
     border.color: selected ? Theme.strongBorder : "transparent"
     border.width: selected ? 1 : 0
 
-    Row {
+    Rectangle {
+        visible: !row.selected
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 18
+        anchors.rightMargin: 18
+        height: 1
+        color: Theme.border
+        opacity: 0.55
+    }
+
+    RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 12
-        anchors.rightMargin: 12
+        anchors.leftMargin: 20
+        anchors.rightMargin: 16
         spacing: 10
 
         Text {
-            width: 42
-            height: parent.height
+            Layout.preferredWidth: 52
+            Layout.fillHeight: true
             verticalAlignment: Text.AlignVCenter
             text: row.signalStrength + "%"
             color: row.signalColor
-            font.pixelSize: 14
+            font.family: Theme.fontFamily
+            font.pixelSize: Math.round(13 * row.density)
+            font.bold: true
         }
 
-        Row {
-            width: 22
-            height: parent.height
-            spacing: 0
+        Item {
+            Layout.preferredWidth: 27
+            Layout.fillHeight: true
 
-            Text {
-                height: parent.height
-                verticalAlignment: Text.AlignVCenter
-                text: "▂"
-                color: row.signalColor
-                font.pixelSize: 13
-            }
-
-            Text {
-                height: parent.height
-                verticalAlignment: Text.AlignVCenter
-                text: "▄"
-                color: row.signalBarCount >= 2 ? row.signalColor : Theme.mutedText
-                font.pixelSize: 13
-            }
-
-            Text {
-                height: parent.height
-                verticalAlignment: Text.AlignVCenter
-                text: "▆"
-                color: row.signalBarCount >= 3 ? row.signalColor : Theme.mutedText
-                font.pixelSize: 13
+            SignalIcon {
+                anchors.centerIn: parent
+                width: Math.round(24 * row.density)
+                height: Math.round(20 * row.density)
+                level: row.signalBarCount
+                iconColor: row.signalColor
             }
         }
 
         Text {
-            width: 16
-            height: parent.height
+            Layout.preferredWidth: 18
+            Layout.fillHeight: true
             verticalAlignment: Text.AlignVCenter
-            text: row.connecting ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length] : (row.active ? "●" : (row.openNetwork ? "Open" : "🔒"))
-            color: row.connecting ? Theme.accent : (row.active ? Theme.active : (row.openNetwork ? Theme.warning : Theme.mutedText))
-            font.pixelSize: row.openNetwork && !row.active && !row.connecting ? 8 : 13
+            horizontalAlignment: Text.AlignHCenter
+            text: row.connecting
+                ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length]
+                : (row.active || row.openNetwork ? "" : "󰌾")
+            color: row.connecting ? Theme.accent : Theme.mutedText
+            font.family: row.connecting ? Theme.fontFamily : Theme.iconFontFamily
+            font.pixelSize: Math.round(13 * row.density)
         }
 
         Text {
-            width: parent.width - 144
-            height: parent.height
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             verticalAlignment: Text.AlignVCenter
             text: row.connecting ? row.name + " — connecting…" : row.name
             color: row.connecting ? Theme.accent : Theme.text
-            font.pixelSize: 15
+            font.family: Theme.fontFamily
+            font.pixelSize: Math.round(14 * row.density)
             font.bold: row.active || row.connecting
             elide: Text.ElideRight
         }
 
         Text {
-            width: 24
-            height: parent.height
+            Layout.preferredWidth: 18
+            Layout.fillHeight: true
             verticalAlignment: Text.AlignVCenter
-            text: row.detailsOpen ? "‹" : "›"
+            horizontalAlignment: Text.AlignHCenter
+            text: "󰅂"
             color: row.selected ? Theme.accent : Theme.mutedText
-            font.pixelSize: 25
+            font.family: Theme.iconFontFamily
+            font.pixelSize: Math.round(17 * row.density)
 
             MouseArea {
                 anchors.fill: parent
@@ -113,7 +121,7 @@ Rectangle {
 
     MouseArea {
         anchors.fill: parent
-        anchors.rightMargin: 36
+        anchors.rightMargin: 38
         onClicked: row.picked(row.index)
         onDoubleClicked: row.connectRequested()
     }

@@ -25,6 +25,10 @@ Item {
     property bool shareAvailable: false
     property string sharePayload: ""
     property string shareProfilePath: ""
+    property string shareRequestPath: ""
+    property int shareCacheGeneration: 0
+    property int shareRequestGeneration: 0
+    property var shareAvailabilityCache: ({})
     property string shareStatus: shareUnavailableMessage
     property double statusHoldUntil: 0
     property string connectWorkspaceId: ""
@@ -49,6 +53,7 @@ Item {
     readonly property bool detailsRendered: detailsOpen || detailsExpansionProgress > detailsRenderCutoff
     readonly property int currentWindowWidth: Math.round(closedWindowWidth + detailsPaintProgress * (openWindowWidth - closedWindowWidth))
     readonly property bool actionInFlight: backend.running
+    readonly property bool scanInFlight: backend.listRunning || backend.scanRunning
     readonly property bool connectRunning: backend.connectStarting || activeConnectRequestId.length > 0
     readonly property var filteredNetworks: selection.filteredNetworks
     readonly property var detailAp: selection.selected() || ({})
@@ -84,18 +89,45 @@ Item {
         setShareAvailability(false, "", shareUnavailableMessage);
     }
 
-    function refreshShareAvailability() {
-        resetShareAvailability();
-        if (!hasSelection)
+    function cachedShareAvailability(path) {
+        return path.length > 0 ? (shareAvailabilityCache[path] || null) : null;
+    }
+
+    function cacheShareAvailability(path, available, payload, message) {
+        if (path.length === 0)
             return;
+        const updated = Object.assign({}, shareAvailabilityCache);
+        updated[path] = { available: available, payload: payload, message: message };
+        shareAvailabilityCache = updated;
+    }
+
+    function invalidateShareAvailabilityCache() {
+        shareCacheGeneration += 1;
+        shareAvailabilityCache = ({});
+        resetShareAvailability();
+    }
+
+    function refreshShareAvailability() {
+        if (!hasSelection)
+            return resetShareAvailability();
         const result = Wifi.shareAvailability(detailAp, profileFor(detailAp), "Wi-Fi QR sharing requires an open network or a saved profile with a readable password.");
-        if (result.state !== "check")
+        if (result.state !== "check") {
+            shareProfilePath = "";
             return setShareAvailability(result.available, result.payload, result.message);
+        }
+
+        shareProfilePath = result.profilePath;
+        const cached = cachedShareAvailability(result.profilePath);
+        if (cached)
+            return setShareAvailability(cached.available, cached.payload, cached.message);
+
+        setShareAvailability(false, "", "Checking saved Wi-Fi password availability…");
         if (backend.isPending("share"))
             return;
-        shareProfilePath = result.profilePath;
-        shareStatus = "Checking saved Wi-Fi password availability…";
-        backend.share(result.profilePath);
+        shareRequestPath = result.profilePath;
+        shareRequestGeneration = shareCacheGeneration;
+        if (!backend.share(result.profilePath))
+            shareRequestPath = "";
     }
 
     function shareSelected() {
@@ -117,13 +149,27 @@ Item {
     function setBackgroundStatus(message) { if (!statusIsHeld()) status = message; }
     function setHeldStatus(message, milliseconds) { status = message; statusHoldUntil = nowMs() + milliseconds; }
     function applyShareResponse(response, errorText) {
+        const requestPath = shareRequestPath;
+        const requestGeneration = shareRequestGeneration;
+        shareRequestPath = "";
         try {
             const result = Wifi.shareCheckAvailability(Wifi.apiData(response, "result"), shareUnavailableMessage);
-            if (result.path !== shareProfilePath)
+            const resultPath = result.path || requestPath;
+            if (requestGeneration !== shareCacheGeneration)
+                return refreshShareAvailabilityIfOpen();
+            cacheShareAvailability(resultPath, result.available, result.payload, result.message);
+            if (resultPath !== shareProfilePath)
                 return refreshShareAvailabilityIfOpen();
             setShareAvailability(result.available, result.payload, result.message);
         } catch (error) {
-            setShareAvailability(false, "", "Could not check Wi-Fi QR sharing: " + (errorText || error));
+            if (requestGeneration !== shareCacheGeneration)
+                return refreshShareAvailabilityIfOpen();
+            const message = "Could not check Wi-Fi QR sharing: " + (errorText || error);
+            cacheShareAvailability(requestPath, false, "", message);
+            if (requestPath === shareProfilePath)
+                setShareAvailability(false, "", message);
+            else
+                refreshShareAvailabilityIfOpen();
         }
     }
 
@@ -245,7 +291,6 @@ Item {
         if (event.event !== "changed")
             return;
         activeStatus = event.status || null;
-        refreshShareAvailabilityIfOpen();
     }
 
     function applyConnectivityEvent(event) {
@@ -272,6 +317,21 @@ Item {
     function failCall(id, message) {
         if (id === "connect-start")
             resetConnectProgress();
+        if (id === "share") {
+            const failedPath = shareRequestPath;
+            const failedGeneration = shareRequestGeneration;
+            const failureMessage = "Could not check Wi-Fi QR sharing: " + message;
+            shareRequestPath = "";
+            if (failedGeneration === shareCacheGeneration) {
+                cacheShareAvailability(failedPath, false, "", failureMessage);
+                if (failedPath === shareProfilePath)
+                    setShareAvailability(false, "", failureMessage);
+                else
+                    refreshShareAvailabilityIfOpen();
+            } else {
+                refreshShareAvailabilityIfOpen();
+            }
+        }
         status = message;
         maybeRunPendingRefresh();
     }
@@ -364,6 +424,7 @@ Item {
             }
         } else {
             connectPolicyModel.clearSecretStale(lastConnectAp);
+            invalidateShareAvailabilityCache();
             setHeldStatus(message, 2500);
         }
         if (Wifi.confirmedPortalResult(result))
@@ -457,7 +518,7 @@ Item {
             Qt.callLater(refreshShareAvailability);
         }
     }
-    onSelectedIndexChanged: if (detailsOpen) Qt.callLater(refreshShareAvailability)
+    onDetailApChanged: if (detailsOpen) Qt.callLater(refreshShareAvailability)
     onActiveStatusChanged: updateVisibleConnectProgress()
     onActiveScanRequestIdChanged: activeScanRequestId.length > 0 ? scanWatchdogTimer.restart() : scanWatchdogTimer.stop()
 

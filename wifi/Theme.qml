@@ -37,6 +37,9 @@ Item {
     readonly property color disabledText: mix(text, surface, 0.62)
     readonly property color overlay: dark ? "#99000000" : "#66ffffff"
 
+    readonly property string fontFamily: envText("SHELLLIST_FONT") || "Noto Sans"
+    readonly property string iconFontFamily: envText("SHELLLIST_ICON_FONT") || "JetBrainsMono Nerd Font"
+
     readonly property int baseRadius: envInt("SHELLLIST_RADIUS", 10)
     readonly property int windowRadius: Math.max(0, baseRadius + 8)
     readonly property int panelRadius: Math.max(0, baseRadius + 2)
