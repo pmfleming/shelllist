@@ -28,12 +28,13 @@ Rectangle {
             spacing: 14
 
             RowLayout {
-                width: parent.width
+                x: 14
+                width: Math.max(0, parent.width - 28)
                 height: 44
                 spacing: 16
 
                 IconTile {
-                    Layout.preferredWidth: 54
+                    Layout.preferredWidth: 32
                     Layout.preferredHeight: 44
                     Layout.alignment: Qt.AlignVCenter
                     icon: "󰤨"

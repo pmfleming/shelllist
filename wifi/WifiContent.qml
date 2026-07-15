@@ -32,6 +32,8 @@ Rectangle {
 
             WifiHeader {
                 id: header
+                Layout.leftMargin: 8
+                Layout.rightMargin: 8
                 filterText: content.controller.filterText
                 onFilterEdited: function (text) {
                     content.controller.filterText = text;
