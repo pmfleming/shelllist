@@ -41,6 +41,7 @@ Item {
     readonly property int scanWatchdogIntervalMs: 15000
     readonly property int closedWindowWidth: 453
     readonly property int contentMargin: 14
+    readonly property int contentVerticalMargin: 24
     readonly property int listPaneWidth: closedWindowWidth - 2 * contentMargin
     readonly property int openWindowWidth: 1040
     readonly property int surfaceWindowWidth: openWindowWidth

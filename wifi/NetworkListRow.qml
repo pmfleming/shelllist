@@ -16,7 +16,11 @@ Rectangle {
     property real rowHeight: 52
 
     readonly property bool selected: index === selectedIndex
-    readonly property bool openNetwork: modelData.security === "--"
+    readonly property bool securedNetwork: modelData.security !== "--"
+        || (Number(modelData.flags) || 0) > 0
+        || (Number(modelData.wpa_flags) || 0) > 0
+        || (Number(modelData.rsn_flags) || 0) > 0
+    readonly property bool openNetwork: !securedNetwork
     readonly property int signalStrength: Math.max(0, Math.min(100, Number(modelData.strength) || 0))
     readonly property int signalBarCount: signalStrength >= 67 ? 3 : (signalStrength >= 34 ? 2 : 1)
     readonly property color signalColor: signalStrength >= 67 ? Theme.active : (signalStrength >= 34 ? Theme.warning : Theme.danger)
@@ -42,8 +46,8 @@ Rectangle {
         anchors.leftMargin: 18
         anchors.rightMargin: 18
         height: 1
-        color: Theme.border
-        opacity: 0.55
+        color: Theme.mix(Theme.border, Theme.text, 0.14)
+        opacity: 0.85
     }
 
     RowLayout {
@@ -53,14 +57,14 @@ Rectangle {
         spacing: 10
 
         Text {
-            Layout.preferredWidth: 52
+            Layout.preferredWidth: 44
             Layout.fillHeight: true
             verticalAlignment: Text.AlignVCenter
             text: row.signalStrength + "%"
             color: row.signalColor
             font.family: Theme.fontFamily
             font.pixelSize: Math.round(13 * row.density)
-            font.bold: true
+            font.weight: Font.Medium
         }
 
         Item {
@@ -69,8 +73,8 @@ Rectangle {
 
             SignalIcon {
                 anchors.centerIn: parent
-                width: Math.round(24 * row.density)
-                height: Math.round(20 * row.density)
+                width: 24
+                height: 20
                 level: row.signalBarCount
                 iconColor: row.signalColor
             }
@@ -83,7 +87,7 @@ Rectangle {
             horizontalAlignment: Text.AlignHCenter
             text: row.connecting
                 ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length]
-                : (row.active || row.openNetwork ? "" : "󰌾")
+                : (row.openNetwork ? "" : "󰌾")
             color: row.connecting ? Theme.accent : Theme.mutedText
             font.family: row.connecting ? Theme.fontFamily : Theme.iconFontFamily
             font.pixelSize: Math.round(13 * row.density)

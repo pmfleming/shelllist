@@ -62,7 +62,7 @@ Rectangle {
                 Column {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
-                    spacing: 5
+                    spacing: 7
 
                     Text {
                         width: parent.width
@@ -75,27 +75,33 @@ Rectangle {
                     }
 
                     Row {
-                        spacing: 7
+                        height: 18
+                        spacing: 8
 
                         Rectangle {
                             visible: pane.controller.isActive(pane.ap)
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 9
-                            height: 9
+                            width: 8
+                            height: 8
                             radius: width / 2
                             color: Theme.active
                         }
 
                         Text {
                             visible: pane.connectionLabel.length > 0
+                            height: parent.height
+                            verticalAlignment: Text.AlignVCenter
                             text: pane.connectionLabel
                             color: pane.controller.isActive(pane.ap) ? Theme.active : Theme.mutedText
                             font.family: Theme.fontFamily
                             font.pixelSize: 12
+                            font.weight: Font.Medium
                         }
 
                         Text {
                             visible: pane.connectionLabel.length > 0 && pane.lastSeenLabel.length > 0
+                            height: parent.height
+                            verticalAlignment: Text.AlignVCenter
                             text: "/"
                             color: Theme.subtleText
                             font.family: Theme.fontFamily
@@ -104,8 +110,10 @@ Rectangle {
 
                         Text {
                             visible: pane.lastSeenLabel.length > 0
+                            height: parent.height
+                            verticalAlignment: Text.AlignVCenter
                             text: pane.lastSeenLabel
-                            color: Theme.subtleText
+                            color: Theme.mutedText
                             font.family: Theme.fontFamily
                             font.pixelSize: 12
                         }
@@ -161,9 +169,9 @@ Rectangle {
                 width: parent.width
                 height: pane.footerHeight
                 radius: Theme.cardRadius
-                color: Theme.surfaceRaised
-                border.color: Theme.border
-                opacity: 0.72
+                color: Theme.withAlpha(Theme.surfaceRaised, 0.96)
+                border.color: Theme.mix(Theme.border, Theme.text, 0.12)
+                border.width: 1
 
                 RowLayout {
                     anchors.fill: parent
@@ -173,7 +181,7 @@ Rectangle {
 
                     Text {
                         text: "󰐲"
-                        color: Theme.mutedText
+                        color: Theme.mix(Theme.mutedText, Theme.text, 0.22)
                         font.family: Theme.iconFontFamily
                         font.pixelSize: 18
                     }
@@ -182,14 +190,14 @@ Rectangle {
 
                     Text {
                         text: "More advanced settings"
-                        color: Theme.mutedText
+                        color: Theme.mix(Theme.mutedText, Theme.text, 0.22)
                         font.family: Theme.fontFamily
                         font.pixelSize: 12
                     }
 
                     Text {
                         text: "󰅂"
-                        color: Theme.mutedText
+                        color: Theme.mix(Theme.mutedText, Theme.text, 0.22)
                         font.family: Theme.iconFontFamily
                         font.pixelSize: 16
                     }

@@ -10,8 +10,9 @@ Rectangle {
 
     width: parent ? parent.width : 0
     radius: Theme.cardRadius
-    color: Theme.surfaceRaised
-    border.color: Theme.border
+    color: Theme.withAlpha(Theme.surfaceRaised, 0.96)
+    border.color: Theme.mix(Theme.border, Theme.text, 0.12)
+    border.width: 1
 
     Column {
         anchors.fill: parent

@@ -21,7 +21,10 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: content.controller.contentMargin
+        anchors.leftMargin: content.controller.contentMargin
+        anchors.rightMargin: content.controller.contentMargin
+        anchors.topMargin: content.controller.contentVerticalMargin
+        anchors.bottomMargin: content.controller.contentVerticalMargin
         spacing: 0
 
         ColumnLayout {
