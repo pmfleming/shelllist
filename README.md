@@ -45,8 +45,10 @@ Popover commands are:
 ```sh
 shelllist-wifi daemon   # ensure the Quickshell popover daemon is running
 shelllist-wifi toggle   # toggle the popover
+shelllist-wifi open
 shelllist-wifi show     # alias for open
 shelllist-wifi hide
+shelllist-wifi status   # print visible or hidden
 ```
 
 Waybar can use `shelllist-wifi toggle` for `on-click` once the package is on `PATH`. Popover mode keeps one Quickshell process alive and controls a focused-monitor `PanelWindow` through IPC target `wifi`. Hyprland can invoke its registered shortcut directly:
@@ -194,7 +196,7 @@ out=$(nix build .#default --no-link --print-out-paths)
 shellcheck "$out/bin/shelllist-wifi"
 portal=$(nix build .#captivePortalBrowser --no-link --print-out-paths)
 shellcheck "$portal/bin/shelllist-captive-portal"
-shelllist-qmllint wifi/*.qml
+shelllist-qmllint wifi/*.qml wifi/process/*.qml
 ```
 
 The Wi-Fi UI entry point is `wifi/shell.qml`.

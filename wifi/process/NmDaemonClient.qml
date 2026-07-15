@@ -1,15 +1,14 @@
 import Quickshell.Io
 import QtQuick
-import "NmApi.js" as NmApi
+import "../NmApi.js" as NmApi
 
 Item {
     id: client
 
     property bool active: false
-    property bool ready: false
+    property bool ready
     property var queuedLines: []
     property int sequence: 0
-    readonly property bool running: process.running
 
     signal response(string id, var envelope, string transportError)
     signal eventReceived(var event)
@@ -62,19 +61,21 @@ Item {
         send({ id: "session-subscribe", op: "subscribe", streams: NmApi.subscribedStreams });
     }
 
+    function handleResponse(message) {
+        response(message.id || "", message.ok ? message.response : null,
+            message.ok ? "" : (message.error || "D-Bus request failed"));
+    }
+
+    function handleMessage(message) {
+        if (message.kind === "event") { eventReceived(message.event); return; }
+        if (message.kind === "response") { handleResponse(message); return; }
+        if (message.kind === "transport-error" || message.kind === "protocol-error")
+            transportFailed(message.error || "nm-daemon client transport failed");
+    }
+
     function handleLine(line) {
         try {
-            const message = JSON.parse(line);
-            if (message.kind === "event") {
-                eventReceived(message.event);
-                return;
-            }
-            if (message.kind === "response") {
-                response(message.id || "", message.ok ? message.response : null, message.ok ? "" : (message.error || "D-Bus request failed"));
-                return;
-            }
-            if (message.kind === "transport-error" || message.kind === "protocol-error")
-                transportFailed(message.error || "nm-daemon client transport failed");
+            handleMessage(JSON.parse(line));
         } catch (error) {
             transportFailed("Could not parse nm-daemon client output: " + error);
         }

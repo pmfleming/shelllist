@@ -4,12 +4,18 @@ import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 import "."
+import "process"
 
 Item {
     id: host
 
-    required property var controller
     required property Component content
+    required property real surfaceWindowWidth
+    required property real currentWindowWidth
+
+    signal uiActivated(string workspaceId)
+    signal uiDeactivated
+    signal focusSearchRequested
 
     readonly property string launchMode: (Quickshell.env("SHELLLIST_WIFI_MODE") || "popover").toLowerCase()
     readonly property bool popoverMode: launchMode === "popover"
@@ -42,7 +48,7 @@ Item {
     function screenDimension(key, fallback) { const value = screenValue(key, fallback); return value > 0 ? value : fallback; }
     function screenGeometry() { return { x: screenValue("x", 0), y: screenValue("y", 0), width: screenDimension("width", 1280), height: screenDimension("height", 960) }; }
 
-    function targetLayerMarginX() { return Math.round((screenGeometry().width - controller.surfaceWindowWidth) / 2); }
+    function targetLayerMarginX() { return Math.round((screenGeometry().width - surfaceWindowWidth) / 2); }
     function targetLayerMarginY() { return Math.round((screenGeometry().height - currentWindowHeight) / 2); }
     function targetWindowX() { return screenGeometry().x + targetLayerMarginX(); }
     function targetWindowY() { return screenGeometry().y + targetLayerMarginY(); }
@@ -105,15 +111,15 @@ Item {
             return;
         syncPopoverAnimationRule();
         popoverVisible = true;
-        controller.activateUi();
-        Qt.callLater(controller.navigation.focusSearch);
+        uiActivated(shelllistWorkspaceId());
+        focusSearchRequested();
     }
 
     function hidePopover() {
         if (!popoverMode)
             return;
         popoverVisible = false;
-        controller.deactivateUi();
+        uiDeactivated();
     }
 
     function togglePopover() { popoverVisible ? hidePopover() : showPopover(); }
@@ -142,6 +148,7 @@ Item {
         target: "wifi"
         readonly property bool visible: host.popoverVisible
         function ping(): string { return "pong"; }
+        function status(): string { return host.popoverVisible ? "visible" : "hidden"; }
         function open(): void { host.showPopover(); }
         function hide(): void { host.hidePopover(); }
         function toggle(): void { host.togglePopover(); }
@@ -157,7 +164,7 @@ Item {
         id: popoverAnchor
         screen: host.focusedScreen()
         visible: host.popoverWindowVisible
-        implicitWidth: host.controller.surfaceWindowWidth
+        implicitWidth: host.surfaceWindowWidth
         implicitHeight: host.currentWindowHeight
         color: "transparent"
         mask: Region { item: popoverVisualSurface }
@@ -173,11 +180,12 @@ Item {
             top: host.targetLayerMarginY()
             left: host.targetLayerMarginX()
         }
-        onVisibleChanged: if (visible) Qt.callLater(host.controller.navigation.focusSearch)
+        onVisibleChanged: if (visible) host.focusSearchRequested()
 
         VisualSurface {
             id: popoverVisualSurface
-            controller: host.controller
+            surfaceWidth: host.surfaceWindowWidth
+            contentWidth: host.currentWindowWidth
             loadWhen: host.popoverWindowVisible
             content: host.content
         }
@@ -186,7 +194,7 @@ Item {
     FloatingWindow {
         id: wifiWindow
         visible: host.floatingMode
-        implicitWidth: host.controller.surfaceWindowWidth
+        implicitWidth: host.surfaceWindowWidth
         implicitHeight: host.currentWindowHeight
         title: "Shelllist Wi-Fi"
         color: "transparent"
@@ -196,7 +204,8 @@ Item {
 
         VisualSurface {
             id: floatingVisualSurface
-            controller: host.controller
+            surfaceWidth: host.surfaceWindowWidth
+            contentWidth: host.currentWindowWidth
             loadWhen: host.floatingMode
             content: host.content
         }

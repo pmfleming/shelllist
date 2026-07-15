@@ -10,34 +10,30 @@ Item {
     required property var controller
 
     property var profile: controller.advancedProfile
-    property bool autoconnect: true
-    property string metered: "auto"
-    property bool hiddenNetwork: false
-    property string macPolicy: "default"
-    property bool sendHostname: true
-    property string passwordValue: ""
-    property bool passwordDirty: false
-    property bool passwordRevealed: false
-    property string ipFamily: "ipv4"
-    property string ipv4Method: "auto"
-    property string ipv4Address: ""
-    property string ipv4Prefix: "24"
-    property string ipv4Gateway: ""
-    property bool ipv4AutoDns: true
-    property string ipv4Dns: ""
-    property string ipv4Search: ""
-    property string ipv6Method: "auto"
-    property string ipv6Address: ""
-    property string ipv6Prefix: "64"
-    property string ipv6Gateway: ""
-    property bool ipv6AutoDns: true
-    property string ipv6Dns: ""
-    property string ipv6Search: ""
-    property bool hardwareDirty: false
+    property string macPolicy
+    property bool sendHostname
+    property string passwordValue
+    property bool passwordDirty
+    property bool passwordRevealed
+    property string ipFamily
+    property string ipv4Method
+    property string ipv4Address
+    property string ipv4Prefix
+    property string ipv4Gateway
+    property bool ipv4AutoDns
+    property string ipv4Dns
+    property string ipv4Search
+    property string ipv6Method
+    property string ipv6Address
+    property string ipv6Prefix
+    property string ipv6Gateway
+    property bool ipv6AutoDns
+    property string ipv6Dns
+    property string ipv6Search
+    property bool hardwareDirty
 
     readonly property bool securityView: controller.advancedSection === "security"
     readonly property bool personalSecurity: String(profile.security_type || "").indexOf("Personal") >= 0
-    readonly property var currentIp: ipFamily === "ipv4" ? (profile.ipv4 || ({})) : (profile.ipv6 || ({}))
     readonly property string currentMethod: ipFamily === "ipv4" ? ipv4Method : ipv6Method
     readonly property bool currentAutoDns: ipFamily === "ipv4" ? ipv4AutoDns : ipv6AutoDns
     readonly property bool editingIpDetails: currentMethod === "manual" || !currentAutoDns
@@ -55,66 +51,56 @@ Item {
         return settings && settings.addresses && settings.addresses.length > 0 ? settings.addresses[0] : ({});
     }
 
-    function syncProfile() {
-        if (!profile || !profile.path) {
-            passwordValue = "";
-            passwordDirty = false;
-            passwordRevealed = false;
-            hardwareDirty = false;
-            return;
-        }
-        autoconnect = !!profile.autoconnect;
-        metered = profile.metered || "auto";
-        hiddenNetwork = !!profile.hidden;
-        macPolicy = profile.mac_address_policy || "default";
-        sendHostname = profile.send_hostname !== false;
-        const ipv4 = profile.ipv4 || ({});
-        const ipv6 = profile.ipv6 || ({});
-        const address4 = firstAddress(ipv4);
-        const address6 = firstAddress(ipv6);
-        ipv4Method = ipv4.method || "auto";
-        ipv4Address = address4.address || "";
-        ipv4Prefix = String(address4.prefix === undefined ? 24 : address4.prefix);
-        ipv4Gateway = ipv4.gateway || "";
-        ipv4AutoDns = !ipv4.ignore_auto_dns;
-        ipv4Dns = (ipv4.dns || []).join(", ");
-        ipv4Search = (ipv4.dns_search || []).join(", ");
-        ipv6Method = ipv6.method || "auto";
-        ipv6Address = address6.address || "";
-        ipv6Prefix = String(address6.prefix === undefined ? 64 : address6.prefix);
-        ipv6Gateway = ipv6.gateway || "";
-        ipv6AutoDns = !ipv6.ignore_auto_dns;
-        ipv6Dns = (ipv6.dns || []).join(", ");
-        ipv6Search = (ipv6.dns_search || []).join(", ");
+    function resetEditState() {
         passwordValue = "";
         passwordDirty = false;
         passwordRevealed = false;
         hardwareDirty = false;
     }
 
+    function syncIp(family, fallbackPrefix) {
+        const settings = profile[family] || ({});
+        const address = firstAddress(settings);
+        page[family + "Method"] = settings.method || "auto";
+        page[family + "Address"] = address.address || "";
+        page[family + "Prefix"] = String(address.prefix === undefined ? fallbackPrefix : address.prefix);
+        page[family + "Gateway"] = settings.gateway || "";
+        page[family + "AutoDns"] = !settings.ignore_auto_dns;
+        page[family + "Dns"] = (settings.dns || []).join(", ");
+        page[family + "Search"] = (settings.dns_search || []).join(", ");
+    }
+
+    function syncProfile() {
+        resetEditState();
+        if (!profile || !profile.path)
+            return;
+        macPolicy = profile.mac_address_policy || "default";
+        sendHostname = profile.send_hostname !== false;
+        syncIp("ipv4", 24);
+        syncIp("ipv6", 64);
+    }
+
     function splitValues(value) {
         return String(value || "").split(/[\s,]+/).filter(function (entry) { return entry.length > 0; });
     }
 
+    function ipValue(family, name) { return page[family + name]; }
+
     function buildIp(family, source) {
-        const method = family === "ipv4" ? ipv4Method : ipv6Method;
-        const address = family === "ipv4" ? ipv4Address.trim() : ipv6Address.trim();
-        const prefixText = family === "ipv4" ? ipv4Prefix : ipv6Prefix;
-        const gateway = family === "ipv4" ? ipv4Gateway.trim() : ipv6Gateway.trim();
-        const autoDns = family === "ipv4" ? ipv4AutoDns : ipv6AutoDns;
-        const dnsText = family === "ipv4" ? ipv4Dns : ipv6Dns;
-        const searchText = family === "ipv4" ? ipv4Search : ipv6Search;
+        const method = ipValue(family, "Method");
+        const address = ipValue(family, "Address").trim();
+        const prefix = Math.max(0, parseInt(ipValue(family, "Prefix") || "0", 10) || 0);
+        const gateway = ipValue(family, "Gateway").trim();
+        const automaticDns = ipValue(family, "AutoDns");
         return {
             method: method,
-            addresses: method === "manual" && address.length > 0
-                ? [{ address: address, prefix: Math.max(0, parseInt(prefixText || "0", 10) || 0) }]
-                : [],
+            addresses: method === "manual" && address.length > 0 ? [{ address: address, prefix: prefix }] : [],
             gateway: gateway.length > 0 ? gateway : null,
-            dns: autoDns ? [] : splitValues(dnsText),
+            dns: automaticDns ? [] : splitValues(ipValue(family, "Dns")),
             routes: source.routes || [],
             route_metric: source.route_metric === undefined ? null : source.route_metric,
-            ignore_auto_dns: !autoDns,
-            dns_search: splitValues(searchText)
+            ignore_auto_dns: !automaticDns,
+            dns_search: splitValues(ipValue(family, "Search"))
         };
     }
 
@@ -123,9 +109,9 @@ Item {
             return;
         hardwareDirty = false;
         controller.saveAdvancedSettings({
-            autoconnect: autoconnect,
-            metered: metered,
-            hidden: hiddenNetwork,
+            autoconnect: !!profile.autoconnect,
+            metered: profile.metered || "auto",
+            hidden: !!profile.hidden,
             mac_address_policy: macPolicy,
             send_hostname: sendHostname,
             ipv4: buildIp("ipv4", profile.ipv4 || ({})),
@@ -151,6 +137,10 @@ Item {
         hardwareDirty = true;
     }
 
+    Component.onCompleted: {
+        ipFamily = "ipv4";
+        syncProfile();
+    }
     onProfileChanged: syncProfile()
 
     Connections {
@@ -322,8 +312,6 @@ Item {
                             FieldLabel { text: "Network password" }
 
                             Rectangle {
-                                id: passwordField
-
                                 width: parent.width
                                 height: Math.round(48 * page.density)
                                 radius: Theme.controlRadius
@@ -688,14 +676,7 @@ Item {
                 }
             }
 
-            Text {
-                visible: page.controller.advancedLoading
-                anchors.centerIn: parent
-                text: "Loading saved profile…"
-                color: Theme.mutedText
-                font.family: Theme.fontFamily
-                font.pixelSize: 13
-            }
+            CenteredMessage { visible: page.controller.advancedLoading; text: "Loading saved profile…" }
         }
 
         RowLayout {

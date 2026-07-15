@@ -1,20 +1,18 @@
 singleton Theme 1.0 Theme.qml
-NmDaemonClient 1.0 NmDaemonClient.qml
 WifiBackend 1.0 WifiBackend.qml
 WifiConnectPolicy 1.0 WifiConnectPolicy.qml
 WifiNavigation 1.0 WifiNavigation.qml
 WifiSelectionModel 1.0 WifiSelectionModel.qml
 ActionButton 1.0 ActionButton.qml
+CenteredMessage 1.0 CenteredMessage.qml
 AdvancedChoice 1.0 AdvancedChoice.qml
 AdvancedSettingsPage 1.0 AdvancedSettingsPage.qml
 AdvancedTextField 1.0 AdvancedTextField.qml
-CommandProcess 1.0 CommandProcess.qml
 DetailCard 1.0 DetailCard.qml
 DetailField 1.0 DetailField.qml
 DetailGrid 1.0 DetailGrid.qml
 IconTile 1.0 IconTile.qml
 InputBackground 1.0 InputBackground.qml
-SurfaceLoader 1.0 SurfaceLoader.qml
 NetworkDetailsActions 1.0 NetworkDetailsActions.qml
 NetworkDetailsPane 1.0 NetworkDetailsPane.qml
 NetworkProfileSettingsCard 1.0 NetworkProfileSettingsCard.qml

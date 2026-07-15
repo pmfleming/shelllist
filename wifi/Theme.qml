@@ -4,8 +4,6 @@ import Quickshell
 import QtQuick
 
 Item {
-    id: theme
-
     readonly property bool hyprland: !!Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
     readonly property var noAnimationsOverride: envBoolOrNull("SHELLLIST_NO_ANIMATIONS")
     readonly property bool noAnimations: noAnimationsOverride === null ? !hyprland : noAnimationsOverride

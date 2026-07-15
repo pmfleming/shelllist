@@ -2,8 +2,6 @@ import QtQuick
 import "."
 
 Canvas {
-    id: icon
-
     property int level: 3
     property color iconColor: Theme.accent
     property color inactiveColor: Theme.withAlpha(Theme.mutedText, 0.62)

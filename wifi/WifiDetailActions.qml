@@ -1,8 +1,6 @@
 import QtQuick
 
 Item {
-    id: model
-
     required property var controller
 
     readonly property var actions: [

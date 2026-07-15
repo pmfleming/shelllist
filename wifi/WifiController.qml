@@ -5,12 +5,13 @@ import "NmApi.js" as NmApi
 import "."
 
 Item {
-    id: controller
+    id: wifi
 
     required property var prompt
-    required property var windowHost
 
-    property alias networks: selection.networks
+    property bool uiActive
+    property string currentWorkspaceId
+
     property var activeStatus: null
     property var networkConnectivity: null
     property alias filterText: selection.filterText
@@ -39,11 +40,9 @@ Item {
     property string shareStatus: shareUnavailableMessage
     property double statusHoldUntil: 0
     property string connectWorkspaceId: ""
-    property alias lastConnectAp: connectPolicyModel.lastConnectAp
     property string activeScanRequestId: ""
     property string activeConnectRequestId: ""
 
-    readonly property bool uiActive: windowHost.uiActive
     readonly property int autoRefreshIntervalMs: 30000
     readonly property int scanWatchdogIntervalMs: 15000
     readonly property int closedWindowWidth: 453
@@ -80,8 +79,13 @@ Item {
     signal focusSearchRequested
     signal focusListTopRequested
     signal advancedSectionLeaving(string section)
+    signal windowPlacementRequested
+    signal closeWindowRequested
 
-    function startup() { if (windowHost.floatingMode) activateUi(); }
+    function startup(floatingMode, workspaceId) {
+        if (floatingMode)
+            activateUi(workspaceId);
+    }
     function activeAccessPoint() { return activeStatus ? (activeStatus.access_point || activeStatus.network || null) : null; }
     function networkName(ap) { return Wifi.networkName(ap); }
     function isActive(ap) { return !!(ap && ap.active); }
@@ -121,7 +125,7 @@ Item {
             return status = "Connect to this network before editing saved settings.";
         detailsOpen = true;
         detailsExpansionProgress = 1;
-        Qt.callLater(windowHost.requestWindowPlacement);
+        windowPlacementRequested();
         advancedSection = section === "hardware" ? "hardware" : "security";
         if (advancedOpen && advancedProfilePath === (profile.path || ""))
             return;
@@ -245,10 +249,9 @@ Item {
     }
 
     function refreshShareAvailabilityIfOpen() { if (detailsOpen) Qt.callLater(refreshShareAvailability); }
-    function nowMs() { return Date.now(); }
-    function statusIsHeld() { return nowMs() < statusHoldUntil; }
+    function statusIsHeld() { return Date.now() < statusHoldUntil; }
     function setBackgroundStatus(message) { if (!statusIsHeld()) status = message; }
-    function setHeldStatus(message, milliseconds) { status = message; statusHoldUntil = nowMs() + milliseconds; }
+    function setHeldStatus(message, milliseconds) { status = message; statusHoldUntil = Date.now() + milliseconds; }
     function applyShareResponse(response, errorText) {
         const requestPath = shareRequestPath;
         const requestGeneration = shareRequestGeneration;
@@ -274,9 +277,9 @@ Item {
         }
     }
 
-    function activateUi() {
-        if (!uiActive)
-            return;
+    function activateUi(workspaceId) {
+        uiActive = true;
+        currentWorkspaceId = workspaceId || "";
         refresh();
         autoRefreshTimer.restart();
         if (connectRunning)
@@ -284,6 +287,7 @@ Item {
     }
 
     function deactivateUi() {
+        uiActive = false;
         pendingRefresh = false;
         backend.cancel(activeScanRequestId);
         activeScanRequestId = "";
@@ -511,7 +515,7 @@ Item {
             return;
         status = connectRunning ? "Connection attempt already running…" : "Connecting to " + displayName + "…";
         connectingNetworkName = displayName;
-        connectWorkspaceId = windowHost.shelllistWorkspaceId();
+        connectWorkspaceId = currentWorkspaceId;
         connectingProgressTick = 0;
         connectingProgressTimer.restart();
         backend.connect(request);
@@ -522,18 +526,18 @@ Item {
         if (result.status === "error") {
             status = message;
             if (Wifi.isSecretFailureReason(result.reason)) {
-                connectPolicyModel.markSecretStale(lastConnectAp);
+                connectPolicyModel.markSecretStale(connectPolicyModel.lastConnectAp);
                 connectPolicyModel.blockLastConnectRetry(Wifi.connectFailureRetryMs(result.reason));
-                if (lastConnectAp)
-                    prompt.openPasswordPrompt(lastConnectAp, Wifi.isWrongPasswordReason(result.reason) ? "Wrong password. Enter a new Wi-Fi password." : "Saved password failed. Enter a new Wi-Fi password.");
+                if (connectPolicyModel.lastConnectAp)
+                    prompt.openPasswordPrompt(connectPolicyModel.lastConnectAp, Wifi.isWrongPasswordReason(result.reason) ? "Wrong password. Enter a new Wi-Fi password." : "Saved password failed. Enter a new Wi-Fi password.");
             }
         } else {
-            connectPolicyModel.clearSecretStale(lastConnectAp);
+            connectPolicyModel.clearSecretStale(connectPolicyModel.lastConnectAp);
             invalidateShareAvailabilityCache();
             setHeldStatus(message, 2500);
         }
         if (Wifi.confirmedPortalResult(result))
-            openConfirmedPortal(result, requestId || "");
+            launchPortal(portalContext("connect-result", connectPolicyModel.lastConnectAp, result, requestId || "", connectWorkspaceId, true, false));
         maybeRunPendingRefresh();
     }
 
@@ -565,9 +569,6 @@ Item {
         backend.openPortal(context);
     }
 
-    function openConfirmedPortal(result, requestId) {
-        launchPortal(portalContext("connect-result", lastConnectAp, result, requestId, connectWorkspaceId, true, false));
-    }
     function provideSecret(requestId, key, password, save) {
         status = "Sending requested Wi-Fi secret to NetworkManager…";
         backend.provideSecret(requestId, key, password, save);
@@ -601,7 +602,7 @@ Item {
     function executeForget(ap) {
         if (!beginAction())
             return;
-        const requestId = "forget-" + Math.round(nowMs());
+        const requestId = "forget-" + Math.round(Date.now());
         status = (isActive(ap) ? "Disconnecting and forgetting " : "Forgetting ") + Wifi.networkName(ap) + "…";
         backend.profile({ operation: "forget", request_id: requestId, target: Wifi.connectTarget(ap) });
     }
@@ -609,7 +610,7 @@ Item {
     function setMacRandomizedSelected(enabled) { runProfileAction(function (profile) { status = (enabled ? "Using randomized MAC for " : "Using device MAC for ") + profile.id + "…"; backend.profile({ operation: "set-mac-randomization", path: profile.path, randomized: enabled }); }); }
     function toggleSendHostnameSelected() { runProfileAction(function (profile) { const enabled = !(profile.privacy && profile.privacy.send_hostname !== false); status = (enabled ? "Sending" : "Hiding") + " device name for " + profile.id + "…"; backend.profile({ operation: "set-send-hostname", path: profile.path, enabled: enabled }); }); }
     function openPortal() {
-        launchPortal(portalContext("manual", detailAp, null, "", windowHost.shelllistWorkspaceId(), false, false));
+        launchPortal(portalContext("manual", detailAp, null, "", currentWorkspaceId, false, false));
     }
     function triggerDetailAction(id) { detailActionModel.trigger(id); }
     function canConnectDetail() { return !isActive(detailAp) && canUsePrimaryAction(); }
@@ -636,18 +637,18 @@ Item {
 
     Connections { target: prompt; function onOpenChanged() { if (!prompt.open) Qt.callLater(navigationModel.focusSearch); } }
     Behavior on detailsExpansionProgress {
-        enabled: !controller.windowHost.noAnimations
+        enabled: !Theme.noAnimations
         NumberAnimation {
             duration: 220
             easing.type: Easing.InOutSine
         }
     }
-    Timer { id: connectingProgressTimer; interval: 120; repeat: true; onTriggered: controller.connectingProgressTick += 1 }
-    Timer { id: scanWatchdogTimer; interval: controller.scanWatchdogIntervalMs; repeat: false; onTriggered: controller.handleScanWatchdog() }
-    Timer { id: autoRefreshTimer; interval: controller.autoRefreshIntervalMs; repeat: true; onTriggered: controller.refresh() }
+    Timer { id: connectingProgressTimer; interval: 120; repeat: true; onTriggered: wifi.connectingProgressTick += 1 }
+    Timer { id: scanWatchdogTimer; interval: wifi.scanWatchdogIntervalMs; repeat: false; onTriggered: wifi.handleScanWatchdog() }
+    Timer { id: autoRefreshTimer; interval: wifi.autoRefreshIntervalMs; repeat: true; onTriggered: wifi.refresh() }
     WifiSelectionModel { id: selection }
     WifiConnectPolicy { id: connectPolicyModel }
-    WifiDetailActions { id: detailActionModel; controller: controller }
-    WifiNavigation { id: navigationModel; controller: controller }
-    WifiBackend { id: backend; controller: controller }
+    WifiDetailActions { id: detailActionModel; controller: wifi }
+    WifiNavigation { id: navigationModel; controller: wifi }
+    WifiBackend { id: backend; controller: wifi }
 }

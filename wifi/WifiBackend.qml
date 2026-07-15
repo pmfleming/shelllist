@@ -1,7 +1,7 @@
 import QtQuick
 import "NmApi.js" as NmApi
 import "Wifi.js" as Wifi
-import "."
+import "process"
 
 Item {
     id: backend
@@ -53,67 +53,85 @@ Item {
     function cancelSecret(requestId) { return call("secret-cancel", NmApi.methods.wifi_secret_provide, { request_id: requestId, cancel: true }); }
     function cancel(requestId) { client.cancel(requestId); }
 
-    function finish(id, envelope, transportError) {
-        const sessionControl = id === "session-subscribe" || id.indexOf("cancel-") === 0 || id.indexOf("shutdown-") === 0;
-        if (!sessionControl)
-            setPending(id, false);
-        if (sessionControl)
+    function handleNetworks(envelope) {
+        const networks = Wifi.apiData(envelope, "networks") || [];
+        if (!controller.scanSnapshotSeen) controller.selectionModel.apply(networks, true);
+        controller.setBackgroundStatus(networks.length + " cached networks; scanning…");
+    }
+
+    function handleScanStart(envelope) {
+        const result = Wifi.apiResult(envelope, "result") || ({});
+        controller.activeScanRequestId = result.request_id || ""; controller.setBackgroundStatus(result.message || "Wi-Fi scan started…");
+    }
+
+    function handleConnectStart(envelope) {
+        const connect = Wifi.apiResult(envelope, "result") || ({});
+        if (connect.status !== "error") {
+            controller.activeConnectRequestId = connect.request_id || "";
+            controller.status = connect.message || ("Connecting to " + controller.connectingNetworkName + "…");
             return;
-        if (transportError.length > 0)
-            return controller.failCall(id, "nm-daemon request failed: " + transportError);
+        }
+        controller.resetConnectProgress();
+        controller.applyConnectResult(connect, connect.message || "Connection failed to start");
+    }
+
+    function handleDisconnect(envelope) {
+        const result = Wifi.apiData(envelope, "result") || ({});
+        controller.status = result.message || "Disconnected Wi-Fi"; controller.refresh();
+    }
+
+    function handleAdvancedSave(envelope) {
+        controller.applyAdvancedSave(Wifi.apiData(envelope, "result") || ({}));
+        controller.invalidateShareAvailabilityCache(); controller.refresh();
+    }
+
+    function logForgetResult(result) {
+        if (result.operation !== "forget")
+            return;
+        console.info("shelllist forget result request_id=" + (result.request_id || "")
+            + " ssid=" + (result.ssid || "")
+            + " status=" + (result.status || "unknown")
+            + " disconnected=" + !!result.disconnected
+            + " profiles_found=" + (result.profiles_found || 0)
+            + " profiles_deleted=" + (result.deleted_profiles ? result.deleted_profiles.length : 0)
+            + " profiles_failed=" + (result.failed_profiles ? result.failed_profiles.length : 0));
+    }
+
+    function handleProfile(envelope) {
+        const result = Wifi.apiData(envelope, "result") || ({});
+        logForgetResult(result); controller.status = result.message || "Saved profile updated";
+        controller.invalidateShareAvailabilityCache(); controller.refresh();
+    }
+
+    function handleSecretResponse(envelope) {
+        const result = Wifi.apiResult(envelope, "result") || ({});
+        if (result.status === "error") controller.status = result.message || "Wi-Fi secret was not accepted";
+    }
+
+    function responseHandlers() {
+        return {
+            "networks": handleNetworks, "scan-start": handleScanStart, "connect-start": handleConnectStart,
+            "disconnect": handleDisconnect, "advanced-load": function (value) { controller.applyAdvancedProfile(Wifi.apiData(value, "result") || ({})); },
+            "advanced-save": handleAdvancedSave, "advanced-secret": function (value) { controller.applyAdvancedSecret(Wifi.apiData(value, "result") || ({})); },
+            "profile": handleProfile, "share": function (value) { controller.applyShareResponse(value, "Saved profile could not be shared"); },
+            "secret-provide": handleSecretResponse, "secret-cancel": handleSecretResponse
+        };
+    }
+
+    function isSessionControl(id) { return id === "session-subscribe" || id.indexOf("cancel-") === 0 || id.indexOf("shutdown-") === 0; }
+
+    function finish(id, envelope, transportError) {
+        if (isSessionControl(id))
+            return;
+        setPending(id, false);
+        if (transportError.length > 0) {
+            controller.failCall(id, "nm-daemon request failed: " + transportError);
+            return;
+        }
         try {
-            if (id === "networks") {
-                const updated = Wifi.apiData(envelope, "networks") || [];
-                if (!controller.scanSnapshotSeen)
-                    controller.selectionModel.apply(updated, true);
-                controller.setBackgroundStatus(updated.length + " cached networks; scanning…");
-            } else if (id === "scan-start") {
-                const scan = Wifi.apiResult(envelope, "result") || ({});
-                controller.activeScanRequestId = scan.request_id || "";
-                controller.setBackgroundStatus(scan.message || "Wi-Fi scan started…");
-            } else if (id === "connect-start") {
-                const connect = Wifi.apiResult(envelope, "result") || ({});
-                if (connect.status === "error") {
-                    controller.resetConnectProgress();
-                    controller.applyConnectResult(connect, connect.message || "Connection failed to start");
-                } else {
-                    controller.activeConnectRequestId = connect.request_id || "";
-                    controller.status = connect.message || ("Connecting to " + controller.connectingNetworkName + "…");
-                }
-            } else if (id === "disconnect") {
-                const disconnected = Wifi.apiData(envelope, "result") || ({});
-                controller.status = disconnected.message || "Disconnected Wi-Fi";
-                controller.refresh();
-            } else if (id === "advanced-load") {
-                controller.applyAdvancedProfile(Wifi.apiData(envelope, "result") || ({}));
-            } else if (id === "advanced-save") {
-                const advancedResult = Wifi.apiData(envelope, "result") || ({});
-                controller.applyAdvancedSave(advancedResult);
-                controller.invalidateShareAvailabilityCache();
-                controller.refresh();
-            } else if (id === "advanced-secret") {
-                controller.applyAdvancedSecret(Wifi.apiData(envelope, "result") || ({}));
-            } else if (id === "profile") {
-                const profileResult = Wifi.apiData(envelope, "result") || ({});
-                if (profileResult.operation === "forget") {
-                    console.info("shelllist forget result request_id=" + (profileResult.request_id || "")
-                        + " ssid=" + (profileResult.ssid || "")
-                        + " status=" + (profileResult.status || "unknown")
-                        + " disconnected=" + !!profileResult.disconnected
-                        + " profiles_found=" + (profileResult.profiles_found || 0)
-                        + " profiles_deleted=" + (profileResult.deleted_profiles ? profileResult.deleted_profiles.length : 0)
-                        + " profiles_failed=" + (profileResult.failed_profiles ? profileResult.failed_profiles.length : 0));
-                }
-                controller.status = profileResult.message || "Saved profile updated";
-                controller.invalidateShareAvailabilityCache();
-                controller.refresh();
-            } else if (id === "share") {
-                controller.applyShareResponse(envelope, "Saved profile could not be shared");
-            } else if (id === "secret-provide" || id === "secret-cancel") {
-                const secret = Wifi.apiResult(envelope, "result") || ({});
-                if (secret.status === "error")
-                    controller.status = secret.message || "Wi-Fi secret was not accepted";
-            }
+            const handler = responseHandlers()[id];
+            if (handler)
+                handler(envelope);
         } catch (error) {
             controller.failCall(id, "Could not parse nm-daemon " + id + " response: " + error);
         }

@@ -14,13 +14,18 @@ ShellRoot {
     WifiController {
         id: wifiController
         prompt: promptController
-        windowHost: windowHost
+        onWindowPlacementRequested: windowHost.requestWindowPlacement()
+        onCloseWindowRequested: windowHost.closeRequested()
     }
 
     WifiWindowHost {
         id: windowHost
-        controller: wifiController
         content: wifiContentComponent
+        surfaceWindowWidth: wifiController.surfaceWindowWidth
+        currentWindowWidth: wifiController.currentWindowWidth
+        onUiActivated: function (workspaceId) { wifiController.activateUi(workspaceId); }
+        onUiDeactivated: wifiController.deactivateUi()
+        onFocusSearchRequested: wifiController.navigation.focusSearch()
     }
 
     Component {
@@ -31,5 +36,5 @@ ShellRoot {
         }
     }
 
-    Component.onCompleted: wifiController.startup()
+    Component.onCompleted: wifiController.startup(windowHost.floatingMode, windowHost.shelllistWorkspaceId())
 }

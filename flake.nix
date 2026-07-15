@@ -94,6 +94,11 @@
                 popover_ipc "$action" >/dev/null
               }
 
+              popover_status() {
+                ensure_popover_daemon || return 1
+                popover_ipc status
+              }
+
               case "''${1:-}" in
                 floating)
                   shift
@@ -102,10 +107,14 @@
                 daemon)
                   ensure_popover_daemon
                   ;;
-                toggle|show|hide)
+                toggle|open|show|hide)
                   action=$1
                   shift
                   popover_call "$action"
+                  ;;
+                status)
+                  shift
+                  popover_status
                   ;;
                 *)
                   if [ "''${SHELLLIST_WIFI_MODE:-popover}" = floating ]; then
@@ -333,7 +342,8 @@
               -I "${pkgs.qt6.qtdeclarative}/lib/qt-6/qml" \
               -I "${pkgs.quickshell}/lib/qt-6/qml" \
               -I ${./wifi} \
-              ${./wifi}/*.qml
+              ${./wifi}/*.qml \
+              ${./wifi}/process/*.qml
             touch $out
           '';
         });

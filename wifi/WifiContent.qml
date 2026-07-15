@@ -44,8 +44,6 @@ Rectangle {
     }
 
     RowLayout {
-        id: mainContent
-
         anchors.fill: parent
         anchors.leftMargin: content.controller.contentMargin
         anchors.rightMargin: content.controller.contentMargin

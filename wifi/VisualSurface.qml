@@ -1,13 +1,21 @@
 import QtQuick
-import "."
 
 Item {
     id: surface
-    required property var controller; required property bool loadWhen; required property Component content
-    x: Math.round((controller.surfaceWindowWidth - controller.currentWindowWidth) / 2)
-    y: 0
-    width: controller.currentWindowWidth
+
+    required property real surfaceWidth
+    required property real contentWidth
+    required property bool loadWhen
+    required property Component content
+
+    x: Math.round((surfaceWidth - contentWidth) / 2)
+    width: contentWidth
     height: parent ? parent.height : 0
     clip: true
-    SurfaceLoader { loadWhen: surface.loadWhen; content: surface.content }
+
+    Loader {
+        anchors.fill: parent
+        active: surface.loadWhen
+        sourceComponent: surface.content
+    }
 }

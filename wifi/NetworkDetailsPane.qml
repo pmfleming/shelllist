@@ -34,8 +34,6 @@ Rectangle {
         anchors.bottomMargin: 2
 
         Column {
-            id: contentColumn
-
             visible: pane.controller.hasSelection
             anchors.fill: parent
             spacing: pane.sectionSpacing
@@ -143,15 +141,11 @@ Rectangle {
             }
 
             Item {
-                id: viewArea
-
                 width: parent.width
                 height: Math.max(0, parent.height - pane.headerHeight - pane.actionsHeight - pane.footerHeight - 3 * parent.spacing)
                 clip: true
 
                 Column {
-                    id: normalDetails
-
                     enabled: !pane.controller.advancedOpen
                     width: parent.width
                     height: parent.height
@@ -159,7 +153,7 @@ Rectangle {
                     spacing: pane.sectionSpacing
 
                     Behavior on x {
-                        enabled: !pane.controller.windowHost.noAnimations
+                        enabled: !Theme.noAnimations
                         NumberAnimation { duration: 240; easing.type: Easing.InOutCubic }
                     }
 
@@ -188,8 +182,6 @@ Rectangle {
                 }
 
                 AdvancedSettingsPage {
-                    id: advancedPane
-
                     enabled: pane.controller.advancedOpen
                     width: parent.width
                     height: parent.height
@@ -197,7 +189,7 @@ Rectangle {
                     controller: pane.controller
 
                     Behavior on x {
-                        enabled: !pane.controller.windowHost.noAnimations
+                        enabled: !Theme.noAnimations
                         NumberAnimation { duration: 240; easing.type: Easing.InOutCubic }
                     }
                 }
@@ -245,12 +237,9 @@ Rectangle {
             }
         }
 
-        Text {
+        CenteredMessage {
             visible: !pane.controller.hasSelection
-            anchors.centerIn: parent
             text: "Select a network"
-            color: Theme.mutedText
-            font.family: Theme.fontFamily
             font.pixelSize: 20
         }
     }

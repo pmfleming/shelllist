@@ -13,7 +13,7 @@ Item {
             return;
         controller.detailsOpen = true;
         controller.detailsExpansionProgress = 1;
-        Qt.callLater(controller.windowHost.requestWindowPlacement);
+        controller.windowPlacementRequested();
     }
 
     function closeDetails() {
@@ -21,7 +21,7 @@ Item {
             return;
         controller.detailsOpen = false;
         controller.detailsExpansionProgress = 0;
-        Qt.callLater(controller.windowHost.requestWindowPlacement);
+        controller.windowPlacementRequested();
     }
 
     function toggleDetails() { controller.detailsOpen ? closeDetails() : openDetails(); }
@@ -36,7 +36,7 @@ Item {
 
     function paneBindings(downAction) {
         return [
-            [Qt.Key_Escape, controller.windowHost.closeRequested],
+            [Qt.Key_Escape, controller.closeWindowRequested],
             [Qt.Key_Down, downAction],
             [Qt.Key_Up, function () { move(-1); }],
             [Qt.Key_Right, openDetails],
