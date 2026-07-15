@@ -28,6 +28,7 @@ Item {
     property var advancedProfile: ({})
     property string advancedSecret: ""
     property string advancedError: ""
+    property string advancedSaveOrigin: ""
     property bool shareAvailable: false
     property string sharePayload: ""
     property string shareProfilePath: ""
@@ -78,6 +79,7 @@ Item {
 
     signal focusSearchRequested
     signal focusListTopRequested
+    signal advancedSectionLeaving(string section)
 
     function startup() { if (windowHost.floatingMode) activateUi(); }
     function activeAccessPoint() { return activeStatus ? (activeStatus.access_point || activeStatus.network || null) : null; }
@@ -96,6 +98,8 @@ Item {
     function canShareSelected() { return shareAvailable && sharePayload.length > 0; }
 
     function selectDetailsTab(tab) {
+        if (advancedOpen && tab !== advancedSection)
+            advancedSectionLeaving(advancedSection);
         if (tab === "network") {
             closeAdvancedSettings();
             return;
@@ -131,8 +135,8 @@ Item {
     }
 
     function closeAdvancedSettings() {
-        if (advancedSaving)
-            return;
+        if (advancedOpen && advancedSection === "hardware")
+            advancedSectionLeaving("hardware");
         advancedOpen = false;
         advancedProfilePath = "";
         advancedProfile = ({});
@@ -147,18 +151,23 @@ Item {
         advancedError = "";
     }
 
-    function saveAdvancedSettings(settings) {
+    function saveAdvancedSettings(settings, origin) {
         if (!advancedOpen || advancedProfilePath.length === 0 || advancedSaving)
             return;
         advancedError = "";
-        if (!backend.saveAdvancedProfile(advancedProfilePath, settings))
+        advancedSaveOrigin = origin || advancedSection;
+        if (!backend.saveAdvancedProfile(advancedProfilePath, settings)) {
+            advancedSaveOrigin = "";
             advancedError = "Advanced profile settings are already being saved.";
+        }
     }
 
     function applyAdvancedSave(result) {
+        const origin = advancedSaveOrigin;
+        advancedSaveOrigin = "";
         status = result.message || "Saved advanced Wi-Fi settings";
         advancedSecret = "";
-        if (advancedOpen && advancedProfilePath.length > 0)
+        if (advancedOpen && advancedProfilePath.length > 0 && advancedSection === origin)
             backend.loadAdvancedProfile(advancedProfilePath);
     }
 
@@ -411,6 +420,8 @@ Item {
             resetConnectProgress();
         if (id === "advanced-load" || id === "advanced-save" || id === "advanced-secret")
             advancedError = message;
+        if (id === "advanced-save")
+            advancedSaveOrigin = "";
         if (id === "share") {
             const failedPath = shareRequestPath;
             const failedGeneration = shareRequestGeneration;

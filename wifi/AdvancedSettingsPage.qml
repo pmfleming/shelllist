@@ -33,6 +33,7 @@ Item {
     property bool ipv6AutoDns: true
     property string ipv6Dns: ""
     property string ipv6Search: ""
+    property bool hardwareDirty: false
 
     readonly property bool securityView: controller.advancedSection === "security"
     readonly property bool personalSecurity: String(profile.security_type || "").indexOf("Personal") >= 0
@@ -59,6 +60,7 @@ Item {
             passwordValue = "";
             passwordDirty = false;
             passwordRevealed = false;
+            hardwareDirty = false;
             return;
         }
         autoconnect = !!profile.autoconnect;
@@ -87,6 +89,7 @@ Item {
         passwordValue = "";
         passwordDirty = false;
         passwordRevealed = false;
+        hardwareDirty = false;
     }
 
     function splitValues(value) {
@@ -116,6 +119,9 @@ Item {
     }
 
     function save() {
+        if (!profile.path || controller.advancedSaving)
+            return;
+        hardwareDirty = false;
         controller.saveAdvancedSettings({
             autoconnect: autoconnect,
             metered: metered,
@@ -125,17 +131,24 @@ Item {
             ipv4: buildIp("ipv4", profile.ipv4 || ({})),
             ipv6: buildIp("ipv6", profile.ipv6 || ({})),
             password: passwordDirty && passwordValue.length > 0 ? passwordValue : null
-        });
+        }, securityView ? "security" : "hardware");
     }
 
     function setMethod(value) {
+        if (value === currentMethod)
+            return;
         if (ipFamily === "ipv4") ipv4Method = value;
         else ipv6Method = value;
+        hardwareDirty = true;
     }
 
     function setAutoDns(value) {
-        if (ipFamily === "ipv4") ipv4AutoDns = value === "auto";
-        else ipv6AutoDns = value === "auto";
+        const automatic = value === "auto";
+        if (automatic === currentAutoDns)
+            return;
+        if (ipFamily === "ipv4") ipv4AutoDns = automatic;
+        else ipv6AutoDns = automatic;
+        hardwareDirty = true;
     }
 
     onProfileChanged: syncProfile()
@@ -148,6 +161,10 @@ Item {
             page.passwordValue = page.controller.advancedSecret;
             page.passwordDirty = false;
             page.passwordRevealed = true;
+        }
+        function onAdvancedSectionLeaving(section) {
+            if (section === "hardware" && page.hardwareDirty)
+                page.save();
         }
     }
 
@@ -280,55 +297,130 @@ Item {
                     width: parent.width
                     height: Math.round(securityCards.usableHeight * 0.45)
 
-                    Column {
+                    ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: Math.round(15 * page.density)
-                        spacing: Math.max(4, Math.round(7 * page.density))
+                        spacing: Math.max(5, Math.round(8 * page.density))
 
-                        CardHeading { icon: "󰌾"; title: "Security" }
-                        FieldLabel { text: "Security type" }
-                        ReadValue { width: parent.width; text: page.profile.security_type || "Unknown" }
-                        FieldLabel { text: "Network password" }
+                        CardHeading { icon: "󰦝"; title: "Security" }
 
-                        RowLayout {
-                            width: parent.width
-                            height: 38
-                            spacing: 8
+                        Item { Layout.preferredHeight: Math.round(4 * page.density) }
 
-                            AdvancedTextField {
-                                Layout.fillWidth: true
-                                text: page.passwordValue
-                                password: !page.passwordRevealed
-                                placeholder: page.personalSecurity ? "Saved password" : "Not available for this security type"
-                                readOnly: !page.personalSecurity
-                                onEdited: function (value) { page.passwordValue = value; page.passwordDirty = true; }
-                            }
+                        Column {
+                            Layout.fillWidth: true
+                            spacing: Math.round(5 * page.density)
+                            FieldLabel { text: "Security type" }
+                            ReadValue { width: parent.width; text: page.profile.security_type || "Unknown" }
+                        }
 
-                            ActionButton {
-                                Layout.preferredWidth: 92
-                                Layout.preferredHeight: 38
-                                icon: page.passwordRevealed ? "󰈉" : "󰈈"
-                                label: page.controller.advancedSecretLoading ? "Loading" : (page.passwordRevealed ? "Hide" : "Show")
-                                enabled: page.personalSecurity && !page.controller.advancedSecretLoading
-                                onClicked: {
-                                    if (page.passwordRevealed) page.passwordRevealed = false;
-                                    else page.controller.revealAdvancedSecret();
+                        Item { Layout.fillHeight: true }
+
+                        Column {
+                            Layout.fillWidth: true
+                            spacing: Math.round(6 * page.density)
+
+                            FieldLabel { text: "Network password" }
+
+                            Rectangle {
+                                id: passwordField
+
+                                width: parent.width
+                                height: Math.round(48 * page.density)
+                                radius: Theme.controlRadius
+                                color: Theme.input
+                                border.width: 1
+                                border.color: passwordInput.activeFocus ? Theme.accent : Theme.mix(Theme.border, Theme.text, 0.22)
+                                opacity: page.personalSecurity ? 1.0 : 0.58
+
+                                TextInput {
+                                    id: passwordInput
+
+                                    anchors.left: parent.left
+                                    anchors.right: passwordAction.left
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    leftPadding: Math.round(13 * page.density)
+                                    rightPadding: Math.round(10 * page.density)
+                                    readOnly: !page.personalSecurity
+                                    echoMode: page.passwordRevealed ? TextInput.Normal : TextInput.Password
+                                    text: page.passwordValue
+                                    color: Theme.inputText
+                                    selectionColor: Theme.accent
+                                    selectedTextColor: Theme.accentText
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Math.round(13 * page.density)
+                                    verticalAlignment: TextInput.AlignVCenter
+                                    onTextEdited: {
+                                        page.passwordValue = text;
+                                        page.passwordDirty = true;
+                                    }
+
+                                    Text {
+                                        anchors.fill: parent
+                                        leftPadding: Math.round(13 * page.density)
+                                        verticalAlignment: Text.AlignVCenter
+                                        visible: passwordInput.text.length === 0
+                                        text: page.personalSecurity ? "Saved password" : "Unavailable for this security type"
+                                        color: Theme.subtleText
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Math.round(13 * page.density)
+                                    }
+                                }
+
+                                Rectangle {
+                                    id: passwordAction
+
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    width: Math.round(98 * page.density)
+                                    color: passwordActionMouse.containsMouse && passwordActionMouse.enabled ? Theme.hover : "transparent"
+                                    border.width: 0
+
+                                    Rectangle {
+                                        anchors.left: parent.left
+                                        anchors.top: parent.top
+                                        anchors.bottom: parent.bottom
+                                        width: 1
+                                        color: Theme.mix(Theme.border, Theme.text, 0.18)
+                                    }
+
+                                    Row {
+                                        anchors.centerIn: parent
+                                        spacing: Math.round(7 * page.density)
+
+                                        Text {
+                                            text: page.passwordRevealed ? "󰈉" : "󰈈"
+                                            color: Theme.accent
+                                            font.family: Theme.iconFontFamily
+                                            font.pixelSize: Math.round(16 * page.density)
+                                        }
+
+                                        Text {
+                                            text: page.controller.advancedSecretLoading ? "Loading" : (page.passwordRevealed ? "Hide" : "Show")
+                                            color: Theme.accent
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: Math.round(13 * page.density)
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: passwordActionMouse
+
+                                        anchors.fill: parent
+                                        enabled: page.personalSecurity && !page.controller.advancedSecretLoading
+                                        hoverEnabled: true
+                                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                        onClicked: {
+                                            if (page.passwordRevealed) page.passwordRevealed = false;
+                                            else page.controller.revealAdvancedSecret();
+                                        }
+                                    }
                                 }
                             }
                         }
 
-                        Text {
-                            width: parent.width
-                            wrapMode: Text.WordWrap
-                            maximumLineCount: 2
-                            elide: Text.ElideRight
-                            text: page.personalSecurity
-                                ? "A new password takes effect the next time NetworkManager activates this profile."
-                                : "Password editing is available for WPA Personal profiles."
-                            color: Theme.subtleText
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Math.round(10 * page.density)
-                        }
+                        Item { Layout.fillHeight: true }
                     }
                 }
 
@@ -336,31 +428,42 @@ Item {
                     width: parent.width
                     height: Math.round(securityCards.usableHeight * 0.34)
 
-                    Column {
+                    ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: Math.round(15 * page.density)
                         spacing: Math.max(5, Math.round(8 * page.density))
 
-                        CardHeading { icon: "󰈡"; title: "Privacy" }
-                        FieldLabel { text: "Address policy" }
-                        AdvancedChoice {
-                            width: parent.width
-                            value: page.macPolicy
-                            options: [
-                                { value: "default", label: "System default" },
-                                { value: "stable", label: "Stable private address" },
-                                { value: "random", label: "New random address each connection" },
-                                { value: "permanent", label: "Permanent device address" }
-                            ]
-                            onSelected: function (value) { page.macPolicy = value; }
+                        CardHeading { icon: "󰢏"; title: "Privacy" }
+
+                        Item { Layout.fillHeight: true }
+
+                        Column {
+                            Layout.fillWidth: true
+                            spacing: Math.round(6 * page.density)
+
+                            FieldLabel { text: "Address policy" }
+                            AdvancedChoice {
+                                width: parent.width
+                                value: page.macPolicy
+                                options: [
+                                    { value: "default", label: "System default" },
+                                    { value: "stable", label: "Stable private address" },
+                                    { value: "random", label: "New random address each connection" },
+                                    { value: "permanent", label: "Permanent device address" }
+                                ]
+                                onSelected: function (value) { page.macPolicy = value; }
+                            }
                         }
 
+                        Item { Layout.fillHeight: true }
+
                         RowLayout {
-                            width: parent.width
-                            height: Math.round(43 * page.density)
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Math.round(43 * page.density)
 
                             Column {
                                 Layout.fillWidth: true
+                                spacing: Math.round(3 * page.density)
                                 FieldLabel { text: "Device name sharing" }
                                 ReadValue { text: "Share this device's hostname with the network" }
                             }
@@ -374,6 +477,8 @@ Item {
                                 }
                             }
                         }
+
+                        Item { Layout.fillHeight: true }
                     }
                 }
 
@@ -381,18 +486,19 @@ Item {
                     width: parent.width
                     height: securityCards.usableHeight - securityCards.children[0].height - securityCards.children[1].height
 
-                    RowLayout {
+                    ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: Math.round(15 * page.density)
-                        spacing: 12
+                        spacing: Math.round(5 * page.density)
 
-                        CardHeading { icon: "󰍛"; title: "Device identity" }
-                        Item { Layout.fillWidth: true }
-                        Column {
-                            Layout.alignment: Qt.AlignVCenter
-                            FieldLabel { text: "Current device MAC" }
-                            ReadValue { text: ((page.status.wireless || {}).mac_address || "Unavailable") }
+                        CardHeading { icon: "󰘚"; title: "Device identity" }
+                        Item { Layout.fillHeight: true }
+                        FieldLabel { text: "Current device MAC" }
+                        ReadValue {
+                            Layout.fillWidth: true
+                            text: ((page.status.wireless || {}).mac_address || "Unavailable")
                         }
+                        Item { Layout.fillHeight: true }
                     }
                 }
             }
@@ -409,13 +515,13 @@ Item {
                     width: parent.width
                     height: page.editingIpDetails ? parent.height : Math.round(hardwareCards.usableHeight * 0.43)
 
-                    Column {
+                    ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: Math.round(15 * page.density)
-                        spacing: Math.max(4, Math.round(6 * page.density))
+                        spacing: Math.max(4, Math.round(7 * page.density))
 
                         RowLayout {
-                            width: parent.width
+                            Layout.fillWidth: true
                             CardHeading { icon: "󰖟"; title: "IP & DNS" }
                             Item { Layout.fillWidth: true }
                             AdvancedChoice {
@@ -426,8 +532,10 @@ Item {
                             }
                         }
 
+                        Item { Layout.fillHeight: true }
+
                         GridLayout {
-                            width: parent.width
+                            Layout.fillWidth: true
                             columns: 2
                             columnSpacing: 10
                             rowSpacing: Math.max(4, Math.round(6 * page.density))
@@ -457,6 +565,7 @@ Item {
                                 onEdited: function (value) {
                                     if (page.ipFamily === "ipv4") page.ipv4Address = value;
                                     else page.ipv6Address = value;
+                                    page.hardwareDirty = true;
                                 }
                             }
 
@@ -468,6 +577,7 @@ Item {
                                 onEdited: function (value) {
                                     if (page.ipFamily === "ipv4") page.ipv4Prefix = value;
                                     else page.ipv6Prefix = value;
+                                    page.hardwareDirty = true;
                                 }
                             }
 
@@ -479,6 +589,7 @@ Item {
                                 onEdited: function (value) {
                                     if (page.ipFamily === "ipv4") page.ipv4Gateway = value;
                                     else page.ipv6Gateway = value;
+                                    page.hardwareDirty = true;
                                 }
                             }
 
@@ -491,6 +602,7 @@ Item {
                                 onEdited: function (value) {
                                     if (page.ipFamily === "ipv4") page.ipv4Dns = value;
                                     else page.ipv6Dns = value;
+                                    page.hardwareDirty = true;
                                 }
                             }
 
@@ -502,18 +614,12 @@ Item {
                                 onEdited: function (value) {
                                     if (page.ipFamily === "ipv4") page.ipv4Search = value;
                                     else page.ipv6Search = value;
+                                    page.hardwareDirty = true;
                                 }
                             }
                         }
 
-                        Text {
-                            visible: !page.editingIpDetails
-                            width: parent.width
-                            text: "This network is using automatic IP and DNS settings."
-                            color: Theme.subtleText
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Math.round(10 * page.density)
-                        }
+                        Item { Layout.fillHeight: true }
                     }
                 }
 
@@ -522,10 +628,10 @@ Item {
                     width: parent.width
                     height: Math.round(hardwareCards.usableHeight * 0.31)
 
-                    Column {
+                    ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: Math.round(15 * page.density)
-                        spacing: Math.max(4, Math.round(6 * page.density))
+                        spacing: Math.max(3, Math.round(5 * page.density))
 
                         CardHeading { icon: "󰍛"; title: "Adapter & radio" }
 
@@ -541,8 +647,8 @@ Item {
                             delegate: RowLayout {
                                 id: radioRow
                                 required property var modelData
-                                width: parent.width
-                                height: Math.round(17 * page.density)
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
                                 FieldLabel { Layout.preferredWidth: Math.round(150 * page.density); text: radioRow.modelData.label }
                                 ReadValue { Layout.fillWidth: true; text: radioRow.modelData.value }
                             }
@@ -555,10 +661,10 @@ Item {
                     width: parent.width
                     height: hardwareCards.usableHeight - hardwareCards.children[0].height - hardwareCards.children[1].height
 
-                    Column {
+                    ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: Math.round(15 * page.density)
-                        spacing: Math.max(4, Math.round(6 * page.density))
+                        spacing: Math.max(3, Math.round(5 * page.density))
 
                         CardHeading { icon: "󰘚"; title: "Identifiers" }
 
@@ -572,8 +678,8 @@ Item {
                             delegate: RowLayout {
                                 id: identifierRow
                                 required property var modelData
-                                width: parent.width
-                                height: Math.round(19 * page.density)
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
                                 FieldLabel { Layout.preferredWidth: Math.round(150 * page.density); text: identifierRow.modelData.label }
                                 ReadValue { Layout.fillWidth: true; text: identifierRow.modelData.value }
                             }
@@ -593,8 +699,9 @@ Item {
         }
 
         RowLayout {
+            visible: page.securityView
             Layout.fillWidth: true
-            Layout.preferredHeight: 42
+            Layout.preferredHeight: page.securityView ? 42 : 0
             spacing: 8
 
             Text {

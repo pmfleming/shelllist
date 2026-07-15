@@ -192,7 +192,7 @@ Rectangle {
 
                     enabled: pane.controller.advancedOpen
                     width: parent.width
-                    height: Math.min(parent.height, width * 812 / 713)
+                    height: parent.height
                     x: pane.controller.advancedOpen ? 0 : width
                     controller: pane.controller
 
