@@ -102,12 +102,12 @@ Item {
     function canShareSelected() { return shareAvailable && sharePayload.length > 0; }
 
     function selectDetailsTab(tab) {
-        if (advancedOpen && tab !== advancedSection)
-            advancedSectionLeaving(advancedSection);
         if (tab === "network") {
             closeAdvancedSettings();
             return;
         }
+        if (advancedOpen && tab !== advancedSection)
+            advancedSectionLeaving(advancedSection);
         openAdvancedSettings(tab);
     }
 
@@ -139,8 +139,8 @@ Item {
     }
 
     function closeAdvancedSettings() {
-        if (advancedOpen && advancedSection === "hardware")
-            advancedSectionLeaving("hardware");
+        if (advancedOpen)
+            advancedSectionLeaving(advancedSection);
         advancedOpen = false;
         advancedProfilePath = "";
         advancedProfile = ({});
@@ -157,13 +157,15 @@ Item {
 
     function saveAdvancedSettings(settings, origin) {
         if (!advancedOpen || advancedProfilePath.length === 0 || advancedSaving)
-            return;
+            return false;
         advancedError = "";
         advancedSaveOrigin = origin || advancedSection;
         if (!backend.saveAdvancedProfile(advancedProfilePath, settings)) {
             advancedSaveOrigin = "";
             advancedError = "Advanced profile settings are already being saved.";
+            return false;
         }
+        return true;
     }
 
     function applyAdvancedSave(result) {
@@ -399,8 +401,15 @@ Item {
     }
 
     function applyConnectivityEvent(event) {
-        if (event.event === "changed")
-            networkConnectivity = event.connectivity || null;
+        if (event.event !== "changed")
+            return;
+        const previous = networkConnectivity;
+        networkConnectivity = event.connectivity || null;
+        if (previous && Wifi.connectivityRequiresSignIn(previous)
+                && networkConnectivity && (networkConnectivity.full || networkConnectivity.state === "full")) {
+            const active = activeAccessPoint();
+            setHeldStatus("Connected to " + (active ? Wifi.networkName(active) : "Wi-Fi") + " with internet access", 2500);
+        }
     }
 
     function handleDaemonEvent(event) {
@@ -461,7 +470,7 @@ Item {
     function updateVisibleConnectProgress() {
         if (!connectRunning || !connectingNetworkIsActive())
             return;
-        setHeldStatus("Connected to " + connectingNetworkName, 2500);
+        setHeldStatus("Wi-Fi link established with " + connectingNetworkName + "; checking internet access…", 2500);
         connectingProgressTimer.stop();
     }
     function deferConnectForPrompt(ap) {
@@ -514,6 +523,7 @@ Item {
         if (!requireIdle(!backend.nonConnectRunning))
             return;
         status = connectRunning ? "Connection attempt already running…" : "Connecting to " + displayName + "…";
+        networkConnectivity = ({ state: "unknown", captive_portal: false, full: false });
         connectingNetworkName = displayName;
         connectWorkspaceId = currentWorkspaceId;
         connectingProgressTick = 0;

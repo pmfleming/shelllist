@@ -11,6 +11,7 @@ AdvancedTextField 1.0 AdvancedTextField.qml
 DetailCard 1.0 DetailCard.qml
 DetailField 1.0 DetailField.qml
 DetailGrid 1.0 DetailGrid.qml
+DetailsTab 1.0 DetailsTab.qml
 IconTile 1.0 IconTile.qml
 InputBackground 1.0 InputBackground.qml
 NetworkDetailsActions 1.0 NetworkDetailsActions.qml

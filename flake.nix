@@ -137,6 +137,7 @@
               pkgs.util-linux
             ];
             text = ''
+              started_ms=$(date +%s%3N)
               state_dir="''${XDG_RUNTIME_DIR:-/tmp}/shelllist-captive-portal"
               profile_dir="$state_dir/browser-profile"
               episode_file="$state_dir/automatic-episode"
@@ -225,6 +226,9 @@
               log_event() {
                 decision=$1
                 browser_pid="''${2:-}"
+                window_title="''${3:-}"
+                event_ms=$(date +%s%3N)
+                helper_elapsed_ms=$((event_ms - started_ms))
                 jq -cn \
                   --arg decision "$decision" \
                   --arg trigger "$trigger" \
@@ -235,14 +239,18 @@
                   --arg episode "$episode" \
                   --arg workspace "$workspace" \
                   --arg browser_pid "$browser_pid" \
+                  --arg window_title "$window_title" \
                   --arg url "$portal_url" \
-                  '{decision:$decision,trigger:$trigger,ssid:$ssid,identity:$identity,connectivity:$connectivity,request_id:$request_id,episode:$episode,workspace:$workspace,browser_pid:$browser_pid,url:$url}' \
+                  --argjson helper_elapsed_ms "$helper_elapsed_ms" \
+                  '{decision:$decision,trigger:$trigger,ssid:$ssid,identity:$identity,connectivity:$connectivity,request_id:$request_id,episode:$episode,workspace:$workspace,browser_pid:$browser_pid,url:$url,window_title:$window_title,helper_elapsed_ms:$helper_elapsed_ms}' \
                   | logger -t shelllist-captive-portal
               }
 
-              if [ -n "$(portal_client)" ]; then
+              existing_client=$(portal_client)
+              if [ -n "$existing_client" ]; then
                 place_and_focus
-                log_event focus-existing
+                existing_title=$(printf '%s' "$existing_client" | jq -r '.title // empty')
+                log_event focus-existing "" "$existing_title"
                 exit 0
               fi
 
@@ -288,9 +296,11 @@
 
               attempts=0
               while [ "$attempts" -lt 20 ]; do
-                if [ -n "$(portal_client)" ]; then
+                observed_client=$(portal_client)
+                if [ -n "$observed_client" ]; then
                   place_and_focus
-                  log_event placed-and-focused "$browser_pid"
+                  observed_title=$(printf '%s' "$observed_client" | jq -r '.title // empty')
+                  log_event placed-and-focused "$browser_pid" "$observed_title"
                   exit 0
                 fi
                 attempts=$((attempts + 1))

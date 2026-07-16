@@ -27,8 +27,7 @@ DetailCard {
                 height: Math.max(30, (settings.height - settings.spacing * Math.max(0, settingRepeater.count - 1)) / Math.max(1, settingRepeater.count))
                 title: modelData.label
                 hotkey: modelData.hotkey
-                subtitle: modelData.subtitle
-                showSubtitle: card.height >= 145
+                showSubtitle: false
                 checked: modelData.checked
                 interactive: modelData.enabled
                 onClicked: card.controller.triggerDetailAction(modelData.id)

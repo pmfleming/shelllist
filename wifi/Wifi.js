@@ -229,7 +229,30 @@ function relativeAgeLabel(seconds) {
     return minutes < 60 ? minutes + "m ago" : Math.round(minutes / 60) + "h ago";
 }
 
-function connectionStateLabel(controller, ap) { return controller.isActive(ap) && controller.activeStatus && controller.activeStatus.active_since_ms ? "Connected" : ""; }
+function activeConnectivity(controller) {
+    if (!controller)
+        return null;
+    return controller.networkConnectivity || (controller.activeStatus && controller.activeStatus.connectivity) || null;
+}
+
+function connectivityRequiresSignIn(connectivity) {
+    return !!(connectivity && (connectivity.captive_portal || connectivity.state === "portal"));
+}
+
+function connectionStateLabel(controller, ap) {
+    if (!controller.isActive(ap) || !controller.activeStatus)
+        return "";
+    const connectivity = activeConnectivity(controller);
+    if (connectivityRequiresSignIn(connectivity))
+        return "Sign in required";
+    if (!connectivity || connectivity.state === "unknown")
+        return "Checking internet access…";
+    if (connectivity.state === "none")
+        return "No internet access";
+    if (connectivity.state === "limited")
+        return "Limited connectivity";
+    return connectivity.full || connectivity.state === "full" ? "Connected" : "Checking internet access…";
+}
 
 function lastSeenLabel(ap) {
     if (!ap || ap.last_seen < 0)

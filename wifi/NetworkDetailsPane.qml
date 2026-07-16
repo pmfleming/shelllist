@@ -9,6 +9,8 @@ Rectangle {
     required property var controller
     readonly property var ap: controller.detailAp
     readonly property string connectionLabel: Wifi.connectionStateLabel(controller, ap)
+    readonly property bool signInRequired: Wifi.connectivityRequiresSignIn(Wifi.activeConnectivity(controller))
+    readonly property color connectionColor: signInRequired ? Theme.warning : Theme.active
     readonly property string lastSeenLabel: Wifi.lastSeenLabel(ap)
     readonly property real uiScale: Math.max(0.82, Math.min(1.12, height / 850))
     readonly property int sectionSpacing: Math.max(8, Math.round(12 * uiScale))
@@ -82,7 +84,7 @@ Rectangle {
                             width: 8
                             height: 8
                             radius: width / 2
-                            color: Theme.active
+                            color: pane.connectionColor
                         }
 
                         Text {
@@ -90,7 +92,7 @@ Rectangle {
                             height: parent.height
                             verticalAlignment: Text.AlignVCenter
                             text: pane.connectionLabel
-                            color: pane.controller.isActive(pane.ap) ? Theme.active : Theme.mutedText
+                            color: pane.controller.isActive(pane.ap) ? pane.connectionColor : Theme.mutedText
                             font.family: Theme.fontFamily
                             font.pixelSize: 12
                             font.weight: Font.Medium
@@ -187,6 +189,7 @@ Rectangle {
                     height: parent.height
                     x: pane.controller.advancedOpen ? 0 : width
                     controller: pane.controller
+                    sectionSpacing: pane.sectionSpacing
 
                     Behavior on x {
                         enabled: !Theme.noAnimations
@@ -195,44 +198,49 @@ Rectangle {
                 }
             }
 
-            RowLayout {
+            Item {
                 width: parent.width
                 height: pane.footerHeight
-                spacing: 8
 
-                ActionButton {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: pane.footerHeight
-                    icon: "󰋜"
-                    label: "Network Details"
-                    backgroundColor: pane.controller.detailsTab === "network" ? Theme.selected : Theme.surfaceRaised
-                    borderColor: pane.controller.detailsTab === "network" ? Theme.strongBorder : Theme.mix(Theme.border, Theme.text, 0.16)
-                    labelColor: pane.controller.detailsTab === "network" ? Theme.accent : Theme.text
-                    onClicked: pane.controller.selectDetailsTab("network")
+                Rectangle {
+                    anchors.top: parent.top
+                    width: parent.width
+                    height: 1
+                    color: Theme.border
                 }
 
-                ActionButton {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: pane.footerHeight
-                    icon: "󰌾"
-                    label: "Security & Privacy"
-                    backgroundColor: pane.controller.detailsTab === "security" ? Theme.selected : Theme.surfaceRaised
-                    borderColor: pane.controller.detailsTab === "security" ? Theme.strongBorder : Theme.mix(Theme.border, Theme.text, 0.16)
-                    labelColor: pane.controller.detailsTab === "security" ? Theme.accent : Theme.text
-                    enabled: !!pane.controller.profileFor(pane.ap)
-                    onClicked: pane.controller.selectDetailsTab("security")
-                }
+                RowLayout {
+                    anchors.fill: parent
+                    spacing: 0
 
-                ActionButton {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: pane.footerHeight
-                    icon: "󰍹"
-                    label: "Hardware & DNS"
-                    backgroundColor: pane.controller.detailsTab === "hardware" ? Theme.selected : Theme.surfaceRaised
-                    borderColor: pane.controller.detailsTab === "hardware" ? Theme.strongBorder : Theme.mix(Theme.border, Theme.text, 0.16)
-                    labelColor: pane.controller.detailsTab === "hardware" ? Theme.accent : Theme.text
-                    enabled: !!pane.controller.profileFor(pane.ap)
-                    onClicked: pane.controller.selectDetailsTab("hardware")
+                    DetailsTab {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        icon: "󰋜"
+                        label: "Network Details"
+                        selected: pane.controller.detailsTab === "network"
+                        onClicked: pane.controller.selectDetailsTab("network")
+                    }
+
+                    DetailsTab {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        icon: "󰌾"
+                        label: "Security & Privacy"
+                        selected: pane.controller.detailsTab === "security"
+                        enabled: !!pane.controller.profileFor(pane.ap)
+                        onClicked: pane.controller.selectDetailsTab("security")
+                    }
+
+                    DetailsTab {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        icon: "󰍹"
+                        label: "Hardware & DNS"
+                        selected: pane.controller.detailsTab === "hardware"
+                        enabled: !!pane.controller.profileFor(pane.ap)
+                        onClicked: pane.controller.selectDetailsTab("hardware")
+                    }
                 }
             }
         }
