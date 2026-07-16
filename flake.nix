@@ -353,7 +353,16 @@
               -I "${pkgs.quickshell}/lib/qt-6/qml" \
               -I ${./wifi} \
               ${./wifi}/*.qml \
+              ${./wifi}/networkinput/*.qml \
               ${./wifi}/process/*.qml
+            touch $out
+          '';
+
+          ipValidation = pkgs.runCommand "shelllist-ip-validation"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-ip-validation.js} ${./wifi/networkinput/IpValidation.js}
             touch $out
           '';
         });

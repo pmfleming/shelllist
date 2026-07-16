@@ -15,8 +15,9 @@ Rectangle {
     readonly property real uiScale: Math.max(0.82, Math.min(1.12, height / 850))
     readonly property int sectionSpacing: Math.max(8, Math.round(12 * uiScale))
     readonly property int headerHeight: Math.max(56, Math.round(64 * uiScale))
-    readonly property int actionsHeight: 44
-    readonly property int footerHeight: Math.max(44, Math.round(50 * uiScale))
+    readonly property int detailControlHeight: Math.max(36, Math.round(42 * uiScale))
+    readonly property int actionsHeight: detailControlHeight
+    readonly property int footerHeight: detailControlHeight
     readonly property real cardBudget: Math.max(420, height - 2 - headerHeight - actionsHeight - footerHeight - 5 * sectionSpacing)
     readonly property real connectionCardHeight: Math.round(cardBudget * 0.44)
     readonly property real networkCardHeight: Math.round(cardBudget * 0.255)
@@ -122,7 +123,7 @@ Rectangle {
 
                 Item {
                     Layout.preferredWidth: 156
-                    Layout.preferredHeight: 44
+                    Layout.preferredHeight: pane.detailControlHeight
                     Layout.alignment: Qt.AlignVCenter
 
                     NetworkDetailsActions {
@@ -130,6 +131,7 @@ Rectangle {
                         controller: pane.controller
                         primaryOnly: true
                         alignRight: true
+                        controlHeight: pane.detailControlHeight
                     }
                 }
             }
@@ -138,6 +140,7 @@ Rectangle {
                 controller: pane.controller
                 primaryOnly: false
                 alignRight: true
+                controlHeight: pane.detailControlHeight
                 width: parent.width
                 height: pane.actionsHeight
             }

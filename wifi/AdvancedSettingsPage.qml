@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import "."
+import "networkinput" as NetworkInput
 
 Item {
     id: page
@@ -116,11 +117,35 @@ Item {
         autoSaveTimer.restart();
     }
 
+    function ipSettingsReady(family) {
+        const method = ipValue(family, "Method");
+        if (method === "manual") {
+            if (!NetworkInput.IpValidator.isAddressInput(ipValue(family, "Address"), family, false, false))
+                return false;
+            if (!NetworkInput.IpValidator.isPrefix(ipValue(family, "Prefix"), family, false))
+                return false;
+        }
+        if (!NetworkInput.IpValidator.isAddressInput(ipValue(family, "Gateway"), family, false, true))
+            return false;
+        return ipValue(family, "AutoDns")
+            || NetworkInput.IpValidator.isAddressInput(ipValue(family, "Dns"), family, true, true);
+    }
+
+    function hardwareSettingsReady() {
+        return ipSettingsReady("ipv4") && ipSettingsReady("ipv6");
+    }
+
     function saveDirty() {
         if ((!securityDirty && !hardwareDirty) || !profile.path)
             return;
         if (controller.advancedSaving || controller.advancedLoading) {
             autoSaveTimer.restart();
+            return;
+        }
+        // Selecting Manual reveals an initially empty form. Keep the edit local until the
+        // required address has been entered instead of sending a predictably invalid update.
+        if (hardwareDirty && !hardwareSettingsReady()) {
+            controller.advancedError = "";
             return;
         }
 
@@ -477,53 +502,57 @@ Item {
                         }
 
                         FieldLabel { visible: page.currentMethod === "manual"; Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "Address" }
-                        AdvancedTextField {
+                        NetworkInput.IpAddressField {
                             visible: page.currentMethod === "manual"
                             Layout.fillWidth: true
+                            family: page.ipFamily
+                            allowEmpty: false
                             text: page.ipFamily === "ipv4" ? page.ipv4Address : page.ipv6Address
-                            placeholder: page.ipFamily === "ipv4" ? "192.168.1.20" : "2001:db8::20"
                             onEdited: function (value) {
                                 if (page.ipFamily === "ipv4") page.ipv4Address = value;
                                 else page.ipv6Address = value;
-                                page.queueHardwareSave();
                             }
+                            onEditingFinished: page.queueHardwareSave()
                         }
 
                         FieldLabel { visible: page.currentMethod === "manual"; Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "Prefix length" }
-                        AdvancedTextField {
+                        NetworkInput.PrefixLengthField {
                             visible: page.currentMethod === "manual"
                             Layout.fillWidth: true
+                            family: page.ipFamily
                             text: page.ipFamily === "ipv4" ? page.ipv4Prefix : page.ipv6Prefix
                             onEdited: function (value) {
                                 if (page.ipFamily === "ipv4") page.ipv4Prefix = value;
                                 else page.ipv6Prefix = value;
-                                page.queueHardwareSave();
                             }
+                            onEditingFinished: page.queueHardwareSave()
                         }
 
                         FieldLabel { visible: page.currentMethod === "manual"; Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "Gateway" }
-                        AdvancedTextField {
+                        NetworkInput.IpAddressField {
                             visible: page.currentMethod === "manual"
                             Layout.fillWidth: true
+                            family: page.ipFamily
                             text: page.ipFamily === "ipv4" ? page.ipv4Gateway : page.ipv6Gateway
                             onEdited: function (value) {
                                 if (page.ipFamily === "ipv4") page.ipv4Gateway = value;
                                 else page.ipv6Gateway = value;
-                                page.queueHardwareSave();
                             }
+                            onEditingFinished: page.queueHardwareSave()
                         }
 
                         FieldLabel { visible: !page.currentAutoDns; Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "DNS servers" }
-                        AdvancedTextField {
+                        NetworkInput.IpAddressField {
                             visible: !page.currentAutoDns
                             Layout.fillWidth: true
+                            family: page.ipFamily
+                            multiple: true
                             text: page.ipFamily === "ipv4" ? page.ipv4Dns : page.ipv6Dns
-                            placeholder: "Comma-separated addresses"
                             onEdited: function (value) {
                                 if (page.ipFamily === "ipv4") page.ipv4Dns = value;
                                 else page.ipv6Dns = value;
-                                page.queueHardwareSave();
                             }
+                            onEditingFinished: page.queueHardwareSave()
                         }
 
                         FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "DNS search domains" }
@@ -534,8 +563,8 @@ Item {
                             onEdited: function (value) {
                                 if (page.ipFamily === "ipv4") page.ipv4Search = value;
                                 else page.ipv6Search = value;
-                                page.queueHardwareSave();
                             }
+                            onEditingFinished: page.queueHardwareSave()
                         }
                     }
                 }

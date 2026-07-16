@@ -10,9 +10,10 @@ RowLayout {
     required property var controller
     property bool primaryOnly: false
     property bool alignRight: false
+    property int controlHeight: 42
 
     width: parent ? parent.width : 0
-    height: 44
+    height: controlHeight
     spacing: 8
 
     Item {
@@ -29,7 +30,7 @@ RowLayout {
             required property var modelData
 
             Layout.preferredWidth: modelData.width
-            Layout.preferredHeight: 42
+            Layout.preferredHeight: row.controlHeight
             icon: modelData.icon || ""
             label: modelData.label
             hotkey: modelData.hotkey

@@ -196,9 +196,10 @@ out=$(nix build .#default --no-link --print-out-paths)
 shellcheck "$out/bin/shelllist-wifi"
 portal=$(nix build .#captivePortalBrowser --no-link --print-out-paths)
 shellcheck "$portal/bin/shelllist-captive-portal"
-shelllist-qmllint wifi/*.qml wifi/process/*.qml
+shelllist-qmllint wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
+node tests/check-ip-validation.js wifi/networkinput/IpValidation.js
 ```
 
-The Wi-Fi UI entry point is `wifi/shell.qml`.
+The Wi-Fi UI entry point is `wifi/shell.qml`. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
 
 The JSON boundary with `nm-daemon` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture, validates the frontend method shapes, regenerates the used method and stream entries in `wifi/NmApi.js` from `nm-daemon debug protocol-registry`, and lints every QML source; any drift or static-analysis failure fails the check.

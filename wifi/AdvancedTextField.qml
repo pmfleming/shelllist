@@ -8,13 +8,17 @@ Rectangle {
     property string placeholder: ""
     property bool password: false
     property bool readOnly: false
+    property bool inputValid: true
+    property int inputMethodHints: Qt.ImhNone
+    property int maximumLength: 32767
 
     signal edited(string value)
+    signal editingFinished
 
     implicitHeight: 38
     radius: Theme.controlRadius
     color: Theme.input
-    border.color: input.activeFocus ? Theme.strongBorder : Theme.border
+    border.color: !inputValid ? Theme.danger : (input.activeFocus ? Theme.strongBorder : Theme.border)
     opacity: readOnly ? 0.72 : 1.0
 
     TextInput {
@@ -24,6 +28,8 @@ Rectangle {
         leftPadding: 12
         rightPadding: 12
         readOnly: field.readOnly
+        inputMethodHints: field.inputMethodHints
+        maximumLength: field.maximumLength
         echoMode: field.password ? TextInput.Password : TextInput.Normal
         color: Theme.inputText
         selectionColor: Theme.accent
@@ -32,6 +38,7 @@ Rectangle {
         font.pixelSize: 13
         verticalAlignment: TextInput.AlignVCenter
         onTextEdited: field.edited(text)
+        onEditingFinished: field.editingFinished()
 
         Text {
             anchors.fill: parent
