@@ -252,6 +252,19 @@ Item {
             spacing: page.sectionSpacing
 
             DetailCard {
+                height: 145
+                title: "Device identity"
+
+                DetailGrid {
+                    entries: [
+                        { label: "BSSID", value: page.ap.bssid || "—" },
+                        { label: "Device MAC", value: ((page.status.wireless || {}).mac_address || "—") },
+                        { label: "Profile path", value: page.profile.path || "—" }
+                    ]
+                }
+            }
+
+            DetailCard {
                 height: 178
                 title: "Security"
 
@@ -372,7 +385,7 @@ Item {
             }
 
             DetailCard {
-                height: 158
+                height: Math.max(158, securityFlick.height - 323 - 2 * securityCards.spacing)
                 title: "Privacy"
 
                 Column {
@@ -417,18 +430,6 @@ Item {
                             page.queueSecuritySave();
                         }
                     }
-                }
-            }
-
-            DetailCard {
-                height: Math.max(120, securityFlick.height - 336 - 2 * securityCards.spacing)
-                title: "Device identity"
-
-                DetailGrid {
-                    entries: [{
-                        label: "Current device MAC",
-                        value: ((page.status.wireless || {}).mac_address || "Unavailable")
-                    }]
                 }
             }
         }
@@ -571,7 +572,7 @@ Item {
             }
 
             DetailCard {
-                height: 190
+                height: Math.max(190, hardwareFlick.height - page.ipCardHeight - hardwareCards.spacing)
                 title: "Adapter & radio"
 
                 DetailGrid {
@@ -581,19 +582,6 @@ Item {
                         { label: "Band / frequency", value: (page.ap.band || "—") + " / " + (page.ap.frequency || "—") + " MHz" },
                         { label: "Channel", value: page.ap.channel === undefined ? "—" : String(page.ap.channel) },
                         { label: "Maximum bitrate", value: page.ap.max_bitrate_mbps ? page.ap.max_bitrate_mbps + " Mbps" : "—" }
-                    ]
-                }
-            }
-
-            DetailCard {
-                height: Math.max(145, hardwareFlick.height - page.ipCardHeight - 190 - 2 * hardwareCards.spacing)
-                title: "Identifiers"
-
-                DetailGrid {
-                    entries: [
-                        { label: "BSSID", value: page.ap.bssid || "—" },
-                        { label: "Device MAC", value: ((page.status.wireless || {}).mac_address || "—") },
-                        { label: "Profile path", value: page.profile.path || "—" }
                     ]
                 }
             }
