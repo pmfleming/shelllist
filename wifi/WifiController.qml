@@ -1,6 +1,7 @@
-import Quickshell
 import QtQuick
-import "Wifi.js" as Wifi
+import "WifiPresentation.js" as Presentation
+import "WifiFlow.js" as Flow
+import "NmApiClient.js" as Api
 import "NmApi.js" as NmApi
 import "."
 
@@ -30,14 +31,6 @@ Item {
     property string advancedSecret: ""
     property string advancedError: ""
     property string advancedSaveOrigin: ""
-    property bool shareAvailable: false
-    property string sharePayload: ""
-    property string shareProfilePath: ""
-    property string shareRequestPath: ""
-    property int shareCacheGeneration: 0
-    property int shareRequestGeneration: 0
-    property var shareAvailabilityCache: ({})
-    property string shareStatus: shareUnavailableMessage
     property double statusHoldUntil: 0
     property string connectWorkspaceId: ""
     property string activeScanRequestId: ""
@@ -70,11 +63,24 @@ Item {
     readonly property var detailAp: selection.selected() || ({})
     readonly property bool hasSelection: filteredNetworks.length > 0
     readonly property string busyMessage: "Wait for the current Wi-Fi action to finish…"
-    readonly property string shareUnavailableMessage: "Wi-Fi QR sharing is not available for this network."
+    readonly property alias shareAvailable: shareModel.available
+    readonly property alias sharePayload: shareModel.payload
+    readonly property alias shareStatus: shareModel.status
+    readonly property alias shareUnavailableMessage: shareModel.unavailableMessage
+    readonly property alias shareController: shareModel
     readonly property alias selectionModel: selection
     readonly property alias connectPolicy: connectPolicyModel
     readonly property alias navigation: navigationModel
     readonly property alias detailActions: detailActionModel.actions
+    readonly property var daemonEventHandlerByStream: {
+        const handlers = ({});
+        handlers[NmApi.streams.wifi_status] = function (event) { wifi.applyStatusEvent(event); };
+        handlers[NmApi.streams.network_connectivity] = function (event) { wifi.applyConnectivityEvent(event); };
+        handlers[NmApi.streams.wifi_scan] = function (event) { wifi.handleScanStreamEvent(event); };
+        handlers[NmApi.streams.wifi_connect] = function (event) { wifi.handleConnectEvent(event); };
+        handlers[NmApi.streams.wifi_secret] = function (event) { wifi.handleSecretEvent(event); };
+        return handlers;
+    }
 
     signal focusSearchRequested
     signal focusListTopRequested
@@ -87,19 +93,19 @@ Item {
             activateUi(workspaceId);
     }
     function activeAccessPoint() { return activeStatus ? (activeStatus.access_point || activeStatus.network || null) : null; }
-    function networkName(ap) { return Wifi.networkName(ap); }
+    function networkName(ap) { return Presentation.networkName(ap); }
     function isActive(ap) { return !!(ap && ap.active); }
-    function profileFor(ap) { return Wifi.profileForAccessPoint(ap); }
+    function profileFor(ap) { return Flow.profileForAccessPoint(ap); }
     function autoconnectEnabled() { const profile = profileFor(detailAp); return !!(profile && profile.autoconnect); }
-    function randomizedMacEnabled() { return !!Wifi.privacyFor(profileFor(detailAp)).randomized_mac; }
-    function sendHostnameEnabled() { return Wifi.privacyFor(profileFor(detailAp)).send_hostname !== false; }
+    function randomizedMacEnabled() { return !!Presentation.privacyFor(profileFor(detailAp)).randomized_mac; }
+    function sendHostnameEnabled() { return Presentation.privacyFor(profileFor(detailAp)).send_hostname !== false; }
     function canProfileAction(capability) { const caps = detailAp.capabilities || ({}); return !actionInFlight && !!profileFor(detailAp) && caps[capability] === true; }
     function canForgetProfile() { const caps = detailAp.capabilities || ({}); return !actionInFlight && (isActive(detailAp) || caps.can_forget === true); }
     function canToggleAutoconnectProfile() { return canProfileAction("can_toggle_autoconnect"); }
     function canSetMacRandomizationProfile() { return canProfileAction("can_set_mac_randomization"); }
     function canSetSendHostnameProfile() { return canProfileAction("can_set_send_hostname"); }
     function canUsePrimaryAction() { return isActive(detailAp) ? !actionInFlight : canBeginConnectAction(detailAp); }
-    function canShareSelected() { return shareAvailable && sharePayload.length > 0; }
+    function canShareSelected() { return shareModel.canShareSelected(); }
 
     function selectDetailsTab(tab) {
         if (tab === "network") {
@@ -191,100 +197,13 @@ Item {
         advancedError = result.available ? "" : "The saved Wi-Fi password is not readable.";
     }
 
-    function resetShareAvailability() {
-        shareProfilePath = "";
-        setShareAvailability(false, "", shareUnavailableMessage);
-    }
-
-    function cachedShareAvailability(path) {
-        return path.length > 0 ? (shareAvailabilityCache[path] || null) : null;
-    }
-
-    function cacheShareAvailability(path, available, payload, message) {
-        if (path.length === 0)
-            return;
-        const updated = Object.assign({}, shareAvailabilityCache);
-        updated[path] = { available: available, payload: payload, message: message };
-        shareAvailabilityCache = updated;
-    }
-
-    function invalidateShareAvailabilityCache() {
-        shareCacheGeneration += 1;
-        shareAvailabilityCache = ({});
-        resetShareAvailability();
-    }
-
-    function refreshShareAvailability() {
-        if (!hasSelection)
-            return resetShareAvailability();
-        const result = Wifi.shareAvailability(detailAp, profileFor(detailAp), "Wi-Fi QR sharing requires an open network or a saved profile with a readable password.");
-        if (result.state !== "check") {
-            shareProfilePath = "";
-            return setShareAvailability(result.available, result.payload, result.message);
-        }
-
-        shareProfilePath = result.profilePath;
-        const cached = cachedShareAvailability(result.profilePath);
-        if (cached)
-            return setShareAvailability(cached.available, cached.payload, cached.message);
-
-        setShareAvailability(false, "", "Checking saved Wi-Fi password availability…");
-        if (backend.isPending("share"))
-            return;
-        shareRequestPath = result.profilePath;
-        shareRequestGeneration = shareCacheGeneration;
-        if (!backend.share(result.profilePath))
-            shareRequestPath = "";
-    }
-
-    function shareSelected() {
-        if (!canShareSelected())
-            return status = shareStatus;
-        Quickshell.clipboardText = sharePayload;
-        status = "Wi-Fi QR payload for " + Wifi.networkName(detailAp) + " copied to clipboard";
-    }
-
-    function setShareAvailability(available, payload, message) {
-        shareAvailable = available;
-        sharePayload = payload;
-        shareStatus = message;
-    }
-
-    function refreshShareAvailabilityIfOpen() { if (detailsOpen) Qt.callLater(refreshShareAvailability); }
+    function invalidateShareAvailabilityCache() { shareModel.invalidate(); }
+    function refreshShareAvailability() { shareModel.refresh(); }
+    function shareSelected() { shareModel.copySelected(); }
+    function applyShareResponse(response, errorText) { shareModel.applyResponse(response, errorText); }
     function statusIsHeld() { return Date.now() < statusHoldUntil; }
     function setBackgroundStatus(message) { if (!statusIsHeld()) status = message; }
     function setHeldStatus(message, milliseconds) { status = message; statusHoldUntil = Date.now() + milliseconds; }
-    function applyShareResult(result, requestPath, requestGeneration) {
-        if (requestGeneration !== shareCacheGeneration)
-            return refreshShareAvailabilityIfOpen();
-        const resultPath = result.path || requestPath;
-        cacheShareAvailability(resultPath, result.available, result.payload, result.message);
-        if (resultPath === shareProfilePath)
-            setShareAvailability(result.available, result.payload, result.message);
-        else
-            refreshShareAvailabilityIfOpen();
-    }
-
-    function applyShareFailure(requestPath, requestGeneration, message) {
-        if (requestGeneration !== shareCacheGeneration)
-            return refreshShareAvailabilityIfOpen();
-        cacheShareAvailability(requestPath, false, "", message);
-        if (requestPath === shareProfilePath)
-            setShareAvailability(false, "", message);
-        else
-            refreshShareAvailabilityIfOpen();
-    }
-
-    function applyShareResponse(response, errorText) {
-        const requestPath = shareRequestPath;
-        const requestGeneration = shareRequestGeneration;
-        shareRequestPath = "";
-        try {
-            applyShareResult(Wifi.shareCheckAvailability(Wifi.apiData(response, "result"), shareUnavailableMessage), requestPath, requestGeneration);
-        } catch (error) {
-            applyShareFailure(requestPath, requestGeneration, "Could not check Wi-Fi QR sharing: " + (errorText || error));
-        }
-    }
 
     function activateUi(workspaceId) {
         uiActive = true;
@@ -349,20 +268,20 @@ Item {
             scanSnapshotSeen = true;
             selection.apply(event.networks || [], false);
         }
-        setBackgroundStatus(Wifi.scanEventStatus(event, status));
+        setBackgroundStatus(Api.scanEventStatus(event, status));
     }
 
     function finishConnectEvent(event, succeeded) {
         const requestId = event.request_id || activeConnectRequestId;
         activeConnectRequestId = "";
         resetConnectProgress();
-        applyConnectResult(Wifi.connectEventResult(event), event.message || (succeeded ? "Connected" : "Connection failed"), requestId);
+        applyConnectResult(Api.connectEventResult(event), event.message || (succeeded ? "Connected" : "Connection failed"), requestId);
         if (succeeded)
             refresh();
     }
 
     function handleConnectEvent(event) {
-        if (!Wifi.requestMatches(event, activeConnectRequestId))
+        if (!Api.requestMatches(event, activeConnectRequestId))
             return;
         if (event.event === "cancelled") {
             activeConnectRequestId = "";
@@ -371,7 +290,7 @@ Item {
             refresh();
             return;
         }
-        const state = Wifi.connectEventState(event);
+        const state = Api.connectEventState(event);
         if (state === "progress")
             return setBackgroundStatus(event.message || "Connecting to " + connectingNetworkName + "…");
         finishConnectEvent(event, state === "succeeded");
@@ -392,10 +311,10 @@ Item {
     }
 
     function handleScanStreamEvent(event) {
-        if (!uiActive || !Wifi.requestMatches(event, activeScanRequestId))
+        if (!uiActive || !Api.requestMatches(event, activeScanRequestId))
             return;
         applyScanEvent(event);
-        if (Wifi.isTerminalEvent(event)) {
+        if (Api.isTerminalEvent(event)) {
             activeScanRequestId = "";
             maybeRunPendingRefresh();
         }
@@ -412,24 +331,19 @@ Item {
             return;
         const previous = networkConnectivity;
         networkConnectivity = event.connectivity || null;
-        if (previous && Wifi.connectivityRequiresSignIn(previous)
+        if (previous && Presentation.connectivityRequiresSignIn(previous)
                 && networkConnectivity && (networkConnectivity.full || networkConnectivity.state === "full")) {
             const active = activeAccessPoint();
-            setHeldStatus("Connected to " + (active ? Wifi.networkName(active) : "Wi-Fi") + " with internet access", 2500);
+            setHeldStatus("Connected to " + (active ? Presentation.networkName(active) : "Wi-Fi") + " with internet access", 2500);
         }
     }
 
     function handleDaemonEvent(event) {
         try {
-            Wifi.requireApiEvent(event);
-            const handlers = ({});
-            handlers[NmApi.streams.wifi_status] = applyStatusEvent;
-            handlers[NmApi.streams.network_connectivity] = applyConnectivityEvent;
-            handlers[NmApi.streams.wifi_scan] = handleScanStreamEvent;
-            handlers[NmApi.streams.wifi_connect] = handleConnectEvent;
-            handlers[NmApi.streams.wifi_secret] = handleSecretEvent;
-            if (handlers[event.stream])
-                handlers[event.stream](event);
+            Api.requireApiEvent(event);
+            const handler = daemonEventHandlerByStream[event.stream];
+            if (handler)
+                handler(event);
         } catch (error) {
             status = "Could not parse nm-daemon event: " + error;
         }
@@ -442,11 +356,8 @@ Item {
             advancedError = message;
         if (id === "advanced-save")
             advancedSaveOrigin = "";
-        if (id === "share") {
-            const failedPath = shareRequestPath;
-            shareRequestPath = "";
-            applyShareFailure(failedPath, shareRequestGeneration, "Could not check Wi-Fi QR sharing: " + message);
-        }
+        if (id === "share")
+            shareModel.fail(message);
         status = message;
         maybeRunPendingRefresh();
     }
@@ -458,12 +369,12 @@ Item {
     }
     function beginAction() { return requireIdle(!actionInFlight); }
     function canBeginAnyConnectAction() { return !backend.running; }
-    function canBeginConnectAction(ap) { return canBeginAnyConnectAction() && Wifi.canStartConnection(ap); }
+    function canBeginConnectAction(ap) { return canBeginAnyConnectAction() && !!(ap && ap.capabilities && ap.capabilities.can_connect); }
     function beginAnyConnectAction() { return requireIdle(canBeginAnyConnectAction()); }
     function beginConnectAction(ap) { return requireIdle(canBeginConnectAction(ap)); }
     function primarySelected() { return connectRunning ? cancelConnection() : (isActive(selection.selected()) ? disconnectSelected() : connectSelected()); }
-    function isConnecting(ap) { return connectRunning && connectingNetworkName.length > 0 && Wifi.networkName(ap) === connectingNetworkName && !isActive(ap); }
-    function connectingNetworkIsActive() { return connectingNetworkName.length > 0 && Wifi.networkName(activeAccessPoint()) === connectingNetworkName; }
+    function isConnecting(ap) { return connectRunning && connectingNetworkName.length > 0 && Presentation.networkName(ap) === connectingNetworkName && !isActive(ap); }
+    function connectingNetworkIsActive() { return connectingNetworkName.length > 0 && Presentation.networkName(activeAccessPoint()) === connectingNetworkName; }
     function updateVisibleConnectProgress() {
         if (!connectRunning || !connectingNetworkIsActive())
             return;
@@ -475,15 +386,16 @@ Item {
             prompt.openPasswordPrompt(ap, "Saved password failed. Enter a new Wi-Fi password.");
             return true;
         }
-        if (Wifi.needsPassword(ap)) {
+        const promptKind = ap && ap.connect_prompt ? (ap.connect_prompt.kind || "none") : "none";
+        if (promptKind === "password") {
             prompt.openPasswordPrompt(ap);
             return true;
         }
-        if (Wifi.needsCredentials(ap)) {
+        if (promptKind === "enterprise") {
             prompt.openEnterpriseIdentityPrompt(ap);
             return true;
         }
-        if (Wifi.canConnect(ap))
+        if (ap && ap.capabilities && ap.capabilities.can_connect)
             return false;
         status = "This access point cannot be connected from Shelllist yet. Use F6 for hidden SSIDs.";
         return true;
@@ -493,17 +405,19 @@ Item {
         if (!ap || !beginConnectAction(ap))
             return;
         if (!deferConnectForPrompt(ap))
-            runConnectTarget(ap, Wifi.networkName(ap));
+            runConnectTarget(ap, Presentation.networkName(ap));
     }
-    function connectTargetRequest(ap, password) {
-        const request = { target: Wifi.connectTarget(ap) };
+    function connectTargetRequest(ap, password, enterpriseIdentity) {
+        const request = ap.key ? { key: ap.key } : { target: ap };
         if (password !== undefined && password !== null)
             request.password = password;
+        if (enterpriseIdentity)
+            request.enterprise_identity = enterpriseIdentity;
         return request;
     }
-    function runConnectTarget(ap, displayName, password) {
-        const attemptKey = Wifi.connectAttemptKey(ap);
-        const secretFingerprint = Wifi.passwordFingerprint(password);
+    function runConnectTarget(ap, displayName, password, enterpriseIdentity) {
+        const attemptKey = Flow.connectAttemptKey(ap);
+        const secretFingerprint = Flow.passwordFingerprint(password);
         if (connectRunning && connectPolicy.lastConnectAttemptKey === attemptKey && connectPolicy.lastConnectSecretFingerprint === secretFingerprint) {
             status = "Connection attempt for " + displayName + " is already running…";
             return;
@@ -514,7 +428,7 @@ Item {
             return;
         }
         connectPolicyModel.rememberConnectAttempt(ap, password);
-        runConnect(connectTargetRequest(ap, password), displayName);
+        runConnect(connectTargetRequest(ap, password, enterpriseIdentity), displayName);
     }
     function runConnect(request, displayName) {
         if (!requireIdle(!backend.nonConnectRunning))
@@ -529,50 +443,23 @@ Item {
     }
     function resetConnectProgress() { connectingNetworkName = ""; connectingProgressTick = 0; connectingProgressTimer.stop(); }
     function applyConnectResult(result, fallbackText, requestId) {
-        const message = Wifi.connectResultMessage(result, fallbackText);
+        const message = result.message || fallbackText || "Wi-Fi connection failed";
         if (result.status === "error") {
             status = message;
-            if (Wifi.isSecretFailureReason(result.reason)) {
+            if (Flow.isSecretFailureReason(result.reason)) {
                 connectPolicyModel.markSecretStale(connectPolicyModel.lastConnectAp);
-                connectPolicyModel.blockLastConnectRetry(Wifi.connectFailureRetryMs(result.reason));
+                connectPolicyModel.blockLastConnectRetry(Flow.connectFailureRetryMs(result.reason));
                 if (connectPolicyModel.lastConnectAp)
-                    prompt.openPasswordPrompt(connectPolicyModel.lastConnectAp, Wifi.isWrongPasswordReason(result.reason) ? "Wrong password. Enter a new Wi-Fi password." : "Saved password failed. Enter a new Wi-Fi password.");
+                    prompt.openPasswordPrompt(connectPolicyModel.lastConnectAp, Flow.isWrongPasswordReason(result.reason) ? "Wrong password. Enter a new Wi-Fi password." : "Saved password failed. Enter a new Wi-Fi password.");
             }
         } else {
             connectPolicyModel.clearSecretStale(connectPolicyModel.lastConnectAp);
             invalidateShareAvailabilityCache();
             setHeldStatus(message, 2500);
         }
-        if (Wifi.confirmedPortalResult(result))
-            launchPortal(portalContext("connect-result", connectPolicyModel.lastConnectAp, result, requestId || "", connectWorkspaceId, true, false));
+        if (Flow.confirmedPortalResult(result))
+            portalModel.launchForConnect(connectPolicyModel.lastConnectAp, result, requestId || "", connectWorkspaceId);
         maybeRunPendingRefresh();
-    }
-
-    function portalContext(trigger, ap, result, requestId, workspaceId, automatic, fallback) {
-        const identity = Wifi.portalNetworkIdentity(ap, result || ({}));
-        const connectivity = Wifi.portalConnectivity(result, networkConnectivity, activeStatus);
-        return {
-            trigger: trigger,
-            ssid: Wifi.valueOr(result, "ssid", Wifi.networkName(ap)),
-            identity: identity,
-            episode: Wifi.portalEpisode(automatic, identity, requestId),
-            connectivity: Wifi.valueOr(connectivity, "state", "unknown"),
-            requestId: requestId,
-            workspaceId: workspaceId,
-            automatic: automatic,
-            fallback: fallback
-        };
-    }
-
-    function launchPortal(context) {
-        console.info("shelllist portal trigger=" + context.trigger
-            + " ssid=" + context.ssid
-            + " identity=" + context.identity
-            + " connectivity=" + context.connectivity
-            + " request_id=" + context.requestId
-            + " workspace=" + context.workspaceId);
-        status = "Opening captive portal page…";
-        backend.openPortal(context);
     }
 
     function provideSecret(requestId, key, password, save) {
@@ -609,15 +496,13 @@ Item {
         if (!beginAction())
             return;
         const requestId = "forget-" + Math.round(Date.now());
-        status = (isActive(ap) ? "Disconnecting and forgetting " : "Forgetting ") + Wifi.networkName(ap) + "…";
-        backend.profile({ operation: "forget", request_id: requestId, target: Wifi.connectTarget(ap) });
+        status = (isActive(ap) ? "Disconnecting and forgetting " : "Forgetting ") + Presentation.networkName(ap) + "…";
+        backend.profile({ operation: "forget", request_id: requestId, key: ap.key });
     }
     function toggleAutoconnectSelected() { runProfileAction(function (profile) { const enabled = !profile.autoconnect; status = (enabled ? "Enabling" : "Disabling") + " autoconnect for " + profile.id + "…"; backend.profile({ operation: "set-autoconnect", path: profile.path, enabled: enabled }); }); }
     function setMacRandomizedSelected(enabled) { runProfileAction(function (profile) { status = (enabled ? "Using randomized MAC for " : "Using device MAC for ") + profile.id + "…"; backend.profile({ operation: "set-mac-randomization", path: profile.path, randomized: enabled }); }); }
     function toggleSendHostnameSelected() { runProfileAction(function (profile) { const enabled = !(profile.privacy && profile.privacy.send_hostname !== false); status = (enabled ? "Sending" : "Hiding") + " device name for " + profile.id + "…"; backend.profile({ operation: "set-send-hostname", path: profile.path, enabled: enabled }); }); }
-    function openPortal() {
-        launchPortal(portalContext("manual", detailAp, null, "", currentWorkspaceId, false, false));
-    }
+    function openPortal() { portalModel.launchManual(detailAp, currentWorkspaceId); }
     function triggerDetailAction(id) { detailActionModel.trigger(id); }
     function canConnectDetail() { return !isActive(detailAp) && canUsePrimaryAction(); }
     function canDisconnectDetail() { return isActive(detailAp) && canUsePrimaryAction(); }
@@ -627,7 +512,7 @@ Item {
 
     onDetailsOpenChanged: {
         if (detailsOpen)
-            Qt.callLater(refreshShareAvailability);
+            Qt.callLater(shareModel.refresh);
         else if (advancedOpen)
             closeAdvancedSettings();
     }
@@ -636,7 +521,7 @@ Item {
         if (advancedOpen && (!profile || (profile.path || "") !== advancedProfilePath))
             closeAdvancedSettings();
         if (detailsOpen)
-            Qt.callLater(refreshShareAvailability);
+            Qt.callLater(shareModel.refresh);
     }
     onActiveStatusChanged: updateVisibleConnectProgress()
     onActiveScanRequestIdChanged: activeScanRequestId.length > 0 ? scanWatchdogTimer.restart() : scanWatchdogTimer.stop()
@@ -653,6 +538,8 @@ Item {
     Timer { id: scanWatchdogTimer; interval: wifi.scanWatchdogIntervalMs; repeat: false; onTriggered: wifi.handleScanWatchdog() }
     Timer { id: autoRefreshTimer; interval: wifi.autoRefreshIntervalMs; repeat: true; onTriggered: wifi.refresh() }
     WifiSelectionModel { id: selection }
+    ShareAvailabilityController { id: shareModel; controller: wifi; backend: backend }
+    CaptivePortalController { id: portalModel; controller: wifi; backend: backend }
     WifiConnectPolicy { id: connectPolicyModel }
     WifiDetailActions { id: detailActionModel; controller: wifi }
     WifiNavigation { id: navigationModel; controller: wifi }

@@ -1,5 +1,5 @@
 import QtQuick
-import "Wifi.js" as Wifi
+import "WifiPresentation.js" as Presentation
 import "."
 
 Rectangle {
@@ -36,7 +36,7 @@ Rectangle {
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: Wifi.highlightHotkey(control.label, control.hotkey)
+            text: Presentation.highlightHotkey(control.label, control.hotkey)
             textFormat: Text.RichText
             color: control.labelColor
             font.family: Theme.fontFamily

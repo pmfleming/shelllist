@@ -126,7 +126,7 @@ Current D-Bus methods used by the UI:
 
 - `wifi.networks` with cached-list parameters;
 - `wifi.scan`, returning a scan `request_id`;
-- `wifi.connectTarget`, returning a connect `request_id`;
+- `wifi.connectTarget` with the daemon-provided opaque network `key`, returning a connect `request_id`;
 - `wifi.secret.provide` for SecretAgent responses.
 - `wifi.disconnect`;
 - `wifi.profile.operation` for profile details, atomic advanced updates, password reveal, delete, privacy, autoconnect, hostname and sharing operations.
@@ -200,6 +200,6 @@ shelllist-qmllint wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-ip-validation.js wifi/networkinput/IpValidation.js
 ```
 
-The Wi-Fi UI entry point is `wifi/shell.qml`. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
+The Wi-Fi UI entry point is `wifi/shell.qml`. Frontend-only helpers are separated by responsibility into `WifiPresentation.js`, `NetworkSelection.js`, `WifiFlow.js`, and `NmApiClient.js`; share availability and captive-portal flows live in dedicated controller Items rather than the main Wi-Fi controller. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
 
 The JSON boundary with `nm-daemon` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture, validates the frontend method shapes, regenerates the used method and stream entries in `wifi/NmApi.js` from `nm-daemon debug protocol-registry`, and lints every QML source; any drift or static-analysis failure fails the check.

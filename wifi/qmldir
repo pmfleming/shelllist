@@ -1,6 +1,8 @@
 singleton Theme 1.0 Theme.qml
 WifiBackend 1.0 WifiBackend.qml
 WifiConnectPolicy 1.0 WifiConnectPolicy.qml
+internal ShareAvailabilityController ShareAvailabilityController.qml
+internal CaptivePortalController CaptivePortalController.qml
 WifiNavigation 1.0 WifiNavigation.qml
 WifiSelectionModel 1.0 WifiSelectionModel.qml
 ActionButton 1.0 ActionButton.qml

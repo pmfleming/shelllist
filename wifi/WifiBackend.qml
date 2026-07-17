@@ -1,6 +1,6 @@
 import QtQuick
 import "NmApi.js" as NmApi
-import "Wifi.js" as Wifi
+import "NmApiClient.js" as Api
 import "process"
 
 Item {
@@ -14,6 +14,19 @@ Item {
     readonly property bool connectStarting: isPending("connect-start")
     readonly property bool nonConnectRunning: isPending("disconnect") || isPending("profile") || isPending("advanced-load") || isPending("advanced-save") || isPending("advanced-secret") || isPending("secret-provide") || isPending("secret-cancel")
     readonly property bool running: connectStarting || nonConnectRunning || controller.activeConnectRequestId.length > 0
+    readonly property var responseHandlerById: ({
+        "networks": function (value) { backend.handleNetworks(value); },
+        "scan-start": function (value) { backend.handleScanStart(value); },
+        "connect-start": function (value) { backend.handleConnectStart(value); },
+        "disconnect": function (value) { backend.handleDisconnect(value); },
+        "advanced-load": function (value) { controller.applyAdvancedProfile(Api.apiData(value, "result") || ({})); },
+        "advanced-save": function (value) { backend.handleAdvancedSave(value); },
+        "advanced-secret": function (value) { controller.applyAdvancedSecret(Api.apiData(value, "result") || ({})); },
+        "profile": function (value) { backend.handleProfile(value); },
+        "share": function (value) { controller.applyShareResponse(value, "Saved profile could not be shared"); },
+        "secret-provide": function (value) { backend.handleSecretResponse(value); },
+        "secret-cancel": function (value) { backend.handleSecretResponse(value); }
+    })
 
     function isPending(id) { return !!pending[id]; }
     function setPending(id, value) {
@@ -54,18 +67,18 @@ Item {
     function cancel(requestId) { client.cancel(requestId); }
 
     function handleNetworks(envelope) {
-        const networks = Wifi.apiData(envelope, "networks") || [];
+        const networks = Api.apiData(envelope, "networks") || [];
         if (!controller.scanSnapshotSeen) controller.selectionModel.apply(networks, true);
         controller.setBackgroundStatus(networks.length + " cached networks; scanning…");
     }
 
     function handleScanStart(envelope) {
-        const result = Wifi.apiResult(envelope, "result") || ({});
+        const result = Api.apiResult(envelope, "result") || ({});
         controller.activeScanRequestId = result.request_id || ""; controller.setBackgroundStatus(result.message || "Wi-Fi scan started…");
     }
 
     function handleConnectStart(envelope) {
-        const connect = Wifi.apiResult(envelope, "result") || ({});
+        const connect = Api.apiResult(envelope, "result") || ({});
         if (connect.status !== "error") {
             controller.activeConnectRequestId = connect.request_id || "";
             controller.status = connect.message || ("Connecting to " + controller.connectingNetworkName + "…");
@@ -76,12 +89,12 @@ Item {
     }
 
     function handleDisconnect(envelope) {
-        const result = Wifi.apiData(envelope, "result") || ({});
+        const result = Api.apiData(envelope, "result") || ({});
         controller.status = result.message || "Disconnected Wi-Fi"; controller.refresh();
     }
 
     function handleAdvancedSave(envelope) {
-        controller.applyAdvancedSave(Wifi.apiData(envelope, "result") || ({}));
+        controller.applyAdvancedSave(Api.apiData(envelope, "result") || ({}));
         controller.invalidateShareAvailabilityCache(); controller.refresh();
     }
 
@@ -98,24 +111,14 @@ Item {
     }
 
     function handleProfile(envelope) {
-        const result = Wifi.apiData(envelope, "result") || ({});
+        const result = Api.apiData(envelope, "result") || ({});
         logForgetResult(result); controller.status = result.message || "Saved profile updated";
         controller.invalidateShareAvailabilityCache(); controller.refresh();
     }
 
     function handleSecretResponse(envelope) {
-        const result = Wifi.apiResult(envelope, "result") || ({});
+        const result = Api.apiResult(envelope, "result") || ({});
         if (result.status === "error") controller.status = result.message || "Wi-Fi secret was not accepted";
-    }
-
-    function responseHandlers() {
-        return {
-            "networks": handleNetworks, "scan-start": handleScanStart, "connect-start": handleConnectStart,
-            "disconnect": handleDisconnect, "advanced-load": function (value) { controller.applyAdvancedProfile(Wifi.apiData(value, "result") || ({})); },
-            "advanced-save": handleAdvancedSave, "advanced-secret": function (value) { controller.applyAdvancedSecret(Wifi.apiData(value, "result") || ({})); },
-            "profile": handleProfile, "share": function (value) { controller.applyShareResponse(value, "Saved profile could not be shared"); },
-            "secret-provide": handleSecretResponse, "secret-cancel": handleSecretResponse
-        };
     }
 
     function isSessionControl(id) { return id === "session-subscribe" || id.indexOf("cancel-") === 0 || id.indexOf("shutdown-") === 0; }
@@ -129,7 +132,7 @@ Item {
             return;
         }
         try {
-            const handler = responseHandlers()[id];
+            const handler = responseHandlerById[id];
             if (handler)
                 handler(envelope);
         } catch (error) {

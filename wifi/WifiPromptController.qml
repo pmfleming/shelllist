@@ -1,7 +1,8 @@
 import QtQuick
-import "Wifi.js" as Wifi
+import "WifiPresentation.js" as Presentation
 
 Item {
+    id: root
     property bool open: false
     property string mode: ""
     property string title: ""
@@ -16,6 +17,15 @@ Item {
     property var secretKeys: []
     property bool saveSecret: false
     property bool saveSecretSupported: false
+    readonly property var submitHandlerByMode: ({
+        "confirm-forget": function (controller, value) { root.submitForget(controller, value); },
+        "daemon-secret": function (controller, value) { root.submitDaemonSecret(controller, value); },
+        "enterprise-identity": function (controller, value) { root.submitEnterpriseIdentity(controller, value); },
+        "enterprise-password": function (controller, value) { root.submitEnterprisePassword(controller, value); },
+        "hidden-password": function (controller, value) { root.submitHiddenPassword(controller, value); },
+        "hidden-ssid": function (controller, value) { root.submitHiddenSsid(controller, value); },
+        "network-password": function (controller, value) { root.submitNetworkPassword(controller, value); }
+    })
 
     function openPrompt(nextMode, nextTitle, nextDetail, nextPassword, nextNetwork, nextHiddenSsid) {
         network = nextNetwork || null;
@@ -33,7 +43,7 @@ Item {
     function promptMessage(ap, fallback) { return ap && ap.connect_prompt && ap.connect_prompt.message ? ap.connect_prompt.message : fallback; }
 
     function openPasswordPrompt(ap, detailOverride) {
-        openPrompt("network-password", "Password for " + Wifi.networkName(ap), detailOverride || promptMessage(ap, "Enter the Wi-Fi password, then press Enter."), true, ap, "");
+        openPrompt("network-password", "Password for " + Presentation.networkName(ap), detailOverride || promptMessage(ap, "Enter the Wi-Fi password, then press Enter."), true, ap, "");
     }
 
     function openHiddenNetworkPrompt() {
@@ -46,7 +56,7 @@ Item {
 
     function openEnterpriseIdentityPrompt(ap) {
         const note = "Enter your enterprise Wi-Fi identity.";
-        openPrompt("enterprise-identity", "Enterprise identity for " + Wifi.networkName(ap), promptMessage(ap, note), false, ap, "");
+        openPrompt("enterprise-identity", "Enterprise identity for " + Presentation.networkName(ap), promptMessage(ap, note), false, ap, "");
     }
 
     function openEnterprisePasswordPrompt(ap, identity) {
@@ -59,7 +69,7 @@ Item {
         const profileText = names.length === 0 ? "no saved profile is currently listed" : (names.length + " saved profile" + (names.length === 1 ? "" : "s") + ": " + names.join(", "));
         const action = active ? "Disconnect from this network and remove " : "Remove ";
         const portalNote = " The hotspot may still recognize this device until its login session expires.";
-        openPrompt("confirm-forget", active ? "Disconnect & forget " + Wifi.networkName(ap) : "Forget " + Wifi.networkName(ap), action + profileText + "." + portalNote + " Type FORGET to confirm.", false, ap, "");
+        openPrompt("confirm-forget", active ? "Disconnect & forget " + Presentation.networkName(ap) : "Forget " + Presentation.networkName(ap), action + profileText + "." + portalNote + " Type FORGET to confirm.", false, ap, "");
     }
 
     function secretKeyLabel(key) {
@@ -115,7 +125,7 @@ Item {
             return controller.status = "Waiting " + Math.ceil(retryDelay / 1000) + "s before retrying; NetworkManager is temporarily ignoring this AP.";
         cancel();
         if (ap)
-            controller.runConnectTarget(ap, Wifi.networkName(ap), value);
+            controller.runConnectTarget(ap, Presentation.networkName(ap), value);
     }
 
     function submitHiddenSsid(controller, value) {
@@ -149,7 +159,7 @@ Item {
         const identity = enterpriseIdentity;
         cancel();
         if (ap && identity.length > 0)
-            controller.runConnectTarget(Wifi.enterpriseTarget(ap, identity), Wifi.networkName(ap), value);
+            controller.runConnectTarget(ap, Presentation.networkName(ap), value, identity);
     }
 
     function submitDaemonSecret(controller, value) {
@@ -173,16 +183,8 @@ Item {
     }
 
     function submit(controller) {
-        const handlers = {
-            "confirm-forget": submitForget,
-            "daemon-secret": submitDaemonSecret,
-            "enterprise-identity": submitEnterpriseIdentity,
-            "enterprise-password": submitEnterprisePassword,
-            "hidden-password": submitHiddenPassword,
-            "hidden-ssid": submitHiddenSsid,
-            "network-password": submitNetworkPassword
-        };
-        if (handlers[mode])
-            handlers[mode](controller, text);
+        const handler = submitHandlerByMode[mode];
+        if (handler)
+            handler(controller, text);
     }
 }

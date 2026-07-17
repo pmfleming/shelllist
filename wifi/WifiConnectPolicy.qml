@@ -1,5 +1,5 @@
 import QtQuick
-import "Wifi.js" as Wifi
+import "WifiFlow.js" as Flow
 
 Item {
     property var staleSecretKeys: ({})
@@ -8,19 +8,19 @@ Item {
     property string lastConnectAttemptKey: ""
     property string lastConnectSecretFingerprint: ""
 
-    function secretStale(ap) { return !!staleSecretKeys[Wifi.secretKey(ap)]; }
+    function secretStale(ap) { return !!staleSecretKeys[Flow.secretKey(ap)]; }
 
     function markSecretStale(ap) {
         if (!ap)
             return;
-        staleSecretKeys[Wifi.secretKey(ap)] = true;
+        staleSecretKeys[Flow.secretKey(ap)] = true;
         staleSecretKeys = Object.assign({}, staleSecretKeys);
     }
 
     function clearSecretStale(ap) {
         if (!ap)
             return;
-        delete staleSecretKeys[Wifi.secretKey(ap)];
+        delete staleSecretKeys[Flow.secretKey(ap)];
         staleSecretKeys = Object.assign({}, staleSecretKeys);
     }
 
@@ -32,13 +32,13 @@ Item {
     }
 
     function retryDelayRemainingMs(ap, password) {
-        const key = Wifi.connectAttemptKey(ap) + "\n" + Wifi.passwordFingerprint(password);
+        const key = Flow.connectAttemptKey(ap) + "\n" + Flow.passwordFingerprint(password);
         return Math.max(0, (retryBlockedUntilByAttempt[key] || 0) - Date.now());
     }
 
     function rememberConnectAttempt(ap, password) {
         lastConnectAp = ap;
-        lastConnectAttemptKey = Wifi.connectAttemptKey(ap);
-        lastConnectSecretFingerprint = Wifi.passwordFingerprint(password);
+        lastConnectAttemptKey = Flow.connectAttemptKey(ap);
+        lastConnectSecretFingerprint = Flow.passwordFingerprint(password);
     }
 }

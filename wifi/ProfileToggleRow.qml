@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import "Wifi.js" as Wifi
+import "WifiPresentation.js" as Presentation
 import "."
 
 RowLayout {
@@ -25,7 +25,7 @@ RowLayout {
         spacing: 2
 
         Text {
-            text: Wifi.highlightHotkey(row.title, row.hotkey)
+            text: Presentation.highlightHotkey(row.title, row.hotkey)
             textFormat: Text.RichText
             color: Theme.text
             font.family: Theme.fontFamily

@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import "Wifi.js" as Wifi
+import "WifiPresentation.js" as Presentation
 import "."
 
 Rectangle {
@@ -8,10 +8,10 @@ Rectangle {
 
     required property WifiController controller
     readonly property var ap: controller.detailAp
-    readonly property string connectionLabel: Wifi.connectionStateLabel(controller, ap)
-    readonly property bool signInRequired: Wifi.connectivityRequiresSignIn(Wifi.activeConnectivity(controller))
+    readonly property string connectionLabel: Presentation.connectionStateLabel(controller, ap)
+    readonly property bool signInRequired: Presentation.connectivityRequiresSignIn(Presentation.activeConnectivity(controller))
     readonly property color connectionColor: signInRequired ? Theme.warning : Theme.active
-    readonly property string lastSeenLabel: Wifi.lastSeenLabel(ap)
+    readonly property string lastSeenLabel: Presentation.lastSeenLabel(ap)
     readonly property real uiScale: Math.max(0.82, Math.min(1.12, height / 850))
     readonly property int sectionSpacing: Math.max(8, Math.round(12 * uiScale))
     readonly property int headerHeight: Math.max(56, Math.round(64 * uiScale))
@@ -67,7 +67,7 @@ Rectangle {
 
                     Text {
                         width: parent.width
-                        text: Wifi.networkName(pane.ap)
+                        text: Presentation.networkName(pane.ap)
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: Math.round(22 * pane.uiScale)
@@ -167,7 +167,7 @@ Rectangle {
                         title: "Connection"
 
                         DetailGrid {
-                            entries: Wifi.connectionDetailRows(pane.controller, pane.ap, Theme.accent).slice(0, 8)
+                            entries: Presentation.connectionDetailRows(pane.controller, pane.ap, Theme.accent).slice(0, 8)
                         }
                     }
 
@@ -176,7 +176,7 @@ Rectangle {
                         title: "Network details"
 
                         DetailGrid {
-                            entries: Wifi.networkDetailRows(pane.controller, pane.ap).slice(0, 4)
+                            entries: Presentation.networkDetailRows(pane.controller, pane.ap).slice(0, 4)
                         }
                     }
 
