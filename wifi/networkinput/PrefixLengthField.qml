@@ -3,8 +3,6 @@ import ".." as Shelllist
 import "IpValidation.js" as IpValidation
 
 Shelllist.AdvancedTextField {
-    id: field
-
     property string family: "ipv4"
     property bool allowEmpty: false
     readonly property int maximumPrefix: family === "ipv6" ? 128 : 32

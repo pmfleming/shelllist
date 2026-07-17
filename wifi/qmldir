@@ -5,7 +5,11 @@ WifiNavigation 1.0 WifiNavigation.qml
 WifiSelectionModel 1.0 WifiSelectionModel.qml
 ActionButton 1.0 ActionButton.qml
 CenteredMessage 1.0 CenteredMessage.qml
-AdvancedChoice 1.0 AdvancedChoice.qml
+AdvancedFieldLabel 1.0 AdvancedFieldLabel.qml
+internal AdvancedIpSettingsPane AdvancedIpSettingsPane.qml
+internal AdvancedSecurityPane AdvancedSecurityPane.qml
+internal AdvancedSettingsFlickable AdvancedSettingsFlickable.qml
+internal AdvancedSegmentedRow AdvancedSegmentedRow.qml
 AdvancedSettingsPage 1.0 AdvancedSettingsPage.qml
 AdvancedTextField 1.0 AdvancedTextField.qml
 DetailCard 1.0 DetailCard.qml

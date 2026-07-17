@@ -56,8 +56,6 @@ Rectangle {
     }
 
     Rectangle {
-        id: selectionIndicator
-
         property real selectedPosition: control.currentIndex
 
         visible: control.currentIndex >= 0

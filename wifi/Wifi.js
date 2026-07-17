@@ -14,6 +14,17 @@ function accessPointPath(ap) { return ap ? (ap.path || "") : ""; }
 function subnetLabel(ip4) { return ip4 && ip4.prefix !== null && ip4.prefix !== undefined ? "/" + ip4.prefix : "—"; }
 function dnsLabel(ip4) { return ip4 && ip4.dns && ip4.dns.length > 0 ? ip4.dns.join(", ") : "—"; }
 function hasNumber(value) { return value !== null && value !== undefined && !isNaN(value); }
+function valueOr(source, key, fallback) { return source && source[key] ? source[key] : fallback; }
+function firstNonEmpty(values) {
+    for (let index = 0; index < values.length; ++index)
+        if (values[index]) return values[index];
+    return "";
+}
+function firstNonZero(values) {
+    for (let index = 0; index < values.length; ++index)
+        if (values[index] !== 0) return values[index];
+    return 0;
+}
 function privacyFor(profile) { return profile && profile.privacy ? profile.privacy : ({}); }
 function shareHint(ap) { return ap && ap.share ? ap.share : ({}); }
 function canShareQr(ap) { const share = shareHint(ap); return !!share.shareable && !!share.qr_payload; }
@@ -23,18 +34,18 @@ function connectFailureRetryMs(reason) { return isWrongPasswordReason(reason) ? 
 function secretKey(ap) { return (ap && (ap.ssid || "")) + "\n" + (ap && (ap.security || "")); }
 function connectAttemptKey(ap) { return secretKey(ap) + "\n" + (ap && (ap.bssid || "")); }
 function portalNetworkIdentity(ap, result) {
-    if (ap && ap.key)
-        return ap.key;
-    const profile = ap && (ap.primary_profile || (ap.profiles && ap.profiles.length > 0 ? ap.profiles[0] : null));
-    if (profile && profile.path)
-        return profile.path;
-    const ssid = result && result.ssid ? result.ssid : networkName(ap);
-    return ssid + "|" + securityLabel(ap && ap.security);
+    const profile = profileForAccessPoint(ap);
+    const networkIdentity = valueOr(result, "ssid", networkName(ap)) + "|" + securityLabel(valueOr(ap, "security", ""));
+    return firstNonEmpty([valueOr(ap, "key", ""), valueOr(profile, "path", ""), networkIdentity]);
 }
 function confirmedPortalResult(result) {
     const connectivity = result && result.connectivity ? result.connectivity : null;
     return !!(result && result.status !== "error" && result.suggest_open_portal && connectivity && connectivity.captive_portal);
 }
+function portalConnectivity(result, currentConnectivity, activeStatus) {
+    return valueOr(result, "connectivity", currentConnectivity || valueOr(activeStatus, "connectivity", ({})));
+}
+function portalEpisode(automatic, identity, requestId) { return automatic ? identity + "::" + requestId : ""; }
 function passwordFingerprint(password) {
     if (password === undefined || password === null)
         return "saved";
@@ -163,18 +174,15 @@ function profileForAccessPoint(ap) {
     return ap.primary_profile || (ap.profiles && ap.profiles.length > 0 ? ap.profiles[0] : null);
 }
 
+function networkMatches(ap, query) { return !query || valueOr(ap, "ssid", "").toLowerCase().indexOf(query) !== -1; }
+function compareNetworks(left, right) {
+    const activityDelta = Number(!!right.active) - Number(!!left.active);
+    const strengthDelta = valueOr(right, "strength", 0) - valueOr(left, "strength", 0);
+    return firstNonZero([activityDelta, strengthDelta, networkName(left).localeCompare(networkName(right))]);
+}
 function visibleNetworks(networks, filterText) {
     const query = (filterText || "").toLowerCase();
-    return networks.filter(function (ap) {
-        return !query || (ap.ssid || "").toLowerCase().indexOf(query) !== -1;
-    }).sort(function (left, right) {
-        const leftActive = !!left.active;
-        const rightActive = !!right.active;
-        if (leftActive !== rightActive)
-            return leftActive ? -1 : 1;
-        const strengthDelta = (right.strength || 0) - (left.strength || 0);
-        return strengthDelta !== 0 ? strengthDelta : networkName(left).localeCompare(networkName(right));
-    });
+    return networks.filter(function (ap) { return networkMatches(ap, query); }).sort(compareNetworks);
 }
 
 function selectedNetwork(networks, selectedIndex) {
@@ -263,35 +271,37 @@ function lastSeenLabel(ap) {
     return "Last seen: " + relativeAgeLabel(seconds);
 }
 
+function statusValue(status, value) { return status ? value : "—"; }
+function wirelessBitrate(status, wireless, field) { return status && wireless ? formatMbps(wireless[field]) : "—"; }
+function hasDirectionalBitrate(wireless) { return !!wireless && (hasNumber(wireless.tx_bitrate_mbps) || hasNumber(wireless.rx_bitrate_mbps)); }
+
 function connectionDetailRows(controller, ap, accentColor) {
     const status = detailConnectionStatus(controller);
-    const ip4 = status && status.ip4 ? status.ip4 : null;
-    const present = function (value) { return status ? value : "—"; };
-    const ip4Value = function (field) { return ip4 && ip4[field] ? ip4[field] : "—"; };
+    const ip4 = valueOr(status, "ip4", null);
     return [
-        { label: "Signal strength", value: (ap.strength || 0) + "%", valueColor: accentColor, valueBold: true },
-        { label: "IP address", value: ip4Value("address") },
+        { label: "Signal strength", value: valueOr(ap, "strength", 0) + "%", valueColor: accentColor, valueBold: true },
+        { label: "IP address", value: valueOr(ip4, "address", "—") },
         { label: "Frequency", value: frequencyLabel(ap) },
-        { label: "Gateway", value: ip4Value("gateway") },
+        { label: "Gateway", value: valueOr(ip4, "gateway", "—") },
         { label: "Band", value: bandLabel(ap) },
-        { label: "Security", value: securityLabel(ap.security) },
-        { label: "Subnet", value: present(subnetLabel(ip4)) },
-        { label: "Network usage", value: present(networkUsageLabel(status)) },
-        { label: "DNS", value: present(dnsLabel(ip4)), valueWidth: 220 }
+        { label: "Security", value: securityLabel(valueOr(ap, "security", "")) },
+        { label: "Subnet", value: statusValue(status, subnetLabel(ip4)) },
+        { label: "Network usage", value: statusValue(status, networkUsageLabel(status)) },
+        { label: "DNS", value: statusValue(status, dnsLabel(ip4)), valueWidth: 220 }
     ];
 }
 
 function networkDetailRows(controller, ap) {
     const status = detailConnectionStatus(controller);
-    const wireless = status && status.wireless ? status.wireless : null;
-    const bitrate = function (field) { return status && wireless ? formatMbps(wireless[field]) : "—"; };
-    const directional = !!(wireless && (hasNumber(wireless.tx_bitrate_mbps) || hasNumber(wireless.rx_bitrate_mbps)));
+    const wireless = valueOr(status, "wireless", null);
+    const directional = hasDirectionalBitrate(wireless);
+    const primaryBitrate = directional ? "tx_bitrate_mbps" : "bitrate_mbps";
     return [
         { label: "Type", value: wifiType(ap) },
-        { label: directional ? "Transmit link speed" : "Link speed", value: bitrate(directional ? "tx_bitrate_mbps" : "bitrate_mbps") },
-        { label: "BSSID", value: ap && ap.bssid ? ap.bssid : "—" },
-        { label: "Receive link speed", value: bitrate("rx_bitrate_mbps") },
-        { label: "Device MAC", value: wireless && wireless.mac_address ? wireless.mac_address : "—" }
+        { label: directional ? "Transmit link speed" : "Link speed", value: wirelessBitrate(status, wireless, primaryBitrate) },
+        { label: "BSSID", value: valueOr(ap, "bssid", "—") },
+        { label: "Receive link speed", value: wirelessBitrate(status, wireless, "rx_bitrate_mbps") },
+        { label: "Device MAC", value: valueOr(wireless, "mac_address", "—") }
     ];
 }
 

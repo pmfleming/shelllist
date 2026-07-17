@@ -3,8 +3,6 @@ import ".." as Shelllist
 import "IpValidation.js" as IpValidation
 
 Shelllist.AdvancedTextField {
-    id: field
-
     property string family: "ipv4"
     property bool multiple: false
     property bool allowEmpty: true

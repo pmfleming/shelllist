@@ -1,7 +1,7 @@
 import QtQuick
 
 Item {
-    required property var controller
+    required property WifiController controller
 
     readonly property var actions: [
         { id: "connect", label: "Connect", icon: "󰖩", hotkey: "C", enabled: controller.canConnectDetail(), toolbar: true, primary: true, visible: !controller.isActive(controller.detailAp) && !controller.connectRunning, width: 152, tone: "active" },

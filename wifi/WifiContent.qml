@@ -5,7 +5,7 @@ import "."
 Rectangle {
     id: content
 
-    required property var controller
+    required property WifiController controller
 
     anchors.fill: parent
     radius: Theme.windowRadius

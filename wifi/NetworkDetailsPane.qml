@@ -6,7 +6,7 @@ import "."
 Rectangle {
     id: pane
 
-    required property var controller
+    required property WifiController controller
     readonly property var ap: controller.detailAp
     readonly property string connectionLabel: Wifi.connectionStateLabel(controller, ap)
     readonly property bool signInRequired: Wifi.connectivityRequiresSignIn(Wifi.activeConnectivity(controller))

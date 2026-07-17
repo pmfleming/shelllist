@@ -1,7 +1,7 @@
 import QtQuick
 
 Item {
-    required property var controller
+    required property WifiController controller
 
     function accept(event, action) { action(); event.accepted = true; }
     function isEnter(key) { return key === Qt.Key_Return || key === Qt.Key_Enter; }

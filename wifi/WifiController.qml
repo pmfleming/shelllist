@@ -7,7 +7,7 @@ import "."
 Item {
     id: wifi
 
-    required property var prompt
+    required property WifiPromptController prompt
 
     property bool uiActive
     property string currentWorkspaceId
@@ -254,28 +254,35 @@ Item {
     function statusIsHeld() { return Date.now() < statusHoldUntil; }
     function setBackgroundStatus(message) { if (!statusIsHeld()) status = message; }
     function setHeldStatus(message, milliseconds) { status = message; statusHoldUntil = Date.now() + milliseconds; }
+    function applyShareResult(result, requestPath, requestGeneration) {
+        if (requestGeneration !== shareCacheGeneration)
+            return refreshShareAvailabilityIfOpen();
+        const resultPath = result.path || requestPath;
+        cacheShareAvailability(resultPath, result.available, result.payload, result.message);
+        if (resultPath === shareProfilePath)
+            setShareAvailability(result.available, result.payload, result.message);
+        else
+            refreshShareAvailabilityIfOpen();
+    }
+
+    function applyShareFailure(requestPath, requestGeneration, message) {
+        if (requestGeneration !== shareCacheGeneration)
+            return refreshShareAvailabilityIfOpen();
+        cacheShareAvailability(requestPath, false, "", message);
+        if (requestPath === shareProfilePath)
+            setShareAvailability(false, "", message);
+        else
+            refreshShareAvailabilityIfOpen();
+    }
+
     function applyShareResponse(response, errorText) {
         const requestPath = shareRequestPath;
         const requestGeneration = shareRequestGeneration;
         shareRequestPath = "";
         try {
-            const result = Wifi.shareCheckAvailability(Wifi.apiData(response, "result"), shareUnavailableMessage);
-            const resultPath = result.path || requestPath;
-            if (requestGeneration !== shareCacheGeneration)
-                return refreshShareAvailabilityIfOpen();
-            cacheShareAvailability(resultPath, result.available, result.payload, result.message);
-            if (resultPath !== shareProfilePath)
-                return refreshShareAvailabilityIfOpen();
-            setShareAvailability(result.available, result.payload, result.message);
+            applyShareResult(Wifi.shareCheckAvailability(Wifi.apiData(response, "result"), shareUnavailableMessage), requestPath, requestGeneration);
         } catch (error) {
-            if (requestGeneration !== shareCacheGeneration)
-                return refreshShareAvailabilityIfOpen();
-            const message = "Could not check Wi-Fi QR sharing: " + (errorText || error);
-            cacheShareAvailability(requestPath, false, "", message);
-            if (requestPath === shareProfilePath)
-                setShareAvailability(false, "", message);
-            else
-                refreshShareAvailabilityIfOpen();
+            applyShareFailure(requestPath, requestGeneration, "Could not check Wi-Fi QR sharing: " + (errorText || error));
         }
     }
 
@@ -437,18 +444,8 @@ Item {
             advancedSaveOrigin = "";
         if (id === "share") {
             const failedPath = shareRequestPath;
-            const failedGeneration = shareRequestGeneration;
-            const failureMessage = "Could not check Wi-Fi QR sharing: " + message;
             shareRequestPath = "";
-            if (failedGeneration === shareCacheGeneration) {
-                cacheShareAvailability(failedPath, false, "", failureMessage);
-                if (failedPath === shareProfilePath)
-                    setShareAvailability(false, "", failureMessage);
-                else
-                    refreshShareAvailabilityIfOpen();
-            } else {
-                refreshShareAvailabilityIfOpen();
-            }
+            applyShareFailure(failedPath, shareRequestGeneration, "Could not check Wi-Fi QR sharing: " + message);
         }
         status = message;
         maybeRunPendingRefresh();
@@ -552,15 +549,14 @@ Item {
     }
 
     function portalContext(trigger, ap, result, requestId, workspaceId, automatic, fallback) {
-        const connectivity = result && result.connectivity ? result.connectivity : (networkConnectivity || (activeStatus && activeStatus.connectivity) || ({}));
         const identity = Wifi.portalNetworkIdentity(ap, result || ({}));
-        const episode = automatic ? identity + "::" + requestId : "";
+        const connectivity = Wifi.portalConnectivity(result, networkConnectivity, activeStatus);
         return {
             trigger: trigger,
-            ssid: result && result.ssid ? result.ssid : Wifi.networkName(ap),
+            ssid: Wifi.valueOr(result, "ssid", Wifi.networkName(ap)),
             identity: identity,
-            episode: episode,
-            connectivity: connectivity.state || "unknown",
+            episode: Wifi.portalEpisode(automatic, identity, requestId),
+            connectivity: Wifi.valueOr(connectivity, "state", "unknown"),
             requestId: requestId,
             workspaceId: workspaceId,
             automatic: automatic,

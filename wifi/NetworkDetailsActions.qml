@@ -7,7 +7,7 @@ import "."
 RowLayout {
     id: row
 
-    required property var controller
+    required property WifiController controller
     property bool primaryOnly: false
     property bool alignRight: false
     property int controlHeight: 42

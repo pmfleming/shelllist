@@ -6,7 +6,7 @@ import "."
 DetailCard {
     id: card
 
-    required property var controller
+    required property WifiController controller
     height: 174
     title: "Profile settings"
 

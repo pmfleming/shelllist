@@ -7,7 +7,7 @@ import "."
 Item {
     id: pane
 
-    required property var controller
+    required property WifiController controller
 
     Layout.fillWidth: true
     Layout.fillHeight: true
