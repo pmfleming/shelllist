@@ -63,7 +63,7 @@ Item {
         : ipValue(ipFamily, "Dns")
 
     clip: true
-    focus: visible
+    focus: visible && controller.advancedOpen
     Keys.onEscapePressed: controller.closeAdvancedSettings()
 
     function firstAddress(settings) {
@@ -147,6 +147,13 @@ Item {
     function queueSecuritySave() {
         securityDirty = true;
         autoSaveTimer.restart();
+    }
+
+    function setMacPolicy(value) {
+        if (macPolicy === value)
+            return;
+        macPolicy = value;
+        queueSecuritySave();
     }
 
     function queueHardwareSave() {
@@ -429,19 +436,17 @@ Item {
                             text: "Address policy"
                         }
 
-                        AdvancedChoice {
+                        SegmentedControl {
                             Layout.fillWidth: true
+                            Layout.fillHeight: true
                             value: page.macPolicy
                             options: [
-                                { value: "default", label: "System default" },
-                                { value: "stable", label: "Stable private address" },
-                                { value: "random", label: "New random address each connection" },
-                                { value: "permanent", label: "Permanent device address" }
+                                { value: "default", label: "Default" },
+                                { value: "stable", label: "Stable" },
+                                { value: "random", label: "Random" },
+                                { value: "permanent", label: "Permanent" }
                             ]
-                            onSelected: function (value) {
-                                page.macPolicy = value;
-                                page.queueSecuritySave();
-                            }
+                            onSelected: function (value) { page.setMacPolicy(value); }
                         }
                     }
 
@@ -497,30 +502,15 @@ Item {
                             text: "Address family"
                         }
 
-                        RowLayout {
+                        SegmentedControl {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            spacing: 8
-
-                            ActionButton {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                label: "IPv4"
-                                backgroundColor: page.ipFamily === "ipv4" ? Theme.selected : Theme.input
-                                borderColor: page.ipFamily === "ipv4" ? Theme.accent : Theme.border
-                                labelColor: page.ipFamily === "ipv4" ? Theme.accent : Theme.text
-                                onClicked: page.ipFamily = "ipv4"
-                            }
-
-                            ActionButton {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                label: "IPv6"
-                                backgroundColor: page.ipFamily === "ipv6" ? Theme.selected : Theme.input
-                                borderColor: page.ipFamily === "ipv6" ? Theme.accent : Theme.border
-                                labelColor: page.ipFamily === "ipv6" ? Theme.accent : Theme.text
-                                onClicked: page.ipFamily = "ipv6"
-                            }
+                            value: page.ipFamily
+                            options: [
+                                { value: "ipv4", label: "IPv4" },
+                                { value: "ipv6", label: "IPv6" }
+                            ]
+                            onSelected: function (value) { page.ipFamily = value; }
                         }
                     }
 

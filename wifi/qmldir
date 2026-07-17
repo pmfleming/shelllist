@@ -21,6 +21,7 @@ NetworkListPane 1.0 NetworkListPane.qml
 NetworkListRow 1.0 NetworkListRow.qml
 ProfileToggleRow 1.0 ProfileToggleRow.qml
 PromptDialog 1.0 PromptDialog.qml
+SegmentedControl 1.0 SegmentedControl.qml
 SignalIcon 1.0 SignalIcon.qml
 TogglePill 1.0 TogglePill.qml
 VisualSurface 1.0 VisualSurface.qml
