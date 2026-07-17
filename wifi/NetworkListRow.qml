@@ -10,6 +10,7 @@ Rectangle {
     property bool active: false
     property string name: ""
     property int selectedIndex: 0
+    property bool detailsOpen: false
     property bool connecting: false
     property int progressTick: 0
     property real rowHeight: 52
@@ -109,7 +110,7 @@ Rectangle {
             Layout.fillHeight: true
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignHCenter
-            text: "󰅂"
+            text: row.detailsOpen ? "󰅁" : "󰅂"
             color: row.selected ? Theme.accent : Theme.mutedText
             font.family: Theme.iconFontFamily
             font.pixelSize: Math.round(17 * row.density)

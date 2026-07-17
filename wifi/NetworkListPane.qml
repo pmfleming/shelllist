@@ -56,6 +56,7 @@ Item {
                     active: pane.controller.isActive(modelData)
                     name: pane.controller.networkName(modelData)
                     selectedIndex: pane.controller.selectedIndex
+                    detailsOpen: pane.controller.detailsOpen
                     connecting: pane.controller.isConnecting(modelData)
                     progressTick: pane.controller.connectingProgressTick
                     onPicked: function (rowIndex) {

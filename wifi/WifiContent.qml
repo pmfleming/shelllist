@@ -13,6 +13,12 @@ Rectangle {
     border.color: Theme.strongBorder
     border.width: 1
 
+    function cancelPrompt() {
+        if (controller.prompt.mode === "daemon-secret" && controller.prompt.secretRequestId.length > 0)
+            controller.cancelSecret(controller.prompt.secretRequestId);
+        controller.prompt.cancel();
+    }
+
     Shortcut {
         sequence: "F7"
         enabled: !content.controller.prompt.open && !content.controller.advancedOpen
@@ -32,9 +38,31 @@ Rectangle {
     }
 
     Shortcut {
+        sequence: "Left"
+        enabled: content.controller.detailsOpen && !content.controller.advancedOpen && !content.controller.prompt.open
+        autoRepeat: false
+        onActivated: content.controller.navigation.closeDetails()
+    }
+
+    Shortcut {
+        sequence: "Escape"
+        enabled: content.controller.prompt.open
+        autoRepeat: false
+        onActivated: content.cancelPrompt()
+    }
+
+    Shortcut {
         sequence: "Escape"
         enabled: content.controller.advancedOpen && !content.controller.prompt.open
+        autoRepeat: false
         onActivated: content.controller.closeAdvancedSettings()
+    }
+
+    Shortcut {
+        sequence: "Escape"
+        enabled: !content.controller.prompt.open && !content.controller.advancedOpen
+        autoRepeat: false
+        onActivated: content.controller.closeWindowRequested()
     }
 
     Connections {
@@ -112,10 +140,6 @@ Rectangle {
         onInputEdited: function (text) { content.controller.prompt.text = text; }
         onSaveEdited: function (requested) { content.controller.prompt.saveSecret = requested; }
         onAccepted: content.controller.prompt.submit(content.controller)
-        onCancelled: {
-            if (content.controller.prompt.mode === "daemon-secret" && content.controller.prompt.secretRequestId.length > 0)
-                content.controller.cancelSecret(content.controller.prompt.secretRequestId);
-            content.controller.prompt.cancel();
-        }
+        onCancelled: content.cancelPrompt()
     }
 }

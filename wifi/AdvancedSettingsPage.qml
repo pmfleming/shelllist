@@ -252,31 +252,29 @@ Item {
             spacing: page.sectionSpacing
 
             DetailCard {
-                height: 145
-                title: "Device identity"
+                height: 245
+                title: "Device"
 
                 DetailGrid {
                     entries: [
                         { label: "BSSID", value: page.ap.bssid || "—" },
                         { label: "Device MAC", value: ((page.status.wireless || {}).mac_address || "—") },
-                        { label: "Profile path", value: page.profile.path || "—" }
+                        { label: "Profile path", value: page.profile.path || "—" },
+                        { label: "Interface", value: page.ap.device_iface || page.status.device_iface || "—" },
+                        { label: "Mode", value: page.ap.mode ? "Wi-Fi " + page.ap.mode : "Infrastructure" },
+                        { label: "Band / frequency", value: (page.ap.band || "—") + " / " + (page.ap.frequency || "—") + " MHz" },
+                        { label: "Channel", value: page.ap.channel === undefined ? "—" : String(page.ap.channel) },
+                        { label: "Maximum bitrate", value: page.ap.max_bitrate_mbps ? page.ap.max_bitrate_mbps + " Mbps" : "—" }
                     ]
                 }
             }
 
             DetailCard {
-                height: 178
+                height: 122
                 title: "Security"
 
                 Column {
                     anchors.fill: parent
-                    spacing: 10
-
-                    DetailGrid {
-                        width: parent.width
-                        height: 44
-                        entries: [{ label: "Security type", value: page.profile.security_type || "Unknown" }]
-                    }
 
                     Column {
                         width: parent.width
@@ -385,7 +383,7 @@ Item {
             }
 
             DetailCard {
-                height: Math.max(158, securityFlick.height - 323 - 2 * securityCards.spacing)
+                height: Math.max(158, securityFlick.height - 367 - 2 * securityCards.spacing)
                 title: "Privacy"
 
                 Column {
@@ -419,17 +417,6 @@ Item {
                         }
                     }
 
-                    ProfileToggleRow {
-                        width: parent.width
-                        height: 44
-                        title: "Device name sharing"
-                        subtitle: "Share this device's hostname with the network"
-                        checked: page.sendHostname
-                        onClicked: {
-                            page.sendHostname = !page.sendHostname;
-                            page.queueSecuritySave();
-                        }
-                    }
                 }
             }
         }
@@ -571,20 +558,6 @@ Item {
                 }
             }
 
-            DetailCard {
-                height: Math.max(190, hardwareFlick.height - page.ipCardHeight - hardwareCards.spacing)
-                title: "Adapter & radio"
-
-                DetailGrid {
-                    entries: [
-                        { label: "Interface", value: page.ap.device_iface || page.status.device_iface || "—" },
-                        { label: "Mode", value: page.ap.mode ? "Wi-Fi " + page.ap.mode : "Infrastructure" },
-                        { label: "Band / frequency", value: (page.ap.band || "—") + " / " + (page.ap.frequency || "—") + " MHz" },
-                        { label: "Channel", value: page.ap.channel === undefined ? "—" : String(page.ap.channel) },
-                        { label: "Maximum bitrate", value: page.ap.max_bitrate_mbps ? page.ap.max_bitrate_mbps + " Mbps" : "—" }
-                    ]
-                }
-            }
         }
     }
 
