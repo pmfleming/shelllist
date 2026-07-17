@@ -35,6 +35,10 @@ jq -e '
   (.data.fixture.network.key | type == "string") and
   (.data.fixture.network.access_points | type == "array") and
   (.data.fixture.status.connectivity.state | type == "string") and
+  (.data.fixture.status.ip4.dhcp_lease.server_identifier | type == "string") and
+  (.data.fixture.status.ip4.dhcp_lease.domain_name | type == "string") and
+  (.data.fixture.status.ip4.dhcp_lease.lease_time_seconds | type == "number") and
+  (.data.fixture.status.ip4.dhcp_lease.expires_at_ms | type == "number") and
   (.data.fixture.status.metered.state | type == "string") and
   (.data.fixture.status.wireless.tx_bitrate_mbps | type == "number") and
   (.data.fixture.status.wireless.rx_bitrate_mbps | type == "number") and

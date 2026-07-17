@@ -69,7 +69,7 @@ Shelllist currently supports:
 - optional keyring saving with persistence feedback and explicit prompt cancellation;
 - disconnecting Wi-Fi;
 - saved-profile actions: disconnect-and-forget, toggle autoconnect, toggle randomized MAC, and toggle hostname sending;
-- an advanced saved-profile editor for metered/hidden state, MAC policy, hostname privacy, WPA Personal passwords, IPv4/IPv6 assignment, DNS, and technical details;
+- an advanced saved-profile editor for metered/hidden state, MAC policy, hostname privacy, WPA Personal passwords, IPv4/IPv6 assignment, DNS, DHCP lease metadata, and technical details;
 - Wi-Fi QR payload copying for open networks or saved profiles whose secret can be read;
 - captive-portal helper launch when requested by the UI or suggested by the backend.
 

@@ -42,6 +42,9 @@ Item {
     readonly property bool currentFamilyEnabled: currentMethod !== "disabled"
     readonly property var ap: controller.detailAp
     readonly property var status: controller.activeStatus || ({})
+    readonly property var dhcpLease: controller.isActive(ap)
+        ? (((status.ip4 || {}).dhcp_lease) || ({}))
+        : ({})
     readonly property var currentActiveIp: controller.isActive(ap)
         ? (status[ipFamily === "ipv4" ? "ip4" : "ip6"] || ({}))
         : ({})
@@ -65,6 +68,25 @@ Item {
 
     function firstAddress(settings) {
         return settings && settings.addresses && settings.addresses.length > 0 ? settings.addresses[0] : ({});
+    }
+
+    function leaseDurationLabel(seconds) {
+        const total = Math.max(0, Number(seconds) || 0);
+        if (total === 0)
+            return "—";
+        const days = Math.floor(total / 86400);
+        const hours = Math.floor((total % 86400) / 3600);
+        const minutes = Math.floor((total % 3600) / 60);
+        if (days > 0)
+            return days + "d" + (hours > 0 ? " " + hours + "h" : "");
+        if (hours > 0)
+            return hours + "h" + (minutes > 0 ? " " + minutes + "m" : "");
+        return Math.max(1, minutes) + "m";
+    }
+
+    function leaseExpiryLabel(milliseconds) {
+        const value = Number(milliseconds) || 0;
+        return value > 0 ? Qt.formatDateTime(new Date(value), "d MMM yyyy, HH:mm") : "—";
     }
 
     function resetEditState() {
@@ -285,11 +307,12 @@ Item {
             }
 
             DetailCard {
-                height: 122
+                height: Math.max(275, securityFlick.height - 245 - securityCards.spacing)
                 title: "Security"
 
                 Column {
                     anchors.fill: parent
+                    spacing: 10
 
                     Column {
                         width: parent.width
@@ -394,16 +417,6 @@ Item {
                             }
                         }
                     }
-                }
-            }
-
-            DetailCard {
-                height: Math.max(158, securityFlick.height - 367 - 2 * securityCards.spacing)
-                title: "Privacy"
-
-                Column {
-                    anchors.fill: parent
-                    spacing: 10
 
                     RowLayout {
                         width: parent.width
@@ -432,6 +445,16 @@ Item {
                         }
                     }
 
+                    DetailGrid {
+                        width: parent.width
+                        height: 90
+                        entries: [
+                            { label: "DHCP server", value: page.dhcpLease.server_identifier || "—" },
+                            { label: "Lease duration", value: page.leaseDurationLabel(page.dhcpLease.lease_time_seconds) },
+                            { label: "Lease domain", value: page.dhcpLease.domain_name || "—" },
+                            { label: "Lease expires", value: page.leaseExpiryLabel(page.dhcpLease.expires_at_ms) }
+                        ]
+                    }
                 }
             }
         }

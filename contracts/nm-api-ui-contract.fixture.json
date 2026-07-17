@@ -218,6 +218,12 @@
         "device_iface": "wlan0",
         "ip4": {
           "address": "192.0.2.10",
+          "dhcp_lease": {
+            "domain_name": "example.test",
+            "expires_at_ms": 1762086400000,
+            "lease_time_seconds": 86400,
+            "server_identifier": "192.0.2.1"
+          },
           "dns": [
             "192.0.2.1",
             "1.1.1.1"
