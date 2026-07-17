@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import "."
 
 Rectangle {
@@ -13,6 +12,10 @@ Rectangle {
 
     signal selected(string value)
 
+    readonly property int contentPadding: 3
+    readonly property real segmentWidth: options.length > 0
+        ? (width - 2 * contentPadding) / options.length
+        : 0
     readonly property int currentIndex: {
         for (let index = 0; index < options.length; ++index)
             if (options[index].value === value)
@@ -21,10 +24,10 @@ Rectangle {
     }
 
     implicitHeight: 38
-    radius: Theme.controlRadius
-    color: Theme.input
-    border.color: activeFocus ? Theme.strongBorder : Theme.border
-    border.width: 1
+    radius: height / 4
+    color: Theme.withAlpha(Theme.mix(Theme.input, "#000000", Theme.dark ? 0.16 : 0.08), 0.88)
+    border.color: activeFocus ? Theme.strongBorder : Theme.mix(Theme.border, Theme.accent, 0.10)
+    border.width: activeFocus ? 2 : 1
     opacity: interactive ? 1.0 : 0.55
     clip: true
     activeFocusOnTab: interactive
@@ -51,9 +54,46 @@ Rectangle {
         control.move(1);
         event.accepted = true;
     }
-    RowLayout {
-        anchors.fill: parent
-        spacing: 0
+
+    Rectangle {
+        id: selectionIndicator
+
+        property real selectedPosition: control.currentIndex
+
+        visible: control.currentIndex >= 0
+        x: control.contentPadding + selectedPosition * control.segmentWidth
+        y: control.contentPadding
+        width: control.segmentWidth
+        height: control.height - 2 * control.contentPadding
+        radius: height / 2
+        border.width: 1
+        border.color: Theme.mix(Theme.accent, Theme.text, 0.20)
+
+        gradient: Gradient {
+            GradientStop {
+                position: 0
+                color: Theme.mix(Theme.accent, "#ffffff", Theme.dark ? 0.18 : 0.10)
+            }
+            GradientStop {
+                position: 1
+                color: Theme.mix(Theme.accent, Theme.window, Theme.dark ? 0.18 : 0.10)
+            }
+        }
+
+        Behavior on selectedPosition {
+            enabled: !Theme.noAnimations
+            NumberAnimation {
+                duration: 170
+                easing.type: Easing.InOutCubic
+            }
+        }
+    }
+
+    Row {
+        x: control.contentPadding
+        y: control.contentPadding
+        width: control.width - 2 * control.contentPadding
+        height: control.height - 2 * control.contentPadding
 
         Repeater {
             model: control.options
@@ -64,27 +104,19 @@ Rectangle {
                 required property int index
                 required property var modelData
 
-                readonly property bool selected: modelData.value === control.value
+                readonly property bool selected: index === control.currentIndex
 
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                color: selected ? Theme.selected : (segmentMouse.containsMouse ? Theme.hover : "transparent")
-
-                Rectangle {
-                    visible: segment.index > 0
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 1
-                    height: parent.height - 12
-                    color: Theme.border
-                }
+                width: control.segmentWidth
+                height: parent.height
+                radius: height / 2
+                color: !selected && segmentMouse.containsMouse ? Theme.hover : "transparent"
 
                 Text {
                     anchors.fill: parent
                     leftPadding: 6
                     rightPadding: 6
                     text: segment.modelData.label || segment.modelData.value || ""
-                    color: segment.selected ? Theme.accent : Theme.text
+                    color: segment.selected ? Theme.accentText : Theme.mutedText
                     font.family: Theme.fontFamily
                     font.pixelSize: 12
                     font.weight: segment.selected ? Font.DemiBold : Font.Normal
