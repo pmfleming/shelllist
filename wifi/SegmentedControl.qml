@@ -25,9 +25,9 @@ Rectangle {
 
     implicitHeight: 38
     radius: height / 4
-    color: Theme.withAlpha(Theme.mix(Theme.input, "#000000", Theme.dark ? 0.16 : 0.08), 0.88)
-    border.color: activeFocus ? Theme.strongBorder : Theme.mix(Theme.border, Theme.accent, 0.10)
-    border.width: activeFocus ? 2 : 1
+    color: Theme.input
+    border.color: activeFocus ? Theme.strongBorder : Theme.border
+    border.width: 1
     opacity: interactive ? 1.0 : 0.55
     clip: true
     activeFocusOnTab: interactive
@@ -67,16 +67,16 @@ Rectangle {
         height: control.height - 2 * control.contentPadding
         radius: height / 2
         border.width: 1
-        border.color: Theme.mix(Theme.accent, Theme.text, 0.20)
+        border.color: Theme.mix(Theme.border, Theme.accent, 0.48)
 
         gradient: Gradient {
             GradientStop {
                 position: 0
-                color: Theme.mix(Theme.accent, "#ffffff", Theme.dark ? 0.18 : 0.10)
+                color: Theme.mix(Theme.input, Theme.accent, Theme.dark ? 0.42 : 0.34)
             }
             GradientStop {
                 position: 1
-                color: Theme.mix(Theme.accent, Theme.window, Theme.dark ? 0.18 : 0.10)
+                color: Theme.mix(Theme.input, Theme.accent, Theme.dark ? 0.32 : 0.26)
             }
         }
 
@@ -116,7 +116,7 @@ Rectangle {
                     leftPadding: 6
                     rightPadding: 6
                     text: segment.modelData.label || segment.modelData.value || ""
-                    color: segment.selected ? Theme.accentText : Theme.mutedText
+                    color: segment.selected ? Theme.accentText : Theme.mix(Theme.mutedText, Theme.text, 0.28)
                     font.family: Theme.fontFamily
                     font.pixelSize: 12
                     font.weight: segment.selected ? Font.DemiBold : Font.Normal
