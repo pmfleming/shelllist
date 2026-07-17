@@ -239,7 +239,7 @@ Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         icon: "󰍹"
-                        label: "Hardware & DNS"
+                        label: "IP & DNS"
                         selected: pane.controller.detailsTab === "hardware"
                         enabled: !!pane.controller.profileFor(pane.ap)
                         onClicked: pane.controller.selectDetailsTab("hardware")

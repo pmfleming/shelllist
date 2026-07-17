@@ -39,10 +39,25 @@ Item {
     readonly property bool personalSecurity: String(profile.security_type || "").indexOf("Personal") >= 0
     readonly property string currentMethod: ipFamily === "ipv4" ? ipv4Method : ipv6Method
     readonly property bool currentAutoDns: ipFamily === "ipv4" ? ipv4AutoDns : ipv6AutoDns
+    readonly property bool currentFamilyEnabled: currentMethod !== "disabled"
     readonly property var ap: controller.detailAp
     readonly property var status: controller.activeStatus || ({})
-    readonly property int ipRowCount: 3 + (currentMethod === "manual" ? 3 : 0) + (!currentAutoDns ? 1 : 0)
-    readonly property int ipCardHeight: 116 + ipRowCount * 38 + Math.max(0, ipRowCount - 1) * 8
+    readonly property var currentActiveIp: controller.isActive(ap)
+        ? (status[ipFamily === "ipv4" ? "ip4" : "ip6"] || ({}))
+        : ({})
+    readonly property string displayedAddress: currentMethod === "auto" && currentActiveIp.address
+        ? String(currentActiveIp.address)
+        : ipValue(ipFamily, "Address")
+    readonly property string displayedPrefix: currentMethod === "auto"
+            && currentActiveIp.prefix !== undefined && currentActiveIp.prefix !== null
+        ? String(currentActiveIp.prefix)
+        : ipValue(ipFamily, "Prefix")
+    readonly property string displayedGateway: currentMethod === "auto" && currentActiveIp.gateway
+        ? String(currentActiveIp.gateway)
+        : ipValue(ipFamily, "Gateway")
+    readonly property string displayedDns: currentAutoDns && currentActiveIp.dns && currentActiveIp.dns.length > 0
+        ? currentActiveIp.dns.join(", ")
+        : ipValue(ipFamily, "Dns")
 
     clip: true
     focus: visible
@@ -441,7 +456,7 @@ Item {
             spacing: page.sectionSpacing
 
             DetailCard {
-                height: page.ipCardHeight
+                height: Math.max(500, hardwareFlick.height)
                 title: "IP & DNS"
 
                 Column {
@@ -459,12 +474,60 @@ Item {
                             text: "Address family"
                         }
 
-                        AdvancedChoice {
+                        RowLayout {
                             Layout.fillWidth: true
-                            value: page.ipFamily
-                            options: [{ value: "ipv4", label: "IPv4" }, { value: "ipv6", label: "IPv6" }]
-                            onSelected: function (value) { page.ipFamily = value; }
+                            Layout.fillHeight: true
+                            spacing: 8
+
+                            ActionButton {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                label: "IPv4"
+                                backgroundColor: page.ipFamily === "ipv4" ? Theme.selected : Theme.input
+                                borderColor: page.ipFamily === "ipv4" ? Theme.accent : Theme.border
+                                labelColor: page.ipFamily === "ipv4" ? Theme.accent : Theme.text
+                                onClicked: page.ipFamily = "ipv4"
+                            }
+
+                            ActionButton {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                label: "IPv6"
+                                backgroundColor: page.ipFamily === "ipv6" ? Theme.selected : Theme.input
+                                borderColor: page.ipFamily === "ipv6" ? Theme.accent : Theme.border
+                                labelColor: page.ipFamily === "ipv6" ? Theme.accent : Theme.text
+                                onClicked: page.ipFamily = "ipv6"
+                            }
                         }
+                    }
+
+                    ProfileToggleRow {
+                        width: parent.width
+                        height: 44
+                        title: page.ipFamily === "ipv4" ? "Enable IPv4" : "Enable IPv6"
+                        showSubtitle: false
+                        checked: page.currentFamilyEnabled
+                        onClicked: page.setMethod(page.currentFamilyEnabled ? "disabled" : "auto")
+                    }
+
+                    ProfileToggleRow {
+                        width: parent.width
+                        height: 44
+                        title: "Automatic addressing"
+                        showSubtitle: false
+                        checked: page.currentMethod === "auto"
+                        interactive: page.currentFamilyEnabled
+                        onClicked: page.setMethod(page.currentMethod === "auto" ? "manual" : "auto")
+                    }
+
+                    ProfileToggleRow {
+                        width: parent.width
+                        height: 44
+                        title: "Automatic DNS"
+                        showSubtitle: false
+                        checked: page.currentAutoDns
+                        interactive: page.currentFamilyEnabled
+                        onClicked: page.setAutoDns(!page.currentAutoDns)
                     }
 
                     GridLayout {
@@ -473,29 +536,13 @@ Item {
                         columnSpacing: 12
                         rowSpacing: 8
 
-                        FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "Assignment" }
-                        AdvancedChoice {
-                            Layout.fillWidth: true
-                            value: page.currentMethod
-                            options: [{ value: "auto", label: "Automatic" }, { value: "manual", label: "Manual" }, { value: "disabled", label: "Disabled" }]
-                            onSelected: function (value) { page.setMethod(value); }
-                        }
-
-                        FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "DNS source" }
-                        AdvancedChoice {
-                            Layout.fillWidth: true
-                            value: page.currentAutoDns ? "auto" : "manual"
-                            options: [{ value: "auto", label: "Automatic" }, { value: "manual", label: "Manual" }]
-                            onSelected: function (value) { page.setAutoDns(value); }
-                        }
-
-                        FieldLabel { visible: page.currentMethod === "manual"; Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "Address" }
+                        FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "IP address" }
                         NetworkInput.IpAddressField {
-                            visible: page.currentMethod === "manual"
                             Layout.fillWidth: true
                             family: page.ipFamily
-                            allowEmpty: false
-                            text: page.ipFamily === "ipv4" ? page.ipv4Address : page.ipv6Address
+                            allowEmpty: page.currentMethod !== "manual"
+                            readOnly: page.currentMethod !== "manual"
+                            text: page.displayedAddress
                             onEdited: function (value) {
                                 if (page.ipFamily === "ipv4") page.ipv4Address = value;
                                 else page.ipv6Address = value;
@@ -503,12 +550,13 @@ Item {
                             onEditingFinished: page.queueHardwareSave()
                         }
 
-                        FieldLabel { visible: page.currentMethod === "manual"; Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "Prefix length" }
+                        FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "Prefix length" }
                         NetworkInput.PrefixLengthField {
-                            visible: page.currentMethod === "manual"
                             Layout.fillWidth: true
                             family: page.ipFamily
-                            text: page.ipFamily === "ipv4" ? page.ipv4Prefix : page.ipv6Prefix
+                            allowEmpty: page.currentMethod !== "manual"
+                            readOnly: page.currentMethod !== "manual"
+                            text: page.displayedPrefix
                             onEdited: function (value) {
                                 if (page.ipFamily === "ipv4") page.ipv4Prefix = value;
                                 else page.ipv6Prefix = value;
@@ -516,12 +564,12 @@ Item {
                             onEditingFinished: page.queueHardwareSave()
                         }
 
-                        FieldLabel { visible: page.currentMethod === "manual"; Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "Gateway" }
+                        FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "Gateway" }
                         NetworkInput.IpAddressField {
-                            visible: page.currentMethod === "manual"
                             Layout.fillWidth: true
                             family: page.ipFamily
-                            text: page.ipFamily === "ipv4" ? page.ipv4Gateway : page.ipv6Gateway
+                            readOnly: page.currentMethod !== "manual"
+                            text: page.displayedGateway
                             onEdited: function (value) {
                                 if (page.ipFamily === "ipv4") page.ipv4Gateway = value;
                                 else page.ipv6Gateway = value;
@@ -529,13 +577,13 @@ Item {
                             onEditingFinished: page.queueHardwareSave()
                         }
 
-                        FieldLabel { visible: !page.currentAutoDns; Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "DNS servers" }
+                        FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "DNS servers" }
                         NetworkInput.IpAddressField {
-                            visible: !page.currentAutoDns
                             Layout.fillWidth: true
                             family: page.ipFamily
                             multiple: true
-                            text: page.ipFamily === "ipv4" ? page.ipv4Dns : page.ipv6Dns
+                            readOnly: !page.currentFamilyEnabled || page.currentAutoDns
+                            text: page.displayedDns
                             onEdited: function (value) {
                                 if (page.ipFamily === "ipv4") page.ipv4Dns = value;
                                 else page.ipv6Dns = value;
@@ -546,6 +594,7 @@ Item {
                         FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "DNS search domains" }
                         AdvancedTextField {
                             Layout.fillWidth: true
+                            readOnly: !page.currentFamilyEnabled
                             text: page.ipFamily === "ipv4" ? page.ipv4Search : page.ipv6Search
                             placeholder: "Optional, comma-separated"
                             onEdited: function (value) {
