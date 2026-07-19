@@ -179,9 +179,10 @@
               [ "$action" = show ] && action=open
               case "$action" in
                 daemon) ensure_daemon ;;
+                foreground) exec quickshell --path "$config_path" --no-duplicate ;;
                 toggle|open|hide) ensure_daemon && popover_ipc "$action" >/dev/null ;;
                 status) ensure_daemon && popover_ipc status ;;
-                *) echo "Usage: shelllist-bluetooth [daemon|toggle|open|hide|status]" >&2; exit 2 ;;
+                *) echo "Usage: shelllist-bluetooth [daemon|foreground|toggle|open|hide|status]" >&2; exit 2 ;;
               esac
             '';
           };
