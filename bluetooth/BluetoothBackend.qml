@@ -75,6 +75,13 @@ Item {
             controller.handlePairingEvent(event);
             return;
         }
+        if (event.stream === BtApi.streams.audio) {
+            if (event.event === "unavailable")
+                controller.audioStatus = (event.error && event.error.message) || "Bluetooth audio is unavailable";
+            else
+                controller.applyAudioSnapshot((event.data && event.data.audio_devices) || []);
+            return;
+        }
         if (event.stream === BtApi.streams.operation) {
             const operation = event.data || ({});
             if (operation.request_id) {

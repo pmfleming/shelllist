@@ -243,6 +243,31 @@ Rectangle {
                     elide: Text.ElideRight
                 }
                 Text {
+                    visible: !!content.controller.selectedAudio.sink
+                    text: "Output         " + (content.controller.selectedAudio.sink.ready ? (content.controller.selectedAudio.sink.is_default ? "Ready · default" : "Ready") : "Not ready")
+                        + " · " + (content.controller.selectedAudio.sink.state || "unknown")
+                    color: content.controller.selectedAudio.sink.ready ? Ui.Theme.text : Ui.Theme.danger
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: 11
+                }
+                Text {
+                    visible: !!content.controller.selectedAudio.source
+                    text: "Input          " + (content.controller.selectedAudio.source.ready ? (content.controller.selectedAudio.source.is_default ? "Ready · default" : "Ready") : "Not ready")
+                        + " · " + (content.controller.selectedAudio.source.state || "unknown")
+                    color: content.controller.selectedAudio.source.ready ? Ui.Theme.text : Ui.Theme.danger
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: 11
+                }
+                Text {
+                    visible: content.controller.audioStatus.length > 0
+                    Layout.fillWidth: true
+                    text: content.controller.audioStatus
+                    color: Ui.Theme.danger
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: 10
+                    elide: Text.ElideRight
+                }
+                Text {
                     visible: !!(content.controller.selectedAudio.profiles && content.controller.selectedAudio.profiles.length)
                     text: content.controller.selectedAudio.profiles.length + " audio profiles available"
                     color: Ui.Theme.subtleText

@@ -13,6 +13,7 @@ Item {
     property bool scanRequested: false
     property var adapters: []
     property var audioDevices: []
+    property string audioStatus: ""
     property var pairingPrompt: null
     property var activeOperation: null
     property string pairingInput: ""
@@ -34,15 +35,6 @@ Item {
 
     signal closeWindowRequested
     signal focusSearchRequested
-
-    onDetailsOpenChanged: {
-        if (detailsOpen && selectedDevice.connected)
-            backend.refreshAudio();
-    }
-    onSelectedResultChanged: {
-        if (detailsOpen && selectedDevice.connected)
-            backend.refreshAudio();
-    }
 
     function activateUi(workspaceId) {
         uiActive = true;
@@ -70,6 +62,7 @@ Item {
     }
     function applyAudioSnapshot(devices) {
         audioDevices = devices || [];
+        audioStatus = "";
     }
     function applySnapshot(snapshot) {
         adapters = snapshot.adapters || [];
