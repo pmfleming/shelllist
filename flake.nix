@@ -420,17 +420,37 @@
             {
               nativeBuildInputs = [ pkgs.qt6.qtdeclarative pkgs.quickshell ];
             } ''
-            qmllint \
-              -I "${pkgs.qt6.qtdeclarative}/lib/qt-6/qml" \
-              -I "${pkgs.quickshell}/lib/qt-6/qml" \
-              -I ${./qml} \
-              ${./qml}/Shelllist/Core/*.qml \
-              ${./qml}/Shelllist/Io/*.qml \
-              ${./qml}/Shelllist/Ui/*.qml \
-              ${./bluetooth}/*.qml \
-              ${./wifi}/*.qml \
-              ${./wifi}/networkinput/*.qml \
+            run_qmllint() {
+              qmllint \
+                -I "${pkgs.qt6.qtdeclarative}/lib/qt-6/qml" \
+                -I "${pkgs.quickshell}/lib/qt-6/qml" \
+                -I ${./qml} \
+                "$@"
+            }
+
+            sources=(
+              ${./qml}/Shelllist/Core/*.qml
+              ${./qml}/Shelllist/Io/*.qml
+              ${./qml}/Shelllist/Ui/*.qml
+              ${./bluetooth}/*.qml
+              ${./wifi}/*.qml
+              ${./wifi}/networkinput/*.qml
               ${./wifi}/process/*.qml
+            )
+            strict_sources=()
+            for source in "''${sources[@]}"; do
+              case "$source" in
+                */BluetoothGlobalShortcut.qml|*/WifiGlobalShortcut.qml) ;;
+                *) strict_sources+=("$source") ;;
+              esac
+            done
+
+            run_qmllint "''${strict_sources[@]}"
+            # Quickshell 0.3's private GlobalShortcut qmltypes reference an
+            # unexported PostReloadHook. Suppress only that upstream import warning.
+            run_qmllint --import disable \
+              ${./bluetooth}/BluetoothGlobalShortcut.qml \
+              ${./wifi}/WifiGlobalShortcut.qml
             touch $out
           '';
 
@@ -480,11 +500,30 @@
               name = "shelllist-qmllint";
               runtimeInputs = [ pkgs.qt6.qtdeclarative pkgs.quickshell ];
               text = ''
-                exec qmllint \
-                  -I "${pkgs.qt6.qtdeclarative}/lib/qt-6/qml" \
-                  -I "${pkgs.quickshell}/lib/qt-6/qml" \
-                  -I "$PWD/qml" \
-                  "$@"
+                run_qmllint() {
+                  qmllint \
+                    -I "${pkgs.qt6.qtdeclarative}/lib/qt-6/qml" \
+                    -I "${pkgs.quickshell}/lib/qt-6/qml" \
+                    -I "$PWD/qml" \
+                    "$@"
+                }
+
+                strict_args=()
+                shortcut_files=()
+                for arg in "$@"; do
+                  case "$arg" in
+                    */BluetoothGlobalShortcut.qml|*/WifiGlobalShortcut.qml)
+                      shortcut_files+=("$arg")
+                      ;;
+                    *) strict_args+=("$arg") ;;
+                  esac
+                done
+                if [ "''${#strict_args[@]}" -gt 0 ]; then
+                  run_qmllint "''${strict_args[@]}"
+                fi
+                if [ "''${#shortcut_files[@]}" -gt 0 ]; then
+                  run_qmllint --import disable "''${shortcut_files[@]}"
+                fi
               '';
             })
           ];

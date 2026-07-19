@@ -1,8 +1,8 @@
-// Quickshell 0.3's GlobalShortcut qmltypes expose an internal PostReloadHook base without
-// exporting it. Keep that private compatibility import isolated in this adapter.
-// qmllint disable import
+// Quickshell 0.3 exposes GlobalShortcut through a private module whose qmltypes
+// omit the internal PostReloadHook dependency. The lint check suppresses only
+// that upstream import diagnostic for this adapter.
 import Quickshell.Hyprland
-import Quickshell.Hyprland._GlobalShortcuts // qmllint disable import
+import Quickshell.Hyprland._GlobalShortcuts
 import QtQuick
 
 Item {
