@@ -65,6 +65,14 @@ Rectangle {
         onAccepted: content.controller.sendFile(content.localFilePath(selectedFile))
     }
 
+    component DetailValue: RowLayout {
+        required property string label
+        required property string value
+        Layout.fillWidth: true
+        Text { Layout.preferredWidth: 104; text: parent.label; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
+        Text { Layout.fillWidth: true; text: parent.value || "Unavailable"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 11; wrapMode: Text.WrapAnywhere }
+    }
+
     component ActionButton: Rectangle {
         id: actionButton
         required property string label
@@ -236,9 +244,17 @@ Rectangle {
             color: Ui.Theme.surface
             border.color: Ui.Theme.border
 
-            ColumnLayout {
+            Flickable {
                 anchors.fill: parent
                 anchors.margins: 18
+                contentWidth: width
+                contentHeight: detailColumn.implicitHeight
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+            ColumnLayout {
+                id: detailColumn
+                width: parent.width
                 spacing: 10
 
                 Text { Layout.fillWidth: true; text: content.controller.selectedResult ? content.controller.selectedResult.title : "Bluetooth device"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 20; font.bold: true; elide: Text.ElideRight }
@@ -247,6 +263,26 @@ Rectangle {
                 Text { text: "Paired        " + (content.controller.selectedDevice.paired ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
                 Text { text: "Trusted       " + (content.controller.selectedDevice.trusted ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
                 Text { text: "In range      " + (content.controller.selectedDevice.present ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
+                Text { text: "Services      " + (content.controller.selectedDevice.services_resolved ? "Resolved" : "Pending"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
+                Text { visible: !!(content.controller.selectedDevice.services && content.controller.selectedDevice.services.length); Layout.fillWidth: true; text: (content.controller.selectedDevice.services || []).map(function (service) { return service.label; }).filter(function (label, index, values) { return values.indexOf(label) === index; }).join(" · "); color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11; wrapMode: Text.WordWrap }
+                Repeater {
+                    model: content.controller.selectedDevice.battery || []
+                    delegate: Rectangle {
+                        id: batteryCard
+                        required property var modelData
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 42
+                        radius: Ui.Theme.cardRadius
+                        color: Ui.Theme.surfaceRaised
+                        border.color: Ui.Theme.border
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            Text { Layout.fillWidth: true; text: batteryCard.modelData.label || batteryCard.modelData.component || "Battery"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 12 }
+                            Text { text: batteryCard.modelData.percentage + "%"; color: Ui.Theme.active; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: true }
+                        }
+                    }
+                }
                 Text {
                     visible: !!content.controller.obexCapabilities.available
                     text: content.controller.obexCapabilities.outgoing_object_push ? "File transfer  Ready" : "OBEX service   Available · sending staged"
@@ -370,7 +406,7 @@ Rectangle {
                 ActionButton {
                     visible: !!content.controller.obexCapabilities.outgoing_object_push && !content.controller.canCancelTransfer
                     label: "Send file"
-                    available: content.controller.selectedDevice.paired && !content.controller.actionInFlight
+                    available: !!(content.controller.selectedDevice.capabilities && content.controller.selectedDevice.capabilities.can_send_file) && !content.controller.actionInFlight
                     onClicked: outgoingFileDialog.open()
                 }
                 ActionButton {
@@ -379,8 +415,6 @@ Rectangle {
                     danger: true
                     onClicked: content.controller.cancelActiveTransfer()
                 }
-                Item { Layout.fillHeight: true }
-
                 ActionButton { visible: !content.controller.canCancelOperation && !content.controller.canCancelTransfer; label: content.controller.selectedDevice.connected ? "Disconnect" : (content.controller.selectedDevice.paired ? "Connect" : "Pair"); available: content.controller.hasSelection && !content.controller.actionInFlight; onClicked: content.controller.primarySelected() }
                 ActionButton { visible: content.controller.canCancelOperation; label: "Cancel operation"; danger: true; onClicked: content.controller.cancelActiveOperation() }
                 ActionButton { label: (content.controller.selectedDevice.trusted ? "Disable" : "Enable") + " trust"; available: !!(content.controller.selectedDevice.capabilities && content.controller.selectedDevice.capabilities.can_trust); onClicked: content.controller.triggerAction("trusted") }
@@ -393,7 +427,68 @@ Rectangle {
                     ActionButton { label: "Cancel"; onClicked: content.confirmRemove = false }
                     ActionButton { label: "Remove"; danger: true; onClicked: { content.confirmRemove = false; content.controller.triggerAction("remove"); } }
                 }
+                Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Ui.Theme.border }
+                Text { text: "Technical details"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: true }
+                DetailValue { label: "Address"; value: content.controller.selectedDevice.address || "" }
+                DetailValue { label: "Address type"; value: content.controller.selectedDevice.address_type || "" }
+                DetailValue { label: "Adapter"; value: (content.controller.selectedAdapter.alias || content.controller.selectedAdapter.name || "") + " · " + (content.controller.selectedAdapter.address || "") }
+                DetailValue { label: "RSSI"; value: content.controller.selectedDevice.rssi === null || content.controller.selectedDevice.rssi === undefined ? "Unavailable" : content.controller.selectedDevice.rssi + " dBm" }
+                DetailValue { label: "Last seen"; value: content.controller.selectedDevice.last_seen_ms ? new Date(content.controller.selectedDevice.last_seen_ms).toLocaleString() : "Not observed this session" }
+                DetailValue { label: "Modalias"; value: content.controller.selectedDevice.modalias || "" }
+                DetailValue { label: "UUIDs"; value: (content.controller.selectedDevice.uuids || []).join("\n") }
+
+                Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Ui.Theme.border }
+                Text { text: "Adapter settings"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: true }
+                Repeater {
+                    model: content.controller.adapters
+                    delegate: ActionButton {
+                        required property var modelData
+                        label: (modelData.key === content.controller.selectedAdapter.key ? "✓  " : "") + (modelData.alias || modelData.name)
+                        onClicked: content.controller.preferredAdapterKey = modelData.key
+                    }
+                }
+                DetailValue { label: "Controller"; value: content.controller.selectedAdapter.name || "" }
+                Text { text: "Adapter alias"; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 38
+                    radius: Ui.Theme.cardRadius
+                    color: Ui.Theme.surfaceRaised
+                    border.color: adapterAliasInput.activeFocus ? Ui.Theme.accent : Ui.Theme.border
+                    TextInput {
+                        id: adapterAliasInput
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        text: content.controller.selectedAdapter.alias || ""
+                        maximumLength: 248
+                        verticalAlignment: TextInput.AlignVCenter
+                        color: Ui.Theme.text
+                        selectionColor: Ui.Theme.accent
+                        font.family: Ui.Theme.fontFamily
+                        font.pixelSize: 13
+                        onAccepted: content.controller.adapterOperation("set-alias", { alias: text.trim() })
+                    }
+                }
+                ActionButton { label: "Save adapter alias"; available: adapterAliasInput.text.trim().length > 0 && adapterAliasInput.text.trim() !== (content.controller.selectedAdapter.alias || ""); onClicked: content.controller.adapterOperation("set-alias", { alias: adapterAliasInput.text.trim() }) }
+                ActionButton { label: content.controller.selectedAdapter.discoverable ? "Disable discoverable" : "Enable discoverable"; available: !!content.controller.selectedAdapter.key && content.controller.selectedAdapter.powered; onClicked: content.controller.adapterOperation("set-discoverable", { discoverable: !content.controller.selectedAdapter.discoverable }) }
+                ActionButton { label: content.controller.selectedAdapter.pairable ? "Disable incoming pairing" : "Enable incoming pairing"; available: !!content.controller.selectedAdapter.key; onClicked: content.controller.adapterOperation("set-pairable", { pairable: !content.controller.selectedAdapter.pairable }) }
+                ActionButton { label: (content.controller.trustAfterPair ? "✓  " : "") + "Trust after pairing"; onClicked: content.controller.trustAfterPair = !content.controller.trustAfterPair }
+                Text { text: "Discoverable timeout (seconds)"; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
+                Rectangle {
+                    Layout.fillWidth: true; Layout.preferredHeight: 36; radius: Ui.Theme.cardRadius; color: Ui.Theme.surfaceRaised; border.color: Ui.Theme.border
+                    TextInput { id: discoverableTimeoutInput; anchors.fill: parent; anchors.margins: 10; text: String(content.controller.selectedAdapter.discoverable_timeout || 0); inputMethodHints: Qt.ImhDigitsOnly; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; verticalAlignment: TextInput.AlignVCenter; onAccepted: content.controller.adapterOperation("set-discoverable-timeout", { timeout: Number(text) }) }
+                }
+                ActionButton { label: "Save discoverable timeout"; onClicked: content.controller.adapterOperation("set-discoverable-timeout", { timeout: Number(discoverableTimeoutInput.text) }) }
+                Text { text: "Pairable timeout (seconds)"; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
+                Rectangle {
+                    Layout.fillWidth: true; Layout.preferredHeight: 36; radius: Ui.Theme.cardRadius; color: Ui.Theme.surfaceRaised; border.color: Ui.Theme.border
+                    TextInput { id: pairableTimeoutInput; anchors.fill: parent; anchors.margins: 10; text: String(content.controller.selectedAdapter.pairable_timeout || 0); inputMethodHints: Qt.ImhDigitsOnly; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; verticalAlignment: TextInput.AlignVCenter; onAccepted: content.controller.adapterOperation("set-pairable-timeout", { timeout: Number(text) }) }
+                }
+                ActionButton { label: "Save pairable timeout"; onClicked: content.controller.adapterOperation("set-pairable-timeout", { timeout: Number(pairableTimeoutInput.text) }) }
+                DetailValue { label: "Adapter modalias"; value: content.controller.selectedAdapter.modalias || "" }
                 Text { Layout.fillWidth: true; text: content.controller.canCancelTransfer ? "Esc: cancel file transfer" : (content.controller.canCancelOperation ? "Esc: cancel operation" : "Enter: primary action   Left: close details   Esc: close"); color: Ui.Theme.mutedText; font.family: Ui.Theme.fontFamily; font.pixelSize: 10; wrapMode: Text.WordWrap }
+            }
             }
         }
     }

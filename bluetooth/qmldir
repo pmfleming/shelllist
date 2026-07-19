@@ -4,5 +4,6 @@ BluetoothProvider 1.0 BluetoothProvider.qml
 BluetoothPairingPrompt 1.0 BluetoothPairingPrompt.qml
 BluetoothObexPrompt 1.0 BluetoothObexPrompt.qml
 BluetoothWindowHost 1.0 BluetoothWindowHost.qml
+BluetoothGlobalShortcut 1.0 BluetoothGlobalShortcut.qml
 BluetoothContent 1.0 BluetoothContent.qml
 BtDaemonClient 1.0 BtDaemonClient.qml

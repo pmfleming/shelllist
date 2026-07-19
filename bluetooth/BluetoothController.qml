@@ -19,12 +19,16 @@ Item {
     property var incomingTransferPrompt: null
     property var activeOperation: null
     property var activeTransfer: null
+    property var activeScan: null
+    property bool trustAfterPair: true
+    property string preferredAdapterKey: ""
     property string pairingInput: ""
     property string status: "Loading Bluetooth devices…"
     readonly property bool actionInFlight: backend.running
     readonly property var filteredResults: results.visibleResults
     readonly property var selectedResult: results.selected()
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
+    readonly property var selectedAdapter: adapters.find(function (adapter) { return adapter.key === preferredAdapterKey; }) || adapters.find(function (adapter) { return adapter.key === selectedDevice.adapter_key; }) || adapters[0] || ({})
     readonly property var selectedAudio: audioDevices.find(function (audio) { return audio.device_key === selectedDevice.key; }) || ({})
     readonly property var activeAudioProfile: (selectedAudio.profiles || []).find(function (profile) { return profile.key === selectedAudio.active_profile_key; }) || ({})
     readonly property bool hasSelection: filteredResults.length > 0
@@ -33,8 +37,8 @@ Item {
     readonly property bool modalPromptOpen: pairingPromptOpen || incomingTransferPromptOpen
     readonly property bool canCancelTransfer: !!activeTransfer && !["complete", "cancelled", "error"].includes(activeTransfer.status)
     readonly property bool canCancelOperation: !!activeOperation && (activeOperation.state === "queued" || activeOperation.state === "running")
-    readonly property bool powered: adapters.some(function (adapter) { return adapter.powered; })
-    readonly property bool scanning: adapters.some(function (adapter) { return adapter.discovering; })
+    readonly property bool powered: selectedAdapter.key ? !!selectedAdapter.powered : adapters.some(function (adapter) { return adapter.powered; })
+    readonly property bool scanning: !!activeScan
     readonly property int closedWindowWidth: 440
     readonly property int openWindowWidth: 820
     property int surfaceWindowWidth: detailsOpen ? openWindowWidth : closedWindowWidth
@@ -59,13 +63,16 @@ Item {
         incomingTransferPrompt = null;
         pairingInput = "";
         scanRequested = false;
-        backend.setScanning(false);
+        if (activeScan)
+            backend.setScanning(false, activeScan.adapter_key);
+        activeScan = null;
         uiActive = false;
     }
     function handleTransportFailure(message) {
         scanRequested = false;
         activeOperation = null;
         activeTransfer = null;
+        activeScan = null;
         incomingTransferPrompt = null;
         status = message;
     }
@@ -82,10 +89,12 @@ Item {
     }
     function applySnapshot(snapshot) {
         adapters = snapshot.adapters || [];
+        if (adapters.length > 0 && !adapters.some(function (adapter) { return adapter.key === preferredAdapterKey; }))
+            preferredAdapterKey = adapters[0].key;
         results.replaceProviderResults(provider.providerId, provider.resultsForDevices(snapshot.devices || []), false);
         if (uiActive && powered && !scanning && !scanRequested) {
             scanRequested = true;
-            backend.setScanning(true);
+            backend.setScanning(true, selectedAdapter.key);
         }
         if (!powered)
             status = "Bluetooth is off";
@@ -99,7 +108,7 @@ Item {
             return powered ? "Bluetooth turned on" : "Bluetooth turned off";
         if (id === "scan-start")
             return "Scanning for Bluetooth devices…";
-        if (id === "scan-stop")
+        if (id === "scan-stop" || id.indexOf("cancel-scan-") === 0)
             return "Bluetooth scan stopped";
         if (id === "pairing-response")
             return "Pairing response sent";
@@ -112,12 +121,33 @@ Item {
     function setPower() {
         status = powered ? "Turning Bluetooth off…" : "Turning Bluetooth on…";
         scanRequested = false;
-        backend.setPowered(!powered);
+        backend.setPowered(!powered, selectedAdapter.key);
     }
     function toggleScan() {
         status = scanning ? "Stopping Bluetooth scan…" : "Scanning for Bluetooth devices…";
         scanRequested = true;
-        backend.setScanning(!scanning);
+        backend.setScanning(!scanning, selectedAdapter.key);
+    }
+    function handleScanEvent(scan) {
+        if (!scan || !scan.request_id)
+            return;
+        if (scan.state === "running") {
+            activeScan = scan;
+            if (scan.snapshot)
+                applySnapshot(scan.snapshot);
+            status = "Scanning for Bluetooth devices…";
+            return;
+        }
+        if (activeScan && activeScan.request_id === scan.request_id)
+            activeScan = null;
+        if (scan.snapshot)
+            applySnapshot(scan.snapshot);
+        if (scan.state === "completed")
+            status = filteredResults.length + " Bluetooth devices · scan complete";
+        else if (scan.state === "cancelled")
+            status = "Bluetooth scan stopped";
+        else if (scan.state === "failed")
+            status = (scan.error && scan.error.message) || "Bluetooth scan failed";
     }
     function sendFile(path) {
         if (!hasSelection || !path || actionInFlight || !obexCapabilities.outgoing_object_push)
@@ -222,6 +252,12 @@ Item {
         pairingInput = "";
         return backend.respondPairing(requestId, accept, value);
     }
+    function adapterOperation(operation, values) {
+        if (!selectedAdapter.key || actionInFlight)
+            return false;
+        status = "Updating Bluetooth adapter…";
+        return backend.adapterOperation(operation, selectedAdapter, values || ({}));
+    }
     function setAudioProfile(profile) {
         if (!hasSelection || !profile || !profile.key || !profile.available || actionInFlight)
             return false;
@@ -244,7 +280,7 @@ Item {
         const operation = ({ pair: "pair", connect: "connect", disconnect: "disconnect", remove: "remove" })[actionId];
         if (operation) {
             status = operation.charAt(0).toUpperCase() + operation.slice(1) + " " + device.name + "…";
-            return backend.deviceOperation(operation, device, {});
+            return backend.deviceOperation(operation, device, operation === "pair" ? { trust_after_pair: trustAfterPair } : {});
         }
         if (actionId === "trusted")
             return backend.deviceOperation("set-trusted", device, { trusted: !device.trusted });

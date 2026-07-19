@@ -10,6 +10,7 @@ Item {
     property var finishedOperations: ({})
     property var transfers: ({})
     property var finishedTransfers: ({})
+    property var scans: ({})
     // Incoming OBEX authorization can arrive while the popup is hidden.
     readonly property bool active: true
     readonly property bool running: Object.keys(pending).length > 0 || Object.keys(operations).length > 0 || Object.keys(transfers).length > 0
@@ -47,6 +48,15 @@ Item {
         }
         if (id.indexOf("cancel-operation-") === 0) {
             controller.status = "Cancelling Bluetooth operation…";
+            return;
+        }
+        const scan = envelope.data ? envelope.data.scan : null;
+        if (scan) {
+            scans[scan.request_id] = scan;
+            scans = Object.assign({}, scans);
+            controller.handleScanEvent(scan);
+            if (envelope.data.snapshot)
+                controller.applySnapshot(envelope.data.snapshot);
             return;
         }
         const transfer = envelope.data ? envelope.data.transfer : null;
@@ -97,6 +107,18 @@ Item {
             return;
         if (event.stream === BtApi.streams.pairing) {
             controller.handlePairingEvent(event);
+            return;
+        }
+        if (event.stream === BtApi.streams.scan) {
+            const scan = event.data || ({});
+            if (scan.request_id) {
+                if (["completed", "failed", "cancelled"].includes(scan.state))
+                    delete scans[scan.request_id];
+                else
+                    scans[scan.request_id] = scan;
+                scans = Object.assign({}, scans);
+            }
+            controller.handleScanEvent(scan);
             return;
         }
         if (event.stream === BtApi.streams.obex) {
@@ -159,8 +181,18 @@ Item {
     }
     function refreshAudio() { return call("audio-snapshot", BtApi.methods.audioSnapshot, {}); }
     function setAudioProfile(deviceKey, profileKey) { return call("audio-set-profile", BtApi.methods.audioSetProfile, { device_key: deviceKey, profile_key: profileKey }); }
-    function setPowered(powered) { return call("power", BtApi.methods.setPowered, { powered: powered }); }
-    function setScanning(enabled) { return call(enabled ? "scan-start" : "scan-stop", BtApi.methods.scan, { enabled: enabled }); }
+    function setPowered(powered, adapterKey) { return call("power", BtApi.methods.setPowered, { adapter_key: adapterKey || null, powered: powered }); }
+    function setScanning(enabled, adapterKey) {
+        if (!enabled && controller.activeScan && controller.activeScan.request_id) {
+            client.cancel("cancel-scan-" + controller.activeScan.request_id, controller.activeScan.request_id);
+            return true;
+        }
+        return call("scan-start", BtApi.methods.scan, { enabled: true, adapter_key: adapterKey || null, timeout_ms: 15000 });
+    }
+    function adapterOperation(operation, adapter, values) {
+        const params = Object.assign({ key: adapter.key, operation: operation }, values || ({}));
+        return call("adapter-" + operation, BtApi.methods.adapterOperation, params);
+    }
     function cancelOperation(requestId) {
         if (!requestId || !operations[requestId])
             return false;
@@ -188,6 +220,7 @@ Item {
             backend.finishedOperations = ({});
             backend.transfers = ({});
             backend.finishedTransfers = ({});
+            backend.scans = ({});
             backend.controller.handleTransportFailure(message);
         }
     }

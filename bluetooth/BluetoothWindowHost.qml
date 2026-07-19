@@ -30,6 +30,8 @@ Item {
     function toggle() { popoverVisible ? hide() : show(); }
     function closeRequested() { hide(); }
 
+    BluetoothGlobalShortcut { onTriggered: host.toggle() }
+
     IpcHandler {
         target: "bluetooth"
         readonly property bool visible: host.popoverVisible
