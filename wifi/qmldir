@@ -3,6 +3,11 @@ WifiConnectPolicy 1.0 WifiConnectPolicy.qml
 WifiProvider 1.0 WifiProvider.qml
 internal ShareAvailabilityController ShareAvailabilityController.qml
 internal CaptivePortalController CaptivePortalController.qml
+internal WifiAdvancedController WifiAdvancedController.qml
+internal WifiConnectionController WifiConnectionController.qml
+internal WifiNetworkActions WifiNetworkActions.qml
+internal WifiScanController WifiScanController.qml
+internal WifiControllerServices WifiControllerServices.qml
 WifiNavigation 1.0 WifiNavigation.qml
 ActionButton 1.0 ActionButton.qml
 CenteredMessage 1.0 CenteredMessage.qml

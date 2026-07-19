@@ -2,8 +2,6 @@ import QtQuick
 import "Model.js" as Model
 
 Item {
-    id: provider
-
     required property string providerId
     required property string displayName
     property string icon: ""

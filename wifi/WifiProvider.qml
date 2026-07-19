@@ -5,7 +5,7 @@ import "WifiPresentation.js" as Presentation
 Core.Provider {
     id: wifiProvider
 
-    required property WifiController controller
+    required property var controller
 
     providerId: "wifi"
     displayName: "Wi-Fi"
@@ -35,31 +35,31 @@ Core.Provider {
     function actionsForNetwork(ap) {
         if (!ap)
             return [];
-        const connectingThis = controller.connectRunning
-            && controller.connectingNetworkName.length > 0
-            && controller.networkName(ap) === controller.connectingNetworkName;
+        const connectingThis = controller.connection.running
+            && controller.connection.networkName.length > 0
+            && controller.networkName(ap) === controller.connection.networkName;
         return [
             actionDefinition("connect", "Connect", {
                 icon: "󰖩", shortcut: "C", role: "default",
-                enabled: controller.canConnectNetwork(ap),
+                enabled: controller.actions.canConnect(ap),
                 visible: !controller.isActive(ap) && !connectingThis,
                 presentation: { group: "primary", tone: "active", width: 152 }
             }),
             actionDefinition("cancel-connect", "Cancel", {
                 icon: "󰜺", shortcut: "C", role: "destructive",
-                enabled: controller.activeConnectRequestId.length > 0,
+                enabled: controller.connection.requestId.length > 0,
                 visible: connectingThis,
                 presentation: { group: "primary", tone: "danger", width: 152 }
             }),
             actionDefinition("disconnect", "Disconnect", {
                 icon: "󰤭", shortcut: "D", role: "destructive",
-                enabled: controller.canDisconnectNetwork(ap),
+                enabled: controller.actions.canDisconnect(ap),
                 visible: controller.isActive(ap) && !connectingThis,
                 presentation: { group: "primary", tone: "danger", width: 152 }
             }),
             actionDefinition("forget", "Forget", {
                 icon: "󰆴", shortcut: "F", role: "destructive",
-                enabled: controller.canForgetNetwork(ap),
+                enabled: controller.actions.canForget(ap),
                 confirmation: { required: true, title: "Forget network" },
                 presentation: { group: "toolbar", tone: "normal", width: 92 }
             }),
@@ -69,32 +69,32 @@ Core.Provider {
             }),
             actionDefinition("share", "Share", {
                 icon: "󰒖", shortcut: "S",
-                enabled: controller.canShareNetwork(ap),
+                enabled: controller.actions.canShare(ap),
                 presentation: { group: "toolbar", tone: "normal", width: 92 }
             }),
             actionDefinition("autoconnect", "Auto-connect", {
                 shortcut: "A", kind: "toggle",
-                enabled: controller.canProfileActionFor(ap, "can_toggle_autoconnect"),
-                state: { checked: controller.autoconnectEnabledFor(ap) },
+                enabled: controller.actions.canProfileAction(ap, "can_toggle_autoconnect"),
+                state: { checked: controller.actions.autoconnectEnabled(ap) },
                 presentation: { group: "settings" }
             }),
             actionDefinition("randomized-mac", "Randomize MAC address", {
                 shortcut: "R", kind: "toggle",
-                enabled: controller.canProfileActionFor(ap, "can_set_mac_randomization"),
-                state: { checked: controller.randomizedMacEnabledFor(ap) },
+                enabled: controller.actions.canProfileAction(ap, "can_set_mac_randomization"),
+                state: { checked: controller.actions.randomizedMacEnabled(ap) },
                 presentation: { group: "settings" }
             }),
             actionDefinition("send-hostname", "Send device name", {
                 shortcut: "N", kind: "toggle",
-                enabled: controller.canProfileActionFor(ap, "can_set_send_hostname"),
-                state: { checked: controller.sendHostnameEnabledFor(ap) },
+                enabled: controller.actions.canProfileAction(ap, "can_set_send_hostname"),
+                state: { checked: controller.actions.sendHostnameEnabled(ap) },
                 presentation: { group: "settings" }
             })
         ];
     }
 
     function primaryActionId(ap) {
-        if (controller.connectRunning && controller.networkName(ap) === controller.connectingNetworkName)
+        if (controller.connection.running && controller.networkName(ap) === controller.connection.networkName)
             return "cancel-connect";
         return controller.isActive(ap) ? "disconnect" : "connect";
     }
@@ -115,7 +115,7 @@ Core.Provider {
             primaryActionId: primaryActionId(network),
             actions: actionsForNetwork(network),
             preview: { kind: "wifi-network", available: true },
-            state: { active: !!network.active, busy: controller.isConnecting(network) },
+            state: { active: !!network.active, busy: controller.connection.isConnecting(network) },
             payload: network
         });
     }
@@ -136,7 +136,7 @@ Core.Provider {
         if (!request || !request.result || !request.result.payload)
             return false;
         executionStarted(request);
-        const accepted = controller.executeNetworkAction(request.actionId, request.result.payload);
+        const accepted = controller.actions.execute(request.actionId, request.result.payload);
         if (accepted === false) {
             executionFailed({ requestId: request.id, code: "action-rejected", message: "Wi-Fi action was rejected" });
             return false;

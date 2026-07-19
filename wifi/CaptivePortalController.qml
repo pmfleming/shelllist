@@ -8,7 +8,7 @@ Item {
 
     function context(trigger, ap, result, requestId, workspaceId, automatic, fallback) {
         const identity = Flow.portalNetworkIdentity(ap, result || ({}));
-        const connectivity = Flow.portalConnectivity(result, controller.networkConnectivity, controller.activeStatus);
+        const connectivity = Flow.portalConnectivity(result, controller.connection.connectivity, controller.activeStatus);
         return {
             trigger: trigger,
             ssid: Presentation.valueOr(result, "ssid", Presentation.networkName(ap)),

@@ -152,10 +152,10 @@ Rectangle {
                 clip: true
 
                 Column {
-                    enabled: !pane.controller.advancedOpen
+                    enabled: !pane.controller.advanced.open
                     width: parent.width
                     height: parent.height
-                    x: pane.controller.advancedOpen ? -width : 0
+                    x: pane.controller.advanced.open ? -width : 0
                     spacing: pane.sectionSpacing
 
                     Behavior on x {
@@ -188,10 +188,10 @@ Rectangle {
                 }
 
                 AdvancedSettingsPage {
-                    enabled: pane.controller.advancedOpen
+                    enabled: pane.controller.advanced.open
                     width: parent.width
                     height: parent.height
-                    x: pane.controller.advancedOpen ? 0 : width
+                    x: pane.controller.advanced.open ? 0 : width
                     controller: pane.controller
                     sectionSpacing: pane.sectionSpacing
 

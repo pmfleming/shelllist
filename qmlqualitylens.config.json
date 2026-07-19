@@ -1,0 +1,7 @@
+{
+  "project_name": "shelllist",
+  "project_root": ".",
+  "source_roots": ["wifi", "bluetooth", "qml"],
+  "output_dir": "target/qmlqualitylens",
+  "exclude": []
+}

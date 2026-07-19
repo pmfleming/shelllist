@@ -425,6 +425,7 @@
               -I "${pkgs.quickshell}/lib/qt-6/qml" \
               -I ${./qml} \
               ${./qml}/Shelllist/Core/*.qml \
+              ${./qml}/Shelllist/Io/*.qml \
               ${./qml}/Shelllist/Ui/*.qml \
               ${./bluetooth}/*.qml \
               ${./wifi}/*.qml \

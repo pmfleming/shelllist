@@ -124,7 +124,7 @@ AdvancedSettingsFlickable {
                                 }
 
                                 Text {
-                                    text: securityFlick.settings.controller.advancedSecretLoading ? "Loading" : (securityFlick.settings.passwordRevealed ? "Hide" : "Show")
+                                    text: securityFlick.settings.controller.advanced.secretLoading ? "Loading" : (securityFlick.settings.passwordRevealed ? "Hide" : "Show")
                                     color: Theme.accent
                                     font.family: Theme.fontFamily
                                     font.pixelSize: 13
@@ -135,12 +135,12 @@ AdvancedSettingsFlickable {
                                 id: passwordActionMouse
 
                                 anchors.fill: parent
-                                enabled: securityFlick.settings.personalSecurity && !securityFlick.settings.controller.advancedSecretLoading
+                                enabled: securityFlick.settings.personalSecurity && !securityFlick.settings.controller.advanced.secretLoading
                                 hoverEnabled: true
                                 cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 onClicked: {
                                     if (securityFlick.settings.passwordRevealed) securityFlick.settings.passwordRevealed = false;
-                                    else securityFlick.settings.controller.revealAdvancedSecret();
+                                    else securityFlick.settings.controller.advanced.revealSecret();
                                 }
                             }
                         }

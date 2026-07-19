@@ -5,8 +5,6 @@ import "WifiFlow.js" as Flow
 import "NmApiClient.js" as Api
 
 Item {
-    id: share
-
     required property var controller
     required property var backend
 

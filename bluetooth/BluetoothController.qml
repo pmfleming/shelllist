@@ -131,6 +131,14 @@ Item {
         scanRequested = true;
         backend.setScanning(!scanning, selectedAdapter.key);
     }
+    function scanCompletionStatus(scan) {
+        const messages = {
+            completed: filteredResults.length + " Bluetooth devices · scan complete",
+            cancelled: "Bluetooth scan stopped",
+            failed: (scan.error && scan.error.message) || "Bluetooth scan failed"
+        };
+        return messages[scan.state] || status;
+    }
     function handleScanEvent(scan) {
         if (!scan || !scan.request_id)
             return;
@@ -145,18 +153,26 @@ Item {
             activeScan = null;
         if (scan.snapshot)
             applySnapshot(scan.snapshot);
-        if (scan.state === "completed")
-            status = filteredResults.length + " Bluetooth devices · scan complete";
-        else if (scan.state === "cancelled")
-            status = "Bluetooth scan stopped";
-        else if (scan.state === "failed")
-            status = (scan.error && scan.error.message) || "Bluetooth scan failed";
+        status = scanCompletionStatus(scan);
     }
     function sendFile(path) {
         if (!hasSelection || !path || actionInFlight || !obexCapabilities.outgoing_object_push)
             return false;
         status = "Starting file transfer to " + selectedDevice.name + "…";
         return backend.sendFile(selectedDevice.key, path);
+    }
+    function isTerminalTransfer(transfer) { return ["complete", "cancelled", "error"].includes(transfer.status); }
+    function completedTransferStatus(transfer) {
+        if (transfer.status === "complete")
+            return transfer.direction === "incoming" ? transfer.file_name + " saved in Downloads" : transfer.file_name + " sent";
+        if (transfer.status === "cancelled")
+            return "File transfer cancelled";
+        return (transfer.error && transfer.error.message) || "File transfer failed";
+    }
+    function transferProgressStatus(transfer) {
+        const percentage = transfer.size > 0 ? Math.floor(transfer.transferred * 100 / transfer.size) : 0;
+        const verb = transfer.direction === "incoming" ? "Receiving " : "Sending ";
+        return verb + transfer.file_name + (transfer.size > 0 ? " · " + percentage + "%" : "…");
     }
     function handleObexTransfer(transfer) {
         if (!transfer || !transfer.request_id)
@@ -170,21 +186,14 @@ Item {
         }
         if (incomingTransferPrompt && incomingTransferPrompt.request_id === transfer.request_id)
             incomingTransferPrompt = null;
-        if (["complete", "cancelled", "error"].includes(transfer.status)) {
+        if (isTerminalTransfer(transfer)) {
             if (activeTransfer && activeTransfer.request_id === transfer.request_id)
                 activeTransfer = null;
-            if (transfer.status === "complete")
-                status = transfer.direction === "incoming" ? transfer.file_name + " saved in Downloads" : transfer.file_name + " sent";
-            else if (transfer.status === "cancelled")
-                status = "File transfer cancelled";
-            else
-                status = (transfer.error && transfer.error.message) || "File transfer failed";
+            status = completedTransferStatus(transfer);
             return;
         }
         activeTransfer = transfer;
-        const percentage = transfer.size > 0 ? Math.floor(transfer.transferred * 100 / transfer.size) : 0;
-        const verb = transfer.direction === "incoming" ? "Receiving " : "Sending ";
-        status = verb + transfer.file_name + (transfer.size > 0 ? " · " + percentage + "%" : "…");
+        status = transferProgressStatus(transfer);
     }
     function respondIncomingTransfer(accept) {
         if (!incomingTransferPromptOpen)
@@ -204,6 +213,13 @@ Item {
         if (!activeOperation || activeOperation.request_id !== operation.request_id)
             activeOperation = operation;
     }
+    function operationCompletionStatus(operation, deviceName) {
+        if (operation.state === "completed")
+            return deviceName + " updated";
+        if (operation.state === "cancelled")
+            return "Bluetooth operation cancelled";
+        return (operation.error && operation.error.message) || "Bluetooth operation failed";
+    }
     function handleOperationEvent(operation) {
         if (!operation || !operation.request_id)
             return;
@@ -218,12 +234,7 @@ Item {
             applySnapshot(operation.snapshot);
         if (activeOperation && activeOperation.request_id === operation.request_id)
             activeOperation = null;
-        if (operation.state === "completed")
-            status = deviceName + " updated";
-        else if (operation.state === "cancelled")
-            status = "Bluetooth operation cancelled";
-        else
-            status = (operation.error && operation.error.message) || "Bluetooth operation failed";
+        status = operationCompletionStatus(operation, deviceName);
     }
     function cancelActiveOperation() {
         if (!canCancelOperation)

@@ -6,22 +6,22 @@ import "process"
 Item {
     id: backend
 
-    required property WifiController controller
+    required property var controller
     property var pending: ({})
-    readonly property bool active: controller.uiActive || controller.connectRunning || controller.prompt.open
+    readonly property bool active: controller.uiActive || controller.connection.running || controller.prompt.open
     readonly property bool listRunning: isPending("networks")
-    readonly property bool scanRunning: isPending("scan-start") || controller.activeScanRequestId.length > 0
+    readonly property bool scanRunning: isPending("scan-start") || controller.scan.requestId.length > 0
     readonly property bool connectStarting: isPending("connect-start")
     readonly property bool nonConnectRunning: isPending("disconnect") || isPending("profile") || isPending("advanced-load") || isPending("advanced-save") || isPending("advanced-secret") || isPending("secret-provide") || isPending("secret-cancel")
-    readonly property bool running: connectStarting || nonConnectRunning || controller.activeConnectRequestId.length > 0
+    readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
     readonly property var responseHandlerById: ({
         "networks": function (value) { backend.handleNetworks(value); },
         "scan-start": function (value) { backend.handleScanStart(value); },
         "connect-start": function (value) { backend.handleConnectStart(value); },
         "disconnect": function (value) { backend.handleDisconnect(value); },
-        "advanced-load": function (value) { controller.applyAdvancedProfile(Api.apiData(value, "result") || ({})); },
+        "advanced-load": function (value) { controller.advanced.applyProfile(Api.apiData(value, "result") || ({})); },
         "advanced-save": function (value) { backend.handleAdvancedSave(value); },
-        "advanced-secret": function (value) { controller.applyAdvancedSecret(Api.apiData(value, "result") || ({})); },
+        "advanced-secret": function (value) { controller.advanced.applySecret(Api.apiData(value, "result") || ({})); },
         "profile": function (value) { backend.handleProfile(value); },
         "share": function (value) { controller.applyShareResponse(value, "Saved profile could not be shared"); },
         "secret-provide": function (value) { backend.handleSecretResponse(value); },
@@ -68,24 +68,24 @@ Item {
 
     function handleNetworks(envelope) {
         const networks = Api.apiData(envelope, "networks") || [];
-        if (!controller.scanSnapshotSeen) controller.applyNetworks(networks, true);
+        if (!controller.scan.snapshotSeen) controller.applyNetworks(networks, true);
         controller.setBackgroundStatus(networks.length + " cached networks; scanning…");
     }
 
     function handleScanStart(envelope) {
         const result = Api.apiResult(envelope, "result") || ({});
-        controller.activeScanRequestId = result.request_id || ""; controller.setBackgroundStatus(result.message || "Wi-Fi scan started…");
+        controller.scan.requestId = result.request_id || ""; controller.setBackgroundStatus(result.message || "Wi-Fi scan started…");
     }
 
     function handleConnectStart(envelope) {
         const connect = Api.apiResult(envelope, "result") || ({});
         if (connect.status !== "error") {
-            controller.activeConnectRequestId = connect.request_id || "";
-            controller.status = connect.message || ("Connecting to " + controller.connectingNetworkName + "…");
+            controller.connection.requestId = connect.request_id || "";
+            controller.status = connect.message || ("Connecting to " + controller.connection.networkName + "…");
             return;
         }
-        controller.resetConnectProgress();
-        controller.applyConnectResult(connect, connect.message || "Connection failed to start");
+        controller.connection.resetProgress();
+        controller.connection.applyResult(connect, connect.message || "Connection failed to start");
     }
 
     function handleDisconnect(envelope) {
@@ -94,7 +94,7 @@ Item {
     }
 
     function handleAdvancedSave(envelope) {
-        controller.applyAdvancedSave(Api.apiData(envelope, "result") || ({}));
+        controller.advanced.applySave(Api.apiData(envelope, "result") || ({}));
         controller.invalidateShareAvailabilityCache(); controller.refresh();
     }
 

@@ -1,7 +1,7 @@
 import QtQuick
 
 Item {
-    required property WifiController controller
+    required property var controller
 
     function accept(event, action) { action(); event.accepted = true; }
     function isEnter(key) { return key === Qt.Key_Return || key === Qt.Key_Enter; }
@@ -42,8 +42,8 @@ Item {
             [Qt.Key_Right, openDetails],
             [Qt.Key_Left, closeDetails],
             [Qt.Key_F6, controller.openHiddenNetworkPrompt],
-            [Qt.Key_F7, function () { controller.openAdvancedSettings("security"); }],
-            [Qt.Key_F8, function () { controller.openAdvancedSettings("hardware"); }],
+            [Qt.Key_F7, function () { controller.advanced.openSettings("security"); }],
+            [Qt.Key_F8, function () { controller.advanced.openSettings("hardware"); }],
             [Qt.Key_F5, controller.refresh]
         ];
     }

@@ -115,7 +115,7 @@ Item {
     }
 
     function submitNetworkPassword(controller, value) {
-        if (!controller.beginAnyConnectAction())
+        if (!controller.connection.beginAny())
             return;
         if (value.length === 0)
             return controller.status = "Enter a password for this network.";
@@ -125,7 +125,7 @@ Item {
             return controller.status = "Waiting " + Math.ceil(retryDelay / 1000) + "s before retrying; NetworkManager is temporarily ignoring this AP.";
         cancel();
         if (ap)
-            controller.runConnectTarget(ap, Presentation.networkName(ap), value);
+            controller.connection.runTarget(ap, Presentation.networkName(ap), value);
     }
 
     function submitHiddenSsid(controller, value) {
@@ -135,12 +135,12 @@ Item {
     }
 
     function submitHiddenPassword(controller, value) {
-        if (!controller.beginAnyConnectAction())
+        if (!controller.connection.beginAny())
             return;
         const ssid = hiddenSsid;
         const pass = value.length > 0 ? value : null;
         cancel();
-        controller.runConnectTarget({ ssid: ssid, ssid_bytes: [], hidden: true, security: pass !== null ? "WPA" : "--", key_mgmt: pass !== null ? "wpa-psk" : "open" }, ssid, pass);
+        controller.connection.runTarget({ ssid: ssid, ssid_bytes: [], hidden: true, security: pass !== null ? "WPA" : "--", key_mgmt: pass !== null ? "wpa-psk" : "open" }, ssid, pass);
     }
 
     function submitEnterpriseIdentity(controller, value) {
@@ -151,7 +151,7 @@ Item {
     }
 
     function submitEnterprisePassword(controller, value) {
-        if (!controller.beginAnyConnectAction())
+        if (!controller.connection.beginAny())
             return;
         if (value.length === 0)
             return controller.status = "Enter an enterprise Wi-Fi password.";
@@ -159,7 +159,7 @@ Item {
         const identity = enterpriseIdentity;
         cancel();
         if (ap && identity.length > 0)
-            controller.runConnectTarget(ap, Presentation.networkName(ap), value, identity);
+            controller.connection.runTarget(ap, Presentation.networkName(ap), value, identity);
     }
 
     function submitDaemonSecret(controller, value) {
@@ -170,7 +170,7 @@ Item {
         const save = saveSecret;
         cancel();
         if (requestId.length > 0)
-            controller.provideSecret(requestId, key, value, save);
+            controller.connection.provideSecret(requestId, key, value, save);
     }
 
     function submitForget(controller, value) {
@@ -179,7 +179,7 @@ Item {
         const ap = network;
         cancel();
         if (ap)
-            controller.executeForget(ap);
+            controller.actions.executeForget(ap);
     }
 
     function submit(controller) {

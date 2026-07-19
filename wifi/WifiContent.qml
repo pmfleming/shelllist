@@ -16,20 +16,20 @@ Rectangle {
 
     function cancelPrompt() {
         if (controller.prompt.mode === "daemon-secret" && controller.prompt.secretRequestId.length > 0)
-            controller.cancelSecret(controller.prompt.secretRequestId);
+            controller.connection.cancelSecret(controller.prompt.secretRequestId);
         controller.prompt.cancel();
     }
 
     Shortcut {
         sequence: "F7"
-        enabled: !content.controller.prompt.open && !content.controller.advancedOpen
-        onActivated: content.controller.openAdvancedSettings("security")
+        enabled: !content.controller.prompt.open && !content.controller.advanced.open
+        onActivated: content.controller.advanced.openSettings("security")
     }
 
     Shortcut {
         sequence: "F8"
-        enabled: !content.controller.prompt.open && !content.controller.advancedOpen
-        onActivated: content.controller.openAdvancedSettings("hardware")
+        enabled: !content.controller.prompt.open && !content.controller.advanced.open
+        onActivated: content.controller.advanced.openSettings("hardware")
     }
 
     Shortcut {
@@ -40,7 +40,7 @@ Rectangle {
 
     Shortcut {
         sequence: "Left"
-        enabled: content.controller.detailsOpen && !content.controller.advancedOpen && !content.controller.prompt.open
+        enabled: content.controller.detailsOpen && !content.controller.advanced.open && !content.controller.prompt.open
         autoRepeat: false
         onActivated: content.controller.navigation.closeDetails()
     }
@@ -54,14 +54,14 @@ Rectangle {
 
     Shortcut {
         sequence: "Escape"
-        enabled: content.controller.advancedOpen && !content.controller.prompt.open
+        enabled: content.controller.advanced.open && !content.controller.prompt.open
         autoRepeat: false
-        onActivated: content.controller.closeAdvancedSettings()
+        onActivated: content.controller.advanced.closeSettings()
     }
 
     Shortcut {
         sequence: "Escape"
-        enabled: !content.controller.prompt.open && !content.controller.advancedOpen
+        enabled: !content.controller.prompt.open && !content.controller.advanced.open
         autoRepeat: false
         onActivated: content.controller.closeWindowRequested()
     }

@@ -63,7 +63,7 @@ function relativeAgeLabel(seconds) {
 function activeConnectivity(controller) {
     if (!controller)
         return null;
-    return controller.networkConnectivity || (controller.activeStatus && controller.activeStatus.connectivity) || null;
+    return controller.connection.connectivity || (controller.activeStatus && controller.activeStatus.connectivity) || null;
 }
 function connectivityRequiresSignIn(connectivity) {
     return !!(connectivity && (connectivity.captive_portal || connectivity.state === "portal"));

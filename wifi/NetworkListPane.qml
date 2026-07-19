@@ -60,8 +60,8 @@ Item {
                     name: networkRow.result.title
                     selectedIndex: pane.controller.selectedIndex
                     detailsOpen: pane.controller.detailsOpen
-                    connecting: pane.controller.isConnecting(networkRow.result.payload)
-                    progressTick: pane.controller.connectingProgressTick
+                    connecting: pane.controller.connection.isConnecting(networkRow.result.payload)
+                    progressTick: pane.controller.connection.progressTick
                     onPicked: function (rowIndex) {
                         pane.controller.selectedIndex = rowIndex;
                         list.forceActiveFocus();

@@ -10,7 +10,7 @@ Item {
 
     required property WifiController controller
 
-    property var profile: controller.advancedProfile
+    property var profile: controller.advanced.profile
     property int sectionSpacing: 12
     property string macPolicy
     property bool sendHostname
@@ -35,7 +35,7 @@ Item {
     property string ipv6Search
     property bool hardwareDirty
 
-    readonly property bool securityView: controller.advancedSection === "security"
+    readonly property bool securityView: controller.advanced.section === "security"
     readonly property bool personalSecurity: String(profile.security_type || "").indexOf("Personal") >= 0
     readonly property string currentMethod: ipFamily === "ipv4" ? ipv4Method : ipv6Method
     readonly property bool currentAutoDns: ipFamily === "ipv4" ? ipv4AutoDns : ipv6AutoDns
@@ -63,8 +63,8 @@ Item {
         : ipValue(ipFamily, "Dns")
 
     clip: true
-    focus: visible && controller.advancedOpen
-    Keys.onEscapePressed: controller.closeAdvancedSettings()
+    focus: visible && controller.advanced.open
+    Keys.onEscapePressed: controller.advanced.closeSettings()
 
     function firstAddress(settings) {
         return settings && settings.addresses && settings.addresses.length > 0 ? settings.addresses[0] : ({});
@@ -181,7 +181,7 @@ Item {
 
     function saveOrigin() {
         if (securityDirty === hardwareDirty)
-            return controller.advancedSection;
+            return controller.advanced.section;
         return securityDirty ? "security" : "hardware";
     }
 
@@ -201,15 +201,15 @@ Item {
     function saveDirty() {
         if ((!securityDirty && !hardwareDirty) || !profile.path)
             return;
-        if (controller.advancedSaving || controller.advancedLoading)
+        if (controller.advanced.saving || controller.advanced.loading)
             return autoSaveTimer.restart();
         // Selecting Manual reveals an initially empty form. Keep the edit local until the
         // required address has been entered instead of sending a predictably invalid update.
         if (hardwareDirty && !hardwareSettingsReady()) {
-            controller.advancedError = "";
+            controller.advanced.error = "";
             return;
         }
-        if (!controller.saveAdvancedSettings(settingsPayload(), saveOrigin()))
+        if (!controller.advanced.save(settingsPayload(), saveOrigin()))
             return autoSaveTimer.restart();
         securityDirty = false;
         hardwareDirty = false;
@@ -250,24 +250,27 @@ Item {
     }
 
     Connections {
-        target: page.controller
+        target: page.controller.advanced
 
-        function onAdvancedSecretChanged() {
-            if (page.controller.advancedSecret.length === 0)
+        function onSecretChanged() {
+            if (page.controller.advanced.secret.length === 0)
                 return;
-            page.passwordValue = page.controller.advancedSecret;
+            page.passwordValue = page.controller.advanced.secret;
             page.passwordDirty = false;
             page.passwordRevealed = true;
         }
 
+        function onSavingChanged() {
+            if (!page.controller.advanced.saving && (page.securityDirty || page.hardwareDirty))
+                autoSaveTimer.restart();
+        }
+    }
+
+    Connections {
+        target: page.controller
         function onAdvancedSectionLeaving() {
             autoSaveTimer.stop();
             page.saveDirty();
-        }
-
-        function onAdvancedSavingChanged() {
-            if (!page.controller.advancedSaving && (page.securityDirty || page.hardwareDirty))
-                autoSaveTimer.restart();
         }
     }
 
@@ -284,7 +287,7 @@ Item {
     }
 
     Rectangle {
-        visible: page.controller.advancedError.length > 0
+        visible: page.controller.advanced.error.length > 0
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 8
@@ -298,7 +301,7 @@ Item {
         Text {
             id: errorText
             anchors.centerIn: parent
-            text: page.controller.advancedError
+            text: page.controller.advanced.error
             color: Theme.danger
             font.family: Theme.fontFamily
             font.pixelSize: 11
@@ -307,7 +310,7 @@ Item {
     }
 
     CenteredMessage {
-        visible: page.controller.advancedLoading
+        visible: page.controller.advanced.loading
         text: "Loading saved profile…"
     }
 }

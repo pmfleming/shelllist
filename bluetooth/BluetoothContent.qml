@@ -1,7 +1,4 @@
-pragma ComponentBehavior: Bound
-
 import QtQuick
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
@@ -10,7 +7,6 @@ Rectangle {
 
     required property BluetoothController controller
     required property BluetoothWindowHost windowHost
-    property bool confirmRemove: false
 
     anchors.fill: parent
     radius: Ui.Theme.windowRadius
@@ -18,26 +14,23 @@ Rectangle {
     border.color: Ui.Theme.strongBorder
     border.width: 1
 
-    function focusSearch() { search.forceActiveFocus(); }
-    function toggleDetails() { if (controller.hasSelection) controller.detailsOpen = !controller.detailsOpen; }
-    function requestRemove() { confirmRemove = true; }
-    function localFilePath(url) {
-        const value = url.toString();
-        return value.indexOf("file://") === 0 ? decodeURIComponent(value.slice(7)) : value;
+    function toggleDetails() {
+        if (controller.hasSelection)
+            controller.detailsOpen = !controller.detailsOpen;
     }
 
     Connections {
         target: content.controller
-        function onFocusSearchRequested() { Qt.callLater(content.focusSearch); }
-        function onSelectedResultChanged() {
-            content.confirmRemove = false;
-            renameInput.text = content.controller.selectedDevice.name || "";
-        }
+        function onFocusSearchRequested() { Qt.callLater(devicePane.focusSearch); }
     }
 
     Shortcut { sequence: "Up"; enabled: !content.controller.modalPromptOpen; onActivated: content.controller.moveSelection(-1) }
     Shortcut { sequence: "Down"; enabled: !content.controller.modalPromptOpen; onActivated: content.controller.moveSelection(1) }
-    Shortcut { sequence: "Enter"; enabled: !content.confirmRemove && !content.controller.modalPromptOpen && !renameInput.activeFocus; onActivated: content.controller.primarySelected() }
+    Shortcut {
+        sequence: "Enter"
+        enabled: !detailsPane.confirmRemove && !content.controller.modalPromptOpen && !detailsPane.editingName
+        onActivated: content.controller.primarySelected()
+    }
     Shortcut { sequence: "Right"; enabled: content.controller.hasSelection && !content.controller.modalPromptOpen; onActivated: content.controller.detailsOpen = true }
     Shortcut { sequence: "Left"; enabled: content.controller.detailsOpen && !content.controller.modalPromptOpen; onActivated: content.controller.detailsOpen = false }
     Shortcut { sequence: "F5"; enabled: !content.controller.modalPromptOpen; onActivated: content.controller.toggleScan() }
@@ -49,55 +42,12 @@ Rectangle {
                 content.controller.cancelActiveTransfer();
             else if (content.controller.canCancelOperation)
                 content.controller.cancelActiveOperation();
-            else if (content.confirmRemove)
-                content.confirmRemove = false;
+            else if (detailsPane.confirmRemove)
+                detailsPane.cancelRemove();
             else if (content.controller.detailsOpen)
                 content.controller.detailsOpen = false;
             else
                 content.windowHost.closeRequested();
-        }
-    }
-
-    FileDialog {
-        id: outgoingFileDialog
-        title: "Send file over Bluetooth"
-        fileMode: FileDialog.OpenFile
-        onAccepted: content.controller.sendFile(content.localFilePath(selectedFile))
-    }
-
-    component DetailValue: RowLayout {
-        required property string label
-        required property string value
-        Layout.fillWidth: true
-        Text { Layout.preferredWidth: 104; text: parent.label; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
-        Text { Layout.fillWidth: true; text: parent.value || "Unavailable"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 11; wrapMode: Text.WrapAnywhere }
-    }
-
-    component ActionButton: Rectangle {
-        id: actionButton
-        required property string label
-        property bool danger: false
-        property bool available: true
-        signal clicked
-        Layout.fillWidth: true
-        Layout.preferredHeight: 38
-        radius: Ui.Theme.cardRadius
-        color: danger ? Ui.Theme.mix(Ui.Theme.danger, Ui.Theme.surface, 0.82) : Ui.Theme.surfaceRaised
-        border.color: danger ? Ui.Theme.danger : Ui.Theme.border
-        opacity: available ? 1 : 0.45
-        Text {
-            anchors.centerIn: parent
-            text: actionButton.label
-            color: actionButton.danger ? Ui.Theme.danger : Ui.Theme.text
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: 13
-            font.bold: true
-        }
-        MouseArea {
-            anchors.fill: parent
-            enabled: actionButton.available
-            cursorShape: Qt.PointingHandCursor
-            onClicked: actionButton.clicked()
         }
     }
 
@@ -106,391 +56,13 @@ Rectangle {
         anchors.margins: 18
         spacing: 14
 
-        ColumnLayout {
-            Layout.preferredWidth: 404
-            Layout.fillHeight: true
-            spacing: 10
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 42
-                spacing: 10
-
-                Text {
-                    text: "󰂯"
-                    color: content.controller.powered ? Ui.Theme.accent : Ui.Theme.mutedText
-                    font.family: Ui.Theme.iconFontFamily
-                    font.pixelSize: 24
-                }
-                TextInput {
-                    id: search
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    text: content.controller.filterText
-                    color: Ui.Theme.text
-                    selectionColor: Ui.Theme.accent
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: 15
-                    verticalAlignment: TextInput.AlignVCenter
-                    clip: true
-                    onTextEdited: content.controller.filterText = text
-                    Keys.onPressed: function (event) {
-                        if (event.key === Qt.Key_Down) { content.controller.moveSelection(1); event.accepted = true; }
-                        else if (event.key === Qt.Key_Up) { content.controller.moveSelection(-1); event.accepted = true; }
-                        else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) { content.controller.primarySelected(); event.accepted = true; }
-                        else if (event.key === Qt.Key_Right && cursorPosition === text.length) { content.controller.detailsOpen = true; event.accepted = true; }
-                    }
-                }
-                Rectangle {
-                    Layout.preferredWidth: 56
-                    Layout.preferredHeight: 28
-                    radius: 14
-                    color: content.controller.powered ? Ui.Theme.accent : Ui.Theme.surfaceRaised
-                    border.color: content.controller.powered ? Ui.Theme.accent : Ui.Theme.border
-                    Text {
-                        anchors.centerIn: parent
-                        text: content.controller.powered ? "ON" : "OFF"
-                        color: content.controller.powered ? Ui.Theme.window : Ui.Theme.subtleText
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: 11
-                        font.bold: true
-                    }
-                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: content.controller.setPower() }
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.preferredHeight: 520
-                radius: Ui.Theme.panelRadius
-                color: Ui.Theme.surface
-                border.color: Ui.Theme.border
-                clip: true
-
-                ListView {
-                    id: deviceList
-                    anchors.fill: parent
-                    model: content.controller.filteredResults
-                    currentIndex: content.controller.selectedIndex
-                    clip: true
-                    delegate: Rectangle {
-                        id: deviceRow
-                        required property int index
-                        required property var modelData
-                        readonly property var device: modelData.payload || ({})
-                        readonly property bool selected: index === content.controller.selectedIndex
-                        width: deviceList.width
-                        height: 58
-                        color: selected ? Ui.Theme.selected : "transparent"
-                        border.color: selected ? Ui.Theme.strongBorder : "transparent"
-                        radius: selected ? Ui.Theme.cardRadius : 0
-                        RowLayout {
-                            id: rowLayout
-                            anchors.fill: parent
-                            anchors.leftMargin: 16
-                            anchors.rightMargin: 14
-                            spacing: 11
-                            Text {
-                                Layout.preferredWidth: 26
-                                text: deviceRow.device.connected ? "󰂱" : "󰂯"
-                                color: deviceRow.device.connected ? Ui.Theme.active : Ui.Theme.mutedText
-                                font.family: Ui.Theme.iconFontFamily
-                                font.pixelSize: 20
-                            }
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-                                Text { id: titleText; Layout.fillWidth: true; text: deviceRow.modelData.title; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: deviceRow.device.connected; elide: Text.ElideRight }
-                                Text { Layout.fillWidth: true; text: deviceRow.modelData.subtitle; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11; elide: Text.ElideRight }
-                            }
-                            Text {
-                                text: "󰅂"
-                                color: deviceRow.selected ? Ui.Theme.accent : Ui.Theme.mutedText
-                                font.family: Ui.Theme.iconFontFamily
-                                font.pixelSize: 17
-                            }
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: content.controller.selectedIndex = deviceRow.index
-                            onDoubleClicked: content.controller.primarySelected()
-                        }
-                    }
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    visible: deviceList.count === 0
-                    text: content.controller.powered ? "No devices · press F5 to scan" : "Bluetooth is off"
-                    color: Ui.Theme.mutedText
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: 13
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 32
-                Text { Layout.fillWidth: true; text: content.controller.status; color: content.controller.actionInFlight ? Ui.Theme.accent : Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11; elide: Text.ElideRight }
-                Text { text: content.controller.scanning ? "󰑐" : "F5 Scan"; color: Ui.Theme.mutedText; font.family: content.controller.scanning ? Ui.Theme.iconFontFamily : Ui.Theme.fontFamily; font.pixelSize: 12; NumberAnimation on rotation { running: content.controller.scanning && !Ui.Theme.noAnimations; loops: Animation.Infinite; from: 0; to: 360; duration: 900 } }
-            }
+        BluetoothDeviceListPane {
+            id: devicePane
+            controller: content.controller
         }
-
-        Rectangle {
-            visible: content.controller.detailsOpen
-            Layout.preferredWidth: 348
-            Layout.fillHeight: true
-            radius: Ui.Theme.panelRadius
-            color: Ui.Theme.surface
-            border.color: Ui.Theme.border
-
-            Flickable {
-                anchors.fill: parent
-                anchors.margins: 18
-                contentWidth: width
-                contentHeight: detailColumn.implicitHeight
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
-
-            ColumnLayout {
-                id: detailColumn
-                width: parent.width
-                spacing: 10
-
-                Text { Layout.fillWidth: true; text: content.controller.selectedResult ? content.controller.selectedResult.title : "Bluetooth device"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 20; font.bold: true; elide: Text.ElideRight }
-                Text { Layout.fillWidth: true; text: content.controller.selectedResult ? content.controller.selectedResult.subtitle : ""; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 12 }
-                Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Ui.Theme.border }
-                Text { text: "Paired        " + (content.controller.selectedDevice.paired ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
-                Text { text: "Trusted       " + (content.controller.selectedDevice.trusted ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
-                Text { text: "In range      " + (content.controller.selectedDevice.present ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
-                Text { text: "Services      " + (content.controller.selectedDevice.services_resolved ? "Resolved" : "Pending"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
-                Text { visible: !!(content.controller.selectedDevice.services && content.controller.selectedDevice.services.length); Layout.fillWidth: true; text: (content.controller.selectedDevice.services || []).map(function (service) { return service.label; }).filter(function (label, index, values) { return values.indexOf(label) === index; }).join(" · "); color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11; wrapMode: Text.WordWrap }
-                Repeater {
-                    model: content.controller.selectedDevice.battery || []
-                    delegate: Rectangle {
-                        id: batteryCard
-                        required property var modelData
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 42
-                        radius: Ui.Theme.cardRadius
-                        color: Ui.Theme.surfaceRaised
-                        border.color: Ui.Theme.border
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 10
-                            Text { Layout.fillWidth: true; text: batteryCard.modelData.label || batteryCard.modelData.component || "Battery"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 12 }
-                            Text { text: batteryCard.modelData.percentage + "%"; color: Ui.Theme.active; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: true }
-                        }
-                    }
-                }
-                Text {
-                    visible: !!content.controller.obexCapabilities.available
-                    text: content.controller.obexCapabilities.outgoing_object_push ? "File transfer  Ready" : "OBEX service   Available · sending staged"
-                    color: Ui.Theme.subtleText
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: 11
-                }
-                Text {
-                    visible: !!content.controller.activeAudioProfile.label
-                    Layout.fillWidth: true
-                    text: "Audio          " + (content.controller.activeAudioProfile.codec || content.controller.activeAudioProfile.label)
-                    color: Ui.Theme.text
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: 13
-                    elide: Text.ElideRight
-                }
-                Text {
-                    visible: Object.keys(content.controller.selectedSink).length > 0
-                    text: "Output         " + (content.controller.selectedSink.ready ? (content.controller.selectedSink.is_default ? "Ready · default" : "Ready") : "Not ready")
-                        + " · " + (content.controller.selectedSink.state || "unknown")
-                    color: content.controller.selectedSink.ready ? Ui.Theme.text : Ui.Theme.danger
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: 11
-                }
-                Text {
-                    visible: Object.keys(content.controller.selectedSource).length > 0
-                    text: "Input          " + (content.controller.selectedSource.ready ? (content.controller.selectedSource.is_default ? "Ready · default" : "Ready") : "Not ready")
-                        + " · " + (content.controller.selectedSource.state || "unknown")
-                    color: content.controller.selectedSource.ready ? Ui.Theme.text : Ui.Theme.danger
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: 11
-                }
-                Text {
-                    visible: content.controller.audioStatus.length > 0
-                    Layout.fillWidth: true
-                    text: content.controller.audioStatus
-                    color: Ui.Theme.danger
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: 10
-                    elide: Text.ElideRight
-                }
-                Text {
-                    visible: content.controller.selectedAudioProfiles.length > 0
-                    text: content.controller.selectedAudioProfiles.length + " audio profiles available"
-                    color: Ui.Theme.subtleText
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: 11
-                }
-                Rectangle {
-                    visible: audioProfileList.count > 0
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Math.min(126, audioProfileList.count * 31 + 2)
-                    radius: Ui.Theme.cardRadius
-                    color: Ui.Theme.surfaceRaised
-                    border.color: Ui.Theme.border
-                    clip: true
-                    ListView {
-                        id: audioProfileList
-                        anchors.fill: parent
-                        anchors.margins: 1
-                        model: content.controller.selectedAudioProfiles
-                        delegate: Rectangle {
-                            id: audioProfileRow
-                            required property var modelData
-                            readonly property bool active: modelData.key === content.controller.selectedAudio.active_profile_key
-                            width: audioProfileList.width
-                            height: 31
-                            color: active ? Ui.Theme.selected : "transparent"
-                            opacity: modelData.available ? 1 : 0.45
-                            Text {
-                                anchors.fill: parent
-                                anchors.leftMargin: 10
-                                anchors.rightMargin: 10
-                                text: (audioProfileRow.active ? "✓  " : "   ") + audioProfileRow.modelData.label
-                                verticalAlignment: Text.AlignVCenter
-                                color: audioProfileRow.active ? Ui.Theme.accent : Ui.Theme.text
-                                font.family: Ui.Theme.fontFamily
-                                font.pixelSize: 11
-                                elide: Text.ElideRight
-                            }
-                            MouseArea {
-                                anchors.fill: parent
-                                enabled: audioProfileRow.modelData.available && !audioProfileRow.active && !content.controller.actionInFlight
-                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                onClicked: content.controller.setAudioProfile(audioProfileRow.modelData)
-                            }
-                        }
-                    }
-                }
-                Text { text: "Device name"; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 38
-                    radius: Ui.Theme.cardRadius
-                    color: Ui.Theme.surfaceRaised
-                    border.color: renameInput.activeFocus ? Ui.Theme.accent : Ui.Theme.border
-                    TextInput {
-                        id: renameInput
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        text: content.controller.selectedDevice.name || ""
-                        maximumLength: 248
-                        verticalAlignment: TextInput.AlignVCenter
-                        color: Ui.Theme.text
-                        selectionColor: Ui.Theme.accent
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: 13
-                        clip: true
-                        onAccepted: content.controller.renameSelected(text)
-                    }
-                }
-                ActionButton {
-                    label: "Save device name"
-                    available: !!(content.controller.selectedDevice.capabilities && content.controller.selectedDevice.capabilities.can_rename)
-                        && renameInput.text.trim().length > 0
-                        && renameInput.text.trim() !== (content.controller.selectedDevice.name || "")
-                        && !content.controller.actionInFlight
-                    onClicked: content.controller.renameSelected(renameInput.text)
-                }
-                ActionButton {
-                    visible: !!content.controller.obexCapabilities.outgoing_object_push && !content.controller.canCancelTransfer
-                    label: "Send file"
-                    available: !!(content.controller.selectedDevice.capabilities && content.controller.selectedDevice.capabilities.can_send_file) && !content.controller.actionInFlight
-                    onClicked: outgoingFileDialog.open()
-                }
-                ActionButton {
-                    visible: content.controller.canCancelTransfer
-                    label: "Cancel " + ((content.controller.activeTransfer || ({})).file_name || "transfer")
-                    danger: true
-                    onClicked: content.controller.cancelActiveTransfer()
-                }
-                ActionButton { visible: !content.controller.canCancelOperation && !content.controller.canCancelTransfer; label: content.controller.selectedDevice.connected ? "Disconnect" : (content.controller.selectedDevice.paired ? "Connect" : "Pair"); available: content.controller.hasSelection && !content.controller.actionInFlight; onClicked: content.controller.primarySelected() }
-                ActionButton { visible: content.controller.canCancelOperation; label: "Cancel operation"; danger: true; onClicked: content.controller.cancelActiveOperation() }
-                ActionButton { label: (content.controller.selectedDevice.trusted ? "Disable" : "Enable") + " trust"; available: !!(content.controller.selectedDevice.capabilities && content.controller.selectedDevice.capabilities.can_trust); onClicked: content.controller.triggerAction("trusted") }
-                ActionButton { visible: content.controller.selectedDevice.wake_allowed !== null && content.controller.selectedDevice.wake_allowed !== undefined; label: (content.controller.selectedDevice.wake_allowed ? "Disable" : "Enable") + " wake"; available: !!(content.controller.selectedDevice.capabilities && content.controller.selectedDevice.capabilities.can_wake); onClicked: content.controller.triggerAction("wake") }
-                ActionButton { label: content.controller.selectedDevice.blocked ? "Unblock device" : "Block device"; danger: !content.controller.selectedDevice.blocked; available: !!(content.controller.selectedDevice.capabilities && content.controller.selectedDevice.capabilities.can_block); onClicked: content.controller.triggerAction("blocked") }
-                ActionButton { visible: !content.confirmRemove; label: "Remove device"; danger: true; available: !!(content.controller.selectedDevice.capabilities && content.controller.selectedDevice.capabilities.can_remove); onClicked: content.requestRemove() }
-                RowLayout {
-                    visible: content.confirmRemove
-                    Layout.fillWidth: true
-                    ActionButton { label: "Cancel"; onClicked: content.confirmRemove = false }
-                    ActionButton { label: "Remove"; danger: true; onClicked: { content.confirmRemove = false; content.controller.triggerAction("remove"); } }
-                }
-                Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Ui.Theme.border }
-                Text { text: "Technical details"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: true }
-                DetailValue { label: "Address"; value: content.controller.selectedDevice.address || "" }
-                DetailValue { label: "Address type"; value: content.controller.selectedDevice.address_type || "" }
-                DetailValue { label: "Adapter"; value: (content.controller.selectedAdapter.alias || content.controller.selectedAdapter.name || "") + " · " + (content.controller.selectedAdapter.address || "") }
-                DetailValue { label: "RSSI"; value: content.controller.selectedDevice.rssi === null || content.controller.selectedDevice.rssi === undefined ? "Unavailable" : content.controller.selectedDevice.rssi + " dBm" }
-                DetailValue { label: "Last seen"; value: content.controller.selectedDevice.last_seen_ms ? new Date(content.controller.selectedDevice.last_seen_ms).toLocaleString() : "Not observed this session" }
-                DetailValue { label: "Modalias"; value: content.controller.selectedDevice.modalias || "" }
-                DetailValue { label: "UUIDs"; value: (content.controller.selectedDevice.uuids || []).join("\n") }
-
-                Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Ui.Theme.border }
-                Text { text: "Adapter settings"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: true }
-                Repeater {
-                    model: content.controller.adapters
-                    delegate: ActionButton {
-                        required property var modelData
-                        label: (modelData.key === content.controller.selectedAdapter.key ? "✓  " : "") + (modelData.alias || modelData.name)
-                        onClicked: content.controller.preferredAdapterKey = modelData.key
-                    }
-                }
-                DetailValue { label: "Controller"; value: content.controller.selectedAdapter.name || "" }
-                Text { text: "Adapter alias"; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 38
-                    radius: Ui.Theme.cardRadius
-                    color: Ui.Theme.surfaceRaised
-                    border.color: adapterAliasInput.activeFocus ? Ui.Theme.accent : Ui.Theme.border
-                    TextInput {
-                        id: adapterAliasInput
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        text: content.controller.selectedAdapter.alias || ""
-                        maximumLength: 248
-                        verticalAlignment: TextInput.AlignVCenter
-                        color: Ui.Theme.text
-                        selectionColor: Ui.Theme.accent
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: 13
-                        onAccepted: content.controller.adapterOperation("set-alias", { alias: text.trim() })
-                    }
-                }
-                ActionButton { label: "Save adapter alias"; available: adapterAliasInput.text.trim().length > 0 && adapterAliasInput.text.trim() !== (content.controller.selectedAdapter.alias || ""); onClicked: content.controller.adapterOperation("set-alias", { alias: adapterAliasInput.text.trim() }) }
-                ActionButton { label: content.controller.selectedAdapter.discoverable ? "Disable discoverable" : "Enable discoverable"; available: !!content.controller.selectedAdapter.key && content.controller.selectedAdapter.powered; onClicked: content.controller.adapterOperation("set-discoverable", { discoverable: !content.controller.selectedAdapter.discoverable }) }
-                ActionButton { label: content.controller.selectedAdapter.pairable ? "Disable incoming pairing" : "Enable incoming pairing"; available: !!content.controller.selectedAdapter.key; onClicked: content.controller.adapterOperation("set-pairable", { pairable: !content.controller.selectedAdapter.pairable }) }
-                ActionButton { label: (content.controller.trustAfterPair ? "✓  " : "") + "Trust after pairing"; onClicked: content.controller.trustAfterPair = !content.controller.trustAfterPair }
-                Text { text: "Discoverable timeout (seconds)"; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
-                Rectangle {
-                    Layout.fillWidth: true; Layout.preferredHeight: 36; radius: Ui.Theme.cardRadius; color: Ui.Theme.surfaceRaised; border.color: Ui.Theme.border
-                    TextInput { id: discoverableTimeoutInput; anchors.fill: parent; anchors.margins: 10; text: String(content.controller.selectedAdapter.discoverable_timeout || 0); inputMethodHints: Qt.ImhDigitsOnly; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; verticalAlignment: TextInput.AlignVCenter; onAccepted: content.controller.adapterOperation("set-discoverable-timeout", { timeout: Number(text) }) }
-                }
-                ActionButton { label: "Save discoverable timeout"; onClicked: content.controller.adapterOperation("set-discoverable-timeout", { timeout: Number(discoverableTimeoutInput.text) }) }
-                Text { text: "Pairable timeout (seconds)"; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
-                Rectangle {
-                    Layout.fillWidth: true; Layout.preferredHeight: 36; radius: Ui.Theme.cardRadius; color: Ui.Theme.surfaceRaised; border.color: Ui.Theme.border
-                    TextInput { id: pairableTimeoutInput; anchors.fill: parent; anchors.margins: 10; text: String(content.controller.selectedAdapter.pairable_timeout || 0); inputMethodHints: Qt.ImhDigitsOnly; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; verticalAlignment: TextInput.AlignVCenter; onAccepted: content.controller.adapterOperation("set-pairable-timeout", { timeout: Number(text) }) }
-                }
-                ActionButton { label: "Save pairable timeout"; onClicked: content.controller.adapterOperation("set-pairable-timeout", { timeout: Number(pairableTimeoutInput.text) }) }
-                DetailValue { label: "Adapter modalias"; value: content.controller.selectedAdapter.modalias || "" }
-                Text { Layout.fillWidth: true; text: content.controller.canCancelTransfer ? "Esc: cancel file transfer" : (content.controller.canCancelOperation ? "Esc: cancel operation" : "Enter: primary action   Left: close details   Esc: close"); color: Ui.Theme.mutedText; font.family: Ui.Theme.fontFamily; font.pixelSize: 10; wrapMode: Text.WordWrap }
-            }
-            }
+        BluetoothDeviceDetails {
+            id: detailsPane
+            controller: content.controller
         }
     }
 

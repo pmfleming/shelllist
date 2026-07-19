@@ -11,162 +11,166 @@ Item {
     property var transfers: ({})
     property var finishedTransfers: ({})
     property var scans: ({})
+
     // Incoming OBEX authorization can arrive while the popup is hidden.
     readonly property bool active: true
     readonly property bool running: Object.keys(pending).length > 0 || Object.keys(operations).length > 0 || Object.keys(transfers).length > 0
+    readonly property var eventHandlers: {
+        const handlers = ({});
+        handlers[BtApi.streams.pairing] = backend.handlePairingEvent;
+        handlers[BtApi.streams.scan] = backend.handleScanEvent;
+        handlers[BtApi.streams.obex] = backend.handleTransferEvent;
+        handlers[BtApi.streams.audio] = backend.handleAudioEvent;
+        handlers[BtApi.streams.operation] = backend.handleOperationEvent;
+        return handlers;
+    }
 
+    function copyWithout(values, key) {
+        const result = Object.assign({}, values);
+        delete result[key];
+        return result;
+    }
+    function copyWith(values, key, value) {
+        const result = Object.assign({}, values);
+        result[key] = value;
+        return result;
+    }
+    function lifecycleState(item, activeItems, finishedItems, state, terminalStates) {
+        const id = item.request_id;
+        if (!id)
+            return { active: activeItems, finished: finishedItems };
+        if (!terminalStates.includes(state))
+            return { active: copyWith(activeItems, id, item), finished: finishedItems };
+        return {
+            active: copyWithout(activeItems, id),
+            finished: activeItems[id] ? finishedItems : copyWith(finishedItems, id, true)
+        };
+    }
     function isPending(id) { return !!pending[id]; }
     function call(id, method, params) {
         if (isPending(id))
             return false;
-        pending[id] = true;
-        pending = Object.assign({}, pending);
+        pending = copyWith(pending, id, true);
         client.call(id, method, params);
         return true;
     }
     function isSessionControl(id) { return id === "session-subscribe" || id.indexOf("cancel-subscription-") === 0 || id.indexOf("shutdown-") === 0; }
+    function responseError(envelope, transportError) {
+        if (transportError.length > 0)
+            return transportError;
+        if (!envelope || envelope.protocol !== "bt-api" || envelope.version !== 1)
+            return "bt-daemon returned an incompatible response";
+        if (!envelope.ok)
+            return (envelope.error && envelope.error.message) || "Bluetooth operation failed";
+        return "";
+    }
+    function cancellationStatus(id) {
+        if (id.indexOf("cancel-transfer-") === 0)
+            return "Cancelling file transfer…";
+        if (id.indexOf("cancel-operation-") === 0)
+            return "Cancelling Bluetooth operation…";
+        return "";
+    }
     function finish(id, envelope, transportError) {
         if (isSessionControl(id))
             return;
-        delete pending[id];
-        pending = Object.assign({}, pending);
-        if (transportError.length > 0) {
-            controller.status = transportError;
+        pending = copyWithout(pending, id);
+        const error = responseError(envelope, transportError);
+        if (error.length > 0) {
+            controller.status = error;
             return;
         }
-        if (!envelope || envelope.protocol !== "bt-api" || envelope.version !== 1) {
-            controller.status = "bt-daemon returned an incompatible response";
+        const cancellation = cancellationStatus(id);
+        if (cancellation.length > 0) {
+            controller.status = cancellation;
             return;
         }
-        if (!envelope.ok) {
-            controller.status = (envelope.error && envelope.error.message) || "Bluetooth operation failed";
-            return;
-        }
-        if (id.indexOf("cancel-transfer-") === 0) {
-            controller.status = "Cancelling file transfer…";
-            return;
-        }
-        if (id.indexOf("cancel-operation-") === 0) {
-            controller.status = "Cancelling Bluetooth operation…";
-            return;
-        }
-        const scan = envelope.data ? envelope.data.scan : null;
-        if (scan) {
-            scans[scan.request_id] = scan;
-            scans = Object.assign({}, scans);
-            controller.handleScanEvent(scan);
-            if (envelope.data.snapshot)
-                controller.applySnapshot(envelope.data.snapshot);
-            return;
-        }
-        const transfer = envelope.data ? envelope.data.transfer : null;
-        if (transfer) {
-            if (finishedTransfers[transfer.request_id]) {
-                delete finishedTransfers[transfer.request_id];
-                finishedTransfers = Object.assign({}, finishedTransfers);
-                return;
-            }
-            transfers[transfer.request_id] = transfer;
-            transfers = Object.assign({}, transfers);
-            controller.handleObexTransfer(transfer);
-            return;
-        }
-        const obex = envelope.data ? envelope.data.obex : null;
-        if (obex) {
-            controller.applyObexSnapshot(obex);
-            return;
-        }
-        const audioDevices = envelope.data ? envelope.data.audio_devices : null;
-        if (audioDevices) {
-            controller.applyAudioSnapshot(audioDevices);
+        applyResponse(id, envelope.data || ({}));
+    }
+    function applyResponse(id, data) {
+        if (data.scan)
+            return acceptScan(data.scan, data.snapshot);
+        if (data.transfer)
+            return acceptTransfer(data.transfer);
+        if (data.obex)
+            return controller.applyObexSnapshot(data.obex);
+        if (data.audio_devices) {
+            controller.applyAudioSnapshot(data.audio_devices);
             if (id === "audio-set-profile")
                 controller.status = "Bluetooth audio profile updated";
             return;
         }
-        const operation = envelope.data ? envelope.data.operation : null;
-        if (operation) {
-            if (finishedOperations[operation.request_id]) {
-                delete finishedOperations[operation.request_id];
-                finishedOperations = Object.assign({}, finishedOperations);
-                return;
-            }
-            operations[operation.request_id] = operation;
-            operations = Object.assign({}, operations);
-            controller.handleOperationAccepted(operation);
-            return;
-        }
-        const snapshot = envelope.data ? envelope.data.snapshot : null;
-        if (snapshot)
-            controller.applySnapshot(snapshot);
+        if (data.operation)
+            return acceptOperation(data.operation);
+        if (data.snapshot)
+            controller.applySnapshot(data.snapshot);
         if (id !== "snapshot")
             controller.status = controller.statusForCompletedCall(id);
+    }
+    function acceptScan(scan, snapshot) {
+        scans = copyWith(scans, scan.request_id, scan);
+        controller.handleScanEvent(scan);
+        if (snapshot)
+            controller.applySnapshot(snapshot);
+    }
+    function acceptTransfer(transfer) {
+        if (finishedTransfers[transfer.request_id]) {
+            finishedTransfers = copyWithout(finishedTransfers, transfer.request_id);
+            return;
+        }
+        transfers = copyWith(transfers, transfer.request_id, transfer);
+        controller.handleObexTransfer(transfer);
+    }
+    function acceptOperation(operation) {
+        if (finishedOperations[operation.request_id]) {
+            finishedOperations = copyWithout(finishedOperations, operation.request_id);
+            return;
+        }
+        operations = copyWith(operations, operation.request_id, operation);
+        controller.handleOperationAccepted(operation);
     }
 
     function handleEvent(event) {
         if (!event || event.protocol !== "bt-api" || event.version !== 1)
             return;
-        if (event.stream === BtApi.streams.pairing) {
-            controller.handlePairingEvent(event);
-            return;
-        }
-        if (event.stream === BtApi.streams.scan) {
-            const scan = event.data || ({});
-            if (scan.request_id) {
-                if (["completed", "failed", "cancelled"].includes(scan.state))
-                    delete scans[scan.request_id];
-                else
-                    scans[scan.request_id] = scan;
-                scans = Object.assign({}, scans);
-            }
-            controller.handleScanEvent(scan);
-            return;
-        }
-        if (event.stream === BtApi.streams.obex) {
-            const transfer = event.data || ({});
-            if (transfer.request_id) {
-                if (transfer.status === "complete" || transfer.status === "cancelled" || transfer.status === "error") {
-                    if (!transfers[transfer.request_id]) {
-                        finishedTransfers[transfer.request_id] = true;
-                        finishedTransfers = Object.assign({}, finishedTransfers);
-                    }
-                    delete transfers[transfer.request_id];
-                } else
-                    transfers[transfer.request_id] = transfer;
-                transfers = Object.assign({}, transfers);
-            }
-            controller.handleObexTransfer(transfer);
-            return;
-        }
-        if (event.stream === BtApi.streams.audio) {
-            if (event.event === "unavailable")
-                controller.audioStatus = (event.error && event.error.message) || "Bluetooth audio is unavailable";
-            else
-                controller.applyAudioSnapshot((event.data && event.data.audio_devices) || []);
-            return;
-        }
-        if (event.stream === BtApi.streams.operation) {
-            const operation = event.data || ({});
-            if (operation.request_id) {
-                if (operation.state === "completed" || operation.state === "failed" || operation.state === "cancelled") {
-                    if (!operations[operation.request_id]) {
-                        finishedOperations[operation.request_id] = true;
-                        finishedOperations = Object.assign({}, finishedOperations);
-                    }
-                    delete operations[operation.request_id];
-                } else
-                    operations[operation.request_id] = operation;
-                operations = Object.assign({}, operations);
-            }
-            controller.handleOperationEvent(operation);
+        const handler = eventHandlers[event.stream];
+        if (handler) {
+            handler(event);
             return;
         }
         if (event.event === "unavailable") {
             controller.status = (event.error && event.error.message) || "BlueZ is unavailable";
             return;
         }
-        const snapshot = event.data ? event.data.snapshot : null;
-        if (snapshot)
-            controller.applySnapshot(snapshot);
+        if (event.data && event.data.snapshot)
+            controller.applySnapshot(event.data.snapshot);
+    }
+    function handlePairingEvent(event) { controller.handlePairingEvent(event); }
+    function handleScanEvent(event) {
+        const scan = event.data || ({});
+        if (scan.request_id)
+            scans = ["completed", "failed", "cancelled"].includes(scan.state) ? copyWithout(scans, scan.request_id) : copyWith(scans, scan.request_id, scan);
+        controller.handleScanEvent(scan);
+    }
+    function handleTransferEvent(event) {
+        const transfer = event.data || ({});
+        const next = lifecycleState(transfer, transfers, finishedTransfers, transfer.status, ["complete", "cancelled", "error"]);
+        transfers = next.active;
+        finishedTransfers = next.finished;
+        controller.handleObexTransfer(transfer);
+    }
+    function handleAudioEvent(event) {
+        if (event.event === "unavailable")
+            controller.audioStatus = (event.error && event.error.message) || "Bluetooth audio is unavailable";
+        else
+            controller.applyAudioSnapshot((event.data && event.data.audio_devices) || []);
+    }
+    function handleOperationEvent(event) {
+        const operation = event.data || ({});
+        const next = lifecycleState(operation, operations, finishedOperations, operation.state, ["completed", "failed", "cancelled"]);
+        operations = next.active;
+        finishedOperations = next.finished;
+        controller.handleOperationEvent(operation);
     }
 
     function refresh() { return call("snapshot", BtApi.methods.snapshot, {}); }
@@ -190,8 +194,8 @@ Item {
         return call("scan-start", BtApi.methods.scan, { enabled: true, adapter_key: adapterKey || null, timeout_ms: 15000 });
     }
     function adapterOperation(operation, adapter, values) {
-        const params = Object.assign({ key: adapter.key, operation: operation }, values || ({}));
-        return call("adapter-" + operation, BtApi.methods.adapterOperation, params);
+        return call("adapter-" + operation, BtApi.methods.adapterOperation,
+            Object.assign({ key: adapter.key, operation: operation }, values || ({})));
     }
     function cancelOperation(requestId) {
         if (!requestId || !operations[requestId])
@@ -206,8 +210,8 @@ Item {
         return call("pairing-response", BtApi.methods.pairingRespond, params);
     }
     function deviceOperation(operation, device, values) {
-        const params = Object.assign({ key: device.key, operation: operation }, values || ({}));
-        return call("device-" + operation, BtApi.methods.deviceOperation, params);
+        return call("device-" + operation, BtApi.methods.deviceOperation,
+            Object.assign({ key: device.key, operation: operation }, values || ({})));
     }
 
     BtDaemonClient {
