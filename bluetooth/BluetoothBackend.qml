@@ -8,8 +8,10 @@ Item {
     property var pending: ({})
     property var operations: ({})
     property var finishedOperations: ({})
-    readonly property bool active: controller.uiActive || Object.keys(pending).length > 0 || Object.keys(operations).length > 0
-    readonly property bool running: Object.keys(pending).length > 0 || Object.keys(operations).length > 0
+    property var transfers: ({})
+    property var finishedTransfers: ({})
+    readonly property bool active: controller.uiActive || Object.keys(pending).length > 0 || Object.keys(operations).length > 0 || Object.keys(transfers).length > 0
+    readonly property bool running: Object.keys(pending).length > 0 || Object.keys(operations).length > 0 || Object.keys(transfers).length > 0
 
     function isPending(id) { return !!pending[id]; }
     function call(id, method, params) {
@@ -38,8 +40,24 @@ Item {
             controller.status = (envelope.error && envelope.error.message) || "Bluetooth operation failed";
             return;
         }
+        if (id.indexOf("cancel-transfer-") === 0) {
+            controller.status = "Cancelling file transfer…";
+            return;
+        }
         if (id.indexOf("cancel-operation-") === 0) {
             controller.status = "Cancelling Bluetooth operation…";
+            return;
+        }
+        const transfer = envelope.data ? envelope.data.transfer : null;
+        if (transfer) {
+            if (finishedTransfers[transfer.request_id]) {
+                delete finishedTransfers[transfer.request_id];
+                finishedTransfers = Object.assign({}, finishedTransfers);
+                return;
+            }
+            transfers[transfer.request_id] = transfer;
+            transfers = Object.assign({}, transfers);
+            controller.handleObexTransfer(transfer);
             return;
         }
         const obex = envelope.data ? envelope.data.obex : null;
@@ -80,6 +98,22 @@ Item {
             controller.handlePairingEvent(event);
             return;
         }
+        if (event.stream === BtApi.streams.obex) {
+            const transfer = event.data || ({});
+            if (transfer.request_id) {
+                if (transfer.status === "complete" || transfer.status === "cancelled" || transfer.status === "error") {
+                    if (!transfers[transfer.request_id]) {
+                        finishedTransfers[transfer.request_id] = true;
+                        finishedTransfers = Object.assign({}, finishedTransfers);
+                    }
+                    delete transfers[transfer.request_id];
+                } else
+                    transfers[transfer.request_id] = transfer;
+                transfers = Object.assign({}, transfers);
+            }
+            controller.handleObexTransfer(transfer);
+            return;
+        }
         if (event.stream === BtApi.streams.audio) {
             if (event.event === "unavailable")
                 controller.audioStatus = (event.error && event.error.message) || "Bluetooth audio is unavailable";
@@ -114,6 +148,13 @@ Item {
 
     function refresh() { return call("snapshot", BtApi.methods.snapshot, {}); }
     function refreshObex() { return call("obex-snapshot", BtApi.methods.obexSnapshot, {}); }
+    function sendFile(deviceKey, path) { return call("obex-send", BtApi.methods.obexSend, { device_key: deviceKey, path: path }); }
+    function cancelTransfer(requestId) {
+        if (!requestId || !transfers[requestId])
+            return false;
+        client.cancel("cancel-transfer-" + requestId, requestId);
+        return true;
+    }
     function refreshAudio() { return call("audio-snapshot", BtApi.methods.audioSnapshot, {}); }
     function setAudioProfile(deviceKey, profileKey) { return call("audio-set-profile", BtApi.methods.audioSetProfile, { device_key: deviceKey, profile_key: profileKey }); }
     function setPowered(powered) { return call("power", BtApi.methods.setPowered, { powered: powered }); }
@@ -143,6 +184,8 @@ Item {
         onTransportFailed: function (message) {
             backend.operations = ({});
             backend.finishedOperations = ({});
+            backend.transfers = ({});
+            backend.finishedTransfers = ({});
             backend.controller.handleTransportFailure(message);
         }
     }

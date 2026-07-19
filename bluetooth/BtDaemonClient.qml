@@ -85,7 +85,7 @@ Item {
         stderr: StdioCollector { id: processError; waitForEnd: true }
         onStarted: {
             client.ready = true;
-            client.send({ id: "session-subscribe", op: "subscribe", streams: [BtApi.streams.changed, BtApi.streams.pairing, BtApi.streams.operation, BtApi.streams.audio] });
+            client.send({ id: "session-subscribe", op: "subscribe", streams: [BtApi.streams.changed, BtApi.streams.pairing, BtApi.streams.operation, BtApi.streams.audio, BtApi.streams.obex] });
             client.flushQueue();
         }
         onExited: function (exitCode) { // qmllint disable signal-handler-parameters

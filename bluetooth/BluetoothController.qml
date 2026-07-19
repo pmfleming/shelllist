@@ -17,6 +17,7 @@ Item {
     property var obexCapabilities: ({})
     property var pairingPrompt: null
     property var activeOperation: null
+    property var activeTransfer: null
     property string pairingInput: ""
     property string status: "Loading Bluetooth devices…"
     readonly property bool actionInFlight: backend.running
@@ -27,6 +28,7 @@ Item {
     readonly property var activeAudioProfile: (selectedAudio.profiles || []).find(function (profile) { return profile.key === selectedAudio.active_profile_key; }) || ({})
     readonly property bool hasSelection: filteredResults.length > 0
     readonly property bool pairingPromptOpen: !!pairingPrompt
+    readonly property bool canCancelTransfer: !!activeTransfer && !["complete", "cancelled", "error"].includes(activeTransfer.status)
     readonly property bool canCancelOperation: !!activeOperation && (activeOperation.state === "queued" || activeOperation.state === "running")
     readonly property bool powered: adapters.some(function (adapter) { return adapter.powered; })
     readonly property bool scanning: adapters.some(function (adapter) { return adapter.discovering; })
@@ -56,6 +58,7 @@ Item {
     function handleTransportFailure(message) {
         scanRequested = false;
         activeOperation = null;
+        activeTransfer = null;
         status = message;
     }
     function refresh() {
@@ -105,6 +108,36 @@ Item {
         status = scanning ? "Stopping Bluetooth scan…" : "Scanning for Bluetooth devices…";
         scanRequested = true;
         backend.setScanning(!scanning);
+    }
+    function sendFile(path) {
+        if (!hasSelection || !path || actionInFlight || !obexCapabilities.outgoing_object_push)
+            return false;
+        status = "Starting file transfer to " + selectedDevice.name + "…";
+        return backend.sendFile(selectedDevice.key, path);
+    }
+    function handleObexTransfer(transfer) {
+        if (!transfer || !transfer.request_id)
+            return;
+        if (["complete", "cancelled", "error"].includes(transfer.status)) {
+            if (activeTransfer && activeTransfer.request_id === transfer.request_id)
+                activeTransfer = null;
+            if (transfer.status === "complete")
+                status = transfer.file_name + " sent";
+            else if (transfer.status === "cancelled")
+                status = "File transfer cancelled";
+            else
+                status = (transfer.error && transfer.error.message) || "File transfer failed";
+            return;
+        }
+        activeTransfer = transfer;
+        const percentage = transfer.size > 0 ? Math.floor(transfer.transferred * 100 / transfer.size) : 0;
+        status = "Sending " + transfer.file_name + (transfer.size > 0 ? " · " + percentage + "%" : "…");
+    }
+    function cancelActiveTransfer() {
+        if (!canCancelTransfer)
+            return false;
+        status = "Cancelling file transfer…";
+        return backend.cancelTransfer(activeTransfer.request_id);
     }
     function handleOperationAccepted(operation) {
         if (!activeOperation || activeOperation.request_id !== operation.request_id)

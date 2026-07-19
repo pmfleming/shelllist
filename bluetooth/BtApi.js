@@ -4,6 +4,7 @@ var streams = {
     changed: "bluetooth.changed",
     pairing: "pairing.request",
     audio: "bluetooth.audio.changed",
+    obex: "bluetooth.obex.transfer",
     operation: "bluetooth.operation"
 };
 
@@ -12,6 +13,7 @@ var methods = {
     setPowered: "bluetooth.setPowered",
     scan: "bluetooth.scan",
     obexSnapshot: "bluetooth.obex.snapshot",
+    obexSend: "bluetooth.obex.send",
     audioSnapshot: "bluetooth.audio.snapshot",
     audioSetProfile: "bluetooth.audio.setProfile",
     pairingRespond: "bluetooth.pairing.respond",
