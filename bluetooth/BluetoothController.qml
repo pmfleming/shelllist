@@ -12,6 +12,7 @@ Item {
     property bool detailsOpen: false
     property bool scanRequested: false
     property var adapters: []
+    property var audioDevices: []
     property var pairingPrompt: null
     property var activeOperation: null
     property string pairingInput: ""
@@ -20,6 +21,8 @@ Item {
     readonly property var filteredResults: results.visibleResults
     readonly property var selectedResult: results.selected()
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
+    readonly property var selectedAudio: audioDevices.find(function (audio) { return audio.device_key === selectedDevice.key; }) || ({})
+    readonly property var activeAudioProfile: (selectedAudio.profiles || []).find(function (profile) { return profile.key === selectedAudio.active_profile_key; }) || ({})
     readonly property bool hasSelection: filteredResults.length > 0
     readonly property bool pairingPromptOpen: !!pairingPrompt
     readonly property bool canCancelOperation: !!activeOperation && (activeOperation.state === "queued" || activeOperation.state === "running")
@@ -31,6 +34,15 @@ Item {
 
     signal closeWindowRequested
     signal focusSearchRequested
+
+    onDetailsOpenChanged: {
+        if (detailsOpen && selectedDevice.connected)
+            backend.refreshAudio();
+    }
+    onSelectedResultChanged: {
+        if (detailsOpen && selectedDevice.connected)
+            backend.refreshAudio();
+    }
 
     function activateUi(workspaceId) {
         uiActive = true;
@@ -55,6 +67,9 @@ Item {
     function refresh() {
         status = scanning ? "Scanning for Bluetooth devices…" : "Refreshing Bluetooth devices…";
         backend.refresh();
+    }
+    function applyAudioSnapshot(devices) {
+        audioDevices = devices || [];
     }
     function applySnapshot(snapshot) {
         adapters = snapshot.adapters || [];

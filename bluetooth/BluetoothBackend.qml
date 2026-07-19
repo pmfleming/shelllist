@@ -42,6 +42,11 @@ Item {
             controller.status = "Cancelling Bluetooth operation…";
             return;
         }
+        const audioDevices = envelope.data ? envelope.data.audio_devices : null;
+        if (audioDevices) {
+            controller.applyAudioSnapshot(audioDevices);
+            return;
+        }
         const operation = envelope.data ? envelope.data.operation : null;
         if (operation) {
             if (finishedOperations[operation.request_id]) {
@@ -94,6 +99,7 @@ Item {
     }
 
     function refresh() { return call("snapshot", BtApi.methods.snapshot, {}); }
+    function refreshAudio() { return call("audio-snapshot", BtApi.methods.audioSnapshot, {}); }
     function setPowered(powered) { return call("power", BtApi.methods.setPowered, { powered: powered }); }
     function setScanning(enabled) { return call(enabled ? "scan-start" : "scan-stop", BtApi.methods.scan, { enabled: enabled }); }
     function cancelOperation(requestId) {

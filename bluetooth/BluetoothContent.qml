@@ -233,6 +233,22 @@ Rectangle {
                 Text { text: "Paired        " + (content.controller.selectedDevice.paired ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
                 Text { text: "Trusted       " + (content.controller.selectedDevice.trusted ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
                 Text { text: "In range      " + (content.controller.selectedDevice.present ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
+                Text {
+                    visible: !!content.controller.activeAudioProfile.label
+                    Layout.fillWidth: true
+                    text: "Audio          " + (content.controller.activeAudioProfile.codec || content.controller.activeAudioProfile.label)
+                    color: Ui.Theme.text
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: 13
+                    elide: Text.ElideRight
+                }
+                Text {
+                    visible: !!(content.controller.selectedAudio.profiles && content.controller.selectedAudio.profiles.length)
+                    text: content.controller.selectedAudio.profiles.length + " audio profiles available"
+                    color: Ui.Theme.subtleText
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: 11
+                }
                 Text { text: "Device name"; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
                 Rectangle {
                     Layout.fillWidth: true
