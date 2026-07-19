@@ -162,6 +162,7 @@ Rectangle {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.preferredHeight: 520
                 radius: Ui.Theme.panelRadius
                 color: Ui.Theme.surface
                 border.color: Ui.Theme.border
@@ -179,13 +180,13 @@ Rectangle {
                         required property var modelData
                         readonly property var device: modelData.payload || ({})
                         readonly property bool selected: index === content.controller.selectedIndex
-                        width: ListView.view.width
+                        width: deviceList.width
                         height: 58
                         color: selected ? Ui.Theme.selected : "transparent"
                         border.color: selected ? Ui.Theme.strongBorder : "transparent"
                         radius: selected ? Ui.Theme.cardRadius : 0
-
                         RowLayout {
+                            id: rowLayout
                             anchors.fill: parent
                             anchors.leftMargin: 16
                             anchors.rightMargin: 14
@@ -200,7 +201,7 @@ Rectangle {
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 2
-                                Text { Layout.fillWidth: true; text: deviceRow.modelData.title; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: deviceRow.device.connected; elide: Text.ElideRight }
+                                Text { id: titleText; Layout.fillWidth: true; text: deviceRow.modelData.title; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: deviceRow.device.connected; elide: Text.ElideRight }
                                 Text { Layout.fillWidth: true; text: deviceRow.modelData.subtitle; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11; elide: Text.ElideRight }
                             }
                             Text {
@@ -300,18 +301,18 @@ Rectangle {
                     elide: Text.ElideRight
                 }
                 Text {
-                    visible: !!content.controller.selectedAudio.sink
-                    text: "Output         " + (content.controller.selectedAudio.sink.ready ? (content.controller.selectedAudio.sink.is_default ? "Ready · default" : "Ready") : "Not ready")
-                        + " · " + (content.controller.selectedAudio.sink.state || "unknown")
-                    color: content.controller.selectedAudio.sink.ready ? Ui.Theme.text : Ui.Theme.danger
+                    visible: Object.keys(content.controller.selectedSink).length > 0
+                    text: "Output         " + (content.controller.selectedSink.ready ? (content.controller.selectedSink.is_default ? "Ready · default" : "Ready") : "Not ready")
+                        + " · " + (content.controller.selectedSink.state || "unknown")
+                    color: content.controller.selectedSink.ready ? Ui.Theme.text : Ui.Theme.danger
                     font.family: Ui.Theme.fontFamily
                     font.pixelSize: 11
                 }
                 Text {
-                    visible: !!content.controller.selectedAudio.source
-                    text: "Input          " + (content.controller.selectedAudio.source.ready ? (content.controller.selectedAudio.source.is_default ? "Ready · default" : "Ready") : "Not ready")
-                        + " · " + (content.controller.selectedAudio.source.state || "unknown")
-                    color: content.controller.selectedAudio.source.ready ? Ui.Theme.text : Ui.Theme.danger
+                    visible: Object.keys(content.controller.selectedSource).length > 0
+                    text: "Input          " + (content.controller.selectedSource.ready ? (content.controller.selectedSource.is_default ? "Ready · default" : "Ready") : "Not ready")
+                        + " · " + (content.controller.selectedSource.state || "unknown")
+                    color: content.controller.selectedSource.ready ? Ui.Theme.text : Ui.Theme.danger
                     font.family: Ui.Theme.fontFamily
                     font.pixelSize: 11
                 }
@@ -325,8 +326,8 @@ Rectangle {
                     elide: Text.ElideRight
                 }
                 Text {
-                    visible: !!(content.controller.selectedAudio.profiles && content.controller.selectedAudio.profiles.length)
-                    text: content.controller.selectedAudio.profiles.length + " audio profiles available"
+                    visible: content.controller.selectedAudioProfiles.length > 0
+                    text: content.controller.selectedAudioProfiles.length + " audio profiles available"
                     color: Ui.Theme.subtleText
                     font.family: Ui.Theme.fontFamily
                     font.pixelSize: 11
@@ -343,12 +344,12 @@ Rectangle {
                         id: audioProfileList
                         anchors.fill: parent
                         anchors.margins: 1
-                        model: content.controller.selectedAudio.profiles || []
+                        model: content.controller.selectedAudioProfiles
                         delegate: Rectangle {
                             id: audioProfileRow
                             required property var modelData
                             readonly property bool active: modelData.key === content.controller.selectedAudio.active_profile_key
-                            width: ListView.view.width
+                            width: audioProfileList.width
                             height: 31
                             color: active ? Ui.Theme.selected : "transparent"
                             opacity: modelData.available ? 1 : 0.45
@@ -411,7 +412,7 @@ Rectangle {
                 }
                 ActionButton {
                     visible: content.controller.canCancelTransfer
-                    label: "Cancel " + (content.controller.activeTransfer.file_name || "transfer")
+                    label: "Cancel " + ((content.controller.activeTransfer || ({})).file_name || "transfer")
                     danger: true
                     onClicked: content.controller.cancelActiveTransfer()
                 }

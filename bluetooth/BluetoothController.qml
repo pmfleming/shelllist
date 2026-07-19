@@ -30,7 +30,10 @@ Item {
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
     readonly property var selectedAdapter: adapters.find(function (adapter) { return adapter.key === preferredAdapterKey; }) || adapters.find(function (adapter) { return adapter.key === selectedDevice.adapter_key; }) || adapters[0] || ({})
     readonly property var selectedAudio: audioDevices.find(function (audio) { return audio.device_key === selectedDevice.key; }) || ({})
-    readonly property var activeAudioProfile: (selectedAudio.profiles || []).find(function (profile) { return profile.key === selectedAudio.active_profile_key; }) || ({})
+    readonly property var selectedSink: selectedAudio.sink || ({})
+    readonly property var selectedSource: selectedAudio.source || ({})
+    readonly property var selectedAudioProfiles: selectedAudio.profiles || []
+    readonly property var activeAudioProfile: selectedAudioProfiles.find(function (profile) { return profile.key === selectedAudio.active_profile_key; }) || ({})
     readonly property bool hasSelection: filteredResults.length > 0
     readonly property bool pairingPromptOpen: !!pairingPrompt
     readonly property bool incomingTransferPromptOpen: !!incomingTransferPrompt
