@@ -14,6 +14,7 @@ Item {
     property var adapters: []
     property var audioDevices: []
     property string audioStatus: ""
+    property var obexCapabilities: ({})
     property var pairingPrompt: null
     property var activeOperation: null
     property string pairingInput: ""
@@ -41,6 +42,7 @@ Item {
         currentWorkspaceId = workspaceId || "";
         scanRequested = false;
         refresh();
+        backend.refreshObex();
     }
     function deactivateUi() {
         if (pairingPromptOpen && pairingPrompt.response_required)
@@ -59,6 +61,9 @@ Item {
     function refresh() {
         status = scanning ? "Scanning for Bluetooth devices…" : "Refreshing Bluetooth devices…";
         backend.refresh();
+    }
+    function applyObexSnapshot(capabilities) {
+        obexCapabilities = capabilities || ({});
     }
     function applyAudioSnapshot(devices) {
         audioDevices = devices || [];

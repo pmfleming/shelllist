@@ -42,6 +42,11 @@ Item {
             controller.status = "Cancelling Bluetooth operation…";
             return;
         }
+        const obex = envelope.data ? envelope.data.obex : null;
+        if (obex) {
+            controller.applyObexSnapshot(obex);
+            return;
+        }
         const audioDevices = envelope.data ? envelope.data.audio_devices : null;
         if (audioDevices) {
             controller.applyAudioSnapshot(audioDevices);
@@ -108,6 +113,7 @@ Item {
     }
 
     function refresh() { return call("snapshot", BtApi.methods.snapshot, {}); }
+    function refreshObex() { return call("obex-snapshot", BtApi.methods.obexSnapshot, {}); }
     function refreshAudio() { return call("audio-snapshot", BtApi.methods.audioSnapshot, {}); }
     function setAudioProfile(deviceKey, profileKey) { return call("audio-set-profile", BtApi.methods.audioSetProfile, { device_key: deviceKey, profile_key: profileKey }); }
     function setPowered(powered) { return call("power", BtApi.methods.setPowered, { powered: powered }); }

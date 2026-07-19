@@ -234,6 +234,13 @@ Rectangle {
                 Text { text: "Trusted       " + (content.controller.selectedDevice.trusted ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
                 Text { text: "In range      " + (content.controller.selectedDevice.present ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
                 Text {
+                    visible: !!content.controller.obexCapabilities.available
+                    text: content.controller.obexCapabilities.outgoing_object_push ? "File transfer  Ready" : "OBEX service   Available · sending staged"
+                    color: Ui.Theme.subtleText
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: 11
+                }
+                Text {
                     visible: !!content.controller.activeAudioProfile.label
                     Layout.fillWidth: true
                     text: "Audio          " + (content.controller.activeAudioProfile.codec || content.controller.activeAudioProfile.label)
