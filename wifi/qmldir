@@ -1,4 +1,3 @@
-singleton Theme 1.0 Theme.qml
 WifiBackend 1.0 WifiBackend.qml
 WifiConnectPolicy 1.0 WifiConnectPolicy.qml
 WifiProvider 1.0 WifiProvider.qml
@@ -30,7 +29,6 @@ PromptDialog 1.0 PromptDialog.qml
 SegmentedControl 1.0 SegmentedControl.qml
 SignalIcon 1.0 SignalIcon.qml
 TogglePill 1.0 TogglePill.qml
-VisualSurface 1.0 VisualSurface.qml
 WifiHeader 1.0 WifiHeader.qml
 WifiContent 1.0 WifiContent.qml
 WifiController 1.0 WifiController.qml

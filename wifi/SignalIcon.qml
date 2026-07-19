@@ -1,5 +1,5 @@
 import QtQuick
-import "."
+import Shelllist.Ui
 
 Canvas {
     property int level: 3

@@ -5,6 +5,7 @@ import Quickshell.Wayland
 import QtQuick
 import "."
 import "process"
+import Shelllist.Ui
 
 Item {
     id: host

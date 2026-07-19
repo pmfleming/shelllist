@@ -7,6 +7,11 @@
       url = "github:pmfleming/nm-daemon";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    bt-daemon = {
+      # Development remains local until the initial bt-daemon history is published.
+      url = "git+file:///home/laufan/Projects/bt-daemon?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ self, nixpkgs, ... }:
@@ -18,6 +23,7 @@
       packages = forAllSystems (system: pkgs:
         let
           nmDaemon = inputs."nm-daemon".packages.${system}.default;
+          btDaemon = inputs."bt-daemon".packages.${system}.default;
           nmDaemonConnectParityProbe = inputs."nm-daemon".packages.${system}.connectParityProbe;
           mkMeta = description: mainProgram: {
             inherit description mainProgram;
@@ -39,6 +45,8 @@
             ];
             text = ''
               config_path=${self.packages.${system}.wifiConfig}/share/shelllist/wifi
+              export QML_IMPORT_PATH=${self.packages.${system}.wifiConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
+              export QML2_IMPORT_PATH=${self.packages.${system}.wifiConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
 
               stop_stale_shelllist_instances() {
                 # Rebuilt path configs have a new store path. Retire an older resident
@@ -47,7 +55,7 @@
                   | awk '
                       /^Instance / { pid = ""; shelllist = 0 }
                       /Process ID:/ { pid = $3 }
-                      /Config path: .*shelllist-wifi-config.*\/share\/shelllist\/wifi\/shell.qml/ { shelllist = 1 }
+                      /Config path: .*shelllist-(wifi-)?config.*\/share\/shelllist\/wifi\/shell.qml/ { shelllist = 1 }
                       shelllist && pid != "" { print pid; pid = ""; shelllist = 0 }
                     ' \
                   | while read -r pid; do
@@ -123,6 +131,45 @@
                     popover_call toggle
                   fi
                   ;;
+              esac
+            '';
+          };
+
+          bluetooth = pkgs.writeShellApplication {
+            name = "shelllist-bluetooth";
+            meta = mkMeta "Quickshell Bluetooth popup backed by bt-daemon" "shelllist-bluetooth";
+            runtimeInputs = [ pkgs.coreutils pkgs.gawk pkgs.quickshell btDaemon ];
+            text = ''
+              config_path=${self.packages.${system}.wifiConfig}/share/shelllist/bluetooth
+              export QML_IMPORT_PATH=${self.packages.${system}.wifiConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
+              export QML2_IMPORT_PATH=${self.packages.${system}.wifiConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
+
+              popover_ipc() {
+                quickshell ipc --path "$config_path" --newest call bluetooth "$@"
+              }
+
+              ensure_daemon() {
+                if popover_ipc ping >/dev/null 2>&1; then return 0; fi
+                quickshell list --all 2>/dev/null \
+                  | awk '/Process ID:/ { pid = $3 } /Config path: .*share\/shelllist\/bluetooth\/shell.qml/ { if (pid != "") print pid }' \
+                  | while read -r pid; do quickshell kill --pid "$pid" >/dev/null 2>&1 || true; done || true
+                quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
+                attempts=0
+                while [ "$attempts" -lt 30 ]; do
+                  if popover_ipc ping >/dev/null 2>&1; then return 0; fi
+                  attempts=$((attempts + 1)); sleep 0.05
+                done
+                echo "Shelllist Bluetooth popover did not become ready" >&2
+                return 1
+              }
+
+              action=''${1:-toggle}
+              [ "$action" = show ] && action=open
+              case "$action" in
+                daemon) ensure_daemon ;;
+                toggle|open|hide) ensure_daemon && popover_ipc "$action" >/dev/null ;;
+                status) ensure_daemon && popover_ipc status ;;
+                *) echo "Usage: shelllist-bluetooth [daemon|toggle|open|hide|status]" >&2; exit 2 ;;
               esac
             '';
           };
@@ -312,17 +359,17 @@
           };
 
           wifiConfig = pkgs.stdenvNoCC.mkDerivation {
-            pname = "shelllist-wifi-config";
-            version = "0.1.0";
-            src = ./wifi;
+            pname = "shelllist-config";
+            version = "0.2.0";
+            src = ./.;
             meta = {
               description = "QML configuration for the Shelllist Wi-Fi popup";
               platforms = pkgs.lib.platforms.linux;
             };
             installPhase = ''
               runHook preInstall
-              mkdir -p $out/share/shelllist/wifi
-              cp -r . $out/share/shelllist/wifi/
+              mkdir -p $out/share/shelllist
+              cp -r wifi bluetooth qml $out/share/shelllist/
               runHook postInstall
             '';
           };
@@ -351,9 +398,11 @@
             qmllint \
               -I "${pkgs.qt6.qtdeclarative}/lib/qt-6/qml" \
               -I "${pkgs.quickshell}/lib/qt-6/qml" \
-              -I ${./wifi} \
+              -I ${./qml} \
+              ${./qml}/Shelllist/Core/*.qml \
+              ${./qml}/Shelllist/Ui/*.qml \
+              ${./bluetooth}/*.qml \
               ${./wifi}/*.qml \
-              ${./wifi}/core/*.qml \
               ${./wifi}/networkinput/*.qml \
               ${./wifi}/process/*.qml
             touch $out
@@ -371,7 +420,7 @@
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-provider-model.js} ${./wifi/core/Model.js}
+            node ${./tests/check-provider-model.js} ${./qml/Shelllist/Core/Model.js}
             touch $out
           '';
         });
@@ -381,6 +430,11 @@
           type = "app";
           program = "${self.packages.${system}.default}/bin/shelllist-wifi";
           meta.description = "Run the Shelllist Wi-Fi Quickshell popup";
+        };
+        bluetooth = {
+          type = "app";
+          program = "${self.packages.${system}.bluetooth}/bin/shelllist-bluetooth";
+          meta.description = "Run the Shelllist Bluetooth Quickshell popup";
         };
         connectParityProbe = {
           type = "app";
@@ -403,7 +457,7 @@
                 exec qmllint \
                   -I "${pkgs.qt6.qtdeclarative}/lib/qt-6/qml" \
                   -I "${pkgs.quickshell}/lib/qt-6/qml" \
-                  -I "$PWD/wifi" \
+                  -I "$PWD/qml" \
                   "$@"
               '';
             })

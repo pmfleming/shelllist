@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import "WifiPresentation.js" as Presentation
 import "."
+import Shelllist.Ui
 
 RowLayout {
     id: row

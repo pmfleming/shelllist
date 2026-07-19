@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "."
 import "networkinput" as NetworkInput
+import Shelllist.Ui
 
 Item {
     id: page

@@ -1,5 +1,5 @@
 import QtQuick
-import "."
+import Shelllist.Ui
 
 Text {
     anchors.centerIn: parent

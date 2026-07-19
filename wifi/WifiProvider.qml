@@ -1,6 +1,5 @@
 import QtQuick
-import "core" as Core
-import "core/Model.js" as Model
+import Shelllist.Core as Core
 import "WifiPresentation.js" as Presentation
 
 Core.Provider {
@@ -17,7 +16,7 @@ Core.Provider {
 
     function actionDefinition(id, label, options) {
         const values = options || ({});
-        return Model.action({
+        return Core.Model.action({
             id: id,
             label: label,
             icon: values.icon || "",
@@ -103,7 +102,7 @@ Core.Provider {
     function resultForNetwork(network) {
         const security = Presentation.securityLabel(network.security);
         const strength = Math.max(0, Math.min(100, Number(network.strength) || 0));
-        return Model.result({
+        return Core.Model.result({
             providerId: providerId,
             providerPriority: priority,
             id: network.key || network.bssid || Presentation.networkName(network),

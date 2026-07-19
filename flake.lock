@@ -1,5 +1,26 @@
 {
   "nodes": {
+    "bt-daemon": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784456633,
+        "narHash": "sha256-b2u/YNFNITgpuJpFfk2TyLTekw/1J+3aj+rHLzq6Er8=",
+        "ref": "main",
+        "rev": "159bda55c109abde32661c02517bd6714b224e08",
+        "revCount": 2,
+        "type": "git",
+        "url": "file:///home/laufan/Projects/bt-daemon"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "file:///home/laufan/Projects/bt-daemon"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1784011430,
@@ -38,6 +59,7 @@
     },
     "root": {
       "inputs": {
+        "bt-daemon": "bt-daemon",
         "nixpkgs": "nixpkgs",
         "nm-daemon": "nm-daemon"
       }

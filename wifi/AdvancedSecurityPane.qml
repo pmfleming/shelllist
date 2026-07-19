@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import "."
+import Shelllist.Ui
 
 AdvancedSettingsFlickable {
     id: securityFlick

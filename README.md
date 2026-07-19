@@ -2,12 +2,13 @@
 
 Quickshell experiments and UI components for desktop menus.
 
-The current project focus is a Hyprland-friendly Wi-Fi/network popup backed by the local `nm-daemon` NetworkManager adapter. Shelllist owns the QML interface, window behavior, and user interactions; `nm-daemon` owns NetworkManager behavior and exposes the JSON `nm-api` protocol over a session D-Bus API.
+Shelllist is a Hyprland-focused desktop action center. Its Wi-Fi popup is backed by `nm-daemon`; the staged Bluetooth popup is backed by `bt-daemon`. Shelllist owns QML, window behavior, and interactions while the Rust backends own system integration and policy.
 
 ## Current status
 
-- Main app: `shelllist-wifi`, a Quickshell Wi-Fi chooser.
-- Default mode: one resident, monitor-aware popover toggled through Quickshell IPC, Waybar, or Hyprland's global-shortcut protocol.
+- Stable app: `shelllist-wifi`, a Quickshell Wi-Fi chooser.
+- Experimental app: `shelllist-bluetooth`, a BlueZ device chooser kept alongside the existing Rofi Bluetooth menu during stabilization.
+- Default mode: resident, monitor-aware popovers toggled through Quickshell IPC, Waybar, or Hyprland.
 - Optional mode: an explicit one-shot floating window for development/fallback use.
 - Backend: the pinned `pmfleming/nm-daemon` flake input; sibling-repository development uses a Nix input override.
 - Target platform: `x86_64-linux` with NetworkManager and Quickshell.
@@ -51,11 +52,26 @@ shelllist-wifi hide
 shelllist-wifi status   # print visible or hidden
 ```
 
-Waybar can use `shelllist-wifi toggle` for `on-click` once the package is on `PATH`. Popover mode keeps one Quickshell process alive and controls a focused-monitor `PanelWindow` through IPC target `wifi`. Hyprland can invoke its registered shortcut directly:
+Waybar can use `shelllist-wifi toggle` for `on-click` once the package is on `PATH`. Popover mode keeps one Quickshell process alive and controls a focused-monitor `PanelWindow` through IPC target `wifi`. Hyprland can invoke Wi-Fi's registered shortcut directly:
 
 ```ini
 bind = SUPER, N, global, shelllist:wifi
 ```
+
+Run the experimental Bluetooth popup:
+
+```sh
+nix run .#bluetooth
+shelllist-bluetooth toggle
+```
+
+The stabilization binding is `SUPER+M`. `SUPER+B` remains assigned to `rofi-bluetooth-menu` until Shelllist Bluetooth is ready to replace it.
+
+## Bluetooth implementation status
+
+The first Bluetooth slice provides a keyboard-first device list, filtering, adapter power, discovery, battery display when BlueZ supplies it, and contextual pair/connect/disconnect behavior. `Right` opens trust, wake, block, and confirmed-remove controls. The UI communicates only through `bt-api` v1 and opaque device keys; it does not parse `bluetoothctl` output or route on MAC addresses.
+
+Pairing prompts currently rely on the existing system pairing agent while Blueman remains installed. Daemon-owned pairing prompts, event subscriptions/cancellation, durable BLE private-address identity, WirePlumber audio controls, and OBEX are later stability gates.
 
 ## Wi-Fi features
 
@@ -202,11 +218,11 @@ out=$(nix build .#default --no-link --print-out-paths)
 shellcheck "$out/bin/shelllist-wifi"
 portal=$(nix build .#captivePortalBrowser --no-link --print-out-paths)
 shellcheck "$portal/bin/shelllist-captive-portal"
-shelllist-qmllint wifi/*.qml wifi/core/*.qml wifi/networkinput/*.qml wifi/process/*.qml
+shelllist-qmllint qml/Shelllist/Core/*.qml qml/Shelllist/Ui/*.qml bluetooth/*.qml wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-ip-validation.js wifi/networkinput/IpValidation.js
-node tests/check-provider-model.js wifi/core/Model.js
+node tests/check-provider-model.js qml/Shelllist/Core/Model.js
 ```
 
-The Wi-Fi UI entry point is `wifi/shell.qml`. Generic provider contracts, validation, ranking, registry dispatch, and result storage live under `wifi/core`; `WifiProvider.qml` is the Wi-Fi adapter. Frontend-only Wi-Fi helpers are separated by responsibility into `WifiPresentation.js`, `WifiFlow.js`, and `NmApiClient.js`; share availability and captive-portal flows live in dedicated controller Items rather than the main Wi-Fi controller. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
+The UI entry points are `wifi/shell.qml` and `bluetooth/shell.qml`. Generic provider contracts, validation, ranking, registry dispatch, and result storage live in the shared `Shelllist.Core` module under `qml/Shelllist/Core/`; shared theming and surface behavior live in `Shelllist.Ui`; `WifiProvider.qml` and `BluetoothProvider.qml` are backend adapters. Frontend-only Wi-Fi helpers are separated by responsibility into `WifiPresentation.js`, `WifiFlow.js`, and `NmApiClient.js`; share availability and captive-portal flows live in dedicated controller Items rather than the main Wi-Fi controller. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
 
 The JSON boundary with `nm-daemon` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture, validates the frontend method shapes, regenerates the used method and stream entries in `wifi/NmApi.js` from `nm-daemon debug protocol-registry`, and lints every QML source; any drift or static-analysis failure fails the check.

@@ -1,6 +1,6 @@
 import QtQuick
 import "WifiPresentation.js" as Presentation
-import "."
+import Shelllist.Ui
 
 Rectangle {
     id: control
