@@ -148,8 +148,20 @@
                 quickshell ipc --path "$config_path" --newest call bluetooth "$@"
               }
 
+              current_daemon_running() {
+                quickshell list --all 2>/dev/null \
+                  | awk -v expected="$config_path/shell.qml" '
+                      /^  Config path:/ {
+                        path = $0
+                        sub(/^  Config path: /, "", path)
+                        if (path == expected) found = 1
+                      }
+                      END { exit(found ? 0 : 1) }
+                    '
+              }
+
               ensure_daemon() {
-                if popover_ipc ping >/dev/null 2>&1; then return 0; fi
+                if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then return 0; fi
                 quickshell list --all 2>/dev/null \
                   | awk '/Process ID:/ { pid = $3 } /Config path: .*share\/shelllist\/bluetooth\/shell.qml/ { if (pid != "") print pid }' \
                   | while read -r pid; do quickshell kill --pid "$pid" >/dev/null 2>&1 || true; done || true
