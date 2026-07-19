@@ -11,7 +11,7 @@ Rectangle {
     readonly property bool responseRequired: !!request.response_required
     readonly property bool inputRequired: kind === "pin-code" || kind === "passkey"
     readonly property bool inputValid: !inputRequired || (controller.pairingInput.length > 0 && (kind !== "passkey" || /^\d{1,6}$/.test(controller.pairingInput)))
-    readonly property string deviceName: controller.selectedDevice && controller.selectedDevice.key === request.device_key ? controller.selectedDevice.name : "Bluetooth device"
+    readonly property string deviceName: request.device_key && controller.selectedDevice && controller.selectedDevice.key === request.device_key ? (controller.selectedDevice.name || "Bluetooth device") : "Bluetooth device"
 
     anchors.fill: parent
     visible: controller.pairingPromptOpen
