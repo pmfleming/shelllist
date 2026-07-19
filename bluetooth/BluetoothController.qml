@@ -45,6 +45,10 @@ Item {
         backend.setScanning(false);
         uiActive = false;
     }
+    function handleTransportFailure(message) {
+        scanRequested = false;
+        status = message;
+    }
     function refresh() {
         status = scanning ? "Scanning for Bluetooth devices…" : "Refreshing Bluetooth devices…";
         backend.refresh();

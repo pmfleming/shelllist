@@ -78,6 +78,6 @@ Item {
         active: backend.active
         onResponse: function (id, envelope, transportError) { backend.finish(id, envelope, transportError); }
         onEventReceived: function (event) { backend.handleEvent(event); }
-        onTransportFailed: function (message) { backend.controller.status = message; }
+        onTransportFailed: function (message) { backend.controller.handleTransportFailure(message); }
     }
 }
