@@ -6,8 +6,10 @@ Item {
 
     required property var controller
     property var pending: ({})
-    readonly property bool active: controller.uiActive || Object.keys(pending).length > 0
-    readonly property bool running: Object.keys(pending).length > 0
+    property var operations: ({})
+    property var finishedOperations: ({})
+    readonly property bool active: controller.uiActive || Object.keys(pending).length > 0 || Object.keys(operations).length > 0
+    readonly property bool running: Object.keys(pending).length > 0 || Object.keys(operations).length > 0
 
     function isPending(id) { return !!pending[id]; }
     function call(id, method, params) {
@@ -36,6 +38,22 @@ Item {
             controller.status = (envelope.error && envelope.error.message) || "Bluetooth operation failed";
             return;
         }
+        if (id.indexOf("cancel-operation-") === 0) {
+            controller.status = "Cancelling Bluetooth operation…";
+            return;
+        }
+        const operation = envelope.data ? envelope.data.operation : null;
+        if (operation) {
+            if (finishedOperations[operation.request_id]) {
+                delete finishedOperations[operation.request_id];
+                finishedOperations = Object.assign({}, finishedOperations);
+                return;
+            }
+            operations[operation.request_id] = operation;
+            operations = Object.assign({}, operations);
+            controller.handleOperationAccepted(operation);
+            return;
+        }
         const snapshot = envelope.data ? envelope.data.snapshot : null;
         if (snapshot)
             controller.applySnapshot(snapshot);
@@ -50,6 +68,22 @@ Item {
             controller.handlePairingEvent(event);
             return;
         }
+        if (event.stream === BtApi.streams.operation) {
+            const operation = event.data || ({});
+            if (operation.request_id) {
+                if (operation.state === "completed" || operation.state === "failed" || operation.state === "cancelled") {
+                    if (!operations[operation.request_id]) {
+                        finishedOperations[operation.request_id] = true;
+                        finishedOperations = Object.assign({}, finishedOperations);
+                    }
+                    delete operations[operation.request_id];
+                } else
+                    operations[operation.request_id] = operation;
+                operations = Object.assign({}, operations);
+            }
+            controller.handleOperationEvent(operation);
+            return;
+        }
         if (event.event === "unavailable") {
             controller.status = (event.error && event.error.message) || "BlueZ is unavailable";
             return;
@@ -62,6 +96,12 @@ Item {
     function refresh() { return call("snapshot", BtApi.methods.snapshot, {}); }
     function setPowered(powered) { return call("power", BtApi.methods.setPowered, { powered: powered }); }
     function setScanning(enabled) { return call(enabled ? "scan-start" : "scan-stop", BtApi.methods.scan, { enabled: enabled }); }
+    function cancelOperation(requestId) {
+        if (!requestId || !operations[requestId])
+            return false;
+        client.cancel("cancel-operation-" + requestId, requestId);
+        return true;
+    }
     function respondPairing(requestId, accept, value) {
         const params = { request_id: requestId, accept: !!accept };
         if (value !== undefined && value !== null)
@@ -78,6 +118,10 @@ Item {
         active: backend.active
         onResponse: function (id, envelope, transportError) { backend.finish(id, envelope, transportError); }
         onEventReceived: function (event) { backend.handleEvent(event); }
-        onTransportFailed: function (message) { backend.controller.handleTransportFailure(message); }
+        onTransportFailed: function (message) {
+            backend.operations = ({});
+            backend.finishedOperations = ({});
+            backend.controller.handleTransportFailure(message);
+        }
     }
 }

@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784460439,
-        "narHash": "sha256-vhx8OIGy/P/2Z53gFe1oTe1Grvsr7Bw/13ZWaHfxicY=",
+        "lastModified": 1784461586,
+        "narHash": "sha256-Ms/J/YKRyUezCQoBduvbmdv5wkozcj9GmXwWot5jSQI=",
         "ref": "main",
-        "rev": "4a9e43681ed64f10a6c8ba2f45b99f6e6b288321",
-        "revCount": 7,
+        "rev": "c5c2b339ddafb16c4bce74eb8d16ccde1ba18064",
+        "revCount": 8,
         "type": "git",
         "url": "file:///home/laufan/Projects/bt-daemon"
       },

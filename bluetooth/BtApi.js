@@ -2,7 +2,8 @@
 
 var streams = {
     changed: "bluetooth.changed",
-    pairing: "pairing.request"
+    pairing: "pairing.request",
+    operation: "bluetooth.operation"
 };
 
 var methods = {

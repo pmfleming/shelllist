@@ -35,6 +35,7 @@ Item {
         process.stdinEnabled = false;
     }
     function call(id, method, params) { send({ id: id, op: "call", method: method, params: params || ({}) }); }
+    function cancel(id, requestId) { send({ id: id, op: "cancel", request_id: requestId }); }
     function send(message) {
         const line = JSON.stringify(message);
         if (!ready) {
@@ -84,7 +85,7 @@ Item {
         stderr: StdioCollector { id: processError; waitForEnd: true }
         onStarted: {
             client.ready = true;
-            client.send({ id: "session-subscribe", op: "subscribe", streams: [BtApi.streams.changed, BtApi.streams.pairing] });
+            client.send({ id: "session-subscribe", op: "subscribe", streams: [BtApi.streams.changed, BtApi.streams.pairing, BtApi.streams.operation] });
             client.flushQueue();
         }
         onExited: function (exitCode) { // qmllint disable signal-handler-parameters

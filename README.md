@@ -71,7 +71,7 @@ The stabilization binding is `SUPER+M`. `SUPER+B` remains assigned to `rofi-blue
 
 The first Bluetooth slice provides a keyboard-first device list, filtering, adapter power, discovery, battery display when BlueZ supplies it, and contextual pair/connect/disconnect behavior. `Right` opens trust, wake, block, and confirmed-remove controls. The UI communicates only through `bt-api` v1 and opaque device keys; it does not parse `bluetoothctl` output or route on MAC addresses.
 
-Shelllist now consumes live `bluetooth.changed` subscriptions instead of polling. Its application-specific daemon pairing agent handles PIN/passkey input and display, numeric confirmation, authorization, cancellation, and timeout prompts without taking default-agent ownership away from Blueman. Operation request IDs/cancellation, durable BLE private-address identity, WirePlumber audio controls, and OBEX remain later stability gates.
+Shelllist now consumes live `bluetooth.changed` subscriptions instead of polling. Its application-specific daemon pairing agent handles PIN/passkey input and display, numeric confirmation, authorization, cancellation, and timeout prompts without taking default-agent ownership away from Blueman. Device actions use opaque operation request IDs and live lifecycle events, with `Escape` and an advanced-panel button available to cancel active work. Durable BLE private-address identity, WirePlumber audio controls, and OBEX remain later stability gates.
 
 ## Wi-Fi features
 

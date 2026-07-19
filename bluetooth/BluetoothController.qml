@@ -13,6 +13,7 @@ Item {
     property bool scanRequested: false
     property var adapters: []
     property var pairingPrompt: null
+    property var activeOperation: null
     property string pairingInput: ""
     property string status: "Loading Bluetooth devices…"
     readonly property bool actionInFlight: backend.running
@@ -21,6 +22,7 @@ Item {
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
     readonly property bool hasSelection: filteredResults.length > 0
     readonly property bool pairingPromptOpen: !!pairingPrompt
+    readonly property bool canCancelOperation: !!activeOperation && (activeOperation.state === "queued" || activeOperation.state === "running")
     readonly property bool powered: adapters.some(function (adapter) { return adapter.powered; })
     readonly property bool scanning: adapters.some(function (adapter) { return adapter.discovering; })
     readonly property int closedWindowWidth: 440
@@ -47,6 +49,7 @@ Item {
     }
     function handleTransportFailure(message) {
         scanRequested = false;
+        activeOperation = null;
         status = message;
     }
     function refresh() {
@@ -89,6 +92,37 @@ Item {
         status = scanning ? "Stopping Bluetooth scan…" : "Scanning for Bluetooth devices…";
         scanRequested = true;
         backend.setScanning(!scanning);
+    }
+    function handleOperationAccepted(operation) {
+        if (!activeOperation || activeOperation.request_id !== operation.request_id)
+            activeOperation = operation;
+    }
+    function handleOperationEvent(operation) {
+        if (!operation || !operation.request_id)
+            return;
+        const device = filteredResults.find(function (result) { return result.id === operation.device_key; });
+        const deviceName = device ? device.title : "Bluetooth device";
+        if (operation.state === "queued" || operation.state === "running") {
+            activeOperation = operation;
+            status = operation.operation.charAt(0).toUpperCase() + operation.operation.slice(1) + " " + deviceName + "…";
+            return;
+        }
+        if (operation.snapshot)
+            applySnapshot(operation.snapshot);
+        if (activeOperation && activeOperation.request_id === operation.request_id)
+            activeOperation = null;
+        if (operation.state === "completed")
+            status = deviceName + " updated";
+        else if (operation.state === "cancelled")
+            status = "Bluetooth operation cancelled";
+        else
+            status = (operation.error && operation.error.message) || "Bluetooth operation failed";
+    }
+    function cancelActiveOperation() {
+        if (!canCancelOperation)
+            return false;
+        status = "Cancelling Bluetooth operation…";
+        return backend.cancelOperation(activeOperation.request_id);
     }
     function handlePairingEvent(event) {
         const prompt = event.data || ({});

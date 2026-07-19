@@ -37,7 +37,9 @@ Rectangle {
         sequence: "Escape"
         enabled: !content.controller.pairingPromptOpen
         onActivated: {
-            if (content.confirmRemove)
+            if (content.controller.canCancelOperation)
+                content.controller.cancelActiveOperation();
+            else if (content.confirmRemove)
                 content.confirmRemove = false;
             else if (content.controller.detailsOpen)
                 content.controller.detailsOpen = false;
@@ -230,7 +232,8 @@ Rectangle {
                 Text { text: "In range      " + (content.controller.selectedDevice.present ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
                 Item { Layout.fillHeight: true }
 
-                ActionButton { label: content.controller.selectedDevice.connected ? "Disconnect" : (content.controller.selectedDevice.paired ? "Connect" : "Pair"); available: content.controller.hasSelection && !content.controller.actionInFlight; onClicked: content.controller.primarySelected() }
+                ActionButton { visible: !content.controller.canCancelOperation; label: content.controller.selectedDevice.connected ? "Disconnect" : (content.controller.selectedDevice.paired ? "Connect" : "Pair"); available: content.controller.hasSelection && !content.controller.actionInFlight; onClicked: content.controller.primarySelected() }
+                ActionButton { visible: content.controller.canCancelOperation; label: "Cancel operation"; danger: true; onClicked: content.controller.cancelActiveOperation() }
                 ActionButton { label: (content.controller.selectedDevice.trusted ? "Disable" : "Enable") + " trust"; available: !!(content.controller.selectedDevice.capabilities && content.controller.selectedDevice.capabilities.can_trust); onClicked: content.controller.triggerAction("trusted") }
                 ActionButton { visible: content.controller.selectedDevice.wake_allowed !== null && content.controller.selectedDevice.wake_allowed !== undefined; label: (content.controller.selectedDevice.wake_allowed ? "Disable" : "Enable") + " wake"; available: !!(content.controller.selectedDevice.capabilities && content.controller.selectedDevice.capabilities.can_wake); onClicked: content.controller.triggerAction("wake") }
                 ActionButton { label: content.controller.selectedDevice.blocked ? "Unblock device" : "Block device"; danger: !content.controller.selectedDevice.blocked; available: !!(content.controller.selectedDevice.capabilities && content.controller.selectedDevice.capabilities.can_block); onClicked: content.controller.triggerAction("blocked") }
@@ -241,7 +244,7 @@ Rectangle {
                     ActionButton { label: "Cancel"; onClicked: content.confirmRemove = false }
                     ActionButton { label: "Remove"; danger: true; onClicked: { content.confirmRemove = false; content.controller.triggerAction("remove"); } }
                 }
-                Text { Layout.fillWidth: true; text: "Enter: primary action   Left: close details   Esc: close"; color: Ui.Theme.mutedText; font.family: Ui.Theme.fontFamily; font.pixelSize: 10; wrapMode: Text.WordWrap }
+                Text { Layout.fillWidth: true; text: content.controller.canCancelOperation ? "Esc: cancel operation" : "Enter: primary action   Left: close details   Esc: close"; color: Ui.Theme.mutedText; font.family: Ui.Theme.fontFamily; font.pixelSize: 10; wrapMode: Text.WordWrap }
             }
         }
     }
