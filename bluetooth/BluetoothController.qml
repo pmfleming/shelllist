@@ -35,10 +35,10 @@ Item {
         refreshTimer.start();
     }
     function deactivateUi() {
-        uiActive = false;
         refreshTimer.stop();
         scanRequested = false;
         backend.setScanning(false);
+        uiActive = false;
     }
     function refresh() {
         status = scanning ? "Scanning for Bluetooth devices…" : "Refreshing Bluetooth devices…";
