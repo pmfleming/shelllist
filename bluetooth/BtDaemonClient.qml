@@ -44,6 +44,13 @@ Item {
         }
         process.write(line + "\n");
     }
+    function recover(message) {
+        transportFailed(message);
+        if (!active)
+            return;
+        stop();
+        retryTimer.restart();
+    }
     function flushQueue() {
         const lines = queuedLines;
         queuedLines = [];
@@ -60,10 +67,10 @@ Item {
                     subscriptionId = (message.response.data.subscription || ({})).id || "";
                 response(message.id || "", message.ok ? message.response : null, message.ok ? "" : (message.error || "bt-daemon call failed"));
             } else if (message.kind === "transport-error" || message.kind === "protocol-error") {
-                transportFailed(message.error || "bt-daemon client failed");
+                recover(message.error || "bt-daemon client failed");
             }
         } catch (error) {
-            transportFailed("Could not parse bt-daemon output: " + error);
+            recover("Could not parse bt-daemon output: " + error);
         }
     }
 
