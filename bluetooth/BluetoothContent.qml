@@ -35,15 +35,15 @@ Rectangle {
         }
     }
 
-    Shortcut { sequence: "Up"; enabled: !content.controller.pairingPromptOpen; onActivated: content.controller.moveSelection(-1) }
-    Shortcut { sequence: "Down"; enabled: !content.controller.pairingPromptOpen; onActivated: content.controller.moveSelection(1) }
-    Shortcut { sequence: "Enter"; enabled: !content.confirmRemove && !content.controller.pairingPromptOpen && !renameInput.activeFocus; onActivated: content.controller.primarySelected() }
-    Shortcut { sequence: "Right"; enabled: content.controller.hasSelection && !content.controller.pairingPromptOpen; onActivated: content.controller.detailsOpen = true }
-    Shortcut { sequence: "Left"; enabled: content.controller.detailsOpen && !content.controller.pairingPromptOpen; onActivated: content.controller.detailsOpen = false }
-    Shortcut { sequence: "F5"; enabled: !content.controller.pairingPromptOpen; onActivated: content.controller.toggleScan() }
+    Shortcut { sequence: "Up"; enabled: !content.controller.modalPromptOpen; onActivated: content.controller.moveSelection(-1) }
+    Shortcut { sequence: "Down"; enabled: !content.controller.modalPromptOpen; onActivated: content.controller.moveSelection(1) }
+    Shortcut { sequence: "Enter"; enabled: !content.confirmRemove && !content.controller.modalPromptOpen && !renameInput.activeFocus; onActivated: content.controller.primarySelected() }
+    Shortcut { sequence: "Right"; enabled: content.controller.hasSelection && !content.controller.modalPromptOpen; onActivated: content.controller.detailsOpen = true }
+    Shortcut { sequence: "Left"; enabled: content.controller.detailsOpen && !content.controller.modalPromptOpen; onActivated: content.controller.detailsOpen = false }
+    Shortcut { sequence: "F5"; enabled: !content.controller.modalPromptOpen; onActivated: content.controller.toggleScan() }
     Shortcut {
         sequence: "Escape"
-        enabled: !content.controller.pairingPromptOpen
+        enabled: !content.controller.modalPromptOpen
         onActivated: {
             if (content.controller.canCancelTransfer)
                 content.controller.cancelActiveTransfer();
@@ -399,4 +399,5 @@ Rectangle {
     }
 
     BluetoothPairingPrompt { controller: content.controller }
+    BluetoothObexPrompt { controller: content.controller }
 }

@@ -14,6 +14,7 @@ var methods = {
     scan: "bluetooth.scan",
     obexSnapshot: "bluetooth.obex.snapshot",
     obexSend: "bluetooth.obex.send",
+    obexRespond: "bluetooth.obex.respond",
     audioSnapshot: "bluetooth.audio.snapshot",
     audioSetProfile: "bluetooth.audio.setProfile",
     pairingRespond: "bluetooth.pairing.respond",

@@ -16,6 +16,7 @@ Item {
     property string audioStatus: ""
     property var obexCapabilities: ({})
     property var pairingPrompt: null
+    property var incomingTransferPrompt: null
     property var activeOperation: null
     property var activeTransfer: null
     property string pairingInput: ""
@@ -28,6 +29,8 @@ Item {
     readonly property var activeAudioProfile: (selectedAudio.profiles || []).find(function (profile) { return profile.key === selectedAudio.active_profile_key; }) || ({})
     readonly property bool hasSelection: filteredResults.length > 0
     readonly property bool pairingPromptOpen: !!pairingPrompt
+    readonly property bool incomingTransferPromptOpen: !!incomingTransferPrompt
+    readonly property bool modalPromptOpen: pairingPromptOpen || incomingTransferPromptOpen
     readonly property bool canCancelTransfer: !!activeTransfer && !["complete", "cancelled", "error"].includes(activeTransfer.status)
     readonly property bool canCancelOperation: !!activeOperation && (activeOperation.state === "queued" || activeOperation.state === "running")
     readonly property bool powered: adapters.some(function (adapter) { return adapter.powered; })
@@ -38,6 +41,7 @@ Item {
 
     signal closeWindowRequested
     signal focusSearchRequested
+    signal incomingTransferRequested
 
     function activateUi(workspaceId) {
         uiActive = true;
@@ -49,7 +53,10 @@ Item {
     function deactivateUi() {
         if (pairingPromptOpen && pairingPrompt.response_required)
             backend.respondPairing(pairingPrompt.request_id, false, "");
+        if (incomingTransferPromptOpen)
+            backend.respondObex(incomingTransferPrompt.request_id, false);
         pairingPrompt = null;
+        incomingTransferPrompt = null;
         pairingInput = "";
         scanRequested = false;
         backend.setScanning(false);
@@ -59,6 +66,7 @@ Item {
         scanRequested = false;
         activeOperation = null;
         activeTransfer = null;
+        incomingTransferPrompt = null;
         status = message;
     }
     function refresh() {
@@ -95,6 +103,8 @@ Item {
             return "Bluetooth scan stopped";
         if (id === "pairing-response")
             return "Pairing response sent";
+        if (id === "obex-response")
+            return status;
         if (id.indexOf("device-") === 0)
             return "Bluetooth device updated";
         return status;
@@ -118,11 +128,20 @@ Item {
     function handleObexTransfer(transfer) {
         if (!transfer || !transfer.request_id)
             return;
+        if (transfer.status === "awaiting-authorization") {
+            activeTransfer = transfer;
+            incomingTransferPrompt = transfer;
+            status = "Incoming file transfer approval required";
+            incomingTransferRequested();
+            return;
+        }
+        if (incomingTransferPrompt && incomingTransferPrompt.request_id === transfer.request_id)
+            incomingTransferPrompt = null;
         if (["complete", "cancelled", "error"].includes(transfer.status)) {
             if (activeTransfer && activeTransfer.request_id === transfer.request_id)
                 activeTransfer = null;
             if (transfer.status === "complete")
-                status = transfer.file_name + " sent";
+                status = transfer.direction === "incoming" ? transfer.file_name + " saved in Downloads" : transfer.file_name + " sent";
             else if (transfer.status === "cancelled")
                 status = "File transfer cancelled";
             else
@@ -131,7 +150,16 @@ Item {
         }
         activeTransfer = transfer;
         const percentage = transfer.size > 0 ? Math.floor(transfer.transferred * 100 / transfer.size) : 0;
-        status = "Sending " + transfer.file_name + (transfer.size > 0 ? " · " + percentage + "%" : "…");
+        const verb = transfer.direction === "incoming" ? "Receiving " : "Sending ";
+        status = verb + transfer.file_name + (transfer.size > 0 ? " · " + percentage + "%" : "…");
+    }
+    function respondIncomingTransfer(accept) {
+        if (!incomingTransferPromptOpen)
+            return false;
+        const requestId = incomingTransferPrompt.request_id;
+        incomingTransferPrompt = null;
+        status = accept ? "Accepting incoming file…" : "Rejecting incoming file…";
+        return backend.respondObex(requestId, accept);
     }
     function cancelActiveTransfer() {
         if (!canCancelTransfer)

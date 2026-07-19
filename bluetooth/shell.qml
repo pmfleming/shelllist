@@ -4,7 +4,10 @@ import Quickshell
 import QtQuick
 
 ShellRoot {
-    BluetoothController { id: controller }
+    BluetoothController {
+        id: controller
+        onIncomingTransferRequested: windowHost.show()
+    }
 
     BluetoothWindowHost {
         id: windowHost

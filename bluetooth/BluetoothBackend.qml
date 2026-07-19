@@ -10,7 +10,8 @@ Item {
     property var finishedOperations: ({})
     property var transfers: ({})
     property var finishedTransfers: ({})
-    readonly property bool active: controller.uiActive || Object.keys(pending).length > 0 || Object.keys(operations).length > 0 || Object.keys(transfers).length > 0
+    // Incoming OBEX authorization can arrive while the popup is hidden.
+    readonly property bool active: true
     readonly property bool running: Object.keys(pending).length > 0 || Object.keys(operations).length > 0 || Object.keys(transfers).length > 0
 
     function isPending(id) { return !!pending[id]; }
@@ -149,6 +150,7 @@ Item {
     function refresh() { return call("snapshot", BtApi.methods.snapshot, {}); }
     function refreshObex() { return call("obex-snapshot", BtApi.methods.obexSnapshot, {}); }
     function sendFile(deviceKey, path) { return call("obex-send", BtApi.methods.obexSend, { device_key: deviceKey, path: path }); }
+    function respondObex(requestId, accept) { return call("obex-response", BtApi.methods.obexRespond, { request_id: requestId, accept: !!accept }); }
     function cancelTransfer(requestId) {
         if (!requestId || !transfers[requestId])
             return false;
