@@ -3,6 +3,7 @@ import "WifiPresentation.js" as Presentation
 import "WifiFlow.js" as Flow
 import "NmApiClient.js" as Api
 import "NmApi.js" as NmApi
+import "core" as Core
 import "."
 
 Item {
@@ -15,8 +16,8 @@ Item {
 
     property var activeStatus: null
     property var networkConnectivity: null
-    property alias filterText: selection.filterText
-    property alias selectedIndex: selection.selectedIndex
+    property alias filterText: results.queryText
+    property alias selectedIndex: results.selectedIndex
     property bool pendingRefresh: false
     property string status: "Loading Wi-Fi networks…"
     property string connectingNetworkName: ""
@@ -59,19 +60,22 @@ Item {
     readonly property string detailsTab: advancedOpen ? advancedSection : "network"
     readonly property bool scanInFlight: backend.listRunning || backend.scanRunning
     readonly property bool connectRunning: backend.connectStarting || activeConnectRequestId.length > 0
-    readonly property var filteredNetworks: selection.filteredNetworks
-    readonly property var detailAp: selection.selected() || ({})
-    readonly property bool hasSelection: filteredNetworks.length > 0
+    readonly property var filteredResults: results.visibleResults
+    readonly property var detailResult: results.selected()
+    readonly property var detailAp: detailResult ? detailResult.payload : ({})
+    readonly property bool hasSelection: filteredResults.length > 0
     readonly property string busyMessage: "Wait for the current Wi-Fi action to finish…"
     readonly property alias shareAvailable: shareModel.available
     readonly property alias sharePayload: shareModel.payload
     readonly property alias shareStatus: shareModel.status
     readonly property alias shareUnavailableMessage: shareModel.unavailableMessage
     readonly property alias shareController: shareModel
-    readonly property alias selectionModel: selection
+    readonly property alias selectionModel: results
+    readonly property alias providerModel: wifiProviderModel
+    readonly property alias providerRegistry: providers
     readonly property alias connectPolicy: connectPolicyModel
     readonly property alias navigation: navigationModel
-    readonly property alias detailActions: detailActionModel.actions
+    readonly property var detailActions: providers.actionsFor(detailResult)
     readonly property var daemonEventHandlerByStream: {
         const handlers = ({});
         handlers[NmApi.streams.wifi_status] = function (event) { wifi.applyStatusEvent(event); };
@@ -96,16 +100,14 @@ Item {
     function networkName(ap) { return Presentation.networkName(ap); }
     function isActive(ap) { return !!(ap && ap.active); }
     function profileFor(ap) { return Flow.profileForAccessPoint(ap); }
-    function autoconnectEnabled() { const profile = profileFor(detailAp); return !!(profile && profile.autoconnect); }
-    function randomizedMacEnabled() { return !!Presentation.privacyFor(profileFor(detailAp)).randomized_mac; }
-    function sendHostnameEnabled() { return Presentation.privacyFor(profileFor(detailAp)).send_hostname !== false; }
-    function canProfileAction(capability) { const caps = detailAp.capabilities || ({}); return !actionInFlight && !!profileFor(detailAp) && caps[capability] === true; }
-    function canForgetProfile() { const caps = detailAp.capabilities || ({}); return !actionInFlight && (isActive(detailAp) || caps.can_forget === true); }
-    function canToggleAutoconnectProfile() { return canProfileAction("can_toggle_autoconnect"); }
-    function canSetMacRandomizationProfile() { return canProfileAction("can_set_mac_randomization"); }
-    function canSetSendHostnameProfile() { return canProfileAction("can_set_send_hostname"); }
-    function canUsePrimaryAction() { return isActive(detailAp) ? !actionInFlight : canBeginConnectAction(detailAp); }
-    function canShareSelected() { return shareModel.canShareSelected(); }
+    function autoconnectEnabledFor(ap) { const profile = profileFor(ap); return !!(profile && profile.autoconnect); }
+    function randomizedMacEnabledFor(ap) { return !!Presentation.privacyFor(profileFor(ap)).randomized_mac; }
+    function sendHostnameEnabledFor(ap) { return Presentation.privacyFor(profileFor(ap)).send_hostname !== false; }
+    function canProfileActionFor(ap, capability) { const caps = ap && ap.capabilities ? ap.capabilities : ({}); return !actionInFlight && !!profileFor(ap) && caps[capability] === true; }
+    function canForgetNetwork(ap) { const caps = ap && ap.capabilities ? ap.capabilities : ({}); return !actionInFlight && (isActive(ap) || caps.can_forget === true); }
+    function canConnectNetwork(ap) { return !isActive(ap) && canBeginConnectAction(ap); }
+    function canDisconnectNetwork(ap) { return isActive(ap) && !actionInFlight; }
+    function canShareNetwork(ap) { return !!ap && !!detailAp && ap.key === detailAp.key && shareModel.canShareSelected(); }
 
     function selectDetailsTab(tab) {
         if (tab === "network") {
@@ -266,7 +268,7 @@ Item {
     function applyScanEvent(event) {
         if (event.event === "snapshot") {
             scanSnapshotSeen = true;
-            selection.apply(event.networks || [], false);
+            applyNetworks(event.networks || [], false);
         }
         setBackgroundStatus(Api.scanEventStatus(event, status));
     }
@@ -372,7 +374,7 @@ Item {
     function canBeginConnectAction(ap) { return canBeginAnyConnectAction() && !!(ap && ap.capabilities && ap.capabilities.can_connect); }
     function beginAnyConnectAction() { return requireIdle(canBeginAnyConnectAction()); }
     function beginConnectAction(ap) { return requireIdle(canBeginConnectAction(ap)); }
-    function primarySelected() { return connectRunning ? cancelConnection() : (isActive(selection.selected()) ? disconnectSelected() : connectSelected()); }
+    function primarySelected() { return providers.execute(detailResult, "", { workspaceId: currentWorkspaceId }); }
     function isConnecting(ap) { return connectRunning && connectingNetworkName.length > 0 && Presentation.networkName(ap) === connectingNetworkName && !isActive(ap); }
     function connectingNetworkIsActive() { return connectingNetworkName.length > 0 && Presentation.networkName(activeAccessPoint()) === connectingNetworkName; }
     function updateVisibleConnectProgress() {
@@ -400,12 +402,12 @@ Item {
         status = "This access point cannot be connected from Shelllist yet. Use F6 for hidden SSIDs.";
         return true;
     }
-    function connectSelected() {
-        const ap = selection.selected();
+    function connectNetwork(ap) {
         if (!ap || !beginConnectAction(ap))
-            return;
+            return false;
         if (!deferConnectForPrompt(ap))
             runConnectTarget(ap, Presentation.networkName(ap));
+        return true;
     }
     function connectTargetRequest(ap, password, enterpriseIdentity) {
         const request = ap.key ? { key: ap.key } : { target: ap };
@@ -473,24 +475,30 @@ Item {
         status = "Cancelling connection to " + connectingNetworkName + "…";
         backend.cancel(activeConnectRequestId);
     }
-    function disconnectSelected() {
-        if (!beginAction())
-            return;
+    function disconnectNetwork(ap) {
+        if (!isActive(ap) || !beginAction())
+            return false;
         status = "Disconnecting Wi-Fi…";
         backend.disconnect();
+        return true;
     }
-    function runProfileAction(action) {
+    function runProfileActionFor(ap, action) {
         if (!beginAction())
-            return;
-        const profile = profileFor(selection.selected());
-        if (profile)
-            action(profile);
+            return false;
+        const profile = profileFor(ap);
+        if (!profile)
+            return false;
+        action(profile);
+        return true;
     }
-    function forgetSelected() {
-        if (!canForgetProfile())
-            return status = busyMessage;
-        const profiles = detailAp.profiles && detailAp.profiles.length > 0 ? detailAp.profiles : (profileFor(detailAp) ? [profileFor(detailAp)] : []);
-        prompt.openForgetPrompt(detailAp, isActive(detailAp), profiles);
+    function forgetNetwork(ap) {
+        if (!canForgetNetwork(ap)) {
+            status = busyMessage;
+            return false;
+        }
+        const profiles = ap.profiles && ap.profiles.length > 0 ? ap.profiles : (profileFor(ap) ? [profileFor(ap)] : []);
+        prompt.openForgetPrompt(ap, isActive(ap), profiles);
+        return true;
     }
     function executeForget(ap) {
         if (!beginAction())
@@ -499,14 +507,26 @@ Item {
         status = (isActive(ap) ? "Disconnecting and forgetting " : "Forgetting ") + Presentation.networkName(ap) + "…";
         backend.profile({ operation: "forget", request_id: requestId, key: ap.key });
     }
-    function toggleAutoconnectSelected() { runProfileAction(function (profile) { const enabled = !profile.autoconnect; status = (enabled ? "Enabling" : "Disabling") + " autoconnect for " + profile.id + "…"; backend.profile({ operation: "set-autoconnect", path: profile.path, enabled: enabled }); }); }
-    function setMacRandomizedSelected(enabled) { runProfileAction(function (profile) { status = (enabled ? "Using randomized MAC for " : "Using device MAC for ") + profile.id + "…"; backend.profile({ operation: "set-mac-randomization", path: profile.path, randomized: enabled }); }); }
-    function toggleSendHostnameSelected() { runProfileAction(function (profile) { const enabled = !(profile.privacy && profile.privacy.send_hostname !== false); status = (enabled ? "Sending" : "Hiding") + " device name for " + profile.id + "…"; backend.profile({ operation: "set-send-hostname", path: profile.path, enabled: enabled }); }); }
-    function openPortal() { portalModel.launchManual(detailAp, currentWorkspaceId); }
-    function triggerDetailAction(id) { detailActionModel.trigger(id); }
-    function canConnectDetail() { return !isActive(detailAp) && canUsePrimaryAction(); }
-    function canDisconnectDetail() { return isActive(detailAp) && canUsePrimaryAction(); }
-    function toggleRandomizedMacSelected() { setMacRandomizedSelected(!randomizedMacEnabled()); }
+    function toggleAutoconnectNetwork(ap) { return runProfileActionFor(ap, function (profile) { const enabled = !profile.autoconnect; status = (enabled ? "Enabling" : "Disabling") + " autoconnect for " + profile.id + "…"; backend.profile({ operation: "set-autoconnect", path: profile.path, enabled: enabled }); }); }
+    function setMacRandomizedNetwork(ap, enabled) { return runProfileActionFor(ap, function (profile) { status = (enabled ? "Using randomized MAC for " : "Using device MAC for ") + profile.id + "…"; backend.profile({ operation: "set-mac-randomization", path: profile.path, randomized: enabled }); }); }
+    function toggleSendHostnameNetwork(ap) { return runProfileActionFor(ap, function (profile) { const enabled = !(profile.privacy && profile.privacy.send_hostname !== false); status = (enabled ? "Sending" : "Hiding") + " device name for " + profile.id + "…"; backend.profile({ operation: "set-send-hostname", path: profile.path, enabled: enabled }); }); }
+    function openPortalFor(ap) { portalModel.launchManual(ap, currentWorkspaceId); return true; }
+    function triggerDetailAction(id) { return providers.execute(detailResult, id, { workspaceId: currentWorkspaceId }); }
+    function executeNetworkAction(actionId, ap) {
+        const handlers = {
+            connect: function () { return connectNetwork(ap); },
+            "cancel-connect": cancelConnection,
+            disconnect: function () { return disconnectNetwork(ap); },
+            forget: function () { return forgetNetwork(ap); },
+            portal: function () { return openPortalFor(ap); },
+            share: function () { shareSelected(); return true; },
+            autoconnect: function () { return toggleAutoconnectNetwork(ap); },
+            "randomized-mac": function () { return setMacRandomizedNetwork(ap, !randomizedMacEnabledFor(ap)); },
+            "send-hostname": function () { return toggleSendHostnameNetwork(ap); }
+        };
+        return handlers[actionId] ? handlers[actionId]() !== false : false;
+    }
+    function applyNetworks(networks, resetSelection) { results.replaceProviderResults(wifiProviderModel.providerId, wifiProviderModel.resultsForNetworks(networks), resetSelection); }
 
     function openHiddenNetworkPrompt() { if (beginAnyConnectAction()) prompt.openHiddenNetworkPrompt(); }
 
@@ -537,11 +557,18 @@ Item {
     Timer { id: connectingProgressTimer; interval: 120; repeat: true; onTriggered: wifi.connectingProgressTick += 1 }
     Timer { id: scanWatchdogTimer; interval: wifi.scanWatchdogIntervalMs; repeat: false; onTriggered: wifi.handleScanWatchdog() }
     Timer { id: autoRefreshTimer; interval: wifi.autoRefreshIntervalMs; repeat: true; onTriggered: wifi.refresh() }
-    WifiSelectionModel { id: selection }
+    Core.ProviderRegistry {
+        id: providers
+
+        WifiProvider {
+            id: wifiProviderModel
+            controller: wifi
+        }
+    }
+    Core.ResultStore { id: results; registry: providers }
     ShareAvailabilityController { id: shareModel; controller: wifi; backend: backend }
     CaptivePortalController { id: portalModel; controller: wifi; backend: backend }
     WifiConnectPolicy { id: connectPolicyModel }
-    WifiDetailActions { id: detailActionModel; controller: wifi }
     WifiNavigation { id: navigationModel; controller: wifi }
     WifiBackend { id: backend; controller: wifi }
 }

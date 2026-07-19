@@ -1,0 +1,4 @@
+module Shelllist.Core
+Provider 1.0 Provider.qml
+ProviderRegistry 1.0 ProviderRegistry.qml
+ResultStore 1.0 ResultStore.qml

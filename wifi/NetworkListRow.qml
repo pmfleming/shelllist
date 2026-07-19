@@ -7,6 +7,8 @@ Rectangle {
 
     required property int index
     required property var modelData
+    readonly property var result: modelData
+    readonly property var network: result.payload || ({})
     property bool active: false
     property string name: ""
     property int selectedIndex: 0
@@ -16,12 +18,12 @@ Rectangle {
     property real rowHeight: 52
 
     readonly property bool selected: index === selectedIndex
-    readonly property bool securedNetwork: modelData.security !== "--"
-        || (Number(modelData.flags) || 0) > 0
-        || (Number(modelData.wpa_flags) || 0) > 0
-        || (Number(modelData.rsn_flags) || 0) > 0
+    readonly property bool securedNetwork: network.security !== "--"
+        || (Number(network.flags) || 0) > 0
+        || (Number(network.wpa_flags) || 0) > 0
+        || (Number(network.rsn_flags) || 0) > 0
     readonly property bool openNetwork: !securedNetwork
-    readonly property int signalStrength: Math.max(0, Math.min(100, Number(modelData.strength) || 0))
+    readonly property int signalStrength: Math.max(0, Math.min(100, Number(network.strength) || 0))
     readonly property int signalBarCount: signalStrength >= 67 ? 3 : (signalStrength >= 34 ? 2 : 1)
     readonly property color signalColor: signalStrength >= 67 ? Theme.active : (signalStrength >= 34 ? Theme.warning : Theme.danger)
     readonly property real density: Math.max(0.86, Math.min(1.08, rowHeight / 52))

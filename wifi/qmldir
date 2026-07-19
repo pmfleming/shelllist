@@ -1,10 +1,10 @@
 singleton Theme 1.0 Theme.qml
 WifiBackend 1.0 WifiBackend.qml
 WifiConnectPolicy 1.0 WifiConnectPolicy.qml
+WifiProvider 1.0 WifiProvider.qml
 internal ShareAvailabilityController ShareAvailabilityController.qml
 internal CaptivePortalController CaptivePortalController.qml
 WifiNavigation 1.0 WifiNavigation.qml
-WifiSelectionModel 1.0 WifiSelectionModel.qml
 ActionButton 1.0 ActionButton.qml
 CenteredMessage 1.0 CenteredMessage.qml
 AdvancedFieldLabel 1.0 AdvancedFieldLabel.qml
@@ -34,7 +34,6 @@ VisualSurface 1.0 VisualSurface.qml
 WifiHeader 1.0 WifiHeader.qml
 WifiContent 1.0 WifiContent.qml
 WifiController 1.0 WifiController.qml
-WifiDetailActions 1.0 WifiDetailActions.qml
 WifiGlobalShortcut 1.0 WifiGlobalShortcut.qml
 WifiPromptController 1.0 WifiPromptController.qml
 WifiWindowHost 1.0 WifiWindowHost.qml

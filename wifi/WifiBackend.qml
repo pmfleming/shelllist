@@ -68,7 +68,7 @@ Item {
 
     function handleNetworks(envelope) {
         const networks = Api.apiData(envelope, "networks") || [];
-        if (!controller.scanSnapshotSeen) controller.selectionModel.apply(networks, true);
+        if (!controller.scanSnapshotSeen) controller.applyNetworks(networks, true);
         controller.setBackgroundStatus(networks.length + " cached networks; scanning…");
     }
 

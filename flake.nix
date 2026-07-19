@@ -353,6 +353,7 @@
               -I "${pkgs.quickshell}/lib/qt-6/qml" \
               -I ${./wifi} \
               ${./wifi}/*.qml \
+              ${./wifi}/core/*.qml \
               ${./wifi}/networkinput/*.qml \
               ${./wifi}/process/*.qml
             touch $out
@@ -363,6 +364,14 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-ip-validation.js} ${./wifi/networkinput/IpValidation.js}
+            touch $out
+          '';
+
+          providerModel = pkgs.runCommand "shelllist-provider-model"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-provider-model.js} ${./wifi/core/Model.js}
             touch $out
           '';
         });

@@ -106,6 +106,12 @@ Details-pane hotkeys are available when the details pane is open and the selecte
 - `R`: toggle randomized MAC.
 - `N`: toggle sending the device hostname.
 
+## Provider model
+
+Shelllist normalizes system integrations behind a generic provider/result/action model. Providers expose stable descriptors, map backend values to serializable results, resolve live action state, and execute actions through a central registry. Generic views never inspect provider payloads or call system backends directly.
+
+The current `WifiProvider.qml` adapter maps `nm-api` networks and Wi-Fi operations onto this model without changing `nm-daemon` protocol v1. See [`docs/provider-model.md`](docs/provider-model.md) for the schemas, validation rules, query generations, action dispatch contract, and guidance for application, clipboard, and Bluetooth providers.
+
 ## Backend/API boundary
 
 Shelllist starts one `nm-daemon client` process while the UI or an operation is active. Tagged JSONL requests on stdin multiplex D-Bus calls, subscriptions, cancellation and events. D-Bus ownership, NetworkManager behavior, event filtering and cleanup remain in Rust.
@@ -196,10 +202,11 @@ out=$(nix build .#default --no-link --print-out-paths)
 shellcheck "$out/bin/shelllist-wifi"
 portal=$(nix build .#captivePortalBrowser --no-link --print-out-paths)
 shellcheck "$portal/bin/shelllist-captive-portal"
-shelllist-qmllint wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
+shelllist-qmllint wifi/*.qml wifi/core/*.qml wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-ip-validation.js wifi/networkinput/IpValidation.js
+node tests/check-provider-model.js wifi/core/Model.js
 ```
 
-The Wi-Fi UI entry point is `wifi/shell.qml`. Frontend-only helpers are separated by responsibility into `WifiPresentation.js`, `NetworkSelection.js`, `WifiFlow.js`, and `NmApiClient.js`; share availability and captive-portal flows live in dedicated controller Items rather than the main Wi-Fi controller. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
+The Wi-Fi UI entry point is `wifi/shell.qml`. Generic provider contracts, validation, ranking, registry dispatch, and result storage live under `wifi/core`; `WifiProvider.qml` is the Wi-Fi adapter. Frontend-only Wi-Fi helpers are separated by responsibility into `WifiPresentation.js`, `WifiFlow.js`, and `NmApiClient.js`; share availability and captive-portal flows live in dedicated controller Items rather than the main Wi-Fi controller. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
 
 The JSON boundary with `nm-daemon` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture, validates the frontend method shapes, regenerates the used method and stream entries in `wifi/NmApi.js` from `nm-daemon debug protocol-registry`, and lints every QML source; any drift or static-analysis failure fails the check.

@@ -39,7 +39,7 @@ Item {
 
                 anchors.fill: parent
                 clip: true
-                model: pane.controller.filteredNetworks
+                model: pane.controller.filteredResults
                 spacing: 0
                 currentIndex: pane.controller.selectedIndex
                 activeFocusOnTab: true
@@ -52,12 +52,14 @@ Item {
                 }
 
                 delegate: NetworkListRow {
+                    id: networkRow
+
                     rowHeight: list.delegateHeight
-                    active: pane.controller.isActive(modelData)
-                    name: pane.controller.networkName(modelData)
+                    active: !!networkRow.result.state.active
+                    name: networkRow.result.title
                     selectedIndex: pane.controller.selectedIndex
                     detailsOpen: pane.controller.detailsOpen
-                    connecting: pane.controller.isConnecting(modelData)
+                    connecting: pane.controller.isConnecting(networkRow.result.payload)
                     progressTick: pane.controller.connectingProgressTick
                     onPicked: function (rowIndex) {
                         pane.controller.selectedIndex = rowIndex;

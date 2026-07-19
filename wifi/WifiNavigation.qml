@@ -59,7 +59,7 @@ Item {
     function handleDetailHotkey(event) {
         if (!controller.detailsOpen)
             return false;
-        const action = controller.detailActions.find(function (item) { return isPlainHotkey(event, item.hotkey) && item.enabled; });
+        const action = controller.detailActions.find(function (item) { return isPlainHotkey(event, item.shortcut) && item.visible && item.enabled; });
         if (!action)
             return false;
         accept(event, function () { controller.triggerDetailAction(action.id); });
