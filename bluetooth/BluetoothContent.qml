@@ -249,6 +249,47 @@ Rectangle {
                     font.family: Ui.Theme.fontFamily
                     font.pixelSize: 11
                 }
+                Rectangle {
+                    visible: audioProfileList.count > 0
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.min(126, audioProfileList.count * 31 + 2)
+                    radius: Ui.Theme.cardRadius
+                    color: Ui.Theme.surfaceRaised
+                    border.color: Ui.Theme.border
+                    clip: true
+                    ListView {
+                        id: audioProfileList
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        model: content.controller.selectedAudio.profiles || []
+                        delegate: Rectangle {
+                            id: audioProfileRow
+                            required property var modelData
+                            readonly property bool active: modelData.key === content.controller.selectedAudio.active_profile_key
+                            width: ListView.view.width
+                            height: 31
+                            color: active ? Ui.Theme.selected : "transparent"
+                            opacity: modelData.available ? 1 : 0.45
+                            Text {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                text: (audioProfileRow.active ? "✓  " : "   ") + audioProfileRow.modelData.label
+                                verticalAlignment: Text.AlignVCenter
+                                color: audioProfileRow.active ? Ui.Theme.accent : Ui.Theme.text
+                                font.family: Ui.Theme.fontFamily
+                                font.pixelSize: 11
+                                elide: Text.ElideRight
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                enabled: audioProfileRow.modelData.available && !audioProfileRow.active && !content.controller.actionInFlight
+                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                onClicked: content.controller.setAudioProfile(audioProfileRow.modelData)
+                            }
+                        }
+                    }
+                }
                 Text { text: "Device name"; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
                 Rectangle {
                     Layout.fillWidth: true

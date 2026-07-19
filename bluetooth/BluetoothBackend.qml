@@ -45,6 +45,8 @@ Item {
         const audioDevices = envelope.data ? envelope.data.audio_devices : null;
         if (audioDevices) {
             controller.applyAudioSnapshot(audioDevices);
+            if (id === "audio-set-profile")
+                controller.status = "Bluetooth audio profile updated";
             return;
         }
         const operation = envelope.data ? envelope.data.operation : null;
@@ -100,6 +102,7 @@ Item {
 
     function refresh() { return call("snapshot", BtApi.methods.snapshot, {}); }
     function refreshAudio() { return call("audio-snapshot", BtApi.methods.audioSnapshot, {}); }
+    function setAudioProfile(deviceKey, profileKey) { return call("audio-set-profile", BtApi.methods.audioSetProfile, { device_key: deviceKey, profile_key: profileKey }); }
     function setPowered(powered) { return call("power", BtApi.methods.setPowered, { powered: powered }); }
     function setScanning(enabled) { return call(enabled ? "scan-start" : "scan-stop", BtApi.methods.scan, { enabled: enabled }); }
     function cancelOperation(requestId) {

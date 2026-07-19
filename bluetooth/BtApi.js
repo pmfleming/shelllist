@@ -11,6 +11,7 @@ var methods = {
     setPowered: "bluetooth.setPowered",
     scan: "bluetooth.scan",
     audioSnapshot: "bluetooth.audio.snapshot",
+    audioSetProfile: "bluetooth.audio.setProfile",
     pairingRespond: "bluetooth.pairing.respond",
     deviceOperation: "bluetooth.device.operation"
 };

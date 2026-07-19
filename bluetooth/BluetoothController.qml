@@ -163,6 +163,12 @@ Item {
         pairingInput = "";
         return backend.respondPairing(requestId, accept, value);
     }
+    function setAudioProfile(profile) {
+        if (!hasSelection || !profile || !profile.key || !profile.available || actionInFlight)
+            return false;
+        status = "Switching Bluetooth audio to " + profile.label + "…";
+        return backend.setAudioProfile(selectedDevice.key, profile.key);
+    }
     function renameSelected(alias) {
         const value = (alias || "").trim();
         if (!hasSelection || value.length === 0 || value === selectedDevice.name || actionInFlight)
