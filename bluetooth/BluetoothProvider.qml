@@ -11,7 +11,7 @@ Core.Provider {
     icon: "󰂯"
     priority: 100
     prefixes: ["bluetooth:", "bt:"]
-    capabilities: ({ query: false, actions: true, preview: true, subscriptions: false })
+    capabilities: ({ query: false, actions: true, preview: true, subscriptions: true })
 
     function action(id, label, options) {
         const values = options || ({});

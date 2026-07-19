@@ -390,8 +390,20 @@
       checks = forAllSystems (system: pkgs:
         let
           nmDaemon = inputs."nm-daemon".packages.${system}.default;
+          btDaemon = inputs."bt-daemon".packages.${system}.default;
         in
         {
+          btDaemonContract = pkgs.runCommand "shelllist-bt-daemon-contract"
+            {
+              nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
+            } ''
+            ${pkgs.bash}/bin/bash ${./tests/check-bt-api-contract.sh} \
+              ${btDaemon}/bin/bt-daemon \
+              ${./contracts/bt-api-ui-contract.fixture.json} \
+              ${./bluetooth/BtApi.js}
+            touch $out
+          '';
+
           nmDaemonContract = pkgs.runCommand "shelllist-nm-daemon-contract"
             {
               nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];

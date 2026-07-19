@@ -1,5 +1,6 @@
 import Quickshell.Io
 import QtQuick
+import "BtApi.js" as BtApi
 
 Item {
     id: client
@@ -8,8 +9,10 @@ Item {
     property bool ready: false
     property var queuedLines: []
     property int sequence: 0
+    property string subscriptionId: ""
 
     signal response(string id, var envelope, string transportError)
+    signal eventReceived(var event)
     signal transportFailed(string message)
 
     function start() {
@@ -23,8 +26,12 @@ Item {
         queuedLines = [];
         if (!process.running)
             return;
-        if (ready)
+        if (ready) {
+            if (subscriptionId.length > 0)
+                send({ id: "cancel-subscription-" + (++sequence), op: "cancel", request_id: subscriptionId });
             send({ id: "shutdown-" + (++sequence), op: "shutdown" });
+        }
+        subscriptionId = "";
         process.stdinEnabled = false;
     }
     function call(id, method, params) { send({ id: id, op: "call", method: method, params: params || ({}) }); }
@@ -46,7 +53,11 @@ Item {
     function handleLine(line) {
         try {
             const message = JSON.parse(line);
-            if (message.kind === "response") {
+            if (message.kind === "event") {
+                eventReceived(message.event || ({}));
+            } else if (message.kind === "response") {
+                if (message.id === "session-subscribe" && message.ok && message.response && message.response.data)
+                    subscriptionId = (message.response.data.subscription || ({})).id || "";
                 response(message.id || "", message.ok ? message.response : null, message.ok ? "" : (message.error || "bt-daemon call failed"));
             } else if (message.kind === "transport-error" || message.kind === "protocol-error") {
                 transportFailed(message.error || "bt-daemon client failed");
@@ -66,6 +77,7 @@ Item {
         stderr: StdioCollector { id: processError; waitForEnd: true }
         onStarted: {
             client.ready = true;
+            client.send({ id: "session-subscribe", op: "subscribe", streams: [BtApi.streams.changed, BtApi.streams.pairing] });
             client.flushQueue();
         }
         onExited: function (exitCode) { // qmllint disable signal-handler-parameters

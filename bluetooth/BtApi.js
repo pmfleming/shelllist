@@ -1,8 +1,14 @@
 .pragma library
 
+var streams = {
+    changed: "bluetooth.changed",
+    pairing: "pairing.request"
+};
+
 var methods = {
     snapshot: "bluetooth.snapshot",
     setPowered: "bluetooth.setPowered",
     scan: "bluetooth.scan",
-    deviceOperation: "device.operation"
+    pairingRespond: "bluetooth.pairing.respond",
+    deviceOperation: "bluetooth.device.operation"
 };

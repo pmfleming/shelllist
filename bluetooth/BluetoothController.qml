@@ -12,12 +12,15 @@ Item {
     property bool detailsOpen: false
     property bool scanRequested: false
     property var adapters: []
+    property var pairingPrompt: null
+    property string pairingInput: ""
     property string status: "Loading Bluetooth devices…"
     readonly property bool actionInFlight: backend.running
     readonly property var filteredResults: results.visibleResults
     readonly property var selectedResult: results.selected()
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
     readonly property bool hasSelection: filteredResults.length > 0
+    readonly property bool pairingPromptOpen: !!pairingPrompt
     readonly property bool powered: adapters.some(function (adapter) { return adapter.powered; })
     readonly property bool scanning: adapters.some(function (adapter) { return adapter.discovering; })
     readonly property int closedWindowWidth: 440
@@ -32,10 +35,12 @@ Item {
         currentWorkspaceId = workspaceId || "";
         scanRequested = false;
         refresh();
-        refreshTimer.start();
     }
     function deactivateUi() {
-        refreshTimer.stop();
+        if (pairingPromptOpen && pairingPrompt.response_required)
+            backend.respondPairing(pairingPrompt.request_id, false, "");
+        pairingPrompt = null;
+        pairingInput = "";
         scanRequested = false;
         backend.setScanning(false);
         uiActive = false;
@@ -65,6 +70,8 @@ Item {
             return "Scanning for Bluetooth devices…";
         if (id === "scan-stop")
             return "Bluetooth scan stopped";
+        if (id === "pairing-response")
+            return "Pairing response sent";
         if (id.indexOf("device-") === 0)
             return "Bluetooth device updated";
         return status;
@@ -78,6 +85,30 @@ Item {
         status = scanning ? "Stopping Bluetooth scan…" : "Scanning for Bluetooth devices…";
         scanRequested = true;
         backend.setScanning(!scanning);
+    }
+    function handlePairingEvent(event) {
+        const prompt = event.data || ({});
+        if (event.event === "cancelled") {
+            if (pairingPrompt && pairingPrompt.request_id === prompt.request_id) {
+                pairingPrompt = null;
+                pairingInput = "";
+            }
+            return;
+        }
+        if (event.event !== "requested" && event.event !== "display")
+            return;
+        pairingPrompt = prompt;
+        pairingInput = "";
+        status = prompt.response_required ? "Pairing confirmation required" : "Complete pairing on the Bluetooth device";
+    }
+    function respondPairing(accept) {
+        if (!pairingPromptOpen || !pairingPrompt.response_required)
+            return false;
+        const requestId = pairingPrompt.request_id;
+        const value = pairingInput;
+        pairingPrompt = null;
+        pairingInput = "";
+        return backend.respondPairing(requestId, accept, value);
     }
     function moveSelection(delta) { results.move(delta); }
     function primarySelected() { return hasSelection && providers.execute(selectedResult, "", { workspaceId: currentWorkspaceId }); }
@@ -99,7 +130,6 @@ Item {
         return false;
     }
 
-    Timer { id: refreshTimer; interval: 1500; repeat: true; onTriggered: backend.refresh() }
     Behavior on surfaceWindowWidth { enabled: !Ui.Theme.noAnimations; NumberAnimation { duration: 180; easing.type: Easing.InOutSine } }
     Core.ProviderRegistry {
         id: providers
