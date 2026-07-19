@@ -148,6 +148,13 @@ Item {
         pairingInput = "";
         return backend.respondPairing(requestId, accept, value);
     }
+    function renameSelected(alias) {
+        const value = (alias || "").trim();
+        if (!hasSelection || value.length === 0 || value === selectedDevice.name || actionInFlight)
+            return false;
+        status = "Renaming " + selectedDevice.name + "…";
+        return backend.deviceOperation("set-alias", selectedDevice, { alias: value });
+    }
     function moveSelection(delta) { results.move(delta); }
     function primarySelected() { return hasSelection && providers.execute(selectedResult, "", { workspaceId: currentWorkspaceId }); }
     function triggerAction(id) { return hasSelection && providers.execute(selectedResult, id, { workspaceId: currentWorkspaceId }); }

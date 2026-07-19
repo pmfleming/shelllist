@@ -24,12 +24,15 @@ Rectangle {
     Connections {
         target: content.controller
         function onFocusSearchRequested() { Qt.callLater(content.focusSearch); }
-        function onSelectedResultChanged() { content.confirmRemove = false; }
+        function onSelectedResultChanged() {
+            content.confirmRemove = false;
+            renameInput.text = content.controller.selectedDevice.name || "";
+        }
     }
 
     Shortcut { sequence: "Up"; enabled: !content.controller.pairingPromptOpen; onActivated: content.controller.moveSelection(-1) }
     Shortcut { sequence: "Down"; enabled: !content.controller.pairingPromptOpen; onActivated: content.controller.moveSelection(1) }
-    Shortcut { sequence: "Enter"; enabled: !content.confirmRemove && !content.controller.pairingPromptOpen; onActivated: content.controller.primarySelected() }
+    Shortcut { sequence: "Enter"; enabled: !content.confirmRemove && !content.controller.pairingPromptOpen && !renameInput.activeFocus; onActivated: content.controller.primarySelected() }
     Shortcut { sequence: "Right"; enabled: content.controller.hasSelection && !content.controller.pairingPromptOpen; onActivated: content.controller.detailsOpen = true }
     Shortcut { sequence: "Left"; enabled: content.controller.detailsOpen && !content.controller.pairingPromptOpen; onActivated: content.controller.detailsOpen = false }
     Shortcut { sequence: "F5"; enabled: !content.controller.pairingPromptOpen; onActivated: content.controller.toggleScan() }
@@ -230,6 +233,37 @@ Rectangle {
                 Text { text: "Paired        " + (content.controller.selectedDevice.paired ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
                 Text { text: "Trusted       " + (content.controller.selectedDevice.trusted ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
                 Text { text: "In range      " + (content.controller.selectedDevice.present ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
+                Text { text: "Device name"; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 38
+                    radius: Ui.Theme.cardRadius
+                    color: Ui.Theme.surfaceRaised
+                    border.color: renameInput.activeFocus ? Ui.Theme.accent : Ui.Theme.border
+                    TextInput {
+                        id: renameInput
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        text: content.controller.selectedDevice.name || ""
+                        maximumLength: 248
+                        verticalAlignment: TextInput.AlignVCenter
+                        color: Ui.Theme.text
+                        selectionColor: Ui.Theme.accent
+                        font.family: Ui.Theme.fontFamily
+                        font.pixelSize: 13
+                        clip: true
+                        onAccepted: content.controller.renameSelected(text)
+                    }
+                }
+                ActionButton {
+                    label: "Save device name"
+                    available: !!(content.controller.selectedDevice.capabilities && content.controller.selectedDevice.capabilities.can_rename)
+                        && renameInput.text.trim().length > 0
+                        && renameInput.text.trim() !== (content.controller.selectedDevice.name || "")
+                        && !content.controller.actionInFlight
+                    onClicked: content.controller.renameSelected(renameInput.text)
+                }
                 Item { Layout.fillHeight: true }
 
                 ActionButton { visible: !content.controller.canCancelOperation; label: content.controller.selectedDevice.connected ? "Disconnect" : (content.controller.selectedDevice.paired ? "Connect" : "Pair"); available: content.controller.hasSelection && !content.controller.actionInFlight; onClicked: content.controller.primarySelected() }
