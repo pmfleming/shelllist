@@ -478,6 +478,14 @@
             touch $out
           '';
 
+          bluetoothGlyphs = pkgs.runCommand "shelllist-bluetooth-glyphs"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-bluetooth-glyphs.js} ${./bluetooth/BluetoothGlyphs.js}
+            touch $out
+          '';
+
           providerModel = pkgs.runCommand "shelllist-provider-model"
             {
               nativeBuildInputs = [ pkgs.nodejs ];

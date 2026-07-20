@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import "BluetoothBattery.js" as BluetoothBattery
+import "BluetoothGlyphs.js" as BluetoothGlyphs
 
 ColumnLayout {
     id: section
@@ -12,7 +13,17 @@ ColumnLayout {
     readonly property string batterySource: BluetoothBattery.sourceLabel(batteryReports)
     Layout.fillWidth: true
     spacing: 10
-    Text { Layout.fillWidth: true; text: section.controller.selectedResult ? section.controller.selectedResult.title : "Bluetooth device"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 20; font.bold: true; elide: Text.ElideRight }
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 9
+        Text {
+            text: section.controller.selectedResult ? section.controller.selectedResult.icon : "󰂯"
+            color: section.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
+            font.family: Ui.Theme.iconFontFamily
+            font.pixelSize: 23
+        }
+        Text { Layout.fillWidth: true; text: section.controller.selectedResult ? section.controller.selectedResult.title : "Bluetooth device"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 20; font.bold: true; elide: Text.ElideRight }
+    }
     Text { Layout.fillWidth: true; text: section.controller.selectedResult ? section.controller.selectedResult.subtitle : ""; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 12 }
     Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Ui.Theme.border }
     Text { text: "Paired        " + (section.controller.selectedDevice.paired ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
@@ -41,6 +52,12 @@ ColumnLayout {
             RowLayout {
                 anchors.fill: parent
                 anchors.margins: 10
+                Text {
+                    text: BluetoothGlyphs.forBattery(batteryCard.modelData)
+                    color: Ui.Theme.accent
+                    font.family: Ui.Theme.iconFontFamily
+                    font.pixelSize: 17
+                }
                 Text { Layout.fillWidth: true; text: batteryCard.modelData.label || batteryCard.modelData.component || "Battery"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 12 }
                 Text { text: batteryCard.modelData.percentage + "%"; color: Ui.Theme.active; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: true }
             }

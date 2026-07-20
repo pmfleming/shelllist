@@ -95,7 +95,7 @@ ColumnLayout {
                     spacing: 11
                     Text {
                         Layout.preferredWidth: 26
-                        text: deviceRow.device.connected ? "󰂱" : "󰂯"
+                        text: deviceRow.resultData.icon || "󰂯"
                         color: deviceRow.device.connected ? Ui.Theme.active : Ui.Theme.mutedText
                         font.family: Ui.Theme.iconFontFamily
                         font.pixelSize: 20

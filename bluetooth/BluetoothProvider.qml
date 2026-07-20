@@ -2,6 +2,7 @@ import QtQuick
 import Shelllist.Core as Core
 import "BluetoothBattery.js" as BluetoothBattery
 import "BluetoothFlow.js" as BluetoothFlow
+import "BluetoothGlyphs.js" as BluetoothGlyphs
 
 Core.Provider {
     id: provider
@@ -43,7 +44,7 @@ Core.Provider {
             id: device.key,
             title: device.name,
             subtitle: BluetoothFlow.deviceState(device) + battery,
-            icon: icon,
+            icon: BluetoothGlyphs.forDevice(device),
             score: BluetoothFlow.deviceScore(device),
             keywords: [device.name, device.icon || ""],
             badges: device.connected ? ["active"] : [],
