@@ -36,6 +36,7 @@ Item {
     property bool hardwareDirty
 
     readonly property bool securityView: controller.advanced.section === "security"
+    property real sectionTransitionProgress: securityView ? 0 : 1
     readonly property bool personalSecurity: String(profile.security_type || "").indexOf("Personal") >= 0
     readonly property string currentMethod: ipFamily === "ipv4" ? ipv4Method : ipv6Method
     readonly property bool currentAutoDns: ipFamily === "ipv4" ? ipv4AutoDns : ipv6AutoDns
@@ -65,6 +66,14 @@ Item {
     clip: true
     focus: visible && controller.advanced.open
     Keys.onEscapePressed: controller.advanced.closeSettings()
+
+    Behavior on sectionTransitionProgress {
+        // Entering the advanced area already has its own page transition. Only animate
+        // this track when moving between its two tabs, so no stale pane slides away
+        // while the details chooser itself is opening.
+        enabled: !Theme.noAnimations && page.controller.advanced.open
+        NumberAnimation { duration: 240; easing.type: Easing.InOutCubic }
+    }
 
     function firstAddress(settings) {
         return settings && settings.addresses && settings.addresses.length > 0 ? settings.addresses[0] : ({});
@@ -275,14 +284,18 @@ Item {
     }
 
     AdvancedSecurityPane {
-        anchors.fill: parent
-        visible: page.securityView
+        width: parent.width
+        height: parent.height
+        x: -width * page.sectionTransitionProgress
+        enabled: page.securityView
         settings: page
     }
 
     AdvancedIpSettingsPane {
-        anchors.fill: parent
-        visible: !page.securityView
+        width: parent.width
+        height: parent.height
+        x: width * (1 - page.sectionTransitionProgress)
+        enabled: !page.securityView
         settings: page
     }
 

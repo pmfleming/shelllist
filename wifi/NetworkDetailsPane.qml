@@ -147,21 +147,25 @@ Rectangle {
             }
 
             Item {
+                id: tabViewport
+
+                property real advancedTransitionProgress: pane.controller.advanced.open ? 1 : 0
+
                 width: parent.width
                 height: Math.max(0, parent.height - pane.headerHeight - pane.actionsHeight - pane.footerHeight - 3 * parent.spacing)
                 clip: true
+
+                Behavior on advancedTransitionProgress {
+                    enabled: !Theme.noAnimations
+                    NumberAnimation { duration: 240; easing.type: Easing.InOutCubic }
+                }
 
                 Column {
                     enabled: !pane.controller.advanced.open
                     width: parent.width
                     height: parent.height
-                    x: pane.controller.advanced.open ? -width : 0
+                    x: -width * tabViewport.advancedTransitionProgress
                     spacing: pane.sectionSpacing
-
-                    Behavior on x {
-                        enabled: !Theme.noAnimations
-                        NumberAnimation { duration: 240; easing.type: Easing.InOutCubic }
-                    }
 
                     DetailCard {
                         height: pane.connectionCardHeight
@@ -191,14 +195,9 @@ Rectangle {
                     enabled: pane.controller.advanced.open
                     width: parent.width
                     height: parent.height
-                    x: pane.controller.advanced.open ? 0 : width
+                    x: width * (1 - tabViewport.advancedTransitionProgress)
                     controller: pane.controller
                     sectionSpacing: pane.sectionSpacing
-
-                    Behavior on x {
-                        enabled: !Theme.noAnimations
-                        NumberAnimation { duration: 240; easing.type: Easing.InOutCubic }
-                    }
                 }
             }
 

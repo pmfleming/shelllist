@@ -43,6 +43,30 @@ AdvancedSettingsFlickable {
                 anchors.fill: parent
                 spacing: 10
 
+                AdvancedSegmentedRow {
+                    height: 40
+                    label: "Address policy"
+                    value: securityFlick.settings.macPolicy
+                    options: [
+                        { value: "default", label: "Default" },
+                        { value: "stable", label: "Stable" },
+                        { value: "random", label: "Random" },
+                        { value: "permanent", label: "Permanent" }
+                    ]
+                    onSelected: function (value) { securityFlick.settings.setMacPolicy(value); }
+                }
+
+                DetailGrid {
+                    width: parent.width
+                    height: 90
+                    entries: [
+                        { label: "DHCP server", value: securityFlick.settings.dhcpLease.server_identifier || "—" },
+                        { label: "Lease duration", value: securityFlick.settings.leaseDurationLabel(securityFlick.settings.dhcpLease.lease_time_seconds) },
+                        { label: "Lease domain", value: securityFlick.settings.dhcpLease.domain_name || "—" },
+                        { label: "Lease expires", value: securityFlick.settings.leaseExpiryLabel(securityFlick.settings.dhcpLease.expires_at_ms) }
+                    ]
+                }
+
                 Column {
                     width: parent.width
                     height: 58
@@ -147,29 +171,6 @@ AdvancedSettingsFlickable {
                     }
                 }
 
-                AdvancedSegmentedRow {
-                    height: 40
-                    label: "Address policy"
-                    value: securityFlick.settings.macPolicy
-                    options: [
-                        { value: "default", label: "Default" },
-                        { value: "stable", label: "Stable" },
-                        { value: "random", label: "Random" },
-                        { value: "permanent", label: "Permanent" }
-                    ]
-                    onSelected: function (value) { securityFlick.settings.setMacPolicy(value); }
-                }
-
-                DetailGrid {
-                    width: parent.width
-                    height: 90
-                    entries: [
-                        { label: "DHCP server", value: securityFlick.settings.dhcpLease.server_identifier || "—" },
-                        { label: "Lease duration", value: securityFlick.settings.leaseDurationLabel(securityFlick.settings.dhcpLease.lease_time_seconds) },
-                        { label: "Lease domain", value: securityFlick.settings.dhcpLease.domain_name || "—" },
-                        { label: "Lease expires", value: securityFlick.settings.leaseExpiryLabel(securityFlick.settings.dhcpLease.expires_at_ms) }
-                    ]
-                }
             }
         }
     }
