@@ -94,19 +94,13 @@ Item {
     }
     function applySnapshot(snapshot) {
         adapters = snapshot.adapters || [];
-        if (adapters.length > 0 && !adapters.some(function (adapter) { return adapter.key === preferredAdapterKey; }))
-            preferredAdapterKey = adapters[0].key;
+        preferredAdapterKey = BluetoothFlow.retainedAdapterKey(adapters, preferredAdapterKey);
         results.replaceProviderResults(provider.providerId, provider.resultsForDevices(snapshot.devices || []), false);
-        if (uiActive && powered && !scanning && !scanRequested) {
+        if (BluetoothFlow.shouldStartScan(uiActive, powered, scanning, scanRequested)) {
             scanRequested = true;
             backend.setScanning(true, selectedAdapter.key);
         }
-        if (!powered)
-            status = "Bluetooth is off";
-        else if (scanning)
-            status = filteredResults.length + " devices · scanning…";
-        else
-            status = filteredResults.length + " Bluetooth devices";
+        status = BluetoothFlow.snapshotStatus(powered, scanning, filteredResults.length);
     }
     function statusForCompletedCall(id) {
         if (id === "power")
@@ -227,7 +221,7 @@ Item {
             return;
         const device = filteredResults.find(function (result) { return result.id === operation.device_key; });
         const deviceName = device ? device.title : "Bluetooth device";
-        if (operation.state === "queued" || operation.state === "running") {
+        if (BluetoothFlow.isActiveOperation(operation)) {
             activeOperation = operation;
             status = operation.operation.charAt(0).toUpperCase() + operation.operation.slice(1) + " " + deviceName + "…";
             return;
@@ -236,7 +230,7 @@ Item {
             applySnapshot(operation.snapshot);
         if (activeOperation && activeOperation.request_id === operation.request_id)
             activeOperation = null;
-        if (BluetoothFlow.isTerminalOperation(operation) && pairingPrompt && pairingPrompt.device_key === operation.device_key) {
+        if (BluetoothFlow.operationEndsPairing(operation, pairingPrompt)) {
             pairingPrompt = null;
             pairingInput = "";
         }

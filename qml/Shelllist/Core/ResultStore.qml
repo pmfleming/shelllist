@@ -7,7 +7,7 @@ Item {
     required property ProviderRegistry registry
     property var sourceResults: []
     property string queryText: ""
-    property int selectedIndex: 0
+    property int selectedIndex
     property int queryGeneration: 0
     property string activeQueryId: ""
     readonly property var visibleResults: Model.rankResults(sourceResults, queryText)

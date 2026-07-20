@@ -12,6 +12,5 @@ internal BluetoothDeviceOverview BluetoothDeviceOverview.qml
 internal BluetoothDeviceActions BluetoothDeviceActions.qml
 internal BluetoothAdapterSettings BluetoothAdapterSettings.qml
 BluetoothWindowHost 1.0 BluetoothWindowHost.qml
-BluetoothGlobalShortcut 1.0 BluetoothGlobalShortcut.qml
 BluetoothContent 1.0 BluetoothContent.qml
 BtDaemonClient 1.0 BtDaemonClient.qml

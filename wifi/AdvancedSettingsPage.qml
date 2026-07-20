@@ -67,12 +67,24 @@ Item {
     focus: visible && controller.advanced.open
     Keys.onEscapePressed: controller.advanced.closeSettings()
 
-    Behavior on sectionTransitionProgress {
-        // Entering the advanced area already has its own page transition. Only animate
-        // this track when moving between its two tabs, so no stale pane slides away
-        // while the details chooser itself is opening.
-        enabled: !Theme.noAnimations && page.controller.advanced.open
-        NumberAnimation { duration: 240; easing.type: Easing.InOutCubic }
+    function showSection(nextSection, animate) {
+        const targetProgress = nextSection === "security" ? 0 : 1;
+        sectionTransition.stop();
+        if (!animate || Theme.noAnimations) {
+            sectionTransitionProgress = targetProgress;
+            return;
+        }
+        sectionTransition.from = sectionTransitionProgress;
+        sectionTransition.to = targetProgress;
+        sectionTransition.start();
+    }
+
+    NumberAnimation {
+        id: sectionTransition
+        target: page
+        property: "sectionTransitionProgress"
+        duration: 240
+        easing.type: Easing.InOutCubic
     }
 
     function firstAddress(settings) {
@@ -260,6 +272,10 @@ Item {
 
     Connections {
         target: page.controller.advanced
+
+        function onSectionTransitionRequested(section, animate) {
+            page.showSection(section, animate);
+        }
 
         function onSecretChanged() {
             if (page.controller.advanced.secret.length === 0)

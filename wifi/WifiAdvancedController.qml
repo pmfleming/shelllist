@@ -1,8 +1,8 @@
 import QtQuick
 
 Item {
-    required property var controller
-    required property var backend
+    required property WifiController controller
+    required property WifiBackend backend
 
     property bool open: false
     property string section: "security"
@@ -15,6 +15,8 @@ Item {
     readonly property bool saving: backend.isPending("advanced-save")
     readonly property bool secretLoading: backend.isPending("advanced-secret")
 
+    signal sectionTransitionRequested(string section, bool animate)
+
     function reset() { profilePath = ""; profile = ({}); secret = ""; error = ""; }
     function openSettings(nextSection) {
         const savedProfile = controller.profileFor(controller.detailAp);
@@ -22,7 +24,9 @@ Item {
         controller.detailsOpen = true;
         controller.detailsExpansionProgress = 1;
         controller.windowPlacementRequested();
-        section = nextSection === "hardware" ? "hardware" : "security";
+        const targetSection = nextSection === "hardware" ? "hardware" : "security";
+        sectionTransitionRequested(targetSection, open && targetSection !== section);
+        section = targetSection;
         if (open && profilePath === (savedProfile.path || "")) return;
         open = true; reset(); profilePath = savedProfile.path || "";
         if (!backend.loadAdvancedProfile(profilePath)) error = "Saved profile details are already loading.";

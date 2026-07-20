@@ -3,8 +3,8 @@ import "WifiPresentation.js" as Presentation
 import "WifiFlow.js" as Flow
 
 Item {
-    required property var controller
-    required property var backend
+    required property WifiController controller
+    required property WifiBackend backend
 
     function context(trigger, ap, result, requestId, workspaceId, automatic, fallback) {
         const identity = Flow.portalNetworkIdentity(ap, result || ({}));

@@ -4,8 +4,8 @@ import "NmApiClient.js" as Api
 Item {
     id: scan
 
-    required property var controller
-    required property var backend
+    required property WifiController controller
+    required property WifiBackend backend
     property bool pendingRefresh: false
     property bool snapshotSeen: false
     property string requestId: ""

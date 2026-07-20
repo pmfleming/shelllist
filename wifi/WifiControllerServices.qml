@@ -4,8 +4,8 @@ import Shelllist.Core as Core
 Item {
     id: services
 
-    required property var controller
-    required property var prompt
+    required property WifiController controller
+    required property WifiPromptController prompt
 
     property alias queryText: resultsModel.queryText
     property alias selectedIndex: resultsModel.selectedIndex

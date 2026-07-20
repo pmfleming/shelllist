@@ -5,7 +5,7 @@ import "WifiPresentation.js" as Presentation
 Core.Provider {
     id: wifiProvider
 
-    required property var controller
+    required property WifiController controller
 
     providerId: "wifi"
     displayName: "Wi-Fi"
@@ -14,83 +14,76 @@ Core.Provider {
     prefixes: ["wifi:"]
     capabilities: ({ query: false, actions: true, preview: true, subscriptions: true })
 
-    function actionDefinition(id, label, options) {
-        const values = options || ({});
-        return Core.Model.action({
-            id: id,
-            label: label,
-            icon: values.icon || "",
-            shortcut: values.shortcut || "",
-            role: values.role || "secondary",
-            kind: values.kind || "command",
-            enabled: values.enabled !== false,
-            visible: values.visible !== false,
-            closePolicy: "keep-open",
-            confirmation: values.confirmation || ({}),
-            state: values.state || ({}),
-            presentation: values.presentation || ({})
-        });
-    }
-
-    function actionsForNetwork(ap) {
-        if (!ap)
-            return [];
-        const connectingThis = controller.connection.running
+    function connectingTo(ap) {
+        return controller.connection.running
             && controller.connection.networkName.length > 0
             && controller.networkName(ap) === controller.connection.networkName;
+    }
+    function primaryActions(ap, connecting) {
         return [
-            actionDefinition("connect", "Connect", {
+            Core.Model.keepOpenAction("connect", "Connect", {
                 icon: "󰖩", shortcut: "C", role: "default",
                 enabled: controller.actions.canConnect(ap),
-                visible: !controller.isActive(ap) && !connectingThis,
+                visible: !controller.isActive(ap) && !connecting,
                 presentation: { group: "primary", tone: "active", width: 152 }
             }),
-            actionDefinition("cancel-connect", "Cancel", {
+            Core.Model.keepOpenAction("cancel-connect", "Cancel", {
                 icon: "󰜺", shortcut: "C", role: "destructive",
                 enabled: controller.connection.requestId.length > 0,
-                visible: connectingThis,
+                visible: connecting,
                 presentation: { group: "primary", tone: "danger", width: 152 }
             }),
-            actionDefinition("disconnect", "Disconnect", {
+            Core.Model.keepOpenAction("disconnect", "Disconnect", {
                 icon: "󰤭", shortcut: "D", role: "destructive",
                 enabled: controller.actions.canDisconnect(ap),
-                visible: controller.isActive(ap) && !connectingThis,
+                visible: controller.isActive(ap) && !connecting,
                 presentation: { group: "primary", tone: "danger", width: 152 }
-            }),
-            actionDefinition("forget", "Forget", {
+            })
+        ];
+    }
+    function toolbarActions(ap) {
+        return [
+            Core.Model.keepOpenAction("forget", "Forget", {
                 icon: "󰆴", shortcut: "F", role: "destructive",
                 enabled: controller.actions.canForget(ap),
                 confirmation: { required: true, title: "Forget network" },
                 presentation: { group: "toolbar", tone: "normal", width: 92 }
             }),
-            actionDefinition("portal", "Sign in", {
+            Core.Model.keepOpenAction("portal", "Sign in", {
                 icon: "󰏌", shortcut: "I",
                 presentation: { group: "toolbar", tone: "normal", width: 100 }
             }),
-            actionDefinition("share", "Share", {
+            Core.Model.keepOpenAction("share", "Share", {
                 icon: "󰒖", shortcut: "S",
                 enabled: controller.actions.canShare(ap),
                 presentation: { group: "toolbar", tone: "normal", width: 92 }
-            }),
-            actionDefinition("autoconnect", "Auto-connect", {
+            })
+        ];
+    }
+    function settingsActions(ap) {
+        return [
+            Core.Model.keepOpenAction("autoconnect", "Auto-connect", {
                 shortcut: "A", kind: "toggle",
                 enabled: controller.actions.canProfileAction(ap, "can_toggle_autoconnect"),
                 state: { checked: controller.actions.autoconnectEnabled(ap) },
                 presentation: { group: "settings" }
             }),
-            actionDefinition("randomized-mac", "Randomize MAC address", {
+            Core.Model.keepOpenAction("randomized-mac", "Randomize MAC address", {
                 shortcut: "R", kind: "toggle",
                 enabled: controller.actions.canProfileAction(ap, "can_set_mac_randomization"),
                 state: { checked: controller.actions.randomizedMacEnabled(ap) },
                 presentation: { group: "settings" }
             }),
-            actionDefinition("send-hostname", "Send device name", {
+            Core.Model.keepOpenAction("send-hostname", "Send device name", {
                 shortcut: "N", kind: "toggle",
                 enabled: controller.actions.canProfileAction(ap, "can_set_send_hostname"),
                 state: { checked: controller.actions.sendHostnameEnabled(ap) },
                 presentation: { group: "settings" }
             })
         ];
+    }
+    function actionsForNetwork(ap) {
+        return ap ? primaryActions(ap, connectingTo(ap)).concat(toolbarActions(ap), settingsActions(ap)) : [];
     }
 
     function primaryActionId(ap) {

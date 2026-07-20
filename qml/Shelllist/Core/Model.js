@@ -75,38 +75,33 @@ function provider(input) {
 
 function action(input) {
     const source = objectOrEmpty(input);
-    const presentationSource = objectOrEmpty(source.presentation);
-    const stateSource = objectOrEmpty(source.state);
-    const confirmationSource = objectOrEmpty(source.confirmation);
-    const role = enumValue(source.role, actionRoles, "secondary", "action.role");
-    const kind = enumValue(source.kind, actionKinds, "command", "action.kind");
+    const presentationSource = objectOrEmpty(source.presentation), stateSource = objectOrEmpty(source.state), confirmationSource = objectOrEmpty(source.confirmation);
+    const role = enumValue(source.role, actionRoles, "secondary", "action.role"), kind = enumValue(source.kind, actionKinds, "command", "action.kind");
     const presentation = {
-        group: enumValue(presentationSource.group, presentationGroups, role === "default" ? "primary" : "overflow", "action.presentation.group"),
-        tone: enumValue(presentationSource.tone, tones, role === "destructive" ? "danger" : "normal", "action.presentation.tone"),
+        group: enumValue(presentationSource.group, presentationGroups, role === "default" ? "primary" : "overflow", "action.presentation.group"), tone: enumValue(presentationSource.tone, tones, role === "destructive" ? "danger" : "normal", "action.presentation.tone"),
         width: Math.max(0, finiteNumber(presentationSource.width, 0))
     };
     return {
-        schemaVersion: schemaVersion,
-        id: identifier(source.id, "action.id"),
+        schemaVersion: schemaVersion, id: identifier(source.id, "action.id"),
         label: nonEmptyString(source.label, "action.label"),
-        icon: stringValue(source.icon, ""),
-        shortcut: stringValue(source.shortcut, ""),
-        role: role,
-        kind: kind,
-        enabled: booleanValue(source.enabled, true),
-        visible: booleanValue(source.visible, true),
+        icon: stringValue(source.icon, ""), shortcut: stringValue(source.shortcut, ""),
+        role: role, kind: kind,
+        enabled: booleanValue(source.enabled, true), visible: booleanValue(source.visible, true),
         closePolicy: enumValue(source.closePolicy, closePolicies, "provider-default", "action.closePolicy"),
         confirmation: {
             required: booleanValue(confirmationSource.required, false),
             title: stringValue(confirmationSource.title, ""),
             message: stringValue(confirmationSource.message, "")
         },
-        state: {
-            checked: booleanValue(stateSource.checked, false)
-        },
-        presentation: presentation,
-        metadata: objectOrEmpty(source.metadata)
+        state: { checked: booleanValue(stateSource.checked, false) },
+        presentation: presentation, metadata: objectOrEmpty(source.metadata)
     };
+}
+
+function keepOpenAction(id, label, options) {
+    return action(Object.assign({}, objectOrEmpty(options), {
+        id: id, label: label, closePolicy: "keep-open"
+    }));
 }
 
 function actionList(values) {
@@ -126,22 +121,15 @@ function result(input) {
     if (primaryActionId.length > 0 && actions.length > 0 && actions.findIndex(function (item) { return item.id === primaryActionId; }) < 0)
         fail("result.primaryActionId", "does not reference an action");
     return {
-        schemaVersion: schemaVersion,
-        providerId: providerId,
+        schemaVersion: schemaVersion, providerId: providerId,
         providerPriority: finiteNumber(source.providerPriority, 0),
-        id: id,
-        key: resultKey(providerId, id),
-        title: nonEmptyString(source.title, "result.title"),
-        subtitle: stringValue(source.subtitle, ""),
-        icon: stringValue(source.icon, ""),
-        score: finiteNumber(source.score, 0),
-        keywords: stringList(source.keywords),
-        badges: stringList(source.badges),
-        primaryActionId: primaryActionId,
-        actions: actions,
+        id: id, key: resultKey(providerId, id),
+        title: nonEmptyString(source.title, "result.title"), subtitle: stringValue(source.subtitle, ""),
+        icon: stringValue(source.icon, ""), score: finiteNumber(source.score, 0),
+        keywords: stringList(source.keywords), badges: stringList(source.badges),
+        primaryActionId: primaryActionId, actions: actions,
         preview: Object.assign({ kind: "none" }, objectOrEmpty(source.preview)),
-        state: objectOrEmpty(source.state),
-        payload: source.payload === undefined ? null : source.payload,
+        state: objectOrEmpty(source.state), payload: source.payload === undefined ? null : source.payload,
         metadata: objectOrEmpty(source.metadata)
     };
 }
@@ -160,6 +148,18 @@ function searchWords(value) { return normalizeSearchText(value).trim().split(/\s
 function wordStartsWith(text, token) {
     return text.split(/[^a-z0-9]+/).some(function (word) { return word.indexOf(token) === 0; });
 }
+function tokenMatchScore(title, subtitle, searchable, token) {
+    if (searchable.indexOf(token) < 0) return -1;
+    if (title === token) return 1200;
+    if (title.indexOf(token) === 0) return 700;
+    if (wordStartsWith(title, token)) return 450;
+    if (title.indexOf(token) >= 0) return 300;
+    return wordStartsWith(subtitle, token) ? 180 : 100;
+}
+function exactMatchBonus(title, normalizedQuery) {
+    if (title === normalizedQuery) return 1600;
+    return title.indexOf(normalizedQuery) === 0 ? 900 : 0;
+}
 function matchScore(item, query) {
     const normalizedQuery = normalizeSearchText(query).trim();
     if (normalizedQuery.length === 0)
@@ -169,20 +169,13 @@ function matchScore(item, query) {
     const keywords = normalizeSearchText((item.keywords || []).join(" "));
     const searchable = title + " " + subtitle + " " + keywords;
     const tokens = searchWords(normalizedQuery);
-    let score = 0;
+    let score = exactMatchBonus(title, normalizedQuery);
     for (let index = 0; index < tokens.length; index++) {
-        const token = tokens[index];
-        if (searchable.indexOf(token) < 0)
+        const tokenScore = tokenMatchScore(title, subtitle, searchable, tokens[index]);
+        if (tokenScore < 0)
             return -1;
-        if (title === token) score += 1200;
-        else if (title.indexOf(token) === 0) score += 700;
-        else if (wordStartsWith(title, token)) score += 450;
-        else if (title.indexOf(token) >= 0) score += 300;
-        else if (wordStartsWith(subtitle, token)) score += 180;
-        else score += 100;
+        score += tokenScore;
     }
-    if (title === normalizedQuery) score += 1600;
-    else if (title.indexOf(normalizedQuery) === 0) score += 900;
     return score;
 }
 function compareRanked(left, right) {

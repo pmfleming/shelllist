@@ -1,2 +1,2 @@
 module Shelllist.Io
-JsonlDaemonClient 1.0 JsonlDaemonClient.qml
+JsonlDaemonClient 1.0 process/JsonlDaemonClient.qml

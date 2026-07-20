@@ -1,11 +1,12 @@
 import QtQuick
 import Shelllist.Core as Core
 import "BluetoothBattery.js" as BluetoothBattery
+import "BluetoothFlow.js" as BluetoothFlow
 
 Core.Provider {
     id: provider
 
-    required property var controller
+    required property BluetoothController controller
 
     providerId: "bluetooth"
     displayName: "Bluetooth"
@@ -14,23 +15,6 @@ Core.Provider {
     prefixes: ["bluetooth:", "bt:"]
     capabilities: ({ query: false, actions: true, preview: true, subscriptions: true })
 
-    function action(id, label, options) {
-        const values = options || ({});
-        return Core.Model.action({
-            id: id,
-            label: label,
-            icon: values.icon || "",
-            shortcut: values.shortcut || "",
-            role: values.role || "secondary",
-            kind: values.kind || "command",
-            enabled: values.enabled !== false,
-            visible: values.visible !== false,
-            closePolicy: "keep-open",
-            confirmation: values.confirmation || ({}),
-            state: values.state || ({}),
-            presentation: values.presentation || ({})
-        });
-    }
     function primaryActionId(device) {
         if (device.connected)
             return "disconnect";
@@ -41,27 +25,26 @@ Core.Provider {
     function actionsForDevice(device) {
         const caps = device.capabilities || ({});
         return [
-            action("pair", "Pair", { role: "default", shortcut: "Enter", visible: !device.paired, enabled: !!caps.can_pair }),
-            action("connect", "Connect", { role: "default", shortcut: "Enter", visible: !device.connected && device.paired, enabled: !!caps.can_connect }),
-            action("disconnect", "Disconnect", { role: "destructive", shortcut: "Enter", visible: !!device.connected, enabled: !!caps.can_disconnect }),
-            action("trusted", "Trusted", { kind: "toggle", enabled: !!caps.can_trust, state: { checked: !!device.trusted } }),
-            action("wake", "Wake computer", { kind: "toggle", visible: device.wake_allowed !== null && device.wake_allowed !== undefined, enabled: !!caps.can_wake, state: { checked: !!device.wake_allowed } }),
-            action("blocked", "Blocked", { kind: "toggle", enabled: !!caps.can_block, state: { checked: !!device.blocked } }),
-            action("remove", "Remove device", { role: "destructive", enabled: !!caps.can_remove, confirmation: { required: true, title: "Remove Bluetooth device", message: "Pairing information will be deleted." } })
+            Core.Model.keepOpenAction("pair", "Pair", { role: "default", shortcut: "Enter", visible: !device.paired, enabled: !!caps.can_pair }),
+            Core.Model.keepOpenAction("connect", "Connect", { role: "default", shortcut: "Enter", visible: !device.connected && device.paired, enabled: !!caps.can_connect }),
+            Core.Model.keepOpenAction("disconnect", "Disconnect", { role: "destructive", shortcut: "Enter", visible: !!device.connected, enabled: !!caps.can_disconnect }),
+            Core.Model.keepOpenAction("trusted", "Trusted", { kind: "toggle", enabled: !!caps.can_trust, state: { checked: !!device.trusted } }),
+            Core.Model.keepOpenAction("wake", "Wake computer", { kind: "toggle", visible: device.wake_allowed !== null && device.wake_allowed !== undefined, enabled: !!caps.can_wake, state: { checked: !!device.wake_allowed } }),
+            Core.Model.keepOpenAction("blocked", "Blocked", { kind: "toggle", enabled: !!caps.can_block, state: { checked: !!device.blocked } }),
+            Core.Model.keepOpenAction("remove", "Remove device", { role: "destructive", enabled: !!caps.can_remove, confirmation: { required: true, title: "Remove Bluetooth device", message: "Pairing information will be deleted." } })
         ];
     }
     function resultForDevice(device) {
         const batterySummary = BluetoothBattery.summary(device.battery || []);
         const battery = batterySummary.length > 0 ? (" · " + batterySummary) : "";
-        const state = device.connected ? "Connected" : (device.paired ? "Paired" : (device.present ? "Available" : "Not in range"));
         return Core.Model.result({
             providerId: providerId,
             providerPriority: priority,
             id: device.key,
             title: device.name,
-            subtitle: state + battery,
+            subtitle: BluetoothFlow.deviceState(device) + battery,
             icon: icon,
-            score: (device.connected ? 10000 : 0) + (device.paired ? 1000 : 0) + (device.signal_strength || 0),
+            score: BluetoothFlow.deviceScore(device),
             keywords: [device.name, device.icon || ""],
             badges: device.connected ? ["active"] : [],
             primaryActionId: primaryActionId(device),

@@ -155,7 +155,9 @@ Item {
         function toggle(): void { host.togglePopover(); }
     }
 
-    WifiGlobalShortcut {
+    ShelllistGlobalShortcut {
+        shortcutName: "wifi"
+        description: "Toggle the Shelllist Wi-Fi chooser"
         onTriggered: host.togglePopover()
     }
 

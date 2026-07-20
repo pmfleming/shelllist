@@ -45,6 +45,8 @@ const launch = model.action({
 });
 expect("action is enabled by default", launch.enabled === true);
 expect("action presentation is normalized", launch.presentation.group === "primary" && launch.presentation.width === 140);
+const keepOpen = model.keepOpenAction("refresh", "Refresh", { role: "default" });
+expect("shared provider actions stay open", keepOpen.closePolicy === "keep-open" && keepOpen.role === "default");
 throws("action enums are checked", () => model.action({ id: "x", label: "X", role: "surprise" }), "unsupported value");
 
 const terminal = model.result({

@@ -6,13 +6,12 @@ Item {
 
     required property string daemonName
     required property var streams
-    property bool active: false
-    property bool ready: false
-    property bool recoverProtocolErrors: false
+    property bool active
+    property bool ready
+    property bool recoverProtocolErrors
     property var queuedLines: []
-    property int sequence: 0
+    property var counters: ({ sequence: 0, retryAttempt: 0 })
     property string subscriptionId: ""
-    property int retryAttempt: 0
     property int initialRetryInterval: 1500
     property int maximumRetryInterval: 30000
 
@@ -34,8 +33,8 @@ Item {
             return;
         if (ready) {
             if (subscriptionId.length > 0)
-                cancel("cancel-subscription-" + (++sequence), subscriptionId);
-            send({ id: "shutdown-" + (++sequence), op: "shutdown" });
+                cancel("cancel-subscription-" + (++counters.sequence), subscriptionId);
+            send({ id: "shutdown-" + (++counters.sequence), op: "shutdown" });
         }
         subscriptionId = "";
         process.stdinEnabled = false;
@@ -46,7 +45,7 @@ Item {
         const requestId = optionalRequestId || idOrRequestId;
         if (!requestId)
             return;
-        const id = optionalRequestId ? idOrRequestId : "cancel-" + (++sequence);
+        const id = optionalRequestId ? idOrRequestId : "cancel-" + (++counters.sequence);
         send({ id: id, op: "cancel", request_id: requestId });
     }
 
@@ -73,12 +72,12 @@ Item {
             return;
         subscriptionId = (message.response.data.subscription || ({})).id || "";
     }
-    function markHealthy() { retryAttempt = 0; }
+    function markHealthy() { counters.retryAttempt = 0; }
     function scheduleRetry() {
         if (!active)
             return;
-        retryTimer.interval = Math.min(maximumRetryInterval, initialRetryInterval * Math.pow(2, retryAttempt));
-        retryAttempt = Math.min(retryAttempt + 1, 30);
+        retryTimer.interval = Math.min(maximumRetryInterval, initialRetryInterval * Math.pow(2, counters.retryAttempt));
+        counters.retryAttempt = Math.min(counters.retryAttempt + 1, 30);
         retryTimer.restart();
     }
     function handleResponse(message) {
@@ -130,7 +129,7 @@ Item {
             start();
         } else {
             stop();
-            retryAttempt = 0;
+            counters.retryAttempt = 0;
         }
     }
 

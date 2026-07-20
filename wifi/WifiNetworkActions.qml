@@ -2,10 +2,10 @@ import QtQuick
 import "WifiPresentation.js" as Presentation
 
 Item {
-    required property var controller
-    required property var backend
-    required property var prompt
-    required property var portal
+    required property WifiController controller
+    required property WifiBackend backend
+    required property WifiPromptController prompt
+    required property CaptivePortalController portal
 
     function profileFor(ap) { return controller.profileFor(ap); }
     function capabilities(ap) { return ap && ap.capabilities ? ap.capabilities : ({}); }

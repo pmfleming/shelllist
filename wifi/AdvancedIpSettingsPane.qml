@@ -8,7 +8,7 @@ import "networkinput" as NetworkInput
 AdvancedSettingsFlickable {
     id: hardwareFlick
 
-    required property var settings
+    required property AdvancedSettingsPage settings
 
     contentHeight: hardwareCards.implicitHeight
 

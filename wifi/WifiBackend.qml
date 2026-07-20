@@ -6,7 +6,7 @@ import "process"
 Item {
     id: backend
 
-    required property var controller
+    required property WifiController controller
     property var pending: ({})
     readonly property bool active: controller.uiActive || controller.connection.running || controller.prompt.open
     readonly property bool listRunning: isPending("networks")

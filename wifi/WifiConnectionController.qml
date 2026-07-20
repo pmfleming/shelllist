@@ -6,11 +6,11 @@ import "NmApiClient.js" as Api
 Item {
     id: connection
 
-    required property var controller
-    required property var backend
-    required property var prompt
-    required property var policy
-    required property var portal
+    required property WifiController controller
+    required property WifiBackend backend
+    required property WifiPromptController prompt
+    required property WifiConnectPolicy policy
+    required property CaptivePortalController portal
     property var connectivity: null
     property string networkName: ""
     property int progressTick: 0

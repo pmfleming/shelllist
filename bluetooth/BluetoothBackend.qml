@@ -4,17 +4,17 @@ import "BtApi.js" as BtApi
 Item {
     id: backend
 
-    required property var controller
-    property var pending: ({})
-    property var operations: ({})
-    property var finishedOperations: ({})
-    property var transfers: ({})
-    property var finishedTransfers: ({})
-    property var scans: ({})
+    required property BluetoothController controller
+    property var pending
+    property var operations
+    property var finishedOperations
+    property var transfers
+    property var finishedTransfers
+    property var scans
 
     // Incoming OBEX authorization can arrive while the popup is hidden.
     readonly property bool active: true
-    readonly property bool running: Object.keys(pending).length > 0 || Object.keys(operations).length > 0 || Object.keys(transfers).length > 0
+    readonly property bool running: itemCount(pending) > 0 || itemCount(operations) > 0 || itemCount(transfers) > 0
     readonly property var eventHandlers: {
         const handlers = ({});
         handlers[BtApi.streams.pairing] = backend.handlePairingEvent;
@@ -25,6 +25,11 @@ Item {
         return handlers;
     }
 
+    function itemCount(values) { return Object.keys(values || ({})).length; }
+    function resetTransportState() {
+        pending = ({}); operations = ({}); finishedOperations = ({});
+        transfers = ({}); finishedTransfers = ({}); scans = ({});
+    }
     function copyWithout(values, key) {
         const result = Object.assign({}, values);
         delete result[key];
@@ -173,6 +178,8 @@ Item {
         controller.handleOperationEvent(operation);
     }
 
+    Component.onCompleted: resetTransportState()
+
     function refresh() { return call("snapshot", BtApi.methods.snapshot, {}); }
     function refreshObex() { return call("obex-snapshot", BtApi.methods.obexSnapshot, {}); }
     function sendFile(deviceKey, path) { return call("obex-send", BtApi.methods.obexSend, { device_key: deviceKey, path: path }); }
@@ -220,11 +227,7 @@ Item {
         onResponse: function (id, envelope, transportError) { backend.finish(id, envelope, transportError); }
         onEventReceived: function (event) { backend.handleEvent(event); }
         onTransportFailed: function (message) {
-            backend.operations = ({});
-            backend.finishedOperations = ({});
-            backend.transfers = ({});
-            backend.finishedTransfers = ({});
-            backend.scans = ({});
+            backend.resetTransportState();
             backend.controller.handleTransportFailure(message);
         }
     }

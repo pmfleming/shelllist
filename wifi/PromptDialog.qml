@@ -36,8 +36,6 @@ Rectangle {
     }
 
     Rectangle {
-        id: promptCard
-
         width: Math.min(parent.width * 0.9, 560)
         implicitHeight: promptContent.implicitHeight + 40
         height: Math.min(parent.height - 40, implicitHeight)

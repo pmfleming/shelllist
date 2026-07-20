@@ -30,7 +30,11 @@ Item {
     function toggle() { popoverVisible ? hide() : show(); }
     function closeRequested() { hide(); }
 
-    BluetoothGlobalShortcut { onTriggered: host.toggle() }
+    Ui.ShelllistGlobalShortcut {
+        shortcutName: "bluetooth"
+        description: "Toggle the Shelllist Bluetooth chooser"
+        onTriggered: host.toggle()
+    }
 
     IpcHandler {
         target: "bluetooth"

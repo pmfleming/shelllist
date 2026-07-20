@@ -432,6 +432,7 @@
             sources=(
               ${./qml}/Shelllist/Core/*.qml
               ${./qml}/Shelllist/Io/*.qml
+              ${./qml}/Shelllist/Io/process/*.qml
               ${./qml}/Shelllist/Ui/*.qml
               ${./bluetooth}/*.qml
               ${./wifi}/*.qml
@@ -441,7 +442,7 @@
             strict_sources=()
             for source in "''${sources[@]}"; do
               case "$source" in
-                */BluetoothGlobalShortcut.qml|*/WifiGlobalShortcut.qml) ;;
+                */ShelllistGlobalShortcut.qml) ;;
                 *) strict_sources+=("$source") ;;
               esac
             done
@@ -449,9 +450,7 @@
             run_qmllint "''${strict_sources[@]}"
             # Quickshell 0.3's private GlobalShortcut qmltypes reference an
             # unexported PostReloadHook. Suppress only that upstream import warning.
-            run_qmllint --import disable \
-              ${./bluetooth}/BluetoothGlobalShortcut.qml \
-              ${./wifi}/WifiGlobalShortcut.qml
+            run_qmllint --import disable ${./qml}/Shelllist/Ui/ShelllistGlobalShortcut.qml
             touch $out
           '';
 
@@ -529,7 +528,7 @@
                 shortcut_files=()
                 for arg in "$@"; do
                   case "$arg" in
-                    */BluetoothGlobalShortcut.qml|*/WifiGlobalShortcut.qml)
+                    */ShelllistGlobalShortcut.qml)
                       shortcut_files+=("$arg")
                       ;;
                     *) strict_args+=("$arg") ;;

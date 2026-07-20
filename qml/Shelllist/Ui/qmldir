@@ -1,3 +1,4 @@
 module Shelllist.Ui
 singleton Theme 1.0 Theme.qml
+ShelllistGlobalShortcut 1.0 ShelllistGlobalShortcut.qml
 VisualSurface 1.0 VisualSurface.qml

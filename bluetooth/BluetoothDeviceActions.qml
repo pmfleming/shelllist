@@ -6,7 +6,7 @@ import Shelllist.Ui as Ui
 ColumnLayout {
     id: section
     required property BluetoothController controller
-    property bool confirmRemove: false
+    property bool confirmRemove
     readonly property bool editingName: renameInput.activeFocus
     Layout.fillWidth: true
     spacing: 10

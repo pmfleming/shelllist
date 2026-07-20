@@ -38,8 +38,14 @@ transition = flow.pairingTransition(requested.data, {
 });
 expect("matching timeout closes prompt", transition.changed && transition.prompt === null);
 
+expect("running operation is active", flow.isActiveOperation({ state: "running" }));
 expect("completed operation is terminal", flow.isTerminalOperation({ state: "completed" }));
 expect("running operation is not terminal", !flow.isTerminalOperation({ state: "running" }));
+expect("terminal pairing operation closes its prompt", flow.operationEndsPairing({ state: "failed", device_key: "device-1" }, requested.data));
+expect("preferred adapter is retained", flow.retainedAdapterKey([{ key: "a" }, { key: "b" }], "b") === "b");
+expect("missing adapter falls back", flow.retainedAdapterKey([{ key: "a" }], "b") === "a");
+expect("initial scan requires an idle powered UI", flow.shouldStartScan(true, true, false, false));
+expect("snapshot status reports scanning", flow.snapshotStatus(true, true, 3) === "3 devices · scanning…");
 expect("failed transfer is terminal", flow.isTerminalTransfer({ status: "error" }));
 expect("active transfer is not terminal", !flow.isTerminalTransfer({ status: "progress" }));
 

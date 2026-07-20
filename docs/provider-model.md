@@ -15,7 +15,7 @@ Shelllist's launcher-facing boundary is a normalized result/action/provider mode
 9. **Destructive actions declare confirmation intent.** The provider still owns the actual confirmation workflow and must not trust the UI to have confirmed it.
 10. **Secrets do not belong in results, metadata, query context, or logs.** Secret prompts use a dedicated backend flow.
 11. **Visible model identity is persistent.** `ResultStore.visibleResults` remains the provider-neutral ranked array used by controllers, while `visibleModel` is one keyed `ListModel` synchronized with insert/move/update/remove operations so views do not reset every delegate for each backend snapshot.
-12. **Do not duplicate dynamic actions in snapshots.** A provider that overrides `actionsFor(result)` may leave `result.actions` empty and resolve current actions only when rendering or dispatching them.
+12. **Do not duplicate dynamic actions in snapshots.** A provider that overrides `actionsFor(result)` may leave `result.actions` empty and resolve current actions only when rendering or dispatching them. Providers use `Core.Model.keepOpenAction()` for the shared normalized keep-open action defaults instead of cloning action factories.
 
 ## Provider descriptor
 

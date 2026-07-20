@@ -8,12 +8,14 @@ import QtQuick
 Item {
     id: shortcut
 
+    required property string shortcutName
+    required property string description
     signal triggered
 
     GlobalShortcut { // qmllint disable unresolved-type import
         appid: "shelllist"
-        name: "bluetooth"
-        description: "Toggle the Shelllist Bluetooth chooser"
+        name: shortcut.shortcutName
+        description: shortcut.description
         onPressed: shortcut.triggered()
     }
 }
