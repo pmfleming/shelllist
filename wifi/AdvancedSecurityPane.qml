@@ -7,7 +7,7 @@ import Shelllist.Ui
 AdvancedSettingsFlickable {
     id: securityFlick
 
-    required property AdvancedSettingsPage settings
+    required property var settings
 
     contentHeight: securityCards.implicitHeight
 

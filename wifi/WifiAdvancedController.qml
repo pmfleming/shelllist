@@ -25,8 +25,9 @@ Item {
         controller.detailsExpansionProgress = 1;
         controller.windowPlacementRequested();
         const targetSection = nextSection === "hardware" ? "hardware" : "security";
-        sectionTransitionRequested(targetSection, open && targetSection !== section);
+        const animateSection = open && targetSection !== section;
         section = targetSection;
+        sectionTransitionRequested(targetSection, animateSection);
         if (open && profilePath === (savedProfile.path || "")) return;
         open = true; reset(); profilePath = savedProfile.path || "";
         if (!backend.loadAdvancedProfile(profilePath)) error = "Saved profile details are already loading.";

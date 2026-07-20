@@ -36,7 +36,7 @@ Item {
     property bool hardwareDirty
 
     readonly property bool securityView: controller.advanced.section === "security"
-    property real sectionTransitionProgress: securityView ? 0 : 1
+    property real sectionOffset
     readonly property bool personalSecurity: String(profile.security_type || "").indexOf("Personal") >= 0
     readonly property string currentMethod: ipFamily === "ipv4" ? ipv4Method : ipv6Method
     readonly property bool currentAutoDns: ipFamily === "ipv4" ? ipv4AutoDns : ipv6AutoDns
@@ -68,21 +68,20 @@ Item {
     Keys.onEscapePressed: controller.advanced.closeSettings()
 
     function showSection(nextSection, animate) {
-        const targetProgress = nextSection === "security" ? 0 : 1;
         sectionTransition.stop();
         if (!animate || Theme.noAnimations) {
-            sectionTransitionProgress = targetProgress;
+            sectionOffset = 0;
             return;
         }
-        sectionTransition.from = sectionTransitionProgress;
-        sectionTransition.to = targetProgress;
+        sectionOffset = nextSection === "security" ? -width : width;
         sectionTransition.start();
     }
 
     NumberAnimation {
         id: sectionTransition
         target: page
-        property: "sectionTransitionProgress"
+        property: "sectionOffset"
+        to: 0
         duration: 240
         easing.type: Easing.InOutCubic
     }
@@ -299,20 +298,21 @@ Item {
         }
     }
 
-    AdvancedSecurityPane {
+    Loader {
         width: parent.width
         height: parent.height
-        x: -width * page.sectionTransitionProgress
-        enabled: page.securityView
-        settings: page
+        x: page.sectionOffset
+        sourceComponent: page.securityView ? securitySection : ipSection
     }
 
-    AdvancedIpSettingsPane {
-        width: parent.width
-        height: parent.height
-        x: width * (1 - page.sectionTransitionProgress)
-        enabled: !page.securityView
-        settings: page
+    Component {
+        id: securitySection
+        AdvancedSecurityPane { settings: page }
+    }
+
+    Component {
+        id: ipSection
+        AdvancedIpSettingsPane { settings: page }
     }
 
     Rectangle {
