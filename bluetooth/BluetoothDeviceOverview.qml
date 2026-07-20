@@ -3,10 +3,13 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
+import "BluetoothBattery.js" as BluetoothBattery
 
 ColumnLayout {
     id: section
     required property BluetoothController controller
+    readonly property var batteryReports: BluetoothBattery.ordered(controller.selectedDevice.battery || [])
+    readonly property string batterySource: BluetoothBattery.sourceLabel(batteryReports)
     Layout.fillWidth: true
     spacing: 10
     Text { Layout.fillWidth: true; text: section.controller.selectedResult ? section.controller.selectedResult.title : "Bluetooth device"; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 20; font.bold: true; elide: Text.ElideRight }
@@ -17,8 +20,16 @@ ColumnLayout {
     Text { text: "In range      " + (section.controller.selectedDevice.present ? "Yes" : "No"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
     Text { text: "Services      " + (section.controller.selectedDevice.services_resolved ? "Resolved" : "Pending"); color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 13 }
     Text { visible: !!(section.controller.selectedDevice.services && section.controller.selectedDevice.services.length); Layout.fillWidth: true; text: (section.controller.selectedDevice.services || []).map(function (service) { return service.label; }).filter(function (label, index, values) { return values.indexOf(label) === index; }).join(" · "); color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11; wrapMode: Text.WordWrap }
+    Text {
+        visible: section.batteryReports.length > 0
+        text: section.batteryReports.length > 1 ? "Component batteries" : "Battery"
+        color: Ui.Theme.text
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: 14
+        font.bold: true
+    }
     Repeater {
-        model: section.controller.selectedDevice.battery || []
+        model: section.batteryReports
         delegate: Rectangle {
             id: batteryCard
             required property var modelData
@@ -34,6 +45,13 @@ ColumnLayout {
                 Text { text: batteryCard.modelData.percentage + "%"; color: Ui.Theme.active; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: true }
             }
         }
+    }
+    Text {
+        visible: section.batterySource.length > 0
+        text: section.batterySource
+        color: Ui.Theme.mutedText
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: 10
     }
     Text {
         visible: !!section.controller.obexCapabilities.available

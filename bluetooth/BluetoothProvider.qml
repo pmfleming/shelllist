@@ -1,5 +1,6 @@
 import QtQuick
 import Shelllist.Core as Core
+import "BluetoothBattery.js" as BluetoothBattery
 
 Core.Provider {
     id: provider
@@ -50,7 +51,8 @@ Core.Provider {
         ];
     }
     function resultForDevice(device) {
-        const battery = device.battery && device.battery.length > 0 ? (" · " + device.battery[0].percentage + "%") : "";
+        const batterySummary = BluetoothBattery.summary(device.battery || []);
+        const battery = batterySummary.length > 0 ? (" · " + batterySummary) : "";
         const state = device.connected ? "Connected" : (device.paired ? "Paired" : (device.present ? "Available" : "Not in range"));
         return Core.Model.result({
             providerId: providerId,

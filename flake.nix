@@ -471,6 +471,14 @@
             touch $out
           '';
 
+          bluetoothBattery = pkgs.runCommand "shelllist-bluetooth-battery"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-bluetooth-battery.js} ${./bluetooth/BluetoothBattery.js}
+            touch $out
+          '';
+
           providerModel = pkgs.runCommand "shelllist-provider-model"
             {
               nativeBuildInputs = [ pkgs.nodejs ];
