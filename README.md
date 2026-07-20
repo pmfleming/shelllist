@@ -10,7 +10,7 @@ Shelllist is a Hyprland-focused desktop action center. Its Wi-Fi popup is backed
 - Experimental app: `shelllist-bluetooth`, a BlueZ device chooser kept alongside the existing Rofi Bluetooth menu during stabilization.
 - Default mode: resident, monitor-aware popovers toggled through Quickshell IPC, Waybar, or Hyprland.
 - Optional mode: an explicit one-shot floating window for development/fallback use.
-- Backend: the pinned `pmfleming/nm-daemon` flake input; sibling-repository development uses a Nix input override.
+- Backend: sibling `nm-daemon` and `bt-daemon` Git inputs while their current API histories are unpublished; repin both to portable GitHub inputs after publication.
 - Target platform: `x86_64-linux` with NetworkManager and Quickshell.
 
 ## Usage
@@ -21,7 +21,7 @@ Start or toggle the default resident popup with Nix:
 nix run
 ```
 
-While developing against an unpublished sibling `nm-daemon` checkout, override the portable pinned input:
+The current development lock uses the unpublished sibling `nm-daemon` and `bt-daemon` histories directly. After those commits are published, restore portable GitHub inputs; an explicit sibling override remains available when testing another checkout:
 
 ```sh
 nix run --override-input nm-daemon path:../nm-daemon

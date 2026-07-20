@@ -4,7 +4,8 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nm-daemon = {
-      url = "github:pmfleming/nm-daemon";
+      # Development remains local until the current nm-daemon API history is published.
+      url = "git+file:///home/laufan/Projects/nm-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     bt-daemon = {
@@ -459,6 +460,14 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-ip-validation.js} ${./wifi/networkinput/IpValidation.js}
+            touch $out
+          '';
+
+          bluetoothLifecycle = pkgs.runCommand "shelllist-bluetooth-lifecycle"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-bluetooth-lifecycle.js} ${./bluetooth/BluetoothFlow.js}
             touch $out
           '';
 

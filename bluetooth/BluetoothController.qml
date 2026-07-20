@@ -1,6 +1,7 @@
 import QtQuick
 import Shelllist.Core as Core
 import Shelllist.Ui as Ui
+import "BluetoothFlow.js" as BluetoothFlow
 
 Item {
     id: controller
@@ -161,7 +162,7 @@ Item {
         status = "Starting file transfer to " + selectedDevice.name + "…";
         return backend.sendFile(selectedDevice.key, path);
     }
-    function isTerminalTransfer(transfer) { return ["complete", "cancelled", "error"].includes(transfer.status); }
+    function isTerminalTransfer(transfer) { return BluetoothFlow.isTerminalTransfer(transfer); }
     function completedTransferStatus(transfer) {
         if (transfer.status === "complete")
             return transfer.direction === "incoming" ? transfer.file_name + " saved in Downloads" : transfer.file_name + " sent";
@@ -234,6 +235,10 @@ Item {
             applySnapshot(operation.snapshot);
         if (activeOperation && activeOperation.request_id === operation.request_id)
             activeOperation = null;
+        if (BluetoothFlow.isTerminalOperation(operation) && pairingPrompt && pairingPrompt.device_key === operation.device_key) {
+            pairingPrompt = null;
+            pairingInput = "";
+        }
         status = operationCompletionStatus(operation, deviceName);
     }
     function cancelActiveOperation() {
@@ -243,19 +248,15 @@ Item {
         return backend.cancelOperation(activeOperation.request_id);
     }
     function handlePairingEvent(event) {
-        const prompt = event.data || ({});
-        if (event.event === "cancelled") {
-            if (pairingPrompt && pairingPrompt.request_id === prompt.request_id) {
-                pairingPrompt = null;
-                pairingInput = "";
-            }
+        const transition = BluetoothFlow.pairingTransition(pairingPrompt, event);
+        if (!transition.changed)
             return;
-        }
-        if (event.event !== "requested" && event.event !== "display")
-            return;
-        pairingPrompt = prompt;
+        pairingPrompt = transition.prompt;
         pairingInput = "";
-        status = prompt.response_required ? "Pairing confirmation required" : "Complete pairing on the Bluetooth device";
+        if (pairingPrompt)
+            status = pairingPrompt.response_required ? "Pairing confirmation required" : "Complete pairing on the Bluetooth device";
+        else if (event.data && event.data.reason === "timeout")
+            status = "Bluetooth pairing request timed out";
     }
     function respondPairing(accept) {
         if (!pairingPromptOpen || !pairingPrompt.response_required)
