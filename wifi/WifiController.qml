@@ -44,10 +44,10 @@ Item {
     readonly property var detailAp: detailResult ? detailResult.payload : ({})
     readonly property bool hasSelection: filteredResults.length > 0
     readonly property string busyMessage: "Wait for the current Wi-Fi action to finish…"
-    readonly property alias shareAvailable: services.share.available
-    readonly property alias sharePayload: services.share.payload
-    readonly property alias shareStatus: services.share.status
-    readonly property alias shareUnavailableMessage: services.share.unavailableMessage
+    readonly property bool shareAvailable: services.share.available
+    readonly property string sharePayload: services.share.payload
+    readonly property string shareStatus: services.share.status
+    readonly property string shareUnavailableMessage: services.share.unavailableMessage
     readonly property alias shareController: services.share
     readonly property alias selectionModel: services.results
     readonly property alias providerModel: services.provider
