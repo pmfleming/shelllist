@@ -85,7 +85,7 @@ Shelllist currently supports:
 - optional keyring saving with persistence feedback and explicit prompt cancellation;
 - disconnecting Wi-Fi;
 - saved-profile actions: disconnect-and-forget, toggle autoconnect, toggle randomized MAC, and toggle hostname sending;
-- an advanced saved-profile editor for metered/hidden state, MAC policy, hostname privacy, WPA Personal passwords, IPv4/IPv6 assignment, DNS, DHCP lease metadata, and technical details;
+- an advanced saved-profile editor for metered/hidden state, MAC policy, hostname privacy, WPA Personal passwords, IPv4/IPv6 assignment, DNS, DHCP lease metadata, and technical details, with directional animation across all three detail tabs;
 - Wi-Fi QR payload copying for open networks or saved profiles whose secret can be read;
 - captive-portal helper launch when requested by the UI or suggested by the backend.
 
@@ -103,13 +103,15 @@ General popup keys:
 - `Enter`: run the primary action for the selected network (`Connect` or `Disconnect`).
 - `Down` / `Up`: move selection.
 - `Right`: open the details pane.
-- `Left`: close the details pane.
+- `Left`: close the details pane while the network list has focus; search-field caret movement is left untouched.
 - `F6`: connect to a hidden SSID.
 - `F7`: open Security & Privacy for the selected saved profile.
 - `F8`: open IP & DNS for the selected saved profile.
 - `Ctrl+Tab`: cycle Network Details, Security & Privacy, and IP & DNS tabs.
 - `F5`: refresh cached networks, active status, saved profiles, and start an explicit scan with spinner/progress events.
 - `Esc`: close the popup, or cancel an open prompt.
+
+`F5`–`F8` are window-scoped, so they remain available when focus is on a details-pane control. Prompt-local keys retain priority while a modal prompt is open.
 
 Details-pane hotkeys are available when the details pane is open and the selected network supports the action:
 
@@ -124,13 +126,13 @@ Details-pane hotkeys are available when the details pane is open and the selecte
 
 ## Provider model
 
-Shelllist normalizes system integrations behind a generic provider/result/action model. Providers expose stable descriptors, map backend values to serializable results, resolve live action state, and execute actions through a central registry. Generic views never inspect provider payloads or call system backends directly.
+Shelllist normalizes system integrations behind a generic provider/result/action model. Providers expose stable descriptors, map backend values to serializable results, resolve live action state, and execute actions through a central registry. Generic views never inspect provider payloads or call system backends directly. `ResultStore` ranks each update once and synchronizes a persistent keyed `ListModel`, so recurring scan snapshots update/move delegates instead of replacing the ListView model. Wi-Fi and Bluetooth result snapshots omit duplicated action objects because their providers resolve those actions from live controller state at use time.
 
 The current `WifiProvider.qml` adapter maps `nm-api` networks and Wi-Fi operations onto this model without changing `nm-daemon` protocol v1. See [`docs/provider-model.md`](docs/provider-model.md) for the schemas, validation rules, query generations, action dispatch contract, and guidance for application, clipboard, and Bluetooth providers.
 
 ## Backend/API boundary
 
-Shelllist starts one `nm-daemon client` process while the UI or an operation is active. Tagged JSONL requests on stdin multiplex D-Bus calls, subscriptions, cancellation and events. D-Bus ownership, NetworkManager behavior, event filtering and cleanup remain in Rust.
+Shelllist starts one `nm-daemon client` process while the UI or an operation is active. Tagged JSONL requests on stdin multiplex D-Bus calls, subscriptions, cancellation and events. D-Bus ownership, NetworkManager behavior, event filtering and cleanup remain in Rust. If the executable or service is unavailable, the shared JSONL client retries with exponential backoff from 1.5 seconds to a 30-second cap; a valid response/event resets the delay, and queued calls cannot bypass it.
 
 The D-Bus endpoint is:
 
@@ -169,8 +171,11 @@ Status and connectivity are continuous subscriptions rather than polling loops. 
 
 The popup uses Nix/Home Manager `SHELLLIST_*` environment values as its single configured theme source, with the Qt/system palette as a portable fallback. It no longer maintains a second asynchronous theme state through `hyprctl getoption`.
 
+The Wi-Fi surface derives a bounded `0.82–1.12` density scale from its available height. List/header spacing, the search/header controls, status bar, and details pane therefore shrink together on short displays and expand together on taller displays. Modal prompt cards derive their height from wrapped content rather than fixed pixel heights.
+
 Animation behavior:
 
+- Network Details, Security & Privacy, and IP & DNS animate in both directions without exposing off-screen/stale panes while the chooser expands.
 - Under Hyprland, animations are enabled unless `SHELLLIST_NO_ANIMATIONS` overrides them.
 - Outside Hyprland, Shelllist defaults to no animations.
 - Set `SHELLLIST_NO_ANIMATIONS=1` or `SHELLLIST_NO_ANIMATIONS=0` to override while testing.
@@ -224,6 +229,6 @@ node tests/check-provider-model.js qml/Shelllist/Core/Model.js
 qmlqualitylens measure all --config qmlqualitylens.config.json  # optional static quality report
 ```
 
-The UI entry points are `wifi/shell.qml` and `bluetooth/shell.qml`. Generic provider contracts, validation, ranking, registry dispatch, and result storage live in the shared `Shelllist.Core` module under `qml/Shelllist/Core/`; shared daemon transport lives in `Shelllist.Io`; shared theming and surface behavior live in `Shelllist.Ui`; `WifiProvider.qml` and `BluetoothProvider.qml` are backend adapters. Frontend-only Wi-Fi helpers are separated by responsibility into `WifiPresentation.js`, `WifiFlow.js`, and `NmApiClient.js`; connection, scan, advanced-profile, network-action, share, and captive-portal flows live in dedicated controller Items rather than the main Wi-Fi controller. Bluetooth device details are likewise split into overview, action, metadata, and adapter-setting sections. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
+The UI entry points are `wifi/shell.qml` and `bluetooth/shell.qml`. Generic provider contracts, validation, single-pass ranking, keyed incremental ListView synchronization, registry dispatch, and result storage live in the shared `Shelllist.Core` module under `qml/Shelllist/Core/`; shared daemon transport (including bounded exponential restart backoff) lives in `Shelllist.Io`; shared theming and surface behavior live in `Shelllist.Ui`; `WifiProvider.qml` and `BluetoothProvider.qml` are backend adapters. Frontend-only Wi-Fi helpers are separated by responsibility into `WifiPresentation.js`, `WifiFlow.js`, and `NmApiClient.js`; connection, scan, advanced-profile, network-action, share, and captive-portal flows live in dedicated controller Items rather than the main Wi-Fi controller. Bluetooth device details are likewise split into overview, action, metadata, and adapter-setting sections. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
 
 The JSON boundary with `nm-daemon` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture, validates the frontend method shapes, regenerates the used method and stream entries in `wifi/NmApi.js` from `nm-daemon debug protocol-registry`, and lints every QML source; any drift or static-analysis failure fails the check.

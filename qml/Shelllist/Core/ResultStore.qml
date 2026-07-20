@@ -11,6 +11,7 @@ Item {
     property int queryGeneration: 0
     property string activeQueryId: ""
     readonly property var visibleResults: Model.rankResults(sourceResults, queryText)
+    readonly property var visibleModel: visibleListModel
     readonly property int count: visibleResults.length
 
     signal staleBatchIgnored(string providerId, string queryId)
@@ -60,14 +61,13 @@ Item {
         });
         const retained = sourceResults.filter(function (item) { return item.providerId !== providerId; });
         const next = Model.resultList(retained.concat(normalized));
-        const ranked = Model.rankResults(next, queryText);
         sourceResults = next;
         if (resetSelection || !previous) {
             selectedIndex = 0;
             return;
         }
-        const retainedIndex = Model.indexByKey(ranked, previous.key);
-        selectedIndex = retainedIndex >= 0 ? retainedIndex : Math.max(0, Math.min(selectedIndex, ranked.length - 1));
+        const retainedIndex = Model.indexByKey(visibleResults, previous.key);
+        selectedIndex = retainedIndex >= 0 ? retainedIndex : Math.max(0, Math.min(selectedIndex, visibleResults.length - 1));
     }
 
     function applyBatch(value) {
@@ -91,9 +91,8 @@ Item {
     function removeProvider(providerId) {
         const previous = selected();
         const next = sourceResults.filter(function (item) { return item.providerId !== providerId; });
-        const ranked = Model.rankResults(next, queryText);
         sourceResults = next;
-        const retainedIndex = previous ? Model.indexByKey(ranked, previous.key) : -1;
+        const retainedIndex = previous ? Model.indexByKey(visibleResults, previous.key) : -1;
         selectedIndex = retainedIndex >= 0 ? retainedIndex : clampIndex(selectedIndex);
     }
 
@@ -103,8 +102,38 @@ Item {
         activeQueryId = "";
     }
 
+    function syncVisibleModel() {
+        for (let desiredIndex = 0; desiredIndex < visibleResults.length; desiredIndex++) {
+            const desired = visibleResults[desiredIndex];
+            let currentIndex = -1;
+            for (let index = desiredIndex; index < visibleListModel.count; index++) {
+                if (visibleListModel.get(index).resultKey === desired.key) {
+                    currentIndex = index;
+                    break;
+                }
+            }
+            if (currentIndex < 0) {
+                visibleListModel.insert(desiredIndex, { resultKey: desired.key, resultData: desired });
+            } else {
+                if (currentIndex !== desiredIndex)
+                    visibleListModel.move(currentIndex, desiredIndex, 1);
+                visibleListModel.setProperty(desiredIndex, "resultData", desired);
+            }
+        }
+        if (visibleListModel.count > visibleResults.length)
+            visibleListModel.remove(visibleResults.length, visibleListModel.count - visibleResults.length);
+    }
+
     onQueryTextChanged: selectedIndex = 0
-    onVisibleResultsChanged: selectedIndex = clampIndex(selectedIndex)
+    onVisibleResultsChanged: {
+        selectedIndex = clampIndex(selectedIndex);
+        syncVisibleModel();
+    }
+
+    ListModel {
+        id: visibleListModel
+        dynamicRoles: true
+    }
 
     Connections {
         target: store.registry

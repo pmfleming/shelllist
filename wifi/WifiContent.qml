@@ -7,6 +7,8 @@ Rectangle {
     id: content
 
     required property WifiController controller
+    readonly property real uiScale: Math.max(0.82, Math.min(1.12,
+        (height - 2 * controller.contentVerticalMargin) / 850))
 
     anchors.fill: parent
     radius: Theme.windowRadius
@@ -18,6 +20,20 @@ Rectangle {
         if (controller.prompt.mode === "daemon-secret" && controller.prompt.secretRequestId.length > 0)
             controller.connection.cancelSecret(controller.prompt.secretRequestId);
         controller.prompt.cancel();
+    }
+
+    Shortcut {
+        sequence: "F5"
+        enabled: !content.controller.prompt.open
+        autoRepeat: false
+        onActivated: content.controller.refresh()
+    }
+
+    Shortcut {
+        sequence: "F6"
+        enabled: !content.controller.prompt.open && !content.controller.advanced.open
+        autoRepeat: false
+        onActivated: content.controller.openHiddenNetworkPrompt()
     }
 
     Shortcut {
@@ -36,13 +52,6 @@ Rectangle {
         sequence: "Ctrl+Tab"
         enabled: content.controller.detailsOpen && content.controller.hasSelection && !content.controller.prompt.open
         onActivated: content.controller.cycleDetailsTab()
-    }
-
-    Shortcut {
-        sequence: "Left"
-        enabled: content.controller.detailsOpen && !content.controller.advanced.open && !content.controller.prompt.open
-        autoRepeat: false
-        onActivated: content.controller.navigation.closeDetails()
     }
 
     Shortcut {
@@ -84,10 +93,11 @@ Rectangle {
             Layout.preferredWidth: content.controller.listPaneWidth
             Layout.maximumWidth: content.controller.listPaneWidth
             Layout.fillHeight: true
-            spacing: 10
+            spacing: Math.round(10 * content.uiScale)
 
             WifiHeader {
                 id: header
+                uiScale: content.uiScale
                 filterText: content.controller.filterText
                 onFilterEdited: function (text) {
                     content.controller.filterText = text;
@@ -100,6 +110,7 @@ Rectangle {
             NetworkListPane {
                 id: listPane
                 controller: content.controller
+                uiScale: content.uiScale
             }
         }
 

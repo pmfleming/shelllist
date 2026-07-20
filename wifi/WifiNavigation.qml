@@ -39,12 +39,7 @@ Item {
             [Qt.Key_Escape, controller.closeWindowRequested],
             [Qt.Key_Down, downAction],
             [Qt.Key_Up, function () { move(-1); }],
-            [Qt.Key_Right, openDetails],
-            [Qt.Key_Left, closeDetails],
-            [Qt.Key_F6, controller.openHiddenNetworkPrompt],
-            [Qt.Key_F7, function () { controller.advanced.openSettings("security"); }],
-            [Qt.Key_F8, function () { controller.advanced.openSettings("hardware"); }],
-            [Qt.Key_F5, controller.refresh]
+            [Qt.Key_Right, openDetails]
         ];
     }
 
@@ -71,6 +66,8 @@ Item {
             return accept(event, controller.primarySelected);
         if (handleDetailHotkey(event))
             return;
+        if (event.key === Qt.Key_Left)
+            return accept(event, closeDetails);
         if (event.key === Qt.Key_Up && controller.selectedIndex <= 0)
             return accept(event, focusSearch);
         return handleBinding(event, paneBindings(function () { move(1); }));

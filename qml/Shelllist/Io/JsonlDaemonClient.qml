@@ -12,13 +12,16 @@ Item {
     property var queuedLines: []
     property int sequence: 0
     property string subscriptionId: ""
+    property int retryAttempt: 0
+    property int initialRetryInterval: 1500
+    property int maximumRetryInterval: 30000
 
     signal response(string id, var envelope, string transportError)
     signal eventReceived(var event)
     signal transportFailed(string message)
 
     function start() {
-        if (!active || process.running)
+        if (!active || process.running || retryTimer.running)
             return;
         process.stdinEnabled = true;
         process.exec([daemonName, "client"]);
@@ -70,7 +73,16 @@ Item {
             return;
         subscriptionId = (message.response.data.subscription || ({})).id || "";
     }
+    function markHealthy() { retryAttempt = 0; }
+    function scheduleRetry() {
+        if (!active)
+            return;
+        retryTimer.interval = Math.min(maximumRetryInterval, initialRetryInterval * Math.pow(2, retryAttempt));
+        retryAttempt = Math.min(retryAttempt + 1, 30);
+        retryTimer.restart();
+    }
     function handleResponse(message) {
+        markHealthy();
         rememberSubscription(message);
         response(message.id || "", message.ok ? message.response : null,
             message.ok ? "" : (message.error || daemonName + " call failed"));
@@ -80,10 +92,11 @@ Item {
         if (!active)
             return;
         stop();
-        retryTimer.restart();
+        scheduleRetry();
     }
     function handleMessage(message) {
         if (message.kind === "event") {
+            markHealthy();
             eventReceived(message.event || ({}));
             return;
         }
@@ -112,7 +125,14 @@ Item {
     }
 
     Component.onCompleted: start()
-    onActiveChanged: active ? start() : stop()
+    onActiveChanged: {
+        if (active) {
+            start();
+        } else {
+            stop();
+            retryAttempt = 0;
+        }
+    }
 
     Process {
         id: process
@@ -130,9 +150,10 @@ Item {
                 return;
             const detail = processError.text.length > 0 ? processError.text : "exit " + exitCode;
             client.transportFailed(client.daemonName + " client stopped: " + detail);
-            retryTimer.restart();
+            if (!retryTimer.running)
+                client.scheduleRetry();
         }
     }
 
-    Timer { id: retryTimer; interval: 1500; onTriggered: client.start() }
+    Timer { id: retryTimer; interval: client.initialRetryInterval; onTriggered: client.start() }
 }

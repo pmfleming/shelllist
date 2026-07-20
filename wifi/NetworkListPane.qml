@@ -9,6 +9,7 @@ Item {
     id: pane
 
     required property WifiController controller
+    required property real uiScale
 
     Layout.fillWidth: true
     Layout.fillHeight: true
@@ -22,7 +23,7 @@ Item {
     Column {
         anchors.fill: parent
         anchors.leftMargin: 12
-        spacing: 6
+        spacing: Math.round(6 * pane.uiScale)
 
         Rectangle {
             width: parent.width
@@ -40,7 +41,7 @@ Item {
 
                 anchors.fill: parent
                 clip: true
-                model: pane.controller.filteredResults
+                model: pane.controller.filteredResultsModel
                 spacing: 0
                 currentIndex: pane.controller.selectedIndex
                 activeFocusOnTab: true
@@ -80,20 +81,20 @@ Item {
             id: statusPanel
 
             width: parent.width
-            height: 38
+            height: Math.round(38 * pane.uiScale)
             radius: Theme.cardRadius
             color: Theme.surfaceRaised
             border.color: Theme.border
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 14
-                anchors.rightMargin: 14
-                spacing: 10
+                anchors.leftMargin: Math.round(14 * pane.uiScale)
+                anchors.rightMargin: Math.round(14 * pane.uiScale)
+                spacing: Math.round(10 * pane.uiScale)
 
                 SignalIcon {
-                    Layout.preferredWidth: 18
-                    Layout.preferredHeight: 16
+                    Layout.preferredWidth: Math.round(18 * pane.uiScale)
+                    Layout.preferredHeight: Math.round(16 * pane.uiScale)
                     level: 1
                     iconColor: Theme.mutedText
                 }
@@ -103,7 +104,7 @@ Item {
                     text: pane.controller.status
                     color: pane.controller.actionInFlight ? Theme.accent : Theme.subtleText
                     font.family: Theme.fontFamily
-                    font.pixelSize: 12
+                    font.pixelSize: Math.max(11, Math.round(12 * pane.uiScale))
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -113,7 +114,7 @@ Item {
                     text: "󰑐"
                     color: Theme.mutedText
                     font.family: Theme.iconFontFamily
-                    font.pixelSize: 16
+                    font.pixelSize: Math.max(13, Math.round(16 * pane.uiScale))
 
                     NumberAnimation on rotation {
                         running: pane.controller.scanInFlight && !Theme.noAnimations

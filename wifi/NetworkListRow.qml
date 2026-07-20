@@ -7,8 +7,8 @@ Rectangle {
     id: row
 
     required property int index
-    required property var modelData
-    readonly property var result: modelData
+    required property var resultData
+    readonly property var result: resultData
     readonly property var network: result.payload || ({})
     property bool active: false
     property string name: ""

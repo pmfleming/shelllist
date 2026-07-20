@@ -40,6 +40,7 @@ Item {
     readonly property string detailsTab: advanced.open ? advanced.section : "network"
     readonly property bool scanInFlight: scan.running
     readonly property var filteredResults: services.results.visibleResults
+    readonly property var filteredResultsModel: services.results.visibleModel
     readonly property var detailResult: services.results.selected()
     readonly property var detailAp: detailResult ? detailResult.payload : ({})
     readonly property bool hasSelection: filteredResults.length > 0

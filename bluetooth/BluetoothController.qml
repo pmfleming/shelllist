@@ -27,6 +27,7 @@ Item {
     property string status: "Loading Bluetooth devices…"
     readonly property bool actionInFlight: backend.running
     readonly property var filteredResults: results.visibleResults
+    readonly property var filteredResultsModel: results.visibleModel
     readonly property var selectedResult: results.selected()
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
     readonly property var selectedAdapter: adapters.find(function (adapter) { return adapter.key === preferredAdapterKey; }) || adapters.find(function (adapter) { return adapter.key === selectedDevice.adapter_key; }) || adapters[0] || ({})

@@ -6,6 +6,7 @@ import Shelllist.Ui
 RowLayout {
     id: header
 
+    required property real uiScale
     property string filterText: ""
 
     signal filterEdited(string text)
@@ -13,20 +14,22 @@ RowLayout {
     signal refreshRequested
 
     Layout.fillWidth: true
-    Layout.preferredHeight: 48
-    spacing: 10
+    Layout.preferredHeight: Math.round(48 * uiScale)
+    spacing: Math.round(10 * uiScale)
+
+    function scaled(value) { return Math.round(value * uiScale); }
 
     function focusSearch() {
         search.forceActiveFocus();
     }
 
     Item {
-        Layout.preferredWidth: 2
+        Layout.preferredWidth: header.scaled(2)
     }
 
     Rectangle {
-        Layout.preferredWidth: 42
-        Layout.preferredHeight: 42
+        Layout.preferredWidth: header.scaled(42)
+        Layout.preferredHeight: header.scaled(42)
         Layout.alignment: Qt.AlignVCenter
         radius: Theme.cardRadius
         color: Theme.selected
@@ -34,8 +37,8 @@ RowLayout {
 
         SignalIcon {
             anchors.centerIn: parent
-            width: 25
-            height: 22
+            width: header.scaled(25)
+            height: header.scaled(22)
             level: 3
             iconColor: Theme.accent
         }
@@ -45,16 +48,16 @@ RowLayout {
         id: search
 
         Layout.fillWidth: true
-        Layout.preferredHeight: 42
+        Layout.preferredHeight: header.scaled(42)
         Layout.alignment: Qt.AlignVCenter
         focus: true
-        leftPadding: 43
-        rightPadding: 12
+        leftPadding: header.scaled(43)
+        rightPadding: header.scaled(12)
         color: Theme.inputText
         selectionColor: Theme.accent
         selectedTextColor: Theme.accentText
         font.family: Theme.fontFamily
-        font.pixelSize: 14
+        font.pixelSize: Math.max(12, header.scaled(14))
         verticalAlignment: TextInput.AlignVCenter
         text: header.filterText
         onTextChanged: header.filterEdited(text)
@@ -63,36 +66,36 @@ RowLayout {
         }
 
         Text {
-            x: 14
+            x: header.scaled(14)
             anchors.verticalCenter: parent.verticalCenter
             text: "󰍉"
             color: Theme.mutedText
             font.family: Theme.iconFontFamily
-            font.pixelSize: 17
+            font.pixelSize: Math.max(14, header.scaled(17))
         }
 
         Text {
-            x: 43
+            x: header.scaled(43)
             anchors.verticalCenter: parent.verticalCenter
             visible: search.text.length === 0
             text: "Search networks…"
             color: Theme.subtleText
             font.family: Theme.fontFamily
-            font.pixelSize: 14
+            font.pixelSize: Math.max(12, header.scaled(14))
         }
 
         InputBackground {}
     }
 
     IconTile {
-        Layout.preferredWidth: 42
-        Layout.preferredHeight: 42
+        Layout.preferredWidth: header.scaled(42)
+        Layout.preferredHeight: header.scaled(42)
         Layout.alignment: Qt.AlignVCenter
         backgroundColor: Theme.surfaceRaised
         borderColor: Theme.border
         icon: "󰑐"
         iconColor: Theme.text
-        iconSize: 19
+        iconSize: Math.max(16, header.scaled(19))
         clickable: true
         onClicked: header.refreshRequested()
     }

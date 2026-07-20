@@ -36,8 +36,11 @@ Rectangle {
     }
 
     Rectangle {
+        id: promptCard
+
         width: Math.min(parent.width * 0.9, 560)
-        height: dialog.saveVisible ? 304 : 270
+        implicitHeight: promptContent.implicitHeight + 40
+        height: Math.min(parent.height - 40, implicitHeight)
         x: Math.round((parent.width - width) / 2)
         y: Math.round((parent.height - height) / 2)
         radius: Theme.windowRadius
@@ -46,8 +49,11 @@ Rectangle {
         border.width: 1
 
         Column {
-            anchors.fill: parent
-            anchors.margins: 20
+            id: promptContent
+
+            x: 20
+            y: 20
+            width: parent.width - 40
             spacing: 12
 
             Text {

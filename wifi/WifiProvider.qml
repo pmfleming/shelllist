@@ -113,7 +113,8 @@ Core.Provider {
             keywords: [network.ssid, network.bssid, network.security, network.band],
             badges: network.active ? ["active"] : [],
             primaryActionId: primaryActionId(network),
-            actions: actionsForNetwork(network),
+            // Actions depend on live controller state and are supplied by actionsFor().
+            actions: [],
             preview: { kind: "wifi-network", available: true },
             state: { active: !!network.active, busy: controller.connection.isConnecting(network) },
             payload: network

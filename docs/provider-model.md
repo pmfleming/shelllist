@@ -14,6 +14,8 @@ Shelllist's launcher-facing boundary is a normalized result/action/provider mode
 8. **Presentation is separate from semantics.** Action role/kind/close policy are semantic; toolbar group, tone, and width live under `action.presentation`.
 9. **Destructive actions declare confirmation intent.** The provider still owns the actual confirmation workflow and must not trust the UI to have confirmed it.
 10. **Secrets do not belong in results, metadata, query context, or logs.** Secret prompts use a dedicated backend flow.
+11. **Visible model identity is persistent.** `ResultStore.visibleResults` remains the provider-neutral ranked array used by controllers, while `visibleModel` is one keyed `ListModel` synchronized with insert/move/update/remove operations so views do not reset every delegate for each backend snapshot.
+12. **Do not duplicate dynamic actions in snapshots.** A provider that overrides `actionsFor(result)` may leave `result.actions` empty and resolve current actions only when rendering or dispatching them.
 
 ## Provider descriptor
 
@@ -109,7 +111,7 @@ A query has a stable request ID, monotonic generation, text, limit, exact-match 
 }
 ```
 
-A batch may contain results from exactly one provider. Cross-provider batches and duplicate keys are rejected.
+A batch may contain results from exactly one provider. Cross-provider batches and duplicate keys are rejected. Replacement and removal paths assign `sourceResults` before consulting the `visibleResults` binding, so ranking is evaluated once per update; the resulting array is then reconciled into the persistent visible model by stable result key.
 
 ## Execution request
 
@@ -130,6 +132,6 @@ The full normalized result/action are included for convenience, but providers mu
 
 ## Current adapters
 
-`WifiProvider.qml` maps `nm-api` network values to generic results and translates generic action IDs back to `WifiController` operations. `BluetoothProvider.qml` does the same for opaque-keyed `bt-api` devices and pair/connect/disconnect/settings operations. Both backend protocols remain independent of the generic UI contract.
+`WifiProvider.qml` maps `nm-api` network values to generic results and translates generic action IDs back to `WifiController` operations. `BluetoothProvider.qml` does the same for opaque-keyed `bt-api` devices and pair/connect/disconnect/settings operations. Both adapters keep snapshot action arrays empty and implement `actionsFor(result)`, avoiding per-device action normalization during recurring backend snapshots while preserving live enabled/visible/toggle state. Both backend protocols remain independent of the generic UI contract.
 
 Generic contracts live in the shared `Shelllist.Core` QML module under `qml/Shelllist/Core/`. Future application, clipboard, window, and file providers should implement `Shelllist.Core.Provider` rather than adding provider-specific behavior to generic result views or the registry.

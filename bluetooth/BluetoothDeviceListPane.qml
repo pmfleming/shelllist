@@ -74,14 +74,14 @@ ColumnLayout {
         ListView {
             id: deviceList
             anchors.fill: parent
-            model: pane.controller.filteredResults
+            model: pane.controller.filteredResultsModel
             currentIndex: pane.controller.selectedIndex
             clip: true
             delegate: Rectangle {
                 id: deviceRow
                 required property int index
-                required property var modelData
-                readonly property var device: modelData.payload || ({})
+                required property var resultData
+                readonly property var device: resultData.payload || ({})
                 readonly property bool selected: index === pane.controller.selectedIndex
                 width: deviceList.width
                 height: 58
@@ -103,8 +103,8 @@ ColumnLayout {
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 2
-                        Text { Layout.fillWidth: true; text: deviceRow.modelData.title; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: deviceRow.device.connected; elide: Text.ElideRight }
-                        Text { Layout.fillWidth: true; text: deviceRow.modelData.subtitle; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11; elide: Text.ElideRight }
+                        Text { Layout.fillWidth: true; text: deviceRow.resultData.title; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: deviceRow.device.connected; elide: Text.ElideRight }
+                        Text { Layout.fillWidth: true; text: deviceRow.resultData.subtitle; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11; elide: Text.ElideRight }
                     }
                     Text { text: "󰅂"; color: deviceRow.selected ? Ui.Theme.accent : Ui.Theme.mutedText; font.family: Ui.Theme.iconFontFamily; font.pixelSize: 17 }
                 }

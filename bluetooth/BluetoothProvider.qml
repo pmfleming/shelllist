@@ -63,7 +63,8 @@ Core.Provider {
             keywords: [device.name, device.icon || ""],
             badges: device.connected ? ["active"] : [],
             primaryActionId: primaryActionId(device),
-            actions: actionsForDevice(device),
+            // Actions depend on live controller state and are supplied by actionsFor().
+            actions: [],
             preview: { kind: "bluetooth-device", available: true },
             state: { active: !!device.connected, busy: controller.actionInFlight },
             payload: device
