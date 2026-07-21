@@ -111,9 +111,48 @@ Item {
     }
 
     function deactivateUi() {
+        if (prompt.open)
+            cancelPrompt("popover-hidden");
         uiActive = false;
         scan.deactivate();
         connection.deactivate();
+    }
+
+    function cancelPrompt(reason) {
+        if (!prompt.open)
+            return true;
+        const mode = prompt.mode;
+        const requestId = prompt.secretRequestId;
+        let cancelled = true;
+        if (mode === "daemon-secret" && requestId.length > 0)
+            cancelled = connection.cancelSecret(requestId);
+        prompt.cancel();
+        console.info("shelllist wifi prompt closed mode=" + mode + " reason=" + (reason || "user")
+            + " daemon_cancelled=" + cancelled);
+        if (!cancelled)
+            status = "Could not cancel the pending Wi-Fi secret request.";
+        return cancelled;
+    }
+
+    function handleTransportFailure(message, lostRequestIds) {
+        const lost = lostRequestIds || [];
+        scan.handleTransportFailure();
+        connection.handleTransportFailure();
+        lost.forEach(function (id) {
+            advanced.failCall(id, "nm-daemon transport failed before " + id + " completed: " + message);
+        });
+        if (lost.indexOf("share") >= 0)
+            services.share.fail(message);
+        if (prompt.open && prompt.mode === "daemon-secret") {
+            console.warn("shelllist wifi daemon secret prompt discarded reason=transport-failure request_id=" + prompt.secretRequestId);
+            prompt.cancel();
+        }
+        status = message + (lost.length > 0 ? " Lost requests: " + lost.join(", ") + "." : "");
+    }
+
+    function handleTransportReady() {
+        if (uiActive)
+            scan.maybeRefresh();
     }
 
     function refresh() { scan.refresh(); }
@@ -145,7 +184,10 @@ Item {
             const handler = daemonEventHandlerByStream[event.stream];
             if (handler)
                 handler(event);
+            else
+                console.warn("shelllist nm event ignored stream=" + event.stream + " event=" + event.event + " reason=no-handler");
         } catch (error) {
+            console.error("shelllist nm event rejected stream=" + (event && event.stream ? event.stream : "unknown") + " error=" + error);
             status = "Could not parse nm-daemon event: " + error;
         }
     }

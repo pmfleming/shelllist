@@ -32,6 +32,14 @@ Item {
         progressTimer.stop();
     }
     function resetProgress() { networkName = ""; progressTick = 0; progressTimer.stop(); }
+    function handleTransportFailure() {
+        const lostRequestId = requestId;
+        requestId = "";
+        resetProgress();
+        connectivity = null;
+        if (lostRequestId.length > 0)
+            console.warn("shelllist wifi connection discarded reason=transport-failure request_id=" + lostRequestId);
+    }
 
     function finishEvent(event, succeeded) {
         const completedRequestId = event.request_id || requestId;
@@ -95,7 +103,11 @@ Item {
         controller.status = running ? "Connection attempt already running…" : "Connecting to " + displayName + "…";
         connectivity = ({ state: "unknown", captive_portal: false, full: false });
         networkName = displayName; workspaceId = controller.currentWorkspaceId; progressTick = 0; progressTimer.restart();
-        backend.connect(request);
+        if (!backend.connect(request)) {
+            console.error("shelllist wifi connection rejected stage=dispatch network=" + displayName);
+            resetProgress();
+            controller.status = "Could not start the connection request for " + displayName + ".";
+        }
     }
     function applyResult(result, fallbackText, completedRequestId) {
         const message = result.message || fallbackText || "Wi-Fi connection failed";
@@ -110,11 +122,27 @@ Item {
         if (policy.lastConnectAp) prompt.openPasswordPrompt(policy.lastConnectAp, Flow.isWrongPasswordReason(result.reason)
             ? "Wrong password. Enter a new Wi-Fi password." : "Saved password failed. Enter a new Wi-Fi password.");
     }
-    function provideSecret(id, key, password, save) { controller.status = "Sending requested Wi-Fi secret to NetworkManager…"; backend.provideSecret(id, key, password, save); }
-    function cancelSecret(id) { backend.cancelSecret(id); }
+    function provideSecret(id, key, password, save) {
+        controller.status = "Sending requested Wi-Fi secret to NetworkManager…";
+        if (!backend.provideSecret(id, key, password, save)) {
+            console.error("shelllist wifi secret rejected stage=dispatch request_id=" + id + " key=" + key);
+            controller.status = "Could not send the requested Wi-Fi secret to NetworkManager.";
+            return false;
+        }
+        return true;
+    }
+    function cancelSecret(id) {
+        if (!backend.cancelSecret(id)) {
+            console.error("shelllist wifi secret cancellation rejected request_id=" + id);
+            return false;
+        }
+        return true;
+    }
     function cancel() {
         if (requestId.length === 0) { controller.status = "Waiting for the connection request to become cancellable…"; return; }
-        controller.status = "Cancelling connection to " + networkName + "…"; backend.cancel(requestId);
+        controller.status = "Cancelling connection to " + networkName + "…";
+        if (!backend.cancel(requestId))
+            controller.status = "Could not cancel the connection to " + networkName + ".";
     }
 
     Timer { id: progressTimer; interval: 120; repeat: true; onTriggered: connection.progressTick += 1 }

@@ -21,10 +21,12 @@ Start or toggle the default resident popup with Nix:
 nix run
 ```
 
-The current development lock uses the unpublished sibling `nm-daemon` and `bt-daemon` histories directly. After those commits are published, restore portable GitHub inputs; an explicit sibling override remains available when testing another checkout:
+The current development lock uses portable relative references to sibling `nm-daemon` and `bt-daemon` checkouts because the required histories are not published yet. Keep the three repositories in the same parent directory. After those commits are published, restore GitHub inputs; explicit overrides remain available when testing other checkouts:
 
 ```sh
-nix run --override-input nm-daemon path:../nm-daemon
+nix run \
+  --override-input nm-daemon path:/path/to/nm-daemon \
+  --override-input bt-daemon path:/path/to/bt-daemon
 ```
 
 Run the explicit floating fallback once the package is on `PATH`:
@@ -191,7 +193,7 @@ The shared `PopupWindowHost` gives each application the same floating fallback, 
 - A Wi-Fi device managed by NetworkManager.
 - User permissions to control NetworkManager connections through D-Bus/polkit.
 - A running or D-Bus-activatable `nm-daemon` session service exposing `org.laufan.NmDaemon`.
-- The pinned `nm-daemon` input, or a sibling checkout supplied with `--override-input nm-daemon path:../nm-daemon`.
+- Sibling `nm-daemon` and `bt-daemon` checkouts containing the locked API histories, or both inputs supplied through `--override-input`.
 
 ## Visible-network connection probe
 
@@ -213,7 +215,7 @@ The executed probe disconnects between attempts and writes logs under `$XDG_STAT
 
 ```sh
 nix develop
-nix flake check --override-input nm-daemon path:../nm-daemon
+nix flake check
 ```
 
 Useful checks:

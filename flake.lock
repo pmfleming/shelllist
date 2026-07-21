@@ -13,12 +13,12 @@
         "rev": "b552e04b6354ec9f882e1a49c02ee5e6b4088905",
         "revCount": 27,
         "type": "git",
-        "url": "file:///home/laufan/Projects/bt-daemon"
+        "url": "file:../bt-daemon"
       },
       "original": {
         "ref": "main",
         "type": "git",
-        "url": "file:///home/laufan/Projects/bt-daemon"
+        "url": "file:../bt-daemon"
       }
     },
     "nixpkgs": {
@@ -50,12 +50,12 @@
         "rev": "40ce1e960dd67fdd2de3f9b2c7184e0d4f68ae45",
         "revCount": 43,
         "type": "git",
-        "url": "file:///home/laufan/Projects/nm-daemon"
+        "url": "file:../nm-daemon"
       },
       "original": {
         "ref": "main",
         "type": "git",
-        "url": "file:///home/laufan/Projects/nm-daemon"
+        "url": "file:../nm-daemon"
       }
     },
     "root": {

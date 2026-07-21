@@ -8,7 +8,10 @@ Item {
 
     required property WifiController controller
     property var pending: ({})
-    readonly property bool active: controller.uiActive || controller.connection.running || controller.prompt.open
+    readonly property bool active: controller.uiActive
+        || Object.keys(pending || ({})).length > 0
+        || controller.connection.running
+        || controller.prompt.open
     readonly property bool listRunning: isPending("networks")
     readonly property bool scanRunning: isPending("scan-start") || controller.scan.requestId.length > 0
     readonly property bool connectStarting: isPending("connect-start")
@@ -38,11 +41,22 @@ Item {
     }
 
     function call(id, method, params) {
-        if (isPending(id))
+        if (isPending(id)) {
+            console.warn("shelllist nm request rejected id=" + id + " reason=already-pending");
             return false;
+        }
         setPending(id, true);
-        client.call(id, method, params);
-        return true;
+        console.info("shelllist nm request started id=" + id + " method=" + method);
+        try {
+            client.call(id, method, params);
+            return true;
+        } catch (error) {
+            setPending(id, false);
+            const message = "Could not send nm-daemon " + id + " request: " + error;
+            console.error("shelllist nm request failed id=" + id + " stage=send error=" + error);
+            controller.failCall(id, message);
+            return false;
+        }
     }
 
     function refreshNetworks(refreshCache) { return call("networks", NmApi.methods.wifi_networks, { cached: true, refresh_cache: !!refreshCache }); }
@@ -50,8 +64,18 @@ Item {
     function connect(request) { return call("connect-start", NmApi.methods.wifi_connectTarget, request); }
     function disconnect() { return call("disconnect", NmApi.methods.wifi_disconnect, {}); }
     function profile(operation) {
-        if (operation.operation === "forget")
-            console.info("shelllist forget request_id=" + operation.request_id + " ssid=" + (operation.target.ssid || "") + " bssid=" + (operation.target.bssid || ""));
+        if (!operation || !operation.operation) {
+            console.error("shelllist profile request rejected reason=missing-operation");
+            controller.status = "Could not update the saved Wi-Fi profile: missing operation.";
+            return false;
+        }
+        if (operation.operation === "forget") {
+            const target = operation.target || ({});
+            console.info("shelllist forget request_id=" + (operation.request_id || "")
+                + " key=" + (operation.key || "")
+                + " ssid=" + (target.ssid || "")
+                + " bssid=" + (target.bssid || ""));
+        }
         return call("profile", NmApi.methods.wifi_profile_operation, operation);
     }
     function share(path) { return call("share", NmApi.methods.wifi_profile_operation, { operation: "share", path: path }); }
@@ -64,7 +88,19 @@ Item {
         return call("secret-provide", NmApi.methods.wifi_secret_provide, { request_id: requestId, values: values, save: !!save, cancel: false });
     }
     function cancelSecret(requestId) { return call("secret-cancel", NmApi.methods.wifi_secret_provide, { request_id: requestId, cancel: true }); }
-    function cancel(requestId) { client.cancel(requestId); }
+    function cancel(requestId) {
+        if (!requestId)
+            return false;
+        try {
+            console.info("shelllist nm cancellation requested request_id=" + requestId);
+            client.cancel(requestId);
+            return true;
+        } catch (error) {
+            console.error("shelllist nm cancellation failed request_id=" + requestId + " error=" + error);
+            controller.status = "Could not cancel nm-daemon request " + requestId + ": " + error;
+            return false;
+        }
+    }
 
     function handleNetworks(envelope) {
         const networks = Api.apiData(envelope, "networks") || [];
@@ -74,7 +110,14 @@ Item {
 
     function handleScanStart(envelope) {
         const result = Api.apiResult(envelope, "result") || ({});
-        controller.scan.requestId = result.request_id || ""; controller.setBackgroundStatus(result.message || "Wi-Fi scan started…");
+        const requestId = result.request_id || "";
+        if (!controller.uiActive && requestId.length > 0) {
+            console.info("shelllist wifi scan cancelled reason=ui-hidden request_id=" + requestId);
+            cancel(requestId);
+            return;
+        }
+        controller.scan.requestId = requestId;
+        controller.setBackgroundStatus(result.message || "Wi-Fi scan started…");
     }
 
     function handleConnectStart(envelope) {
@@ -128,17 +171,35 @@ Item {
             return;
         setPending(id, false);
         if (transportError.length > 0) {
+            console.error("shelllist nm request failed id=" + id + " stage=response error=" + transportError);
             controller.failCall(id, "nm-daemon request failed: " + transportError);
             return;
         }
         try {
             const handler = responseHandlerById[id];
-            if (handler)
+            if (!handler)
+                console.warn("shelllist nm response ignored id=" + id + " reason=no-handler");
+            else
                 handler(envelope);
+            console.info("shelllist nm request completed id=" + id);
         } catch (error) {
+            console.error("shelllist nm request failed id=" + id + " stage=parse error=" + error);
             controller.failCall(id, "Could not parse nm-daemon " + id + " response: " + error);
         }
         controller.maybeRunPendingRefresh();
+    }
+
+    function handleTransportFailure(message) {
+        const lostRequestIds = Object.keys(pending || ({}));
+        pending = ({});
+        console.error("shelllist nm transport failed error=" + message
+            + " lost_requests=" + (lostRequestIds.length > 0 ? lostRequestIds.join(",") : "none"));
+        controller.handleTransportFailure(message, lostRequestIds);
+    }
+
+    function handleTransportReady() {
+        console.info("shelllist nm transport ready");
+        controller.handleTransportReady();
     }
 
     function openPortal(context) {
@@ -160,7 +221,13 @@ Item {
             args.push("--episode", context.episode);
         if (context.fallback)
             args.push("--fallback");
-        portalProcess.exec(args);
+        try {
+            console.info("shelllist portal helper started trigger=" + context.trigger + " request_id=" + context.requestId);
+            portalProcess.exec(args);
+        } catch (error) {
+            console.error("shelllist portal helper failed stage=start error=" + error);
+            controller.status = "Could not start captive portal browser: " + error;
+        }
     }
 
     NmDaemonClient {
@@ -168,15 +235,21 @@ Item {
         active: backend.active
         onResponse: function (id, envelope, transportError) { backend.finish(id, envelope, transportError); }
         onEventReceived: function (event) { backend.controller.handleDaemonEvent(event); }
-        onTransportFailed: function (message) { backend.controller.status = message; }
+        onTransportFailed: function (message) { backend.handleTransportFailure(message); }
+        onReadyChanged: if (ready) backend.handleTransportReady()
     }
 
     CommandProcess {
         id: portalProcess
         stderrWaitForEnd: false
         onFinished: function (exitCode, outputText, errorText) {
-            if (exitCode !== 0 && errorText.length > 0)
-                backend.controller.status = "Could not open captive portal browser: " + errorText;
+            if (exitCode !== 0) {
+                const detail = errorText.length > 0 ? errorText : ("exit " + exitCode);
+                console.error("shelllist portal helper failed stage=exit error=" + detail);
+                backend.controller.status = "Could not open captive portal browser: " + detail;
+            } else {
+                console.info("shelllist portal helper completed");
+            }
         }
     }
 }

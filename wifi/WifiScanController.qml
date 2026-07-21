@@ -13,7 +13,18 @@ Item {
 
     function activate() { refresh(); refreshTimer.restart(); }
     function deactivate() {
-        pendingRefresh = false; backend.cancel(requestId); requestId = ""; snapshotSeen = false; refreshTimer.stop();
+        pendingRefresh = false;
+        if (requestId.length > 0 && !backend.cancel(requestId))
+            console.warn("shelllist wifi scan cancellation failed request_id=" + requestId);
+        requestId = ""; snapshotSeen = false; refreshTimer.stop();
+    }
+    function handleTransportFailure() {
+        const lostRequestId = requestId;
+        requestId = "";
+        snapshotSeen = false;
+        pendingRefresh = controller.uiActive;
+        if (lostRequestId.length > 0)
+            console.warn("shelllist wifi scan discarded reason=transport-failure request_id=" + lostRequestId);
     }
     function refresh() {
         if (!controller.uiActive) { pendingRefresh = false; return; }
@@ -26,17 +37,25 @@ Item {
         pendingRefresh = false;
         controller.setBackgroundStatus("Loading cached Wi-Fi networks…");
         snapshotSeen = false;
-        backend.refreshNetworks(false); backend.startScan();
+        const listAccepted = backend.refreshNetworks(true);
+        const scanAccepted = backend.startScan();
+        if (!listAccepted || !scanAccepted) {
+            pendingRefresh = true;
+            console.warn("shelllist wifi refresh partially dispatched networks=" + listAccepted + " scan=" + scanAccepted);
+        }
     }
     function maybeRefresh() {
         if (controller.uiActive && pendingRefresh && !controller.connection.running && !running) Qt.callLater(refresh);
     }
     function handleWatchdog() {
         if (!controller.uiActive || requestId.length === 0) return;
-        backend.cancel(requestId); requestId = "";
+        if (!backend.cancel(requestId))
+            console.warn("shelllist wifi scan watchdog cancellation failed request_id=" + requestId);
+        requestId = "";
         if (!snapshotSeen) {
             controller.status = "Wi-Fi scan events timed out; loading refreshed cache…";
-            if (!backend.listRunning) backend.refreshNetworks(false);
+            if (!backend.listRunning && !backend.refreshNetworks(true))
+                console.warn("shelllist wifi cache refresh rejected after scan watchdog");
         } else controller.setBackgroundStatus("Wi-Fi scan finished without a completion event.");
         maybeRefresh();
     }

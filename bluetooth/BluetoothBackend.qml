@@ -53,11 +53,21 @@ Item {
     }
     function isPending(id) { return !!pending[id]; }
     function call(id, method, params) {
-        if (isPending(id))
+        if (isPending(id)) {
+            console.warn("shelllist bluetooth request rejected id=" + id + " reason=already-pending");
             return false;
+        }
         pending = copyWith(pending, id, true);
-        client.call(id, method, params);
-        return true;
+        console.info("shelllist bluetooth request started id=" + id + " method=" + method);
+        try {
+            client.call(id, method, params);
+            return true;
+        } catch (error) {
+            pending = copyWithout(pending, id);
+            console.error("shelllist bluetooth request failed id=" + id + " stage=send error=" + error);
+            controller.status = "Could not send Bluetooth request " + id + ": " + error;
+            return false;
+        }
     }
     function isSessionControl(id) { return id === "session-subscribe" || id.indexOf("cancel-subscription-") === 0 || id.indexOf("shutdown-") === 0; }
     function responseError(envelope, transportError) {
@@ -82,15 +92,23 @@ Item {
         pending = copyWithout(pending, id);
         const error = responseError(envelope, transportError);
         if (error.length > 0) {
+            console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
             controller.status = error;
             return;
         }
         const cancellation = cancellationStatus(id);
         if (cancellation.length > 0) {
+            console.info("shelllist bluetooth cancellation accepted id=" + id);
             controller.status = cancellation;
             return;
         }
-        applyResponse(id, envelope.data || ({}));
+        try {
+            applyResponse(id, envelope.data || ({}));
+            console.info("shelllist bluetooth request completed id=" + id);
+        } catch (applyError) {
+            console.error("shelllist bluetooth request failed id=" + id + " stage=parse error=" + applyError);
+            controller.status = "Could not parse bt-daemon " + id + " response: " + applyError;
+        }
     }
     function applyResponse(id, data) {
         if (data.scan)
@@ -136,19 +154,28 @@ Item {
     }
 
     function handleEvent(event) {
-        if (!event || event.protocol !== "bt-api" || event.version !== 1)
-            return;
-        const handler = eventHandlers[event.stream];
-        if (handler) {
-            handler(event);
-            return;
+        try {
+            if (!event || event.protocol !== "bt-api" || event.version !== 1) {
+                console.warn("shelllist bluetooth event rejected reason=incompatible-envelope");
+                return;
+            }
+            const handler = eventHandlers[event.stream];
+            if (handler) {
+                handler(event);
+                return;
+            }
+            if (event.event === "unavailable") {
+                controller.status = (event.error && event.error.message) || "BlueZ is unavailable";
+                return;
+            }
+            if (event.data && event.data.snapshot)
+                controller.applySnapshot(event.data.snapshot);
+            else
+                console.warn("shelllist bluetooth event ignored stream=" + (event.stream || "unknown") + " event=" + (event.event || "unknown"));
+        } catch (error) {
+            console.error("shelllist bluetooth event failed stream=" + (event && event.stream ? event.stream : "unknown") + " error=" + error);
+            controller.status = "Could not process bt-daemon event: " + error;
         }
-        if (event.event === "unavailable") {
-            controller.status = (event.error && event.error.message) || "BlueZ is unavailable";
-            return;
-        }
-        if (event.data && event.data.snapshot)
-            controller.applySnapshot(event.data.snapshot);
     }
     function handlePairingEvent(event) { controller.handlePairingEvent(event); }
     function handleScanEvent(event) {
@@ -185,18 +212,35 @@ Item {
     function sendFile(deviceKey, path) { return call("obex-send", BtApi.methods.obexSend, { device_key: deviceKey, path: path }); }
     function respondObex(requestId, accept) { return call("obex-response", BtApi.methods.obexRespond, { request_id: requestId, accept: !!accept }); }
     function cancelTransfer(requestId) {
-        if (!requestId || !transfers[requestId])
+        if (!requestId || !transfers[requestId]) {
+            console.warn("shelllist bluetooth transfer cancellation rejected request_id=" + (requestId || "") + " reason=not-active");
             return false;
-        client.cancel("cancel-transfer-" + requestId, requestId);
-        return true;
+        }
+        try {
+            client.cancel("cancel-transfer-" + requestId, requestId);
+            console.info("shelllist bluetooth transfer cancellation requested request_id=" + requestId);
+            return true;
+        } catch (error) {
+            console.error("shelllist bluetooth transfer cancellation failed request_id=" + requestId + " error=" + error);
+            controller.status = "Could not cancel Bluetooth transfer: " + error;
+            return false;
+        }
     }
     function refreshAudio() { return call("audio-snapshot", BtApi.methods.audioSnapshot, {}); }
     function setAudioProfile(deviceKey, profileKey) { return call("audio-set-profile", BtApi.methods.audioSetProfile, { device_key: deviceKey, profile_key: profileKey }); }
     function setPowered(powered, adapterKey) { return call("power", BtApi.methods.setPowered, { adapter_key: adapterKey || null, powered: powered }); }
     function setScanning(enabled, adapterKey) {
         if (!enabled && controller.activeScan && controller.activeScan.request_id) {
-            client.cancel("cancel-scan-" + controller.activeScan.request_id, controller.activeScan.request_id);
-            return true;
+            const requestId = controller.activeScan.request_id;
+            try {
+                client.cancel("cancel-scan-" + requestId, requestId);
+                console.info("shelllist bluetooth scan cancellation requested request_id=" + requestId);
+                return true;
+            } catch (error) {
+                console.error("shelllist bluetooth scan cancellation failed request_id=" + requestId + " error=" + error);
+                controller.status = "Could not cancel Bluetooth scan: " + error;
+                return false;
+            }
         }
         return call("scan-start", BtApi.methods.scan, { enabled: true, adapter_key: adapterKey || null, timeout_ms: 15000 });
     }
@@ -205,10 +249,19 @@ Item {
             Object.assign({ key: adapter.key, operation: operation }, values || ({})));
     }
     function cancelOperation(requestId) {
-        if (!requestId || !operations[requestId])
+        if (!requestId || !operations[requestId]) {
+            console.warn("shelllist bluetooth operation cancellation rejected request_id=" + (requestId || "") + " reason=not-active");
             return false;
-        client.cancel("cancel-operation-" + requestId, requestId);
-        return true;
+        }
+        try {
+            client.cancel("cancel-operation-" + requestId, requestId);
+            console.info("shelllist bluetooth operation cancellation requested request_id=" + requestId);
+            return true;
+        } catch (error) {
+            console.error("shelllist bluetooth operation cancellation failed request_id=" + requestId + " error=" + error);
+            controller.status = "Could not cancel Bluetooth operation: " + error;
+            return false;
+        }
     }
     function respondPairing(requestId, accept, value) {
         const params = { request_id: requestId, accept: !!accept };

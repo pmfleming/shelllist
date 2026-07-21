@@ -283,10 +283,20 @@ Item {
         return backend.respondPairing(requestId, accept, value);
     }
     function adapterOperation(operation, values) {
-        if (!selectedAdapter.key || actionInFlight)
+        if (!selectedAdapter.key || actionInFlight) {
+            console.warn("shelllist bluetooth adapter operation rejected operation=" + operation
+                + " adapter_key=" + (selectedAdapter.key || "") + " busy=" + actionInFlight);
+            status = actionInFlight ? "Wait for the current Bluetooth action to finish…" : "No Bluetooth adapter is selected.";
             return false;
+        }
         status = "Updating Bluetooth adapter…";
-        return backend.adapterOperation(operation, selectedAdapter, values || ({}));
+        const accepted = backend.adapterOperation(operation, selectedAdapter, values || ({}));
+        if (!accepted) {
+            console.error("shelllist bluetooth adapter operation rejected stage=dispatch operation=" + operation
+                + " adapter_key=" + selectedAdapter.key);
+            status = "Could not start Bluetooth adapter operation " + operation + ".";
+        }
+        return accepted;
     }
     function setAudioProfile(profile) {
         if (!hasSelection || !profile || !profile.key || !profile.available || actionInFlight)

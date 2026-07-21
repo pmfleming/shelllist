@@ -23,7 +23,16 @@ Item {
         if (!active || process.running || retryTimer.running)
             return;
         process.stdinEnabled = true;
-        process.exec([daemonName, "client"]);
+        try {
+            console.info("shelllist transport starting daemon=" + daemonName);
+            process.exec([daemonName, "client"]);
+        } catch (error) {
+            process.stdinEnabled = false;
+            const message = "Could not start " + daemonName + " client: " + error;
+            console.error("shelllist transport failed daemon=" + daemonName + " stage=start error=" + error);
+            transportFailed(message);
+            scheduleRetry();
+        }
     }
 
     function stop() {
@@ -32,9 +41,13 @@ Item {
         if (!process.running)
             return;
         if (ready) {
-            if (subscriptionId.length > 0)
-                cancel("cancel-subscription-" + (++counters.sequence), subscriptionId);
-            send({ id: "shutdown-" + (++counters.sequence), op: "shutdown" });
+            try {
+                if (subscriptionId.length > 0)
+                    cancel("cancel-subscription-" + (++counters.sequence), subscriptionId);
+                send({ id: "shutdown-" + (++counters.sequence), op: "shutdown" });
+            } catch (error) {
+                console.error("shelllist transport shutdown failed daemon=" + daemonName + " error=" + error);
+            }
         }
         subscriptionId = "";
         process.stdinEnabled = false;
@@ -78,9 +91,18 @@ Item {
             return;
         retryTimer.interval = Math.min(maximumRetryInterval, initialRetryInterval * Math.pow(2, counters.retryAttempt));
         counters.retryAttempt = Math.min(counters.retryAttempt + 1, 30);
+        console.warn("shelllist transport retry scheduled daemon=" + daemonName + " delay_ms=" + retryTimer.interval
+            + " attempt=" + counters.retryAttempt);
         retryTimer.restart();
     }
     function handleResponse(message) {
+        if (message.id === "session-subscribe" && !message.ok) {
+            const subscriptionError = message.error || daemonName + " subscription failed";
+            console.error("shelllist transport subscription failed daemon=" + daemonName + " error=" + subscriptionError);
+            response(message.id, null, subscriptionError);
+            recover(subscriptionError);
+            return;
+        }
         markHealthy();
         rememberSubscription(message);
         response(message.id || "", message.ok ? message.response : null,
@@ -90,8 +112,11 @@ Item {
         transportFailed(message);
         if (!active)
             return;
-        stop();
-        scheduleRetry();
+        try {
+            stop();
+        } finally {
+            scheduleRetry();
+        }
     }
     function handleMessage(message) {
         if (message.kind === "event") {
@@ -139,15 +164,21 @@ Item {
         stdout: SplitParser { splitMarker: "\n"; onRead: function (line) { client.handleLine(line); } }
         stderr: StdioCollector { id: processError; waitForEnd: true }
         onStarted: {
+            console.info("shelllist transport started daemon=" + client.daemonName);
             client.ready = true;
-            client.subscribe();
-            client.flushQueue();
+            try {
+                client.subscribe();
+                client.flushQueue();
+            } catch (error) {
+                client.recover("Could not initialize " + client.daemonName + " client: " + error);
+            }
         }
         onExited: function (exitCode) { // qmllint disable signal-handler-parameters
             client.ready = false;
             if (!client.active)
                 return;
             const detail = processError.text.length > 0 ? processError.text : "exit " + exitCode;
+            console.error("shelllist transport exited daemon=" + client.daemonName + " detail=" + detail);
             client.transportFailed(client.daemonName + " client stopped: " + detail);
             if (!retryTimer.running)
                 client.scheduleRetry();

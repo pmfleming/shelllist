@@ -4,13 +4,13 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nm-daemon = {
-      # Development remains local until the current nm-daemon API history is published.
-      url = "git+file:///home/laufan/Projects/nm-daemon?ref=main";
+      # Use the portable sibling layout until the current API history is published.
+      url = "git+file:../nm-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     bt-daemon = {
-      # Development remains local until the initial bt-daemon history is published.
-      url = "git+file:///home/laufan/Projects/bt-daemon?ref=main";
+      # Use the portable sibling layout until the initial API history is published.
+      url = "git+file:../bt-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

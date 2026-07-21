@@ -37,7 +37,10 @@ Item {
         if (!controller.beginAction()) return;
         const requestId = "forget-" + Math.round(Date.now());
         controller.status = (controller.isActive(ap) ? "Disconnecting and forgetting " : "Forgetting ") + Presentation.networkName(ap) + "…";
-        backend.profile({ operation: "forget", request_id: requestId, key: ap.key });
+        if (!backend.profile({ operation: "forget", request_id: requestId, key: ap.key })) {
+            console.error("shelllist forget rejected stage=dispatch request_id=" + requestId + " key=" + (ap.key || ""));
+            controller.status = "Could not start the forget operation for " + Presentation.networkName(ap) + ".";
+        }
     }
     function toggleAutoconnect(ap) { return runProfileAction(ap, function (profile) { const enabled = !profile.autoconnect; controller.status = (enabled ? "Enabling" : "Disabling") + " autoconnect for " + profile.id + "…"; backend.profile({ operation: "set-autoconnect", path: profile.path, enabled: enabled }); }); }
     function setMacRandomized(ap, enabled) { return runProfileAction(ap, function (profile) { controller.status = (enabled ? "Using randomized MAC for " : "Using device MAC for ") + profile.id + "…"; backend.profile({ operation: "set-mac-randomization", path: profile.path, randomized: enabled }); }); }

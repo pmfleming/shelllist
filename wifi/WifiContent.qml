@@ -16,9 +16,7 @@ Rectangle {
     border.width: 1
 
     function cancelPrompt() {
-        if (controller.prompt.mode === "daemon-secret" && controller.prompt.secretRequestId.length > 0)
-            controller.connection.cancelSecret(controller.prompt.secretRequestId);
-        controller.prompt.cancel();
+        controller.cancelPrompt("user");
     }
 
     Shortcut {
@@ -51,13 +49,6 @@ Rectangle {
         sequence: "Ctrl+Tab"
         enabled: content.controller.detailsOpen && content.controller.hasSelection && !content.controller.prompt.open
         onActivated: content.controller.cycleDetailsTab()
-    }
-
-    Shortcut {
-        sequence: "Escape"
-        enabled: content.controller.prompt.open
-        autoRepeat: false
-        onActivated: content.cancelPrompt()
     }
 
     Shortcut {
@@ -149,6 +140,9 @@ Rectangle {
         optionVisible: content.controller.prompt.mode === "daemon-secret" && content.controller.prompt.saveSecretSupported
         optionChecked: content.controller.prompt.saveSecret
         optionLabel: "Save in the desktop keyring"
+        actionsVisible: true
+        rejectLabel: "Cancel"
+        acceptLabel: content.controller.prompt.mode === "confirm-forget" ? "Confirm" : "Continue"
         onInputEdited: function (text) { content.controller.prompt.text = text; }
         onOptionEdited: function (requested) { content.controller.prompt.saveSecret = requested; }
         onAccepted: content.controller.prompt.submit(content.controller)
