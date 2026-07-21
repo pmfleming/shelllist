@@ -9,9 +9,26 @@ ColumnLayout {
 
     required property BluetoothController controller
     readonly property bool editingName: renameInput.inputActiveFocus
+        || noiseModeControl.activeFocus
     property string displayedDeviceKey: ""
     property bool renameDirty: false
     readonly property bool renameValid: renameInput.text.trim().length > 0
+    readonly property var fastPair: controller.selectedDevice.fast_pair || ({})
+    readonly property var noiseControl: fastPair.noise_control || ({})
+    readonly property var noiseModes: noiseControl.available_modes || []
+    readonly property var settableNoiseModes: noiseControl.settable_modes || []
+    readonly property bool noiseControlVisible: noiseModes.length > 0
+    readonly property bool multipointVisible: !!(fastPair.multipoint && fastPair.multipoint.supported)
+
+    function noiseModeLabel(mode) {
+        const labels = {
+            "transparent": "Ambient",
+            "adaptive": "Adaptive",
+            "off": "Off",
+            "noise-cancelling": "Noise cancelling"
+        };
+        return labels[mode] || mode;
+    }
 
     Layout.fillWidth: true
     spacing: Ui.Theme.spacingMd
@@ -111,5 +128,33 @@ ColumnLayout {
             showSubtitle: false
             onClicked: section.controller.triggerDetailAction(modelData.id)
         }
+    }
+
+    Text {
+        visible: section.noiseControlVisible
+        text: "Noise control"
+        color: Ui.Theme.mutedText
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Ui.Theme.fontSizeBody
+    }
+
+    Ui.SegmentedControl {
+        id: noiseModeControl
+
+        visible: section.noiseControlVisible
+        Layout.fillWidth: true
+        Layout.preferredHeight: visible ? Ui.Theme.compactControlHeight : 0
+        options: section.noiseModes.map(function (mode) {
+            return {
+                value: mode,
+                label: section.noiseModeLabel(mode),
+                enabled: section.settableNoiseModes.includes(mode)
+            };
+        })
+        value: section.noiseControl.active_mode || ""
+        interactive: !section.controller.actionInFlight
+            && !!(section.controller.selectedDevice.capabilities
+                && section.controller.selectedDevice.capabilities.can_set_noise_control)
+        onSelected: function (mode) { section.controller.setNoiseControl(mode); }
     }
 }

@@ -59,6 +59,7 @@ Item {
                     active: !!networkRow.result.state.active
                     name: networkRow.result.title
                     selectedIndex: pane.controller.selectedIndex
+                    selectionFocused: list.activeFocus
                     detailsOpen: pane.controller.detailsOpen
                     connecting: pane.controller.connection.isConnecting(networkRow.result.payload)
                     progressTick: pane.controller.connection.progressTick

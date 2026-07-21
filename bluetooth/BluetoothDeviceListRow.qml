@@ -10,6 +10,7 @@ Rectangle {
     required property real rowHeight
     required property real uiScale
     property int selectedIndex: 0
+    property bool selectionFocused: false
     property bool detailsOpen: false
 
     readonly property var device: resultData.payload || ({})
@@ -27,8 +28,8 @@ Rectangle {
     color: selected ? Ui.Theme.selected
         : (rowMouse.pressed ? Ui.Theme.pressed
         : (rowMouse.containsMouse ? Ui.Theme.hover : "transparent"))
-    border.color: selected ? Ui.Theme.strongBorder : "transparent"
-    border.width: selected ? 1 : 0
+    border.color: selected && selectionFocused ? Ui.Theme.strongBorder : "transparent"
+    border.width: selected && selectionFocused ? 1 : 0
 
     Rectangle {
         visible: !row.selected

@@ -19,7 +19,7 @@ Rectangle {
         for (let index = 0; index < options.length; ++index)
             if (options[index].value === value)
                 return index;
-        return options.length > 0 ? 0 : -1;
+        return -1;
     }
 
     implicitHeight: Theme.compactControlHeight
@@ -31,8 +31,12 @@ Rectangle {
     clip: true
     activeFocusOnTab: interactive
 
+    function optionEnabled(index) {
+        return index >= 0 && index < options.length && options[index].enabled !== false;
+    }
+
     function choose(index) {
-        if (!interactive || index < 0 || index >= options.length)
+        if (!interactive || !optionEnabled(index))
             return;
         const nextValue = options[index].value;
         if (nextValue !== value)
@@ -42,7 +46,16 @@ Rectangle {
     function move(delta) {
         if (options.length === 0)
             return;
-        choose(Math.max(0, Math.min(options.length - 1, currentIndex + delta)));
+        let index = currentIndex >= 0 ? currentIndex : (delta > 0 ? -1 : options.length);
+        for (let count = 0; count < options.length; ++count) {
+            index += delta;
+            if (index < 0 || index >= options.length)
+                return;
+            if (optionEnabled(index)) {
+                choose(index);
+                return;
+            }
+        }
     }
 
     Keys.onLeftPressed: function (event) {
@@ -108,6 +121,7 @@ Rectangle {
                 radius: Math.min(Theme.controlRadius, height / 2)
                 color: !selected && segmentMouse.pressed ? Theme.pressed
                     : (!selected && segmentMouse.containsMouse ? Theme.hover : "transparent")
+                opacity: control.optionEnabled(index) ? 1.0 : Theme.disabledOpacity
 
                 Text {
                     anchors.fill: parent
@@ -127,7 +141,7 @@ Rectangle {
                     id: segmentMouse
 
                     anchors.fill: parent
-                    enabled: control.enabled && control.interactive
+                    enabled: control.enabled && control.interactive && control.optionEnabled(segment.index)
                     hoverEnabled: true
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: {

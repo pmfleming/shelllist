@@ -13,7 +13,6 @@ Item {
     readonly property bool hasBatteryReports: reports.length > 0
     readonly property var displayReports: hasBatteryReports ? reports : [{
         component: "main",
-        label: "Battery unavailable",
         percentage: -1,
         source: ""
     }]
@@ -181,14 +180,13 @@ Item {
                 }
 
                 Text {
+                    visible: indicator.batteryAvailable
                     anchors.top: ring.bottom
                     anchors.topMargin: Ui.Theme.spacingSm
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: parent.width - Ui.Theme.spacingSm
-                    text: indicator.batteryAvailable
-                        ? root.componentName(indicator.modelData) + ": " + indicator.percentage + "%"
-                            + (root.device.battery_last_known ? " · last known" : "")
-                        : "Battery unavailable"
+                    text: root.componentName(indicator.modelData) + ": " + indicator.percentage + "%"
+                        + (root.device.battery_last_known ? " · last known" : "")
                     color: Ui.Theme.text
                     font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeHeading

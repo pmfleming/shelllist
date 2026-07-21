@@ -72,6 +72,7 @@ ColumnLayout {
                         rowHeight: deviceList.delegateHeight
                         uiScale: pane.uiScale
                         selectedIndex: pane.controller.selectedIndex
+                        selectionFocused: deviceList.activeFocus
                         detailsOpen: pane.controller.detailsOpen
                         onPicked: function (rowIndex) {
                             pane.controller.selectedIndex = rowIndex;

@@ -399,9 +399,31 @@ Item {
             return backend.deviceOperation("set-trusted", device, { trusted: !device.trusted });
         if (actionId === "wake")
             return backend.deviceOperation("set-wake-allowed", device, { wake_allowed: !device.wake_allowed });
+        if (actionId === "multipoint") {
+            const multipoint = (device.fast_pair && device.fast_pair.multipoint) || ({});
+            status = (multipoint.enabled ? "Disabling" : "Enabling") + " multipoint for " + device.name + "…";
+            return backend.deviceOperation("set-multipoint", device, { enabled: !multipoint.enabled });
+        }
         if (actionId === "blocked")
             return backend.deviceOperation("set-blocked", device, { blocked: !device.blocked });
         return false;
+    }
+    function setNoiseControl(mode) {
+        if (!hasSelection || actionInFlight)
+            return false;
+        const device = selectedDevice;
+        const capabilities = device.capabilities || ({});
+        const noiseControl = (device.fast_pair && device.fast_pair.noise_control) || ({});
+        const settableModes = noiseControl.settable_modes || [];
+        if (!capabilities.can_set_noise_control || !settableModes.includes(mode)) {
+            console.warn("shelllist bluetooth noise control rejected device_key=" + (device.key || "")
+                + " mode=" + mode + " reason=unsupported");
+            return false;
+        }
+        if (noiseControl.active_mode === mode)
+            return true;
+        status = "Setting " + device.name + " noise control to " + mode + "…";
+        return backend.deviceOperation("set-noise-control", device, { mode: mode });
     }
 
     onModalPromptOpenChanged: if (!modalPromptOpen) Qt.callLater(focusSearchRequested)

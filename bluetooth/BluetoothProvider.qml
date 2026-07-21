@@ -58,6 +58,15 @@ Core.Provider {
                 enabled: idle && !!caps.can_wake, state: { checked: !!device.wake_allowed },
                 presentation: { group: "settings", tone: "normal" }
             }),
+            Core.Model.keepOpenAction("multipoint", "Multipoint", {
+                shortcut: "M", kind: "toggle",
+                visible: !!(device.fast_pair && device.fast_pair.multipoint
+                    && device.fast_pair.multipoint.supported),
+                enabled: idle && !!caps.can_set_multipoint,
+                state: { checked: !!(device.fast_pair && device.fast_pair.multipoint
+                    && device.fast_pair.multipoint.enabled) },
+                presentation: { group: "settings", tone: "normal" }
+            }),
             Core.Model.keepOpenAction("blocked", "Blocked", {
                 shortcut: "B", kind: "toggle", enabled: idle && !!caps.can_block,
                 state: { checked: !!device.blocked }, presentation: { group: "settings", tone: "danger" }

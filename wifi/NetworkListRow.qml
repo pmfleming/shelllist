@@ -13,6 +13,7 @@ Rectangle {
     property bool active: false
     property string name: ""
     property int selectedIndex: 0
+    property bool selectionFocused: false
     property bool detailsOpen: false
     property bool connecting: false
     property int progressTick: 0
@@ -38,8 +39,8 @@ Rectangle {
     height: rowHeight
     radius: selected ? Theme.cardRadius : 0
     color: selected ? Theme.selected : "transparent"
-    border.color: selected ? Theme.strongBorder : "transparent"
-    border.width: selected ? 1 : 0
+    border.color: selected && selectionFocused ? Theme.strongBorder : "transparent"
+    border.width: selected && selectionFocused ? 1 : 0
 
     Rectangle {
         visible: !row.selected
