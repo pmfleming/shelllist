@@ -58,9 +58,7 @@ ColumnLayout {
                 ListView {
                     id: deviceList
 
-                    readonly property int visibleRowTarget: Math.max(1, Math.min(count, Ui.Theme.listVisibleRowTarget))
-                    readonly property real delegateHeight: Math.max(pane.scaled(Ui.Theme.listRowMinHeight),
-                        Math.min(pane.scaled(Ui.Theme.listRowMaxHeight), height / visibleRowTarget))
+                    readonly property real delegateHeight: Ui.Theme.listDelegateHeight(height)
 
                     anchors.fill: parent
                     clip: true

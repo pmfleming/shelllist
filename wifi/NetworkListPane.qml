@@ -36,8 +36,7 @@ Item {
             ListView {
                 id: list
 
-                readonly property int visibleRowTarget: Math.max(1, Math.min(count, Theme.listVisibleRowTarget))
-                readonly property real delegateHeight: Math.max(Theme.listRowMinHeight, Math.min(Theme.listRowMaxHeight, height / visibleRowTarget))
+                readonly property real delegateHeight: Theme.listDelegateHeight(height)
 
                 anchors.fill: parent
                 clip: true

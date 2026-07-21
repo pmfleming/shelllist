@@ -7,26 +7,29 @@ ColumnLayout {
 
     required property BluetoothController controller
     readonly property bool editing: adapterAliasInput.inputActiveFocus
-        || discoverableTimeoutInput.inputActiveFocus
-        || pairableTimeoutInput.inputActiveFocus
+        || discoverableTimeoutSlider.activeFocus
+        || pairableTimeoutSlider.activeFocus
     property string displayedAdapterKey: ""
     property bool aliasDirty: false
     property bool discoverableTimeoutDirty: false
     property bool pairableTimeoutDirty: false
     readonly property bool hasDirtyFields: aliasDirty || discoverableTimeoutDirty || pairableTimeoutDirty
     readonly property bool aliasValid: adapterAliasInput.text.trim().length > 0
-    readonly property bool discoverableTimeoutValid: validTimeout(discoverableTimeoutInput.text)
-    readonly property bool pairableTimeoutValid: validTimeout(pairableTimeoutInput.text)
+    readonly property int maximumTimeout: 3600
+    readonly property int timeoutStep: 30
 
     Layout.fillWidth: true
     spacing: Ui.Theme.spacingMd
 
-    function validTimeout(text) {
-        const value = String(text).trim();
-        if (!/^\d+$/.test(value))
-            return false;
-        const parsed = Number(value);
-        return Number.isSafeInteger(parsed) && parsed >= 0 && parsed <= 4294967295;
+    function timeoutLabel(value) {
+        const seconds = Math.round(Number(value) || 0);
+        if (seconds === 0)
+            return "No timeout";
+        if (seconds < 60)
+            return seconds + " sec";
+        if (seconds % 60 === 0)
+            return (seconds / 60) + " min";
+        return Math.floor(seconds / 60) + "m " + (seconds % 60) + "s";
     }
 
     function clearDirtyFields() {
@@ -47,14 +50,14 @@ ColumnLayout {
         if (force || adapterChanged || !aliasDirty)
             adapterAliasInput.text = adapter.alias || "";
         if (force || adapterChanged || !discoverableTimeoutDirty)
-            discoverableTimeoutInput.text = String(adapter.discoverable_timeout || 0);
+            discoverableTimeoutSlider.value = Math.min(maximumTimeout, Number(adapter.discoverable_timeout || 0));
         if (force || adapterChanged || !pairableTimeoutDirty)
-            pairableTimeoutInput.text = String(adapter.pairable_timeout || 0);
+            pairableTimeoutSlider.value = Math.min(maximumTimeout, Number(adapter.pairable_timeout || 0));
         console.info("shelllist bluetooth adapter fields synchronized adapter_key=" + nextKey
             + " pending=" + hasDirtyFields);
     }
 
-    function queueAutoSave(field) {
+    function queueAutoSave(field, debounce) {
         if (field === "alias")
             aliasDirty = true;
         else if (field === "discoverable-timeout")
@@ -62,7 +65,10 @@ ColumnLayout {
         else if (field === "pairable-timeout")
             pairableTimeoutDirty = true;
         controller.status = "Bluetooth adapter changes pending…";
-        autoSaveTimer.restart();
+        if (debounce === false)
+            autoSaveTimer.stop();
+        else
+            autoSaveTimer.restart();
     }
 
     function saveAliasIfDirty() {
@@ -83,15 +89,11 @@ ColumnLayout {
         return true;
     }
 
-    function saveTimeoutIfDirty(field, operation, text, valid, currentValue) {
+    function saveTimeoutIfDirty(field, operation, value, currentValue) {
         const dirty = field === "discoverable-timeout" ? discoverableTimeoutDirty : pairableTimeoutDirty;
         if (!dirty)
             return false;
-        if (!valid) {
-            controller.status = "Enter a whole-number Bluetooth timeout from 0 to 4294967295 seconds.";
-            return false;
-        }
-        const value = Number(text);
+        value = Math.round(Number(value) || 0);
         if (value === Number(currentValue || 0)) {
             if (field === "discoverable-timeout")
                 discoverableTimeoutDirty = false;
@@ -117,12 +119,10 @@ ColumnLayout {
         if (saveAliasIfDirty())
             return;
         if (saveTimeoutIfDirty("discoverable-timeout", "set-discoverable-timeout",
-                discoverableTimeoutInput.text, discoverableTimeoutValid,
-                controller.selectedAdapter.discoverable_timeout))
+                discoverableTimeoutSlider.value, controller.selectedAdapter.discoverable_timeout))
             return;
         saveTimeoutIfDirty("pairable-timeout", "set-pairable-timeout",
-            pairableTimeoutInput.text, pairableTimeoutValid,
-            controller.selectedAdapter.pairable_timeout);
+            pairableTimeoutSlider.value, controller.selectedAdapter.pairable_timeout);
     }
 
     Component.onCompleted: Qt.callLater(function () { section.syncAdapterFields(true); })
@@ -211,36 +211,58 @@ ColumnLayout {
 
     GridLayout {
         Layout.fillWidth: true
-        columns: 2
+        columns: 3
         columnSpacing: Ui.Theme.spacingMd
         rowSpacing: Ui.Theme.spacingSm
 
-        Text { text: "Discoverable timeout"; color: Ui.Theme.mutedText; font.family: Ui.Theme.fontFamily; font.pixelSize: Ui.Theme.fontSizeBody }
-        Ui.TextField {
-            id: discoverableTimeoutInput
+        Text {
+            text: "Discoverable timeout"
+            color: Ui.Theme.mutedText
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Ui.Theme.fontSizeBody
+        }
+        Ui.ValueSlider {
+            id: discoverableTimeoutSlider
             Layout.fillWidth: true
-            text: "0"
-            inputMethodHints: Qt.ImhDigitsOnly
-            maximumLength: 10
-            inputValid: section.discoverableTimeoutValid
-            readOnly: section.controller.actionInFlight
-            onEdited: section.queueAutoSave("discoverable-timeout")
-            onEditingFinished: section.saveDirtyFields()
-            onAccepted: section.saveDirtyFields()
+            from: 0
+            to: section.maximumTimeout
+            stepSize: section.timeoutStep
+            enabled: !section.controller.actionInFlight && !!section.controller.selectedAdapter.key
+            onEdited: section.queueAutoSave("discoverable-timeout", !discoverableTimeoutSlider.pressed)
+            onPressedChanged: if (!discoverableTimeoutSlider.pressed) section.saveDirtyFields()
+        }
+        Text {
+            Layout.preferredWidth: 76
+            text: section.timeoutLabel(discoverableTimeoutSlider.value)
+            color: Ui.Theme.text
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Ui.Theme.fontSizeBody
+            horizontalAlignment: Text.AlignRight
         }
 
-        Text { text: "Pairable timeout"; color: Ui.Theme.mutedText; font.family: Ui.Theme.fontFamily; font.pixelSize: Ui.Theme.fontSizeBody }
-        Ui.TextField {
-            id: pairableTimeoutInput
+        Text {
+            text: "Pairable timeout"
+            color: Ui.Theme.mutedText
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Ui.Theme.fontSizeBody
+        }
+        Ui.ValueSlider {
+            id: pairableTimeoutSlider
             Layout.fillWidth: true
-            text: "0"
-            inputMethodHints: Qt.ImhDigitsOnly
-            maximumLength: 10
-            inputValid: section.pairableTimeoutValid
-            readOnly: section.controller.actionInFlight
-            onEdited: section.queueAutoSave("pairable-timeout")
-            onEditingFinished: section.saveDirtyFields()
-            onAccepted: section.saveDirtyFields()
+            from: 0
+            to: section.maximumTimeout
+            stepSize: section.timeoutStep
+            enabled: !section.controller.actionInFlight && !!section.controller.selectedAdapter.key
+            onEdited: section.queueAutoSave("pairable-timeout", !pairableTimeoutSlider.pressed)
+            onPressedChanged: if (!pairableTimeoutSlider.pressed) section.saveDirtyFields()
+        }
+        Text {
+            Layout.preferredWidth: 76
+            text: section.timeoutLabel(pairableTimeoutSlider.value)
+            color: Ui.Theme.text
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Ui.Theme.fontSizeBody
+            horizontalAlignment: Text.AlignRight
         }
     }
 }

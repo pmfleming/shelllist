@@ -135,6 +135,11 @@ Item {
             (availableHeight - 2 * verticalMargin) / densityReferenceHeight));
     }
 
+    function listDelegateHeight(availableHeight) {
+        return Math.max(listRowMinHeight, Math.min(listRowMaxHeight,
+            availableHeight / listVisibleRowTarget));
+    }
+
     function luminance(color) { return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b; }
     function withAlpha(color, alphaValue) { return Qt.rgba(color.r, color.g, color.b, alphaValue); }
     function mix(left, right, amount) {

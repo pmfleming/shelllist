@@ -18,4 +18,5 @@ ShelllistGlobalShortcut 1.0 ShelllistGlobalShortcut.qml
 TextField 1.0 TextField.qml
 TogglePill 1.0 TogglePill.qml
 ToggleRow 1.0 ToggleRow.qml
+ValueSlider 1.0 ValueSlider.qml
 VisualSurface 1.0 VisualSurface.qml
