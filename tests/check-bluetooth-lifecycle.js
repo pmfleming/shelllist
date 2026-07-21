@@ -46,6 +46,14 @@ expect("preferred adapter is retained", flow.retainedAdapterKey([{ key: "a" }, {
 expect("missing adapter falls back", flow.retainedAdapterKey([{ key: "a" }], "b") === "a");
 expect("initial scan requires an idle powered UI", flow.shouldStartScan(true, true, false, false));
 expect("snapshot status reports scanning", flow.snapshotStatus(true, true, 3) === "3 devices · scanning…");
+expect("cached unpaired device is recently found", flow.deviceState({ paired: false, connected: false, present: false, last_seen_ms: 123 }) === "Recently found");
+expect("strong signal uses three bars", flow.signalLevel({ signal_strength: 80 }) === 3);
+expect("zero signal still uses one bar", flow.signalLevel({ signal_strength: 0 }) === 1);
+expect("missing signal uses no bars", flow.signalLevel({ signal_strength: null }) === 0);
+expect("cached signal is labelled", flow.signalLabel({ signal_strength: 50, signal_live: false }) === "50% · cached");
+expect("small signal changes share a stable rank", flow.deviceScore({ present: true, signal_strength: 40 }) === flow.deviceScore({ present: true, signal_strength: 60 }));
+expect("unavailable cached pairing triggers scan", flow.shouldRescanAfterOperation({ operation: "pair", state: "failed", error: { code: "device-unavailable" } }, true, true, false));
+expect("other operation failures do not trigger scan", !flow.shouldRescanAfterOperation({ operation: "connect", state: "failed", error: { code: "device-unavailable" } }, true, true, false));
 expect("failed transfer is terminal", flow.isTerminalTransfer({ status: "error" }));
 expect("active transfer is not terminal", !flow.isTerminalTransfer({ status: "progress" }));
 

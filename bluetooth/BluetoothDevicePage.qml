@@ -54,7 +54,7 @@ Flickable {
         }
 
         Ui.DetailCard {
-            height: 260
+            height: 300
             title: "Technical details"
 
             Ui.DetailGrid {
@@ -62,7 +62,8 @@ Flickable {
                     { label: "Address", value: page.controller.selectedDevice.address || "Unavailable" },
                     { label: "Address type", value: page.controller.selectedDevice.address_type || "Unavailable" },
                     { label: "Adapter", value: page.controller.selectedAdapter.alias || page.controller.selectedAdapter.name || "Unavailable" },
-                    { label: "RSSI", value: page.controller.selectedDevice.rssi === null || page.controller.selectedDevice.rssi === undefined ? "Unavailable" : page.controller.selectedDevice.rssi + " dBm" },
+                    { label: "Signal", value: BluetoothFlow.signalLabel(page.controller.selectedDevice) },
+                    { label: "RSSI", value: page.controller.selectedDevice.rssi === null || page.controller.selectedDevice.rssi === undefined ? "Unavailable" : page.controller.selectedDevice.rssi + " dBm" + (page.controller.selectedDevice.signal_live ? "" : " (cached)") },
                     { label: "Last seen", value: page.controller.selectedDevice.last_seen_ms ? new Date(page.controller.selectedDevice.last_seen_ms).toLocaleString() : "Not observed this session" },
                     { label: "Modalias", value: page.controller.selectedDevice.modalias || "Unavailable" },
                     { label: "Adapter address", value: page.controller.selectedAdapter.address || "Unavailable" },

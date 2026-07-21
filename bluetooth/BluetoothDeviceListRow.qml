@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
+import "BluetoothFlow.js" as BluetoothFlow
 
 Rectangle {
     id: row
@@ -15,6 +16,12 @@ Rectangle {
 
     readonly property var device: resultData.payload || ({})
     readonly property bool selected: index === selectedIndex
+    readonly property bool hasSignal: BluetoothFlow.hasSignal(device)
+    readonly property int signalStrength: hasSignal ? Math.max(0, Math.min(100, Math.round(Number(device.signal_strength) || 0))) : 0
+    readonly property int signalLevel: BluetoothFlow.signalLevel(device)
+    readonly property bool signalLive: !!device.signal_live
+    readonly property color signalColor: !hasSignal ? Ui.Theme.mutedText
+        : (signalStrength >= 67 ? Ui.Theme.active : (signalStrength >= 34 ? Ui.Theme.warning : Ui.Theme.danger))
 
     signal picked(int rowIndex)
     signal primaryRequested
@@ -86,6 +93,27 @@ Rectangle {
                 font.pixelSize: Math.max(10, row.scaled(Ui.Theme.fontSizeCaption))
                 elide: Text.ElideRight
             }
+        }
+
+        Text {
+            Layout.preferredWidth: row.scaled(38)
+            Layout.fillHeight: true
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignRight
+            text: row.hasSignal ? row.signalStrength + "%" : "—"
+            color: row.signalColor
+            opacity: row.signalLive ? 1 : 0.58
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Math.max(10, row.scaled(Ui.Theme.fontSizeCaption))
+            font.weight: Font.Medium
+        }
+
+        Ui.SignalIcon {
+            Layout.preferredWidth: row.scaled(24)
+            Layout.preferredHeight: row.scaled(20)
+            level: row.signalLevel
+            iconColor: row.signalColor
+            opacity: row.signalLive ? 1 : 0.58
         }
 
         Text {

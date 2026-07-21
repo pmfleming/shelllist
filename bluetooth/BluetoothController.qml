@@ -298,6 +298,11 @@ Item {
             pairingInput = "";
         }
         status = operationCompletionStatus(operation, deviceName);
+        if (BluetoothFlow.shouldRescanAfterOperation(operation, uiActive, powered, scanning)) {
+            status = "Device is no longer nearby · scanning again…";
+            scanRequested = true;
+            backend.setScanning(true, operation.adapter_key || selectedDevice.adapter_key || selectedAdapter.key);
+        }
     }
     function cancelActiveOperation() {
         if (!canCancelOperation)

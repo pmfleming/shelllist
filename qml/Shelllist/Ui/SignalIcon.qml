@@ -1,8 +1,7 @@
 import QtQuick
-import Shelllist.Ui
 
 Canvas {
-    property int level: 3
+    property int level: 0
     property color iconColor: Theme.accent
     property color inactiveColor: Theme.withAlpha(Theme.mutedText, 0.62)
 
@@ -36,11 +35,13 @@ Canvas {
         context.strokeStyle = inactiveColor;
         drawArcs(context, 3, centerX, centerY, scale * 0.18);
 
-        context.fillStyle = iconColor;
+        context.fillStyle = level > 0 ? iconColor : inactiveColor;
         context.beginPath();
         context.arc(centerX, centerY, Math.max(1.6, scale * 0.09), 0, Math.PI * 2);
         context.fill();
-        context.strokeStyle = iconColor;
-        drawArcs(context, Math.max(1, Math.min(3, level)), centerX, centerY, scale * 0.18);
+        if (level > 0) {
+            context.strokeStyle = iconColor;
+            drawArcs(context, Math.min(3, level), centerX, centerY, scale * 0.18);
+        }
     }
 }

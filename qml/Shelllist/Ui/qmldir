@@ -16,6 +16,7 @@ RefreshTile 1.0 RefreshTile.qml
 ResultNavigation 1.0 ResultNavigation.qml
 SegmentedControl 1.0 SegmentedControl.qml
 ShelllistGlobalShortcut 1.0 ShelllistGlobalShortcut.qml
+SignalIcon 1.0 SignalIcon.qml
 TextField 1.0 TextField.qml
 TogglePill 1.0 TogglePill.qml
 ToggleRow 1.0 ToggleRow.qml

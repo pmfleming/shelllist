@@ -24,6 +24,12 @@ function operationEndsPairing(operation, prompt) {
     return isTerminalOperation(operation) && !!prompt && prompt.device_key === operation.device_key;
 }
 
+function shouldRescanAfterOperation(operation, uiActive, powered, scanning) {
+    return !!operation && operation.operation === "pair" && operation.state === "failed"
+        && !!operation.error && operation.error.code === "device-unavailable"
+        && uiActive && powered && !scanning;
+}
+
 function isTerminalTransfer(transfer) {
     return !!transfer && ["complete", "cancelled", "error"].includes(transfer.status);
 }
@@ -45,11 +51,29 @@ function snapshotStatus(powered, scanning, count) {
 function deviceState(device) {
     if (device.connected) return "Connected";
     if (device.paired) return "Paired";
-    return device.present ? "Available" : "Not in range";
+    if (device.present) return "Available";
+    return device.last_seen_ms ? "Recently found" : "Not in range";
+}
+
+function hasSignal(device) {
+    return device.signal_strength !== null && device.signal_strength !== undefined;
+}
+
+function signalLevel(device) {
+    if (!hasSignal(device)) return 0;
+    const strength = Math.max(0, Math.min(100, Number(device.signal_strength) || 0));
+    return strength >= 67 ? 3 : (strength >= 34 ? 2 : 1);
+}
+
+function signalLabel(device) {
+    if (!hasSignal(device)) return "Unavailable";
+    const suffix = device.signal_live ? "" : " · cached";
+    return Math.max(0, Math.min(100, Math.round(Number(device.signal_strength) || 0))) + "%" + suffix;
 }
 
 function deviceScore(device) {
     return (device.connected ? 10000 : 0)
         + (device.paired ? 1000 : 0)
-        + (device.signal_strength || 0);
+        + (device.present ? 100 : 0)
+        + signalLevel(device) * 10;
 }

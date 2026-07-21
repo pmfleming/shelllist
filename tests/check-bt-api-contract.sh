@@ -10,6 +10,14 @@ trap 'rm -f "$tmp"' EXIT
 "$bt_daemon" debug contract-fixture > "$tmp"
 diff -u <(jq -S . "$fixture") <(jq -S . "$tmp")
 
+jq -e '
+  .snapshot.data.snapshot.devices
+  | all(.[]; (.signal_live | type == "boolean")
+      and ((.signal_strength == null) or (.signal_strength | type == "number"))
+      and ((.rssi == null) or (.rssi | type == "number"))
+      and ((.last_seen_ms == null) or (.last_seen_ms | type == "number")))
+' "$fixture" >/dev/null
+
 while IFS= read -r name; do
   grep -Fq "\"$name\"" "$api_js" || {
     echo "BtApi.js does not declare method $name" >&2

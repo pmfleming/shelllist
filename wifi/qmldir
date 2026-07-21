@@ -20,7 +20,6 @@ NetworkDetailsPane 1.0 NetworkDetailsPane.qml
 NetworkProfileSettingsCard 1.0 NetworkProfileSettingsCard.qml
 NetworkListPane 1.0 NetworkListPane.qml
 NetworkListRow 1.0 NetworkListRow.qml
-SignalIcon 1.0 SignalIcon.qml
 WifiHeader 1.0 WifiHeader.qml
 WifiContent 1.0 WifiContent.qml
 WifiController 1.0 WifiController.qml
