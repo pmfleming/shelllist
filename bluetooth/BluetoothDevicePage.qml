@@ -1,13 +1,12 @@
 import QtQuick
 import Shelllist.Ui as Ui
-import "BluetoothBattery.js" as BluetoothBattery
+import "BluetoothFlow.js" as BluetoothFlow
 
 Flickable {
     id: page
 
     required property BluetoothController controller
     readonly property alias editingName: settings.editingName
-    readonly property var batteryReports: BluetoothBattery.ordered(controller.selectedDevice.battery || [])
 
     contentWidth: width
     contentHeight: cards.implicitHeight
@@ -22,36 +21,24 @@ Flickable {
         width: page.width
         spacing: Ui.Theme.spacingMd
 
+        BluetoothBatteryStatus {
+            width: parent.width
+            device: page.controller.selectedDevice
+        }
+
         Ui.DetailCard {
             height: 190
             title: "Device overview"
 
             Ui.DetailGrid {
                 entries: [
-                    { label: "Connection", value: page.controller.selectedResult ? page.controller.selectedResult.subtitle : "—", valueColor: page.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.text, valueBold: page.controller.selectedDevice.connected },
+                    { label: "Connection", value: page.controller.hasSelection ? BluetoothFlow.deviceState(page.controller.selectedDevice) : "—", valueColor: page.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.text, valueBold: page.controller.selectedDevice.connected },
                     { label: "Paired", value: page.controller.selectedDevice.paired ? "Yes" : "No" },
                     { label: "Trusted", value: page.controller.selectedDevice.trusted ? "Yes" : "No" },
                     { label: "In range", value: page.controller.selectedDevice.present ? "Yes" : "No" },
                     { label: "Services", value: page.controller.selectedDevice.services_resolved ? "Resolved" : "Pending" },
                     { label: "Audio profile", value: page.controller.activeAudioProfile.label || "—" }
                 ]
-            }
-        }
-
-        Ui.DetailCard {
-            visible: page.batteryReports.length > 0
-            height: visible ? Math.max(120, 76 + Math.ceil(page.batteryReports.length / 2) * 48) : 0
-            title: page.batteryReports.length > 1 ? "Component batteries" : "Battery"
-
-            Ui.DetailGrid {
-                entries: page.batteryReports.map(function (battery) {
-                    return {
-                        label: battery.label || battery.component || "Battery",
-                        value: battery.percentage + "%",
-                        valueColor: Ui.Theme.active,
-                        valueBold: true
-                    };
-                })
             }
         }
 

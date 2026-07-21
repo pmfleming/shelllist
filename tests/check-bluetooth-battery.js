@@ -34,6 +34,10 @@ expect(
     battery.summary(fastPair) === "L 100% · R 100% · Case 78%"
 );
 expect(
+    "Fast Pair visual layout places the case between the earbuds",
+    battery.visualOrdered(fastPair).map(value => value.component).join(",") === "left,case,right"
+);
+expect(
     "Fast Pair source is identified",
     battery.sourceLabel(fastPair) === "Fast Pair component data"
 );

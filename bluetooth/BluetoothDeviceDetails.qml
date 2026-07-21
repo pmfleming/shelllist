@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
+import "BluetoothFlow.js" as BluetoothFlow
 
 Rectangle {
     id: pane
@@ -61,7 +62,7 @@ Rectangle {
                     }
                     Text {
                         width: parent.width
-                        text: pane.controller.selectedResult ? pane.controller.selectedResult.subtitle : ""
+                        text: pane.controller.hasSelection ? BluetoothFlow.deviceState(pane.controller.selectedDevice) : ""
                         color: pane.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
                         font.family: Ui.Theme.fontFamily
                         font.pixelSize: Math.max(Ui.Theme.fontSizeCaption, Math.round(Ui.Theme.fontSizeSmall * pane.uiScale))

@@ -1,6 +1,7 @@
 .pragma library
 
 const componentOrder = ({ left: 0, right: 1, case: 2, main: 3 });
+const visualComponentOrder = ({ left: 0, case: 1, right: 2, main: 3 });
 
 function isValid(report) {
     return !!report
@@ -24,6 +25,16 @@ function ordered(reports) {
             return componentDifference !== 0 ? componentDifference : left.index - right.index;
         })
         .map(function (entry) { return entry.report; });
+}
+
+function visualOrdered(reports) {
+    return ordered(reports).slice().sort(function (left, right) {
+        const leftComponent = String((left && left.component) || "").toLowerCase();
+        const rightComponent = String((right && right.component) || "").toLowerCase();
+        const leftOrder = visualComponentOrder[leftComponent] === undefined ? 100 : visualComponentOrder[leftComponent];
+        const rightOrder = visualComponentOrder[rightComponent] === undefined ? 100 : visualComponentOrder[rightComponent];
+        return leftOrder - rightOrder;
+    });
 }
 
 function compactLabel(report) {
