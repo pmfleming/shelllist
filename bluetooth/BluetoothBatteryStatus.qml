@@ -21,17 +21,6 @@ Item {
     visible: true
     implicitHeight: indicatorHeight
 
-    function componentName(report) {
-        const component = String((report && report.component) || "").toLowerCase();
-        if (component === "left")
-            return "Left";
-        if (component === "right")
-            return "Right";
-        if (component === "case")
-            return "Case";
-        return (report && (report.label || report.component)) || "Battery";
-    }
-
     function ringColor(percentage) {
         if (percentage <= 20)
             return Ui.Theme.danger;
@@ -185,8 +174,7 @@ Item {
                     anchors.topMargin: Ui.Theme.spacingSm
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: parent.width - Ui.Theme.spacingSm
-                    text: root.componentName(indicator.modelData) + ": " + indicator.percentage + "%"
-                        + (root.device.battery_last_known ? " · last known" : "")
+                    text: indicator.percentage + "%"
                     color: Ui.Theme.text
                     font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeHeading
