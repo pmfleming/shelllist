@@ -1,6 +1,7 @@
 import QtQuick
 import Shelllist.Core as Core
 import Shelllist.Ui as Ui
+import "BluetoothBattery.js" as BluetoothBattery
 import "BluetoothFlow.js" as BluetoothFlow
 
 Item {
@@ -16,6 +17,7 @@ Item {
     property bool scanRequested: false
     property var adapters: []
     property var audioDevices: []
+    property var lastKnownBatteryByDevice: ({})
     property string audioStatus: ""
     property var obexCapabilities: ({})
     property var pairingPrompt: null
@@ -50,6 +52,9 @@ Item {
     readonly property bool canCancelOperation: !!activeOperation && (activeOperation.state === "queued" || activeOperation.state === "running")
     readonly property bool powered: selectedAdapter.key ? !!selectedAdapter.powered : adapters.some(function (adapter) { return adapter.powered; })
     readonly property bool scanning: !!activeScan
+    readonly property bool refreshInFlight: scanning
+        || backend.isPending("snapshot")
+        || backend.isPending("scan-start")
     readonly property int closedWindowWidth: Ui.Theme.popupClosedWidth
     readonly property int openWindowWidth: Ui.Theme.popupOpenWidth
     readonly property int surfaceWindowWidth: openWindowWidth
@@ -112,10 +117,48 @@ Item {
         audioDevices = devices || [];
         audioStatus = "";
     }
+    function devicesWithRememberedBattery(devices) {
+        const cache = Object.assign({}, lastKnownBatteryByDevice);
+        const observedKeys = ({});
+        const enriched = (devices || []).map(function (device) {
+            const key = device.key || "";
+            if (key.length > 0)
+                observedKeys[key] = true;
+            const currentReports = BluetoothBattery.ordered(device.battery || []);
+            if (currentReports.length > 0) {
+                if (key.length > 0)
+                    cache[key] = currentReports;
+                return Object.assign({}, device, {
+                    battery: currentReports,
+                    battery_last_known: !device.connected
+                });
+            }
+            const rememberedReports = key.length > 0 ? (cache[key] || []) : [];
+            if (!device.connected && rememberedReports.length > 0) {
+                console.info("shelllist bluetooth battery restored device_key=" + key
+                    + " reports=" + rememberedReports.length);
+                return Object.assign({}, device, {
+                    battery: rememberedReports,
+                    battery_last_known: true
+                });
+            }
+            return Object.assign({}, device, {
+                battery: currentReports,
+                battery_last_known: false
+            });
+        });
+        Object.keys(cache).forEach(function (key) {
+            if (!observedKeys[key])
+                delete cache[key];
+        });
+        lastKnownBatteryByDevice = cache;
+        return enriched;
+    }
     function applySnapshot(snapshot) {
         adapters = snapshot.adapters || [];
         preferredAdapterKey = BluetoothFlow.retainedAdapterKey(adapters, preferredAdapterKey);
-        results.replaceProviderResults(provider.providerId, provider.resultsForDevices(snapshot.devices || []), false);
+        const devices = devicesWithRememberedBattery(snapshot.devices || []);
+        results.replaceProviderResults(provider.providerId, provider.resultsForDevices(devices), false);
         if (BluetoothFlow.shouldStartScan(uiActive, powered, scanning, scanRequested)) {
             scanRequested = true;
             backend.setScanning(true, selectedAdapter.key);
@@ -346,9 +389,10 @@ Item {
     function executeDeviceAction(actionId, device) {
         if (actionInFlight)
             return false;
-        const operation = ({ pair: "pair", connect: "connect", disconnect: "disconnect", remove: "remove" })[actionId];
+        const operation = ({ pair: "pair", connect: "connect", disconnect: "disconnect", forget: "remove" })[actionId];
         if (operation) {
-            status = operation.charAt(0).toUpperCase() + operation.slice(1) + " " + device.name + "…";
+            const actionLabel = actionId === "forget" ? "Forgetting" : (operation.charAt(0).toUpperCase() + operation.slice(1));
+            status = actionLabel + " " + device.name + "…";
             return backend.deviceOperation(operation, device, operation === "pair" ? { trust_after_pair: trustAfterPair } : {});
         }
         if (actionId === "trusted")

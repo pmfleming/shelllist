@@ -107,22 +107,6 @@ Item {
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                 }
-
-                Text {
-                    visible: pane.controller.scanInFlight
-                    text: "󰑐"
-                    color: Theme.mutedText
-                    font.family: Theme.iconFontFamily
-                    font.pixelSize: Math.max(13, Math.round(16 * pane.uiScale))
-
-                    NumberAnimation on rotation {
-                        running: pane.controller.scanInFlight && !Theme.noAnimations
-                        loops: Animation.Infinite
-                        from: 0
-                        to: 360
-                        duration: Theme.spinnerDuration
-                    }
-                }
             }
         }
     }

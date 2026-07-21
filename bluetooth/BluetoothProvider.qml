@@ -42,11 +42,11 @@ Core.Provider {
                 visible: !!device.connected, enabled: idle && !!caps.can_disconnect,
                 presentation: { group: "primary", tone: "danger", width: 152 }
             }),
-            Core.Model.keepOpenAction("remove", "Remove device", {
-                icon: "󰆴", shortcut: "R", role: "destructive",
+            Core.Model.keepOpenAction("forget", "Forget", {
+                icon: "󰆴", shortcut: "F", role: "destructive",
                 enabled: idle && !!caps.can_remove,
-                confirmation: { required: true, title: "Remove " + (device.name || "Bluetooth device") + "?", message: "Pairing information and saved trust will be deleted." },
-                presentation: { group: "toolbar", tone: "danger", width: 132 }
+                confirmation: { required: true, title: "Forget " + (device.name || "Bluetooth device") + "?", message: "Pairing information and saved trust will be deleted." },
+                presentation: { group: "toolbar", tone: "normal", width: 92 }
             }),
             Core.Model.keepOpenAction("trusted", "Trusted", {
                 shortcut: "T", kind: "toggle", enabled: idle && !!caps.can_trust,
@@ -66,7 +66,9 @@ Core.Provider {
     }
     function resultForDevice(device) {
         const batterySummary = BluetoothBattery.summary(device.battery || []);
-        const battery = batterySummary.length > 0 ? (" · " + batterySummary) : "";
+        const battery = batterySummary.length > 0
+            ? (" · " + batterySummary + (device.battery_last_known ? " · last known" : ""))
+            : "";
         return Core.Model.result({
             providerId: providerId,
             providerPriority: priority,

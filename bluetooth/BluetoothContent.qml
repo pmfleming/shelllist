@@ -21,7 +21,7 @@ Rectangle {
         function onFocusListTopRequested() { Qt.callLater(devicePane.focusTop); }
     }
 
-    Shortcut { sequence: "F5"; enabled: content.controller.powered && !content.controller.actionInFlight && !content.controller.modalPromptOpen && !detailsPane.editingText; onActivated: content.controller.toggleScan() }
+    Shortcut { sequence: "F5"; enabled: content.controller.powered && !content.controller.refreshInFlight && !content.controller.actionInFlight && !content.controller.modalPromptOpen && !detailsPane.editingText; onActivated: content.controller.toggleScan() }
     Shortcut {
         sequence: "Alt+Tab"
         enabled: content.controller.detailsOpen
@@ -107,6 +107,7 @@ Rectangle {
             ? content.controller.pendingConfirmationAction.confirmation.title : "Confirm Bluetooth action"
         detail: (content.controller.pendingConfirmationAction || ({})).confirmation
             ? content.controller.pendingConfirmationAction.confirmation.message : "This action cannot be undone."
+        acceptLabel: "Forget"
         onAccepted: content.controller.confirmPendingAction()
         onCancelled: content.controller.cancelPendingConfirmation()
     }

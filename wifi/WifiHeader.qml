@@ -8,6 +8,8 @@ RowLayout {
 
     required property real uiScale
     property string filterText: ""
+    property bool refreshing: false
+    property bool refreshEnabled: true
 
     signal filterEdited(string text)
     signal keyPressed(var event)
@@ -70,16 +72,13 @@ RowLayout {
         }
     }
 
-    IconTile {
+    RefreshTile {
         Layout.preferredWidth: header.scaled(Theme.controlHeight)
         Layout.preferredHeight: header.scaled(Theme.controlHeight)
         Layout.alignment: Qt.AlignVCenter
-        backgroundColor: Theme.surfaceRaised
-        borderColor: Theme.border
-        icon: "󰑐"
-        iconColor: Theme.text
+        refreshing: header.refreshing
+        refreshEnabled: header.refreshEnabled
         iconSize: Math.max(16, header.scaled(19))
-        clickable: true
         onClicked: header.refreshRequested()
     }
 }

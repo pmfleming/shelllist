@@ -21,7 +21,7 @@ Rectangle {
 
     Shortcut {
         sequence: "F5"
-        enabled: !content.controller.prompt.open
+        enabled: !content.controller.prompt.open && !content.controller.actionInFlight
         autoRepeat: false
         onActivated: content.controller.refresh()
     }
@@ -89,6 +89,8 @@ Rectangle {
                 id: header
                 uiScale: content.uiScale
                 filterText: content.controller.filterText
+                refreshing: content.controller.scanInFlight
+                refreshEnabled: !content.controller.actionInFlight
                 onFilterEdited: function (text) {
                     content.controller.filterText = text;
                     content.controller.selectedIndex = 0;

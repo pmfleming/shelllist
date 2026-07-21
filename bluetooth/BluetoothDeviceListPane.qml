@@ -26,16 +26,16 @@ ColumnLayout {
         uiScale: pane.uiScale
         filterText: pane.controller.filterText
         powered: pane.controller.powered
-        scanning: pane.controller.scanning
+        refreshing: pane.controller.refreshInFlight
         powerEnabled: !pane.controller.actionInFlight
-        scanEnabled: pane.controller.powered && !pane.controller.actionInFlight
+        refreshEnabled: pane.controller.powered && !pane.controller.actionInFlight
         onFilterEdited: function (text) {
             pane.controller.filterText = text;
             pane.controller.selectedIndex = 0;
         }
         onKeyPressed: function (event) { pane.controller.navigation.handleSearchKey(event); }
         onPowerRequested: pane.controller.setPower()
-        onScanRequested: pane.controller.toggleScan()
+        onRefreshRequested: pane.controller.toggleScan()
     }
 
     Item {
@@ -124,22 +124,6 @@ ColumnLayout {
                         font.pixelSize: Math.max(10, pane.scaled(Ui.Theme.fontSizeCaption))
                         elide: Text.ElideRight
                         verticalAlignment: Text.AlignVCenter
-                    }
-
-                    Text {
-                        visible: pane.controller.scanning
-                        text: "󰑐"
-                        color: Ui.Theme.mutedText
-                        font.family: Ui.Theme.iconFontFamily
-                        font.pixelSize: Math.max(Ui.Theme.iconSizeSmall, pane.scaled(Ui.Theme.iconSize))
-
-                        NumberAnimation on rotation {
-                            running: pane.controller.scanning && !Ui.Theme.noAnimations
-                            loops: Animation.Infinite
-                            from: 0
-                            to: 360
-                            duration: Ui.Theme.spinnerDuration
-                        }
                     }
                 }
             }

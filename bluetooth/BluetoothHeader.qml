@@ -8,14 +8,14 @@ RowLayout {
     required property real uiScale
     property string filterText: ""
     property bool powered: false
-    property bool scanning: false
+    property bool refreshing: false
     property bool powerEnabled: true
-    property bool scanEnabled: true
+    property bool refreshEnabled: true
 
     signal filterEdited(string text)
     signal keyPressed(var event)
     signal powerRequested
-    signal scanRequested
+    signal refreshRequested
 
     Layout.fillWidth: true
     Layout.preferredHeight: scaled(Ui.Theme.headerHeight)
@@ -71,25 +71,13 @@ RowLayout {
         onClicked: header.powerRequested()
     }
 
-    Ui.IconTile {
+    Ui.RefreshTile {
         Layout.preferredWidth: header.scaled(Ui.Theme.controlHeight)
         Layout.preferredHeight: header.scaled(Ui.Theme.controlHeight)
         Layout.alignment: Qt.AlignVCenter
-        backgroundColor: Ui.Theme.controlBackground
-        borderColor: Ui.Theme.border
-        icon: "󰑐"
-        iconColor: header.scanning ? Ui.Theme.accent : Ui.Theme.text
+        refreshing: header.refreshing
+        refreshEnabled: header.refreshEnabled
         iconSize: Math.max(Ui.Theme.iconSizeSmall, header.scaled(Ui.Theme.iconSize))
-        clickable: true
-        enabled: header.scanEnabled
-        onClicked: header.scanRequested()
-
-        NumberAnimation on iconRotation {
-            running: header.scanning && !Ui.Theme.noAnimations
-            loops: Animation.Infinite
-            from: 0
-            to: 360
-            duration: Ui.Theme.spinnerDuration
-        }
+        onClicked: header.refreshRequested()
     }
 }

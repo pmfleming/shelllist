@@ -10,10 +10,17 @@ Item {
 
     required property var device
     readonly property var reports: BluetoothBattery.visualOrdered(device.battery || [])
+    readonly property bool hasBatteryReports: reports.length > 0
+    readonly property var displayReports: hasBatteryReports ? reports : [{
+        component: "main",
+        label: "Battery unavailable",
+        percentage: -1,
+        source: ""
+    }]
     readonly property int indicatorHeight: 166
 
-    visible: reports.length > 0
-    implicitHeight: visible ? indicatorHeight : 0
+    visible: true
+    implicitHeight: indicatorHeight
 
     function componentName(report) {
         const component = String((report && report.component) || "").toLowerCase();
@@ -62,24 +69,25 @@ Item {
     Row {
         id: indicators
 
-        readonly property int itemWidth: Math.min(172, root.width / Math.max(1, root.reports.length))
+        readonly property int itemWidth: Math.min(172, root.width / Math.max(1, root.displayReports.length))
 
         anchors.horizontalCenter: parent.horizontalCenter
-        width: itemWidth * root.reports.length
+        width: itemWidth * root.displayReports.length
         height: root.indicatorHeight
         spacing: 0
 
         Repeater {
-            model: root.reports
+            model: root.displayReports
 
             delegate: Item {
                 id: indicator
 
                 required property var modelData
-                readonly property real percentage: modelData.percentage
+                readonly property bool batteryAvailable: BluetoothBattery.isValid(modelData)
+                readonly property real percentage: batteryAvailable ? modelData.percentage : 0
                 readonly property color statusColor: root.ringColor(percentage)
                 readonly property string imageSource: root.imageFor(modelData)
-                readonly property int ringSize: root.reports.length === 1 ? 126 : 108
+                readonly property int ringSize: root.displayReports.length === 1 ? 126 : 108
 
                 width: indicators.itemWidth
                 height: indicators.height
@@ -119,7 +127,7 @@ Item {
                         context.arc(center, center, radius, 0, Math.PI * 2);
                         context.stroke();
 
-                        if (indicator.percentage > 0) {
+                        if (indicator.batteryAvailable && indicator.percentage > 0) {
                             context.strokeStyle = indicator.statusColor;
                             context.beginPath();
                             context.arc(center, center, radius, start, end);
@@ -138,6 +146,7 @@ Item {
                     fillMode: Image.PreserveAspectFit
                     mipmap: true
                     visible: indicator.imageSource.length > 0
+                    opacity: root.device.battery_last_known ? 0.78 : 1.0
                 }
 
                 Text {
@@ -152,6 +161,7 @@ Item {
                 }
 
                 Rectangle {
+                    visible: indicator.batteryAvailable
                     anchors.horizontalCenter: ring.horizontalCenter
                     y: 0
                     width: 34
@@ -175,7 +185,10 @@ Item {
                     anchors.topMargin: Ui.Theme.spacingSm
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: parent.width - Ui.Theme.spacingSm
-                    text: root.componentName(indicator.modelData) + ": " + indicator.percentage + "%"
+                    text: indicator.batteryAvailable
+                        ? root.componentName(indicator.modelData) + ": " + indicator.percentage + "%"
+                            + (root.device.battery_last_known ? " · last known" : "")
+                        : "Battery unavailable"
                     color: Ui.Theme.text
                     font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeHeading

@@ -12,6 +12,7 @@ IconTile 1.0 IconTile.qml
 ModalFrame 1.0 ModalFrame.qml
 PopupWindowHost 1.0 PopupWindowHost.qml
 PromptDialog 1.0 PromptDialog.qml
+RefreshTile 1.0 RefreshTile.qml
 ResultNavigation 1.0 ResultNavigation.qml
 SegmentedControl 1.0 SegmentedControl.qml
 ShelllistGlobalShortcut 1.0 ShelllistGlobalShortcut.qml
