@@ -82,8 +82,8 @@ Item {
         target: page
         property: "sectionOffset"
         to: 0
-        duration: 240
-        easing.type: Easing.InOutCubic
+        duration: Theme.animationSlow
+        easing.type: Theme.easingStandard
     }
 
     function firstAddress(settings) {

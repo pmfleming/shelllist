@@ -11,6 +11,8 @@ Item {
     property alias filterText: results.queryText
     property alias selectedIndex: results.selectedIndex
     property bool detailsOpen: false
+    property string detailsTab: "device"
+    property var pendingConfirmationAction: null
     property bool scanRequested: false
     property var adapters: []
     property var audioDevices: []
@@ -25,11 +27,14 @@ Item {
     property string preferredAdapterKey: ""
     property string pairingInput: ""
     property string status: "Loading Bluetooth devices…"
-    readonly property bool actionInFlight: backend.running
+    readonly property bool actionInFlight: backend.running || canCancelOperation || canCancelTransfer
     readonly property var filteredResults: results.visibleResults
     readonly property var filteredResultsModel: results.visibleModel
     readonly property var selectedResult: results.selected()
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
+    readonly property var detailActions: providers.actionsFor(selectedResult)
+    readonly property alias selectionModel: results
+    readonly property alias navigation: navigationModel
     readonly property var selectedAdapter: adapters.find(function (adapter) { return adapter.key === preferredAdapterKey; }) || adapters.find(function (adapter) { return adapter.key === selectedDevice.adapter_key; }) || adapters[0] || ({})
     readonly property var selectedAudio: audioDevices.find(function (audio) { return audio.device_key === selectedDevice.key; }) || ({})
     readonly property var selectedSink: selectedAudio.sink || ({})
@@ -39,17 +44,31 @@ Item {
     readonly property bool hasSelection: filteredResults.length > 0
     readonly property bool pairingPromptOpen: !!pairingPrompt
     readonly property bool incomingTransferPromptOpen: !!incomingTransferPrompt
-    readonly property bool modalPromptOpen: pairingPromptOpen || incomingTransferPromptOpen
+    readonly property bool confirmationOpen: !!pendingConfirmationAction
+    readonly property bool modalPromptOpen: pairingPromptOpen || incomingTransferPromptOpen || confirmationOpen
     readonly property bool canCancelTransfer: !!activeTransfer && !["complete", "cancelled", "error"].includes(activeTransfer.status)
     readonly property bool canCancelOperation: !!activeOperation && (activeOperation.state === "queued" || activeOperation.state === "running")
     readonly property bool powered: selectedAdapter.key ? !!selectedAdapter.powered : adapters.some(function (adapter) { return adapter.powered; })
     readonly property bool scanning: !!activeScan
-    readonly property int closedWindowWidth: 440
-    readonly property int openWindowWidth: 820
-    property int surfaceWindowWidth: detailsOpen ? openWindowWidth : closedWindowWidth
+    readonly property int closedWindowWidth: Ui.Theme.popupClosedWidth
+    readonly property int openWindowWidth: Ui.Theme.popupOpenWidth
+    readonly property int surfaceWindowWidth: openWindowWidth
+    readonly property int contentMargin: Ui.Theme.contentMargin
+    readonly property int contentVerticalMargin: Ui.Theme.contentVerticalMargin
+    readonly property int listPaneWidth: closedWindowWidth - 2 * contentMargin
+    readonly property int detailsGapWidth: Ui.Theme.detailsGapWidth
+    readonly property real detailsRenderCutoff: 0.025
+    property real detailsExpansionProgress: detailsOpen ? 1 : 0
+    readonly property real detailsPaintProgress: (!detailsOpen && detailsExpansionProgress <= detailsRenderCutoff) ? 0 : detailsExpansionProgress
+    readonly property real detailsPaneFullWidth: openWindowWidth - closedWindowWidth - detailsGapWidth
+    readonly property real detailsPaneWidth: detailsPaintProgress * detailsPaneFullWidth
+    readonly property real detailsPaneGapWidth: detailsPaintProgress * detailsGapWidth
+    readonly property bool detailsRendered: detailsOpen || detailsExpansionProgress > detailsRenderCutoff
+    readonly property int currentWindowWidth: Math.round(closedWindowWidth + detailsPaintProgress * (openWindowWidth - closedWindowWidth))
 
     signal closeWindowRequested
     signal focusSearchRequested
+    signal focusListTopRequested
     signal incomingTransferRequested
 
     function activateUi(workspaceId) {
@@ -66,6 +85,7 @@ Item {
             backend.respondObex(incomingTransferPrompt.request_id, false);
         pairingPrompt = null;
         incomingTransferPrompt = null;
+        pendingConfirmationAction = null;
         pairingInput = "";
         scanRequested = false;
         if (activeScan)
@@ -283,7 +303,28 @@ Item {
     }
     function moveSelection(delta) { results.move(delta); }
     function primarySelected() { return hasSelection && providers.execute(selectedResult, "", { workspaceId: currentWorkspaceId }); }
-    function triggerAction(id) { return hasSelection && providers.execute(selectedResult, id, { workspaceId: currentWorkspaceId }); }
+    function actionForId(id) { return detailActions.find(function (action) { return action.id === id; }) || null; }
+    function triggerDetailAction(id) {
+        if (!hasSelection)
+            return false;
+        const action = actionForId(id);
+        if (!action || action.visible === false || action.enabled === false)
+            return false;
+        if (action.confirmation && action.confirmation.required) {
+            pendingConfirmationAction = action;
+            return true;
+        }
+        return providers.execute(selectedResult, id, { workspaceId: currentWorkspaceId });
+    }
+    function triggerAction(id) { return triggerDetailAction(id); }
+    function cancelPendingConfirmation() { pendingConfirmationAction = null; }
+    function confirmPendingAction() {
+        if (!pendingConfirmationAction)
+            return false;
+        const actionId = pendingConfirmationAction.id;
+        pendingConfirmationAction = null;
+        return hasSelection && providers.execute(selectedResult, actionId, { workspaceId: currentWorkspaceId });
+    }
     function executeDeviceAction(actionId, device) {
         if (actionInFlight)
             return false;
@@ -301,7 +342,11 @@ Item {
         return false;
     }
 
-    Behavior on surfaceWindowWidth { enabled: !Ui.Theme.noAnimations; NumberAnimation { duration: 180; easing.type: Easing.InOutSine } }
+    onModalPromptOpenChanged: if (!modalPromptOpen) Qt.callLater(focusSearchRequested)
+    onSelectedResultChanged: pendingConfirmationAction = null
+
+    Behavior on detailsExpansionProgress { enabled: !Ui.Theme.noAnimations; NumberAnimation { duration: Ui.Theme.animationNormal; easing.type: Ui.Theme.easingGentle } }
+    Ui.ResultNavigation { id: navigationModel; controller: controller; blocked: controller.modalPromptOpen }
     Core.ProviderRegistry {
         id: providers
         BluetoothProvider { id: provider; controller: controller }

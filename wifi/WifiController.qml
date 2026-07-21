@@ -19,15 +19,15 @@ Item {
     property alias selectedIndex: services.selectedIndex
     property string status: "Loading Wi-Fi networks…"
     property bool detailsOpen: false
-    property real detailsExpansionProgress: 0
+    property real detailsExpansionProgress: detailsOpen ? 1 : 0
     property double statusHoldUntil: 0
-    readonly property int closedWindowWidth: 453
-    readonly property int contentMargin: 14
-    readonly property int contentVerticalMargin: 24
+    readonly property int closedWindowWidth: Theme.popupClosedWidth
+    readonly property int contentMargin: Theme.contentMargin
+    readonly property int contentVerticalMargin: Theme.contentVerticalMargin
     readonly property int listPaneWidth: closedWindowWidth - 2 * contentMargin
-    readonly property int openWindowWidth: 1040
+    readonly property int openWindowWidth: Theme.popupOpenWidth
     readonly property int surfaceWindowWidth: openWindowWidth
-    readonly property int detailsGapWidth: 12
+    readonly property int detailsGapWidth: Theme.detailsGapWidth
     readonly property real detailsRenderCutoff: 0.025
     readonly property real detailsPaintProgress: (!detailsOpen && detailsExpansionProgress <= detailsRenderCutoff) ? 0 : detailsExpansionProgress
     readonly property real detailsPaneFullWidth: openWindowWidth - closedWindowWidth - detailsGapWidth
@@ -73,13 +73,8 @@ Item {
     signal focusSearchRequested
     signal focusListTopRequested
     signal advancedSectionLeaving(string section)
-    signal windowPlacementRequested
     signal closeWindowRequested
 
-    function startup(floatingMode, workspaceId) {
-        if (floatingMode)
-            activateUi(workspaceId);
-    }
     function activeAccessPoint() { return activeStatus ? (activeStatus.access_point || activeStatus.network || null) : null; }
     function networkName(ap) { return Presentation.networkName(ap); }
     function isActive(ap) { return !!(ap && ap.active); }
@@ -194,8 +189,8 @@ Item {
     Behavior on detailsExpansionProgress {
         enabled: !Theme.noAnimations
         NumberAnimation {
-            duration: 220
-            easing.type: Easing.InOutSine
+            duration: Theme.animationNormal
+            easing.type: Theme.easingGentle
         }
     }
     WifiControllerServices { id: services; controller: wifi; prompt: wifi.prompt }

@@ -1,88 +1,73 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
 ColumnLayout {
     id: section
-    required property BluetoothController controller
-    property bool confirmRemove
-    readonly property bool editingName: renameInput.activeFocus
-    Layout.fillWidth: true
-    spacing: 10
 
-    function localFilePath(url) {
-        const value = url.toString();
-        return value.indexOf("file://") === 0 ? decodeURIComponent(value.slice(7)) : value;
-    }
-    function cancelRemove() { confirmRemove = false; }
+    required property BluetoothController controller
+    readonly property bool editingName: renameInput.inputActiveFocus
+
+    Layout.fillWidth: true
+    spacing: Ui.Theme.spacingMd
 
     Connections {
         target: section.controller
-        function onSelectedResultChanged() {
-            section.confirmRemove = false;
-            renameInput.text = section.controller.selectedDevice.name || "";
-        }
+        function onSelectedResultChanged() { renameInput.text = section.controller.selectedDevice.name || ""; }
     }
-    FileDialog {
-        id: outgoingFileDialog
-        title: "Send file over Bluetooth"
-        fileMode: FileDialog.OpenFile
-        onAccepted: section.controller.sendFile(section.localFilePath(selectedFile))
+
+    Text {
+        text: "Device name"
+        color: Ui.Theme.mutedText
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Ui.Theme.fontSizeBody
     }
-    Text { text: "Device name"; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11 }
-    Rectangle {
+
+    RowLayout {
         Layout.fillWidth: true
-        Layout.preferredHeight: 38
-        radius: Ui.Theme.cardRadius
-        color: Ui.Theme.surfaceRaised
-        border.color: renameInput.activeFocus ? Ui.Theme.accent : Ui.Theme.border
-        TextInput {
+        spacing: Ui.Theme.spacingSm
+
+        Ui.TextField {
             id: renameInput
-            anchors.fill: parent
-            anchors.leftMargin: 12
-            anchors.rightMargin: 12
+            Layout.fillWidth: true
+            Layout.preferredHeight: Ui.Theme.compactControlHeight
             text: section.controller.selectedDevice.name || ""
             maximumLength: 248
-            verticalAlignment: TextInput.AlignVCenter
-            color: Ui.Theme.text
-            selectionColor: Ui.Theme.accent
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: 13
-            clip: true
+            readOnly: section.controller.actionInFlight
             onAccepted: section.controller.renameSelected(text)
         }
+        Ui.ActionButton {
+            Layout.preferredWidth: 92
+            Layout.preferredHeight: Ui.Theme.compactControlHeight
+            label: "Save"
+            tone: "accent"
+            enabled: !!(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_rename)
+                && renameInput.text.trim().length > 0
+                && renameInput.text.trim() !== (section.controller.selectedDevice.name || "")
+                && !section.controller.actionInFlight
+            onClicked: section.controller.renameSelected(renameInput.text)
+        }
     }
-    BluetoothActionButton {
-        label: "Save device name"
-        available: !!(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_rename)
-            && renameInput.text.trim().length > 0
-            && renameInput.text.trim() !== (section.controller.selectedDevice.name || "")
-            && !section.controller.actionInFlight
-        onClicked: section.controller.renameSelected(renameInput.text)
-    }
-    BluetoothActionButton {
-        visible: !!section.controller.obexCapabilities.outgoing_object_push && !section.controller.canCancelTransfer
-        label: "Send file"
-        available: !!(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_send_file) && !section.controller.actionInFlight
-        onClicked: outgoingFileDialog.open()
-    }
-    BluetoothActionButton {
-        visible: section.controller.canCancelTransfer
-        label: "Cancel " + ((section.controller.activeTransfer || ({})).file_name || "transfer")
-        danger: true
-        onClicked: section.controller.cancelActiveTransfer()
-    }
-    BluetoothActionButton { visible: !section.controller.canCancelOperation && !section.controller.canCancelTransfer; label: section.controller.selectedDevice.connected ? "Disconnect" : (section.controller.selectedDevice.paired ? "Connect" : "Pair"); available: section.controller.hasSelection && !section.controller.actionInFlight; onClicked: section.controller.primarySelected() }
-    BluetoothActionButton { visible: section.controller.canCancelOperation; label: "Cancel operation"; danger: true; onClicked: section.controller.cancelActiveOperation() }
-    BluetoothActionButton { label: (section.controller.selectedDevice.trusted ? "Disable" : "Enable") + " trust"; available: !!(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_trust); onClicked: section.controller.triggerAction("trusted") }
-    BluetoothActionButton { visible: section.controller.selectedDevice.wake_allowed !== null && section.controller.selectedDevice.wake_allowed !== undefined; label: (section.controller.selectedDevice.wake_allowed ? "Disable" : "Enable") + " wake"; available: !!(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_wake); onClicked: section.controller.triggerAction("wake") }
-    BluetoothActionButton { label: section.controller.selectedDevice.blocked ? "Unblock device" : "Block device"; danger: !section.controller.selectedDevice.blocked; available: !!(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_block); onClicked: section.controller.triggerAction("blocked") }
-    BluetoothActionButton { visible: !section.confirmRemove; label: "Remove device"; danger: true; available: !!(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_remove); onClicked: section.confirmRemove = true }
-    RowLayout {
-        visible: section.confirmRemove
-        Layout.fillWidth: true
-        BluetoothActionButton { label: "Cancel"; onClicked: section.confirmRemove = false }
-        BluetoothActionButton { label: "Remove"; danger: true; onClicked: { section.confirmRemove = false; section.controller.triggerAction("remove"); } }
+
+    Repeater {
+        model: section.controller.detailActions.filter(function (action) {
+            return action.visible !== false && (action.presentation || {}).group === "settings";
+        })
+
+        delegate: Ui.ToggleRow {
+            required property var modelData
+
+            Layout.fillWidth: true
+            Layout.preferredHeight: 36
+            title: modelData.label
+            hotkey: modelData.shortcut || ""
+            checked: !!(modelData.state && modelData.state.checked)
+            tone: (modelData.presentation || {}).tone || "normal"
+            interactive: modelData.enabled !== false
+            showSubtitle: false
+            onClicked: section.controller.triggerDetailAction(modelData.id)
+        }
     }
 }

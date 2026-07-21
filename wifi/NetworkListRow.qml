@@ -16,7 +16,7 @@ Rectangle {
     property bool detailsOpen: false
     property bool connecting: false
     property int progressTick: 0
-    property real rowHeight: 52
+    property real rowHeight: Theme.listRowHeight
 
     readonly property bool selected: index === selectedIndex
     readonly property bool securedNetwork: network.security !== "--"
@@ -27,7 +27,7 @@ Rectangle {
     readonly property int signalStrength: Math.max(0, Math.min(100, Number(network.strength) || 0))
     readonly property int signalBarCount: signalStrength >= 67 ? 3 : (signalStrength >= 34 ? 2 : 1)
     readonly property color signalColor: signalStrength >= 67 ? Theme.active : (signalStrength >= 34 ? Theme.warning : Theme.danger)
-    readonly property real density: Math.max(0.86, Math.min(1.08, rowHeight / 52))
+    readonly property real density: Math.max(Theme.listDensityMinimum, Math.min(Theme.listDensityMaximum, rowHeight / Theme.listRowHeight))
     readonly property var spinnerFrames: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
     signal picked(int rowIndex)

@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
-BluetoothPromptShell {
+Ui.PromptDialog {
     id: prompt
 
     required property BluetoothController controller
@@ -10,8 +10,9 @@ BluetoothPromptShell {
     readonly property string kind: request.kind || ""
     readonly property bool responseRequired: !!request.response_required
     readonly property bool inputRequired: kind === "pin-code" || kind === "passkey"
-    readonly property bool inputValid: !inputRequired || (controller.pairingInput.length > 0 && (kind !== "passkey" || /^\d{1,6}$/.test(controller.pairingInput)))
-    readonly property string deviceName: request.device_key && controller.selectedDevice && controller.selectedDevice.key === request.device_key ? (controller.selectedDevice.name || "Bluetooth device") : "Bluetooth device"
+    readonly property bool valueValid: !inputRequired || (controller.pairingInput.length > 0 && (kind !== "passkey" || /^\d{1,6}$/.test(controller.pairingInput)))
+    readonly property string deviceName: request.device_key && controller.selectedDevice && controller.selectedDevice.key === request.device_key
+        ? (controller.selectedDevice.name || "Bluetooth device") : "Bluetooth device"
     readonly property var headings: ({
         "confirmation": "Confirm pairing code",
         "authorization": "Allow pairing?",
@@ -22,13 +23,25 @@ BluetoothPromptShell {
 
     visible: controller.pairingPromptOpen
     z: 100
-    heading: headings[kind] || "Complete pairing"
+    title: headings[kind] || "Complete pairing"
     detail: detailText()
+    inputVisible: inputRequired
+    inputText: controller.pairingInput
+    password: true
+    inputValid: valueValid
+    inputMaximumLength: kind === "passkey" ? 6 : 16
+    inputMethodHints: kind === "passkey" ? Qt.ImhDigitsOnly : Qt.ImhNone
+    inputHorizontalAlignment: TextInput.AlignHCenter
     actionsVisible: responseRequired
-    acceptEnabled: inputValid
-    footer: responseRequired ? "" : "Waiting for the remote device…"
+    rejectLabel: "Reject"
+    acceptLabel: "Confirm"
+    acceptEnabled: valueValid
+    escapeEnabled: responseRequired
+    enterEnabled: responseRequired
+    instruction: responseRequired ? "Enter confirm   •   Esc reject" : "Waiting for the remote device…"
+    onInputEdited: function (text) { controller.pairingInput = text; }
     onAccepted: controller.respondPairing(true)
-    onRejected: controller.respondPairing(false)
+    onCancelled: controller.respondPairing(false)
 
     function detailText() {
         if (kind === "display-pin" || kind === "display-passkey")
@@ -50,7 +63,7 @@ BluetoothPromptShell {
         font.family: Ui.Theme.fontFamily
         font.pixelSize: 34
         font.letterSpacing: 5
-        font.bold: true
+        font.weight: Ui.Theme.fontWeightBold
         horizontalAlignment: Text.AlignHCenter
     }
     Text {
@@ -59,33 +72,7 @@ BluetoothPromptShell {
         text: Number(prompt.request.entered || 0) + " of 6 digits entered"
         color: Ui.Theme.mutedText
         font.family: Ui.Theme.fontFamily
-        font.pixelSize: 11
+        font.pixelSize: Ui.Theme.fontSizeCaption
         horizontalAlignment: Text.AlignHCenter
     }
-    Rectangle {
-        visible: prompt.inputRequired
-        Layout.fillWidth: true
-        Layout.preferredHeight: 44
-        radius: Ui.Theme.cardRadius
-        color: Ui.Theme.surfaceRaised
-        border.color: pairingInput.activeFocus ? Ui.Theme.accent : Ui.Theme.border
-        TextInput {
-            id: pairingInput
-            anchors.fill: parent
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
-            text: prompt.controller.pairingInput
-            color: Ui.Theme.text
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: 18
-            horizontalAlignment: TextInput.AlignHCenter
-            verticalAlignment: TextInput.AlignVCenter
-            echoMode: TextInput.Password
-            maximumLength: prompt.kind === "passkey" ? 6 : 16
-            inputMethodHints: prompt.kind === "passkey" ? Qt.ImhDigitsOnly : Qt.ImhNone
-            onTextEdited: prompt.controller.pairingInput = text
-        }
-    }
-
-    onVisibleChanged: if (visible && inputRequired) Qt.callLater(pairingInput.forceActiveFocus)
 }

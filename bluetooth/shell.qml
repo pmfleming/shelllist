@@ -13,6 +13,7 @@ ShellRoot {
         id: windowHost
         content: contentComponent
         surfaceWindowWidth: controller.surfaceWindowWidth
+        currentWindowWidth: controller.currentWindowWidth
         onUiActivated: function (workspaceId) { controller.activateUi(workspaceId); }
         onUiDeactivated: controller.deactivateUi()
         onFocusSearchRequested: controller.focusSearchRequested()
@@ -22,4 +23,5 @@ ShellRoot {
         id: contentComponent
         BluetoothContent { controller: controller; windowHost: windowHost }
     }
+
 }

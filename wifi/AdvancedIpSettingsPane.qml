@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import "."
 import "networkinput" as NetworkInput
+import Shelllist.Ui
 
 AdvancedSettingsFlickable {
     id: hardwareFlick
@@ -36,7 +37,7 @@ AdvancedSettingsFlickable {
                     onSelected: function (value) { hardwareFlick.settings.ipFamily = value; }
                 }
 
-                ProfileToggleRow {
+                ToggleRow {
                     width: parent.width
                     height: 44
                     title: hardwareFlick.settings.ipFamily === "ipv4" ? "Enable IPv4" : "Enable IPv6"
@@ -45,7 +46,7 @@ AdvancedSettingsFlickable {
                     onClicked: hardwareFlick.settings.setMethod(hardwareFlick.settings.currentFamilyEnabled ? "disabled" : "auto")
                 }
 
-                ProfileToggleRow {
+                ToggleRow {
                     width: parent.width
                     height: 44
                     title: "Automatic addressing"
@@ -55,7 +56,7 @@ AdvancedSettingsFlickable {
                     onClicked: hardwareFlick.settings.setMethod(hardwareFlick.settings.currentMethod === "auto" ? "manual" : "auto")
                 }
 
-                ProfileToggleRow {
+                ToggleRow {
                     width: parent.width
                     height: 44
                     title: "Automatic DNS"
@@ -127,7 +128,7 @@ AdvancedSettingsFlickable {
                     }
 
                     AdvancedFieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "DNS search domains" }
-                    AdvancedTextField {
+                    TextField {
                         Layout.fillWidth: true
                         readOnly: !hardwareFlick.settings.currentFamilyEnabled
                         text: hardwareFlick.settings.ipFamily === "ipv4" ? hardwareFlick.settings.ipv4Search : hardwareFlick.settings.ipv6Search

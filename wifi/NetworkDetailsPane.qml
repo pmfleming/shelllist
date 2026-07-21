@@ -13,7 +13,7 @@ Rectangle {
     readonly property bool signInRequired: Presentation.connectivityRequiresSignIn(Presentation.activeConnectivity(controller))
     readonly property color connectionColor: signInRequired ? Theme.warning : Theme.active
     readonly property string lastSeenLabel: Presentation.lastSeenLabel(ap)
-    readonly property real uiScale: Math.max(0.82, Math.min(1.12, height / 850))
+    readonly property real uiScale: Theme.densityScale(height, 0)
     readonly property int sectionSpacing: Math.max(8, Math.round(12 * uiScale))
     readonly property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     readonly property int detailControlHeight: Math.max(36, Math.round(42 * uiScale))
@@ -157,7 +157,7 @@ Rectangle {
 
                 Behavior on advancedTransitionProgress {
                     enabled: !Theme.noAnimations
-                    NumberAnimation { duration: 240; easing.type: Easing.InOutCubic }
+                    NumberAnimation { duration: Theme.animationSlow; easing.type: Theme.easingStandard }
                 }
 
                 Column {

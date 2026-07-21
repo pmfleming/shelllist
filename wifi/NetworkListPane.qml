@@ -36,8 +36,8 @@ Item {
             ListView {
                 id: list
 
-                readonly property int visibleRowTarget: Math.max(1, Math.min(count, 15))
-                readonly property real delegateHeight: Math.max(42, Math.min(58, height / visibleRowTarget))
+                readonly property int visibleRowTarget: Math.max(1, Math.min(count, Theme.listVisibleRowTarget))
+                readonly property real delegateHeight: Math.max(Theme.listRowMinHeight, Math.min(Theme.listRowMaxHeight, height / visibleRowTarget))
 
                 anchors.fill: parent
                 clip: true
@@ -81,7 +81,7 @@ Item {
             id: statusPanel
 
             width: parent.width
-            height: Math.round(38 * pane.uiScale)
+            height: Math.round(Theme.statusHeight * pane.uiScale)
             radius: Theme.cardRadius
             color: Theme.surfaceRaised
             border.color: Theme.border
@@ -121,7 +121,7 @@ Item {
                         loops: Animation.Infinite
                         from: 0
                         to: 360
-                        duration: 900
+                        duration: Theme.spinnerDuration
                     }
                 }
             }

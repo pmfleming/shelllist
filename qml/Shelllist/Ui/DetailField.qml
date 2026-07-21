@@ -1,5 +1,4 @@
 import QtQuick
-import Shelllist.Ui
 
 Column {
     id: field
@@ -11,13 +10,13 @@ Column {
     property int valueWidth: width
 
     width: 245
-    spacing: 4
+    spacing: Theme.spacingXs
 
     Text {
         text: field.label
         color: Theme.mutedText
         font.family: Theme.fontFamily
-        font.pixelSize: 13
+        font.pixelSize: Theme.fontSizeBody
     }
 
     Text {
@@ -25,8 +24,8 @@ Column {
         text: field.value
         color: field.valueColor
         font.family: Theme.fontFamily
-        font.pixelSize: 14
-        font.bold: field.valueBold
+        font.pixelSize: Theme.fontSizeLabel
+        font.weight: field.valueBold ? Theme.fontWeightBold : Theme.fontWeightRegular
         elide: Text.ElideRight
     }
 }

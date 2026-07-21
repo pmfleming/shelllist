@@ -25,6 +25,7 @@ Item {
     readonly property color accentText: readableOn(accent)
     readonly property color selected: envColor("SHELLLIST_SELECTED", withAlpha(accent, dark ? 0.30 : 0.18))
     readonly property color hover: withAlpha(accent, dark ? 0.16 : 0.10)
+    readonly property color pressed: withAlpha(accent, dark ? 0.24 : 0.16)
     readonly property color active: envColor("SHELLLIST_SUCCESS", dark ? "#22c55e" : "#15803d")
     readonly property color activeText: readableOn(active)
     readonly property color activeBackground: withAlpha(active, dark ? 0.18 : 0.12)
@@ -32,11 +33,67 @@ Item {
     readonly property color dangerText: readableOn(danger)
     readonly property color dangerBackground: withAlpha(danger, dark ? 0.18 : 0.12)
     readonly property color warning: envColor("SHELLLIST_WARNING", dark ? "#fbbf24" : "#b45309")
+    readonly property color warningText: readableOn(warning)
+    readonly property color warningBackground: withAlpha(warning, dark ? 0.18 : 0.12)
     readonly property color disabledText: mix(text, surface, 0.62)
     readonly property color overlay: dark ? "#99000000" : "#66ffffff"
+    readonly property color controlBackground: surfaceRaised
+    readonly property color controlBorder: mix(border, text, 0.16)
 
     readonly property string fontFamily: envText("SHELLLIST_FONT") || "Noto Sans"
     readonly property string iconFontFamily: envText("SHELLLIST_ICON_FONT") || "JetBrainsMono Nerd Font"
+
+    readonly property int spacingXs: 4
+    readonly property int spacingSm: 8
+    readonly property int spacingMd: 12
+    readonly property int spacingLg: 18
+    readonly property int spacingXl: 24
+    readonly property int contentMargin: 14
+    readonly property int contentVerticalMargin: 24
+    readonly property int popupClosedWidth: 453
+    readonly property int popupOpenWidth: 1040
+    readonly property int detailsGapWidth: 12
+    readonly property real popupHeightRatio: 0.75
+    readonly property real densityMinimum: 0.82
+    readonly property real densityMaximum: 1.12
+    readonly property int densityReferenceHeight: 850
+
+    readonly property int compactControlHeight: 38
+    readonly property int controlHeight: 42
+    readonly property int headerHeight: 48
+    readonly property int statusHeight: 38
+
+    readonly property int fontSizeCaption: 11
+    readonly property int fontSizeSmall: 12
+    readonly property int fontSizeBody: 13
+    readonly property int fontSizeLabel: 14
+    readonly property int fontSizeHeading: 16
+    readonly property int fontSizeTitle: 20
+    readonly property int fontSizeDisplay: 22
+    readonly property int fontWeightRegular: Font.Normal
+    readonly property int fontWeightMedium: Font.Medium
+    readonly property int fontWeightDemiBold: Font.DemiBold
+    readonly property int fontWeightBold: Font.Bold
+
+    readonly property int iconSizeSmall: 15
+    readonly property int iconSize: 18
+    readonly property int iconSizeLarge: 24
+
+    readonly property real disabledOpacity: 0.45
+    readonly property real readOnlyOpacity: 0.72
+    readonly property int animationFast: 170
+    readonly property int animationNormal: 220
+    readonly property int animationSlow: 240
+    readonly property int spinnerDuration: 900
+    readonly property int easingStandard: Easing.InOutCubic
+    readonly property int easingGentle: Easing.InOutSine
+
+    readonly property int listRowMinHeight: 42
+    readonly property int listRowHeight: 52
+    readonly property int listRowMaxHeight: 58
+    readonly property int listVisibleRowTarget: 15
+    readonly property real listDensityMinimum: 0.86
+    readonly property real listDensityMaximum: 1.08
 
     readonly property int baseRadius: envInt("SHELLLIST_RADIUS", 10)
     readonly property int windowRadius: Math.max(0, baseRadius + 8)
@@ -71,6 +128,11 @@ Item {
         if (["0", "false", "no", "off", "enabled", "enable"].indexOf(value) >= 0)
             return false;
         return null;
+    }
+
+    function densityScale(availableHeight, verticalMargin) {
+        return Math.max(densityMinimum, Math.min(densityMaximum,
+            (availableHeight - 2 * verticalMargin) / densityReferenceHeight));
     }
 
     function luminance(color) { return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b; }

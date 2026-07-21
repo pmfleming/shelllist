@@ -14,13 +14,15 @@ RowLayout {
     signal refreshRequested
 
     Layout.fillWidth: true
-    Layout.preferredHeight: Math.round(48 * uiScale)
-    spacing: Math.round(10 * uiScale)
+    Layout.preferredHeight: Math.round(Theme.headerHeight * uiScale)
+    spacing: Math.round(Theme.spacingSm * uiScale)
 
     function scaled(value) { return Math.round(value * uiScale); }
 
+    Component.onCompleted: Qt.callLater(focusSearch)
+
     function focusSearch() {
-        search.forceActiveFocus();
+        search.focusInput(false);
     }
 
     Item {
@@ -28,8 +30,8 @@ RowLayout {
     }
 
     Rectangle {
-        Layout.preferredWidth: header.scaled(42)
-        Layout.preferredHeight: header.scaled(42)
+        Layout.preferredWidth: header.scaled(Theme.controlHeight)
+        Layout.preferredHeight: header.scaled(Theme.controlHeight)
         Layout.alignment: Qt.AlignVCenter
         radius: Theme.cardRadius
         color: Theme.selected
@@ -44,52 +46,33 @@ RowLayout {
         }
     }
 
-    TextInput {
+    TextField {
         id: search
 
         Layout.fillWidth: true
-        Layout.preferredHeight: header.scaled(42)
+        Layout.preferredHeight: header.scaled(Theme.controlHeight)
         Layout.alignment: Qt.AlignVCenter
-        focus: true
         leftPadding: header.scaled(43)
-        rightPadding: header.scaled(12)
-        color: Theme.inputText
-        selectionColor: Theme.accent
-        selectedTextColor: Theme.accentText
-        font.family: Theme.fontFamily
-        font.pixelSize: Math.max(12, header.scaled(14))
-        verticalAlignment: TextInput.AlignVCenter
+        rightPadding: header.scaled(Theme.spacingMd)
+        fontPixelSize: Math.max(Theme.fontSizeSmall, header.scaled(Theme.fontSizeLabel))
         text: header.filterText
-        onTextChanged: header.filterEdited(text)
-        Keys.onPressed: function (event) {
-            header.keyPressed(event);
-        }
+        placeholder: "Search networks…"
+        onEdited: function (text) { header.filterEdited(text); }
+        onKeyPressed: function (event) { header.keyPressed(event); }
 
         Text {
-            x: header.scaled(14)
+            x: header.scaled(Theme.contentMargin)
             anchors.verticalCenter: parent.verticalCenter
             text: "󰍉"
             color: Theme.mutedText
             font.family: Theme.iconFontFamily
-            font.pixelSize: Math.max(14, header.scaled(17))
+            font.pixelSize: Math.max(Theme.fontSizeLabel, header.scaled(Theme.iconSize))
         }
-
-        Text {
-            x: header.scaled(43)
-            anchors.verticalCenter: parent.verticalCenter
-            visible: search.text.length === 0
-            text: "Search networks…"
-            color: Theme.subtleText
-            font.family: Theme.fontFamily
-            font.pixelSize: Math.max(12, header.scaled(14))
-        }
-
-        InputBackground {}
     }
 
     IconTile {
-        Layout.preferredWidth: header.scaled(42)
-        Layout.preferredHeight: header.scaled(42)
+        Layout.preferredWidth: header.scaled(Theme.controlHeight)
+        Layout.preferredHeight: header.scaled(Theme.controlHeight)
         Layout.alignment: Qt.AlignVCenter
         backgroundColor: Theme.surfaceRaised
         borderColor: Theme.border

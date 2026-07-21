@@ -1,11 +1,10 @@
 import QtQuick
-import Shelllist.Ui
 
 Rectangle {
     id: card
 
     property string title: ""
-    property real contentPadding: Math.max(12, Math.min(18, height * 0.06))
+    property real contentPadding: Math.max(Theme.spacingMd, Math.min(Theme.spacingLg, height * 0.06))
     default property alias content: contentSlot.data
 
     width: parent ? parent.width : 0
@@ -17,7 +16,7 @@ Rectangle {
     Column {
         anchors.fill: parent
         anchors.margins: card.contentPadding
-        spacing: card.title.length > 0 ? 12 : 0
+        spacing: card.title.length > 0 ? Theme.spacingMd : 0
 
         Text {
             id: heading
@@ -26,8 +25,8 @@ Rectangle {
             text: card.title
             color: Theme.text
             font.family: Theme.fontFamily
-            font.pixelSize: 16
-            font.bold: true
+            font.pixelSize: Theme.fontSizeHeading
+            font.weight: Theme.fontWeightBold
         }
 
         Item {

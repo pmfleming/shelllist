@@ -1,4 +1,21 @@
 module Shelllist.Ui
 singleton Theme 1.0 Theme.qml
+ActionButton 1.0 ActionButton.qml
+ActionToolbar 1.0 ActionToolbar.qml
+CenteredMessage 1.0 CenteredMessage.qml
+ConfirmationDialog 1.0 ConfirmationDialog.qml
+DetailCard 1.0 DetailCard.qml
+DetailField 1.0 DetailField.qml
+DetailGrid 1.0 DetailGrid.qml
+DetailsTab 1.0 DetailsTab.qml
+IconTile 1.0 IconTile.qml
+ModalFrame 1.0 ModalFrame.qml
+PopupWindowHost 1.0 PopupWindowHost.qml
+PromptDialog 1.0 PromptDialog.qml
+ResultNavigation 1.0 ResultNavigation.qml
+SegmentedControl 1.0 SegmentedControl.qml
 ShelllistGlobalShortcut 1.0 ShelllistGlobalShortcut.qml
+TextField 1.0 TextField.qml
+TogglePill 1.0 TogglePill.qml
+ToggleRow 1.0 ToggleRow.qml
 VisualSurface 1.0 VisualSurface.qml

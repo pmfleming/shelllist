@@ -14,7 +14,6 @@ ShellRoot {
     WifiController {
         id: wifiController
         prompt: promptController
-        onWindowPlacementRequested: windowHost.requestWindowPlacement()
         onCloseWindowRequested: windowHost.closeRequested()
     }
 
@@ -36,5 +35,4 @@ ShellRoot {
         }
     }
 
-    Component.onCompleted: wifiController.startup(windowHost.floatingMode, windowHost.shelllistWorkspaceId())
 }

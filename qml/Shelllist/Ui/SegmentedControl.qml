@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Shelllist.Ui
 
 Rectangle {
     id: control
@@ -23,12 +22,12 @@ Rectangle {
         return options.length > 0 ? 0 : -1;
     }
 
-    implicitHeight: 38
-    radius: height / 4
+    implicitHeight: Theme.compactControlHeight
+    radius: Theme.controlRadius
     color: Theme.input
     border.color: activeFocus ? Theme.strongBorder : Theme.border
     border.width: 1
-    opacity: interactive ? 1.0 : 0.55
+    opacity: enabled && interactive ? 1.0 : Theme.disabledOpacity
     clip: true
     activeFocusOnTab: interactive
 
@@ -63,7 +62,7 @@ Rectangle {
         y: control.contentPadding
         width: control.segmentWidth
         height: control.height - 2 * control.contentPadding
-        radius: height / 2
+        radius: Math.min(Theme.controlRadius, height / 2)
         border.width: 1
         border.color: Theme.mix(Theme.border, Theme.accent, 0.48)
 
@@ -81,8 +80,8 @@ Rectangle {
         Behavior on selectedPosition {
             enabled: !Theme.noAnimations
             NumberAnimation {
-                duration: 170
-                easing.type: Easing.InOutCubic
+                duration: Theme.animationFast
+                easing.type: Theme.easingStandard
             }
         }
     }
@@ -106,8 +105,9 @@ Rectangle {
 
                 width: control.segmentWidth
                 height: parent.height
-                radius: height / 2
-                color: !selected && segmentMouse.containsMouse ? Theme.hover : "transparent"
+                radius: Math.min(Theme.controlRadius, height / 2)
+                color: !selected && segmentMouse.pressed ? Theme.pressed
+                    : (!selected && segmentMouse.containsMouse ? Theme.hover : "transparent")
 
                 Text {
                     anchors.fill: parent
@@ -116,8 +116,8 @@ Rectangle {
                     text: segment.modelData.label || segment.modelData.value || ""
                     color: segment.selected ? Theme.accentText : Theme.mix(Theme.mutedText, Theme.text, 0.28)
                     font.family: Theme.fontFamily
-                    font.pixelSize: 12
-                    font.weight: segment.selected ? Font.DemiBold : Font.Normal
+                    font.pixelSize: Theme.fontSizeSmall
+                    font.weight: segment.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
@@ -127,7 +127,7 @@ Rectangle {
                     id: segmentMouse
 
                     anchors.fill: parent
-                    enabled: control.interactive
+                    enabled: control.enabled && control.interactive
                     hoverEnabled: true
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: {

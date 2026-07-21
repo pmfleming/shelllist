@@ -8,128 +8,143 @@ ColumnLayout {
     id: pane
 
     required property BluetoothController controller
-    Layout.preferredWidth: 404
+    required property real uiScale
+
     Layout.fillHeight: true
-    spacing: 10
+    spacing: Math.round(10 * uiScale)
 
-    function focusSearch() { search.forceActiveFocus(); }
-
-    RowLayout {
-        Layout.fillWidth: true
-        Layout.preferredHeight: 42
-        spacing: 10
-
-        Text {
-            text: "󰂯"
-            color: pane.controller.powered ? Ui.Theme.accent : Ui.Theme.mutedText
-            font.family: Ui.Theme.iconFontFamily
-            font.pixelSize: 24
-        }
-        TextInput {
-            id: search
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            text: pane.controller.filterText
-            color: Ui.Theme.text
-            selectionColor: Ui.Theme.accent
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: 15
-            verticalAlignment: TextInput.AlignVCenter
-            clip: true
-            onTextEdited: pane.controller.filterText = text
-            Keys.onPressed: function (event) {
-                if (event.key === Qt.Key_Down) { pane.controller.moveSelection(1); event.accepted = true; }
-                else if (event.key === Qt.Key_Up) { pane.controller.moveSelection(-1); event.accepted = true; }
-                else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) { pane.controller.primarySelected(); event.accepted = true; }
-                else if (event.key === Qt.Key_Right && cursorPosition === text.length) { pane.controller.detailsOpen = true; event.accepted = true; }
-            }
-        }
-        Rectangle {
-            Layout.preferredWidth: 56
-            Layout.preferredHeight: 28
-            radius: 14
-            color: pane.controller.powered ? Ui.Theme.accent : Ui.Theme.surfaceRaised
-            border.color: pane.controller.powered ? Ui.Theme.accent : Ui.Theme.border
-            Text {
-                anchors.centerIn: parent
-                text: pane.controller.powered ? "ON" : "OFF"
-                color: pane.controller.powered ? Ui.Theme.window : Ui.Theme.subtleText
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: 11
-                font.bold: true
-            }
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: pane.controller.setPower() }
-        }
+    function scaled(value) { return Math.round(value * uiScale); }
+    function focusSearch() { header.focusSearch(); }
+    function focusTop() {
+        controller.selectedIndex = 0;
+        deviceList.forceActiveFocus();
+        deviceList.positionViewAtBeginning();
     }
 
-    Rectangle {
+    BluetoothHeader {
+        id: header
+        uiScale: pane.uiScale
+        filterText: pane.controller.filterText
+        powered: pane.controller.powered
+        scanning: pane.controller.scanning
+        powerEnabled: !pane.controller.actionInFlight
+        scanEnabled: pane.controller.powered && !pane.controller.actionInFlight
+        onFilterEdited: function (text) {
+            pane.controller.filterText = text;
+            pane.controller.selectedIndex = 0;
+        }
+        onKeyPressed: function (event) { pane.controller.navigation.handleSearchKey(event); }
+        onPowerRequested: pane.controller.setPower()
+        onScanRequested: pane.controller.toggleScan()
+    }
+
+    Item {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.preferredHeight: 520
-        radius: Ui.Theme.panelRadius
-        color: Ui.Theme.surface
-        border.color: Ui.Theme.border
-        clip: true
 
-        ListView {
-            id: deviceList
+        Column {
             anchors.fill: parent
-            model: pane.controller.filteredResultsModel
-            currentIndex: pane.controller.selectedIndex
-            clip: true
-            delegate: Rectangle {
-                id: deviceRow
-                required property int index
-                required property var resultData
-                readonly property var device: resultData.payload || ({})
-                readonly property bool selected: index === pane.controller.selectedIndex
-                width: deviceList.width
-                height: 58
-                color: selected ? Ui.Theme.selected : "transparent"
-                border.color: selected ? Ui.Theme.strongBorder : "transparent"
-                radius: selected ? Ui.Theme.cardRadius : 0
+            anchors.leftMargin: pane.scaled(12)
+            spacing: pane.scaled(6)
+
+            Rectangle {
+                width: parent.width
+                height: parent.height - statusPanel.height - parent.spacing
+                radius: Ui.Theme.panelRadius
+                color: Ui.Theme.surface
+                border.color: Ui.Theme.border
+                clip: true
+
+                ListView {
+                    id: deviceList
+
+                    readonly property int visibleRowTarget: Math.max(1, Math.min(count, Ui.Theme.listVisibleRowTarget))
+                    readonly property real delegateHeight: Math.max(pane.scaled(Ui.Theme.listRowMinHeight),
+                        Math.min(pane.scaled(Ui.Theme.listRowMaxHeight), height / visibleRowTarget))
+
+                    anchors.fill: parent
+                    clip: true
+                    model: pane.controller.filteredResultsModel
+                    currentIndex: pane.controller.selectedIndex
+                    activeFocusOnTab: true
+                    Keys.onPressed: function (event) { pane.controller.navigation.handleListKey(event); }
+                    onCurrentIndexChanged: if (currentIndex >= 0 && count > 0) positionViewAtIndex(currentIndex, ListView.Contain)
+
+                    delegate: BluetoothDeviceListRow {
+                        rowHeight: deviceList.delegateHeight
+                        uiScale: pane.uiScale
+                        selectedIndex: pane.controller.selectedIndex
+                        detailsOpen: pane.controller.detailsOpen
+                        onPicked: function (rowIndex) {
+                            pane.controller.selectedIndex = rowIndex;
+                            deviceList.forceActiveFocus();
+                        }
+                        onDetailsToggled: function (rowIndex) {
+                            pane.controller.selectedIndex = rowIndex;
+                            pane.controller.navigation.toggleDetails();
+                            deviceList.forceActiveFocus();
+                        }
+                        onPrimaryRequested: pane.controller.primarySelected()
+                    }
+                }
+
+                Ui.CenteredMessage {
+                    visible: deviceList.count === 0
+                    text: pane.controller.powered ? "No Bluetooth devices" : "Bluetooth is off"
+                    font.pixelSize: Math.max(Ui.Theme.fontSizeCaption, pane.scaled(Ui.Theme.fontSizeBody))
+                }
+            }
+
+            Rectangle {
+                id: statusPanel
+
+                width: parent.width
+                height: pane.scaled(Ui.Theme.statusHeight)
+                radius: Ui.Theme.cardRadius
+                color: Ui.Theme.surfaceRaised
+                border.color: Ui.Theme.border
+
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 16
-                    anchors.rightMargin: 14
-                    spacing: 11
+                    anchors.leftMargin: pane.scaled(Ui.Theme.contentMargin)
+                    anchors.rightMargin: pane.scaled(Ui.Theme.contentMargin)
+                    spacing: pane.scaled(10)
+
                     Text {
-                        Layout.preferredWidth: 26
-                        text: deviceRow.resultData.icon || "󰂯"
-                        color: deviceRow.device.connected ? Ui.Theme.active : Ui.Theme.mutedText
+                        Layout.preferredWidth: pane.scaled(Ui.Theme.iconSize)
+                        text: "󰂯"
+                        color: pane.controller.powered ? Ui.Theme.accent : Ui.Theme.mutedText
                         font.family: Ui.Theme.iconFontFamily
-                        font.pixelSize: 20
+                        font.pixelSize: Math.max(Ui.Theme.iconSizeSmall, pane.scaled(Ui.Theme.iconSize))
                     }
-                    ColumnLayout {
+
+                    Text {
                         Layout.fillWidth: true
-                        spacing: 2
-                        Text { Layout.fillWidth: true; text: deviceRow.resultData.title; color: Ui.Theme.text; font.family: Ui.Theme.fontFamily; font.pixelSize: 14; font.bold: deviceRow.device.connected; elide: Text.ElideRight }
-                        Text { Layout.fillWidth: true; text: deviceRow.resultData.subtitle; color: Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11; elide: Text.ElideRight }
+                        text: pane.controller.status
+                        color: pane.controller.actionInFlight ? Ui.Theme.accent : Ui.Theme.subtleText
+                        font.family: Ui.Theme.fontFamily
+                        font.pixelSize: Math.max(10, pane.scaled(Ui.Theme.fontSizeCaption))
+                        elide: Text.ElideRight
+                        verticalAlignment: Text.AlignVCenter
                     }
-                    Text { text: "󰅂"; color: deviceRow.selected ? Ui.Theme.accent : Ui.Theme.mutedText; font.family: Ui.Theme.iconFontFamily; font.pixelSize: 17 }
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: pane.controller.selectedIndex = deviceRow.index
-                    onDoubleClicked: pane.controller.primarySelected()
+
+                    Text {
+                        visible: pane.controller.scanning
+                        text: "󰑐"
+                        color: Ui.Theme.mutedText
+                        font.family: Ui.Theme.iconFontFamily
+                        font.pixelSize: Math.max(Ui.Theme.iconSizeSmall, pane.scaled(Ui.Theme.iconSize))
+
+                        NumberAnimation on rotation {
+                            running: pane.controller.scanning && !Ui.Theme.noAnimations
+                            loops: Animation.Infinite
+                            from: 0
+                            to: 360
+                            duration: Ui.Theme.spinnerDuration
+                        }
+                    }
                 }
             }
         }
-
-        Text {
-            anchors.centerIn: parent
-            visible: deviceList.count === 0
-            text: pane.controller.powered ? "No devices · press F5 to scan" : "Bluetooth is off"
-            color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: 13
-        }
-    }
-
-    RowLayout {
-        Layout.fillWidth: true
-        Layout.preferredHeight: 32
-        Text { Layout.fillWidth: true; text: pane.controller.status; color: pane.controller.actionInFlight ? Ui.Theme.accent : Ui.Theme.subtleText; font.family: Ui.Theme.fontFamily; font.pixelSize: 11; elide: Text.ElideRight }
-        Text { text: pane.controller.scanning ? "󰑐" : "F5 Scan"; color: Ui.Theme.mutedText; font.family: pane.controller.scanning ? Ui.Theme.iconFontFamily : Ui.Theme.fontFamily; font.pixelSize: 12; NumberAnimation on rotation { running: pane.controller.scanning && !Ui.Theme.noAnimations; loops: Animation.Infinite; from: 0; to: 360; duration: 900 } }
     }
 }

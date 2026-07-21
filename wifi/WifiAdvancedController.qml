@@ -22,8 +22,6 @@ Item {
         const savedProfile = controller.profileFor(controller.detailAp);
         if (!savedProfile) { controller.status = "Connect to this network before editing saved settings."; return; }
         controller.detailsOpen = true;
-        controller.detailsExpansionProgress = 1;
-        controller.windowPlacementRequested();
         const targetSection = nextSection === "hardware" ? "hardware" : "security";
         const animateSection = open && targetSection !== section;
         section = targetSection;

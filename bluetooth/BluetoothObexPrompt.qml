@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
-BluetoothPromptShell {
+Ui.PromptDialog {
     id: prompt
 
     required property BluetoothController controller
@@ -10,12 +10,16 @@ BluetoothPromptShell {
 
     visible: controller.incomingTransferPromptOpen
     z: 110
-    heading: "Accept Bluetooth file?"
+    title: "Accept Bluetooth file?"
     detail: (request.device_name || "A paired Bluetooth device") + " wants to send:"
+    inputVisible: false
+    actionsVisible: true
+    rejectLabel: "Reject"
     acceptLabel: "Accept"
-    footer: "Enter: accept   Esc: reject"
+    acceptTone: "accent"
+    instruction: "Enter accept   •   Esc reject"
     onAccepted: controller.respondIncomingTransfer(true)
-    onRejected: controller.respondIncomingTransfer(false)
+    onCancelled: controller.respondIncomingTransfer(false)
 
     function sizeLabel() {
         const size = Number(request.size || 0);
@@ -31,17 +35,18 @@ BluetoothPromptShell {
         text: prompt.request.file_name || "Unnamed file"
         color: Ui.Theme.accent
         font.family: Ui.Theme.fontFamily
-        font.pixelSize: 17
-        font.bold: true
+        font.pixelSize: Ui.Theme.iconSize
+        font.weight: Ui.Theme.fontWeightBold
         elide: Text.ElideMiddle
         horizontalAlignment: Text.AlignHCenter
     }
     Text {
         Layout.fillWidth: true
-        text: prompt.sizeLabel() + (prompt.request.media_type ? " · " + prompt.request.media_type : "") + "\nAccepted files are saved in Downloads."
+        text: prompt.sizeLabel() + (prompt.request.media_type ? " · " + prompt.request.media_type : "")
+            + "\nAccepted files are saved in Downloads."
         color: Ui.Theme.mutedText
         font.family: Ui.Theme.fontFamily
-        font.pixelSize: 11
+        font.pixelSize: Ui.Theme.fontSizeCaption
         wrapMode: Text.WordWrap
         horizontalAlignment: Text.AlignHCenter
     }

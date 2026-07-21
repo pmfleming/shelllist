@@ -1,8 +1,8 @@
 import QtQuick
-import ".." as Shelllist
+import Shelllist.Ui as Ui
 import "IpValidation.js" as IpValidation
 
-Shelllist.AdvancedTextField {
+Ui.TextField {
     property string family: "ipv4"
     property bool multiple: false
     property bool allowEmpty: true

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import "."
+import Shelllist.Ui
 
 DetailCard {
     id: card
@@ -21,7 +22,7 @@ DetailCard {
 
             model: card.controller.detailActions.filter(function (action) { return action.presentation.group === "settings" && action.visible; })
 
-            delegate: ProfileToggleRow {
+            delegate: ToggleRow {
                 required property var modelData
 
                 height: Math.max(30, (settings.height - settings.spacing * Math.max(0, settingRepeater.count - 1)) / Math.max(1, settingRepeater.count))

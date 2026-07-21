@@ -45,9 +45,9 @@
               nmDaemon
             ];
             text = ''
-              config_path=${self.packages.${system}.wifiConfig}/share/shelllist/wifi
-              export QML_IMPORT_PATH=${self.packages.${system}.wifiConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
-              export QML2_IMPORT_PATH=${self.packages.${system}.wifiConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
+              config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/wifi
+              export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
+              export QML2_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
 
               stop_stale_shelllist_instances() {
                 # Rebuilt path configs have a new store path. Retire an older resident
@@ -141,9 +141,13 @@
             meta = mkMeta "Quickshell Bluetooth popup backed by bt-daemon" "shelllist-bluetooth";
             runtimeInputs = [ pkgs.coreutils pkgs.gawk pkgs.quickshell btDaemon ];
             text = ''
-              config_path=${self.packages.${system}.wifiConfig}/share/shelllist/bluetooth
-              export QML_IMPORT_PATH=${self.packages.${system}.wifiConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
-              export QML2_IMPORT_PATH=${self.packages.${system}.wifiConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
+              config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/bluetooth
+              export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
+              export QML2_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
+
+              run_floating() {
+                SHELLLIST_BLUETOOTH_MODE=floating exec quickshell --path "$config_path" "$@"
+              }
 
               popover_ipc() {
                 quickshell ipc --path "$config_path" --newest call bluetooth "$@"
@@ -166,7 +170,7 @@
                 quickshell list --all 2>/dev/null \
                   | awk '/Process ID:/ { pid = $3 } /Config path: .*share\/shelllist\/bluetooth\/shell.qml/ { if (pid != "") print pid }' \
                   | while read -r pid; do quickshell kill --pid "$pid" >/dev/null 2>&1 || true; done || true
-                quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
+                SHELLLIST_BLUETOOTH_MODE=popover quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
                 attempts=0
                 while [ "$attempts" -lt 30 ]; do
                   if popover_ipc ping >/dev/null 2>&1; then return 0; fi
@@ -180,10 +184,11 @@
               [ "$action" = show ] && action=open
               case "$action" in
                 daemon) ensure_daemon ;;
-                foreground) exec quickshell --path "$config_path" --no-duplicate ;;
+                floating) shift; run_floating "$@" ;;
+                foreground) SHELLLIST_BLUETOOTH_MODE=popover exec quickshell --path "$config_path" --no-duplicate ;;
                 toggle|open|hide) ensure_daemon && popover_ipc "$action" >/dev/null ;;
                 status) ensure_daemon && popover_ipc status ;;
-                *) echo "Usage: shelllist-bluetooth [daemon|foreground|toggle|open|hide|status]" >&2; exit 2 ;;
+                *) echo "Usage: shelllist-bluetooth [daemon|floating|foreground|toggle|open|hide|status]" >&2; exit 2 ;;
               esac
             '';
           };
@@ -372,12 +377,12 @@
             '';
           };
 
-          wifiConfig = pkgs.stdenvNoCC.mkDerivation {
+          shelllistConfig = pkgs.stdenvNoCC.mkDerivation {
             pname = "shelllist-config";
             version = "0.2.0";
             src = ./.;
             meta = {
-              description = "QML configuration for the Shelllist Wi-Fi popup";
+              description = "Shared QML configuration for Shelllist applications";
               platforms = pkgs.lib.platforms.linux;
             };
             installPhase = ''

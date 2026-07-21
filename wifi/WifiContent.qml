@@ -7,8 +7,7 @@ Rectangle {
     id: content
 
     required property WifiController controller
-    readonly property real uiScale: Math.max(0.82, Math.min(1.12,
-        (height - 2 * controller.contentVerticalMargin) / 850))
+    readonly property real uiScale: Theme.densityScale(height, controller.contentVerticalMargin)
 
     anchors.fill: parent
     radius: Theme.windowRadius
@@ -147,10 +146,11 @@ Rectangle {
         detail: content.controller.prompt.detail
         inputText: content.controller.prompt.text
         password: content.controller.prompt.password
-        saveVisible: content.controller.prompt.mode === "daemon-secret" && content.controller.prompt.saveSecretSupported
-        saveRequested: content.controller.prompt.saveSecret
+        optionVisible: content.controller.prompt.mode === "daemon-secret" && content.controller.prompt.saveSecretSupported
+        optionChecked: content.controller.prompt.saveSecret
+        optionLabel: "Save in the desktop keyring"
         onInputEdited: function (text) { content.controller.prompt.text = text; }
-        onSaveEdited: function (requested) { content.controller.prompt.saveSecret = requested; }
+        onOptionEdited: function (requested) { content.controller.prompt.saveSecret = requested; }
         onAccepted: content.controller.prompt.submit(content.controller)
         onCancelled: content.cancelPrompt()
     }
