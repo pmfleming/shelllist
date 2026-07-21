@@ -57,6 +57,27 @@ Rectangle {
         spacing: row.scaled(10)
 
         Text {
+            Layout.preferredWidth: row.scaled(44)
+            Layout.fillHeight: true
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
+            text: row.hasSignal ? row.signalStrength + "%" : "—"
+            color: row.signalColor
+            opacity: row.signalLive ? 1 : 0.58
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Math.max(10, row.scaled(Ui.Theme.fontSizeCaption))
+            font.weight: Font.Medium
+        }
+
+        Ui.SignalIcon {
+            Layout.preferredWidth: row.scaled(24)
+            Layout.preferredHeight: row.scaled(20)
+            level: row.signalLevel
+            iconColor: row.signalColor
+            opacity: row.signalLive ? 1 : 0.58
+        }
+
+        Text {
             Layout.preferredWidth: row.scaled(28)
             Layout.fillHeight: true
             verticalAlignment: Text.AlignVCenter
@@ -93,27 +114,6 @@ Rectangle {
                 font.pixelSize: Math.max(10, row.scaled(Ui.Theme.fontSizeCaption))
                 elide: Text.ElideRight
             }
-        }
-
-        Text {
-            Layout.preferredWidth: row.scaled(38)
-            Layout.fillHeight: true
-            verticalAlignment: Text.AlignVCenter
-            horizontalAlignment: Text.AlignRight
-            text: row.hasSignal ? row.signalStrength + "%" : "—"
-            color: row.signalColor
-            opacity: row.signalLive ? 1 : 0.58
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Math.max(10, row.scaled(Ui.Theme.fontSizeCaption))
-            font.weight: Font.Medium
-        }
-
-        Ui.SignalIcon {
-            Layout.preferredWidth: row.scaled(24)
-            Layout.preferredHeight: row.scaled(20)
-            level: row.signalLevel
-            iconColor: row.signalColor
-            opacity: row.signalLive ? 1 : 0.58
         }
 
         Text {
