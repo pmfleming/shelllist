@@ -23,6 +23,22 @@ Rectangle {
 
     Shortcut { sequence: "F5"; enabled: content.controller.powered && !content.controller.actionInFlight && !content.controller.modalPromptOpen && !detailsPane.editingText; onActivated: content.controller.toggleScan() }
     Shortcut {
+        sequence: "Alt+Tab"
+        enabled: content.controller.detailsOpen
+            && content.controller.hasSelection
+            && !content.controller.modalPromptOpen
+            && !detailsPane.editingText
+        onActivated: content.controller.cycleDetailsTab()
+    }
+    Shortcut {
+        sequence: "Ctrl+Tab"
+        enabled: content.controller.detailsOpen
+            && content.controller.hasSelection
+            && !content.controller.modalPromptOpen
+            && !detailsPane.editingText
+        onActivated: content.controller.cycleDetailsTab()
+    }
+    Shortcut {
         sequence: "Escape"
         enabled: !content.controller.modalPromptOpen && !detailsPane.editingText
         onActivated: {

@@ -312,6 +312,14 @@ Item {
         return backend.deviceOperation("set-alias", selectedDevice, { alias: value });
     }
     function moveSelection(delta) { results.move(delta); }
+    function cycleDetailsTab() {
+        if (!detailsOpen || !hasSelection)
+            return false;
+        const tabs = ["device", "audio", "adapter"];
+        const currentIndex = Math.max(0, tabs.indexOf(detailsTab));
+        detailsTab = tabs[(currentIndex + 1) % tabs.length];
+        return true;
+    }
     function primarySelected() { return hasSelection && providers.execute(selectedResult, "", { workspaceId: currentWorkspaceId }); }
     function actionForId(id) { return detailActions.find(function (action) { return action.id === id; }) || null; }
     function triggerDetailAction(id) {

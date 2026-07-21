@@ -20,7 +20,7 @@ Flickable {
         spacing: Ui.Theme.spacingMd
 
         Ui.DetailCard {
-            height: 490
+            height: 440
             title: "Adapter settings"
 
             BluetoothAdapterSettings {
