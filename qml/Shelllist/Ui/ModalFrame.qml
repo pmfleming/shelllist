@@ -20,8 +20,6 @@ Rectangle {
     }
 
     Rectangle {
-        id: card
-
         width: Math.min(parent.width - 2 * frame.minimumOuterMargin, frame.maximumCardWidth)
         implicitHeight: contentColumn.implicitHeight + 2 * frame.cardPadding
         height: Math.min(parent.height - 2 * frame.minimumOuterMargin, implicitHeight)

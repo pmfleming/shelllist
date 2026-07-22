@@ -91,7 +91,6 @@ Rectangle {
             }
 
             Item {
-                id: viewport
                 width: parent.width
                 height: Math.max(0, parent.height - pane.headerHeight - 2 * pane.actionHeight - 3 * parent.spacing)
                 clip: true

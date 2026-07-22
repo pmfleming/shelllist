@@ -77,13 +77,7 @@ Rectangle {
             Layout.maximumWidth: content.controller.detailsPaneGapWidth
             Layout.fillHeight: true
 
-            Rectangle {
-                anchors.centerIn: parent
-                width: 1
-                height: parent.height
-                color: Ui.Theme.border
-                opacity: 0.75
-            }
+            Ui.VerticalDivider {}
         }
 
         BluetoothDeviceDetails {

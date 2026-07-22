@@ -56,5 +56,15 @@ expect("unavailable cached pairing triggers scan", flow.shouldRescanAfterOperati
 expect("other operation failures do not trigger scan", !flow.shouldRescanAfterOperation({ operation: "connect", state: "failed", error: { code: "device-unavailable" } }, true, true, false));
 expect("failed transfer is terminal", flow.isTerminalTransfer({ status: "error" }));
 expect("active transfer is not terminal", !flow.isTerminalTransfer({ status: "progress" }));
+const pairAction = flow.deviceActionRequest("pair", { name: "Headset" }, true);
+expect("pair action retains trust policy", pairAction.operation === "pair" && pairAction.values.trust_after_pair);
+const wakeAction = flow.deviceActionRequest("wake", { wake_allowed: false }, false);
+expect("wake action toggles the backend value", wakeAction.operation === "set-wake-allowed" && wakeAction.values.wake_allowed);
+expect("unknown device actions are rejected", flow.deviceActionRequest("unknown", {}, false) === null);
+expect("noise control validates settable modes", flow.noiseControlRequest({
+    name: "Headset",
+    capabilities: { can_set_noise_control: true },
+    fast_pair: { noise_control: { settable_modes: ["adaptive"], active_mode: "off" } }
+}, "adaptive").supported);
 
 console.log(`Bluetooth lifecycle: ${checks} checks passed`);

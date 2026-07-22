@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import "."
 import Shelllist.Ui
 
 RowLayout {
@@ -16,7 +15,7 @@ RowLayout {
     height: 38
     spacing: 12
 
-    AdvancedFieldLabel {
+    FieldLabel {
         Layout.preferredWidth: 150
         Layout.fillHeight: true
         text: row.label

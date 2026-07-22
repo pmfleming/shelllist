@@ -8,6 +8,7 @@ DetailCard 1.0 DetailCard.qml
 DetailField 1.0 DetailField.qml
 DetailGrid 1.0 DetailGrid.qml
 DetailsTab 1.0 DetailsTab.qml
+FieldLabel 1.0 FieldLabel.qml
 IconTile 1.0 IconTile.qml
 ModalFrame 1.0 ModalFrame.qml
 PopupWindowHost 1.0 PopupWindowHost.qml
@@ -21,4 +22,5 @@ TextField 1.0 TextField.qml
 TogglePill 1.0 TogglePill.qml
 ToggleRow 1.0 ToggleRow.qml
 ValueSlider 1.0 ValueSlider.qml
+VerticalDivider 1.0 VerticalDivider.qml
 VisualSurface 1.0 VisualSurface.qml

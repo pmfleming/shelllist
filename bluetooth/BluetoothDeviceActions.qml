@@ -89,12 +89,7 @@ ColumnLayout {
         }
     }
 
-    Text {
-        text: "Device name"
-        color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeBody
-    }
+    Ui.FieldLabel { text: "Device name" }
 
     Ui.TextField {
         id: renameInput
@@ -130,12 +125,9 @@ ColumnLayout {
         }
     }
 
-    Text {
+    Ui.FieldLabel {
         visible: section.noiseControlVisible
         text: "Noise control"
-        color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeBody
     }
 
     Ui.SegmentedControl {

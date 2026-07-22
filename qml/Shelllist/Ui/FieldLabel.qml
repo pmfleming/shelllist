@@ -1,10 +1,9 @@
 import QtQuick
-import Shelllist.Ui
 
 Text {
     color: Theme.mutedText
     font.family: Theme.fontFamily
-    font.pixelSize: 13
+    font.pixelSize: Theme.fontSizeBody
     elide: Text.ElideRight
     verticalAlignment: Text.AlignVCenter
 }

@@ -9,6 +9,20 @@ var streams = {
     scan: "bluetooth.scan"
 };
 
+function compatibilityError(envelope) {
+    return (!envelope || envelope.protocol !== "bt-api" || envelope.version !== 1)
+        ? "bt-daemon returned an incompatible response" : "";
+}
+
+function responseError(envelope, transportError) {
+    if (transportError)
+        return transportError;
+    const compatibility = compatibilityError(envelope);
+    if (compatibility)
+        return compatibility;
+    return envelope.ok ? "" : ((envelope.error && envelope.error.message) || "Bluetooth operation failed");
+}
+
 var methods = {
     snapshot: "bluetooth.snapshot",
     setPowered: "bluetooth.setPowered",

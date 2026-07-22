@@ -29,37 +29,12 @@ Item {
         return Ui.Theme.active;
     }
 
-    function imageFor(report) {
-        const component = String((report && report.component) || "").toLowerCase();
-        if (component === "left")
-            return "assets/audio/left-earbud.png";
-        if (component === "right")
-            return "assets/audio/right-earbud.png";
-        if (component === "case")
-            return "assets/audio/charging-case.png";
-
-        const icon = String(device.icon || "").toLowerCase();
-        if (icon.indexOf("headset") >= 0)
-            return "assets/audio/headset.png";
-        if (icon.indexOf("headphones") >= 0)
-            return "assets/audio/headphones.png";
-
-        const services = (device.services || []).map(function (service) {
-            return String(service.label || "").toLowerCase();
-        }).join(" ");
-        if (services.indexOf("handsfree") >= 0 || services.indexOf("headset") >= 0)
-            return "assets/audio/headset.png";
-        if (services.indexOf("audio sink") >= 0)
-            return "assets/audio/headphones.png";
-        return "";
-    }
-
     Row {
         id: indicators
 
         readonly property int itemWidth: Math.min(172, root.width / Math.max(1, root.displayReports.length))
 
-        anchors.horizontalCenter: parent.horizontalCenter
+        x: Math.round((parent.width - width) / 2)
         width: itemWidth * root.displayReports.length
         height: root.indicatorHeight
         spacing: 0
@@ -74,7 +49,7 @@ Item {
                 readonly property bool batteryAvailable: BluetoothBattery.isValid(modelData)
                 readonly property real percentage: batteryAvailable ? modelData.percentage : 0
                 readonly property color statusColor: root.ringColor(percentage)
-                readonly property string imageSource: root.imageFor(modelData)
+                readonly property string imageSource: BluetoothBattery.imageFor(root.device, modelData)
                 readonly property int ringSize: root.displayReports.length === 1 ? 126 : 108
 
                 width: indicators.itemWidth
@@ -83,7 +58,7 @@ Item {
                 Canvas {
                     id: ring
 
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    x: Math.round((parent.width - width) / 2)
                     y: 12
                     width: indicator.ringSize
                     height: indicator.ringSize
@@ -125,7 +100,8 @@ Item {
                 }
 
                 Image {
-                    anchors.centerIn: ring
+                    x: ring.x + Math.round((ring.width - width) / 2)
+                    y: ring.y + Math.round((ring.height - height) / 2)
                     width: indicator.ringSize * 0.68
                     height: indicator.ringSize * 0.68
                     source: indicator.imageSource
@@ -150,7 +126,7 @@ Item {
 
                 Rectangle {
                     visible: indicator.batteryAvailable
-                    anchors.horizontalCenter: ring.horizontalCenter
+                    x: ring.x + Math.round((ring.width - width) / 2)
                     y: 0
                     width: 34
                     height: 34
@@ -170,9 +146,8 @@ Item {
 
                 Text {
                     visible: indicator.batteryAvailable
-                    anchors.top: ring.bottom
-                    anchors.topMargin: Ui.Theme.spacingSm
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    x: Math.round(Ui.Theme.spacingSm / 2)
+                    y: ring.y + ring.height + Ui.Theme.spacingSm
                     width: parent.width - Ui.Theme.spacingSm
                     text: indicator.percentage + "%"
                     color: Ui.Theme.text

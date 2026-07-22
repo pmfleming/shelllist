@@ -32,6 +32,8 @@ ColumnLayout {
         return Math.floor(seconds / 60) + "m " + (seconds % 60) + "s";
     }
 
+    function needsSync(syncAll, dirty) { return syncAll || !dirty; }
+
     function clearDirtyFields() {
         aliasDirty = false;
         discoverableTimeoutDirty = false;
@@ -47,14 +49,13 @@ ColumnLayout {
             clearDirtyFields();
         }
         displayedAdapterKey = nextKey;
-        if (force || adapterChanged || !aliasDirty)
+        const syncAll = force || adapterChanged;
+        if (needsSync(syncAll, aliasDirty))
             adapterAliasInput.text = adapter.alias || "";
-        if (force || adapterChanged || !discoverableTimeoutDirty)
+        if (needsSync(syncAll, discoverableTimeoutDirty))
             discoverableTimeoutSlider.value = Math.min(maximumTimeout, Number(adapter.discoverable_timeout || 0));
-        if (force || adapterChanged || !pairableTimeoutDirty)
+        if (needsSync(syncAll, pairableTimeoutDirty))
             pairableTimeoutSlider.value = Math.min(maximumTimeout, Number(adapter.pairable_timeout || 0));
-        console.info("shelllist bluetooth adapter fields synchronized adapter_key=" + nextKey
-            + " pending=" + hasDirtyFields);
     }
 
     function queueAutoSave(field, debounce) {
@@ -89,24 +90,19 @@ ColumnLayout {
         return true;
     }
 
-    function saveTimeoutIfDirty(field, operation, value, currentValue) {
-        const dirty = field === "discoverable-timeout" ? discoverableTimeoutDirty : pairableTimeoutDirty;
+    function clearDiscoverableTimeoutDirty() { discoverableTimeoutDirty = false; }
+    function clearPairableTimeoutDirty() { pairableTimeoutDirty = false; }
+    function saveTimeoutIfDirty(dirty, operation, value, currentValue, clearDirty) {
         if (!dirty)
             return false;
-        value = Math.round(Number(value) || 0);
-        if (value === Number(currentValue || 0)) {
-            if (field === "discoverable-timeout")
-                discoverableTimeoutDirty = false;
-            else
-                pairableTimeoutDirty = false;
+        const timeout = Math.round(Number(value) || 0);
+        if (timeout === Number(currentValue || 0)) {
+            clearDirty();
             return false;
         }
-        if (!controller.adapterOperation(operation, { timeout: value }))
+        if (!controller.adapterOperation(operation, { timeout: timeout }))
             return false;
-        if (field === "discoverable-timeout")
-            discoverableTimeoutDirty = false;
-        else
-            pairableTimeoutDirty = false;
+        clearDirty();
         return true;
     }
 
@@ -118,11 +114,13 @@ ColumnLayout {
             return;
         if (saveAliasIfDirty())
             return;
-        if (saveTimeoutIfDirty("discoverable-timeout", "set-discoverable-timeout",
-                discoverableTimeoutSlider.value, controller.selectedAdapter.discoverable_timeout))
+        if (saveTimeoutIfDirty(discoverableTimeoutDirty, "set-discoverable-timeout",
+                discoverableTimeoutSlider.value, controller.selectedAdapter.discoverable_timeout,
+                clearDiscoverableTimeoutDirty))
             return;
-        saveTimeoutIfDirty("pairable-timeout", "set-pairable-timeout",
-            pairableTimeoutSlider.value, controller.selectedAdapter.pairable_timeout);
+        saveTimeoutIfDirty(pairableTimeoutDirty, "set-pairable-timeout",
+            pairableTimeoutSlider.value, controller.selectedAdapter.pairable_timeout,
+            clearPairableTimeoutDirty);
     }
 
     Component.onCompleted: Qt.callLater(function () { section.syncAdapterFields(true); })
@@ -191,12 +189,7 @@ ColumnLayout {
         onClicked: section.controller.trustAfterPair = !section.controller.trustAfterPair
     }
 
-    Text {
-        text: "Adapter alias"
-        color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeBody
-    }
+    Ui.FieldLabel { text: "Adapter alias" }
     Ui.TextField {
         id: adapterAliasInput
         Layout.fillWidth: true
@@ -215,12 +208,7 @@ ColumnLayout {
         columnSpacing: Ui.Theme.spacingMd
         rowSpacing: Ui.Theme.spacingSm
 
-        Text {
-            text: "Discoverable timeout"
-            color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
-        }
+        Ui.FieldLabel { text: "Discoverable timeout" }
         Ui.ValueSlider {
             id: discoverableTimeoutSlider
             Layout.fillWidth: true
@@ -240,12 +228,7 @@ ColumnLayout {
             horizontalAlignment: Text.AlignRight
         }
 
-        Text {
-            text: "Pairable timeout"
-            color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
-        }
+        Ui.FieldLabel { text: "Pairable timeout" }
         Ui.ValueSlider {
             id: pairableTimeoutSlider
             Layout.fillWidth: true

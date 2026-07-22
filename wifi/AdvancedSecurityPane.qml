@@ -72,7 +72,7 @@ AdvancedSettingsFlickable {
                     height: 58
                     spacing: 5
 
-                    AdvancedFieldLabel { width: parent.width; height: 13; text: "Network password" }
+                    FieldLabel { width: parent.width; height: 13; text: "Network password" }
 
                     Rectangle {
                         width: parent.width

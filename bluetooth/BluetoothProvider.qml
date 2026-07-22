@@ -23,52 +23,52 @@ Core.Provider {
             return "pair";
         return "connect";
     }
+    function actionEnabled(capability) { return !controller.actionInFlight && !!capability; }
+    function hasValue(value) { return value !== null && value !== undefined; }
     function actionsForDevice(device) {
         const caps = device.capabilities || ({});
-        const idle = !controller.actionInFlight;
+        const multipoint = (device.fast_pair && device.fast_pair.multipoint) || ({});
         return [
             Core.Model.keepOpenAction("pair", "Pair", {
                 icon: "󰌾", shortcut: "P", role: "default",
-                visible: !device.paired, enabled: idle && !!caps.can_pair,
+                visible: !device.paired, enabled: actionEnabled(caps.can_pair),
                 presentation: { group: "primary", tone: "active", width: 152 }
             }),
             Core.Model.keepOpenAction("connect", "Connect", {
                 icon: "󰂱", shortcut: "C", role: "default",
-                visible: !device.connected && device.paired, enabled: idle && !!caps.can_connect,
+                visible: !device.connected && device.paired, enabled: actionEnabled(caps.can_connect),
                 presentation: { group: "primary", tone: "active", width: 152 }
             }),
             Core.Model.keepOpenAction("disconnect", "Disconnect", {
                 icon: "󰂲", shortcut: "D", role: "destructive",
-                visible: !!device.connected, enabled: idle && !!caps.can_disconnect,
+                visible: !!device.connected, enabled: actionEnabled(caps.can_disconnect),
                 presentation: { group: "primary", tone: "danger", width: 152 }
             }),
             Core.Model.keepOpenAction("forget", "Forget", {
                 icon: "󰆴", shortcut: "F", role: "destructive",
-                enabled: idle && !!caps.can_remove,
+                enabled: actionEnabled(caps.can_remove),
                 confirmation: { required: true, title: "Forget " + (device.name || "Bluetooth device") + "?", message: "Pairing information and saved trust will be deleted." },
                 presentation: { group: "toolbar", tone: "normal", width: 92 }
             }),
             Core.Model.keepOpenAction("trusted", "Trusted", {
-                shortcut: "T", kind: "toggle", enabled: idle && !!caps.can_trust,
+                shortcut: "T", kind: "toggle", enabled: actionEnabled(caps.can_trust),
                 state: { checked: !!device.trusted }, presentation: { group: "settings", tone: "normal" }
             }),
             Core.Model.keepOpenAction("wake", "Wake computer", {
                 shortcut: "W", kind: "toggle",
-                visible: device.wake_allowed !== null && device.wake_allowed !== undefined,
-                enabled: idle && !!caps.can_wake, state: { checked: !!device.wake_allowed },
+                visible: hasValue(device.wake_allowed),
+                enabled: actionEnabled(caps.can_wake), state: { checked: !!device.wake_allowed },
                 presentation: { group: "settings", tone: "normal" }
             }),
             Core.Model.keepOpenAction("multipoint", "Multipoint", {
                 shortcut: "M", kind: "toggle",
-                visible: !!(device.fast_pair && device.fast_pair.multipoint
-                    && device.fast_pair.multipoint.supported),
-                enabled: idle && !!caps.can_set_multipoint,
-                state: { checked: !!(device.fast_pair && device.fast_pair.multipoint
-                    && device.fast_pair.multipoint.enabled) },
+                visible: !!multipoint.supported,
+                enabled: actionEnabled(caps.can_set_multipoint),
+                state: { checked: !!multipoint.enabled },
                 presentation: { group: "settings", tone: "normal" }
             }),
             Core.Model.keepOpenAction("blocked", "Blocked", {
-                shortcut: "B", kind: "toggle", enabled: idle && !!caps.can_block,
+                shortcut: "B", kind: "toggle", enabled: actionEnabled(caps.can_block),
                 state: { checked: !!device.blocked }, presentation: { group: "settings", tone: "danger" }
             })
         ];

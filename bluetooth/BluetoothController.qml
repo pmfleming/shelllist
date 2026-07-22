@@ -118,41 +118,9 @@ Item {
         audioStatus = "";
     }
     function devicesWithRememberedBattery(devices) {
-        const cache = Object.assign({}, lastKnownBatteryByDevice);
-        const observedKeys = ({});
-        const enriched = (devices || []).map(function (device) {
-            const key = device.key || "";
-            if (key.length > 0)
-                observedKeys[key] = true;
-            const currentReports = BluetoothBattery.ordered(device.battery || []);
-            if (currentReports.length > 0) {
-                if (key.length > 0)
-                    cache[key] = currentReports;
-                return Object.assign({}, device, {
-                    battery: currentReports,
-                    battery_last_known: !device.connected
-                });
-            }
-            const rememberedReports = key.length > 0 ? (cache[key] || []) : [];
-            if (!device.connected && rememberedReports.length > 0) {
-                console.info("shelllist bluetooth battery restored device_key=" + key
-                    + " reports=" + rememberedReports.length);
-                return Object.assign({}, device, {
-                    battery: rememberedReports,
-                    battery_last_known: true
-                });
-            }
-            return Object.assign({}, device, {
-                battery: currentReports,
-                battery_last_known: false
-            });
-        });
-        Object.keys(cache).forEach(function (key) {
-            if (!observedKeys[key])
-                delete cache[key];
-        });
-        lastKnownBatteryByDevice = cache;
-        return enriched;
+        const enrichment = BluetoothBattery.enrichDevices(devices, lastKnownBatteryByDevice);
+        lastKnownBatteryByDevice = enrichment.cache;
+        return enrichment.devices;
     }
     function applySnapshot(snapshot) {
         adapters = snapshot.adapters || [];
@@ -282,8 +250,7 @@ Item {
     function handleOperationEvent(operation) {
         if (!operation || !operation.request_id)
             return;
-        const device = filteredResults.find(function (result) { return result.id === operation.device_key; });
-        const deviceName = device ? device.title : "Bluetooth device";
+        const deviceName = BluetoothFlow.operationDeviceName(filteredResults, operation.device_key);
         if (BluetoothFlow.isActiveOperation(operation)) {
             activeOperation = operation;
             status = operation.operation.charAt(0).toUpperCase() + operation.operation.slice(1) + " " + deviceName + "…";
@@ -291,8 +258,7 @@ Item {
         }
         if (operation.snapshot)
             applySnapshot(operation.snapshot);
-        if (activeOperation && activeOperation.request_id === operation.request_id)
-            activeOperation = null;
+        activeOperation = BluetoothFlow.withoutMatchingOperation(activeOperation, operation.request_id);
         if (BluetoothFlow.operationEndsPairing(operation, pairingPrompt)) {
             pairingPrompt = null;
             pairingInput = "";
@@ -394,41 +360,26 @@ Item {
     function executeDeviceAction(actionId, device) {
         if (actionInFlight)
             return false;
-        const operation = ({ pair: "pair", connect: "connect", disconnect: "disconnect", forget: "remove" })[actionId];
-        if (operation) {
-            const actionLabel = actionId === "forget" ? "Forgetting" : (operation.charAt(0).toUpperCase() + operation.slice(1));
-            status = actionLabel + " " + device.name + "…";
-            return backend.deviceOperation(operation, device, operation === "pair" ? { trust_after_pair: trustAfterPair } : {});
-        }
-        if (actionId === "trusted")
-            return backend.deviceOperation("set-trusted", device, { trusted: !device.trusted });
-        if (actionId === "wake")
-            return backend.deviceOperation("set-wake-allowed", device, { wake_allowed: !device.wake_allowed });
-        if (actionId === "multipoint") {
-            const multipoint = (device.fast_pair && device.fast_pair.multipoint) || ({});
-            status = (multipoint.enabled ? "Disabling" : "Enabling") + " multipoint for " + device.name + "…";
-            return backend.deviceOperation("set-multipoint", device, { enabled: !multipoint.enabled });
-        }
-        if (actionId === "blocked")
-            return backend.deviceOperation("set-blocked", device, { blocked: !device.blocked });
-        return false;
+        const request = BluetoothFlow.deviceActionRequest(actionId, device, trustAfterPair);
+        if (!request)
+            return false;
+        if (request.status)
+            status = request.status;
+        return backend.deviceOperation(request.operation, device, request.values);
     }
     function setNoiseControl(mode) {
         if (!hasSelection || actionInFlight)
             return false;
-        const device = selectedDevice;
-        const capabilities = device.capabilities || ({});
-        const noiseControl = (device.fast_pair && device.fast_pair.noise_control) || ({});
-        const settableModes = noiseControl.settable_modes || [];
-        if (!capabilities.can_set_noise_control || !settableModes.includes(mode)) {
-            console.warn("shelllist bluetooth noise control rejected device_key=" + (device.key || "")
+        const request = BluetoothFlow.noiseControlRequest(selectedDevice, mode);
+        if (!request.supported) {
+            console.warn("shelllist bluetooth noise control rejected device_key=" + (selectedDevice.key || "")
                 + " mode=" + mode + " reason=unsupported");
             return false;
         }
-        if (noiseControl.active_mode === mode)
+        if (request.unchanged)
             return true;
-        status = "Setting " + device.name + " noise control to " + mode + "…";
-        return backend.deviceOperation("set-noise-control", device, { mode: mode });
+        status = request.status;
+        return backend.deviceOperation("set-noise-control", selectedDevice, { mode: mode });
     }
 
     onModalPromptOpenChanged: if (!modalPromptOpen) Qt.callLater(focusSearchRequested)

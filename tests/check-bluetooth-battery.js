@@ -54,5 +54,14 @@ const partial = [
 expect("unknown values are not inferred", battery.summary(partial) === "R 55%");
 expect("presentation does not mutate backend order", fastPair[0].component === "case");
 expect("missing reports produce no summary", battery.summary(null) === "");
+expect("component artwork is selected centrally", battery.imageFor({}, fastPair[0]).endsWith("charging-case.png"));
+
+const remembered = battery.enrichDevices([{ key: "headset", connected: false, battery: [] }], { headset: aggregate });
+expect("disconnected devices restore remembered reports", remembered.devices[0].battery[0].percentage === 64);
+expect("restored reports are marked last-known", remembered.devices[0].battery_last_known === true);
+const connected = battery.enrichDevices([{ key: "headset", connected: true, battery: [] }], remembered.cache);
+expect("connected devices hide stale reports without dropping the cache",
+    connected.devices[0].battery.length === 0 && connected.cache.headset[0].percentage === 64);
+expect("devices absent from a snapshot are pruned", Object.keys(battery.enrichDevices([], connected.cache).cache).length === 0);
 
 console.log(`Bluetooth battery presentation: ${checks} checks passed`);
