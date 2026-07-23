@@ -9,32 +9,50 @@ Item {
     property var pending: ({})
 
     function call(id, method, params) {
+        if (pending[id])
+            return false;
         const next = Object.assign({}, pending);
         next[id] = true;
         pending = next;
         client.call(id, method, params || ({}));
+        return true;
     }
     function finish(id, envelope, transportError) {
         const next = Object.assign({}, pending);
         delete next[id];
         pending = next;
-        if (id === "session-subscribe" || id.indexOf("cancel-") === 0 || id.indexOf("shutdown-") === 0)
+        if (isTransportControl(id))
             return;
         const error = ClipApi.responseError(envelope, transportError);
         if (error) {
             controller.handleFailure(id, error);
             return;
         }
-        const data = envelope.data || ({});
+        applyResponse(id, envelope.data || ({}));
+    }
+    function isTransportControl(id) {
+        return id === "session-subscribe" || id.indexOf("cancel-") === 0 || id.indexOf("shutdown-") === 0;
+    }
+    function applyResponse(id, data) {
         if (data.history)
             controller.applyHistory(id, data.history);
         else if (data.session)
             controller.applySession(data.session);
+        else if (data.entry)
+            controller.applyDetails(id, data.entry);
+        else if (data.thumbnail)
+            controller.applyThumbnail(id, data.thumbnail);
     }
     function query(id, text, generation, limit) {
-        call(id, ClipApi.methods.historyQuery, { query: text, generation: generation, limit: limit });
+        return call(id, ClipApi.methods.historyQuery, { query: text, generation: generation, limit: limit });
     }
-    function beginSession() { call("session-begin", ClipApi.methods.sessionBegin, {}); }
+    function details(id, entry) {
+        return call(id, ClipApi.methods.entryDetails, { entry_id: entry.id, revision: entry.revision });
+    }
+    function thumbnail(id, entry) {
+        return call(id, ClipApi.methods.entryThumbnail, { entry_id: entry.id, revision: entry.revision, edge: 640 });
+    }
+    function beginSession() { return call("session-begin", ClipApi.methods.sessionBegin, {}); }
     function cancelRequest(requestId) { client.cancel("cancel-" + requestId, requestId); }
 
     ClipDaemonClient {
@@ -42,8 +60,9 @@ Item {
         active: backend.active
         onResponse: function (id, envelope, transportError) { backend.finish(id, envelope, transportError); }
         onEventReceived: function (event) {
-            if (event.stream === ClipApi.streams.history && event.event !== "subscribed")
-                backend.controller.refresh();
+            if ((event.stream === ClipApi.streams.history || event.stream === ClipApi.streams.current)
+                    && event.event !== "subscribed")
+                backend.controller.scheduleRefresh();
         }
         onTransportFailed: function (message) { backend.controller.handleTransportFailure(message); }
     }

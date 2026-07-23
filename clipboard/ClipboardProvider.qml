@@ -25,7 +25,7 @@ Core.Provider {
     }
     function resultForEntry(entry) {
         const kind = entry.kind || "binary";
-        const preview = entry.preview || "No text preview";
+        const preview = entry.preview || labelFor(kind) + " clipboard entry";
         return Core.Model.result({
             providerId: providerId,
             providerPriority: priority,
@@ -33,9 +33,9 @@ Core.Provider {
             title: preview,
             subtitle: labelFor(kind) + " · " + (entry.mime || "unknown") + " · " + entry.byte_size + " bytes",
             icon: iconFor(kind),
-            score: entry.favorite ? 1000 : 100,
+            score: entry.current ? 2000 : (entry.favorite ? 1000 : 100),
             keywords: [preview, entry.mime || "", kind],
-            badges: entry.favorite ? ["favorite"] : [],
+            badges: entry.current ? ["current"] : (entry.favorite ? ["favorite"] : []),
             primaryActionId: "",
             actions: [],
             preview: { kind: "clipboard-entry", available: true },

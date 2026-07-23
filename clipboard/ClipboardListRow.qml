@@ -6,6 +6,7 @@ Ui.ResultRow {
     id: row
 
     required property var resultData
+    readonly property var entry: resultData.payload || ({})
 
     Text {
         Layout.preferredWidth: row.scaled(30)
@@ -13,7 +14,7 @@ Ui.ResultRow {
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter
         text: row.resultData.icon
-        color: Ui.Theme.accent
+        color: row.entry.current ? Ui.Theme.active : Ui.Theme.accent
         font.family: Ui.Theme.iconFontFamily
         font.pixelSize: Math.max(Ui.Theme.iconSize, row.scaled(Ui.Theme.fontSizeTitle))
     }
@@ -42,5 +43,18 @@ Ui.ResultRow {
             font.pixelSize: Math.max(10, row.scaled(Ui.Theme.fontSizeCaption))
             elide: Text.ElideRight
         }
+    }
+
+    Text {
+        visible: row.entry.current || row.entry.favorite
+        Layout.preferredWidth: row.scaled(62)
+        Layout.fillHeight: true
+        verticalAlignment: Text.AlignVCenter
+        horizontalAlignment: Text.AlignRight
+        text: row.entry.current ? "Current" : "Pinned"
+        color: row.entry.current ? Ui.Theme.active : Ui.Theme.accent
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
+        font.weight: Ui.Theme.fontWeightDemiBold
     }
 }
