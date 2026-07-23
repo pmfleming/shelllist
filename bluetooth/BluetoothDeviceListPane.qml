@@ -13,17 +13,22 @@ ColumnLayout {
     Layout.fillHeight: true
     spacing: Math.round(10 * uiScale)
 
-    function scaled(value) { return Math.round(value * uiScale); }
-    function focusSearch() { header.focusSearch(); }
+    function scaled(value) {
+        return Math.round(value * uiScale);
+    }
+    function focusSearch() {
+        header.focusSearch();
+    }
     function focusTop() {
         controller.selectedIndex = 0;
-        deviceList.forceActiveFocus();
-        deviceList.positionViewAtBeginning();
+        listFrame.focusTop();
     }
 
-    BluetoothHeader {
+    Ui.ChooserHeader {
         id: header
         uiScale: pane.uiScale
+        placeholder: "Search devices…"
+        icon: "󰂯"
         filterText: pane.controller.filterText
         powered: pane.controller.powered
         refreshing: pane.controller.refreshInFlight
@@ -33,7 +38,9 @@ ColumnLayout {
             pane.controller.filterText = text;
             pane.controller.selectedIndex = 0;
         }
-        onKeyPressed: function (event) { pane.controller.navigation.handleSearchKey(event); }
+        onKeyPressed: function (event) {
+            pane.controller.navigation.handleSearchKey(event);
+        }
         onPowerRequested: pane.controller.setPower()
         onRefreshRequested: pane.controller.toggleScan()
     }
@@ -47,86 +54,48 @@ ColumnLayout {
             anchors.leftMargin: pane.scaled(12)
             spacing: pane.scaled(6)
 
-            Rectangle {
+            Ui.ResultListFrame {
+                id: listFrame
+
                 width: parent.width
                 height: parent.height - statusPanel.height - parent.spacing
-                radius: Ui.Theme.panelRadius
-                color: Ui.Theme.surface
-                border.color: Ui.Theme.border
-                clip: true
-
-                ListView {
-                    id: deviceList
-
-                    readonly property real delegateHeight: Ui.Theme.listDelegateHeight(height)
-
-                    anchors.fill: parent
-                    clip: true
-                    model: pane.controller.filteredResultsModel
-                    currentIndex: pane.controller.selectedIndex
-                    activeFocusOnTab: true
-                    Keys.onPressed: function (event) { pane.controller.navigation.handleListKey(event); }
-                    onCurrentIndexChanged: if (currentIndex >= 0 && count > 0) positionViewAtIndex(currentIndex, ListView.Contain)
-
-                    delegate: BluetoothDeviceListRow {
-                        rowHeight: deviceList.delegateHeight
+                uiScale: pane.uiScale
+                resultModel: pane.controller.filteredResultsModel
+                selectedIndex: pane.controller.selectedIndex
+                emptyText: pane.controller.powered ? "No Bluetooth devices" : "Bluetooth is off"
+                onKeyPressed: function (event) {
+                    pane.controller.navigation.handleListKey(event);
+                }
+                rowDelegate: Component {
+                    BluetoothDeviceListRow {
+                        rowHeight: listFrame.delegateHeight
                         uiScale: pane.uiScale
                         selectedIndex: pane.controller.selectedIndex
-                        selectionFocused: deviceList.activeFocus
+                        selectionFocused: listFrame.listFocused
                         detailsOpen: pane.controller.detailsOpen
                         onPicked: function (rowIndex) {
                             pane.controller.selectedIndex = rowIndex;
-                            deviceList.forceActiveFocus();
+                            listFrame.focusList();
                         }
                         onDetailsToggled: function (rowIndex) {
                             pane.controller.selectedIndex = rowIndex;
                             pane.controller.navigation.toggleDetails();
-                            deviceList.forceActiveFocus();
+                            listFrame.focusList();
                         }
                         onPrimaryRequested: pane.controller.primarySelected()
                     }
                 }
-
-                Ui.CenteredMessage {
-                    visible: deviceList.count === 0
-                    text: pane.controller.powered ? "No Bluetooth devices" : "Bluetooth is off"
-                    font.pixelSize: Math.max(Ui.Theme.fontSizeCaption, pane.scaled(Ui.Theme.fontSizeBody))
-                }
             }
 
-            Rectangle {
+            Ui.StatusPanel {
                 id: statusPanel
 
                 width: parent.width
-                height: pane.scaled(Ui.Theme.statusHeight)
-                radius: Ui.Theme.cardRadius
-                color: Ui.Theme.surfaceRaised
-                border.color: Ui.Theme.border
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: pane.scaled(Ui.Theme.contentMargin)
-                    anchors.rightMargin: pane.scaled(Ui.Theme.contentMargin)
-                    spacing: pane.scaled(10)
-
-                    Text {
-                        Layout.preferredWidth: pane.scaled(Ui.Theme.iconSize)
-                        text: "󰂯"
-                        color: pane.controller.powered ? Ui.Theme.accent : Ui.Theme.mutedText
-                        font.family: Ui.Theme.iconFontFamily
-                        font.pixelSize: Math.max(Ui.Theme.iconSizeSmall, pane.scaled(Ui.Theme.iconSize))
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: pane.controller.status
-                        color: pane.controller.actionInFlight ? Ui.Theme.accent : Ui.Theme.subtleText
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: Math.max(10, pane.scaled(Ui.Theme.fontSizeCaption))
-                        elide: Text.ElideRight
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                }
+                uiScale: pane.uiScale
+                status: pane.controller.status
+                icon: "󰂯"
+                powered: pane.controller.powered
+                busy: pane.controller.actionInFlight
             }
         }
     }

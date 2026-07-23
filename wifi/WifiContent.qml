@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import "."
@@ -67,68 +69,53 @@ Rectangle {
 
     Connections {
         target: content.controller
-        function onFocusSearchRequested() { Qt.callLater(header.focusSearch); }
-        function onFocusListTopRequested() { Qt.callLater(listPane.focusTop); }
+        function onFocusSearchRequested() { Qt.callLater(chooser.listItem.focusSearch); }
+        function onFocusListTopRequested() { Qt.callLater(chooser.listItem.focusTop); }
     }
 
-    RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: content.controller.contentMargin
-        anchors.rightMargin: content.controller.contentMargin
-        anchors.topMargin: content.controller.contentVerticalMargin
-        anchors.bottomMargin: content.controller.contentVerticalMargin
-        spacing: 0
+    SplitChooserLayout {
+        id: chooser
+        controller: content.controller
+        listComponent: Component {
+            ColumnLayout {
+                spacing: Math.round(10 * content.uiScale)
 
-        ColumnLayout {
-            Layout.preferredWidth: content.controller.listPaneWidth
-            Layout.maximumWidth: content.controller.listPaneWidth
-            Layout.fillHeight: true
-            spacing: Math.round(10 * content.uiScale)
+                function focusSearch() { header.focusSearch(); }
+                function focusTop() { listPane.focusTop(); }
 
-            WifiHeader {
-                id: header
-                uiScale: content.uiScale
-                filterText: content.controller.filterText
-                powered: content.controller.powered
-                refreshing: content.controller.scanInFlight
-                powerEnabled: !content.controller.actionInFlight && !content.controller.prompt.open
-                refreshEnabled: content.controller.powered && !content.controller.actionInFlight
-                onFilterEdited: function (text) {
-                    content.controller.filterText = text;
-                    content.controller.selectedIndex = 0;
+                ChooserHeader {
+                    id: header
+                    uiScale: content.uiScale
+                    placeholder: "Search networks…"
+                    signalIcon: true
+                    focusOnCompleted: true
+                    filterText: content.controller.filterText
+                    powered: content.controller.powered
+                    refreshing: content.controller.scanInFlight
+                    powerEnabled: !content.controller.actionInFlight && !content.controller.prompt.open
+                    refreshEnabled: content.controller.powered && !content.controller.actionInFlight
+                    onFilterEdited: function (text) {
+                        content.controller.filterText = text;
+                        content.controller.selectedIndex = 0;
+                    }
+                    onKeyPressed: function (event) { content.controller.navigation.handleSearchKey(event); }
+                    onPowerRequested: content.controller.setPower()
+                    onRefreshRequested: content.controller.refresh()
                 }
-                onKeyPressed: function (event) { content.controller.navigation.handleSearchKey(event); }
-                onPowerRequested: content.controller.setPower()
-                onRefreshRequested: content.controller.refresh()
-            }
 
-            NetworkListPane {
-                id: listPane
+                NetworkListPane {
+                    id: listPane
+                    controller: content.controller
+                    uiScale: content.uiScale
+                }
+            }
+        }
+        detailsComponent: Component {
+            NetworkDetailsPane {
                 controller: content.controller
-                uiScale: content.uiScale
             }
-        }
-
-        Item {
-            visible: content.controller.detailsRendered
-            Layout.preferredWidth: content.controller.detailsPaneGapWidth
-            Layout.minimumWidth: content.controller.detailsPaneGapWidth
-            Layout.maximumWidth: content.controller.detailsPaneGapWidth
-            Layout.fillHeight: true
-
-            VerticalDivider {}
-        }
-
-        NetworkDetailsPane {
-            controller: content.controller
-            visible: content.controller.detailsRendered
-            Layout.preferredWidth: content.controller.detailsPaneWidth
-            Layout.minimumWidth: content.controller.detailsPaneWidth
-            Layout.maximumWidth: content.controller.detailsPaneWidth
-            Layout.fillHeight: true
         }
     }
-
 
     PromptDialog {
         visible: content.controller.prompt.open

@@ -121,46 +121,16 @@ Rectangle {
                 }
             }
 
-            Item {
+            Ui.DetailsTabBar {
                 width: parent.width
                 height: pane.footerHeight
-
-                Rectangle {
-                    anchors.top: parent.top
-                    width: parent.width
-                    height: 1
-                    color: Ui.Theme.border
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    spacing: 0
-
-                    Ui.DetailsTab {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        icon: "󰋜"
-                        label: "Device Details"
-                        selected: pane.controller.detailsTab === "device"
-                        onClicked: pane.controller.detailsTab = "device"
-                    }
-                    Ui.DetailsTab {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        icon: "󰓃"
-                        label: "Audio & Transfer"
-                        selected: pane.controller.detailsTab === "audio"
-                        onClicked: pane.controller.detailsTab = "audio"
-                    }
-                    Ui.DetailsTab {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        icon: "󰒓"
-                        label: "Adapter"
-                        selected: pane.controller.detailsTab === "adapter"
-                        onClicked: pane.controller.detailsTab = "adapter"
-                    }
-                }
+                selectedValue: pane.controller.detailsTab
+                tabs: [
+                    { value: "device", icon: "󰋜", label: "Device Details" },
+                    { value: "audio", icon: "󰓃", label: "Audio & Transfer" },
+                    { value: "adapter", icon: "󰒓", label: "Adapter" }
+                ]
+                onSelected: function (value) { pane.controller.detailsTab = value; }
             }
         }
 

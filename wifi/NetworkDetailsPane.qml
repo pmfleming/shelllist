@@ -201,50 +201,16 @@ Rectangle {
                 }
             }
 
-            Item {
+            DetailsTabBar {
                 width: parent.width
                 height: pane.footerHeight
-
-                Rectangle {
-                    anchors.top: parent.top
-                    width: parent.width
-                    height: 1
-                    color: Theme.border
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    spacing: 0
-
-                    DetailsTab {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        icon: "󰋜"
-                        label: "Network Details"
-                        selected: pane.controller.detailsTab === "network"
-                        onClicked: pane.controller.selectDetailsTab("network")
-                    }
-
-                    DetailsTab {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        icon: "󰌾"
-                        label: "Security & Privacy"
-                        selected: pane.controller.detailsTab === "security"
-                        enabled: !!pane.controller.profileFor(pane.ap)
-                        onClicked: pane.controller.selectDetailsTab("security")
-                    }
-
-                    DetailsTab {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        icon: "󰍹"
-                        label: "IP & DNS"
-                        selected: pane.controller.detailsTab === "hardware"
-                        enabled: !!pane.controller.profileFor(pane.ap)
-                        onClicked: pane.controller.selectDetailsTab("hardware")
-                    }
-                }
+                selectedValue: pane.controller.detailsTab
+                tabs: [
+                    { value: "network", icon: "󰋜", label: "Network Details" },
+                    { value: "security", icon: "󰌾", label: "Security & Privacy", enabled: !!pane.controller.profileFor(pane.ap) },
+                    { value: "hardware", icon: "󰍹", label: "IP & DNS", enabled: !!pane.controller.profileFor(pane.ap) }
+                ]
+                onSelected: function (value) { pane.controller.selectDetailsTab(value); }
             }
         }
 

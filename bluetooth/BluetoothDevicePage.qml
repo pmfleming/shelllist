@@ -2,90 +2,76 @@ import QtQuick
 import Shelllist.Ui as Ui
 import "BluetoothFlow.js" as BluetoothFlow
 
-Flickable {
+Ui.DetailFlickable {
     id: page
 
     required property BluetoothController controller
     readonly property alias editingName: settings.editingName
 
-    contentWidth: width
-    contentHeight: cards.implicitHeight
-    boundsBehavior: Flickable.StopAtBounds
-    flickableDirection: Flickable.VerticalFlick
-    interactive: contentHeight > height
-    clip: true
+    BluetoothBatteryStatus {
+        width: parent.width
+        device: page.controller.selectedDevice
+    }
 
-    Column {
-        id: cards
+    Ui.DetailCard {
+        height: 190
+        title: "Device overview"
 
-        width: page.width
-        spacing: Ui.Theme.spacingMd
-
-        BluetoothBatteryStatus {
-            width: parent.width
-            device: page.controller.selectedDevice
+        Ui.DetailGrid {
+            entries: [
+                { label: "Connection", value: page.controller.hasSelection ? BluetoothFlow.deviceState(page.controller.selectedDevice) : "—", valueColor: page.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.text, valueBold: page.controller.selectedDevice.connected },
+                { label: "Paired", value: page.controller.selectedDevice.paired ? "Yes" : "No" },
+                { label: "Trusted", value: page.controller.selectedDevice.trusted ? "Yes" : "No" },
+                { label: "In range", value: page.controller.selectedDevice.present ? "Yes" : "No" },
+                { label: "Services", value: page.controller.selectedDevice.services_resolved ? "Resolved" : "Pending" },
+                { label: "Audio profile", value: page.controller.activeAudioProfile.label || "—" }
+            ]
         }
+    }
 
-        Ui.DetailCard {
-            height: 190
-            title: "Device overview"
+    Ui.DetailCard {
+        height: Math.max(320, settings.implicitHeight + 76)
+        title: "Device settings"
 
-            Ui.DetailGrid {
-                entries: [
-                    { label: "Connection", value: page.controller.hasSelection ? BluetoothFlow.deviceState(page.controller.selectedDevice) : "—", valueColor: page.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.text, valueBold: page.controller.selectedDevice.connected },
-                    { label: "Paired", value: page.controller.selectedDevice.paired ? "Yes" : "No" },
-                    { label: "Trusted", value: page.controller.selectedDevice.trusted ? "Yes" : "No" },
-                    { label: "In range", value: page.controller.selectedDevice.present ? "Yes" : "No" },
-                    { label: "Services", value: page.controller.selectedDevice.services_resolved ? "Resolved" : "Pending" },
-                    { label: "Audio profile", value: page.controller.activeAudioProfile.label || "—" }
-                ]
-            }
+        BluetoothDeviceActions {
+            id: settings
+            anchors.fill: parent
+            controller: page.controller
         }
+    }
 
-        Ui.DetailCard {
-            height: Math.max(320, settings.implicitHeight + 76)
-            title: "Device settings"
+    Ui.DetailCard {
+        height: 300
+        title: "Technical details"
 
-            BluetoothDeviceActions {
-                id: settings
-                anchors.fill: parent
-                controller: page.controller
-            }
+        Ui.DetailGrid {
+            entries: [
+                { label: "Address", value: page.controller.selectedDevice.address || "Unavailable" },
+                { label: "Address type", value: page.controller.selectedDevice.address_type || "Unavailable" },
+                { label: "Adapter", value: page.controller.selectedAdapter.alias || page.controller.selectedAdapter.name || "Unavailable" },
+                { label: "Signal", value: BluetoothFlow.signalLabel(page.controller.selectedDevice) },
+                { label: "RSSI", value: page.controller.selectedDevice.rssi === null || page.controller.selectedDevice.rssi === undefined ? "Unavailable" : page.controller.selectedDevice.rssi + " dBm" + (page.controller.selectedDevice.signal_live ? "" : " (cached)") },
+                { label: "Last seen", value: page.controller.selectedDevice.last_seen_ms ? new Date(page.controller.selectedDevice.last_seen_ms).toLocaleString() : "Not observed this session" },
+                { label: "Modalias", value: page.controller.selectedDevice.modalias || "Unavailable" },
+                { label: "Adapter address", value: page.controller.selectedAdapter.address || "Unavailable" },
+                { label: "UUID count", value: String((page.controller.selectedDevice.uuids || []).length) }
+            ]
         }
+    }
 
-        Ui.DetailCard {
-            height: 300
-            title: "Technical details"
+    Ui.DetailCard {
+        visible: !!(page.controller.selectedDevice.services && page.controller.selectedDevice.services.length)
+        height: visible ? Math.max(110, servicesText.implicitHeight + 72) : 0
+        title: "Services"
 
-            Ui.DetailGrid {
-                entries: [
-                    { label: "Address", value: page.controller.selectedDevice.address || "Unavailable" },
-                    { label: "Address type", value: page.controller.selectedDevice.address_type || "Unavailable" },
-                    { label: "Adapter", value: page.controller.selectedAdapter.alias || page.controller.selectedAdapter.name || "Unavailable" },
-                    { label: "Signal", value: BluetoothFlow.signalLabel(page.controller.selectedDevice) },
-                    { label: "RSSI", value: page.controller.selectedDevice.rssi === null || page.controller.selectedDevice.rssi === undefined ? "Unavailable" : page.controller.selectedDevice.rssi + " dBm" + (page.controller.selectedDevice.signal_live ? "" : " (cached)") },
-                    { label: "Last seen", value: page.controller.selectedDevice.last_seen_ms ? new Date(page.controller.selectedDevice.last_seen_ms).toLocaleString() : "Not observed this session" },
-                    { label: "Modalias", value: page.controller.selectedDevice.modalias || "Unavailable" },
-                    { label: "Adapter address", value: page.controller.selectedAdapter.address || "Unavailable" },
-                    { label: "UUID count", value: String((page.controller.selectedDevice.uuids || []).length) }
-                ]
-            }
-        }
-
-        Ui.DetailCard {
-            visible: !!(page.controller.selectedDevice.services && page.controller.selectedDevice.services.length)
-            height: visible ? Math.max(110, servicesText.implicitHeight + 72) : 0
-            title: "Services"
-
-            Text {
-                id: servicesText
-                anchors.fill: parent
-                text: (page.controller.selectedDevice.services || []).map(function (service) { return service.label; }).filter(function (label, index, values) { return values.indexOf(label) === index; }).join(" · ")
-                color: Ui.Theme.mutedText
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeSmall
-                wrapMode: Text.WordWrap
-            }
+        Text {
+            id: servicesText
+            anchors.fill: parent
+            text: (page.controller.selectedDevice.services || []).map(function (service) { return service.label; }).filter(function (label, index, values) { return values.indexOf(label) === index; }).join(" · ")
+            color: Ui.Theme.mutedText
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Ui.Theme.fontSizeSmall
+            wrapMode: Text.WordWrap
         }
     }
 }

@@ -1,5 +1,6 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
 Rectangle {
@@ -8,6 +9,7 @@ Rectangle {
     required property BluetoothController controller
     required property BluetoothWindowHost windowHost
     readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
+    readonly property bool editingDetails: chooser.detailsItem ? chooser.detailsItem.editingText : false
 
     anchors.fill: parent
     radius: Ui.Theme.windowRadius
@@ -17,30 +19,24 @@ Rectangle {
 
     Connections {
         target: content.controller
-        function onFocusSearchRequested() { Qt.callLater(devicePane.focusSearch); }
-        function onFocusListTopRequested() { Qt.callLater(devicePane.focusTop); }
+        function onFocusSearchRequested() { Qt.callLater(chooser.listItem.focusSearch); }
+        function onFocusListTopRequested() { Qt.callLater(chooser.listItem.focusTop); }
     }
 
-    Shortcut { sequence: "F5"; enabled: content.controller.powered && !content.controller.refreshInFlight && !content.controller.actionInFlight && !content.controller.modalPromptOpen && !detailsPane.editingText; onActivated: content.controller.toggleScan() }
+    Shortcut { sequence: "F5"; enabled: content.controller.powered && !content.controller.refreshInFlight && !content.controller.actionInFlight && !content.controller.modalPromptOpen && !content.editingDetails; onActivated: content.controller.toggleScan() }
     Shortcut {
         sequence: "Alt+Tab"
-        enabled: content.controller.detailsOpen
-            && content.controller.hasSelection
-            && !content.controller.modalPromptOpen
-            && !detailsPane.editingText
+        enabled: content.controller.detailsOpen && content.controller.hasSelection && !content.controller.modalPromptOpen && !content.editingDetails
         onActivated: content.controller.cycleDetailsTab()
     }
     Shortcut {
         sequence: "Ctrl+Tab"
-        enabled: content.controller.detailsOpen
-            && content.controller.hasSelection
-            && !content.controller.modalPromptOpen
-            && !detailsPane.editingText
+        enabled: content.controller.detailsOpen && content.controller.hasSelection && !content.controller.modalPromptOpen && !content.editingDetails
         onActivated: content.controller.cycleDetailsTab()
     }
     Shortcut {
         sequence: "Escape"
-        enabled: !content.controller.modalPromptOpen && !detailsPane.editingText
+        enabled: !content.controller.modalPromptOpen && !content.editingDetails
         onActivated: {
             if (content.controller.canCancelTransfer)
                 content.controller.cancelActiveTransfer();
@@ -53,42 +49,20 @@ Rectangle {
         }
     }
 
-    RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: content.controller.contentMargin
-        anchors.rightMargin: content.controller.contentMargin
-        anchors.topMargin: content.controller.contentVerticalMargin
-        anchors.bottomMargin: content.controller.contentVerticalMargin
-        spacing: 0
-
-        BluetoothDeviceListPane {
-            id: devicePane
-            controller: content.controller
-            uiScale: content.uiScale
-            Layout.preferredWidth: content.controller.listPaneWidth
-            Layout.minimumWidth: content.controller.listPaneWidth
-            Layout.maximumWidth: content.controller.listPaneWidth
+    Ui.SplitChooserLayout {
+        id: chooser
+        controller: content.controller
+        listComponent: Component {
+            BluetoothDeviceListPane {
+                controller: content.controller
+                uiScale: content.uiScale
+            }
         }
-
-        Item {
-            visible: content.controller.detailsRendered
-            Layout.preferredWidth: content.controller.detailsPaneGapWidth
-            Layout.minimumWidth: content.controller.detailsPaneGapWidth
-            Layout.maximumWidth: content.controller.detailsPaneGapWidth
-            Layout.fillHeight: true
-
-            Ui.VerticalDivider {}
-        }
-
-        BluetoothDeviceDetails {
-            id: detailsPane
-            controller: content.controller
-            uiScale: content.uiScale
-            visible: content.controller.detailsRendered
-            Layout.preferredWidth: content.controller.detailsPaneWidth
-            Layout.minimumWidth: content.controller.detailsPaneWidth
-            Layout.maximumWidth: content.controller.detailsPaneWidth
-            Layout.fillHeight: true
+        detailsComponent: Component {
+            BluetoothDeviceDetails {
+                controller: content.controller
+                uiScale: content.uiScale
+            }
         }
     }
 

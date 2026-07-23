@@ -3,7 +3,6 @@ BluetoothController 1.0 BluetoothController.qml
 BluetoothProvider 1.0 BluetoothProvider.qml
 BluetoothPairingPrompt 1.0 BluetoothPairingPrompt.qml
 BluetoothObexPrompt 1.0 BluetoothObexPrompt.qml
-internal BluetoothHeader BluetoothHeader.qml
 internal BluetoothDeviceListPane BluetoothDeviceListPane.qml
 internal BluetoothDeviceListRow BluetoothDeviceListRow.qml
 internal BluetoothDeviceDetails BluetoothDeviceDetails.qml

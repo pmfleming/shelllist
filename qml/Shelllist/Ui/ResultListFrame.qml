@@ -1,0 +1,50 @@
+import QtQuick
+
+Rectangle {
+    id: frame
+
+    required property Component rowDelegate
+    property var resultModel: null
+    property int selectedIndex: 0
+    property real uiScale: 1
+    property string emptyText: ""
+    property bool emptyVisible: list.count === 0
+    readonly property int count: list.count
+    readonly property bool listFocused: list.activeFocus
+    readonly property real delegateHeight: Theme.listDelegateHeight(height)
+
+    signal keyPressed(var event)
+
+    function focusList() { list.forceActiveFocus(); }
+    function focusTop() {
+        focusList();
+        list.positionViewAtBeginning();
+    }
+
+    radius: Theme.panelRadius
+    color: Theme.surface
+    border.color: Theme.border
+    clip: true
+
+    ListView {
+        id: list
+
+        anchors.fill: parent
+        clip: true
+        model: frame.resultModel
+        currentIndex: frame.selectedIndex
+        activeFocusOnTab: true
+        Keys.onPressed: function (event) {
+            frame.keyPressed(event);
+        }
+        onCurrentIndexChanged: if (currentIndex >= 0 && count > 0)
+            positionViewAtIndex(currentIndex, ListView.Contain)
+        delegate: frame.rowDelegate
+    }
+
+    CenteredMessage {
+        visible: frame.emptyVisible
+        text: frame.emptyText
+        font.pixelSize: Math.max(Theme.fontSizeCaption, Math.round(Theme.fontSizeBody * frame.uiScale))
+    }
+}

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import "."
 import Shelllist.Ui
 
 Item {
@@ -16,105 +15,61 @@ Item {
 
     function focusTop() {
         controller.selectedIndex = 0;
-        list.forceActiveFocus();
-        list.positionViewAtBeginning();
+        listFrame.focusTop();
     }
 
     Column {
         anchors.fill: parent
-        anchors.leftMargin: 12
+        anchors.leftMargin: Math.round(12 * pane.uiScale)
         spacing: Math.round(6 * pane.uiScale)
 
-        Rectangle {
+        ResultListFrame {
+            id: listFrame
+
             width: parent.width
             height: parent.height - statusPanel.height - parent.spacing
-            radius: Theme.panelRadius
-            color: Theme.surface
-            border.color: Theme.border
-            clip: true
-
-            ListView {
-                id: list
-
-                readonly property real delegateHeight: Theme.listDelegateHeight(height)
-
-                anchors.fill: parent
-                clip: true
-                model: pane.controller.powered ? pane.controller.filteredResultsModel : null
-                spacing: 0
-                currentIndex: pane.controller.selectedIndex
-                activeFocusOnTab: true
-                Keys.onPressed: function (event) {
-                    pane.controller.navigation.handleListKey(event);
-                }
-                onCurrentIndexChanged: {
-                    if (currentIndex >= 0 && count > 0)
-                        positionViewAtIndex(currentIndex, ListView.Contain);
-                }
-
-                delegate: NetworkListRow {
+            uiScale: pane.uiScale
+            resultModel: pane.controller.powered ? pane.controller.filteredResultsModel : null
+            selectedIndex: pane.controller.selectedIndex
+            emptyText: pane.controller.powered ? "No Wi-Fi networks" : "Wi-Fi is off"
+            onKeyPressed: function (event) {
+                pane.controller.navigation.handleListKey(event);
+            }
+            rowDelegate: Component {
+                NetworkListRow {
                     id: networkRow
 
-                    rowHeight: list.delegateHeight
+                    rowHeight: listFrame.delegateHeight
                     active: !!networkRow.result.state.active
                     name: networkRow.result.title
                     selectedIndex: pane.controller.selectedIndex
-                    selectionFocused: list.activeFocus
+                    selectionFocused: listFrame.listFocused
                     detailsOpen: pane.controller.detailsOpen
                     connecting: pane.controller.connection.isConnecting(networkRow.result.payload)
                     progressTick: pane.controller.connection.progressTick
                     onPicked: function (rowIndex) {
                         pane.controller.selectedIndex = rowIndex;
-                        list.forceActiveFocus();
+                        listFrame.focusList();
                     }
                     onDetailsToggled: function (rowIndex) {
                         pane.controller.selectedIndex = rowIndex;
                         pane.controller.navigation.toggleDetails();
-                        list.forceActiveFocus();
+                        listFrame.focusList();
                     }
-                    onConnectRequested: pane.controller.primarySelected()
+                    onPrimaryRequested: pane.controller.primarySelected()
                 }
-            }
-
-            CenteredMessage {
-                visible: !pane.controller.powered
-                text: "Wi-Fi is off"
-                font.pixelSize: Math.max(Theme.fontSizeCaption, Math.round(Theme.fontSizeBody * pane.uiScale))
             }
         }
 
-        Rectangle {
+        StatusPanel {
             id: statusPanel
 
             width: parent.width
-            height: Math.round(Theme.statusHeight * pane.uiScale)
-            radius: Theme.cardRadius
-            color: Theme.surfaceRaised
-            border.color: Theme.border
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Math.round(14 * pane.uiScale)
-                anchors.rightMargin: Math.round(14 * pane.uiScale)
-                spacing: Math.round(10 * pane.uiScale)
-
-                SignalIcon {
-                    Layout.preferredWidth: Math.round(18 * pane.uiScale)
-                    Layout.preferredHeight: Math.round(16 * pane.uiScale)
-                    level: 1
-                    iconColor: pane.controller.powered ? Theme.accent : Theme.mutedText
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: pane.controller.status
-                    color: pane.controller.actionInFlight ? Theme.accent : Theme.subtleText
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Math.max(11, Math.round(12 * pane.uiScale))
-                    elide: Text.ElideRight
-                    verticalAlignment: Text.AlignVCenter
-                }
-            }
+            uiScale: pane.uiScale
+            status: pane.controller.status
+            signalIcon: true
+            powered: pane.controller.powered
+            busy: pane.controller.actionInFlight
         }
     }
 }
