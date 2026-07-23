@@ -46,29 +46,14 @@ Rectangle {
                     borderColor: Ui.Theme.mix(Ui.Theme.strongBorder, Ui.Theme.surface, 0.40)
                 }
 
-                Column {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    spacing: Ui.Theme.spacingXs
-
-                    Text {
-                        width: parent.width
-                        text: pane.controller.selectedResult ? pane.controller.selectedResult.title : "Bluetooth device"
-                        color: Ui.Theme.text
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: Math.round(Ui.Theme.fontSizeDisplay * pane.uiScale)
-                        font.weight: Ui.Theme.fontWeightBold
-                        elide: Text.ElideRight
-                    }
-                    Text {
-                        width: parent.width
-                        text: pane.controller.hasSelection ? BluetoothFlow.deviceState(pane.controller.selectedDevice) : ""
-                        color: pane.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: Math.max(Ui.Theme.fontSizeCaption, Math.round(Ui.Theme.fontSizeSmall * pane.uiScale))
-                        font.weight: Ui.Theme.fontWeightMedium
-                        elide: Text.ElideRight
-                    }
+                Ui.ResultLabel {
+                    title: pane.controller.selectedResult ? pane.controller.selectedResult.title : "Bluetooth device"
+                    subtitle: pane.controller.hasSelection ? BluetoothFlow.deviceState(pane.controller.selectedDevice) : ""
+                    subtitleColor: pane.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
+                    titleWeight: Ui.Theme.fontWeightBold
+                    subtitleWeight: Ui.Theme.fontWeightMedium
+                    titlePixelSize: Math.round(Ui.Theme.fontSizeDisplay * pane.uiScale)
+                    subtitlePixelSize: Math.max(Ui.Theme.fontSizeCaption, Math.round(Ui.Theme.fontSizeSmall * pane.uiScale))
                 }
 
                 Ui.ActionToolbar {

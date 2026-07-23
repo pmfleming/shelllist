@@ -24,24 +24,27 @@ Core.Provider {
         const value = String(kind || "binary");
         return value.charAt(0).toUpperCase() + value.slice(1);
     }
+    function scoreFor(entry) {
+        if (entry.current) return 2000;
+        return entry.favorite ? 1000 : 100;
+    }
+    function badgesFor(entry) {
+        if (entry.current) return ["current"];
+        return entry.favorite ? ["favorite"] : [];
+    }
     function resultForEntry(entry) {
         const kind = entry.kind || "binary";
         const preview = entry.preview || labelFor(kind) + " clipboard entry";
         return Core.Model.result({
-            providerId: providerId,
-            providerPriority: priority,
-            id: entry.id,
+            providerId: providerId, providerPriority: priority, id: entry.id,
             title: preview,
             subtitle: labelFor(kind) + " · " + (entry.mime || "unknown") + " · " + entry.byte_size + " bytes",
-            icon: iconFor(kind),
-            score: entry.current ? 2000 : (entry.favorite ? 1000 : 100),
-            keywords: [preview, entry.mime || "", kind],
-            badges: entry.current ? ["current"] : (entry.favorite ? ["favorite"] : []),
+            icon: iconFor(kind), score: scoreFor(entry),
+            keywords: [preview, entry.mime || "", kind], badges: badgesFor(entry),
             primaryActionId: kind === "binary" ? "copy" : "paste",
             actions: ClipApi.actionsForKind(kind),
             preview: { kind: "clipboard-entry", available: true },
-            state: { active: false, busy: false },
-            payload: entry
+            state: { active: false, busy: false }, payload: entry
         });
     }
     function resultsForEntries(entries) {

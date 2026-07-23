@@ -2,11 +2,8 @@ import QtQuick
 import Shelllist.Core as Core
 import Shelllist.Ui as Ui
 
-Item {
+Ui.ChooserController {
     id: controller
-
-    property bool uiActive: false
-    property string currentWorkspaceId: ""
     property string status: "Loading clipboard history…"
     property string sessionId: ""
     property bool targetAvailable: false
@@ -16,7 +13,6 @@ Item {
     property var settings: ({ max_entries: 750, max_favorites: 100, max_entry_bytes: 16777216, capture_paused: false, private_mode: false })
     property var wipeChallenge: null
     property bool deleteConfirmationOpen: false
-    property bool detailsOpen: false
     property bool detailsLoading: false
     property string detailsError: ""
     property var details: null
@@ -33,31 +29,15 @@ Item {
     readonly property var filteredResultsModel: results.visibleModel
     readonly property var selectedResult: results.selected()
     readonly property var selectedEntry: selectedResult ? selectedResult.payload : null
-    readonly property bool hasSelection: !!selectedResult
-    readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
-    readonly property int closedWindowWidth: Ui.Theme.popupClosedWidth
-    readonly property int openWindowWidth: Ui.Theme.popupOpenWidth
-    readonly property int surfaceWindowWidth: openWindowWidth
-    readonly property int contentMargin: Ui.Theme.contentMargin
-    readonly property int contentVerticalMargin: Ui.Theme.contentVerticalMargin
-    readonly property int listPaneWidth: closedWindowWidth - 2 * contentMargin
-    readonly property int detailsGapWidth: Ui.Theme.detailsGapWidth
-    readonly property real detailsRenderCutoff: 0.025
-    property real detailsExpansionProgress: detailsOpen ? 1 : 0
-    readonly property real detailsPaintProgress: (!detailsOpen && detailsExpansionProgress <= detailsRenderCutoff) ? 0 : detailsExpansionProgress
-    readonly property real detailsPaneFullWidth: openWindowWidth - closedWindowWidth - detailsGapWidth
-    readonly property real detailsPaneWidth: detailsPaintProgress * detailsPaneFullWidth
-    readonly property real detailsPaneGapWidth: detailsPaintProgress * detailsGapWidth
-    readonly property bool detailsRendered: detailsOpen || detailsExpansionProgress > detailsRenderCutoff
-    readonly property int currentWindowWidth: Math.round(closedWindowWidth + detailsPaintProgress * (openWindowWidth - closedWindowWidth))
+    readonly property alias navigation: navigationModel
+    hasSelection: !!selectedResult
+    selectionModel: results
 
-    signal focusSearchRequested
-    signal focusListTopRequested
+    readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
     signal hideRequested
 
     function activateUi(workspaceId) {
-        uiActive = true;
-        currentWorkspaceId = workspaceId || "";
+        activateUiState(workspaceId);
         backend.beginSession();
         backend.getSettings();
         refresh();
@@ -65,7 +45,7 @@ Item {
     function deactivateUi() {
         if (sessionId.length > 0)
             backend.endSession(sessionId);
-        uiActive = false;
+        deactivateUiState();
         sessionId = "";
         targetAvailable = false;
         detailsOpen = false;
@@ -179,23 +159,28 @@ Item {
     function applyCapture(value) {
         status = value.private_mode ? "Private mode enabled" : (value.paused ? "Clipboard capture paused" : "Clipboard capture resumed");
     }
+    function finishWipe() {
+        wipeChallenge = null;
+        closeDetails();
+        scheduleRefresh();
+    }
+    function finishDelete() {
+        closeDetails();
+        scheduleRefresh();
+    }
     function applyOperation(id, operation) {
         actionInFlight = operation.status === "started";
         activeAction = actionInFlight ? operation.action : "";
         activeOperationId = actionInFlight ? (operation.id || "") : "";
         status = operation.message || "Clipboard operation completed";
-        if (operation.action === "paste" && operation.status === "paste-prepared") {
-            backend.hideSession(sessionId);
-            return;
-        }
-        if (operation.action === "wipe") {
-            wipeChallenge = null;
-            closeDetails();
-            scheduleRefresh();
-        } else if (["copy", "image-as-file", "delete", "favorite", "unfavorite", "pin-current"].indexOf(operation.action) >= 0) {
-            if (operation.action === "delete") closeDetails();
-            scheduleRefresh();
-        }
+        if (actionInFlight) return;
+        const completions = ({
+            paste: function () { if (operation.status === "paste-prepared") backend.hideSession(sessionId); },
+            wipe: finishWipe, "delete": finishDelete,
+            copy: scheduleRefresh, "image-as-file": scheduleRefresh,
+            favorite: scheduleRefresh, unfavorite: scheduleRefresh, "pin-current": scheduleRefresh
+        });
+        if (completions[operation.action]) completions[operation.action]();
     }
     function requestWipe() { if (!actionInFlight) backend.prepareWipe(); }
     function applyWipeChallenge(challenge) { wipeChallenge = challenge; }
@@ -272,8 +257,6 @@ Item {
         clearDetails();
         status = message;
     }
-    function moveSelection(delta) { results.move(delta); }
-
     Timer { id: searchTimer; interval: 120; repeat: false; onTriggered: if (controller.uiActive) controller.refresh() }
     Timer { id: refreshTimer; interval: 90; repeat: false; onTriggered: if (controller.uiActive) controller.refresh() }
 
@@ -283,11 +266,12 @@ Item {
         if (editingText) cancelEdit();
         if (detailsOpen) loadDetails();
     }
-    Behavior on detailsExpansionProgress {
-        enabled: !Ui.Theme.noAnimations
-        NumberAnimation { duration: Ui.Theme.animationNormal; easing.type: Ui.Theme.easingGentle }
+    Ui.ResultNavigation {
+        id: navigationModel
+        controller: controller
+        primaryEnabled: false
+        closeEnabled: false
     }
-
     Core.ProviderRegistry {
         id: providers
         ClipboardProvider { id: provider; controller: controller }

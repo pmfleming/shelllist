@@ -19,30 +19,11 @@ Ui.ResultRow {
         font.pixelSize: Math.max(Ui.Theme.iconSize, row.scaled(Ui.Theme.fontSizeTitle))
     }
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        spacing: Math.max(1, row.scaled(2))
-        Text {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            verticalAlignment: Text.AlignBottom
-            text: row.resultData.title
-            color: Ui.Theme.text
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Math.max(Ui.Theme.fontSizeSmall, row.scaled(Ui.Theme.fontSizeLabel))
-            elide: Text.ElideRight
-        }
-        Text {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            verticalAlignment: Text.AlignTop
-            text: row.resultData.subtitle
-            color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Math.max(10, row.scaled(Ui.Theme.fontSizeCaption))
-            elide: Text.ElideRight
-        }
+    Ui.ResultLabel {
+        title: row.resultData.title
+        subtitle: row.resultData.subtitle
+        subtitleColor: Ui.Theme.mutedText
+        uiScale: row.uiScale
     }
 
     Text {

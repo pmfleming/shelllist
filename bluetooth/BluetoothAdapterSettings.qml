@@ -32,16 +32,25 @@ ColumnLayout {
         return Math.floor(seconds / 60) + "m " + (seconds % 60) + "s";
     }
 
-    function needsSync(syncAll, dirty) { return syncAll || !dirty; }
-
     function clearDirtyFields() {
         aliasDirty = false;
         discoverableTimeoutDirty = false;
         pairableTimeoutDirty = false;
     }
 
+    function syncAlias(force, adapter) {
+        if (force || !aliasDirty) adapterAliasInput.text = adapter.alias || "";
+    }
+    function syncDiscoverableTimeout(force, adapter) {
+        if (force || !discoverableTimeoutDirty)
+            discoverableTimeoutSlider.value = Math.min(maximumTimeout, Number(adapter.discoverable_timeout || 0));
+    }
+    function syncPairableTimeout(force, adapter) {
+        if (force || !pairableTimeoutDirty)
+            pairableTimeoutSlider.value = Math.min(maximumTimeout, Number(adapter.pairable_timeout || 0));
+    }
     function syncAdapterFields(force) {
-        const adapter = controller.selectedAdapter || ({});
+        const adapter = controller.selectedAdapter;
         const nextKey = adapter.key || "";
         const adapterChanged = nextKey !== displayedAdapterKey;
         if (adapterChanged) {
@@ -50,26 +59,18 @@ ColumnLayout {
         }
         displayedAdapterKey = nextKey;
         const syncAll = force || adapterChanged;
-        if (needsSync(syncAll, aliasDirty))
-            adapterAliasInput.text = adapter.alias || "";
-        if (needsSync(syncAll, discoverableTimeoutDirty))
-            discoverableTimeoutSlider.value = Math.min(maximumTimeout, Number(adapter.discoverable_timeout || 0));
-        if (needsSync(syncAll, pairableTimeoutDirty))
-            pairableTimeoutSlider.value = Math.min(maximumTimeout, Number(adapter.pairable_timeout || 0));
+        syncAlias(syncAll, adapter);
+        syncDiscoverableTimeout(syncAll, adapter);
+        syncPairableTimeout(syncAll, adapter);
     }
 
-    function queueAutoSave(field, debounce) {
-        if (field === "alias")
-            aliasDirty = true;
-        else if (field === "discoverable-timeout")
-            discoverableTimeoutDirty = true;
-        else if (field === "pairable-timeout")
-            pairableTimeoutDirty = true;
+    function markAliasDirty() { aliasDirty = true; }
+    function markDiscoverableTimeoutDirty() { discoverableTimeoutDirty = true; }
+    function markPairableTimeoutDirty() { pairableTimeoutDirty = true; }
+    function queueAutoSave(markDirty, debounce) {
+        markDirty();
         controller.status = "Bluetooth adapter changes pending…";
-        if (debounce === false)
-            autoSaveTimer.stop();
-        else
-            autoSaveTimer.restart();
+        debounce === false ? autoSaveTimer.stop() : autoSaveTimer.restart();
     }
 
     function saveAliasIfDirty() {
@@ -197,7 +198,7 @@ ColumnLayout {
         maximumLength: 248
         inputValid: section.aliasValid
         readOnly: section.controller.actionInFlight
-        onEdited: section.queueAutoSave("alias")
+        onEdited: section.queueAutoSave(section.markAliasDirty)
         onEditingFinished: section.saveDirtyFields()
         onAccepted: section.saveDirtyFields()
     }
@@ -216,7 +217,7 @@ ColumnLayout {
             to: section.maximumTimeout
             stepSize: section.timeoutStep
             enabled: !section.controller.actionInFlight && !!section.controller.selectedAdapter.key
-            onEdited: section.queueAutoSave("discoverable-timeout", !discoverableTimeoutSlider.pressed)
+            onEdited: section.queueAutoSave(section.markDiscoverableTimeoutDirty, !discoverableTimeoutSlider.pressed)
             onPressedChanged: if (!discoverableTimeoutSlider.pressed) section.saveDirtyFields()
         }
         Text {
@@ -236,7 +237,7 @@ ColumnLayout {
             to: section.maximumTimeout
             stepSize: section.timeoutStep
             enabled: !section.controller.actionInFlight && !!section.controller.selectedAdapter.key
-            onEdited: section.queueAutoSave("pairable-timeout", !pairableTimeoutSlider.pressed)
+            onEdited: section.queueAutoSave(section.markPairableTimeoutDirty, !pairableTimeoutSlider.pressed)
             onPressedChanged: if (!pairableTimeoutSlider.pressed) section.saveDirtyFields()
         }
         Text {

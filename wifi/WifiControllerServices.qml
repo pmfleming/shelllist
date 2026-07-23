@@ -9,18 +9,18 @@ Item {
 
     property alias queryText: resultsModel.queryText
     property alias selectedIndex: resultsModel.selectedIndex
-    readonly property alias providers: providerRegistry
-    readonly property alias provider: wifiProvider
-    readonly property alias results: resultsModel
-    readonly property alias share: shareModel
-    readonly property alias portal: portalModel
-    readonly property alias policy: policyModel
-    readonly property alias connection: connectionModel
-    readonly property alias advanced: advancedModel
-    readonly property alias actions: actionModel
-    readonly property alias scan: scanModel
-    readonly property alias navigation: navigationModel
-    readonly property alias backend: backendModel
+    readonly property Core.ProviderRegistry providers: providerRegistry
+    readonly property WifiProvider provider: wifiProvider
+    readonly property Core.ResultStore results: resultsModel
+    readonly property ShareAvailabilityController share: shareModel
+    readonly property CaptivePortalController portal: portalModel
+    readonly property WifiConnectPolicy policy: policyModel
+    readonly property WifiConnectionController connection: connectionModel
+    readonly property WifiAdvancedController advanced: advancedModel
+    readonly property WifiNetworkActions actions: actionModel
+    readonly property WifiScanController scan: scanModel
+    readonly property WifiNavigation navigation: navigationModel
+    readonly property WifiBackend backend: backendModel
 
     Core.ProviderRegistry {
         id: providerRegistry
@@ -41,6 +41,10 @@ Item {
     WifiAdvancedController { id: advancedModel; controller: services.controller; backend: backendModel }
     WifiNetworkActions { id: actionModel; controller: services.controller; backend: backendModel; prompt: services.prompt; portal: portalModel }
     WifiScanController { id: scanModel; controller: services.controller; backend: backendModel }
-    WifiNavigation { id: navigationModel; controller: services.controller }
+    WifiNavigation {
+        id: navigationModel
+        controller: services.controller
+        blocked: services.prompt.open || !services.controller.powered
+    }
     WifiBackend { id: backendModel; controller: services.controller }
 }

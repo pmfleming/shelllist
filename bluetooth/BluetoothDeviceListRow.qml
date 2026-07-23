@@ -47,31 +47,10 @@ Ui.ResultRow {
         font.pixelSize: Math.max(Ui.Theme.iconSize, row.scaled(Ui.Theme.fontSizeTitle))
     }
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        spacing: Math.max(1, row.scaled(2))
-
-        Text {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            verticalAlignment: Text.AlignBottom
-            text: row.resultData.title
-            color: Ui.Theme.text
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Math.max(Ui.Theme.fontSizeSmall, row.scaled(Ui.Theme.fontSizeLabel))
-            font.weight: row.device.connected ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
-            elide: Text.ElideRight
-        }
-        Text {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            verticalAlignment: Text.AlignTop
-            text: row.resultData.subtitle
-            color: Ui.Theme.subtleText
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Math.max(10, row.scaled(Ui.Theme.fontSizeCaption))
-            elide: Text.ElideRight
-        }
+    Ui.ResultLabel {
+        title: row.resultData.title
+        subtitle: row.resultData.subtitle
+        titleWeight: row.device.connected ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
+        uiScale: row.uiScale
     }
 }

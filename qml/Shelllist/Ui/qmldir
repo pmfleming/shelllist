@@ -3,7 +3,9 @@ singleton Theme 1.0 Theme.qml
 ActionButton 1.0 ActionButton.qml
 ActionToolbar 1.0 ActionToolbar.qml
 CenteredMessage 1.0 CenteredMessage.qml
+ChooserController 1.0 ChooserController.qml
 ChooserHeader 1.0 ChooserHeader.qml
+ChooserSurface 1.0 ChooserSurface.qml
 ConfirmationDialog 1.0 ConfirmationDialog.qml
 DetailCard 1.0 DetailCard.qml
 DetailField 1.0 DetailField.qml
@@ -17,6 +19,7 @@ ModalFrame 1.0 ModalFrame.qml
 PopupWindowHost 1.0 PopupWindowHost.qml
 PromptDialog 1.0 PromptDialog.qml
 RefreshTile 1.0 RefreshTile.qml
+ResultLabel 1.0 ResultLabel.qml
 ResultListFrame 1.0 ResultListFrame.qml
 ResultNavigation 1.0 ResultNavigation.qml
 ResultRow 1.0 ResultRow.qml

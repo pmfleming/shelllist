@@ -5,17 +5,11 @@ import QtQuick.Layouts
 import "."
 import Shelllist.Ui
 
-Rectangle {
+ChooserSurface {
     id: content
 
     required property WifiController controller
     readonly property real uiScale: Theme.densityScale(height, controller.contentVerticalMargin)
-
-    anchors.fill: parent
-    radius: Theme.windowRadius
-    color: Theme.window
-    border.color: Theme.strongBorder
-    border.width: 1
 
     function cancelPrompt() {
         controller.cancelPrompt("user");

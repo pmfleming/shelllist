@@ -34,26 +34,23 @@ Item {
         return id === "session-subscribe" || id.indexOf("cancel-") === 0 || id.indexOf("shutdown-") === 0;
     }
     function applyResponse(id, data) {
-        if (data.history)
-            controller.applyHistory(id, data.history);
-        else if (data.session)
-            controller.applySession(data.session);
-        else if (data.entry && id === "edit-commit")
-            controller.applyEditCommit(data.entry);
-        else if (data.entry)
-            controller.applyDetails(id, data.entry);
-        else if (data.thumbnail)
-            controller.applyThumbnail(id, data.thumbnail);
-        else if (data.operation)
-            controller.applyOperation(id, data.operation);
-        else if (data.challenge)
-            controller.applyWipeChallenge(data.challenge);
-        else if (data.edit)
-            controller.applyEdit(id, data.edit);
-        if (data.settings)
-            controller.applySettings(data.settings);
-        if (data.capture)
-            controller.applyCapture(data.capture);
+        const handlers = ({
+            history: function (value) { controller.applyHistory(id, value); },
+            session: controller.applySession,
+            entry: function (value) {
+                if (id === "edit-commit") controller.applyEditCommit(value);
+                else controller.applyDetails(id, value);
+            },
+            thumbnail: function (value) { controller.applyThumbnail(id, value); },
+            operation: function (value) { controller.applyOperation(id, value); },
+            challenge: controller.applyWipeChallenge,
+            edit: function (value) { controller.applyEdit(id, value); },
+            settings: controller.applySettings,
+            capture: controller.applyCapture
+        });
+        Object.keys(data).forEach(function (key) {
+            if (handlers[key]) handlers[key](data[key]);
+        });
     }
     function query(id, text, generation, limit) {
         return call(id, ClipApi.methods.historyQuery, { query: text, generation: generation, limit: limit });
@@ -99,11 +96,12 @@ Item {
         active: backend.active
         onResponse: function (id, envelope, transportError) { backend.finish(id, envelope, transportError); }
         onEventReceived: function (event) {
-            if ((event.stream === ClipApi.streams.history || event.stream === ClipApi.streams.current)
-                    && event.event !== "subscribed")
-                backend.controller.scheduleRefresh();
-            else if (event.stream === ClipApi.streams.capture && event.event !== "subscribed")
-                backend.getSettings();
+            if (event.event === "subscribed") return;
+            const handlers = ({});
+            handlers[ClipApi.streams.history] = backend.controller.scheduleRefresh;
+            handlers[ClipApi.streams.current] = backend.controller.scheduleRefresh;
+            handlers[ClipApi.streams.capture] = backend.getSettings;
+            if (handlers[event.stream]) handlers[event.stream]();
         }
         onTransportFailed: function (message) { backend.controller.handleTransportFailure(message); }
     }

@@ -1,7 +1,26 @@
 {
   "project_name": "shelllist",
   "project_root": ".",
-  "source_roots": ["wifi", "bluetooth", "qml"],
+  "source_roots": ["wifi", "bluetooth", "clipboard", "qml"],
   "output_dir": "target/qmlqualitylens",
+  "qmllint_command": "tests/run-qmllint.sh",
+  "external_types": ["FileDialog", "GlobalShortcut", "IpcHandler", "PanelWindow", "Region", "Shortcut"],
+  "suppressions": [
+    {
+      "kind": "cleanup.unused_component",
+      "file": "bluetooth/BluetoothDeviceDetails.qml",
+      "reason": "Instantiated through SplitChooserLayout's details Component"
+    },
+    {
+      "kind": "cleanup.unused_component",
+      "file": "bluetooth/BluetoothDeviceListPane.qml",
+      "reason": "Instantiated through SplitChooserLayout's list Component"
+    },
+    {
+      "kind": "cleanup.unused_component",
+      "file": "bluetooth/BluetoothDeviceListRow.qml",
+      "reason": "Instantiated as ResultListFrame's delegate Component"
+    }
+  ],
   "exclude": []
 }

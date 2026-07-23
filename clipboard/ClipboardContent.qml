@@ -3,18 +3,12 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 
-Rectangle {
+Ui.ChooserSurface {
     id: content
 
     required property ClipboardController controller
-    required property ClipboardWindowHost windowHost
+    required property Ui.PopupWindowHost windowHost
     readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
-
-    anchors.fill: parent
-    radius: Ui.Theme.windowRadius
-    color: Ui.Theme.window
-    border.color: Ui.Theme.strongBorder
-    border.width: 1
 
     Shortcut {
         sequence: "Escape"

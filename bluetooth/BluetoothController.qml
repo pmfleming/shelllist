@@ -4,14 +4,10 @@ import Shelllist.Ui as Ui
 import "BluetoothBattery.js" as BluetoothBattery
 import "BluetoothFlow.js" as BluetoothFlow
 
-Item {
+Ui.ChooserController {
     id: controller
-
-    property bool uiActive: false
-    property string currentWorkspaceId: ""
     property alias filterText: results.queryText
     property alias selectedIndex: results.selectedIndex
-    property bool detailsOpen: false
     property string detailsTab: "device"
     property var pendingConfirmationAction: null
     property bool scanRequested: false
@@ -34,8 +30,6 @@ Item {
     readonly property var filteredResultsModel: results.visibleModel
     readonly property var selectedResult: results.selected()
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
-    readonly property var detailActions: providers.actionsFor(selectedResult)
-    readonly property alias selectionModel: results
     readonly property alias navigation: navigationModel
     readonly property var selectedAdapter: adapters.find(function (adapter) { return adapter.key === preferredAdapterKey; }) || adapters.find(function (adapter) { return adapter.key === selectedDevice.adapter_key; }) || adapters[0] || ({})
     readonly property var selectedAudio: audioDevices.find(function (audio) { return audio.device_key === selectedDevice.key; }) || ({})
@@ -43,7 +37,10 @@ Item {
     readonly property var selectedSource: selectedAudio.source || ({})
     readonly property var selectedAudioProfiles: selectedAudio.profiles || []
     readonly property var activeAudioProfile: selectedAudioProfiles.find(function (profile) { return profile.key === selectedAudio.active_profile_key; }) || ({})
-    readonly property bool hasSelection: filteredResults.length > 0
+    hasSelection: filteredResults.length > 0
+    selectionModel: results
+    detailActions: providers.actionsFor(selectedResult)
+
     readonly property bool pairingPromptOpen: !!pairingPrompt
     readonly property bool incomingTransferPromptOpen: !!incomingTransferPrompt
     readonly property bool confirmationOpen: !!pendingConfirmationAction
@@ -55,30 +52,10 @@ Item {
     readonly property bool refreshInFlight: scanning
         || backend.isPending("snapshot")
         || backend.isPending("scan-start")
-    readonly property int closedWindowWidth: Ui.Theme.popupClosedWidth
-    readonly property int openWindowWidth: Ui.Theme.popupOpenWidth
-    readonly property int surfaceWindowWidth: openWindowWidth
-    readonly property int contentMargin: Ui.Theme.contentMargin
-    readonly property int contentVerticalMargin: Ui.Theme.contentVerticalMargin
-    readonly property int listPaneWidth: closedWindowWidth - 2 * contentMargin
-    readonly property int detailsGapWidth: Ui.Theme.detailsGapWidth
-    readonly property real detailsRenderCutoff: 0.025
-    property real detailsExpansionProgress: detailsOpen ? 1 : 0
-    readonly property real detailsPaintProgress: (!detailsOpen && detailsExpansionProgress <= detailsRenderCutoff) ? 0 : detailsExpansionProgress
-    readonly property real detailsPaneFullWidth: openWindowWidth - closedWindowWidth - detailsGapWidth
-    readonly property real detailsPaneWidth: detailsPaintProgress * detailsPaneFullWidth
-    readonly property real detailsPaneGapWidth: detailsPaintProgress * detailsGapWidth
-    readonly property bool detailsRendered: detailsOpen || detailsExpansionProgress > detailsRenderCutoff
-    readonly property int currentWindowWidth: Math.round(closedWindowWidth + detailsPaintProgress * (openWindowWidth - closedWindowWidth))
-
-    signal closeWindowRequested
-    signal focusSearchRequested
-    signal focusListTopRequested
     signal incomingTransferRequested
 
     function activateUi(workspaceId) {
-        uiActive = true;
-        currentWorkspaceId = workspaceId || "";
+        activateUiState(workspaceId);
         scanRequested = false;
         refresh();
         backend.refreshObex();
@@ -96,7 +73,7 @@ Item {
         if (activeScan)
             backend.setScanning(false, activeScan.adapter_key);
         activeScan = null;
-        uiActive = false;
+        deactivateUiState();
     }
     function handleTransportFailure(message) {
         scanRequested = false;
@@ -325,7 +302,6 @@ Item {
         status = "Renaming " + selectedDevice.name + "…";
         return backend.deviceOperation("set-alias", selectedDevice, { alias: value });
     }
-    function moveSelection(delta) { results.move(delta); }
     function cycleDetailsTab() {
         if (!detailsOpen || !hasSelection)
             return false;
@@ -385,7 +361,6 @@ Item {
     onModalPromptOpenChanged: if (!modalPromptOpen) Qt.callLater(focusSearchRequested)
     onSelectedResultChanged: pendingConfirmationAction = null
 
-    Behavior on detailsExpansionProgress { enabled: !Ui.Theme.noAnimations; NumberAnimation { duration: Ui.Theme.animationNormal; easing.type: Ui.Theme.easingGentle } }
     Ui.ResultNavigation { id: navigationModel; controller: controller; blocked: controller.modalPromptOpen }
     Core.ProviderRegistry {
         id: providers

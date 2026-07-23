@@ -13,10 +13,7 @@ ColumnLayout {
     spacing: Math.round(10 * uiScale)
 
     function focusSearch() { header.focusSearch(); }
-    function focusTop() {
-        controller.selectedIndex = 0;
-        listFrame.focusTop();
-    }
+    function focusTop() { listFrame.focusTop(); }
 
     Ui.ChooserHeader {
         id: header
@@ -30,16 +27,7 @@ ColumnLayout {
         refreshEnabled: !pane.controller.refreshInFlight
         onFilterEdited: function (text) { pane.controller.filterText = text; }
         onRefreshRequested: pane.controller.refresh()
-        onKeyPressed: function (event) {
-            if (event.key === Qt.Key_Down) {
-                pane.controller.selectedIndex = 0;
-                listFrame.focusTop();
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Right) {
-                pane.controller.openDetails();
-                event.accepted = true;
-            }
-        }
+        onKeyPressed: function (event) { pane.controller.navigation.handleSearchKey(event); }
     }
 
     Ui.ResultListFrame {
@@ -47,27 +35,11 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         uiScale: pane.uiScale
+        controller: pane.controller
         resultModel: pane.controller.filteredResultsModel
         selectedIndex: pane.controller.selectedIndex
         emptyText: pane.controller.refreshInFlight ? "Loading clipboard history…" : "Clipboard history is empty"
-        onKeyPressed: function (event) {
-            if (event.key === Qt.Key_Down) {
-                pane.controller.moveSelection(1);
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Up) {
-                if (pane.controller.selectedIndex === 0)
-                    header.focusSearch();
-                else
-                    pane.controller.moveSelection(-1);
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Right) {
-                pane.controller.openDetails();
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Left) {
-                pane.controller.closeDetails();
-                event.accepted = true;
-            }
-        }
+        onKeyPressed: function (event) { pane.controller.navigation.handleListKey(event); }
         rowDelegate: Component {
             ClipboardListRow {
                 rowHeight: listFrame.delegateHeight
@@ -75,15 +47,8 @@ ColumnLayout {
                 selectedIndex: pane.controller.selectedIndex
                 selectionFocused: listFrame.listFocused
                 detailsOpen: pane.controller.detailsOpen
-                onPicked: function (rowIndex) {
-                    pane.controller.selectedIndex = rowIndex;
-                    listFrame.focusList();
-                }
-                onDetailsToggled: function (rowIndex) {
-                    pane.controller.selectedIndex = rowIndex;
-                    pane.controller.toggleDetails();
-                    listFrame.focusList();
-                }
+                onPicked: function (rowIndex) { listFrame.pick(rowIndex); }
+                onDetailsToggled: function (rowIndex) { listFrame.toggleDetails(rowIndex); }
             }
         }
     }

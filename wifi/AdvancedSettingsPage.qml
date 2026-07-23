@@ -302,6 +302,7 @@ Item {
         width: parent.width
         height: parent.height
         x: page.sectionOffset
+        active: true
         sourceComponent: page.securityView ? securitySection : ipSection
     }
 

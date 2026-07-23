@@ -15,6 +15,8 @@ internal AdvancedSettingsFlickable AdvancedSettingsFlickable.qml
 internal AdvancedSegmentedRow AdvancedSegmentedRow.qml
 AdvancedSettingsPage 1.0 AdvancedSettingsPage.qml
 NetworkDetailsActions 1.0 NetworkDetailsActions.qml
+internal NetworkDetailCards NetworkDetailCards.qml
+internal NetworkDetailsHeader NetworkDetailsHeader.qml
 NetworkDetailsPane 1.0 NetworkDetailsPane.qml
 NetworkProfileSettingsCard 1.0 NetworkProfileSettingsCard.qml
 NetworkListPane 1.0 NetworkListPane.qml
@@ -22,4 +24,3 @@ NetworkListRow 1.0 NetworkListRow.qml
 WifiContent 1.0 WifiContent.qml
 WifiController 1.0 WifiController.qml
 WifiPromptController 1.0 WifiPromptController.qml
-WifiWindowHost 1.0 WifiWindowHost.qml

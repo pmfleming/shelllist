@@ -4,6 +4,7 @@ Rectangle {
     id: frame
 
     required property Component rowDelegate
+    required property ChooserController controller
     property var resultModel: null
     property int selectedIndex: 0
     property real uiScale: 1
@@ -17,8 +18,18 @@ Rectangle {
 
     function focusList() { list.forceActiveFocus(); }
     function focusTop() {
+        controller.selectFirst();
         focusList();
         list.positionViewAtBeginning();
+    }
+    function pick(rowIndex) {
+        controller.select(rowIndex);
+        focusList();
+    }
+    function toggleDetails(rowIndex) {
+        controller.select(rowIndex);
+        controller.toggleDetails();
+        focusList();
     }
 
     radius: Theme.panelRadius

@@ -4,7 +4,7 @@ import QtQuick.Layouts
 RowLayout {
     id: layout
 
-    required property var controller
+    required property ChooserController controller
     property Component listComponent
     property Component detailsComponent
     readonly property var listItem: listLoader.item
@@ -24,6 +24,7 @@ RowLayout {
         Layout.minimumWidth: layout.controller.listPaneWidth
         Layout.maximumWidth: layout.controller.listPaneWidth
         Layout.fillHeight: true
+        active: true
         sourceComponent: layout.listComponent
     }
 
@@ -45,6 +46,7 @@ RowLayout {
         Layout.minimumWidth: layout.controller.detailsPaneWidth
         Layout.maximumWidth: layout.controller.detailsPaneWidth
         Layout.fillHeight: true
+        active: layout.controller.detailsRendered
         sourceComponent: layout.detailsComponent
     }
 }

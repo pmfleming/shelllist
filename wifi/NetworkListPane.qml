@@ -13,10 +13,7 @@ Item {
     Layout.fillWidth: true
     Layout.fillHeight: true
 
-    function focusTop() {
-        controller.selectedIndex = 0;
-        listFrame.focusTop();
-    }
+    function focusTop() { listFrame.focusTop(); }
 
     Column {
         anchors.fill: parent
@@ -29,6 +26,7 @@ Item {
             width: parent.width
             height: parent.height - statusPanel.height - parent.spacing
             uiScale: pane.uiScale
+            controller: pane.controller
             resultModel: pane.controller.powered ? pane.controller.filteredResultsModel : null
             selectedIndex: pane.controller.selectedIndex
             emptyText: pane.controller.powered ? "No Wi-Fi networks" : "Wi-Fi is off"
@@ -47,15 +45,8 @@ Item {
                     detailsOpen: pane.controller.detailsOpen
                     connecting: pane.controller.connection.isConnecting(networkRow.result.payload)
                     progressTick: pane.controller.connection.progressTick
-                    onPicked: function (rowIndex) {
-                        pane.controller.selectedIndex = rowIndex;
-                        listFrame.focusList();
-                    }
-                    onDetailsToggled: function (rowIndex) {
-                        pane.controller.selectedIndex = rowIndex;
-                        pane.controller.navigation.toggleDetails();
-                        listFrame.focusList();
-                    }
+                    onPicked: function (rowIndex) { listFrame.pick(rowIndex); }
+                    onDetailsToggled: function (rowIndex) { listFrame.toggleDetails(rowIndex); }
                     onPrimaryRequested: pane.controller.primarySelected()
                 }
             }

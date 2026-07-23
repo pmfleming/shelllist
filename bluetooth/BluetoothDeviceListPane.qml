@@ -19,10 +19,7 @@ ColumnLayout {
     function focusSearch() {
         header.focusSearch();
     }
-    function focusTop() {
-        controller.selectedIndex = 0;
-        listFrame.focusTop();
-    }
+    function focusTop() { listFrame.focusTop(); }
 
     Ui.ChooserHeader {
         id: header
@@ -60,6 +57,7 @@ ColumnLayout {
                 width: parent.width
                 height: parent.height - statusPanel.height - parent.spacing
                 uiScale: pane.uiScale
+                controller: pane.controller
                 resultModel: pane.controller.filteredResultsModel
                 selectedIndex: pane.controller.selectedIndex
                 emptyText: pane.controller.powered ? "No Bluetooth devices" : "Bluetooth is off"
@@ -73,15 +71,8 @@ ColumnLayout {
                         selectedIndex: pane.controller.selectedIndex
                         selectionFocused: listFrame.listFocused
                         detailsOpen: pane.controller.detailsOpen
-                        onPicked: function (rowIndex) {
-                            pane.controller.selectedIndex = rowIndex;
-                            listFrame.focusList();
-                        }
-                        onDetailsToggled: function (rowIndex) {
-                            pane.controller.selectedIndex = rowIndex;
-                            pane.controller.navigation.toggleDetails();
-                            listFrame.focusList();
-                        }
+                        onPicked: function (rowIndex) { listFrame.pick(rowIndex); }
+                        onDetailsToggled: function (rowIndex) { listFrame.toggleDetails(rowIndex); }
                         onPrimaryRequested: pane.controller.primarySelected()
                     }
                 }

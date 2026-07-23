@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import "WifiPresentation.js" as Presentation
 import "."
 import Shelllist.Ui
 
@@ -9,10 +8,6 @@ Rectangle {
 
     required property WifiController controller
     readonly property var ap: controller.detailAp
-    readonly property string connectionLabel: Presentation.connectionStateLabel(controller, ap)
-    readonly property bool signInRequired: Presentation.connectivityRequiresSignIn(Presentation.activeConnectivity(controller))
-    readonly property color connectionColor: signInRequired ? Theme.warning : Theme.active
-    readonly property string lastSeenLabel: Presentation.lastSeenLabel(ap)
     readonly property real uiScale: Theme.densityScale(height, 0)
     readonly property int sectionSpacing: Math.max(8, Math.round(12 * uiScale))
     readonly property int headerHeight: Math.max(56, Math.round(64 * uiScale))
@@ -42,99 +37,12 @@ Rectangle {
             anchors.fill: parent
             spacing: pane.sectionSpacing
 
-            RowLayout {
+            NetworkDetailsHeader {
                 width: parent.width
                 height: pane.headerHeight
-                spacing: 14
-
-                Item {
-                    Layout.preferredWidth: 58
-                    Layout.preferredHeight: 54
-                    Layout.alignment: Qt.AlignVCenter
-
-                    SignalIcon {
-                        anchors.centerIn: parent
-                        width: Math.round(48 * pane.uiScale)
-                        height: Math.round(40 * pane.uiScale)
-                        level: 3
-                        iconColor: Theme.accent
-                    }
-                }
-
-                Column {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    spacing: 7
-
-                    Text {
-                        width: parent.width
-                        text: Presentation.networkName(pane.ap)
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Math.round(22 * pane.uiScale)
-                        font.bold: true
-                        elide: Text.ElideRight
-                    }
-
-                    Row {
-                        height: 18
-                        spacing: 8
-
-                        Rectangle {
-                            visible: pane.controller.isActive(pane.ap)
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 8
-                            height: 8
-                            radius: width / 2
-                            color: pane.connectionColor
-                        }
-
-                        Text {
-                            visible: pane.connectionLabel.length > 0
-                            height: parent.height
-                            verticalAlignment: Text.AlignVCenter
-                            text: pane.connectionLabel
-                            color: pane.controller.isActive(pane.ap) ? pane.connectionColor : Theme.mutedText
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 12
-                            font.weight: Font.Medium
-                        }
-
-                        Text {
-                            visible: pane.connectionLabel.length > 0 && pane.lastSeenLabel.length > 0
-                            height: parent.height
-                            verticalAlignment: Text.AlignVCenter
-                            text: "/"
-                            color: Theme.subtleText
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 12
-                        }
-
-                        Text {
-                            visible: pane.lastSeenLabel.length > 0
-                            height: parent.height
-                            verticalAlignment: Text.AlignVCenter
-                            text: pane.lastSeenLabel
-                            color: Theme.mutedText
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 12
-                        }
-                    }
-                }
-
-                Item {
-                    Layout.preferredWidth: 156
-                    Layout.preferredHeight: pane.detailControlHeight
-                    Layout.alignment: Qt.AlignVCenter
-
-                    NetworkDetailsActions {
-                        anchors.fill: parent
-                        controller: pane.controller
-                        primaryOnly: true
-                        alignRight: true
-                        controlHeight: pane.detailControlHeight
-                    }
-                }
+                controller: pane.controller
+                uiScale: pane.uiScale
+                controlHeight: pane.detailControlHeight
             }
 
             NetworkDetailsActions {
@@ -160,35 +68,17 @@ Rectangle {
                     NumberAnimation { duration: Theme.animationSlow; easing.type: Theme.easingStandard }
                 }
 
-                Column {
+                NetworkDetailCards {
                     enabled: !pane.controller.advanced.open
                     width: parent.width
                     height: parent.height
                     x: -width * tabViewport.advancedTransitionProgress
-                    spacing: pane.sectionSpacing
-
-                    DetailCard {
-                        height: pane.connectionCardHeight
-                        title: "Connection"
-
-                        DetailGrid {
-                            entries: Presentation.connectionDetailRows(pane.controller, pane.ap, Theme.accent).slice(0, 8)
-                        }
-                    }
-
-                    DetailCard {
-                        height: pane.networkCardHeight
-                        title: "Network details"
-
-                        DetailGrid {
-                            entries: Presentation.networkDetailRows(pane.controller, pane.ap).slice(0, 4)
-                        }
-                    }
-
-                    NetworkProfileSettingsCard {
-                        controller: pane.controller
-                        height: pane.profileCardHeight
-                    }
+                    controller: pane.controller
+                    accessPoint: pane.ap
+                    sectionSpacing: pane.sectionSpacing
+                    connectionCardHeight: pane.connectionCardHeight
+                    networkCardHeight: pane.networkCardHeight
+                    profileCardHeight: pane.profileCardHeight
                 }
 
                 AdvancedSettingsPage {
