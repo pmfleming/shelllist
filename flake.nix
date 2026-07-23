@@ -202,7 +202,15 @@
           clipboard = pkgs.writeShellApplication {
             name = "shelllist-clipboard";
             meta = mkMeta "Quickshell clipboard history backed by clip-daemon" "shelllist-clipboard";
-            runtimeInputs = [ pkgs.coreutils pkgs.gawk pkgs.quickshell clipDaemon ];
+            runtimeInputs = [
+              pkgs.bash
+              pkgs.coreutils
+              pkgs.gawk
+              pkgs.grim
+              pkgs.quickshell
+              pkgs.wl-clipboard
+              clipDaemon
+            ];
             text = ''
               config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/clipboard
               export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}

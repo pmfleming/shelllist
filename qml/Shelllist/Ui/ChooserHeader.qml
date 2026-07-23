@@ -14,9 +14,11 @@ RowLayout {
     property bool powerEnabled: true
     property bool refreshEnabled: true
     property bool focusOnCompleted: false
+    property bool iconActionEnabled: false
 
     signal filterEdited(string text)
     signal keyPressed(var event)
+    signal iconClicked
     signal powerRequested
     signal refreshRequested
 
@@ -47,6 +49,8 @@ RowLayout {
         icon: header.signalIcon ? "" : header.icon
         iconColor: header.powered ? Theme.accent : Theme.mutedText
         iconSize: Math.max(Theme.iconSize, header.scaled(Theme.iconSizeLarge))
+        clickable: header.iconActionEnabled
+        onClicked: header.iconClicked()
 
         SignalIcon {
             visible: header.signalIcon

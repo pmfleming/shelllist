@@ -8,6 +8,7 @@ Ui.ChooserController {
     property string sessionId: ""
     property bool targetAvailable: false
     property bool actionInFlight: false
+    property bool screenshotInFlight: false
     property string activeAction: ""
     property string activeOperationId: ""
     property var settings: ({ max_entries: 750, max_favorites: 100, max_entry_bytes: 16777216, capture_paused: false, private_mode: false })
@@ -35,6 +36,7 @@ Ui.ChooserController {
 
     readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
     signal hideRequested
+    signal screenshotRequested
 
     function activateUi(workspaceId) {
         activateUiState(workspaceId);

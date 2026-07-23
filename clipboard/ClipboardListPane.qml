@@ -20,12 +20,14 @@ ColumnLayout {
         uiScale: pane.uiScale
         placeholder: "Search clipboard…"
         icon: "󰅇"
+        iconActionEnabled: !pane.controller.screenshotInFlight
         filterText: pane.controller.filterText
         powered: true
         refreshing: pane.controller.refreshInFlight
         powerEnabled: false
         refreshEnabled: !pane.controller.refreshInFlight
         onFilterEdited: function (text) { pane.controller.filterText = text; }
+        onIconClicked: pane.controller.screenshotRequested()
         onRefreshRequested: pane.controller.refresh()
         onKeyPressed: function (event) { pane.controller.navigation.handleSearchKey(event); }
     }

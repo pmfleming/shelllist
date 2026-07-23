@@ -43,10 +43,17 @@ Ui.ChooserSurface {
         }
     }
 
+    ClipboardScreenshotProcess {
+        id: screenshotProcess
+        controller: content.controller
+        windowHost: content.windowHost
+    }
+
     Connections {
         target: content.controller
         function onFocusSearchRequested() { Qt.callLater(chooser.listItem.focusSearch); }
         function onFocusListTopRequested() { Qt.callLater(chooser.listItem.focusTop); }
+        function onScreenshotRequested() { screenshotProcess.capture(); }
         function onHideRequested() { content.windowHost.closeRequested(); }
     }
 
