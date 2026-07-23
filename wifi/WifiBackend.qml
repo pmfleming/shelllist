@@ -15,11 +15,12 @@ Item {
     readonly property bool listRunning: isPending("networks")
     readonly property bool scanRunning: isPending("scan-start") || controller.scan.requestId.length > 0
     readonly property bool connectStarting: isPending("connect-start")
-    readonly property bool nonConnectRunning: isPending("disconnect") || isPending("profile") || isPending("advanced-load") || isPending("advanced-save") || isPending("advanced-secret") || isPending("secret-provide") || isPending("secret-cancel")
+    readonly property bool nonConnectRunning: isPending("power") || isPending("disconnect") || isPending("profile") || isPending("advanced-load") || isPending("advanced-save") || isPending("advanced-secret") || isPending("secret-provide") || isPending("secret-cancel")
     readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
     readonly property var responseHandlerById: ({
         "networks": function (value) { backend.handleNetworks(value); },
         "scan-start": function (value) { backend.handleScanStart(value); },
+        "power": function (value) { controller.applyPowerResult(Api.apiData(value, "result") || ({})); },
         "connect-start": function (value) { backend.handleConnectStart(value); },
         "disconnect": function (value) { backend.handleDisconnect(value); },
         "advanced-load": function (value) { controller.advanced.applyProfile(Api.apiData(value, "result") || ({})); },
@@ -61,6 +62,7 @@ Item {
 
     function refreshNetworks(refreshCache) { return call("networks", NmApi.methods.wifi_networks, { cached: true, refresh_cache: !!refreshCache }); }
     function startScan() { return call("scan-start", NmApi.methods.wifi_scan, { timeout: 12, cache: true }); }
+    function setPowered(enabled) { return call("power", NmApi.methods.wifi_setEnabled, { enabled: enabled }); }
     function connect(request) { return call("connect-start", NmApi.methods.wifi_connectTarget, request); }
     function disconnect() { return call("disconnect", NmApi.methods.wifi_disconnect, {}); }
     function profile(operation) {
@@ -111,8 +113,8 @@ Item {
     function handleScanStart(envelope) {
         const result = Api.apiResult(envelope, "result") || ({});
         const requestId = result.request_id || "";
-        if (!controller.uiActive && requestId.length > 0) {
-            console.info("shelllist wifi scan cancelled reason=ui-hidden request_id=" + requestId);
+        if ((!controller.uiActive || !controller.powered) && requestId.length > 0) {
+            console.info("shelllist wifi scan cancelled reason=" + (controller.uiActive ? "wifi-off" : "ui-hidden") + " request_id=" + requestId);
             cancel(requestId);
             return;
         }

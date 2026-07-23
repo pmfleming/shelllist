@@ -4,6 +4,7 @@ var protocol = "nm-api";
 var version = 1;
 
 var methods = {
+    wifi_setEnabled: "wifi.setEnabled",
     wifi_networks: "wifi.networks",
     wifi_scan: "wifi.scan",
     wifi_connectTarget: "wifi.connectTarget",

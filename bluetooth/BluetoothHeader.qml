@@ -61,14 +61,13 @@ RowLayout {
         }
     }
 
-    Ui.ActionButton {
+    Ui.ToggleSwitch {
         Layout.preferredWidth: header.scaled(56)
         Layout.preferredHeight: header.scaled(Ui.Theme.controlHeight)
         Layout.alignment: Qt.AlignVCenter
-        label: header.powered ? "ON" : "OFF"
-        tone: header.powered ? "accent" : "normal"
+        checked: header.powered
         enabled: header.powerEnabled
-        onClicked: header.powerRequested()
+        onToggled: header.powerRequested()
     }
 
     Ui.RefreshTile {

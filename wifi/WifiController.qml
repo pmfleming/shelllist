@@ -19,6 +19,7 @@ Item {
     property alias selectedIndex: services.selectedIndex
     property string status: "Loading Wi-Fi networks…"
     property bool detailsOpen: false
+    readonly property bool powered: !activeStatus || activeStatus.enabled !== false
     property real detailsExpansionProgress: detailsOpen ? 1 : 0
     property double statusHoldUntil: 0
     readonly property int closedWindowWidth: Theme.popupClosedWidth
@@ -157,6 +158,23 @@ Item {
 
     function refresh() { scan.refresh(); }
     function maybeRunPendingRefresh() { scan.maybeRefresh(); }
+    function setPower() {
+        if (!beginAction())
+            return;
+        const enabled = !powered;
+        status = enabled ? "Turning Wi-Fi on…" : "Turning Wi-Fi off…";
+        if (!enabled)
+            scan.cancelForPowerOff();
+        backend.setPowered(enabled);
+    }
+    function applyPowerResult(result) {
+        const enabled = !!result.enabled;
+        activeStatus = Object.assign({}, activeStatus || ({}), {
+            enabled: enabled,
+            active: enabled ? !!(activeStatus && activeStatus.active) : false
+        });
+        status = result.message || (enabled ? "Wi-Fi turned on" : "Wi-Fi turned off");
+    }
 
     function handleSecretEvent(event) {
         if (event.event === "requested") {
@@ -226,6 +244,15 @@ Item {
             Qt.callLater(services.share.refresh);
     }
     onActiveStatusChanged: connection.updateVisibleProgress()
+    onPoweredChanged: {
+        if (!powered) {
+            detailsOpen = false;
+            scan.cancelForPowerOff();
+            status = "Wi-Fi is off";
+        } else if (uiActive) {
+            Qt.callLater(scan.refresh);
+        }
+    }
 
     Connections { target: wifi.prompt; function onOpenChanged() { if (!wifi.prompt.open) Qt.callLater(services.navigation.focusSearch); } }
     Behavior on detailsExpansionProgress {

@@ -40,7 +40,7 @@ Item {
 
                 anchors.fill: parent
                 clip: true
-                model: pane.controller.filteredResultsModel
+                model: pane.controller.powered ? pane.controller.filteredResultsModel : null
                 spacing: 0
                 currentIndex: pane.controller.selectedIndex
                 activeFocusOnTab: true
@@ -75,6 +75,12 @@ Item {
                     onConnectRequested: pane.controller.primarySelected()
                 }
             }
+
+            CenteredMessage {
+                visible: !pane.controller.powered
+                text: "Wi-Fi is off"
+                font.pixelSize: Math.max(Theme.fontSizeCaption, Math.round(Theme.fontSizeBody * pane.uiScale))
+            }
         }
 
         Rectangle {
@@ -96,7 +102,7 @@ Item {
                     Layout.preferredWidth: Math.round(18 * pane.uiScale)
                     Layout.preferredHeight: Math.round(16 * pane.uiScale)
                     level: 1
-                    iconColor: Theme.mutedText
+                    iconColor: pane.controller.powered ? Theme.accent : Theme.mutedText
                 }
 
                 Text {

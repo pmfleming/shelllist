@@ -34,6 +34,7 @@ jq -e '
   (.data.fixture.network.portal_hint.auto_open_on_connect | type == "boolean") and
   (.data.fixture.network.key | type == "string") and
   (.data.fixture.network.access_points | type == "array") and
+  (.data.fixture.status.enabled | type == "boolean") and
   (.data.fixture.status.connectivity.state | type == "string") and
   (.data.fixture.status.ip4.dhcp_lease.server_identifier | type == "string") and
   (.data.fixture.status.ip4.dhcp_lease.domain_name | type == "string") and
@@ -59,12 +60,13 @@ jq -e '
   .data.fixtures."wifi-networks.enterprise-required".networks[0].connect_prompt.kind == "enterprise" and
   .data.fixtures."wifi-status.active".status.active == true and
   .data.fixtures."wifi-status.inactive".status.active == false and
+  .data.fixtures."wifi-set-enabled.success".result.enabled == true and
   .data.fixtures."wifi-connect.success".result.status == "connected" and
   .data.fixtures."wifi-connect.success".result.path == "dbus" and
   .data.fixtures."wifi-connect.secret-required".result.reason == "secret-required" and
   .data.fixtures."wifi-scan.stream".events[0].protocol == "nm-api" and
   .data.fixtures."wifi-scan.stream".events[0].stream == "wifi.scan" and
-  .data.fixtures."wifi-profile.share".payload.shareable == true
+  .data.fixtures."wifi-profile.share".result.shareable == true
 ' "$method_actual" >/dev/null
 
 jq -e '
@@ -72,7 +74,7 @@ jq -e '
   .version == 1 and
   .ok == true and
   ([.data.protocol.methods[].name] | contains([
-    "wifi.status", "network.connectivity", "wifi.networks", "wifi.scan",
+    "wifi.status", "wifi.setEnabled", "network.connectivity", "wifi.networks", "wifi.scan",
     "wifi.connectTarget", "wifi.disconnect", "wifi.profile.operation",
     "wifi.secret.capabilities", "wifi.secret.provide"
   ])) and
@@ -88,7 +90,8 @@ jq -r '
   + "var version = " + (.version | tostring) + ";\n\n"
   + "var methods = {\n"
   + ([.data.protocol.methods[]
-      | select(.name == "wifi.networks"
+      | select(.name == "wifi.setEnabled"
+          or .name == "wifi.networks"
           or .name == "wifi.scan"
           or .name == "wifi.connectTarget"
           or .name == "wifi.disconnect"

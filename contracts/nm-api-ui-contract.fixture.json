@@ -216,6 +216,7 @@
           "state": "portal"
         },
         "device_iface": "wlan0",
+        "enabled": true,
         "ip4": {
           "address": "192.0.2.10",
           "dhcp_lease": {

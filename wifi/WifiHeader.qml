@@ -7,11 +7,14 @@ RowLayout {
 
     required property real uiScale
     property string filterText: ""
+    property bool powered: false
     property bool refreshing: false
+    property bool powerEnabled: true
     property bool refreshEnabled: true
 
     signal filterEdited(string text)
     signal keyPressed(var event)
+    signal powerRequested
     signal refreshRequested
 
     Layout.fillWidth: true
@@ -43,7 +46,7 @@ RowLayout {
             width: header.scaled(25)
             height: header.scaled(22)
             level: 3
-            iconColor: Theme.accent
+            iconColor: header.powered ? Theme.accent : Theme.mutedText
         }
     }
 
@@ -69,6 +72,15 @@ RowLayout {
             font.family: Theme.iconFontFamily
             font.pixelSize: Math.max(Theme.fontSizeLabel, header.scaled(Theme.iconSize))
         }
+    }
+
+    ToggleSwitch {
+        Layout.preferredWidth: header.scaled(56)
+        Layout.preferredHeight: header.scaled(Theme.controlHeight)
+        Layout.alignment: Qt.AlignVCenter
+        checked: header.powered
+        enabled: header.powerEnabled
+        onToggled: header.powerRequested()
     }
 
     RefreshTile {

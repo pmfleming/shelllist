@@ -44,11 +44,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784454521,
-        "narHash": "sha256-/mCHqsAn+sU6vBmQ238PcKkSSEvOjCRFu4uDgNmoShk=",
+        "lastModified": 1784814667,
+        "narHash": "sha256-PKcOVF8WEzt1qujEWe7Asrx6GjuTpZy2xgvfRz7zYgI=",
         "ref": "main",
-        "rev": "40ce1e960dd67fdd2de3f9b2c7184e0d4f68ae45",
-        "revCount": 43,
+        "rev": "4a1440f9aebe183c44edb8a3a77c122dec639bbe",
+        "revCount": 48,
         "type": "git",
         "url": "file:../nm-daemon"
       },

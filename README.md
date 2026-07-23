@@ -81,7 +81,7 @@ Shelllist consumes live Bluetooth, scan, operation, audio, pairing and OBEX subs
 Shelllist currently supports:
 
 - cached network snapshots with Shelllist-owned cache refresh while the Wi-Fi UI is visible;
-- active Wi-Fi status, IP/connectivity detail display, and selected-network details;
+- Wi-Fi radio power control, active status, IP/connectivity detail display, and selected-network details;
 - connection to saved, open, password-protected, hidden, and supported enterprise networks;
 - asynchronous `wifi.connect` progress/completion events by `request_id`;
 - NetworkManager SecretAgent prompts through `wifi.secret` events;
@@ -151,6 +151,7 @@ The UI consumes `nm-api` protocol v1 envelopes:
 
 Current D-Bus methods used by the UI:
 
+- `wifi.setEnabled` for Wi-Fi radio power control;
 - `wifi.networks` with cached-list parameters;
 - `wifi.scan`, returning a scan `request_id`;
 - `wifi.connectTarget` with the daemon-provided opaque network `key`, returning a connect `request_id`;

@@ -21,27 +21,27 @@ Rectangle {
 
     Shortcut {
         sequence: "F5"
-        enabled: !content.controller.prompt.open && !content.controller.actionInFlight
+        enabled: content.controller.powered && !content.controller.prompt.open && !content.controller.actionInFlight
         autoRepeat: false
         onActivated: content.controller.refresh()
     }
 
     Shortcut {
         sequence: "F6"
-        enabled: !content.controller.prompt.open && !content.controller.advanced.open
+        enabled: content.controller.powered && !content.controller.prompt.open && !content.controller.advanced.open
         autoRepeat: false
         onActivated: content.controller.openHiddenNetworkPrompt()
     }
 
     Shortcut {
         sequence: "F7"
-        enabled: !content.controller.prompt.open && !content.controller.advanced.open
+        enabled: content.controller.powered && !content.controller.prompt.open && !content.controller.advanced.open
         onActivated: content.controller.advanced.openSettings("security")
     }
 
     Shortcut {
         sequence: "F8"
-        enabled: !content.controller.prompt.open && !content.controller.advanced.open
+        enabled: content.controller.powered && !content.controller.prompt.open && !content.controller.advanced.open
         onActivated: content.controller.advanced.openSettings("hardware")
     }
 
@@ -89,13 +89,16 @@ Rectangle {
                 id: header
                 uiScale: content.uiScale
                 filterText: content.controller.filterText
+                powered: content.controller.powered
                 refreshing: content.controller.scanInFlight
-                refreshEnabled: !content.controller.actionInFlight
+                powerEnabled: !content.controller.actionInFlight && !content.controller.prompt.open
+                refreshEnabled: content.controller.powered && !content.controller.actionInFlight
                 onFilterEdited: function (text) {
                     content.controller.filterText = text;
                     content.controller.selectedIndex = 0;
                 }
                 onKeyPressed: function (event) { content.controller.navigation.handleSearchKey(event); }
+                onPowerRequested: content.controller.setPower()
                 onRefreshRequested: content.controller.refresh()
             }
 

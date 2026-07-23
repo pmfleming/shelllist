@@ -18,6 +18,13 @@ Item {
             console.warn("shelllist wifi scan cancellation failed request_id=" + requestId);
         requestId = ""; snapshotSeen = false; refreshTimer.stop();
     }
+    function cancelForPowerOff() {
+        pendingRefresh = false;
+        if (requestId.length > 0 && !backend.cancel(requestId))
+            console.warn("shelllist wifi scan cancellation failed request_id=" + requestId);
+        requestId = "";
+        snapshotSeen = false;
+    }
     function handleTransportFailure() {
         const lostRequestId = requestId;
         requestId = "";
@@ -28,6 +35,11 @@ Item {
     }
     function refresh() {
         if (!controller.uiActive) { pendingRefresh = false; return; }
+        if (!controller.powered) {
+            pendingRefresh = false;
+            controller.status = "Wi-Fi is off";
+            return;
+        }
         if (controller.connection.running) {
             pendingRefresh = true;
             controller.setBackgroundStatus("Connection in progress; delaying Wi-Fi scan refresh…");
@@ -45,7 +57,7 @@ Item {
         }
     }
     function maybeRefresh() {
-        if (controller.uiActive && pendingRefresh && !controller.connection.running && !running) Qt.callLater(refresh);
+        if (controller.uiActive && controller.powered && pendingRefresh && !controller.connection.running && !running) Qt.callLater(refresh);
     }
     function handleWatchdog() {
         if (!controller.uiActive || requestId.length === 0) return;
