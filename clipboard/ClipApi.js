@@ -39,6 +39,22 @@ function actionsForKind(kind) {
     return ["copy"];
 }
 
+var actionLabels = {
+    paste: "Paste", copy: "Copy", edit: "Edit", "open-url": "Open URL",
+    "image-as-file": "Save as file", annotate: "Annotate",
+    "open-file": "Open file", "reveal-file": "Reveal file"
+};
+
+function actionDescriptorsForKind(kind) {
+    return actionsForKind(kind).map(function (actionId) {
+        return {
+            id: actionId,
+            label: actionLabels[actionId],
+            role: actionId === "paste" ? "default" : "secondary"
+        };
+    });
+}
+
 function compatibilityError(envelope) {
     return (!envelope || envelope.protocol !== "clip-api" || envelope.version !== 1)
         ? "clip-daemon returned an incompatible response" : "";

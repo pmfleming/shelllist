@@ -24,4 +24,12 @@ expect("html", ["paste", "copy", "edit"]);
 expect("json", ["paste", "copy", "edit"]);
 expect("color", ["paste", "copy", "edit"]);
 expect("binary", ["copy"]);
+
+for (const kind of ["text", "link", "image", "files", "binary"]) {
+    const descriptors = context.actionDescriptorsForKind(kind);
+    if (descriptors.some(action => !action.id || !action.label || !["default", "secondary"].includes(action.role)))
+        throw new Error(`${kind}: invalid action descriptor`);
+    if (descriptors.map(action => action.id).join(",") !== context.actionsForKind(kind).join(","))
+        throw new Error(`${kind}: descriptor IDs differ from action matrix`);
+}
 console.log("clipboard action matrix checks passed");

@@ -42,7 +42,7 @@ Core.Provider {
             icon: iconFor(kind), score: scoreFor(entry),
             keywords: [preview, entry.mime || "", kind], badges: badgesFor(entry),
             primaryActionId: kind === "binary" ? "copy" : "paste",
-            actions: ClipApi.actionsForKind(kind),
+            actions: ClipApi.actionDescriptorsForKind(kind),
             preview: { kind: "clipboard-entry", available: true },
             state: { active: false, busy: false }, payload: entry
         });

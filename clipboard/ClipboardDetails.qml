@@ -12,6 +12,7 @@ Rectangle {
     readonly property var selected: controller.selectedResult || ({})
     readonly property var entry: controller.details ? controller.details.entry : ({})
     readonly property var files: controller.details ? controller.details.files : []
+    readonly property var firstFile: files.length > 0 ? files[0] : ({})
     readonly property int headerHeight: Math.max(58, Math.round(66 * uiScale))
     readonly property int toolbarHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     readonly property bool textEditable: ["text", "link", "html", "json", "color"].indexOf(entry.kind) >= 0
@@ -89,11 +90,11 @@ Rectangle {
                 presentation: { group: "toolbar", tone: "normal", width: 88 }
             }, {
                 id: "open-file", label: "Open", icon: "󰷏", shortcut: "",
-                visible: pane.files.length > 0, enabled: !pane.controller.actionInFlight && pane.files[0].exists,
+                visible: pane.files.length > 0, enabled: !pane.controller.actionInFlight && !!pane.firstFile.exists,
                 presentation: { group: "toolbar", tone: "normal", width: 88 }
             }, {
                 id: "reveal-file", label: "Reveal", icon: "󰉋", shortcut: "",
-                visible: pane.files.length > 0, enabled: !pane.controller.actionInFlight && pane.files[0].exists,
+                visible: pane.files.length > 0, enabled: !pane.controller.actionInFlight && !!pane.firstFile.exists,
                 presentation: { group: "toolbar", tone: "normal", width: 96 }
             }, {
                 id: "image-as-file", label: "As file", icon: "󰈔", shortcut: "Shift+↵",
