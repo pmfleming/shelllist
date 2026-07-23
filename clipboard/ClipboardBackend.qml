@@ -42,6 +42,10 @@ Item {
             controller.applyDetails(id, data.entry);
         else if (data.thumbnail)
             controller.applyThumbnail(id, data.thumbnail);
+        else if (data.operation)
+            controller.applyOperation(id, data.operation);
+        else if (data.challenge)
+            controller.applyWipeChallenge(data.challenge);
     }
     function query(id, text, generation, limit) {
         return call(id, ClipApi.methods.historyQuery, { query: text, generation: generation, limit: limit });
@@ -53,6 +57,17 @@ Item {
         return call(id, ClipApi.methods.entryThumbnail, { entry_id: entry.id, revision: entry.revision, edge: 640 });
     }
     function beginSession() { return call("session-begin", ClipApi.methods.sessionBegin, {}); }
+    function hideSession(sessionId) { return call("session-hidden", ClipApi.methods.sessionHidden, { session_id: sessionId }); }
+    function endSession(sessionId) { return call("session-end", ClipApi.methods.sessionEnd, { session_id: sessionId }); }
+    function action(id, entry, actionName, sessionId) {
+        return call(id, ClipApi.methods.entryAction, {
+            entry_id: entry.id, revision: entry.revision, action: actionName, session_id: sessionId || null
+        });
+    }
+    function prepareWipe() { return call("wipe-prepare", ClipApi.methods.wipePrepare, {}); }
+    function commitWipe(challengeId) {
+        return call("wipe-commit", ClipApi.methods.wipeCommit, { challenge_id: challengeId, response: "WIPE" });
+    }
     function cancelRequest(requestId) { client.cancel("cancel-" + requestId, requestId); }
 
     ClipDaemonClient {

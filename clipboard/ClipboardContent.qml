@@ -25,7 +25,10 @@ Rectangle {
                 content.windowHost.closeRequested();
         }
     }
-    Shortcut { sequence: "F5"; onActivated: content.controller.refresh() }
+    Shortcut { sequence: "F5"; enabled: !content.controller.actionInFlight; onActivated: content.controller.refresh() }
+    Shortcut { sequence: "Return"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.pasteSelected() }
+    Shortcut { sequence: "Ctrl+Return"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.copySelected() }
+    Shortcut { sequence: "Shift+Return"; enabled: content.controller.selectedEntry && content.controller.selectedEntry.kind === "image" && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.imageAsFile() }
 
     Ui.SplitChooserLayout {
         id: chooser
@@ -42,5 +45,16 @@ Rectangle {
         target: content.controller
         function onFocusSearchRequested() { Qt.callLater(chooser.listItem.focusSearch); }
         function onFocusListTopRequested() { Qt.callLater(chooser.listItem.focusTop); }
+        function onHideRequested() { content.windowHost.closeRequested(); }
+    }
+
+    Ui.ConfirmationDialog {
+        visible: !!content.controller.wipeChallenge
+        z: 120
+        title: "Clear clipboard history?"
+        detail: "This permanently removes regular and favorite entries plus generated previews."
+        acceptLabel: "Clear all"
+        onAccepted: content.controller.confirmWipe()
+        onCancelled: content.controller.cancelWipe()
     }
 }

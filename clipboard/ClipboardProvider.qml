@@ -10,7 +10,7 @@ Core.Provider {
     icon: "󰅇"
     priority: 100
     prefixes: ["clipboard:", "clip:"]
-    capabilities: ({ query: true, actions: false, preview: true, subscriptions: true })
+    capabilities: ({ query: true, actions: true, preview: true, subscriptions: true })
 
     function iconFor(kind) {
         const icons = {
@@ -36,8 +36,8 @@ Core.Provider {
             score: entry.current ? 2000 : (entry.favorite ? 1000 : 100),
             keywords: [preview, entry.mime || "", kind],
             badges: entry.current ? ["current"] : (entry.favorite ? ["favorite"] : []),
-            primaryActionId: "",
-            actions: [],
+            primaryActionId: "paste",
+            actions: ["paste", "copy"],
             preview: { kind: "clipboard-entry", available: true },
             state: { active: false, busy: false },
             payload: entry

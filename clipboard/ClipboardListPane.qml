@@ -88,6 +88,17 @@ ColumnLayout {
         }
     }
 
+    Ui.ActionToolbar {
+        Layout.fillWidth: true
+        actions: [{
+            id: "wipe", label: "Clear history", icon: "󰆴", shortcut: "",
+            visible: true, enabled: !pane.controller.actionInFlight,
+            presentation: { group: "toolbar", tone: "danger", width: 132 }
+        }]
+        alignRight: false
+        onTriggered: pane.controller.requestWipe()
+    }
+
     Ui.StatusPanel {
         Layout.fillWidth: true
         uiScale: pane.uiScale

@@ -68,14 +68,36 @@ Rectangle {
             width: parent.width
             height: pane.toolbarHeight
             actions: [{
+                id: "paste", label: pane.controller.targetAvailable ? "Paste" : "Copy", icon: "󰆒", shortcut: "Enter",
+                visible: true, enabled: !pane.controller.actionInFlight,
+                presentation: { group: "toolbar", tone: "active", width: 104 }
+            }, {
+                id: "copy", label: "Copy", icon: "󰆏", shortcut: "Ctrl+↵",
+                visible: true, enabled: !pane.controller.actionInFlight,
+                presentation: { group: "toolbar", tone: "normal", width: 96 }
+            }, {
+                id: "image-as-file", label: "As file", icon: "󰈔", shortcut: "Shift+↵",
+                visible: pane.entry.kind === "image", enabled: !pane.controller.actionInFlight,
+                presentation: { group: "toolbar", tone: "normal", width: 106 }
+            }, {
+                id: "annotate", label: "Annotate", icon: "󰏫", shortcut: "",
+                visible: pane.entry.kind === "image", enabled: !pane.controller.actionInFlight,
+                presentation: { group: "toolbar", tone: "normal", width: 112 }
+            }, {
                 id: "close-details", label: "Back", icon: "󰁍", shortcut: "Left",
                 visible: true, enabled: true,
-                presentation: { group: "toolbar", tone: "normal", width: 104 }
+                presentation: { group: "toolbar", tone: "normal", width: 92 }
             }]
             group: "toolbar"
             alignRight: false
             controlHeight: pane.toolbarHeight
-            onTriggered: pane.controller.closeDetails()
+            onTriggered: function (actionId) {
+                if (actionId === "paste") pane.controller.pasteSelected();
+                else if (actionId === "copy") pane.controller.copySelected();
+                else if (actionId === "image-as-file") pane.controller.imageAsFile();
+                else if (actionId === "annotate") pane.controller.annotateImage();
+                else pane.controller.closeDetails();
+            }
         }
 
         Item {

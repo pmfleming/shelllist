@@ -9,6 +9,10 @@ Item {
     property string currentWorkspaceId: ""
     property string status: "Loading clipboard history…"
     property string sessionId: ""
+    property bool targetAvailable: false
+    property bool actionInFlight: false
+    property string activeAction: ""
+    property var wipeChallenge: null
     property bool detailsOpen: false
     property bool detailsLoading: false
     property string detailsError: ""
@@ -42,6 +46,7 @@ Item {
 
     signal focusSearchRequested
     signal focusListTopRequested
+    signal hideRequested
 
     function activateUi(workspaceId) {
         uiActive = true;
@@ -50,7 +55,11 @@ Item {
         refresh();
     }
     function deactivateUi() {
+        if (sessionId.length > 0)
+            backend.endSession(sessionId);
         uiActive = false;
+        sessionId = "";
+        targetAvailable = false;
         detailsOpen = false;
         clearDetails();
     }
@@ -74,7 +83,48 @@ Item {
         if (detailsOpen)
             loadDetails();
     }
-    function applySession(session) { sessionId = session.id || ""; }
+    function applySession(session) {
+        sessionId = session.state === "hidden" || session.state === "ended" ? "" : (session.id || "");
+        targetAvailable = session.target_available === true;
+        if (session.state === "hidden")
+            hideRequested();
+    }
+    function runAction(actionName) {
+        if (!selectedEntry || actionInFlight)
+            return;
+        actionInFlight = true;
+        activeAction = actionName;
+        backend.action("action-" + actionName, selectedEntry, actionName, sessionId);
+    }
+    function copySelected() { runAction("copy"); }
+    function pasteSelected() { runAction("paste"); }
+    function imageAsFile() { runAction("image-as-file"); }
+    function annotateImage() { runAction("annotate"); }
+    function applyOperation(id, operation) {
+        actionInFlight = false;
+        activeAction = "";
+        status = operation.message || "Clipboard operation completed";
+        if (operation.action === "paste" && operation.status === "paste-prepared") {
+            backend.hideSession(sessionId);
+            return;
+        }
+        if (operation.action === "wipe") {
+            wipeChallenge = null;
+            closeDetails();
+            scheduleRefresh();
+        } else if (operation.action === "copy" || operation.action === "image-as-file") {
+            scheduleRefresh();
+        }
+    }
+    function requestWipe() { if (!actionInFlight) backend.prepareWipe(); }
+    function applyWipeChallenge(challenge) { wipeChallenge = challenge; }
+    function cancelWipe() { wipeChallenge = null; }
+    function confirmWipe() {
+        if (!wipeChallenge)
+            return;
+        actionInFlight = true;
+        backend.commitWipe(wipeChallenge.id);
+    }
     function openDetails() {
         if (!hasSelection)
             return;
@@ -113,6 +163,10 @@ Item {
         thumbnail = value;
     }
     function handleFailure(id, message) {
+        if (id.indexOf("action-") === 0 || id.indexOf("wipe-") === 0) {
+            actionInFlight = false;
+            activeAction = "";
+        }
         if (id === results.activeQueryId) {
             results.clear();
             status = message;
