@@ -26,6 +26,19 @@ var methods = {
     wipeCommit: "clipboard.history.wipe.commit"
 };
 
+function actionsForKind(kind) {
+    const common = ["paste", "copy"];
+    if (["text", "html", "json", "color"].indexOf(kind) >= 0)
+        return common.concat(["edit"]);
+    if (kind === "link")
+        return common.concat(["edit", "open-url"]);
+    if (kind === "image")
+        return common.concat(["image-as-file", "annotate"]);
+    if (kind === "files")
+        return common.concat(["open-file", "reveal-file"]);
+    return ["copy"];
+}
+
 function compatibilityError(envelope) {
     return (!envelope || envelope.protocol !== "clip-api" || envelope.version !== 1)
         ? "clip-daemon returned an incompatible response" : "";

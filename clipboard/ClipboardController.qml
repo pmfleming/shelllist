@@ -21,6 +21,10 @@ Item {
     property string detailsError: ""
     property var details: null
     property var thumbnail: null
+    property bool editingText: false
+    property string editId: ""
+    property string editDraft: ""
+    property int editMaxBytes: 0
     property var currentEntry: null
     property int detailSequence: 0
     property alias filterText: results.queryText
@@ -65,6 +69,8 @@ Item {
         sessionId = "";
         targetAvailable = false;
         detailsOpen = false;
+        if (editingText)
+            cancelEdit();
         clearDetails();
     }
     function refresh() {
@@ -93,17 +99,58 @@ Item {
         if (session.state === "hidden")
             hideRequested();
     }
-    function runAction(actionName) {
+    function runAction(actionName, fileIndex) {
         if (!selectedEntry || actionInFlight)
             return;
         actionInFlight = true;
         activeAction = actionName;
-        backend.action("action-" + actionName, selectedEntry, actionName, sessionId);
+        backend.action("action-" + actionName, selectedEntry, actionName, sessionId, fileIndex);
     }
     function copySelected() { runAction("copy"); }
     function pasteSelected() { runAction("paste"); }
     function imageAsFile() { runAction("image-as-file"); }
     function annotateImage() { runAction("annotate"); }
+    function openUrl() { runAction("open-url"); }
+    function openFile(index) { runAction("open-file", index || 0); }
+    function revealFile(index) { runAction("reveal-file", index || 0); }
+    function beginEdit() {
+        if (selectedEntry && !actionInFlight)
+            backend.beginEdit(selectedEntry);
+    }
+    function applyEdit(id, edit) {
+        if (id === "edit-begin") {
+            editId = edit.id || "";
+            editDraft = edit.value || "";
+            editMaxBytes = edit.max_bytes || 0;
+            editingText = editId.length > 0;
+        } else if (id === "edit-cancel") {
+            editingText = false;
+            editId = "";
+        }
+    }
+    function commitEdit() {
+        if (editingText && editId.length > 0) {
+            actionInFlight = true;
+            activeAction = "edit";
+            backend.commitEdit(editId, editDraft);
+        }
+    }
+    function cancelEdit() {
+        if (editId.length > 0)
+            backend.cancelEdit(editId);
+        editingText = false;
+        editId = "";
+        editDraft = "";
+    }
+    function applyEditCommit(entry) {
+        actionInFlight = false;
+        activeAction = "";
+        editingText = false;
+        editId = "";
+        status = "Clipboard entry updated";
+        details = null;
+        scheduleRefresh();
+    }
     function toggleFavorite() { runAction(selectedEntry && selectedEntry.favorite ? "unfavorite" : "favorite"); }
     function pinCurrent() { runAction("pin-current"); }
     function requestDelete() { if (selectedEntry) deleteConfirmationOpen = true; }
@@ -168,6 +215,10 @@ Item {
     function closeDetails() { detailsOpen = false; }
     function toggleDetails() { detailsOpen ? closeDetails() : openDetails(); }
     function clearDetails() {
+        editingText = false;
+        editId = "";
+        editDraft = "";
+        editMaxBytes = 0;
         details = null;
         thumbnail = null;
         detailsError = "";
@@ -197,10 +248,14 @@ Item {
         thumbnail = value;
     }
     function handleFailure(id, message) {
-        if (id.indexOf("action-") === 0 || id.indexOf("wipe-") === 0) {
+        if (id.indexOf("action-") === 0 || id.indexOf("wipe-") === 0 || id.indexOf("edit-") === 0) {
             actionInFlight = false;
             activeAction = "";
             activeOperationId = "";
+            if (id === "edit-commit") {
+                editingText = false;
+                editId = "";
+            }
         }
         if (id === results.activeQueryId) {
             results.clear();
@@ -225,6 +280,7 @@ Item {
     onFilterTextChanged: if (uiActive) searchTimer.restart()
     onSelectedResultChanged: {
         deleteConfirmationOpen = false;
+        if (editingText) cancelEdit();
         if (detailsOpen) loadDetails();
     }
     Behavior on detailsExpansionProgress {

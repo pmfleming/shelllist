@@ -38,6 +38,8 @@ Item {
             controller.applyHistory(id, data.history);
         else if (data.session)
             controller.applySession(data.session);
+        else if (data.entry && id === "edit-commit")
+            controller.applyEditCommit(data.entry);
         else if (data.entry)
             controller.applyDetails(id, data.entry);
         else if (data.thumbnail)
@@ -46,6 +48,8 @@ Item {
             controller.applyOperation(id, data.operation);
         else if (data.challenge)
             controller.applyWipeChallenge(data.challenge);
+        else if (data.edit)
+            controller.applyEdit(id, data.edit);
         if (data.settings)
             controller.applySettings(data.settings);
         if (data.capture)
@@ -63,10 +67,20 @@ Item {
     function beginSession() { return call("session-begin", ClipApi.methods.sessionBegin, {}); }
     function hideSession(sessionId) { return call("session-hidden", ClipApi.methods.sessionHidden, { session_id: sessionId }); }
     function endSession(sessionId) { return call("session-end", ClipApi.methods.sessionEnd, { session_id: sessionId }); }
-    function action(id, entry, actionName, sessionId) {
+    function action(id, entry, actionName, sessionId, fileIndex) {
         return call(id, ClipApi.methods.entryAction, {
-            entry_id: entry.id, revision: entry.revision, action: actionName, session_id: sessionId || null
+            entry_id: entry.id, revision: entry.revision, action: actionName,
+            session_id: sessionId || null, file_index: fileIndex === undefined ? null : fileIndex
         });
+    }
+    function beginEdit(entry) {
+        return call("edit-begin", ClipApi.methods.editBegin, { entry_id: entry.id, revision: entry.revision });
+    }
+    function commitEdit(editId, value) {
+        return call("edit-commit", ClipApi.methods.editCommit, { edit_id: editId, value: value });
+    }
+    function cancelEdit(editId) {
+        return call("edit-cancel", ClipApi.methods.editCancel, { edit_id: editId });
     }
     function getSettings() { return call("settings-get", ClipApi.methods.settingsGet, {}); }
     function updateSettings(values) { return call("settings-update", ClipApi.methods.settingsUpdate, values); }

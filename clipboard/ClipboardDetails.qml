@@ -15,6 +15,7 @@ Rectangle {
     readonly property var imageFacts: controller.details ? controller.details.image : null
     readonly property int headerHeight: Math.max(58, Math.round(66 * uiScale))
     readonly property int toolbarHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
+    readonly property bool textEditable: ["text", "link", "html", "json", "color"].indexOf(entry.kind) >= 0
 
     color: "transparent"
     clip: true
@@ -69,11 +70,31 @@ Rectangle {
             height: pane.toolbarHeight
             actions: [{
                 id: "paste", label: pane.controller.targetAvailable ? "Paste" : "Copy", icon: "󰆒", shortcut: "Enter",
-                visible: true, enabled: !pane.controller.actionInFlight,
+                visible: pane.entry.kind !== "binary", enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: "active", width: 104 }
             }, {
                 id: "copy", label: "Copy", icon: "󰆏", shortcut: "Ctrl+↵",
                 visible: true, enabled: !pane.controller.actionInFlight,
+                presentation: { group: "toolbar", tone: "normal", width: 96 }
+            }, {
+                id: "edit", label: pane.controller.editingText ? "Save" : "Edit", icon: "󰏫", shortcut: "",
+                visible: pane.textEditable, enabled: !pane.controller.actionInFlight,
+                presentation: { group: "toolbar", tone: pane.controller.editingText ? "active" : "normal", width: 88 }
+            }, {
+                id: "cancel-edit", label: "Cancel", icon: "󰜺", shortcut: "Esc",
+                visible: pane.controller.editingText, enabled: !pane.controller.actionInFlight,
+                presentation: { group: "toolbar", tone: "normal", width: 92 }
+            }, {
+                id: "open-url", label: "Open", icon: "󰌷", shortcut: "",
+                visible: pane.entry.kind === "link" && !pane.controller.editingText, enabled: !pane.controller.actionInFlight,
+                presentation: { group: "toolbar", tone: "normal", width: 88 }
+            }, {
+                id: "open-file", label: "Open", icon: "󰷏", shortcut: "",
+                visible: pane.files.length > 0, enabled: !pane.controller.actionInFlight && pane.files[0].exists,
+                presentation: { group: "toolbar", tone: "normal", width: 88 }
+            }, {
+                id: "reveal-file", label: "Reveal", icon: "󰉋", shortcut: "",
+                visible: pane.files.length > 0, enabled: !pane.controller.actionInFlight && pane.files[0].exists,
                 presentation: { group: "toolbar", tone: "normal", width: 96 }
             }, {
                 id: "image-as-file", label: "As file", icon: "󰈔", shortcut: "Shift+↵",
@@ -102,6 +123,11 @@ Rectangle {
             onTriggered: function (actionId) {
                 if (actionId === "paste") pane.controller.pasteSelected();
                 else if (actionId === "copy") pane.controller.copySelected();
+                else if (actionId === "edit") pane.controller.editingText ? pane.controller.commitEdit() : pane.controller.beginEdit();
+                else if (actionId === "cancel-edit") pane.controller.cancelEdit();
+                else if (actionId === "open-url") pane.controller.openUrl();
+                else if (actionId === "open-file") pane.controller.openFile(0);
+                else if (actionId === "reveal-file") pane.controller.revealFile(0);
                 else if (actionId === "image-as-file") pane.controller.imageAsFile();
                 else if (actionId === "annotate") pane.controller.annotateImage();
                 else if (actionId === "favorite") pane.controller.toggleFavorite();
@@ -146,14 +172,15 @@ Rectangle {
                     TextEdit {
                         visible: !pane.controller.thumbnail && pane.controller.details && pane.controller.details.text !== null
                         anchors.fill: parent
-                        text: pane.controller.details ? (pane.controller.details.text || "") : ""
+                        text: pane.controller.editingText ? pane.controller.editDraft : (pane.controller.details ? (pane.controller.details.text || "") : "")
                         color: Ui.Theme.text
                         selectionColor: Ui.Theme.selected
                         selectedTextColor: Ui.Theme.text
                         font.family: Ui.Theme.fontFamily
                         font.pixelSize: Ui.Theme.fontSizeBody
-                        readOnly: true
+                        readOnly: !pane.controller.editingText
                         selectByMouse: true
+                        onTextChanged: if (pane.controller.editingText && activeFocus) pane.controller.editDraft = text
                         wrapMode: TextEdit.Wrap
                     }
                     Ui.CenteredMessage {

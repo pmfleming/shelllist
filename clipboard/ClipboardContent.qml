@@ -19,7 +19,9 @@ Rectangle {
     Shortcut {
         sequence: "Escape"
         onActivated: {
-            if (content.controller.activeOperationId.length > 0)
+            if (content.controller.editingText)
+                content.controller.cancelEdit();
+            else if (content.controller.activeOperationId.length > 0)
                 content.controller.cancelActiveOperation();
             else if (content.controller.deleteConfirmationOpen)
                 content.controller.cancelDelete();
@@ -30,7 +32,7 @@ Rectangle {
         }
     }
     Shortcut { sequence: "F5"; enabled: !content.controller.actionInFlight; onActivated: content.controller.refresh() }
-    Shortcut { sequence: "Return"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.pasteSelected() }
+    Shortcut { sequence: "Return"; enabled: content.controller.hasSelection && content.controller.selectedEntry.kind !== "binary" && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.pasteSelected() }
     Shortcut { sequence: "Ctrl+Return"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.copySelected() }
     Shortcut { sequence: "Shift+Return"; enabled: content.controller.selectedEntry && content.controller.selectedEntry.kind === "image" && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.imageAsFile() }
     Shortcut { sequence: "Delete"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.requestDelete() }

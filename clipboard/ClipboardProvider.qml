@@ -1,4 +1,5 @@
 import Shelllist.Core as Core
+import "ClipApi.js" as ClipApi
 
 Core.Provider {
     id: provider
@@ -36,8 +37,8 @@ Core.Provider {
             score: entry.current ? 2000 : (entry.favorite ? 1000 : 100),
             keywords: [preview, entry.mime || "", kind],
             badges: entry.current ? ["current"] : (entry.favorite ? ["favorite"] : []),
-            primaryActionId: "paste",
-            actions: ["paste", "copy"],
+            primaryActionId: kind === "binary" ? "copy" : "paste",
+            actions: ClipApi.actionsForKind(kind),
             preview: { kind: "clipboard-entry", available: true },
             state: { active: false, busy: false },
             payload: entry

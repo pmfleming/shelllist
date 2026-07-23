@@ -558,6 +558,14 @@
             touch $out
           '';
 
+          clipboardActions = pkgs.runCommand "shelllist-clipboard-actions"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-clipboard-actions.js} ${./clipboard/ClipApi.js}
+            touch $out
+          '';
+
           providerModel = pkgs.runCommand "shelllist-provider-model"
             {
               nativeBuildInputs = [ pkgs.nodejs ];
