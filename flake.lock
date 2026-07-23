@@ -21,6 +21,27 @@
         "url": "file:../bt-daemon"
       }
     },
+    "clip-daemon": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784819448,
+        "narHash": "sha256-iFeHmCpnfBhXFFG8IveFFgHDuD+KVFx3Qu7wTTCbGi4=",
+        "ref": "main",
+        "rev": "cd052cd0717b3c3742654d84d6b038f695d02cbb",
+        "revCount": 2,
+        "type": "git",
+        "url": "file:../clip-daemon"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "file:../clip-daemon"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1784011430,
@@ -61,6 +82,7 @@
     "root": {
       "inputs": {
         "bt-daemon": "bt-daemon",
+        "clip-daemon": "clip-daemon",
         "nixpkgs": "nixpkgs",
         "nm-daemon": "nm-daemon"
       }

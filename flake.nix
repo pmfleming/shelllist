@@ -13,6 +13,11 @@
       url = "git+file:../bt-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    clip-daemon = {
+      # Use the sibling daemon during clipboard UI development.
+      url = "git+file:../clip-daemon?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ self, nixpkgs, ... }:
@@ -25,6 +30,7 @@
         let
           nmDaemon = inputs."nm-daemon".packages.${system}.default;
           btDaemon = inputs."bt-daemon".packages.${system}.default;
+          clipDaemon = inputs."clip-daemon".packages.${system}.default;
           nmDaemonConnectParityProbe = inputs."nm-daemon".packages.${system}.connectParityProbe;
           mkMeta = description: mainProgram: {
             inherit description mainProgram;
@@ -189,6 +195,54 @@
                 toggle|open|hide) ensure_daemon && popover_ipc "$action" >/dev/null ;;
                 status) ensure_daemon && popover_ipc status ;;
                 *) echo "Usage: shelllist-bluetooth [daemon|floating|foreground|toggle|open|hide|status]" >&2; exit 2 ;;
+              esac
+            '';
+          };
+
+          clipboard = pkgs.writeShellApplication {
+            name = "shelllist-clipboard";
+            meta = mkMeta "Quickshell clipboard history backed by clip-daemon" "shelllist-clipboard";
+            runtimeInputs = [ pkgs.coreutils pkgs.gawk pkgs.quickshell clipDaemon ];
+            text = ''
+              config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/clipboard
+              export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
+              export QML2_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
+
+              popover_ipc() {
+                quickshell ipc --path "$config_path" --newest call clipboard "$@"
+              }
+              current_daemon_running() {
+                quickshell list --all 2>/dev/null \
+                  | awk -v expected="$config_path/shell.qml" '
+                      /^  Config path:/ {
+                        path = $0
+                        sub(/^  Config path: /, "", path)
+                        if (path == expected) found = 1
+                      }
+                      END { exit(found ? 0 : 1) }
+                    '
+              }
+              ensure_daemon() {
+                if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then return 0; fi
+                SHELLLIST_CLIPBOARD_MODE=popover quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
+                attempts=0
+                while [ "$attempts" -lt 30 ]; do
+                  if popover_ipc ping >/dev/null 2>&1; then return 0; fi
+                  attempts=$((attempts + 1)); sleep 0.05
+                done
+                echo "Shelllist Clipboard popover did not become ready" >&2
+                return 1
+              }
+
+              action=''${1:-toggle}
+              [ "$action" = show ] && action=open
+              case "$action" in
+                daemon) ensure_daemon ;;
+                floating) shift; SHELLLIST_CLIPBOARD_MODE=floating exec quickshell --path "$config_path" "$@" ;;
+                foreground) SHELLLIST_CLIPBOARD_MODE=popover exec quickshell --path "$config_path" --no-duplicate ;;
+                toggle|open|hide) ensure_daemon && popover_ipc "$action" >/dev/null ;;
+                status) ensure_daemon && popover_ipc status ;;
+                *) echo "Usage: shelllist-clipboard [daemon|floating|foreground|toggle|open|hide|status]" >&2; exit 2 ;;
               esac
             '';
           };
@@ -388,7 +442,7 @@
             installPhase = ''
               runHook preInstall
               mkdir -p $out/share/shelllist
-              cp -r wifi bluetooth qml $out/share/shelllist/
+              cp -r wifi bluetooth clipboard qml $out/share/shelllist/
               runHook postInstall
             '';
           };
@@ -398,8 +452,20 @@
         let
           nmDaemon = inputs."nm-daemon".packages.${system}.default;
           btDaemon = inputs."bt-daemon".packages.${system}.default;
+          clipDaemon = inputs."clip-daemon".packages.${system}.default;
         in
         {
+          clipDaemonContract = pkgs.runCommand "shelllist-clip-daemon-contract"
+            {
+              nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
+            } ''
+            ${pkgs.bash}/bin/bash ${./tests/check-clip-api-contract.sh} \
+              ${clipDaemon}/bin/clip-daemon \
+              ${./contracts/clip-api-ui-contract.fixture.json} \
+              ${./clipboard/ClipApi.js}
+            touch $out
+          '';
+
           btDaemonContract = pkgs.runCommand "shelllist-bt-daemon-contract"
             {
               nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
@@ -440,6 +506,7 @@
               ${./qml}/Shelllist/Io/process/*.qml
               ${./qml}/Shelllist/Ui/*.qml
               ${./bluetooth}/*.qml
+              ${./clipboard}/*.qml
               ${./wifi}/*.qml
               ${./wifi}/networkinput/*.qml
               ${./wifi}/process/*.qml
@@ -510,6 +577,11 @@
           type = "app";
           program = "${self.packages.${system}.bluetooth}/bin/shelllist-bluetooth";
           meta.description = "Run the Shelllist Bluetooth Quickshell popup";
+        };
+        clipboard = {
+          type = "app";
+          program = "${self.packages.${system}.clipboard}/bin/shelllist-clipboard";
+          meta.description = "Run the Shelllist Clipboard Quickshell popup";
         };
         connectParityProbe = {
           type = "app";
