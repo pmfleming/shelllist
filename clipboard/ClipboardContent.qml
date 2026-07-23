@@ -19,7 +19,11 @@ Rectangle {
     Shortcut {
         sequence: "Escape"
         onActivated: {
-            if (content.controller.detailsOpen)
+            if (content.controller.activeOperationId.length > 0)
+                content.controller.cancelActiveOperation();
+            else if (content.controller.deleteConfirmationOpen)
+                content.controller.cancelDelete();
+            else if (content.controller.detailsOpen)
                 content.controller.closeDetails();
             else
                 content.windowHost.closeRequested();
@@ -29,6 +33,7 @@ Rectangle {
     Shortcut { sequence: "Return"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.pasteSelected() }
     Shortcut { sequence: "Ctrl+Return"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.copySelected() }
     Shortcut { sequence: "Shift+Return"; enabled: content.controller.selectedEntry && content.controller.selectedEntry.kind === "image" && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.imageAsFile() }
+    Shortcut { sequence: "Delete"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.requestDelete() }
 
     Ui.SplitChooserLayout {
         id: chooser
@@ -46,6 +51,16 @@ Rectangle {
         function onFocusSearchRequested() { Qt.callLater(chooser.listItem.focusSearch); }
         function onFocusListTopRequested() { Qt.callLater(chooser.listItem.focusTop); }
         function onHideRequested() { content.windowHost.closeRequested(); }
+    }
+
+    Ui.ConfirmationDialog {
+        visible: content.controller.deleteConfirmationOpen
+        z: 120
+        title: "Delete clipboard entry?"
+        detail: "This entry will be permanently removed from Ringboard history."
+        acceptLabel: "Delete"
+        onAccepted: content.controller.confirmDelete()
+        onCancelled: content.controller.cancelDelete()
     }
 
     Ui.ConfirmationDialog {

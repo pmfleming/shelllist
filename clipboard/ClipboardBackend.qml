@@ -46,6 +46,10 @@ Item {
             controller.applyOperation(id, data.operation);
         else if (data.challenge)
             controller.applyWipeChallenge(data.challenge);
+        if (data.settings)
+            controller.applySettings(data.settings);
+        if (data.capture)
+            controller.applyCapture(data.capture);
     }
     function query(id, text, generation, limit) {
         return call(id, ClipApi.methods.historyQuery, { query: text, generation: generation, limit: limit });
@@ -64,11 +68,17 @@ Item {
             entry_id: entry.id, revision: entry.revision, action: actionName, session_id: sessionId || null
         });
     }
+    function getSettings() { return call("settings-get", ClipApi.methods.settingsGet, {}); }
+    function updateSettings(values) { return call("settings-update", ClipApi.methods.settingsUpdate, values); }
+    function setPaused(paused, privateMode) {
+        return call("capture-pause", ClipApi.methods.captureSetPaused, { paused: paused, private_mode: privateMode });
+    }
     function prepareWipe() { return call("wipe-prepare", ClipApi.methods.wipePrepare, {}); }
     function commitWipe(challengeId) {
         return call("wipe-commit", ClipApi.methods.wipeCommit, { challenge_id: challengeId, response: "WIPE" });
     }
     function cancelRequest(requestId) { client.cancel("cancel-" + requestId, requestId); }
+    function cancelOperation(operationId) { client.cancel("cancel-operation-" + operationId, operationId); }
 
     ClipDaemonClient {
         id: client
@@ -78,6 +88,8 @@ Item {
             if ((event.stream === ClipApi.streams.history || event.stream === ClipApi.streams.current)
                     && event.event !== "subscribed")
                 backend.controller.scheduleRefresh();
+            else if (event.stream === ClipApi.streams.capture && event.event !== "subscribed")
+                backend.getSettings();
         }
         onTransportFailed: function (message) { backend.controller.handleTransportFailure(message); }
     }

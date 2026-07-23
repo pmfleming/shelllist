@@ -84,6 +84,14 @@ Rectangle {
                 visible: pane.entry.kind === "image", enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: "normal", width: 112 }
             }, {
+                id: "favorite", label: pane.entry.favorite ? "Unpin" : "Pin", icon: "󰓎", shortcut: "",
+                visible: true, enabled: !pane.controller.actionInFlight,
+                presentation: { group: "toolbar", tone: pane.entry.favorite ? "active" : "normal", width: 88 }
+            }, {
+                id: "delete", label: "Delete", icon: "󰆴", shortcut: "Del",
+                visible: true, enabled: !pane.controller.actionInFlight,
+                presentation: { group: "toolbar", tone: "danger", width: 96 }
+            }, {
                 id: "close-details", label: "Back", icon: "󰁍", shortcut: "Left",
                 visible: true, enabled: true,
                 presentation: { group: "toolbar", tone: "normal", width: 92 }
@@ -96,6 +104,8 @@ Rectangle {
                 else if (actionId === "copy") pane.controller.copySelected();
                 else if (actionId === "image-as-file") pane.controller.imageAsFile();
                 else if (actionId === "annotate") pane.controller.annotateImage();
+                else if (actionId === "favorite") pane.controller.toggleFavorite();
+                else if (actionId === "delete") pane.controller.requestDelete();
                 else pane.controller.closeDetails();
             }
         }

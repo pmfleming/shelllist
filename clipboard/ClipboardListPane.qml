@@ -91,12 +91,29 @@ ColumnLayout {
     Ui.ActionToolbar {
         Layout.fillWidth: true
         actions: [{
-            id: "wipe", label: "Clear history", icon: "󰆴", shortcut: "",
+            id: "pause", label: pane.controller.settings.capture_paused ? "Resume" : "Pause", icon: "󰏤", shortcut: "",
             visible: true, enabled: !pane.controller.actionInFlight,
-            presentation: { group: "toolbar", tone: "danger", width: 132 }
+            presentation: { group: "toolbar", tone: pane.controller.settings.capture_paused ? "warning" : "normal", width: 104 }
+        }, {
+            id: "private", label: "Private", icon: "󰌾", shortcut: "",
+            visible: !pane.controller.settings.capture_paused, enabled: !pane.controller.actionInFlight,
+            presentation: { group: "toolbar", tone: "normal", width: 104 }
+        }, {
+            id: "retention", label: pane.controller.settings.max_entries + " kept", icon: "󰓦", shortcut: "",
+            visible: true, enabled: !pane.controller.actionInFlight,
+            presentation: { group: "toolbar", tone: "normal", width: 112 }
+        }, {
+            id: "wipe", label: "Clear", icon: "󰆴", shortcut: "",
+            visible: true, enabled: !pane.controller.actionInFlight,
+            presentation: { group: "toolbar", tone: "danger", width: 94 }
         }]
         alignRight: false
-        onTriggered: pane.controller.requestWipe()
+        onTriggered: function (actionId) {
+            if (actionId === "pause") pane.controller.toggleCapturePaused(false);
+            else if (actionId === "private") pane.controller.toggleCapturePaused(true);
+            else if (actionId === "retention") pane.controller.cycleRetention();
+            else pane.controller.requestWipe();
+        }
     }
 
     Ui.StatusPanel {

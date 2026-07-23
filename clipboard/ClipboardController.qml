@@ -12,7 +12,10 @@ Item {
     property bool targetAvailable: false
     property bool actionInFlight: false
     property string activeAction: ""
+    property string activeOperationId: ""
+    property var settings: ({ max_entries: 750, max_favorites: 100, max_entry_bytes: 16777216, capture_paused: false, private_mode: false })
     property var wipeChallenge: null
+    property bool deleteConfirmationOpen: false
     property bool detailsOpen: false
     property bool detailsLoading: false
     property string detailsError: ""
@@ -52,6 +55,7 @@ Item {
         uiActive = true;
         currentWorkspaceId = workspaceId || "";
         backend.beginSession();
+        backend.getSettings();
         refresh();
     }
     function deactivateUi() {
@@ -100,9 +104,38 @@ Item {
     function pasteSelected() { runAction("paste"); }
     function imageAsFile() { runAction("image-as-file"); }
     function annotateImage() { runAction("annotate"); }
-    function applyOperation(id, operation) {
+    function toggleFavorite() { runAction(selectedEntry && selectedEntry.favorite ? "unfavorite" : "favorite"); }
+    function pinCurrent() { runAction("pin-current"); }
+    function requestDelete() { if (selectedEntry) deleteConfirmationOpen = true; }
+    function cancelDelete() { deleteConfirmationOpen = false; }
+    function confirmDelete() { deleteConfirmationOpen = false; runAction("delete"); }
+    function cancelActiveOperation() {
+        if (activeOperationId.length > 0)
+            backend.cancelOperation(activeOperationId);
         actionInFlight = false;
         activeAction = "";
+        activeOperationId = "";
+        status = "Clipboard operation cancelled";
+    }
+    function toggleCapturePaused(privateMode) {
+        if (!actionInFlight)
+            backend.setPaused(!settings.capture_paused, privateMode === true);
+    }
+    function cycleRetention() {
+        const next = settings.max_entries >= 750 ? 250 : 750;
+        backend.updateSettings({ max_entries: next });
+    }
+    function applySettings(value) {
+        settings = value;
+        status = value.private_mode ? "Private mode · capture paused" : (value.capture_paused ? "Clipboard capture paused" : status);
+    }
+    function applyCapture(value) {
+        status = value.private_mode ? "Private mode enabled" : (value.paused ? "Clipboard capture paused" : "Clipboard capture resumed");
+    }
+    function applyOperation(id, operation) {
+        actionInFlight = operation.status === "started";
+        activeAction = actionInFlight ? operation.action : "";
+        activeOperationId = actionInFlight ? (operation.id || "") : "";
         status = operation.message || "Clipboard operation completed";
         if (operation.action === "paste" && operation.status === "paste-prepared") {
             backend.hideSession(sessionId);
@@ -112,7 +145,8 @@ Item {
             wipeChallenge = null;
             closeDetails();
             scheduleRefresh();
-        } else if (operation.action === "copy" || operation.action === "image-as-file") {
+        } else if (["copy", "image-as-file", "delete", "favorite", "unfavorite", "pin-current"].indexOf(operation.action) >= 0) {
+            if (operation.action === "delete") closeDetails();
             scheduleRefresh();
         }
     }
@@ -166,6 +200,7 @@ Item {
         if (id.indexOf("action-") === 0 || id.indexOf("wipe-") === 0) {
             actionInFlight = false;
             activeAction = "";
+            activeOperationId = "";
         }
         if (id === results.activeQueryId) {
             results.clear();
@@ -188,7 +223,10 @@ Item {
     Timer { id: refreshTimer; interval: 90; repeat: false; onTriggered: if (controller.uiActive) controller.refresh() }
 
     onFilterTextChanged: if (uiActive) searchTimer.restart()
-    onSelectedResultChanged: if (detailsOpen) loadDetails()
+    onSelectedResultChanged: {
+        deleteConfirmationOpen = false;
+        if (detailsOpen) loadDetails();
+    }
     Behavior on detailsExpansionProgress {
         enabled: !Ui.Theme.noAnimations
         NumberAnimation { duration: Ui.Theme.animationNormal; easing.type: Ui.Theme.easingGentle }
