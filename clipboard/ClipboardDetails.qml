@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
-Rectangle {
+Ui.DetailsPane {
     id: pane
 
     required property ClipboardController controller
@@ -31,16 +31,11 @@ Rectangle {
         handlers[actionId]();
     }
 
-    color: "transparent"
-    clip: true
+    chooserController: controller
+    densityScale: uiScale
+    emptyText: "Select a clipboard entry"
 
-    Column {
-        anchors.fill: parent
-        anchors.leftMargin: Math.round(Ui.Theme.spacingLg * pane.uiScale)
-        anchors.rightMargin: Math.round(Ui.Theme.spacingLg * pane.uiScale)
-        spacing: Math.round(Ui.Theme.spacingMd * pane.uiScale)
-
-        RowLayout {
+    RowLayout {
             width: parent.width
             height: pane.headerHeight
             spacing: Ui.Theme.spacingMd
@@ -125,7 +120,7 @@ Rectangle {
 
         Item {
             width: parent.width
-            height: Math.max(0, parent.height - pane.headerHeight - pane.toolbarHeight - 2 * parent.spacing)
+            height: Math.max(0, parent.height - pane.headerHeight - pane.toolbarHeight - 2 * pane.sectionSpacing)
 
             Ui.CenteredMessage {
                 anchors.fill: parent
@@ -140,13 +135,12 @@ Rectangle {
                 font.pixelSize: Ui.Theme.fontSizeBody
             }
 
-            ClipboardDetailCards {
-                anchors.fill: parent
-                visible: !pane.controller.detailsLoading
-                    && pane.controller.detailsError.length === 0
-                    && !!pane.controller.details
-                controller: pane.controller
-            }
+        ClipboardDetailCards {
+            anchors.fill: parent
+            visible: !pane.controller.detailsLoading
+                && pane.controller.detailsError.length === 0
+                && !!pane.controller.details
+            controller: pane.controller
         }
     }
 }

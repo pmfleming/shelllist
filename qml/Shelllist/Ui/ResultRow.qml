@@ -5,17 +5,22 @@ Rectangle {
     id: row
 
     required property int index
-    required property real rowHeight
-    property real uiScale: 1
-    property int selectedIndex: 0
-    property bool selectionFocused: false
-    property bool detailsOpen: false
+    required property ChooserListPane listPane
+    property real rowHeight: listPane.delegateHeight
+    property real uiScale: listPane.densityScale
+    property int selectedIndex: listPane.selectedIndex
+    property bool selectionFocused: listPane.listFocused
+    property bool detailsOpen: listPane.chooserController.detailsOpen
     readonly property bool selected: index === selectedIndex
     default property alias content: rowContent.data
 
     signal picked(int rowIndex)
     signal primaryRequested
     signal detailsToggled(int rowIndex)
+
+    onPicked: function (rowIndex) { listPane.pick(rowIndex); }
+    onPrimaryRequested: listPane.chooserController.primarySelected()
+    onDetailsToggled: function (rowIndex) { listPane.toggleDetails(rowIndex); }
 
     function scaled(value) {
         return Math.round(value * uiScale);

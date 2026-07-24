@@ -3,34 +3,21 @@ import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import "BluetoothFlow.js" as BluetoothFlow
 
-Rectangle {
+Ui.DetailsPane {
     id: pane
 
     required property BluetoothController controller
     required property real uiScale
     readonly property bool editingText: devicePage.editingName || adapterPage.editing
-    readonly property int sectionSpacing: Math.max(Ui.Theme.spacingSm, Math.round(Ui.Theme.spacingMd * uiScale))
     readonly property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     readonly property int footerHeight: actionHeight
 
-    radius: 0
-    color: "transparent"
-    border.color: "transparent"
-    clip: true
+    chooserController: controller
+    densityScale: uiScale
+    emptyText: "Select a Bluetooth device"
 
-    Item {
-        anchors.fill: parent
-        anchors.leftMargin: Math.round(Ui.Theme.spacingLg * pane.uiScale)
-        anchors.rightMargin: Math.round(Ui.Theme.spacingLg * pane.uiScale)
-        anchors.bottomMargin: 2
-
-        Column {
-            visible: pane.controller.hasSelection
-            anchors.fill: parent
-            spacing: pane.sectionSpacing
-
-            RowLayout {
+    RowLayout {
                 width: parent.width
                 height: pane.headerHeight
                 spacing: Ui.Theme.spacingMd
@@ -77,7 +64,7 @@ Rectangle {
 
             Item {
                 width: parent.width
-                height: Math.max(0, parent.height - pane.headerHeight - 2 * pane.actionHeight - 3 * parent.spacing)
+                height: Math.max(0, parent.height - pane.headerHeight - 2 * pane.actionHeight - 3 * pane.sectionSpacing)
                 clip: true
 
                 Item {
@@ -106,23 +93,15 @@ Rectangle {
                 }
             }
 
-            Ui.DetailsTabBar {
-                width: parent.width
-                height: pane.footerHeight
-                selectedValue: pane.controller.detailsTab
-                tabs: [
-                    { value: "device", icon: "󰋜", label: "Device Details" },
-                    { value: "audio", icon: "󰓃", label: "Audio & Transfer" },
-                    { value: "adapter", icon: "󰒓", label: "Adapter" }
-                ]
-                onSelected: function (value) { pane.controller.detailsTab = value; }
-            }
-        }
-
-        Ui.CenteredMessage {
-            visible: !pane.controller.hasSelection
-            text: "Select a Bluetooth device"
-            font.pixelSize: Ui.Theme.fontSizeTitle
-        }
+    Ui.DetailsTabBar {
+        width: parent.width
+        height: pane.footerHeight
+        selectedValue: pane.controller.detailsTab
+        tabs: [
+            { value: "device", icon: "󰋜", label: "Device Details" },
+            { value: "audio", icon: "󰓃", label: "Audio & Transfer" },
+            { value: "adapter", icon: "󰒓", label: "Adapter" }
+        ]
+        onSelected: function (value) { pane.controller.detailsTab = value; }
     }
 }

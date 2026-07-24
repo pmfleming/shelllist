@@ -1,93 +1,37 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
-ColumnLayout {
+Ui.ChooserListPane {
     id: pane
 
     required property BluetoothController controller
     required property real uiScale
-
-    Layout.fillHeight: true
-    spacing: Math.round(10 * uiScale)
-
-    function scaled(value) {
-        return Math.round(value * uiScale);
+    chooserController: controller
+    densityScale: uiScale
+    resultModel: controller.filteredResultsModel
+    emptyText: controller.powered ? "No Bluetooth devices" : "Bluetooth is off"
+    placeholder: "Search devices…"
+    icon: "󰂯"
+    powered: controller.powered
+    refreshing: controller.refreshInFlight
+    busy: controller.actionInFlight
+    powerEnabled: !controller.actionInFlight
+    refreshEnabled: controller.powered && !controller.actionInFlight
+    filterText: controller.filterText
+    status: controller.status
+    listInset: Math.round(12 * uiScale)
+    onFilterEdited: function (text) {
+        controller.filterText = text;
+        controller.selectedIndex = 0;
     }
-    function focusSearch() {
-        header.focusSearch();
-    }
-    function focusTop() { listFrame.focusTop(); }
+    onSearchKeyPressed: function (event) { controller.navigation.handleSearchKey(event); }
+    onListKeyPressed: function (event) { controller.navigation.handleListKey(event); }
+    onPowerRequested: controller.setPower()
+    onRefreshRequested: controller.toggleScan()
 
-    Ui.ChooserHeader {
-        id: header
-        uiScale: pane.uiScale
-        placeholder: "Search devices…"
-        icon: "󰂯"
-        filterText: pane.controller.filterText
-        powered: pane.controller.powered
-        refreshing: pane.controller.refreshInFlight
-        powerEnabled: !pane.controller.actionInFlight
-        refreshEnabled: pane.controller.powered && !pane.controller.actionInFlight
-        onFilterEdited: function (text) {
-            pane.controller.filterText = text;
-            pane.controller.selectedIndex = 0;
-        }
-        onKeyPressed: function (event) {
-            pane.controller.navigation.handleSearchKey(event);
-        }
-        onPowerRequested: pane.controller.setPower()
-        onRefreshRequested: pane.controller.toggleScan()
-    }
-
-    Item {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-
-        Column {
-            anchors.fill: parent
-            anchors.leftMargin: pane.scaled(12)
-            spacing: pane.scaled(6)
-
-            Ui.ResultListFrame {
-                id: listFrame
-
-                width: parent.width
-                height: parent.height - statusPanel.height - parent.spacing
-                uiScale: pane.uiScale
-                controller: pane.controller
-                resultModel: pane.controller.filteredResultsModel
-                selectedIndex: pane.controller.selectedIndex
-                emptyText: pane.controller.powered ? "No Bluetooth devices" : "Bluetooth is off"
-                onKeyPressed: function (event) {
-                    pane.controller.navigation.handleListKey(event);
-                }
-                rowDelegate: Component {
-                    BluetoothDeviceListRow {
-                        rowHeight: listFrame.delegateHeight
-                        uiScale: pane.uiScale
-                        selectedIndex: pane.controller.selectedIndex
-                        selectionFocused: listFrame.listFocused
-                        detailsOpen: pane.controller.detailsOpen
-                        onPicked: function (rowIndex) { listFrame.pick(rowIndex); }
-                        onDetailsToggled: function (rowIndex) { listFrame.toggleDetails(rowIndex); }
-                        onPrimaryRequested: pane.controller.primarySelected()
-                    }
-                }
-            }
-
-            Ui.StatusPanel {
-                id: statusPanel
-
-                width: parent.width
-                uiScale: pane.uiScale
-                status: pane.controller.status
-                icon: "󰂯"
-                powered: pane.controller.powered
-                busy: pane.controller.actionInFlight
-            }
-        }
+    rowDelegate: Component {
+        BluetoothDeviceListRow { listPane: pane }
     }
 }

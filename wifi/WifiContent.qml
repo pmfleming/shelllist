@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import "."
 import Shelllist.Ui
 
@@ -71,37 +70,9 @@ ChooserSurface {
         id: chooser
         controller: content.controller
         listComponent: Component {
-            ColumnLayout {
-                spacing: Math.round(10 * content.uiScale)
-
-                function focusSearch() { header.focusSearch(); }
-                function focusTop() { listPane.focusTop(); }
-
-                ChooserHeader {
-                    id: header
-                    uiScale: content.uiScale
-                    placeholder: "Search networks…"
-                    signalIcon: true
-                    focusOnCompleted: true
-                    filterText: content.controller.filterText
-                    powered: content.controller.powered
-                    refreshing: content.controller.scanInFlight
-                    powerEnabled: !content.controller.actionInFlight && !content.controller.prompt.open
-                    refreshEnabled: content.controller.powered && !content.controller.actionInFlight
-                    onFilterEdited: function (text) {
-                        content.controller.filterText = text;
-                        content.controller.selectedIndex = 0;
-                    }
-                    onKeyPressed: function (event) { content.controller.navigation.handleSearchKey(event); }
-                    onPowerRequested: content.controller.setPower()
-                    onRefreshRequested: content.controller.refresh()
-                }
-
-                NetworkListPane {
-                    id: listPane
-                    controller: content.controller
-                    uiScale: content.uiScale
-                }
+            NetworkListPane {
+                controller: content.controller
+                uiScale: content.uiScale
             }
         }
         detailsComponent: Component {

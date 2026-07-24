@@ -5,12 +5,14 @@ ActionToolbar 1.0 ActionToolbar.qml
 CenteredMessage 1.0 CenteredMessage.qml
 ChooserController 1.0 ChooserController.qml
 ChooserHeader 1.0 ChooserHeader.qml
+ChooserListPane 1.0 ChooserListPane.qml
 ChooserSurface 1.0 ChooserSurface.qml
 ConfirmationDialog 1.0 ConfirmationDialog.qml
 DetailCard 1.0 DetailCard.qml
 DetailField 1.0 DetailField.qml
 DetailFlickable 1.0 DetailFlickable.qml
 DetailGrid 1.0 DetailGrid.qml
+DetailsPane 1.0 DetailsPane.qml
 DetailsTab 1.0 DetailsTab.qml
 DetailsTabBar 1.0 DetailsTabBar.qml
 FieldLabel 1.0 FieldLabel.qml

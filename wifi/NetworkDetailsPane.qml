@@ -1,15 +1,13 @@
 import QtQuick
-import QtQuick.Layouts
 import "."
 import Shelllist.Ui
 
-Rectangle {
+DetailsPane {
     id: pane
 
     required property WifiController controller
     readonly property var ap: controller.detailAp
     readonly property real uiScale: Theme.densityScale(height, 0)
-    readonly property int sectionSpacing: Math.max(8, Math.round(12 * uiScale))
     readonly property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     readonly property int detailControlHeight: Math.max(36, Math.round(42 * uiScale))
     readonly property int actionsHeight: detailControlHeight
@@ -19,25 +17,15 @@ Rectangle {
     readonly property real networkCardHeight: Math.round(cardBudget * 0.255)
     readonly property real profileCardHeight: Math.max(0, cardBudget - connectionCardHeight - networkCardHeight)
 
-    Layout.fillWidth: true
-    Layout.fillHeight: true
-    radius: 0
-    color: "transparent"
-    border.color: "transparent"
-    clip: true
+    chooserController: controller
+    densityScale: uiScale
+    sectionSpacing: Math.max(8, Math.round(12 * uiScale))
+    leftMargin: 18
+    rightMargin: 16
+    emptyText: "Select a network"
+    emptyFontSize: 20
 
-    Item {
-        anchors.fill: parent
-        anchors.leftMargin: 18
-        anchors.rightMargin: 16
-        anchors.bottomMargin: 2
-
-        Column {
-            visible: pane.controller.hasSelection
-            anchors.fill: parent
-            spacing: pane.sectionSpacing
-
-            NetworkDetailsHeader {
+    NetworkDetailsHeader {
                 width: parent.width
                 height: pane.headerHeight
                 controller: pane.controller
@@ -60,7 +48,7 @@ Rectangle {
                 property real advancedTransitionProgress: pane.controller.advanced.open ? 1 : 0
 
                 width: parent.width
-                height: Math.max(0, parent.height - pane.headerHeight - pane.actionsHeight - pane.footerHeight - 3 * parent.spacing)
+                height: Math.max(0, parent.height - pane.headerHeight - pane.actionsHeight - pane.footerHeight - 3 * pane.sectionSpacing)
                 clip: true
 
                 Behavior on advancedTransitionProgress {
@@ -91,23 +79,15 @@ Rectangle {
                 }
             }
 
-            DetailsTabBar {
-                width: parent.width
-                height: pane.footerHeight
-                selectedValue: pane.controller.detailsTab
-                tabs: [
-                    { value: "network", icon: "󰋜", label: "Network Details" },
-                    { value: "security", icon: "󰌾", label: "Security & Privacy", enabled: !!pane.controller.profileFor(pane.ap) },
-                    { value: "hardware", icon: "󰍹", label: "IP & DNS", enabled: !!pane.controller.profileFor(pane.ap) }
-                ]
-                onSelected: function (value) { pane.controller.selectDetailsTab(value); }
-            }
-        }
-
-        CenteredMessage {
-            visible: !pane.controller.hasSelection
-            text: "Select a network"
-            font.pixelSize: 20
-        }
+    DetailsTabBar {
+        width: parent.width
+        height: pane.footerHeight
+        selectedValue: pane.controller.detailsTab
+        tabs: [
+            { value: "network", icon: "󰋜", label: "Network Details" },
+            { value: "security", icon: "󰌾", label: "Security & Privacy", enabled: !!pane.controller.profileFor(pane.ap) },
+            { value: "hardware", icon: "󰍹", label: "IP & DNS", enabled: !!pane.controller.profileFor(pane.ap) }
+        ]
+        onSelected: function (value) { pane.controller.selectDetailsTab(value); }
     }
 }
