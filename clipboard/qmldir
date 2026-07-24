@@ -8,4 +8,3 @@ ClipboardDetails 1.0 ClipboardDetails.qml
 ClipboardListPane 1.0 ClipboardListPane.qml
 ClipboardListRow 1.0 ClipboardListRow.qml
 ClipboardProvider 1.0 ClipboardProvider.qml
-internal ClipboardScreenshotProcess ClipboardScreenshotProcess.qml

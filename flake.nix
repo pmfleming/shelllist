@@ -203,12 +203,9 @@
             name = "shelllist-clipboard";
             meta = mkMeta "Quickshell clipboard history backed by clip-daemon" "shelllist-clipboard";
             runtimeInputs = [
-              pkgs.bash
               pkgs.coreutils
               pkgs.gawk
-              pkgs.grim
               pkgs.quickshell
-              pkgs.wl-clipboard
               clipDaemon
             ];
             text = ''

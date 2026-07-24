@@ -20,7 +20,7 @@ ColumnLayout {
         uiScale: pane.uiScale
         placeholder: "Search clipboard…"
         icon: "󰅇"
-        iconActionEnabled: !pane.controller.screenshotInFlight
+        iconActionEnabled: !pane.controller.screenshotInFlight && !pane.controller.actionInFlight
         filterText: pane.controller.filterText
         powered: true
         refreshing: pane.controller.refreshInFlight

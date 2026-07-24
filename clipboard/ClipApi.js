@@ -20,6 +20,7 @@ var methods = {
     editCommit: "clipboard.entry.edit.commit",
     editCancel: "clipboard.entry.edit.cancel",
     captureSetPaused: "clipboard.capture.setPaused",
+    captureScreenshot: "clipboard.capture.screenshot",
     settingsGet: "clipboard.settings.get",
     settingsUpdate: "clipboard.settings.update",
     wipePrepare: "clipboard.history.wipe.prepare",

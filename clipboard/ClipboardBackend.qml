@@ -84,6 +84,11 @@ Item {
     function setPaused(paused, privateMode) {
         return call("capture-pause", ClipApi.methods.captureSetPaused, { paused: paused, private_mode: privateMode });
     }
+    function captureScreenshot(x, y, width, height) {
+        return call("capture-screenshot", ClipApi.methods.captureScreenshot, {
+            x: x, y: y, width: width, height: height
+        });
+    }
     function prepareWipe() { return call("wipe-prepare", ClipApi.methods.wipePrepare, {}); }
     function commitWipe(challengeId) {
         return call("wipe-commit", ClipApi.methods.wipeCommit, { challenge_id: challengeId, response: "WIPE" });

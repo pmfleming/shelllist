@@ -11,6 +11,18 @@ Ui.ChooserSurface {
     readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
     readonly property var selectedEntry: controller.selectedEntry || ({})
 
+    function captureScreenshot() {
+        const width = Math.round(controller.currentWindowWidth);
+        const x = Math.round(windowHost.targetWindowX()
+            + (controller.surfaceWindowWidth - width) / 2);
+        controller.captureScreenshot(
+            x,
+            windowHost.targetWindowY(),
+            width,
+            windowHost.currentWindowHeight
+        );
+    }
+
     Shortcut {
         sequence: "Escape"
         onActivated: {
@@ -43,17 +55,11 @@ Ui.ChooserSurface {
         }
     }
 
-    ClipboardScreenshotProcess {
-        id: screenshotProcess
-        controller: content.controller
-        windowHost: content.windowHost
-    }
-
     Connections {
         target: content.controller
         function onFocusSearchRequested() { Qt.callLater(chooser.listItem.focusSearch); }
         function onFocusListTopRequested() { Qt.callLater(chooser.listItem.focusTop); }
-        function onScreenshotRequested() { screenshotProcess.capture(); }
+        function onScreenshotRequested() { content.captureScreenshot(); }
         function onHideRequested() { content.windowHost.closeRequested(); }
     }
 

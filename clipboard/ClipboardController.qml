@@ -50,6 +50,10 @@ Ui.ChooserController {
         deactivateUiState();
         sessionId = "";
         targetAvailable = false;
+        actionInFlight = false;
+        screenshotInFlight = false;
+        activeAction = "";
+        activeOperationId = "";
         detailsOpen = false;
         if (editingText)
             cancelEdit();
@@ -87,6 +91,16 @@ Ui.ChooserController {
         actionInFlight = true;
         activeAction = actionName;
         backend.action("action-" + actionName, selectedEntry, actionName, sessionId, fileIndex);
+    }
+    function captureScreenshot(x, y, width, height) {
+        if (screenshotInFlight || actionInFlight)
+            return false;
+        screenshotInFlight = true;
+        actionInFlight = true;
+        activeAction = "screenshot";
+        status = "Capturing clipboard window…";
+        backend.captureScreenshot(x, y, width, height);
+        return true;
     }
     function copySelected() { runAction("copy"); }
     function pasteSelected() { runAction("paste"); }
@@ -170,6 +184,10 @@ Ui.ChooserController {
         closeDetails();
         scheduleRefresh();
     }
+    function finishScreenshot() {
+        screenshotInFlight = false;
+        scheduleRefresh();
+    }
     function applyOperation(id, operation) {
         actionInFlight = operation.status === "started";
         activeAction = actionInFlight ? operation.action : "";
@@ -178,7 +196,7 @@ Ui.ChooserController {
         if (actionInFlight) return;
         const completions = ({
             paste: function () { if (operation.status === "paste-prepared") backend.hideSession(sessionId); },
-            wipe: finishWipe, "delete": finishDelete,
+            wipe: finishWipe, "delete": finishDelete, screenshot: finishScreenshot,
             copy: scheduleRefresh, "image-as-file": scheduleRefresh,
             favorite: scheduleRefresh, unfavorite: scheduleRefresh, "pin-current": scheduleRefresh
         });
@@ -235,10 +253,13 @@ Ui.ChooserController {
         thumbnail = value;
     }
     function handleFailure(id, message) {
-        if (id.indexOf("action-") === 0 || id.indexOf("wipe-") === 0 || id.indexOf("edit-") === 0) {
+        if (id.indexOf("action-") === 0 || id.indexOf("wipe-") === 0 || id.indexOf("edit-") === 0
+                || id === "capture-screenshot") {
             actionInFlight = false;
             activeAction = "";
             activeOperationId = "";
+            if (id === "capture-screenshot")
+                screenshotInFlight = false;
             if (id === "edit-commit") {
                 editingText = false;
                 editId = "";
@@ -257,6 +278,10 @@ Ui.ChooserController {
     function handleTransportFailure(message) {
         results.clear();
         clearDetails();
+        actionInFlight = false;
+        screenshotInFlight = false;
+        activeAction = "";
+        activeOperationId = "";
         status = message;
     }
     Timer { id: searchTimer; interval: 120; repeat: false; onTriggered: if (controller.uiActive) controller.refresh() }
