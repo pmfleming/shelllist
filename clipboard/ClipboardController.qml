@@ -107,6 +107,12 @@ Ui.ChooserController {
     }
     function copySelected() { runAction("copy"); }
     function pasteSelected() { runAction("paste"); }
+    function primarySelected() {
+        if (!selectedEntry || selectedEntry.kind === "binary" || actionInFlight || wipeChallenge)
+            return false;
+        pasteSelected();
+        return true;
+    }
     function imageAsFile() { runAction("image-as-file"); }
     function annotateImage() { runAction("annotate"); }
     function openUrl() { runAction("open-url"); }
@@ -347,7 +353,8 @@ Ui.ChooserController {
     Ui.ResultNavigation {
         id: navigationModel
         controller: controller
-        primaryEnabled: false
+        primaryEnabled: controller.hasSelection && controller.selectedEntry.kind !== "binary"
+            && !controller.actionInFlight && !controller.wipeChallenge
         closeEnabled: false
     }
     Core.ProviderRegistry {
