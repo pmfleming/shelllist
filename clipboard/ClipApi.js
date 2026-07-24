@@ -1,5 +1,4 @@
 .pragma library
-.import "../qml/Shelllist/Core/ApiEnvelope.js" as ApiEnvelope
 
 var streams = {
     history: "clipboard.history.changed",
@@ -55,8 +54,4 @@ function actionDescriptorsForKind(kind) {
             role: actionId === "paste" ? "default" : "secondary"
         };
     });
-}
-
-function responseError(envelope, transportError) {
-    return ApiEnvelope.responseError(envelope, transportError, "clip-api", 1, "clip-daemon", "Clipboard operation failed");
 }

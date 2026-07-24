@@ -1,4 +1,5 @@
 import QtQuick
+import Shelllist.Core as Core
 import Shelllist.Io as Io
 import "BtApi.js" as BtApi
 
@@ -82,7 +83,8 @@ Item {
         if (isSessionControl(id))
             return;
         pending = copyWithout(pending, id);
-        const error = BtApi.responseError(envelope, transportError);
+        const error = Core.ApiEnvelope.responseError(envelope, transportError,
+            "bt-api", 1, "bt-daemon", "Bluetooth operation failed");
         if (error.length > 0) {
             console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
             controller.status = error;
@@ -166,7 +168,7 @@ Item {
     }
     function handleEvent(event) {
         try {
-            if (BtApi.compatibilityError(event)) {
+            if (Core.ApiEnvelope.compatibilityError(event, "bt-api", 1, "bt-daemon")) {
                 console.warn("shelllist bluetooth event rejected reason=incompatible-envelope");
                 return;
             }

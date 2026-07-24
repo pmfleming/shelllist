@@ -1,5 +1,4 @@
 .pragma library
-.import "../qml/Shelllist/Core/ApiEnvelope.js" as ApiEnvelope
 
 var streams = {
     changed: "bluetooth.changed",
@@ -9,13 +8,6 @@ var streams = {
     operation: "bluetooth.operation",
     scan: "bluetooth.scan"
 };
-
-function compatibilityError(envelope) {
-    return ApiEnvelope.compatibilityError(envelope, "bt-api", 1, "bt-daemon");
-}
-function responseError(envelope, transportError) {
-    return ApiEnvelope.responseError(envelope, transportError, "bt-api", 1, "bt-daemon", "Bluetooth operation failed");
-}
 
 var methods = {
     snapshot: "bluetooth.snapshot",

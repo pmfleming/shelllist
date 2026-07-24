@@ -1,4 +1,5 @@
 import QtQuick
+import Shelllist.Core as Core
 import Shelllist.Io as Io
 import "ClipApi.js" as ClipApi
 
@@ -24,7 +25,8 @@ Item {
         pending = next;
         if (isTransportControl(id))
             return;
-        const error = ClipApi.responseError(envelope, transportError);
+        const error = Core.ApiEnvelope.responseError(envelope, transportError,
+            "clip-api", 1, "clip-daemon", "Clipboard operation failed");
         if (error) {
             controller.handleFailure(id, error);
             return;

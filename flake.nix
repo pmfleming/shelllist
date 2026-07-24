@@ -567,7 +567,7 @@
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-clipboard-actions.js} ${./clipboard/ClipApi.js} ${./qml/Shelllist/Core/ApiEnvelope.js}
+            node ${./tests/check-clipboard-actions.js} ${./clipboard/ClipApi.js}
             touch $out
           '';
 
