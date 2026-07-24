@@ -24,6 +24,10 @@ Ui.ChooserController {
     property int editMaxBytes: 0
     property var currentEntry: null
     property int detailSequence: 0
+    property string detailsEntryId: ""
+    property var detailsEntryRevision: null
+    property string activeDetailsRequestId: ""
+    property string activeThumbnailRequestId: ""
     property alias filterText: results.queryText
     property alias selectedIndex: results.selectedIndex
     readonly property var filteredResults: results.visibleResults
@@ -76,8 +80,7 @@ Ui.ChooserController {
         });
         currentEntry = history.current || null;
         status = history.entries.length + " clipboard entries" + (history.has_more ? " · more available" : "");
-        if (detailsOpen)
-            loadDetails();
+        scheduleDetailsLoad();
     }
     function applySession(session) {
         sessionId = session.state === "hidden" || session.state === "ended" ? "" : (session.id || "");
@@ -219,6 +222,13 @@ Ui.ChooserController {
     }
     function closeDetails() { detailsOpen = false; }
     function toggleDetails() { detailsOpen ? closeDetails() : openDetails(); }
+    function scheduleDetailsLoad() {
+        if (detailsOpen)
+            detailsTimer.restart();
+    }
+    function selectedEntryMatches(id, revision) {
+        return !!selectedEntry && selectedEntry.id === id && selectedEntry.revision === revision;
+    }
     function clearDetails() {
         editingText = false;
         editId = "";
@@ -228,29 +238,65 @@ Ui.ChooserController {
         thumbnail = null;
         detailsError = "";
         detailsLoading = false;
+        detailsEntryId = "";
+        detailsEntryRevision = null;
+        activeDetailsRequestId = "";
+        activeThumbnailRequestId = "";
     }
     function loadDetails() {
-        clearDetails();
-        if (!selectedEntry)
+        const entry = selectedEntry;
+        if (!entry) {
+            clearDetails();
             return;
+        }
+        if (detailsLoading && detailsEntryId === entry.id && detailsEntryRevision === entry.revision)
+            return;
+        if (details && details.entry.id === entry.id && details.entry.revision === entry.revision)
+            return;
+        clearDetails();
+        detailsEntryId = entry.id;
+        detailsEntryRevision = entry.revision;
         detailsLoading = true;
         detailSequence += 1;
         const suffix = "-" + detailSequence;
-        backend.details("details" + suffix, selectedEntry);
-        if (selectedEntry.kind === "image")
-            backend.thumbnail("thumbnail" + suffix, selectedEntry);
+        activeDetailsRequestId = "details" + suffix;
+        if (!backend.details(activeDetailsRequestId, entry)) {
+            activeDetailsRequestId = "";
+            detailsLoading = false;
+            detailsError = "Could not request clipboard entry details";
+            return;
+        }
+        if (entry.kind === "image") {
+            activeThumbnailRequestId = "thumbnail" + suffix;
+            if (!backend.thumbnail(activeThumbnailRequestId, entry))
+                activeThumbnailRequestId = "";
+        }
     }
     function applyDetails(id, value) {
-        if (id.indexOf("details-") !== 0 || !selectedEntry || value.entry.id !== selectedEntry.id)
+        if (id !== activeDetailsRequestId)
             return;
-        details = value;
+        activeDetailsRequestId = "";
         detailsLoading = false;
+        if (!selectedEntryMatches(detailsEntryId, detailsEntryRevision)) {
+            scheduleDetailsLoad();
+            return;
+        }
+        if (!value.entry || value.entry.id !== detailsEntryId
+                || value.entry.revision !== detailsEntryRevision) {
+            detailsError = "Clipboard entry changed while loading";
+            scheduleDetailsLoad();
+            return;
+        }
+        details = value;
         detailsError = "";
     }
     function applyThumbnail(id, value) {
-        if (id.indexOf("thumbnail-") !== 0 || !selectedEntry || value.entry_id !== selectedEntry.id)
+        if (id !== activeThumbnailRequestId)
             return;
-        thumbnail = value;
+        activeThumbnailRequestId = "";
+        if (selectedEntryMatches(detailsEntryId, detailsEntryRevision)
+                && value.entry_id === detailsEntryId && value.revision === detailsEntryRevision)
+            thumbnail = value;
     }
     function handleFailure(id, message) {
         if (id.indexOf("action-") === 0 || id.indexOf("wipe-") === 0 || id.indexOf("edit-") === 0
@@ -268,10 +314,14 @@ Ui.ChooserController {
         if (id === results.activeQueryId) {
             results.clear();
             status = message;
-        } else if (id.indexOf("details-") === 0 || id.indexOf("thumbnail-") === 0) {
+        } else if (id === activeDetailsRequestId) {
+            activeDetailsRequestId = "";
             detailsLoading = false;
             detailsError = message;
-        } else {
+        } else if (id === activeThumbnailRequestId) {
+            activeThumbnailRequestId = "";
+            thumbnail = null;
+        } else if (id.indexOf("details-") !== 0 && id.indexOf("thumbnail-") !== 0) {
             status = message;
         }
     }
@@ -286,12 +336,13 @@ Ui.ChooserController {
     }
     Timer { id: searchTimer; interval: 120; repeat: false; onTriggered: if (controller.uiActive) controller.refresh() }
     Timer { id: refreshTimer; interval: 90; repeat: false; onTriggered: if (controller.uiActive) controller.refresh() }
+    Timer { id: detailsTimer; interval: 0; repeat: false; onTriggered: controller.loadDetails() }
 
     onFilterTextChanged: if (uiActive) searchTimer.restart()
     onSelectedResultChanged: {
         deleteConfirmationOpen = false;
         if (editingText) cancelEdit();
-        if (detailsOpen) loadDetails();
+        scheduleDetailsLoad();
     }
     Ui.ResultNavigation {
         id: navigationModel
