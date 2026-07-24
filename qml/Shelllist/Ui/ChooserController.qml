@@ -1,13 +1,18 @@
 import QtQuick
 
 Item {
+    id: root
     property bool uiActive: false
     property string currentWorkspaceId: ""
     property bool detailsOpen: false
     property bool hasSelection: false
     property var selectionModel: null
     property var detailActions: []
+    property bool navigationBlocked: false
+    property bool navigationPrimaryEnabled: true
+    property bool navigationCloseEnabled: true
     property real detailsExpansionProgress: detailsOpen ? 1 : 0
+    readonly property alias navigation: navigationModel
 
     readonly property int closedWindowWidth: Theme.popupClosedWidth
     readonly property int openWindowWidth: Theme.popupOpenWidth
@@ -30,6 +35,11 @@ Item {
     signal focusSearchRequested
     signal focusListTopRequested
 
+    function activateUi(workspaceId) { activateUiState(workspaceId); }
+    function deactivateUi() { deactivateUiState(); }
+    function refresh() {}
+    function setPower() {}
+
     function activateUiState(workspaceId) {
         uiActive = true;
         currentWorkspaceId = workspaceId || "";
@@ -48,6 +58,14 @@ Item {
     function toggleDetails() { detailsOpen ? closeDetails() : openDetails(); }
     function primarySelected() { return false; }
     function triggerDetailAction(actionId) { return false; }
+
+    ResultNavigation {
+        id: navigationModel
+        controller: root
+        blocked: root.navigationBlocked
+        primaryEnabled: root.navigationPrimaryEnabled
+        closeEnabled: root.navigationCloseEnabled
+    }
 
     Behavior on detailsExpansionProgress {
         enabled: !Theme.noAnimations

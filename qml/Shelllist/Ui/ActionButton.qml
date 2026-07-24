@@ -1,5 +1,4 @@
 import QtQuick
-import "UiText.js" as UiText
 
 Rectangle {
     id: control
@@ -34,37 +33,14 @@ Rectangle {
     Keys.onEnterPressed: function (event) { control.clicked(); event.accepted = true; }
     Keys.onSpacePressed: function (event) { control.clicked(); event.accepted = true; }
 
-    Row {
+    ControlLabel {
         anchors.centerIn: parent
-        spacing: Theme.spacingSm
-
-        Text {
-            visible: control.icon.length > 0
-            anchors.verticalCenter: parent.verticalCenter
-            text: control.icon
-            color: control.labelColor
-            font.family: Theme.iconFontFamily
-            font.pixelSize: Theme.iconSizeSmall
-        }
-
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: UiText.highlightHotkey(control.label, control.hotkey)
-            textFormat: Text.RichText
-            color: control.labelColor
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeBody
-        }
+        label: control.label
+        icon: control.icon
+        hotkey: control.hotkey
+        iconColor: control.labelColor
+        labelColor: control.labelColor
     }
 
-    MouseArea {
-        id: area
-
-        anchors.fill: parent
-        enabled: control.enabled
-        hoverEnabled: true
-        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onPressed: control.forceActiveFocus()
-        onClicked: control.clicked()
-    }
+    ControlPointerArea { id: area; focusTarget: control; onClicked: control.clicked() }
 }

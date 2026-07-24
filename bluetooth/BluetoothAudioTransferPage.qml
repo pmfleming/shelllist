@@ -104,14 +104,11 @@ Ui.DetailFlickable {
     Ui.DetailCard {
         height: 150
         title: "Runtime state"
-
-        Ui.DetailGrid {
-            entries: [
-                { label: "Output state", value: page.controller.selectedSink.state || "Unknown" },
-                { label: "Input state", value: page.controller.selectedSource.state || "Unknown" },
-                { label: "Audio service", value: page.controller.audioStatus || "Ready", valueColor: page.controller.audioStatus.length > 0 ? Ui.Theme.danger : Ui.Theme.text },
-                { label: "OBEX", value: page.controller.obexCapabilities.available ? "Available" : "Unavailable" }
-            ]
-        }
+        entries: [
+            { label: "Output state", value: page.controller.selectedSink.state || "Unknown" },
+            { label: "Input state", value: page.controller.selectedSource.state || "Unknown" },
+            { label: "Audio service", value: page.controller.audioStatus || "Ready", valueColor: page.controller.audioStatus.length > 0 ? Ui.Theme.danger : Ui.Theme.text },
+            { label: "OBEX", value: page.controller.obexCapabilities.available ? "Available" : "Unavailable" }
+        ]
     }
 }

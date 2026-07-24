@@ -39,6 +39,16 @@ ColumnLayout {
     signal powerRequested
     signal refreshRequested
 
+    onFilterEdited: function (text) {
+        if (chooserController.selectionModel)
+            chooserController.selectionModel.queryText = text;
+        chooserController.selectFirst();
+    }
+    onSearchKeyPressed: function (event) { chooserController.navigation.handleSearchKey(event); }
+    onListKeyPressed: function (event) { chooserController.navigation.handleListKey(event); }
+    onPowerRequested: chooserController.setPower()
+    onRefreshRequested: chooserController.refresh()
+
     Layout.fillWidth: true
     Layout.fillHeight: true
     spacing: Math.round(Theme.spacingMd * densityScale)

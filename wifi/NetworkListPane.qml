@@ -23,15 +23,6 @@ ChooserListPane {
     filterText: controller.filterText
     status: controller.status
     listInset: Math.round(12 * uiScale)
-    onFilterEdited: function (text) {
-        controller.filterText = text;
-        controller.selectedIndex = 0;
-    }
-    onSearchKeyPressed: function (event) { controller.navigation.handleSearchKey(event); }
-    onListKeyPressed: function (event) { controller.navigation.handleListKey(event); }
-    onPowerRequested: controller.setPower()
-    onRefreshRequested: controller.refresh()
-
     rowDelegate: Component {
         NetworkListRow {
             id: networkRow

@@ -57,36 +57,42 @@ function snapshotStatus(powered, scanning, count) {
     return scanning ? count + " devices · scanning…" : count + " Bluetooth devices";
 }
 
-function deviceActionRequest(actionId, device, trustAfterPair) {
-    const operations = ({ pair: "pair", connect: "connect", disconnect: "disconnect", forget: "remove" });
-    const operation = operations[actionId];
-    if (operation) {
-        const verb = actionId === "forget" ? "Forgetting" : operation.charAt(0).toUpperCase() + operation.slice(1);
-        return {
-            operation: operation,
-            values: operation === "pair" ? { trust_after_pair: trustAfterPair } : ({}),
-            status: verb + " " + device.name + "…"
-        };
-    }
-    const toggles = ({
-        trusted: { operation: "set-trusted", field: "trusted", value: "trusted" },
-        wake: { operation: "set-wake-allowed", field: "wake_allowed", value: "wake_allowed" },
-        blocked: { operation: "set-blocked", field: "blocked", value: "blocked" }
-    });
-    const toggle = toggles[actionId];
-    if (toggle) {
-        const values = ({});
-        values[toggle.value] = !device[toggle.field];
-        return { operation: toggle.operation, values: values, status: "" };
-    }
-    if (actionId !== "multipoint")
+const directOperations = ({ pair: "pair", connect: "connect", disconnect: "disconnect", forget: "remove" });
+const toggleOperations = ({
+    trusted: { operation: "set-trusted", field: "trusted" },
+    wake: { operation: "set-wake-allowed", field: "wake_allowed" },
+    blocked: { operation: "set-blocked", field: "blocked" }
+});
+
+function directActionRequest(actionId, device, trustAfterPair) {
+    const operation = directOperations[actionId];
+    if (!operation)
         return null;
+    const verb = actionId === "forget" ? "Forgetting" : operation.charAt(0).toUpperCase() + operation.slice(1);
+    return { operation: operation,
+        values: operation === "pair" ? { trust_after_pair: trustAfterPair } : ({}),
+        status: verb + " " + device.name + "…" };
+}
+
+function toggleActionRequest(actionId, device) {
+    const toggle = toggleOperations[actionId];
+    if (!toggle)
+        return null;
+    const values = ({});
+    values[toggle.field] = !device[toggle.field];
+    return { operation: toggle.operation, values: values, status: "" };
+}
+
+function multipointActionRequest(device) {
     const multipoint = (device.fast_pair && device.fast_pair.multipoint) || ({});
-    return {
-        operation: "set-multipoint",
-        values: { enabled: !multipoint.enabled },
-        status: (multipoint.enabled ? "Disabling" : "Enabling") + " multipoint for " + device.name + "…"
-    };
+    return { operation: "set-multipoint", values: { enabled: !multipoint.enabled },
+        status: (multipoint.enabled ? "Disabling" : "Enabling") + " multipoint for " + device.name + "…" };
+}
+
+function deviceActionRequest(actionId, device, trustAfterPair) {
+    return directActionRequest(actionId, device, trustAfterPair)
+        || toggleActionRequest(actionId, device)
+        || (actionId === "multipoint" ? multipointActionRequest(device) : null);
 }
 
 function noiseControlRequest(device, mode) {

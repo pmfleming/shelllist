@@ -5,11 +5,11 @@ import "BluetoothBattery.js" as BluetoothBattery
 import "BluetoothFlow.js" as BluetoothFlow
 
 Ui.ChooserController {
-    id: controller
+    id: bluetoothController
     property alias filterText: results.queryText
     property alias selectedIndex: results.selectedIndex
     property string detailsTab: "device"
-    property var pendingConfirmationAction: null
+    property var pendingConfirmationAction
     property bool scanRequested: false
     property var adapters: []
     property var audioDevices: []
@@ -30,7 +30,7 @@ Ui.ChooserController {
     readonly property var filteredResultsModel: results.visibleModel
     readonly property var selectedResult: results.selected()
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
-    readonly property alias navigation: navigationModel
+    navigationBlocked: modalPromptOpen
     readonly property var selectedAdapter: adapters.find(function (adapter) { return adapter.key === preferredAdapterKey; }) || adapters.find(function (adapter) { return adapter.key === selectedDevice.adapter_key; }) || adapters[0] || ({})
     readonly property var selectedAudio: audioDevices.find(function (audio) { return audio.device_key === selectedDevice.key; }) || ({})
     readonly property var selectedSink: selectedAudio.sink || ({})
@@ -361,11 +361,10 @@ Ui.ChooserController {
     onModalPromptOpenChanged: if (!modalPromptOpen) Qt.callLater(focusSearchRequested)
     onSelectedResultChanged: pendingConfirmationAction = null
 
-    Ui.ResultNavigation { id: navigationModel; controller: controller; blocked: controller.modalPromptOpen }
     Core.ProviderRegistry {
         id: providers
-        BluetoothProvider { id: provider; controller: controller }
+        BluetoothProvider { id: provider; controller: bluetoothController }
     }
     Core.ResultStore { id: results; registry: providers }
-    BluetoothBackend { id: backend; controller: controller }
+    BluetoothBackend { id: backend; controller: bluetoothController }
 }

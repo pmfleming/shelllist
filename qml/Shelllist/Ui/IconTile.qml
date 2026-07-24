@@ -36,14 +36,5 @@ Rectangle {
         rotation: tile.iconRotation
     }
 
-    MouseArea {
-        id: area
-
-        anchors.fill: parent
-        enabled: tile.clickable && tile.enabled
-        hoverEnabled: tile.clickable
-        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onPressed: tile.forceActiveFocus()
-        onClicked: tile.clicked()
-    }
+    ControlPointerArea { id: area; focusTarget: tile; enabled: tile.clickable && tile.enabled; onClicked: tile.clicked() }
 }

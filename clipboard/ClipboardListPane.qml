@@ -24,11 +24,7 @@ Ui.ChooserListPane {
     status: controller.status
     bodySpacing: Math.round(Ui.Theme.spacingMd * uiScale)
     toolbarHeight: Math.round(Ui.Theme.controlHeight * uiScale)
-    onFilterEdited: function (text) { controller.filterText = text; }
-    onSearchKeyPressed: function (event) { controller.navigation.handleSearchKey(event); }
-    onListKeyPressed: function (event) { controller.navigation.handleListKey(event); }
     onIconClicked: controller.screenshotRequested()
-    onRefreshRequested: controller.refresh()
 
     rowDelegate: Component {
         ClipboardListRow { listPane: pane }

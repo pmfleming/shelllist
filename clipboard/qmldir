@@ -1,8 +1,8 @@
 module Shelllist.Clipboard
-ClipDaemonClient 1.0 ClipDaemonClient.qml
 ClipboardBackend 1.0 ClipboardBackend.qml
 ClipboardContent 1.0 ClipboardContent.qml
 ClipboardController 1.0 ClipboardController.qml
+internal ClipboardDetailsController ClipboardDetailsController.qml
 internal ClipboardDetailCards ClipboardDetailCards.qml
 ClipboardDetails 1.0 ClipboardDetails.qml
 ClipboardListPane 1.0 ClipboardListPane.qml

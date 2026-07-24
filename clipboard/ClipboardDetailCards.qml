@@ -8,43 +8,44 @@ Ui.DetailFlickable {
     id: cards
 
     required property ClipboardController controller
-    readonly property var entry: controller.details ? controller.details.entry : ({})
-    readonly property var files: controller.details ? controller.details.files : []
-    readonly property var imageFacts: controller.details ? controller.details.image : null
+    readonly property ClipboardDetailsController detailState: controller.detailState
+    readonly property var entry: detailState.value ? detailState.value.entry : ({})
+    readonly property var files: detailState.value ? detailState.value.files : []
+    readonly property var imageFacts: detailState.value ? detailState.value.image : null
 
     Ui.DetailCard {
         title: "Preview"
-        height: cards.controller.thumbnail || (cards.controller.details && cards.controller.details.text) ? 250 : 112
+        height: cards.detailState.thumbnail || (cards.detailState.value && cards.detailState.value.text) ? 250 : 112
 
         Image {
-            visible: !!cards.controller.thumbnail
+            visible: !!cards.detailState.thumbnail
             anchors.fill: parent
             fillMode: Image.PreserveAspectFit
             asynchronous: true
             cache: true
             sourceSize.width: width
             sourceSize.height: height
-            source: cards.controller.thumbnail ? "file://" + cards.controller.thumbnail.path : ""
+            source: cards.detailState.thumbnail ? "file://" + cards.detailState.thumbnail.path : ""
         }
         TextEdit {
-            visible: !cards.controller.thumbnail && cards.controller.details && cards.controller.details.text !== null
+            visible: !cards.detailState.thumbnail && cards.detailState.value && cards.detailState.value.text !== null
             anchors.fill: parent
-            text: cards.controller.editingText ? cards.controller.editDraft
-                : (cards.controller.details ? (cards.controller.details.text || "") : "")
+            text: cards.detailState.editing ? cards.detailState.editDraft
+                : (cards.detailState.value ? (cards.detailState.value.text || "") : "")
             color: Ui.Theme.text
             selectionColor: Ui.Theme.selected
             selectedTextColor: Ui.Theme.text
             font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeBody
-            readOnly: !cards.controller.editingText
+            readOnly: !cards.detailState.editing
             selectByMouse: true
-            onTextChanged: if (cards.controller.editingText && activeFocus) cards.controller.editDraft = text
+            onTextChanged: if (cards.detailState.editing && activeFocus) cards.detailState.editDraft = text
             wrapMode: TextEdit.Wrap
         }
         Ui.CenteredMessage {
             anchors.fill: parent
-            visible: !cards.controller.thumbnail
-                && (!cards.controller.details || cards.controller.details.text === null)
+            visible: !cards.detailState.thumbnail
+                && (!cards.detailState.value || cards.detailState.value.text === null)
             text: "Binary preview is unavailable"
             font.pixelSize: Ui.Theme.fontSizeBody
         }

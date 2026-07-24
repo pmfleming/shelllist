@@ -15,7 +15,7 @@ ChooserController {
     property var activeStatus: null
     property alias filterText: services.queryText
     property alias selectedIndex: services.selectedIndex
-    property string status: "Loading Wi-Fi networks…"
+    property string status
     readonly property bool powered: !activeStatus || activeStatus.enabled !== false
     property double statusHoldUntil: 0
     readonly property WifiBackend backend: services.backend
@@ -38,7 +38,7 @@ ChooserController {
     readonly property WifiProvider providerModel: services.provider
     readonly property Core.ProviderRegistry providerRegistry: services.providers
     readonly property WifiConnectPolicy connectPolicy: services.policy
-    readonly property WifiNavigation navigation: services.navigation
+    navigationBlocked: prompt.open || !powered
     readonly property WifiAdvancedController advanced: services.advanced
     readonly property WifiConnectionController connection: services.connection
     readonly property WifiNetworkActions actions: services.actions
@@ -232,6 +232,6 @@ ChooserController {
         }
     }
 
-    Connections { target: wifi.prompt; function onOpenChanged() { if (!wifi.prompt.open) Qt.callLater(services.navigation.focusSearch); } }
+    Connections { target: wifi.prompt; function onOpenChanged() { if (!wifi.prompt.open) Qt.callLater(wifi.navigation.focusSearch); } }
     WifiControllerServices { id: services; controller: wifi; prompt: wifi.prompt }
 }

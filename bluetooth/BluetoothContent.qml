@@ -7,15 +7,8 @@ Ui.ChooserSurface {
     id: content
 
     required property BluetoothController controller
-    required property Ui.PopupWindowHost windowHost
     readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
     readonly property bool editingDetails: chooser.detailsItem ? chooser.detailsItem.editingText : false
-
-    Connections {
-        target: content.controller
-        function onFocusSearchRequested() { Qt.callLater(chooser.listItem.focusSearch); }
-        function onFocusListTopRequested() { Qt.callLater(chooser.listItem.focusTop); }
-    }
 
     Shortcut { sequence: "F5"; enabled: content.controller.powered && !content.controller.refreshInFlight && !content.controller.actionInFlight && !content.controller.modalPromptOpen && !content.editingDetails; onActivated: content.controller.toggleScan() }
     Shortcut {
@@ -39,7 +32,7 @@ Ui.ChooserSurface {
             else if (content.controller.detailsOpen)
                 content.controller.detailsOpen = false;
             else
-                content.windowHost.closeRequested();
+                content.controller.closeWindowRequested();
         }
     }
 

@@ -17,19 +17,13 @@ Column {
     DetailCard {
         height: cards.connectionCardHeight
         title: "Connection"
-
-        DetailGrid {
-            entries: Presentation.connectionDetailRows(cards.controller, cards.accessPoint, Theme.accent).slice(0, 8)
-        }
+        entries: Presentation.connectionDetailRows(cards.controller, cards.accessPoint, Theme.accent).slice(0, 8)
     }
 
     DetailCard {
         height: cards.networkCardHeight
         title: "Network details"
-
-        DetailGrid {
-            entries: Presentation.networkDetailRows(cards.controller, cards.accessPoint).slice(0, 4)
-        }
+        entries: Presentation.networkDetailRows(cards.controller, cards.accessPoint).slice(0, 4)
     }
 
     NetworkProfileSettingsCard {

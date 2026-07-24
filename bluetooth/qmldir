@@ -13,4 +13,3 @@ internal BluetoothAdapterPage BluetoothAdapterPage.qml
 internal BluetoothDeviceActions BluetoothDeviceActions.qml
 internal BluetoothAdapterSettings BluetoothAdapterSettings.qml
 BluetoothContent 1.0 BluetoothContent.qml
-BtDaemonClient 1.0 BtDaemonClient.qml

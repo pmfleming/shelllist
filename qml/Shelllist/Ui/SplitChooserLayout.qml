@@ -10,12 +10,21 @@ RowLayout {
     readonly property var listItem: listLoader.item
     readonly property var detailsItem: detailsLoader.item
 
+    function focusSearch() { if (listItem) listItem.focusSearch(); }
+    function focusTop() { if (listItem) listItem.focusTop(); }
+
     anchors.fill: parent
     anchors.leftMargin: controller.contentMargin
     anchors.rightMargin: controller.contentMargin
     anchors.topMargin: controller.contentVerticalMargin
     anchors.bottomMargin: controller.contentVerticalMargin
     spacing: 0
+
+    Connections {
+        target: layout.controller
+        function onFocusSearchRequested() { Qt.callLater(layout.focusSearch); }
+        function onFocusListTopRequested() { Qt.callLater(layout.focusTop); }
+    }
 
     Loader {
         id: listLoader

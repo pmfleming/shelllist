@@ -1,6 +1,7 @@
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import Shelllist.Io as Io
 import Quickshell.Wayland
 import QtQuick
 
@@ -21,7 +22,6 @@ Item {
     property string defaultLaunchMode: "popover"
     property bool popoverVisible: false
     property int popoverNoAnimRuleState: -1
-    property string pendingPopoverLayerRule: ""
 
     readonly property string launchMode: (Quickshell.env(modeEnvironment) || defaultLaunchMode).toLowerCase()
     readonly property bool popoverMode: launchMode === "popover"
@@ -92,26 +92,11 @@ Item {
         const desiredState = noAnimations ? 1 : 0;
         if (!popoverAnimationRuleReady(desiredState))
             return;
-        applyPopoverLayerAnimationRule(noAnimations
+        layerRuleClient.apply(noAnimations
             ? "animation 0 " + layerNamespace
             : "animation unset " + layerNamespace);
         popoverNoAnimRuleState = desiredState;
     }
-    function applyPopoverLayerAnimationRule(rule) {
-        if (popoverLayerRuleProcess.running) {
-            pendingPopoverLayerRule = rule;
-            return;
-        }
-        popoverLayerRuleProcess.exec(["hyprctl", "keyword", "layerrule", rule]);
-    }
-    function runPendingPopoverLayerRule() {
-        if (pendingPopoverLayerRule.length === 0)
-            return;
-        const rule = pendingPopoverLayerRule;
-        pendingPopoverLayerRule = "";
-        applyPopoverLayerAnimationRule(rule);
-    }
-
     function applyCompositorWindowRules() {
         if (!floatingMode || !Theme.hyprland)
             return;
@@ -168,10 +153,7 @@ Item {
         host.focusSearchRequested();
     })
 
-    Process {
-        id: popoverLayerRuleProcess
-        onExited: function () { host.runPendingPopoverLayerRule(); } // qmllint disable signal-handler-parameters
-    }
+    Io.HyprlandLayerRuleClient { id: layerRuleClient }
 
     IpcHandler {
         enabled: host.popoverMode

@@ -19,7 +19,6 @@ Item {
     readonly property WifiAdvancedController advanced: advancedModel
     readonly property WifiNetworkActions actions: actionModel
     readonly property WifiScanController scan: scanModel
-    readonly property WifiNavigation navigation: navigationModel
     readonly property WifiBackend backend: backendModel
 
     Core.ProviderRegistry {
@@ -41,10 +40,5 @@ Item {
     WifiAdvancedController { id: advancedModel; controller: services.controller; backend: backendModel }
     WifiNetworkActions { id: actionModel; controller: services.controller; backend: backendModel; prompt: services.prompt; portal: portalModel }
     WifiScanController { id: scanModel; controller: services.controller; backend: backendModel }
-    WifiNavigation {
-        id: navigationModel
-        controller: services.controller
-        blocked: services.prompt.open || !services.controller.powered
-    }
     WifiBackend { id: backendModel; controller: services.controller }
 }

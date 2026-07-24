@@ -10,8 +10,9 @@ Ui.DetailsPane {
     required property ClipboardController controller
     required property real uiScale
     readonly property var selected: controller.selectedResult || ({})
-    readonly property var entry: controller.details ? controller.details.entry : ({})
-    readonly property var files: controller.details ? controller.details.files : []
+    readonly property ClipboardDetailsController detailState: controller.detailState
+    readonly property var entry: detailState.value ? detailState.value.entry : ({})
+    readonly property var files: detailState.value ? detailState.value.files : []
     readonly property var firstFile: files.length > 0 ? files[0] : ({})
     readonly property int headerHeight: Math.max(58, Math.round(66 * uiScale))
     readonly property int toolbarHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
@@ -20,8 +21,8 @@ Ui.DetailsPane {
     function triggerAction(actionId) {
         const handlers = ({
             paste: controller.pasteSelected, copy: controller.copySelected,
-            edit: controller.editingText ? controller.commitEdit : controller.beginEdit,
-            "cancel-edit": controller.cancelEdit, "open-url": controller.openUrl,
+            edit: detailState.editing ? detailState.commitEdit : detailState.beginEdit,
+            "cancel-edit": detailState.cancelEdit, "open-url": controller.openUrl,
             "open-file": function () { controller.openFile(0); },
             "reveal-file": function () { controller.revealFile(0); },
             "image-as-file": controller.imageAsFile, annotate: controller.annotateImage,
@@ -72,16 +73,16 @@ Ui.DetailsPane {
                 visible: true, enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: "normal", width: 96 }
             }, {
-                id: "edit", label: pane.controller.editingText ? "Save" : "Edit", icon: "󰏫", shortcut: "",
+                id: "edit", label: pane.detailState.editing ? "Save" : "Edit", icon: "󰏫", shortcut: "",
                 visible: pane.textEditable, enabled: !pane.controller.actionInFlight,
-                presentation: { group: "toolbar", tone: pane.controller.editingText ? "active" : "normal", width: 88 }
+                presentation: { group: "toolbar", tone: pane.detailState.editing ? "active" : "normal", width: 88 }
             }, {
                 id: "cancel-edit", label: "Cancel", icon: "󰜺", shortcut: "Esc",
-                visible: pane.controller.editingText, enabled: !pane.controller.actionInFlight,
+                visible: pane.detailState.editing, enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: "normal", width: 92 }
             }, {
                 id: "open-url", label: "Open", icon: "󰌷", shortcut: "",
-                visible: pane.entry.kind === "link" && !pane.controller.editingText, enabled: !pane.controller.actionInFlight,
+                visible: pane.entry.kind === "link" && !pane.detailState.editing, enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: "normal", width: 88 }
             }, {
                 id: "open-file", label: "Open", icon: "󰷏", shortcut: "",
@@ -124,22 +125,22 @@ Ui.DetailsPane {
 
             Ui.CenteredMessage {
                 anchors.fill: parent
-                visible: pane.controller.detailsLoading
+                visible: pane.detailState.loading
                 text: "Loading entry details…"
                 font.pixelSize: Ui.Theme.fontSizeTitle
             }
             Ui.CenteredMessage {
                 anchors.fill: parent
-                visible: !pane.controller.detailsLoading && pane.controller.detailsError.length > 0
-                text: pane.controller.detailsError
+                visible: !pane.detailState.loading && pane.detailState.error.length > 0
+                text: pane.detailState.error
                 font.pixelSize: Ui.Theme.fontSizeBody
             }
 
         ClipboardDetailCards {
             anchors.fill: parent
-            visible: !pane.controller.detailsLoading
-                && pane.controller.detailsError.length === 0
-                && !!pane.controller.details
+            visible: !pane.detailState.loading
+                && pane.detailState.error.length === 0
+                && !!pane.detailState.value
             controller: pane.controller
         }
     }

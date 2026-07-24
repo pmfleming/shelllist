@@ -35,36 +35,34 @@ function serviceText(device) {
     }).join(" ");
 }
 
+const iconRules = [
+    { terms: ["headphones"], glyph: glyphs.headphones },
+    { terms: ["headset"], glyph: glyphs.headset },
+    { terms: ["speaker", "audio-card"], glyph: glyphs.speaker },
+    { terms: ["keyboard"], glyph: glyphs.keyboard },
+    { terms: ["mouse"], glyph: glyphs.mouse },
+    { terms: ["gaming", "gamepad", "joystick"], glyph: glyphs.controller },
+    { terms: ["phone"], glyph: glyphs.phone },
+    { terms: ["computer", "laptop"], glyph: glyphs.computer },
+    { terms: ["watch"], glyph: glyphs.watch }
+];
+const serviceRules = [
+    { terms: ["audio sink"], glyph: glyphs.bluetoothHeadphones },
+    { terms: ["handsfree", "headset"], glyph: glyphs.headset }
+];
+
+function glyphMatching(text, rules, fallback) {
+    const match = rules.find(function (rule) {
+        return rule.terms.some(function (term) { return text.indexOf(term) >= 0; });
+    });
+    return match ? match.glyph : fallback;
+}
+
 function forDevice(device) {
     if (hasComponent(device, "left") || hasComponent(device, "right"))
         return glyphs.earbuds;
-
-    const icon = normalized(device && device.icon);
-    if (icon.indexOf("headphones") >= 0)
-        return glyphs.headphones;
-    if (icon.indexOf("headset") >= 0)
-        return glyphs.headset;
-    if (icon.indexOf("speaker") >= 0 || icon.indexOf("audio-card") >= 0)
-        return glyphs.speaker;
-    if (icon.indexOf("keyboard") >= 0)
-        return glyphs.keyboard;
-    if (icon.indexOf("mouse") >= 0)
-        return glyphs.mouse;
-    if (icon.indexOf("gaming") >= 0 || icon.indexOf("gamepad") >= 0 || icon.indexOf("joystick") >= 0)
-        return glyphs.controller;
-    if (icon.indexOf("phone") >= 0)
-        return glyphs.phone;
-    if (icon.indexOf("computer") >= 0 || icon.indexOf("laptop") >= 0)
-        return glyphs.computer;
-    if (icon.indexOf("watch") >= 0)
-        return glyphs.watch;
-
-    const services = serviceText(device);
-    if (services.indexOf("audio sink") >= 0)
-        return glyphs.bluetoothHeadphones;
-    if (services.indexOf("handsfree") >= 0 || services.indexOf("headset") >= 0)
-        return glyphs.headset;
-    return glyphs.bluetooth;
+    const iconGlyph = glyphMatching(normalized(device && device.icon), iconRules, "");
+    return iconGlyph || glyphMatching(serviceText(device), serviceRules, glyphs.bluetooth);
 }
 
 function forBattery(report) {

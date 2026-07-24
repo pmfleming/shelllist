@@ -7,7 +7,10 @@ ChooserController 1.0 ChooserController.qml
 ChooserHeader 1.0 ChooserHeader.qml
 ChooserListPane 1.0 ChooserListPane.qml
 ChooserSurface 1.0 ChooserSurface.qml
+ChooserWindowHost 1.0 ChooserWindowHost.qml
 ConfirmationDialog 1.0 ConfirmationDialog.qml
+internal ControlLabel ControlLabel.qml
+internal ControlPointerArea ControlPointerArea.qml
 DetailCard 1.0 DetailCard.qml
 DetailField 1.0 DetailField.qml
 DetailFlickable 1.0 DetailFlickable.qml

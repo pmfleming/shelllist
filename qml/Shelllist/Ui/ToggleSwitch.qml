@@ -38,14 +38,5 @@ Rectangle {
         uncheckedColor: control.uncheckedColor
     }
 
-    MouseArea {
-        id: area
-
-        anchors.fill: parent
-        enabled: control.enabled
-        hoverEnabled: true
-        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onPressed: control.forceActiveFocus()
-        onClicked: control.toggle()
-    }
+    ControlPointerArea { id: area; focusTarget: control; onClicked: control.toggle() }
 }

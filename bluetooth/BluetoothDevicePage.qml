@@ -16,17 +16,14 @@ Ui.DetailFlickable {
     Ui.DetailCard {
         height: 190
         title: "Device overview"
-
-        Ui.DetailGrid {
-            entries: [
-                { label: "Connection", value: page.controller.hasSelection ? BluetoothFlow.deviceState(page.controller.selectedDevice) : "—", valueColor: page.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.text, valueBold: page.controller.selectedDevice.connected },
-                { label: "Paired", value: page.controller.selectedDevice.paired ? "Yes" : "No" },
-                { label: "Trusted", value: page.controller.selectedDevice.trusted ? "Yes" : "No" },
-                { label: "In range", value: page.controller.selectedDevice.present ? "Yes" : "No" },
-                { label: "Services", value: page.controller.selectedDevice.services_resolved ? "Resolved" : "Pending" },
-                { label: "Audio profile", value: page.controller.activeAudioProfile.label || "—" }
-            ]
-        }
+        entries: [
+            { label: "Connection", value: page.controller.hasSelection ? BluetoothFlow.deviceState(page.controller.selectedDevice) : "—", valueColor: page.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.text, valueBold: page.controller.selectedDevice.connected },
+            { label: "Paired", value: page.controller.selectedDevice.paired ? "Yes" : "No" },
+            { label: "Trusted", value: page.controller.selectedDevice.trusted ? "Yes" : "No" },
+            { label: "In range", value: page.controller.selectedDevice.present ? "Yes" : "No" },
+            { label: "Services", value: page.controller.selectedDevice.services_resolved ? "Resolved" : "Pending" },
+            { label: "Audio profile", value: page.controller.activeAudioProfile.label || "—" }
+        ]
     }
 
     Ui.DetailCard {
@@ -43,20 +40,17 @@ Ui.DetailFlickable {
     Ui.DetailCard {
         height: 300
         title: "Technical details"
-
-        Ui.DetailGrid {
-            entries: [
-                { label: "Address", value: page.controller.selectedDevice.address || "Unavailable" },
-                { label: "Address type", value: page.controller.selectedDevice.address_type || "Unavailable" },
-                { label: "Adapter", value: page.controller.selectedAdapter.alias || page.controller.selectedAdapter.name || "Unavailable" },
-                { label: "Signal", value: BluetoothFlow.signalLabel(page.controller.selectedDevice) },
-                { label: "RSSI", value: page.controller.selectedDevice.rssi === null || page.controller.selectedDevice.rssi === undefined ? "Unavailable" : page.controller.selectedDevice.rssi + " dBm" + (page.controller.selectedDevice.signal_live ? "" : " (cached)") },
-                { label: "Last seen", value: page.controller.selectedDevice.last_seen_ms ? new Date(page.controller.selectedDevice.last_seen_ms).toLocaleString() : "Not observed this session" },
-                { label: "Modalias", value: page.controller.selectedDevice.modalias || "Unavailable" },
-                { label: "Adapter address", value: page.controller.selectedAdapter.address || "Unavailable" },
-                { label: "UUID count", value: String((page.controller.selectedDevice.uuids || []).length) }
-            ]
-        }
+        entries: [
+            { label: "Address", value: page.controller.selectedDevice.address || "Unavailable" },
+            { label: "Address type", value: page.controller.selectedDevice.address_type || "Unavailable" },
+            { label: "Adapter", value: page.controller.selectedAdapter.alias || page.controller.selectedAdapter.name || "Unavailable" },
+            { label: "Signal", value: BluetoothFlow.signalLabel(page.controller.selectedDevice) },
+            { label: "RSSI", value: page.controller.selectedDevice.rssi === null || page.controller.selectedDevice.rssi === undefined ? "Unavailable" : page.controller.selectedDevice.rssi + " dBm" + (page.controller.selectedDevice.signal_live ? "" : " (cached)") },
+            { label: "Last seen", value: page.controller.selectedDevice.last_seen_ms ? new Date(page.controller.selectedDevice.last_seen_ms).toLocaleString() : "Not observed this session" },
+            { label: "Modalias", value: page.controller.selectedDevice.modalias || "Unavailable" },
+            { label: "Adapter address", value: page.controller.selectedAdapter.address || "Unavailable" },
+            { label: "UUID count", value: String((page.controller.selectedDevice.uuids || []).length) }
+        ]
     }
 
     Ui.DetailCard {

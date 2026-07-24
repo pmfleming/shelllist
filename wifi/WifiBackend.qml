@@ -204,32 +204,34 @@ Item {
         controller.handleTransportReady();
     }
 
-    function openPortal(context) {
-        if (portalProcess.running) {
-            console.info("shelllist portal decision=helper-busy trigger=" + context.trigger + " request_id=" + context.requestId);
-            return;
-        }
+    function portalArguments(context) {
         const args = [
-            "shelllist-captive-portal",
-            context.automatic ? "--automatic" : "--manual",
-            "--trigger", context.trigger,
-            "--ssid", context.ssid,
-            "--identity", context.identity,
-            "--connectivity", context.connectivity,
-            "--request-id", context.requestId,
-            "--workspace", context.workspaceId
+            "shelllist-captive-portal", context.automatic ? "--automatic" : "--manual",
+            "--trigger", context.trigger, "--ssid", context.ssid,
+            "--identity", context.identity, "--connectivity", context.connectivity,
+            "--request-id", context.requestId, "--workspace", context.workspaceId
         ];
         if (context.automatic)
             args.push("--episode", context.episode);
         if (context.fallback)
             args.push("--fallback");
+        return args;
+    }
+    function startPortal(context) {
         try {
             console.info("shelllist portal helper started trigger=" + context.trigger + " request_id=" + context.requestId);
-            portalProcess.exec(args);
+            portalProcess.exec(portalArguments(context));
         } catch (error) {
             console.error("shelllist portal helper failed stage=start error=" + error);
             controller.status = "Could not start captive portal browser: " + error;
         }
+    }
+    function openPortal(context) {
+        if (portalProcess.running) {
+            console.info("shelllist portal decision=helper-busy trigger=" + context.trigger + " request_id=" + context.requestId);
+            return;
+        }
+        startPortal(context);
     }
 
     NmDaemonClient {

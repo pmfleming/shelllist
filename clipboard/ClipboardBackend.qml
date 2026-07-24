@@ -1,4 +1,5 @@
 import QtQuick
+import Shelllist.Io as Io
 import "ClipApi.js" as ClipApi
 
 Item {
@@ -38,13 +39,13 @@ Item {
             history: function (value) { controller.applyHistory(id, value); },
             session: controller.applySession,
             entry: function (value) {
-                if (id === "edit-commit") controller.applyEditCommit(value);
-                else controller.applyDetails(id, value);
+                if (id === "edit-commit") controller.detailState.applyEditCommit(value);
+                else controller.detailState.applyDetails(id, value);
             },
-            thumbnail: function (value) { controller.applyThumbnail(id, value); },
+            thumbnail: function (value) { controller.detailState.applyThumbnail(id, value); },
             operation: function (value) { controller.applyOperation(id, value); },
             challenge: controller.applyWipeChallenge,
-            edit: function (value) { controller.applyEdit(id, value); },
+            edit: function (value) { controller.detailState.applyEdit(id, value); },
             settings: controller.applySettings,
             capture: controller.applyCapture
         });
@@ -96,8 +97,12 @@ Item {
     function cancelRequest(requestId) { client.cancel("cancel-" + requestId, requestId); }
     function cancelOperation(operationId) { client.cancel("cancel-operation-" + operationId, operationId); }
 
-    ClipDaemonClient {
+    Io.JsonlDaemonClient {
         id: client
+        daemonName: "clip-daemon"
+        recoverProtocolErrors: true
+        streams: [ClipApi.streams.history, ClipApi.streams.current, ClipApi.streams.operation,
+            ClipApi.streams.capture, ClipApi.streams.session]
         active: backend.active
         onResponse: function (id, envelope, transportError) { backend.finish(id, envelope, transportError); }
         onEventReceived: function (event) {

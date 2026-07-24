@@ -46,36 +46,45 @@ function visualOrdered(reports) {
     });
 }
 
-function imageFor(device, report) {
-    const componentImage = componentImages[componentName(report)];
-    if (componentImage)
-        return componentImage;
+function serviceText(device) {
+    return ((device && device.services) || []).map(function (service) {
+        return String(service.label || "").toLowerCase();
+    }).join(" ");
+}
+
+function audioImage(device) {
     const icon = String((device && device.icon) || "").toLowerCase();
     if (icon.indexOf("headset") >= 0)
         return "assets/audio/headset.png";
     if (icon.indexOf("headphones") >= 0)
         return "assets/audio/headphones.png";
-    const services = ((device && device.services) || []).map(function (service) {
-        return String(service.label || "").toLowerCase();
-    }).join(" ");
+    const services = serviceText(device);
     if (services.indexOf("handsfree") >= 0 || services.indexOf("headset") >= 0)
         return "assets/audio/headset.png";
     return services.indexOf("audio sink") >= 0 ? "assets/audio/headphones.png" : "";
 }
 
+function imageFor(device, report) {
+    return componentImages[componentName(report)] || audioImage(device);
+}
+
+function batteryState(device, previousCache) {
+    const key = device.key || "";
+    const current = ordered(device.battery || []);
+    const remembered = key ? ((previousCache || ({}))[key] || []) : [];
+    return { key: key, retained: current.length > 0 ? current : remembered,
+        reports: current.length > 0 ? current : (!device.connected ? remembered : []) };
+}
+
 function enrichDevices(devices, previousCache) {
     const cache = ({});
     const enriched = (devices || []).map(function (device) {
-        const key = device.key || "";
-        const current = ordered(device.battery || []);
-        const remembered = key ? ((previousCache || ({}))[key] || []) : [];
-        const retained = current.length > 0 ? current : remembered;
-        const reports = current.length > 0 ? current : (!device.connected ? remembered : []);
-        if (key && retained.length > 0)
-            cache[key] = retained;
+        const state = batteryState(device, previousCache);
+        if (state.key && state.retained.length > 0)
+            cache[state.key] = state.retained;
         return Object.assign({}, device, {
-            battery: reports,
-            battery_last_known: !device.connected && reports.length > 0
+            battery: state.reports,
+            battery_last_known: !device.connected && state.reports.length > 0
         });
     });
     return { devices: enriched, cache: cache };

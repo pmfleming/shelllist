@@ -127,14 +127,6 @@ Core.Provider {
     }
 
     function execute(request) {
-        if (!request || !request.result || !request.result.payload)
-            return false;
-        executionStarted(request);
-        const accepted = controller.actions.execute(request.actionId, request.result.payload);
-        if (accepted === false) {
-            executionFailed({ requestId: request.id, code: "action-rejected", message: "Wi-Fi action was rejected" });
-            return false;
-        }
-        return true;
+        return executePayload(request, function (id, payload) { return controller.actions.execute(id, payload); }, "Wi-Fi action was rejected");
     }
 }

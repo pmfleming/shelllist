@@ -1,4 +1,5 @@
 import QtQuick
+import Shelllist.Io as Io
 import "BtApi.js" as BtApi
 
 Item {
@@ -262,8 +263,12 @@ Item {
             Object.assign({ key: device.key, operation: operation }, values || ({})));
     }
 
-    BtDaemonClient {
+    Io.JsonlDaemonClient {
         id: client
+        daemonName: "bt-daemon"
+        recoverProtocolErrors: true
+        streams: [BtApi.streams.changed, BtApi.streams.pairing, BtApi.streams.operation,
+            BtApi.streams.scan, BtApi.streams.audio, BtApi.streams.obex]
         active: backend.active
         onResponse: function (id, envelope, transportError) { backend.finish(id, envelope, transportError); }
         onEventReceived: function (event) { backend.handleEvent(event); }

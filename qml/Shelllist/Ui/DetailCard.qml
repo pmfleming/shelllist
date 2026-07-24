@@ -4,6 +4,7 @@ Rectangle {
     id: card
 
     property string title: ""
+    property var entries: null
     property real contentPadding: Math.max(Theme.spacingMd, Math.min(Theme.spacingLg, height * 0.06))
     default property alias content: contentSlot.data
 
@@ -34,6 +35,11 @@ Rectangle {
 
             width: parent.width
             height: Math.max(0, parent.height - heading.height - parent.spacing)
+
+            DetailGrid {
+                visible: card.entries !== null
+                entries: card.entries || []
+            }
         }
     }
 }

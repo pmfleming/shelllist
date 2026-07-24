@@ -137,17 +137,11 @@ Rectangle {
                     elide: Text.ElideRight
                 }
 
-                MouseArea {
+                ControlPointerArea {
                     id: segmentMouse
-
-                    anchors.fill: parent
+                    focusTarget: control
                     enabled: control.enabled && control.interactive && control.optionEnabled(segment.index)
-                    hoverEnabled: true
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: {
-                        control.forceActiveFocus();
-                        control.choose(segment.index);
-                    }
+                    onClicked: control.choose(segment.index)
                 }
             }
         }

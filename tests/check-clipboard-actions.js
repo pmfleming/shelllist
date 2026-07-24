@@ -4,11 +4,23 @@ const fs = require("fs");
 const vm = require("vm");
 
 const apiPath = process.argv[2];
-if (!apiPath)
-    throw new Error("usage: check-clipboard-actions.js <ClipApi.js>");
+const helperPath = process.argv[3];
+if (!apiPath || !helperPath)
+    throw new Error("usage: check-clipboard-actions.js <ClipApi.js> <ApiEnvelope.js>");
 const context = {};
 vm.createContext(context);
-vm.runInContext(fs.readFileSync(apiPath, "utf8").replace(/^\.pragma library\s*/, ""), context);
+vm.runInContext(fs.readFileSync(helperPath, "utf8").replace(/^\.pragma library\s*/, ""), context);
+context.ApiEnvelope = {
+    compatibilityError: context.compatibilityError,
+    responseError: context.responseError
+};
+const source = fs.readFileSync(apiPath, "utf8")
+    .replace(/^\.pragma library\s*/, "").replace(/^\.import.*$/gm, "");
+vm.runInContext(source, context);
+if (context.responseError({ protocol: "clip-api", version: 1, ok: true }, "") !== "")
+    throw new Error("valid clip-api envelope was rejected");
+if (!context.responseError({ protocol: "wrong", version: 1, ok: true }, "").includes("incompatible"))
+    throw new Error("incompatible clip-api envelope was accepted");
 
 function expect(kind, expected) {
     const actual = context.actionsForKind(kind);

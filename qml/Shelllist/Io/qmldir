@@ -1,2 +1,3 @@
 module Shelllist.Io
+HyprlandLayerRuleClient 1.0 process/HyprlandLayerRuleClient.qml
 JsonlDaemonClient 1.0 process/JsonlDaemonClient.qml

@@ -1,5 +1,4 @@
 import QtQuick
-import "UiText.js" as UiText
 
 Rectangle {
     id: tab
@@ -35,38 +34,15 @@ Rectangle {
         visible: tab.selected
     }
 
-    Row {
+    ControlLabel {
         anchors.centerIn: parent
-        spacing: Theme.spacingSm
-
-        Text {
-            visible: tab.icon.length > 0
-            anchors.verticalCenter: parent.verticalCenter
-            text: tab.icon
-            color: tab.selected ? Theme.accent : Theme.mutedText
-            font.family: Theme.iconFontFamily
-            font.pixelSize: Theme.iconSizeSmall
-        }
-
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: UiText.highlightHotkey(tab.label, tab.hotkey)
-            textFormat: Text.RichText
-            color: tab.selected ? Theme.accent : Theme.text
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeBody
-            font.weight: tab.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
-        }
+        label: tab.label
+        icon: tab.icon
+        hotkey: tab.hotkey
+        iconColor: tab.selected ? Theme.accent : Theme.mutedText
+        labelColor: tab.selected ? Theme.accent : Theme.text
+        labelWeight: tab.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
     }
 
-    MouseArea {
-        id: area
-
-        anchors.fill: parent
-        enabled: tab.enabled
-        hoverEnabled: true
-        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onPressed: tab.forceActiveFocus()
-        onClicked: tab.clicked()
-    }
+    ControlPointerArea { id: area; focusTarget: tab; onClicked: tab.clicked() }
 }

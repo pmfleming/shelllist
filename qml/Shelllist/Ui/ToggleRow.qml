@@ -68,14 +68,5 @@ Rectangle {
         }
     }
 
-    MouseArea {
-        id: area
-
-        anchors.fill: parent
-        enabled: row.enabled && row.interactive
-        hoverEnabled: true
-        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onPressed: row.forceActiveFocus()
-        onClicked: row.clicked()
-    }
+    ControlPointerArea { id: area; focusTarget: row; enabled: row.enabled && row.interactive; onClicked: row.clicked() }
 }

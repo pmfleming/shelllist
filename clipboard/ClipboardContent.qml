@@ -7,27 +7,14 @@ Ui.ChooserSurface {
     id: content
 
     required property ClipboardController controller
-    required property Ui.PopupWindowHost windowHost
     readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
     readonly property var selectedEntry: controller.selectedEntry || ({})
-
-    function captureScreenshot() {
-        const width = Math.round(controller.currentWindowWidth);
-        const x = Math.round(windowHost.targetWindowX()
-            + (controller.surfaceWindowWidth - width) / 2);
-        controller.captureScreenshot(
-            x,
-            windowHost.targetWindowY(),
-            width,
-            windowHost.currentWindowHeight
-        );
-    }
 
     Shortcut {
         sequence: "Escape"
         onActivated: {
-            if (content.controller.editingText)
-                content.controller.cancelEdit();
+            if (content.controller.detailState.editing)
+                content.controller.detailState.cancelEdit();
             else if (content.controller.activeOperationId.length > 0)
                 content.controller.cancelActiveOperation();
             else if (content.controller.deleteConfirmationOpen)
@@ -35,7 +22,7 @@ Ui.ChooserSurface {
             else if (content.controller.detailsOpen)
                 content.controller.closeDetails();
             else
-                content.windowHost.closeRequested();
+                content.controller.closeWindowRequested();
         }
     }
     Shortcut { sequence: "F5"; enabled: !content.controller.actionInFlight; onActivated: content.controller.refresh() }
@@ -45,7 +32,6 @@ Ui.ChooserSurface {
     Shortcut { sequence: "Delete"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.requestDelete() }
 
     Ui.SplitChooserLayout {
-        id: chooser
         controller: content.controller
         listComponent: Component {
             ClipboardListPane { controller: content.controller; uiScale: content.uiScale }
@@ -57,10 +43,7 @@ Ui.ChooserSurface {
 
     Connections {
         target: content.controller
-        function onFocusSearchRequested() { Qt.callLater(chooser.listItem.focusSearch); }
-        function onFocusListTopRequested() { Qt.callLater(chooser.listItem.focusTop); }
-        function onScreenshotRequested() { content.captureScreenshot(); }
-        function onHideRequested() { content.windowHost.closeRequested(); }
+        function onHideRequested() { content.controller.closeWindowRequested(); }
     }
 
     Ui.ConfirmationDialog {

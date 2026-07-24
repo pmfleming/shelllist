@@ -20,19 +20,16 @@ AdvancedSettingsFlickable {
         DetailCard {
             height: 245
             title: "Device"
-
-            DetailGrid {
-                entries: [
-                    { label: "BSSID", value: securityFlick.settings.ap.bssid || "—" },
-                    { label: "Device MAC", value: ((securityFlick.settings.status.wireless || {}).mac_address || "—") },
-                    { label: "Profile path", value: securityFlick.settings.profile.path || "—" },
-                    { label: "Interface", value: securityFlick.settings.ap.device_iface || securityFlick.settings.status.device_iface || "—" },
-                    { label: "Mode", value: securityFlick.settings.ap.mode ? "Wi-Fi " + securityFlick.settings.ap.mode : "Infrastructure" },
-                    { label: "Band / frequency", value: (securityFlick.settings.ap.band || "—") + " / " + (securityFlick.settings.ap.frequency || "—") + " MHz" },
-                    { label: "Channel", value: securityFlick.settings.ap.channel === undefined ? "—" : String(securityFlick.settings.ap.channel) },
-                    { label: "Maximum bitrate", value: securityFlick.settings.ap.max_bitrate_mbps ? securityFlick.settings.ap.max_bitrate_mbps + " Mbps" : "—" }
-                ]
-            }
+            entries: [
+                { label: "BSSID", value: securityFlick.settings.ap.bssid || "—" },
+                { label: "Device MAC", value: ((securityFlick.settings.status.wireless || {}).mac_address || "—") },
+                { label: "Profile path", value: securityFlick.settings.profile.path || "—" },
+                { label: "Interface", value: securityFlick.settings.ap.device_iface || securityFlick.settings.status.device_iface || "—" },
+                { label: "Mode", value: securityFlick.settings.ap.mode ? "Wi-Fi " + securityFlick.settings.ap.mode : "Infrastructure" },
+                { label: "Band / frequency", value: (securityFlick.settings.ap.band || "—") + " / " + (securityFlick.settings.ap.frequency || "—") + " MHz" },
+                { label: "Channel", value: securityFlick.settings.ap.channel === undefined ? "—" : String(securityFlick.settings.ap.channel) },
+                { label: "Maximum bitrate", value: securityFlick.settings.ap.max_bitrate_mbps ? securityFlick.settings.ap.max_bitrate_mbps + " Mbps" : "—" }
+            ]
         }
 
         DetailCard {

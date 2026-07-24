@@ -60,14 +60,7 @@ ChooserSurface {
         onActivated: content.controller.closeWindowRequested()
     }
 
-    Connections {
-        target: content.controller
-        function onFocusSearchRequested() { Qt.callLater(chooser.listItem.focusSearch); }
-        function onFocusListTopRequested() { Qt.callLater(chooser.listItem.focusTop); }
-    }
-
     SplitChooserLayout {
-        id: chooser
         controller: content.controller
         listComponent: Component {
             NetworkListPane {

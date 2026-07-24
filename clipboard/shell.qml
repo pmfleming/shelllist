@@ -5,26 +5,28 @@ import QtQuick
 import Shelllist.Ui as Ui
 
 ShellRoot {
-    ClipboardController { id: controller }
+    ClipboardController { id: clipboardController }
 
-    Ui.PopupWindowHost {
+    Ui.ChooserWindowHost {
         id: windowHost
-        modeEnvironment: "SHELLLIST_CLIPBOARD_MODE"
-        ipcTarget: "clipboard"
-        shortcutName: "clipboard"
-        shortcutDescription: "Toggle the Shelllist clipboard history"
-        windowTitle: "Shelllist Clipboard"
-        layerNamespace: "shelllist-clipboard"
+        controller: clipboardController
+        applicationId: "clipboard"
+        displayName: "Clipboard"
         content: contentComponent
-        surfaceWindowWidth: controller.surfaceWindowWidth
-        currentWindowWidth: controller.currentWindowWidth
-        onUiActivated: function (workspaceId) { controller.activateUi(workspaceId); }
-        onUiDeactivated: controller.deactivateUi()
-        onFocusSearchRequested: controller.focusSearchRequested()
+    }
+
+    Connections {
+        target: clipboardController
+        function onScreenshotRequested() {
+            const width = Math.round(clipboardController.currentWindowWidth);
+            const x = Math.round(windowHost.targetWindowX()
+                + (clipboardController.surfaceWindowWidth - width) / 2);
+            clipboardController.captureScreenshot(x, windowHost.targetWindowY(), width, windowHost.currentWindowHeight);
+        }
     }
 
     Component {
         id: contentComponent
-        ClipboardContent { controller: controller; windowHost: windowHost }
+        ClipboardContent { controller: clipboardController }
     }
 }
