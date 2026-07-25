@@ -25,7 +25,7 @@ Ui.DetailsPane {
             "cancel-edit": detailState.cancelEdit, "open-url": controller.openUrl,
             "open-file": function () { controller.openFile(0); },
             "reveal-file": function () { controller.revealFile(0); },
-            "image-as-file": controller.imageAsFile, annotate: controller.annotateImage,
+            "image-as-file": controller.pasteImageAsFile, annotate: controller.annotateImage,
             favorite: controller.toggleFavorite, "delete": controller.requestDelete,
             "close-details": controller.closeDetails
         });
@@ -93,9 +93,9 @@ Ui.DetailsPane {
                 visible: pane.files.length > 0, enabled: !pane.controller.actionInFlight && !!pane.firstFile.exists,
                 presentation: { group: "toolbar", tone: "normal", width: 96 }
             }, {
-                id: "image-as-file", label: "As file", icon: "󰈔", shortcut: "Shift+↵",
+                id: "image-as-file", label: pane.controller.targetAvailable ? "Paste as file" : "Copy as file", icon: "󰈔", shortcut: "Shift+↵",
                 visible: pane.entry.kind === "image", enabled: !pane.controller.actionInFlight,
-                presentation: { group: "toolbar", tone: "normal", width: 106 }
+                presentation: { group: "toolbar", tone: "normal", width: 136 }
             }, {
                 id: "annotate", label: "Annotate", icon: "󰏫", shortcut: "",
                 visible: pane.entry.kind === "image", enabled: !pane.controller.actionInFlight,

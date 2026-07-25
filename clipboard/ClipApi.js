@@ -42,7 +42,7 @@ function actionsForKind(kind) {
 
 var actionLabels = {
     paste: "Paste", copy: "Copy", edit: "Edit", "open-url": "Open URL",
-    "image-as-file": "Save as file", annotate: "Annotate",
+    "image-as-file": "Paste as file", annotate: "Annotate",
     "open-file": "Open file", "reveal-file": "Reveal file"
 };
 

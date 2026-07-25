@@ -103,7 +103,7 @@ Ui.ChooserController {
         pasteSelected();
         return true;
     }
-    function imageAsFile() { runAction("image-as-file"); }
+    function pasteImageAsFile() { runAction("image-as-file"); }
     function annotateImage() { runAction("annotate"); }
     function openUrl() { runAction("open-url"); }
     function openFile(index) { runAction("open-file", index || 0); }
@@ -155,11 +155,17 @@ Ui.ChooserController {
         activeOperationId = actionInFlight ? (operation.id || "") : "";
         status = operation.message || "Clipboard operation completed";
         if (actionInFlight) return;
+        const finishPaste = function () {
+            if (operation.status === "paste-prepared")
+                backend.hideSession(sessionId);
+            else if (operation.action === "image-as-file")
+                scheduleRefresh();
+        };
         const completions = ({
-            paste: function () { if (operation.status === "paste-prepared") backend.hideSession(sessionId); },
+            paste: finishPaste, "image-as-file": finishPaste,
             wipe: finishWipe, "delete": finishDelete, screenshot: finishScreenshot,
-            copy: scheduleRefresh, "image-as-file": scheduleRefresh,
-            favorite: scheduleRefresh, unfavorite: scheduleRefresh, "pin-current": scheduleRefresh
+            copy: scheduleRefresh, favorite: scheduleRefresh,
+            unfavorite: scheduleRefresh, "pin-current": scheduleRefresh
         });
         if (completions[operation.action]) completions[operation.action]();
     }

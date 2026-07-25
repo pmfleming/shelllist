@@ -24,6 +24,8 @@ expect("html", ["paste", "copy", "edit"]);
 expect("json", ["paste", "copy", "edit"]);
 expect("color", ["paste", "copy", "edit"]);
 expect("binary", ["copy"]);
+if (context.actionLabels["image-as-file"] !== "Paste as file")
+    throw new Error("image-as-file must be presented as the alternative image paste action");
 
 for (const kind of ["text", "link", "image", "files", "binary"]) {
     const descriptors = context.actionDescriptorsForKind(kind);

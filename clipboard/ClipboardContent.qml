@@ -28,7 +28,7 @@ Ui.ChooserSurface {
     Shortcut { sequence: "F5"; enabled: !content.controller.actionInFlight; onActivated: content.controller.refresh() }
     Shortcut { sequence: "Return"; enabled: content.controller.hasSelection && content.selectedEntry.kind !== "binary" && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.pasteSelected() }
     Shortcut { sequence: "Ctrl+Return"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.copySelected() }
-    Shortcut { sequence: "Shift+Return"; enabled: content.controller.hasSelection && content.selectedEntry.kind === "image" && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.imageAsFile() }
+    Shortcut { sequence: "Shift+Return"; enabled: content.controller.hasSelection && content.selectedEntry.kind === "image" && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.pasteImageAsFile() }
     Shortcut { sequence: "Delete"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.requestDelete() }
 
     Ui.SplitChooserLayout {
