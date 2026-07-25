@@ -46,6 +46,11 @@ expect("preferred adapter is retained", flow.retainedAdapterKey([{ key: "a" }, {
 expect("missing adapter falls back", flow.retainedAdapterKey([{ key: "a" }], "b") === "a");
 expect("initial scan requires an idle powered UI", flow.shouldStartScan(true, true, false, false));
 expect("snapshot status reports scanning", flow.snapshotStatus(true, true, 3) === "3 devices · scanning…");
+expect("completed calls use a stable status", flow.completedCallStatus("device-connect", true, "Connecting") === "Bluetooth device updated");
+expect("scan failure exposes its error", flow.scanCompletionStatus({ state: "failed", error: { message: "radio failed" } }, 0, "Scanning") === "radio failed");
+expect("incoming transfer completion names Downloads", flow.transferCompletionStatus({ status: "complete", direction: "incoming", file_name: "photo.jpg" }) === "photo.jpg saved in Downloads");
+expect("transfer progress reports percentage", flow.transferProgressStatus({ direction: "outgoing", file_name: "photo.jpg", size: 100, transferred: 25 }) === "Sending photo.jpg · 25%");
+expect("cancelled operations have a stable status", flow.operationCompletionStatus({ state: "cancelled" }, "Headset") === "Bluetooth operation cancelled");
 expect("cached unpaired device is recently found", flow.deviceState({ paired: false, connected: false, present: false, last_seen_ms: 123 }) === "Recently found");
 expect("strong signal uses three bars", flow.signalLevel({ signal_strength: 80 }) === 3);
 expect("zero signal still uses one bar", flow.signalLevel({ signal_strength: 0 }) === 1);

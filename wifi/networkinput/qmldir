@@ -1,4 +1,5 @@
 module Shelllist.NetworkInput
 singleton IpValidator 1.0 IpValidator.qml
+internal ValidatedIpField ValidatedIpField.qml
 IpAddressField 1.0 IpAddressField.qml
 PrefixLengthField 1.0 PrefixLengthField.qml

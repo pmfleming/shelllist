@@ -12,7 +12,6 @@ Item {
     property var finishedOperations
     property var transfers
     property var finishedTransfers
-    property var scans
 
     // Incoming OBEX authorization can arrive while the popup is hidden.
     readonly property bool active: true
@@ -30,7 +29,7 @@ Item {
     function itemCount(values) { return Object.keys(values || ({})).length; }
     function resetTransportState() {
         pending = ({}); operations = ({}); finishedOperations = ({});
-        transfers = ({}); finishedTransfers = ({}); scans = ({});
+        transfers = ({}); finishedTransfers = ({});
     }
     function copyWithout(values, key) {
         const result = Object.assign({}, values);
@@ -125,7 +124,6 @@ Item {
             controller.status = controller.statusForCompletedCall(id);
     }
     function acceptScan(scan, snapshot) {
-        scans = copyWith(scans, scan.request_id, scan);
         controller.handleScanEvent(scan);
         if (snapshot)
             controller.applySnapshot(snapshot);
@@ -181,12 +179,7 @@ Item {
         }
     }
     function handlePairingEvent(event) { controller.handlePairingEvent(event); }
-    function handleScanEvent(event) {
-        const scan = event.data || ({});
-        if (scan.request_id)
-            scans = ["completed", "failed", "cancelled"].includes(scan.state) ? copyWithout(scans, scan.request_id) : copyWith(scans, scan.request_id, scan);
-        controller.handleScanEvent(scan);
-    }
+    function handleScanEvent(event) { controller.handleScanEvent(event.data || ({})); }
     function handleTransferEvent(event) {
         const transfer = event.data || ({});
         const next = lifecycleState(transfer, transfers, finishedTransfers, transfer.status, ["complete", "cancelled", "error"]);
@@ -231,7 +224,6 @@ Item {
         }
     }
     function cancelTransfer(requestId) { return cancelActive("transfer", requestId, transfers); }
-    function refreshAudio() { return call("audio-snapshot", BtApi.methods.audioSnapshot, {}); }
     function setAudioProfile(deviceKey, profileKey) { return call("audio-set-profile", BtApi.methods.audioSetProfile, { device_key: deviceKey, profile_key: profileKey }); }
     function setPowered(powered, adapterKey) { return call("power", BtApi.methods.setPowered, { adapter_key: adapterKey || null, powered: powered }); }
     function setScanning(enabled, adapterKey) {

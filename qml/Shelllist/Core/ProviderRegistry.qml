@@ -80,18 +80,32 @@ Item {
             || null;
     }
 
-    function execute(result, actionId, context) {
+    function executionProvider(result, actionId) {
         if (!result)
             return reject("missing-result", "No result is selected", "", actionId);
         const itemProvider = providerById(result.providerId);
         if (!itemProvider || !itemProvider.providerEnabled)
             return reject("provider-unavailable", "Provider " + result.providerId + " is unavailable", result.key, actionId);
+        return itemProvider;
+    }
+
+    function executionAction(result, actionId) {
         const actions = actionsFor(result);
-        const selectedAction = actionId ? Model.actionById(actions, actionId) : defaultActionFor(result);
-        if (!selectedAction)
+        const action = actionId ? Model.actionById(actions, actionId) : defaultActionFor(result);
+        if (!action)
             return reject("action-unavailable", "No action is available", result.key, actionId);
-        if (!selectedAction.visible || !selectedAction.enabled)
-            return reject("action-disabled", "Action " + selectedAction.id + " is unavailable", result.key, selectedAction.id);
+        if (!action.visible || !action.enabled)
+            return reject("action-disabled", "Action " + action.id + " is unavailable", result.key, action.id);
+        return action;
+    }
+
+    function execute(result, actionId, context) {
+        const itemProvider = executionProvider(result, actionId);
+        if (!itemProvider)
+            return false;
+        const selectedAction = executionAction(result, actionId);
+        if (!selectedAction)
+            return false;
         executionSequence += 1;
         const request = Model.executionRequest({
             id: "action-" + Date.now() + "-" + executionSequence,
@@ -109,6 +123,8 @@ Item {
         actionRejected({ code: code, message: message, resultKey: resultKey || "", actionId: actionId || "" });
         return false;
     }
+
+    Component.onCompleted: validate()
 
     Instantiator {
         model: registry.providers

@@ -94,16 +94,12 @@ Ui.ChooserController {
         audioDevices = devices || [];
         audioStatus = "";
     }
-    function devicesWithRememberedBattery(devices) {
-        const enrichment = BluetoothBattery.enrichDevices(devices, lastKnownBatteryByDevice);
-        lastKnownBatteryByDevice = enrichment.cache;
-        return enrichment.devices;
-    }
     function applySnapshot(snapshot) {
         adapters = snapshot.adapters || [];
         preferredAdapterKey = BluetoothFlow.retainedAdapterKey(adapters, preferredAdapterKey);
-        const devices = devicesWithRememberedBattery(snapshot.devices || []);
-        results.replaceProviderResults(provider.providerId, provider.resultsForDevices(devices), false);
+        const enrichment = BluetoothBattery.enrichDevices(snapshot.devices, lastKnownBatteryByDevice);
+        lastKnownBatteryByDevice = enrichment.cache;
+        results.replaceProviderResults(provider.providerId, provider.resultsForDevices(enrichment.devices), false);
         if (BluetoothFlow.shouldStartScan(uiActive, powered, scanning, scanRequested)) {
             scanRequested = true;
             backend.setScanning(true, selectedAdapter.key);
@@ -111,19 +107,7 @@ Ui.ChooserController {
         status = BluetoothFlow.snapshotStatus(powered, scanning, filteredResults.length);
     }
     function statusForCompletedCall(id) {
-        if (id === "power")
-            return powered ? "Bluetooth turned on" : "Bluetooth turned off";
-        if (id === "scan-start")
-            return "Scanning for Bluetooth devices…";
-        if (id === "scan-stop" || id.indexOf("cancel-scan-") === 0)
-            return "Bluetooth scan stopped";
-        if (id === "pairing-response")
-            return "Pairing response sent";
-        if (id === "obex-response")
-            return status;
-        if (id.indexOf("device-") === 0)
-            return "Bluetooth device updated";
-        return status;
+        return BluetoothFlow.completedCallStatus(id, powered, status);
     }
     function setPower() {
         status = powered ? "Turning Bluetooth off…" : "Turning Bluetooth on…";
@@ -134,14 +118,6 @@ Ui.ChooserController {
         status = scanning ? "Stopping Bluetooth scan…" : "Scanning for Bluetooth devices…";
         scanRequested = true;
         backend.setScanning(!scanning, selectedAdapter.key);
-    }
-    function scanCompletionStatus(scan) {
-        const messages = {
-            completed: filteredResults.length + " Bluetooth devices · scan complete",
-            cancelled: "Bluetooth scan stopped",
-            failed: (scan.error && scan.error.message) || "Bluetooth scan failed"
-        };
-        return messages[scan.state] || status;
     }
     function handleScanEvent(scan) {
         if (!scan || !scan.request_id)
@@ -157,7 +133,7 @@ Ui.ChooserController {
             activeScan = null;
         if (scan.snapshot)
             applySnapshot(scan.snapshot);
-        status = scanCompletionStatus(scan);
+        status = BluetoothFlow.scanCompletionStatus(scan, filteredResults.length, status);
     }
     function sendFile(path) {
         if (!hasSelection || !path || actionInFlight || !obexCapabilities.outgoing_object_push)
@@ -165,39 +141,32 @@ Ui.ChooserController {
         status = "Starting file transfer to " + selectedDevice.name + "…";
         return backend.sendFile(selectedDevice.key, path);
     }
-    function isTerminalTransfer(transfer) { return BluetoothFlow.isTerminalTransfer(transfer); }
-    function completedTransferStatus(transfer) {
-        if (transfer.status === "complete")
-            return transfer.direction === "incoming" ? transfer.file_name + " saved in Downloads" : transfer.file_name + " sent";
-        if (transfer.status === "cancelled")
-            return "File transfer cancelled";
-        return (transfer.error && transfer.error.message) || "File transfer failed";
+    function openIncomingTransfer(transfer) {
+        activeTransfer = transfer;
+        incomingTransferPrompt = transfer;
+        status = "Incoming file transfer approval required";
+        incomingTransferRequested();
     }
-    function transferProgressStatus(transfer) {
-        const percentage = transfer.size > 0 ? Math.floor(transfer.transferred * 100 / transfer.size) : 0;
-        const verb = transfer.direction === "incoming" ? "Receiving " : "Sending ";
-        return verb + transfer.file_name + (transfer.size > 0 ? " · " + percentage + "%" : "…");
+    function completeTransfer(transfer) {
+        if (activeTransfer && activeTransfer.request_id === transfer.request_id)
+            activeTransfer = null;
+        status = BluetoothFlow.transferCompletionStatus(transfer);
     }
     function handleObexTransfer(transfer) {
         if (!transfer || !transfer.request_id)
             return;
         if (transfer.status === "awaiting-authorization") {
-            activeTransfer = transfer;
-            incomingTransferPrompt = transfer;
-            status = "Incoming file transfer approval required";
-            incomingTransferRequested();
+            openIncomingTransfer(transfer);
             return;
         }
         if (incomingTransferPrompt && incomingTransferPrompt.request_id === transfer.request_id)
             incomingTransferPrompt = null;
-        if (isTerminalTransfer(transfer)) {
-            if (activeTransfer && activeTransfer.request_id === transfer.request_id)
-                activeTransfer = null;
-            status = completedTransferStatus(transfer);
+        if (BluetoothFlow.isTerminalTransfer(transfer)) {
+            completeTransfer(transfer);
             return;
         }
         activeTransfer = transfer;
-        status = transferProgressStatus(transfer);
+        status = BluetoothFlow.transferProgressStatus(transfer);
     }
     function respondIncomingTransfer(accept) {
         if (!incomingTransferPromptOpen)
@@ -217,13 +186,6 @@ Ui.ChooserController {
         if (!activeOperation || activeOperation.request_id !== operation.request_id)
             activeOperation = operation;
     }
-    function operationCompletionStatus(operation, deviceName) {
-        if (operation.state === "completed")
-            return deviceName + " updated";
-        if (operation.state === "cancelled")
-            return "Bluetooth operation cancelled";
-        return (operation.error && operation.error.message) || "Bluetooth operation failed";
-    }
     function handleOperationEvent(operation) {
         if (!operation || !operation.request_id)
             return;
@@ -240,7 +202,7 @@ Ui.ChooserController {
             pairingPrompt = null;
             pairingInput = "";
         }
-        status = operationCompletionStatus(operation, deviceName);
+        status = BluetoothFlow.operationCompletionStatus(operation, deviceName);
         if (BluetoothFlow.shouldRescanAfterOperation(operation, uiActive, powered, scanning)) {
             status = "Device is no longer nearby · scanning again…";
             scanRequested = true;
@@ -311,11 +273,10 @@ Ui.ChooserController {
         return true;
     }
     function primarySelected() { return hasSelection && providers.execute(selectedResult, "", { workspaceId: currentWorkspaceId }); }
-    function actionForId(id) { return detailActions.find(function (action) { return action.id === id; }) || null; }
     function triggerDetailAction(id) {
         if (!hasSelection)
             return false;
-        const action = actionForId(id);
+        const action = detailActions.find(function (candidate) { return candidate.id === id; }) || null;
         if (!action || action.visible === false || action.enabled === false)
             return false;
         if (action.confirmation && action.confirmation.required) {
@@ -324,7 +285,6 @@ Ui.ChooserController {
         }
         return providers.execute(selectedResult, id, { workspaceId: currentWorkspaceId });
     }
-    function triggerAction(id) { return triggerDetailAction(id); }
     function cancelPendingConfirmation() { pendingConfirmationAction = null; }
     function confirmPendingAction() {
         if (!pendingConfirmationAction)

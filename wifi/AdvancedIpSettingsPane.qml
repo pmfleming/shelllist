@@ -9,7 +9,7 @@ import Shelllist.Ui
 AdvancedSettingsFlickable {
     id: hardwareFlick
 
-    required property var settings
+    required property AdvancedSettingsPage settings
 
     contentHeight: hardwareCards.implicitHeight
 
@@ -79,10 +79,7 @@ AdvancedSettingsFlickable {
                         allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
                         readOnly: hardwareFlick.settings.currentMethod !== "manual"
                         text: hardwareFlick.settings.displayedAddress
-                        onEdited: function (value) {
-                            if (hardwareFlick.settings.ipFamily === "ipv4") hardwareFlick.settings.ipv4Address = value;
-                            else hardwareFlick.settings.ipv6Address = value;
-                        }
+                        onEdited: function (value) { hardwareFlick.settings.currentIp.address = value; }
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
 
@@ -93,10 +90,7 @@ AdvancedSettingsFlickable {
                         allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
                         readOnly: hardwareFlick.settings.currentMethod !== "manual"
                         text: hardwareFlick.settings.displayedPrefix
-                        onEdited: function (value) {
-                            if (hardwareFlick.settings.ipFamily === "ipv4") hardwareFlick.settings.ipv4Prefix = value;
-                            else hardwareFlick.settings.ipv6Prefix = value;
-                        }
+                        onEdited: function (value) { hardwareFlick.settings.currentIp.prefix = value; }
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
 
@@ -106,10 +100,7 @@ AdvancedSettingsFlickable {
                         family: hardwareFlick.settings.ipFamily
                         readOnly: hardwareFlick.settings.currentMethod !== "manual"
                         text: hardwareFlick.settings.displayedGateway
-                        onEdited: function (value) {
-                            if (hardwareFlick.settings.ipFamily === "ipv4") hardwareFlick.settings.ipv4Gateway = value;
-                            else hardwareFlick.settings.ipv6Gateway = value;
-                        }
+                        onEdited: function (value) { hardwareFlick.settings.currentIp.gateway = value; }
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
 
@@ -120,10 +111,7 @@ AdvancedSettingsFlickable {
                         multiple: true
                         readOnly: !hardwareFlick.settings.currentFamilyEnabled || hardwareFlick.settings.currentAutoDns
                         text: hardwareFlick.settings.displayedDns
-                        onEdited: function (value) {
-                            if (hardwareFlick.settings.ipFamily === "ipv4") hardwareFlick.settings.ipv4Dns = value;
-                            else hardwareFlick.settings.ipv6Dns = value;
-                        }
+                        onEdited: function (value) { hardwareFlick.settings.currentIp.dns = value; }
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
 
@@ -131,12 +119,9 @@ AdvancedSettingsFlickable {
                     TextField {
                         Layout.fillWidth: true
                         readOnly: !hardwareFlick.settings.currentFamilyEnabled
-                        text: hardwareFlick.settings.ipFamily === "ipv4" ? hardwareFlick.settings.ipv4Search : hardwareFlick.settings.ipv6Search
+                        text: hardwareFlick.settings.currentIp.search
                         placeholder: "Optional, comma-separated"
-                        onEdited: function (value) {
-                            if (hardwareFlick.settings.ipFamily === "ipv4") hardwareFlick.settings.ipv4Search = value;
-                            else hardwareFlick.settings.ipv6Search = value;
-                        }
+                        onEdited: function (value) { hardwareFlick.settings.currentIp.search = value; }
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
                 }

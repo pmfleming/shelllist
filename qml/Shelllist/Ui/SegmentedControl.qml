@@ -43,19 +43,19 @@ Rectangle {
             selected(nextValue);
     }
 
+    function nextEnabledIndex(index, delta, remaining) {
+        if (remaining === 0 || index < 0 || index >= options.length)
+            return -1;
+        return optionEnabled(index) ? index : nextEnabledIndex(index + delta, delta, remaining - 1);
+    }
+
     function move(delta) {
         if (options.length === 0)
             return;
-        let index = currentIndex >= 0 ? currentIndex : (delta > 0 ? -1 : options.length);
-        for (let count = 0; count < options.length; ++count) {
-            index += delta;
-            if (index < 0 || index >= options.length)
-                return;
-            if (optionEnabled(index)) {
-                choose(index);
-                return;
-            }
-        }
+        const initial = currentIndex >= 0 ? currentIndex : (delta > 0 ? -1 : options.length);
+        const next = nextEnabledIndex(initial + delta, delta, options.length);
+        if (next >= 0)
+            choose(next);
     }
 
     Keys.onLeftPressed: function (event) {

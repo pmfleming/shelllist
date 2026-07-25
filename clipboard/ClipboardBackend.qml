@@ -45,7 +45,7 @@ Item {
                 else controller.detailState.applyDetails(id, value);
             },
             thumbnail: function (value) { controller.detailState.applyThumbnail(id, value); },
-            operation: function (value) { controller.applyOperation(id, value); },
+            operation: function (value) { controller.applyOperation(value); },
             challenge: controller.applyWipeChallenge,
             edit: function (value) { controller.detailState.applyEdit(id, value); },
             settings: controller.applySettings,

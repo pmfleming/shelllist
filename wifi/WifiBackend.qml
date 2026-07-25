@@ -71,13 +71,8 @@ Item {
             controller.status = "Could not update the saved Wi-Fi profile: missing operation.";
             return false;
         }
-        if (operation.operation === "forget") {
-            const target = operation.target || ({});
-            console.info("shelllist forget request_id=" + (operation.request_id || "")
-                + " key=" + (operation.key || "")
-                + " ssid=" + (target.ssid || "")
-                + " bssid=" + (target.bssid || ""));
-        }
+        if (operation.operation === "forget")
+            console.info("shelllist forget request=" + JSON.stringify(operation));
         return call("profile", NmApi.methods.wifi_profile_operation, operation);
     }
     function share(path) { return call("share", NmApi.methods.wifi_profile_operation, { operation: "share", path: path }); }

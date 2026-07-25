@@ -1,16 +1,11 @@
 import QtQuick
-import Shelllist.Ui as Ui
 import "IpValidation.js" as IpValidation
 
-Ui.TextField {
-    property string family: "ipv4"
+ValidatedIpField {
     property bool multiple: false
-    property bool allowEmpty: true
-    readonly property int validationState: IpValidation.addressInputState(text, family, multiple, allowEmpty)
-    readonly property bool acceptableInput: validationState === IpValidation.Acceptable
-    readonly property bool intermediateInput: validationState === IpValidation.Intermediate
 
-    inputValid: validationState !== IpValidation.Invalid
+    allowEmpty: true
+    validationState: IpValidation.addressInputState(text, family, multiple, allowEmpty)
     inputMethodHints: family === "ipv4" && !multiple
         ? Qt.ImhFormattedNumbersOnly
         : (Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase)

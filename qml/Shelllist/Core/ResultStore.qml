@@ -88,30 +88,23 @@ Item {
         return true;
     }
 
-    function removeProvider(providerId) {
-        const previous = selected();
-        const next = sourceResults.filter(function (item) { return item.providerId !== providerId; });
-        sourceResults = next;
-        const retainedIndex = previous ? Model.indexByKey(visibleResults, previous.key) : -1;
-        selectedIndex = retainedIndex >= 0 ? retainedIndex : clampIndex(selectedIndex);
-    }
-
     function clear() {
         sourceResults = [];
         selectedIndex = 0;
         activeQueryId = "";
     }
 
+    function modelIndexFor(key, startIndex) {
+        for (let index = startIndex; index < visibleListModel.count; index++)
+            if (visibleListModel.get(index).resultKey === key)
+                return index;
+        return -1;
+    }
+
     function syncVisibleModel() {
         for (let desiredIndex = 0; desiredIndex < visibleResults.length; desiredIndex++) {
             const desired = visibleResults[desiredIndex];
-            let currentIndex = -1;
-            for (let index = desiredIndex; index < visibleListModel.count; index++) {
-                if (visibleListModel.get(index).resultKey === desired.key) {
-                    currentIndex = index;
-                    break;
-                }
-            }
+            const currentIndex = modelIndexFor(desired.key, desiredIndex);
             if (currentIndex < 0) {
                 visibleListModel.insert(desiredIndex, { resultKey: desired.key, resultData: desired });
             } else {

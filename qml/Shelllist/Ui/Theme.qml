@@ -28,13 +28,11 @@ Item {
     readonly property color pressed: withAlpha(accent, dark ? 0.24 : 0.16)
     readonly property color active: envColor("SHELLLIST_SUCCESS", dark ? "#22c55e" : "#15803d")
     readonly property color activeText: readableOn(active)
-    readonly property color activeBackground: withAlpha(active, dark ? 0.18 : 0.12)
     readonly property color danger: envColor("SHELLLIST_DANGER", dark ? "#ef4444" : "#dc2626")
     readonly property color dangerText: readableOn(danger)
     readonly property color dangerBackground: withAlpha(danger, dark ? 0.18 : 0.12)
     readonly property color warning: envColor("SHELLLIST_WARNING", dark ? "#fbbf24" : "#b45309")
     readonly property color warningText: readableOn(warning)
-    readonly property color warningBackground: withAlpha(warning, dark ? 0.18 : 0.12)
     readonly property color disabledText: mix(text, surface, 0.62)
     readonly property color overlay: dark ? "#99000000" : "#66ffffff"
     readonly property color controlBackground: surfaceRaised
@@ -47,7 +45,6 @@ Item {
     readonly property int spacingSm: 8
     readonly property int spacingMd: 12
     readonly property int spacingLg: 18
-    readonly property int spacingXl: 24
     readonly property int contentMargin: 14
     readonly property int contentVerticalMargin: 24
     readonly property int popupClosedWidth: 453

@@ -30,10 +30,6 @@ ChooserController {
     selectionModel: services.results
     detailActions: services.providers.actionsFor(detailResult)
     readonly property string busyMessage: "Wait for the current Wi-Fi action to finish…"
-    readonly property bool shareAvailable: services.share.available
-    readonly property string sharePayload: services.share.payload
-    readonly property string shareStatus: services.share.status
-    readonly property string shareUnavailableMessage: services.share.unavailableMessage
     readonly property ShareAvailabilityController shareController: services.share
     readonly property WifiProvider providerModel: services.provider
     readonly property Core.ProviderRegistry providerRegistry: services.providers
@@ -76,7 +72,6 @@ ChooserController {
 
 
     function invalidateShareAvailabilityCache() { services.share.invalidate(); }
-    function refreshShareAvailability() { services.share.refresh(); }
     function shareSelected() { services.share.copySelected(); }
     function applyShareResponse(response, errorText) { services.share.applyResponse(response, errorText); }
     function statusIsHeld() { return Date.now() < statusHoldUntil; }

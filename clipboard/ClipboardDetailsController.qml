@@ -67,7 +67,7 @@ Item {
             error = "Could not request clipboard entry details";
             return;
         }
-        if (entry.kind !== "image" && entry.kind !== "files")
+        if (entry.kind !== "image")
             return;
         thumbnailRequestId = "thumbnail" + suffix;
         if (!daemonBackend.thumbnail(thumbnailRequestId, entry))

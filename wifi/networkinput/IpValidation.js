@@ -139,16 +139,21 @@ function isAddress(value, family) {
     return addressState(value, family) === Acceptable;
 }
 
+function groupedAddressState(value, family, finalAddress) {
+    const state = addressState(value, family);
+    if (state === Invalid)
+        return Invalid;
+    return finalAddress || state === Acceptable ? state : Invalid;
+}
+
 function addressGroupState(group, family, finalGroup) {
     if (group.length === 0)
         return finalGroup ? Intermediate : Invalid;
     const addresses = group.split(/\s+/);
     for (let index = 0; index < addresses.length; ++index) {
-        const state = addressState(addresses[index], family);
         const finalAddress = finalGroup && index === addresses.length - 1;
-        if (state === Invalid || (!finalAddress && state !== Acceptable))
-            return Invalid;
-        if (finalAddress)
+        const state = groupedAddressState(addresses[index], family, finalAddress);
+        if (state !== Acceptable)
             return state;
     }
     return Acceptable;

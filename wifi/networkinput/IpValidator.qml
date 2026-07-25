@@ -4,10 +4,6 @@ import QtQuick
 import "IpValidation.js" as Validation
 
 QtObject {
-    readonly property int invalid: Validation.Invalid
-    readonly property int intermediate: Validation.Intermediate
-    readonly property int acceptable: Validation.Acceptable
-
     function ipv4State(value) { return Validation.ipv4State(value); }
     function ipv6State(value) { return Validation.ipv6State(value); }
     function addressState(value, family) { return Validation.addressState(value, family); }

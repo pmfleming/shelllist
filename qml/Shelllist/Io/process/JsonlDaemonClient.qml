@@ -118,6 +118,7 @@ Item {
             scheduleRetry();
         }
     }
+    function isFailureKind(kind) { return ["transport-error", "protocol-error"].includes(kind); }
     function handleMessage(message) {
         if (message.kind === "event") {
             markHealthy();
@@ -128,7 +129,7 @@ Item {
             handleResponse(message);
             return;
         }
-        if (message.kind === "transport-error" || message.kind === "protocol-error") {
+        if (isFailureKind(message.kind)) {
             const detail = message.error || daemonName + " client failed";
             if (recoverProtocolErrors)
                 recover(detail);

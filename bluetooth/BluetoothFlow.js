@@ -57,6 +57,46 @@ function snapshotStatus(powered, scanning, count) {
     return scanning ? count + " devices · scanning…" : count + " Bluetooth devices";
 }
 
+function completedCallStatus(id, powered, currentStatus) {
+    const messages = ({
+        power: powered ? "Bluetooth turned on" : "Bluetooth turned off",
+        "scan-start": "Scanning for Bluetooth devices…",
+        "scan-stop": "Bluetooth scan stopped",
+        "pairing-response": "Pairing response sent"
+    });
+    if (messages[id]) return messages[id];
+    if (id.indexOf("cancel-scan-") === 0) return messages["scan-stop"];
+    return id.indexOf("device-") === 0 ? "Bluetooth device updated" : currentStatus;
+}
+
+function scanCompletionStatus(scan, deviceCount, currentStatus) {
+    const messages = ({
+        completed: deviceCount + " Bluetooth devices · scan complete",
+        cancelled: "Bluetooth scan stopped",
+        failed: (scan.error && scan.error.message) || "Bluetooth scan failed"
+    });
+    return messages[scan.state] || currentStatus;
+}
+
+function transferCompletionStatus(transfer) {
+    if (transfer.status === "complete")
+        return transfer.direction === "incoming" ? transfer.file_name + " saved in Downloads" : transfer.file_name + " sent";
+    if (transfer.status === "cancelled") return "File transfer cancelled";
+    return (transfer.error && transfer.error.message) || "File transfer failed";
+}
+
+function transferProgressStatus(transfer) {
+    const percentage = transfer.size > 0 ? Math.floor(transfer.transferred * 100 / transfer.size) : 0;
+    const verb = transfer.direction === "incoming" ? "Receiving " : "Sending ";
+    return verb + transfer.file_name + (transfer.size > 0 ? " · " + percentage + "%" : "…");
+}
+
+function operationCompletionStatus(operation, deviceName) {
+    if (operation.state === "completed") return deviceName + " updated";
+    if (operation.state === "cancelled") return "Bluetooth operation cancelled";
+    return (operation.error && operation.error.message) || "Bluetooth operation failed";
+}
+
 const directOperations = ({ pair: "pair", connect: "connect", disconnect: "disconnect", forget: "remove" });
 const toggleOperations = ({
     trusted: { operation: "set-trusted", field: "trusted" },

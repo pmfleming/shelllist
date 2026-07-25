@@ -109,7 +109,6 @@ Ui.ChooserController {
     function openFile(index) { runAction("open-file", index || 0); }
     function revealFile(index) { runAction("reveal-file", index || 0); }
     function toggleFavorite() { runAction(selectedEntry && selectedEntry.favorite ? "unfavorite" : "favorite"); }
-    function pinCurrent() { runAction("pin-current"); }
     function requestDelete() { if (selectedEntry) deleteConfirmationOpen = true; }
     function cancelDelete() { deleteConfirmationOpen = false; }
     function confirmDelete() { deleteConfirmationOpen = false; runAction("delete"); }
@@ -149,25 +148,24 @@ Ui.ChooserController {
         screenshotInFlight = false;
         scheduleRefresh();
     }
-    function applyOperation(id, operation) {
+    function finishPaste(operation) {
+        if (operation.status === "paste-prepared")
+            backend.hideSession(sessionId);
+        else if (operation.action === "image-as-file")
+            scheduleRefresh();
+    }
+    function applyOperation(operation) {
         actionInFlight = operation.status === "started";
         activeAction = actionInFlight ? operation.action : "";
         activeOperationId = actionInFlight ? (operation.id || "") : "";
         status = operation.message || "Clipboard operation completed";
         if (actionInFlight) return;
-        const finishPaste = function () {
-            if (operation.status === "paste-prepared")
-                backend.hideSession(sessionId);
-            else if (operation.action === "image-as-file")
-                scheduleRefresh();
-        };
         const completions = ({
             paste: finishPaste, "image-as-file": finishPaste,
             wipe: finishWipe, "delete": finishDelete, screenshot: finishScreenshot,
-            copy: scheduleRefresh, favorite: scheduleRefresh,
-            unfavorite: scheduleRefresh, "pin-current": scheduleRefresh
+            copy: scheduleRefresh, favorite: scheduleRefresh, unfavorite: scheduleRefresh
         });
-        if (completions[operation.action]) completions[operation.action]();
+        if (completions[operation.action]) completions[operation.action](operation);
     }
     function requestWipe() { if (!actionInFlight) backend.prepareWipe(); }
     function applyWipeChallenge(challenge) { wipeChallenge = challenge; }
