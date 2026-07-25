@@ -1,10 +1,11 @@
 {
   "project_name": "shelllist",
   "project_root": ".",
-  "source_roots": ["wifi", "bluetooth", "clipboard", "qml"],
+  "source_roots": ["wifi", "bluetooth", "clipboard", "qml", "tests/qml"],
   "output_dir": "target/qmlqualitylens",
   "qmllint_command": "tests/run-qmllint.sh",
-  "external_types": ["FileDialog", "GlobalShortcut", "IpcHandler", "PanelWindow", "Region", "Shortcut"],
+  "external_modules": ["QtTest"],
+  "external_types": ["FileDialog", "GlobalShortcut", "IpcHandler", "PanelWindow", "Region", "Shortcut", "SignalSpy", "TestCase"],
   "suppressions": [
     {
       "kind": "cleanup.unused_component",
@@ -20,6 +21,86 @@
       "kind": "cleanup.unused_component",
       "file": "bluetooth/BluetoothDeviceListRow.qml",
       "reason": "Instantiated as ResultListFrame's delegate Component"
+    },
+    {
+      "kind": "qml.layout_conflict.anchors_with_geometry",
+      "file": "qml/Shelllist/Ui/ChooserHeader.qml",
+      "reason": "Partial and centering anchors intentionally position explicitly sized children"
+    },
+    {
+      "kind": "qml.layout_conflict.anchors_with_geometry",
+      "file": "qml/Shelllist/Ui/DetailsTab.qml",
+      "reason": "Top/left/right anchors intentionally leave height explicit"
+    },
+    {
+      "kind": "qml.layout_conflict.anchors_with_geometry",
+      "file": "qml/Shelllist/Ui/DetailsTabBar.qml",
+      "reason": "Top anchor intentionally leaves line width and height explicit"
+    },
+    {
+      "kind": "qml.layout_conflict.anchors_with_geometry",
+      "file": "qml/Shelllist/Ui/ResultRow.qml",
+      "reason": "Partial edge anchors intentionally leave orthogonal geometry explicit"
+    },
+    {
+      "kind": "qml.layout_conflict.anchors_with_geometry",
+      "file": "qml/Shelllist/Ui/StatusPanel.qml",
+      "reason": "Centering anchor intentionally leaves icon dimensions explicit"
+    },
+    {
+      "kind": "qml.layout_conflict.anchors_with_geometry",
+      "file": "qml/Shelllist/Ui/ToggleSwitch.qml",
+      "reason": "Centering anchor intentionally leaves pill dimensions explicit"
+    },
+    {
+      "kind": "qml.layout_conflict.anchors_with_geometry",
+      "file": "qml/Shelllist/Ui/VerticalDivider.qml",
+      "reason": "Vertical anchors intentionally leave divider width explicit"
+    },
+    {
+      "kind": "qml.layout_conflict.anchors_with_geometry",
+      "file": "wifi/AdvancedSettingsPage.qml",
+      "reason": "Bottom/center anchors intentionally leave toast dimensions explicit"
+    },
+    {
+      "kind": "qml.layout_conflict.anchors_with_geometry",
+      "file": "wifi/NetworkDetailsHeader.qml",
+      "reason": "Centering anchors intentionally leave status dimensions explicit"
+    },
+    {
+      "kind": "qml.layout_conflict.anchors_with_geometry",
+      "file": "wifi/NetworkListRow.qml",
+      "reason": "Centering anchor intentionally leaves signal icon dimensions explicit"
+    },
+    {
+      "kind": "cleanup.unused_component",
+      "file": "tests/qml/tst_hyprland_dispatch.qml",
+      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
+    },
+    {
+      "kind": "cleanup.unused_component",
+      "file": "tests/qml/tst_ip_settings_state.qml",
+      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
+    },
+    {
+      "kind": "cleanup.unused_component",
+      "file": "tests/qml/tst_jsonl_routing.qml",
+      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
+    },
+    {
+      "kind": "cleanup.unused_component",
+      "file": "tests/qml/tst_provider_registry.qml",
+      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
+    },
+    {
+      "kind": "cleanup.unused_component",
+      "file": "tests/qml/tst_result_store.qml",
+      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
+    },
+    {
+      "kind": "cleanup.unused_component",
+      "file": "tests/qml/tst_segmented_navigation.qml",
+      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
     }
   ],
   "exclude": []

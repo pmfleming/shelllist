@@ -1,5 +1,6 @@
 import Quickshell.Io
 import QtQuick
+import "../JsonlRouting.js" as Routing
 
 Item {
     id: client
@@ -81,9 +82,8 @@ Item {
 
     function subscribe() { send({ id: "session-subscribe", op: "subscribe", streams: streams }); }
     function rememberSubscription(message) {
-        if (message.id !== "session-subscribe" || !message.ok || !message.response || !message.response.data)
-            return;
-        subscriptionId = (message.response.data.subscription || ({})).id || "";
+        if (message.id === "session-subscribe" && message.ok)
+            subscriptionId = Routing.subscriptionId(message);
     }
     function markHealthy() { counters.retryAttempt = 0; }
     function scheduleRetry() {
@@ -96,17 +96,16 @@ Item {
         retryTimer.restart();
     }
     function handleResponse(message) {
-        if (message.id === "session-subscribe" && !message.ok) {
-            const subscriptionError = message.error || daemonName + " subscription failed";
-            console.error("shelllist transport subscription failed daemon=" + daemonName + " error=" + subscriptionError);
-            response(message.id, null, subscriptionError);
-            recover(subscriptionError);
+        const outcome = Routing.responseOutcome(message, daemonName);
+        if (outcome.recover) {
+            console.error("shelllist transport subscription failed daemon=" + daemonName + " error=" + outcome.error);
+            response(outcome.id, null, outcome.error);
+            recover(outcome.error);
             return;
         }
         markHealthy();
         rememberSubscription(message);
-        response(message.id || "", message.ok ? message.response : null,
-            message.ok ? "" : (message.error || daemonName + " call failed"));
+        response(outcome.id, outcome.envelope, outcome.error);
     }
     function recover(message) {
         transportFailed(message);
@@ -118,7 +117,6 @@ Item {
             scheduleRetry();
         }
     }
-    function isFailureKind(kind) { return ["transport-error", "protocol-error"].includes(kind); }
     function handleMessage(message) {
         if (message.kind === "event") {
             markHealthy();
@@ -129,7 +127,7 @@ Item {
             handleResponse(message);
             return;
         }
-        if (isFailureKind(message.kind)) {
+        if (Routing.isFailureKind(message.kind)) {
             const detail = message.error || daemonName + " client failed";
             if (recoverProtocolErrors)
                 recover(detail);

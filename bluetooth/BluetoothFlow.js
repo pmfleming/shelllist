@@ -43,6 +43,24 @@ function isTerminalTransfer(transfer) {
     return !!transfer && ["complete", "cancelled", "error"].includes(transfer.status);
 }
 
+function matchingRequest(current, update) {
+    return !!current && current.request_id === update.request_id;
+}
+
+function transferTransition(activeTransfer, prompt, transfer) {
+    if (!transfer || !transfer.request_id)
+        return null;
+    if (transfer.status === "awaiting-authorization")
+        return { activeTransfer: transfer, prompt: transfer,
+            status: "Incoming file transfer approval required", authorizationRequested: true };
+    const nextPrompt = matchingRequest(prompt, transfer) ? null : prompt;
+    if (isTerminalTransfer(transfer))
+        return { activeTransfer: matchingRequest(activeTransfer, transfer) ? null : activeTransfer,
+            prompt: nextPrompt, status: transferCompletionStatus(transfer), authorizationRequested: false };
+    return { activeTransfer: transfer, prompt: nextPrompt,
+        status: transferProgressStatus(transfer), authorizationRequested: false };
+}
+
 function retainedAdapterKey(adapters, currentKey) {
     const retained = adapters.some(function (adapter) { return adapter.key === currentKey; });
     return retained || adapters.length === 0 ? currentKey : adapters[0].key;
@@ -95,6 +113,26 @@ function operationCompletionStatus(operation, deviceName) {
     if (operation.state === "completed") return deviceName + " updated";
     if (operation.state === "cancelled") return "Bluetooth operation cancelled";
     return (operation.error && operation.error.message) || "Bluetooth operation failed";
+}
+
+function activeOperationStatus(operation, deviceName) {
+    return operation.operation.charAt(0).toUpperCase() + operation.operation.slice(1) + " " + deviceName + "…";
+}
+
+function operationTransition(activeOperation, pairingPrompt, operation, deviceName, uiActive, powered, scanning) {
+    if (!operation || !operation.request_id)
+        return null;
+    if (isActiveOperation(operation))
+        return { activeOperation: operation, active: true, clearPairing: false,
+            status: activeOperationStatus(operation, deviceName), rescan: false };
+    const rescan = shouldRescanAfterOperation(operation, uiActive, powered, scanning);
+    return {
+        activeOperation: withoutMatchingOperation(activeOperation, operation.request_id),
+        active: false,
+        clearPairing: operationEndsPairing(operation, pairingPrompt),
+        status: rescan ? "Device is no longer nearby · scanning again…" : operationCompletionStatus(operation, deviceName),
+        rescan: rescan
+    };
 }
 
 const directOperations = ({ pair: "pair", connect: "connect", disconnect: "disconnect", forget: "remove" });

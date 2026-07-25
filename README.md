@@ -230,6 +230,7 @@ shellcheck "$portal/bin/shelllist-captive-portal"
 shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml qml/Shelllist/Io/process/*.qml bluetooth/*.qml wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-ip-validation.js wifi/networkinput/IpValidation.js
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
+tests/run-qml-tests.sh
 qmlqualitylens measure all --config qmlqualitylens.config.json  # optional static quality report
 ```
 

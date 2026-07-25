@@ -4,6 +4,7 @@ import Quickshell.Io
 import Shelllist.Io as Io
 import Quickshell.Wayland
 import QtQuick
+import "HyprlandDispatch.js" as HyprlandDispatch
 
 Item {
     id: host
@@ -85,6 +86,21 @@ Item {
         floatingPlacementTimer.restart();
     }
 
+    function setWindowProperty(selector, legacyName, legacyValue, luaName, luaValue) {
+        Hyprland.dispatch(HyprlandDispatch.windowProperty(Hyprland.usingLua, selector,
+            legacyName, legacyValue, luaName, luaValue));
+    }
+    function focusWindow(selector) {
+        Hyprland.dispatch(HyprlandDispatch.focusWindow(Hyprland.usingLua, selector));
+    }
+    function floatWindow(selector) {
+        Hyprland.dispatch(HyprlandDispatch.floatWindow(Hyprland.usingLua, selector));
+    }
+    function moveWindow(selector) {
+        Hyprland.dispatch(HyprlandDispatch.moveWindow(Hyprland.usingLua, selector,
+            targetWindowX(), targetWindowY()));
+    }
+
     function popoverAnimationRuleReady(desiredState) {
         return popoverMode && Theme.hyprland && popoverNoAnimRuleState !== desiredState;
     }
@@ -101,9 +117,10 @@ Item {
         if (!floatingMode || !Theme.hyprland)
             return;
         const selector = "title:" + windowTitle;
-        Hyprland.dispatch("setprop " + selector + " noanim " + (noAnimations ? "1" : "0"));
-        Hyprland.dispatch("setprop " + selector + " noborder 1");
-        Hyprland.dispatch("setprop " + selector + " noshadow 1");
+        const animationValue = noAnimations ? "1" : "0";
+        setWindowProperty(selector, "noanim", animationValue, "no_anim", animationValue);
+        setWindowProperty(selector, "noborder", "1", "decorate", "0");
+        setWindowProperty(selector, "noshadow", "1", "no_shadow", "1");
     }
 
     function closeRequested() {
@@ -141,9 +158,9 @@ Item {
         onTriggered: {
             host.applyCompositorWindowRules();
             const selector = "title:" + host.windowTitle;
-            Hyprland.dispatch("focuswindow " + selector);
-            Hyprland.dispatch("setfloating");
-            Hyprland.dispatch("movewindowpixel exact " + host.targetWindowX() + " " + host.targetWindowY() + "," + selector);
+            host.focusWindow(selector);
+            host.floatWindow(selector);
+            host.moveWindow(selector);
         }
     }
 

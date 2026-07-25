@@ -515,6 +515,7 @@
               ${./wifi}/*.qml
               ${./wifi}/networkinput/*.qml
               ${./wifi}/process/*.qml
+              ${./tests/qml}/*.qml
             )
             strict_sources=()
             for source in "''${sources[@]}"; do
@@ -543,7 +544,25 @@
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-bluetooth-lifecycle.js} ${./bluetooth/BluetoothFlow.js}
+            node ${./tests/check-bluetooth-lifecycle.js} ${./bluetooth/BluetoothFlow.js} ${./bluetooth/BtApi.js}
+            touch $out
+          '';
+
+          qmlTests = pkgs.runCommand "shelllist-qml-tests"
+            {
+              nativeBuildInputs = [ pkgs.qt6.qtdeclarative ];
+            } ''
+            mkdir -p test-root/tests
+            cp -r ${./tests/qml} test-root/tests/qml
+            ln -s ${./qml} test-root/qml
+            ln -s ${./wifi} test-root/wifi
+            export HOME=$TMPDIR
+            export XDG_CACHE_HOME=$TMPDIR/cache
+            QT_QPA_PLATFORM=offscreen qmltestrunner \
+              -input test-root/tests/qml \
+              -import ${./qml} \
+              -import ${pkgs.qt6.qtdeclarative}/lib/qt-6/qml \
+              -o -,txt
             touch $out
           '';
 

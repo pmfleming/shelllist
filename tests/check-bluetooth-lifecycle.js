@@ -4,13 +4,20 @@ const fs = require("fs");
 const vm = require("vm");
 
 const flowPath = process.argv[2];
-if (!flowPath)
-    throw new Error("usage: check-bluetooth-lifecycle.js <BluetoothFlow.js>");
+const apiPath = process.argv[3];
+if (!flowPath || !apiPath)
+    throw new Error("usage: check-bluetooth-lifecycle.js <BluetoothFlow.js> <BtApi.js>");
 
-const source = fs.readFileSync(flowPath, "utf8").replace(/^\.pragma library\s*/, "");
-const flow = {};
-vm.createContext(flow);
-vm.runInContext(source, flow, { filename: flowPath });
+function loadLibrary(path) {
+    const source = fs.readFileSync(path, "utf8").replace(/^\.pragma library\s*/, "");
+    const library = {};
+    vm.createContext(library);
+    vm.runInContext(source, library, { filename: path });
+    return library;
+}
+
+const flow = loadLibrary(flowPath);
+const api = loadLibrary(apiPath);
 
 let checks = 0;
 function expect(label, condition) {
@@ -61,6 +68,29 @@ expect("unavailable cached pairing triggers scan", flow.shouldRescanAfterOperati
 expect("other operation failures do not trigger scan", !flow.shouldRescanAfterOperation({ operation: "connect", state: "failed", error: { code: "device-unavailable" } }, true, true, false));
 expect("failed transfer is terminal", flow.isTerminalTransfer({ status: "error" }));
 expect("active transfer is not terminal", !flow.isTerminalTransfer({ status: "progress" }));
+const incoming = flow.transferTransition(null, null, {
+    request_id: "transfer-1", status: "awaiting-authorization", file_name: "photo.jpg"
+});
+expect("incoming transfer transition requests authorization", incoming.authorizationRequested && incoming.prompt.request_id === "transfer-1");
+const finishedTransfer = flow.transferTransition(incoming.activeTransfer, incoming.prompt, {
+    request_id: "transfer-1", status: "complete", direction: "incoming", file_name: "photo.jpg"
+});
+expect("terminal transfer clears matching state", finishedTransfer.activeTransfer === null && finishedTransfer.prompt === null);
+const activeOperation = flow.operationTransition(null, null, {
+    request_id: "operation-1", operation: "connect", state: "running"
+}, "Headset", true, true, false);
+expect("active operation transition retains request", activeOperation.active && activeOperation.activeOperation.request_id === "operation-1");
+const failedPair = flow.operationTransition(activeOperation.activeOperation, requested.data, {
+    request_id: "operation-1", operation: "pair", state: "failed", device_key: "device-1",
+    error: { code: "device-unavailable" }
+}, "Headset", true, true, false);
+expect("failed unavailable pair transitions to rescan", failedPair.rescan && failedPair.clearPairing && failedPair.activeOperation === null);
+expect("response routing preserves protocol priority", api.responseKind({ scan: {}, snapshot: {} }) === "scan");
+expect("response routing recognizes audio snapshots", api.responseKind({ audio_devices: [{ device_key: "device-1" }] }) === "audio_devices");
+const activeLifecycle = api.lifecycleState({ request_id: "operation-1" }, {}, {}, "running", ["completed"]);
+expect("backend lifecycle records active requests", activeLifecycle.active["operation-1"].request_id === "operation-1");
+const finishedLifecycle = api.lifecycleState({ request_id: "operation-1" }, activeLifecycle.active, {}, "completed", ["completed"]);
+expect("backend lifecycle removes terminal requests", !finishedLifecycle.active["operation-1"]);
 const pairAction = flow.deviceActionRequest("pair", { name: "Headset" }, true);
 expect("pair action retains trust policy", pairAction.operation === "pair" && pairAction.values.trust_after_pair);
 const wakeAction = flow.deviceActionRequest("wake", { wake_allowed: false }, false);

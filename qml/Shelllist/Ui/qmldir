@@ -20,6 +20,7 @@ DetailsTab 1.0 DetailsTab.qml
 DetailsTabBar 1.0 DetailsTabBar.qml
 FieldLabel 1.0 FieldLabel.qml
 IconTile 1.0 IconTile.qml
+LabeledValueSlider 1.0 LabeledValueSlider.qml
 ModalFrame 1.0 ModalFrame.qml
 PopupWindowHost 1.0 PopupWindowHost.qml
 PromptDialog 1.0 PromptDialog.qml

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "SegmentedNavigation.js" as Navigation
 
 Rectangle {
     id: control
@@ -31,9 +32,7 @@ Rectangle {
     clip: true
     activeFocusOnTab: interactive
 
-    function optionEnabled(index) {
-        return index >= 0 && index < options.length && options[index].enabled !== false;
-    }
+    function optionEnabled(index) { return Navigation.optionEnabled(options, index); }
 
     function choose(index) {
         if (!interactive || !optionEnabled(index))
@@ -43,17 +42,8 @@ Rectangle {
             selected(nextValue);
     }
 
-    function nextEnabledIndex(index, delta, remaining) {
-        if (remaining === 0 || index < 0 || index >= options.length)
-            return -1;
-        return optionEnabled(index) ? index : nextEnabledIndex(index + delta, delta, remaining - 1);
-    }
-
     function move(delta) {
-        if (options.length === 0)
-            return;
-        const initial = currentIndex >= 0 ? currentIndex : (delta > 0 ? -1 : options.length);
-        const next = nextEnabledIndex(initial + delta, delta, options.length);
+        const next = Navigation.nextEnabledIndex(options, currentIndex, delta);
         if (next >= 0)
             choose(next);
     }

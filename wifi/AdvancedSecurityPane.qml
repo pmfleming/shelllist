@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import "."
 import Shelllist.Ui
 
@@ -37,6 +38,7 @@ AdvancedSettingsFlickable {
             title: "Security"
 
             Column {
+                id: securityControls
                 anchors.fill: parent
                 spacing: 10
 
@@ -71,98 +73,39 @@ AdvancedSettingsFlickable {
 
                     FieldLabel { width: parent.width; height: 13; text: "Network password" }
 
-                    Rectangle {
-                        width: parent.width
+                    RowLayout {
+                        width: securityControls.width
                         height: 40
-                        radius: Theme.controlRadius
-                        color: Theme.input
-                        border.width: 1
-                        border.color: passwordInput.activeFocus ? Theme.strongBorder : Theme.border
-                        opacity: securityFlick.settings.personalSecurity ? 1.0 : 0.58
+                        spacing: 8
 
-                        TextInput {
-                            id: passwordInput
-
-                            anchors.left: parent.left
-                            anchors.right: passwordAction.left
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            leftPadding: 12
-                            rightPadding: 10
+                        TextField {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
                             readOnly: !securityFlick.settings.personalSecurity
-                            echoMode: securityFlick.settings.passwordRevealed ? TextInput.Normal : TextInput.Password
+                            password: !securityFlick.settings.passwordRevealed
                             text: securityFlick.settings.passwordValue
-                            color: Theme.inputText
-                            selectionColor: Theme.accent
-                            selectedTextColor: Theme.accentText
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 13
-                            verticalAlignment: TextInput.AlignVCenter
-                            onTextEdited: {
-                                securityFlick.settings.passwordValue = text;
+                            placeholder: securityFlick.settings.personalSecurity
+                                ? "Saved password" : "Unavailable for this security type"
+                            onEdited: function (value) {
+                                securityFlick.settings.passwordValue = value;
                                 securityFlick.settings.passwordDirty = true;
                                 securityFlick.settings.queueSecuritySave();
                             }
-
-                            Text {
-                                anchors.fill: parent
-                                leftPadding: 12
-                                verticalAlignment: Text.AlignVCenter
-                                visible: passwordInput.text.length === 0
-                                text: securityFlick.settings.personalSecurity ? "Saved password" : "Unavailable for this security type"
-                                color: Theme.subtleText
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 13
-                            }
                         }
 
-                        Rectangle {
-                            id: passwordAction
-
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            width: 98
-                            color: passwordActionMouse.containsMouse && passwordActionMouse.enabled ? Theme.hover : "transparent"
-
-                            Rectangle {
-                                anchors.left: parent.left
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                                width: 1
-                                color: Theme.mix(Theme.border, Theme.text, 0.18)
-                            }
-
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 7
-
-                                Text {
-                                    text: securityFlick.settings.passwordRevealed ? "󰈉" : "󰈈"
-                                    color: Theme.accent
-                                    font.family: Theme.iconFontFamily
-                                    font.pixelSize: 16
-                                }
-
-                                Text {
-                                    text: securityFlick.settings.controller.advanced.secretLoading ? "Loading" : (securityFlick.settings.passwordRevealed ? "Hide" : "Show")
-                                    color: Theme.accent
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: 13
-                                }
-                            }
-
-                            MouseArea {
-                                id: passwordActionMouse
-
-                                anchors.fill: parent
-                                enabled: securityFlick.settings.personalSecurity && !securityFlick.settings.controller.advanced.secretLoading
-                                hoverEnabled: true
-                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                onClicked: {
-                                    if (securityFlick.settings.passwordRevealed) securityFlick.settings.passwordRevealed = false;
-                                    else securityFlick.settings.controller.advanced.revealSecret();
-                                }
+                        ActionButton {
+                            Layout.preferredWidth: 98
+                            Layout.fillHeight: true
+                            enabled: securityFlick.settings.personalSecurity
+                                && !securityFlick.settings.controller.advanced.secretLoading
+                            icon: securityFlick.settings.passwordRevealed ? "󰈉" : "󰈈"
+                            label: securityFlick.settings.controller.advanced.secretLoading
+                                ? "Loading" : (securityFlick.settings.passwordRevealed ? "Hide" : "Show")
+                            onClicked: {
+                                if (securityFlick.settings.passwordRevealed)
+                                    securityFlick.settings.passwordRevealed = false;
+                                else
+                                    securityFlick.settings.controller.advanced.revealSecret();
                             }
                         }
                     }

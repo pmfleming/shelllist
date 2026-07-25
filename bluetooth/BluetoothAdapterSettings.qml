@@ -7,8 +7,8 @@ ColumnLayout {
 
     required property BluetoothController controller
     readonly property bool editing: adapterAliasInput.inputActiveFocus
-        || discoverableTimeoutSlider.activeFocus
-        || pairableTimeoutSlider.activeFocus
+        || discoverableTimeoutRow.inputActiveFocus
+        || pairableTimeoutRow.inputActiveFocus
     property string displayedAdapterKey: ""
     property bool aliasDirty: false
     property bool discoverableTimeoutDirty: false
@@ -43,11 +43,11 @@ ColumnLayout {
     }
     function syncDiscoverableTimeout(force, adapter) {
         if (force || !discoverableTimeoutDirty)
-            discoverableTimeoutSlider.value = Math.min(maximumTimeout, Number(adapter.discoverable_timeout || 0));
+            discoverableTimeoutRow.value = Math.min(maximumTimeout, Number(adapter.discoverable_timeout || 0));
     }
     function syncPairableTimeout(force, adapter) {
         if (force || !pairableTimeoutDirty)
-            pairableTimeoutSlider.value = Math.min(maximumTimeout, Number(adapter.pairable_timeout || 0));
+            pairableTimeoutRow.value = Math.min(maximumTimeout, Number(adapter.pairable_timeout || 0));
     }
     function syncAdapterFields(force) {
         const adapter = controller.selectedAdapter;
@@ -116,11 +116,11 @@ ColumnLayout {
         if (saveAliasIfDirty())
             return;
         if (saveTimeoutIfDirty(discoverableTimeoutDirty, "set-discoverable-timeout",
-                discoverableTimeoutSlider.value, controller.selectedAdapter.discoverable_timeout,
+                discoverableTimeoutRow.value, controller.selectedAdapter.discoverable_timeout,
                 clearDiscoverableTimeoutDirty))
             return;
         saveTimeoutIfDirty(pairableTimeoutDirty, "set-pairable-timeout",
-            pairableTimeoutSlider.value, controller.selectedAdapter.pairable_timeout,
+            pairableTimeoutRow.value, controller.selectedAdapter.pairable_timeout,
             clearPairableTimeoutDirty);
     }
 
@@ -203,50 +203,29 @@ ColumnLayout {
         onAccepted: section.saveDirtyFields()
     }
 
-    GridLayout {
+    Ui.LabeledValueSlider {
+        id: discoverableTimeoutRow
         Layout.fillWidth: true
-        columns: 3
-        columnSpacing: Ui.Theme.spacingMd
-        rowSpacing: Ui.Theme.spacingSm
+        label: "Discoverable timeout"
+        from: 0
+        to: section.maximumTimeout
+        stepSize: section.timeoutStep
+        valueText: section.timeoutLabel(value)
+        enabled: !section.controller.actionInFlight && !!section.controller.selectedAdapter.key
+        onEdited: function (dragging) { section.queueAutoSave(section.markDiscoverableTimeoutDirty, !dragging); }
+        onEditingFinished: section.saveDirtyFields()
+    }
 
-        Ui.FieldLabel { text: "Discoverable timeout" }
-        Ui.ValueSlider {
-            id: discoverableTimeoutSlider
-            Layout.fillWidth: true
-            from: 0
-            to: section.maximumTimeout
-            stepSize: section.timeoutStep
-            enabled: !section.controller.actionInFlight && !!section.controller.selectedAdapter.key
-            onEdited: section.queueAutoSave(section.markDiscoverableTimeoutDirty, !discoverableTimeoutSlider.pressed)
-            onPressedChanged: if (!discoverableTimeoutSlider.pressed) section.saveDirtyFields()
-        }
-        Text {
-            Layout.preferredWidth: 76
-            text: section.timeoutLabel(discoverableTimeoutSlider.value)
-            color: Ui.Theme.text
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
-            horizontalAlignment: Text.AlignRight
-        }
-
-        Ui.FieldLabel { text: "Pairable timeout" }
-        Ui.ValueSlider {
-            id: pairableTimeoutSlider
-            Layout.fillWidth: true
-            from: 0
-            to: section.maximumTimeout
-            stepSize: section.timeoutStep
-            enabled: !section.controller.actionInFlight && !!section.controller.selectedAdapter.key
-            onEdited: section.queueAutoSave(section.markPairableTimeoutDirty, !pairableTimeoutSlider.pressed)
-            onPressedChanged: if (!pairableTimeoutSlider.pressed) section.saveDirtyFields()
-        }
-        Text {
-            Layout.preferredWidth: 76
-            text: section.timeoutLabel(pairableTimeoutSlider.value)
-            color: Ui.Theme.text
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
-            horizontalAlignment: Text.AlignRight
-        }
+    Ui.LabeledValueSlider {
+        id: pairableTimeoutRow
+        Layout.fillWidth: true
+        label: "Pairable timeout"
+        from: 0
+        to: section.maximumTimeout
+        stepSize: section.timeoutStep
+        valueText: section.timeoutLabel(value)
+        enabled: !section.controller.actionInFlight && !!section.controller.selectedAdapter.key
+        onEdited: function (dragging) { section.queueAutoSave(section.markPairableTimeoutDirty, !dragging); }
+        onEditingFinished: section.saveDirtyFields()
     }
 }

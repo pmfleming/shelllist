@@ -141,32 +141,15 @@ Ui.ChooserController {
         status = "Starting file transfer to " + selectedDevice.name + "…";
         return backend.sendFile(selectedDevice.key, path);
     }
-    function openIncomingTransfer(transfer) {
-        activeTransfer = transfer;
-        incomingTransferPrompt = transfer;
-        status = "Incoming file transfer approval required";
-        incomingTransferRequested();
-    }
-    function completeTransfer(transfer) {
-        if (activeTransfer && activeTransfer.request_id === transfer.request_id)
-            activeTransfer = null;
-        status = BluetoothFlow.transferCompletionStatus(transfer);
-    }
     function handleObexTransfer(transfer) {
-        if (!transfer || !transfer.request_id)
+        const transition = BluetoothFlow.transferTransition(activeTransfer, incomingTransferPrompt, transfer);
+        if (!transition)
             return;
-        if (transfer.status === "awaiting-authorization") {
-            openIncomingTransfer(transfer);
-            return;
-        }
-        if (incomingTransferPrompt && incomingTransferPrompt.request_id === transfer.request_id)
-            incomingTransferPrompt = null;
-        if (BluetoothFlow.isTerminalTransfer(transfer)) {
-            completeTransfer(transfer);
-            return;
-        }
-        activeTransfer = transfer;
-        status = BluetoothFlow.transferProgressStatus(transfer);
+        activeTransfer = transition.activeTransfer;
+        incomingTransferPrompt = transition.prompt;
+        status = transition.status;
+        if (transition.authorizationRequested)
+            incomingTransferRequested();
     }
     function respondIncomingTransfer(accept) {
         if (!incomingTransferPromptOpen)
@@ -187,24 +170,20 @@ Ui.ChooserController {
             activeOperation = operation;
     }
     function handleOperationEvent(operation) {
-        if (!operation || !operation.request_id)
+        const deviceName = BluetoothFlow.operationDeviceName(filteredResults, (operation || ({})).device_key);
+        const transition = BluetoothFlow.operationTransition(activeOperation, pairingPrompt, operation,
+            deviceName, uiActive, powered, scanning);
+        if (!transition)
             return;
-        const deviceName = BluetoothFlow.operationDeviceName(filteredResults, operation.device_key);
-        if (BluetoothFlow.isActiveOperation(operation)) {
-            activeOperation = operation;
-            status = operation.operation.charAt(0).toUpperCase() + operation.operation.slice(1) + " " + deviceName + "…";
-            return;
-        }
-        if (operation.snapshot)
+        if (!transition.active && operation.snapshot)
             applySnapshot(operation.snapshot);
-        activeOperation = BluetoothFlow.withoutMatchingOperation(activeOperation, operation.request_id);
-        if (BluetoothFlow.operationEndsPairing(operation, pairingPrompt)) {
+        activeOperation = transition.activeOperation;
+        status = transition.status;
+        if (transition.clearPairing) {
             pairingPrompt = null;
             pairingInput = "";
         }
-        status = BluetoothFlow.operationCompletionStatus(operation, deviceName);
-        if (BluetoothFlow.shouldRescanAfterOperation(operation, uiActive, powered, scanning)) {
-            status = "Device is no longer nearby · scanning again…";
+        if (transition.rescan) {
             scanRequested = true;
             backend.setScanning(true, operation.adapter_key || selectedDevice.adapter_key || selectedAdapter.key);
         }

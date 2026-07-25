@@ -25,32 +25,22 @@ Item {
         handlers[BtApi.streams.operation] = backend.handleOperationEvent;
         return handlers;
     }
+    readonly property var responseHandlers: ({
+        scan: function (id, data) { backend.acceptScan(data.scan, data.snapshot); },
+        transfer: function (id, data) { backend.acceptTransfer(data.transfer); },
+        obex: function (id, data) { backend.controller.applyObexSnapshot(data.obex); },
+        audio_devices: function (id, data) {
+            backend.controller.applyAudioSnapshot(data.audio_devices);
+            if (id === "audio-set-profile")
+                backend.controller.status = "Bluetooth audio profile updated";
+        },
+        operation: function (id, data) { backend.acceptOperation(data.operation); }
+    })
 
     function itemCount(values) { return Object.keys(values || ({})).length; }
     function resetTransportState() {
         pending = ({}); operations = ({}); finishedOperations = ({});
         transfers = ({}); finishedTransfers = ({});
-    }
-    function copyWithout(values, key) {
-        const result = Object.assign({}, values);
-        delete result[key];
-        return result;
-    }
-    function copyWith(values, key, value) {
-        const result = Object.assign({}, values);
-        result[key] = value;
-        return result;
-    }
-    function lifecycleState(item, activeItems, finishedItems, state, terminalStates) {
-        const id = item.request_id;
-        if (!id)
-            return { active: activeItems, finished: finishedItems };
-        if (!terminalStates.includes(state))
-            return { active: copyWith(activeItems, id, item), finished: finishedItems };
-        return {
-            active: copyWithout(activeItems, id),
-            finished: activeItems[id] ? finishedItems : copyWith(finishedItems, id, true)
-        };
     }
     function isPending(id) { return !!pending[id]; }
     function call(id, method, params) {
@@ -58,13 +48,13 @@ Item {
             console.warn("shelllist bluetooth request rejected id=" + id + " reason=already-pending");
             return false;
         }
-        pending = copyWith(pending, id, true);
+        pending = BtApi.copyWith(pending, id, true);
         console.info("shelllist bluetooth request started id=" + id + " method=" + method);
         try {
             client.call(id, method, params);
             return true;
         } catch (error) {
-            pending = copyWithout(pending, id);
+            pending = BtApi.copyWithout(pending, id);
             console.error("shelllist bluetooth request failed id=" + id + " stage=send error=" + error);
             controller.status = "Could not send Bluetooth request " + id + ": " + error;
             return false;
@@ -81,7 +71,7 @@ Item {
     function finish(id, envelope, transportError) {
         if (isSessionControl(id))
             return;
-        pending = copyWithout(pending, id);
+        pending = BtApi.copyWithout(pending, id);
         const error = Core.ApiEnvelope.responseError(envelope, transportError,
             "bt-api", 1, "bt-daemon", "Bluetooth operation failed");
         if (error.length > 0) {
@@ -104,20 +94,11 @@ Item {
         }
     }
     function applyResponse(id, data) {
-        if (data.scan)
-            return acceptScan(data.scan, data.snapshot);
-        if (data.transfer)
-            return acceptTransfer(data.transfer);
-        if (data.obex)
-            return controller.applyObexSnapshot(data.obex);
-        if (data.audio_devices) {
-            controller.applyAudioSnapshot(data.audio_devices);
-            if (id === "audio-set-profile")
-                controller.status = "Bluetooth audio profile updated";
+        const kind = BtApi.responseKind(data);
+        if (kind.length > 0) {
+            responseHandlers[kind](id, data);
             return;
         }
-        if (data.operation)
-            return acceptOperation(data.operation);
         if (data.snapshot)
             controller.applySnapshot(data.snapshot);
         if (id !== "snapshot")
@@ -130,18 +111,18 @@ Item {
     }
     function acceptTransfer(transfer) {
         if (finishedTransfers[transfer.request_id]) {
-            finishedTransfers = copyWithout(finishedTransfers, transfer.request_id);
+            finishedTransfers = BtApi.copyWithout(finishedTransfers, transfer.request_id);
             return;
         }
-        transfers = copyWith(transfers, transfer.request_id, transfer);
+        transfers = BtApi.copyWith(transfers, transfer.request_id, transfer);
         controller.handleObexTransfer(transfer);
     }
     function acceptOperation(operation) {
         if (finishedOperations[operation.request_id]) {
-            finishedOperations = copyWithout(finishedOperations, operation.request_id);
+            finishedOperations = BtApi.copyWithout(finishedOperations, operation.request_id);
             return;
         }
-        operations = copyWith(operations, operation.request_id, operation);
+        operations = BtApi.copyWith(operations, operation.request_id, operation);
         controller.handleOperationAccepted(operation);
     }
 
@@ -182,7 +163,7 @@ Item {
     function handleScanEvent(event) { controller.handleScanEvent(event.data || ({})); }
     function handleTransferEvent(event) {
         const transfer = event.data || ({});
-        const next = lifecycleState(transfer, transfers, finishedTransfers, transfer.status, ["complete", "cancelled", "error"]);
+        const next = BtApi.lifecycleState(transfer, transfers, finishedTransfers, transfer.status, ["complete", "cancelled", "error"]);
         transfers = next.active;
         finishedTransfers = next.finished;
         controller.handleObexTransfer(transfer);
@@ -195,7 +176,7 @@ Item {
     }
     function handleOperationEvent(event) {
         const operation = event.data || ({});
-        const next = lifecycleState(operation, operations, finishedOperations, operation.state, ["completed", "failed", "cancelled"]);
+        const next = BtApi.lifecycleState(operation, operations, finishedOperations, operation.state, ["completed", "failed", "cancelled"]);
         operations = next.active;
         finishedOperations = next.finished;
         controller.handleOperationEvent(operation);
