@@ -159,6 +159,10 @@ Ui.ChooserController {
         activeAction = actionInFlight ? operation.action : "";
         activeOperationId = actionInFlight ? (operation.id || "") : "";
         status = operation.message || "Clipboard operation completed";
+        if (operation.action === "annotate" && actionInFlight) {
+            hideRequested();
+            return;
+        }
         if (actionInFlight) return;
         const completions = ({
             paste: finishPaste, "image-as-file": finishPaste,
