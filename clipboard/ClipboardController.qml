@@ -109,6 +109,7 @@ Ui.ChooserController {
     }
     function pasteImageAsFile() { runAction("image-as-file"); }
     function annotateImage() { runAction("annotate"); }
+    function editTextExternally() { runAction("edit-external"); }
     function openUrl() { runAction("open-url"); }
     function openFile(index) { runAction("open-file", index || 0); }
     function revealFile(index) { runAction("reveal-file", index || 0); }
@@ -163,7 +164,7 @@ Ui.ChooserController {
         activeAction = actionInFlight ? operation.action : "";
         activeOperationId = actionInFlight ? (operation.id || "") : "";
         status = operation.message || "Clipboard operation completed";
-        if (operation.action === "annotate" && actionInFlight) {
+        if (["annotate", "edit-external"].includes(operation.action) && actionInFlight) {
             hideRequested();
             return;
         }

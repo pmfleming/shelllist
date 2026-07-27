@@ -26,7 +26,7 @@ Ui.DetailsPane {
         } else if (actionId === "edit" && image) {
             controller.annotateImage();
         } else if (actionId === "edit" && plainText) {
-            detailCards.focusEditor();
+            controller.editTextExternally();
         } else if (actionId === "edit" && link) {
             controller.openUrl();
         }
@@ -76,7 +76,8 @@ Ui.DetailsPane {
                 presentation: { group: "toolbar", tone: "normal", width: 120 }
             }, {
                 id: "edit", label: pane.link ? "Open" : "Edit", icon: pane.link ? "󰌷" : "󰏫", shortcut: "",
-                enabled: (pane.image || pane.plainText || pane.link) && !pane.controller.actionInFlight,
+                enabled: (pane.image || pane.plainText || pane.link) && !pane.controller.actionInFlight
+                    && (!pane.plainText || (!pane.detailState.editDirty && !pane.detailState.saveInFlight)),
                 presentation: { group: "toolbar", tone: "normal", width: 92 }
             }]
             group: "toolbar"

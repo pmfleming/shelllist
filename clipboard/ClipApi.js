@@ -29,7 +29,9 @@ var methods = {
 
 function actionsForKind(kind) {
     const common = ["paste", "copy"];
-    if (["text", "html", "json", "color"].indexOf(kind) >= 0)
+    if (kind === "text")
+        return ["paste", "edit-external"];
+    if (["html", "json", "color"].indexOf(kind) >= 0)
         return common.concat(["edit"]);
     if (kind === "link")
         return common.concat(["edit", "open-url"]);
@@ -41,7 +43,7 @@ function actionsForKind(kind) {
 }
 
 var actionLabels = {
-    paste: "Paste", copy: "Copy", edit: "Edit", "open-url": "Open URL",
+    paste: "Paste", copy: "Copy", edit: "Edit", "edit-external": "Edit", "open-url": "Open URL",
     "image-as-file": "Paste as file", annotate: "Edit",
     "open-file": "Open file", "reveal-file": "Reveal file"
 };

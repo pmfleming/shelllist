@@ -16,7 +16,7 @@ function expect(kind, expected) {
         throw new Error(`${kind}: expected ${expected}, got ${actual}`);
 }
 
-expect("text", ["paste", "copy", "edit"]);
+expect("text", ["paste", "edit-external"]);
 expect("link", ["paste", "copy", "edit", "open-url"]);
 expect("image", ["paste", "image-as-file", "annotate"]);
 expect("files", ["paste", "copy", "open-file", "reveal-file"]);
