@@ -20,7 +20,9 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailCard {
-        title: "Preview"
+        title: cards.entry.kind
+            ? cards.entry.kind.charAt(0).toUpperCase() + cards.entry.kind.slice(1)
+            : "Clipboard item"
         height: cards.detailState.thumbnail || (cards.detailState.value && cards.detailState.value.text) ? 250 : 112
 
         Image {
