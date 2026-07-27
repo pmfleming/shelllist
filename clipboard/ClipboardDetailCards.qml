@@ -12,6 +12,12 @@ Ui.DetailFlickable {
     readonly property var entry: detailState.value ? detailState.value.entry : ({})
     readonly property var files: detailState.value ? detailState.value.files : []
     readonly property var imageFacts: detailState.value ? detailState.value.image : null
+    readonly property bool directTextEdit: entry.kind === "text"
+
+    function focusEditor() {
+        textEditor.forceActiveFocus();
+        detailState.requestDirectEdit();
+    }
 
     Ui.DetailCard {
         title: "Preview"
@@ -28,6 +34,7 @@ Ui.DetailFlickable {
             source: cards.detailState.thumbnail ? "file://" + cards.detailState.thumbnail.path : ""
         }
         TextEdit {
+            id: textEditor
             visible: !cards.detailState.thumbnail && cards.detailState.value && cards.detailState.value.text !== null
             anchors.fill: parent
             text: cards.detailState.editing ? cards.detailState.editDraft
@@ -37,9 +44,15 @@ Ui.DetailFlickable {
             selectedTextColor: Ui.Theme.text
             font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeBody
-            readOnly: !cards.detailState.editing
+            readOnly: !cards.detailState.editing || cards.detailState.saveInFlight
             selectByMouse: true
-            onTextChanged: if (cards.detailState.editing && activeFocus) cards.detailState.editDraft = text
+            onActiveFocusChanged: if (cards.directTextEdit) cards.detailState.setEditorFocused(activeFocus)
+            onTextChanged: if (cards.detailState.editing && activeFocus) {
+                if (cards.directTextEdit)
+                    cards.detailState.updateEditDraft(text);
+                else
+                    cards.detailState.editDraft = text;
+            }
             wrapMode: TextEdit.Wrap
         }
         Ui.CenteredMessage {

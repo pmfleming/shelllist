@@ -13,8 +13,12 @@ Ui.ChooserSurface {
     Shortcut {
         sequence: "Escape"
         onActivated: {
-            if (content.controller.detailState.editing)
-                content.controller.detailState.cancelEdit();
+            if (content.controller.detailState.editing) {
+                if (content.controller.detailState.editIsDirect)
+                    content.controller.detailState.finishDirectEdit();
+                else
+                    content.controller.detailState.cancelEdit();
+            }
             else if (content.controller.activeOperationId.length > 0)
                 content.controller.cancelActiveOperation();
             else if (content.controller.deleteConfirmationOpen)

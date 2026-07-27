@@ -34,7 +34,7 @@ function actionsForKind(kind) {
     if (kind === "link")
         return common.concat(["edit", "open-url"]);
     if (kind === "image")
-        return common.concat(["image-as-file", "annotate"]);
+        return ["paste", "image-as-file", "annotate"];
     if (kind === "files")
         return common.concat(["open-file", "reveal-file"]);
     return ["copy"];
@@ -42,7 +42,7 @@ function actionsForKind(kind) {
 
 var actionLabels = {
     paste: "Paste", copy: "Copy", edit: "Edit", "open-url": "Open URL",
-    "image-as-file": "Paste as file", annotate: "Annotate",
+    "image-as-file": "Paste as file", annotate: "Edit",
     "open-file": "Open file", "reveal-file": "Reveal file"
 };
 

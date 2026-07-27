@@ -18,7 +18,7 @@ function expect(kind, expected) {
 
 expect("text", ["paste", "copy", "edit"]);
 expect("link", ["paste", "copy", "edit", "open-url"]);
-expect("image", ["paste", "copy", "image-as-file", "annotate"]);
+expect("image", ["paste", "image-as-file", "annotate"]);
 expect("files", ["paste", "copy", "open-file", "reveal-file"]);
 expect("html", ["paste", "copy", "edit"]);
 expect("json", ["paste", "copy", "edit"]);
@@ -26,6 +26,8 @@ expect("color", ["paste", "copy", "edit"]);
 expect("binary", ["copy"]);
 if (context.actionLabels["image-as-file"] !== "Paste as file")
     throw new Error("image-as-file must be presented as the alternative image paste action");
+if (context.actionLabels.annotate !== "Edit")
+    throw new Error("image annotation must be presented as editing");
 
 for (const kind of ["text", "link", "image", "files", "binary"]) {
     const descriptors = context.actionDescriptorsForKind(kind);

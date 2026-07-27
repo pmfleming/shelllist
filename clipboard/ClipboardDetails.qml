@@ -17,11 +17,14 @@ Ui.DetailsPane {
     readonly property int headerHeight: Math.max(58, Math.round(66 * uiScale))
     readonly property int toolbarHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     readonly property bool textEditable: ["text", "link", "html", "json", "color"].indexOf(entry.kind) >= 0
+    readonly property bool plainText: entry.kind === "text"
+    readonly property bool compactActions: plainText || entry.kind === "image"
 
     function triggerAction(actionId) {
         const handlers = ({
             paste: controller.pasteSelected, copy: controller.copySelected,
             edit: detailState.editing ? detailState.commitEdit : detailState.beginEdit,
+            "direct-edit": detailCards.focusEditor,
             "cancel-edit": detailState.cancelEdit, "open-url": controller.openUrl,
             "open-file": function () { controller.openFile(0); },
             "reveal-file": function () { controller.revealFile(0); },
@@ -65,20 +68,20 @@ Ui.DetailsPane {
             width: parent.width
             height: pane.toolbarHeight
             actions: [{
-                id: "paste", label: pane.controller.targetAvailable ? "Paste" : "Copy", icon: "󰆒", shortcut: "Enter",
+                id: "paste", label: pane.plainText ? "Paste" : (pane.controller.targetAvailable ? "Paste" : "Copy"), icon: "󰆒", shortcut: "Enter",
                 visible: pane.entry.kind !== "binary", enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: "active", width: 104 }
             }, {
                 id: "copy", label: "Copy", icon: "󰆏", shortcut: "Ctrl+↵",
-                visible: true, enabled: !pane.controller.actionInFlight,
+                visible: !pane.compactActions, enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: "normal", width: 96 }
             }, {
                 id: "edit", label: pane.detailState.editing ? "Save" : "Edit", icon: "󰏫", shortcut: "",
-                visible: pane.textEditable, enabled: !pane.controller.actionInFlight,
+                visible: pane.textEditable && !pane.plainText, enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: pane.detailState.editing ? "active" : "normal", width: 88 }
             }, {
                 id: "cancel-edit", label: "Cancel", icon: "󰜺", shortcut: "Esc",
-                visible: pane.detailState.editing, enabled: !pane.controller.actionInFlight,
+                visible: pane.detailState.editing && !pane.plainText, enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: "normal", width: 92 }
             }, {
                 id: "open-url", label: "Open", icon: "󰌷", shortcut: "",
@@ -93,24 +96,29 @@ Ui.DetailsPane {
                 visible: pane.files.length > 0, enabled: !pane.controller.actionInFlight && !!pane.firstFile.exists,
                 presentation: { group: "toolbar", tone: "normal", width: 96 }
             }, {
-                id: "image-as-file", label: pane.controller.targetAvailable ? "Paste as file" : "Copy as file", icon: "󰈔", shortcut: "Shift+↵",
-                visible: pane.entry.kind === "image", enabled: !pane.controller.actionInFlight,
+                id: "image-as-file", label: pane.plainText ? "Paste as file" : (pane.controller.targetAvailable ? "Paste as file" : "Copy as file"), icon: "󰈔", shortcut: "Shift+↵",
+                visible: pane.entry.kind === "image" || pane.plainText,
+                enabled: pane.entry.kind === "image" && !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: "normal", width: 136 }
             }, {
-                id: "annotate", label: "Annotate", icon: "󰏫", shortcut: "",
+                id: "direct-edit", label: "Edit", icon: "󰏫", shortcut: "",
+                visible: pane.plainText, enabled: !pane.controller.actionInFlight,
+                presentation: { group: "toolbar", tone: "normal", width: 96 }
+            }, {
+                id: "annotate", label: "Edit", icon: "󰏫", shortcut: "",
                 visible: pane.entry.kind === "image", enabled: !pane.controller.actionInFlight,
-                presentation: { group: "toolbar", tone: "normal", width: 112 }
+                presentation: { group: "toolbar", tone: "normal", width: 96 }
             }, {
                 id: "favorite", label: pane.entry.favorite ? "Unpin" : "Pin", icon: "󰓎", shortcut: "",
-                visible: true, enabled: !pane.controller.actionInFlight,
+                visible: !pane.compactActions, enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: pane.entry.favorite ? "active" : "normal", width: 88 }
             }, {
                 id: "delete", label: "Delete", icon: "󰆴", shortcut: "Del",
-                visible: true, enabled: !pane.controller.actionInFlight,
+                visible: !pane.compactActions, enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: "danger", width: 96 }
             }, {
                 id: "close-details", label: "Back", icon: "󰁍", shortcut: "Left",
-                visible: true, enabled: true,
+                visible: !pane.compactActions, enabled: true,
                 presentation: { group: "toolbar", tone: "normal", width: 92 }
             }]
             group: "toolbar"
@@ -137,6 +145,7 @@ Ui.DetailsPane {
             }
 
         ClipboardDetailCards {
+            id: detailCards
             anchors.fill: parent
             visible: !pane.detailState.loading
                 && pane.detailState.error.length === 0

@@ -41,6 +41,12 @@ Ui.ChooserController {
     function deactivateUi() {
         if (sessionId.length > 0)
             backend.endSession(sessionId);
+        if (detailState.editing) {
+            if (detailState.editIsDirect && detailState.editDirty)
+                detailState.commitEdit();
+            else
+                detailState.cancelEdit();
+        }
         deactivateUiState();
         sessionId = "";
         targetAvailable = false;
@@ -49,8 +55,6 @@ Ui.ChooserController {
         activeAction = "";
         activeOperationId = "";
         detailsOpen = false;
-        if (detailState.editing)
-            detailState.cancelEdit();
         detailState.clear();
     }
     function refresh() {
