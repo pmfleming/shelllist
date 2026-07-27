@@ -205,6 +205,7 @@
             runtimeInputs = [
               pkgs.coreutils
               pkgs.gawk
+              pkgs.jq
               pkgs.quickshell
               clipDaemon
             ];
@@ -239,15 +240,140 @@
                 return 1
               }
 
-              action=''${1:-toggle}
+              usage() {
+                cat <<'EOF'
+Usage: shelllist-clipboard [OPTIONS] [ACTION]
+
+Clipboard settings:
+  --pause         Pause history capture
+  --private       Pause capture in private mode
+  --resume        Resume history capture
+  --kept COUNT    Set the maximum number of regular history entries
+
+Actions: daemon, floating, foreground, toggle, open, show, hide, status
+Setting options used without an action update clip-daemon and exit.
+EOF
+              }
+
+              clip_call() {
+                request=$1
+                response=
+                coproc CLIP_CLIENT { clip-daemon client; }
+                client_out=''${CLIP_CLIENT[0]}
+                client_in=''${CLIP_CLIENT[1]}
+                client_pid=$CLIP_CLIENT_PID
+                printf '%s\n' "$request" >&"$client_in"
+                while IFS= read -r line <&"$client_out"; do
+                  if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli"' >/dev/null; then
+                    response=$line
+                    break
+                  fi
+                done
+                printf '%s\n' '{"op":"shutdown","id":"shelllist-cli-shutdown"}' >&"$client_in" || true
+                while IFS= read -r line <&"$client_out"; do
+                  if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli-shutdown"' >/dev/null; then
+                    break
+                  fi
+                done
+                wait "$client_pid" || true
+
+                if [ -z "$response" ]; then
+                  echo "clip-daemon did not return a response" >&2
+                  return 1
+                fi
+                if ! printf '%s\n' "$response" | jq -e '.ok == true and .response.ok == true' >/dev/null; then
+                  printf '%s\n' "$response" | jq -r '.response.error.message // .error // "Clipboard setting update failed"' >&2
+                  return 1
+                fi
+              }
+
+              capture_mode=
+              kept=
+              configured=0
+              while [ "$#" -gt 0 ]; do
+                case "$1" in
+                  --pause|--private|--resume)
+                    requested_mode=''${1#--}
+                    if [ -n "$capture_mode" ] && [ "$capture_mode" != "$requested_mode" ]; then
+                      echo "Only one of --pause, --private, or --resume may be used" >&2
+                      exit 2
+                    fi
+                    capture_mode=$requested_mode
+                    configured=1
+                    shift
+                    ;;
+                  --kept)
+                    if [ "$#" -lt 2 ]; then
+                      echo "--kept requires an entry count" >&2
+                      exit 2
+                    fi
+                    case "$2" in
+                      ""|*[!0-9]*) echo "--kept must be a positive integer" >&2; exit 2 ;;
+                    esac
+                    kept=$2
+                    configured=1
+                    shift 2
+                    ;;
+                  -h|--help)
+                    usage
+                    exit 0
+                    ;;
+                  --)
+                    shift
+                    break
+                    ;;
+                  -*)
+                    echo "Unknown option: $1" >&2
+                    usage >&2
+                    exit 2
+                    ;;
+                  *) break ;;
+                esac
+              done
+
+              if [ -n "$capture_mode" ]; then
+                paused=true
+                private=false
+                if [ "$capture_mode" = private ]; then
+                  private=true
+                elif [ "$capture_mode" = resume ]; then
+                  paused=false
+                fi
+                request=$(jq -cn --argjson paused "$paused" --argjson private "$private" \
+                  '{op:"call", id:"shelllist-cli", method:"clipboard.capture.setPaused", params:{paused:$paused, private_mode:$private}}')
+                clip_call "$request"
+                case "$capture_mode" in
+                  pause) echo "Clipboard history capture paused" ;;
+                  private) echo "Private mode enabled; clipboard history capture paused" ;;
+                  resume) echo "Clipboard history capture resumed" ;;
+                esac
+              fi
+
+              if [ -n "$kept" ]; then
+                request=$(jq -cn --argjson kept "$kept" \
+                  '{op:"call", id:"shelllist-cli", method:"clipboard.settings.update", params:{max_entries:$kept}}')
+                clip_call "$request"
+                echo "Clipboard retention set to $kept entries"
+              fi
+
+              action=''${1:-}
+              if [ "$#" -gt 0 ]; then shift; fi
+              if [ "$#" -gt 0 ]; then
+                usage >&2
+                exit 2
+              fi
+              if [ -z "$action" ]; then
+                if [ "$configured" -eq 1 ]; then exit 0; fi
+                action=toggle
+              fi
               [ "$action" = show ] && action=open
               case "$action" in
                 daemon) ensure_daemon ;;
-                floating) shift; SHELLLIST_CLIPBOARD_MODE=floating exec quickshell --path "$config_path" "$@" ;;
+                floating) SHELLLIST_CLIPBOARD_MODE=floating exec quickshell --path "$config_path" ;;
                 foreground) SHELLLIST_CLIPBOARD_MODE=popover exec quickshell --path "$config_path" --no-duplicate ;;
                 toggle|open|hide) ensure_daemon && popover_ipc "$action" >/dev/null ;;
                 status) ensure_daemon && popover_ipc status ;;
-                *) echo "Usage: shelllist-clipboard [daemon|floating|foreground|toggle|open|hide|status]" >&2; exit 2 ;;
+                *) usage >&2; exit 2 ;;
               esac
             '';
           };

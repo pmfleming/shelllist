@@ -13,6 +13,7 @@ RowLayout {
     property bool refreshing: false
     property bool powerEnabled: true
     property bool refreshEnabled: true
+    property string refreshIcon: "󰑐"
     property bool focusOnCompleted: false
     property bool iconActionEnabled: false
 
@@ -105,6 +106,7 @@ RowLayout {
         Layout.alignment: Qt.AlignVCenter
         refreshing: header.refreshing
         refreshEnabled: header.refreshEnabled
+        icon: header.refreshIcon
         iconSize: Math.max(Theme.iconSizeSmall, header.scaled(Theme.iconSize))
         onClicked: header.refreshRequested()
     }

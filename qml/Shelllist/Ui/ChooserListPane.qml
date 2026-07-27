@@ -19,6 +19,8 @@ ColumnLayout {
     property bool busy: false
     property bool powerEnabled: true
     property bool refreshEnabled: true
+    property string refreshIcon: "󰑐"
+    property var refreshHandler: null
     property bool focusOnCompleted: false
     property bool iconActionEnabled: false
     property string filterText: ""
@@ -47,7 +49,12 @@ ColumnLayout {
     onSearchKeyPressed: function (event) { chooserController.navigation.handleSearchKey(event); }
     onListKeyPressed: function (event) { chooserController.navigation.handleListKey(event); }
     onPowerRequested: chooserController.setPower()
-    onRefreshRequested: chooserController.refresh()
+    onRefreshRequested: {
+        if (refreshHandler)
+            refreshHandler();
+        else
+            chooserController.refresh();
+    }
 
     Layout.fillWidth: true
     Layout.fillHeight: true
@@ -69,6 +76,7 @@ ColumnLayout {
         refreshing: pane.refreshing
         powerEnabled: pane.powerEnabled
         refreshEnabled: pane.refreshEnabled
+        refreshIcon: pane.refreshIcon
         focusOnCompleted: pane.focusOnCompleted
         iconActionEnabled: pane.iconActionEnabled
         onFilterEdited: function (text) { pane.filterEdited(text); }

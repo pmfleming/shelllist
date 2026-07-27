@@ -70,6 +70,18 @@ shelllist-bluetooth floating  # one-shot floating fallback
 
 The stabilization binding is `SUPER+M`. `SUPER+B` remains assigned to `rofi-bluetooth-menu` until Shelllist Bluetooth is ready to replace it. In the device list, `Right` opens details and `Left` closes them. `Alt+Tab` cycles Device Details, Audio & Transfer, and Adapter tabs; `Ctrl+Tab` is retained as the network-popup-compatible alternative.
 
+Run and configure the clipboard popup with:
+
+```sh
+nix run .#clipboard
+shelllist-clipboard --pause       # pause history capture
+shelllist-clipboard --private     # pause capture and mark private mode
+shelllist-clipboard --resume      # resume history capture
+shelllist-clipboard --kept 750    # set the regular-history retention limit
+```
+
+Settings-only invocations update `clip-daemon` without opening the popup. A popup action may follow the options, for example `shelllist-clipboard --resume open`. The clipboard UI keeps destructive history clearing behind its icon-only header action and confirmation dialog; pause, private-mode, and retention controls are CLI-only.
+
 ## Bluetooth implementation status
 
 The Bluetooth surface provides a keyboard-first device list, filtering, per-adapter power, bounded discovery with request IDs and cancellation, live and recently cached signal strength, standard battery display, and contextual pair/connect/disconnect behavior. It shows the cached list immediately, dims last-known signal after discovery ends, and retains recently found devices long enough to pair instead of collapsing to paired devices. `Right` opens a structured details surface with persistent primary/secondary actions and separate Device Details, Audio & Transfer, and Adapter tabs. Device details always place a device visual above the overview, enrich it with component-battery rings when available, and retain the last observed battery state while a device is disconnected; settings include auto-saved rename, trust, wake, block, capability-gated Fast Pair multipoint and noise-control modes, shared destructive confirmation, service and technical summaries; adapter settings include segmented adapter selection, an auto-saved alias, auto-saved timeout sliders, pairable/discoverable controls, and trust-after-pair policy. The UI communicates only through `bt-api` v1 and opaque device keys; it does not parse `bluetoothctl` output or route actions on MAC addresses. A `shelllist:bluetooth` Hyprland global shortcut is registered alongside the transition IPC command.
