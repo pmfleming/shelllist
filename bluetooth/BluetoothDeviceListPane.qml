@@ -19,9 +19,11 @@ Ui.ChooserListPane {
     busy: controller.actionInFlight
     powerEnabled: !controller.actionInFlight
     refreshEnabled: controller.powered && !controller.actionInFlight
+    iconActionEnabled: !controller.screenshotInFlight && !controller.actionInFlight && !controller.modalPromptOpen
     filterText: controller.filterText
     status: controller.status
     listInset: Math.round(12 * uiScale)
+    onIconClicked: controller.screenshotRequested()
     onRefreshRequested: controller.toggleScan()
 
     rowDelegate: Component {

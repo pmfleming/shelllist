@@ -19,10 +19,12 @@ ChooserListPane {
     busy: controller.actionInFlight
     powerEnabled: !controller.actionInFlight && !controller.prompt.open
     refreshEnabled: controller.powered && !controller.actionInFlight
+    iconActionEnabled: !controller.screenshotInFlight && !controller.actionInFlight && !controller.prompt.open
     focusOnCompleted: true
     filterText: controller.filterText
     status: controller.status
     listInset: Math.round(12 * uiScale)
+    onIconClicked: controller.screenshotRequested()
     rowDelegate: Component {
         NetworkListRow {
             id: networkRow

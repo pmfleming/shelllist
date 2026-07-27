@@ -1,3 +1,4 @@
 module Shelllist.Io
+ClipboardScreenshotCapture 1.0 ClipboardScreenshotCapture.qml
 HyprlandLayerRuleClient 1.0 process/HyprlandLayerRuleClient.qml
 JsonlDaemonClient 1.0 process/JsonlDaemonClient.qml

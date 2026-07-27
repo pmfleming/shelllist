@@ -49,6 +49,7 @@
               pkgs.quickshell
               self.packages.${system}.captivePortalBrowser
               nmDaemon
+              clipDaemon
             ];
             text = ''
               config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/wifi
@@ -145,7 +146,7 @@
           bluetooth = pkgs.writeShellApplication {
             name = "shelllist-bluetooth";
             meta = mkMeta "Quickshell Bluetooth popup backed by bt-daemon" "shelllist-bluetooth";
-            runtimeInputs = [ pkgs.coreutils pkgs.gawk pkgs.quickshell btDaemon ];
+            runtimeInputs = [ pkgs.coreutils pkgs.gawk pkgs.quickshell btDaemon clipDaemon ];
             text = ''
               config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/bluetooth
               export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}

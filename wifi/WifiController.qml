@@ -5,6 +5,7 @@ import "NmApiClient.js" as Api
 import "NmApi.js" as NmApi
 import "."
 import Shelllist.Core as Core
+import Shelllist.Io as Io
 import Shelllist.Ui
 
 ChooserController {
@@ -19,7 +20,8 @@ ChooserController {
     readonly property bool powered: !activeStatus || activeStatus.enabled !== false
     property double statusHoldUntil: 0
     readonly property WifiBackend backend: services.backend
-    readonly property bool actionInFlight: backend.running
+    readonly property bool screenshotInFlight: screenshotCapture.inFlight
+    readonly property bool actionInFlight: backend.running || screenshotInFlight
     readonly property string detailsTab: advanced.open ? advanced.section : "network"
     readonly property bool scanInFlight: scan.running
     readonly property var filteredResults: services.results.visibleResults
@@ -50,6 +52,7 @@ ChooserController {
     }
 
     signal advancedSectionLeaving(string section)
+    signal screenshotRequested
 
     function activeAccessPoint() { return activeStatus ? (activeStatus.access_point || activeStatus.network || null) : null; }
     function networkName(ap) { return Presentation.networkName(ap); }
@@ -130,6 +133,12 @@ ChooserController {
     }
 
     function refresh() { scan.refresh(); }
+    function captureScreenshot(x, y, width, height) {
+        if (actionInFlight || prompt.open || screenshotInFlight)
+            return false;
+        status = "Capturing Wi-Fi window…";
+        return screenshotCapture.captureRegion(x, y, width, height);
+    }
     function maybeRunPendingRefresh() { scan.maybeRefresh(); }
     function setPower() {
         if (!beginAction())
@@ -228,5 +237,11 @@ ChooserController {
     }
 
     Connections { target: wifi.prompt; function onOpenChanged() { if (!wifi.prompt.open) Qt.callLater(wifi.navigation.focusSearch); } }
+    Io.ClipboardScreenshotCapture {
+        id: screenshotCapture
+        active: wifi.uiActive
+        onCompleted: function (message) { wifi.status = message; }
+        onFailed: function (message) { wifi.status = message; }
+    }
     WifiControllerServices { id: services; controller: wifi; prompt: wifi.prompt }
 }

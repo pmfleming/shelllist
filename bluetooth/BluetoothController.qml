@@ -1,5 +1,6 @@
 import QtQuick
 import Shelllist.Core as Core
+import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "BluetoothBattery.js" as BluetoothBattery
 import "BluetoothFlow.js" as BluetoothFlow
@@ -25,7 +26,8 @@ Ui.ChooserController {
     property string preferredAdapterKey: ""
     property string pairingInput: ""
     property string status: "Loading Bluetooth devices…"
-    readonly property bool actionInFlight: backend.running || canCancelOperation || canCancelTransfer
+    readonly property bool screenshotInFlight: screenshotCapture.inFlight
+    readonly property bool actionInFlight: backend.running || canCancelOperation || canCancelTransfer || screenshotInFlight
     readonly property var filteredResults: results.visibleResults
     readonly property var filteredResultsModel: results.visibleModel
     readonly property var selectedResult: results.selected()
@@ -53,6 +55,7 @@ Ui.ChooserController {
         || backend.isPending("snapshot")
         || backend.isPending("scan-start")
     signal incomingTransferRequested
+    signal screenshotRequested
 
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
@@ -86,6 +89,12 @@ Ui.ChooserController {
     function refresh() {
         status = scanning ? "Scanning for Bluetooth devices…" : "Refreshing Bluetooth devices…";
         backend.refresh();
+    }
+    function captureScreenshot(x, y, width, height) {
+        if (actionInFlight || modalPromptOpen || screenshotInFlight)
+            return false;
+        status = "Capturing Bluetooth window…";
+        return screenshotCapture.captureRegion(x, y, width, height);
     }
     function applyObexSnapshot(capabilities) {
         obexCapabilities = capabilities || ({});
@@ -305,5 +314,11 @@ Ui.ChooserController {
         BluetoothProvider { id: provider; controller: bluetoothController }
     }
     Core.ResultStore { id: results; registry: providers }
+    Io.ClipboardScreenshotCapture {
+        id: screenshotCapture
+        active: bluetoothController.uiActive
+        onCompleted: function (message) { bluetoothController.status = message; }
+        onFailed: function (message) { bluetoothController.status = message; }
+    }
     BluetoothBackend { id: backend; controller: bluetoothController }
 }
