@@ -21,6 +21,7 @@ var methods = {
     editCancel: "clipboard.entry.edit.cancel",
     captureSetPaused: "clipboard.capture.setPaused",
     captureScreenshot: "clipboard.capture.screenshot",
+    selectionPublishFiles: "clipboard.selection.publishFiles",
     settingsGet: "clipboard.settings.get",
     settingsUpdate: "clipboard.settings.update",
     wipePrepare: "clipboard.history.wipe.prepare",
