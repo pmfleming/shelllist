@@ -13,6 +13,28 @@ Ui.DetailFlickable {
     readonly property var files: detailState.value ? detailState.value.files : []
     readonly property var imageFacts: detailState.value ? detailState.value.image : null
     readonly property bool directTextEdit: entry.kind === "text"
+    readonly property int dataCardHeight: 270
+
+    function formatByteSize(byteSize) {
+        if (byteSize === undefined || byteSize === null)
+            return "—";
+
+        const bytes = Number(byteSize);
+        if (!Number.isFinite(bytes) || bytes < 0)
+            return "—";
+        if (bytes < 1024)
+            return Math.round(bytes) + " B";
+
+        const units = ["KB", "MB", "GB", "TB"];
+        let value = bytes / 1024;
+        let unitIndex = 0;
+        while (value >= 1024 && unitIndex < units.length - 1) {
+            value /= 1024;
+            unitIndex += 1;
+        }
+        const conciseValue = value.toFixed(value < 10 ? 1 : 0).replace(/\.0$/, "");
+        return conciseValue + " " + units[unitIndex];
+    }
 
     function focusEditor() {
         textEditor.forceActiveFocus();
@@ -20,6 +42,8 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailCard {
+        id: previewCard
+
         title: cards.entry.kind
             ? cards.entry.kind.charAt(0).toUpperCase() + cards.entry.kind.slice(1)
             : "Clipboard item"
@@ -66,55 +90,103 @@ Ui.DetailFlickable {
         }
     }
 
-    Ui.DetailCard {
-        title: "Metadata"
-        height: 154
-        RowLayout {
-            anchors.fill: parent
-            spacing: Ui.Theme.spacingLg
-            Ui.DetailField { Layout.fillWidth: true; label: "Type"; value: cards.entry.kind || "—" }
-            Ui.DetailField { Layout.fillWidth: true; label: "MIME"; value: cards.entry.mime || "—" }
-            Ui.DetailField {
-                Layout.fillWidth: true
-                label: "Size"
-                value: cards.entry.byte_size !== undefined ? cards.entry.byte_size + " bytes" : "—"
-            }
-            Ui.DetailField {
-                Layout.fillWidth: true
-                label: "Dimensions"
-                value: cards.imageFacts ? cards.imageFacts.width + " × " + cards.imageFacts.height : "—"
-            }
-        }
+    Item {
+        height: Math.max(0, cards.height - previewCard.height - dataCard.height - 2 * cards.cardSpacing)
     }
 
     Ui.DetailCard {
-        visible: cards.files.length > 0
-        title: "Files"
-        height: Math.min(300, 76 + cards.files.length * 42)
-        Column {
+        id: dataCard
+
+        title: "Data"
+        height: cards.dataCardHeight
+
+        ColumnLayout {
             anchors.fill: parent
             spacing: Ui.Theme.spacingSm
-            Repeater {
-                model: cards.files
-                delegate: RowLayout {
-                    id: fileRow
 
-                    required property var modelData
-                    width: parent.width
-                    height: 34
-                    Text {
-                        Layout.fillWidth: true
-                        text: fileRow.modelData.display_name
-                        color: fileRow.modelData.exists ? Ui.Theme.text : Ui.Theme.danger
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: Ui.Theme.fontSizeBody
-                        elide: Text.ElideMiddle
-                    }
-                    Text {
-                        text: fileRow.modelData.operation === "cut" ? "Move" : "Copy"
-                        color: Ui.Theme.mutedText
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: Ui.Theme.fontSizeCaption
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 96
+
+                Ui.DetailGrid {
+                    anchors.fill: parent
+                    entries: [{
+                        label: "Type",
+                        value: cards.entry.kind || "—"
+                    }, {
+                        label: "MIME",
+                        value: cards.entry.mime || "—"
+                    }, {
+                        label: "Size",
+                        value: cards.formatByteSize(cards.entry.byte_size)
+                    }, {
+                        label: "Dimensions",
+                        value: cards.imageFacts
+                            ? cards.imageFacts.width + " × " + cards.imageFacts.height
+                            : "—"
+                    }]
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 1
+                color: Ui.Theme.border
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: "Files"
+                color: Ui.Theme.mutedText
+                font.family: Ui.Theme.fontFamily
+                font.pixelSize: Ui.Theme.fontSizeBody
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                Text {
+                    anchors.fill: parent
+                    visible: cards.files.length === 0
+                    text: "No associated files"
+                    color: Ui.Theme.mutedText
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: Ui.Theme.fontSizeCaption
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                ListView {
+                    id: fileList
+
+                    anchors.fill: parent
+                    visible: cards.files.length > 0
+                    model: cards.files
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    delegate: RowLayout {
+                        id: fileRow
+
+                        required property var modelData
+                        width: fileList.width
+                        height: 34
+                        spacing: Ui.Theme.spacingMd
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: fileRow.modelData.display_name
+                            color: fileRow.modelData.exists ? Ui.Theme.text : Ui.Theme.danger
+                            font.family: Ui.Theme.fontFamily
+                            font.pixelSize: Ui.Theme.fontSizeBody
+                            elide: Text.ElideMiddle
+                        }
+                        Text {
+                            text: fileRow.modelData.operation === "cut" ? "Move" : "Copy"
+                            color: Ui.Theme.mutedText
+                            font.family: Ui.Theme.fontFamily
+                            font.pixelSize: Ui.Theme.fontSizeCaption
+                        }
                     }
                 }
             }
