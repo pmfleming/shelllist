@@ -151,6 +151,7 @@
         "rsn_flags": 256,
         "rsn_flags_label": "psk",
         "security": "WPA2/3",
+        "security_class": "personal",
         "share": {
           "profile_path": "/org/freedesktop/NetworkManager/Settings/1",
           "reason": "Saved profile password availability must be checked before sharing",
@@ -367,6 +368,7 @@
           "rsn_flags": 256,
           "rsn_flags_label": "psk",
           "security": "WPA2/3",
+          "security_class": "personal",
           "share": {
             "profile_path": "/org/freedesktop/NetworkManager/Settings/1",
             "reason": "Saved profile password availability must be checked before sharing",

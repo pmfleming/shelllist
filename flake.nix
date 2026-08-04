@@ -667,6 +667,14 @@ EOF
             touch $out
           '';
 
+          wifiIcons = pkgs.runCommand "shelllist-wifi-icons"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-wifi-icons.js} ${./wifi/WifiIcons.js}
+            touch $out
+          '';
+
           bluetoothLifecycle = pkgs.runCommand "shelllist-bluetooth-lifecycle"
             {
               nativeBuildInputs = [ pkgs.nodejs ];
@@ -697,7 +705,7 @@ EOF
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-bluetooth-battery.js} ${./bluetooth/BluetoothBattery.js}
+            node ${./tests/check-bluetooth-battery.js} ${./bluetooth/BluetoothBattery.js} ${./bluetooth}
             touch $out
           '';
 

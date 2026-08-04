@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
 const fs = require("fs");
+const path = require("path");
 const vm = require("vm");
 
 const helperPath = process.argv[2];
 if (!helperPath)
-    throw new Error("usage: check-bluetooth-battery.js <BluetoothBattery.js>");
+    throw new Error("usage: check-bluetooth-battery.js <BluetoothBattery.js> [bluetooth-root]");
+const bluetoothRoot = process.argv[3] || path.dirname(helperPath);
 
 const source = fs.readFileSync(helperPath, "utf8").replace(/^\.pragma library\s*/, "");
 const battery = {};
@@ -17,6 +19,12 @@ function expect(label, condition) {
     ++checks;
     if (!condition)
         throw new Error(label);
+}
+
+function expectDeviceImage(label, device, expected) {
+    const image = battery.imageFor(device, { component: "main" });
+    expect(label + " selects its artwork", image === expected);
+    expect(label + " artwork exists", fs.existsSync(path.resolve(bluetoothRoot, image)));
 }
 
 const fastPair = [
@@ -55,6 +63,14 @@ expect("unknown values are not inferred", battery.summary(partial) === "R 55%");
 expect("presentation does not mutate backend order", fastPair[0].component === "case");
 expect("missing reports produce no summary", battery.summary(null) === "");
 expect("component artwork is selected centrally", battery.imageFor({}, fastPair[0]).endsWith("charging-case.png"));
+expectDeviceImage("computer", { icon: "computer" }, "assets/devices/computer.png");
+expectDeviceImage("game controller", { icon: "input-gaming" }, "assets/devices/game-controller.png");
+expectDeviceImage("keyboard", { icon: "input-keyboard" }, "assets/devices/keyboard.png");
+expectDeviceImage("mouse", { icon: "input-mouse" }, "assets/devices/mouse.png");
+expectDeviceImage("phone", { icon: "phone" }, "assets/devices/phone.png");
+expectDeviceImage("speaker", { icon: "audio-speakers" }, "assets/devices/speaker.png");
+expectDeviceImage("unknown device", { icon: "" }, "assets/devices/unknown-device.png");
+expectDeviceImage("audio service fallback", { services: [{ label: "Audio Sink" }] }, "assets/audio/headphones.png");
 
 const remembered = battery.enrichDevices([{ key: "headset", connected: false, battery: [] }], { headset: aggregate });
 expect("disconnected devices restore remembered reports", remembered.devices[0].battery[0].percentage === 64);

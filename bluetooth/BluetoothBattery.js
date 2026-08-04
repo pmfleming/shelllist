@@ -7,6 +7,17 @@ const componentImages = ({
     right: "assets/audio/right-earbud.png",
     case: "assets/audio/charging-case.png"
 });
+const deviceImageRules = [
+    { terms: ["headphones"], image: "assets/audio/headphones.png" },
+    { terms: ["headset"], image: "assets/audio/headset.png" },
+    { terms: ["speaker", "audio-card"], image: "assets/devices/speaker.png" },
+    { terms: ["keyboard"], image: "assets/devices/keyboard.png" },
+    { terms: ["mouse"], image: "assets/devices/mouse.png" },
+    { terms: ["gaming", "gamepad", "joystick"], image: "assets/devices/game-controller.png" },
+    { terms: ["phone"], image: "assets/devices/phone.png" },
+    { terms: ["computer", "laptop"], image: "assets/devices/computer.png" }
+];
+const unknownDeviceImage = "assets/devices/unknown-device.png";
 
 function componentName(report) {
     return String((report && report.component) || "").toLowerCase();
@@ -52,20 +63,27 @@ function serviceText(device) {
     }).join(" ");
 }
 
-function audioImage(device) {
-    const icon = String((device && device.icon) || "").toLowerCase();
-    if (icon.indexOf("headset") >= 0)
-        return "assets/audio/headset.png";
-    if (icon.indexOf("headphones") >= 0)
-        return "assets/audio/headphones.png";
+function matchingDeviceImage(text) {
+    const match = deviceImageRules.find(function (rule) {
+        return rule.terms.some(function (term) { return text.indexOf(term) >= 0; });
+    });
+    return match ? match.image : "";
+}
+
+function deviceImage(device) {
+    const iconImage = matchingDeviceImage(String((device && device.icon) || "").toLowerCase());
+    if (iconImage)
+        return iconImage;
     const services = serviceText(device);
     if (services.indexOf("handsfree") >= 0 || services.indexOf("headset") >= 0)
         return "assets/audio/headset.png";
-    return services.indexOf("audio sink") >= 0 ? "assets/audio/headphones.png" : "";
+    return services.indexOf("audio sink") >= 0
+        ? "assets/audio/headphones.png"
+        : unknownDeviceImage;
 }
 
 function imageFor(device, report) {
-    return componentImages[componentName(report)] || audioImage(device);
+    return componentImages[componentName(report)] || deviceImage(device);
 }
 
 function batteryState(device, previousCache) {

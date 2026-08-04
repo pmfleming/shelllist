@@ -2,6 +2,8 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui
+import "WifiIcons.js" as WifiIcons
+import "WifiPresentation.js" as Presentation
 
 ChooserListPane {
     id: pane
@@ -33,6 +35,9 @@ ChooserListPane {
             name: networkRow.result.title
             connecting: pane.controller.connection.isConnecting(networkRow.result.payload)
             progressTick: pane.controller.connection.progressTick
+            captivePortal: networkRow.active
+                && Presentation.connectivityRequiresSignIn(Presentation.activeConnectivity(pane.controller))
+            networkTypeIcon: WifiIcons.forNetwork(networkRow.network, networkRow.captivePortal)
         }
     }
 }

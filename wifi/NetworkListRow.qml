@@ -12,9 +12,8 @@ ResultRow {
     property string name: ""
     property bool connecting: false
     property int progressTick: 0
-
-    readonly property bool securedNetwork: network.security !== "--" || (Number(network.flags) || 0) > 0 || (Number(network.wpa_flags) || 0) > 0 || (Number(network.rsn_flags) || 0) > 0
-    readonly property bool openNetwork: !securedNetwork
+    property bool captivePortal: false
+    property string networkTypeIcon: ""
     readonly property int signalStrength: Math.max(0, Math.min(100, Number(network.strength) || 0))
     readonly property int signalBarCount: signalStrength >= 67 ? 3 : (signalStrength >= 34 ? 2 : 1)
     readonly property color signalColor: signalStrength >= 67 ? Theme.active : (signalStrength >= 34 ? Theme.warning : Theme.danger)
@@ -52,8 +51,8 @@ ResultRow {
         Layout.fillHeight: true
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter
-        text: row.connecting ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length] : (row.openNetwork ? "" : "󰌾")
-        color: row.connecting ? Theme.accent : Theme.mutedText
+        text: row.connecting ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length] : row.networkTypeIcon
+        color: row.connecting ? Theme.accent : (row.captivePortal ? Theme.warning : Theme.mutedText)
         font.family: row.connecting ? Theme.fontFamily : Theme.iconFontFamily
         font.pixelSize: Math.round(Theme.fontSizeLabel * row.density)
     }

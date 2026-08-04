@@ -29,6 +29,7 @@ jq -e '
   (.data.fixture.network.capabilities.needs_password | type == "boolean") and
   (.data.fixture.network.capabilities.needs_credentials | type == "boolean") and
   (.data.fixture.network.auth.note | type == "string") and
+  (.data.fixture.network.security_class | IN("open", "enhanced-open", "legacy", "personal", "enterprise", "unknown")) and
   (.data.fixture.network.connect_prompt.kind | type == "string") and
   (.data.fixture.network.share.requires_profile_secret_check | type == "boolean") and
   (.data.fixture.network.portal_hint.auto_open_on_connect | type == "boolean") and
@@ -55,6 +56,7 @@ jq -e '
   .version == 1 and
   .ok == true and
   (.data.fixtures."wifi-networks.saved".networks | type == "array") and
+  .data.fixtures."wifi-networks.saved".networks[0].security_class == "personal" and
   .data.fixtures."wifi-networks.password-required".networks[0].capabilities.needs_password == true and
   .data.fixtures."wifi-networks.enterprise-required".networks[0].capabilities.needs_credentials == true and
   .data.fixtures."wifi-networks.enterprise-required".networks[0].connect_prompt.kind == "enterprise" and
