@@ -25,7 +25,7 @@ Ui.ChooserController {
     hasSelection: !!selectedResult
     selectionModel: results
     navigationPrimaryEnabled: hasSelection && selectedEntry.kind !== "binary"
-        && !actionInFlight && !wipeChallenge
+        && !actionInFlight && !wipeChallenge && !detailState.editorFocused
     navigationCloseEnabled: false
 
     readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
@@ -82,12 +82,25 @@ Ui.ChooserController {
         if (session.state === "hidden")
             hideRequested();
     }
-    function runAction(actionName, fileIndex) {
-        if (!selectedEntry || actionInFlight)
-            return;
+    function actionEntry() {
+        const details = detailState.value;
+        const detailedEntry = details ? details.entry : null;
+        const detailsMatchSelection = selectedEntry && detailedEntry
+            && (detailedEntry.id === selectedEntry.id
+                || detailState.replacedSourceIds.indexOf(selectedEntry.id) >= 0);
+        if (detailsMatchSelection && (detailedEntry.id !== selectedEntry.id
+                || detailedEntry.revision >= selectedEntry.revision))
+            return detailedEntry;
+        return selectedEntry;
+    }
+    function runAction(actionName, fileIndex, entry) {
+        const target = entry || actionEntry();
+        if (!target || actionInFlight)
+            return false;
         actionInFlight = true;
         activeAction = actionName;
-        backend.action("action-" + actionName, selectedEntry, actionName, sessionId, fileIndex);
+        backend.action("action-" + actionName, target, actionName, sessionId, fileIndex);
+        return true;
     }
     function captureScreenshot(x, y, width, height) {
         if (screenshotInFlight || actionInFlight)
@@ -100,7 +113,10 @@ Ui.ChooserController {
         return true;
     }
     function copySelected() { runAction("copy"); }
-    function pasteSelected() { runAction("paste"); }
+    function pasteSelected() {
+        if (!detailState.preparePaste())
+            runAction("paste");
+    }
     function primarySelected() {
         if (!selectedEntry || selectedEntry.kind === "binary" || actionInFlight || wipeChallenge)
             return false;
@@ -109,7 +125,6 @@ Ui.ChooserController {
     }
     function pasteImageAsFile() { runAction("image-as-file"); }
     function annotateImage() { runAction("annotate"); }
-    function editTextExternally() { runAction("edit-external"); }
     function openUrl() { runAction("open-url"); }
     function openFile(index) { runAction("open-file", index || 0); }
     function revealFile(index) { runAction("reveal-file", index || 0); }
@@ -164,7 +179,7 @@ Ui.ChooserController {
         activeAction = actionInFlight ? operation.action : "";
         activeOperationId = actionInFlight ? (operation.id || "") : "";
         status = operation.message || "Clipboard operation completed";
-        if (["annotate", "edit-external"].includes(operation.action) && actionInFlight) {
+        if (operation.action === "annotate" && actionInFlight) {
             hideRequested();
             return;
         }

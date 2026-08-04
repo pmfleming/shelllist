@@ -39,11 +39,6 @@ Ui.DetailFlickable {
         return conciseValue + " " + units[unitIndex];
     }
 
-    function focusEditor() {
-        textEditor.forceActiveFocus();
-        detailState.requestDirectEdit();
-    }
-
     Ui.DetailCard {
         id: previewCard
 

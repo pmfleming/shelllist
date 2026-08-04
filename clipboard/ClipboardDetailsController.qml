@@ -14,12 +14,14 @@ Item {
     property bool editorFocused
     property bool saveInFlight
     property bool savingDirectEdit
+    property bool pasteAfterSave
     property string editId
     property string editDraft
     property string committedDraft
     property int editMaxBytes
     property int sequence
     property string entryId
+    property var replacedSourceIds: []
     property var entryRevision
     property string requestId
     property string thumbnailRequestId
@@ -76,12 +78,29 @@ Item {
         editDirty = false;
         controller.actionInFlight = true; controller.activeAction = "edit";
         if (savingDirectEdit)
-            controller.status = "Saving clipboard text…";
+            controller.status = pasteAfterSave ? "Saving clipboard text before pasting…" : "Saving clipboard text…";
         daemonBackend.commitEdit(editId, committedDraft);
+        return true;
+    }
+    function preparePaste() {
+        if (!directTextEdit || entryId.length === 0 || selectedEntry.id !== entryId)
+            return false;
+        if (saveInFlight) {
+            pasteAfterSave = true;
+            controller.status = "Saving clipboard text before pasting…";
+            return true;
+        }
+        if (!editing || !editDirty)
+            return false;
+        pasteAfterSave = true;
+        if (!commitEdit())
+            pasteAfterSave = false;
         return true;
     }
     function finishDirectEdit() {
         editorFocused = false;
+        if (saveInFlight)
+            return;
         if (!commitEdit())
             cancelEdit();
     }
@@ -89,25 +108,34 @@ Item {
         autoSaveTimer.stop();
         if (editId.length > 0)
             daemonBackend.cancelEdit(editId);
-        editBeginPending = false; saveInFlight = false; savingDirectEdit = false;
+        editBeginPending = false; saveInFlight = false; savingDirectEdit = false; pasteAfterSave = false;
         editing = false; editIsDirect = false; editId = ""; editDraft = ""; editDirty = false;
     }
-    function applyEditCommit(entry) {
+    function applyEditCommit(nextValue) {
+        const entry = nextValue ? nextValue.entry : null;
+        const sourceEntryId = entryId;
         const wasDirect = savingDirectEdit;
+        const shouldPaste = wasDirect && pasteAfterSave;
         controller.actionInFlight = false; controller.activeAction = "";
-        saveInFlight = false; savingDirectEdit = false;
+        saveInFlight = false; savingDirectEdit = false; pasteAfterSave = false;
         editing = false; editIsDirect = false; editId = ""; editDirty = false;
-        if (wasDirect) {
-            if (value && value.entry && value.entry.id === entry.id) {
-                value = Object.assign({}, value, { entry: entry, text: committedDraft });
-                entryId = entry.id;
-                entryRevision = entry.revision;
-            }
-            editDraft = committedDraft;
+        if (wasDirect && entry) {
+            value = nextValue;
+            entryId = entry.id;
+            if (entry.id !== sourceEntryId && replacedSourceIds.indexOf(sourceEntryId) < 0)
+                replacedSourceIds = replacedSourceIds.concat([sourceEntryId]);
+            entryRevision = entry.revision;
+            editDraft = nextValue.text === null || nextValue.text === undefined
+                ? committedDraft : nextValue.text;
             controller.status = "Clipboard text saved";
             controller.scheduleRefresh();
-            if (editorFocused && selectedEntry && selectedEntry.id === entry.id)
+            if (shouldPaste) {
+                editorFocused = false;
+                controller.runAction("paste", undefined, entry);
+            } else if (editorFocused && selectedEntry
+                    && (selectedEntry.id === sourceEntryId || selectedEntry.id === entry.id)) {
                 Qt.callLater(function () { detailsController.beginEdit(entry); });
+            }
             return;
         }
         value = null;
@@ -120,10 +148,10 @@ Item {
     function clear() {
         autoSaveTimer.stop();
         editing = false; editBeginPending = false; editDirty = false; editIsDirect = false; editorFocused = false;
-        saveInFlight = false; savingDirectEdit = false;
+        saveInFlight = false; savingDirectEdit = false; pasteAfterSave = false;
         editId = ""; editDraft = ""; committedDraft = ""; editMaxBytes = 0;
         value = null; thumbnail = null; error = ""; loading = false;
-        entryId = ""; entryRevision = null;
+        entryId = ""; replacedSourceIds = []; entryRevision = null;
         requestId = ""; thumbnailRequestId = "";
     }
     function alreadyLoaded(entry) {
@@ -195,7 +223,7 @@ Item {
             editIsDirect = false;
         }
         if (id === "edit-commit") {
-            saveInFlight = false; savingDirectEdit = false;
+            saveInFlight = false; savingDirectEdit = false; pasteAfterSave = false;
             editing = false; editIsDirect = false; editId = ""; editDirty = false;
         }
         if (id === requestId) {

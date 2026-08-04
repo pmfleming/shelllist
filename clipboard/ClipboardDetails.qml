@@ -14,7 +14,6 @@ Ui.DetailsPane {
     readonly property var entry: detailState.value ? detailState.value.entry : ({})
     readonly property int headerHeight: Math.max(58, Math.round(66 * uiScale))
     readonly property int toolbarHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
-    readonly property bool plainText: entry.kind === "text"
     readonly property bool image: entry.kind === "image"
     readonly property bool link: entry.kind === "link"
 
@@ -25,8 +24,6 @@ Ui.DetailsPane {
             controller.pasteImageAsFile();
         } else if (actionId === "edit" && image) {
             controller.annotateImage();
-        } else if (actionId === "edit" && plainText) {
-            controller.editTextExternally();
         } else if (actionId === "edit" && link) {
             controller.openUrl();
         }
@@ -72,12 +69,13 @@ Ui.DetailsPane {
                 presentation: { group: "toolbar", tone: "active", width: 92 }
             }, {
                 id: "paste-as-file", label: "Paste as file", icon: "󰈔", shortcut: "Shift+↵",
-                enabled: pane.image && !pane.controller.actionInFlight,
+                visible: pane.image,
+                enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: "normal", width: 120 }
             }, {
                 id: "edit", label: pane.link ? "Open" : "Edit", icon: pane.link ? "󰌷" : "󰏫", shortcut: "",
-                enabled: (pane.image || pane.plainText || pane.link) && !pane.controller.actionInFlight
-                    && (!pane.plainText || (!pane.detailState.editDirty && !pane.detailState.saveInFlight)),
+                visible: pane.image || pane.link,
+                enabled: !pane.controller.actionInFlight,
                 presentation: { group: "toolbar", tone: "normal", width: 92 }
             }]
             group: "toolbar"

@@ -80,7 +80,7 @@ shelllist-clipboard --resume      # resume history capture
 shelllist-clipboard --kept 750    # set the regular-history retention limit
 ```
 
-Settings-only invocations update `clip-daemon` without opening the popup. A popup action may follow the options, for example `shelllist-clipboard --resume open`. The clipboard UI keeps destructive history clearing behind its icon-only header action and confirmation dialog; pause, private-mode, and retention controls are CLI-only. Text can still be edited directly in its detail card with automatic saving; the **Edit** action opens a blocking external editor through `clip-daemon`, using `CLIP_DAEMON_TEXT_EDITOR_COMMAND`, `VISUAL`, `EDITOR`, or `code --wait` in that order.
+Settings-only invocations update `clip-daemon` without opening the popup. A popup action may follow the options, for example `shelllist-clipboard --resume open`. The clipboard UI keeps destructive history clearing behind its icon-only header action and confirmation dialog; pause, private-mode, and retention controls are CLI-only. Plain-text entries can be edited directly in their detail card with automatic saving; pasting first commits any pending inline edit.
 
 ## Bluetooth implementation status
 
