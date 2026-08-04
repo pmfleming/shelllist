@@ -28,11 +28,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785244832,
-        "narHash": "sha256-mwXhf/2wbBLkiS8OCYzNMz0bptmra/AH2f0PQhBW0oY=",
+        "lastModified": 1785847837,
+        "narHash": "sha256-7zt7ZyW7obqKkVOFKU8IufXlG6Uvr5Pb6MIDp/l6JPc=",
         "ref": "main",
-        "rev": "0c3a8508bcc201d441a430074f378c773882ed88",
-        "revCount": 32,
+        "rev": "6802929250205f15dd9c4ca32c8cab875e9f51d3",
+        "revCount": 34,
         "type": "git",
         "url": "file:../clip-daemon"
       },
