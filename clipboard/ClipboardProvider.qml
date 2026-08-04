@@ -24,22 +24,18 @@ Core.Provider {
         const value = String(kind || "binary");
         return value.charAt(0).toUpperCase() + value.slice(1);
     }
-    function scoreFor(entry) {
-        if (entry.current) return 2000;
-        return entry.favorite ? 1000 : 100;
-    }
     function badgesFor(entry) {
         if (entry.current) return ["current"];
         return entry.favorite ? ["favorite"] : [];
     }
-    function resultForEntry(entry) {
+    function resultForEntry(entry, historyScore) {
         const kind = entry.kind || "binary";
         const preview = entry.preview || labelFor(kind) + " clipboard entry";
         return Core.Model.result({
             providerId: providerId, providerPriority: priority, id: entry.id,
             title: preview,
             subtitle: labelFor(kind) + " · " + (entry.mime || "unknown") + " · " + entry.byte_size + " bytes",
-            icon: iconFor(kind), score: scoreFor(entry),
+            icon: iconFor(kind), score: historyScore,
             keywords: [preview, entry.mime || "", kind], badges: badgesFor(entry),
             primaryActionId: kind === "binary" ? "copy" : "paste",
             actions: ClipApi.actionDescriptorsForKind(kind),
@@ -48,7 +44,10 @@ Core.Provider {
         });
     }
     function resultsForEntries(entries) {
-        return (entries || []).map(function (entry) { return provider.resultForEntry(entry); });
+        const history = entries || [];
+        return history.map(function (entry, index) {
+            return provider.resultForEntry(entry, history.length - index);
+        });
     }
     function query(request) {
         controller.requestHistory(request.id, request.text, request.generation, request.limit);

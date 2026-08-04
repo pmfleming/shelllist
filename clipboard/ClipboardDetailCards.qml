@@ -13,7 +13,10 @@ Ui.DetailFlickable {
     readonly property var files: detailState.value ? detailState.value.files : []
     readonly property var imageFacts: detailState.value ? detailState.value.image : null
     readonly property bool directTextEdit: entry.kind === "text"
-    readonly property int dataCardHeight: 270
+    readonly property real previewShare: 0.75
+    readonly property int availableCardHeight: Math.max(0, height - cardSpacing)
+    readonly property int previewCardHeight: Math.round(availableCardHeight * previewShare)
+    readonly property int dataCardHeight: availableCardHeight - previewCardHeight
 
     function formatByteSize(byteSize) {
         if (byteSize === undefined || byteSize === null)
@@ -47,7 +50,7 @@ Ui.DetailFlickable {
         title: cards.entry.kind
             ? cards.entry.kind.charAt(0).toUpperCase() + cards.entry.kind.slice(1)
             : "Clipboard item"
-        height: cards.detailState.thumbnail || (cards.detailState.value && cards.detailState.value.text) ? 250 : 112
+        height: cards.previewCardHeight
 
         Image {
             visible: !!cards.detailState.thumbnail
@@ -88,10 +91,6 @@ Ui.DetailFlickable {
             text: "Binary preview is unavailable"
             font.pixelSize: Ui.Theme.fontSizeBody
         }
-    }
-
-    Item {
-        height: Math.max(0, cards.height - previewCard.height - dataCard.height - 2 * cards.cardSpacing)
     }
 
     Ui.DetailCard {
