@@ -76,11 +76,14 @@ Ui.DetailFlickable {
             anchors.fill: parent
             spacing: Ui.Theme.spacingMd
 
-            Ui.SegmentedControl {
+            Ui.DropDownList {
                 Layout.fillWidth: true
                 Layout.preferredHeight: Ui.Theme.compactControlHeight
-                options: page.controller.selectedAudioProfiles.map(function (profile) { return { value: profile.key, label: profile.label }; })
+                options: page.controller.selectedAudioProfiles.map(function (profile) {
+                    return { value: profile.key, label: profile.label, enabled: profile.available !== false };
+                })
                 value: page.controller.selectedAudio.active_profile_key || ""
+                placeholder: page.controller.selectedAudioProfiles.length > 0 ? "Select audio profile" : "No audio profiles available"
                 interactive: !page.controller.actionInFlight && page.controller.selectedAudioProfiles.length > 0
                 onSelected: function (value) {
                     const profile = page.controller.selectedAudioProfiles.find(function (entry) { return entry.key === value; });

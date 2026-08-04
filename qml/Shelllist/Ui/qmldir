@@ -18,6 +18,7 @@ DetailGrid 1.0 DetailGrid.qml
 DetailsPane 1.0 DetailsPane.qml
 DetailsTab 1.0 DetailsTab.qml
 DetailsTabBar 1.0 DetailsTabBar.qml
+DropDownList 1.0 DropDownList.qml
 FieldLabel 1.0 FieldLabel.qml
 IconTile 1.0 IconTile.qml
 LabeledValueSlider 1.0 LabeledValueSlider.qml
