@@ -1,7 +1,6 @@
 import QtQuick
 import Shelllist.Core as Core
 import Shelllist.Io as Io
-import "../bluetooth/BtApi.js" as BtApi
 
 Item {
     id: bridge
@@ -13,7 +12,7 @@ Item {
     function setAirplaneMode(enabled) {
         enabling = enabled;
         if (enabled)
-            client.call("airplane-snapshot", BtApi.methods.snapshot, {});
+            client.call("airplane-snapshot", "bluetooth.snapshot", {});
         else
             restorePoweredAdapters();
     }
@@ -22,7 +21,7 @@ Item {
         if (poweredAdapters.length === 0)
             return;
         poweredAdapters.forEach(function (key, index) {
-            client.call("airplane-restore-" + index, BtApi.methods.setPowered,
+            client.call("airplane-restore-" + index, "bluetooth.setPowered",
                 { adapter_key: key, powered: true });
         });
     }
@@ -39,7 +38,7 @@ Item {
             poweredAdapters = (snapshot.adapters || []).filter(function (adapter) {
                 return !!adapter.powered;
             }).map(function (adapter) { return adapter.key; });
-            client.call("airplane-disable-bluetooth", BtApi.methods.setPowered,
+            client.call("airplane-disable-bluetooth", "bluetooth.setPowered",
                 { adapter_key: null, powered: false });
         }
     }
