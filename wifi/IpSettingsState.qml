@@ -37,6 +37,8 @@ QtObject {
         search = list(value.dns_search).join(", ");
     }
 
+    function setAutoDns(value) { autoDns = !!value; }
+
     function manualAddresses() {
         if (method !== "manual")
             return [];

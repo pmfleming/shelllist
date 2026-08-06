@@ -47,8 +47,11 @@
               pkgs.coreutils
               pkgs.gawk
               pkgs.quickshell
+              pkgs.qrencode
+              pkgs.kdePackages.qrca
               self.packages.${system}.captivePortalBrowser
               nmDaemon
+              btDaemon
               clipDaemon
             ];
             text = ''

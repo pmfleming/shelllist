@@ -3,6 +3,7 @@ import "WifiPresentation.js" as Presentation
 
 Item {
     id: root
+
     property bool open: false
     property string mode: ""
     property string title: ""
@@ -10,26 +11,27 @@ Item {
     property string text: ""
     property bool password: false
     property var network: null
-    property string hiddenSsid: ""
-    property string enterpriseIdentity: ""
     property string secretRequestId: ""
-    property string secretPrimaryKey: ""
-    property var secretKeys: []
     property bool saveSecret: false
     property bool saveSecretSupported: false
+
+    // Complex NetworkManager authentication is represented as named fields
+    // instead of flattening every request into one password string.
+    property bool credentialOpen: false
+    property string credentialMode: ""
+    property string credentialTitle: ""
+    property string credentialDetail: ""
+    property var credentialFields: []
+    property var credentialValues: ({})
+    property var credentialNetwork: null
+
     readonly property var submitHandlerByMode: ({
         "confirm-forget": function (controller, value) { root.submitForget(controller, value); },
-        "daemon-secret": function (controller, value) { root.submitDaemonSecret(controller, value); },
-        "enterprise-identity": function (controller, value) { root.submitEnterpriseIdentity(controller, value); },
-        "enterprise-password": function (controller, value) { root.submitEnterprisePassword(controller, value); },
-        "hidden-password": function (controller, value) { root.submitHiddenPassword(controller, value); },
-        "hidden-ssid": function (controller, value) { root.submitHiddenSsid(controller, value); },
         "network-password": function (controller, value) { root.submitNetworkPassword(controller, value); }
     })
 
-    function openPrompt(nextMode, nextTitle, nextDetail, nextPassword, nextNetwork, nextHiddenSsid) {
+    function openPrompt(nextMode, nextTitle, nextDetail, nextPassword, nextNetwork) {
         network = nextNetwork || null;
-        hiddenSsid = nextHiddenSsid || "";
         mode = nextMode;
         title = nextTitle;
         detail = nextDetail;
@@ -40,76 +42,132 @@ Item {
         open = true;
     }
 
-    function promptMessage(ap, fallback) { return ap && ap.connect_prompt && ap.connect_prompt.message ? ap.connect_prompt.message : fallback; }
+    function promptMessage(ap, fallback) {
+        return ap && ap.connect_prompt && ap.connect_prompt.message
+            ? ap.connect_prompt.message : fallback;
+    }
 
     function openPasswordPrompt(ap, detailOverride) {
-        openPrompt("network-password", "Password for " + Presentation.networkName(ap), detailOverride || promptMessage(ap, "Enter the Wi-Fi password, then press Enter."), true, ap, "");
+        openPrompt("network-password", "Password for " + Presentation.networkName(ap),
+            detailOverride || promptMessage(ap, "Enter the Wi-Fi password, then press Enter."), true, ap);
+    }
+
+    function field(key, label, required, passwordField, value) {
+        return {
+            key: key,
+            label: label,
+            required: required,
+            password: passwordField,
+            value: value || ""
+        };
+    }
+
+    function openCredentials(nextMode, nextTitle, nextDetail, fields, nextNetwork) {
+        credentialMode = nextMode;
+        credentialTitle = nextTitle;
+        credentialDetail = nextDetail;
+        credentialFields = fields;
+        credentialValues = ({});
+        fields.forEach(function (item) { credentialValues[item.key] = item.value || ""; });
+        credentialNetwork = nextNetwork || null;
+        credentialOpen = true;
     }
 
     function openHiddenNetworkPrompt() {
-        openPrompt("hidden-ssid", "Connect hidden network", "Enter the hidden SSID, then press Enter.", false, null, "");
+        openCredentials("hidden", "Connect hidden network",
+            "Choose security explicitly. Optional enterprise fields may be left blank.", [
+                field("ssid", "Network name (SSID)", true, false, ""),
+                field("security", "Security: open, owe, wpa-psk, sae, wep-key, wep-phrase, or wpa-eap", true, false, "wpa-psk"),
+                field("password", "Password / key", false, true, ""),
+                field("enterprise.eap", "EAP methods (comma-separated)", false, false, "peap"),
+                field("enterprise.identity", "Enterprise identity", false, false, ""),
+                field("enterprise.anonymous_identity", "Anonymous identity", false, false, ""),
+                field("enterprise.phase2_auth", "Inner authentication", false, false, "mschapv2"),
+                field("enterprise.ca_cert", "CA certificate path", false, false, "")
+            ], null);
     }
 
-    function openHiddenPasswordPrompt(ssid) {
-        openPrompt("hidden-password", "Password for hidden network", "Enter the password for " + ssid + ", or leave blank for an open network.", true, null, ssid);
+    function enterpriseFieldLabel(key) {
+        const labels = {
+            "enterprise.eap": "EAP methods (comma-separated)",
+            "enterprise.identity": "Identity",
+            "password": "Password",
+            "enterprise.anonymous_identity": "Anonymous identity",
+            "enterprise.phase2_auth": "Inner authentication",
+            "enterprise.ca_cert": "CA certificate path",
+            "enterprise.domain_suffix_match": "Server domain suffix",
+            "enterprise.client_cert": "Client certificate path",
+            "enterprise.private_key": "Private key path",
+            "enterprise.private_key_password": "Private key password"
+        };
+        return labels[key] || key.replace(/^enterprise\./, "").replace(/_/g, " ");
     }
 
     function openEnterpriseIdentityPrompt(ap) {
-        const note = "Enter your enterprise Wi-Fi identity.";
-        openPrompt("enterprise-identity", "Enterprise identity for " + Presentation.networkName(ap), promptMessage(ap, note), false, ap, "");
-    }
-
-    function openEnterprisePasswordPrompt(ap, identity) {
-        enterpriseIdentity = identity;
-        openPrompt("enterprise-password", "Enterprise password for " + identity, "Enter your enterprise Wi-Fi password, then press Enter.", true, ap, "");
+        const prompt = ap.connect_prompt || ({});
+        const defaults = prompt.enterprise_defaults || ({});
+        const required = prompt.required_fields || ["enterprise.eap", "enterprise.identity"];
+        const optional = prompt.optional_fields || ["password"];
+        const fields = required.concat(optional).filter(function (key, index, values) {
+            return values.indexOf(key) === index;
+        }).map(function (key) {
+            let value = "";
+            const name = key.replace(/^enterprise\./, "");
+            if (key === "enterprise.eap")
+                value = (defaults.eap || ["peap"]).join(",");
+            else if (defaults[name] !== undefined && defaults[name] !== null)
+                value = String(defaults[name]);
+            return field(key, enterpriseFieldLabel(key), required.indexOf(key) >= 0,
+                key === "password" || key.indexOf("password") >= 0 || key === "enterprise.pin", value);
+        });
+        openCredentials("enterprise", "Enterprise credentials for " + Presentation.networkName(ap),
+            promptMessage(ap, "Enter the fields required by this enterprise network."), fields, ap);
     }
 
     function openForgetPrompt(ap, active, profiles) {
         const names = (profiles || []).map(function (profile) { return profile.id; });
-        const profileText = names.length === 0 ? "no saved profile is currently listed" : (names.length + " saved profile" + (names.length === 1 ? "" : "s") + ": " + names.join(", "));
+        const profileText = names.length === 0 ? "no saved profile is currently listed"
+            : (names.length + " saved profile" + (names.length === 1 ? "" : "s") + ": " + names.join(", "));
         const action = active ? "Disconnect from this network and remove " : "Remove ";
         const portalNote = " The hotspot may still recognize this device until its login session expires.";
-        openPrompt("confirm-forget", active ? "Disconnect & forget " + Presentation.networkName(ap) : "Forget " + Presentation.networkName(ap), action + profileText + "." + portalNote + " Type FORGET to confirm.", false, ap, "");
+        openPrompt("confirm-forget",
+            active ? "Disconnect & forget " + Presentation.networkName(ap) : "Forget " + Presentation.networkName(ap),
+            action + profileText + "." + portalNote + " Type FORGET to confirm.", false, ap);
     }
 
     function secretKeyLabel(key) {
         const labels = {
-            "psk": "Wi-Fi password",
-            "wep-key0": "WEP key",
-            "wep-key1": "WEP key",
-            "wep-key2": "WEP key",
-            "wep-key3": "WEP key",
-            "leap-password": "LEAP password",
-            "password": "password",
-            "private-key-password": "private key password",
-            "pin": "PIN"
+            "psk": "Wi-Fi password", "wep-key0": "WEP key", "wep-key1": "WEP key",
+            "wep-key2": "WEP key", "wep-key3": "WEP key", "leap-password": "LEAP password",
+            "password": "Password", "private-key-password": "Private key password", "pin": "PIN"
         };
-        return labels[key] || (key ? key.replace(/-/g, " ") : "secret");
+        return labels[key] || (key ? key.replace(/-/g, " ") : "Secret");
     }
 
     function openDaemonSecretPrompt(event) {
-        const keys = event.secret_keys || [];
-        const primary = event.primary_secret_key || (keys.length > 0 ? keys[0] : "password");
-        const label = secretKeyLabel(primary);
+        const keys = event.secret_keys && event.secret_keys.length > 0
+            ? event.secret_keys : [event.primary_secret_key || "password"];
         const setting = event.setting_name ? (" for " + event.setting_name) : "";
-        const detailText = "NetworkManager requested " + label + setting + ". Requested keys: " + (keys.length > 0 ? keys.join(", ") : primary) + ".";
         secretRequestId = event.request_id || "";
-        secretPrimaryKey = primary;
-        secretKeys = keys;
-        openPrompt("daemon-secret", "Enter " + label, detailText, primary !== "pin", null, "");
         saveSecretSupported = !!event.save_supported;
+        openCredentials("daemon-secret", "Network credentials",
+            "NetworkManager requested " + keys.map(secretKeyLabel).join(", ") + setting + ".",
+            keys.map(function (key) {
+                return field(key, secretKeyLabel(key), true, key !== "pin", "");
+            }), null);
     }
 
     function cancel() {
         open = false;
+        credentialOpen = false;
+        credentialMode = "";
+        credentialFields = [];
+        credentialValues = ({});
+        credentialNetwork = null;
         text = "";
         mode = "";
         network = null;
-        hiddenSsid = "";
-        enterpriseIdentity = "";
         secretRequestId = "";
-        secretPrimaryKey = "";
-        secretKeys = [];
         saveSecret = false;
         saveSecretSupported = false;
     }
@@ -128,49 +186,76 @@ Item {
             controller.connection.runTarget(ap, Presentation.networkName(ap), value);
     }
 
-    function submitHiddenSsid(controller, value) {
-        if (value.length === 0)
-            return controller.status = "Enter an SSID for the hidden network.";
-        openHiddenPasswordPrompt(value);
+    function enterpriseObject(values) {
+        const enterprise = ({});
+        Object.keys(values).forEach(function (key) {
+            if (key.indexOf("enterprise.") !== 0 || String(values[key]).length === 0)
+                return;
+            const name = key.slice("enterprise.".length);
+            enterprise[name] = name === "eap"
+                ? String(values[key]).split(",").map(function (item) { return item.trim(); }).filter(Boolean)
+                : values[key];
+        });
+        return enterprise;
     }
 
-    function submitHiddenPassword(controller, value) {
+    function submitCredentials(controller, values) {
+        const missing = credentialFields.filter(function (item) {
+            return item.required && !String(values[item.key] || "").trim();
+        });
+        if (missing.length > 0) {
+            controller.status = "Complete required field: " + missing[0].label;
+            return false;
+        }
+        if (credentialMode === "hidden") {
+            const security = String(values.security || "").toLowerCase();
+            const supported = ["open", "owe", "wpa-psk", "sae", "wep-key", "wep-phrase", "wpa-eap"];
+            if (supported.indexOf(security) < 0) {
+                controller.status = "Choose a supported hidden-network security value.";
+                return false;
+            }
+            if (["wpa-psk", "sae", "wep-key", "wep-phrase"].indexOf(security) >= 0
+                    && !String(values.password || "").length) {
+                controller.status = "Enter the password or key required by this hidden network.";
+                return false;
+            }
+            if (security === "wpa-eap" && !String(values["enterprise.identity"] || "").length) {
+                controller.status = "Enter the identity required by this hidden enterprise network.";
+                return false;
+            }
+        }
         if (!controller.connection.beginAny())
-            return;
-        const ssid = hiddenSsid;
-        const pass = value.length > 0 ? value : null;
-        cancel();
-        controller.connection.runTarget({ ssid: ssid, ssid_bytes: [], hidden: true, security: pass !== null ? "WPA" : "--", key_mgmt: pass !== null ? "wpa-psk" : "open" }, ssid, pass);
-    }
-
-    function submitEnterpriseIdentity(controller, value) {
-        if (value.length === 0)
-            return controller.status = "Enter an enterprise Wi-Fi identity.";
-        if (network)
-            openEnterprisePasswordPrompt(network, value);
-    }
-
-    function submitEnterprisePassword(controller, value) {
-        if (!controller.connection.beginAny())
-            return;
-        if (value.length === 0)
-            return controller.status = "Enter an enterprise Wi-Fi password.";
-        const ap = network;
-        const identity = enterpriseIdentity;
-        cancel();
-        if (ap && identity.length > 0)
-            controller.connection.runTarget(ap, Presentation.networkName(ap), value, identity);
-    }
-
-    function submitDaemonSecret(controller, value) {
-        if (value.length === 0)
-            return controller.status = "Enter the requested " + secretKeyLabel(secretPrimaryKey) + ".";
+            return false;
+        const nextMode = credentialMode;
+        const ap = credentialNetwork;
         const requestId = secretRequestId;
-        const key = secretPrimaryKey;
         const save = saveSecret;
         cancel();
-        if (requestId.length > 0)
-            controller.connection.provideSecret(requestId, key, value, save);
+        if (nextMode === "daemon-secret")
+            return controller.connection.provideSecrets(requestId, values, save);
+        if (nextMode === "enterprise") {
+            const enterprise = enterpriseObject(values);
+            return controller.connection.runTarget(ap, Presentation.networkName(ap),
+                values.password || null, null, enterprise);
+        }
+        if (nextMode === "hidden") {
+            const ssid = String(values.ssid || "");
+            const security = String(values.security || "").toLowerCase();
+            const keyMgmtBySecurity = {
+                "open": "open", "owe": "owe", "wpa-psk": "wpa-psk", "sae": "sae",
+                "wep-key": "wep", "wep-phrase": "wep", "wpa-eap": "wpa-eap"
+            };
+            const keyMgmt = keyMgmtBySecurity[security];
+            const enterprise = security === "wpa-eap" ? enterpriseObject(values) : null;
+            const target = {
+                ssid: ssid, ssid_bytes: [], hidden: true,
+                security: security === "open" ? "--" : (security === "owe" ? "OWE" : "WPA2/3"),
+                key_mgmt: keyMgmt, enterprise: enterprise
+            };
+            const wepType = security === "wep-phrase" ? "phrase" : (security === "wep-key" ? "key" : null);
+            return controller.connection.runTarget(target, ssid, values.password || null, null, enterprise, wepType);
+        }
+        return false;
     }
 
     function submitForget(controller, value) {

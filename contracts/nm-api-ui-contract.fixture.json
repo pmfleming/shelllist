@@ -96,7 +96,7 @@
         "device_path": "/org/freedesktop/NetworkManager/Devices/1",
         "flags": 1,
         "frequency": 5180,
-        "key": "ssid-hex:4578616d706c65",
+        "key": "ssid-hex:4578616d706c65|security:personal|ifname:776c616e30",
         "last_seen": 1234,
         "last_seen_age_ms": 2500,
         "max_bitrate_mbps": 866,
@@ -313,7 +313,7 @@
           "device_path": "/org/freedesktop/NetworkManager/Devices/1",
           "flags": 1,
           "frequency": 5180,
-          "key": "ssid-hex:4578616d706c65",
+          "key": "ssid-hex:4578616d706c65|security:personal|ifname:776c616e30",
           "last_seen": 1234,
           "last_seen_age_ms": 2500,
           "max_bitrate_mbps": 866,
@@ -409,6 +409,15 @@
             108,
             101
           ]
+        },
+        "radios": {
+          "airplane_mode": false,
+          "wireless_available": true,
+          "wireless_enabled": true,
+          "wireless_hardware_enabled": true,
+          "wwan_available": true,
+          "wwan_enabled": true,
+          "wwan_hardware_enabled": true
         },
         "wireless": {
           "bitrate_mbps": 144,

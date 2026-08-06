@@ -11,16 +11,18 @@ Item {
     readonly property bool active: controller.uiActive
         || Object.keys(pending || ({})).length > 0
         || controller.connection.running
-        || controller.prompt.open
+        || controller.promptActive
     readonly property bool listRunning: isPending("networks")
     readonly property bool scanRunning: isPending("scan-start") || controller.scan.requestId.length > 0
     readonly property bool connectStarting: isPending("connect-start")
-    readonly property bool nonConnectRunning: isPending("power") || isPending("disconnect") || isPending("profile") || isPending("advanced-load") || isPending("advanced-save") || isPending("advanced-secret") || isPending("secret-provide") || isPending("secret-cancel")
+    readonly property bool nonConnectRunning: isPending("power") || isPending("wwan-power") || isPending("airplane-mode") || isPending("disconnect") || isPending("profile") || isPending("advanced-load") || isPending("advanced-save") || isPending("advanced-secret") || isPending("secret-provide") || isPending("secret-cancel")
     readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
     readonly property var responseHandlerById: ({
         "networks": function (value) { backend.handleNetworks(value); },
         "scan-start": function (value) { backend.handleScanStart(value); },
         "power": function (value) { controller.applyPowerResult(Api.apiData(value, "result") || ({})); },
+        "wwan-power": function (value) { controller.applyRadioResult(Api.apiData(value, "result") || ({})); },
+        "airplane-mode": function (value) { controller.applyRadioResult(Api.apiData(value, "result") || ({})); },
         "connect-start": function (value) { backend.handleConnectStart(value); },
         "disconnect": function (value) { backend.handleDisconnect(value); },
         "advanced-load": function (value) { controller.advanced.applyProfile(Api.apiData(value, "result") || ({})); },
@@ -63,6 +65,8 @@ Item {
     function refreshNetworks(refreshCache) { return call("networks", NmApi.methods.wifi_networks, { cached: true, refresh_cache: !!refreshCache }); }
     function startScan() { return call("scan-start", NmApi.methods.wifi_scan, { timeout: 12, cache: true }); }
     function setPowered(enabled) { return call("power", NmApi.methods.wifi_setEnabled, { enabled: enabled }); }
+    function setWwanPowered(enabled) { return call("wwan-power", NmApi.methods.radio_setWwanEnabled, { enabled: enabled }); }
+    function setAirplaneMode(enabled) { return call("airplane-mode", NmApi.methods.radio_setAirplaneMode, { enabled: enabled }); }
     function connect(request) { return call("connect-start", NmApi.methods.wifi_connectTarget, request); }
     function disconnect() { return call("disconnect", NmApi.methods.wifi_disconnect, {}); }
     function profile(operation) {
@@ -79,10 +83,9 @@ Item {
     function loadAdvancedProfile(path) { return call("advanced-load", NmApi.methods.wifi_profile_operation, { operation: "details", path: path }); }
     function saveAdvancedProfile(path, settings) { return call("advanced-save", NmApi.methods.wifi_profile_operation, { operation: "update", path: path, settings: settings }); }
     function revealAdvancedSecret(path) { return call("advanced-secret", NmApi.methods.wifi_profile_operation, { operation: "reveal-secret", path: path }); }
-    function provideSecret(requestId, key, password, save) {
-        const values = ({});
-        values[key] = password;
-        return call("secret-provide", NmApi.methods.wifi_secret_provide, { request_id: requestId, values: values, save: !!save, cancel: false });
+    function provideSecrets(requestId, values, save) {
+        return call("secret-provide", NmApi.methods.wifi_secret_provide,
+            { request_id: requestId, values: values || ({}), save: !!save, cancel: false });
     }
     function cancelSecret(requestId) { return call("secret-cancel", NmApi.methods.wifi_secret_provide, { request_id: requestId, cancel: true }); }
     function cancel(requestId) {

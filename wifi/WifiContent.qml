@@ -16,46 +16,46 @@ ChooserSurface {
 
     Shortcut {
         sequence: "F5"
-        enabled: content.controller.powered && !content.controller.prompt.open && !content.controller.actionInFlight
+        enabled: content.controller.powered && !content.controller.promptActive && !content.controller.actionInFlight
         autoRepeat: false
         onActivated: content.controller.refresh()
     }
 
     Shortcut {
         sequence: "F6"
-        enabled: content.controller.powered && !content.controller.prompt.open && !content.controller.advanced.open
+        enabled: content.controller.powered && !content.controller.promptActive && !content.controller.advanced.open
         autoRepeat: false
         onActivated: content.controller.openHiddenNetworkPrompt()
     }
 
     Shortcut {
         sequence: "F7"
-        enabled: content.controller.powered && !content.controller.prompt.open && !content.controller.advanced.open
+        enabled: content.controller.powered && !content.controller.promptActive && !content.controller.advanced.open
         onActivated: content.controller.advanced.openSettings("security")
     }
 
     Shortcut {
         sequence: "F8"
-        enabled: content.controller.powered && !content.controller.prompt.open && !content.controller.advanced.open
+        enabled: content.controller.powered && !content.controller.promptActive && !content.controller.advanced.open
         onActivated: content.controller.advanced.openSettings("hardware")
     }
 
     Shortcut {
         sequence: "Ctrl+Tab"
-        enabled: content.controller.detailsOpen && content.controller.hasSelection && !content.controller.prompt.open
+        enabled: content.controller.detailsOpen && content.controller.hasSelection && !content.controller.promptActive
         onActivated: content.controller.cycleDetailsTab()
     }
 
     Shortcut {
         sequence: "Escape"
-        enabled: content.controller.advanced.open && !content.controller.prompt.open
+        enabled: content.controller.advanced.open && !content.controller.promptActive
         autoRepeat: false
         onActivated: content.controller.advanced.closeSettings()
     }
 
     Shortcut {
         sequence: "Escape"
-        enabled: !content.controller.prompt.open && !content.controller.advanced.open
+        enabled: !content.controller.promptActive && !content.controller.advanced.open
         autoRepeat: false
         onActivated: content.controller.closeWindowRequested()
     }
@@ -91,5 +91,18 @@ ChooserSurface {
         onOptionEdited: function (requested) { content.controller.prompt.saveSecret = requested; }
         onAccepted: content.controller.prompt.submit(content.controller)
         onCancelled: content.cancelPrompt()
+    }
+
+    WifiCredentialDialog {
+        visible: content.controller.prompt.credentialOpen
+        prompt: content.controller.prompt
+        onAccepted: function (values) { content.controller.prompt.submitCredentials(content.controller, values); }
+        onCancelled: content.cancelPrompt()
+    }
+
+    WifiQrDialog {
+        visible: content.controller.qr.open
+        qr: content.controller.qr
+        onClosed: content.controller.qr.close()
     }
 }

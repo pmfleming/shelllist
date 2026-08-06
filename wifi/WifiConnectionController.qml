@@ -13,6 +13,7 @@ Item {
     required property CaptivePortalController portal
     property var connectivity: null
     property string networkName: ""
+    property string networkKey: ""
     property int progressTick: 0
     property string workspaceId: ""
     property string requestId: ""
@@ -24,14 +25,15 @@ Item {
     function canBegin(ap) { return canBeginAny() && !!(ap && ap.capabilities && ap.capabilities.can_connect); }
     function beginAny() { return controller.requireIdle(canBeginAny()); }
     function begin(ap) { return controller.requireIdle(canBegin(ap)); }
-    function isConnecting(ap) { return running && networkName.length > 0 && Presentation.networkName(ap) === networkName && !controller.isActive(ap); }
-    function networkIsActive() { return networkName.length > 0 && Presentation.networkName(controller.activeAccessPoint()) === networkName; }
+    function keyFor(ap) { return ap && ap.key ? ap.key : ""; }
+    function isConnecting(ap) { return running && networkKey.length > 0 && keyFor(ap) === networkKey && !controller.isActive(ap); }
+    function networkIsActive() { return networkKey.length > 0 && controller.activeNetworkKey() === networkKey; }
     function updateVisibleProgress() {
         if (!running || !networkIsActive()) return;
         controller.setHeldStatus("Wi-Fi link established with " + networkName + "; checking internet access…", 2500);
         progressTimer.stop();
     }
-    function resetProgress() { networkName = ""; progressTick = 0; progressTimer.stop(); }
+    function resetProgress() { networkName = ""; networkKey = ""; progressTick = 0; progressTimer.stop(); }
     function handleTransportFailure() {
         const lostRequestId = requestId;
         requestId = "";
@@ -80,13 +82,15 @@ Item {
         if (!deferForPrompt(ap)) runTarget(ap, Presentation.networkName(ap));
         return true;
     }
-    function targetRequest(ap, password, enterpriseIdentity) {
+    function targetRequest(ap, password, enterpriseIdentity, enterprise, wepKeyType) {
         const request = ap.key ? { key: ap.key } : { target: ap };
         if (password !== undefined && password !== null) request.password = password;
         if (enterpriseIdentity) request.enterprise_identity = enterpriseIdentity;
+        if (enterprise) request.enterprise = enterprise;
+        if (wepKeyType) request.wep_key_type = wepKeyType;
         return request;
     }
-    function runTarget(ap, displayName, password, enterpriseIdentity) {
+    function runTarget(ap, displayName, password, enterpriseIdentity, enterprise, wepKeyType) {
         const attemptKey = Flow.connectAttemptKey(ap);
         const secretFingerprint = Flow.passwordFingerprint(password);
         if (running && policy.lastConnectAttemptKey === attemptKey && policy.lastConnectSecretFingerprint === secretFingerprint) {
@@ -96,13 +100,16 @@ Item {
         if (retryDelay > 0) {
             controller.status = "Waiting " + Math.ceil(retryDelay / 1000) + "s before retrying " + displayName + "; NetworkManager is temporarily ignoring this AP."; return;
         }
-        policy.rememberConnectAttempt(ap, password); run(targetRequest(ap, password, enterpriseIdentity), displayName);
+        policy.rememberConnectAttempt(ap, password);
+        run(targetRequest(ap, password, enterpriseIdentity, enterprise, wepKeyType), displayName);
     }
     function run(request, displayName) {
         if (!controller.requireIdle(!backend.nonConnectRunning)) return;
         controller.status = running ? "Connection attempt already running…" : "Connecting to " + displayName + "…";
         connectivity = ({ state: "unknown", captive_portal: false, full: false });
-        networkName = displayName; workspaceId = controller.currentWorkspaceId; progressTick = 0; progressTimer.restart();
+        networkName = displayName;
+        networkKey = request.key || ((request.target || {}).key || "");
+        workspaceId = controller.currentWorkspaceId; progressTick = 0; progressTimer.restart();
         if (!backend.connect(request)) {
             console.error("shelllist wifi connection rejected stage=dispatch network=" + displayName);
             resetProgress();
@@ -122,11 +129,11 @@ Item {
         if (policy.lastConnectAp) prompt.openPasswordPrompt(policy.lastConnectAp, Flow.isWrongPasswordReason(result.reason)
             ? "Wrong password. Enter a new Wi-Fi password." : "Saved password failed. Enter a new Wi-Fi password.");
     }
-    function provideSecret(id, key, password, save) {
-        controller.status = "Sending requested Wi-Fi secret to NetworkManager…";
-        if (!backend.provideSecret(id, key, password, save)) {
-            console.error("shelllist wifi secret rejected stage=dispatch request_id=" + id + " key=" + key);
-            controller.status = "Could not send the requested Wi-Fi secret to NetworkManager.";
+    function provideSecrets(id, values, save) {
+        controller.status = "Sending requested Wi-Fi credentials to NetworkManager…";
+        if (!backend.provideSecrets(id, values, save)) {
+            console.error("shelllist wifi secrets rejected stage=dispatch request_id=" + id);
+            controller.status = "Could not send the requested Wi-Fi credentials to NetworkManager.";
             return false;
         }
         return true;

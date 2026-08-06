@@ -13,19 +13,26 @@ ChooserListPane {
     chooserController: controller
     densityScale: uiScale
     resultModel: controller.powered ? controller.filteredResultsModel : null
-    emptyText: controller.powered ? "No Wi-Fi networks" : "Wi-Fi is off"
+    emptyText: controller.powered ? "No Wi-Fi networks"
+        : (!controller.radios.wireless_available ? "No Wi-Fi adapter"
+        : (!controller.radios.wireless_hardware_enabled ? "Wi-Fi is hardware blocked"
+        : (controller.airplaneMode ? "Airplane mode is enabled" : "Wi-Fi is off")))
     placeholder: "Search networks…"
     signalIcon: true
     powered: controller.powered
     refreshing: controller.scanInFlight
     busy: controller.actionInFlight
-    powerEnabled: !controller.actionInFlight && !controller.prompt.open
+    powerEnabled: !controller.actionInFlight && !controller.promptActive
     refreshEnabled: controller.powered && !controller.actionInFlight
-    iconActionEnabled: !controller.screenshotInFlight && !controller.actionInFlight && !controller.prompt.open
+    iconActionEnabled: !controller.screenshotInFlight && !controller.actionInFlight && !controller.promptActive
     focusOnCompleted: true
     filterText: controller.filterText
     status: controller.status
     listInset: Math.round(12 * uiScale)
+    toolbarHeight: Math.round(Theme.controlHeight * uiScale)
+    toolbarComponent: Component {
+        WifiRadioToolbar { controller: pane.controller }
+    }
     onIconClicked: controller.screenshotRequested()
     rowDelegate: Component {
         NetworkListRow {

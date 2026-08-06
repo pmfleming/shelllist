@@ -17,10 +17,24 @@ ChooserController {
     property alias filterText: services.queryText
     property alias selectedIndex: services.selectedIndex
     property string status
-    readonly property bool powered: !activeStatus || activeStatus.enabled !== false
+    readonly property var radios: activeStatus && activeStatus.radios ? activeStatus.radios : ({
+        wireless_enabled: !activeStatus || activeStatus.enabled !== false,
+        wireless_hardware_enabled: true,
+        wireless_available: true,
+        wwan_enabled: false,
+        wwan_hardware_enabled: false,
+        wwan_available: false,
+        airplane_mode: false
+    })
+    readonly property bool powered: radios.wireless_enabled !== false
+        && radios.wireless_hardware_enabled !== false && !radios.airplane_mode
+    readonly property bool wwanPowered: !!radios.wwan_enabled
+    readonly property bool airplaneMode: !!radios.airplane_mode
+    property var pendingAirplaneBluetooth: null
     property double statusHoldUntil: 0
     readonly property WifiBackend backend: services.backend
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
+    readonly property bool promptActive: prompt.open || prompt.credentialOpen || qr.open
     readonly property bool actionInFlight: backend.running || screenshotInFlight
     readonly property string detailsTab: advanced.open ? advanced.section : "network"
     readonly property bool scanInFlight: scan.running
@@ -36,11 +50,12 @@ ChooserController {
     readonly property WifiProvider providerModel: services.provider
     readonly property Core.ProviderRegistry providerRegistry: services.providers
     readonly property WifiConnectPolicy connectPolicy: services.policy
-    navigationBlocked: prompt.open || !powered
+    navigationBlocked: promptActive || !powered
     readonly property WifiAdvancedController advanced: services.advanced
     readonly property WifiConnectionController connection: services.connection
     readonly property WifiNetworkActions actions: services.actions
     readonly property WifiScanController scan: services.scan
+    readonly property WifiQrController qr: qrController
     readonly property var daemonEventHandlerByStream: {
         const handlers = ({});
         handlers[NmApi.streams.wifi_status] = function (event) { wifi.applyStatusEvent(event); };
@@ -55,6 +70,7 @@ ChooserController {
     signal screenshotRequested
 
     function activeAccessPoint() { return activeStatus ? (activeStatus.access_point || activeStatus.network || null) : null; }
+    function activeNetworkKey() { return activeStatus && activeStatus.network ? (activeStatus.network.key || "") : ""; }
     function networkName(ap) { return Presentation.networkName(ap); }
     function isActive(ap) { return !!(ap && ap.active); }
     function profileFor(ap) { return Flow.profileForAccessPoint(ap); }
@@ -75,7 +91,14 @@ ChooserController {
 
 
     function invalidateShareAvailabilityCache() { services.share.invalidate(); }
-    function shareSelected() { services.share.copySelected(); }
+    function shareSelected() {
+        if (!services.share.canShareSelected()) {
+            status = services.share.status;
+            return;
+        }
+        qr.show(services.share.payload, networkName(detailAp));
+    }
+    function launchQrScanner() { return qr.launchScanner(); }
     function applyShareResponse(response, errorText) { services.share.applyResponse(response, errorText); }
     function statusIsHeld() { return Date.now() < statusHoldUntil; }
     function setBackgroundStatus(message) { if (!statusIsHeld()) status = message; }
@@ -88,7 +111,7 @@ ChooserController {
     }
 
     function deactivateUi() {
-        if (prompt.open)
+        if (promptActive)
             cancelPrompt("popover-hidden");
         deactivateUiState();
         scan.deactivate();
@@ -96,9 +119,13 @@ ChooserController {
     }
 
     function cancelPrompt(reason) {
-        if (!prompt.open)
+        if (qr.open) {
+            qr.close();
             return true;
-        const mode = prompt.mode;
+        }
+        if (!promptActive)
+            return true;
+        const mode = prompt.credentialOpen ? prompt.credentialMode : prompt.mode;
         const requestId = prompt.secretRequestId;
         let cancelled = true;
         if (mode === "daemon-secret" && requestId.length > 0)
@@ -120,7 +147,7 @@ ChooserController {
         });
         if (lost.indexOf("share") >= 0)
             services.share.fail(message);
-        if (prompt.open && prompt.mode === "daemon-secret") {
+        if (promptActive && (prompt.mode === "daemon-secret" || prompt.credentialMode === "daemon-secret")) {
             console.warn("shelllist wifi daemon secret prompt discarded reason=transport-failure request_id=" + prompt.secretRequestId);
             prompt.cancel();
         }
@@ -134,7 +161,7 @@ ChooserController {
 
     function refresh() { scan.refresh(); }
     function captureScreenshot(x, y, width, height) {
-        if (actionInFlight || prompt.open || screenshotInFlight)
+        if (actionInFlight || promptActive || screenshotInFlight)
             return false;
         status = "Capturing Wi-Fi window…";
         return screenshotCapture.captureRegion(x, y, width, height);
@@ -151,11 +178,45 @@ ChooserController {
     }
     function applyPowerResult(result) {
         const enabled = !!result.enabled;
+        const nextRadios = Object.assign({}, radios, { wireless_enabled: enabled });
         activeStatus = Object.assign({}, activeStatus || ({}), {
             enabled: enabled,
+            radios: nextRadios,
             active: enabled ? !!(activeStatus && activeStatus.active) : false
         });
         status = result.message || (enabled ? "Wi-Fi turned on" : "Wi-Fi turned off");
+    }
+
+    function setWwanPower() {
+        if (!beginAction()) return;
+        status = wwanPowered ? "Turning mobile data off…" : "Turning mobile data on…";
+        backend.setWwanPowered(!wwanPowered);
+    }
+
+    function setAirplaneMode() {
+        if (!beginAction()) return;
+        status = airplaneMode ? "Disabling airplane mode…" : "Enabling airplane mode…";
+        const enabled = !airplaneMode;
+        if (enabled) scan.cancelForPowerOff();
+        pendingAirplaneBluetooth = enabled;
+        if (!backend.setAirplaneMode(enabled))
+            pendingAirplaneBluetooth = null;
+    }
+
+    function applyRadioResult(result) {
+        const nextRadios = result.radios || radios;
+        activeStatus = Object.assign({}, activeStatus || ({}), {
+            enabled: nextRadios.wireless_enabled !== false,
+            radios: nextRadios,
+            active: nextRadios.wireless_enabled !== false
+                ? !!(activeStatus && activeStatus.active) : false
+        });
+        status = result.message || "Radio state updated";
+        if (pendingAirplaneBluetooth !== null) {
+            bluetoothAirplane.setAirplaneMode(!!pendingAirplaneBluetooth);
+            pendingAirplaneBluetooth = null;
+        }
+        if (powered && uiActive) Qt.callLater(scan.refresh);
     }
 
     function handleSecretEvent(event) {
@@ -163,7 +224,9 @@ ChooserController {
             prompt.openDaemonSecretPrompt(event);
             return;
         }
-        if (event.event === "cancelled" && prompt.mode === "daemon-secret" && prompt.secretRequestId === event.request_id) {
+        if (event.event === "cancelled"
+                && (prompt.mode === "daemon-secret" || prompt.credentialMode === "daemon-secret")
+                && prompt.secretRequestId === event.request_id) {
             prompt.cancel();
             status = "NetworkManager cancelled the Wi-Fi secret request.";
             return;
@@ -195,6 +258,8 @@ ChooserController {
     function failCall(id, message) {
         if (id === "connect-start")
             connection.resetProgress();
+        if (id === "airplane-mode")
+            pendingAirplaneBluetooth = null;
         advanced.failCall(id, message);
         if (id === "share")
             services.share.fail(message);
@@ -236,7 +301,11 @@ ChooserController {
         }
     }
 
-    Connections { target: wifi.prompt; function onOpenChanged() { if (!wifi.prompt.open) Qt.callLater(wifi.navigation.focusSearch); } }
+    Connections {
+        target: wifi.prompt
+        function onOpenChanged() { if (!wifi.promptActive) Qt.callLater(wifi.navigation.focusSearch); }
+        function onCredentialOpenChanged() { if (!wifi.promptActive) Qt.callLater(wifi.navigation.focusSearch); }
+    }
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture
         active: wifi.uiActive
@@ -244,4 +313,6 @@ ChooserController {
         onFailed: function (message) { wifi.status = message; }
     }
     WifiControllerServices { id: services; controller: wifi; prompt: wifi.prompt }
+    WifiQrController { id: qrController; controller: wifi }
+    BluetoothAirplaneController { id: bluetoothAirplane; controller: wifi }
 }

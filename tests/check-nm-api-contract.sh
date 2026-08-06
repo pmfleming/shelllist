@@ -36,6 +36,9 @@ jq -e '
   (.data.fixture.network.key | type == "string") and
   (.data.fixture.network.access_points | type == "array") and
   (.data.fixture.status.enabled | type == "boolean") and
+  (.data.fixture.status.radios.wireless_hardware_enabled | type == "boolean") and
+  (.data.fixture.status.radios.wwan_enabled | type == "boolean") and
+  (.data.fixture.status.radios.airplane_mode | type == "boolean") and
   (.data.fixture.status.connectivity.state | type == "string") and
   (.data.fixture.status.ip4.dhcp_lease.server_identifier | type == "string") and
   (.data.fixture.status.ip4.dhcp_lease.domain_name | type == "string") and
@@ -63,6 +66,8 @@ jq -e '
   .data.fixtures."wifi-status.active".status.active == true and
   .data.fixtures."wifi-status.inactive".status.active == false and
   .data.fixtures."wifi-set-enabled.success".result.enabled == true and
+  .data.fixtures."radio-set-wwan-enabled.success".result.radios.wwan_enabled == true and
+  .data.fixtures."radio-set-airplane-mode.success".result.radios.airplane_mode == true and
   .data.fixtures."wifi-connect.success".result.status == "connected" and
   .data.fixtures."wifi-connect.success".result.path == "dbus" and
   .data.fixtures."wifi-connect.secret-required".result.reason == "secret-required" and
@@ -76,7 +81,8 @@ jq -e '
   .version == 1 and
   .ok == true and
   ([.data.protocol.methods[].name] | contains([
-    "wifi.status", "wifi.setEnabled", "network.connectivity", "wifi.networks", "wifi.scan",
+    "wifi.status", "wifi.setEnabled", "radio.setWwanEnabled", "radio.setAirplaneMode",
+    "network.connectivity", "wifi.networks", "wifi.scan",
     "wifi.connectTarget", "wifi.disconnect", "wifi.profile.operation",
     "wifi.secret.capabilities", "wifi.secret.provide"
   ])) and
@@ -93,6 +99,8 @@ jq -r '
   + "var methods = {\n"
   + ([.data.protocol.methods[]
       | select(.name == "wifi.setEnabled"
+          or .name == "radio.setWwanEnabled"
+          or .name == "radio.setAirplaneMode"
           or .name == "wifi.networks"
           or .name == "wifi.scan"
           or .name == "wifi.connectTarget"

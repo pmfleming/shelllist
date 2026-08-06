@@ -15,9 +15,7 @@ Core.Provider {
     capabilities: ({ query: false, actions: true, preview: true, subscriptions: true })
 
     function connectingTo(ap) {
-        return controller.connection.running
-            && controller.connection.networkName.length > 0
-            && controller.networkName(ap) === controller.connection.networkName;
+        return controller.connection.isConnecting(ap);
     }
     function primaryActions(ap, connecting) {
         return [
@@ -87,7 +85,7 @@ Core.Provider {
     }
 
     function primaryActionId(ap) {
-        if (controller.connection.running && controller.networkName(ap) === controller.connection.networkName)
+        if (controller.connection.isConnecting(ap))
             return "cancel-connect";
         return controller.isActive(ap) ? "disconnect" : "connect";
     }

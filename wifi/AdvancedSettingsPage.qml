@@ -174,10 +174,10 @@ Item {
     }
 
     function setAutoDns(value) {
-        const automatic = value === "auto";
+        const automatic = !!value;
         if (automatic === currentAutoDns)
             return;
-        currentIp.autoDns = automatic;
+        currentIp.setAutoDns(automatic);
         queueHardwareSave();
     }
 

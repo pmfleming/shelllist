@@ -93,15 +93,16 @@ Shelllist consumes live Bluetooth, scan, operation, audio, pairing and OBEX subs
 Shelllist currently supports:
 
 - cached network snapshots with Shelllist-owned cache refresh while the Wi-Fi UI is visible;
-- Wi-Fi radio power control, active status, IP/connectivity detail display, selected-network details, and distinct icons for captive-portal, open, enhanced-open, legacy, personal, enterprise, and unknown security types;
-- connection to saved, open, password-protected, hidden, and supported enterprise networks;
+- Wi-Fi software/hardware radio state, adapter availability, mobile-data state, and coordinated airplane mode across NetworkManager Wi-Fi/WWAN and powered Bluetooth adapters;
+- active status, IP/connectivity detail display, selected-network details, and distinct icons for captive-portal, open, enhanced-open, legacy, personal, enterprise, and unknown security types;
+- connection to saved, open, password-protected, hidden, WEP, and enterprise networks through named credential forms driven by daemon-required/optional fields;
 - asynchronous `wifi.connect` progress/completion events by `request_id`;
 - NetworkManager SecretAgent prompts through `wifi.secret` events;
 - optional keyring saving with persistence feedback and explicit prompt cancellation;
 - disconnecting Wi-Fi;
 - saved-profile actions: disconnect-and-forget, toggle autoconnect, toggle randomized MAC, and toggle hostname sending;
 - an advanced saved-profile editor for metered/hidden state, MAC policy, hostname privacy, WPA Personal passwords, IPv4/IPv6 assignment, DNS, DHCP lease metadata, and technical details, with directional animation across all three detail tabs;
-- Wi-Fi QR payload copying for open networks or saved profiles whose secret can be read;
+- rendered Wi-Fi QR sharing, payload copying, and QRCA scanner launch for open networks or saved profiles whose secret can be read;
 - captive-portal helper launch when requested by the UI or suggested by the backend.
 
 Shelllist is the sole owner of automatic captive-portal presentation. It opens one plain-HTTP page only after a successful `wifi.connect` result reports captive-portal connectivity. An active Wi-Fi link is labelled **Sign in required**, **Limited connectivity**, or **No internet access** until NetworkManager reports full connectivity; **Connected** is reserved for full internet readiness. The helper uses a runtime-only Chrome profile, deduplicates automatic opens by network identity plus connect request, and places or focuses its uniquely-classed app window on the workspace where Shelllist initiated the connection. `shelllist-captive-portal --manual --fallback` rotates through additional plain-HTTP probes for manual troubleshooting. Helper journal records include `helper_elapsed_ms` and the first observed window title, allowing browser startup/window-placement time to be separated from a later hotspot redirect; inspect them with `journalctl -t shelllist-captive-portal`.
@@ -164,6 +165,8 @@ The UI consumes `nm-api` protocol v1 envelopes:
 Current D-Bus methods used by the UI:
 
 - `wifi.setEnabled` for Wi-Fi radio power control;
+- `radio.setWwanEnabled` for mobile-data radio control;
+- `radio.setAirplaneMode` for restoring/disabling NetworkManager Wi-Fi and WWAN radios while Shelllist coordinates Bluetooth power through `bt-daemon`;
 - `wifi.networks` with cached-list parameters;
 - `wifi.scan`, returning a scan `request_id`;
 - `wifi.connectTarget` with the daemon-provided opaque network `key`, returning a connect `request_id`;

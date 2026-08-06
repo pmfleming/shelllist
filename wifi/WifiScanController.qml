@@ -49,7 +49,9 @@ Item {
         pendingRefresh = false;
         controller.setBackgroundStatus("Loading cached Wi-Fi networks…");
         snapshotSeen = false;
-        const listAccepted = backend.refreshNetworks(true);
+        // The explicit scan below owns this refresh. Asking wifi.networks to
+        // refresh its cache as well would schedule a second NetworkManager scan.
+        const listAccepted = backend.refreshNetworks(false);
         const scanAccepted = backend.startScan();
         if (!listAccepted || !scanAccepted) {
             pendingRefresh = true;
