@@ -6,6 +6,10 @@ Rectangle {
     property string title: ""
     property var entries: null
     property real contentPadding: Math.max(Theme.spacingMd, Math.min(Theme.spacingLg, height * 0.06))
+    property real verticalContentPadding: Math.max(Theme.spacingSm, Math.min(contentPadding, height * 0.05))
+    property real headingSpacing: title.length > 0
+        ? Math.max(Theme.spacingXs, Math.min(Theme.spacingMd, height * 0.04))
+        : 0
     default property alias content: contentSlot.data
 
     width: parent ? parent.width : 0
@@ -16,8 +20,11 @@ Rectangle {
 
     Column {
         anchors.fill: parent
-        anchors.margins: card.contentPadding
-        spacing: card.title.length > 0 ? Theme.spacingMd : 0
+        anchors.leftMargin: card.contentPadding
+        anchors.rightMargin: card.contentPadding
+        anchors.topMargin: card.verticalContentPadding
+        anchors.bottomMargin: card.verticalContentPadding
+        spacing: card.headingSpacing
 
         Text {
             id: heading
