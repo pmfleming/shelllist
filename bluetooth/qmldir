@@ -8,6 +8,7 @@ internal BluetoothDeviceListRow BluetoothDeviceListRow.qml
 internal BluetoothDeviceDetails BluetoothDeviceDetails.qml
 internal BluetoothDevicePage BluetoothDevicePage.qml
 internal BluetoothBatteryStatus BluetoothBatteryStatus.qml
+internal BluetoothNoiseControl BluetoothNoiseControl.qml
 internal BluetoothAudioTransferPage BluetoothAudioTransferPage.qml
 internal BluetoothAdapterPage BluetoothAdapterPage.qml
 internal BluetoothDeviceActions BluetoothDeviceActions.qml

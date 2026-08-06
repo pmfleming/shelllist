@@ -17,6 +17,7 @@ Item {
         source: ""
     }]
     readonly property int indicatorHeight: 166
+    readonly property int artworkSize: Math.round((displayReports.length === 1 ? 126 : 108) * 0.68)
 
     visible: true
     implicitHeight: indicatorHeight
@@ -102,8 +103,8 @@ Item {
                 Image {
                     x: ring.x + Math.round((ring.width - width) / 2)
                     y: ring.y + Math.round((ring.height - height) / 2)
-                    width: indicator.ringSize * 0.68
-                    height: indicator.ringSize * 0.68
+                    width: root.artworkSize
+                    height: root.artworkSize
                     source: indicator.imageSource
                     sourceSize.width: 180
                     sourceSize.height: 180

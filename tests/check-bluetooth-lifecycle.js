@@ -96,10 +96,19 @@ expect("pair action retains trust policy", pairAction.operation === "pair" && pa
 const wakeAction = flow.deviceActionRequest("wake", { wake_allowed: false }, false);
 expect("wake action toggles the backend value", wakeAction.operation === "set-wake-allowed" && wakeAction.values.wake_allowed);
 expect("unknown device actions are rejected", flow.deviceActionRequest("unknown", {}, false) === null);
-expect("noise control validates settable modes", flow.noiseControlRequest({
+const noiseControlDevice = {
     name: "Headset",
     capabilities: { can_set_noise_control: true },
-    fast_pair: { noise_control: { settable_modes: ["adaptive"], active_mode: "off" } }
-}, "adaptive").supported);
+    fast_pair: {
+        noise_control: {
+            settable_modes: ["transparent", "adaptive", "noise-cancelling", "off"],
+            active_mode: "off"
+        }
+    }
+};
+for (const mode of ["transparent", "adaptive", "noise-cancelling", "off"])
+    expect(`${mode} noise control mode is accepted`, flow.noiseControlRequest(noiseControlDevice, mode).supported);
+expect("unknown noise control modes are rejected", !flow.noiseControlRequest(noiseControlDevice, "unknown").supported);
+expect("active noise control mode is unchanged", flow.noiseControlRequest(noiseControlDevice, "off").unchanged);
 
 console.log(`Bluetooth lifecycle: ${checks} checks passed`);

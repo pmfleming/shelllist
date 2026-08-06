@@ -709,6 +709,14 @@ EOF
             touch $out
           '';
 
+          bluetoothNoiseControl = pkgs.runCommand "shelllist-bluetooth-noise-control"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-bluetooth-noise-control.js} ${./bluetooth/BluetoothNoiseControl.js} ${./bluetooth}
+            touch $out
+          '';
+
           bluetoothGlyphs = pkgs.runCommand "shelllist-bluetooth-glyphs"
             {
               nativeBuildInputs = [ pkgs.nodejs ];

@@ -9,8 +9,16 @@ Ui.DetailFlickable {
     readonly property alias editingName: settings.editingName
 
     BluetoothBatteryStatus {
+        id: batteryStatus
+
         width: parent.width
         device: page.controller.selectedDevice
+    }
+
+    BluetoothNoiseControl {
+        width: parent.width
+        controller: page.controller
+        referenceArtworkSize: batteryStatus.artworkSize
     }
 
     Ui.DetailCard {
