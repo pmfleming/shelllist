@@ -1,11 +1,11 @@
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui
+import "process"
 
 ModalFrame {
     id: dialog
 
-    required property WifiQrController qr
+    required property WifiQrService qr
     signal closed
 
     title: "Share " + qr.networkName
@@ -15,7 +15,7 @@ ModalFrame {
     Keys.onEscapePressed: dialog.closed()
 
     Rectangle {
-        width: Math.min(parent.width, 360)
+        width: Math.min(parent.width, dialog.height < 700 ? 280 : 360)
         height: width
         anchors.horizontalCenter: parent.horizontalCenter
         radius: Theme.controlRadius
@@ -57,27 +57,21 @@ ModalFrame {
         }
     }
 
-    RowLayout {
+    ActionToolbar {
         width: parent.width
-        spacing: Theme.spacingMd
-
-        ActionButton {
-            Layout.fillWidth: true
-            label: "Copy payload"
-            onClicked: dialog.qr.copyPayload()
-        }
-
-        ActionButton {
-            Layout.fillWidth: true
-            label: "Scan another code"
-            onClicked: dialog.qr.launchScanner()
-        }
-
-        ActionButton {
-            Layout.fillWidth: true
-            label: "Close"
-            tone: "accent"
-            onClicked: dialog.closed()
+        height: Theme.controlHeight
+        fillActions: true
+        actions: [{
+            id: "copy", label: "Copy payload"
+        }, {
+            id: "scan", label: "Scan another code"
+        }, {
+            id: "close", label: "Close", presentation: { tone: "accent" }
+        }]
+        onTriggered: function (actionId) {
+            if (actionId === "copy") dialog.qr.copyPayload();
+            else if (actionId === "scan") dialog.qr.launchScanner();
+            else dialog.closed();
         }
     }
 }

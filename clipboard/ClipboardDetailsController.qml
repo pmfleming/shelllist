@@ -111,31 +111,34 @@ Item {
         editBeginPending = false; saveInFlight = false; savingDirectEdit = false; pasteAfterSave = false;
         editing = false; editIsDirect = false; editId = ""; editDraft = ""; editDirty = false;
     }
+    function resetCommitState() {
+        controller.actionInFlight = false; controller.activeAction = "";
+        saveInFlight = false; savingDirectEdit = false; pasteAfterSave = false;
+        editing = false; editIsDirect = false; editId = ""; editDirty = false;
+    }
+    function applyDirectEditCommit(nextValue, entry, sourceEntryId, shouldPaste) {
+        value = nextValue; entryId = entry.id; entryRevision = entry.revision;
+        if (entry.id !== sourceEntryId && replacedSourceIds.indexOf(sourceEntryId) < 0)
+            replacedSourceIds = replacedSourceIds.concat([sourceEntryId]);
+        editDraft = nextValue.text === null || nextValue.text === undefined ? committedDraft : nextValue.text;
+        controller.status = "Clipboard text saved";
+        controller.scheduleRefresh();
+        if (shouldPaste) {
+            editorFocused = false;
+            controller.runAction("paste", undefined, entry);
+        } else if (editorFocused && selectedEntry
+                && (selectedEntry.id === sourceEntryId || selectedEntry.id === entry.id)) {
+            Qt.callLater(function () { detailsController.beginEdit(entry); });
+        }
+    }
     function applyEditCommit(nextValue) {
         const entry = nextValue ? nextValue.entry : null;
         const sourceEntryId = entryId;
         const wasDirect = savingDirectEdit;
         const shouldPaste = wasDirect && pasteAfterSave;
-        controller.actionInFlight = false; controller.activeAction = "";
-        saveInFlight = false; savingDirectEdit = false; pasteAfterSave = false;
-        editing = false; editIsDirect = false; editId = ""; editDirty = false;
+        resetCommitState();
         if (wasDirect && entry) {
-            value = nextValue;
-            entryId = entry.id;
-            if (entry.id !== sourceEntryId && replacedSourceIds.indexOf(sourceEntryId) < 0)
-                replacedSourceIds = replacedSourceIds.concat([sourceEntryId]);
-            entryRevision = entry.revision;
-            editDraft = nextValue.text === null || nextValue.text === undefined
-                ? committedDraft : nextValue.text;
-            controller.status = "Clipboard text saved";
-            controller.scheduleRefresh();
-            if (shouldPaste) {
-                editorFocused = false;
-                controller.runAction("paste", undefined, entry);
-            } else if (editorFocused && selectedEntry
-                    && (selectedEntry.id === sourceEntryId || selectedEntry.id === entry.id)) {
-                Qt.callLater(function () { detailsController.beginEdit(entry); });
-            }
+            applyDirectEditCommit(nextValue, entry, sourceEntryId, shouldPaste);
             return;
         }
         value = null;

@@ -8,6 +8,7 @@ internal WifiConnectionController WifiConnectionController.qml
 internal WifiNetworkActions WifiNetworkActions.qml
 internal WifiScanController WifiScanController.qml
 internal WifiControllerServices WifiControllerServices.qml
+internal WifiRadioToolbar WifiRadioToolbar.qml
 internal AdvancedIpSettingsPane AdvancedIpSettingsPane.qml
 internal AdvancedSecurityPane AdvancedSecurityPane.qml
 internal AdvancedSettingsFlickable AdvancedSettingsFlickable.qml

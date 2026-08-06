@@ -9,6 +9,7 @@ RowLayout {
     property var actions: []
     property string group: "toolbar"
     property bool alignRight: true
+    property bool fillActions: false
     property int controlHeight: Theme.controlHeight
 
     signal triggered(string actionId)
@@ -16,7 +17,7 @@ RowLayout {
     spacing: Theme.spacingSm
 
     Item {
-        visible: toolbar.alignRight
+        visible: !toolbar.fillActions && toolbar.alignRight
         Layout.fillWidth: true
     }
 
@@ -29,7 +30,8 @@ RowLayout {
         delegate: ActionButton {
             required property var modelData
 
-            Layout.preferredWidth: Number((modelData.presentation || {}).width) || 104
+            Layout.fillWidth: toolbar.fillActions
+            Layout.preferredWidth: toolbar.fillActions ? -1 : (Number((modelData.presentation || {}).width) || 104)
             Layout.preferredHeight: toolbar.controlHeight
             label: modelData.label || ""
             icon: modelData.icon || ""
@@ -41,7 +43,7 @@ RowLayout {
     }
 
     Item {
-        visible: !toolbar.alignRight
+        visible: !toolbar.fillActions && !toolbar.alignRight
         Layout.fillWidth: true
     }
 }

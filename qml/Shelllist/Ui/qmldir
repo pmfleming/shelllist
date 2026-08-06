@@ -15,6 +15,7 @@ DetailCard 1.0 DetailCard.qml
 DetailField 1.0 DetailField.qml
 DetailFlickable 1.0 DetailFlickable.qml
 DetailGrid 1.0 DetailGrid.qml
+DetailsHeader 1.0 DetailsHeader.qml
 DetailsPane 1.0 DetailsPane.qml
 DetailsTab 1.0 DetailsTab.qml
 DetailsTabBar 1.0 DetailsTabBar.qml

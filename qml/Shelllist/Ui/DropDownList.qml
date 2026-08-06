@@ -93,6 +93,8 @@ Controls.ComboBox {
 
         required property int index
         required property var modelData
+        readonly property bool selected: index === control.currentIndex
+        readonly property string optionText: modelData.label || modelData.value || ""
 
         width: ListView.view ? ListView.view.width : control.width
         height: Theme.compactControlHeight
@@ -103,12 +105,11 @@ Controls.ComboBox {
         rightPadding: Theme.spacingMd
 
         contentItem: Text {
-            text: optionDelegate.modelData.label || optionDelegate.modelData.value || ""
+            text: optionDelegate.optionText
             color: optionDelegate.highlighted ? Theme.accentText : Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeBody
-            font.weight: optionDelegate.index === control.currentIndex
-                ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
+            font.weight: optionDelegate.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
         }
@@ -116,7 +117,7 @@ Controls.ComboBox {
         background: Rectangle {
             radius: Theme.controlRadius
             color: optionDelegate.highlighted ? Theme.accent
-                : (optionDelegate.index === control.currentIndex ? Theme.selected
+                : (optionDelegate.selected ? Theme.selected
                     : (optionDelegate.hovered ? Theme.hover : "transparent"))
         }
     }
@@ -125,8 +126,8 @@ Controls.ComboBox {
         y: control.height + Theme.spacingXs
         width: control.width
         padding: Theme.spacingXs
-        implicitHeight: Math.min(
-            contentItem.implicitHeight + topPadding + bottomPadding,
+        height: Math.min(
+            control.options.length * Theme.compactControlHeight + topPadding + bottomPadding,
             Theme.compactControlHeight * 6 + topPadding + bottomPadding
         )
 

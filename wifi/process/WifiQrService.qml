@@ -1,11 +1,12 @@
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import "../WifiQr.js" as WifiQr
 
 Item {
     id: qr
 
-    required property WifiController controller
+    required property Item controller
     property bool open: false
     property string payload: ""
     property string networkName: ""
@@ -20,38 +21,12 @@ Item {
         return Quickshell.env("XDG_RUNTIME_DIR") || "";
     }
 
-    function payloadField(qrPayload, requestedKey) {
-        const value = String(qrPayload || "").replace(/^WIFI:/, "");
-        let field = "";
-        let escaped = false;
-        const fields = [];
-        for (let index = 0; index < value.length; index++) {
-            const character = value[index];
-            if (escaped) {
-                field += character;
-                escaped = false;
-            } else if (character === "\\") {
-                escaped = true;
-            } else if (character === ";") {
-                fields.push(field);
-                field = "";
-            } else {
-                field += character;
-            }
-        }
-        for (let index = 0; index < fields.length; index++) {
-            if (fields[index].indexOf(requestedKey + ":") === 0)
-                return fields[index].slice(requestedKey.length + 1);
-        }
-        return "";
-    }
-
     function show(qrPayload, name) {
         if (outputPath.length > 0)
             cleaner.exec(["rm", "-f", outputPath]);
         payload = qrPayload;
         networkName = name;
-        password = payloadField(qrPayload, "P");
+        password = WifiQr.payloadField(qrPayload, "P");
         imageSource = "";
         error = "";
         open = true;
@@ -92,6 +67,22 @@ Item {
         return true;
     }
 
+    function finishRendering(exitCode) {
+        if (!open) {
+            if (outputPath.length > 0) cleaner.exec(["rm", "-f", outputPath]);
+        } else if (exitCode === 0) {
+            imageSource = "file://" + outputPath;
+        } else {
+            error = renderError.text.length > 0 ? renderError.text : "QR renderer exited with " + exitCode;
+        }
+    }
+
+    function finishScanning(exitCode) {
+        if (exitCode === 0) return;
+        const detail = scannerError.text.length > 0 ? scannerError.text : "exit " + exitCode;
+        controller.status = "Wi-Fi QR scanner failed: " + detail;
+    }
+
     Process {
         id: renderer
         stdinEnabled: true
@@ -101,16 +92,7 @@ Item {
             renderer.write(qr.payload);
             renderer.stdinEnabled = false;
         }
-        onExited: function (exitCode) { // qmllint disable signal-handler-parameters
-            if (!qr.open) {
-                if (qr.outputPath.length > 0)
-                    cleaner.exec(["rm", "-f", qr.outputPath]);
-            } else if (exitCode === 0) {
-                qr.imageSource = "file://" + qr.outputPath;
-            } else {
-                qr.error = renderError.text.length > 0 ? renderError.text : "QR renderer exited with " + exitCode;
-            }
-        }
+        onExited: function (exitCode) { qr.finishRendering(exitCode); } // qmllint disable signal-handler-parameters
     }
 
     Process { id: cleaner }
@@ -118,11 +100,6 @@ Item {
     Process {
         id: scanner
         stderr: StdioCollector { id: scannerError; waitForEnd: true }
-        onExited: function (exitCode) { // qmllint disable signal-handler-parameters
-            if (exitCode !== 0) {
-                const detail = scannerError.text.length > 0 ? scannerError.text : "exit " + exitCode;
-                qr.controller.status = "Wi-Fi QR scanner failed: " + detail;
-            }
-        }
+        onExited: function (exitCode) { qr.finishScanning(exitCode); } // qmllint disable signal-handler-parameters
     }
 }

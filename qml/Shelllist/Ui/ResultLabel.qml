@@ -8,6 +8,8 @@ ColumnLayout {
     property string subtitle: ""
     property color titleColor: Theme.text
     property color subtitleColor: Theme.subtleText
+    property bool statusIndicatorVisible: false
+    property color statusIndicatorColor: subtitleColor
     property int titleWeight: Theme.fontWeightRegular
     property int subtitleWeight: Theme.fontWeightRegular
     property real uiScale: 1
@@ -30,15 +32,29 @@ ColumnLayout {
         elide: Text.ElideRight
     }
 
-    Text {
+    RowLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        verticalAlignment: Text.AlignTop
-        text: label.subtitle
-        color: label.subtitleColor
-        font.family: Theme.fontFamily
-        font.pixelSize: label.subtitlePixelSize
-        font.weight: label.subtitleWeight
-        elide: Text.ElideRight
+        spacing: Math.max(Theme.spacingXs, Math.round(Theme.spacingSm * label.uiScale))
+
+        Rectangle {
+            visible: label.statusIndicatorVisible
+            Layout.preferredWidth: 8
+            Layout.preferredHeight: 8
+            radius: width / 2
+            color: label.statusIndicatorColor
+        }
+
+        Text {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            verticalAlignment: Text.AlignTop
+            text: label.subtitle
+            color: label.subtitleColor
+            font.family: Theme.fontFamily
+            font.pixelSize: label.subtitlePixelSize
+            font.weight: label.subtitleWeight
+            elide: Text.ElideRight
+        }
     }
 }

@@ -101,6 +101,16 @@
       "kind": "cleanup.unused_component",
       "file": "tests/qml/tst_segmented_navigation.qml",
       "reason": "Discovered directly by qmltestrunner as a test entrypoint"
+    },
+    {
+      "kind": "cleanup.unused_component",
+      "file": "tests/qml/tst_wifi_prompt.qml",
+      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
+    },
+    {
+      "kind": "cleanup.unused_component",
+      "file": "wifi/WifiRadioToolbar.qml",
+      "reason": "Instantiated directly in NetworkListPane's default content slot"
     }
   ],
   "exclude": []

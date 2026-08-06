@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
 Ui.DetailsPane {
@@ -35,30 +34,16 @@ Ui.DetailsPane {
     rightMargin: 16
     emptyText: "Select a clipboard entry"
 
-    RowLayout {
-            width: parent.width
-            height: pane.headerHeight
-            spacing: Ui.Theme.spacingMd
-
-            Ui.IconTile {
-                Layout.preferredWidth: 58
-                Layout.preferredHeight: 54
-                icon: pane.selected.icon || "󰅇"
-                iconColor: pane.entry.current ? Ui.Theme.active : Ui.Theme.accent
-                iconSize: Math.round(Ui.Theme.iconSizeLarge * pane.uiScale)
-                backgroundColor: Ui.Theme.selected
-                borderColor: Ui.Theme.strongBorder
-            }
-
-            Ui.ResultLabel {
-                title: pane.selected.title || "Clipboard entry"
-                subtitle: pane.selected.subtitle || ""
-                subtitleColor: Ui.Theme.mutedText
-                titleWeight: Ui.Theme.fontWeightBold
-                titlePixelSize: Math.round(Ui.Theme.fontSizeTitle * pane.uiScale)
-                subtitlePixelSize: Math.max(Ui.Theme.fontSizeCaption, Math.round(Ui.Theme.fontSizeSmall * pane.uiScale))
-            }
-        }
+    Ui.DetailsHeader {
+        width: parent.width
+        height: pane.headerHeight
+        uiScale: pane.uiScale
+        icon: pane.selected.icon || "󰅇"
+        iconColor: pane.entry.current ? Ui.Theme.active : Ui.Theme.accent
+        title: pane.selected.title || "Clipboard entry"
+        subtitle: pane.selected.subtitle || ""
+        titlePixelSize: Math.round(Ui.Theme.fontSizeTitle * pane.uiScale)
+    }
 
         Ui.ActionToolbar {
             width: parent.width
@@ -102,7 +87,6 @@ Ui.DetailsPane {
             }
 
         ClipboardDetailCards {
-            id: detailCards
             anchors.fill: parent
             visible: !pane.detailState.loading
                 && pane.detailState.error.length === 0

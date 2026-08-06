@@ -33,6 +33,11 @@ Rectangle {
     border.color: selected && selectionFocused ? Theme.strongBorder : "transparent"
     border.width: selected && selectionFocused ? 1 : 0
 
+    Keys.onReturnPressed: function (event) { row.primaryRequested(); event.accepted = true; }
+    Keys.onEnterPressed: function (event) { row.primaryRequested(); event.accepted = true; }
+    Keys.onSpacePressed: function (event) { row.picked(row.index); event.accepted = true; }
+    Keys.onRightPressed: function (event) { row.detailsToggled(row.index); event.accepted = true; }
+
     Rectangle {
         visible: !row.selected
         anchors.left: parent.left
@@ -62,18 +67,12 @@ Rectangle {
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter
         text: row.selected && row.detailsOpen ? "󰅁" : "󰅂"
-        color: row.selected || chevronMouse.containsMouse ? Theme.accent : Theme.mutedText
+        color: row.selected || chevronHover.hovered ? Theme.accent : Theme.mutedText
         font.family: Theme.iconFontFamily
         font.pixelSize: Math.max(Theme.iconSizeSmall, row.scaled(Theme.iconSize))
 
-        MouseArea {
-            id: chevronMouse
-
-            anchors.fill: parent
-            anchors.margins: -row.scaled(Theme.spacingSm)
-            cursorShape: Qt.PointingHandCursor
-            onClicked: row.detailsToggled(row.index)
-        }
+        HoverHandler { id: chevronHover; cursorShape: Qt.PointingHandCursor }
+        TapHandler { onTapped: row.detailsToggled(row.index) }
     }
 
     MouseArea {

@@ -5,7 +5,7 @@ import Shelllist.Ui
 RowLayout {
     id: row
 
-    property string label
+    required property string label
     property alias value: control.value
     property alias options: control.options
 

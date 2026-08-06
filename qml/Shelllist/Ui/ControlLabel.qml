@@ -4,9 +4,9 @@ import "UiText.js" as UiText
 Row {
     id: controlLabel
 
-    property string label
-    property string icon
-    property string hotkey
+    required property string label
+    required property string icon
+    required property string hotkey
     property color iconColor: Theme.text
     property color labelColor: Theme.text
     property int labelWeight: Theme.fontWeightRegular

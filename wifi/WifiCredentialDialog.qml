@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui
 
 ModalFrame {
@@ -19,7 +18,7 @@ ModalFrame {
 
     Flickable {
         width: parent.width
-        height: Math.min(360, fieldsColumn.implicitHeight)
+        height: Math.min(dialog.compact ? 260 : 360, fieldsColumn.implicitHeight)
         contentHeight: fieldsColumn.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -71,21 +70,20 @@ ModalFrame {
         onClicked: dialog.prompt.saveSecret = !dialog.prompt.saveSecret
     }
 
-    RowLayout {
+    ActionToolbar {
         width: parent.width
-        spacing: Theme.spacingMd
-
-        ActionButton {
-            Layout.fillWidth: true
-            label: "Cancel"
-            onClicked: dialog.cancelled()
-        }
-
-        ActionButton {
-            Layout.fillWidth: true
-            label: dialog.prompt.credentialMode === "daemon-secret" ? "Provide" : "Connect"
-            tone: "accent"
-            onClicked: dialog.accepted(dialog.prompt.credentialValues)
+        height: Theme.controlHeight
+        fillActions: true
+        actions: [{
+            id: "cancel", label: "Cancel"
+        }, {
+            id: "accept",
+            label: dialog.prompt.credentialMode === "daemon-secret" ? "Provide" : "Connect",
+            presentation: { tone: "accent" }
+        }]
+        onTriggered: function (actionId) {
+            if (actionId === "cancel") dialog.cancelled();
+            else dialog.accepted(dialog.prompt.credentialValues);
         }
     }
 }

@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import "BluetoothFlow.js" as BluetoothFlow
 
@@ -17,41 +16,22 @@ Ui.DetailsPane {
     densityScale: uiScale
     emptyText: "Select a Bluetooth device"
 
-    RowLayout {
-                width: parent.width
-                height: pane.headerHeight
-                spacing: Ui.Theme.spacingMd
-
-                Ui.IconTile {
-                    Layout.preferredWidth: 58
-                    Layout.preferredHeight: 54
-                    Layout.alignment: Qt.AlignVCenter
-                    icon: pane.controller.selectedResult ? pane.controller.selectedResult.icon : "󰂯"
-                    iconColor: pane.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
-                    iconSize: Math.round(Ui.Theme.iconSizeLarge * pane.uiScale)
-                    backgroundColor: Ui.Theme.selected
-                    borderColor: Ui.Theme.mix(Ui.Theme.strongBorder, Ui.Theme.surface, 0.40)
-                }
-
-                Ui.ResultLabel {
-                    title: pane.controller.selectedResult ? pane.controller.selectedResult.title : "Bluetooth device"
-                    subtitle: pane.controller.hasSelection ? BluetoothFlow.deviceState(pane.controller.selectedDevice) : ""
-                    subtitleColor: pane.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
-                    titleWeight: Ui.Theme.fontWeightBold
-                    subtitleWeight: Ui.Theme.fontWeightMedium
-                    titlePixelSize: Math.round(Ui.Theme.fontSizeDisplay * pane.uiScale)
-                    subtitlePixelSize: Math.max(Ui.Theme.fontSizeCaption, Math.round(Ui.Theme.fontSizeSmall * pane.uiScale))
-                }
-
-                Ui.ActionToolbar {
-                    Layout.preferredWidth: 170
-                    Layout.preferredHeight: pane.actionHeight
-                    actions: pane.controller.detailActions
-                    group: "primary"
-                    controlHeight: pane.actionHeight
-                    onTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
-                }
-            }
+    Ui.DetailsHeader {
+        width: parent.width
+        height: pane.headerHeight
+        uiScale: pane.uiScale
+        icon: pane.controller.selectedResult ? pane.controller.selectedResult.icon : "󰂯"
+        iconColor: pane.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
+        iconBorderColor: Ui.Theme.mix(Ui.Theme.strongBorder, Ui.Theme.surface, 0.40)
+        title: pane.controller.selectedResult ? pane.controller.selectedResult.title : "Bluetooth device"
+        subtitle: pane.controller.hasSelection ? BluetoothFlow.deviceState(pane.controller.selectedDevice) : ""
+        subtitleColor: pane.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
+        subtitleWeight: Ui.Theme.fontWeightMedium
+        titlePixelSize: Math.round(Ui.Theme.fontSizeDisplay * pane.uiScale)
+        actions: pane.controller.detailActions
+        controlHeight: pane.actionHeight
+        onActionTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
+    }
 
             Ui.ActionToolbar {
                 width: parent.width

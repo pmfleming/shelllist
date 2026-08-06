@@ -13,10 +13,9 @@ Ui.DetailFlickable {
     readonly property var files: detailState.value ? detailState.value.files : []
     readonly property var imageFacts: detailState.value ? detailState.value.image : null
     readonly property bool directTextEdit: entry.kind === "text"
-    readonly property real previewShare: 0.75
     readonly property int availableCardHeight: Math.max(0, height - cardSpacing)
-    readonly property int previewCardHeight: Math.round(availableCardHeight * previewShare)
-    readonly property int dataCardHeight: availableCardHeight - previewCardHeight
+    readonly property int previewCardHeight: Math.max(220, Math.round(availableCardHeight * 0.66))
+    readonly property int dataCardHeight: Math.max(250, availableCardHeight - previewCardHeight)
 
     function formatByteSize(byteSize) {
         if (byteSize === undefined || byteSize === null)
@@ -40,8 +39,6 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailCard {
-        id: previewCard
-
         title: cards.entry.kind
             ? cards.entry.kind.charAt(0).toUpperCase() + cards.entry.kind.slice(1)
             : "Clipboard item"
@@ -58,7 +55,6 @@ Ui.DetailFlickable {
             source: cards.detailState.thumbnail ? "file://" + cards.detailState.thumbnail.path : ""
         }
         TextEdit {
-            id: textEditor
             visible: !cards.detailState.thumbnail && cards.detailState.value && cards.detailState.value.text !== null
             anchors.fill: parent
             text: cards.detailState.editing ? cards.detailState.editDraft
@@ -89,8 +85,6 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailCard {
-        id: dataCard
-
         title: "Data"
         height: cards.dataCardHeight
 

@@ -678,6 +678,14 @@ EOF
             touch $out
           '';
 
+          wifiQr = pkgs.runCommand "shelllist-wifi-qr"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-wifi-qr.js} ${./wifi/WifiQr.js}
+            touch $out
+          '';
+
           bluetoothLifecycle = pkgs.runCommand "shelllist-bluetooth-lifecycle"
             {
               nativeBuildInputs = [ pkgs.nodejs ];

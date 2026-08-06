@@ -6,9 +6,10 @@ Rectangle {
     property string title: ""
     property string detail: ""
     property real maximumCardWidth: 560
-    property real minimumOuterMargin: Theme.spacingLg
-    property real cardPadding: Theme.spacingLg
-    property real bodySpacing: Theme.spacingMd
+    readonly property bool compact: height < 720
+    property real minimumOuterMargin: compact ? Theme.spacingSm : Theme.spacingLg
+    property real cardPadding: compact ? Theme.spacingMd : Theme.spacingLg
+    property real bodySpacing: compact ? Theme.spacingSm : Theme.spacingMd
     default property alias body: bodyColumn.data
 
     anchors.fill: parent
@@ -45,7 +46,7 @@ Rectangle {
                 text: frame.title
                 color: Theme.text
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeDisplay
+                font.pixelSize: frame.compact ? Theme.fontSizeHeading : Theme.fontSizeDisplay
                 font.weight: Theme.fontWeightBold
                 elide: Text.ElideRight
             }
@@ -58,7 +59,7 @@ Rectangle {
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeLabel
                 wrapMode: Text.Wrap
-                maximumLineCount: 5
+                maximumLineCount: frame.compact ? 3 : 5
                 elide: Text.ElideRight
             }
 

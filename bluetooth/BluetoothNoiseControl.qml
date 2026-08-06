@@ -95,8 +95,6 @@ Rectangle {
                 Keys.onSpacePressed: function (event) { control.choose(modeButton.index); event.accepted = true; }
 
                 Image {
-                    id: modeImage
-
                     anchors.centerIn: parent
                     width: control.iconExtent
                     height: control.iconExtent

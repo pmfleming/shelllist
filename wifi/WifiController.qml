@@ -2,6 +2,7 @@ import QtQuick
 import "WifiPresentation.js" as Presentation
 import "WifiFlow.js" as Flow
 import "NmApiClient.js" as Api
+import "process"
 import "NmApi.js" as NmApi
 import "."
 import Shelllist.Core as Core
@@ -55,7 +56,7 @@ ChooserController {
     readonly property WifiConnectionController connection: services.connection
     readonly property WifiNetworkActions actions: services.actions
     readonly property WifiScanController scan: services.scan
-    readonly property WifiQrController qr: qrController
+    readonly property WifiQrService qr: qrController
     readonly property var daemonEventHandlerByStream: {
         const handlers = ({});
         handlers[NmApi.streams.wifi_status] = function (event) { wifi.applyStatusEvent(event); };
@@ -313,6 +314,6 @@ ChooserController {
         onFailed: function (message) { wifi.status = message; }
     }
     WifiControllerServices { id: services; controller: wifi; prompt: wifi.prompt }
-    WifiQrController { id: qrController; controller: wifi }
+    WifiQrService { id: qrController; controller: wifi }
     BluetoothAirplaneController { id: bluetoothAirplane; controller: wifi }
 }

@@ -5,8 +5,8 @@ RowLayout {
     id: layout
 
     required property ChooserController controller
-    property Component listComponent
-    property Component detailsComponent
+    required property Component listComponent
+    required property Component detailsComponent
     readonly property var listItem: listLoader.item
     readonly property var detailsItem: detailsLoader.item
 
