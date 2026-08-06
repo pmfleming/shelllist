@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls as Controls
 import QtQuick.Effects
 import Shelllist.Ui as Ui
 import "BluetoothNoiseControl.js" as NoiseControl
@@ -22,7 +23,7 @@ Rectangle {
     readonly property int iconExtent: Math.max(28, Math.round(referenceArtworkSize * 0.4))
 
     visible: advertised
-    implicitHeight: advertised ? 94 : 0
+    implicitHeight: advertised ? iconExtent + 2 * Ui.Theme.spacingSm : 0
     radius: Ui.Theme.controlRadius
     color: Ui.Theme.withAlpha(Ui.Theme.input, 0.72)
     border.width: 1
@@ -43,27 +44,11 @@ Rectangle {
             nextButton.forceActiveFocus();
     }
 
-    Text {
-        id: heading
-
-        x: Ui.Theme.spacingMd
-        y: Ui.Theme.spacingSm
-        width: parent.width - 2 * Ui.Theme.spacingMd
-        text: "Noise control"
-        color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        font.weight: Ui.Theme.fontWeightMedium
-        horizontalAlignment: Text.AlignHCenter
-    }
-
     Row {
         id: modeRow
 
-        x: Ui.Theme.spacingXs
-        y: heading.y + heading.height + Ui.Theme.spacingXs
-        width: parent.width - 2 * Ui.Theme.spacingXs
-        height: parent.height - y - Ui.Theme.spacingXs
+        anchors.fill: parent
+        anchors.margins: Ui.Theme.spacingXs
         spacing: Ui.Theme.spacingXs
 
         Repeater {
@@ -78,6 +63,7 @@ Rectangle {
                 required property var modelData
                 readonly property bool modeAvailable: control.canSetNoiseControl
                     && NoiseControl.isSettable(control.noiseControl, modelData.value)
+                readonly property bool activatable: control.interactive && modeAvailable
                 readonly property bool selected: control.noiseControl.active_mode === modelData.value
 
                 width: (modeRow.width - modeRow.spacing * 3) / 4
@@ -85,14 +71,14 @@ Rectangle {
                 radius: Ui.Theme.controlRadius
                 color: selected ? Ui.Theme.selected
                     : (pointer.pressed ? Ui.Theme.pressed
-                    : (pointer.containsMouse ? Ui.Theme.hover : "transparent"))
+                    : (activatable && hover.hovered ? Ui.Theme.hover : "transparent"))
                 border.width: selected || activeFocus ? 1 : 0
                 border.color: activeFocus ? Ui.Theme.strongBorder : Ui.Theme.accent
-                enabled: control.interactive && modeAvailable
-                activeFocusOnTab: enabled
+                activeFocusOnTab: activatable
 
                 Accessible.role: Accessible.RadioButton
                 Accessible.name: modelData.label
+                Accessible.description: modeAvailable ? "" : "Unavailable"
                 Accessible.checked: selected
                 Accessible.onPressAction: control.choose(index)
 
@@ -111,9 +97,7 @@ Rectangle {
                 Image {
                     id: modeImage
 
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.top
-                    anchors.topMargin: 1
+                    anchors.centerIn: parent
                     width: control.iconExtent
                     height: control.iconExtent
                     source: modeButton.modelData.image
@@ -127,27 +111,17 @@ Rectangle {
                     layer.effect: MultiEffect { saturation: -1.0 }
                 }
 
-                Text {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: modeImage.bottom
-                    anchors.bottom: parent.bottom
-                    leftPadding: 2
-                    rightPadding: 2
-                    text: modeButton.modelData.label
-                    color: modeButton.modeAvailable ? Ui.Theme.text : Ui.Theme.disabledText
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Ui.Theme.fontSizeCaption
-                    font.weight: modeButton.selected ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
-                }
+                HoverHandler { id: hover }
+
+                Controls.ToolTip.visible: hover.hovered
+                Controls.ToolTip.text: modeButton.modelData.label
+                    + (modeButton.modeAvailable ? "" : " — Unavailable")
+                Controls.ToolTip.delay: 450
 
                 Ui.ControlPointerArea {
                     id: pointer
                     focusTarget: modeButton
-                    enabled: modeButton.enabled
+                    enabled: modeButton.activatable
                     onClicked: control.choose(modeButton.index)
                 }
             }
