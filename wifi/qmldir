@@ -1,7 +1,6 @@
 WifiBackend 1.0 WifiBackend.qml
 WifiConnectPolicy 1.0 WifiConnectPolicy.qml
 WifiProvider 1.0 WifiProvider.qml
-internal BluetoothAirplaneController BluetoothAirplaneController.qml
 internal ShareAvailabilityController ShareAvailabilityController.qml
 internal CaptivePortalController CaptivePortalController.qml
 internal WifiAdvancedController WifiAdvancedController.qml

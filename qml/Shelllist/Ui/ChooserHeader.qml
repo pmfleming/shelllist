@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 
 RowLayout {
@@ -16,10 +17,14 @@ RowLayout {
     property string refreshIcon: "󰑐"
     property bool focusOnCompleted: false
     property bool iconActionEnabled: false
+    property string searchActionIcon: ""
+    property string searchActionToolTip: ""
+    property bool searchActionEnabled: true
 
     signal filterEdited(string text)
     signal keyPressed(var event)
     signal iconClicked
+    signal searchActionRequested
     signal powerRequested
     signal refreshRequested
 
@@ -61,6 +66,32 @@ RowLayout {
             level: 3
             iconColor: header.powered ? Theme.accent : Theme.mutedText
         }
+    }
+
+    IconTile {
+        id: searchAction
+
+        visible: header.searchActionIcon.length > 0
+        Layout.preferredWidth: visible ? header.scaled(Theme.controlHeight) : 0
+        Layout.preferredHeight: header.scaled(Theme.controlHeight)
+        Layout.alignment: Qt.AlignVCenter
+        icon: header.searchActionIcon
+        iconColor: header.searchActionEnabled ? Theme.text : Theme.disabledText
+        iconSize: Math.max(Theme.iconSize, header.scaled(Theme.iconSize))
+        backgroundColor: Theme.input
+        borderColor: Theme.border
+        clickable: header.searchActionEnabled
+        opacity: header.searchActionEnabled ? 1 : Theme.disabledOpacity
+        onClicked: header.searchActionRequested()
+
+        Accessible.role: Accessible.Button
+        Accessible.name: header.searchActionToolTip
+        Accessible.onPressAction: if (header.searchActionEnabled) header.searchActionRequested()
+
+        HoverHandler { id: searchActionHover }
+        Controls.ToolTip.visible: searchActionHover.hovered && header.searchActionToolTip.length > 0
+        Controls.ToolTip.text: header.searchActionToolTip
+        Controls.ToolTip.delay: 450
     }
 
     TextField {

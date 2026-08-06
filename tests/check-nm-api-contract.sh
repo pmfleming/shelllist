@@ -100,7 +100,6 @@ jq -r '
   + ([.data.protocol.methods[]
       | select(.name == "wifi.setEnabled"
           or .name == "radio.setWwanEnabled"
-          or .name == "radio.setAirplaneMode"
           or .name == "wifi.networks"
           or .name == "wifi.scan"
           or .name == "wifi.connectTarget"

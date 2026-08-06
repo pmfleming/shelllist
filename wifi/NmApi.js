@@ -6,7 +6,6 @@ var version = 1;
 var methods = {
     wifi_setEnabled: "wifi.setEnabled",
     radio_setWwanEnabled: "radio.setWwanEnabled",
-    radio_setAirplaneMode: "radio.setAirplaneMode",
     wifi_networks: "wifi.networks",
     wifi_scan: "wifi.scan",
     wifi_connectTarget: "wifi.connectTarget",

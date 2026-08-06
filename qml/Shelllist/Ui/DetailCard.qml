@@ -6,9 +6,10 @@ Rectangle {
     property string title: ""
     property var entries: null
     property real contentPadding: Math.max(Theme.spacingMd, Math.min(Theme.spacingLg, height * 0.06))
-    property real verticalContentPadding: Math.max(Theme.spacingSm, Math.min(contentPadding, height * 0.05))
+    readonly property real verticalDensity: Math.max(Theme.densityMinimum, Math.min(1, height / 260))
+    property real verticalContentPadding: Theme.verticalSpacing(Theme.spacingMd, verticalDensity)
     property real headingSpacing: title.length > 0
-        ? Math.max(Theme.spacingXs, Math.min(Theme.spacingMd, height * 0.04))
+        ? Theme.verticalSpacing(Theme.spacingMd, verticalDensity)
         : 0
     default property alias content: contentSlot.data
 
@@ -46,6 +47,7 @@ Rectangle {
             DetailGrid {
                 visible: card.entries !== null
                 entries: card.entries || []
+                densityScale: card.verticalDensity
             }
         }
     }

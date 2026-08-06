@@ -6,6 +6,7 @@ Grid {
     id: grid
 
     property var entries: []
+    property real densityScale: Math.max(Theme.densityMinimum, Math.min(1, height / 220))
     readonly property int rowCount: Math.max(1, Math.ceil(entries.length / 2))
     readonly property real fieldWidth: Math.max(160, (width - columnSpacing) / 2)
     readonly property real fieldHeight: {
@@ -18,7 +19,9 @@ Grid {
     columns: 2
     columnSpacing: Math.max(24, Math.min(48, width * 0.08))
     rowSpacing: rowCount > 1
-        ? Math.max(Theme.spacingXs, Math.min(24, (height - rowCount * fieldHeight) / (rowCount - 1)))
+        ? Math.max(Theme.minimumVerticalSpacing, Math.min(
+            Theme.verticalSpacing(Theme.spacingMd, densityScale),
+            (height - rowCount * fieldHeight) / (rowCount - 1)))
         : 0
 
     Repeater {

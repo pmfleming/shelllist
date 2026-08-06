@@ -24,14 +24,12 @@ ChooserController {
         wireless_available: true,
         wwan_enabled: false,
         wwan_hardware_enabled: false,
-        wwan_available: false,
-        airplane_mode: false
+        wwan_available: false
     })
     readonly property bool powered: radios.wireless_enabled !== false
-        && radios.wireless_hardware_enabled !== false && !radios.airplane_mode
+        && radios.wireless_hardware_enabled !== false
+    // WWAN control is retained for a future dedicated mobile-broadband surface.
     readonly property bool wwanPowered: !!radios.wwan_enabled
-    readonly property bool airplaneMode: !!radios.airplane_mode
-    property var pendingAirplaneBluetooth: null
     property double statusHoldUntil: 0
     readonly property WifiBackend backend: services.backend
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
@@ -194,16 +192,6 @@ ChooserController {
         backend.setWwanPowered(!wwanPowered);
     }
 
-    function setAirplaneMode() {
-        if (!beginAction()) return;
-        status = airplaneMode ? "Disabling airplane mode…" : "Enabling airplane mode…";
-        const enabled = !airplaneMode;
-        if (enabled) scan.cancelForPowerOff();
-        pendingAirplaneBluetooth = enabled;
-        if (!backend.setAirplaneMode(enabled))
-            pendingAirplaneBluetooth = null;
-    }
-
     function applyRadioResult(result) {
         const nextRadios = result.radios || radios;
         activeStatus = Object.assign({}, activeStatus || ({}), {
@@ -213,10 +201,6 @@ ChooserController {
                 ? !!(activeStatus && activeStatus.active) : false
         });
         status = result.message || "Radio state updated";
-        if (pendingAirplaneBluetooth !== null) {
-            bluetoothAirplane.setAirplaneMode(!!pendingAirplaneBluetooth);
-            pendingAirplaneBluetooth = null;
-        }
         if (powered && uiActive) Qt.callLater(scan.refresh);
     }
 
@@ -259,8 +243,6 @@ ChooserController {
     function failCall(id, message) {
         if (id === "connect-start")
             connection.resetProgress();
-        if (id === "airplane-mode")
-            pendingAirplaneBluetooth = null;
         advanced.failCall(id, message);
         if (id === "share")
             services.share.fail(message);
@@ -315,5 +297,4 @@ ChooserController {
     }
     WifiControllerServices { id: services; controller: wifi; prompt: wifi.prompt }
     WifiQrService { id: qrController; controller: wifi }
-    BluetoothAirplaneController { id: bluetoothAirplane; controller: wifi }
 }

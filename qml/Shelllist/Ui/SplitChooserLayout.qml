@@ -9,6 +9,8 @@ RowLayout {
     required property Component detailsComponent
     readonly property var listItem: listLoader.item
     readonly property var detailsItem: detailsLoader.item
+    readonly property real verticalDensity: Theme.densityScale(height, controller.contentVerticalMargin)
+    readonly property int verticalMargin: Theme.verticalSpacing(controller.contentVerticalMargin, verticalDensity)
 
     function focusSearch() { if (listItem) listItem.focusSearch(); }
     function focusTop() { if (listItem) listItem.focusTop(); }
@@ -16,8 +18,8 @@ RowLayout {
     anchors.fill: parent
     anchors.leftMargin: controller.contentMargin
     anchors.rightMargin: controller.contentMargin
-    anchors.topMargin: controller.contentVerticalMargin
-    anchors.bottomMargin: controller.contentVerticalMargin
+    anchors.topMargin: layout.verticalMargin
+    anchors.bottomMargin: layout.verticalMargin
     spacing: 0
 
     Connections {

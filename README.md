@@ -93,7 +93,7 @@ Shelllist consumes live Bluetooth, scan, operation, audio, pairing and OBEX subs
 Shelllist currently supports:
 
 - cached network snapshots with Shelllist-owned cache refresh while the Wi-Fi UI is visible;
-- Wi-Fi software/hardware radio state, adapter availability, mobile-data state, and coordinated airplane mode across NetworkManager Wi-Fi/WWAN and powered Bluetooth adapters;
+- Wi-Fi software/hardware radio state and adapter availability, with dormant WWAN backend support reserved for a future mobile-broadband surface;
 - active status, IP/connectivity detail display, selected-network details, and distinct icons for captive-portal, open, enhanced-open, legacy, personal, enterprise, and unknown security types;
 - connection to saved, open, password-protected, hidden, WEP, and enterprise networks through named credential forms driven by daemon-required/optional fields;
 - asynchronous `wifi.connect` progress/completion events by `request_id`;
@@ -165,14 +165,14 @@ The UI consumes `nm-api` protocol v1 envelopes:
 Current D-Bus methods used by the UI:
 
 - `wifi.setEnabled` for Wi-Fi radio power control;
-- `radio.setWwanEnabled` for mobile-data radio control;
-- `radio.setAirplaneMode` for restoring/disabling NetworkManager Wi-Fi and WWAN radios while Shelllist coordinates Bluetooth power through `bt-daemon`;
 - `wifi.networks` with cached-list parameters;
 - `wifi.scan`, returning a scan `request_id`;
 - `wifi.connectTarget` with the daemon-provided opaque network `key`, returning a connect `request_id`;
 - `wifi.secret.provide` for SecretAgent responses.
 - `wifi.disconnect`;
 - `wifi.profile.operation` for profile details, atomic advanced updates, password reveal, delete, privacy, autoconnect, hostname and sharing operations.
+
+The frontend retains a `radio.setWwanEnabled` backend route for a future dedicated mobile-broadband surface, but does not currently expose a modem button.
 
 Current event streams used by the UI:
 

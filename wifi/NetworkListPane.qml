@@ -15,8 +15,7 @@ ChooserListPane {
     resultModel: controller.powered ? controller.filteredResultsModel : null
     emptyText: controller.powered ? "No Wi-Fi networks"
         : (!controller.radios.wireless_available ? "No Wi-Fi adapter"
-        : (!controller.radios.wireless_hardware_enabled ? "Wi-Fi is hardware blocked"
-        : (controller.airplaneMode ? "Airplane mode is enabled" : "Wi-Fi is off")))
+        : (!controller.radios.wireless_hardware_enabled ? "Wi-Fi is hardware blocked" : "Wi-Fi is off"))
     placeholder: "Search networks…"
     signalIcon: true
     powered: controller.powered
@@ -25,6 +24,9 @@ ChooserListPane {
     powerEnabled: !controller.actionInFlight && !controller.promptActive
     refreshEnabled: controller.powered && !controller.actionInFlight
     iconActionEnabled: !controller.screenshotInFlight && !controller.actionInFlight && !controller.promptActive
+    searchActionIcon: "󰐲"
+    searchActionToolTip: "Scan a Wi-Fi QR code"
+    searchActionEnabled: !controller.actionInFlight
     focusOnCompleted: true
     filterText: controller.filterText
     status: controller.status
@@ -34,6 +36,7 @@ ChooserListPane {
         WifiRadioToolbar { controller: pane.controller }
     }
     onIconClicked: controller.screenshotRequested()
+    onSearchActionRequested: controller.launchQrScanner()
     rowDelegate: Component {
         NetworkListRow {
             id: networkRow

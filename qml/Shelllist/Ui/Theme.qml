@@ -45,6 +45,7 @@ Item {
     readonly property int spacingSm: 8
     readonly property int spacingMd: 12
     readonly property int spacingLg: 18
+    readonly property int minimumVerticalSpacing: Math.ceil(fontSizeLabel / 2)
     readonly property int contentMargin: 14
     readonly property int contentVerticalMargin: 24
     readonly property int popupClosedWidth: 453
@@ -130,6 +131,15 @@ Item {
     function densityScale(availableHeight, verticalMargin) {
         return Math.max(densityMinimum, Math.min(densityMaximum,
             (availableHeight - 2 * verticalMargin) / densityReferenceHeight));
+    }
+
+    function verticalSpacing(preferred, density) {
+        if (preferred <= minimumVerticalSpacing)
+            return preferred;
+        const boundedDensity = Math.max(densityMinimum, Math.min(1, density));
+        const compression = (boundedDensity - densityMinimum) / (1 - densityMinimum);
+        return Math.round(minimumVerticalSpacing
+            + (preferred - minimumVerticalSpacing) * compression);
     }
 
     function listDelegateHeight(availableHeight) {

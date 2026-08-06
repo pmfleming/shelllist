@@ -7,9 +7,10 @@ Rectangle {
     property string detail: ""
     property real maximumCardWidth: 560
     readonly property bool compact: height < 720
-    property real minimumOuterMargin: compact ? Theme.spacingSm : Theme.spacingLg
-    property real cardPadding: compact ? Theme.spacingMd : Theme.spacingLg
-    property real bodySpacing: compact ? Theme.spacingSm : Theme.spacingMd
+    property real minimumOuterMargin: compact ? Theme.minimumVerticalSpacing : Theme.spacingLg
+    property real cardPadding: Theme.spacingLg
+    property real verticalCardPadding: compact ? Theme.minimumVerticalSpacing : Theme.spacingLg
+    property real bodySpacing: compact ? Theme.minimumVerticalSpacing : Theme.spacingMd
     default property alias body: bodyColumn.data
 
     anchors.fill: parent
@@ -22,7 +23,7 @@ Rectangle {
 
     Rectangle {
         width: Math.min(parent.width - 2 * frame.minimumOuterMargin, frame.maximumCardWidth)
-        implicitHeight: contentColumn.implicitHeight + 2 * frame.cardPadding
+        implicitHeight: contentColumn.implicitHeight + 2 * frame.verticalCardPadding
         height: Math.min(parent.height - 2 * frame.minimumOuterMargin, implicitHeight)
         x: Math.round((parent.width - width) / 2)
         y: Math.round((parent.height - height) / 2)
@@ -36,7 +37,7 @@ Rectangle {
             id: contentColumn
 
             x: frame.cardPadding
-            y: frame.cardPadding
+            y: frame.verticalCardPadding
             width: parent.width - 2 * frame.cardPadding
             spacing: frame.bodySpacing
 

@@ -13,13 +13,13 @@ DetailsPane {
     readonly property int actionsHeight: detailControlHeight
     readonly property int footerHeight: detailControlHeight
     readonly property real cardBudget: Math.max(420, height - 2 - headerHeight - actionsHeight - footerHeight - 5 * sectionSpacing)
-    readonly property real connectionCardHeight: Math.round(cardBudget * 0.44)
-    readonly property real networkCardHeight: Math.round(cardBudget * 0.255)
-    readonly property real profileCardHeight: Math.max(0, cardBudget - connectionCardHeight - networkCardHeight)
+    readonly property real connectionCardHeight: Math.max(220, Math.round(cardBudget * 0.44))
+    readonly property real networkCardHeight: Math.max(130, Math.round(cardBudget * 0.255))
+    readonly property real profileCardHeight: Math.max(150, cardBudget - connectionCardHeight - networkCardHeight)
 
     chooserController: controller
     densityScale: uiScale
-    sectionSpacing: Math.max(8, Math.round(12 * uiScale))
+    sectionSpacing: Theme.verticalSpacing(Theme.spacingMd, uiScale)
     leftMargin: 18
     rightMargin: 16
     emptyText: "Select a network"

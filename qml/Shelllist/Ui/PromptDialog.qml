@@ -49,12 +49,12 @@ ModalFrame {
 
     ColumnLayout {
         width: parent.width
-        spacing: Theme.spacingMd
+        spacing: dialog.bodySpacing
 
         ColumnLayout {
             id: bodyColumn
             Layout.fillWidth: true
-            spacing: Theme.spacingMd
+            spacing: dialog.bodySpacing
         }
 
         TextField {

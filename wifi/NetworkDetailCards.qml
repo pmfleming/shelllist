@@ -2,7 +2,7 @@ import QtQuick
 import Shelllist.Ui
 import "WifiPresentation.js" as Presentation
 
-Column {
+DetailFlickable {
     id: cards
 
     required property WifiController controller
@@ -12,7 +12,7 @@ Column {
     required property real networkCardHeight
     required property real profileCardHeight
 
-    spacing: sectionSpacing
+    cardSpacing: sectionSpacing
 
     DetailCard {
         height: cards.connectionCardHeight

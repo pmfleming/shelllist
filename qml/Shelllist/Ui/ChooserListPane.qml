@@ -23,10 +23,13 @@ ColumnLayout {
     property var refreshHandler: null
     property bool focusOnCompleted: false
     property bool iconActionEnabled: false
+    property string searchActionIcon: ""
+    property string searchActionToolTip: ""
+    property bool searchActionEnabled: true
     property string filterText: ""
     property string status: ""
     property real listInset: 0
-    property int bodySpacing: Math.round(Theme.spacingSm * densityScale)
+    property int bodySpacing: Theme.verticalSpacing(Theme.spacingSm, densityScale)
     property Component toolbarComponent: null
     property int toolbarHeight: Math.round(Theme.controlHeight * densityScale)
     readonly property real delegateHeight: listFrame.delegateHeight
@@ -38,6 +41,7 @@ ColumnLayout {
     signal searchKeyPressed(var event)
     signal listKeyPressed(var event)
     signal iconClicked
+    signal searchActionRequested
     signal powerRequested
     signal refreshRequested
 
@@ -58,7 +62,7 @@ ColumnLayout {
 
     Layout.fillWidth: true
     Layout.fillHeight: true
-    spacing: Math.round(Theme.spacingMd * densityScale)
+    spacing: Theme.verticalSpacing(Theme.spacingMd, densityScale)
 
     function focusSearch() { header.focusSearch(); }
     function focusTop() { listFrame.focusTop(); }
@@ -79,9 +83,13 @@ ColumnLayout {
         refreshIcon: pane.refreshIcon
         focusOnCompleted: pane.focusOnCompleted
         iconActionEnabled: pane.iconActionEnabled
+        searchActionIcon: pane.searchActionIcon
+        searchActionToolTip: pane.searchActionToolTip
+        searchActionEnabled: pane.searchActionEnabled
         onFilterEdited: function (text) { pane.filterEdited(text); }
         onKeyPressed: function (event) { pane.searchKeyPressed(event); }
         onIconClicked: pane.iconClicked()
+        onSearchActionRequested: pane.searchActionRequested()
         onPowerRequested: pane.powerRequested()
         onRefreshRequested: pane.refreshRequested()
     }

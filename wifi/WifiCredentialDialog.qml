@@ -26,7 +26,7 @@ ModalFrame {
         Column {
             id: fieldsColumn
             width: parent.width
-            spacing: Theme.spacingMd
+            spacing: dialog.bodySpacing
 
             Repeater {
                 model: dialog.prompt.credentialFields

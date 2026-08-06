@@ -6,7 +6,7 @@ Rectangle {
 
     required property ChooserController chooserController
     property real densityScale: 1
-    property int sectionSpacing: Math.max(Theme.spacingSm, Math.round(Theme.spacingMd * densityScale))
+    property int sectionSpacing: Theme.verticalSpacing(Theme.spacingMd, densityScale)
     property int leftMargin: Math.round(Theme.spacingLg * densityScale)
     property int rightMargin: leftMargin
     property int bottomMargin: 2
