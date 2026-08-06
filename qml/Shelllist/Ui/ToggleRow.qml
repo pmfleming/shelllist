@@ -23,6 +23,10 @@ Rectangle {
     border.width: 1
     opacity: enabled && interactive ? 1.0 : Theme.disabledOpacity
     activeFocusOnTab: enabled && interactive
+    Accessible.role: Accessible.CheckBox
+    Accessible.name: subtitle.length > 0 ? title + ". " + subtitle : title
+    Accessible.checked: checked
+    Accessible.onPressAction: if (enabled && interactive) row.clicked()
 
     Keys.onReturnPressed: function (event) { row.clicked(); event.accepted = true; }
     Keys.onEnterPressed: function (event) { row.clicked(); event.accepted = true; }

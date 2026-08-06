@@ -111,7 +111,7 @@ ColumnLayout {
         autoSaveTimer.stop();
         if (!hasDirtyFields || !controller.selectedAdapter.key)
             return;
-        if (controller.actionInFlight)
+        if (controller.globalRequestInFlight)
             return;
         if (saveAliasIfDirty())
             return;
@@ -140,7 +140,7 @@ ColumnLayout {
             section.syncAdapterFields(section.displayedAdapterKey !== (section.controller.selectedAdapter.key || ""));
         }
         function onActionInFlightChanged() {
-            if (!section.controller.actionInFlight && section.hasDirtyFields)
+            if (!section.controller.globalRequestInFlight && section.hasDirtyFields)
                 autoSaveTimer.restart();
         }
     }
@@ -152,10 +152,21 @@ ColumnLayout {
             return { value: adapter.key, label: adapter.alias || adapter.name || "Adapter" };
         })
         value: section.controller.selectedAdapter.key || ""
-        interactive: !section.controller.actionInFlight
+        interactive: !section.controller.globalRequestInFlight
             && !section.hasDirtyFields
             && section.controller.adapters.length > 0
-        onSelected: function (value) { section.controller.preferredAdapterKey = value; }
+        onSelected: function (value) { section.controller.setPreferredAdapter(value); }
+    }
+
+    Ui.ToggleRow {
+        Layout.fillWidth: true
+        Layout.preferredHeight: 38
+        title: "Adapter powered"
+        subtitle: "Power only this Bluetooth adapter"
+        checked: !!section.controller.selectedAdapter.powered
+        interactive: !!section.controller.selectedAdapter.key && !section.controller.globalRequestInFlight
+        onClicked: section.controller.setAdapterPower(section.controller.selectedAdapter,
+            !section.controller.selectedAdapter.powered)
     }
 
     Ui.ToggleRow {
@@ -166,7 +177,7 @@ ColumnLayout {
         checked: !!section.controller.selectedAdapter.discoverable
         interactive: !!section.controller.selectedAdapter.key
             && section.controller.selectedAdapter.powered
-            && !section.controller.actionInFlight
+            && !section.controller.globalRequestInFlight
         onClicked: section.controller.adapterOperation("set-discoverable", { discoverable: !section.controller.selectedAdapter.discoverable })
     }
 
@@ -176,7 +187,7 @@ ColumnLayout {
         title: "Incoming pairing"
         subtitle: "Allow new devices to request pairing"
         checked: !!section.controller.selectedAdapter.pairable
-        interactive: !!section.controller.selectedAdapter.key && !section.controller.actionInFlight
+        interactive: !!section.controller.selectedAdapter.key && !section.controller.globalRequestInFlight
         onClicked: section.controller.adapterOperation("set-pairable", { pairable: !section.controller.selectedAdapter.pairable })
     }
 
@@ -186,8 +197,52 @@ ColumnLayout {
         title: "Trust after pairing"
         subtitle: "Mark successfully paired devices as trusted"
         checked: section.controller.trustAfterPair
-        interactive: !section.controller.actionInFlight
-        onClicked: section.controller.trustAfterPair = !section.controller.trustAfterPair
+        interactive: !section.controller.globalRequestInFlight
+        onClicked: section.controller.setTrustAfterPair(!section.controller.trustAfterPair)
+    }
+
+    Ui.ToggleRow {
+        Layout.fillWidth: true
+        Layout.preferredHeight: 38
+        title: "Reconnect after resume"
+        subtitle: "Reconnect devices that were active before suspend"
+        checked: section.controller.management.reconnect_on_resume !== false
+        interactive: !section.controller.globalRequestInFlight
+        onClicked: section.controller.updateManagement({ reconnect_on_resume: !checked })
+    }
+
+    Ui.ToggleRow {
+        Layout.fillWidth: true
+        Layout.preferredHeight: 38
+        title: "Show blocked devices"
+        subtitle: "Include blocked devices in My Devices"
+        checked: !!section.controller.management.show_blocked_devices
+        interactive: !section.controller.globalRequestInFlight
+        onClicked: section.controller.updateManagement({ show_blocked_devices: !checked })
+    }
+
+    Ui.ToggleRow {
+        Layout.fillWidth: true
+        Layout.preferredHeight: 38
+        title: "Keep recently found devices"
+        subtitle: "Retain cached devices in Add Device"
+        checked: !!section.controller.management.show_recent_devices
+        interactive: !section.controller.globalRequestInFlight
+        onClicked: section.controller.updateManagement({ show_recent_devices: !checked })
+    }
+
+    Ui.FieldLabel { text: "State on login" }
+    Ui.SegmentedControl {
+        Layout.fillWidth: true
+        Layout.preferredHeight: Ui.Theme.compactControlHeight
+        options: [
+            { value: "remember", label: "Restore" },
+            { value: "enable", label: "Enable" },
+            { value: "disable", label: "Disable" }
+        ]
+        value: section.controller.management.launch_state || "remember"
+        interactive: !section.controller.globalRequestInFlight
+        onSelected: function (value) { section.controller.updateManagement({ launch_state: value }); }
     }
 
     Ui.FieldLabel { text: "Adapter alias" }
@@ -197,7 +252,7 @@ ColumnLayout {
         text: ""
         maximumLength: 248
         inputValid: section.aliasValid
-        readOnly: section.controller.actionInFlight
+        readOnly: section.controller.globalRequestInFlight || !section.controller.selectedAdapter.key
         onEdited: section.queueAutoSave(section.markAliasDirty)
         onEditingFinished: section.saveDirtyFields()
         onAccepted: section.saveDirtyFields()
@@ -211,7 +266,7 @@ ColumnLayout {
         to: section.maximumTimeout
         stepSize: section.timeoutStep
         valueText: section.timeoutLabel(value)
-        enabled: !section.controller.actionInFlight && !!section.controller.selectedAdapter.key
+        enabled: !section.controller.globalRequestInFlight && !!section.controller.selectedAdapter.key
         onEdited: function (dragging) { section.queueAutoSave(section.markDiscoverableTimeoutDirty, !dragging); }
         onEditingFinished: section.saveDirtyFields()
     }
@@ -224,7 +279,7 @@ ColumnLayout {
         to: section.maximumTimeout
         stepSize: section.timeoutStep
         valueText: section.timeoutLabel(value)
-        enabled: !section.controller.actionInFlight && !!section.controller.selectedAdapter.key
+        enabled: !section.controller.globalRequestInFlight && !!section.controller.selectedAdapter.key
         onEdited: function (dragging) { section.queueAutoSave(section.markPairableTimeoutDirty, !dragging); }
         onEditingFinished: section.saveDirtyFields()
     }

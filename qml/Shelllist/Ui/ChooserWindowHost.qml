@@ -12,6 +12,7 @@ PopupWindowHost {
     layerNamespace: "shelllist-" + applicationId
     surfaceWindowWidth: controller.surfaceWindowWidth
     currentWindowWidth: controller.currentWindowWidth
+    retainOnFocusLoss: controller.navigationBlocked
     onUiActivated: function (workspaceId) { controller.activateUi(workspaceId); }
     onUiDeactivated: controller.deactivateUi()
     onFocusSearchRequested: controller.focusSearchRequested()

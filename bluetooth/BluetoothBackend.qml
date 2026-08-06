@@ -15,7 +15,8 @@ Item {
 
     // Incoming OBEX authorization can arrive while the popup is hidden.
     readonly property bool active: true
-    readonly property bool running: itemCount(pending) > 0 || itemCount(operations) > 0 || itemCount(transfers) > 0
+    readonly property bool requestRunning: itemCount(pending) > 0
+    readonly property bool running: requestRunning || itemCount(operations) > 0 || itemCount(transfers) > 0
     readonly property var eventHandlers: {
         const handlers = ({});
         handlers[BtApi.streams.pairing] = backend.handlePairingEvent;
@@ -225,6 +226,9 @@ Item {
     function adapterOperation(operation, adapter, values) {
         return call("adapter-" + operation, BtApi.methods.adapterOperation,
             Object.assign({ key: adapter.key, operation: operation }, values || ({})));
+    }
+    function updateManagement(values) {
+        return call("management-update", BtApi.methods.managementUpdate, values || ({}));
     }
     function cancelOperation(requestId) { return cancelActive("operation", requestId, operations); }
     function respondPairing(requestId, accept, value) {

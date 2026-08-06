@@ -4,6 +4,7 @@ Rectangle {
     id: control
 
     property string label: ""
+    property string accessibleName: label
     property string icon: ""
     property string hotkey: ""
     property string tone: "normal"
@@ -28,6 +29,9 @@ Rectangle {
     border.width: 1
     opacity: enabled ? 1.0 : Theme.disabledOpacity
     activeFocusOnTab: enabled
+    Accessible.role: Accessible.Button
+    Accessible.name: accessibleName
+    Accessible.onPressAction: if (enabled) control.clicked()
 
     Keys.onReturnPressed: function (event) { control.clicked(); event.accepted = true; }
     Keys.onEnterPressed: function (event) { control.clicked(); event.accepted = true; }

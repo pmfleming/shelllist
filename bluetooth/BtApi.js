@@ -44,6 +44,7 @@ var methods = {
     setPowered: "bluetooth.setPowered",
     scan: "bluetooth.scan",
     adapterOperation: "bluetooth.adapter.operation",
+    managementUpdate: "bluetooth.management.update",
     obexSnapshot: "bluetooth.obex.snapshot",
     obexSend: "bluetooth.obex.send",
     obexRespond: "bluetooth.obex.respond",

@@ -11,8 +11,8 @@ Ui.PromptDialog {
     readonly property bool responseRequired: !!request.response_required
     readonly property bool inputRequired: kind === "pin-code" || kind === "passkey"
     readonly property bool valueValid: !inputRequired || (controller.pairingInput.length > 0 && (kind !== "passkey" || /^\d{1,6}$/.test(controller.pairingInput)))
-    readonly property string deviceName: request.device_key && controller.selectedDevice && controller.selectedDevice.key === request.device_key
-        ? (controller.selectedDevice.name || "Bluetooth device") : "Bluetooth device"
+    readonly property var requestDevice: controller.allDevices.find(function (device) { return device.key === request.device_key; }) || ({})
+    readonly property string deviceName: requestDevice.name || "Bluetooth device"
     readonly property var headings: ({
         "confirmation": "Confirm pairing code",
         "authorization": "Allow pairing?",

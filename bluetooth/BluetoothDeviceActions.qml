@@ -74,18 +74,44 @@ ColumnLayout {
 
     Ui.FieldLabel { text: "Device name" }
 
-    Ui.TextField {
-        id: renameInput
+    RowLayout {
         Layout.fillWidth: true
-        Layout.preferredHeight: Ui.Theme.compactControlHeight
-        text: ""
-        maximumLength: 248
-        inputValid: section.renameValid
-        readOnly: section.controller.actionInFlight
-            || !(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_rename)
-        onEdited: section.queueRename()
-        onEditingFinished: section.saveRename()
-        onAccepted: section.saveRename()
+        spacing: Ui.Theme.spacingSm
+
+        Ui.TextField {
+            id: renameInput
+            Layout.fillWidth: true
+            Layout.preferredHeight: Ui.Theme.compactControlHeight
+            text: ""
+            maximumLength: 248
+            inputValid: section.renameValid
+            readOnly: section.controller.actionInFlight
+                || !(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_rename)
+            onEdited: section.queueRename()
+            onEditingFinished: section.saveRename()
+            onAccepted: section.saveRename()
+        }
+
+        Ui.ActionButton {
+            Layout.preferredWidth: 84
+            Layout.preferredHeight: Ui.Theme.compactControlHeight
+            label: "Reset"
+            enabled: !section.controller.actionInFlight
+                && !!section.controller.selectedDevice.remote_name
+                && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
+            onClicked: section.controller.resetSelectedName()
+        }
+    }
+
+    Text {
+        Layout.fillWidth: true
+        text: section.controller.selectedDevice.remote_name
+            ? "Original name: " + section.controller.selectedDevice.remote_name
+            : "Original device name unavailable"
+        color: Ui.Theme.mutedText
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Ui.Theme.fontSizeCaption
+        elide: Text.ElideRight
     }
 
     Repeater {
@@ -103,7 +129,9 @@ ColumnLayout {
             checked: !!(modelData.state && modelData.state.checked)
             tone: (modelData.presentation || {}).tone || "normal"
             interactive: modelData.enabled !== false
-            showSubtitle: false
+            subtitle: modelData.enabled === false && modelData.metadata
+                ? (modelData.metadata.disabledReason || "Unavailable for this device") : ""
+            showSubtitle: modelData.enabled === false
             onClicked: section.controller.triggerDetailAction(modelData.id)
         }
     }

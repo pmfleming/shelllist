@@ -15,20 +15,22 @@ Ui.DetailsPane {
     chooserController: controller
     densityScale: uiScale
     emptyText: "Select a Bluetooth device"
+    contentAvailable: controller.hasSelection || controller.detailsTab === "adapter"
 
     Ui.DetailsHeader {
         width: parent.width
         height: pane.headerHeight
         uiScale: pane.uiScale
-        icon: pane.controller.selectedResult ? pane.controller.selectedResult.icon : "󰂯"
-        iconColor: pane.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
+        icon: pane.controller.selectedResult ? pane.controller.selectedResult.icon : "󰒓"
+        iconColor: pane.controller.selectedDevice.connected || !pane.controller.hasSelection ? Ui.Theme.active : Ui.Theme.mutedText
         iconBorderColor: Ui.Theme.mix(Ui.Theme.strongBorder, Ui.Theme.surface, 0.40)
-        title: pane.controller.selectedResult ? pane.controller.selectedResult.title : "Bluetooth device"
-        subtitle: pane.controller.hasSelection ? BluetoothFlow.deviceState(pane.controller.selectedDevice) : ""
-        subtitleColor: pane.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
+        title: pane.controller.selectedResult ? pane.controller.selectedResult.title
+            : (pane.controller.selectedAdapter.alias || pane.controller.selectedAdapter.name || "Bluetooth adapter")
+        subtitle: pane.controller.hasSelection ? BluetoothFlow.deviceState(pane.controller.selectedDevice) : "Adapter and management settings"
+        subtitleColor: pane.controller.selectedDevice.connected || !pane.controller.hasSelection ? Ui.Theme.active : Ui.Theme.mutedText
         subtitleWeight: Ui.Theme.fontWeightMedium
         titlePixelSize: Math.round(Ui.Theme.fontSizeDisplay * pane.uiScale)
-        actions: pane.controller.detailActions
+        actions: pane.controller.hasSelection ? pane.controller.detailActions : []
         controlHeight: pane.actionHeight
         onActionTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
     }
@@ -36,7 +38,7 @@ Ui.DetailsPane {
             Ui.ActionToolbar {
                 width: parent.width
                 height: pane.actionHeight
-                actions: pane.controller.detailActions
+                actions: pane.controller.hasSelection ? pane.controller.detailActions : []
                 group: "toolbar"
                 controlHeight: pane.actionHeight
                 onTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
@@ -56,12 +58,12 @@ Ui.DetailsPane {
                     BluetoothDevicePage {
                         id: devicePage
                         anchors.fill: parent
-                        visible: pane.controller.detailsTab === "device"
+                        visible: pane.controller.hasSelection && pane.controller.detailsTab === "device"
                         controller: pane.controller
                     }
                     BluetoothAudioTransferPage {
                         anchors.fill: parent
-                        visible: pane.controller.detailsTab === "audio"
+                        visible: pane.controller.hasSelection && pane.controller.detailsTab === "audio"
                         controller: pane.controller
                     }
                     BluetoothAdapterPage {
@@ -77,9 +79,11 @@ Ui.DetailsPane {
         width: parent.width
         height: pane.footerHeight
         selectedValue: pane.controller.detailsTab
-        tabs: [
+        tabs: pane.controller.hasSelection ? [
             { value: "device", icon: "󰋜", label: "Device Details" },
             { value: "audio", icon: "󰓃", label: "Audio & Transfer" },
+            { value: "adapter", icon: "󰒓", label: "Adapter" }
+        ] : [
             { value: "adapter", icon: "󰒓", label: "Adapter" }
         ]
         onSelected: function (value) { pane.controller.detailsTab = value; }

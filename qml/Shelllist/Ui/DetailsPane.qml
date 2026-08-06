@@ -11,6 +11,7 @@ Rectangle {
     property int rightMargin: leftMargin
     property int bottomMargin: 2
     property string emptyText: "Select an item"
+    property bool contentAvailable: chooserController.hasSelection
     property int emptyFontSize: Theme.fontSizeTitle
     default property alias content: contentColumn.data
 
@@ -29,13 +30,13 @@ Rectangle {
 
         Column {
             id: contentColumn
-            visible: pane.chooserController.hasSelection
+            visible: pane.contentAvailable
             anchors.fill: parent
             spacing: pane.sectionSpacing
         }
 
         CenteredMessage {
-            visible: !pane.chooserController.hasSelection
+            visible: !pane.contentAvailable
             text: pane.emptyText
             font.pixelSize: pane.emptyFontSize
         }

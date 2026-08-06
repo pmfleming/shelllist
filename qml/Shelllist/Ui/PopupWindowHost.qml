@@ -22,6 +22,7 @@ Item {
     property real windowHeightRatio: Theme.popupHeightRatio
     property string defaultLaunchMode: "popover"
     property bool popoverVisible: false
+    property bool retainOnFocusLoss: false
     property int popoverNoAnimRuleState: -1
 
     readonly property string launchMode: (Quickshell.env(modeEnvironment) || defaultLaunchMode).toLowerCase()
@@ -243,6 +244,6 @@ Item {
     HyprlandFocusGrab {
         active: Theme.hyprland && host.popoverMode && host.popoverVisible
         windows: [popoverAnchor]
-        onCleared: host.hidePopover()
+        onCleared: if (!host.retainOnFocusLoss) host.hidePopover()
     }
 }

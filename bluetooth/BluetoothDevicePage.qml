@@ -22,20 +22,23 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailCard {
-        height: 190
+        height: 220
         title: "Device overview"
         entries: [
-            { label: "Connection", value: page.controller.hasSelection ? BluetoothFlow.deviceState(page.controller.selectedDevice) : "—", valueColor: page.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.text, valueBold: page.controller.selectedDevice.connected },
+            { label: "Connection", value: page.controller.hasSelection ? BluetoothFlow.deviceState(page.controller.selectedDevice) : "—", valueColor: page.controller.selectedDevice.blocked ? Ui.Theme.danger : (page.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.text), valueBold: page.controller.selectedDevice.connected || page.controller.selectedDevice.blocked },
+            { label: "Type", value: page.controller.selectedDevice.device_type || "Bluetooth device" },
             { label: "Paired", value: page.controller.selectedDevice.paired ? "Yes" : "No" },
             { label: "Trusted", value: page.controller.selectedDevice.trusted ? "Yes" : "No" },
             { label: "In range", value: page.controller.selectedDevice.present ? "Yes" : "No" },
             { label: "Services", value: page.controller.selectedDevice.services_resolved ? "Resolved" : "Pending" },
-            { label: "Audio profile", value: page.controller.activeAudioProfile.label || "—" }
+            { label: "Last error", value: page.controller.selectedOperationError
+                ? (page.controller.selectedOperationError.message || "Operation failed") : "None",
+                valueColor: page.controller.selectedOperationError ? Ui.Theme.danger : Ui.Theme.text }
         ]
     }
 
     Ui.DetailCard {
-        height: Math.max(320, settings.implicitHeight + 76)
+        height: Math.max(370, settings.implicitHeight + 76)
         title: "Device settings"
 
         BluetoothDeviceActions {
@@ -49,6 +52,7 @@ Ui.DetailFlickable {
         height: 300
         title: "Technical details"
         entries: [
+            { label: "Original name", value: page.controller.selectedDevice.remote_name || "Unavailable" },
             { label: "Address", value: page.controller.selectedDevice.address || "Unavailable" },
             { label: "Address type", value: page.controller.selectedDevice.address_type || "Unavailable" },
             { label: "Adapter", value: page.controller.selectedAdapter.alias || page.controller.selectedAdapter.name || "Unavailable" },

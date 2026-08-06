@@ -11,6 +11,7 @@ Rectangle {
     property int selectedIndex: listPane.selectedIndex
     property bool selectionFocused: listPane.listFocused
     property bool detailsOpen: listPane.chooserController.detailsOpen
+    property string accessibleName: ""
     readonly property bool selected: index === selectedIndex
     default property alias content: rowContent.data
 
@@ -32,6 +33,10 @@ Rectangle {
     color: selected ? Theme.selected : (rowMouse.pressed ? Theme.pressed : (rowMouse.containsMouse ? Theme.hover : "transparent"))
     border.color: selected && selectionFocused ? Theme.strongBorder : "transparent"
     border.width: selected && selectionFocused ? 1 : 0
+    Accessible.role: Accessible.ListItem
+    Accessible.name: accessibleName
+    Accessible.selected: selected
+    Accessible.onPressAction: row.picked(row.index)
 
     Keys.onReturnPressed: function (event) { row.primaryRequested(); event.accepted = true; }
     Keys.onEnterPressed: function (event) { row.primaryRequested(); event.accepted = true; }

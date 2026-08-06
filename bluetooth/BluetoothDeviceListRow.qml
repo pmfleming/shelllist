@@ -13,6 +13,7 @@ Ui.ResultRow {
     readonly property int signalStrength: hasSignal ? Math.max(0, Math.min(100, Math.round(Number(device.signal_strength) || 0))) : 0
     readonly property int signalLevel: BluetoothFlow.signalLevel(device)
     readonly property bool signalLive: !!device.signal_live
+    accessibleName: resultData.title + ". " + resultData.subtitle
     readonly property color signalColor: !hasSignal ? Ui.Theme.mutedText : (signalStrength >= 67 ? Ui.Theme.active : (signalStrength >= 34 ? Ui.Theme.warning : Ui.Theme.danger))
 
     Text {

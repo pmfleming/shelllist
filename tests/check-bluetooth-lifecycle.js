@@ -59,6 +59,21 @@ expect("incoming transfer completion names Downloads", flow.transferCompletionSt
 expect("transfer progress reports percentage", flow.transferProgressStatus({ direction: "outgoing", file_name: "photo.jpg", size: 100, transferred: 25 }) === "Sending photo.jpg · 25%");
 expect("cancelled operations have a stable status", flow.operationCompletionStatus({ state: "cancelled" }, "Headset") === "Bluetooth operation cancelled");
 expect("cached unpaired device is recently found", flow.deviceState({ paired: false, connected: false, present: false, last_seen_ms: 123 }) === "Recently found");
+expect("blocked state takes priority", flow.deviceState({ blocked: true, paired: true, connected: false }) === "Blocked");
+const managedDevices = flow.devicesForView([
+    { key: "paired", paired: true, blocked: false },
+    { key: "nearby", paired: false, blocked: false, present: true },
+    { key: "blocked", paired: true, blocked: true }
+], "managed", { show_blocked_devices: false });
+expect("managed view excludes discovery and hidden blocked devices", managedDevices.length === 1 && managedDevices[0].key === "paired");
+const discoveryDevices = flow.devicesForView([
+    { key: "paired", paired: true, blocked: false, present: true },
+    { key: "nearby", paired: false, blocked: false, present: true },
+    { key: "recent", paired: false, blocked: false, present: false }
+], "discovery", { show_recent_devices: true });
+expect("discovery view excludes paired devices and can retain recent devices", discoveryDevices.length === 2);
+expect("radio status distinguishes hardware blocks", flow.radioStatus({ hard_blocked: true }, false, false, 0).includes("hardware switch"));
+expect("radio status distinguishes missing adapters", flow.radioStatus({ available: false, adapter_count: 0 }, false, false, 0) === "No Bluetooth adapters available");
 expect("strong signal uses three bars", flow.signalLevel({ signal_strength: 80 }) === 3);
 expect("zero signal still uses one bar", flow.signalLevel({ signal_strength: 0 }) === 1);
 expect("missing signal uses no bars", flow.signalLevel({ signal_strength: null }) === 0);

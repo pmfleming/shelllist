@@ -7,7 +7,8 @@ import Shelllist.Ui as Ui
 ShellRoot {
     BluetoothController {
         id: bluetoothController
-        onIncomingTransferRequested: windowHost.show()
+        onIncomingTransferRequested: if (!windowHost.uiActive) windowHost.show()
+        onPairingInteractionRequested: if (!windowHost.uiActive) windowHost.show()
     }
 
     Ui.ChooserWindowHost {

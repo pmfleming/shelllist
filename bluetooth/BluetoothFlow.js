@@ -61,6 +61,27 @@ function transferTransition(activeTransfer, prompt, transfer) {
         status: transferProgressStatus(transfer), authorizationRequested: false };
 }
 
+function devicesForView(devices, mode, policy) {
+    const settings = policy || ({});
+    return (devices || []).filter(function (device) {
+        if (mode === "discovery")
+            return !device.paired && !device.blocked && (device.present || settings.show_recent_devices);
+        if (device.blocked && !settings.show_blocked_devices)
+            return false;
+        return device.paired || device.connected;
+    });
+}
+
+function radioStatus(radio, discoveryMode, scanning, count) {
+    const state = radio || ({});
+    if (state.hard_blocked) return "Bluetooth is disabled by a hardware switch";
+    if (state.soft_blocked) return "Bluetooth is disabled by rfkill";
+    if (!state.available || Number(state.adapter_count || 0) === 0) return "No Bluetooth adapters available";
+    if (!state.powered) return "Bluetooth is off";
+    if (discoveryMode) return scanning ? count + " nearby devices · scanning…" : count + " nearby devices";
+    return count + " managed Bluetooth devices";
+}
+
 function retainedAdapterKey(adapters, currentKey) {
     const retained = adapters.some(function (adapter) { return adapter.key === currentKey; });
     return retained || adapters.length === 0 ? currentKey : adapters[0].key;
@@ -185,6 +206,7 @@ function noiseControlRequest(device, mode) {
 }
 
 function deviceState(device) {
+    if (device.blocked) return "Blocked";
     if (device.connected) return "Connected";
     if (device.paired) return "Paired";
     if (device.present) return "Available";
