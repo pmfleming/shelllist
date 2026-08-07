@@ -9,7 +9,6 @@ internal WifiCredentialDialog WifiCredentialDialog.qml
 internal WifiNetworkActions WifiNetworkActions.qml
 internal WifiScanController WifiScanController.qml
 internal WifiControllerServices WifiControllerServices.qml
-internal WifiRadioToolbar WifiRadioToolbar.qml
 internal WifiQrDialog WifiQrDialog.qml
 internal AdvancedIpSettingsPane AdvancedIpSettingsPane.qml
 internal AdvancedSecurityPane AdvancedSecurityPane.qml

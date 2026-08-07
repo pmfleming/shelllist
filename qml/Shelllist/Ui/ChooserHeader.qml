@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls as Controls
 import QtQuick.Layouts
 
 RowLayout {
@@ -68,32 +67,6 @@ RowLayout {
         }
     }
 
-    IconTile {
-        id: searchAction
-
-        visible: header.searchActionIcon.length > 0
-        Layout.preferredWidth: visible ? header.scaled(Theme.controlHeight) : 0
-        Layout.preferredHeight: header.scaled(Theme.controlHeight)
-        Layout.alignment: Qt.AlignVCenter
-        icon: header.searchActionIcon
-        iconColor: header.searchActionEnabled ? Theme.text : Theme.disabledText
-        iconSize: Math.max(Theme.iconSize, header.scaled(Theme.iconSize))
-        backgroundColor: Theme.input
-        borderColor: Theme.border
-        clickable: header.searchActionEnabled
-        opacity: header.searchActionEnabled ? 1 : Theme.disabledOpacity
-        onClicked: header.searchActionRequested()
-
-        Accessible.role: Accessible.Button
-        Accessible.name: header.searchActionToolTip
-        Accessible.onPressAction: if (header.searchActionEnabled) header.searchActionRequested()
-
-        HoverHandler { id: searchActionHover }
-        Controls.ToolTip.visible: searchActionHover.hovered && header.searchActionToolTip.length > 0
-        Controls.ToolTip.text: header.searchActionToolTip
-        Controls.ToolTip.delay: 450
-    }
-
     TextField {
         id: search
 
@@ -105,12 +78,17 @@ RowLayout {
         fontPixelSize: Math.max(Theme.fontSizeSmall, header.scaled(Theme.fontSizeLabel))
         text: header.filterText
         placeholder: header.placeholder
+        trailingActionIcon: header.searchActionIcon
+        trailingActionToolTip: header.searchActionToolTip
+        trailingActionEnabled: header.searchActionEnabled
+        trailingActionIconSize: Math.max(Theme.iconSize, header.scaled(Theme.iconSize))
         onEdited: function (text) {
             header.filterEdited(text);
         }
         onKeyPressed: function (event) {
             header.keyPressed(event);
         }
+        onTrailingActionRequested: header.searchActionRequested()
 
         Text {
             x: header.scaled(Theme.contentMargin)

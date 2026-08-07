@@ -31,10 +31,6 @@ ChooserListPane {
     filterText: controller.filterText
     status: controller.status
     listInset: Math.round(12 * uiScale)
-    toolbarHeight: Math.round(Theme.controlHeight * uiScale)
-    toolbarComponent: Component {
-        WifiRadioToolbar { controller: pane.controller }
-    }
     onIconClicked: controller.screenshotRequested()
     onSearchActionRequested: controller.launchQrScanner()
     rowDelegate: Component {
