@@ -35,56 +35,47 @@ Ui.DetailsPane {
         onActionTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
     }
 
-            Ui.ActionToolbar {
-                width: parent.width
-                height: pane.actionHeight
-                actions: pane.controller.hasSelection ? pane.controller.detailActions : []
-                group: "toolbar"
-                controlHeight: pane.actionHeight
-                onTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
+    Item {
+        width: parent.width
+        height: Math.max(0, parent.height - pane.headerHeight - pane.footerHeight - 2 * pane.sectionSpacing)
+        clip: true
+
+        Item {
+            width: parent.width / pane.uiScale
+            height: parent.height / pane.uiScale
+            scale: pane.uiScale
+            transformOrigin: Item.TopLeft
+
+            BluetoothDevicePage {
+                id: devicePage
+                anchors.fill: parent
+                visible: pane.controller.hasSelection && pane.controller.detailsTab === "device"
+                controller: pane.controller
             }
-
-            Item {
-                width: parent.width
-                height: Math.max(0, parent.height - pane.headerHeight - 2 * pane.actionHeight - 3 * pane.sectionSpacing)
-                clip: true
-
-                Item {
-                    width: parent.width / pane.uiScale
-                    height: parent.height / pane.uiScale
-                    scale: pane.uiScale
-                    transformOrigin: Item.TopLeft
-
-                    BluetoothDevicePage {
-                        id: devicePage
-                        anchors.fill: parent
-                        visible: pane.controller.hasSelection && pane.controller.detailsTab === "device"
-                        controller: pane.controller
-                    }
-                    BluetoothAudioTransferPage {
-                        anchors.fill: parent
-                        visible: pane.controller.hasSelection && pane.controller.detailsTab === "audio"
-                        controller: pane.controller
-                    }
-                    BluetoothAdapterPage {
-                        id: adapterPage
-                        anchors.fill: parent
-                        visible: pane.controller.detailsTab === "adapter"
-                        controller: pane.controller
-                    }
-                }
+            BluetoothInformationPage {
+                anchors.fill: parent
+                visible: pane.controller.hasSelection && pane.controller.detailsTab === "information"
+                controller: pane.controller
             }
+            BluetoothAdapterPage {
+                id: adapterPage
+                anchors.fill: parent
+                visible: pane.controller.detailsTab === "adapter"
+                controller: pane.controller
+            }
+        }
+    }
 
     Ui.DetailsTabBar {
         width: parent.width
         height: pane.footerHeight
         selectedValue: pane.controller.detailsTab
         tabs: pane.controller.hasSelection ? [
-            { value: "device", icon: "󰋜", label: "Device Details" },
-            { value: "audio", icon: "󰓃", label: "Audio & Transfer" },
-            { value: "adapter", icon: "󰒓", label: "Adapter" }
+            { value: "device", icon: "󰋜", label: "Device" },
+            { value: "information", icon: "󰋼", label: "Information" },
+            { value: "adapter", icon: "󰒓", label: "Bluetooth" }
         ] : [
-            { value: "adapter", icon: "󰒓", label: "Adapter" }
+            { value: "adapter", icon: "󰒓", label: "Bluetooth" }
         ]
         onSelected: function (value) { pane.controller.detailsTab = value; }
     }

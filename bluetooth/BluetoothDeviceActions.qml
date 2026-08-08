@@ -12,6 +12,9 @@ ColumnLayout {
     property string displayedDeviceKey: ""
     property bool renameDirty: false
     readonly property bool renameValid: renameInput.text.trim().length > 0
+    readonly property var forgetAction: controller.detailActions.find(function (action) {
+        return action.id === "forget";
+    }) || ({})
 
     Layout.fillWidth: true
     spacing: Ui.Theme.spacingMd
@@ -134,6 +137,26 @@ ColumnLayout {
             showSubtitle: modelData.enabled === false
             onClicked: section.controller.triggerDetailAction(modelData.id)
         }
+    }
+
+    Rectangle {
+        visible: !!section.forgetAction.id
+        Layout.fillWidth: true
+        Layout.preferredHeight: 1
+        color: Ui.Theme.border
+    }
+
+    Ui.ActionButton {
+        visible: !!section.forgetAction.id
+        Layout.alignment: Qt.AlignRight
+        Layout.preferredWidth: 112
+        Layout.preferredHeight: Ui.Theme.compactControlHeight
+        label: section.forgetAction.label || "Forget"
+        icon: section.forgetAction.icon || "󰆴"
+        hotkey: section.forgetAction.shortcut || ""
+        tone: "danger"
+        enabled: section.forgetAction.enabled !== false
+        onClicked: section.controller.triggerDetailAction("forget")
     }
 
 }

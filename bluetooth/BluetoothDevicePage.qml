@@ -1,12 +1,22 @@
 import QtQuick
+import QtQuick.Layouts
 import Shelllist.Ui as Ui
-import "BluetoothFlow.js" as BluetoothFlow
 
 Ui.DetailFlickable {
     id: page
 
     required property BluetoothController controller
     readonly property alias editingName: settings.editingName
+    readonly property bool hasAudio: !!controller.selectedAudio.device_key
+    readonly property bool hasAudioProfiles: controller.selectedAudioProfiles.length > 0
+
+    function routeLabel(route, available) {
+        if (!available)
+            return "Not provided";
+        if (!route.ready)
+            return "Unavailable";
+        return route.is_default ? "Ready · default" : "Ready";
+    }
 
     BluetoothBatteryStatus {
         id: batteryStatus
@@ -22,62 +32,50 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailCard {
-        height: 220
-        title: "Device overview"
-        entries: [
-            { label: "Connection", value: page.controller.hasSelection ? BluetoothFlow.deviceState(page.controller.selectedDevice) : "—", valueColor: page.controller.selectedDevice.blocked ? Ui.Theme.danger : (page.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.text), valueBold: page.controller.selectedDevice.connected || page.controller.selectedDevice.blocked },
-            { label: "Type", value: page.controller.selectedDevice.device_type || "Bluetooth device" },
-            { label: "Paired", value: page.controller.selectedDevice.paired ? "Yes" : "No" },
-            { label: "Trusted", value: page.controller.selectedDevice.trusted ? "Yes" : "No" },
-            { label: "In range", value: page.controller.selectedDevice.present ? "Yes" : "No" },
-            { label: "Services", value: page.controller.selectedDevice.services_resolved ? "Resolved" : "Pending" },
-            { label: "Last error", value: page.controller.selectedOperationError
-                ? (page.controller.selectedOperationError.message || "Operation failed") : "None",
-                valueColor: page.controller.selectedOperationError ? Ui.Theme.danger : Ui.Theme.text }
-        ]
+        visible: page.hasAudio
+        height: visible ? 190 : 0
+        title: "Audio profile"
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Ui.Theme.spacingMd
+
+            Ui.DropDownList {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Ui.Theme.compactControlHeight
+                options: page.controller.selectedAudioProfiles.map(function (profile) {
+                    return { value: profile.key, label: profile.label, enabled: profile.available !== false };
+                })
+                value: page.controller.selectedAudio.active_profile_key || ""
+                placeholder: page.hasAudioProfiles ? "Select audio profile" : "No audio profiles available"
+                interactive: !page.controller.actionInFlight && page.hasAudioProfiles
+                onSelected: function (value) {
+                    const profile = page.controller.selectedAudioProfiles.find(function (entry) { return entry.key === value; });
+                    if (profile) page.controller.setAudioProfile(profile);
+                }
+            }
+
+            Ui.DetailGrid {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                entries: [
+                    { label: "Active codec", value: page.controller.activeAudioProfile.codec || page.controller.activeAudioProfile.label || "Unavailable" },
+                    { label: "Available profiles", value: String(page.controller.selectedAudioProfiles.length) },
+                    { label: "Output", value: page.routeLabel(page.controller.selectedSink, page.controller.selectedAudio.sink !== null && page.controller.selectedAudio.sink !== undefined) },
+                    { label: "Input", value: page.routeLabel(page.controller.selectedSource, page.controller.selectedAudio.source !== null && page.controller.selectedAudio.source !== undefined) }
+                ]
+            }
+        }
     }
 
     Ui.DetailCard {
-        height: Math.max(370, settings.implicitHeight + 76)
+        height: Math.max(410, settings.implicitHeight + 76)
         title: "Device settings"
 
         BluetoothDeviceActions {
             id: settings
             anchors.fill: parent
             controller: page.controller
-        }
-    }
-
-    Ui.DetailCard {
-        height: 300
-        title: "Technical details"
-        entries: [
-            { label: "Original name", value: page.controller.selectedDevice.remote_name || "Unavailable" },
-            { label: "Address", value: page.controller.selectedDevice.address || "Unavailable" },
-            { label: "Address type", value: page.controller.selectedDevice.address_type || "Unavailable" },
-            { label: "Adapter", value: page.controller.selectedAdapter.alias || page.controller.selectedAdapter.name || "Unavailable" },
-            { label: "Signal", value: BluetoothFlow.signalLabel(page.controller.selectedDevice) },
-            { label: "RSSI", value: page.controller.selectedDevice.rssi === null || page.controller.selectedDevice.rssi === undefined ? "Unavailable" : page.controller.selectedDevice.rssi + " dBm" + (page.controller.selectedDevice.signal_live ? "" : " (cached)") },
-            { label: "Last seen", value: page.controller.selectedDevice.last_seen_ms ? new Date(page.controller.selectedDevice.last_seen_ms).toLocaleString() : "Not observed this session" },
-            { label: "Modalias", value: page.controller.selectedDevice.modalias || "Unavailable" },
-            { label: "Adapter address", value: page.controller.selectedAdapter.address || "Unavailable" },
-            { label: "UUID count", value: String((page.controller.selectedDevice.uuids || []).length) }
-        ]
-    }
-
-    Ui.DetailCard {
-        visible: !!(page.controller.selectedDevice.services && page.controller.selectedDevice.services.length)
-        height: visible ? Math.max(110, servicesText.implicitHeight + 72) : 0
-        title: "Services"
-
-        Text {
-            id: servicesText
-            anchors.fill: parent
-            text: (page.controller.selectedDevice.services || []).map(function (service) { return service.label; }).filter(function (label, index, values) { return values.indexOf(label) === index; }).join(" · ")
-            color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeSmall
-            wrapMode: Text.WordWrap
         }
     }
 }

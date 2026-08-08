@@ -55,8 +55,6 @@ expect("initial scan requires an idle powered UI", flow.shouldStartScan(true, tr
 expect("snapshot status reports scanning", flow.snapshotStatus(true, true, 3) === "3 devices · scanning…");
 expect("completed calls use a stable status", flow.completedCallStatus("device-connect", true, "Connecting") === "Bluetooth device updated");
 expect("scan failure exposes its error", flow.scanCompletionStatus({ state: "failed", error: { message: "radio failed" } }, 0, "Scanning") === "radio failed");
-expect("incoming transfer completion names Downloads", flow.transferCompletionStatus({ status: "complete", direction: "incoming", file_name: "photo.jpg" }) === "photo.jpg saved in Downloads");
-expect("transfer progress reports percentage", flow.transferProgressStatus({ direction: "outgoing", file_name: "photo.jpg", size: 100, transferred: 25 }) === "Sending photo.jpg · 25%");
 expect("cancelled operations have a stable status", flow.operationCompletionStatus({ state: "cancelled" }, "Headset") === "Bluetooth operation cancelled");
 expect("cached unpaired device is recently found", flow.deviceState({ paired: false, connected: false, present: false, last_seen_ms: 123 }) === "Recently found");
 expect("blocked state takes priority", flow.deviceState({ blocked: true, paired: true, connected: false }) === "Blocked");
@@ -81,16 +79,6 @@ expect("cached signal is labelled", flow.signalLabel({ signal_strength: 50, sign
 expect("small signal changes share a stable rank", flow.deviceScore({ present: true, signal_strength: 40 }) === flow.deviceScore({ present: true, signal_strength: 60 }));
 expect("unavailable cached pairing triggers scan", flow.shouldRescanAfterOperation({ operation: "pair", state: "failed", error: { code: "device-unavailable" } }, true, true, false));
 expect("other operation failures do not trigger scan", !flow.shouldRescanAfterOperation({ operation: "connect", state: "failed", error: { code: "device-unavailable" } }, true, true, false));
-expect("failed transfer is terminal", flow.isTerminalTransfer({ status: "error" }));
-expect("active transfer is not terminal", !flow.isTerminalTransfer({ status: "progress" }));
-const incoming = flow.transferTransition(null, null, {
-    request_id: "transfer-1", status: "awaiting-authorization", file_name: "photo.jpg"
-});
-expect("incoming transfer transition requests authorization", incoming.authorizationRequested && incoming.prompt.request_id === "transfer-1");
-const finishedTransfer = flow.transferTransition(incoming.activeTransfer, incoming.prompt, {
-    request_id: "transfer-1", status: "complete", direction: "incoming", file_name: "photo.jpg"
-});
-expect("terminal transfer clears matching state", finishedTransfer.activeTransfer === null && finishedTransfer.prompt === null);
 const activeOperation = flow.operationTransition(null, null, {
     request_id: "operation-1", operation: "connect", state: "running"
 }, "Headset", true, true, false);

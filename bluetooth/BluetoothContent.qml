@@ -25,9 +25,7 @@ Ui.ChooserSurface {
         sequence: "Escape"
         enabled: !content.controller.modalPromptOpen && !content.editingDetails
         onActivated: {
-            if (content.controller.canCancelTransfer)
-                content.controller.cancelActiveTransfer();
-            else if (content.controller.canCancelOperation)
+            if (content.controller.canCancelOperation)
                 content.controller.cancelActiveOperation();
             else if (content.controller.detailsOpen)
                 content.controller.detailsOpen = false;
@@ -54,7 +52,6 @@ Ui.ChooserSurface {
     }
 
     BluetoothPairingPrompt { controller: content.controller }
-    BluetoothObexPrompt { controller: content.controller }
     Ui.ConfirmationDialog {
         visible: content.controller.confirmationOpen
         z: 120

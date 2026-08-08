@@ -18,18 +18,12 @@ jq -e '
       and ((.last_seen_ms == null) or (.last_seen_ms | type == "number")))
 ' "$fixture" >/dev/null
 
+registry=$("$bt_daemon" debug protocol-registry)
 while IFS= read -r name; do
-  grep -Fq "\"$name\"" "$api_js" || {
-    echo "BtApi.js does not declare method $name" >&2
+  jq -e --arg name "$name" 'any((.methods + .streams)[]; .name == $name)' <<<"$registry" >/dev/null || {
+    echo "BtApi.js declares unknown protocol entry $name" >&2
     exit 1
   }
-done < <("$bt_daemon" debug protocol-registry | jq -r '.methods[].name')
-
-while IFS= read -r name; do
-  grep -Fq "\"$name\"" "$api_js" || {
-    echo "BtApi.js does not declare stream $name" >&2
-    exit 1
-  }
-done < <("$bt_daemon" debug protocol-registry | jq -r '.streams[].name')
+done < <(grep -oE '"(bluetooth|pairing)\.[A-Za-z0-9.]+"' "$api_js" | tr -d '"' | sort -u)
 
 echo "bt-api contract: checked fixture and frontend registry match"

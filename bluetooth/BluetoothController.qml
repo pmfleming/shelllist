@@ -23,12 +23,9 @@ Ui.ChooserController {
     property var audioDevices: []
     property var lastKnownBatteryByDevice: ({})
     property string audioStatus: ""
-    property var obexCapabilities: ({})
     property var pairingPrompt: null
-    property var incomingTransferPrompt: null
     property var activeOperations: ({})
     property var operationErrors: ({})
-    property var activeTransfer: null
     property var activeScan: null
     property bool trustAfterPair: true
     property string preferredAdapterKey: ""
@@ -52,23 +49,20 @@ Ui.ChooserController {
     readonly property var selectedOperationError: operationErrorForDevice(selectedDevice.key)
     readonly property bool selectedDeviceBusy: !!selectedOperation
     readonly property bool globalRequestInFlight: backend.requestRunning
-    readonly property bool actionInFlight: globalRequestInFlight || selectedDeviceBusy || canCancelTransfer || screenshotInFlight
+    readonly property bool actionInFlight: globalRequestInFlight || selectedDeviceBusy || screenshotInFlight
     readonly property bool anyActionInFlight: backend.running || screenshotInFlight
     hasSelection: filteredResults.length > 0
     selectionModel: results
     detailActions: providers.actionsFor(selectedResult)
 
     readonly property bool pairingPromptOpen: !!pairingPrompt
-    readonly property bool incomingTransferPromptOpen: !!incomingTransferPrompt
     readonly property bool confirmationOpen: !!pendingConfirmationAction
-    readonly property bool modalPromptOpen: pairingPromptOpen || incomingTransferPromptOpen || confirmationOpen
-    readonly property bool canCancelTransfer: !!activeTransfer && !["complete", "cancelled", "error"].includes(activeTransfer.status)
+    readonly property bool modalPromptOpen: pairingPromptOpen || confirmationOpen
     readonly property bool canCancelOperation: !!selectedOperation && ["queued", "running"].includes(selectedOperation.state)
     readonly property bool powered: !!radio.operational
     readonly property bool scanning: !!activeScan
     readonly property bool discoveryMode: viewMode === "discovery"
     readonly property bool refreshInFlight: scanning || backend.isPending("snapshot") || backend.isPending("scan-start")
-    signal incomingTransferRequested
     signal pairingInteractionRequested
     signal screenshotRequested
 
@@ -115,7 +109,6 @@ Ui.ChooserController {
         activateUiState(workspaceId);
         scanRequested = false;
         refresh();
-        backend.refreshObex();
     }
     function deactivateUi() {
         pendingConfirmationAction = null;
@@ -128,7 +121,6 @@ Ui.ChooserController {
     function handleTransportFailure(message) {
         scanRequested = false;
         activeOperations = ({});
-        activeTransfer = null;
         activeScan = null;
         status = message;
     }
@@ -168,7 +160,6 @@ Ui.ChooserController {
         status = "Capturing Bluetooth window…";
         return screenshotCapture.captureRegion(x, y, width, height);
     }
-    function applyObexSnapshot(capabilities) { obexCapabilities = capabilities || ({}); }
     function applyAudioSnapshot(devices) { audioDevices = devices || []; audioStatus = ""; }
     function applySnapshot(snapshot) {
         radio = snapshot.radio || ({ available: (snapshot.adapters || []).length > 0,
@@ -250,32 +241,6 @@ Ui.ChooserController {
         trustAfterPair = !!value;
         updateManagement({ trust_after_pair: trustAfterPair });
     }
-    function sendFile(path) {
-        if (!hasSelection || !path || actionInFlight || !obexCapabilities.outgoing_object_push)
-            return false;
-        status = "Starting file transfer to " + selectedDevice.name + "…";
-        return backend.sendFile(selectedDevice.key, path);
-    }
-    function handleObexTransfer(transfer) {
-        const transition = BluetoothFlow.transferTransition(activeTransfer, incomingTransferPrompt, transfer);
-        if (!transition) return;
-        activeTransfer = transition.activeTransfer;
-        incomingTransferPrompt = transition.prompt;
-        status = transition.status;
-        if (transition.authorizationRequested) incomingTransferRequested();
-    }
-    function respondIncomingTransfer(accept) {
-        if (!incomingTransferPromptOpen) return false;
-        const requestId = incomingTransferPrompt.request_id;
-        incomingTransferPrompt = null;
-        status = accept ? "Accepting incoming file…" : "Rejecting incoming file…";
-        return backend.respondObex(requestId, accept);
-    }
-    function cancelActiveTransfer() {
-        if (!canCancelTransfer) return false;
-        status = "Cancelling file transfer…";
-        return backend.cancelTransfer(activeTransfer.request_id);
-    }
     function handleOperationAccepted(operation) {
         if (!operation || !operation.request_id) return;
         if (!activeOperations[operation.request_id])
@@ -346,7 +311,7 @@ Ui.ChooserController {
         return backend.adapterOperation(operation, selectedAdapter, values || ({}));
     }
     function setAudioProfile(profile) {
-        if (!hasSelection || !profile || !profile.key || !profile.available || actionInFlight) return false;
+        if (!hasSelection || !profile || !profile.key || profile.available === false || actionInFlight) return false;
         status = "Switching Bluetooth audio to " + profile.label + "…";
         return backend.setAudioProfile(selectedDevice.key, profile.key);
     }
@@ -363,7 +328,7 @@ Ui.ChooserController {
     }
     function cycleDetailsTab() {
         if (!detailsOpen || !hasSelection) return false;
-        const tabs = ["device", "audio", "adapter"];
+        const tabs = ["device", "information", "adapter"];
         const currentIndex = Math.max(0, tabs.indexOf(detailsTab));
         detailsTab = tabs[(currentIndex + 1) % tabs.length];
         return true;

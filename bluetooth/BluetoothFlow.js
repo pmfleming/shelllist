@@ -39,28 +39,6 @@ function shouldRescanAfterOperation(operation, uiActive, powered, scanning) {
         && uiActive && powered && !scanning;
 }
 
-function isTerminalTransfer(transfer) {
-    return !!transfer && ["complete", "cancelled", "error"].includes(transfer.status);
-}
-
-function matchingRequest(current, update) {
-    return !!current && current.request_id === update.request_id;
-}
-
-function transferTransition(activeTransfer, prompt, transfer) {
-    if (!transfer || !transfer.request_id)
-        return null;
-    if (transfer.status === "awaiting-authorization")
-        return { activeTransfer: transfer, prompt: transfer,
-            status: "Incoming file transfer approval required", authorizationRequested: true };
-    const nextPrompt = matchingRequest(prompt, transfer) ? null : prompt;
-    if (isTerminalTransfer(transfer))
-        return { activeTransfer: matchingRequest(activeTransfer, transfer) ? null : activeTransfer,
-            prompt: nextPrompt, status: transferCompletionStatus(transfer), authorizationRequested: false };
-    return { activeTransfer: transfer, prompt: nextPrompt,
-        status: transferProgressStatus(transfer), authorizationRequested: false };
-}
-
 function devicesForView(devices, mode, policy) {
     const settings = policy || ({});
     return (devices || []).filter(function (device) {
@@ -115,19 +93,6 @@ function scanCompletionStatus(scan, deviceCount, currentStatus) {
         failed: (scan.error && scan.error.message) || "Bluetooth scan failed"
     });
     return messages[scan.state] || currentStatus;
-}
-
-function transferCompletionStatus(transfer) {
-    if (transfer.status === "complete")
-        return transfer.direction === "incoming" ? transfer.file_name + " saved in Downloads" : transfer.file_name + " sent";
-    if (transfer.status === "cancelled") return "File transfer cancelled";
-    return (transfer.error && transfer.error.message) || "File transfer failed";
-}
-
-function transferProgressStatus(transfer) {
-    const percentage = transfer.size > 0 ? Math.floor(transfer.transferred * 100 / transfer.size) : 0;
-    const verb = transfer.direction === "incoming" ? "Receiving " : "Sending ";
-    return verb + transfer.file_name + (transfer.size > 0 ? " · " + percentage + "%" : "…");
 }
 
 function operationCompletionStatus(operation, deviceName) {

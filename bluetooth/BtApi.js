@@ -4,12 +4,11 @@ var streams = {
     changed: "bluetooth.changed",
     pairing: "pairing.request",
     audio: "bluetooth.audio.changed",
-    obex: "bluetooth.obex.transfer",
     operation: "bluetooth.operation",
     scan: "bluetooth.scan"
 };
 
-var responseKeys = ["scan", "transfer", "obex", "audio_devices", "operation"];
+var responseKeys = ["scan", "audio_devices", "operation"];
 
 function responseKind(data) {
     return responseKeys.find(function (key) { return !!data[key]; }) || "";
@@ -45,10 +44,6 @@ var methods = {
     scan: "bluetooth.scan",
     adapterOperation: "bluetooth.adapter.operation",
     managementUpdate: "bluetooth.management.update",
-    obexSnapshot: "bluetooth.obex.snapshot",
-    obexSend: "bluetooth.obex.send",
-    obexRespond: "bluetooth.obex.respond",
-    audioSnapshot: "bluetooth.audio.snapshot",
     audioSetProfile: "bluetooth.audio.setProfile",
     pairingRespond: "bluetooth.pairing.respond",
     deviceOperation: "bluetooth.device.operation"
