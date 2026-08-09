@@ -31,13 +31,17 @@ for (const mode of modes)
 
 const control = {
     available_modes: ["transparent", "adaptive", "noise-cancelling", "off"],
-    settable_modes: ["transparent", "noise-cancelling", "off"]
+    active_mode: "adaptive"
 };
 expect("reported noise control is advertised", helper.isAdvertised(control));
 expect("empty noise control stays hidden", !helper.isAdvertised({ available_modes: [] }));
-expect("settable mode is enabled", helper.isSettable(control, "transparent"));
-expect("reported but unsettable mode is disabled", !helper.isSettable(control, "adaptive"));
-expect("right navigation skips disabled modes", helper.adjacentSettableIndex(control, 0, 1) === 2);
-expect("left navigation stops at the boundary", helper.adjacentSettableIndex(control, 0, -1) === -1);
+expect("available status retains canonical presentation order",
+    helper.availableModes(control).map(mode => mode.value).join(",") === "transparent,adaptive,noise-cancelling,off");
+expect("unsupported status modes are omitted",
+    helper.availableModes({ available_modes: ["off", "transparent"] }).map(mode => mode.value).join(",") === "transparent,off");
+expect("reported active mode is selected", helper.isActive(control, "adaptive"));
+expect("non-active mode is not selected", !helper.isActive(control, "transparent"));
+expect("active status has a user-facing label", helper.activeLabel(control) === "Adaptive");
+expect("unknown active status has a safe label", helper.activeLabel({ active_mode: "vendor-mode" }) === "Unknown");
 
 console.log(`Bluetooth noise control presentation: ${checks} checks passed`);

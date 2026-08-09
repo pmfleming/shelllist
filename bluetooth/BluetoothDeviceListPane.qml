@@ -16,7 +16,7 @@ Ui.ChooserListPane {
         : (!controller.radio.available || Number(controller.radio.adapter_count || 0) === 0 ? "No Bluetooth adapters"
         : (!controller.radio.powered ? "Bluetooth is off"
         : (controller.searchAllDevices ? "No Bluetooth devices found" : "No devices in My Devices"))))
-    placeholder: controller.searchAllDevices ? "Search all devices…" : "Search my devices…"
+    placeholder: controller.searchAllDevices ? "Search All Devices" : "Search My Devices"
     icon: "󰂯"
     powered: controller.powered
     refreshing: controller.refreshInFlight
@@ -25,9 +25,7 @@ Ui.ChooserListPane {
     refreshEnabled: controller.powered && !controller.globalRequestInFlight
     iconActionEnabled: !controller.screenshotInFlight && !controller.actionInFlight && !controller.modalPromptOpen
     searchActionIcon: controller.searchAllDevices ? "󰂯" : "󰂱"
-    searchActionToolTip: controller.searchAllDevices
-        ? "Search all devices — includes nearby and blocked devices. Click to search My Devices."
-        : "Search My Devices — paired or connected devices. Click to search all devices."
+    searchActionToolTip: controller.searchAllDevices ? "Search All Devices" : "Search My Devices"
     searchActionEnabled: !controller.globalRequestInFlight && !controller.modalPromptOpen
     filterText: controller.filterText
     status: controller.status

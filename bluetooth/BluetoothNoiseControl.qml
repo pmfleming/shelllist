@@ -13,13 +13,8 @@ Rectangle {
     property int referenceArtworkSize: 86
     readonly property var fastPair: controller.selectedDevice.fast_pair || ({})
     readonly property var noiseControl: fastPair.noise_control || ({})
-    readonly property var modes: NoiseControl.modes()
+    readonly property var displayModes: NoiseControl.availableModes(noiseControl)
     readonly property bool advertised: NoiseControl.isAdvertised(noiseControl)
-    readonly property bool canSetNoiseControl: !!(controller.selectedDevice.capabilities
-        && controller.selectedDevice.capabilities.can_set_noise_control)
-    readonly property bool interactive: !controller.actionInFlight && canSetNoiseControl
-    // The source artwork has generous transparent margins. This produces visible
-    // marks around one quarter of the rendered device artwork.
     readonly property int iconExtent: Math.max(28, Math.round(referenceArtworkSize * 0.4))
 
     visible: advertised
@@ -29,20 +24,9 @@ Rectangle {
     border.width: 1
     border.color: Ui.Theme.border
 
-    function choose(index) {
-        if (!interactive || index < 0 || index >= modes.length)
-            return;
-        const mode = modes[index].value;
-        if (NoiseControl.isSettable(noiseControl, mode))
-            controller.setNoiseControl(mode);
-    }
-
-    function focusAdjacent(index, delta) {
-        const nextIndex = NoiseControl.adjacentSettableIndex(noiseControl, index, delta);
-        const nextButton = nextIndex >= 0 ? modeRepeater.itemAt(nextIndex) : null;
-        if (nextButton)
-            nextButton.forceActiveFocus();
-    }
+    Accessible.role: Accessible.StaticText
+    Accessible.name: "Noise control: " + NoiseControl.activeLabel(noiseControl)
+    Accessible.description: "Read-only headphone status"
 
     Row {
         id: modeRow
@@ -54,74 +38,48 @@ Rectangle {
         Repeater {
             id: modeRepeater
 
-            model: control.modes
+            model: control.displayModes
 
             delegate: Rectangle {
-                id: modeButton
+                id: modeIndicator
 
-                required property int index
                 required property var modelData
-                readonly property bool modeAvailable: control.canSetNoiseControl
-                    && NoiseControl.isSettable(control.noiseControl, modelData.value)
-                readonly property bool activatable: control.interactive && modeAvailable
-                readonly property bool selected: control.noiseControl.active_mode === modelData.value
+                readonly property bool selected: NoiseControl.isActive(control.noiseControl, modelData.value)
 
-                width: (modeRow.width - modeRow.spacing * 3) / 4
+                width: (modeRow.width - modeRow.spacing * Math.max(0, modeRepeater.count - 1))
+                    / Math.max(1, modeRepeater.count)
                 height: modeRow.height
                 radius: Ui.Theme.controlRadius
-                color: selected ? Ui.Theme.selected
-                    : (pointer.pressed ? Ui.Theme.pressed
-                    : (activatable && hover.hovered ? Ui.Theme.hover : "transparent"))
-                border.width: selected || activeFocus ? 1 : 0
-                border.color: activeFocus ? Ui.Theme.strongBorder : Ui.Theme.accent
-                activeFocusOnTab: activatable
+                color: selected ? Ui.Theme.selected : "transparent"
+                border.width: selected ? 1 : 0
+                border.color: Ui.Theme.accent
 
-                Accessible.role: Accessible.RadioButton
-                Accessible.name: modelData.label
-                Accessible.description: modeAvailable ? "" : "Unavailable"
-                Accessible.checked: selected
-                Accessible.onPressAction: control.choose(index)
-
-                Keys.onLeftPressed: function (event) {
-                    control.focusAdjacent(modeButton.index, -1);
-                    event.accepted = true;
-                }
-                Keys.onRightPressed: function (event) {
-                    control.focusAdjacent(modeButton.index, 1);
-                    event.accepted = true;
-                }
-                Keys.onReturnPressed: function (event) { control.choose(modeButton.index); event.accepted = true; }
-                Keys.onEnterPressed: function (event) { control.choose(modeButton.index); event.accepted = true; }
-                Keys.onSpacePressed: function (event) { control.choose(modeButton.index); event.accepted = true; }
+                Accessible.role: Accessible.StaticText
+                Accessible.name: modelData.label + (selected ? " — active" : " — inactive")
+                Accessible.description: "Read-only noise-control status"
 
                 Image {
                     anchors.centerIn: parent
                     width: control.iconExtent
                     height: control.iconExtent
-                    source: modeButton.modelData.image
+                    source: modeIndicator.modelData.image
                     sourceSize.width: 128
                     sourceSize.height: 128
                     fillMode: Image.PreserveAspectFit
                     smooth: true
                     mipmap: true
-                    opacity: modeButton.modeAvailable ? 1.0 : 0.38
-                    layer.enabled: !modeButton.modeAvailable
+                    opacity: modeIndicator.selected ? 1.0 : 0.38
+                    layer.enabled: !modeIndicator.selected
                     layer.effect: MultiEffect { saturation: -1.0 }
                 }
 
                 HoverHandler { id: hover }
 
                 Controls.ToolTip.visible: hover.hovered
-                Controls.ToolTip.text: modeButton.modelData.label
-                    + (modeButton.modeAvailable ? "" : " — Unavailable")
+                Controls.ToolTip.text: modeIndicator.modelData.label
+                    + (modeIndicator.selected ? " — Active" : " — Inactive")
+                    + " · Read-only"
                 Controls.ToolTip.delay: 450
-
-                Ui.ControlPointerArea {
-                    id: pointer
-                    focusTarget: modeButton
-                    enabled: modeButton.activatable
-                    onClicked: control.choose(modeButton.index)
-                }
             }
         }
     }

@@ -15,14 +15,18 @@ function isAdvertised(control) {
     return ((control && control.available_modes) || []).length > 0;
 }
 
-function isSettable(control, mode) {
-    return ((control && control.settable_modes) || []).includes(mode);
+function availableModes(control) {
+    const available = (control && control.available_modes) || [];
+    return modeDefinitions
+        .filter(function (mode) { return available.includes(mode.value); })
+        .map(function (mode) { return Object.assign({}, mode); });
 }
 
-function adjacentSettableIndex(control, currentIndex, delta) {
-    for (let index = currentIndex + delta; index >= 0 && index < modeDefinitions.length; index += delta) {
-        if (isSettable(control, modeDefinitions[index].value))
-            return index;
-    }
-    return -1;
+function isActive(control, mode) {
+    return !!control && control.active_mode === mode;
+}
+
+function activeLabel(control) {
+    const active = modeDefinitions.find(function (mode) { return isActive(control, mode.value); });
+    return active ? active.label : "Unknown";
 }
