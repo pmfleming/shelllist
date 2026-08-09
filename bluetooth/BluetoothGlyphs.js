@@ -4,6 +4,7 @@
 // BlueZ semantic metadata and typed battery components, never product names.
 const glyphs = ({
     bluetooth: "󰂯",                 // md-bluetooth
+    blocked: "󰂲",                   // md-bluetooth-off
     earbuds: "󱡏",                   // md-earbuds
     headphones: "󰋋",                // md-headphones
     bluetoothHeadphones: "󰥰",       // md-headphones-bluetooth
@@ -63,6 +64,10 @@ function forDevice(device) {
         return glyphs.earbuds;
     const iconGlyph = glyphMatching(normalized(device && device.icon), iconRules, "");
     return iconGlyph || glyphMatching(serviceText(device), serviceRules, glyphs.bluetooth);
+}
+
+function forListDevice(device) {
+    return device && device.blocked ? glyphs.blocked : forDevice(device);
 }
 
 function forBattery(report) {

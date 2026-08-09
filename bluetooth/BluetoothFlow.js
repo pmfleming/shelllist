@@ -39,25 +39,24 @@ function shouldRescanAfterOperation(operation, uiActive, powered, scanning) {
         && uiActive && powered && !scanning;
 }
 
-function devicesForView(devices, mode, policy) {
+function devicesForView(devices, scope, policy) {
     const settings = policy || ({});
     return (devices || []).filter(function (device) {
-        if (mode === "discovery")
-            return !device.paired && !device.blocked && (device.present || settings.show_recent_devices);
-        if (device.blocked && !settings.show_blocked_devices)
-            return false;
-        return device.paired || device.connected;
+        if (scope === "all")
+            return device.blocked || device.paired || device.connected || device.present
+                || settings.show_recent_devices;
+        return !device.blocked && (device.paired || device.connected);
     });
 }
 
-function radioStatus(radio, discoveryMode, scanning, count) {
+function radioStatus(radio, searchAllDevices, scanning, count) {
     const state = radio || ({});
     if (state.hard_blocked) return "Bluetooth is disabled by a hardware switch";
     if (state.soft_blocked) return "Bluetooth is disabled by rfkill";
     if (!state.available || Number(state.adapter_count || 0) === 0) return "No Bluetooth adapters available";
     if (!state.powered) return "Bluetooth is off";
-    if (discoveryMode) return scanning ? count + " nearby devices · scanning…" : count + " nearby devices";
-    return count + " managed Bluetooth devices";
+    if (searchAllDevices) return scanning ? count + " Bluetooth devices · scanning…" : count + " Bluetooth devices";
+    return count + " devices in My Devices";
 }
 
 function retainedAdapterKey(adapters, currentKey) {

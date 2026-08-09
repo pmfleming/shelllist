@@ -58,18 +58,22 @@ expect("scan failure exposes its error", flow.scanCompletionStatus({ state: "fai
 expect("cancelled operations have a stable status", flow.operationCompletionStatus({ state: "cancelled" }, "Headset") === "Bluetooth operation cancelled");
 expect("cached unpaired device is recently found", flow.deviceState({ paired: false, connected: false, present: false, last_seen_ms: 123 }) === "Recently found");
 expect("blocked state takes priority", flow.deviceState({ blocked: true, paired: true, connected: false }) === "Blocked");
-const managedDevices = flow.devicesForView([
+const myDevices = flow.devicesForView([
     { key: "paired", paired: true, blocked: false },
     { key: "nearby", paired: false, blocked: false, present: true },
     { key: "blocked", paired: true, blocked: true }
-], "managed", { show_blocked_devices: false });
-expect("managed view excludes discovery and hidden blocked devices", managedDevices.length === 1 && managedDevices[0].key === "paired");
-const discoveryDevices = flow.devicesForView([
+], "mine", {});
+expect("My Devices excludes nearby and blocked devices", myDevices.length === 1 && myDevices[0].key === "paired");
+const allDevices = flow.devicesForView([
     { key: "paired", paired: true, blocked: false, present: true },
     { key: "nearby", paired: false, blocked: false, present: true },
+    { key: "blocked", paired: false, blocked: true, present: false },
     { key: "recent", paired: false, blocked: false, present: false }
-], "discovery", { show_recent_devices: true });
-expect("discovery view excludes paired devices and can retain recent devices", discoveryDevices.length === 2);
+], "all", { show_recent_devices: true });
+expect("Search all includes paired, nearby, blocked, and retained devices", allDevices.length === 4);
+const currentDevices = flow.devicesForView(allDevices, "all", { show_recent_devices: false });
+expect("Search all always includes blocked devices", currentDevices.some(device => device.key === "blocked"));
+expect("Search all can hide an unblocked stale device", !currentDevices.some(device => device.key === "recent"));
 expect("radio status distinguishes hardware blocks", flow.radioStatus({ hard_blocked: true }, false, false, 0).includes("hardware switch"));
 expect("radio status distinguishes missing adapters", flow.radioStatus({ available: false, adapter_count: 0 }, false, false, 0) === "No Bluetooth adapters available");
 expect("strong signal uses three bars", flow.signalLevel({ signal_strength: 80 }) === 3);

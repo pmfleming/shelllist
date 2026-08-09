@@ -300,7 +300,7 @@ ColumnLayout {
 
     Ui.DetailCard {
         Layout.fillWidth: true
-        Layout.preferredHeight: 150
+        Layout.preferredHeight: 102
         title: "Device list"
 
         ColumnLayout {
@@ -310,18 +310,8 @@ ColumnLayout {
             Ui.ToggleRow {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 38
-                title: "Show blocked devices"
-                subtitle: "Include blocked devices in My Devices"
-                checked: !!section.controller.management.show_blocked_devices
-                interactive: !section.controller.globalRequestInFlight
-                onClicked: section.controller.updateManagement({ show_blocked_devices: !checked })
-            }
-
-            Ui.ToggleRow {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 38
                 title: "Keep recently found devices"
-                subtitle: "Retain cached devices in Add Device"
+                subtitle: "Retain cached devices in Search all"
                 checked: !!section.controller.management.show_recent_devices
                 interactive: !section.controller.globalRequestInFlight
                 onClicked: section.controller.updateManagement({ show_recent_devices: !checked })

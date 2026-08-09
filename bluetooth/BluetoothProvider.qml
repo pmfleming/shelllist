@@ -98,7 +98,7 @@ Core.Provider {
             subtitle: operation ? BluetoothFlow.activeOperationStatus(operation, device.name || "Bluetooth device")
                 : (operationError ? ((operationError.message || "Last operation failed") + " · retry available")
                 : BluetoothFlow.deviceState(device) + battery),
-            icon: BluetoothGlyphs.forDevice(device),
+            icon: BluetoothGlyphs.forListDevice(device),
             score: BluetoothFlow.deviceScore(device),
             keywords: [device.name, device.icon || ""],
             badges: device.connected ? ["active"] : [],

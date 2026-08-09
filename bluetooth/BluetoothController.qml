@@ -10,7 +10,7 @@ Ui.ChooserController {
     property alias filterText: results.queryText
     property alias selectedIndex: results.selectedIndex
     property string detailsTab: "device"
-    property string viewMode: "managed"
+    property string searchScope: "mine"
     property var pendingConfirmationAction
     property bool scanRequested: false
     property var radio: ({ available: false, operational: false, powered: false, adapter_count: 0,
@@ -61,7 +61,7 @@ Ui.ChooserController {
     readonly property bool canCancelOperation: !!selectedOperation && ["queued", "running"].includes(selectedOperation.state)
     readonly property bool powered: !!radio.operational
     readonly property bool scanning: !!activeScan
-    readonly property bool discoveryMode: viewMode === "discovery"
+    readonly property bool searchAllDevices: searchScope === "all"
     readonly property bool refreshInFlight: scanning || backend.isPending("snapshot") || backend.isPending("scan-start")
     signal pairingInteractionRequested
     signal screenshotRequested
@@ -100,7 +100,7 @@ Ui.ChooserController {
         return base + " · " + (adapter.alias || adapter.name || "adapter");
     }
     function devicesForView() {
-        return BluetoothFlow.devicesForView(allDevices, viewMode, management);
+        return BluetoothFlow.devicesForView(allDevices, searchScope, management);
     }
     function rebuildResults(resetSelection) {
         results.replaceProviderResults(provider.providerId, provider.resultsForDevices(devicesForView()), !!resetSelection);
@@ -129,7 +129,7 @@ Ui.ChooserController {
         backend.refresh();
     }
     function refreshList() {
-        if (discoveryMode)
+        if (searchAllDevices)
             toggleScan();
         else
             refresh();
@@ -138,21 +138,24 @@ Ui.ChooserController {
         detailsTab = "adapter";
         detailsOpen = true;
     }
-    function setViewMode(mode) {
-        if (!["managed", "discovery"].includes(mode) || viewMode === mode)
+    function setSearchScope(scope) {
+        if (!["mine", "all"].includes(scope) || searchScope === scope)
             return;
         if (scanning)
             backend.setScanning(false, activeScan.adapter_key);
         activeScan = null;
         scanRequested = false;
-        viewMode = mode;
+        searchScope = scope;
         detailsOpen = false;
         rebuildResults(true);
-        if (discoveryMode && powered) {
+        if (searchAllDevices && powered) {
             scanRequested = true;
             backend.setScanning(true, selectedAdapter.key);
         }
         status = statusForSnapshot();
+    }
+    function toggleSearchScope() {
+        setSearchScope(searchAllDevices ? "mine" : "all");
     }
     function captureScreenshot(x, y, width, height) {
         if (anyActionInFlight || modalPromptOpen || screenshotInFlight)
@@ -176,14 +179,14 @@ Ui.ChooserController {
         lastKnownBatteryByDevice = enrichment.cache;
         allDevices = enrichment.devices;
         rebuildResults(false);
-        if (BluetoothFlow.shouldStartScan(uiActive && discoveryMode, powered, scanning, scanRequested)) {
+        if (BluetoothFlow.shouldStartScan(uiActive && searchAllDevices, powered, scanning, scanRequested)) {
             scanRequested = true;
             backend.setScanning(true, selectedAdapter.key);
         }
         status = statusForSnapshot();
     }
     function statusForSnapshot() {
-        return BluetoothFlow.radioStatus(radio, discoveryMode, scanning, filteredResults.length);
+        return BluetoothFlow.radioStatus(radio, searchAllDevices, scanning, filteredResults.length);
     }
     function statusForCompletedCall(id) {
         return BluetoothFlow.completedCallStatus(id, powered, status);
@@ -204,7 +207,7 @@ Ui.ChooserController {
         return backend.setPowered(!!value, adapter.key);
     }
     function toggleScan() {
-        if (!discoveryMode) {
+        if (!searchAllDevices) {
             refresh();
             return;
         }
@@ -260,8 +263,6 @@ Ui.ChooserController {
             return;
         }
         activeOperations = copyWithout(activeOperations, operation.request_id);
-        if (operation.operation === "pair" && operation.state === "completed" && discoveryMode)
-            setViewMode("managed");
         if (operation.state === "failed")
             operationErrors = copyWith(operationErrors, operation.device_key, operation.error || ({ message: "Bluetooth operation failed" }));
         else
@@ -272,7 +273,7 @@ Ui.ChooserController {
             pairingPrompt = null;
             pairingInput = "";
         }
-        if (BluetoothFlow.shouldRescanAfterOperation(operation, uiActive && discoveryMode, powered, scanning)) {
+        if (BluetoothFlow.shouldRescanAfterOperation(operation, uiActive && searchAllDevices, powered, scanning)) {
             scanRequested = true;
             backend.setScanning(true, operation.adapter_key || device.adapter_key || selectedAdapter.key);
         }

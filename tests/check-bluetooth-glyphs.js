@@ -41,5 +41,7 @@ expect("mice use generic mouse", glyphs.forDevice({ icon: "input-mouse" }) === "
 expect("controllers use generic controller", glyphs.forDevice({ icon: "input-gaming" }) === "󰊴");
 expect("audio service fallback remains generic", glyphs.forDevice({ services: [{ label: "Audio Sink" }] }) === "󰥰");
 expect("unknown devices use Bluetooth glyph", glyphs.forDevice({ icon: "" }) === "󰂯");
+expect("blocked list devices use Bluetooth-off glyph", glyphs.forListDevice({ blocked: true, icon: "audio-headphones" }) === "󰂲");
+expect("unblocked list devices keep their semantic glyph", glyphs.forListDevice({ blocked: false, icon: "audio-headphones" }) === "󰋋");
 
 console.log(`Bluetooth glyph presentation: ${checks} checks passed`);

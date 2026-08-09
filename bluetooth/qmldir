@@ -4,7 +4,6 @@ BluetoothProvider 1.0 BluetoothProvider.qml
 BluetoothPairingPrompt 1.0 BluetoothPairingPrompt.qml
 internal BluetoothDeviceListPane BluetoothDeviceListPane.qml
 internal BluetoothDeviceListRow BluetoothDeviceListRow.qml
-internal BluetoothListModeBar BluetoothListModeBar.qml
 internal BluetoothDeviceDetails BluetoothDeviceDetails.qml
 internal BluetoothDevicePage BluetoothDevicePage.qml
 internal BluetoothBatteryStatus BluetoothBatteryStatus.qml

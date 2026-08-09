@@ -15,8 +15,8 @@ Ui.ChooserListPane {
         : (controller.radio.soft_blocked ? "Bluetooth is blocked"
         : (!controller.radio.available || Number(controller.radio.adapter_count || 0) === 0 ? "No Bluetooth adapters"
         : (!controller.radio.powered ? "Bluetooth is off"
-        : (controller.discoveryMode ? "No nearby devices found" : "No managed Bluetooth devices"))))
-    placeholder: controller.discoveryMode ? "Search nearby devices…" : "Search my devices…"
+        : (controller.searchAllDevices ? "No Bluetooth devices found" : "No devices in My Devices"))))
+    placeholder: controller.searchAllDevices ? "Search all devices…" : "Search my devices…"
     icon: "󰂯"
     powered: controller.powered
     refreshing: controller.refreshInFlight
@@ -24,12 +24,17 @@ Ui.ChooserListPane {
     powerEnabled: !controller.globalRequestInFlight && !controller.radio.hard_blocked
     refreshEnabled: controller.powered && !controller.globalRequestInFlight
     iconActionEnabled: !controller.screenshotInFlight && !controller.actionInFlight && !controller.modalPromptOpen
+    searchActionIcon: controller.searchAllDevices ? "󰂯" : "󰂱"
+    searchActionToolTip: controller.searchAllDevices
+        ? "Search all devices — includes nearby and blocked devices. Click to search My Devices."
+        : "Search My Devices — paired or connected devices. Click to search all devices."
+    searchActionEnabled: !controller.globalRequestInFlight && !controller.modalPromptOpen
     filterText: controller.filterText
     status: controller.status
     listInset: Math.round(12 * uiScale)
     refreshHandler: function () { controller.refreshList(); }
-    toolbarComponent: Component { BluetoothListModeBar { controller: pane.controller } }
     onIconClicked: controller.screenshotRequested()
+    onSearchActionRequested: controller.toggleSearchScope()
 
     rowDelegate: Component {
         BluetoothDeviceListRow { listPane: pane }

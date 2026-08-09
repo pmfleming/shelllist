@@ -43,7 +43,8 @@ Ui.ResultRow {
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter
         text: row.resultData.icon || "󰂯"
-        color: row.device.connected ? Ui.Theme.active : Ui.Theme.mutedText
+        color: row.device.blocked ? Ui.Theme.danger
+            : (row.device.connected ? Ui.Theme.active : Ui.Theme.mutedText)
         font.family: Ui.Theme.iconFontFamily
         font.pixelSize: Math.max(Ui.Theme.iconSize, row.scaled(Ui.Theme.fontSizeTitle))
     }
