@@ -1,5 +1,26 @@
 {
   "nodes": {
+    "app-daemon": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786263926,
+        "narHash": "sha256-xVTNdMA34d+gE1uXrIn3Mpe69OYHtbcCn+b0/Giz620=",
+        "ref": "main",
+        "rev": "a0b6ac71016b7db4cc52016c45810893b11b9602",
+        "revCount": 1,
+        "type": "git",
+        "url": "file:../app-daemon"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "file:../app-daemon"
+      }
+    },
     "bt-daemon": {
       "inputs": {
         "nixpkgs": [
@@ -81,6 +102,7 @@
     },
     "root": {
       "inputs": {
+        "app-daemon": "app-daemon",
         "bt-daemon": "bt-daemon",
         "clip-daemon": "clip-daemon",
         "nixpkgs": "nixpkgs",

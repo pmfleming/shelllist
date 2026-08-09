@@ -18,6 +18,11 @@
       url = "git+file:../clip-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    app-daemon = {
+      # Use the sibling daemon during launcher development.
+      url = "git+file:../app-daemon?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ self, nixpkgs, ... }:
@@ -31,6 +36,7 @@
           nmDaemon = inputs."nm-daemon".packages.${system}.default;
           btDaemon = inputs."bt-daemon".packages.${system}.default;
           clipDaemon = inputs."clip-daemon".packages.${system}.default;
+          appDaemon = inputs."app-daemon".packages.${system}.default;
           nmDaemonConnectParityProbe = inputs."nm-daemon".packages.${system}.connectParityProbe;
           mkMeta = description: mainProgram: {
             inherit description mainProgram;
@@ -214,12 +220,185 @@
               clipDaemon
             ];
             text = ''
-              config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/clipboard
+                            config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/clipboard
+                            export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
+                            export QML2_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
+
+                            popover_ipc() {
+                              quickshell ipc --path "$config_path" --newest call clipboard "$@"
+                            }
+                            current_daemon_running() {
+                              quickshell list --all 2>/dev/null \
+                                | awk -v expected="$config_path/shell.qml" '
+                                    /^  Config path:/ {
+                                      path = $0
+                                      sub(/^  Config path: /, "", path)
+                                      if (path == expected) found = 1
+                                    }
+                                    END { exit(found ? 0 : 1) }
+                                  '
+                            }
+                            ensure_daemon() {
+                              if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then return 0; fi
+                              SHELLLIST_CLIPBOARD_MODE=popover quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
+                              attempts=0
+                              while [ "$attempts" -lt 30 ]; do
+                                if popover_ipc ping >/dev/null 2>&1; then return 0; fi
+                                attempts=$((attempts + 1)); sleep 0.05
+                              done
+                              echo "Shelllist Clipboard popover did not become ready" >&2
+                              return 1
+                            }
+
+                            usage() {
+                              cat <<'EOF'
+              Usage: shelllist-clipboard [OPTIONS] [ACTION]
+
+              Clipboard settings:
+                --pause         Pause history capture
+                --private       Pause capture in private mode
+                --resume        Resume history capture
+                --kept COUNT    Set the maximum number of regular history entries
+
+              Actions: daemon, floating, foreground, toggle, open, show, hide, status
+              Setting options used without an action update clip-daemon and exit.
+              EOF
+                            }
+
+                            clip_call() {
+                              request=$1
+                              response=
+                              coproc CLIP_CLIENT { clip-daemon client; }
+                              client_out=''${CLIP_CLIENT[0]}
+                              client_in=''${CLIP_CLIENT[1]}
+                              client_pid=$CLIP_CLIENT_PID
+                              printf '%s\n' "$request" >&"$client_in"
+                              while IFS= read -r line <&"$client_out"; do
+                                if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli"' >/dev/null; then
+                                  response=$line
+                                  break
+                                fi
+                              done
+                              printf '%s\n' '{"op":"shutdown","id":"shelllist-cli-shutdown"}' >&"$client_in" || true
+                              while IFS= read -r line <&"$client_out"; do
+                                if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli-shutdown"' >/dev/null; then
+                                  break
+                                fi
+                              done
+                              wait "$client_pid" || true
+
+                              if [ -z "$response" ]; then
+                                echo "clip-daemon did not return a response" >&2
+                                return 1
+                              fi
+                              if ! printf '%s\n' "$response" | jq -e '.ok == true and .response.ok == true' >/dev/null; then
+                                printf '%s\n' "$response" | jq -r '.response.error.message // .error // "Clipboard setting update failed"' >&2
+                                return 1
+                              fi
+                            }
+
+                            capture_mode=
+                            kept=
+                            configured=0
+                            while [ "$#" -gt 0 ]; do
+                              case "$1" in
+                                --pause|--private|--resume)
+                                  requested_mode=''${1#--}
+                                  if [ -n "$capture_mode" ] && [ "$capture_mode" != "$requested_mode" ]; then
+                                    echo "Only one of --pause, --private, or --resume may be used" >&2
+                                    exit 2
+                                  fi
+                                  capture_mode=$requested_mode
+                                  configured=1
+                                  shift
+                                  ;;
+                                --kept)
+                                  if [ "$#" -lt 2 ]; then
+                                    echo "--kept requires an entry count" >&2
+                                    exit 2
+                                  fi
+                                  case "$2" in
+                                    ""|*[!0-9]*) echo "--kept must be a positive integer" >&2; exit 2 ;;
+                                  esac
+                                  kept=$2
+                                  configured=1
+                                  shift 2
+                                  ;;
+                                -h|--help)
+                                  usage
+                                  exit 0
+                                  ;;
+                                --)
+                                  shift
+                                  break
+                                  ;;
+                                -*)
+                                  echo "Unknown option: $1" >&2
+                                  usage >&2
+                                  exit 2
+                                  ;;
+                                *) break ;;
+                              esac
+                            done
+
+                            if [ -n "$capture_mode" ]; then
+                              paused=true
+                              private=false
+                              if [ "$capture_mode" = private ]; then
+                                private=true
+                              elif [ "$capture_mode" = resume ]; then
+                                paused=false
+                              fi
+                              request=$(jq -cn --argjson paused "$paused" --argjson private "$private" \
+                                '{op:"call", id:"shelllist-cli", method:"clipboard.capture.setPaused", params:{paused:$paused, private_mode:$private}}')
+                              clip_call "$request"
+                              case "$capture_mode" in
+                                pause) echo "Clipboard history capture paused" ;;
+                                private) echo "Private mode enabled; clipboard history capture paused" ;;
+                                resume) echo "Clipboard history capture resumed" ;;
+                              esac
+                            fi
+
+                            if [ -n "$kept" ]; then
+                              request=$(jq -cn --argjson kept "$kept" \
+                                '{op:"call", id:"shelllist-cli", method:"clipboard.settings.update", params:{max_entries:$kept}}')
+                              clip_call "$request"
+                              echo "Clipboard retention set to $kept entries"
+                            fi
+
+                            action=''${1:-}
+                            if [ "$#" -gt 0 ]; then shift; fi
+                            if [ "$#" -gt 0 ]; then
+                              usage >&2
+                              exit 2
+                            fi
+                            if [ -z "$action" ]; then
+                              if [ "$configured" -eq 1 ]; then exit 0; fi
+                              action=toggle
+                            fi
+                            [ "$action" = show ] && action=open
+                            case "$action" in
+                              daemon) ensure_daemon ;;
+                              floating) SHELLLIST_CLIPBOARD_MODE=floating exec quickshell --path "$config_path" ;;
+                              foreground) SHELLLIST_CLIPBOARD_MODE=popover exec quickshell --path "$config_path" --no-duplicate ;;
+                              toggle|open|hide) ensure_daemon && popover_ipc "$action" >/dev/null ;;
+                              status) ensure_daemon && popover_ipc status ;;
+                              *) usage >&2; exit 2 ;;
+                            esac
+            '';
+          };
+
+          launcher = pkgs.writeShellApplication {
+            name = "shelllist-launcher";
+            meta = mkMeta "Shelllist application launcher backed by app-daemon" "shelllist-launcher";
+            runtimeInputs = [ pkgs.coreutils pkgs.gawk pkgs.quickshell appDaemon ];
+            text = ''
+              config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/launcher
               export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
               export QML2_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
 
               popover_ipc() {
-                quickshell ipc --path "$config_path" --newest call clipboard "$@"
+                quickshell ipc --path "$config_path" --newest call launcher "$@"
               }
               current_daemon_running() {
                 quickshell list --all 2>/dev/null \
@@ -234,150 +413,28 @@
               }
               ensure_daemon() {
                 if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then return 0; fi
-                SHELLLIST_CLIPBOARD_MODE=popover quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
+                quickshell list --all 2>/dev/null \
+                  | awk '/Process ID:/ { pid = $3 } /Config path: .*share\/shelllist\/launcher\/shell.qml/ { if (pid != "") print pid }' \
+                  | while read -r pid; do quickshell kill --pid "$pid" >/dev/null 2>&1 || true; done || true
+                SHELLLIST_LAUNCHER_MODE=popover quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
                 attempts=0
                 while [ "$attempts" -lt 30 ]; do
                   if popover_ipc ping >/dev/null 2>&1; then return 0; fi
                   attempts=$((attempts + 1)); sleep 0.05
                 done
-                echo "Shelllist Clipboard popover did not become ready" >&2
+                echo "Shelllist launcher did not become ready" >&2
                 return 1
               }
 
-              usage() {
-                cat <<'EOF'
-Usage: shelllist-clipboard [OPTIONS] [ACTION]
-
-Clipboard settings:
-  --pause         Pause history capture
-  --private       Pause capture in private mode
-  --resume        Resume history capture
-  --kept COUNT    Set the maximum number of regular history entries
-
-Actions: daemon, floating, foreground, toggle, open, show, hide, status
-Setting options used without an action update clip-daemon and exit.
-EOF
-              }
-
-              clip_call() {
-                request=$1
-                response=
-                coproc CLIP_CLIENT { clip-daemon client; }
-                client_out=''${CLIP_CLIENT[0]}
-                client_in=''${CLIP_CLIENT[1]}
-                client_pid=$CLIP_CLIENT_PID
-                printf '%s\n' "$request" >&"$client_in"
-                while IFS= read -r line <&"$client_out"; do
-                  if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli"' >/dev/null; then
-                    response=$line
-                    break
-                  fi
-                done
-                printf '%s\n' '{"op":"shutdown","id":"shelllist-cli-shutdown"}' >&"$client_in" || true
-                while IFS= read -r line <&"$client_out"; do
-                  if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli-shutdown"' >/dev/null; then
-                    break
-                  fi
-                done
-                wait "$client_pid" || true
-
-                if [ -z "$response" ]; then
-                  echo "clip-daemon did not return a response" >&2
-                  return 1
-                fi
-                if ! printf '%s\n' "$response" | jq -e '.ok == true and .response.ok == true' >/dev/null; then
-                  printf '%s\n' "$response" | jq -r '.response.error.message // .error // "Clipboard setting update failed"' >&2
-                  return 1
-                fi
-              }
-
-              capture_mode=
-              kept=
-              configured=0
-              while [ "$#" -gt 0 ]; do
-                case "$1" in
-                  --pause|--private|--resume)
-                    requested_mode=''${1#--}
-                    if [ -n "$capture_mode" ] && [ "$capture_mode" != "$requested_mode" ]; then
-                      echo "Only one of --pause, --private, or --resume may be used" >&2
-                      exit 2
-                    fi
-                    capture_mode=$requested_mode
-                    configured=1
-                    shift
-                    ;;
-                  --kept)
-                    if [ "$#" -lt 2 ]; then
-                      echo "--kept requires an entry count" >&2
-                      exit 2
-                    fi
-                    case "$2" in
-                      ""|*[!0-9]*) echo "--kept must be a positive integer" >&2; exit 2 ;;
-                    esac
-                    kept=$2
-                    configured=1
-                    shift 2
-                    ;;
-                  -h|--help)
-                    usage
-                    exit 0
-                    ;;
-                  --)
-                    shift
-                    break
-                    ;;
-                  -*)
-                    echo "Unknown option: $1" >&2
-                    usage >&2
-                    exit 2
-                    ;;
-                  *) break ;;
-                esac
-              done
-
-              if [ -n "$capture_mode" ]; then
-                paused=true
-                private=false
-                if [ "$capture_mode" = private ]; then
-                  private=true
-                elif [ "$capture_mode" = resume ]; then
-                  paused=false
-                fi
-                request=$(jq -cn --argjson paused "$paused" --argjson private "$private" \
-                  '{op:"call", id:"shelllist-cli", method:"clipboard.capture.setPaused", params:{paused:$paused, private_mode:$private}}')
-                clip_call "$request"
-                case "$capture_mode" in
-                  pause) echo "Clipboard history capture paused" ;;
-                  private) echo "Private mode enabled; clipboard history capture paused" ;;
-                  resume) echo "Clipboard history capture resumed" ;;
-                esac
-              fi
-
-              if [ -n "$kept" ]; then
-                request=$(jq -cn --argjson kept "$kept" \
-                  '{op:"call", id:"shelllist-cli", method:"clipboard.settings.update", params:{max_entries:$kept}}')
-                clip_call "$request"
-                echo "Clipboard retention set to $kept entries"
-              fi
-
-              action=''${1:-}
-              if [ "$#" -gt 0 ]; then shift; fi
-              if [ "$#" -gt 0 ]; then
-                usage >&2
-                exit 2
-              fi
-              if [ -z "$action" ]; then
-                if [ "$configured" -eq 1 ]; then exit 0; fi
-                action=toggle
-              fi
+              action=''${1:-toggle}
               [ "$action" = show ] && action=open
               case "$action" in
                 daemon) ensure_daemon ;;
-                floating) SHELLLIST_CLIPBOARD_MODE=floating exec quickshell --path "$config_path" ;;
-                foreground) SHELLLIST_CLIPBOARD_MODE=popover exec quickshell --path "$config_path" --no-duplicate ;;
+                floating) shift; SHELLLIST_LAUNCHER_MODE=floating exec quickshell --path "$config_path" "$@" ;;
+                foreground) SHELLLIST_LAUNCHER_MODE=popover exec quickshell --path "$config_path" --no-duplicate ;;
                 toggle|open|hide) ensure_daemon && popover_ipc "$action" >/dev/null ;;
                 status) ensure_daemon && popover_ipc status ;;
-                *) usage >&2; exit 2 ;;
+                *) echo "Usage: shelllist-launcher [daemon|floating|foreground|toggle|open|hide|status]" >&2; exit 2 ;;
               esac
             '';
           };
@@ -577,7 +634,7 @@ EOF
             installPhase = ''
               runHook preInstall
               mkdir -p $out/share/shelllist
-              cp -r wifi bluetooth clipboard qml $out/share/shelllist/
+              cp -r wifi bluetooth clipboard launcher qml $out/share/shelllist/
               runHook postInstall
             '';
           };
@@ -588,8 +645,20 @@ EOF
           nmDaemon = inputs."nm-daemon".packages.${system}.default;
           btDaemon = inputs."bt-daemon".packages.${system}.default;
           clipDaemon = inputs."clip-daemon".packages.${system}.default;
+          appDaemon = inputs."app-daemon".packages.${system}.default;
         in
         {
+          appDaemonContract = pkgs.runCommand "shelllist-app-daemon-contract"
+            {
+              nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
+            } ''
+            ${pkgs.bash}/bin/bash ${./tests/check-app-api-contract.sh} \
+              ${appDaemon}/bin/app-daemon \
+              ${./contracts/app-api-ui-contract.fixture.json} \
+              ${./launcher/AppApi.js}
+            touch $out
+          '';
+
           clipDaemonContract = pkgs.runCommand "shelllist-clip-daemon-contract"
             {
               nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
@@ -642,6 +711,7 @@ EOF
               ${./qml}/Shelllist/Ui/*.qml
               ${./bluetooth}/*.qml
               ${./clipboard}/*.qml
+              ${./launcher}/*.qml
               ${./wifi}/*.qml
               ${./wifi}/networkinput/*.qml
               ${./wifi}/process/*.qml
@@ -768,6 +838,11 @@ EOF
           type = "app";
           program = "${self.packages.${system}.clipboard}/bin/shelllist-clipboard";
           meta.description = "Run the Shelllist Clipboard Quickshell popup";
+        };
+        launcher = {
+          type = "app";
+          program = "${self.packages.${system}.launcher}/bin/shelllist-launcher";
+          meta.description = "Run the Shelllist application launcher";
         };
         connectParityProbe = {
           type = "app";

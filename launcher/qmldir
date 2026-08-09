@@ -1,0 +1,8 @@
+module Shelllist.Launcher
+ApplicationBackend 1.0 ApplicationBackend.qml
+ApplicationContent 1.0 ApplicationContent.qml
+ApplicationController 1.0 ApplicationController.qml
+ApplicationDetails 1.0 ApplicationDetails.qml
+ApplicationListPane 1.0 ApplicationListPane.qml
+ApplicationListRow 1.0 ApplicationListRow.qml
+ApplicationProvider 1.0 ApplicationProvider.qml
