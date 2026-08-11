@@ -1,5 +1,4 @@
 import QtQuick
-import Shelllist.Core as Core
 
 Item {
     id: services
@@ -7,11 +6,6 @@ Item {
     required property WifiController controller
     required property WifiPromptController prompt
 
-    property alias queryText: resultsModel.queryText
-    property alias selectedIndex: resultsModel.selectedIndex
-    readonly property Core.ProviderRegistry providers: providerRegistry
-    readonly property WifiProvider provider: wifiProvider
-    readonly property Core.ResultStore results: resultsModel
     readonly property ShareAvailabilityController share: shareModel
     readonly property CaptivePortalController portal: portalModel
     readonly property WifiConnectPolicy policy: policyModel
@@ -21,11 +15,6 @@ Item {
     readonly property WifiScanController scan: scanModel
     readonly property WifiBackend backend: backendModel
 
-    Core.ProviderRegistry {
-        id: providerRegistry
-        WifiProvider { id: wifiProvider; controller: services.controller }
-    }
-    Core.ResultStore { id: resultsModel; registry: providerRegistry }
     ShareAvailabilityController { id: shareModel; controller: services.controller; backend: backendModel }
     CaptivePortalController { id: portalModel; controller: services.controller; backend: backendModel }
     WifiConnectPolicy { id: policyModel }

@@ -1,32 +1,16 @@
-import QtQuick
 import Shelllist.Core as Core
 import Shelllist.Io as Io
 import "AppApi.js" as AppApi
 
-Item {
-    id: backend
-
+Io.DaemonBackend {
     required property ApplicationController controller
-    readonly property bool active: controller.uiActive
-    property var pending: ({})
+    daemonName: "app-daemon"
+    streams: [AppApi.streams.applications, AppApi.streams.windows, AppApi.streams.operation]
+    active: controller.uiActive
 
-    function call(id, method, params) {
-        if (pending[id])
-            return false;
-        const next = Object.assign({}, pending);
-        next[id] = true;
-        pending = next;
-        client.call(id, method, params || ({}));
-        return true;
-    }
-    function finish(id, envelope, transportError) {
-        const next = Object.assign({}, pending);
-        delete next[id];
-        pending = next;
-        if (id === "session-subscribe" || id.indexOf("cancel-") === 0 || id.indexOf("shutdown-") === 0)
-            return;
+    function finish(id: string, envelope: var, transportError: string): void {
         const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            AppApi.protocol, AppApi.version, "app-daemon", "Application operation failed");
+            AppApi.protocol, AppApi.version, daemonName, "Application operation failed");
         if (error) {
             controller.handleFailure(id, error);
             return;
@@ -37,26 +21,28 @@ Item {
         if (data.operation)
             controller.applyOperation(id, data.operation);
     }
-    function query(id, text, generation, limit, forceRefresh) {
+
+    function query(id: string, text: string, generation: int, limit: int, forceRefresh: bool): bool {
         return call(id, forceRefresh ? AppApi.methods.refresh : AppApi.methods.query,
             { query: text, generation: generation, limit: limit });
     }
-    function execute(id, params) { return call(id, AppApi.methods.execute, params); }
-    function cancelRequest(requestId) { client.cancel("cancel-" + requestId, requestId); }
 
-    Io.JsonlDaemonClient {
-        id: client
-        daemonName: "app-daemon"
-        recoverProtocolErrors: true
-        streams: [AppApi.streams.applications, AppApi.streams.windows, AppApi.streams.operation]
-        active: backend.active
-        onResponse: function (id, envelope, transportError) { backend.finish(id, envelope, transportError); }
-        onEventReceived: function (event) {
-            if (event.event === "subscribed")
-                return;
-            if (event.stream === AppApi.streams.applications || event.stream === AppApi.streams.windows)
-                backend.controller.scheduleRefresh();
-        }
-        onTransportFailed: function (message) { backend.controller.handleTransportFailure(message); }
+    function execute(id: string, params: var): bool {
+        return call(id, AppApi.methods.execute, params);
     }
+
+    function cancelRequest(requestId: string): bool {
+        return cancel(requestId, "cancel-" + requestId);
+    }
+
+    onResponseReceived: function (id, envelope, transportError) {
+        finish(id, envelope, transportError);
+    }
+    onEventReceived: function (event) {
+        if (event.event !== "subscribed"
+                && (event.stream === AppApi.streams.applications || event.stream === AppApi.streams.windows))
+            controller.scheduleRefresh();
+    }
+    onSendFailed: function (id, message) { controller.handleFailure(id, message); }
+    onTransportFailed: function (message) { controller.handleTransportFailure(message); }
 }

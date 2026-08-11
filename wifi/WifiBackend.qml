@@ -1,27 +1,26 @@
 import QtQuick
+import Shelllist.Io as Io
 import "NmApi.js" as NmApi
 import "NmApiClient.js" as Api
 import "process"
 
-Item {
+Io.DaemonBackend {
     id: backend
 
     required property WifiController controller
-    property var pending: ({})
-    readonly property bool active: controller.uiActive
-        || Object.keys(pending || ({})).length > 0
-        || controller.connection.running
-        || controller.promptActive
+    daemonName: "nm-daemon"
+    streams: NmApi.subscribedStreams
+    recoverProtocolErrors: false
+    active: controller.uiActive || requestRunning || controller.connection.running || controller.promptActive
     readonly property bool listRunning: isPending("networks")
     readonly property bool scanRunning: isPending("scan-start") || controller.scan.requestId.length > 0
     readonly property bool connectStarting: isPending("connect-start")
-    readonly property bool nonConnectRunning: isPending("power") || isPending("wwan-power") || isPending("disconnect") || isPending("profile") || isPending("advanced-load") || isPending("advanced-save") || isPending("advanced-secret") || isPending("secret-provide") || isPending("secret-cancel")
+    readonly property bool nonConnectRunning: isPending("power") || isPending("disconnect") || isPending("profile") || isPending("advanced-load") || isPending("advanced-save") || isPending("advanced-secret") || isPending("secret-provide") || isPending("secret-cancel")
     readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
     readonly property var responseHandlerById: ({
         "networks": function (value) { backend.handleNetworks(value); },
         "scan-start": function (value) { backend.handleScanStart(value); },
         "power": function (value) { controller.applyPowerResult(Api.apiData(value, "result") || ({})); },
-        "wwan-power": function (value) { controller.applyRadioResult(Api.apiData(value, "result") || ({})); },
         "connect-start": function (value) { backend.handleConnectStart(value); },
         "disconnect": function (value) { backend.handleDisconnect(value); },
         "advanced-load": function (value) { controller.advanced.applyProfile(Api.apiData(value, "result") || ({})); },
@@ -33,39 +32,9 @@ Item {
         "secret-cancel": function (value) { backend.handleSecretResponse(value); }
     })
 
-    function isPending(id) { return !!pending[id]; }
-    function setPending(id, value) {
-        if (value)
-            pending[id] = true;
-        else
-            delete pending[id];
-        pending = Object.assign({}, pending);
-    }
-
-    function call(id, method, params) {
-        if (isPending(id)) {
-            console.warn("shelllist nm request rejected id=" + id + " reason=already-pending");
-            return false;
-        }
-        setPending(id, true);
-        console.info("shelllist nm request started id=" + id + " method=" + method);
-        try {
-            client.call(id, method, params);
-            return true;
-        } catch (error) {
-            setPending(id, false);
-            const message = "Could not send nm-daemon " + id + " request: " + error;
-            console.error("shelllist nm request failed id=" + id + " stage=send error=" + error);
-            controller.failCall(id, message);
-            return false;
-        }
-    }
-
     function refreshNetworks(refreshCache) { return call("networks", NmApi.methods.wifi_networks, { cached: true, refresh_cache: !!refreshCache }); }
     function startScan() { return call("scan-start", NmApi.methods.wifi_scan, { timeout: 12, cache: true }); }
     function setPowered(enabled) { return call("power", NmApi.methods.wifi_setEnabled, { enabled: enabled }); }
-    // Kept as backend support for a future dedicated mobile-broadband surface.
-    function setWwanPowered(enabled) { return call("wwan-power", NmApi.methods.radio_setWwanEnabled, { enabled: enabled }); }
     function connect(request) { return call("connect-start", NmApi.methods.wifi_connectTarget, request); }
     function disconnect() { return call("disconnect", NmApi.methods.wifi_disconnect, {}); }
     function profile(operation) {
@@ -87,20 +56,6 @@ Item {
             { request_id: requestId, values: values || ({}), save: !!save, cancel: false });
     }
     function cancelSecret(requestId) { return call("secret-cancel", NmApi.methods.wifi_secret_provide, { request_id: requestId, cancel: true }); }
-    function cancel(requestId) {
-        if (!requestId)
-            return false;
-        try {
-            console.info("shelllist nm cancellation requested request_id=" + requestId);
-            client.cancel(requestId);
-            return true;
-        } catch (error) {
-            console.error("shelllist nm cancellation failed request_id=" + requestId + " error=" + error);
-            controller.status = "Could not cancel nm-daemon request " + requestId + ": " + error;
-            return false;
-        }
-    }
-
     function handleNetworks(envelope) {
         const networks = Api.apiData(envelope, "networks") || [];
         if (!controller.scan.snapshotSeen) controller.applyNetworks(networks, true);
@@ -163,12 +118,7 @@ Item {
         if (result.status === "error") controller.status = result.message || "Wi-Fi secret was not accepted";
     }
 
-    function isSessionControl(id) { return id === "session-subscribe" || id.indexOf("cancel-") === 0 || id.indexOf("shutdown-") === 0; }
-
     function finish(id, envelope, transportError) {
-        if (isSessionControl(id))
-            return;
-        setPending(id, false);
         if (transportError.length > 0) {
             console.error("shelllist nm request failed id=" + id + " stage=response error=" + transportError);
             controller.failCall(id, "nm-daemon request failed: " + transportError);
@@ -186,14 +136,6 @@ Item {
             controller.failCall(id, "Could not parse nm-daemon " + id + " response: " + error);
         }
         controller.maybeRunPendingRefresh();
-    }
-
-    function handleTransportFailure(message) {
-        const lostRequestIds = Object.keys(pending || ({}));
-        pending = ({});
-        console.error("shelllist nm transport failed error=" + message
-            + " lost_requests=" + (lostRequestIds.length > 0 ? lostRequestIds.join(",") : "none"));
-        controller.handleTransportFailure(message, lostRequestIds);
     }
 
     function handleTransportReady() {
@@ -231,14 +173,15 @@ Item {
         startPortal(context);
     }
 
-    NmDaemonClient {
-        id: client
-        active: backend.active
-        onResponse: function (id, envelope, transportError) { backend.finish(id, envelope, transportError); }
-        onEventReceived: function (event) { backend.controller.handleDaemonEvent(event); }
-        onTransportFailed: function (message) { backend.handleTransportFailure(message); }
-        onReadyChanged: if (ready) backend.handleTransportReady()
+    onResponseReceived: function (id, envelope, transportError) { finish(id, envelope, transportError); }
+    onEventReceived: function (event) { controller.handleDaemonEvent(event); }
+    onSendFailed: function (id, message) { controller.failCall(id, message); }
+    onTransportFailed: function (message, lostRequestIds) {
+        console.error("shelllist nm transport failed error=" + message
+            + " lost_requests=" + (lostRequestIds.length > 0 ? lostRequestIds.join(",") : "none"));
+        controller.handleTransportFailure(message, lostRequestIds);
     }
+    onTransportReady: handleTransportReady()
 
     CommandProcess {
         id: portalProcess

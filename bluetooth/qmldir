@@ -11,5 +11,6 @@ internal BluetoothNoiseControl BluetoothNoiseControl.qml
 internal BluetoothInformationPage BluetoothInformationPage.qml
 internal BluetoothAdapterPage BluetoothAdapterPage.qml
 internal BluetoothDeviceActions BluetoothDeviceActions.qml
+internal BluetoothOperationController BluetoothOperationController.qml
 internal BluetoothAdapterSettings BluetoothAdapterSettings.qml
 BluetoothContent 1.0 BluetoothContent.qml

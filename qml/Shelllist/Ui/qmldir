@@ -6,6 +6,7 @@ CenteredMessage 1.0 CenteredMessage.qml
 ChooserController 1.0 ChooserController.qml
 ChooserHeader 1.0 ChooserHeader.qml
 ChooserListPane 1.0 ChooserListPane.qml
+ProviderChooserController 1.0 ProviderChooserController.qml
 ChooserSurface 1.0 ChooserSurface.qml
 ChooserWindowHost 1.0 ChooserWindowHost.qml
 ConfirmationDialog 1.0 ConfirmationDialog.qml

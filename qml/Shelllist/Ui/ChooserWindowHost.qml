@@ -19,5 +19,11 @@ PopupWindowHost {
     Connections {
         target: host.controller
         function onCloseWindowRequested() { host.closeRequested(); }
+        function onScreenshotRequested() {
+            const width = Math.round(host.controller.currentWindowWidth);
+            const x = Math.round(host.targetWindowX()
+                + (host.controller.surfaceWindowWidth - width) / 2);
+            host.controller.captureScreenshot(x, host.targetWindowY(), width, host.currentWindowHeight);
+        }
     }
 }

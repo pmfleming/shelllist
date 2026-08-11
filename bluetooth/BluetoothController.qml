@@ -1,20 +1,18 @@
 import QtQuick
-import Shelllist.Core as Core
 import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "BluetoothBattery.js" as BluetoothBattery
 import "BluetoothFlow.js" as BluetoothFlow
 
-Ui.ChooserController {
+Ui.ProviderChooserController {
     id: bluetoothController
-    property alias filterText: results.queryText
-    property alias selectedIndex: results.selectedIndex
+
+    provider: BluetoothProvider { id: bluetoothProvider; controller: bluetoothController }
     property string detailsTab: "device"
     property string searchScope: "mine"
     property var pendingConfirmationAction
     property bool scanRequested: false
-    property var radio: ({ available: false, operational: false, powered: false, adapter_count: 0,
-        rfkill_present: false, soft_blocked: false, hard_blocked: false })
+    property var radio: BluetoothFlow.emptyRadio()
     property var management: ({ launch_state: "remember", reconnect_on_resume: true,
         trust_after_pair: true, preferred_adapter_key: "", show_blocked_devices: false,
         show_recent_devices: false })
@@ -24,17 +22,14 @@ Ui.ChooserController {
     property var lastKnownBatteryByDevice: ({})
     property string audioStatus: ""
     property var pairingPrompt: null
-    property var activeOperations: ({})
-    property var operationErrors: ({})
+    readonly property alias activeOperations: operationState.activeOperations
+    readonly property alias operationErrors: operationState.errorsByDevice
     property var activeScan: null
     property bool trustAfterPair: true
     property string preferredAdapterKey: ""
     property string pairingInput: ""
     property string status: "Loading Bluetooth devices…"
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
-    readonly property var filteredResults: results.visibleResults
-    readonly property var filteredResultsModel: results.visibleModel
-    readonly property var selectedResult: results.selected()
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
     navigationBlocked: modalPromptOpen
     readonly property var selectedAdapter: adapters.find(function (adapter) { return adapter.key === preferredAdapterKey; })
@@ -51,9 +46,6 @@ Ui.ChooserController {
     readonly property bool globalRequestInFlight: backend.requestRunning
     readonly property bool actionInFlight: globalRequestInFlight || selectedDeviceBusy || screenshotInFlight
     readonly property bool anyActionInFlight: backend.running || screenshotInFlight
-    hasSelection: filteredResults.length > 0
-    selectionModel: results
-    detailActions: providers.actionsFor(selectedResult)
 
     readonly property bool pairingPromptOpen: !!pairingPrompt
     readonly property bool confirmationOpen: !!pendingConfirmationAction
@@ -64,31 +56,10 @@ Ui.ChooserController {
     readonly property bool searchAllDevices: searchScope === "all"
     readonly property bool refreshInFlight: scanning || backend.isPending("snapshot") || backend.isPending("scan-start")
     signal pairingInteractionRequested
-    signal screenshotRequested
 
-    function copyWith(values, key, value) {
-        const result = Object.assign({}, values || ({}));
-        result[key] = value;
-        return result;
-    }
-    function copyWithout(values, key) {
-        const result = Object.assign({}, values || ({}));
-        delete result[key];
-        return result;
-    }
-    function operationForDevice(deviceKey) {
-        if (!deviceKey)
-            return null;
-        const requestIds = Object.keys(activeOperations || ({}));
-        for (let index = 0; index < requestIds.length; index++) {
-            const operation = activeOperations[requestIds[index]];
-            if (operation.device_key === deviceKey)
-                return operation;
-        }
-        return null;
-    }
-    function operationErrorForDevice(deviceKey) { return deviceKey ? (operationErrors[deviceKey] || null) : null; }
-    function deviceBusy(deviceKey) { return !!operationForDevice(deviceKey); }
+    function operationForDevice(deviceKey) { return operationState.forDevice(deviceKey); }
+    function operationErrorForDevice(deviceKey) { return operationState.errorForDevice(deviceKey); }
+    function deviceBusy(deviceKey) { return !!operationState.forDevice(deviceKey); }
     function deviceDisplayName(device) {
         const base = device.name || device.remote_name || "Bluetooth device";
         const duplicate = allDevices.some(function (candidate) {
@@ -103,7 +74,7 @@ Ui.ChooserController {
         return BluetoothFlow.devicesForView(allDevices, searchScope, management);
     }
     function rebuildResults(resetSelection) {
-        results.replaceProviderResults(provider.providerId, provider.resultsForDevices(devicesForView()), !!resetSelection);
+        replaceProviderResults(bluetoothProvider.resultsForDevices(devicesForView()), !!resetSelection);
     }
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
@@ -120,7 +91,7 @@ Ui.ChooserController {
     }
     function handleTransportFailure(message) {
         scanRequested = false;
-        activeOperations = ({});
+        operationState.reset();
         activeScan = null;
         status = message;
     }
@@ -165,11 +136,7 @@ Ui.ChooserController {
     }
     function applyAudioSnapshot(devices) { audioDevices = devices || []; audioStatus = ""; }
     function applySnapshot(snapshot) {
-        radio = snapshot.radio || ({ available: (snapshot.adapters || []).length > 0,
-            operational: (snapshot.adapters || []).some(function (adapter) { return adapter.powered; }),
-            powered: (snapshot.adapters || []).some(function (adapter) { return adapter.powered; }),
-            adapter_count: (snapshot.adapters || []).length, rfkill_present: false,
-            soft_blocked: false, hard_blocked: false });
+        radio = BluetoothFlow.radioForSnapshot(snapshot);
         adapters = snapshot.adapters || [];
         management = snapshot.management || management;
         trustAfterPair = management.trust_after_pair !== false;
@@ -244,40 +211,8 @@ Ui.ChooserController {
         trustAfterPair = !!value;
         updateManagement({ trust_after_pair: trustAfterPair });
     }
-    function handleOperationAccepted(operation) {
-        if (!operation || !operation.request_id) return;
-        if (!activeOperations[operation.request_id])
-            activeOperations = copyWith(activeOperations, operation.request_id, operation);
-        operationErrors = copyWithout(operationErrors, operation.device_key);
-        rebuildResults(false);
-    }
-    function handleOperationEvent(operation) {
-        if (!operation || !operation.request_id) return;
-        const device = allDevices.find(function (candidate) { return candidate.key === operation.device_key; }) || ({});
-        const deviceName = device.name || "Bluetooth device";
-        if (BluetoothFlow.isActiveOperation(operation)) {
-            activeOperations = copyWith(activeOperations, operation.request_id, operation);
-            operationErrors = copyWithout(operationErrors, operation.device_key);
-            status = BluetoothFlow.activeOperationStatus(operation, deviceName);
-            rebuildResults(false);
-            return;
-        }
-        activeOperations = copyWithout(activeOperations, operation.request_id);
-        if (operation.state === "failed")
-            operationErrors = copyWith(operationErrors, operation.device_key, operation.error || ({ message: "Bluetooth operation failed" }));
-        else
-            operationErrors = copyWithout(operationErrors, operation.device_key);
-        if (operation.snapshot) applySnapshot(operation.snapshot); else rebuildResults(false);
-        status = BluetoothFlow.operationCompletionStatus(operation, deviceName);
-        if (pairingPrompt && pairingPrompt.device_key === operation.device_key) {
-            pairingPrompt = null;
-            pairingInput = "";
-        }
-        if (BluetoothFlow.shouldRescanAfterOperation(operation, uiActive && searchAllDevices, powered, scanning)) {
-            scanRequested = true;
-            backend.setScanning(true, operation.adapter_key || device.adapter_key || selectedAdapter.key);
-        }
-    }
+    function handleOperationAccepted(operation) { operationState.accept(operation); }
+    function handleOperationEvent(operation) { operationState.handle(operation); }
     function cancelActiveOperation() {
         if (!canCancelOperation) return false;
         status = "Cancelling Bluetooth operation…";
@@ -334,7 +269,7 @@ Ui.ChooserController {
         detailsTab = tabs[(currentIndex + 1) % tabs.length];
         return true;
     }
-    function primarySelected() { return hasSelection && providers.execute(selectedResult, "", { workspaceId: currentWorkspaceId }); }
+    function primarySelected() { return hasSelection && executeSelected(""); }
     function triggerDetailAction(id) {
         if (!hasSelection) return false;
         const action = detailActions.find(function (candidate) { return candidate.id === id; }) || null;
@@ -343,14 +278,14 @@ Ui.ChooserController {
             pendingConfirmationAction = action;
             return true;
         }
-        return providers.execute(selectedResult, id, { workspaceId: currentWorkspaceId });
+        return executeSelected(id);
     }
     function cancelPendingConfirmation() { pendingConfirmationAction = null; }
     function confirmPendingAction() {
         if (!pendingConfirmationAction) return false;
         const actionId = pendingConfirmationAction.id;
         pendingConfirmationAction = null;
-        return hasSelection && providers.execute(selectedResult, actionId, { workspaceId: currentWorkspaceId });
+        return hasSelection && executeSelected(actionId);
     }
     function executeDeviceAction(actionId, device) {
         if (deviceBusy(device.key) || backend.requestRunning) return false;
@@ -371,11 +306,6 @@ Ui.ChooserController {
     onModalPromptOpenChanged: if (!modalPromptOpen) Qt.callLater(focusSearchRequested)
     onSelectedResultChanged: pendingConfirmationAction = null
 
-    Core.ProviderRegistry {
-        id: providers
-        BluetoothProvider { id: provider; controller: bluetoothController }
-    }
-    Core.ResultStore { id: results; registry: providers }
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture
         active: bluetoothController.uiActive
@@ -383,4 +313,9 @@ Ui.ChooserController {
         onFailed: function (message) { bluetoothController.status = message; }
     }
     BluetoothBackend { id: backend; controller: bluetoothController }
+    BluetoothOperationController {
+        id: operationState
+        controller: bluetoothController
+        backend: backend
+    }
 }

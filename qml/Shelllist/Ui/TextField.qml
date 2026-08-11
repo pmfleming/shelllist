@@ -77,8 +77,6 @@ Rectangle {
     }
 
     IconTile {
-        id: trailingAction
-
         visible: field.trailingActionIcon.length > 0
         anchors.right: parent.right
         anchors.rightMargin: Theme.spacingXs

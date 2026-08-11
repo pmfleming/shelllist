@@ -196,8 +196,6 @@ Current D-Bus methods used by the UI:
 - `wifi.disconnect`;
 - `wifi.profile.operation` for profile details, atomic advanced updates, password reveal, delete, privacy, autoconnect, hostname and sharing operations.
 
-The frontend retains a `radio.setWwanEnabled` backend route for a future dedicated mobile-broadband surface, but does not currently expose a modem button.
-
 Current event streams used by the UI:
 
 - `wifi.scan`

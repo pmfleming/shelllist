@@ -1,9 +1,13 @@
 import QtQuick
-import Shelllist.Core as Core
 import Shelllist.Ui as Ui
 
-Ui.ChooserController {
+Ui.ProviderChooserController {
     id: clipboardController
+
+    provider: ClipboardProvider { id: clipboardProvider; controller: clipboardController }
+    filterRefreshDelay: 120
+    scheduledRefreshDelay: 90
+
     property string status: "Loading clipboard history…"
     property string sessionId: ""
     property bool targetAvailable: false
@@ -16,21 +20,13 @@ Ui.ChooserController {
     property bool deleteConfirmationOpen
     property var currentEntry: null
     readonly property alias detailState: detailsModel
-    property alias filterText: results.queryText
-    property alias selectedIndex: results.selectedIndex
-    readonly property var filteredResults: results.visibleResults
-    readonly property var filteredResultsModel: results.visibleModel
-    readonly property var selectedResult: results.selected()
     readonly property var selectedEntry: selectedResult ? selectedResult.payload : null
-    hasSelection: !!selectedResult
-    selectionModel: results
     navigationPrimaryEnabled: hasSelection && selectedEntry.kind !== "binary"
         && !actionInFlight && !wipeChallenge && !detailState.editorFocused
     navigationCloseEnabled: false
 
     readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
     signal hideRequested
-    signal screenshotRequested
 
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
@@ -59,19 +55,12 @@ Ui.ChooserController {
     }
     function refresh() {
         status = "Loading clipboard history…";
-        results.beginQuery(filterText, {}, [provider.providerId], 100);
+        beginProviderQuery({}, 100);
     }
-    function scheduleRefresh() { refreshTimer.restart(); }
     function requestHistory(id, text, generation, limit) { backend.query(id, text, generation, limit); }
     function cancelQuery(requestId) { backend.cancelRequest(requestId); }
     function applyHistory(id, history) {
-        results.applyBatch({
-            providerId: provider.providerId,
-            queryId: id,
-            replace: true,
-            complete: true,
-            results: provider.resultsForEntries(history.entries || [])
-        });
+        applyProviderQuery(id, clipboardProvider.resultsForEntries(history.entries || []));
         currentEntry = history.current || null;
         status = history.entries.length + " clipboard entries" + (history.has_more ? " · more available" : "");
         detailState.scheduleLoad();
@@ -220,15 +209,15 @@ Ui.ChooserController {
             if (id === "capture-screenshot")
                 screenshotInFlight = false;
         }
-        if (id === results.activeQueryId) {
-            results.clear();
+        if (isActiveQuery(id)) {
+            clearProviderResults();
             status = message;
         } else if (!detailState.handleFailure(id, message)) {
             status = message;
         }
     }
     function handleTransportFailure(message) {
-        results.clear();
+        clearProviderResults();
         detailState.clear();
         actionInFlight = false;
         screenshotInFlight = false;
@@ -236,18 +225,10 @@ Ui.ChooserController {
         activeOperationId = "";
         status = message;
     }
-    Timer { id: searchTimer; interval: 120; repeat: false; onTriggered: if (clipboardController.uiActive) clipboardController.refresh() }
-    Timer { id: refreshTimer; interval: 90; repeat: false; onTriggered: if (clipboardController.uiActive) clipboardController.refresh() }
-    onFilterTextChanged: if (uiActive) searchTimer.restart()
     onSelectedResultChanged: {
         deleteConfirmationOpen = false;
         detailState.selectionChanged();
     }
-    Core.ProviderRegistry {
-        id: providers
-        ClipboardProvider { id: provider; controller: clipboardController }
-    }
-    Core.ResultStore { id: results; registry: providers }
     ClipboardBackend { id: backend; controller: clipboardController }
     ClipboardDetailsController {
         id: detailsModel

@@ -3,17 +3,18 @@ import Shelllist.Core as Core
 import Shelllist.Io as Io
 import "BtApi.js" as BtApi
 
-Item {
+Io.DaemonBackend {
     id: backend
 
     required property BluetoothController controller
-    property var pending
     property var operations
     property var finishedOperations
 
+    daemonName: "bt-daemon"
+    streams: [BtApi.streams.changed, BtApi.streams.pairing, BtApi.streams.operation,
+        BtApi.streams.scan, BtApi.streams.audio]
     // Pairing authorization can arrive while the popup is hidden.
-    readonly property bool active: true
-    readonly property bool requestRunning: itemCount(pending) > 0
+    active: true
     readonly property bool running: requestRunning || itemCount(operations) > 0
     readonly property var eventHandlers: {
         const handlers = ({});
@@ -37,36 +38,14 @@ Item {
     function resetTransportState() {
         pending = ({}); operations = ({}); finishedOperations = ({});
     }
-    function isPending(id) { return !!pending[id]; }
-    function call(id, method, params) {
-        if (isPending(id)) {
-            console.warn("shelllist bluetooth request rejected id=" + id + " reason=already-pending");
-            return false;
-        }
-        pending = BtApi.copyWith(pending, id, true);
-        console.info("shelllist bluetooth request started id=" + id + " method=" + method);
-        try {
-            client.call(id, method, params);
-            return true;
-        } catch (error) {
-            pending = BtApi.copyWithout(pending, id);
-            console.error("shelllist bluetooth request failed id=" + id + " stage=send error=" + error);
-            controller.status = "Could not send Bluetooth request " + id + ": " + error;
-            return false;
-        }
-    }
-    function isSessionControl(id) { return id === "session-subscribe" || id.indexOf("cancel-subscription-") === 0 || id.indexOf("shutdown-") === 0; }
     function cancellationStatus(id) {
         if (id.indexOf("cancel-operation-") === 0)
             return "Cancelling Bluetooth operation…";
         return "";
     }
     function finish(id, envelope, transportError) {
-        if (isSessionControl(id))
-            return;
-        pending = BtApi.copyWithout(pending, id);
         const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            "bt-api", 1, "bt-daemon", "Bluetooth operation failed");
+            "bt-api", 1, daemonName, "Bluetooth operation failed");
         if (error.length > 0) {
             console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
             controller.status = error;
@@ -169,30 +148,20 @@ Item {
                 + (requestId || "") + " reason=not-active");
             return false;
         }
-        try {
-            client.cancel("cancel-" + kind + "-" + requestId, requestId);
+        const accepted = cancel(requestId, "cancel-" + kind + "-" + requestId);
+        if (accepted)
             console.info("shelllist bluetooth " + kind + " cancellation requested request_id=" + requestId);
-            return true;
-        } catch (error) {
-            console.error("shelllist bluetooth " + kind + " cancellation failed request_id=" + requestId + " error=" + error);
-            controller.status = "Could not cancel Bluetooth " + kind + ": " + error;
-            return false;
-        }
+        return accepted;
     }
     function setAudioProfile(deviceKey, profileKey) { return call("audio-set-profile", BtApi.methods.audioSetProfile, { device_key: deviceKey, profile_key: profileKey }); }
     function setPowered(powered, adapterKey) { return call("power", BtApi.methods.setPowered, { adapter_key: adapterKey || null, powered: powered }); }
     function setScanning(enabled, adapterKey) {
         if (!enabled && controller.activeScan && controller.activeScan.request_id) {
             const requestId = controller.activeScan.request_id;
-            try {
-                client.cancel("cancel-scan-" + requestId, requestId);
+            const accepted = cancel(requestId, "cancel-scan-" + requestId);
+            if (accepted)
                 console.info("shelllist bluetooth scan cancellation requested request_id=" + requestId);
-                return true;
-            } catch (error) {
-                console.error("shelllist bluetooth scan cancellation failed request_id=" + requestId + " error=" + error);
-                controller.status = "Could not cancel Bluetooth scan: " + error;
-                return false;
-            }
+            return accepted;
         }
         return call("scan-start", BtApi.methods.scan, { enabled: true, adapter_key: adapterKey || null, timeout_ms: 15000 });
     }
@@ -215,18 +184,11 @@ Item {
             Object.assign({ key: device.key, operation: operation }, values || ({})));
     }
 
-    Io.JsonlDaemonClient {
-        id: client
-        daemonName: "bt-daemon"
-        recoverProtocolErrors: true
-        streams: [BtApi.streams.changed, BtApi.streams.pairing, BtApi.streams.operation,
-            BtApi.streams.scan, BtApi.streams.audio]
-        active: backend.active
-        onResponse: function (id, envelope, transportError) { backend.finish(id, envelope, transportError); }
-        onEventReceived: function (event) { backend.handleEvent(event); }
-        onTransportFailed: function (message) {
-            backend.resetTransportState();
-            backend.controller.handleTransportFailure(message);
-        }
+    onResponseReceived: function (id, envelope, transportError) { finish(id, envelope, transportError); }
+    onEventReceived: function (event) { handleEvent(event); }
+    onSendFailed: function (id, message) { controller.status = message; }
+    onTransportFailed: function (message) {
+        resetTransportState();
+        controller.handleTransportFailure(message);
     }
 }

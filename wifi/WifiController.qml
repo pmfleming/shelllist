@@ -5,31 +5,24 @@ import "NmApiClient.js" as Api
 import "process"
 import "NmApi.js" as NmApi
 import "."
-import Shelllist.Core as Core
 import Shelllist.Io as Io
 import Shelllist.Ui
 
-ChooserController {
+ProviderChooserController {
     id: wifi
 
     required property WifiPromptController prompt
+    provider: WifiProvider { id: wifiProvider; controller: wifi }
 
     property var activeStatus: null
-    property alias filterText: services.queryText
-    property alias selectedIndex: services.selectedIndex
     property string status
     readonly property var radios: activeStatus && activeStatus.radios ? activeStatus.radios : ({
         wireless_enabled: !activeStatus || activeStatus.enabled !== false,
         wireless_hardware_enabled: true,
-        wireless_available: true,
-        wwan_enabled: false,
-        wwan_hardware_enabled: false,
-        wwan_available: false
+        wireless_available: true
     })
     readonly property bool powered: radios.wireless_enabled !== false
         && radios.wireless_hardware_enabled !== false
-    // WWAN control is retained for a future dedicated mobile-broadband surface.
-    readonly property bool wwanPowered: !!radios.wwan_enabled
     property double statusHoldUntil: 0
     readonly property WifiBackend backend: services.backend
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
@@ -37,17 +30,11 @@ ChooserController {
     readonly property bool actionInFlight: backend.running || screenshotInFlight
     readonly property string detailsTab: advanced.open ? advanced.section : "network"
     readonly property bool scanInFlight: scan.running
-    readonly property var filteredResults: services.results.visibleResults
-    readonly property var filteredResultsModel: services.results.visibleModel
-    readonly property var detailResult: services.results.selected()
+    readonly property var detailResult: selectedResult
     readonly property var detailAp: detailResult ? detailResult.payload : ({})
-    hasSelection: filteredResults.length > 0
-    selectionModel: services.results
-    detailActions: services.providers.actionsFor(detailResult)
     readonly property string busyMessage: "Wait for the current Wi-Fi action to finish…"
     readonly property ShareAvailabilityController shareController: services.share
-    readonly property WifiProvider providerModel: services.provider
-    readonly property Core.ProviderRegistry providerRegistry: services.providers
+    readonly property WifiProvider providerModel: wifiProvider
     readonly property WifiConnectPolicy connectPolicy: services.policy
     navigationBlocked: promptActive || !powered
     readonly property WifiAdvancedController advanced: services.advanced
@@ -66,7 +53,6 @@ ChooserController {
     }
 
     signal advancedSectionLeaving(string section)
-    signal screenshotRequested
 
     function activeAccessPoint() { return activeStatus ? (activeStatus.access_point || activeStatus.network || null) : null; }
     function activeNetworkKey() { return activeStatus && activeStatus.network ? (activeStatus.network.key || "") : ""; }
@@ -186,24 +172,6 @@ ChooserController {
         status = result.message || (enabled ? "Wi-Fi turned on" : "Wi-Fi turned off");
     }
 
-    function setWwanPower() {
-        if (!beginAction()) return;
-        status = wwanPowered ? "Turning mobile data off…" : "Turning mobile data on…";
-        backend.setWwanPowered(!wwanPowered);
-    }
-
-    function applyRadioResult(result) {
-        const nextRadios = result.radios || radios;
-        activeStatus = Object.assign({}, activeStatus || ({}), {
-            enabled: nextRadios.wireless_enabled !== false,
-            radios: nextRadios,
-            active: nextRadios.wireless_enabled !== false
-                ? !!(activeStatus && activeStatus.active) : false
-        });
-        status = result.message || "Radio state updated";
-        if (powered && uiActive) Qt.callLater(scan.refresh);
-    }
-
     function handleSecretEvent(event) {
         if (event.event === "requested") {
             prompt.openDaemonSecretPrompt(event);
@@ -256,9 +224,9 @@ ChooserController {
         return ready;
     }
     function beginAction() { return requireIdle(!actionInFlight); }
-    function primarySelected() { return services.providers.execute(detailResult, "", { workspaceId: currentWorkspaceId }); }
-    function triggerDetailAction(id) { return services.providers.execute(detailResult, id, { workspaceId: currentWorkspaceId }); }
-    function applyNetworks(networks, resetSelection) { services.results.replaceProviderResults(services.provider.providerId, services.provider.resultsForNetworks(networks), resetSelection); }
+    function primarySelected() { return executeSelected(""); }
+    function triggerDetailAction(id) { return executeSelected(id); }
+    function applyNetworks(networks, resetSelection) { replaceProviderResults(wifiProvider.resultsForNetworks(networks), resetSelection); }
 
     function openHiddenNetworkPrompt() { if (connection.beginAny()) prompt.openHiddenNetworkPrompt(); }
 

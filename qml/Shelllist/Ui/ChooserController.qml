@@ -34,11 +34,13 @@ Item {
     signal closeWindowRequested
     signal focusSearchRequested
     signal focusListTopRequested
+    signal screenshotRequested
 
     function activateUi(workspaceId) { activateUiState(workspaceId); }
     function deactivateUi() { deactivateUiState(); }
     function refresh() {}
     function setPower() {}
+    function captureScreenshot(x, y, width, height) { return false; }
 
     function activateUiState(workspaceId) {
         uiActive = true;

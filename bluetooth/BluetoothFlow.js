@@ -1,5 +1,19 @@
 .pragma library
 
+function emptyRadio() {
+    return { available: false, operational: false, powered: false, adapter_count: 0,
+        rfkill_present: false, soft_blocked: false, hard_blocked: false };
+}
+
+function radioForSnapshot(snapshot) {
+    if (snapshot.radio)
+        return snapshot.radio;
+    const adapters = snapshot.adapters || [];
+    const powered = adapters.some(function (adapter) { return adapter.powered; });
+    return { available: adapters.length > 0, operational: powered, powered: powered,
+        adapter_count: adapters.length, rfkill_present: false, soft_blocked: false, hard_blocked: false };
+}
+
 function pairingTransition(currentPrompt, envelope) {
     const event = envelope || ({});
     const prompt = event.data || ({});
@@ -39,14 +53,20 @@ function shouldRescanAfterOperation(operation, uiActive, powered, scanning) {
         && uiActive && powered && !scanning;
 }
 
+function isKnownDevice(device) {
+    return !device.blocked && (device.paired || device.connected);
+}
+
+function isDiscoverableDevice(device, showRecent) {
+    return device.blocked || device.paired || device.connected || device.present || showRecent;
+}
+
 function devicesForView(devices, scope, policy) {
-    const settings = policy || ({});
-    return (devices || []).filter(function (device) {
-        if (scope === "all")
-            return device.blocked || device.paired || device.connected || device.present
-                || settings.show_recent_devices;
-        return !device.blocked && (device.paired || device.connected);
-    });
+    const showRecent = !!policy && !!policy.show_recent_devices;
+    const predicate = scope === "all"
+        ? function (device) { return isDiscoverableDevice(device, showRecent); }
+        : isKnownDevice;
+    return (devices || []).filter(predicate);
 }
 
 function radioStatus(radio, searchAllDevices, scanning, count) {

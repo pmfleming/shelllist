@@ -10,26 +10,29 @@ const icons = ({
     unknown: "󰣯"       // md-lock-question
 });
 
-function inferredSecurityClass(network) {
-    const value = network || ({});
-    const declared = String(value.security_class || "").toLowerCase();
-    if (["open", "enhanced-open", "legacy", "personal", "enterprise", "unknown"].indexOf(declared) >= 0)
-        return declared;
+function declaredClass(value) { return String(value.security_class || "").toLowerCase(); }
+function securityText(value) { return String(value.security || "").toUpperCase(); }
+function securityFlags(value) { return (Number(value.wpa_flags) || 0) | (Number(value.rsn_flags) || 0); }
+function hasFlag(flags, mask) { return (flags & mask) !== 0; }
+function isEnterprise(security, flags) { return hasFlag(flags, 0x0200 | 0x2000) || security.includes("ENTERPRISE"); }
+function isEnhancedOpen(security, flags) { return hasFlag(flags, 0x0800 | 0x1000) || security.includes("OWE"); }
+function isPersonal(security, flags) { return security.includes("WPA") || hasFlag(flags, 0x0100 | 0x0400); }
+function isOpen(value, security, flags) {
+    return ["--", "OPEN", ""].includes(security) && !Number(value.flags) && flags === 0;
+}
 
-    const security = String(value.security || "").toUpperCase();
-    const keyManagement = (Number(value.wpa_flags) || 0) | (Number(value.rsn_flags) || 0);
-    if ((keyManagement & (0x0200 | 0x2000)) !== 0 || security.indexOf("ENTERPRISE") >= 0)
-        return "enterprise";
-    if ((keyManagement & (0x0800 | 0x1000)) !== 0 || security.indexOf("OWE") >= 0)
-        return "enhanced-open";
-    if (security === "WEP")
-        return "legacy";
-    if (security.indexOf("WPA") >= 0 || (keyManagement & (0x0100 | 0x0400)) !== 0)
-        return "personal";
-    if ((security === "--" || security === "OPEN" || security === "")
-            && (Number(value.flags) || 0) === 0 && keyManagement === 0)
-        return "open";
-    return "unknown";
+function inferredSecurityClass(network) {
+    const value = network ? network : ({});
+    const declared = declaredClass(value);
+    if (["open", "enhanced-open", "legacy", "personal", "enterprise", "unknown"].includes(declared))
+        return declared;
+    const security = securityText(value);
+    const flags = securityFlags(value);
+    if (isEnterprise(security, flags)) return "enterprise";
+    if (isEnhancedOpen(security, flags)) return "enhanced-open";
+    if (security === "WEP") return "legacy";
+    if (isPersonal(security, flags)) return "personal";
+    return isOpen(value, security, flags) ? "open" : "unknown";
 }
 
 function networkType(network, captivePortal) {

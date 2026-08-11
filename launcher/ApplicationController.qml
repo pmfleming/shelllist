@@ -1,25 +1,21 @@
 import QtQuick
-import Shelllist.Core as Core
 import Shelllist.Ui as Ui
 
-Ui.ChooserController {
+Ui.ProviderChooserController {
     id: controller
+
+    provider: ApplicationProvider { id: applicationProvider; controller: controller }
+    filterRefreshDelay: 90
+    scheduledRefreshDelay: 120
+    closeDetailsWithoutSelection: true
 
     property string status: "Loading applications…"
     property bool actionInFlight: false
     property string activeTargetId: ""
     property var activeRequest: null
     property bool forceRefresh: false
-    property alias filterText: results.queryText
-    property alias selectedIndex: results.selectedIndex
-    readonly property var filteredResults: results.visibleResults
-    readonly property var filteredResultsModel: results.visibleModel
-    readonly property var selectedResult: results.selected()
     readonly property var selectedApplication: selectedResult ? selectedResult.payload : null
     readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
-    hasSelection: !!selectedResult
-    selectionModel: results
-    detailActions: selectedResult ? providers.actionsFor(selectedResult) : []
     navigationPrimaryEnabled: hasSelection && !actionInFlight
     navigationBlocked: actionInFlight
 
@@ -37,9 +33,8 @@ Ui.ChooserController {
     function refresh(explicitRefresh) {
         forceRefresh = explicitRefresh === true;
         status = forceRefresh ? "Refreshing applications…" : "Loading applications…";
-        results.beginQuery(filterText, { workspaceId: currentWorkspaceId }, [provider.providerId], 500);
+        beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
     }
-    function scheduleRefresh() { refreshTimer.restart(); }
     function requestApplications(id, text, generation, limit) {
         const refreshCatalog = forceRefresh;
         forceRefresh = false;
@@ -47,10 +42,7 @@ Ui.ChooserController {
     }
     function cancelQuery(requestId) { backend.cancelRequest(requestId); }
     function applyApplications(id, page) {
-        results.applyBatch({
-            providerId: provider.providerId, queryId: id, replace: true, complete: true,
-            results: provider.resultsForApplications(page.applications || [])
-        });
+        applyProviderQuery(id, applicationProvider.resultsForApplications(page.applications || []));
         const count = (page.applications || []).length;
         status = count + (count === 1 ? " application" : " applications");
         if (page.has_more)
@@ -78,7 +70,7 @@ Ui.ChooserController {
         activeTargetId = "";
         status = operation.message || "Application action completed";
         if (activeRequest)
-            provider.executionFinished({ requestId: id, operation: operation });
+            applicationProvider.executionFinished({ requestId: id, operation: operation });
         activeRequest = null;
         closeWindowRequested();
     }
@@ -87,11 +79,11 @@ Ui.ChooserController {
             actionInFlight = false;
             activeTargetId = "";
             if (activeRequest)
-                provider.executionFailed({ requestId: id, code: "operation-failed", message: message });
+                applicationProvider.executionFailed({ requestId: id, code: "operation-failed", message: message });
             activeRequest = null;
         }
-        if (id === results.activeQueryId) {
-            results.clear();
+        if (isActiveQuery(id)) {
+            clearProviderResults();
             status = message;
         } else {
             status = message;
@@ -101,34 +93,24 @@ Ui.ChooserController {
         actionInFlight = false;
         activeTargetId = "";
         activeRequest = null;
-        results.clear();
+        clearProviderResults();
         status = message;
     }
     function primarySelected() {
         if (!selectedResult || actionInFlight)
             return false;
-        return providers.execute(selectedResult, "activate", { workspaceId: currentWorkspaceId });
+        return executeSelected("activate");
     }
     function launchSelected() {
         if (!selectedResult || actionInFlight || selectedApplication.kind !== "desktop-application")
             return false;
-        return providers.execute(selectedResult, "launch", { workspaceId: currentWorkspaceId });
+        return executeSelected("launch");
     }
     function triggerDetailAction(actionId) {
         if (!selectedResult || actionInFlight)
             return false;
-        return providers.execute(selectedResult, actionId, { workspaceId: currentWorkspaceId });
+        return executeSelected(actionId);
     }
 
-    Timer { id: searchTimer; interval: 90; repeat: false; onTriggered: if (controller.uiActive) controller.refresh(false) }
-    Timer { id: refreshTimer; interval: 120; repeat: false; onTriggered: if (controller.uiActive) controller.refresh(false) }
-    onFilterTextChanged: if (uiActive) searchTimer.restart()
-    onSelectedResultChanged: if (!hasSelection) detailsOpen = false
-
-    Core.ProviderRegistry {
-        id: providers
-        ApplicationProvider { id: provider; controller: controller }
-    }
-    Core.ResultStore { id: results; registry: providers }
     ApplicationBackend { id: backend; controller: controller }
 }
