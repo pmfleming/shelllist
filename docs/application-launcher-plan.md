@@ -1,5 +1,7 @@
 # Shelllist application launcher implementation plan
 
+**Implementation status:** The v0.1 baseline is implemented in `app-daemon` and `launcher/`: desktop catalog and visibility, Hyprland grouping/focus, identifier-only actions, `app-api` contracts, the resident QML chooser, packaging, Home Manager services, and the temporary `SUPER+M` binding are complete. Stabilization, broader fixture coverage, native event-driven catalog updates, and the eventual `SUPER+SPACE` cutover remain.
+
 ## Objective
 
 Replace the current `rofi-app-menu` with a resident, keyboard-first Shelllist launcher while preserving its useful behavior:
