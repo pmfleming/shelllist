@@ -2,15 +2,16 @@
 
 Quickshell experiments and UI components for desktop menus.
 
-Shelllist is a Hyprland-focused desktop action center. Its Wi-Fi popup is backed by `nm-daemon`; the staged Bluetooth popup is backed by `bt-daemon`. Shelllist owns QML, window behavior, and interactions while the Rust backends own system integration and policy.
+Shelllist is a Hyprland-focused desktop action center. Wi-Fi, Bluetooth, clipboard, and application surfaces are backed by `nm-daemon`, `bt-daemon`, `clip-daemon`, and `app-daemon`. Shelllist owns QML, window behavior, and interactions while the Rust backends own system integration and policy.
 
 ## Current status
 
 - Stable app: `shelllist-wifi`, a Quickshell Wi-Fi chooser.
 - Experimental app: `shelllist-bluetooth`, a BlueZ device chooser kept alongside the existing Rofi Bluetooth menu during stabilization.
+- Experimental app: `shelllist-launcher`, an application launcher backed by `app-daemon`, initially bound to `SUPER+M` while Rofi remains on `SUPER+SPACE`.
 - Default mode: resident, monitor-aware popovers toggled through Quickshell IPC, Waybar, or Hyprland.
 - Optional mode: an explicit one-shot floating window for development/fallback use.
-- Backend: sibling `nm-daemon` and `bt-daemon` Git inputs while their current API histories are unpublished; repin both to portable GitHub inputs after publication.
+- Backend: sibling Rust daemon Git inputs while their current API histories are unpublished; repin them to portable GitHub inputs after publication.
 - Target platform: `x86_64-linux` with NetworkManager and Quickshell.
 
 ## Usage
@@ -21,12 +22,14 @@ Start or toggle the default resident popup with Nix:
 nix run
 ```
 
-The current development lock uses portable relative references to sibling `nm-daemon` and `bt-daemon` checkouts because the required histories are not published yet. Keep the three repositories in the same parent directory. After those commits are published, restore GitHub inputs; explicit overrides remain available when testing other checkouts:
+The current development lock uses portable relative references to sibling daemon checkouts because the required histories are not all published yet. Keep Shelllist and the daemon repositories in the same parent directory. Explicit overrides remain available when testing other checkouts:
 
 ```sh
 nix run \
   --override-input nm-daemon path:/path/to/nm-daemon \
-  --override-input bt-daemon path:/path/to/bt-daemon
+  --override-input bt-daemon path:/path/to/bt-daemon \
+  --override-input clip-daemon path:/path/to/clip-daemon \
+  --override-input app-daemon path:/path/to/app-daemon
 ```
 
 Run the explicit floating fallback once the package is on `PATH`:
@@ -59,6 +62,16 @@ Waybar can use `shelllist-wifi toggle` for `on-click` once the package is on `PA
 ```ini
 bind = SUPER, N, global, shelllist:wifi
 ```
+
+Run the experimental application launcher:
+
+```sh
+nix run .#launcher
+shelllist-launcher toggle
+shelllist-launcher floating  # one-shot floating fallback
+```
+
+The launcher lists standards-visible desktop applications, groups live Hyprland windows, focuses the most-recent running instance with `Enter`, launches non-running applications, and exposes instances plus desktop-defined actions with `Right`. `Shift+Enter` always launches a new instance.
 
 Run the experimental Bluetooth popup:
 
@@ -113,7 +126,18 @@ Shelllist sends user-entered Wi-Fi secrets through stdin-backed JSON requests on
 
 ## Keybindings
 
-General popup keys:
+Application launcher keys:
+
+- Type to filter applications, metadata, and window titles.
+- `Enter`: focus the most-recent running instance or launch the application.
+- `Shift+Enter`: launch a new instance.
+- `Down` / `Up`: move selection.
+- `Right`: open running instances and desktop actions.
+- `Left`: close details.
+- `F5`: refresh desktop applications and running windows.
+- `Esc`: close details, then close the launcher.
+
+General Wi-Fi popup keys:
 
 - Type to filter visible SSIDs.
 - `Enter`: run the primary action for the selected network (`Connect` or `Disconnect`).
@@ -144,7 +168,7 @@ Details-pane hotkeys are available when the details pane is open and the selecte
 
 Shelllist normalizes system integrations behind a generic provider/result/action model. Providers expose stable descriptors, map backend values to serializable results, resolve live action state, and execute actions through a central registry. Generic views never inspect provider payloads or call system backends directly. `ResultStore` ranks each update once and synchronizes a persistent keyed `ListModel`, so recurring scan snapshots update/move delegates instead of replacing the ListView model. Wi-Fi and Bluetooth result snapshots omit duplicated action objects because their providers resolve those actions from live controller state at use time.
 
-The current `WifiProvider.qml` adapter maps `nm-api` networks and Wi-Fi operations onto this model without changing `nm-daemon` protocol v1. See [`docs/provider-model.md`](docs/provider-model.md) for the schemas, validation rules, query generations, action dispatch contract, and guidance for application, clipboard, and Bluetooth providers.
+The current `WifiProvider.qml`, `BluetoothProvider.qml`, `ClipboardProvider.qml`, and `ApplicationProvider.qml` adapters map their backend protocols onto this model. The application provider consumes `app-api` v1 summaries and routes identifier-only activation, launch, window-focus, and desktop-action requests back to Rust. See [`docs/provider-model.md`](docs/provider-model.md) for the schemas, validation rules, query generations, and action dispatch contract.
 
 ## Backend/API boundary
 
@@ -211,7 +235,7 @@ The shared `PopupWindowHost` gives each application the same floating fallback, 
 - A Wi-Fi device managed by NetworkManager.
 - User permissions to control NetworkManager connections through D-Bus/polkit.
 - A running or D-Bus-activatable `nm-daemon` session service exposing `org.laufan.NmDaemon`.
-- Sibling `nm-daemon` and `bt-daemon` checkouts containing the locked API histories, or both inputs supplied through `--override-input`.
+- Sibling `nm-daemon`, `bt-daemon`, `clip-daemon`, and `app-daemon` checkouts containing the locked API histories, or corresponding inputs supplied through `--override-input`.
 
 ## Visible-network connection probe
 
@@ -244,7 +268,7 @@ out=$(nix build .#default --no-link --print-out-paths)
 shellcheck "$out/bin/shelllist-wifi"
 portal=$(nix build .#captivePortalBrowser --no-link --print-out-paths)
 shellcheck "$portal/bin/shelllist-captive-portal"
-shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml qml/Shelllist/Io/process/*.qml bluetooth/*.qml wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
+shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml qml/Shelllist/Io/process/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-ip-validation.js wifi/networkinput/IpValidation.js
 node tests/check-wifi-qr.js wifi/WifiQr.js
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
@@ -252,6 +276,6 @@ tests/run-qml-tests.sh
 qmlqualitylens measure all --config qmlqualitylens.config.json  # optional static quality report
 ```
 
-The UI entry points are `wifi/shell.qml` and `bluetooth/shell.qml`. Generic provider contracts, validation, single-pass ranking, keyed incremental ListView synchronization, registry dispatch, and result storage live in the shared `Shelllist.Core` module under `qml/Shelllist/Core/`; shared daemon transport (including bounded exponential restart backoff) lives in `Shelllist.Io`, with Process ownership isolated under its `process/` boundary; shared theming, popup/window behavior, surface behavior, controls, detail cards, toggles, text fields, and modal frames live in `Shelllist.Ui`; `WifiProvider.qml` and `BluetoothProvider.qml` are backend adapters. Frontend-only Wi-Fi helpers are separated by responsibility into `WifiPresentation.js`, `WifiFlow.js`, and `NmApiClient.js`; connection, scan, advanced-profile, network-action, share, and captive-portal flows live in dedicated controller Items rather than the main Wi-Fi controller. Bluetooth device details are likewise split into overview, action, metadata, and adapter-setting sections. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
+The UI entry points are `wifi/shell.qml`, `bluetooth/shell.qml`, `clipboard/shell.qml`, and `launcher/shell.qml`. Generic provider contracts, validation, single-pass ranking, keyed incremental ListView synchronization, registry dispatch, and result storage live in the shared `Shelllist.Core` module under `qml/Shelllist/Core/`; shared daemon transport (including bounded exponential restart backoff) lives in `Shelllist.Io`, with Process ownership isolated under its `process/` boundary; shared theming, popup/window behavior, surface behavior, controls, detail cards, toggles, text fields, and modal frames live in `Shelllist.Ui`; `WifiProvider.qml` and `BluetoothProvider.qml` are backend adapters. Frontend-only Wi-Fi helpers are separated by responsibility into `WifiPresentation.js`, `WifiFlow.js`, and `NmApiClient.js`; connection, scan, advanced-profile, network-action, share, and captive-portal flows live in dedicated controller Items rather than the main Wi-Fi controller. Bluetooth device details are likewise split into overview, action, metadata, and adapter-setting sections. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
 
 The JSON boundary with `nm-daemon` is pinned by `contracts/nm-api-ui-contract.fixture.json`. `nix flake check` regenerates the fixture, validates the frontend method shapes, regenerates the used method and stream entries in `wifi/NmApi.js` from `nm-daemon debug protocol-registry`, and lints every QML source; any drift or static-analysis failure fails the check.
