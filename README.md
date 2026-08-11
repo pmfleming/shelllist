@@ -71,7 +71,7 @@ shelllist-launcher toggle
 shelllist-launcher floating  # one-shot floating fallback
 ```
 
-The launcher lists standards-visible desktop applications, groups live Hyprland windows, focuses the most-recent running instance with `Enter`, launches non-running applications, and exposes instances plus desktop-defined actions with `Right`. `Shift+Enter` always launches a new instance.
+The launcher lists standards-visible desktop applications, groups live Hyprland windows, focuses the most-recent running instance with `Enter`, launches non-running applications, and exposes instances plus desktop-defined actions with `Right`. Running rows use single- or multiple-window icons and show aggregate CPU and resident-memory usage; the details pane reports the same usage per window instance. Its header action focuses the first running instance (or launches on the current workspace), **New tile** launches another instance, and each instance has an icon-only focus control with a tooltip. `Shift+Enter` also launches a new tile.
 
 Run the experimental Bluetooth popup:
 

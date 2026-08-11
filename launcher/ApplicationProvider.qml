@@ -20,14 +20,19 @@ Core.Provider {
     }
 
     function primaryActions(application: var, busy: bool): var {
-        const actions = [action("activate", application.running ? "Focus" : "Launch", {
-            icon: application.running ? "󰖲" : "󰐕", shortcut: "Enter", role: "default", enabled: !busy,
-            presentation: { group: "primary", tone: "active", width: 128 }
+        const running = !!application.running;
+        const actions = [action("activate", running ? "Focus" : "Launch", {
+            icon: running ? "󰖯" : "󰐕", shortcut: "Enter", role: "default", enabled: !busy,
+            presentation: { group: "primary", tone: "active", width: 128 },
+            metadata: { toolTip: running
+                ? "Focus the first running instance"
+                : "Launch on the current workspace" }
         })];
         if (application.kind === "desktop-application")
-            actions.push(action("launch", "Launch new", {
-                icon: "󰐕", shortcut: "Shift+Enter", enabled: !busy,
-                presentation: { group: "toolbar", tone: "normal", width: 120 }
+            actions.push(action("launch", "New tile", {
+                icon: "󰖲", shortcut: "Shift+Enter", enabled: !busy,
+                presentation: { group: "toolbar", tone: "normal", width: 120 },
+                metadata: { toolTip: "Launch another instance in a new tile on the current workspace" }
             }));
         return actions;
     }
@@ -61,9 +66,6 @@ Core.Provider {
     }
 
     function subtitleFor(application: var): string {
-        const running = application.running_count || 0;
-        if (running > 0)
-            return running === 1 ? "Running" : running + " windows";
         return application.generic_name || application.comment || "Application";
     }
 

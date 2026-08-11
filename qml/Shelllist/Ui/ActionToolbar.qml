@@ -36,6 +36,7 @@ RowLayout {
             label: modelData.label || ""
             icon: modelData.icon || ""
             hotkey: modelData.shortcut || ""
+            toolTip: (modelData.metadata || {}).toolTip || ""
             tone: (modelData.presentation || {}).tone || "normal"
             enabled: modelData.enabled !== false
             onClicked: toolbar.triggered(modelData.id)

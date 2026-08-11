@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls as Controls
 
 Rectangle {
     id: control
@@ -7,6 +8,7 @@ Rectangle {
     property string accessibleName: label
     property string icon: ""
     property string hotkey: ""
+    property string toolTip: ""
     property string tone: "normal"
     property color backgroundColor: tone === "accent" ? Theme.accent
         : (tone === "active" ? Theme.active
@@ -47,4 +49,8 @@ Rectangle {
     }
 
     ControlPointerArea { id: area; focusTarget: control; onClicked: control.clicked() }
+
+    Controls.ToolTip.visible: area.containsMouse && control.toolTip.length > 0
+    Controls.ToolTip.text: control.toolTip
+    Controls.ToolTip.delay: 450
 }

@@ -35,6 +35,12 @@ Ui.ProviderChooserController {
         status = forceRefresh ? "Refreshing applications…" : "Loading applications…";
         beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
     }
+    function refreshMetrics() {
+        if (!uiActive || actionInFlight || refreshInFlight)
+            return;
+        forceRefresh = false;
+        beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
+    }
     function requestApplications(id, text, generation, limit) {
         const refreshCatalog = forceRefresh;
         forceRefresh = false;
@@ -110,6 +116,13 @@ Ui.ProviderChooserController {
         if (!selectedResult || actionInFlight)
             return false;
         return executeSelected(actionId);
+    }
+
+    Timer {
+        interval: 2000
+        running: controller.uiActive
+        repeat: true
+        onTriggered: controller.refreshMetrics()
     }
 
     ApplicationBackend { id: backend; controller: controller }

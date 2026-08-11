@@ -2,6 +2,7 @@ import Quickshell
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
+import "ApplicationPresentation.js" as Presentation
 
 Ui.ResultRow {
     id: row
@@ -51,8 +52,10 @@ Ui.ResultRow {
         }
         Text {
             Layout.fillWidth: true
-            text: row.resultData.subtitle
-            color: row.application.running ? Ui.Theme.accent : Ui.Theme.mutedText
+            text: row.application.running
+                ? Presentation.usageText(row.application)
+                : row.resultData.subtitle
+            color: Ui.Theme.mutedText
             font.family: Ui.Theme.fontFamily
             font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
             elide: Text.ElideRight
@@ -61,12 +64,15 @@ Ui.ResultRow {
 
     Text {
         visible: row.application.running
-        Layout.preferredWidth: row.scaled(46)
-        text: row.application.focused ? "Active" : String(row.application.running_count || 1)
+        Layout.preferredWidth: row.scaled(30)
+        text: Presentation.runningWindowIcon(row.application.running_count)
         color: row.application.focused ? Ui.Theme.active : Ui.Theme.accent
-        horizontalAlignment: Text.AlignRight
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
-        font.weight: Ui.Theme.fontWeightDemiBold
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        font.family: Ui.Theme.iconFontFamily
+        font.pixelSize: Math.max(Ui.Theme.iconSizeSmall, row.scaled(Ui.Theme.iconSize))
+        Accessible.name: (row.application.running_count || 1) > 1
+            ? String(row.application.running_count) + " running windows"
+            : "Running window"
     }
 }

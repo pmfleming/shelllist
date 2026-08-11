@@ -732,6 +732,14 @@
             touch $out
           '';
 
+          applicationPresentation = pkgs.runCommand "shelllist-application-presentation"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-application-presentation.js} ${./launcher/ApplicationPresentation.js}
+            touch $out
+          '';
+
           ipValidation = pkgs.runCommand "shelllist-ip-validation"
             {
               nativeBuildInputs = [ pkgs.nodejs ];
