@@ -33,8 +33,10 @@ Item {
             registry.cancelQuery(activeQueryId);
         queryGeneration += 1;
         activeQueryId = "query-" + Date.now() + "-" + queryGeneration;
+        // Assigning a different query resets selection through onQueryTextChanged.
+        // A refresh of the same query must keep the stable result selection while
+        // the replacement batch is in flight.
         queryText = text || "";
-        selectedIndex = 0;
         const request = Model.queryRequest({
             id: activeQueryId,
             generation: queryGeneration,

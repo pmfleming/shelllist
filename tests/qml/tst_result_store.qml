@@ -40,6 +40,25 @@ TestCase {
         compare(store.selectedIndex, 0);
     }
 
+    function test_retainsSelectionAcrossSameQueryRefresh() {
+        store.replaceProviderResults("test", [
+            result("first", "First", 20), result("second", "Second", 10)
+        ], true);
+        store.selectedIndex = 1;
+
+        const request = store.beginQuery("", {}, ["test"], 50);
+        compare(store.selected().id, "second");
+
+        verify(store.applyBatch({
+            providerId: "test", queryId: request.id, replace: true,
+            complete: true, results: [
+                result("first", "First", 5), result("second", "Second", 40)
+            ]
+        }));
+        compare(store.selected().id, "second");
+        compare(store.selectedIndex, 0);
+    }
+
     function test_ignoresStaleBatch() {
         store.activeQueryId = "query-current";
         verify(!store.applyBatch({
