@@ -75,4 +75,21 @@ Ui.ResultRow {
             ? String(row.application.running_count) + " running windows"
             : "Running window"
     }
+
+    Ui.ActionButton {
+        visible: row.application.running
+        z: 2
+        Layout.preferredWidth: row.scaled(30)
+        Layout.preferredHeight: row.scaled(30)
+        label: ""
+        icon: "󰅖"
+        tone: "danger"
+        enabled: !row.listPane.chooserController.actionInFlight
+        accessibleName: "Close " + row.resultData.title
+        toolTip: "Close all running instances of “" + row.resultData.title + "”"
+        onClicked: {
+            row.listPane.chooserController.select(row.index);
+            row.listPane.chooserController.triggerDetailAction("close");
+        }
+    }
 }

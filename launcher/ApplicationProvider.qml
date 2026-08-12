@@ -37,14 +37,29 @@ Core.Provider {
         return actions;
     }
 
+    function closeAction(application: var, busy: bool): var {
+        return action("close", "Close", {
+            icon: "󰅖", enabled: !!application.running && !busy,
+            presentation: { group: "primary", tone: "danger", width: 104 },
+            metadata: { toolTip: "Close all running instances" }
+        });
+    }
+
     function windowActions(application: var, busy: bool): var {
-        return (application.instances || []).map(function (window, index) {
-            return action("focus-window-" + index, window.title || "Window", {
+        const actions = [];
+        (application.instances || []).forEach(function (window, index) {
+            actions.push(action("focus-window-" + index, window.title || "Window", {
                 icon: "󰖲", enabled: !busy,
                 presentation: { group: "overflow", tone: window.focused ? "active" : "normal", width: 0 },
                 metadata: { operation: "focus-window", windowId: window.id }
-            });
+            }));
+            actions.push(action("close-window-" + index, "Close " + (window.title || "window"), {
+                icon: "󰅖", enabled: !busy,
+                presentation: { group: "overflow", tone: "danger", width: 0 },
+                metadata: { operation: "close-window", windowId: window.id }
+            }));
         });
+        return actions;
     }
 
     function desktopActions(application: var, busy: bool): var {
@@ -62,7 +77,7 @@ Core.Provider {
             return [];
         const busy = controller.actionInFlight;
         return primaryActions(application, busy)
-            .concat(windowActions(application, busy), desktopActions(application, busy));
+            .concat([closeAction(application, busy)], windowActions(application, busy), desktopActions(application, busy));
     }
 
     function subtitleFor(application: var): string {
@@ -108,6 +123,8 @@ Core.Provider {
     function operationFor(actionId: string): string {
         if (actionId.indexOf("focus-window-") === 0)
             return "focus-window";
+        if (actionId.indexOf("close-window-") === 0)
+            return "close-window";
         if (actionId.indexOf("desktop-action-") === 0)
             return "desktop-action";
         return actionId;

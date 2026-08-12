@@ -77,7 +77,12 @@ Ui.ProviderChooserController {
         status = operation.message || "Application action completed";
         if (activeRequest)
             applicationProvider.executionFinished({ requestId: id, operation: operation });
+        const action = activeRequest ? activeRequest.actionId : "";
         activeRequest = null;
+        if (action === "close" || action.indexOf("close-window-") === 0) {
+            refresh(false);
+            return;
+        }
         closeWindowRequested();
     }
     function handleFailure(id, message) {

@@ -32,7 +32,7 @@ Ui.DetailsPane {
         subtitle: pane.selected.subtitle || ""
         titlePixelSize: Math.round(Ui.Theme.fontSizeTitle * pane.uiScale)
         actions: pane.actions
-        actionWidth: 128
+        actionWidth: 240
         controlHeight: pane.toolbarHeight
         onActionTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
     }
@@ -150,10 +150,24 @@ Ui.DetailsPane {
                             icon: "󰖯"
                             hotkey: ""
                             tone: instanceRow.modelData.focused ? "active" : "normal"
+                            enabled: !pane.controller.actionInFlight
                             accessibleName: "Focus " + instanceRow.instanceTitle
                             toolTip: "Focus “" + instanceRow.instanceTitle + "” on workspace "
                                 + instanceRow.workspaceLabel
                             onClicked: pane.controller.triggerDetailAction("focus-window-" + instanceRow.index)
+                        }
+
+                        Ui.ActionButton {
+                            Layout.preferredWidth: pane.toolbarHeight
+                            Layout.preferredHeight: pane.toolbarHeight
+                            label: ""
+                            icon: "󰅖"
+                            hotkey: ""
+                            tone: "danger"
+                            enabled: !pane.controller.actionInFlight
+                            accessibleName: "Close " + instanceRow.instanceTitle
+                            toolTip: "Close “" + instanceRow.instanceTitle + "”"
+                            onClicked: pane.controller.triggerDetailAction("close-window-" + instanceRow.index)
                         }
                     }
                 }
