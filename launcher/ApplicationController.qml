@@ -14,6 +14,11 @@ Ui.ProviderChooserController {
     property string activeTargetId: ""
     property var activeRequest: null
     property bool forceRefresh: false
+    property var resourceHistory: []
+    property string historyTargetId: ""
+    property string activeHistoryRequestId: ""
+    property int historyRequestSequence: 0
+    readonly property bool historyInFlight: activeHistoryRequestId.length > 0
     readonly property var selectedApplication: selectedResult ? selectedResult.payload : null
     readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
     navigationPrimaryEnabled: hasSelection && !actionInFlight
@@ -28,6 +33,9 @@ Ui.ProviderChooserController {
         actionInFlight = false;
         activeTargetId = "";
         activeRequest = null;
+        resourceHistory = [];
+        historyTargetId = "";
+        activeHistoryRequestId = "";
         detailsOpen = false;
     }
     function refresh(explicitRefresh) {
@@ -46,9 +54,29 @@ Ui.ProviderChooserController {
         forceRefresh = false;
         backend.query(id, text, generation, limit, refreshCatalog);
     }
+    function requestResourceHistory(forceRefresh) {
+        if (!uiActive || !detailsOpen || !selectedResult)
+            return;
+        const targetId = selectedResult.id;
+        if (historyInFlight && targetId === historyTargetId)
+            return;
+        if (forceRefresh !== true && targetId === historyTargetId)
+            return;
+        historyTargetId = targetId;
+        activeHistoryRequestId = "history-" + Date.now() + "-" + (++historyRequestSequence);
+        backend.history(activeHistoryRequestId, targetId, 120);
+    }
+    function applyResourceHistory(id, history) {
+        if (id !== activeHistoryRequestId || (history.target_id || "") !== historyTargetId)
+            return;
+        activeHistoryRequestId = "";
+        resourceHistory = history.points || [];
+    }
     function cancelQuery(requestId) { backend.cancelRequest(requestId); }
     function applyApplications(id, page) {
         applyProviderQuery(id, applicationProvider.resultsForApplications(page.applications || []));
+        if (detailsOpen && selectedResult && selectedResult.id !== historyTargetId)
+            requestResourceHistory();
         const count = (page.applications || []).length;
         status = count + (count === 1 ? " application" : " applications");
         if (page.has_more)
@@ -86,6 +114,11 @@ Ui.ProviderChooserController {
         closeWindowRequested();
     }
     function handleFailure(id, message) {
+        if (id.indexOf("history-") === 0) {
+            if (id === activeHistoryRequestId)
+                activeHistoryRequestId = "";
+            return;
+        }
         if (id.indexOf("action-") === 0) {
             actionInFlight = false;
             activeTargetId = "";
@@ -104,6 +137,8 @@ Ui.ProviderChooserController {
         actionInFlight = false;
         activeTargetId = "";
         activeRequest = null;
+        activeHistoryRequestId = "";
+        resourceHistory = [];
         clearProviderResults();
         status = message;
     }
@@ -123,11 +158,29 @@ Ui.ProviderChooserController {
         return executeSelected(actionId);
     }
 
+    onDetailsOpenChanged: {
+        if (detailsOpen)
+            requestResourceHistory();
+        else {
+            resourceHistory = [];
+            historyTargetId = "";
+            activeHistoryRequestId = "";
+        }
+    }
+    onSelectedResultChanged: if (detailsOpen) requestResourceHistory()
+
     Timer {
         interval: 2000
         running: controller.uiActive
         repeat: true
         onTriggered: controller.refreshMetrics()
+    }
+
+    Timer {
+        interval: 15000
+        running: controller.uiActive && controller.detailsOpen
+        repeat: true
+        onTriggered: controller.requestResourceHistory(true)
     }
 
     ApplicationBackend { id: backend; controller: controller }

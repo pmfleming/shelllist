@@ -25,6 +25,21 @@ function usageText(value) {
     return "CPU " + cpuText(usage.cpu_percent) + " · " + memoryText(usage.memory_bytes);
 }
 
+function rateText(value) {
+    const bytes = finiteNumber(value);
+    if (bytes >= 1024 * 1024 * 1024)
+        return (bytes / (1024 * 1024 * 1024)).toFixed(1) + " GiB/s";
+    if (bytes >= 1024 * 1024)
+        return (bytes / (1024 * 1024)).toFixed(1) + " MiB/s";
+    if (bytes >= 1024)
+        return (bytes / 1024).toFixed(1) + " KiB/s";
+    return Math.round(bytes) + " B/s";
+}
+
+function powerText(value) {
+    return finiteNumber(value).toFixed(2) + " W";
+}
+
 function runningWindowIcon(instanceCount) {
     return Number(instanceCount || 0) > 1 ? "󰖲" : "󰖯";
 }

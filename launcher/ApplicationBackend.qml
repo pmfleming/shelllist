@@ -18,6 +18,8 @@ Io.DaemonBackend {
         const data = envelope.data || ({});
         if (data.applications)
             controller.applyApplications(id, data.applications);
+        if (data.history)
+            controller.applyResourceHistory(id, data.history);
         if (data.operation)
             controller.applyOperation(id, data.operation);
     }
@@ -25,6 +27,11 @@ Io.DaemonBackend {
     function query(id: string, text: string, generation: int, limit: int, forceRefresh: bool): bool {
         return call(id, forceRefresh ? AppApi.methods.refresh : AppApi.methods.query,
             { query: text, generation: generation, limit: limit });
+    }
+
+    function history(id: string, targetId: string, limit: int): bool {
+        return call(id, AppApi.methods.history,
+            { target_id: targetId, since_ms: null, limit: limit });
     }
 
     function execute(id: string, params: var): bool {

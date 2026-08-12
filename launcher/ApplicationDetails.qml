@@ -81,6 +81,75 @@ Ui.DetailsPane {
             }
 
             Text {
+                visible: pane.application.running
+                Layout.fillWidth: true
+                text: pane.controller.historyInFlight ? "Resource history · Loading…" : "Resource history · Last 30 minutes"
+                color: Ui.Theme.text
+                font.family: Ui.Theme.fontFamily
+                font.pixelSize: Ui.Theme.fontSizeLabel
+                font.weight: Ui.Theme.fontWeightDemiBold
+            }
+
+            GridLayout {
+                visible: pane.application.running
+                Layout.fillWidth: true
+                columns: 2
+                columnSpacing: Math.round(Ui.Theme.spacingMd * pane.uiScale)
+                rowSpacing: Math.round(Ui.Theme.spacingMd * pane.uiScale)
+
+                ApplicationResourceGraph {
+                    points: pane.controller.resourceHistory
+                    uiScale: pane.uiScale
+                    metric: "cpu_percent_of_machine"
+                    label: "CPU"
+                    valueText: Presentation.cpuText(pane.application.cpu_percent_of_machine)
+                    lineColor: Ui.Theme.accent
+                    minimumMaximum: 10
+                }
+                ApplicationResourceGraph {
+                    points: pane.controller.resourceHistory
+                    uiScale: pane.uiScale
+                    metric: "memory_bytes"
+                    label: "Memory"
+                    valueText: Presentation.memoryText(pane.application.memory_bytes)
+                    lineColor: Ui.Theme.active
+                }
+                ApplicationResourceGraph {
+                    points: pane.controller.resourceHistory
+                    uiScale: pane.uiScale
+                    metric: "gpu_percent"
+                    label: "GPU"
+                    valueText: Presentation.cpuText(pane.application.gpu_percent)
+                    lineColor: Ui.Theme.warning
+                    minimumMaximum: 10
+                }
+                ApplicationResourceGraph {
+                    points: pane.controller.resourceHistory
+                    uiScale: pane.uiScale
+                    metric: "disk_read_bytes_per_second"
+                    label: "Disk read"
+                    valueText: Presentation.rateText(pane.application.disk_read_bytes_per_second)
+                    lineColor: Ui.Theme.accent
+                }
+                ApplicationResourceGraph {
+                    points: pane.controller.resourceHistory
+                    uiScale: pane.uiScale
+                    metric: "disk_write_bytes_per_second"
+                    label: "Disk write"
+                    valueText: Presentation.rateText(pane.application.disk_write_bytes_per_second)
+                    lineColor: Ui.Theme.warning
+                }
+                ApplicationResourceGraph {
+                    points: pane.controller.resourceHistory
+                    uiScale: pane.uiScale
+                    metric: "average_power_watts"
+                    label: "Power"
+                    valueText: Presentation.powerText(pane.application.power_watts)
+                    lineColor: Ui.Theme.active
+                }
+            }
+
+            Text {
                 visible: (pane.application.instances || []).length > 0
                 Layout.fillWidth: true
                 text: "Running instances"

@@ -6,3 +6,4 @@ ApplicationDetails 1.0 ApplicationDetails.qml
 ApplicationListPane 1.0 ApplicationListPane.qml
 ApplicationListRow 1.0 ApplicationListRow.qml
 ApplicationProvider 1.0 ApplicationProvider.qml
+ApplicationResourceGraph 1.0 ApplicationResourceGraph.qml
