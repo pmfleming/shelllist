@@ -63,6 +63,15 @@ expect("unknown values are not inferred", battery.summary(partial) === "R 55%");
 expect("presentation does not mutate backend order", fastPair[0].component === "case");
 expect("missing reports produce no summary", battery.summary(null) === "");
 expect("component artwork is selected centrally", battery.imageFor({}, fastPair[0]).endsWith("charging-case.png"));
+expectDeviceImage("known earbuds despite a transient headphone icon", {
+    device_type: "Earbuds", icon: "audio-headphones"
+}, "assets/audio/left-earbud.png");
+expectDeviceImage("known headphones despite a transient headset icon", {
+    device_type: "Headphones", icon: "audio-headset"
+}, "assets/audio/headphones.png");
+expectDeviceImage("known types without dedicated artwork despite a contradictory icon", {
+    device_type: "Tablet", icon: "audio-headphones"
+}, "assets/devices/unknown-device.png");
 expectDeviceImage("computer", { icon: "computer" }, "assets/devices/computer.png");
 expectDeviceImage("game controller", { icon: "input-gaming" }, "assets/devices/game-controller.png");
 expectDeviceImage("keyboard", { icon: "input-keyboard" }, "assets/devices/keyboard.png");

@@ -8,6 +8,7 @@ const componentImages = ({
     case: "assets/audio/charging-case.png"
 });
 const deviceImageRules = [
+    { terms: ["earbuds"], image: "assets/audio/left-earbud.png" },
     { terms: ["headphones"], image: "assets/audio/headphones.png" },
     { terms: ["headset"], image: "assets/audio/headset.png" },
     { terms: ["speaker", "audio-card"], image: "assets/devices/speaker.png" },
@@ -71,6 +72,12 @@ function matchingDeviceImage(text) {
 }
 
 function deviceImage(device) {
+    const knownType = String((device && device.device_type) || "").toLowerCase();
+    const typeImage = matchingDeviceImage(knownType);
+    if (typeImage)
+        return typeImage;
+    if (knownType && knownType !== "bluetooth device")
+        return unknownDeviceImage;
     const iconImage = matchingDeviceImage(String((device && device.icon) || "").toLowerCase());
     if (iconImage)
         return iconImage;

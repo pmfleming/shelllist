@@ -28,6 +28,19 @@ const earbuds = {
     ]
 };
 expect("component data classifies untethered earbuds", glyphs.forDevice(earbuds) === "󱡏");
+expect("known earbud type survives transient headphone metadata", glyphs.forDevice({
+    device_type: "Earbuds",
+    icon: "audio-headphones",
+    battery: [{ component: "main", percentage: 80 }]
+}) === "󱡏");
+expect("known headphone type survives a transient headset icon", glyphs.forDevice({
+    device_type: "Headphones",
+    icon: "audio-headset"
+}) === "󰋋");
+expect("known types without dedicated artwork ignore contradictory icons", glyphs.forDevice({
+    device_type: "Tablet",
+    icon: "audio-headphones"
+}) === "󰂯");
 expect("left bud uses earbud glyph", glyphs.forBattery(earbuds.battery[0]) === "󱡏");
 expect("right bud uses earbud glyph", glyphs.forBattery(earbuds.battery[1]) === "󱡏");
 expect("case uses charging-case glyph", glyphs.forBattery(earbuds.battery[2]) === "󰋌");

@@ -47,6 +47,19 @@ const iconRules = [
     { terms: ["computer", "laptop"], glyph: glyphs.computer },
     { terms: ["watch"], glyph: glyphs.watch }
 ];
+const typeRules = [
+    { terms: ["earbuds"], glyph: glyphs.earbuds },
+    { terms: ["headphones"], glyph: glyphs.headphones },
+    { terms: ["headset"], glyph: glyphs.headset },
+    { terms: ["speaker"], glyph: glyphs.speaker },
+    { terms: ["audio device"], glyph: glyphs.bluetoothHeadphones },
+    { terms: ["keyboard"], glyph: glyphs.keyboard },
+    { terms: ["mouse"], glyph: glyphs.mouse },
+    { terms: ["game controller"], glyph: glyphs.controller },
+    { terms: ["phone"], glyph: glyphs.phone },
+    { terms: ["computer"], glyph: glyphs.computer },
+    { terms: ["wearable"], glyph: glyphs.watch }
+];
 const serviceRules = [
     { terms: ["audio sink"], glyph: glyphs.bluetoothHeadphones },
     { terms: ["handsfree", "headset"], glyph: glyphs.headset }
@@ -62,6 +75,9 @@ function glyphMatching(text, rules, fallback) {
 function forDevice(device) {
     if (hasComponent(device, "left") || hasComponent(device, "right"))
         return glyphs.earbuds;
+    const knownType = normalized(device && device.device_type);
+    if (knownType && knownType !== "bluetooth device")
+        return glyphMatching(knownType, typeRules, glyphs.bluetooth);
     const iconGlyph = glyphMatching(normalized(device && device.icon), iconRules, "");
     return iconGlyph || glyphMatching(serviceText(device), serviceRules, glyphs.bluetooth);
 }
