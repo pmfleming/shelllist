@@ -64,7 +64,7 @@ Item {
         const itemProvider = providerById(result.providerId);
         if (!itemProvider || !itemProvider.providerEnabled)
             return [];
-        return (itemProvider.actionsFor(result) || []).map(Model.action);
+        return Model.actionList(itemProvider.actionsFor(result) || []);
     }
 
     function defaultActionFor(result) {

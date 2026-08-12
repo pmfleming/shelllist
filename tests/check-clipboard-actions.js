@@ -35,5 +35,10 @@ for (const kind of ["text", "link", "image", "files", "binary"]) {
         throw new Error(`${kind}: invalid action descriptor`);
     if (descriptors.map(action => action.id).join(",") !== context.actionsForKind(kind).join(","))
         throw new Error(`${kind}: descriptor IDs differ from action matrix`);
+    const primary = descriptors.filter(action => action.presentation.group === "primary");
+    if (primary.length !== 1 || primary[0].role !== "default")
+        throw new Error(`${kind}: expected exactly one default primary action`);
+    if (descriptors.filter(action => action.presentation.group === "toolbar").some(action => action.role !== "secondary"))
+        throw new Error(`${kind}: toolbar actions must be secondary`);
 }
 console.log("clipboard action matrix checks passed");

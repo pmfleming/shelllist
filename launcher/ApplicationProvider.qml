@@ -39,8 +39,8 @@ Core.Provider {
 
     function closeAction(application: var, busy: bool): var {
         return action("close", "Close", {
-            icon: "󰅖", enabled: !!application.running && !busy,
-            presentation: { group: "primary", tone: "danger", width: 104 },
+            icon: "󰅖", role: "destructive", enabled: !!application.running && !busy,
+            presentation: { group: "toolbar", tone: "normal", width: 104 },
             metadata: { toolTip: "Close all running instances" }
         });
     }

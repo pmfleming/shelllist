@@ -16,6 +16,7 @@ Shelllist's launcher-facing boundary is a normalized result/action/provider mode
 10. **Secrets do not belong in results, metadata, query context, or logs.** Secret prompts use a dedicated backend flow.
 11. **Visible model identity is persistent.** `ResultStore.visibleResults` remains the provider-neutral ranked array used by controllers, while `visibleModel` is one keyed `ListModel` synchronized with insert/move/update/remove operations so views do not reset every delegate for each backend snapshot.
 12. **Do not duplicate dynamic actions in snapshots.** A provider that overrides `actionsFor(result)` may leave `result.actions` empty and resolve current actions only when rendering or dispatching them. Providers use `Core.Model.keepOpenAction()` for the shared normalized keep-open action defaults instead of cloning action factories.
+13. **Details use one clear action hierarchy.** Exactly one visible primary action sits in the header, in line with the selected item's title and status. Zero or more mutually exclusive primary state alternatives may be declared as hidden actions, but only one may be visible. Secondary actions render in a toolbar directly below the header; settings and item-level actions remain in their relevant content sections. Wi-Fi's connect/cancel/disconnect header action with forget/sign-in/share below is the canonical layout.
 
 ## Provider descriptor
 

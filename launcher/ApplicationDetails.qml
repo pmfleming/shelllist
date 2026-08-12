@@ -32,7 +32,7 @@ Ui.DetailsPane {
         subtitle: pane.selected.subtitle || ""
         titlePixelSize: Math.round(Ui.Theme.fontSizeTitle * pane.uiScale)
         actions: pane.actions
-        actionWidth: 240
+        actionWidth: 128
         controlHeight: pane.toolbarHeight
         onActionTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
     }

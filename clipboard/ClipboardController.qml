@@ -21,7 +21,7 @@ Ui.ProviderChooserController {
     property var currentEntry: null
     readonly property alias detailState: detailsModel
     readonly property var selectedEntry: selectedResult ? selectedResult.payload : null
-    navigationPrimaryEnabled: hasSelection && selectedEntry.kind !== "binary"
+    navigationPrimaryEnabled: hasSelection
         && !actionInFlight && !wipeChallenge && !detailState.editorFocused
     navigationCloseEnabled: false
 
@@ -30,6 +30,7 @@ Ui.ProviderChooserController {
 
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
+        selectFirst();
         backend.beginSession();
         backend.getSettings();
         refresh();
@@ -107,9 +108,12 @@ Ui.ProviderChooserController {
             runAction("paste");
     }
     function primarySelected() {
-        if (!selectedEntry || selectedEntry.kind === "binary" || actionInFlight || wipeChallenge)
+        if (!selectedEntry || actionInFlight || wipeChallenge)
             return false;
-        pasteSelected();
+        if (selectedEntry.kind === "binary")
+            copySelected();
+        else
+            pasteSelected();
         return true;
     }
     function pasteImageAsFile() { runAction("image-as-file"); }

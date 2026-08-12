@@ -10,6 +10,7 @@ Ui.DetailsPane {
     readonly property bool editingText: devicePage.editingName || adapterPage.editing
     readonly property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
+    readonly property int secondaryActionsHeight: controller.hasSelection ? actionHeight : 0
     readonly property int footerHeight: actionHeight
 
     chooserController: controller
@@ -35,9 +36,21 @@ Ui.DetailsPane {
         onActionTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
     }
 
+    Ui.ActionToolbar {
+        visible: pane.controller.hasSelection
+        width: parent.width
+        height: pane.secondaryActionsHeight
+        actions: pane.controller.detailActions
+        group: "toolbar"
+        alignRight: true
+        controlHeight: pane.actionHeight
+        onTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
+    }
+
     Item {
         width: parent.width
-        height: Math.max(0, parent.height - pane.headerHeight - pane.footerHeight - 2 * pane.sectionSpacing)
+        height: Math.max(0, parent.height - pane.headerHeight - pane.secondaryActionsHeight
+            - pane.footerHeight - 3 * pane.sectionSpacing)
         clip: true
 
         Item {

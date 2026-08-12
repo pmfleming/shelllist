@@ -24,8 +24,8 @@ Ui.ChooserListPane {
     powerEnabled: !controller.globalRequestInFlight && !controller.radio.hard_blocked
     refreshEnabled: controller.powered && !controller.globalRequestInFlight
     iconActionEnabled: !controller.screenshotInFlight && !controller.actionInFlight && !controller.modalPromptOpen
-    searchActionIcon: controller.searchAllDevices ? "󰂯" : "󰂱"
-    searchActionToolTip: controller.searchAllDevices ? "Search All Devices" : "Search My Devices"
+    searchActionIcon: controller.searchAllDevices ? "󰐷" : "󰒓"
+    searchActionToolTip: controller.searchAllDevices ? "All Devices" : "My Devices"
     searchActionEnabled: !controller.globalRequestInFlight && !controller.modalPromptOpen
     filterText: controller.filterText
     status: controller.status

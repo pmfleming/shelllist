@@ -48,6 +48,14 @@ expect("action presentation is normalized", launch.presentation.group === "prima
 const keepOpen = model.keepOpenAction("refresh", "Refresh", { role: "default" });
 expect("shared provider actions stay open", keepOpen.closePolicy === "keep-open" && keepOpen.role === "default");
 throws("action enums are checked", () => model.action({ id: "x", label: "X", role: "surprise" }), "unsupported value");
+throws("only one visible primary action is allowed", () => model.actionList([
+    { id: "first", label: "First", presentation: { group: "primary" } },
+    { id: "second", label: "Second", presentation: { group: "primary" } }
+]), "at most one visible primary");
+expect("hidden primary state alternatives are allowed", model.actionList([
+    { id: "connected", label: "Disconnect", presentation: { group: "primary" } },
+    { id: "disconnected", label: "Connect", visible: false, presentation: { group: "primary" } }
+]).length === 2);
 
 const terminal = model.result({
     providerId: "desktop.applications",
@@ -65,6 +73,10 @@ expect("result keeps provider payload", terminal.payload.desktopFile === "/tmp/t
 throws("primary action must exist", () => model.result({
     providerId: "test", id: "one", title: "One", primaryActionId: "missing", actions: [launch]
 }), "does not reference");
+throws("primary action uses primary presentation", () => model.result({
+    providerId: "test", id: "one", title: "One", primaryActionId: "secondary",
+    actions: [{ id: "secondary", label: "Secondary", presentation: { group: "toolbar" } }]
+}), "must reference a primary presentation action");
 throws("duplicate actions are rejected", () => model.result({
     providerId: "test", id: "one", title: "One", actions: [launch, launch]
 }), "duplicate");

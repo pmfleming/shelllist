@@ -107,6 +107,11 @@ function keepOpenAction(id, label, options) {
 function actionList(values) {
     const result = (Array.isArray(values) ? values : []).map(action);
     ensureUnique(result, "id", "result.actions");
+    const visiblePrimary = result.filter(function (item) {
+        return item.visible && item.presentation.group === "primary";
+    });
+    if (visiblePrimary.length > 1)
+        fail("result.actions", "must expose at most one visible primary action");
     return result;
 }
 
@@ -118,8 +123,11 @@ function result(input) {
     const id = nonEmptyString(source.id, "result.id");
     const actions = actionList(source.actions);
     const primaryActionId = stringValue(source.primaryActionId, "");
-    if (primaryActionId.length > 0 && actions.length > 0 && actions.findIndex(function (item) { return item.id === primaryActionId; }) < 0)
+    const primaryAction = actions.find(function (item) { return item.id === primaryActionId; });
+    if (primaryActionId.length > 0 && actions.length > 0 && !primaryAction)
         fail("result.primaryActionId", "does not reference an action");
+    if (primaryAction && primaryAction.presentation.group !== "primary")
+        fail("result.primaryActionId", "must reference a primary presentation action");
     return {
         schemaVersion: schemaVersion, providerId: providerId,
         providerPriority: finiteNumber(source.providerPriority, 0),

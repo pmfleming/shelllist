@@ -50,11 +50,14 @@ var actionLabels = {
 };
 
 function actionDescriptorsForKind(kind) {
+    const primaryId = kind === "binary" ? "copy" : "paste";
     return actionsForKind(kind).map(function (actionId) {
+        const primary = actionId === primaryId;
         return {
             id: actionId,
             label: actionLabels[actionId],
-            role: actionId === "paste" ? "default" : "secondary"
+            role: primary ? "default" : "secondary",
+            presentation: { group: primary ? "primary" : "toolbar" }
         };
     });
 }
