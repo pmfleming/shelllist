@@ -36,30 +36,15 @@ Ui.ResultRow {
         }
     }
 
-    ColumnLayout {
+    Text {
         Layout.fillWidth: true
-        Layout.fillHeight: true
-        spacing: 0
-
-        Text {
-            Layout.fillWidth: true
-            text: row.resultData.title
-            color: Ui.Theme.text
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Math.max(Ui.Theme.fontSizeSmall, row.scaled(Ui.Theme.fontSizeLabel))
-            font.weight: row.application.focused ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
-            elide: Text.ElideRight
-        }
-        Text {
-            Layout.fillWidth: true
-            text: row.application.running
-                ? Presentation.usageText(row.application)
-                : row.resultData.subtitle
-            color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
-            elide: Text.ElideRight
-        }
+        text: row.resultData.title
+        color: Ui.Theme.text
+        verticalAlignment: Text.AlignVCenter
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Math.max(Ui.Theme.fontSizeSmall, row.scaled(Ui.Theme.fontSizeLabel))
+        font.weight: row.application.focused ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
+        elide: Text.ElideRight
     }
 
     Text {
