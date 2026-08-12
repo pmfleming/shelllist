@@ -83,7 +83,12 @@ Ui.ResultRow {
         Layout.preferredHeight: row.scaled(30)
         label: ""
         icon: "󰅖"
-        tone: "danger"
+        tone: "normal"
+        backgroundColor: "transparent"
+        borderColor: "transparent"
+        labelColor: Ui.Theme.text
+        hoverBackgroundColor: Ui.Theme.danger
+        pressedBackgroundColor: Ui.Theme.mix(Ui.Theme.danger, Ui.Theme.dangerText, 0.14)
         enabled: !row.listPane.chooserController.actionInFlight
         accessibleName: "Close " + row.resultData.title
         toolTip: "Close all running instances of “" + row.resultData.title + "”"

@@ -15,6 +15,8 @@ Rectangle {
         : (tone === "danger" ? Theme.danger
         : (tone === "warning" ? Theme.warning : Theme.controlBackground)))
     property color borderColor: tone === "normal" ? Theme.controlBorder : backgroundColor
+    property color hoverBackgroundColor: Theme.mix(backgroundColor, labelColor, 0.08)
+    property color pressedBackgroundColor: Theme.mix(backgroundColor, labelColor, 0.14)
     property color labelColor: tone === "accent" ? Theme.accentText
         : (tone === "active" ? Theme.activeText
         : (tone === "danger" ? Theme.dangerText
@@ -25,8 +27,8 @@ Rectangle {
     implicitHeight: Theme.controlHeight
     radius: Theme.controlRadius
     color: !enabled ? backgroundColor
-        : (area.pressed ? Theme.mix(backgroundColor, labelColor, 0.14)
-        : (area.containsMouse ? Theme.mix(backgroundColor, labelColor, 0.08) : backgroundColor))
+        : (area.pressed ? pressedBackgroundColor
+        : (area.containsMouse ? hoverBackgroundColor : backgroundColor))
     border.color: activeFocus ? Theme.strongBorder : borderColor
     border.width: 1
     opacity: enabled ? 1.0 : Theme.disabledOpacity
