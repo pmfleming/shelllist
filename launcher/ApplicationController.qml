@@ -1,4 +1,5 @@
 import QtQuick
+import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 
 Ui.ProviderChooserController {
@@ -21,8 +22,9 @@ Ui.ProviderChooserController {
     readonly property bool historyInFlight: activeHistoryRequestId.length > 0
     readonly property var selectedApplication: selectedResult ? selectedResult.payload : null
     readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
-    navigationPrimaryEnabled: hasSelection && !actionInFlight
-    navigationBlocked: actionInFlight
+    readonly property bool screenshotInFlight: screenshotCapture.inFlight
+    navigationPrimaryEnabled: hasSelection && !actionInFlight && !screenshotInFlight
+    navigationBlocked: actionInFlight || screenshotInFlight
 
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
@@ -44,10 +46,16 @@ Ui.ProviderChooserController {
         beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
     }
     function refreshMetrics() {
-        if (!uiActive || actionInFlight || refreshInFlight)
+        if (!uiActive || actionInFlight || screenshotInFlight || refreshInFlight)
             return;
         forceRefresh = false;
         beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
+    }
+    function captureScreenshot(x, y, width, height) {
+        if (actionInFlight || screenshotInFlight)
+            return false;
+        status = "Capturing Applications window…";
+        return screenshotCapture.captureRegion(x, y, width, height);
     }
     function requestApplications(id, text, generation, limit) {
         const refreshCatalog = forceRefresh;
@@ -85,7 +93,7 @@ Ui.ProviderChooserController {
             status += " · launch only";
     }
     function executeProviderAction(request, params) {
-        if (actionInFlight)
+        if (actionInFlight || screenshotInFlight)
             return false;
         actionInFlight = true;
         activeTargetId = request.result.id;
@@ -143,17 +151,18 @@ Ui.ProviderChooserController {
         status = message;
     }
     function primarySelected() {
-        if (!selectedResult || actionInFlight)
+        if (!selectedResult || actionInFlight || screenshotInFlight)
             return false;
         return executeSelected("activate");
     }
     function launchSelected() {
-        if (!selectedResult || actionInFlight || selectedApplication.kind !== "desktop-application")
+        if (!selectedResult || actionInFlight || screenshotInFlight
+                || selectedApplication.kind !== "desktop-application")
             return false;
         return executeSelected("launch");
     }
     function triggerDetailAction(actionId) {
-        if (!selectedResult || actionInFlight)
+        if (!selectedResult || actionInFlight || screenshotInFlight)
             return false;
         return executeSelected(actionId);
     }
@@ -168,6 +177,13 @@ Ui.ProviderChooserController {
         }
     }
     onSelectedResultChanged: if (detailsOpen) requestResourceHistory()
+
+    Io.ClipboardScreenshotCapture {
+        id: screenshotCapture
+        active: controller.uiActive
+        onCompleted: function (message) { controller.status = message; }
+        onFailed: function (message) { controller.status = message; }
+    }
 
     Timer {
         interval: 2000

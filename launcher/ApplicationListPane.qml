@@ -16,12 +16,14 @@ Ui.ChooserListPane {
     icon: "󰀻"
     powered: true
     refreshing: controller.refreshInFlight
-    busy: controller.refreshInFlight || controller.actionInFlight
+    busy: controller.refreshInFlight || controller.actionInFlight || controller.screenshotInFlight
     powerEnabled: false
-    refreshEnabled: !controller.actionInFlight
+    refreshEnabled: !controller.actionInFlight && !controller.screenshotInFlight
+    iconActionEnabled: !controller.actionInFlight && !controller.screenshotInFlight
     filterText: controller.filterText
     status: controller.status
     focusOnCompleted: true
+    onIconClicked: controller.screenshotRequested()
     onRefreshRequested: controller.refresh(true)
 
     rowDelegate: Component {

@@ -212,7 +212,7 @@ Status and connectivity are continuous subscriptions rather than polling loops. 
 
 The popup uses Nix/Home Manager `SHELLLIST_*` environment values as its single configured theme source, with the Qt/system palette as a portable fallback. It no longer maintains a second asynchronous theme state through `hyprctl getoption`. Shared `Shelllist.Ui` tokens also define spacing, margins, control and status heights, typography, icons, disabled opacity, motion, and list density so applications do not establish parallel visual constants.
 
-Clicking the coloured application tile in the Wi-Fi, Bluetooth, or Clipboard header captures the visible app surface and publishes the PNG to the Wayland clipboard through `clip-daemon`.
+Clicking the coloured application tile in the Wi-Fi, Bluetooth, Clipboard, or application launcher header captures the visible app surface and publishes the PNG to the Wayland clipboard through `clip-daemon`.
 
 Wi-Fi and Bluetooth derive a bounded `0.82–1.12` density scale from their available height. List/header spacing, search/header controls, status bars, rows, and details content therefore shrink together on short displays and expand together on taller displays. Their shared refresh tile spins and remains unavailable for the full list refresh; status bars report progress as text without duplicating the refresh animation. Modal prompt cards derive their height from wrapped content rather than fixed pixel heights.
 

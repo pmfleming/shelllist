@@ -391,7 +391,7 @@
           launcher = pkgs.writeShellApplication {
             name = "shelllist-launcher";
             meta = mkMeta "Shelllist application launcher backed by app-daemon" "shelllist-launcher";
-            runtimeInputs = [ pkgs.coreutils pkgs.gawk pkgs.quickshell appDaemon ];
+            runtimeInputs = [ pkgs.coreutils pkgs.gawk pkgs.quickshell appDaemon clipDaemon ];
             text = ''
               config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/launcher
               export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
