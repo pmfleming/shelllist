@@ -10,7 +10,8 @@ ActionButton {
     icon: "󰅖"
     tone: "normal"
     backgroundColor: "transparent"
-    borderColor: interactionState === "flat" ? "transparent" : highlightedBackgroundColor
+    border.width: 0
+    borderColor: "transparent"
     labelColor: interactionState === "flat" ? flatIconColor : highlightedIconColor
     hoverBackgroundColor: highlightedBackgroundColor
     pressedBackgroundColor: pressedColor

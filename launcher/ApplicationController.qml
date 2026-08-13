@@ -108,18 +108,38 @@ Ui.ProviderChooserController {
         return true;
     }
     function applyOperation(id, operation) {
+        const completedRequest = activeRequest;
+        const action = completedRequest ? completedRequest.actionId : "";
+        if (completedRequest
+                && (action === "close" || action.indexOf("close-window-") === 0))
+            removeClosedInstances(completedRequest, action);
         actionInFlight = false;
         activeTargetId = "";
         status = operation.message || "Application action completed";
-        if (activeRequest)
+        if (completedRequest)
             applicationProvider.executionFinished({ requestId: id, operation: operation });
-        const action = activeRequest ? activeRequest.actionId : "";
         activeRequest = null;
-        if (action === "close" || action.indexOf("close-window-") === 0) {
-            refresh(false);
+        if (action === "close" || action.indexOf("close-window-") === 0)
             return;
-        }
         closeWindowRequested();
+    }
+    function removeClosedInstances(request, action) {
+        const targetId = request.result.id;
+        const windowId = (request.action.metadata || ({})).windowId || "";
+        const next = filteredResults.map(function (result) {
+            if (result.id !== targetId)
+                return result;
+            const payload = Object.assign({}, result.payload || ({}));
+            const instances = action === "close" ? [] : (payload.instances || []).filter(function (instance) {
+                return instance.id !== windowId;
+            });
+            payload.instances = instances;
+            payload.running_count = instances.length;
+            payload.running = instances.length > 0;
+            payload.focused = instances.some(function (instance) { return instance.focused; });
+            return applicationProvider.resultForApplication(payload);
+        });
+        replaceProviderResults(next, false);
     }
     function handleFailure(id, message) {
         if (id.indexOf("history-") === 0) {
