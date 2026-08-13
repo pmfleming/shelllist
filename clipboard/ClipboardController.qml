@@ -19,6 +19,7 @@ Ui.ProviderChooserController {
     property var wipeChallenge: null
     property bool deleteConfirmationOpen
     property var currentEntry: null
+    property bool selectCurrentAfterRefresh: false
     readonly property alias detailState: detailsModel
     readonly property var selectedEntry: selectedResult ? selectedResult.payload : null
     navigationPrimaryEnabled: hasSelection
@@ -30,6 +31,7 @@ Ui.ProviderChooserController {
 
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
+        selectCurrentAfterRefresh = true;
         selectFirst();
         backend.beginSession();
         backend.getSettings();
@@ -63,6 +65,14 @@ Ui.ProviderChooserController {
     function applyHistory(id, history) {
         applyProviderQuery(id, clipboardProvider.resultsForEntries(history.entries || []));
         currentEntry = history.current || null;
+        if (selectCurrentAfterRefresh) {
+            const currentId = currentEntry ? currentEntry.id : "";
+            const currentIndex = filteredResults.findIndex(function (result) {
+                return result.id === currentId;
+            });
+            select(currentIndex >= 0 ? currentIndex : 0);
+            selectCurrentAfterRefresh = false;
+        }
         status = history.entries.length + " clipboard entries" + (history.has_more ? " · more available" : "");
         detailState.scheduleLoad();
     }
@@ -159,6 +169,11 @@ Ui.ProviderChooserController {
     }
     function finishScreenshot() {
         screenshotInFlight = false;
+        selectCurrentAfterRefresh = true;
+        scheduleRefresh();
+    }
+    function finishAnnotate() {
+        selectCurrentAfterRefresh = true;
         scheduleRefresh();
     }
     function finishPaste(operation) {
@@ -180,6 +195,7 @@ Ui.ProviderChooserController {
         const completions = ({
             paste: finishPaste, "image-as-file": finishPaste,
             wipe: finishWipe, "delete": finishDelete, screenshot: finishScreenshot,
+            annotate: finishAnnotate,
             copy: scheduleRefresh, favorite: scheduleRefresh, unfavorite: scheduleRefresh
         });
         if (completions[operation.action]) completions[operation.action](operation);
