@@ -88,6 +88,11 @@ Io.DaemonBackend {
         handlers[ClipApi.streams.history] = controller.scheduleRefresh;
         handlers[ClipApi.streams.current] = controller.scheduleRefresh;
         handlers[ClipApi.streams.capture] = getSettings;
+        handlers[ClipApi.streams.operation] = function () {
+            const operation = event.data && event.data.operation;
+            if (operation)
+                controller.applyOperation(operation);
+        };
         if (handlers[event.stream]) handlers[event.stream]();
     }
     onSendFailed: function (id, message) { controller.handleFailure(id, message); }

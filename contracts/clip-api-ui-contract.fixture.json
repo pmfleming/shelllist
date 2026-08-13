@@ -28,6 +28,7 @@
         "name": "clipboard.history.query",
         "params_example": {
           "generation": 1,
+          "offset": 0,
           "limit": 100,
           "query": ""
         },
@@ -187,18 +188,16 @@
       {
         "events": [
           "subscribed",
-          "changed",
-          "unavailable"
+          "changed"
         ],
         "name": "clipboard.capture.changed"
       },
       {
         "events": [
+          "subscribed",
           "paste-prepared",
           "completed",
-          "fallback",
-          "target-unavailable",
-          "expired"
+          "fallback"
         ],
         "name": "clipboard.session"
       }
