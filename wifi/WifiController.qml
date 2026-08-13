@@ -27,7 +27,7 @@ ProviderChooserController {
     readonly property WifiBackend backend: services.backend
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
     readonly property bool promptActive: prompt.open || prompt.credentialOpen || qr.open
-    readonly property bool actionInFlight: backend.running || screenshotInFlight
+    actionInFlight: backend.running || screenshotInFlight
     readonly property string detailsTab: advanced.open ? advanced.section : "network"
     readonly property bool scanInFlight: scan.running
     readonly property var detailResult: selectedResult

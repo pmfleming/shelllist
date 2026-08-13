@@ -7,9 +7,9 @@ Item {
 
     required property string daemonName
     required property var streams
-    property bool active
+    required property bool active
     property bool ready
-    property bool recoverProtocolErrors
+    required property bool recoverProtocolErrors
     property var queuedLines: []
     property var counters: ({ sequence: 0, retryAttempt: 0 })
     property string subscriptionId: ""

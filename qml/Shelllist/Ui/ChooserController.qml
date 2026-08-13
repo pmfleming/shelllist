@@ -9,6 +9,7 @@ Item {
     property var selectionModel: null
     property var detailActions: []
     property bool navigationBlocked: false
+    property bool actionInFlight: false
     property bool navigationPrimaryEnabled: true
     property bool navigationCloseEnabled: true
     property real detailsExpansionProgress: detailsOpen ? 1 : 0

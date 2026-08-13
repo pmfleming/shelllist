@@ -21,17 +21,6 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: Ui.Theme.spacingMd
 
-    function timeoutLabel(value) {
-        const seconds = Math.round(Number(value) || 0);
-        if (seconds === 0)
-            return "No timeout";
-        if (seconds < 60)
-            return seconds + " sec";
-        if (seconds % 60 === 0)
-            return (seconds / 60) + " min";
-        return Math.floor(seconds / 60) + "m " + (seconds % 60) + "s";
-    }
-
     function clearDirtyFields() {
         aliasDirty = false;
         discoverableTimeoutDirty = false;
@@ -222,7 +211,7 @@ ColumnLayout {
                 from: 0
                 to: section.maximumTimeout
                 stepSize: section.timeoutStep
-                valueText: section.timeoutLabel(value)
+                valueText: Ui.Format.duration(value)
                 enabled: !section.controller.globalRequestInFlight && !!section.controller.selectedAdapter.key
                 onEdited: function (dragging) { section.queueAutoSave(section.markDiscoverableTimeoutDirty, !dragging); }
                 onEditingFinished: section.saveDirtyFields()
@@ -245,7 +234,7 @@ ColumnLayout {
                 from: 0
                 to: section.maximumTimeout
                 stepSize: section.timeoutStep
-                valueText: section.timeoutLabel(value)
+                valueText: Ui.Format.duration(value)
                 enabled: !section.controller.globalRequestInFlight && !!section.controller.selectedAdapter.key
                 onEdited: function (dragging) { section.queueAutoSave(section.markPairableTimeoutDirty, !dragging); }
                 onEditingFinished: section.saveDirtyFields()

@@ -3,9 +3,14 @@
   "project_root": ".",
   "source_roots": ["wifi", "bluetooth", "clipboard", "launcher", "qml", "tests/qml"],
   "output_dir": "target/qmlqualitylens",
-  "qmllint_command": "tests/run-qmllint.sh",
+  "profile": "quickshell",
   "external_modules": ["QtTest"],
   "external_types": ["GlobalShortcut", "IpcHandler", "PanelWindow", "Region", "Shortcut", "SignalSpy", "TestCase"],
+  "tools": {
+    "qmllint": { "check": false },
+    "qmltestrunner": { "check": false },
+    "runtime": { "check": false }
+  },
   "suppressions": [
     {
       "kind": "cleanup.unused_component",

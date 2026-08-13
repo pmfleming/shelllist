@@ -16,7 +16,6 @@ internal AdvancedSettingsFlickable AdvancedSettingsFlickable.qml
 internal AdvancedSegmentedRow AdvancedSegmentedRow.qml
 internal IpSettingsState IpSettingsState.qml
 AdvancedSettingsPage 1.0 AdvancedSettingsPage.qml
-NetworkDetailsActions 1.0 NetworkDetailsActions.qml
 internal NetworkDetailCards NetworkDetailCards.qml
 internal NetworkDetailsHeader NetworkDetailsHeader.qml
 NetworkDetailsPane 1.0 NetworkDetailsPane.qml

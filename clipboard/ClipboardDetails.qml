@@ -62,33 +62,25 @@ Ui.DetailsPane {
     emptyText: "Select a clipboard entry"
 
     Ui.DetailsHeader {
+        id: actionHeader
         width: parent.width
-        height: pane.headerHeight
         uiScale: pane.uiScale
+        headerHeight: pane.headerHeight
+        controlHeight: pane.toolbarHeight
+        sectionSpacing: pane.sectionSpacing
         icon: pane.selected.icon || "󰅇"
         iconColor: pane.entry.current ? Ui.Theme.active : Ui.Theme.accent
         title: pane.selected.title || "Clipboard entry"
         subtitle: pane.selected.subtitle || ""
         titlePixelSize: Math.round(Ui.Theme.fontSizeTitle * pane.uiScale)
-        actions: pane.primaryActions
-        actionWidth: 112
-        controlHeight: pane.toolbarHeight
+        actions: pane.primaryActions.concat(pane.secondaryActions)
+        primaryActionWidth: 112
         onActionTriggered: function (actionId) { pane.triggerAction(actionId); }
-    }
-
-    Ui.ActionToolbar {
-        width: parent.width
-        height: pane.toolbarHeight
-        actions: pane.secondaryActions
-        group: "toolbar"
-        alignRight: true
-        controlHeight: pane.toolbarHeight
-        onTriggered: function (actionId) { pane.triggerAction(actionId); }
     }
 
     Item {
         width: parent.width
-        height: Math.max(0, parent.height - pane.headerHeight - pane.toolbarHeight - 2 * pane.sectionSpacing)
+        height: Math.max(0, parent.height - actionHeader.height - pane.sectionSpacing)
 
         Ui.CenteredMessage {
             anchors.fill: parent

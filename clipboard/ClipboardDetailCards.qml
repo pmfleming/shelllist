@@ -17,27 +17,6 @@ Ui.DetailFlickable {
     readonly property int previewCardHeight: Math.max(220, Math.round(availableCardHeight * 0.66))
     readonly property int dataCardHeight: Math.max(250, availableCardHeight - previewCardHeight)
 
-    function formatByteSize(byteSize) {
-        if (byteSize === undefined || byteSize === null)
-            return "—";
-
-        const bytes = Number(byteSize);
-        if (!Number.isFinite(bytes) || bytes < 0)
-            return "—";
-        if (bytes < 1024)
-            return Math.round(bytes) + " B";
-
-        const units = ["KB", "MB", "GB", "TB"];
-        let value = bytes / 1024;
-        let unitIndex = 0;
-        while (value >= 1024 && unitIndex < units.length - 1) {
-            value /= 1024;
-            unitIndex += 1;
-        }
-        const conciseValue = value.toFixed(value < 10 ? 1 : 0).replace(/\.0$/, "");
-        return conciseValue + " " + units[unitIndex];
-    }
-
     Ui.DetailCard {
         title: cards.entry.kind
             ? cards.entry.kind.charAt(0).toUpperCase() + cards.entry.kind.slice(1)
@@ -106,7 +85,7 @@ Ui.DetailFlickable {
                         value: cards.entry.mime || "—"
                     }, {
                         label: "Size",
-                        value: cards.formatByteSize(cards.entry.byte_size)
+                        value: Ui.Format.bytes(cards.entry.byte_size)
                     }, {
                         label: "Dimensions",
                         value: cards.imageFacts

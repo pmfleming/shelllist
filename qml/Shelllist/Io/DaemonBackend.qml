@@ -6,7 +6,7 @@ Item {
 
     required property string daemonName
     required property var streams
-    property bool active
+    required property bool active
     property bool recoverProtocolErrors: true
     property var pending: ({})
 

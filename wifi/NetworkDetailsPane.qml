@@ -10,9 +10,8 @@ DetailsPane {
     readonly property real uiScale: Theme.densityScale(height, 0)
     readonly property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     readonly property int detailControlHeight: Math.max(36, Math.round(42 * uiScale))
-    readonly property int actionsHeight: detailControlHeight
     readonly property int footerHeight: detailControlHeight
-    readonly property real cardBudget: Math.max(420, height - 2 - headerHeight - actionsHeight - footerHeight - 5 * sectionSpacing)
+    readonly property real cardBudget: Math.max(420, height - 2 - actionHeader.height - footerHeight - 4 * sectionSpacing)
     readonly property real connectionCardHeight: Math.max(220, Math.round(cardBudget * 0.44))
     readonly property real networkCardHeight: Math.max(130, Math.round(cardBudget * 0.255))
     readonly property real profileCardHeight: Math.max(150, cardBudget - connectionCardHeight - networkCardHeight)
@@ -26,58 +25,51 @@ DetailsPane {
     emptyFontSize: 20
 
     NetworkDetailsHeader {
-                width: parent.width
-                height: pane.headerHeight
-                controller: pane.controller
-                uiScale: pane.uiScale
-                controlHeight: pane.detailControlHeight
-            }
+        id: actionHeader
+        width: parent.width
+        controller: pane.controller
+        uiScale: pane.uiScale
+        headerHeight: pane.headerHeight
+        controlHeight: pane.detailControlHeight
+        sectionSpacing: pane.sectionSpacing
+    }
 
-            NetworkDetailsActions {
-                controller: pane.controller
-                primaryOnly: false
-                alignRight: true
-                controlHeight: pane.detailControlHeight
-                width: parent.width
-                height: pane.actionsHeight
-            }
+    Item {
+        id: tabViewport
 
-            Item {
-                id: tabViewport
+        property real advancedTransitionProgress: pane.controller.advanced.open ? 1 : 0
 
-                property real advancedTransitionProgress: pane.controller.advanced.open ? 1 : 0
+        width: parent.width
+        height: Math.max(0, parent.height - actionHeader.height - pane.footerHeight - 2 * pane.sectionSpacing)
+        clip: true
 
-                width: parent.width
-                height: Math.max(0, parent.height - pane.headerHeight - pane.actionsHeight - pane.footerHeight - 3 * pane.sectionSpacing)
-                clip: true
+        Behavior on advancedTransitionProgress {
+            enabled: !Theme.noAnimations
+            NumberAnimation { duration: Theme.animationSlow; easing.type: Theme.easingStandard }
+        }
 
-                Behavior on advancedTransitionProgress {
-                    enabled: !Theme.noAnimations
-                    NumberAnimation { duration: Theme.animationSlow; easing.type: Theme.easingStandard }
-                }
+        NetworkDetailCards {
+            enabled: !pane.controller.advanced.open
+            width: parent.width
+            height: parent.height
+            x: -width * tabViewport.advancedTransitionProgress
+            controller: pane.controller
+            accessPoint: pane.ap
+            sectionSpacing: pane.sectionSpacing
+            connectionCardHeight: pane.connectionCardHeight
+            networkCardHeight: pane.networkCardHeight
+            profileCardHeight: pane.profileCardHeight
+        }
 
-                NetworkDetailCards {
-                    enabled: !pane.controller.advanced.open
-                    width: parent.width
-                    height: parent.height
-                    x: -width * tabViewport.advancedTransitionProgress
-                    controller: pane.controller
-                    accessPoint: pane.ap
-                    sectionSpacing: pane.sectionSpacing
-                    connectionCardHeight: pane.connectionCardHeight
-                    networkCardHeight: pane.networkCardHeight
-                    profileCardHeight: pane.profileCardHeight
-                }
-
-                AdvancedSettingsPage {
-                    enabled: pane.controller.advanced.open
-                    width: parent.width
-                    height: parent.height
-                    x: width * (1 - tabViewport.advancedTransitionProgress)
-                    controller: pane.controller
-                    sectionSpacing: pane.sectionSpacing
-                }
-            }
+        AdvancedSettingsPage {
+            enabled: pane.controller.advanced.open
+            width: parent.width
+            height: parent.height
+            x: width * (1 - tabViewport.advancedTransitionProgress)
+            controller: pane.controller
+            sectionSpacing: pane.sectionSpacing
+        }
+    }
 
     DetailsTabBar {
         width: parent.width

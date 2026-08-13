@@ -11,7 +11,7 @@ Ui.ProviderChooserController {
     property string status: "Loading clipboard history…"
     property string sessionId: ""
     property bool targetAvailable: false
-    property bool actionInFlight: false
+    actionInFlight: false
     property bool screenshotInFlight: false
     property string activeAction: ""
     property string activeOperationId: ""

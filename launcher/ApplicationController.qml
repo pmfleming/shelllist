@@ -10,7 +10,7 @@ Ui.ProviderChooserController {
     closeDetailsWithoutSelection: true
 
     property string status: "Loading applications…"
-    property bool actionInFlight: false
+    actionInFlight: false
     property string activeTargetId: ""
     property var activeRequest: null
     property bool forceRefresh: false

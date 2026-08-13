@@ -44,7 +44,7 @@ Ui.ProviderChooserController {
     readonly property var selectedOperationError: operationErrorForDevice(selectedDevice.key)
     readonly property bool selectedDeviceBusy: !!selectedOperation
     readonly property bool globalRequestInFlight: backend.requestRunning
-    readonly property bool actionInFlight: globalRequestInFlight || selectedDeviceBusy || screenshotInFlight
+    actionInFlight: globalRequestInFlight || selectedDeviceBusy || screenshotInFlight
     readonly property bool anyActionInFlight: backend.running || screenshotInFlight
 
     readonly property bool pairingPromptOpen: !!pairingPrompt
