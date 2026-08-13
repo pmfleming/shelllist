@@ -23,14 +23,16 @@ Rectangle {
         : (tone === "warning" ? Theme.warningText : Theme.text)))
     readonly property bool hovered: area.containsMouse
     readonly property bool pressed: area.pressed
+    readonly property string interactionState: !enabled ? "disabled"
+        : (pressed ? "pressed"
+        : (hovered || activeFocus ? "highlighted" : "flat"))
 
     signal clicked
 
     implicitHeight: Theme.controlHeight
     radius: Theme.controlRadius
-    color: !enabled ? backgroundColor
-        : (area.pressed ? pressedBackgroundColor
-        : (area.containsMouse ? hoverBackgroundColor : backgroundColor))
+    color: interactionState === "pressed" ? pressedBackgroundColor
+        : (interactionState === "highlighted" ? hoverBackgroundColor : backgroundColor)
     border.color: activeFocus ? Theme.strongBorder : borderColor
     border.width: 1
     opacity: enabled ? 1.0 : Theme.disabledOpacity

@@ -12,6 +12,7 @@ Rectangle {
     property bool selectionFocused: listPane.listFocused
     property bool detailsOpen: listPane.chooserController.detailsOpen
     property string accessibleName: ""
+    property real trailingActionWidth: 0
     readonly property bool selected: index === selectedIndex
     default property alias content: rowContent.data
 
@@ -84,7 +85,7 @@ Rectangle {
         id: rowMouse
 
         anchors.fill: parent
-        anchors.rightMargin: row.scaled(38)
+        anchors.rightMargin: row.scaled(38) + row.trailingActionWidth
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: row.picked(row.index)

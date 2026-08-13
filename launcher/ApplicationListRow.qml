@@ -9,6 +9,7 @@ Ui.ResultRow {
 
     required property var resultData
     readonly property var application: resultData.payload || ({})
+    trailingActionWidth: application.running ? scaled(40) : 0
 
     Item {
         Layout.preferredWidth: row.scaled(34)
