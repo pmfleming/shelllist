@@ -28,6 +28,6 @@ Ui.ChooserListPane {
     onIconClicked: controller.screenshotRequested()
 
     rowDelegate: Component {
-        ClipboardListRow { listPane: pane }
+        ClipboardListRow { listPane: pane; controller: pane.controller }
     }
 }

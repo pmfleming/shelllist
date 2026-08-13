@@ -5,8 +5,10 @@ import Shelllist.Ui as Ui
 Ui.ResultRow {
     id: row
 
+    required property ClipboardController controller
     required property var resultData
     readonly property var entry: resultData.payload || ({})
+    trailingActionWidth: scaled(40)
 
     Text {
         Layout.preferredWidth: row.scaled(30)
@@ -41,5 +43,20 @@ Ui.ResultRow {
         font.family: Ui.Theme.fontFamily
         font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
         font.weight: Ui.Theme.fontWeightDemiBold
+    }
+
+    Ui.DestructiveIconButton {
+        z: 2
+        Layout.preferredWidth: row.scaled(30)
+        Layout.preferredHeight: row.scaled(30)
+        enabled: !row.controller.actionInFlight
+            && !row.controller.screenshotInFlight
+            && !row.controller.wipeChallenge
+        accessibleName: "Delete clipboard entry"
+        toolTip: "Delete this clipboard entry"
+        onClicked: {
+            row.controller.select(row.index);
+            row.controller.requestDelete();
+        }
     }
 }
