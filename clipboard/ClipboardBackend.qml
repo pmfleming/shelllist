@@ -90,8 +90,11 @@ Io.DaemonBackend {
         handlers[ClipApi.streams.capture] = getSettings;
         handlers[ClipApi.streams.operation] = function () {
             const operation = event.data && event.data.operation;
-            if (operation)
+            if (operation) {
                 controller.applyOperation(operation);
+                if (operation.status !== "started")
+                    controller.scheduleRefresh();
+            }
         };
         if (handlers[event.stream]) handlers[event.stream]();
     }
