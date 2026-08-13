@@ -1,4 +1,5 @@
 import QtQuick
+import Qt.labs.settings
 import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "BluetoothBattery.js" as BluetoothBattery
@@ -9,7 +10,7 @@ Ui.ProviderChooserController {
 
     provider: BluetoothProvider { id: bluetoothProvider; controller: bluetoothController }
     property string detailsTab: "device"
-    property string searchScope: "mine"
+    property alias searchScope: scopeSettings.searchScope
     property var pendingConfirmationAction
     property bool scanRequested: false
     property var radio: BluetoothFlow.emptyRadio()
@@ -56,6 +57,12 @@ Ui.ProviderChooserController {
     readonly property bool searchAllDevices: searchScope === "all"
     readonly property bool refreshInFlight: scanning || backend.isPending("snapshot") || backend.isPending("scan-start")
     signal pairingInteractionRequested
+
+    Settings {
+        id: scopeSettings
+        category: "ShelllistBluetooth"
+        property string searchScope: "mine"
+    }
 
     function operationForDevice(deviceKey) { return operationState.forDevice(deviceKey); }
     function operationErrorForDevice(deviceKey) { return operationState.errorForDevice(deviceKey); }
