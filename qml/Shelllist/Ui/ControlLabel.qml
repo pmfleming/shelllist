@@ -8,6 +8,7 @@ Row {
     required property string icon
     required property string hotkey
     property color iconColor: Theme.text
+    property int iconSize: Theme.iconSizeSmall
     property color labelColor: Theme.text
     property int labelWeight: Theme.fontWeightRegular
 
@@ -18,7 +19,7 @@ Row {
         text: controlLabel.icon
         color: controlLabel.iconColor
         font.family: Theme.iconFontFamily
-        font.pixelSize: Theme.iconSizeSmall
+        font.pixelSize: controlLabel.iconSize
     }
     Text {
         anchors.verticalCenter: parent.verticalCenter

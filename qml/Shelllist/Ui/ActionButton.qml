@@ -7,6 +7,7 @@ Rectangle {
     property string label: ""
     property string accessibleName: label
     property string icon: ""
+    property int iconSize: Theme.iconSizeSmall
     property string hotkey: ""
     property string toolTip: ""
     property string tone: "normal"
@@ -51,6 +52,7 @@ Rectangle {
         icon: control.icon
         hotkey: control.hotkey
         iconColor: control.labelColor
+        iconSize: control.iconSize
         labelColor: control.labelColor
     }
 

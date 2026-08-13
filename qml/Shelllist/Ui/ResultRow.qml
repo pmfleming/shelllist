@@ -65,20 +65,23 @@ Rectangle {
         spacing: row.scaled(10)
     }
 
-    Text {
+    FlatIconButton {
+        z: 2
         anchors.right: parent.right
-        anchors.rightMargin: row.scaled(16)
-        width: row.scaled(18)
-        height: parent.height
-        verticalAlignment: Text.AlignVCenter
-        horizontalAlignment: Text.AlignHCenter
-        text: row.selected && row.detailsOpen ? "󰅁" : "󰅂"
-        color: row.selected || chevronHover.hovered ? Theme.accent : Theme.mutedText
-        font.family: Theme.iconFontFamily
-        font.pixelSize: Math.max(Theme.iconSizeSmall, row.scaled(Theme.iconSize))
-
-        HoverHandler { id: chevronHover; cursorShape: Qt.PointingHandCursor }
-        TapHandler { onTapped: row.detailsToggled(row.index) }
+        anchors.rightMargin: row.scaled(10)
+        anchors.verticalCenter: parent.verticalCenter
+        width: row.scaled(30)
+        height: row.scaled(30)
+        icon: row.selected && row.detailsOpen ? "󰅁" : "󰅂"
+        iconSize: Math.max(Theme.iconSizeSmall, row.scaled(Theme.iconSize))
+        flatIconColor: row.selected ? Theme.accent : Theme.mutedText
+        highlightedBackgroundColor: row.selected
+            ? Theme.mix(Theme.selected, Theme.accent, 0.36)
+            : Theme.selected
+        highlightedIconColor: Theme.accent
+        accessibleName: row.selected && row.detailsOpen ? "Collapse details" : "Expand details"
+        toolTip: row.selected && row.detailsOpen ? "Collapse details" : "Expand details"
+        onClicked: row.detailsToggled(row.index)
     }
 
     MouseArea {
