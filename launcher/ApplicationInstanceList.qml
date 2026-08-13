@@ -87,12 +87,9 @@ ColumnLayout {
                     onClicked: list.controller.triggerDetailAction("focus-window-" + instanceRow.index)
                 }
 
-                Ui.ActionButton {
+                Ui.DestructiveIconButton {
                     Layout.preferredWidth: list.actionHeight
                     Layout.preferredHeight: list.actionHeight
-                    label: ""
-                    icon: "󰅖"
-                    tone: "danger"
                     enabled: !list.controller.actionInFlight
                     accessibleName: "Close " + instanceRow.instanceTitle
                     toolTip: "Close “" + instanceRow.instanceTitle + "”"

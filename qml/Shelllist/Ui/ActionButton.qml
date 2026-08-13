@@ -21,6 +21,8 @@ Rectangle {
         : (tone === "active" ? Theme.activeText
         : (tone === "danger" ? Theme.dangerText
         : (tone === "warning" ? Theme.warningText : Theme.text)))
+    readonly property bool hovered: area.containsMouse
+    readonly property bool pressed: area.pressed
 
     signal clicked
 

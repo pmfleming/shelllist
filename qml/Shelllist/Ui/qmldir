@@ -18,6 +18,7 @@ DetailFlickable 1.0 DetailFlickable.qml
 DetailGrid 1.0 DetailGrid.qml
 DetailsHeader 1.0 DetailsHeader.qml
 DetailsPane 1.0 DetailsPane.qml
+DestructiveIconButton 1.0 DestructiveIconButton.qml
 DetailsTab 1.0 DetailsTab.qml
 DetailsTabBar 1.0 DetailsTabBar.qml
 DropDownList 1.0 DropDownList.qml
