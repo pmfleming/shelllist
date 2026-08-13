@@ -74,7 +74,7 @@ Ui.DetailsPane {
         subtitle: pane.selected.subtitle || ""
         titlePixelSize: Math.round(Ui.Theme.fontSizeTitle * pane.uiScale)
         actions: pane.primaryActions.concat(pane.secondaryActions)
-        primaryActionWidth: 112
+        actionWidth: 112
         onActionTriggered: function (actionId) { pane.triggerAction(actionId); }
     }
 
