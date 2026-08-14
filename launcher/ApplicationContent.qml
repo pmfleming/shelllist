@@ -29,6 +29,12 @@ Ui.ChooserSurface {
             && (content.controller.selectedApplication || ({})).kind === "desktop-application"
         onActivated: content.controller.launchSelected()
     }
+    Shortcut {
+        sequence: "Ctrl+Tab"
+        enabled: content.controller.detailsOpen && content.controller.hasSelection
+            && !content.controller.actionInFlight
+        onActivated: content.controller.cycleDetailsTab()
+    }
 
     Ui.SplitChooserLayout {
         controller: content.controller

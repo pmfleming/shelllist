@@ -48,7 +48,6 @@ Item {
         const actions = ({});
         actions[Qt.Key_Down] = focusListTop;
         actions[Qt.Key_Up] = moveUp;
-        actions[Qt.Key_Right] = controller.openDetails;
         if (actions[event.key]) accept(event, actions[event.key]);
     }
     function handleListDirection(event) {

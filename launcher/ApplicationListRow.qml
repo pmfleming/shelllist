@@ -9,7 +9,7 @@ Ui.ResultRow {
 
     required property var resultData
     readonly property var application: resultData.payload || ({})
-    trailingActionWidth: application.running ? scaled(40) : 0
+    trailingActionWidth: application.running ? scaled(80) : 0
 
     Item {
         Layout.preferredWidth: row.scaled(34)
@@ -48,18 +48,21 @@ Ui.ResultRow {
         elide: Text.ElideRight
     }
 
-    Text {
+    Ui.FlatIconButton {
         visible: row.application.running
+        z: 2
         Layout.preferredWidth: row.scaled(30)
-        text: Presentation.runningWindowIcon(row.application.running_count)
-        color: row.application.focused ? Ui.Theme.active : Ui.Theme.accent
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        font.family: Ui.Theme.iconFontFamily
-        font.pixelSize: Math.max(Ui.Theme.iconSizeSmall, row.scaled(Ui.Theme.iconSize))
-        Accessible.name: (row.application.running_count || 1) > 1
-            ? String(row.application.running_count) + " running windows"
-            : "Running window"
+        Layout.preferredHeight: row.scaled(30)
+        icon: Presentation.runningWindowIcon(row.application.running_count)
+        iconSize: Math.max(Ui.Theme.iconSizeSmall, row.scaled(Ui.Theme.iconSize))
+        flatIconColor: row.application.focused ? Ui.Theme.active : Ui.Theme.accent
+        enabled: !row.listPane.chooserController.actionInFlight
+        accessibleName: "Focus " + row.resultData.title
+        toolTip: "Focus “" + row.resultData.title + "”"
+        onClicked: {
+            row.listPane.chooserController.select(row.index);
+            row.listPane.chooserController.primarySelected();
+        }
     }
 
     Ui.DestructiveIconButton {

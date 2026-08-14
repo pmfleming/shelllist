@@ -1,6 +1,5 @@
 import QtQuick
 import Shelllist.Ui as Ui
-import "ApplicationPresentation.js" as Presentation
 
 Ui.DetailsPane {
     id: pane
@@ -12,6 +11,7 @@ Ui.DetailsPane {
     readonly property var actions: controller.detailActions || []
     readonly property int headerHeight: Math.max(58, Math.round(66 * uiScale))
     readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
+    readonly property int footerHeight: actionHeight
 
     chooserController: controller
     densityScale: uiScale
@@ -36,62 +36,38 @@ Ui.DetailsPane {
         onActionTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
     }
 
-    Ui.DetailFlickable {
+    Item {
         width: parent.width
-        height: Math.max(0, parent.height - actionHeader.height - pane.sectionSpacing)
+        height: Math.max(0, parent.height - actionHeader.height
+            - pane.footerHeight - 2 * pane.sectionSpacing)
+        clip: true
 
-        Text {
-            visible: pane.application.comment && pane.application.comment.length > 0
-            width: parent.width
-            text: pane.application.comment || ""
-            color: Ui.Theme.mutedText
-            wrapMode: Text.Wrap
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
-        }
-
-        Text {
-            visible: pane.application.running
-            width: parent.width
-            text: "Total usage · " + Presentation.usageText(pane.application)
-            color: Ui.Theme.accent
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeLabel
-            font.weight: Ui.Theme.fontWeightDemiBold
-        }
-
-        ApplicationResourceHistory {
-            visible: pane.application.running
-            width: parent.width
-            controller: pane.controller
-            application: pane.application
-            uiScale: pane.uiScale
-        }
-
-        ApplicationInstanceList {
-            width: parent.width
+        ApplicationPage {
+            anchors.fill: parent
+            visible: pane.controller.detailsTab === "application"
             controller: pane.controller
             application: pane.application
             uiScale: pane.uiScale
             actionHeight: pane.actionHeight
         }
 
-        ApplicationDesktopActions {
-            width: parent.width
+        ApplicationResourcesPage {
+            anchors.fill: parent
+            visible: pane.controller.detailsTab === "resources"
             controller: pane.controller
             application: pane.application
             uiScale: pane.uiScale
         }
+    }
 
-        Ui.CenteredMessage {
-            visible: (pane.application.instances || []).length === 0
-                && (pane.application.desktop_actions || []).length === 0
-            width: parent.width
-            height: 120
-            text: pane.application.kind === "desktop-application"
-                ? "No additional actions"
-                : "Window is no longer available"
-            font.pixelSize: Ui.Theme.fontSizeBody
-        }
+    Ui.DetailsTabBar {
+        width: parent.width
+        height: pane.footerHeight
+        selectedValue: pane.controller.detailsTab
+        tabs: [
+            { value: "application", icon: "󰀻", label: "Application" },
+            { value: "resources", icon: "󰄪", label: "Resources" }
+        ]
+        onSelected: function (value) { pane.controller.selectDetailsTab(value); }
     }
 }

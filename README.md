@@ -71,7 +71,7 @@ shelllist-launcher toggle
 shelllist-launcher floating  # one-shot floating fallback
 ```
 
-The launcher lists standards-visible desktop applications, groups live Hyprland windows, focuses the most-recent running instance with `Enter`, launches non-running applications, and exposes instances plus desktop-defined actions with `Right`. Running rows use single- or multiple-window icons. The details pane reports live usage per window and shows compact 30-minute CPU, memory, GPU, disk-read, disk-write, and power graphs from `app-daemon`'s retained history. Its header action focuses the first running instance (or launches on the current workspace), **New tile** launches another instance, and each instance has an icon-only focus control with a tooltip. `Shift+Enter` also launches a new tile.
+The launcher lists standards-visible desktop applications, groups live Hyprland windows, focuses the most-recent running instance with `Enter`, launches non-running applications, and exposes instances plus desktop-defined actions with `Right`. Running rows use single- or multiple-window icons. The details pane separates running instances and desktop-defined actions under **Application** from live usage and compact 30-minute CPU, memory, GPU, disk-read, disk-write, and power graphs under **Resources**. Its header action focuses the first running instance (or launches on the current workspace), **New tile** launches another instance, and each instance has an icon-only focus control with a tooltip. `Shift+Enter` also launches a new tile.
 
 Run the experimental Bluetooth popup:
 
@@ -134,6 +134,7 @@ Application launcher keys:
 - `Down` / `Up`: move selection.
 - `Right`: open running instances and desktop actions.
 - `Left`: close details.
+- `Ctrl+Tab`: switch between Application and Resources details.
 - `F5`: refresh desktop applications and running windows.
 - `Esc`: close details, then close the launcher.
 

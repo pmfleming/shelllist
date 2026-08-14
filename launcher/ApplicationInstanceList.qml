@@ -75,12 +75,11 @@ ColumnLayout {
                     }
                 }
 
-                Ui.ActionButton {
+                Ui.FlatIconButton {
                     Layout.preferredWidth: list.actionHeight
                     Layout.preferredHeight: list.actionHeight
-                    label: ""
-                    icon: "󰖯"
-                    tone: instanceRow.modelData.focused ? "active" : "normal"
+                    icon: Presentation.runningWindowIcon(1)
+                    flatIconColor: instanceRow.modelData.focused ? Ui.Theme.active : Ui.Theme.accent
                     enabled: !list.controller.actionInFlight
                     accessibleName: "Focus " + instanceRow.instanceTitle
                     toolTip: "Focus “" + instanceRow.instanceTitle + "” on workspace " + instanceRow.workspaceLabel

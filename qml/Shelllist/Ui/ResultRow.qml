@@ -42,7 +42,15 @@ Rectangle {
     Keys.onReturnPressed: function (event) { row.primaryRequested(); event.accepted = true; }
     Keys.onEnterPressed: function (event) { row.primaryRequested(); event.accepted = true; }
     Keys.onSpacePressed: function (event) { row.picked(row.index); event.accepted = true; }
-    Keys.onRightPressed: function (event) { row.detailsToggled(row.index); event.accepted = true; }
+    Keys.onLeftPressed: function (event) {
+        row.listPane.chooserController.closeDetails();
+        event.accepted = true;
+    }
+    Keys.onRightPressed: function (event) {
+        row.picked(row.index);
+        row.listPane.chooserController.openDetails();
+        event.accepted = true;
+    }
 
     Rectangle {
         visible: !row.selected

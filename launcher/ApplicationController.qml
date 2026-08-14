@@ -11,6 +11,7 @@ Ui.ProviderChooserController {
     closeDetailsWithoutSelection: true
 
     property string status: "Loading applications…"
+    property string detailsTab: "application"
     actionInFlight: false
     property string activeTargetId: ""
     property var activeRequest: null
@@ -45,6 +46,16 @@ Ui.ProviderChooserController {
         status = forceRefresh ? "Refreshing applications…" : "Loading applications…";
         beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
     }
+    function selectDetailsTab(value) {
+        if (value === "application" || value === "resources")
+            detailsTab = value;
+    }
+    function cycleDetailsTab() {
+        if (!detailsOpen || !hasSelection)
+            return false;
+        detailsTab = detailsTab === "application" ? "resources" : "application";
+        return true;
+    }
     function refreshMetrics() {
         if (!uiActive || actionInFlight || screenshotInFlight || refreshInFlight)
             return;
@@ -63,7 +74,7 @@ Ui.ProviderChooserController {
         backend.query(id, text, generation, limit, refreshCatalog);
     }
     function requestResourceHistory(forceRefresh) {
-        if (!uiActive || !detailsOpen || !selectedResult)
+        if (!uiActive || !detailsOpen || detailsTab !== "resources" || !selectedResult)
             return;
         const targetId = selectedResult.id;
         if (historyInFlight && targetId === historyTargetId)
@@ -83,7 +94,8 @@ Ui.ProviderChooserController {
     function cancelQuery(requestId) { backend.cancelRequest(requestId); }
     function applyApplications(id, page) {
         applyProviderQuery(id, applicationProvider.resultsForApplications(page.applications || []));
-        if (detailsOpen && selectedResult && selectedResult.id !== historyTargetId)
+        if (detailsOpen && detailsTab === "resources"
+                && selectedResult && selectedResult.id !== historyTargetId)
             requestResourceHistory();
         const count = (page.applications || []).length;
         status = count + (count === 1 ? " application" : " applications");
@@ -189,14 +201,15 @@ Ui.ProviderChooserController {
 
     onDetailsOpenChanged: {
         if (detailsOpen)
-            requestResourceHistory();
+            detailsTab = "application";
         else {
             resourceHistory = [];
             historyTargetId = "";
             activeHistoryRequestId = "";
         }
     }
-    onSelectedResultChanged: if (detailsOpen) requestResourceHistory()
+    onDetailsTabChanged: if (detailsTab === "resources") requestResourceHistory()
+    onSelectedResultChanged: if (detailsOpen && detailsTab === "resources") requestResourceHistory()
 
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture
@@ -214,7 +227,7 @@ Ui.ProviderChooserController {
 
     Timer {
         interval: 15000
-        running: controller.uiActive && controller.detailsOpen
+        running: controller.uiActive && controller.detailsOpen && controller.detailsTab === "resources"
         repeat: true
         onTriggered: controller.requestResourceHistory(true)
     }
