@@ -2,8 +2,6 @@ import QtQuick
 import "Model.js" as Model
 
 Item {
-    id: store
-
     required property ProviderRegistry registry
     property var sourceResults: []
     property string queryText: ""
@@ -15,20 +13,19 @@ Item {
     readonly property int count: visibleResults.length
 
     signal staleBatchIgnored(string providerId, string queryId)
-    signal providerQueryFailed(var error)
 
-    function selected() {
+    function selected(): var {
         return count === 0 ? null : visibleResults[clampIndex(selectedIndex)];
     }
 
-    function clampIndex(index) {
+    function clampIndex(index: int): int {
         return count <= 0 ? 0 : Math.max(0, Math.min(index, count - 1));
     }
 
-    function move(delta) { selectedIndex = clampIndex(selectedIndex + delta); }
-    function selectFirst() { selectedIndex = 0; }
+    function move(delta: int): void { selectedIndex = clampIndex(selectedIndex + delta); }
+    function selectFirst(): void { selectedIndex = 0; }
 
-    function beginQuery(text, context, providerIds, limit) {
+    function beginQuery(text: string, context: var, providerIds: var, limit: int): var {
         if (activeQueryId.length > 0)
             registry.cancelQuery(activeQueryId);
         queryGeneration += 1;
@@ -49,7 +46,7 @@ Item {
         return request;
     }
 
-    function replaceProviderResults(providerId, values, resetSelection) {
+    function replaceProviderResults(providerId: string, values: var, resetSelection: bool): void {
         const itemProvider = registry.providerById(providerId);
         if (!itemProvider)
             throw new Error("results: unknown provider " + JSON.stringify(providerId));
@@ -72,7 +69,7 @@ Item {
         selectedIndex = retainedIndex >= 0 ? retainedIndex : Math.max(0, Math.min(selectedIndex, visibleResults.length - 1));
     }
 
-    function applyBatch(value) {
+    function applyBatch(value: var): bool {
         const batch = Model.resultBatch(value);
         if (batch.queryId.length > 0 && batch.queryId !== activeQueryId) {
             staleBatchIgnored(batch.providerId, batch.queryId);
@@ -90,20 +87,20 @@ Item {
         return true;
     }
 
-    function clear() {
+    function clear(): void {
         sourceResults = [];
         selectedIndex = 0;
         activeQueryId = "";
     }
 
-    function modelIndexFor(key, startIndex) {
+    function modelIndexFor(key: string, startIndex: int): int {
         for (let index = startIndex; index < visibleListModel.count; index++)
             if (visibleListModel.get(index).resultKey === key)
                 return index;
         return -1;
     }
 
-    function syncVisibleModel() {
+    function syncVisibleModel(): void {
         for (let desiredIndex = 0; desiredIndex < visibleResults.length; desiredIndex++) {
             const desired = visibleResults[desiredIndex];
             const currentIndex = modelIndexFor(desired.key, desiredIndex);
@@ -128,11 +125,5 @@ Item {
     ListModel {
         id: visibleListModel
         dynamicRoles: true
-    }
-
-    Connections {
-        target: store.registry
-        function onQueryBatchReceived(batch) { store.applyBatch(batch); }
-        function onQueryFailed(error) { store.providerQueryFailed(error); }
     }
 }

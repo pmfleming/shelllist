@@ -20,5 +20,14 @@ equal(context.rateText(2 * 1024 * 1024), "2.0 MiB/s", "I/O rate formats MiB per 
 equal(context.powerText(1.234), "1.23 W", "power formats watts");
 equal(context.runningWindowIcon(1), "󰖯", "single-window icon");
 equal(context.runningWindowIcon(3), "󰖲", "multiple-window icon");
+equal(context.isCloseAction("close-window-2"), true, "window close action");
+equal(context.isCloseAction("activate"), false, "non-close action");
+equal(context.pageStatus({ applications: [{}], has_more: true, hyprland_available: false }),
+    "1 application · more available · launch only", "application page status");
+const retained = context.withoutClosedInstances({
+    instances: [{ id: "one", focused: true }, { id: "two", focused: false }]
+}, "close-window-1", "one");
+equal(retained.running_count, 1, "closed window count");
+equal(retained.focused, false, "closed focused window state");
 
-console.log("application presentation: resource formatting and running icons passed");
+console.log("application presentation: formatting, status, and window state passed");

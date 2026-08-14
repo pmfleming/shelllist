@@ -37,23 +37,15 @@ ColumnLayout {
     readonly property int selectedIndex: chooserController.selectionModel
         ? chooserController.selectionModel.selectedIndex : 0
 
-    signal filterEdited(string text)
-    signal searchKeyPressed(var event)
-    signal listKeyPressed(var event)
     signal iconClicked
     signal searchActionRequested
-    signal powerRequested
-    signal refreshRequested
 
-    onFilterEdited: function (text) {
+    function applyFilter(text: string): void {
         if (chooserController.selectionModel)
             chooserController.selectionModel.queryText = text;
         chooserController.selectFirst();
     }
-    onSearchKeyPressed: function (event) { chooserController.navigation.handleSearchKey(event); }
-    onListKeyPressed: function (event) { chooserController.navigation.handleListKey(event); }
-    onPowerRequested: chooserController.setPower()
-    onRefreshRequested: {
+    function requestRefresh(): void {
         if (refreshHandler)
             refreshHandler();
         else
@@ -64,10 +56,10 @@ ColumnLayout {
     Layout.fillHeight: true
     spacing: Theme.verticalSpacing(Theme.spacingMd, densityScale)
 
-    function focusSearch() { header.focusSearch(); }
-    function focusTop() { listFrame.focusTop(); }
-    function pick(rowIndex) { listFrame.pick(rowIndex); }
-    function toggleDetails(rowIndex) { listFrame.toggleDetails(rowIndex); }
+    function focusSearch(): void { header.focusSearch(); }
+    function focusTop(): void { listFrame.focusTop(); }
+    function pick(rowIndex: int): void { listFrame.pick(rowIndex); }
+    function toggleDetails(rowIndex: int): void { listFrame.toggleDetails(rowIndex); }
 
     ChooserHeader {
         id: header
@@ -86,12 +78,12 @@ ColumnLayout {
         searchActionIcon: pane.searchActionIcon
         searchActionToolTip: pane.searchActionToolTip
         searchActionEnabled: pane.searchActionEnabled
-        onFilterEdited: function (text) { pane.filterEdited(text); }
-        onKeyPressed: function (event) { pane.searchKeyPressed(event); }
+        onFilterEdited: function (text) { pane.applyFilter(text); }
+        onKeyPressed: function (event) { pane.chooserController.navigation.handleSearchKey(event); }
         onIconClicked: pane.iconClicked()
         onSearchActionRequested: pane.searchActionRequested()
-        onPowerRequested: pane.powerRequested()
-        onRefreshRequested: pane.refreshRequested()
+        onPowerRequested: pane.chooserController.setPower()
+        onRefreshRequested: pane.requestRefresh()
     }
 
     Item {
@@ -113,7 +105,7 @@ ColumnLayout {
                 selectedIndex: pane.selectedIndex
                 emptyText: pane.emptyText
                 rowDelegate: pane.rowDelegate
-                onKeyPressed: function (event) { pane.listKeyPressed(event); }
+                onKeyPressed: function (event) { pane.chooserController.navigation.handleListKey(event); }
             }
 
             Loader {

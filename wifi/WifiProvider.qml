@@ -125,6 +125,7 @@ Core.Provider {
     }
 
     function execute(request) {
-        return executePayload(request, function (id, payload) { return controller.actions.execute(id, payload); }, "Wi-Fi action was rejected");
+        return executePayload(request,
+            function (id, payload) { return controller.actions.execute(id, payload); });
     }
 }

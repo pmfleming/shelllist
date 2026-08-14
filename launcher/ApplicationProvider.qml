@@ -134,7 +134,6 @@ Core.Provider {
         if (!request || !request.result || !request.result.payload)
             return false;
         const metadata = request.action.metadata || ({});
-        executionStarted(request);
         return controller.executeProviderAction(request, {
             target_id: request.result.id,
             action: operationFor(request.actionId),

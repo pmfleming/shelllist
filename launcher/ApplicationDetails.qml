@@ -36,11 +36,17 @@ Ui.DetailsPane {
         onActionTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
     }
 
-    Item {
+    Ui.TabbedDetailsStack {
         width: parent.width
-        height: Math.max(0, parent.height - actionHeader.height
-            - pane.footerHeight - 2 * pane.sectionSpacing)
-        clip: true
+        height: Math.max(0, parent.height - actionHeader.height - pane.sectionSpacing)
+        footerHeight: pane.footerHeight
+        sectionSpacing: pane.sectionSpacing
+        selectedValue: pane.controller.detailsTab
+        tabs: [
+            { value: "application", icon: "󰀻", label: "Application" },
+            { value: "resources", icon: "󰄪", label: "Resources" }
+        ]
+        onSelected: function (value) { pane.controller.selectDetailsTab(value); }
 
         ApplicationPage {
             anchors.fill: parent
@@ -58,16 +64,5 @@ Ui.DetailsPane {
             application: pane.application
             uiScale: pane.uiScale
         }
-    }
-
-    Ui.DetailsTabBar {
-        width: parent.width
-        height: pane.footerHeight
-        selectedValue: pane.controller.detailsTab
-        tabs: [
-            { value: "application", icon: "󰀻", label: "Application" },
-            { value: "resources", icon: "󰄪", label: "Resources" }
-        ]
-        onSelected: function (value) { pane.controller.selectDetailsTab(value); }
     }
 }

@@ -38,11 +38,20 @@ Ui.DetailsPane {
         onActionTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
     }
 
-    Item {
+    Ui.TabbedDetailsStack {
         width: parent.width
-        height: Math.max(0, parent.height - actionHeader.height
-            - pane.footerHeight - 2 * pane.sectionSpacing)
-        clip: true
+        height: Math.max(0, parent.height - actionHeader.height - pane.sectionSpacing)
+        footerHeight: pane.footerHeight
+        sectionSpacing: pane.sectionSpacing
+        selectedValue: pane.controller.detailsTab
+        tabs: pane.controller.hasSelection ? [
+            { value: "device", icon: "󰋜", label: "Device" },
+            { value: "information", icon: "󰋼", label: "Information" },
+            { value: "adapter", icon: "󰒓", label: "Bluetooth" }
+        ] : [
+            { value: "adapter", icon: "󰒓", label: "Bluetooth" }
+        ]
+        onSelected: function (value) { pane.controller.detailsTab = value; }
 
         Item {
             width: parent.width / pane.uiScale
@@ -68,19 +77,5 @@ Ui.DetailsPane {
                 controller: pane.controller
             }
         }
-    }
-
-    Ui.DetailsTabBar {
-        width: parent.width
-        height: pane.footerHeight
-        selectedValue: pane.controller.detailsTab
-        tabs: pane.controller.hasSelection ? [
-            { value: "device", icon: "󰋜", label: "Device" },
-            { value: "information", icon: "󰋼", label: "Information" },
-            { value: "adapter", icon: "󰒓", label: "Bluetooth" }
-        ] : [
-            { value: "adapter", icon: "󰒓", label: "Bluetooth" }
-        ]
-        onSelected: function (value) { pane.controller.detailsTab = value; }
     }
 }

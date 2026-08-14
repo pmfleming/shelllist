@@ -4,28 +4,24 @@ import QtQuick
 import "Model.js" as Model
 
 Item {
-    id: registry
-
     default property list<Provider> providers
     property int executionSequence: 0
 
-    signal queryBatchReceived(var batch)
-    signal queryFailed(var error)
     signal actionDispatched(var request)
     signal actionRejected(var rejection)
 
-    function providerById(providerId) {
+    function providerById(providerId: string): var {
         for (let index = 0; index < providers.length; index++)
             if (providers[index].providerId === providerId)
                 return providers[index];
         return null;
     }
 
-    function descriptors() {
+    function descriptors(): var {
         return Array.prototype.map.call(providers, function (item) { return item.descriptor(); });
     }
 
-    function validate() {
+    function validate(): bool {
         const seen = ({});
         descriptors().forEach(function (descriptor) {
             if (seen[descriptor.id])
@@ -35,7 +31,7 @@ Item {
         return true;
     }
 
-    function query(request) {
+    function query(request: var): int {
         const normalized = Model.queryRequest(request);
         const selected = normalized.providerIds;
         let dispatched = 0;
@@ -52,13 +48,13 @@ Item {
         return dispatched;
     }
 
-    function cancelQuery(requestId) {
+    function cancelQuery(requestId: string): void {
         for (let index = 0; index < providers.length; index++)
             if (providers[index].providerEnabled)
                 providers[index].cancel(requestId);
     }
 
-    function actionsFor(result) {
+    function actionsFor(result: var): var {
         if (!result)
             return [];
         const itemProvider = providerById(result.providerId);
@@ -67,7 +63,7 @@ Item {
         return Model.actionList(itemProvider.actionsFor(result) || []);
     }
 
-    function defaultActionFor(result) {
+    function defaultActionFor(result: var): var {
         if (!result)
             return null;
         const itemProvider = providerById(result.providerId);
@@ -80,7 +76,7 @@ Item {
             || null;
     }
 
-    function executionProvider(result, actionId) {
+    function executionProvider(result: var, actionId: string): var {
         if (!result)
             return reject("missing-result", "No result is selected", "", actionId);
         const itemProvider = providerById(result.providerId);
@@ -89,7 +85,7 @@ Item {
         return itemProvider;
     }
 
-    function executionAction(result, actionId) {
+    function executionAction(result: var, actionId: string): var {
         const actions = actionsFor(result);
         const action = actionId ? Model.actionById(actions, actionId) : defaultActionFor(result);
         if (!action)
@@ -99,7 +95,7 @@ Item {
         return action;
     }
 
-    function execute(result, actionId, context) {
+    function execute(result: var, actionId: string, context: var): bool {
         const itemProvider = executionProvider(result, actionId);
         if (!itemProvider)
             return false;
@@ -119,22 +115,10 @@ Item {
         return true;
     }
 
-    function reject(code, message, resultKey, actionId) {
+    function reject(code: string, message: string, resultKey: string, actionId: string): bool {
         actionRejected({ code: code, message: message, resultKey: resultKey || "", actionId: actionId || "" });
         return false;
     }
 
     Component.onCompleted: validate()
-
-    Instantiator {
-        model: registry.providers
-
-        delegate: Connections {
-            required property var modelData
-
-            target: modelData
-            function onQueryCompleted(batch) { registry.queryBatchReceived(batch); }
-            function onQueryFailed(error) { registry.queryFailed(error); }
-        }
-    }
 }

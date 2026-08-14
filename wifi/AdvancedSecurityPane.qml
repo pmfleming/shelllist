@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import "."
 import Shelllist.Ui
+import "WifiPresentation.js" as Presentation
 
 AdvancedSettingsFlickable {
     id: securityFlick
@@ -60,9 +61,9 @@ AdvancedSettingsFlickable {
                     height: 90
                     entries: [
                         { label: "DHCP server", value: securityFlick.settings.dhcpLease.server_identifier || "—" },
-                        { label: "Lease duration", value: securityFlick.settings.leaseDurationLabel(securityFlick.settings.dhcpLease.lease_time_seconds) },
+                        { label: "Lease duration", value: Presentation.leaseDurationLabel(securityFlick.settings.dhcpLease.lease_time_seconds) },
                         { label: "Lease domain", value: securityFlick.settings.dhcpLease.domain_name || "—" },
-                        { label: "Lease expires", value: securityFlick.settings.leaseExpiryLabel(securityFlick.settings.dhcpLease.expires_at_ms) }
+                        { label: "Lease expires", value: Presentation.leaseExpiryLabel(securityFlick.settings.dhcpLease.expires_at_ms) }
                     ]
                 }
 

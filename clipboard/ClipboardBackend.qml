@@ -67,10 +67,6 @@ Io.DaemonBackend {
         return call("edit-cancel", ClipApi.methods.editCancel, { edit_id: editId });
     }
     function getSettings(): bool { return call("settings-get", ClipApi.methods.settingsGet, {}); }
-    function updateSettings(values: var): bool { return call("settings-update", ClipApi.methods.settingsUpdate, values); }
-    function setPaused(paused: bool, privateMode: bool): bool {
-        return call("capture-pause", ClipApi.methods.captureSetPaused, { paused: paused, private_mode: privateMode });
-    }
     function captureScreenshot(x: int, y: int, width: int, height: int): bool {
         return call("capture-screenshot", ClipApi.methods.captureScreenshot, { x: x, y: y, width: width, height: height });
     }

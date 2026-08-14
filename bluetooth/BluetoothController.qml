@@ -67,16 +67,6 @@ Ui.ProviderChooserController {
     function operationForDevice(deviceKey) { return operationState.forDevice(deviceKey); }
     function operationErrorForDevice(deviceKey) { return operationState.errorForDevice(deviceKey); }
     function deviceBusy(deviceKey) { return !!operationState.forDevice(deviceKey); }
-    function deviceDisplayName(device) {
-        const base = device.name || device.remote_name || "Bluetooth device";
-        const duplicate = allDevices.some(function (candidate) {
-            return candidate.key !== device.key && (candidate.name || candidate.remote_name) === base;
-        });
-        if (!duplicate)
-            return base;
-        const adapter = adapters.find(function (candidate) { return candidate.key === device.adapter_key; }) || ({});
-        return base + " · " + (adapter.alias || adapter.name || "adapter");
-    }
     function devicesForView() {
         return BluetoothFlow.devicesForView(allDevices, searchScope, management);
     }
@@ -136,9 +126,6 @@ Ui.ProviderChooserController {
         setSearchScope(searchAllDevices ? "mine" : "all");
     }
     function captureScreenshot(x, y, width, height) {
-        if (anyActionInFlight || modalPromptOpen || screenshotInFlight)
-            return false;
-        status = "Capturing Bluetooth window…";
         return screenshotCapture.captureRegion(x, y, width, height);
     }
     function applyAudioSnapshot(devices) { audioDevices = devices || []; audioStatus = ""; }
@@ -190,17 +177,14 @@ Ui.ProviderChooserController {
         backend.setScanning(!scanning, selectedAdapter.key);
     }
     function handleScanEvent(scan) {
-        if (!scan || !scan.request_id)
+        const transition = BluetoothFlow.scanTransition(
+            activeScan, scan, filteredResults.length, status);
+        if (!transition)
             return;
-        if (scan.state === "running") {
-            activeScan = scan;
-            if (scan.snapshot) applySnapshot(scan.snapshot);
-            status = "Scanning for Bluetooth devices…";
-            return;
-        }
-        if (activeScan && activeScan.request_id === scan.request_id) activeScan = null;
-        if (scan.snapshot) applySnapshot(scan.snapshot);
-        status = BluetoothFlow.scanCompletionStatus(scan, filteredResults.length, status);
+        activeScan = transition.activeScan;
+        if (transition.snapshot)
+            applySnapshot(transition.snapshot);
+        status = transition.status;
     }
     function updateManagement(values) {
         if (backend.requestRunning)
@@ -316,8 +300,9 @@ Ui.ProviderChooserController {
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture
         active: bluetoothController.uiActive
-        onCompleted: function (message) { bluetoothController.status = message; }
-        onFailed: function (message) { bluetoothController.status = message; }
+        blocked: bluetoothController.anyActionInFlight || bluetoothController.modalPromptOpen
+        startMessage: "Capturing Bluetooth window…"
+        onStatusChanged: function (message) { bluetoothController.status = message; }
     }
     BluetoothBackend { id: backend; controller: bluetoothController }
     BluetoothOperationController {

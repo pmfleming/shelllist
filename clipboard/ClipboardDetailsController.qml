@@ -18,19 +18,20 @@ Item {
     property string editId
     property string editDraft
     property string committedDraft
-    property int editMaxBytes
     property int sequence
     property string entryId
     property var replacedSourceIds: []
-    property var entryRevision
+    property double entryRevision: -1
     property string requestId
     property string thumbnailRequestId
     readonly property var selectedEntry: controller.selectedEntry
+    readonly property string selectedEntryId: selectedEntry ? selectedEntry.id : ""
     readonly property bool directTextEdit: !!selectedEntry && selectedEntry.kind === "text"
+    readonly property bool editOperationActive: editing || editBeginPending || saveInFlight
 
-    function beginEdit(entry) {
+    function beginEdit(entry: var): bool {
         const target = entry || selectedEntry;
-        if (!target || controller.actionInFlight || editBeginPending || editing)
+        if (!target || controller.actionInFlight || editOperationActive)
             return false;
         editBeginPending = true;
         editIsDirect = target.kind === "text";
@@ -41,26 +42,22 @@ Item {
         }
         return true;
     }
-    function requestDirectEdit() {
-        if (directTextEdit)
+    function setEditorFocused(focused: bool): void {
+        editorFocused = focused;
+        if (focused && directTextEdit)
             beginEdit();
     }
-    function setEditorFocused(focused) {
-        editorFocused = focused;
-        if (focused)
-            requestDirectEdit();
-    }
-    function updateEditDraft(text) {
+    function updateEditDraft(text: string): void {
         if (!editing || !editIsDirect || saveInFlight || text === editDraft)
             return;
         editDraft = text;
         editDirty = true;
         autoSaveTimer.restart();
     }
-    function applyEdit(id, edit) {
+    function applyEdit(id: string, edit: var): void {
         if (id === "edit-begin") {
             editBeginPending = false;
-            editId = edit.id || ""; editDraft = edit.value || ""; editMaxBytes = edit.max_bytes || 0;
+            editId = edit.id || ""; editDraft = edit.value || "";
             editDirty = false;
             editing = editId.length > 0;
         } else if (id === "edit-cancel") {
@@ -68,7 +65,7 @@ Item {
             editing = false; editIsDirect = false; editId = ""; editDirty = false;
         }
     }
-    function commitEdit() {
+    function commitEdit(): bool {
         if (!editing || editId.length === 0 || saveInFlight || (editIsDirect && !editDirty))
             return false;
         autoSaveTimer.stop();
@@ -82,8 +79,8 @@ Item {
         daemonBackend.commitEdit(editId, committedDraft);
         return true;
     }
-    function preparePaste() {
-        if (!directTextEdit || entryId.length === 0 || selectedEntry.id !== entryId)
+    function preparePaste(): bool {
+        if (!directTextEdit || entryId.length === 0 || selectedEntryId !== entryId)
             return false;
         if (saveInFlight) {
             pasteAfterSave = true;
@@ -97,41 +94,49 @@ Item {
             pasteAfterSave = false;
         return true;
     }
-    function finishDirectEdit() {
+    function finishDirectEdit(): void {
         editorFocused = false;
-        if (saveInFlight)
-            return;
-        if (!commitEdit())
+        if (!saveInFlight && !commitEdit())
             cancelEdit();
     }
-    function cancelEdit() {
+    function cancelEdit(): void {
         autoSaveTimer.stop();
         if (editId.length > 0)
             daemonBackend.cancelEdit(editId);
         editBeginPending = false; saveInFlight = false; savingDirectEdit = false; pasteAfterSave = false;
         editing = false; editIsDirect = false; editId = ""; editDraft = ""; editDirty = false;
     }
-    function resetCommitState() {
+    function resetCommitState(): void {
         controller.actionInFlight = false; controller.activeAction = "";
         saveInFlight = false; savingDirectEdit = false; pasteAfterSave = false;
         editing = false; editIsDirect = false; editId = ""; editDirty = false;
     }
-    function applyDirectEditCommit(nextValue, entry, sourceEntryId, shouldPaste) {
-        value = nextValue; entryId = entry.id; entryRevision = entry.revision;
-        if (entry.id !== sourceEntryId && replacedSourceIds.indexOf(sourceEntryId) < 0)
+    function rememberReplacedEntry(sourceEntryId: string, replacementId: string): void {
+        if (replacementId !== sourceEntryId && replacedSourceIds.indexOf(sourceEntryId) < 0)
             replacedSourceIds = replacedSourceIds.concat([sourceEntryId]);
-        editDraft = nextValue.text === null || nextValue.text === undefined ? committedDraft : nextValue.text;
+    }
+    function selectionTracksEdit(sourceEntryId: string, replacementId: string): bool {
+        return editorFocused
+            && (selectedEntryId === sourceEntryId || selectedEntryId === replacementId);
+    }
+    function applyDirectEditCommit(nextValue: var, entry: var, sourceEntryId: string, shouldPaste: bool): void {
+        value = nextValue;
+        entryId = entry.id;
+        entryRevision = entry.revision;
+        rememberReplacedEntry(sourceEntryId, entry.id);
+        editDraft = nextValue.text === null || nextValue.text === undefined
+            ? committedDraft : nextValue.text;
         controller.status = "Clipboard text saved";
         controller.scheduleRefresh();
         if (shouldPaste) {
             editorFocused = false;
             controller.runAction("paste", undefined, entry);
-        } else if (editorFocused && selectedEntry
-                && (selectedEntry.id === sourceEntryId || selectedEntry.id === entry.id)) {
-            Qt.callLater(function () { detailsController.beginEdit(entry); });
+            return;
         }
+        if (selectionTracksEdit(sourceEntryId, entry.id))
+            Qt.callLater(function () { detailsController.beginEdit(entry); });
     }
-    function applyEditCommit(nextValue) {
+    function applyEditCommit(nextValue: var): void {
         const entry = nextValue ? nextValue.entry : null;
         const sourceEntryId = entryId;
         const wasDirect = savingDirectEdit;
@@ -145,23 +150,23 @@ Item {
         controller.status = "Clipboard entry updated";
         controller.scheduleRefresh();
     }
-    function selectedEntryMatches(id, revision) {
+    function selectedEntryMatches(id: string, revision: var): bool {
         return !!selectedEntry && selectedEntry.id === id && selectedEntry.revision === revision;
     }
-    function clear() {
+    function clear(): void {
         autoSaveTimer.stop();
         editing = false; editBeginPending = false; editDirty = false; editIsDirect = false; editorFocused = false;
         saveInFlight = false; savingDirectEdit = false; pasteAfterSave = false;
-        editId = ""; editDraft = ""; committedDraft = ""; editMaxBytes = 0;
+        editId = ""; editDraft = ""; committedDraft = "";
         value = null; thumbnail = null; error = ""; loading = false;
-        entryId = ""; replacedSourceIds = []; entryRevision = null;
+        entryId = ""; replacedSourceIds = []; entryRevision = -1;
         requestId = ""; thumbnailRequestId = "";
     }
-    function alreadyLoaded(entry) {
+    function alreadyLoaded(entry: var): bool {
         return (loading && entryId === entry.id && entryRevision === entry.revision)
             || (value && value.entry.id === entry.id && value.entry.revision === entry.revision);
     }
-    function request(entry, suffix) {
+    function request(entry: var, suffix: string): void {
         requestId = "details" + suffix;
         if (!daemonBackend.details(requestId, entry)) {
             requestId = ""; loading = false;
@@ -174,7 +179,7 @@ Item {
         if (!daemonBackend.thumbnail(thumbnailRequestId, entry))
             thumbnailRequestId = "";
     }
-    function load() {
+    function load(): void {
         const entry = selectedEntry;
         if (!entry) {
             clear();
@@ -187,16 +192,15 @@ Item {
         sequence += 1;
         request(entry, "-" + sequence);
     }
-    function scheduleLoad() { if (controller.detailsOpen) loadTimer.restart(); }
-    function selectionChanged() {
-        if ((editing || editBeginPending || saveInFlight)
-                && selectedEntry && selectedEntry.id === entryId)
+    function scheduleLoad(): void { if (controller.detailsOpen) loadTimer.restart(); }
+    function selectionChanged(): void {
+        if (editOperationActive && selectedEntryId === entryId)
             return;
         if (editing)
             editIsDirect && editDirty ? commitEdit() : cancelEdit();
         scheduleLoad();
     }
-    function applyDetails(id, nextValue) {
+    function applyDetails(id: string, nextValue: var): void {
         if (id !== requestId)
             return;
         requestId = ""; loading = false;
@@ -212,7 +216,7 @@ Item {
         }
         value = nextValue; error = "";
     }
-    function applyThumbnail(id, nextValue) {
+    function applyThumbnail(id: string, nextValue: var): void {
         if (id !== thumbnailRequestId)
             return;
         thumbnailRequestId = "";
@@ -220,7 +224,7 @@ Item {
                 && nextValue.entry_id === entryId && nextValue.revision === entryRevision)
             thumbnail = nextValue;
     }
-    function handleFailure(id, message) {
+    function handleFailure(id: string, message: string): bool {
         if (id === "edit-begin") {
             editBeginPending = false;
             editIsDirect = false;

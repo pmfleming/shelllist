@@ -114,26 +114,11 @@ ColumnLayout {
         elide: Text.ElideRight
     }
 
-    Repeater {
-        model: section.controller.detailActions.filter(function (action) {
+    Ui.ActionToggleList {
+        Layout.fillWidth: true
+        actions: section.controller.detailActions.filter(function (action) {
             return action.visible !== false && (action.presentation || {}).group === "settings";
         })
-
-        delegate: Ui.ToggleRow {
-            required property var modelData
-
-            Layout.fillWidth: true
-            Layout.preferredHeight: 36
-            title: modelData.label
-            hotkey: modelData.shortcut || ""
-            checked: !!(modelData.state && modelData.state.checked)
-            tone: (modelData.presentation || {}).tone || "normal"
-            interactive: modelData.enabled !== false
-            subtitle: modelData.enabled === false && modelData.metadata
-                ? (modelData.metadata.disabledReason || "Unavailable for this device") : ""
-            showSubtitle: modelData.enabled === false
-            onClicked: section.controller.triggerDetailAction(modelData.id)
-        }
+        onTriggered: function (actionId) { section.controller.triggerDetailAction(actionId); }
     }
-
 }

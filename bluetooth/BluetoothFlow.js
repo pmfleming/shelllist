@@ -61,6 +61,25 @@ function isDiscoverableDevice(device, showRecent) {
     return device.blocked || device.paired || device.connected || device.present || showRecent;
 }
 
+function deviceBaseName(device) {
+    return [device.name, device.remote_name, "Bluetooth device"].find(Boolean);
+}
+function adapterDisplayName(adapter) {
+    return [adapter.alias, adapter.name, "adapter"].find(Boolean);
+}
+function deviceDisplayName(device, devices, adapters) {
+    const base = deviceBaseName(device);
+    const duplicate = devices.some(function (candidate) {
+        return candidate.key !== device.key && deviceBaseName(candidate) === base;
+    });
+    if (!duplicate)
+        return base;
+    const adapter = adapters.find(function (candidate) {
+        return candidate.key === device.adapter_key;
+    });
+    return base + " · " + adapterDisplayName(adapter || ({}));
+}
+
 function devicesForView(devices, scope, policy) {
     const showRecent = !!policy && !!policy.show_recent_devices;
     const predicate = scope === "all"
@@ -103,6 +122,17 @@ function completedCallStatus(id, powered, currentStatus) {
     if (messages[id]) return messages[id];
     if (id.indexOf("cancel-scan-") === 0) return messages["scan-stop"];
     return id.indexOf("device-") === 0 ? "Bluetooth device updated" : currentStatus;
+}
+
+function scanTransition(activeScan, scan, deviceCount, currentStatus) {
+    if (!scan || !scan.request_id)
+        return null;
+    if (scan.state === "running")
+        return { activeScan: scan, snapshot: scan.snapshot || null,
+            status: "Scanning for Bluetooth devices…" };
+    const retained = activeScan && activeScan.request_id !== scan.request_id ? activeScan : null;
+    return { activeScan: retained, snapshot: scan.snapshot || null,
+        status: scanCompletionStatus(scan, deviceCount, currentStatus) };
 }
 
 function scanCompletionStatus(scan, deviceCount, currentStatus) {

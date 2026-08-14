@@ -51,10 +51,19 @@ expect("running operation is not terminal", !flow.isTerminalOperation({ state: "
 expect("terminal pairing operation closes its prompt", flow.operationEndsPairing({ state: "failed", device_key: "device-1" }, requested.data));
 expect("preferred adapter is retained", flow.retainedAdapterKey([{ key: "a" }, { key: "b" }], "b") === "b");
 expect("missing adapter falls back", flow.retainedAdapterKey([{ key: "a" }], "b") === "a");
+expect("unique device keeps its base name",
+    flow.deviceDisplayName({ key: "one", name: "Headset" }, [], []) === "Headset");
+expect("duplicate device name includes its adapter",
+    flow.deviceDisplayName({ key: "one", name: "Headset", adapter_key: "a" },
+        [{ key: "two", name: "Headset" }], [{ key: "a", alias: "USB" }]) === "Headset · USB");
 expect("initial scan requires an idle powered UI", flow.shouldStartScan(true, true, false, false));
 expect("snapshot status reports scanning", flow.snapshotStatus(true, true, 3) === "3 devices · scanning…");
 expect("completed calls use a stable status", flow.completedCallStatus("device-connect", true, "Connecting") === "Bluetooth device updated");
 expect("scan failure exposes its error", flow.scanCompletionStatus({ state: "failed", error: { message: "radio failed" } }, 0, "Scanning") === "radio failed");
+const scanTransition = flow.scanTransition({ request_id: "old" },
+    { request_id: "new", state: "running", snapshot: { devices: [] } }, 0, "Idle");
+expect("running scan transition retains its snapshot",
+    scanTransition.activeScan.request_id === "new" && !!scanTransition.snapshot);
 expect("cancelled operations have a stable status", flow.operationCompletionStatus({ state: "cancelled" }, "Headset") === "Bluetooth operation cancelled");
 expect("cached unpaired device is recently found", flow.deviceState({ paired: false, connected: false, present: false, last_seen_ms: 123 }) === "Recently found");
 expect("blocked state takes priority", flow.deviceState({ blocked: true, paired: true, connected: false }) === "Blocked");

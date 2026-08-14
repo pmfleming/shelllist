@@ -20,6 +20,7 @@ Item {
     property string ipFamily: "ipv4"
     property bool hardwareDirty
 
+    readonly property bool hasDirtyChanges: securityDirty || hardwareDirty
     readonly property bool securityView: controller.advanced.section === "security"
     property real sectionOffset
     readonly property bool personalSecurity: String(profile.security_type || "").indexOf("Personal") >= 0
@@ -53,7 +54,7 @@ Item {
     focus: visible && controller.advanced.open
     Keys.onEscapePressed: controller.advanced.closeSettings()
 
-    function showSection(nextSection, animate) {
+    function showSection(nextSection: string, animate: bool): void {
         sectionTransition.stop();
         if (!animate || Theme.noAnimations) {
             sectionOffset = 0;
@@ -72,26 +73,7 @@ Item {
         easing.type: Theme.easingStandard
     }
 
-    function leaseDurationLabel(seconds) {
-        const total = Math.max(0, Number(seconds) || 0);
-        if (total === 0)
-            return "—";
-        const days = Math.floor(total / 86400);
-        const hours = Math.floor((total % 86400) / 3600);
-        const minutes = Math.floor((total % 3600) / 60);
-        if (days > 0)
-            return days + "d" + (hours > 0 ? " " + hours + "h" : "");
-        if (hours > 0)
-            return hours + "h" + (minutes > 0 ? " " + minutes + "m" : "");
-        return Math.max(1, minutes) + "m";
-    }
-
-    function leaseExpiryLabel(milliseconds) {
-        const value = Number(milliseconds) || 0;
-        return value > 0 ? Qt.formatDateTime(new Date(value), "d MMM yyyy, HH:mm") : "—";
-    }
-
-    function resetEditState() {
+    function resetEditState(): void {
         autoSaveTimer.stop();
         passwordValue = "";
         passwordDirty = false;
@@ -100,7 +82,7 @@ Item {
         hardwareDirty = false;
     }
 
-    function syncProfile() {
+    function syncProfile(): void {
         resetEditState();
         if (!profile || !profile.path)
             return;
@@ -110,32 +92,32 @@ Item {
         ipv6State.sync(profile.ipv6);
     }
 
-    function queueSecuritySave() {
+    function queueSecuritySave(): void {
         securityDirty = true;
         autoSaveTimer.restart();
     }
 
-    function setMacPolicy(value) {
+    function setMacPolicy(value: string): void {
         if (macPolicy === value)
             return;
         macPolicy = value;
         queueSecuritySave();
     }
 
-    function queueHardwareSave() {
+    function queueHardwareSave(): void {
         hardwareDirty = true;
         autoSaveTimer.restart();
     }
 
-    function hardwareSettingsReady() { return ipv4State.ready() && ipv6State.ready(); }
+    function hardwareSettingsReady(): bool { return ipv4State.ready() && ipv6State.ready(); }
 
-    function saveOrigin() {
+    function saveOrigin(): string {
         if (securityDirty === hardwareDirty)
             return controller.advanced.section;
         return securityDirty ? "security" : "hardware";
     }
 
-    function settingsPayload() {
+    function settingsPayload(): var {
         return {
             autoconnect: !!profile.autoconnect,
             metered: profile.metered || "auto",
@@ -148,32 +130,42 @@ Item {
         };
     }
 
-    function saveDirty() {
-        if ((!securityDirty && !hardwareDirty) || !profile.path)
-            return;
-        if (controller.advanced.saving || controller.advanced.loading)
-            return autoSaveTimer.restart();
+    function saveReady(): bool {
+        if (!hasDirtyChanges || !profile.path)
+            return false;
+        if (controller.advanced.saving || controller.advanced.loading) {
+            autoSaveTimer.restart();
+            return false;
+        }
         // Selecting Manual reveals an initially empty form. Keep the edit local until the
         // required address has been entered instead of sending a predictably invalid update.
         if (hardwareDirty && !hardwareSettingsReady()) {
             controller.advanced.error = "";
+            return false;
+        }
+        return true;
+    }
+
+    function saveDirty(): void {
+        if (!saveReady())
+            return;
+        if (!controller.advanced.save(settingsPayload(), saveOrigin())) {
+            autoSaveTimer.restart();
             return;
         }
-        if (!controller.advanced.save(settingsPayload(), saveOrigin()))
-            return autoSaveTimer.restart();
         securityDirty = false;
         hardwareDirty = false;
         passwordDirty = false;
     }
 
-    function setMethod(value) {
+    function setMethod(value: string): void {
         if (value === currentMethod)
             return;
         currentIp.method = value;
         queueHardwareSave();
     }
 
-    function setAutoDns(value) {
+    function setAutoDns(value: bool): void {
         const automatic = !!value;
         if (automatic === currentAutoDns)
             return;

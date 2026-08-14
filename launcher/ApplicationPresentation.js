@@ -43,3 +43,29 @@ function powerText(value) {
 function runningWindowIcon(instanceCount) {
     return Number(instanceCount || 0) > 1 ? "󰖲" : "󰖯";
 }
+
+function isCloseAction(actionId) {
+    return actionId === "close" || String(actionId || "").indexOf("close-window-") === 0;
+}
+
+function pageStatus(page) {
+    const applications = page.applications || [];
+    let status = applications.length + (applications.length === 1 ? " application" : " applications");
+    if (page.has_more)
+        status += " · more available";
+    if (!page.hyprland_available)
+        status += " · launch only";
+    return status;
+}
+
+function withoutClosedInstances(application, actionId, windowId) {
+    const payload = Object.assign({}, application || ({}));
+    const instances = actionId === "close" ? [] : (payload.instances || []).filter(function (instance) {
+        return instance.id !== windowId;
+    });
+    payload.instances = instances;
+    payload.running_count = instances.length;
+    payload.running = instances.length > 0;
+    payload.focused = instances.some(function (instance) { return instance.focused; });
+    return payload;
+}

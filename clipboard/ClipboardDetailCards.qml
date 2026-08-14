@@ -63,97 +63,92 @@ Ui.DetailFlickable {
         }
     }
 
-    Ui.DetailCard {
+    Ui.DetailColumnCard {
         title: "Data"
         height: cards.dataCardHeight
 
-        ColumnLayout {
-            anchors.fill: parent
-            spacing: Ui.Theme.spacingSm
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 96
 
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 96
-
-                Ui.DetailGrid {
-                    anchors.fill: parent
-                    entries: [{
-                        label: "Type",
-                        value: cards.entry.kind || "—"
-                    }, {
-                        label: "MIME",
-                        value: cards.entry.mime || "—"
-                    }, {
-                        label: "Size",
-                        value: Ui.Format.bytes(cards.entry.byte_size)
-                    }, {
-                        label: "Dimensions",
-                        value: cards.imageFacts
-                            ? cards.imageFacts.width + " × " + cards.imageFacts.height
-                            : "—"
-                    }]
-                }
+            Ui.DetailGrid {
+                anchors.fill: parent
+                entries: [{
+                    label: "Type",
+                    value: cards.entry.kind || "—"
+                }, {
+                    label: "MIME",
+                    value: cards.entry.mime || "—"
+                }, {
+                    label: "Size",
+                    value: Ui.Format.bytes(cards.entry.byte_size)
+                }, {
+                    label: "Dimensions",
+                    value: cards.imageFacts
+                        ? cards.imageFacts.width + " × " + cards.imageFacts.height
+                        : "—"
+                }]
             }
+        }
 
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 1
-                color: Ui.Theme.border
-            }
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 1
+            color: Ui.Theme.border
+        }
+
+        Text {
+            Layout.fillWidth: true
+            text: "Files"
+            color: Ui.Theme.mutedText
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Ui.Theme.fontSizeBody
+        }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
 
             Text {
-                Layout.fillWidth: true
-                text: "Files"
+                anchors.fill: parent
+                visible: cards.files.length === 0
+                text: "No associated files"
                 color: Ui.Theme.mutedText
                 font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeBody
+                font.pixelSize: Ui.Theme.fontSizeCaption
+                verticalAlignment: Text.AlignVCenter
             }
 
-            Item {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+            ListView {
+                id: fileList
 
-                Text {
-                    anchors.fill: parent
-                    visible: cards.files.length === 0
-                    text: "No associated files"
-                    color: Ui.Theme.mutedText
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Ui.Theme.fontSizeCaption
-                    verticalAlignment: Text.AlignVCenter
-                }
+                anchors.fill: parent
+                visible: cards.files.length > 0
+                model: cards.files
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
 
-                ListView {
-                    id: fileList
+                delegate: RowLayout {
+                    id: fileRow
 
-                    anchors.fill: parent
-                    visible: cards.files.length > 0
-                    model: cards.files
-                    clip: true
-                    boundsBehavior: Flickable.StopAtBounds
+                    required property var modelData
+                    width: fileList.width
+                    height: 34
+                    spacing: Ui.Theme.spacingMd
 
-                    delegate: RowLayout {
-                        id: fileRow
-
-                        required property var modelData
-                        width: fileList.width
-                        height: 34
-                        spacing: Ui.Theme.spacingMd
-
-                        Text {
-                            Layout.fillWidth: true
-                            text: fileRow.modelData.display_name
-                            color: fileRow.modelData.exists ? Ui.Theme.text : Ui.Theme.danger
-                            font.family: Ui.Theme.fontFamily
-                            font.pixelSize: Ui.Theme.fontSizeBody
-                            elide: Text.ElideMiddle
-                        }
-                        Text {
-                            text: fileRow.modelData.operation === "cut" ? "Move" : "Copy"
-                            color: Ui.Theme.mutedText
-                            font.family: Ui.Theme.fontFamily
-                            font.pixelSize: Ui.Theme.fontSizeCaption
-                        }
+                    Text {
+                        Layout.fillWidth: true
+                        text: fileRow.modelData.display_name
+                        color: fileRow.modelData.exists ? Ui.Theme.text : Ui.Theme.danger
+                        font.family: Ui.Theme.fontFamily
+                        font.pixelSize: Ui.Theme.fontSizeBody
+                        elide: Text.ElideMiddle
+                    }
+                    Text {
+                        text: fileRow.modelData.operation === "cut" ? "Move" : "Copy"
+                        color: Ui.Theme.mutedText
+                        font.family: Ui.Theme.fontFamily
+                        font.pixelSize: Ui.Theme.fontSizeCaption
                     }
                 }
             }

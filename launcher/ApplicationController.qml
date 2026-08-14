@@ -1,6 +1,7 @@
 import QtQuick
 import Shelllist.Io as Io
 import Shelllist.Ui as Ui
+import "ApplicationPresentation.js" as Presentation
 
 Ui.ProviderChooserController {
     id: controller
@@ -19,7 +20,6 @@ Ui.ProviderChooserController {
     property var resourceHistory: []
     property string historyTargetId: ""
     property string activeHistoryRequestId: ""
-    property int historyRequestSequence: 0
     readonly property bool historyInFlight: activeHistoryRequestId.length > 0
     readonly property var selectedApplication: selectedResult ? selectedResult.payload : null
     readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
@@ -27,53 +27,56 @@ Ui.ProviderChooserController {
     navigationPrimaryEnabled: hasSelection && !actionInFlight && !screenshotInFlight
     navigationBlocked: actionInFlight || screenshotInFlight
 
-    function activateUi(workspaceId) {
-        activateUiState(workspaceId);
-        refresh(false);
-    }
-    function deactivateUi() {
-        deactivateUiState();
+    function clearActiveAction(): void {
         actionInFlight = false;
         activeTargetId = "";
         activeRequest = null;
+    }
+    function clearResourceHistory(): void {
         resourceHistory = [];
         historyTargetId = "";
         activeHistoryRequestId = "";
+    }
+    function activateUi(workspaceId: string): void {
+        activateUiState(workspaceId);
+        refresh(false);
+    }
+    function deactivateUi(): void {
+        deactivateUiState();
+        clearActiveAction();
+        clearResourceHistory();
         detailsOpen = false;
     }
-    function refresh(explicitRefresh) {
+    function refresh(explicitRefresh: var): void {
         forceRefresh = explicitRefresh === true;
         status = forceRefresh ? "Refreshing applications…" : "Loading applications…";
         beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
     }
-    function selectDetailsTab(value) {
+    function selectDetailsTab(value: string): void {
         if (value === "application" || value === "resources")
             detailsTab = value;
     }
-    function cycleDetailsTab() {
+    function cycleDetailsTab(): bool {
         if (!detailsOpen || !hasSelection)
             return false;
         detailsTab = detailsTab === "application" ? "resources" : "application";
         return true;
     }
-    function refreshMetrics() {
+    function refreshMetrics(): void {
         if (!uiActive || actionInFlight || screenshotInFlight || refreshInFlight)
             return;
         forceRefresh = false;
         beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
     }
-    function captureScreenshot(x, y, width, height) {
-        if (actionInFlight || screenshotInFlight)
-            return false;
-        status = "Capturing Applications window…";
+    function captureScreenshot(x: real, y: real, width: real, height: real): bool {
         return screenshotCapture.captureRegion(x, y, width, height);
     }
-    function requestApplications(id, text, generation, limit) {
+    function requestApplications(id: string, text: string, generation: int, limit: int): void {
         const refreshCatalog = forceRefresh;
         forceRefresh = false;
         backend.query(id, text, generation, limit, refreshCatalog);
     }
-    function requestResourceHistory(forceRefresh) {
+    function requestResourceHistory(forceRefresh: var): void {
         if (!uiActive || !detailsOpen || detailsTab !== "resources" || !selectedResult)
             return;
         const targetId = selectedResult.id;
@@ -82,29 +85,24 @@ Ui.ProviderChooserController {
         if (forceRefresh !== true && targetId === historyTargetId)
             return;
         historyTargetId = targetId;
-        activeHistoryRequestId = "history-" + Date.now() + "-" + (++historyRequestSequence);
+        activeHistoryRequestId = "history-" + Date.now();
         backend.history(activeHistoryRequestId, targetId, 120);
     }
-    function applyResourceHistory(id, history) {
+    function applyResourceHistory(id: string, history: var): void {
         if (id !== activeHistoryRequestId || (history.target_id || "") !== historyTargetId)
             return;
         activeHistoryRequestId = "";
         resourceHistory = history.points || [];
     }
-    function cancelQuery(requestId) { backend.cancelRequest(requestId); }
-    function applyApplications(id, page) {
+    function cancelQuery(requestId: string): void { backend.cancelRequest(requestId); }
+    function applyApplications(id: string, page: var): void {
         applyProviderQuery(id, applicationProvider.resultsForApplications(page.applications || []));
         if (detailsOpen && detailsTab === "resources"
                 && selectedResult && selectedResult.id !== historyTargetId)
             requestResourceHistory();
-        const count = (page.applications || []).length;
-        status = count + (count === 1 ? " application" : " applications");
-        if (page.has_more)
-            status += " · more available";
-        if (!page.hyprland_available)
-            status += " · launch only";
+        status = Presentation.pageStatus(page);
     }
-    function executeProviderAction(request, params) {
+    function executeProviderAction(request: var, params: var): bool {
         if (actionInFlight || screenshotInFlight)
             return false;
         actionInFlight = true;
@@ -112,60 +110,42 @@ Ui.ProviderChooserController {
         activeRequest = request;
         status = request.action.label + "…";
         if (!backend.execute(request.id, params)) {
-            actionInFlight = false;
-            activeTargetId = "";
-            activeRequest = null;
+            clearActiveAction();
             return false;
         }
         return true;
     }
-    function applyOperation(id, operation) {
+    function applyOperation(id: string, operation: var): void {
         const completedRequest = activeRequest;
         const action = completedRequest ? completedRequest.actionId : "";
-        if (completedRequest
-                && (action === "close" || action.indexOf("close-window-") === 0))
+        const closing = Presentation.isCloseAction(action);
+        if (completedRequest && closing)
             removeClosedInstances(completedRequest, action);
-        actionInFlight = false;
-        activeTargetId = "";
+        clearActiveAction();
         status = operation.message || "Application action completed";
-        if (completedRequest)
-            applicationProvider.executionFinished({ requestId: id, operation: operation });
-        activeRequest = null;
-        if (action === "close" || action.indexOf("close-window-") === 0)
+        if (closing)
             return;
         closeWindowRequested();
     }
-    function removeClosedInstances(request, action) {
+    function removeClosedInstances(request: var, action: string): void {
         const targetId = request.result.id;
         const windowId = (request.action.metadata || ({})).windowId || "";
         const next = filteredResults.map(function (result) {
             if (result.id !== targetId)
                 return result;
-            const payload = Object.assign({}, result.payload || ({}));
-            const instances = action === "close" ? [] : (payload.instances || []).filter(function (instance) {
-                return instance.id !== windowId;
-            });
-            payload.instances = instances;
-            payload.running_count = instances.length;
-            payload.running = instances.length > 0;
-            payload.focused = instances.some(function (instance) { return instance.focused; });
-            return applicationProvider.resultForApplication(payload);
+            return applicationProvider.resultForApplication(
+                Presentation.withoutClosedInstances(result.payload, action, windowId));
         });
         replaceProviderResults(next, false);
     }
-    function handleFailure(id, message) {
+    function handleFailure(id: string, message: string): void {
         if (id.indexOf("history-") === 0) {
             if (id === activeHistoryRequestId)
                 activeHistoryRequestId = "";
             return;
         }
-        if (id.indexOf("action-") === 0) {
-            actionInFlight = false;
-            activeTargetId = "";
-            if (activeRequest)
-                applicationProvider.executionFailed({ requestId: id, code: "operation-failed", message: message });
-            activeRequest = null;
-        }
+        if (id.indexOf("action-") === 0)
+            clearActiveAction();
         if (isActiveQuery(id)) {
             clearProviderResults();
             status = message;
@@ -173,27 +153,24 @@ Ui.ProviderChooserController {
             status = message;
         }
     }
-    function handleTransportFailure(message) {
-        actionInFlight = false;
-        activeTargetId = "";
-        activeRequest = null;
-        activeHistoryRequestId = "";
-        resourceHistory = [];
+    function handleTransportFailure(message: string): void {
+        clearActiveAction();
+        clearResourceHistory();
         clearProviderResults();
         status = message;
     }
-    function primarySelected() {
+    function primarySelected(): bool {
         if (!selectedResult || actionInFlight || screenshotInFlight)
             return false;
         return executeSelected("activate");
     }
-    function launchSelected() {
+    function launchSelected(): bool {
         if (!selectedResult || actionInFlight || screenshotInFlight
                 || selectedApplication.kind !== "desktop-application")
             return false;
         return executeSelected("launch");
     }
-    function triggerDetailAction(actionId) {
+    function triggerDetailAction(actionId: string): bool {
         if (!selectedResult || actionInFlight || screenshotInFlight)
             return false;
         return executeSelected(actionId);
@@ -202,11 +179,8 @@ Ui.ProviderChooserController {
     onDetailsOpenChanged: {
         if (detailsOpen)
             detailsTab = "application";
-        else {
-            resourceHistory = [];
-            historyTargetId = "";
-            activeHistoryRequestId = "";
-        }
+        else
+            clearResourceHistory();
     }
     onDetailsTabChanged: if (detailsTab === "resources") requestResourceHistory()
     onSelectedResultChanged: if (detailsOpen && detailsTab === "resources") requestResourceHistory()
@@ -214,8 +188,9 @@ Ui.ProviderChooserController {
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture
         active: controller.uiActive
-        onCompleted: function (message) { controller.status = message; }
-        onFailed: function (message) { controller.status = message; }
+        blocked: controller.actionInFlight
+        startMessage: "Capturing Applications window…"
+        onStatusChanged: function (message) { controller.status = message; }
     }
 
     Timer {

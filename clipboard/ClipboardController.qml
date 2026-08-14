@@ -10,7 +10,6 @@ Ui.ProviderChooserController {
 
     property string status: "Loading clipboard history…"
     property string sessionId: ""
-    property bool targetAvailable: false
     actionInFlight: false
     property bool screenshotInFlight: false
     property string activeAction: ""
@@ -18,7 +17,6 @@ Ui.ProviderChooserController {
     property var settings: ({ max_entries: 750, max_favorites: 100, max_entry_bytes: 16777216, capture_paused: false, private_mode: false })
     property var wipeChallenge: null
     property bool deleteConfirmationOpen
-    property var currentEntry: null
     property bool selectCurrentAfterRefresh: false
     readonly property alias detailState: detailsModel
     readonly property var selectedEntry: selectedResult ? selectedResult.payload : null
@@ -48,7 +46,6 @@ Ui.ProviderChooserController {
         }
         deactivateUiState();
         sessionId = "";
-        targetAvailable = false;
         actionInFlight = false;
         screenshotInFlight = false;
         activeAction = "";
@@ -64,7 +61,7 @@ Ui.ProviderChooserController {
     function cancelQuery(requestId) { backend.cancelRequest(requestId); }
     function applyHistory(id, history) {
         applyProviderQuery(id, clipboardProvider.resultsForEntries(history.entries || []));
-        currentEntry = history.current || null;
+        const currentEntry = history.current || null;
         if (selectCurrentAfterRefresh) {
             const currentId = currentEntry ? currentEntry.id : "";
             const currentIndex = filteredResults.findIndex(function (result) {
@@ -78,7 +75,6 @@ Ui.ProviderChooserController {
     }
     function applySession(session) {
         sessionId = session.state === "hidden" || session.state === "ended" ? "" : (session.id || "");
-        targetAvailable = session.target_available === true;
         if (session.state === "hidden")
             hideRequested();
     }
@@ -129,8 +125,6 @@ Ui.ProviderChooserController {
     function pasteImageAsFile() { runAction("image-as-file"); }
     function annotateImage() { runAction("annotate"); }
     function openUrl() { runAction("open-url"); }
-    function openFile(index) { runAction("open-file", index || 0); }
-    function revealFile(index) { runAction("reveal-file", index || 0); }
     function toggleFavorite() { runAction(selectedEntry && selectedEntry.favorite ? "unfavorite" : "favorite"); }
     function requestDelete() { if (selectedEntry) deleteConfirmationOpen = true; }
     function cancelDelete() { deleteConfirmationOpen = false; }
@@ -142,14 +136,6 @@ Ui.ProviderChooserController {
         activeAction = "";
         activeOperationId = "";
         status = "Clipboard operation cancelled";
-    }
-    function toggleCapturePaused(privateMode) {
-        if (!actionInFlight)
-            backend.setPaused(!settings.capture_paused, privateMode === true);
-    }
-    function cycleRetention() {
-        const next = settings.max_entries >= 750 ? 250 : 750;
-        backend.updateSettings({ max_entries: next });
     }
     function applySettings(value) {
         settings = value;

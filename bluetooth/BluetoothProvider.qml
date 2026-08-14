@@ -113,7 +113,8 @@ Core.Provider {
         const operationError = controller.operationErrorForDevice(device.key);
         return Core.Model.result({
             providerId: providerId, providerPriority: priority, id: device.key,
-            title: controller.deviceDisplayName(device), subtitle: deviceSubtitle(device, operation, operationError),
+            title: BluetoothFlow.deviceDisplayName(device, controller.allDevices, controller.adapters),
+            subtitle: deviceSubtitle(device, operation, operationError),
             icon: BluetoothGlyphs.forListDevice(device), score: BluetoothFlow.deviceScore(device),
             keywords: [device.name, device.icon || ""], badges: device.connected ? ["active"] : [],
             primaryActionId: primaryActionId(device), actions: [],
@@ -128,7 +129,6 @@ Core.Provider {
     function primaryActionIdFor(result: var): string { return result && result.payload ? primaryActionId(result.payload) : ""; }
     function execute(request: var): bool {
         return executePayload(request,
-            function (id, payload) { return controller.executeDeviceAction(id, payload); },
-            "Bluetooth action was rejected");
+            function (id, payload) { return controller.executeDeviceAction(id, payload); });
     }
 }

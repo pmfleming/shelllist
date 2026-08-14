@@ -7,6 +7,20 @@ function dnsLabel(ip4) { return ip4 && ip4.dns && ip4.dns.length > 0 ? ip4.dns.j
 function hasNumber(value) { return value !== null && value !== undefined && !isNaN(value); }
 function valueOr(source, key, fallback) { return source && source[key] !== undefined && source[key] !== null ? source[key] : fallback; }
 function privacyFor(profile) { return profile && profile.privacy ? profile.privacy : ({}); }
+function leaseDurationLabel(seconds) {
+    const total = Math.max(0, Number(seconds) || 0);
+    if (total === 0) return "—";
+    const days = Math.floor(total / 86400);
+    const hours = Math.floor((total % 86400) / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    if (days > 0) return days + "d" + (hours > 0 ? " " + hours + "h" : "");
+    if (hours > 0) return hours + "h" + (minutes > 0 ? " " + minutes + "m" : "");
+    return Math.max(1, minutes) + "m";
+}
+function leaseExpiryLabel(milliseconds) {
+    const value = Number(milliseconds) || 0;
+    return value > 0 ? Qt.formatDateTime(new Date(value), "d MMM yyyy, HH:mm") : "—";
+}
 
 function bandLabel(ap) {
     if (ap && ap.band)

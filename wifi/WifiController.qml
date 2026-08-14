@@ -146,9 +146,6 @@ ProviderChooserController {
 
     function refresh() { scan.refresh(); }
     function captureScreenshot(x, y, width, height) {
-        if (actionInFlight || promptActive || screenshotInFlight)
-            return false;
-        status = "Capturing Wi-Fi window…";
         return screenshotCapture.captureRegion(x, y, width, height);
     }
     function maybeRunPendingRefresh() { scan.maybeRefresh(); }
@@ -260,8 +257,9 @@ ProviderChooserController {
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture
         active: wifi.uiActive
-        onCompleted: function (message) { wifi.status = message; }
-        onFailed: function (message) { wifi.status = message; }
+        blocked: wifi.actionInFlight || wifi.promptActive
+        startMessage: "Capturing Wi-Fi window…"
+        onStatusChanged: function (message) { wifi.status = message; }
     }
     WifiControllerServices { id: services; controller: wifi; prompt: wifi.prompt }
     WifiQrService { id: qrController; controller: wifi }
