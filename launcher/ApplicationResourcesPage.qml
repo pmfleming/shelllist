@@ -19,6 +19,19 @@ Ui.DetailFlickable {
         font.weight: Ui.Theme.fontWeightDemiBold
     }
 
+    Text {
+        visible: page.application.running && Number(page.application.disk_space_total_bytes || 0) > 0
+        width: parent.width
+        text: "Application data · " + Presentation.memoryText(page.application.disk_space_total_bytes)
+            + " total · " + Presentation.memoryText(page.application.disk_space_permanent_bytes)
+            + " permanent · " + Presentation.memoryText(page.application.disk_space_temporary_bytes)
+            + " temporary"
+        color: Ui.Theme.mutedText
+        wrapMode: Text.Wrap
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Ui.Theme.fontSizeCaption
+    }
+
     ApplicationResourceHistory {
         visible: page.application.running
         width: parent.width

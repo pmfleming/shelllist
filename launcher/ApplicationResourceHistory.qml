@@ -37,8 +37,8 @@ ColumnLayout {
                 value: Presentation.memoryText(history.application.memory_bytes),
                 color: Ui.Theme.active, minimum: 0
             }, {
-                metric: "gpu_percent", label: "GPU",
-                value: Presentation.cpuText(history.application.gpu_percent),
+                metric: "gpu_busy_percent", label: "GPU",
+                value: Presentation.cpuText(history.application.gpu_busy_percent || history.application.gpu_percent),
                 color: Ui.Theme.warning, minimum: 10
             }, {
                 metric: "disk_read_bytes_per_second", label: "Disk read",
@@ -49,8 +49,16 @@ ColumnLayout {
                 value: Presentation.rateText(history.application.disk_write_bytes_per_second),
                 color: Ui.Theme.warning, minimum: 0
             }, {
-                metric: "average_power_watts", label: "Power",
-                value: Presentation.powerText(history.application.power_watts),
+                metric: "disk_space_permanent_bytes", label: "Permanent storage",
+                value: Presentation.memoryText(history.application.disk_space_permanent_bytes),
+                color: Ui.Theme.accent, minimum: 0
+            }, {
+                metric: "disk_space_temporary_bytes", label: "Cache & temporary",
+                value: Presentation.memoryText(history.application.disk_space_temporary_bytes),
+                color: Ui.Theme.warning, minimum: 0
+            }, {
+                metric: "average_power_watts", label: "Estimated power",
+                value: Presentation.powerText(history.application.estimated_app_power_watts || history.application.power_watts),
                 color: Ui.Theme.active, minimum: 0
             }]
 
