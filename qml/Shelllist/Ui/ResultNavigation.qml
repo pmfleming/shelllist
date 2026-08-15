@@ -1,4 +1,5 @@
 import QtQuick
+import "NavigationKeys.js" as NavigationKeys
 
 Item {
     id: navigation
@@ -29,7 +30,7 @@ Item {
     }
     function handleClose(event) {
         if (!closeEnabled || event.key !== Qt.Key_Escape) return false;
-        accept(event, controller.closeWindowRequested);
+        accept(event, controller.dismissNavigation);
         return true;
     }
     function handleDetailHotkey(event) {
@@ -56,16 +57,25 @@ Item {
         actions[Qt.Key_Right] = controller.openDetails;
         actions[Qt.Key_Up] = controller.selectionAtStart() ? focusSearch : moveUp;
         actions[Qt.Key_Down] = moveDown;
-        if (actions[event.key]) accept(event, actions[event.key]);
+        if (actions[event.key]) {
+            accept(event, actions[event.key]);
+            return;
+        }
+        const direction = NavigationKeys.listDirection(event.text, event.modifiers,
+            Qt.NoModifier, Qt.ShiftModifier);
+        if (direction > 0)
+            accept(event, moveDown);
+        else if (direction < 0)
+            accept(event, moveUp);
     }
 
     function handleSearchKey(event) {
-        if (blocked) return;
+        if (blocked || controller.navigationHelpOpen) return;
         if (handlePrimary(event) || handleClose(event)) return;
         handleSearchDirection(event);
     }
     function handleListKey(event) {
-        if (blocked) return;
+        if (blocked || controller.navigationHelpOpen) return;
         if (handlePrimary(event) || handleDetailHotkey(event) || handleClose(event)) return;
         handleListDirection(event);
     }

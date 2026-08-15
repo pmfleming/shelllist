@@ -11,28 +11,25 @@ Ui.ChooserSurface {
 
     Shortcut {
         sequence: "Escape"
-        onActivated: {
-            if (content.controller.detailsOpen)
-                content.controller.closeDetails();
-            else
-                content.controller.closeWindowRequested();
-        }
+        enabled: !content.controller.navigationHelpOpen
+        onActivated: content.controller.dismissNavigation()
     }
     Shortcut {
         sequence: "F5"
-        enabled: !content.controller.actionInFlight
+        enabled: !content.controller.actionInFlight && !content.controller.navigationHelpOpen
         onActivated: content.controller.refresh(true)
     }
     Shortcut {
         sequence: "Shift+Return"
         enabled: content.controller.hasSelection && !content.controller.actionInFlight
+            && !content.controller.navigationHelpOpen
             && (content.controller.selectedApplication || ({})).kind === "desktop-application"
         onActivated: content.controller.launchSelected()
     }
     Shortcut {
         sequence: "Ctrl+Tab"
         enabled: content.controller.detailsOpen && content.controller.hasSelection
-            && !content.controller.actionInFlight
+            && !content.controller.actionInFlight && !content.controller.navigationHelpOpen
         onActivated: content.controller.cycleDetailsTab()
     }
 
@@ -44,5 +41,15 @@ Ui.ChooserSurface {
         detailsComponent: Component {
             ApplicationDetails { controller: content.controller; uiScale: content.uiScale }
         }
+    }
+
+    Ui.NavigationHelpDialog {
+        controller: content.controller
+        surfaceName: "Applications"
+        entries: [
+            { keys: "Shift+Enter", action: "Launch a new application instance" },
+            { keys: "F5", action: "Refresh applications and windows" },
+            { keys: "Ctrl+Tab", action: "Cycle detail tabs" }
+        ]
     }
 }

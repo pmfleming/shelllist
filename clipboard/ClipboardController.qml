@@ -53,6 +53,37 @@ Ui.ProviderChooserController {
         detailsOpen = false;
         detailState.clear();
     }
+    function dismissNavigation() {
+        if (navigationHelpOpen) {
+            closeNavigationHelp();
+            return true;
+        }
+        if (detailState.editing) {
+            if (detailState.editIsDirect)
+                detailState.finishDirectEdit();
+            else
+                detailState.cancelEdit();
+            return true;
+        }
+        if (activeOperationId.length > 0) {
+            cancelActiveOperation();
+            return true;
+        }
+        if (deleteConfirmationOpen) {
+            cancelDelete();
+            return true;
+        }
+        if (wipeChallenge) {
+            cancelWipe();
+            return true;
+        }
+        if (detailsOpen) {
+            closeDetails();
+            return true;
+        }
+        closeWindowRequested();
+        return true;
+    }
     function refresh() {
         status = "Loading clipboard history…";
         beginProviderQuery({}, 100);

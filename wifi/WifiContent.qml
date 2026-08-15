@@ -16,48 +16,46 @@ ChooserSurface {
 
     Shortcut {
         sequence: "F5"
-        enabled: content.controller.powered && !content.controller.promptActive && !content.controller.actionInFlight
+        enabled: content.controller.powered && !content.controller.promptActive
+            && !content.controller.navigationHelpOpen && !content.controller.actionInFlight
         autoRepeat: false
         onActivated: content.controller.refresh()
     }
 
     Shortcut {
         sequence: "F6"
-        enabled: content.controller.powered && !content.controller.promptActive && !content.controller.advanced.open
+        enabled: content.controller.powered && !content.controller.promptActive
+            && !content.controller.navigationHelpOpen && !content.controller.advanced.open
         autoRepeat: false
         onActivated: content.controller.openHiddenNetworkPrompt()
     }
 
     Shortcut {
         sequence: "F7"
-        enabled: content.controller.powered && !content.controller.promptActive && !content.controller.advanced.open
+        enabled: content.controller.powered && !content.controller.promptActive
+            && !content.controller.navigationHelpOpen && !content.controller.advanced.open
         onActivated: content.controller.advanced.openSettings("security")
     }
 
     Shortcut {
         sequence: "F8"
-        enabled: content.controller.powered && !content.controller.promptActive && !content.controller.advanced.open
+        enabled: content.controller.powered && !content.controller.promptActive
+            && !content.controller.navigationHelpOpen && !content.controller.advanced.open
         onActivated: content.controller.advanced.openSettings("hardware")
     }
 
     Shortcut {
         sequence: "Ctrl+Tab"
-        enabled: content.controller.detailsOpen && content.controller.hasSelection && !content.controller.promptActive
+        enabled: content.controller.detailsOpen && content.controller.hasSelection
+            && !content.controller.promptActive && !content.controller.navigationHelpOpen
         onActivated: content.controller.cycleDetailsTab()
     }
 
     Shortcut {
         sequence: "Escape"
-        enabled: content.controller.advanced.open && !content.controller.promptActive
+        enabled: !content.controller.promptActive && !content.controller.navigationHelpOpen
         autoRepeat: false
-        onActivated: content.controller.advanced.closeSettings()
-    }
-
-    Shortcut {
-        sequence: "Escape"
-        enabled: !content.controller.promptActive && !content.controller.advanced.open
-        autoRepeat: false
-        onActivated: content.controller.closeWindowRequested()
+        onActivated: content.controller.dismissNavigation()
     }
 
     SplitChooserLayout {
@@ -104,5 +102,18 @@ ChooserSurface {
         visible: content.controller.qr.open
         qr: content.controller.qr
         onClosed: content.controller.qr.close()
+    }
+
+    NavigationHelpDialog {
+        controller: content.controller
+        surfaceName: "Wi-Fi"
+        helpEnabled: !content.controller.promptActive
+        entries: [
+            { keys: "F5", action: "Refresh and scan for networks" },
+            { keys: "F6", action: "Connect to a hidden network" },
+            { keys: "F7", action: "Open Security & Privacy" },
+            { keys: "F8", action: "Open IP & DNS" },
+            { keys: "Ctrl+Tab", action: "Cycle detail tabs" }
+        ]
     }
 }

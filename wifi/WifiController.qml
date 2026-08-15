@@ -103,6 +103,25 @@ ProviderChooserController {
         connection.deactivate();
     }
 
+    function dismissNavigation() {
+        if (navigationHelpOpen) {
+            closeNavigationHelp();
+            return true;
+        }
+        if (promptActive)
+            return false;
+        if (advanced.open) {
+            advanced.closeSettings();
+            return true;
+        }
+        if (detailsOpen) {
+            closeDetails();
+            return true;
+        }
+        closeWindowRequested();
+        return true;
+    }
+
     function cancelPrompt(reason) {
         if (qr.open) {
             qr.close();

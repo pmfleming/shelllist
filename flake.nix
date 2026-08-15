@@ -748,6 +748,14 @@
             touch $out
           '';
 
+          navigationKeys = pkgs.runCommand "shelllist-navigation-keys"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-navigation-keys.js} ${./qml/Shelllist/Ui/NavigationKeys.js}
+            touch $out
+          '';
+
           wifiIcons = pkgs.runCommand "shelllist-wifi-icons"
             {
               nativeBuildInputs = [ pkgs.nodejs ];

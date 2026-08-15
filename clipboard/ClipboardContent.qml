@@ -12,28 +12,40 @@ Ui.ChooserSurface {
 
     Shortcut {
         sequence: "Escape"
-        onActivated: {
-            if (content.controller.detailState.editing) {
-                if (content.controller.detailState.editIsDirect)
-                    content.controller.detailState.finishDirectEdit();
-                else
-                    content.controller.detailState.cancelEdit();
-            }
-            else if (content.controller.activeOperationId.length > 0)
-                content.controller.cancelActiveOperation();
-            else if (content.controller.deleteConfirmationOpen)
-                content.controller.cancelDelete();
-            else if (content.controller.detailsOpen)
-                content.controller.closeDetails();
-            else
-                content.controller.closeWindowRequested();
-        }
+        enabled: !content.controller.navigationHelpOpen
+        onActivated: content.controller.dismissNavigation()
     }
-    Shortcut { sequence: "F5"; enabled: !content.controller.actionInFlight; onActivated: content.controller.refresh() }
-    Shortcut { sequence: "Return"; enabled: content.controller.hasSelection && content.selectedEntry.kind !== "binary" && !content.controller.detailState.editorFocused && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.pasteSelected() }
-    Shortcut { sequence: "Ctrl+Return"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.copySelected() }
-    Shortcut { sequence: "Shift+Return"; enabled: content.controller.hasSelection && content.selectedEntry.kind === "image" && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.pasteImageAsFile() }
-    Shortcut { sequence: "Delete"; enabled: content.controller.hasSelection && !content.controller.actionInFlight && !content.controller.wipeChallenge; onActivated: content.controller.requestDelete() }
+    Shortcut {
+        sequence: "F5"
+        enabled: !content.controller.actionInFlight && !content.controller.navigationHelpOpen
+        onActivated: content.controller.refresh()
+    }
+    Shortcut {
+        sequence: "Return"
+        enabled: content.controller.hasSelection && content.selectedEntry.kind !== "binary"
+            && !content.controller.detailState.editorFocused && !content.controller.actionInFlight
+            && !content.controller.wipeChallenge && !content.controller.navigationHelpOpen
+        onActivated: content.controller.pasteSelected()
+    }
+    Shortcut {
+        sequence: "Ctrl+Return"
+        enabled: content.controller.hasSelection && !content.controller.actionInFlight
+            && !content.controller.wipeChallenge && !content.controller.navigationHelpOpen
+        onActivated: content.controller.copySelected()
+    }
+    Shortcut {
+        sequence: "Shift+Return"
+        enabled: content.controller.hasSelection && content.selectedEntry.kind === "image"
+            && !content.controller.actionInFlight && !content.controller.wipeChallenge
+            && !content.controller.navigationHelpOpen
+        onActivated: content.controller.pasteImageAsFile()
+    }
+    Shortcut {
+        sequence: "Delete"
+        enabled: content.controller.hasSelection && !content.controller.actionInFlight
+            && !content.controller.wipeChallenge && !content.controller.navigationHelpOpen
+        onActivated: content.controller.requestDelete()
+    }
 
     Ui.SplitChooserLayout {
         controller: content.controller
@@ -68,5 +80,18 @@ Ui.ChooserSurface {
         acceptLabel: "Clear all"
         onAccepted: content.controller.confirmWipe()
         onCancelled: content.controller.cancelWipe()
+    }
+
+    Ui.NavigationHelpDialog {
+        controller: content.controller
+        surfaceName: "Clipboard"
+        helpEnabled: !content.controller.detailState.editorFocused
+            && !content.controller.deleteConfirmationOpen && !content.controller.wipeChallenge
+        entries: [
+            { keys: "Ctrl+Enter", action: "Copy without pasting" },
+            { keys: "Shift+Enter", action: "Paste an image as a file" },
+            { keys: "Delete", action: "Delete the selected entry" },
+            { keys: "F5", action: "Refresh clipboard history" }
+        ]
     }
 }

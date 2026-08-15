@@ -81,7 +81,7 @@ shelllist-bluetooth toggle
 shelllist-bluetooth floating  # one-shot floating fallback
 ```
 
-The stabilization binding is `SUPER+M`. `SUPER+B` remains assigned to `rofi-bluetooth-menu` until Shelllist Bluetooth is ready to replace it. In the device list, `Right` opens details and `Left` closes them. `Alt+Tab` cycles Device, Information, and Bluetooth settings tabs; `Ctrl+Tab` is retained as the network-popup-compatible alternative.
+The stabilization binding is `SUPER+M`. `SUPER+B` remains assigned to `rofi-bluetooth-menu` until Shelllist Bluetooth is ready to replace it. In the device list, `Right` opens details and `Left` closes them. `Ctrl+Tab` cycles Device, Information, and Bluetooth settings tabs, matching the other Shelllist choosers.
 
 Run and configure the clipboard popup with:
 
@@ -125,6 +125,15 @@ Forget is a confirmed daemon-owned workflow. For an active network the UI presen
 Shelllist sends user-entered Wi-Fi secrets through stdin-backed JSON requests only; secrets are not placed on command-line arguments.
 
 ## Keybindings
+
+Standard chooser navigation:
+
+- `Down` / `Up`: move selection; `J` / `K` do the same while the result list has focus.
+- `Enter`: run the selected result's primary action.
+- `Right` / `Left`: open and close details.
+- `Esc`: close the current modal or nested detail layer, then details, then the chooser.
+- `?` or `F1`: show the contextual shortcut guide, including actions available for the selected result.
+- `Ctrl+Tab`: cycle tabs when a chooser has tabbed details.
 
 Application launcher keys:
 

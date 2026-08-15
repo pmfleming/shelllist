@@ -204,6 +204,22 @@ Ui.ProviderChooserController {
     }
     function handleOperationAccepted(operation) { operationState.accept(operation); }
     function handleOperationEvent(operation) { operationState.handle(operation); }
+    function dismissNavigation() {
+        if (navigationHelpOpen) {
+            closeNavigationHelp();
+            return true;
+        }
+        if (modalPromptOpen)
+            return false;
+        if (canCancelOperation)
+            return cancelActiveOperation();
+        if (detailsOpen) {
+            closeDetails();
+            return true;
+        }
+        closeWindowRequested();
+        return true;
+    }
     function cancelActiveOperation() {
         if (!canCancelOperation) return false;
         status = "Cancelling Bluetooth operation…";

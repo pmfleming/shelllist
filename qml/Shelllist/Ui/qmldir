@@ -30,6 +30,7 @@ singleton Format 1.0 Format.qml
 IconTile 1.0 IconTile.qml
 LabeledValueSlider 1.0 LabeledValueSlider.qml
 ModalFrame 1.0 ModalFrame.qml
+NavigationHelpDialog 1.0 NavigationHelpDialog.qml
 PopupWindowHost 1.0 PopupWindowHost.qml
 PromptDialog 1.0 PromptDialog.qml
 RefreshTile 1.0 RefreshTile.qml

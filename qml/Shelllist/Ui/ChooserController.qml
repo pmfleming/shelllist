@@ -12,6 +12,7 @@ Item {
     property bool actionInFlight: false
     property bool navigationPrimaryEnabled: true
     property bool navigationCloseEnabled: true
+    property bool navigationHelpOpen: false
     property real detailsExpansionProgress: detailsOpen ? 1 : 0
     readonly property alias navigation: navigationModel
 
@@ -50,6 +51,23 @@ Item {
 
     function deactivateUiState() {
         uiActive = false;
+        navigationHelpOpen = false;
+    }
+
+    function openNavigationHelp() { navigationHelpOpen = true; }
+    function closeNavigationHelp() { navigationHelpOpen = false; }
+    function toggleNavigationHelp() { navigationHelpOpen ? closeNavigationHelp() : openNavigationHelp(); }
+    function dismissNavigation() {
+        if (navigationHelpOpen) {
+            closeNavigationHelp();
+            return true;
+        }
+        if (detailsOpen) {
+            closeDetails();
+            return true;
+        }
+        closeWindowRequested();
+        return true;
     }
 
     function moveSelection(delta) { if (selectionModel) selectionModel.move(delta); }
