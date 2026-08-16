@@ -17,6 +17,7 @@ ModalFrame {
         { keys: "J / K", action: "Move selection while the list is focused" },
         { keys: "Enter", action: "Run the primary action" },
         { keys: "→ / ←", action: "Open / close details" },
+        { keys: "Ctrl+Alt+← / →", action: "Switch Shelllist surface" },
         { keys: "Esc", action: "Close the current layer, then the chooser" },
         { keys: "? / F1", action: "Show / hide this shortcut guide" }
     ]
@@ -89,6 +90,7 @@ ModalFrame {
                     delegate: Rectangle {
                         id: shortcutRow
 
+                        required property int index
                         required property var modelData
 
                         width: shortcutColumn.width

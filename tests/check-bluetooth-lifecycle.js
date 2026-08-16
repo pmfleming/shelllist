@@ -103,6 +103,7 @@ const failedPair = flow.operationTransition(activeOperation.activeOperation, req
 expect("failed unavailable pair transitions to rescan", failedPair.rescan && failedPair.clearPairing && failedPair.activeOperation === null);
 expect("response routing preserves protocol priority", api.responseKind({ scan: {}, snapshot: {} }) === "scan");
 expect("response routing recognizes audio snapshots", api.responseKind({ audio_devices: [{ device_key: "device-1" }] }) === "audio_devices");
+expect("response routing recognizes request recovery", api.responseKind({ requests: { operations: {} } }) === "requests");
 const activeLifecycle = api.lifecycleState({ request_id: "operation-1" }, {}, {}, "running", ["completed"]);
 expect("backend lifecycle records active requests", activeLifecycle.active["operation-1"].request_id === "operation-1");
 const finishedLifecycle = api.lifecycleState({ request_id: "operation-1" }, activeLifecycle.active, {}, "completed", ["completed"]);

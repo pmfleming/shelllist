@@ -80,6 +80,12 @@ Io.DaemonBackend {
     onResponseReceived: function (id, envelope, transportError) { finish(id, envelope, transportError); }
     onEventReceived: function (event) {
         if (event.event === "subscribed") return;
+        if (event.data && event.data.resync_required) {
+            controller.handleEventGap(event.stream);
+            if (event.stream === ClipApi.streams.capture)
+                getSettings();
+            return;
+        }
         const handlers = ({});
         handlers[ClipApi.streams.history] = controller.scheduleRefresh;
         handlers[ClipApi.streams.current] = controller.scheduleRefresh;

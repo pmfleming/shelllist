@@ -59,6 +59,7 @@ jq -e '
   .version == 1 and
   .ok == true and
   (.data.fixtures."wifi-networks.saved".networks | type == "array") and
+  .data.fixtures."wifi-networks.saved".snapshot.source == "cache" and
   .data.fixtures."wifi-networks.saved".networks[0].security_class == "personal" and
   .data.fixtures."wifi-networks.password-required".networks[0].capabilities.needs_password == true and
   .data.fixtures."wifi-networks.enterprise-required".networks[0].capabilities.needs_credentials == true and
@@ -66,6 +67,9 @@ jq -e '
   .data.fixtures."wifi-status.active".status.active == true and
   .data.fixtures."wifi-status.inactive".status.active == false and
   .data.fixtures."wifi-set-enabled.success".result.enabled == true and
+  .data.fixtures."wifi-band.status".band.selected == "5" and
+  .data.fixtures."wifi-band.set".result.stream == "wifi.band" and
+  .data.fixtures."wifi-band.stream".events[-1].event == "cancelled" and
   .data.fixtures."radio-set-wwan-enabled.success".result.radios.wwan_enabled == true and
   .data.fixtures."radio-set-airplane-mode.success".result.radios.airplane_mode == true and
   .data.fixtures."wifi-connect.success".result.status == "connected" and
@@ -82,12 +86,12 @@ jq -e '
   .ok == true and
   ([.data.protocol.methods[].name] | contains([
     "wifi.status", "wifi.setEnabled", "radio.setWwanEnabled", "radio.setAirplaneMode",
-    "network.connectivity", "wifi.networks", "wifi.scan",
+    "network.connectivity", "wifi.networks", "wifi.band.status", "wifi.band.set", "wifi.scan",
     "wifi.connectTarget", "wifi.disconnect", "wifi.profile.operation",
     "wifi.secret.capabilities", "wifi.secret.provide"
   ])) and
   ([.data.protocol.streams[] | select(.subscribable) | .name] | contains([
-    "wifi.status", "network.connectivity", "wifi.scan", "wifi.connect", "wifi.secret"
+    "wifi.status", "network.connectivity", "wifi.scan", "wifi.connect", "wifi.band", "wifi.secret"
   ]))
 ' "$registry_actual" >/dev/null
 
@@ -100,6 +104,8 @@ jq -r '
   + ([.data.protocol.methods[]
       | select(.name == "wifi.setEnabled"
           or .name == "wifi.networks"
+          or .name == "wifi.band.status"
+          or .name == "wifi.band.set"
           or .name == "wifi.scan"
           or .name == "wifi.connectTarget"
           or .name == "wifi.disconnect"

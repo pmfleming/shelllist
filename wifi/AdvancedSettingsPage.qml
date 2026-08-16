@@ -30,6 +30,7 @@ Item {
     readonly property bool currentFamilyEnabled: currentMethod !== "disabled"
     readonly property var ap: controller.detailAp
     readonly property var status: controller.activeStatus || ({})
+    readonly property var bandStatus: controller.bandStatus || ({})
     readonly property var dhcpLease: controller.isActive(ap)
         ? (((status.ip4 || {}).dhcp_lease) || ({}))
         : ({})
@@ -95,6 +96,12 @@ Item {
     function queueSecuritySave(): void {
         securityDirty = true;
         autoSaveTimer.restart();
+    }
+
+    function setBand(value: string): void {
+        if (!profile.path || value === (bandStatus.selected || "auto"))
+            return;
+        controller.setBand(profile.path, value);
     }
 
     function setMacPolicy(value: string): void {

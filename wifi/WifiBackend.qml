@@ -15,10 +15,15 @@ Io.DaemonBackend {
     readonly property bool listRunning: isPending("networks")
     readonly property bool scanRunning: isPending("scan-start") || controller.scan.requestId.length > 0
     readonly property bool connectStarting: isPending("connect-start")
-    readonly property bool nonConnectRunning: isPending("power") || isPending("disconnect") || isPending("profile") || isPending("advanced-load") || isPending("advanced-save") || isPending("advanced-secret") || isPending("secret-provide") || isPending("secret-cancel")
+    readonly property bool nonConnectRunning: isPending("power") || isPending("disconnect")
+        || isPending("profile") || isPending("advanced-load") || isPending("advanced-save")
+        || isPending("advanced-secret") || isPending("band-status") || isPending("band-set")
+        || isPending("secret-provide") || isPending("secret-cancel")
     readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
     readonly property var responseHandlerById: ({
         "networks": function (value) { backend.handleNetworks(value); },
+        "band-status": function (value) { controller.applyBandStatus(Api.apiData(value, "band") || ({})); },
+        "band-set": function (value) { controller.applyBandStart(Api.apiData(value, "result") || ({})); },
         "scan-start": function (value) { backend.handleScanStart(value); },
         "power": function (value) { controller.applyPowerResult(Api.apiData(value, "result") || ({})); },
         "connect-start": function (value) { backend.handleConnectStart(value); },
@@ -33,6 +38,8 @@ Io.DaemonBackend {
     })
 
     function refreshNetworks(refreshCache) { return call("networks", NmApi.methods.wifi_networks, { cached: true, refresh_cache: !!refreshCache }); }
+    function loadBandStatus(path) { return call("band-status", NmApi.methods.wifi_band_status, { path: path }); }
+    function setBand(path, band) { return call("band-set", NmApi.methods.wifi_band_set, { path: path, band: band }); }
     function startScan() { return call("scan-start", NmApi.methods.wifi_scan, { timeout: 12, cache: true }); }
     function setPowered(enabled) { return call("power", NmApi.methods.wifi_setEnabled, { enabled: enabled }); }
     function connect(request) { return call("connect-start", NmApi.methods.wifi_connectTarget, request); }
@@ -57,9 +64,15 @@ Io.DaemonBackend {
     }
     function cancelSecret(requestId) { return call("secret-cancel", NmApi.methods.wifi_secret_provide, { request_id: requestId, cancel: true }); }
     function handleNetworks(envelope) {
-        const networks = Api.apiData(envelope, "networks") || [];
-        if (!controller.scan.snapshotSeen) controller.applyNetworks(networks, true);
-        controller.setBackgroundStatus(networks.length + " cached networks; scanning…");
+        const data = Api.apiPayload(envelope);
+        if (!envelope.ok)
+            throw new Error(Api.apiErrorMessage(envelope));
+        const networks = data.networks || [];
+        const snapshot = data.snapshot || null;
+        if (!controller.scan.snapshotSeen)
+            controller.applyNetworks(networks, true, snapshot);
+        const stale = snapshot && snapshot.stale ? "stale " : "";
+        controller.setBackgroundStatus(networks.length + " " + stale + "cached networks; scanning…");
     }
 
     function handleScanStart(envelope) {

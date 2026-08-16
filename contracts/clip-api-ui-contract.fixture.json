@@ -28,8 +28,8 @@
         "name": "clipboard.history.query",
         "params_example": {
           "generation": 1,
-          "offset": 0,
           "limit": 100,
+          "offset": 0,
           "query": ""
         },
         "response_key": "history",

@@ -10,6 +10,12 @@ trap 'rm -f "$tmp"' EXIT
 "$app_daemon" debug contract-fixture > "$tmp"
 diff -u <(jq -S . "$fixture") <(jq -S . "$tmp")
 
+jq -e '
+  (.registry.methods[] | select(.name == "applications.history")
+    | .pagination.kind) == "opaque-cursor" and
+  (.registry.streams | any(.name == "applications.operation"))
+' "$fixture" >/dev/null
+
 while IFS= read -r name; do
   grep -Fq "\"$name\"" "$api_js" || {
     echo "AppApi.js does not declare method $name" >&2

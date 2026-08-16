@@ -12,38 +12,43 @@ Ui.ChooserSurface {
 
     Shortcut {
         sequence: "Escape"
-        enabled: !content.controller.navigationHelpOpen
+        enabled: content.controller.uiActive && !content.controller.navigationHelpOpen
         onActivated: content.controller.dismissNavigation()
     }
     Shortcut {
         sequence: "F5"
-        enabled: !content.controller.actionInFlight && !content.controller.navigationHelpOpen
+        enabled: content.controller.uiActive && !content.controller.actionInFlight
+            && !content.controller.navigationHelpOpen
         onActivated: content.controller.refresh()
     }
     Shortcut {
         sequence: "Return"
-        enabled: content.controller.hasSelection && content.selectedEntry.kind !== "binary"
+        enabled: content.controller.uiActive && content.controller.hasSelection
+            && content.selectedEntry.kind !== "binary"
             && !content.controller.detailState.editorFocused && !content.controller.actionInFlight
             && !content.controller.wipeChallenge && !content.controller.navigationHelpOpen
         onActivated: content.controller.pasteSelected()
     }
     Shortcut {
         sequence: "Ctrl+Return"
-        enabled: content.controller.hasSelection && !content.controller.actionInFlight
-            && !content.controller.wipeChallenge && !content.controller.navigationHelpOpen
+        enabled: content.controller.uiActive && content.controller.hasSelection
+            && !content.controller.actionInFlight && !content.controller.wipeChallenge
+            && !content.controller.navigationHelpOpen
         onActivated: content.controller.copySelected()
     }
     Shortcut {
         sequence: "Shift+Return"
-        enabled: content.controller.hasSelection && content.selectedEntry.kind === "image"
+        enabled: content.controller.uiActive && content.controller.hasSelection
+            && content.selectedEntry.kind === "image"
             && !content.controller.actionInFlight && !content.controller.wipeChallenge
             && !content.controller.navigationHelpOpen
         onActivated: content.controller.pasteImageAsFile()
     }
     Shortcut {
         sequence: "Delete"
-        enabled: content.controller.hasSelection && !content.controller.actionInFlight
-            && !content.controller.wipeChallenge && !content.controller.navigationHelpOpen
+        enabled: content.controller.uiActive && content.controller.hasSelection
+            && !content.controller.actionInFlight && !content.controller.wipeChallenge
+            && !content.controller.navigationHelpOpen
         onActivated: content.controller.requestDelete()
     }
 
@@ -85,7 +90,8 @@ Ui.ChooserSurface {
     Ui.NavigationHelpDialog {
         controller: content.controller
         surfaceName: "Clipboard"
-        helpEnabled: !content.controller.detailState.editorFocused
+        helpEnabled: content.controller.uiActive
+            && !content.controller.detailState.editorFocused
             && !content.controller.deleteConfirmationOpen && !content.controller.wipeChallenge
         entries: [
             { keys: "Ctrl+Enter", action: "Copy without pasting" },

@@ -15,7 +15,10 @@ ProviderChooserController {
     provider: WifiProvider { id: wifiProvider; controller: wifi }
 
     property var activeStatus: null
+    property var networkSnapshot: null
     property string status
+    property var bandStatus: null
+    property string bandRequestId: ""
     readonly property var radios: activeStatus && activeStatus.radios ? activeStatus.radios : ({
         wireless_enabled: !activeStatus || activeStatus.enabled !== false,
         wireless_hardware_enabled: true,
@@ -27,7 +30,7 @@ ProviderChooserController {
     readonly property WifiBackend backend: services.backend
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
     readonly property bool promptActive: prompt.open || prompt.credentialOpen || qr.open
-    actionInFlight: backend.running || screenshotInFlight
+    actionInFlight: backend.running || screenshotInFlight || bandRequestId.length > 0
     readonly property string detailsTab: advanced.open ? advanced.section : "network"
     readonly property bool scanInFlight: scan.running
     readonly property var detailResult: selectedResult
@@ -48,6 +51,7 @@ ProviderChooserController {
         handlers[NmApi.streams.network_connectivity] = function (event) { connection.applyConnectivityEvent(event); };
         handlers[NmApi.streams.wifi_scan] = function (event) { scan.handleStream(event); };
         handlers[NmApi.streams.wifi_connect] = function (event) { connection.handleEvent(event); };
+        handlers[NmApi.streams.wifi_band] = function (event) { wifi.handleBandEvent(event); };
         handlers[NmApi.streams.wifi_secret] = function (event) { wifi.handleSecretEvent(event); };
         return handlers;
     }
@@ -146,6 +150,7 @@ ProviderChooserController {
         const lost = lostRequestIds || [];
         scan.handleTransportFailure();
         connection.handleTransportFailure();
+        bandRequestId = "";
         lost.forEach(function (id) {
             advanced.failCall(id, "nm-daemon transport failed before " + id + " completed: " + message);
         });
@@ -186,6 +191,45 @@ ProviderChooserController {
             active: enabled ? !!(activeStatus && activeStatus.active) : false
         });
         status = result.message || (enabled ? "Wi-Fi turned on" : "Wi-Fi turned off");
+    }
+
+    function loadBandStatus(path) {
+        if (!path || backend.isPending("band-status"))
+            return false;
+        return backend.loadBandStatus(path);
+    }
+    function applyBandStatus(value) {
+        bandStatus = value && value.path ? value : null;
+    }
+    function setBand(path, band) {
+        if (!path || !band || bandRequestId.length > 0 || backend.running)
+            return false;
+        status = "Changing Wi-Fi band…";
+        return backend.setBand(path, band);
+    }
+    function applyBandStart(result) {
+        bandRequestId = result.request_id || "";
+        status = result.message || "Wi-Fi band change started…";
+    }
+    function handleBandEvent(event) {
+        if (event.event === "subscribed")
+            return;
+        if (bandRequestId.length > 0 && event.request_id !== bandRequestId)
+            return;
+        if (event.event === "started" || event.event === "progress") {
+            status = event.message || "Applying Wi-Fi band selection…";
+            return;
+        }
+        bandRequestId = "";
+        if (event.event === "succeeded") {
+            const result = event.result || ({});
+            applyBandStatus(result.band || ({}));
+            status = result.message || "Wi-Fi band selection updated";
+            refresh();
+        } else {
+            status = event.message || (event.event === "cancelled"
+                ? "Wi-Fi band change cancelled" : "Wi-Fi band change failed");
+        }
     }
 
     function handleSecretEvent(event) {
@@ -242,7 +286,11 @@ ProviderChooserController {
     function beginAction() { return requireIdle(!actionInFlight); }
     function primarySelected() { return executeSelected(""); }
     function triggerDetailAction(id) { return executeSelected(id); }
-    function applyNetworks(networks, resetSelection) { replaceProviderResults(wifiProvider.resultsForNetworks(networks), resetSelection); }
+    function applyNetworks(networks, resetSelection, snapshot) {
+        if (snapshot)
+            networkSnapshot = snapshot;
+        replaceProviderResults(wifiProvider.resultsForNetworks(networks), resetSelection);
+    }
 
     function openHiddenNetworkPrompt() { if (connection.beginAny()) prompt.openHiddenNetworkPrompt(); }
 

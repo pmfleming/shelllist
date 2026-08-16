@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
@@ -23,6 +25,9 @@ Item {
     property string defaultLaunchMode: "popover"
     property bool popoverVisible: false
     property bool retainOnFocusLoss: false
+    property bool retainContentLoaded: false
+    property bool ipcEnabled: true
+    property bool shortcutEnabled: true
     property int popoverNoAnimRuleState: -1
 
     readonly property string launchMode: (Quickshell.env(modeEnvironment) || defaultLaunchMode).toLowerCase()
@@ -174,7 +179,7 @@ Item {
     Io.HyprlandLayerRuleClient { id: layerRuleClient }
 
     IpcHandler {
-        enabled: host.popoverMode
+        enabled: host.popoverMode && host.ipcEnabled
         target: host.ipcTarget
         readonly property bool visible: host.popoverVisible
         function ping(): string { return "pong"; }
@@ -184,10 +189,15 @@ Item {
         function toggle(): void { host.togglePopover(); }
     }
 
-    ShelllistGlobalShortcut {
-        shortcutName: host.shortcutName
-        description: host.shortcutDescription
-        onTriggered: host.togglePopover()
+    Loader {
+        active: host.shortcutEnabled
+        sourceComponent: Component {
+            ShelllistGlobalShortcut {
+                shortcutName: host.shortcutName
+                description: host.shortcutDescription
+                onTriggered: host.togglePopover()
+            }
+        }
     }
 
     PanelWindow { // qmllint disable uncreatable-type
@@ -214,6 +224,7 @@ Item {
             surfaceWidth: host.surfaceWindowWidth
             contentWidth: host.currentWindowWidth
             loadWhen: host.popoverWindowVisible
+            retainLoaded: host.retainContentLoaded
             content: host.content
         }
     }
@@ -237,6 +248,7 @@ Item {
             surfaceWidth: host.surfaceWindowWidth
             contentWidth: host.currentWindowWidth
             loadWhen: host.floatingMode
+            retainLoaded: host.retainContentLoaded
             content: host.content
         }
     }

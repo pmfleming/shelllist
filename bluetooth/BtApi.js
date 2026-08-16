@@ -8,7 +8,7 @@ var streams = {
     scan: "bluetooth.scan"
 };
 
-var responseKeys = ["scan", "audio_devices", "operation"];
+var responseKeys = ["scan", "audio_devices", "operation", "requests"];
 
 function responseKind(data) {
     return responseKeys.find(function (key) { return !!data[key]; }) || "";
@@ -39,12 +39,16 @@ function lifecycleState(item, activeItems, finishedItems, state, terminalStates)
 }
 
 var methods = {
+    protocolDescribe: "bluetooth.protocol.describe",
     snapshot: "bluetooth.snapshot",
     setPowered: "bluetooth.setPowered",
     scan: "bluetooth.scan",
     adapterOperation: "bluetooth.adapter.operation",
     managementUpdate: "bluetooth.management.update",
+    devicePolicyUpdate: "bluetooth.device.policy.update",
     audioSetProfile: "bluetooth.audio.setProfile",
+    audioSetDefault: "bluetooth.audio.setDefault",
+    requestsSnapshot: "bluetooth.requests.snapshot",
     pairingRespond: "bluetooth.pairing.respond",
     deviceOperation: "bluetooth.device.operation"
 };

@@ -14,6 +14,7 @@ Ui.ProviderChooserController {
     property bool screenshotInFlight: false
     property string activeAction: ""
     property string activeOperationId: ""
+    property var handledTerminalOperations: ({})
     property var settings: ({ max_entries: 750, max_favorites: 100, max_entry_bytes: 16777216, capture_paused: false, private_mode: false })
     property var wipeChallenge: null
     property bool deleteConfirmationOpen
@@ -50,6 +51,7 @@ Ui.ProviderChooserController {
         screenshotInFlight = false;
         activeAction = "";
         activeOperationId = "";
+        handledTerminalOperations = ({});
         detailsOpen = false;
         detailState.clear();
     }
@@ -199,8 +201,24 @@ Ui.ProviderChooserController {
         else if (operation.action === "image-as-file")
             scheduleRefresh();
     }
+    function terminalOperationHandled(operation: var): bool {
+        if (!operation || !operation.id
+                || operation.status === "started" || operation.status === "progress")
+            return false;
+        if (handledTerminalOperations[operation.id])
+            return true;
+        const next = Object.assign({}, handledTerminalOperations);
+        next[operation.id] = true;
+        const ids = Object.keys(next);
+        if (ids.length > 64)
+            delete next[ids[0]];
+        handledTerminalOperations = next;
+        return false;
+    }
     function applyOperation(operation) {
-        actionInFlight = operation.status === "started";
+        if (!operation || terminalOperationHandled(operation))
+            return;
+        actionInFlight = operation.status === "started" || operation.status === "progress";
         activeAction = actionInFlight ? operation.action : "";
         activeOperationId = actionInFlight ? (operation.id || "") : "";
         status = operation.message || "Clipboard operation completed";
@@ -252,6 +270,15 @@ Ui.ProviderChooserController {
         } else if (!detailState.handleFailure(id, message)) {
             status = message;
         }
+    }
+    function handleEventGap(stream: string): void {
+        if (stream === "clipboard.operation") {
+            actionInFlight = false;
+            activeAction = "";
+            activeOperationId = "";
+        }
+        status = "Clipboard events were missed; refreshing current state…";
+        scheduleRefresh();
     }
     function handleTransportFailure(message) {
         clearProviderResults();

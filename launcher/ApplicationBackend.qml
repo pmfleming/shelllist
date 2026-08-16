@@ -29,9 +29,14 @@ Io.DaemonBackend {
             { query: text, generation: generation, limit: limit });
     }
 
-    function history(id: string, targetId: string, limit: int): bool {
-        return call(id, AppApi.methods.history,
-            { target_id: targetId, since_ms: null, limit: limit });
+    function history(id: string, targetId: string, sinceMs: double,
+            cursor: var, limit: int): bool {
+        return call(id, AppApi.methods.history, {
+            target_id: targetId,
+            since_ms: sinceMs,
+            cursor: cursor,
+            limit: limit
+        });
     }
 
     function execute(id: string, params: var): bool {
@@ -46,8 +51,16 @@ Io.DaemonBackend {
         finish(id, envelope, transportError);
     }
     onEventReceived: function (event) {
-        if (event.event !== "subscribed"
-                && (event.stream === AppApi.streams.applications || event.stream === AppApi.streams.windows))
+        if (event.event === "subscribed")
+            return;
+        if (event.stream === AppApi.streams.operation) {
+            const operation = event.data && event.data.operation;
+            if (operation)
+                controller.applyOperation("", operation);
+            return;
+        }
+        if (event.stream === AppApi.streams.applications
+                || event.stream === AppApi.streams.windows)
             controller.scheduleRefresh();
     }
     onSendFailed: function (id, message) { controller.handleFailure(id, message); }

@@ -1,3 +1,4 @@
+module Shelllist.Bluetooth
 BluetoothBackend 1.0 BluetoothBackend.qml
 BluetoothController 1.0 BluetoothController.qml
 BluetoothProvider 1.0 BluetoothProvider.qml

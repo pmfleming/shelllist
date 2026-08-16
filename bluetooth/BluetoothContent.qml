@@ -12,21 +12,24 @@ Ui.ChooserSurface {
 
     Shortcut {
         sequence: "F5"
-        enabled: content.controller.powered && !content.controller.refreshInFlight
+        enabled: content.controller.uiActive && content.controller.powered
+            && !content.controller.refreshInFlight
             && !content.controller.actionInFlight && !content.controller.modalPromptOpen
             && !content.controller.navigationHelpOpen && !content.editingDetails
         onActivated: content.controller.toggleScan()
     }
     Shortcut {
         sequence: "Ctrl+Tab"
-        enabled: content.controller.detailsOpen && content.controller.hasSelection
+        enabled: content.controller.uiActive && content.controller.detailsOpen
+            && content.controller.hasSelection
             && !content.controller.modalPromptOpen && !content.controller.navigationHelpOpen
             && !content.editingDetails
         onActivated: content.controller.cycleDetailsTab()
     }
     Shortcut {
         sequence: "Escape"
-        enabled: !content.controller.modalPromptOpen && !content.controller.navigationHelpOpen
+        enabled: content.controller.uiActive && !content.controller.modalPromptOpen
+            && !content.controller.navigationHelpOpen
             && !content.editingDetails
         onActivated: content.controller.dismissNavigation()
     }
@@ -64,7 +67,8 @@ Ui.ChooserSurface {
     Ui.NavigationHelpDialog {
         controller: content.controller
         surfaceName: "Bluetooth"
-        helpEnabled: !content.controller.modalPromptOpen && !content.editingDetails
+        helpEnabled: content.controller.uiActive && !content.controller.modalPromptOpen
+            && !content.editingDetails
         entries: [
             { keys: "F5", action: "Refresh devices or toggle discovery" },
             { keys: "Ctrl+Tab", action: "Cycle detail tabs" }

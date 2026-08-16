@@ -11,11 +11,16 @@ trap 'rm -f "$tmp"' EXIT
 diff -u <(jq -S . "$fixture") <(jq -S . "$tmp")
 
 jq -e '
-  .snapshot.data.snapshot.devices
+  (.snapshot.data.snapshot.management.version == 1) and
+  (.snapshot.data.snapshot.radio.operational | type == "boolean") and
+  (.snapshot.data.snapshot.devices[0].policy.wait_for_services | type == "boolean") and
+  (.audio_snapshot.data.audio_devices[0].sink.key | type == "string") and
+  (.registry.methods | any(.name == "bluetooth.requests.snapshot")) and
+  (.snapshot.data.snapshot.devices
   | all(.[]; (.signal_live | type == "boolean")
       and ((.signal_strength == null) or (.signal_strength | type == "number"))
       and ((.rssi == null) or (.rssi | type == "number"))
-      and ((.last_seen_ms == null) or (.last_seen_ms | type == "number")))
+      and ((.last_seen_ms == null) or (.last_seen_ms | type == "number"))))
 ' "$fixture" >/dev/null
 
 registry=$("$bt_daemon" debug protocol-registry)

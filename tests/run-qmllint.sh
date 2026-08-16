@@ -8,6 +8,7 @@ ln -s "$repo_root/qml" "$workdir/qml"
 
 mapfile -t sources < <(find \
   "$repo_root/qml" \
+  "$repo_root/shell" \
   "$repo_root/bluetooth" \
   "$repo_root/clipboard" \
   "$repo_root/launcher" \

@@ -35,13 +35,31 @@ AdvancedSettingsFlickable {
         }
 
         DetailCard {
-            height: Math.max(275, securityFlick.height - 245 - securityCards.spacing)
+            height: Math.max(315, securityFlick.height - 245 - securityCards.spacing)
             title: "Security"
 
             Column {
                 id: securityControls
                 anchors.fill: parent
                 spacing: 10
+
+                AdvancedSegmentedRow {
+                    visible: !!securityFlick.settings.bandStatus.path
+                    height: visible ? 40 : 0
+                    enabled: !securityFlick.settings.controller.actionInFlight
+                    label: "Wi-Fi band"
+                    value: securityFlick.settings.bandStatus.selected || "auto"
+                    options: [
+                        { value: "auto", label: "Auto" },
+                        { value: "2.4", label: "2.4 GHz",
+                            enabled: (securityFlick.settings.bandStatus.available || []).indexOf("2.4") >= 0 },
+                        { value: "5", label: "5 GHz",
+                            enabled: (securityFlick.settings.bandStatus.available || []).indexOf("5") >= 0 },
+                        { value: "6", label: "6 GHz",
+                            enabled: (securityFlick.settings.bandStatus.available || []).indexOf("6") >= 0 }
+                    ]
+                    onSelected: function (value) { securityFlick.settings.setBand(value); }
+                }
 
                 AdvancedSegmentedRow {
                     height: 40

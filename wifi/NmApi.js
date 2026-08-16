@@ -6,6 +6,8 @@ var version = 1;
 var methods = {
     wifi_setEnabled: "wifi.setEnabled",
     wifi_networks: "wifi.networks",
+    wifi_band_status: "wifi.band.status",
+    wifi_band_set: "wifi.band.set",
     wifi_scan: "wifi.scan",
     wifi_connectTarget: "wifi.connectTarget",
     wifi_disconnect: "wifi.disconnect",
@@ -18,6 +20,7 @@ var streams = {
     network_connectivity: "network.connectivity",
     wifi_scan: "wifi.scan",
     wifi_connect: "wifi.connect",
+    wifi_band: "wifi.band",
     wifi_secret: "wifi.secret"
 };
 
@@ -26,5 +29,6 @@ var subscribedStreams = [
     streams.network_connectivity,
     streams.wifi_scan,
     streams.wifi_connect,
+    streams.wifi_band,
     streams.wifi_secret
 ];

@@ -10,6 +10,13 @@ trap 'rm -f "$tmp"' EXIT
 "$clip_daemon" debug contract-fixture > "$tmp"
 diff -u <(jq -S . "$fixture") <(jq -S . "$tmp")
 
+jq -e '
+  (.registry.methods | any(.name == "clipboard.capture.setPaused")) and
+  (.registry.methods | any(.name == "clipboard.selection.publishFiles")) and
+  ((.registry.streams[] | select(.name == "clipboard.operation")
+    | .events | index("progress")) != null)
+' "$fixture" >/dev/null
+
 while IFS= read -r name; do
   grep -Fq "\"$name\"" "$api_js" || {
     echo "ClipApi.js does not declare method $name" >&2

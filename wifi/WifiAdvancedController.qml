@@ -17,7 +17,13 @@ Item {
 
     signal sectionTransitionRequested(string section, bool animate)
 
-    function reset() { profilePath = ""; profile = ({}); secret = ""; error = ""; }
+    function reset() {
+        profilePath = "";
+        profile = ({});
+        secret = "";
+        error = "";
+        controller.bandStatus = null;
+    }
     function openSettings(nextSection) {
         const savedProfile = controller.profileFor(controller.detailAp);
         if (!savedProfile) { controller.status = "Connect to this network before editing saved settings."; return; }
@@ -41,6 +47,8 @@ Item {
     function applyProfile(value) {
         if (!open || (value.path || "") !== profilePath) return;
         profile = value; error = "";
+        if (controller.isActive(controller.detailAp))
+            controller.loadBandStatus(profilePath);
     }
     function save(settings, origin) {
         if (!open || profilePath.length === 0 || saving) return false;

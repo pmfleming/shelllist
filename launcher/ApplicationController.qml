@@ -2,6 +2,7 @@ import QtQuick
 import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "ApplicationPresentation.js" as Presentation
+import "ApplicationLifecycle.js" as Lifecycle
 
 Ui.ProviderChooserController {
     id: controller
@@ -15,6 +16,7 @@ Ui.ProviderChooserController {
     property string detailsTab: "application"
     actionInFlight: false
     property string activeTargetId: ""
+    property string activeOperationId: ""
     property var activeRequest: null
     property bool forceRefresh: false
     property var resourceHistory: []
@@ -30,6 +32,7 @@ Ui.ProviderChooserController {
     function clearActiveAction(): void {
         actionInFlight = false;
         activeTargetId = "";
+        activeOperationId = "";
         activeRequest = null;
     }
     function clearResourceHistory(): void {
@@ -76,6 +79,9 @@ Ui.ProviderChooserController {
         forceRefresh = false;
         backend.query(id, text, generation, limit, refreshCatalog);
     }
+    function resourceHistorySinceMs(): double {
+        return Date.now() - 30 * 60 * 1000;
+    }
     function requestResourceHistory(forceRefresh: var): void {
         if (!uiActive || !detailsOpen || detailsTab !== "resources" || !selectedResult)
             return;
@@ -86,7 +92,7 @@ Ui.ProviderChooserController {
             return;
         historyTargetId = targetId;
         activeHistoryRequestId = "history-" + Date.now();
-        backend.history(activeHistoryRequestId, targetId, 120);
+        backend.history(activeHistoryRequestId, targetId, resourceHistorySinceMs(), null, 120);
     }
     function applyResourceHistory(id: string, history: var): void {
         if (id !== activeHistoryRequestId || (history.target_id || "") !== historyTargetId)
@@ -115,15 +121,41 @@ Ui.ProviderChooserController {
         }
         return true;
     }
+    function operationMatchesActiveRequest(operation: var): bool {
+        return Lifecycle.operationMatches(activeRequest, activeTargetId, operation);
+    }
     function applyOperation(id: string, operation: var): void {
+        if (!operation || !operation.id)
+            return;
+        const state = operation.status || "completed";
+        if (state === "accepted") {
+            if (!activeRequest || (id.length > 0 && id !== activeRequest.id))
+                return;
+            activeOperationId = operation.id;
+            status = operation.message || "Application action accepted…";
+            return;
+        }
+        if (!activeRequest || (activeOperationId.length > 0 && operation.id !== activeOperationId))
+            return;
+        if (activeOperationId.length === 0) {
+            if (!operationMatchesActiveRequest(operation))
+                return;
+            activeOperationId = operation.id;
+        }
+        if (state === "running") {
+            status = operation.message || (activeRequest.action.label + "…");
+            return;
+        }
+
         const completedRequest = activeRequest;
-        const action = completedRequest ? completedRequest.actionId : "";
+        const action = completedRequest.actionId;
         const closing = Presentation.isCloseAction(action);
-        if (completedRequest && closing)
+        if (state === "completed" && closing)
             removeClosedInstances(completedRequest, action);
         clearActiveAction();
-        status = operation.message || "Application action completed";
-        if (closing)
+        status = operation.message || (state === "completed"
+            ? "Application action completed" : "Application action " + state);
+        if (state !== "completed" || closing)
             return;
         closeWindowRequested();
     }

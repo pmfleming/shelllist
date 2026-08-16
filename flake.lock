@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786723840,
-        "narHash": "sha256-KGmifJDFcJmIVfnmZXU6Z9f7NyVUr7ZO6/F8iKorl7U=",
+        "lastModified": 1786766324,
+        "narHash": "sha256-z9k/AUQZlrGdA+xP4gLlApjZCUXLjthe0KdnTwaNDLs=",
         "ref": "main",
-        "rev": "5673d7ea4507e6841b857e3f3daf2bcdc6c1ac67",
-        "revCount": 19,
+        "rev": "17addf1841e704d0dd66496a04774c5bf9c3a38b",
+        "revCount": 24,
         "type": "git",
         "url": "file:../app-daemon"
       },
@@ -28,11 +28,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784671742,
-        "narHash": "sha256-bS0RZF63sjYWRv9GIi1kxgVNe4sjlunMUBH5sewdgas=",
+        "lastModified": 1786767328,
+        "narHash": "sha256-FlWfthFr+LkDsx8v5Fmar50aYSvP8WuPIEZ/cY5qNMo=",
         "ref": "main",
-        "rev": "f2d093155fffbf469aa9021a8a8018bd8e1c8899",
-        "revCount": 34,
+        "rev": "03cf76f6241d5f5cdd178f9ac00cb326c151d80c",
+        "revCount": 55,
         "type": "git",
         "url": "file:../bt-daemon"
       },
@@ -49,11 +49,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785847837,
-        "narHash": "sha256-7zt7ZyW7obqKkVOFKU8IufXlG6Uvr5Pb6MIDp/l6JPc=",
+        "lastModified": 1786726423,
+        "narHash": "sha256-FJlRGTwBgK0Q/pTzh5n/CVaormEhLzcxjnLPtJcIM4U=",
         "ref": "main",
-        "rev": "6802929250205f15dd9c4ca32c8cab875e9f51d3",
-        "revCount": 34,
+        "rev": "0bc342832db179efd516acfc714145e7b1088d71",
+        "revCount": 50,
         "type": "git",
         "url": "file:../clip-daemon"
       },
@@ -86,11 +86,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786056467,
-        "narHash": "sha256-NpaiVTCB2Rl8UukJM8vl8T6VGWFHa8smaRXVet4XiME=",
+        "lastModified": 1786768070,
+        "narHash": "sha256-2Nw7WERG/vJ6ocFMaOnwMIm+815DySiKimOUCaVo528=",
         "ref": "main",
-        "rev": "9ebac8a9a5d2b229cc84918267f89e0e4ab90171",
-        "revCount": 51,
+        "rev": "222f0e6d18df35f5d9ca483652447a7ccfbca963",
+        "revCount": 57,
         "type": "git",
         "url": "file:../nm-daemon"
       },

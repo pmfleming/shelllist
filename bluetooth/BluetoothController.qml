@@ -129,6 +129,26 @@ Ui.ProviderChooserController {
         return screenshotCapture.captureRegion(x, y, width, height);
     }
     function applyAudioSnapshot(devices) { audioDevices = devices || []; audioStatus = ""; }
+    function applyRequestSnapshot(requests) {
+        const values = requests || ({});
+        const operationRequests = values.operations || ({});
+        operationState.restore(operationRequests.active || []);
+        const scanRequests = (values.scans || {}).active || [];
+        activeScan = scanRequests.length > 0 ? scanRequests[0] : null;
+        scanRequested = !!activeScan;
+        const pairingRequests = (values.pairing || {}).active || [];
+        pairingPrompt = pairingRequests.length > 0
+            ? pairingRequests[pairingRequests.length - 1] : null;
+        pairingInput = "";
+        if (pairingPrompt) {
+            status = pairingPrompt.response_required
+                ? "Recovered Bluetooth pairing confirmation"
+                : "Recovered active Bluetooth pairing";
+            pairingInteractionRequested();
+        } else if (Object.keys(operationState.activeOperations).length > 0) {
+            status = "Recovered active Bluetooth operation";
+        }
+    }
     function applySnapshot(snapshot) {
         radio = BluetoothFlow.radioForSnapshot(snapshot);
         adapters = snapshot.adapters || [];

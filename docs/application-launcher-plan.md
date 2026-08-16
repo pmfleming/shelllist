@@ -315,16 +315,7 @@ Mouse behavior follows the existing chooser convention: single-click selects, do
 
 ## Packaging and deployment
 
-1. Add `app-daemon` as a Shelllist flake input and runtime dependency.
-2. Add `packages.<system>.launcher` and `apps.<system>.launcher`.
-3. Copy `launcher/` into `shelllistConfig` and include it in `qmllint`.
-4. Add a `shelllist-launcher` wrapper with `daemon`, `foreground`, `floating`, `toggle`, `open`, `hide`, and `status`, matching the other chooser wrappers.
-5. Install `app-daemon` as a graphical-session user service with restart-on-failure.
-6. Run the resident Shelllist launcher frontend for warm startup, or have the wrapper ensure it is running before IPC.
-7. Add Home Manager shims for `app-daemon` and `shelllist-launcher`.
-8. During stabilization, bind a temporary key to Shelllist and keep `SUPER+SPACE` on Rofi.
-9. After parity testing, move `SUPER+SPACE` to `shelllist-launcher toggle`; retain `rofi-app-menu` as an explicit fallback for one release.
-10. Remove Rofi launcher wiring only after the rollback period. Clipboard can remain on its dedicated Shelllist shortcut; arbitrary `run` mode is explicitly not part of launcher v1.
+The launcher now ships as the `applications` surface in the single resident `shelllist` host. `app-daemon` remains a flake input and runtime dependency, while `shelllist open applications` and the `shelllist:applications` global shortcut replace the former per-launcher package and process. The host keeps the application controller and view loaded after first use for warm reopening. Arbitrary `run` mode remains explicitly outside launcher v1.
 
 ## Delivery phases
 
@@ -362,7 +353,7 @@ Exit: keyboard and mouse workflows match the Rofi baseline, with launch-new and 
 
 ### Phase 4 — packaging and stabilization
 
-- Add flake packages/checks, wrapper, user services, Home Manager shims, and temporary binding.
+- Add flake checks, the unified host command, user services, and the application-surface binding.
 - Measure warm open-to-results and query update latency.
 - Run daily use with Rofi fallback and inspect daemon/UI journals.
 

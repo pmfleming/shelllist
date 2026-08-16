@@ -1,5 +1,5 @@
 {
-  description = "Quickshell desktop menu experiments";
+  description = "Single-host Quickshell desktop action center";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
@@ -47,11 +47,12 @@
           connectParityProbe = nmDaemonConnectParityProbe;
 
           default = pkgs.writeShellApplication {
-            name = "shelllist-wifi";
-            meta = mkMeta "Quickshell Wi-Fi popup backed by nm-daemon" "shelllist-wifi";
+            name = "shelllist";
+            meta = mkMeta "Single-host Shelllist desktop action center" "shelllist";
             runtimeInputs = [
               pkgs.coreutils
               pkgs.gawk
+              pkgs.jq
               pkgs.quickshell
               pkgs.qrencode
               pkgs.kdePackages.qrca
@@ -59,20 +60,68 @@
               nmDaemon
               btDaemon
               clipDaemon
+              appDaemon
             ];
             text = ''
-              config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/wifi
+              config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/shell
               export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
               export QML2_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
 
-              stop_stale_shelllist_instances() {
-                # Rebuilt path configs have a new store path. Retire an older resident
-                # instance only when the current config cannot answer IPC.
+              usage() {
+                cat <<'EOF'
+              Usage: shelllist [COMMAND]
+
+              Surface commands:
+                shelllist                         Toggle Applications
+                shelllist <surface> [open|toggle] Open or toggle a surface
+                shelllist open [surface]          Open a surface (default: applications)
+                shelllist toggle [surface]        Toggle a surface (default: applications)
+                shelllist floating [surface]      Run a one-shot floating host
+                shelllist hide                    Hide the active surface
+                shelllist quit                    Stop the resident host
+                shelllist status                  Print host status as JSON
+                shelllist list                    List surfaces as JSON
+                shelllist daemon                  Ensure the resident host is running
+
+              Surfaces: applications, wifi, bluetooth, clipboard
+
+              Clipboard settings:
+                shelllist clipboard pause
+                shelllist clipboard private
+                shelllist clipboard resume
+                shelllist clipboard kept COUNT
+              EOF
+              }
+
+              valid_surface() {
+                case "$1" in
+                  applications|wifi|bluetooth|clipboard) return 0 ;;
+                  *) return 1 ;;
+                esac
+              }
+
+              popover_ipc() {
+                quickshell ipc --path "$config_path" --newest call shelllist "$@"
+              }
+
+              current_daemon_running() {
+                quickshell list --all 2>/dev/null \
+                  | awk -v expected="$config_path/shell.qml" '
+                      /^  Config path:/ {
+                        path = $0
+                        sub(/^  Config path: /, "", path)
+                        if (path == expected) found = 1
+                      }
+                      END { exit(found ? 0 : 1) }
+                    '
+              }
+
+              stop_stale_hosts() {
                 quickshell list --all 2>/dev/null \
                   | awk '
                       /^Instance / { pid = ""; shelllist = 0 }
                       /Process ID:/ { pid = $3 }
-                      /Config path: .*shelllist-(wifi-)?config.*\/share\/shelllist\/wifi\/shell.qml/ { shelllist = 1 }
+                      /Config path: .*share\/shelllist\/(shell|wifi|bluetooth|clipboard|launcher)\/shell.qml/ { shelllist = 1 }
                       shelllist && pid != "" { print pid; pid = ""; shelllist = 0 }
                     ' \
                   | while read -r pid; do
@@ -81,360 +130,162 @@
                   || true
               }
 
-              run_floating() {
-                SHELLLIST_WIFI_MODE=floating exec quickshell --path "$config_path" "$@"
-              }
-
-              popover_ipc() {
-                quickshell ipc --path "$config_path" --newest call wifi "$@"
-              }
-
-              ensure_popover_daemon() {
-                if popover_ipc ping >/dev/null 2>&1; then
+              ensure_daemon() {
+                if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then
                   return 0
                 fi
 
-                stop_stale_shelllist_instances
-                SHELLLIST_WIFI_MODE=popover quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
-
+                stop_stale_hosts
+                SHELLLIST_MODE=popover quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
                 attempts=0
-                while [ "$attempts" -lt 20 ]; do
+                while [ "$attempts" -lt 30 ]; do
                   if popover_ipc ping >/dev/null 2>&1; then
                     return 0
                   fi
                   attempts=$((attempts + 1))
                   sleep 0.05
                 done
-
-                echo "Shelllist Wi-Fi popover daemon did not become ready" >&2
+                echo "Shelllist host did not become ready" >&2
                 return 1
               }
 
-              popover_call() {
+              surface_call() {
                 action=$1
-                if [ "$action" = show ]; then
-                  action=open
+                surface=$2
+                valid_surface "$surface" || {
+                  echo "Unknown Shelllist surface: $surface" >&2
+                  return 2
+                }
+                ensure_daemon || return 1
+                result=$(popover_ipc "$action" "$surface")
+                [ "$result" = ok ] || {
+                  echo "Shelllist rejected $action for $surface: $result" >&2
+                  return 1
+                }
+              }
+
+              clip_call() {
+                request=$1
+                response=
+                coproc CLIP_CLIENT { clip-daemon client; }
+                client_out=''${CLIP_CLIENT[0]}
+                client_in=''${CLIP_CLIENT[1]}
+                client_pid=$CLIP_CLIENT_PID
+                printf '%s\n' "$request" >&"$client_in"
+                while IFS= read -r line <&"$client_out"; do
+                  if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli"' >/dev/null; then
+                    response=$line
+                    break
+                  fi
+                done
+                printf '%s\n' '{"op":"shutdown","id":"shelllist-cli-shutdown"}' >&"$client_in" || true
+                while IFS= read -r line <&"$client_out"; do
+                  if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli-shutdown"' >/dev/null; then
+                    break
+                  fi
+                done
+                wait "$client_pid" || true
+
+                if [ -z "$response" ]; then
+                  echo "clip-daemon did not return a response" >&2
+                  return 1
                 fi
-                ensure_popover_daemon || return 1
-                popover_ipc "$action" >/dev/null
+                if ! printf '%s\n' "$response" | jq -e '.ok == true and .response.ok == true' >/dev/null; then
+                  printf '%s\n' "$response" | jq -r '.response.error.message // .error // "Clipboard setting update failed"' >&2
+                  return 1
+                fi
               }
 
-              popover_status() {
-                ensure_popover_daemon || return 1
-                popover_ipc status
+              clipboard_setting() {
+                setting=$1
+                case "$setting" in
+                  pause|private|resume)
+                    paused=true
+                    private=false
+                    [ "$setting" = private ] && private=true
+                    [ "$setting" = resume ] && paused=false
+                    request=$(jq -cn --argjson paused "$paused" --argjson private "$private" \
+                      '{op:"call", id:"shelllist-cli", method:"clipboard.capture.setPaused", params:{paused:$paused, private_mode:$private}}')
+                    clip_call "$request"
+                    ;;
+                  kept)
+                    count=''${2:-}
+                    case "$count" in
+                      ""|*[!0-9]*) echo "Clipboard retention must be a non-negative integer" >&2; return 2 ;;
+                    esac
+                    request=$(jq -cn --argjson kept "$count" \
+                      '{op:"call", id:"shelllist-cli", method:"clipboard.settings.update", params:{max_entries:$kept}}')
+                    clip_call "$request"
+                    ;;
+                  *) return 2 ;;
+                esac
               }
 
-              case "''${1:-}" in
-                floating)
-                  shift
-                  run_floating "$@"
+              command=''${1:-}
+              case "$command" in
+                "") surface_call toggle applications ;;
+                -h|--help|help) usage ;;
+                daemon) [ "$#" -eq 1 ] || { usage >&2; exit 2; }; ensure_daemon ;;
+                open|toggle)
+                  surface=''${2:-applications}
+                  [ "$#" -le 2 ] || { usage >&2; exit 2; }
+                  surface_call "$command" "$surface"
                   ;;
-                daemon)
-                  ensure_popover_daemon
+                hide)
+                  [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+                  if current_daemon_running; then popover_ipc hide >/dev/null; fi
                   ;;
-                toggle|open|show|hide)
-                  action=$1
-                  shift
-                  popover_call "$action"
+                quit)
+                  [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+                  if current_daemon_running; then popover_ipc quit >/dev/null; fi
                   ;;
                 status)
-                  shift
-                  popover_status
-                  ;;
-                *)
-                  if [ "''${SHELLLIST_WIFI_MODE:-popover}" = floating ]; then
-                    run_floating "$@"
+                  [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+                  if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then
+                    popover_ipc status
                   else
-                    popover_call toggle
+                    printf '%s\n' '{"running":false,"visible":false}'
                   fi
                   ;;
-              esac
-            '';
-          };
-
-          bluetooth = pkgs.writeShellApplication {
-            name = "shelllist-bluetooth";
-            meta = mkMeta "Quickshell Bluetooth popup backed by bt-daemon" "shelllist-bluetooth";
-            runtimeInputs = [ pkgs.coreutils pkgs.gawk pkgs.quickshell btDaemon clipDaemon ];
-            text = ''
-              config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/bluetooth
-              export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
-              export QML2_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
-
-              run_floating() {
-                SHELLLIST_BLUETOOTH_MODE=floating exec quickshell --path "$config_path" "$@"
-              }
-
-              popover_ipc() {
-                quickshell ipc --path "$config_path" --newest call bluetooth "$@"
-              }
-
-              current_daemon_running() {
-                quickshell list --all 2>/dev/null \
-                  | awk -v expected="$config_path/shell.qml" '
-                      /^  Config path:/ {
-                        path = $0
-                        sub(/^  Config path: /, "", path)
-                        if (path == expected) found = 1
-                      }
-                      END { exit(found ? 0 : 1) }
-                    '
-              }
-
-              ensure_daemon() {
-                if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then return 0; fi
-                quickshell list --all 2>/dev/null \
-                  | awk '/Process ID:/ { pid = $3 } /Config path: .*share\/shelllist\/bluetooth\/shell.qml/ { if (pid != "") print pid }' \
-                  | while read -r pid; do quickshell kill --pid "$pid" >/dev/null 2>&1 || true; done || true
-                SHELLLIST_BLUETOOTH_MODE=popover quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
-                attempts=0
-                while [ "$attempts" -lt 30 ]; do
-                  if popover_ipc ping >/dev/null 2>&1; then return 0; fi
-                  attempts=$((attempts + 1)); sleep 0.05
-                done
-                echo "Shelllist Bluetooth popover did not become ready" >&2
-                return 1
-              }
-
-              action=''${1:-toggle}
-              [ "$action" = show ] && action=open
-              case "$action" in
-                daemon) ensure_daemon ;;
-                floating) shift; run_floating "$@" ;;
-                foreground) SHELLLIST_BLUETOOTH_MODE=popover exec quickshell --path "$config_path" --no-duplicate ;;
-                toggle|open|hide) ensure_daemon && popover_ipc "$action" >/dev/null ;;
-                status) ensure_daemon && popover_ipc status ;;
-                *) echo "Usage: shelllist-bluetooth [daemon|floating|foreground|toggle|open|hide|status]" >&2; exit 2 ;;
-              esac
-            '';
-          };
-
-          clipboard = pkgs.writeShellApplication {
-            name = "shelllist-clipboard";
-            meta = mkMeta "Quickshell clipboard history backed by clip-daemon" "shelllist-clipboard";
-            runtimeInputs = [
-              pkgs.coreutils
-              pkgs.gawk
-              pkgs.jq
-              pkgs.quickshell
-              clipDaemon
-            ];
-            text = ''
-                            config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/clipboard
-                            export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
-                            export QML2_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
-
-                            popover_ipc() {
-                              quickshell ipc --path "$config_path" --newest call clipboard "$@"
-                            }
-                            current_daemon_running() {
-                              quickshell list --all 2>/dev/null \
-                                | awk -v expected="$config_path/shell.qml" '
-                                    /^  Config path:/ {
-                                      path = $0
-                                      sub(/^  Config path: /, "", path)
-                                      if (path == expected) found = 1
-                                    }
-                                    END { exit(found ? 0 : 1) }
-                                  '
-                            }
-                            ensure_daemon() {
-                              if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then return 0; fi
-                              SHELLLIST_CLIPBOARD_MODE=popover quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
-                              attempts=0
-                              while [ "$attempts" -lt 30 ]; do
-                                if popover_ipc ping >/dev/null 2>&1; then return 0; fi
-                                attempts=$((attempts + 1)); sleep 0.05
-                              done
-                              echo "Shelllist Clipboard popover did not become ready" >&2
-                              return 1
-                            }
-
-                            usage() {
-                              cat <<'EOF'
-              Usage: shelllist-clipboard [OPTIONS] [ACTION]
-
-              Clipboard settings:
-                --pause         Pause history capture
-                --private       Pause capture in private mode
-                --resume        Resume history capture
-                --kept COUNT    Set the maximum number of regular history entries
-
-              Actions: daemon, floating, foreground, toggle, open, show, hide, status
-              Setting options used without an action update clip-daemon and exit.
-              EOF
-                            }
-
-                            clip_call() {
-                              request=$1
-                              response=
-                              coproc CLIP_CLIENT { clip-daemon client; }
-                              client_out=''${CLIP_CLIENT[0]}
-                              client_in=''${CLIP_CLIENT[1]}
-                              client_pid=$CLIP_CLIENT_PID
-                              printf '%s\n' "$request" >&"$client_in"
-                              while IFS= read -r line <&"$client_out"; do
-                                if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli"' >/dev/null; then
-                                  response=$line
-                                  break
-                                fi
-                              done
-                              printf '%s\n' '{"op":"shutdown","id":"shelllist-cli-shutdown"}' >&"$client_in" || true
-                              while IFS= read -r line <&"$client_out"; do
-                                if printf '%s\n' "$line" | jq -e '.kind == "response" and .id == "shelllist-cli-shutdown"' >/dev/null; then
-                                  break
-                                fi
-                              done
-                              wait "$client_pid" || true
-
-                              if [ -z "$response" ]; then
-                                echo "clip-daemon did not return a response" >&2
-                                return 1
-                              fi
-                              if ! printf '%s\n' "$response" | jq -e '.ok == true and .response.ok == true' >/dev/null; then
-                                printf '%s\n' "$response" | jq -r '.response.error.message // .error // "Clipboard setting update failed"' >&2
-                                return 1
-                              fi
-                            }
-
-                            capture_mode=
-                            kept=
-                            configured=0
-                            while [ "$#" -gt 0 ]; do
-                              case "$1" in
-                                --pause|--private|--resume)
-                                  requested_mode=''${1#--}
-                                  if [ -n "$capture_mode" ] && [ "$capture_mode" != "$requested_mode" ]; then
-                                    echo "Only one of --pause, --private, or --resume may be used" >&2
-                                    exit 2
-                                  fi
-                                  capture_mode=$requested_mode
-                                  configured=1
-                                  shift
-                                  ;;
-                                --kept)
-                                  if [ "$#" -lt 2 ]; then
-                                    echo "--kept requires an entry count" >&2
-                                    exit 2
-                                  fi
-                                  case "$2" in
-                                    ""|*[!0-9]*) echo "--kept must be a positive integer" >&2; exit 2 ;;
-                                  esac
-                                  kept=$2
-                                  configured=1
-                                  shift 2
-                                  ;;
-                                -h|--help)
-                                  usage
-                                  exit 0
-                                  ;;
-                                --)
-                                  shift
-                                  break
-                                  ;;
-                                -*)
-                                  echo "Unknown option: $1" >&2
-                                  usage >&2
-                                  exit 2
-                                  ;;
-                                *) break ;;
-                              esac
-                            done
-
-                            if [ -n "$capture_mode" ]; then
-                              paused=true
-                              private=false
-                              if [ "$capture_mode" = private ]; then
-                                private=true
-                              elif [ "$capture_mode" = resume ]; then
-                                paused=false
-                              fi
-                              request=$(jq -cn --argjson paused "$paused" --argjson private "$private" \
-                                '{op:"call", id:"shelllist-cli", method:"clipboard.capture.setPaused", params:{paused:$paused, private_mode:$private}}')
-                              clip_call "$request"
-                              case "$capture_mode" in
-                                pause) echo "Clipboard history capture paused" ;;
-                                private) echo "Private mode enabled; clipboard history capture paused" ;;
-                                resume) echo "Clipboard history capture resumed" ;;
-                              esac
-                            fi
-
-                            if [ -n "$kept" ]; then
-                              request=$(jq -cn --argjson kept "$kept" \
-                                '{op:"call", id:"shelllist-cli", method:"clipboard.settings.update", params:{max_entries:$kept}}')
-                              clip_call "$request"
-                              echo "Clipboard retention set to $kept entries"
-                            fi
-
-                            action=''${1:-}
-                            if [ "$#" -gt 0 ]; then shift; fi
-                            if [ "$#" -gt 0 ]; then
-                              usage >&2
-                              exit 2
-                            fi
-                            if [ -z "$action" ]; then
-                              if [ "$configured" -eq 1 ]; then exit 0; fi
-                              action=toggle
-                            fi
-                            [ "$action" = show ] && action=open
-                            case "$action" in
-                              daemon) ensure_daemon ;;
-                              floating) SHELLLIST_CLIPBOARD_MODE=floating exec quickshell --path "$config_path" ;;
-                              foreground) SHELLLIST_CLIPBOARD_MODE=popover exec quickshell --path "$config_path" --no-duplicate ;;
-                              toggle|open|hide) ensure_daemon && popover_ipc "$action" >/dev/null ;;
-                              status) ensure_daemon && popover_ipc status ;;
-                              *) usage >&2; exit 2 ;;
-                            esac
-            '';
-          };
-
-          launcher = pkgs.writeShellApplication {
-            name = "shelllist-launcher";
-            meta = mkMeta "Shelllist application launcher backed by app-daemon" "shelllist-launcher";
-            runtimeInputs = [ pkgs.coreutils pkgs.gawk pkgs.quickshell appDaemon clipDaemon ];
-            text = ''
-              config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/launcher
-              export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
-              export QML2_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
-
-              popover_ipc() {
-                quickshell ipc --path "$config_path" --newest call launcher "$@"
-              }
-              current_daemon_running() {
-                quickshell list --all 2>/dev/null \
-                  | awk -v expected="$config_path/shell.qml" '
-                      /^  Config path:/ {
-                        path = $0
-                        sub(/^  Config path: /, "", path)
-                        if (path == expected) found = 1
-                      }
-                      END { exit(found ? 0 : 1) }
-                    '
-              }
-              ensure_daemon() {
-                if current_daemon_running && popover_ipc ping >/dev/null 2>&1; then return 0; fi
-                quickshell list --all 2>/dev/null \
-                  | awk '/Process ID:/ { pid = $3 } /Config path: .*share\/shelllist\/launcher\/shell.qml/ { if (pid != "") print pid }' \
-                  | while read -r pid; do quickshell kill --pid "$pid" >/dev/null 2>&1 || true; done || true
-                SHELLLIST_LAUNCHER_MODE=popover quickshell --path "$config_path" --daemonize --no-duplicate >/dev/null 2>&1 || true
-                attempts=0
-                while [ "$attempts" -lt 30 ]; do
-                  if popover_ipc ping >/dev/null 2>&1; then return 0; fi
-                  attempts=$((attempts + 1)); sleep 0.05
-                done
-                echo "Shelllist launcher did not become ready" >&2
-                return 1
-              }
-
-              action=''${1:-toggle}
-              [ "$action" = show ] && action=open
-              case "$action" in
-                daemon) ensure_daemon ;;
-                floating) shift; SHELLLIST_LAUNCHER_MODE=floating exec quickshell --path "$config_path" "$@" ;;
-                foreground) SHELLLIST_LAUNCHER_MODE=popover exec quickshell --path "$config_path" --no-duplicate ;;
-                toggle|open|hide) ensure_daemon && popover_ipc "$action" >/dev/null ;;
-                status) ensure_daemon && popover_ipc status ;;
-                *) echo "Usage: shelllist-launcher [daemon|floating|foreground|toggle|open|hide|status]" >&2; exit 2 ;;
+                list)
+                  [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+                  ensure_daemon && popover_ipc listSurfaces
+                  ;;
+                floating)
+                  surface=''${2:-applications}
+                  [ "$#" -le 2 ] || { usage >&2; exit 2; }
+                  valid_surface "$surface" || { echo "Unknown Shelllist surface: $surface" >&2; exit 2; }
+                  if current_daemon_running; then
+                    echo "Run 'shelllist quit' before starting floating mode" >&2
+                    exit 1
+                  fi
+                  SHELLLIST_INITIAL_SURFACE="$surface" SHELLLIST_MODE=floating \
+                    exec quickshell --path "$config_path"
+                  ;;
+                clipboard)
+                  operation=''${2:-toggle}
+                  case "$operation" in
+                    pause|private|resume)
+                      [ "$#" -eq 2 ] || { usage >&2; exit 2; }
+                      clipboard_setting "$operation"
+                      ;;
+                    kept)
+                      [ "$#" -eq 3 ] || { usage >&2; exit 2; }
+                      clipboard_setting kept "$3"
+                      ;;
+                    open|toggle)
+                      [ "$#" -le 2 ] || { usage >&2; exit 2; }
+                      surface_call "$operation" clipboard
+                      ;;
+                    *) usage >&2; exit 2 ;;
+                  esac
+                  ;;
+                applications|wifi|bluetooth)
+                  action=''${2:-toggle}
+                  [ "$#" -le 2 ] || { usage >&2; exit 2; }
+                  case "$action" in open|toggle) surface_call "$action" "$command" ;; *) usage >&2; exit 2 ;; esac
+                  ;;
+                *) usage >&2; exit 2 ;;
               esac
             '';
           };
@@ -634,7 +485,7 @@
             installPhase = ''
               runHook preInstall
               mkdir -p $out/share/shelllist
-              cp -r wifi bluetooth clipboard launcher qml $out/share/shelllist/
+              cp -r shell wifi bluetooth clipboard launcher qml $out/share/shelllist/
               runHook postInstall
             '';
           };
@@ -709,6 +560,7 @@
               ${./qml}/Shelllist/Io/*.qml
               ${./qml}/Shelllist/Io/process/*.qml
               ${./qml}/Shelllist/Ui/*.qml
+              ${./shell}/*.qml
               ${./bluetooth}/*.qml
               ${./clipboard}/*.qml
               ${./launcher}/*.qml
@@ -737,6 +589,14 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-application-presentation.js} ${./launcher/ApplicationPresentation.js}
+            touch $out
+          '';
+
+          applicationLifecycle = pkgs.runCommand "shelllist-application-lifecycle"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-application-lifecycle.js} ${./launcher/ApplicationLifecycle.js}
             touch $out
           '';
 
@@ -842,23 +702,8 @@
       apps = forAllSystems (system: pkgs: {
         default = {
           type = "app";
-          program = "${self.packages.${system}.default}/bin/shelllist-wifi";
-          meta.description = "Run the Shelllist Wi-Fi Quickshell popup";
-        };
-        bluetooth = {
-          type = "app";
-          program = "${self.packages.${system}.bluetooth}/bin/shelllist-bluetooth";
-          meta.description = "Run the Shelllist Bluetooth Quickshell popup";
-        };
-        clipboard = {
-          type = "app";
-          program = "${self.packages.${system}.clipboard}/bin/shelllist-clipboard";
-          meta.description = "Run the Shelllist Clipboard Quickshell popup";
-        };
-        launcher = {
-          type = "app";
-          program = "${self.packages.${system}.launcher}/bin/shelllist-launcher";
-          meta.description = "Run the Shelllist application launcher";
+          program = "${self.packages.${system}.default}/bin/shelllist";
+          meta.description = "Run the single-host Shelllist desktop action center";
         };
         connectParityProbe = {
           type = "app";

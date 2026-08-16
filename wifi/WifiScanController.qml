@@ -74,7 +74,10 @@ Item {
         maybeRefresh();
     }
     function applyEvent(event) {
-        if (event.event === "snapshot") { snapshotSeen = true; controller.applyNetworks(event.networks || [], false); }
+        if (event.event === "snapshot") {
+            snapshotSeen = true;
+            controller.applyNetworks(event.networks || [], false, event.snapshot || null);
+        }
         controller.setBackgroundStatus(Api.scanEventStatus(event, controller.status));
     }
     function handleStream(event) {

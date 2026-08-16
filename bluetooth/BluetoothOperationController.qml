@@ -18,6 +18,16 @@ Item {
         return result;
     }
     function reset(): void { activeOperations = ({}); errorsByDevice = ({}); }
+    function restore(operations: var): void {
+        const next = ({});
+        (operations || []).forEach(function (operation) {
+            if (operation && operation.request_id
+                    && BluetoothFlow.isActiveOperation(operation))
+                next[operation.request_id] = operation;
+        });
+        activeOperations = next;
+        controller.rebuildResults(false);
+    }
     function forDevice(deviceKey: string): var {
         if (!deviceKey)
             return null;

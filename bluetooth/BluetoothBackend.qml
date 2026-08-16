@@ -30,13 +30,32 @@ Io.DaemonBackend {
             backend.controller.applyAudioSnapshot(data.audio_devices);
             if (id === "audio-set-profile")
                 backend.controller.status = "Bluetooth audio profile updated";
+            else if (id === "audio-set-default")
+                backend.controller.status = "Default Bluetooth audio route updated";
         },
-        operation: function (id, data) { backend.acceptOperation(data.operation); }
+        operation: function (id, data) { backend.acceptOperation(data.operation); },
+        requests: function (id, data) { backend.restoreRequestState(data.requests); }
     })
 
     function itemCount(values) { return Object.keys(values || ({})).length; }
     function resetTransportState() {
         pending = ({}); operations = ({}); finishedOperations = ({});
+    }
+    function restoreRequestState(requests) {
+        const operationSnapshot = (requests || {}).operations || ({});
+        const active = ({});
+        (operationSnapshot.active || []).forEach(function (operation) {
+            if (operation && operation.request_id)
+                active[operation.request_id] = operation;
+        });
+        const recent = ({});
+        (operationSnapshot.recent || []).forEach(function (operation) {
+            if (operation && operation.request_id)
+                recent[operation.request_id] = true;
+        });
+        operations = active;
+        finishedOperations = recent;
+        controller.applyRequestSnapshot(requests || ({}));
     }
     function cancellationStatus(id) {
         if (id.indexOf("cancel-operation-") === 0)
@@ -115,6 +134,12 @@ Io.DaemonBackend {
                 console.warn("shelllist bluetooth event rejected reason=incompatible-envelope");
                 return;
             }
+            if (event.event === "lagged") {
+                controller.status = "Bluetooth events were missed; recovering current state…";
+                recoverRequests();
+                if (!isPending("snapshot")) refresh();
+                return;
+            }
             if (!dispatchStreamEvent(event))
                 applyUnhandledEvent(event);
         } catch (error) {
@@ -154,6 +179,12 @@ Io.DaemonBackend {
         return accepted;
     }
     function setAudioProfile(deviceKey, profileKey) { return call("audio-set-profile", BtApi.methods.audioSetProfile, { device_key: deviceKey, profile_key: profileKey }); }
+    function setDefaultAudio(deviceKey, endpointKey) { return call("audio-set-default", BtApi.methods.audioSetDefault, { device_key: deviceKey, endpoint_key: endpointKey }); }
+    function updateDevicePolicy(deviceKey, values) { return call("device-policy-update", BtApi.methods.devicePolicyUpdate, Object.assign({ key: deviceKey }, values || ({}))); }
+    function recoverRequests() {
+        if (isPending("requests")) return false;
+        return call("requests", BtApi.methods.requestsSnapshot, {});
+    }
     function setPowered(powered, adapterKey) { return call("power", BtApi.methods.setPowered, { adapter_key: adapterKey || null, powered: powered }); }
     function setScanning(enabled, adapterKey) {
         if (!enabled && controller.activeScan && controller.activeScan.request_id) {
@@ -190,5 +221,9 @@ Io.DaemonBackend {
     onTransportFailed: function (message) {
         resetTransportState();
         controller.handleTransportFailure(message);
+    }
+    onTransportReady: {
+        recoverRequests();
+        if (!isPending("snapshot")) refresh();
     }
 }
