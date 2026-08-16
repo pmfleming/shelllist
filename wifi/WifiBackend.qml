@@ -11,7 +11,8 @@ Io.DaemonBackend {
     daemonName: "nm-daemon"
     streams: NmApi.subscribedStreams
     recoverProtocolErrors: false
-    active: controller.uiActive || requestRunning || controller.connection.running || controller.promptActive
+    active: controller.statusMonitorActive || controller.uiActive || requestRunning
+        || controller.connection.running || controller.promptActive
     readonly property bool listRunning: isPending("networks")
     readonly property bool scanRunning: isPending("scan-start") || controller.scan.requestId.length > 0
     readonly property bool connectStarting: isPending("connect-start")

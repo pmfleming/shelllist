@@ -21,6 +21,27 @@
         "url": "file:../app-daemon"
       }
     },
+    "bar-daemon": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786900754,
+        "narHash": "sha256-OQtrEzS6Ar5hkN4RI6jQ4dKFs/pjNrWJqbNb5iduF4Q=",
+        "ref": "main",
+        "rev": "4e5a4f238a17035d98ce5e98874c0b0919117a69",
+        "revCount": 9,
+        "type": "git",
+        "url": "file:../bar-daemon"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "file:../bar-daemon"
+      }
+    },
     "bt-daemon": {
       "inputs": {
         "nixpkgs": [
@@ -103,6 +124,7 @@
     "root": {
       "inputs": {
         "app-daemon": "app-daemon",
+        "bar-daemon": "bar-daemon",
         "bt-daemon": "bt-daemon",
         "clip-daemon": "clip-daemon",
         "nixpkgs": "nixpkgs",

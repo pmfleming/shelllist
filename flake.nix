@@ -23,6 +23,11 @@
       url = "git+file:../app-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    bar-daemon = {
+      # Use the sibling daemon during top-bar development.
+      url = "git+file:../bar-daemon?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ self, nixpkgs, ... }:
@@ -37,6 +42,7 @@
           btDaemon = inputs."bt-daemon".packages.${system}.default;
           clipDaemon = inputs."clip-daemon".packages.${system}.default;
           appDaemon = inputs."app-daemon".packages.${system}.default;
+          barDaemon = inputs."bar-daemon".packages.${system}.default;
           nmDaemonConnectParityProbe = inputs."nm-daemon".packages.${system}.connectParityProbe;
           mkMeta = description: mainProgram: {
             inherit description mainProgram;
@@ -61,6 +67,9 @@
               btDaemon
               clipDaemon
               appDaemon
+              barDaemon
+              pkgs.pavucontrol
+              pkgs.ghostty
             ];
             text = ''
               config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/shell
@@ -485,7 +494,7 @@
             installPhase = ''
               runHook preInstall
               mkdir -p $out/share/shelllist
-              cp -r shell wifi bluetooth clipboard launcher qml $out/share/shelllist/
+              cp -r shell bar wifi bluetooth clipboard launcher qml $out/share/shelllist/
               runHook postInstall
             '';
           };
@@ -497,6 +506,7 @@
           btDaemon = inputs."bt-daemon".packages.${system}.default;
           clipDaemon = inputs."clip-daemon".packages.${system}.default;
           appDaemon = inputs."app-daemon".packages.${system}.default;
+          barDaemon = inputs."bar-daemon".packages.${system}.default;
         in
         {
           appDaemonContract = pkgs.runCommand "shelllist-app-daemon-contract"
@@ -543,6 +553,17 @@
             touch $out
           '';
 
+          barDaemonContract = pkgs.runCommand "shelllist-bar-daemon-contract"
+            {
+              nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
+            } ''
+            ${pkgs.bash}/bin/bash ${./tests/check-bar-api-contract.sh} \
+              ${barDaemon}/bin/bar-daemon \
+              ${./contracts/bar-api-ui-contract.fixture.json} \
+              ${./bar/BarApi.js}
+            touch $out
+          '';
+
           qmlLint = pkgs.runCommand "shelllist-qml-lint"
             {
               nativeBuildInputs = [ pkgs.qt6.qtdeclarative pkgs.quickshell ];
@@ -561,6 +582,7 @@
               ${./qml}/Shelllist/Io/process/*.qml
               ${./qml}/Shelllist/Ui/*.qml
               ${./shell}/*.qml
+              ${./bar}/*.qml
               ${./bluetooth}/*.qml
               ${./clipboard}/*.qml
               ${./launcher}/*.qml
@@ -581,6 +603,14 @@
             # Quickshell 0.3's private GlobalShortcut qmltypes reference an
             # unexported PostReloadHook. Suppress only that upstream import warning.
             run_qmllint --import disable ${./qml}/Shelllist/Ui/ShelllistGlobalShortcut.qml
+            touch $out
+          '';
+
+          barPresentation = pkgs.runCommand "shelllist-bar-presentation"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-bar-presentation.js} ${./bar/BarPresentation.js}
             touch $out
           '';
 

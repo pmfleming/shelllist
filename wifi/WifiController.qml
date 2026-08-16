@@ -15,6 +15,7 @@ ProviderChooserController {
     provider: WifiProvider { id: wifiProvider; controller: wifi }
 
     property var activeStatus: null
+    property bool statusMonitorActive: false
     property var networkSnapshot: null
     property string status
     property var bandStatus: null

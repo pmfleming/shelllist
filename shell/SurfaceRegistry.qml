@@ -21,13 +21,21 @@ Item {
         { id: "clipboard", name: "Clipboard", icon: "󰅇",
             controllerLoadPolicy: "keep-loaded", viewLoadPolicy: "keep-loaded" }
     ]
-    property var loadedSurfaces: ({ bluetooth: true })
+    property var loadedSurfaces: ({ wifi: true, bluetooth: true })
     property var openedSurfaces: ({})
     property string currentId: "applications"
 
     readonly property SurfaceBundle currentBundle: bundleFor(currentId)
     readonly property Ui.ChooserController currentController: currentBundle
         ? currentBundle.controller : null
+    readonly property var wifiController: {
+        const bundle = bundleFor("wifi");
+        return bundle ? bundle.controller : null;
+    }
+    readonly property var bluetoothController: {
+        const bundle = bundleFor("bluetooth");
+        return bundle ? bundle.controller : null;
+    }
 
     signal surfaceRequested(string surfaceId)
 
@@ -138,6 +146,7 @@ Item {
                 Wifi.WifiController {
                     id: wifiController
                     prompt: wifiPromptController
+                    statusMonitorActive: true
                 }
             }
         }

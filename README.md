@@ -2,17 +2,23 @@
 
 A single-host Quickshell desktop action center.
 
-Shelllist is a Hyprland-focused desktop action center. Wi-Fi, Bluetooth, clipboard, and application surfaces are backed by `nm-daemon`, `bt-daemon`, `clip-daemon`, and `app-daemon`. Shelllist owns QML, window behavior, and interactions while the Rust backends own system integration and policy.
+Shelllist is a Hyprland-focused desktop action center and top bar. Wi-Fi, Bluetooth, clipboard, application, and bar state are backed by `nm-daemon`, `bt-daemon`, `clip-daemon`, `app-daemon`, and `bar-daemon`. Shelllist owns QML, window behavior, and interactions while the Rust backends own system integration and policy.
 
 ## Current status
 
-- One resident `shelllist` Quickshell host owns the Applications, Wi-Fi, Bluetooth, and Clipboard surfaces.
-- The Bluetooth controller is eager-loaded so pairing requests are handled while the chooser is hidden. Other controllers and every view are loaded on first use and retained for warm reopening.
+- One resident `shelllist` Quickshell host owns a 51 px per-monitor top bar and the Applications, Wi-Fi, Bluetooth, and Clipboard surfaces.
+- Bluetooth remains eager for hidden pairing requests and Wi-Fi remains eager for authoritative bar status. Application and clipboard controllers plus every chooser view load on first use and remain warm.
 - Only one surface is visible at a time; `Ctrl+Alt+Left/Right` switches between loaded surfaces through the common host.
 - Default mode: a monitor-aware popover controlled through one IPC target, Waybar, or Hyprland global shortcuts.
 - Optional mode: an explicit one-shot floating host for development and fallback use.
 - Backend: sibling Rust daemon Git inputs while their current API histories are unpublished; repin them to portable GitHub inputs after publication.
 - Target platform: `x86_64-linux` with NetworkManager and Quickshell.
+
+## Top bar
+
+The resident popover-mode host creates one `PanelWindow` per Quickshell screen. `bar-daemon` supplies workspace, media, audio, brightness, battery, power-profile, notification, update, and timezone state through `bar-api` v1. The existing Wi-Fi and Bluetooth controllers remain authoritative for their icons and open their Shelllist surfaces directly. Quickshell owns StatusNotifierItem rendering and native DBusMenu display.
+
+The initial layout intentionally matches the previous Waybar order and 51 px geometry: monitor-local workspaces, centered MPRIS, then tray, network, updates, Bluetooth, audio, brightness, battery, power profile, notifications, timezone city, and clock. The QML frontend contains no compositor, PipeWire, UPower, SwayNC, or update-state parsing.
 
 ## Usage
 
@@ -249,7 +255,7 @@ out=$(nix build .#default --no-link --print-out-paths)
 shellcheck "$out/bin/shelllist"
 portal=$(nix build .#captivePortalBrowser --no-link --print-out-paths)
 shellcheck "$portal/bin/shelllist-captive-portal"
-shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml qml/Shelllist/Io/process/*.qml shell/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
+shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml qml/Shelllist/Io/process/*.qml shell/*.qml bar/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-ip-validation.js wifi/networkinput/IpValidation.js
 node tests/check-wifi-qr.js wifi/WifiQr.js
 node tests/check-application-lifecycle.js launcher/ApplicationLifecycle.js
@@ -258,6 +264,6 @@ tests/run-qml-tests.sh
 qmlqualitylens measure all --config qmlqualitylens.config.json  # optional static quality report
 ```
 
-The sole UI entry point is `shell/shell.qml`. `SurfaceRegistry.qml` declares separate controller and view load policies, keeps the Bluetooth controller eager for hidden pairing events, and loads other controller bundles and all views on first use. `ShellContent.qml` retains opened views while the common host handles focused-monitor placement, IPC, focus, and switching. Generic provider contracts, validation, single-pass ranking, keyed incremental ListView synchronization, registry dispatch, and result storage live in the shared `Shelllist.Core` module under `qml/Shelllist/Core/`; shared daemon transport (including bounded exponential restart backoff) lives in `Shelllist.Io`, with Process ownership isolated under its `process/` boundary; shared theming, popup/window behavior, surface behavior, controls, detail cards, toggles, text fields, and modal frames live in `Shelllist.Ui`; `WifiProvider.qml` and `BluetoothProvider.qml` are backend adapters. Frontend-only Wi-Fi helpers are separated by responsibility into `WifiPresentation.js`, `WifiFlow.js`, and `NmApiClient.js`; connection, scan, advanced-profile, network-action, share, and captive-portal flows live in dedicated controller Items rather than the main Wi-Fi controller. Bluetooth device details are likewise split into overview, action, metadata, and adapter-setting sections. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
+The sole UI entry point is `shell/shell.qml`. It owns the shared `BarController` and creates monitor-local `BarWindow` delegates. `SurfaceRegistry.qml` declares separate controller and view load policies, keeps Bluetooth eager for hidden pairing events and Wi-Fi eager for bar status, and loads other controller bundles plus all views on first use. `ShellContent.qml` retains opened views while the common host handles focused-monitor placement, IPC, focus, and switching. Generic provider contracts, validation, single-pass ranking, keyed incremental ListView synchronization, registry dispatch, and result storage live in the shared `Shelllist.Core` module under `qml/Shelllist/Core/`; shared daemon transport (including bounded exponential restart backoff) lives in `Shelllist.Io`, with Process ownership isolated under its `process/` boundary; shared theming, popup/window behavior, surface behavior, controls, detail cards, toggles, text fields, and modal frames live in `Shelllist.Ui`; `WifiProvider.qml` and `BluetoothProvider.qml` are backend adapters. Frontend-only Wi-Fi helpers are separated by responsibility into `WifiPresentation.js`, `WifiFlow.js`, and `NmApiClient.js`; connection, scan, advanced-profile, network-action, share, and captive-portal flows live in dedicated controller Items rather than the main Wi-Fi controller. Bluetooth device details are likewise split into overview, action, metadata, and adapter-setting sections. Reusable IPv4/IPv6 address and prefix controls live in the `wifi/networkinput` QML module. Their validator distinguishes acceptable, intermediate, and invalid editing states so incomplete addresses remain editable without being saved or immediately presented as errors.
 
 The JSON boundaries with all four daemons are pinned under `contracts/`. `nix flake check` compares each checked fixture with its daemon, validates frontend registry declarations, regenerates the used entries in `wifi/NmApi.js` from `nm-daemon debug protocol-registry`, exercises asynchronous application lifecycle mapping, and lints every QML source; any drift or static-analysis failure fails the check.

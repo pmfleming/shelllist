@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import Shelllist.Ui as Ui
+import Shelllist.Bar as Bar
 
 ShellRoot {
     id: shell
@@ -65,6 +66,21 @@ ShellRoot {
     SurfaceRegistry {
         id: surfaces
         onSurfaceRequested: function (surfaceId) { shell.openSurface(surfaceId); }
+    }
+
+    Bar.BarController {
+        id: barController
+        surfaceRegistry: surfaces
+    }
+
+    Variants {
+        model: windowHost.popoverMode ? Quickshell.screens : []
+
+        Bar.BarWindow {
+            required property var modelData
+            targetScreen: modelData
+            controller: barController
+        }
     }
 
     Ui.PopupWindowHost {

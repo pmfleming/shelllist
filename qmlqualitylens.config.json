@@ -1,7 +1,7 @@
 {
   "project_name": "shelllist",
   "project_root": ".",
-  "source_roots": ["wifi", "bluetooth", "clipboard", "launcher", "qml", "tests/qml"],
+  "source_roots": ["bar", "shell", "wifi", "bluetooth", "clipboard", "launcher", "qml", "tests/qml"],
   "output_dir": "target/qmlqualitylens",
   "profile": "quickshell",
   "external_modules": ["QtTest"],
