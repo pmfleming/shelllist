@@ -9,16 +9,15 @@ Ui.ChooserSurface {
     required property ApplicationController controller
     readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
 
-    Shortcut {
-        sequence: "Escape"
-        enabled: content.controller.uiActive && !content.controller.navigationHelpOpen
-        onActivated: content.controller.dismissNavigation()
-    }
-    Shortcut {
-        sequence: "F5"
-        enabled: content.controller.uiActive && !content.controller.actionInFlight
+    Ui.ChooserShortcuts {
+        controller: content.controller
+        navigationEnabled: !content.controller.navigationHelpOpen
+        refreshEnabled: !content.controller.actionInFlight
             && !content.controller.navigationHelpOpen
-        onActivated: content.controller.refresh(true)
+        detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection
+            && !content.controller.actionInFlight && !content.controller.navigationHelpOpen
+        onRefreshRequested: content.controller.refresh(true)
+        onDetailsTabRequested: content.controller.cycleDetailsTab()
     }
     Shortcut {
         sequence: "Shift+Return"
@@ -28,14 +27,6 @@ Ui.ChooserSurface {
             && (content.controller.selectedApplication || ({})).kind === "desktop-application"
         onActivated: content.controller.launchSelected()
     }
-    Shortcut {
-        sequence: "Ctrl+Tab"
-        enabled: content.controller.uiActive && content.controller.detailsOpen
-            && content.controller.hasSelection
-            && !content.controller.actionInFlight && !content.controller.navigationHelpOpen
-        onActivated: content.controller.cycleDetailsTab()
-    }
-
     Ui.SplitChooserLayout {
         controller: content.controller
         listComponent: Component {

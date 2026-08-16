@@ -10,28 +10,16 @@ Ui.ChooserSurface {
     readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
     readonly property bool editingDetails: chooser.detailsItem ? chooser.detailsItem.editingText : false
 
-    Shortcut {
-        sequence: "F5"
-        enabled: content.controller.uiActive && content.controller.powered
-            && !content.controller.refreshInFlight
-            && !content.controller.actionInFlight && !content.controller.modalPromptOpen
+    Ui.ChooserShortcuts {
+        controller: content.controller
+        navigationEnabled: !content.controller.modalPromptOpen
             && !content.controller.navigationHelpOpen && !content.editingDetails
-        onActivated: content.controller.toggleScan()
-    }
-    Shortcut {
-        sequence: "Ctrl+Tab"
-        enabled: content.controller.uiActive && content.controller.detailsOpen
-            && content.controller.hasSelection
-            && !content.controller.modalPromptOpen && !content.controller.navigationHelpOpen
-            && !content.editingDetails
-        onActivated: content.controller.cycleDetailsTab()
-    }
-    Shortcut {
-        sequence: "Escape"
-        enabled: content.controller.uiActive && !content.controller.modalPromptOpen
-            && !content.controller.navigationHelpOpen
-            && !content.editingDetails
-        onActivated: content.controller.dismissNavigation()
+        refreshEnabled: content.controller.powered && !content.controller.refreshInFlight
+            && !content.controller.actionInFlight && navigationEnabled
+        detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection
+            && navigationEnabled
+        onRefreshRequested: content.controller.toggleScan()
+        onDetailsTabRequested: content.controller.cycleDetailsTab()
     }
 
     Ui.SplitChooserLayout {

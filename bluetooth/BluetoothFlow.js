@@ -38,11 +38,6 @@ function operationEndsPairing(operation, prompt) {
     return isTerminalOperation(operation) && !!prompt && prompt.device_key === operation.device_key;
 }
 
-function operationDeviceName(results, deviceKey) {
-    const result = (results || []).find(function (candidate) { return candidate.id === deviceKey; });
-    return result ? result.title : "Bluetooth device";
-}
-
 function withoutMatchingOperation(current, requestId) {
     return current && current.request_id === requestId ? null : current;
 }
@@ -105,11 +100,6 @@ function retainedAdapterKey(adapters, currentKey) {
 
 function shouldStartScan(uiActive, powered, scanning, requested) {
     return uiActive && powered && !scanning && !requested;
-}
-
-function snapshotStatus(powered, scanning, count) {
-    if (!powered) return "Bluetooth is off";
-    return scanning ? count + " devices · scanning…" : count + " Bluetooth devices";
 }
 
 function completedCallStatus(id, powered, currentStatus) {
@@ -206,17 +196,6 @@ function deviceActionRequest(actionId, device, trustAfterPair) {
     return directActionRequest(actionId, device, trustAfterPair)
         || toggleActionRequest(actionId, device)
         || (actionId === "multipoint" ? multipointActionRequest(device) : null);
-}
-
-function noiseControlRequest(device, mode) {
-    const capabilities = device.capabilities || ({});
-    const control = (device.fast_pair && device.fast_pair.noise_control) || ({});
-    const supported = capabilities.can_set_noise_control && (control.settable_modes || []).includes(mode);
-    return {
-        supported: supported,
-        unchanged: control.active_mode === mode,
-        status: "Setting " + device.name + " noise control to " + mode + "…"
-    };
 }
 
 function deviceState(device) {

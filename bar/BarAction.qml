@@ -5,8 +5,8 @@ import Shelllist.Ui as Ui
 Item {
     id: root
 
-    property string text
-    property string tooltipText
+    required property string text
+    required property string tooltipText
     property color foreground: Ui.Theme.text
     property color hoverColor: Ui.Theme.hover
     property int horizontalPadding: 10
@@ -14,13 +14,29 @@ Item {
     property bool interactive: true
     property alias elide: label.elide
     property alias fontWeight: label.font.weight
-    property alias textHorizontalAlignment: label.horizontalAlignment
 
     signal primaryTriggered
     signal secondaryTriggered
     signal middleTriggered
     signal wheelUp
     signal wheelDown
+
+    function routeClick(button: int): void {
+        if (!interactive)
+            return;
+        const handlers = ({});
+        handlers[Qt.LeftButton] = primaryTriggered;
+        handlers[Qt.RightButton] = secondaryTriggered;
+        handlers[Qt.MiddleButton] = middleTriggered;
+        if (handlers[button])
+            handlers[button]();
+    }
+
+    function routeWheel(delta: int): void {
+        if (!interactive || delta === 0)
+            return;
+        (delta > 0 ? wheelUp : wheelDown)();
+    }
 
     implicitWidth: Math.max(minimumWidth, label.implicitWidth + horizontalPadding * 2)
     implicitHeight: 51
@@ -48,23 +64,10 @@ Item {
     MouseArea {
         id: pointer
         anchors.fill: parent
-        enabled: root.interactive
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-        onClicked: function (mouse) {
-            if (mouse.button === Qt.LeftButton)
-                root.primaryTriggered();
-            else if (mouse.button === Qt.RightButton)
-                root.secondaryTriggered();
-            else if (mouse.button === Qt.MiddleButton)
-                root.middleTriggered();
-        }
-        onWheel: function (wheel) {
-            if (wheel.angleDelta.y > 0)
-                root.wheelUp();
-            else if (wheel.angleDelta.y < 0)
-                root.wheelDown();
-        }
+        onClicked: function (mouse) { root.routeClick(mouse.button); }
+        onWheel: function (wheel) { root.routeWheel(wheel.angleDelta.y); }
     }
 
     Controls.ToolTip.visible: pointer.containsMouse && tooltipText.length > 0

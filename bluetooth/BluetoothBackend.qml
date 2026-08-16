@@ -128,20 +128,30 @@ Io.DaemonBackend {
         console.warn("shelllist bluetooth event ignored stream=" + (event.stream || "unknown")
             + " event=" + (event.event || "unknown"));
     }
-    function handleEvent(event) {
+    function compatibleEvent(event: var): bool {
+        if (!Core.ApiEnvelope.compatibilityError(event, "bt-api", 1, "bt-daemon"))
+            return true;
+        console.warn("shelllist bluetooth event rejected reason=incompatible-envelope");
+        return false;
+    }
+    function recoverEventGap(): void {
+        controller.status = "Bluetooth events were missed; recovering current state…";
+        recoverRequests();
+        if (!isPending("snapshot")) refresh();
+    }
+    function processEvent(event: var): void {
+        if (!compatibleEvent(event))
+            return;
+        if (event.event === "lagged") {
+            recoverEventGap();
+            return;
+        }
+        if (!dispatchStreamEvent(event))
+            applyUnhandledEvent(event);
+    }
+    function handleEvent(event: var): void {
         try {
-            if (Core.ApiEnvelope.compatibilityError(event, "bt-api", 1, "bt-daemon")) {
-                console.warn("shelllist bluetooth event rejected reason=incompatible-envelope");
-                return;
-            }
-            if (event.event === "lagged") {
-                controller.status = "Bluetooth events were missed; recovering current state…";
-                recoverRequests();
-                if (!isPending("snapshot")) refresh();
-                return;
-            }
-            if (!dispatchStreamEvent(event))
-                applyUnhandledEvent(event);
+            processEvent(event);
         } catch (error) {
             const stream = event && event.stream ? event.stream : "unknown";
             console.error("shelllist bluetooth event failed stream=" + stream + " error=" + error);
@@ -179,8 +189,6 @@ Io.DaemonBackend {
         return accepted;
     }
     function setAudioProfile(deviceKey, profileKey) { return call("audio-set-profile", BtApi.methods.audioSetProfile, { device_key: deviceKey, profile_key: profileKey }); }
-    function setDefaultAudio(deviceKey, endpointKey) { return call("audio-set-default", BtApi.methods.audioSetDefault, { device_key: deviceKey, endpoint_key: endpointKey }); }
-    function updateDevicePolicy(deviceKey, values) { return call("device-policy-update", BtApi.methods.devicePolicyUpdate, Object.assign({ key: deviceKey }, values || ({}))); }
     function recoverRequests() {
         if (isPending("requests")) return false;
         return call("requests", BtApi.methods.requestsSnapshot, {});

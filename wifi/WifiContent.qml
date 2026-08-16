@@ -14,13 +14,17 @@ ChooserSurface {
         controller.cancelPrompt("user");
     }
 
-    Shortcut {
-        sequence: "F5"
-        enabled: content.controller.uiActive && content.controller.powered
+    ChooserShortcuts {
+        controller: content.controller
+        navigationEnabled: !content.controller.promptActive
+            && !content.controller.navigationHelpOpen
+        refreshEnabled: content.controller.powered && !content.controller.promptActive
+            && !content.controller.navigationHelpOpen && !content.controller.actionInFlight
+        detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection
             && !content.controller.promptActive && !content.controller.navigationHelpOpen
-            && !content.controller.actionInFlight
-        autoRepeat: false
-        onActivated: content.controller.refresh()
+        refreshAutoRepeat: false
+        onRefreshRequested: content.controller.refresh()
+        onDetailsTabRequested: content.controller.cycleDetailsTab()
     }
 
     Shortcut {
@@ -46,22 +50,6 @@ ChooserSurface {
             && !content.controller.promptActive && !content.controller.navigationHelpOpen
             && !content.controller.advanced.open
         onActivated: content.controller.advanced.openSettings("hardware")
-    }
-
-    Shortcut {
-        sequence: "Ctrl+Tab"
-        enabled: content.controller.uiActive && content.controller.detailsOpen
-            && content.controller.hasSelection && !content.controller.promptActive
-            && !content.controller.navigationHelpOpen
-        onActivated: content.controller.cycleDetailsTab()
-    }
-
-    Shortcut {
-        sequence: "Escape"
-        enabled: content.controller.uiActive && !content.controller.promptActive
-            && !content.controller.navigationHelpOpen
-        autoRepeat: false
-        onActivated: content.controller.dismissNavigation()
     }
 
     SplitChooserLayout {

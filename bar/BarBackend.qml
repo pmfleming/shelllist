@@ -4,8 +4,6 @@ import Shelllist.Io as Io
 import "BarApi.js" as BarApi
 
 Io.DaemonBackend {
-    id: backend
-
     required property var controller
     daemonName: "bar-daemon"
     streams: BarApi.subscribedStreams
@@ -39,10 +37,6 @@ Io.DaemonBackend {
             { delta_percent: deltaPercent });
     }
 
-    function setPowerProfile(profile: string): bool {
-        return call("power-profile", BarApi.methods.powerProfileSet, { profile: profile });
-    }
-
     function toggleNotifications(): bool {
         return call("notifications-panel", BarApi.methods.notificationsTogglePanel, {});
     }
@@ -51,16 +45,11 @@ Io.DaemonBackend {
         return call("notifications-dnd", BarApi.methods.notificationsToggleDnd, {});
     }
 
-    function refreshUpdates(): bool {
-        return call("updates-refresh", BarApi.methods.updatesRefresh, {});
-    }
-
     function finish(id: string, envelope: var, transportError: string): void {
         const error = Core.ApiEnvelope.responseError(envelope, transportError,
             BarApi.protocol, BarApi.version, daemonName, "Bar operation failed");
         if (error.length > 0) {
             console.error("shelllist bar request failed id=" + id + " error=" + error);
-            controller.status = error;
             return;
         }
         controller.applyResponse(envelope.data || ({}));
@@ -70,10 +59,11 @@ Io.DaemonBackend {
         finish(id, envelope, transportError);
     }
     onEventReceived: function (event) { controller.handleEvent(event); }
-    onSendFailed: function (id, message) { controller.status = message; }
+    onSendFailed: function (id, message) {
+        console.error("shelllist bar send failed id=" + id + " error=" + message);
+    }
     onTransportFailed: function (message) {
-        controller.available = false;
-        controller.status = message;
+        console.error("shelllist bar transport failed error=" + message);
     }
     onTransportReady: snapshot()
 }

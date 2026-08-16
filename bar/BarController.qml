@@ -8,8 +8,6 @@ Item {
     id: controller
 
     required property var surfaceRegistry
-    property bool available
-    property string status: "Starting bar-daemon…"
     property var workspaces: ({ available: false, monitors: [], workspaces: [] })
     property var media: ({ available: false, active_player: "", players: [] })
     property var audio: ({ available: false, volume_percent: 0, muted: false })
@@ -27,58 +25,25 @@ Item {
     readonly property string activePlayerId: activePlayer ? activePlayer.id : ""
     readonly property BarBackend backend: barBackend
 
-    function applySnapshot(snapshot: var): void {
-        if (!snapshot)
-            return;
-        workspaces = snapshot.workspaces || workspaces;
-        media = snapshot.media || media;
-        audio = snapshot.audio || audio;
-        brightness = snapshot.brightness || brightness;
-        battery = snapshot.battery || battery;
-        powerProfile = snapshot.power_profile || powerProfile;
-        notifications = snapshot.notifications || notifications;
-        updates = snapshot.updates || updates;
-        timezone = snapshot.timezone || timezone;
-        available = true;
-        status = "";
+    function applyPayload(data: var): void {
+        Object.keys(BarApi.propertyByPayload).forEach(function (payloadName) {
+            if (data[payloadName] !== undefined)
+                controller[BarApi.propertyByPayload[payloadName]] = data[payloadName];
+        });
     }
 
+    function applySnapshot(snapshot: var): void { if (snapshot) applyPayload(snapshot); }
     function applyResponse(data: var): void {
         if (data.snapshot)
             applySnapshot(data.snapshot);
-        if (data.audio)
-            audio = data.audio;
-        if (data.brightness)
-            brightness = data.brightness;
-        if (data.power_profile)
-            powerProfile = data.power_profile;
-        if (data.updates)
-            updates = data.updates;
+        applyPayload(data);
     }
 
     function applyDomain(stream: string, value: var): bool {
-        if (stream === BarApi.streams.workspaces)
-            workspaces = value;
-        else if (stream === BarApi.streams.media)
-            media = value;
-        else if (stream === BarApi.streams.audio)
-            audio = value;
-        else if (stream === BarApi.streams.brightness)
-            brightness = value;
-        else if (stream === BarApi.streams.battery)
-            battery = value;
-        else if (stream === BarApi.streams.powerProfile)
-            powerProfile = value;
-        else if (stream === BarApi.streams.notifications)
-            notifications = value;
-        else if (stream === BarApi.streams.updates)
-            updates = value;
-        else if (stream === BarApi.streams.timezone)
-            timezone = value;
-        else
+        const propertyName = BarApi.propertyByStream[stream] || "";
+        if (propertyName.length === 0)
             return false;
-        available = true;
-        status = "";
+        controller[propertyName] = value;
         return true;
     }
 
@@ -86,11 +51,10 @@ Item {
         const compatibility = Core.ApiEnvelope.compatibilityError(event,
             BarApi.protocol, BarApi.version, "bar-daemon");
         if (compatibility.length > 0) {
-            status = compatibility;
+            console.warn("shelllist bar event rejected error=" + compatibility);
             return;
         }
         if (event.event === "lagged") {
-            status = "Bar events were missed; recovering current state…";
             backend.snapshot();
             return;
         }
@@ -106,24 +70,34 @@ Item {
 
     function focusWorkspace(workspaceId: int): bool { return backend.focusWorkspace(workspaceId); }
     function mediaOperation(operation: string): bool { return backend.mediaOperation(operation); }
-    function adjustAudio(deltaPercent: int): bool { return backend.adjustAudio(deltaPercent); }
-    function toggleMuted(): bool { return backend.toggleMuted(); }
-    function adjustBrightness(deltaPercent: int): bool { return backend.adjustBrightness(deltaPercent); }
-    function toggleNotifications(): bool { return backend.toggleNotifications(); }
-    function toggleDnd(): bool { return backend.toggleDnd(); }
-    function openWifi(): void { openSurface("wifi"); }
-    function openBluetooth(): void { openSurface("bluetooth"); }
-    function openPortalFallback(): void {
-        Quickshell.execDetached(["shelllist-captive-portal", "--manual", "--fallback"]);
+    function statusModules(now: date): var {
+        return Presentation.statusModules({
+            network: networkStatus, bluetooth: bluetoothController, updates: updates,
+            audio: audio, brightness: brightness, battery: battery,
+            powerProfile: powerProfile, notifications: notifications, timezone: timezone
+        }, now);
     }
-    function openAudioMixer(): void { Quickshell.execDetached(["pavucontrol"]); }
-    function openUpdateJournal(): void {
-        Quickshell.execDetached(["ghostty", "-e", "bash", "-lc",
-            "journalctl -u nixos-update-fast.service -u nixos-update-delayed.service -u delayed-nixos-update.service -n 100 --no-pager; read -r -p 'Press enter to close'"]);
-    }
-    function openTimezoneDetails(): void {
-        Quickshell.execDetached(["ghostty", "-e", "bash", "-lc",
-            "timedatectl; read -r -p 'Press enter to close'"]);
+    function triggerModuleAction(action: string): bool {
+        const actions = ({
+            wifi: function () { openSurface("wifi"); },
+            portal: function () { Quickshell.execDetached(["shelllist-captive-portal", "--manual", "--fallback"]); },
+            updates: function () { Quickshell.execDetached(["ghostty", "-e", "bash", "-lc", "journalctl -u nixos-update-fast.service -u nixos-update-delayed.service -u delayed-nixos-update.service -n 100 --no-pager; read -r -p 'Press enter to close'"]); },
+            bluetooth: function () { openSurface("bluetooth"); },
+            "audio-mixer": function () { Quickshell.execDetached(["pavucontrol"]); },
+            "audio-mute": function () { backend.toggleMuted(); },
+            "audio-up": function () { backend.adjustAudio(5); },
+            "audio-down": function () { backend.adjustAudio(-5); },
+            "brightness-up": function () { backend.adjustBrightness(5); },
+            "brightness-down": function () { backend.adjustBrightness(-5); },
+            notifications: function () { backend.toggleNotifications(); },
+            "notifications-dnd": function () { backend.toggleDnd(); },
+            timezone: function () { Quickshell.execDetached(["ghostty", "-e", "bash", "-lc", "timedatectl; read -r -p 'Press enter to close'"]); }
+        });
+        const handler = actions[action];
+        if (!handler)
+            return false;
+        handler();
+        return true;
     }
 
     BarBackend { id: barBackend; controller: controller }

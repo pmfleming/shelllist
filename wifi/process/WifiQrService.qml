@@ -15,7 +15,6 @@ Item {
     property string error: ""
     property string outputPath: ""
     property int generation: 0
-    readonly property bool rendering: renderer.running
 
     function runtimeDirectory() {
         return Quickshell.env("XDG_RUNTIME_DIR") || "";

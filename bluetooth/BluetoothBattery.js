@@ -71,6 +71,15 @@ function matchingDeviceImage(text) {
     return match ? match.image : "";
 }
 
+function serviceImage(device) {
+    const services = serviceText(device);
+    const headset = services.indexOf("handsfree") >= 0 || services.indexOf("headset") >= 0;
+    if (headset)
+        return "assets/audio/headset.png";
+    return services.indexOf("audio sink") >= 0
+        ? "assets/audio/headphones.png" : unknownDeviceImage;
+}
+
 function deviceImage(device) {
     const knownType = String((device && device.device_type) || "").toLowerCase();
     const typeImage = matchingDeviceImage(knownType);
@@ -78,15 +87,8 @@ function deviceImage(device) {
         return typeImage;
     if (knownType && knownType !== "bluetooth device")
         return unknownDeviceImage;
-    const iconImage = matchingDeviceImage(String((device && device.icon) || "").toLowerCase());
-    if (iconImage)
-        return iconImage;
-    const services = serviceText(device);
-    if (services.indexOf("handsfree") >= 0 || services.indexOf("headset") >= 0)
-        return "assets/audio/headset.png";
-    return services.indexOf("audio sink") >= 0
-        ? "assets/audio/headphones.png"
-        : unknownDeviceImage;
+    const icon = String((device && device.icon) || "").toLowerCase();
+    return matchingDeviceImage(icon) || serviceImage(device);
 }
 
 function imageFor(device, report) {
@@ -133,14 +135,4 @@ function summary(reports) {
         const label = compactLabel(report);
         return (label.length > 0 ? label + " " : "") + report.percentage + "%";
     }).join(" · ");
-}
-
-function sourceLabel(reports) {
-    const values = ordered(reports);
-    if (values.some(function (report) { return report.source === "google-fast-pair-message-stream"; }))
-        return "Fast Pair component data";
-    if (values.some(function (report) { return report.source === "bluez"; }))
-        return "BlueZ aggregate data";
-    const source = values.length > 0 ? values[0].source : "";
-    return source ? source : "";
 }

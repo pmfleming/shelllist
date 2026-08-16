@@ -121,28 +121,33 @@ Ui.ProviderChooserController {
         }
         return true;
     }
+    function applyActiveOperation(transition: var, operation: var): void {
+        activeOperationId = transition.operationId;
+        status = operation.message || (transition.accepted
+            ? "Application action accepted…" : activeRequest.action.label + "…");
+    }
+    function applyCompletedOperation(transition: var, operation: var): void {
+        const completedRequest = activeRequest;
+        const action = completedRequest.actionId;
+        const completed = transition.status === "completed";
+        const closing = Presentation.isCloseAction(action);
+        if (completed && closing)
+            removeClosedInstances(completedRequest, action);
+        clearActiveAction();
+        status = operation.message || (completed
+            ? "Application action completed" : "Application action " + transition.status);
+        if (completed && !closing)
+            closeWindowRequested();
+    }
     function applyOperation(id: string, operation: var): void {
         const transition = Lifecycle.operationTransition(activeRequest, activeTargetId,
             activeOperationId, id, operation);
         if (!transition)
             return;
-        activeOperationId = transition.operationId;
-        if (transition.stage === "active") {
-            status = operation.message || (transition.accepted
-                ? "Application action accepted…" : activeRequest.action.label + "…");
-            return;
-        }
-
-        const completedRequest = activeRequest;
-        const action = completedRequest.actionId;
-        const closing = Presentation.isCloseAction(action);
-        if (transition.status === "completed" && closing)
-            removeClosedInstances(completedRequest, action);
-        clearActiveAction();
-        status = operation.message || (transition.status === "completed"
-            ? "Application action completed" : "Application action " + transition.status);
-        if (transition.status === "completed" && !closing)
-            closeWindowRequested();
+        if (transition.stage === "active")
+            applyActiveOperation(transition, operation);
+        else
+            applyCompletedOperation(transition, operation);
     }
     function removeClosedInstances(request: var, action: string): void {
         const targetId = request.result.id;

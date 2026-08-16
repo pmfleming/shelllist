@@ -12,14 +12,10 @@ Item {
     id: registry
 
     readonly property var descriptors: [
-        { id: "applications", name: "Applications", icon: "󰀻",
-            controllerLoadPolicy: "keep-loaded", viewLoadPolicy: "keep-loaded" },
-        { id: "wifi", name: "Wi-Fi", icon: "󰖩",
-            controllerLoadPolicy: "keep-loaded", viewLoadPolicy: "keep-loaded" },
-        { id: "bluetooth", name: "Bluetooth", icon: "󰂯",
-            controllerLoadPolicy: "eager", viewLoadPolicy: "keep-loaded" },
-        { id: "clipboard", name: "Clipboard", icon: "󰅇",
-            controllerLoadPolicy: "keep-loaded", viewLoadPolicy: "keep-loaded" }
+        { id: "applications", name: "Applications", icon: "󰀻" },
+        { id: "wifi", name: "Wi-Fi", icon: "󰖩" },
+        { id: "bluetooth", name: "Bluetooth", icon: "󰂯" },
+        { id: "clipboard", name: "Clipboard", icon: "󰅇" }
     ]
     property var loadedSurfaces: ({ wifi: true, bluetooth: true })
     property var openedSurfaces: ({})
@@ -117,8 +113,6 @@ Item {
                 surfaceId: "applications"
                 displayName: "Applications"
                 icon: "󰀻"
-                controllerLoadPolicy: "keep-loaded"
-                viewLoadPolicy: "keep-loaded"
                 controller: applicationController
                 content: Component {
                     Launcher.ApplicationContent { controller: applicationController }
@@ -136,8 +130,6 @@ Item {
                 surfaceId: "wifi"
                 displayName: "Wi-Fi"
                 icon: "󰖩"
-                controllerLoadPolicy: "keep-loaded"
-                viewLoadPolicy: "keep-loaded"
                 controller: wifiController
                 content: Component {
                     Wifi.WifiContent { controller: wifiController }
@@ -160,8 +152,6 @@ Item {
                 surfaceId: "bluetooth"
                 displayName: "Bluetooth"
                 icon: "󰂯"
-                controllerLoadPolicy: "eager"
-                viewLoadPolicy: "keep-loaded"
                 controller: bluetoothController
                 content: Component {
                     Bluetooth.BluetoothContent { controller: bluetoothController }
@@ -182,8 +172,6 @@ Item {
                 surfaceId: "clipboard"
                 displayName: "Clipboard"
                 icon: "󰅇"
-                controllerLoadPolicy: "keep-loaded"
-                viewLoadPolicy: "keep-loaded"
                 controller: clipboardController
                 content: Component {
                     Clipboard.ClipboardContent { controller: clipboardController }

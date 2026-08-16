@@ -20,19 +20,16 @@ function expect(label, condition) {
         throw new Error(label);
 }
 
-const modes = helper.modes();
-expect("control exposes four canonical modes", modes.length === 4);
-expect("modes retain presentation order",
-    modes.map(mode => mode.value).join(",") === "transparent,adaptive,noise-cancelling,off");
-expect("modes retain user-facing labels",
-    modes.map(mode => mode.label).join(",") === "Ambient,Adaptive,Noise cancellation,Off");
-for (const mode of modes)
-    expect(`${mode.value} artwork exists`, fs.existsSync(path.resolve(bluetoothRoot, mode.image)));
-
 const control = {
     available_modes: ["transparent", "adaptive", "noise-cancelling", "off"],
     active_mode: "adaptive"
 };
+const modes = helper.availableModes(control);
+expect("control exposes four canonical modes", modes.length === 4);
+expect("modes retain user-facing labels",
+    modes.map(mode => mode.label).join(",") === "Ambient,Adaptive,Noise cancellation,Off");
+for (const mode of modes)
+    expect(`${mode.value} artwork exists`, fs.existsSync(path.resolve(bluetoothRoot, mode.image)));
 expect("reported noise control is advertised", helper.isAdvertised(control));
 expect("empty noise control stays hidden", !helper.isAdvertised({ available_modes: [] }));
 expect("available status retains canonical presentation order",

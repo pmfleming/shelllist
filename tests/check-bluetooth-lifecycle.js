@@ -57,7 +57,6 @@ expect("duplicate device name includes its adapter",
     flow.deviceDisplayName({ key: "one", name: "Headset", adapter_key: "a" },
         [{ key: "two", name: "Headset" }], [{ key: "a", alias: "USB" }]) === "Headset · USB");
 expect("initial scan requires an idle powered UI", flow.shouldStartScan(true, true, false, false));
-expect("snapshot status reports scanning", flow.snapshotStatus(true, true, 3) === "3 devices · scanning…");
 expect("completed calls use a stable status", flow.completedCallStatus("device-connect", true, "Connecting") === "Bluetooth device updated");
 expect("scan failure exposes its error", flow.scanCompletionStatus({ state: "failed", error: { message: "radio failed" } }, 0, "Scanning") === "radio failed");
 const scanTransition = flow.scanTransition({ request_id: "old" },
@@ -113,19 +112,4 @@ expect("pair action retains trust policy", pairAction.operation === "pair" && pa
 const wakeAction = flow.deviceActionRequest("wake", { wake_allowed: false }, false);
 expect("wake action toggles the backend value", wakeAction.operation === "set-wake-allowed" && wakeAction.values.wake_allowed);
 expect("unknown device actions are rejected", flow.deviceActionRequest("unknown", {}, false) === null);
-const noiseControlDevice = {
-    name: "Headset",
-    capabilities: { can_set_noise_control: true },
-    fast_pair: {
-        noise_control: {
-            settable_modes: ["transparent", "adaptive", "noise-cancelling", "off"],
-            active_mode: "off"
-        }
-    }
-};
-for (const mode of ["transparent", "adaptive", "noise-cancelling", "off"])
-    expect(`${mode} noise control mode is accepted`, flow.noiseControlRequest(noiseControlDevice, mode).supported);
-expect("unknown noise control modes are rejected", !flow.noiseControlRequest(noiseControlDevice, "unknown").supported);
-expect("active noise control mode is unchanged", flow.noiseControlRequest(noiseControlDevice, "off").unchanged);
-
 console.log(`Bluetooth lifecycle: ${checks} checks passed`);

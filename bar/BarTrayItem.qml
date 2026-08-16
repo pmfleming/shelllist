@@ -18,22 +18,25 @@ MouseArea {
         if (item.hasMenu)
             item.display(root.QsWindow.window, Math.round(width / 2), height);
     }
-
-    onClicked: function (mouse) {
-        if (mouse.button === Qt.RightButton) {
+    function routeClick(button: int): void {
+        if (button === Qt.RightButton || item.onlyMenu)
             displayMenu();
-        } else if (mouse.button === Qt.MiddleButton) {
+        else if (button === Qt.MiddleButton)
             item.secondaryActivate();
-        } else if (item.onlyMenu) {
-            displayMenu();
-        } else {
+        else
             item.activate();
-        }
     }
-    onWheel: function (wheel) {
-        if (wheel.angleDelta.y !== 0)
-            item.scroll(Math.round(wheel.angleDelta.y / 8), false);
+    function scroll(delta: int): void {
+        if (delta !== 0)
+            item.scroll(Math.round(delta / 8), false);
     }
+    function tooltip(): string {
+        const title = item.tooltipTitle || item.title || item.id;
+        return item.tooltipDescription ? title + "\n" + item.tooltipDescription : title;
+    }
+
+    onClicked: function (mouse) { routeClick(mouse.button); }
+    onWheel: function (wheel) { scroll(wheel.angleDelta.y); }
 
     Rectangle {
         anchors.fill: parent
@@ -48,9 +51,6 @@ MouseArea {
     }
 
     Controls.ToolTip.visible: root.containsMouse
-    Controls.ToolTip.text: {
-        const title = root.item.tooltipTitle || root.item.title || root.item.id;
-        return root.item.tooltipDescription ? title + "\n" + root.item.tooltipDescription : title;
-    }
+    Controls.ToolTip.text: root.tooltip()
     Controls.ToolTip.delay: 500
 }

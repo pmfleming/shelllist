@@ -155,3 +155,110 @@ function utcOffset(seconds) {
     const minutes = Math.floor((absolute % 3600) / 60);
     return sign + String(hours).padStart(2, "0") + String(minutes).padStart(2, "0");
 }
+
+function statusModule(text, tooltip, options) {
+    return Object.assign({
+        text: text, tooltip: tooltip, visible: true, interactive: true,
+        tone: "text", weight: 400, primary: "", secondary: "", middle: "",
+        wheelUp: "", wheelDown: ""
+    }, options || ({}));
+}
+
+function networkModule(status) {
+    return statusModule(networkIcon(status), networkTooltip(status), {
+        tone: networkKind(status) === "disconnected" ? "muted" : "text",
+        primary: "wifi", secondary: "portal"
+    });
+}
+
+function updateModule(updates) {
+    return statusModule("󰚰", "A checked and built NixOS update is waiting for automatic safety or manual approval", {
+        visible: !!(updates && updates.available && updates.ready), tone: "accent",
+        weight: 700, primary: "updates"
+    });
+}
+
+function bluetoothModule(bluetooth) {
+    return statusModule("", bluetoothTooltip(bluetooth), {
+        tone: bluetooth && bluetooth.powered ? "text" : "muted", primary: "bluetooth"
+    });
+}
+
+function audioModule(audio) {
+    const available = audio && audio.available;
+    const tooltip = available
+        ? (audio.sink_description || "Audio") + ": " + audio.volume_percent + "%"
+            + (audio.muted ? " (muted)" : "")
+        : "Audio unavailable";
+    return statusModule(audioIcon(audio), tooltip, {
+        tone: audio && audio.muted ? "muted" : "text", primary: "audio-mixer",
+        secondary: "audio-mute", wheelUp: "audio-up", wheelDown: "audio-down"
+    });
+}
+
+function brightnessModule(brightness) {
+    const percent = brightness ? brightness.percent : 0;
+    return statusModule("󰃠", "Brightness: " + percent
+        + "%\nLeft click: brighter\nRight click: dimmer", {
+        visible: !!(brightness && brightness.available), primary: "brightness-up",
+        secondary: "brightness-down", wheelUp: "brightness-up", wheelDown: "brightness-down"
+    });
+}
+
+function batteryTone(battery) {
+    if (battery && (battery.charging || battery.plugged)) return "success";
+    if (battery && battery.critical) return "danger";
+    return battery && battery.warning ? "warning" : "text";
+}
+
+function batteryModule(battery) {
+    return statusModule(batteryIcon(battery) + " " + ((battery && battery.percentage) || 0) + "%",
+        batteryTooltip(battery), {
+            visible: !!(battery && battery.available), interactive: false,
+            tone: batteryTone(battery)
+        });
+}
+
+function powerModule(profile) {
+    return statusModule(powerProfileIcon(profile), "Power profile: " + (profile.profile || "")
+        + "\nDriver: " + (profile.driver || "unknown"), {
+        visible: !!profile.available, interactive: false,
+        tone: profile.profile === "performance" ? "danger"
+            : profile.profile === "power-saver" ? "success" : "accent"
+    });
+}
+
+function notificationModule(notifications) {
+    const count = (notifications && notifications.count) || 0;
+    const dnd = !!(notifications && notifications.dnd);
+    return statusModule(" " + count, "Notifications: " + count
+        + "\nLeft click: open history\nRight click: toggle do not disturb"
+        + (dnd ? "\nDo not disturb is on" : ""), {
+        tone: dnd ? "muted" : "text", primary: "notifications",
+        secondary: "notifications-dnd"
+    });
+}
+
+function timezoneModule(timezone) {
+    const city = (timezone && timezone.city) || "";
+    return statusModule("󰅐 " + city, "Timezone city: " + city
+        + "\nTimezone is updated automatically from location", {
+        visible: !!(timezone && timezone.available), primary: "timezone"
+    });
+}
+
+function clockModule(now, timezone) {
+    return statusModule(Qt.formatDateTime(now, "ddd dd MMM  HH:mm"),
+        Qt.formatDateTime(now, "yyyy-MM-dd") + " " + (timezone.abbreviation || "")
+            + " " + utcOffset(timezone.utc_offset_seconds), { interactive: false });
+}
+
+function statusModules(state, now) {
+    return [
+        networkModule(state.network), updateModule(state.updates),
+        bluetoothModule(state.bluetooth), audioModule(state.audio),
+        brightnessModule(state.brightness), batteryModule(state.battery),
+        powerModule(state.powerProfile), notificationModule(state.notifications),
+        timezoneModule(state.timezone), clockModule(now, state.timezone)
+    ];
+}

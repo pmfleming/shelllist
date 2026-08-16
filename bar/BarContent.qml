@@ -9,7 +9,13 @@ Item {
 
     required property BarController controller
     required property string screenName
-    property date now: new Date()
+    property date now
+    readonly property var toneColors: ({
+        text: Ui.Theme.text, muted: Ui.Theme.mutedText, accent: Ui.Theme.accent,
+        success: Ui.Theme.active, danger: Ui.Theme.danger, warning: Ui.Theme.warning
+    })
+
+    function moduleColor(tone: string): color { return toneColors[tone] || Ui.Theme.text; }
 
     Rectangle {
         anchors.fill: parent
@@ -33,7 +39,6 @@ Item {
     }
 
     BarAction {
-        id: mediaItem
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -41,8 +46,8 @@ Item {
         width: Math.min(420, implicitWidth)
         text: Presentation.mediaText(root.controller.activePlayer)
         tooltipText: root.controller.activePlayer
-            ? (root.controller.activePlayer.artist || root.controller.activePlayer.identity || "")
-                + (root.controller.activePlayer.album ? "\n" + root.controller.activePlayer.album : "") : ""
+            ? [root.controller.activePlayer.artist || root.controller.activePlayer.identity || "",
+                root.controller.activePlayer.album || ""].filter(Boolean).join("\n") : ""
         elide: Text.ElideRight
         onPrimaryTriggered: root.controller.mediaOperation("play-pause")
         onSecondaryTriggered: root.controller.mediaOperation("next")
@@ -50,7 +55,6 @@ Item {
     }
 
     Row {
-        id: rightModules
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -58,117 +62,29 @@ Item {
 
         BarTray { height: parent.height }
 
-        BarAction {
-            height: parent.height
-            text: Presentation.networkIcon(root.controller.networkStatus)
-            tooltipText: Presentation.networkTooltip(root.controller.networkStatus)
-            foreground: Presentation.networkKind(root.controller.networkStatus) === "disconnected"
-                ? Ui.Theme.mutedText : Ui.Theme.text
-            onPrimaryTriggered: root.controller.openWifi()
-            onSecondaryTriggered: root.controller.openPortalFallback()
-        }
+        Repeater {
+            model: root.controller.statusModules(root.now)
 
-        BarAction {
-            height: parent.height
-            visible: root.controller.updates.available && root.controller.updates.ready
-            text: "󰚰"
-            tooltipText: "A checked and built NixOS update is waiting for automatic safety or manual approval"
-            foreground: Ui.Theme.accent
-            fontWeight: Ui.Theme.fontWeightBold
-            onPrimaryTriggered: root.controller.openUpdateJournal()
-        }
+            delegate: BarAction {
+                required property var modelData
 
-        BarAction {
-            height: parent.height
-            text: ""
-            tooltipText: Presentation.bluetoothTooltip(root.controller.bluetoothController)
-            foreground: root.controller.bluetoothController && root.controller.bluetoothController.powered
-                ? Ui.Theme.text : Ui.Theme.mutedText
-            onPrimaryTriggered: root.controller.openBluetooth()
-        }
-
-        BarAction {
-            height: parent.height
-            text: Presentation.audioIcon(root.controller.audio)
-            tooltipText: root.controller.audio.available
-                ? (root.controller.audio.sink_description || "Audio") + ": "
-                    + root.controller.audio.volume_percent + "%"
-                    + (root.controller.audio.muted ? " (muted)" : "")
-                : "Audio unavailable"
-            foreground: root.controller.audio.muted ? Ui.Theme.mutedText : Ui.Theme.text
-            onPrimaryTriggered: root.controller.openAudioMixer()
-            onSecondaryTriggered: root.controller.toggleMuted()
-            onWheelUp: root.controller.adjustAudio(5)
-            onWheelDown: root.controller.adjustAudio(-5)
-        }
-
-        BarAction {
-            height: parent.height
-            visible: root.controller.brightness.available
-            text: "󰃠"
-            tooltipText: "Brightness: " + root.controller.brightness.percent
-                + "%\nLeft click: brighter\nRight click: dimmer"
-            onPrimaryTriggered: root.controller.adjustBrightness(5)
-            onSecondaryTriggered: root.controller.adjustBrightness(-5)
-            onWheelUp: root.controller.adjustBrightness(5)
-            onWheelDown: root.controller.adjustBrightness(-5)
-        }
-
-        BarAction {
-            height: parent.height
-            visible: root.controller.battery.available
-            text: Presentation.batteryIcon(root.controller.battery) + " "
-                + root.controller.battery.percentage + "%"
-            tooltipText: Presentation.batteryTooltip(root.controller.battery)
-            interactive: false
-            foreground: root.controller.battery.charging || root.controller.battery.plugged
-                ? Ui.Theme.active : root.controller.battery.critical
-                    ? Ui.Theme.danger : root.controller.battery.warning
-                        ? Ui.Theme.warning : Ui.Theme.text
-        }
-
-        BarAction {
-            height: parent.height
-            visible: root.controller.powerProfile.available
-            text: Presentation.powerProfileIcon(root.controller.powerProfile)
-            tooltipText: "Power profile: " + root.controller.powerProfile.profile
-                + "\nDriver: " + (root.controller.powerProfile.driver || "unknown")
-            interactive: false
-            foreground: root.controller.powerProfile.profile === "performance"
-                ? Ui.Theme.danger : root.controller.powerProfile.profile === "power-saver"
-                    ? Ui.Theme.active : Ui.Theme.accent
-        }
-
-        BarAction {
-            height: parent.height
-            text: " " + (root.controller.notifications.count || 0)
-            tooltipText: "Notifications: " + (root.controller.notifications.count || 0)
-                + "\nLeft click: open history\nRight click: toggle do not disturb"
-                + (root.controller.notifications.dnd ? "\nDo not disturb is on" : "")
-            foreground: root.controller.notifications.dnd ? Ui.Theme.mutedText : Ui.Theme.text
-            onPrimaryTriggered: root.controller.toggleNotifications()
-            onSecondaryTriggered: root.controller.toggleDnd()
-        }
-
-        BarAction {
-            height: parent.height
-            visible: root.controller.timezone.available
-            text: "󰅐 " + root.controller.timezone.city
-            tooltipText: "Timezone city: " + root.controller.timezone.city
-                + "\nTimezone is updated automatically from location"
-            onPrimaryTriggered: root.controller.openTimezoneDetails()
-        }
-
-        BarAction {
-            height: parent.height
-            text: Qt.formatDateTime(root.now, "ddd dd MMM  HH:mm")
-            tooltipText: Qt.formatDateTime(root.now, "yyyy-MM-dd") + " "
-                + root.controller.timezone.abbreviation + " "
-                + Presentation.utcOffset(root.controller.timezone.utc_offset_seconds)
-            interactive: false
+                height: parent.height
+                visible: modelData.visible
+                text: modelData.text
+                tooltipText: modelData.tooltip
+                foreground: root.moduleColor(modelData.tone)
+                fontWeight: modelData.weight
+                interactive: modelData.interactive
+                onPrimaryTriggered: root.controller.triggerModuleAction(modelData.primary)
+                onSecondaryTriggered: root.controller.triggerModuleAction(modelData.secondary)
+                onMiddleTriggered: root.controller.triggerModuleAction(modelData.middle)
+                onWheelUp: root.controller.triggerModuleAction(modelData.wheelUp)
+                onWheelDown: root.controller.triggerModuleAction(modelData.wheelDown)
+            }
         }
     }
 
+    Component.onCompleted: now = new Date()
     Timer {
         interval: 1000
         repeat: true

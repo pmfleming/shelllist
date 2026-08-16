@@ -10,16 +10,12 @@ Ui.ChooserSurface {
     readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
     readonly property var selectedEntry: controller.selectedEntry || ({})
 
-    Shortcut {
-        sequence: "Escape"
-        enabled: content.controller.uiActive && !content.controller.navigationHelpOpen
-        onActivated: content.controller.dismissNavigation()
-    }
-    Shortcut {
-        sequence: "F5"
-        enabled: content.controller.uiActive && !content.controller.actionInFlight
+    Ui.ChooserShortcuts {
+        controller: content.controller
+        navigationEnabled: !content.controller.navigationHelpOpen
+        refreshEnabled: !content.controller.actionInFlight
             && !content.controller.navigationHelpOpen
-        onActivated: content.controller.refresh()
+        onRefreshRequested: content.controller.refresh()
     }
     Shortcut {
         sequence: "Return"

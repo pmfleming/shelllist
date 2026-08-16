@@ -45,9 +45,7 @@ var methods = {
     scan: "bluetooth.scan",
     adapterOperation: "bluetooth.adapter.operation",
     managementUpdate: "bluetooth.management.update",
-    devicePolicyUpdate: "bluetooth.device.policy.update",
     audioSetProfile: "bluetooth.audio.setProfile",
-    audioSetDefault: "bluetooth.audio.setDefault",
     requestsSnapshot: "bluetooth.requests.snapshot",
     pairingRespond: "bluetooth.pairing.respond",
     deviceOperation: "bluetooth.device.operation"

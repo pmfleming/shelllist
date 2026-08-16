@@ -11,10 +11,8 @@ var methods = {
     audioSetMuted: "audio.setMuted",
     brightnessAdjust: "brightness.adjust",
     brightnessSet: "brightness.set",
-    powerProfileSet: "powerProfile.set",
     notificationsTogglePanel: "notifications.togglePanel",
-    notificationsToggleDnd: "notifications.toggleDnd",
-    updatesRefresh: "updates.refresh"
+    notificationsToggleDnd: "notifications.toggleDnd"
 };
 
 var streams = {
@@ -29,14 +27,27 @@ var streams = {
     timezone: "timezone.changed"
 };
 
-var subscribedStreams = [
-    streams.workspaces,
-    streams.media,
-    streams.audio,
-    streams.brightness,
-    streams.battery,
-    streams.powerProfile,
-    streams.notifications,
-    streams.updates,
-    streams.timezone
-];
+var subscribedStreams = Object.keys(streams).map(function (name) { return streams[name]; });
+
+var propertyByStream = {};
+propertyByStream[streams.workspaces] = "workspaces";
+propertyByStream[streams.media] = "media";
+propertyByStream[streams.audio] = "audio";
+propertyByStream[streams.brightness] = "brightness";
+propertyByStream[streams.battery] = "battery";
+propertyByStream[streams.powerProfile] = "powerProfile";
+propertyByStream[streams.notifications] = "notifications";
+propertyByStream[streams.updates] = "updates";
+propertyByStream[streams.timezone] = "timezone";
+
+var propertyByPayload = {
+    workspaces: "workspaces",
+    media: "media",
+    audio: "audio",
+    brightness: "brightness",
+    battery: "battery",
+    power_profile: "powerProfile",
+    notifications: "notifications",
+    updates: "updates",
+    timezone: "timezone"
+};

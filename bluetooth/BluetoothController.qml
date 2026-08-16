@@ -1,5 +1,6 @@
+import Quickshell
+import QtCore
 import QtQuick
-import Qt.labs.settings
 import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "BluetoothBattery.js" as BluetoothBattery
@@ -24,7 +25,6 @@ Ui.ProviderChooserController {
     property string audioStatus: ""
     property var pairingPrompt: null
     readonly property alias activeOperations: operationState.activeOperations
-    readonly property alias operationErrors: operationState.errorsByDevice
     property var activeScan: null
     property bool trustAfterPair: true
     property string preferredAdapterKey: ""
@@ -60,7 +60,9 @@ Ui.ProviderChooserController {
 
     Settings {
         id: scopeSettings
-        category: "ShelllistBluetooth"
+        location: "file://" + (Quickshell.env("XDG_CONFIG_HOME")
+            || Quickshell.env("HOME") + "/.config") + "/shelllist.ini"
+        category: "Bluetooth"
         property string searchScope: "mine"
     }
 
@@ -101,10 +103,6 @@ Ui.ProviderChooserController {
             toggleScan();
         else
             refresh();
-    }
-    function openAdapterSettings() {
-        detailsTab = "adapter";
-        detailsOpen = true;
     }
     function setSearchScope(scope) {
         if (!["mine", "all"].includes(scope) || searchScope === scope)
@@ -319,15 +317,6 @@ Ui.ProviderChooserController {
         if (request.status) status = request.status;
         return backend.deviceOperation(request.operation, device, request.values);
     }
-    function setNoiseControl(mode) {
-        if (!hasSelection || selectedDeviceBusy || backend.requestRunning) return false;
-        const request = BluetoothFlow.noiseControlRequest(selectedDevice, mode);
-        if (!request.supported) return false;
-        if (request.unchanged) return true;
-        status = request.status;
-        return backend.deviceOperation("set-noise-control", selectedDevice, { mode: mode });
-    }
-
     onModalPromptOpenChanged: if (!modalPromptOpen) Qt.callLater(focusSearchRequested)
     onSelectedResultChanged: pendingConfirmationAction = null
 

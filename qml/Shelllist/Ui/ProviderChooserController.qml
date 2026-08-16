@@ -11,8 +11,6 @@ ChooserController {
     property int scheduledRefreshDelay: 0
     property bool closeDetailsWithoutSelection: false
 
-    readonly property Core.ProviderRegistry providerRegistry: providers
-    readonly property Core.ResultStore resultStore: results
     readonly property var filteredResults: results.visibleResults
     readonly property var filteredResultsModel: results.visibleModel
     readonly property var selectedResult: results.selected()

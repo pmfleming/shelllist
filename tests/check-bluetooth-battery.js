@@ -45,14 +45,8 @@ expect(
     "Fast Pair visual layout places the case between the earbuds",
     battery.visualOrdered(fastPair).map(value => value.component).join(",") === "left,case,right"
 );
-expect(
-    "Fast Pair source is identified",
-    battery.sourceLabel(fastPair) === "Fast Pair component data"
-);
-
 const aggregate = [{ component: "main", label: "Battery", percentage: 64, source: "bluez" }];
 expect("aggregate summary remains compact", battery.summary(aggregate) === "64%");
-expect("aggregate source is identified", battery.sourceLabel(aggregate) === "BlueZ aggregate data");
 
 const partial = [
     { component: "right", percentage: 55, source: "google-fast-pair-message-stream" },

@@ -10,7 +10,6 @@ ShellRoot {
     id: shell
 
     readonly property Ui.ChooserController activeController: surfaces.currentController
-    readonly property SurfaceBundle activeBundle: surfaces.currentBundle
 
     function selectSurface(surfaceId: string): bool {
         const requested = surfaces.validSurfaceId(surfaceId);

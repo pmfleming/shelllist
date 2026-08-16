@@ -152,7 +152,6 @@ Ui.ProviderChooserController {
     function pasteImageAsFile() { runAction("image-as-file"); }
     function annotateImage() { runAction("annotate"); }
     function openUrl() { runAction("open-url"); }
-    function toggleFavorite() { runAction(selectedEntry && selectedEntry.favorite ? "unfavorite" : "favorite"); }
     function requestDelete() { if (selectedEntry) deleteConfirmationOpen = true; }
     function cancelDelete() { deleteConfirmationOpen = false; }
     function confirmDelete() { deleteConfirmationOpen = false; runAction("delete"); }
@@ -209,25 +208,33 @@ Ui.ProviderChooserController {
         handledTerminalOperations = next;
         return false;
     }
-    function applyOperation(operation) {
-        if (!operation || terminalOperationHandled(operation))
-            return;
+    function updateOperationState(operation: var): void {
         actionInFlight = operation.status === "started" || operation.status === "progress";
         activeAction = actionInFlight ? operation.action : "";
         activeOperationId = actionInFlight ? (operation.id || "") : "";
         status = operation.message || "Clipboard operation completed";
+    }
+    function completeOperation(operation: var): void {
+        const completions = ({
+            paste: finishPaste, "image-as-file": finishPaste,
+            wipe: finishWipe, "delete": finishDelete, screenshot: finishScreenshot,
+            annotate: finishAnnotate, copy: scheduleRefresh,
+            favorite: scheduleRefresh, unfavorite: scheduleRefresh
+        });
+        const completion = completions[operation.action];
+        if (completion)
+            completion(operation);
+    }
+    function applyOperation(operation: var): void {
+        if (!operation || terminalOperationHandled(operation))
+            return;
+        updateOperationState(operation);
         if (operation.action === "annotate" && actionInFlight) {
             hideRequested();
             return;
         }
-        if (actionInFlight) return;
-        const completions = ({
-            paste: finishPaste, "image-as-file": finishPaste,
-            wipe: finishWipe, "delete": finishDelete, screenshot: finishScreenshot,
-            annotate: finishAnnotate,
-            copy: scheduleRefresh, favorite: scheduleRefresh, unfavorite: scheduleRefresh
-        });
-        if (completions[operation.action]) completions[operation.action](operation);
+        if (!actionInFlight)
+            completeOperation(operation);
     }
     function requestWipe() { if (!actionInFlight) backend.prepareWipe(); }
     function applyWipeChallenge(challenge) { wipeChallenge = challenge; }

@@ -3,7 +3,7 @@ const fs = require("fs");
 const vm = require("vm");
 
 const source = fs.readFileSync(process.argv[2], "utf8").replace(/^\.pragma library\s*$/m, "");
-const context = {};
+const context = { Qt: { formatDateTime: (_date, format) => format } };
 vm.createContext(context);
 vm.runInContext(source, context);
 
@@ -28,5 +28,20 @@ equal(context.networkKind({ active: true, device_iface: "enp1s0" }), "ethernet",
 equal(context.networkKind({ active: false }), "disconnected", "disconnected status");
 equal(context.utcOffset(-18000), "-0500", "negative UTC offset");
 equal(context.utcOffset(19800), "+0530", "fractional UTC offset");
+const modules = context.statusModules({
+    network: { active: false }, updates: { available: true, ready: true },
+    bluetooth: { powered: true, allDevices: [] },
+    audio: { available: true, muted: false, volume_percent: 50 },
+    brightness: { available: true, percent: 70 },
+    battery: { available: true, percentage: 80 },
+    powerProfile: { available: true, profile: "balanced", driver: "test" },
+    notifications: { count: 2, dnd: false },
+    timezone: { available: true, city: "Taipei", abbreviation: "CST", utc_offset_seconds: 28800 }
+}, new Date(0));
+equal(modules.length, 10, "status module count");
+equal(modules[0].primary, "wifi", "network action routing");
+equal(modules[1].visible, true, "ready update visibility");
+equal(modules[4].wheelDown, "brightness-down", "brightness wheel routing");
+equal(modules[9].interactive, false, "clock is presentation-only");
 
 console.log("bar presentation: workspace and status formatting passed");

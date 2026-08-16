@@ -30,19 +30,21 @@ ModalFrame {
     detail: "The same list and detail navigation works in every Shelllist chooser."
     maximumCardWidth: 620
 
+    function visibleDetailAction(action: var): bool {
+        const shortcut = String(action.shortcut || "").toLowerCase();
+        return shortcut.length > 0 && shortcut.indexOf("enter") < 0
+            && action.visible !== false;
+    }
+    function detailActionEntry(action: var): var {
+        return {
+            keys: action.shortcut,
+            action: action.label + (action.enabled === false ? " (unavailable)" : "")
+        };
+    }
     function detailActionEntries(): var {
-        if (!controller.detailsOpen)
-            return [];
-        return (controller.detailActions || []).filter(function (action) {
-            const shortcut = String(action.shortcut || "");
-            return shortcut.length > 0 && shortcut.toLowerCase().indexOf("enter") < 0
-                && action.visible !== false;
-        }).map(function (action) {
-            return {
-                keys: action.shortcut,
-                action: action.label + (action.enabled === false ? " (unavailable)" : "")
-            };
-        });
+        return controller.detailsOpen
+            ? (controller.detailActions || []).filter(visibleDetailAction).map(detailActionEntry)
+            : [];
     }
 
     Shortcut {
@@ -65,62 +67,48 @@ ModalFrame {
         width: parent.width
         spacing: Theme.spacingSm
 
-        Flickable {
-            id: shortcutView
-
+        ListView {
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.min(shortcutColumn.implicitHeight,
-                Math.max(180, dialog.height - 230))
-            contentWidth: width
-            contentHeight: shortcutColumn.implicitHeight
+            Layout.preferredHeight: Math.min(contentHeight, Math.max(180, dialog.height - 230))
+            model: dialog.allEntries
+            spacing: Theme.spacingXs
             clip: true
             boundsBehavior: Flickable.StopAtBounds
-
             Controls.ScrollBar.vertical: Controls.ScrollBar {}
 
-            Column {
-                id: shortcutColumn
+            delegate: Rectangle {
+                id: shortcutRow
 
-                width: shortcutView.width
-                spacing: Theme.spacingXs
+                required property int index
+                required property var modelData
 
-                Repeater {
-                    model: dialog.allEntries
+                width: ListView.view.width
+                height: Theme.compactControlHeight
+                radius: Theme.controlRadius
+                color: index % 2 === 0
+                    ? Theme.withAlpha(Theme.surfaceRaised, 0.72) : "transparent"
 
-                    delegate: Rectangle {
-                        id: shortcutRow
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: Theme.spacingMd
+                    anchors.rightMargin: Theme.spacingMd
+                    spacing: Theme.spacingMd
 
-                        required property int index
-                        required property var modelData
-
-                        width: shortcutColumn.width
-                        height: Theme.compactControlHeight
-                        radius: Theme.controlRadius
-                        color: index % 2 === 0 ? Theme.withAlpha(Theme.surfaceRaised, 0.72) : "transparent"
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: Theme.spacingMd
-                            anchors.rightMargin: Theme.spacingMd
-                            spacing: Theme.spacingMd
-
-                            Text {
-                                Layout.preferredWidth: 126
-                                text: shortcutRow.modelData.keys || ""
-                                color: Theme.accent
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontSizeBody
-                                font.weight: Theme.fontWeightDemiBold
-                            }
-                            Text {
-                                Layout.fillWidth: true
-                                text: shortcutRow.modelData.action || ""
-                                color: Theme.text
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontSizeBody
-                                elide: Text.ElideRight
-                            }
-                        }
+                    Text {
+                        Layout.preferredWidth: 126
+                        text: shortcutRow.modelData.keys || ""
+                        color: Theme.accent
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeBody
+                        font.weight: Theme.fontWeightDemiBold
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        text: shortcutRow.modelData.action || ""
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeBody
+                        elide: Text.ElideRight
                     }
                 }
             }
