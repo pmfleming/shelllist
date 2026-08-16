@@ -55,36 +55,30 @@ Ui.ProviderChooserController {
         detailsOpen = false;
         detailState.clear();
     }
-    function dismissNavigation() {
-        if (navigationHelpOpen) {
-            closeNavigationHelp();
-            return true;
-        }
-        if (detailState.editing) {
-            if (detailState.editIsDirect)
-                detailState.finishDirectEdit();
-            else
-                detailState.cancelEdit();
-            return true;
-        }
-        if (activeOperationId.length > 0) {
-            cancelActiveOperation();
-            return true;
-        }
-        if (deleteConfirmationOpen) {
-            cancelDelete();
-            return true;
-        }
-        if (wipeChallenge) {
-            cancelWipe();
-            return true;
-        }
-        if (detailsOpen) {
-            closeDetails();
-            return true;
-        }
-        closeWindowRequested();
+    function dismissEditor(): bool {
+        if (!detailState.editing)
+            return false;
+        if (detailState.editIsDirect)
+            detailState.finishDirectEdit();
+        else
+            detailState.cancelEdit();
         return true;
+    }
+    function dismissClipboardOperation(): bool {
+        if (activeOperationId.length > 0)
+            cancelActiveOperation();
+        else if (deleteConfirmationOpen)
+            cancelDelete();
+        else if (wipeChallenge)
+            cancelWipe();
+        else
+            return false;
+        return true;
+    }
+    function dismissNavigation(): bool {
+        if (dismissNavigationHelp() || dismissEditor() || dismissClipboardOperation())
+            return true;
+        return dismissDetailsOrWindow();
     }
     function refresh() {
         status = "Loading clipboard history…";

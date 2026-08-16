@@ -1,44 +1,31 @@
 import QtQuick
 import Shelllist.Ui as Ui
 
-Ui.DetailsPane {
+Ui.ActionDetailsPane {
     id: pane
 
     required property ApplicationController controller
-    required property real uiScale
     readonly property var selected: controller.selectedResult || ({})
     readonly property var application: controller.selectedApplication || ({})
-    readonly property var actions: controller.detailActions || []
-    readonly property int headerHeight: Math.max(58, Math.round(66 * uiScale))
     readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     readonly property int footerHeight: actionHeight
 
     chooserController: controller
-    densityScale: uiScale
     leftMargin: 18
     rightMargin: 16
     emptyText: "Select an application"
-
-    Ui.DetailsHeader {
-        id: actionHeader
-        width: parent.width
-        uiScale: pane.uiScale
-        headerHeight: pane.headerHeight
-        controlHeight: pane.actionHeight
-        sectionSpacing: pane.sectionSpacing
-        icon: "󰀻"
-        iconColor: pane.application.focused ? Ui.Theme.active : Ui.Theme.accent
-        title: pane.selected.title || "Application"
-        subtitle: pane.selected.subtitle || ""
-        titlePixelSize: Math.round(Ui.Theme.fontSizeTitle * pane.uiScale)
-        actions: pane.actions
-        actionWidth: 128
-        onActionTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
-    }
+    headerHeight: Math.max(58, Math.round(66 * uiScale))
+    controlHeight: actionHeight
+    icon: "󰀻"
+    iconColor: application.focused ? Ui.Theme.active : Ui.Theme.accent
+    title: selected.title || "Application"
+    subtitle: selected.subtitle || ""
+    actions: controller.detailActions || []
+    actionWidth: 128
+    onActionTriggered: function (actionId) { controller.triggerDetailAction(actionId); }
 
     Ui.TabbedDetailsStack {
-        width: parent.width
-        height: Math.max(0, parent.height - actionHeader.height - pane.sectionSpacing)
+        anchors.fill: parent
         footerHeight: pane.footerHeight
         sectionSpacing: pane.sectionSpacing
         selectedValue: pane.controller.detailsTab

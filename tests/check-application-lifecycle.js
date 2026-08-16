@@ -3,8 +3,7 @@ const fs = require("fs");
 const vm = require("vm");
 
 const source = fs.readFileSync(process.argv[2], "utf8")
-    .replace(/^\.pragma library\s*$/m, "")
-    .replace(/if \(typeof module[\s\S]*$/, "");
+    .replace(/^\.pragma library\s*$/m, "");
 const context = {};
 vm.createContext(context);
 vm.runInContext(source, context);
@@ -30,10 +29,19 @@ equal(context.operationMatches(request, "app.desktop", {
     target_id: "app.desktop", action: "activate"
 }), false, "another action is rejected");
 
-equal(context.isActiveStatus("accepted"), true, "accepted is active");
-equal(context.isActiveStatus("running"), true, "running is active");
-equal(context.isTerminalStatus("completed"), true, "completed is terminal");
-equal(context.isTerminalStatus("failed"), true, "failed is terminal");
-equal(context.isTerminalStatus("cancelled"), true, "cancelled is terminal");
+equal(context.operationTransition(request, "app.desktop", "", "action-1", {
+    id: "operation-1", status: "accepted"
+}), null, "accepted response must match the active request");
+const accepted = context.operationTransition({ id: "action-1", actionId: "focus-window-2" },
+    "app.desktop", "", "action-1", { id: "operation-1", status: "accepted" });
+equal(accepted.stage, "active", "accepted operation remains active");
+equal(accepted.operationId, "operation-1", "accepted operation captures its daemon id");
+const completed = context.operationTransition(request, "app.desktop", "", "", {
+    id: "operation-1", status: "completed", target_id: "app.desktop", action: "focus-window"
+});
+equal(completed.stage, "terminal", "matching completion is terminal");
+equal(context.operationTransition(request, "app.desktop", "operation-1", "", {
+    id: "operation-2", status: "running"
+}), null, "events from another operation are rejected");
 
 console.log("application lifecycle: 12 checks passed");

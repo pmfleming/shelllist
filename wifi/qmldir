@@ -18,7 +18,6 @@ internal AdvancedSegmentedRow AdvancedSegmentedRow.qml
 internal IpSettingsState IpSettingsState.qml
 AdvancedSettingsPage 1.0 AdvancedSettingsPage.qml
 internal NetworkDetailCards NetworkDetailCards.qml
-internal NetworkDetailsHeader NetworkDetailsHeader.qml
 NetworkDetailsPane 1.0 NetworkDetailsPane.qml
 NetworkProfileSettingsCard 1.0 NetworkProfileSettingsCard.qml
 NetworkListPane 1.0 NetworkListPane.qml

@@ -107,23 +107,16 @@ ProviderChooserController {
         connection.deactivate();
     }
 
-    function dismissNavigation() {
-        if (navigationHelpOpen) {
-            closeNavigationHelp();
+    function dismissNavigation(): bool {
+        if (dismissNavigationHelp())
             return true;
-        }
         if (promptActive)
             return false;
         if (advanced.open) {
             advanced.closeSettings();
             return true;
         }
-        if (detailsOpen) {
-            closeDetails();
-            return true;
-        }
-        closeWindowRequested();
-        return true;
+        return dismissDetailsOrWindow();
     }
 
     function cancelPrompt(reason) {
@@ -211,25 +204,34 @@ ProviderChooserController {
         bandRequestId = result.request_id || "";
         status = result.message || "Wi-Fi band change started…";
     }
-    function handleBandEvent(event) {
-        if (event.event === "subscribed")
+    function ignoresBandEvent(event: var): bool {
+        return event.event === "subscribed"
+            || (bandRequestId.length > 0 && event.request_id !== bandRequestId);
+    }
+    function bandEventRunning(event: var): bool {
+        return ["started", "progress"].includes(event.event);
+    }
+    function bandFailureStatus(event: var): string {
+        if (event.message)
+            return event.message;
+        return event.event === "cancelled" ? "Wi-Fi band change cancelled" : "Wi-Fi band change failed";
+    }
+    function handleBandEvent(event: var): void {
+        if (ignoresBandEvent(event))
             return;
-        if (bandRequestId.length > 0 && event.request_id !== bandRequestId)
-            return;
-        if (event.event === "started" || event.event === "progress") {
+        if (bandEventRunning(event)) {
             status = event.message || "Applying Wi-Fi band selection…";
             return;
         }
         bandRequestId = "";
-        if (event.event === "succeeded") {
-            const result = event.result || ({});
-            applyBandStatus(result.band || ({}));
-            status = result.message || "Wi-Fi band selection updated";
-            refresh();
-        } else {
-            status = event.message || (event.event === "cancelled"
-                ? "Wi-Fi band change cancelled" : "Wi-Fi band change failed");
+        if (event.event !== "succeeded") {
+            status = bandFailureStatus(event);
+            return;
         }
+        const result = event.result || ({});
+        applyBandStatus(result.band || ({}));
+        status = result.message || "Wi-Fi band selection updated";
+        refresh();
     }
 
     function handleSecretEvent(event) {

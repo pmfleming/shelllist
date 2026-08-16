@@ -18,19 +18,33 @@ function operationMatches(activeRequest, activeTargetId, operation) {
         && operation.action === expectedOperationAction(activeRequest.actionId);
 }
 
-function isActiveStatus(status) {
-    return status === "accepted" || status === "running";
+function acceptedOperationMatches(activeRequest, responseId) {
+    return !!activeRequest && (!responseId || responseId === activeRequest.id);
 }
 
-function isTerminalStatus(status) {
-    return status === "completed" || status === "failed" || status === "cancelled";
+function currentOperationMatches(activeRequest, activeTargetId, activeOperationId, operation) {
+    if (!activeRequest)
+        return false;
+    return activeOperationId
+        ? operation.id === activeOperationId
+        : operationMatches(activeRequest, activeTargetId, operation);
 }
 
-if (typeof module !== "undefined") {
-    module.exports = {
-        expectedOperationAction: expectedOperationAction,
-        operationMatches: operationMatches,
-        isActiveStatus: isActiveStatus,
-        isTerminalStatus: isTerminalStatus
+function operationTransition(activeRequest, activeTargetId, activeOperationId, responseId, operation) {
+    if (!operation || !operation.id)
+        return null;
+    const status = operation.status || "completed";
+    if (status === "accepted") {
+        if (!acceptedOperationMatches(activeRequest, responseId))
+            return null;
+        return { stage: "active", accepted: true, status: status, operationId: operation.id };
+    }
+    if (!currentOperationMatches(activeRequest, activeTargetId, activeOperationId, operation))
+        return null;
+    return {
+        stage: status === "running" ? "active" : "terminal",
+        accepted: false,
+        status: status,
+        operationId: operation.id
     };
 }

@@ -3,15 +3,13 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 
-Ui.DetailsPane {
+Ui.ActionDetailsPane {
     id: pane
 
     required property ClipboardController controller
-    required property real uiScale
     readonly property var selected: controller.selectedResult || ({})
     readonly property ClipboardDetailsController detailState: controller.detailState
     readonly property var entry: detailState.value ? detailState.value.entry : ({})
-    readonly property int headerHeight: Math.max(58, Math.round(66 * uiScale))
     readonly property int toolbarHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     readonly property bool image: entry.kind === "image"
     readonly property bool link: entry.kind === "link"
@@ -56,31 +54,21 @@ Ui.DetailsPane {
     }
 
     chooserController: controller
-    densityScale: uiScale
     leftMargin: 18
     rightMargin: 16
     emptyText: "Select a clipboard entry"
-
-    Ui.DetailsHeader {
-        id: actionHeader
-        width: parent.width
-        uiScale: pane.uiScale
-        headerHeight: pane.headerHeight
-        controlHeight: pane.toolbarHeight
-        sectionSpacing: pane.sectionSpacing
-        icon: pane.selected.icon || "󰅇"
-        iconColor: pane.entry.current ? Ui.Theme.active : Ui.Theme.accent
-        title: pane.selected.title || "Clipboard entry"
-        subtitle: pane.selected.subtitle || ""
-        titlePixelSize: Math.round(Ui.Theme.fontSizeTitle * pane.uiScale)
-        actions: pane.primaryActions.concat(pane.secondaryActions)
-        actionWidth: 112
-        onActionTriggered: function (actionId) { pane.triggerAction(actionId); }
-    }
+    headerHeight: Math.max(58, Math.round(66 * uiScale))
+    controlHeight: toolbarHeight
+    icon: selected.icon || "󰅇"
+    iconColor: entry.current ? Ui.Theme.active : Ui.Theme.accent
+    title: selected.title || "Clipboard entry"
+    subtitle: selected.subtitle || ""
+    actions: primaryActions.concat(secondaryActions)
+    actionWidth: 112
+    onActionTriggered: function (actionId) { triggerAction(actionId); }
 
     Item {
-        width: parent.width
-        height: Math.max(0, parent.height - actionHeader.height - pane.sectionSpacing)
+        anchors.fill: parent
 
         Ui.CenteredMessage {
             anchors.fill: parent

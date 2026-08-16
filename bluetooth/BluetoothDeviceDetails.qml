@@ -2,45 +2,37 @@ import QtQuick
 import Shelllist.Ui as Ui
 import "BluetoothFlow.js" as BluetoothFlow
 
-Ui.DetailsPane {
+Ui.ActionDetailsPane {
     id: pane
 
     required property BluetoothController controller
-    required property real uiScale
     readonly property bool editingText: devicePage.editingName || adapterPage.editing
-    readonly property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     readonly property int footerHeight: actionHeight
 
     chooserController: controller
-    densityScale: uiScale
     emptyText: "Select a Bluetooth device"
     contentAvailable: controller.hasSelection || controller.detailsTab === "adapter"
-
-    Ui.DetailsHeader {
-        id: actionHeader
-        width: parent.width
-        uiScale: pane.uiScale
-        headerHeight: pane.headerHeight
-        controlHeight: pane.actionHeight
-        sectionSpacing: pane.sectionSpacing
-        icon: pane.controller.selectedResult ? pane.controller.selectedResult.icon : "󰒓"
-        iconColor: pane.controller.selectedDevice.connected || !pane.controller.hasSelection ? Ui.Theme.active : Ui.Theme.mutedText
-        iconBorderColor: Ui.Theme.mix(Ui.Theme.strongBorder, Ui.Theme.surface, 0.40)
-        title: pane.controller.selectedResult ? pane.controller.selectedResult.title
-            : (pane.controller.selectedAdapter.alias || pane.controller.selectedAdapter.name || "Bluetooth adapter")
-        subtitle: pane.controller.hasSelection ? BluetoothFlow.deviceState(pane.controller.selectedDevice) : "Adapter and management settings"
-        subtitleColor: pane.controller.selectedDevice.connected || !pane.controller.hasSelection ? Ui.Theme.active : Ui.Theme.mutedText
-        subtitleWeight: Ui.Theme.fontWeightMedium
-        titlePixelSize: Math.round(Ui.Theme.fontSizeDisplay * pane.uiScale)
-        actions: pane.controller.hasSelection ? pane.controller.detailActions : []
-        secondaryVisible: pane.controller.hasSelection
-        onActionTriggered: function (actionId) { pane.controller.triggerDetailAction(actionId); }
-    }
+    headerHeight: Math.max(56, Math.round(64 * uiScale))
+    controlHeight: actionHeight
+    icon: controller.selectedResult ? controller.selectedResult.icon : "󰒓"
+    iconColor: controller.selectedDevice.connected || !controller.hasSelection
+        ? Ui.Theme.active : Ui.Theme.mutedText
+    iconBorderColor: Ui.Theme.mix(Ui.Theme.strongBorder, Ui.Theme.surface, 0.40)
+    title: controller.selectedResult ? controller.selectedResult.title
+        : (controller.selectedAdapter.alias || controller.selectedAdapter.name || "Bluetooth adapter")
+    subtitle: controller.hasSelection ? BluetoothFlow.deviceState(controller.selectedDevice)
+        : "Adapter and management settings"
+    subtitleColor: controller.selectedDevice.connected || !controller.hasSelection
+        ? Ui.Theme.active : Ui.Theme.mutedText
+    subtitleWeight: Ui.Theme.fontWeightMedium
+    titlePixelSize: Math.round(Ui.Theme.fontSizeDisplay * uiScale)
+    actions: controller.hasSelection ? controller.detailActions : []
+    secondaryVisible: controller.hasSelection
+    onActionTriggered: function (actionId) { controller.triggerDetailAction(actionId); }
 
     Ui.TabbedDetailsStack {
-        width: parent.width
-        height: Math.max(0, parent.height - actionHeader.height - pane.sectionSpacing)
+        anchors.fill: parent
         footerHeight: pane.footerHeight
         sectionSpacing: pane.sectionSpacing
         selectedValue: pane.controller.detailsTab

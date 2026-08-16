@@ -129,25 +129,30 @@ Ui.ProviderChooserController {
         return screenshotCapture.captureRegion(x, y, width, height);
     }
     function applyAudioSnapshot(devices) { audioDevices = devices || []; audioStatus = ""; }
-    function applyRequestSnapshot(requests) {
-        const values = requests || ({});
-        const operationRequests = values.operations || ({});
-        operationState.restore(operationRequests.active || []);
-        const scanRequests = (values.scans || {}).active || [];
-        activeScan = scanRequests.length > 0 ? scanRequests[0] : null;
+    function activeRequests(snapshot: var, groupName: string): var {
+        const group = snapshot ? snapshot[groupName] : null;
+        return group && Array.isArray(group.active) ? group.active : [];
+    }
+    function latestRequest(requests: var): var {
+        return requests.length > 0 ? requests[requests.length - 1] : null;
+    }
+    function applyRequestSnapshot(requests: var): void {
+        const operations = activeRequests(requests, "operations");
+        const scans = activeRequests(requests, "scans");
+        operationState.restore(operations);
+        activeScan = scans.length > 0 ? scans[0] : null;
         scanRequested = !!activeScan;
-        const pairingRequests = (values.pairing || {}).active || [];
-        pairingPrompt = pairingRequests.length > 0
-            ? pairingRequests[pairingRequests.length - 1] : null;
+        pairingPrompt = latestRequest(activeRequests(requests, "pairing"));
         pairingInput = "";
         if (pairingPrompt) {
             status = pairingPrompt.response_required
                 ? "Recovered Bluetooth pairing confirmation"
                 : "Recovered active Bluetooth pairing";
             pairingInteractionRequested();
-        } else if (Object.keys(operationState.activeOperations).length > 0) {
-            status = "Recovered active Bluetooth operation";
+            return;
         }
+        if (operations.length > 0)
+            status = "Recovered active Bluetooth operation";
     }
     function applySnapshot(snapshot) {
         radio = BluetoothFlow.radioForSnapshot(snapshot);
@@ -224,21 +229,14 @@ Ui.ProviderChooserController {
     }
     function handleOperationAccepted(operation) { operationState.accept(operation); }
     function handleOperationEvent(operation) { operationState.handle(operation); }
-    function dismissNavigation() {
-        if (navigationHelpOpen) {
-            closeNavigationHelp();
+    function dismissNavigation(): bool {
+        if (dismissNavigationHelp())
             return true;
-        }
         if (modalPromptOpen)
             return false;
         if (canCancelOperation)
             return cancelActiveOperation();
-        if (detailsOpen) {
-            closeDetails();
-            return true;
-        }
-        closeWindowRequested();
-        return true;
+        return dismissDetailsOrWindow();
     }
     function cancelActiveOperation() {
         if (!canCancelOperation) return false;

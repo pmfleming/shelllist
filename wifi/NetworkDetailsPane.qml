@@ -1,38 +1,48 @@
 import QtQuick
 import "."
 import Shelllist.Ui
+import "WifiPresentation.js" as Presentation
 
-DetailsPane {
+ActionDetailsPane {
     id: pane
 
     required property WifiController controller
     readonly property var ap: controller.detailAp
-    readonly property real uiScale: Theme.densityScale(height, 0)
-    readonly property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     readonly property int detailControlHeight: Math.max(36, Math.round(42 * uiScale))
     readonly property int footerHeight: detailControlHeight
-    readonly property real cardBudget: Math.max(420, height - 2 - actionHeader.height - footerHeight - 4 * sectionSpacing)
+    readonly property string connectionLabel: Presentation.connectionStateLabel(controller, ap)
+    readonly property bool signInRequired: Presentation.connectivityRequiresSignIn(
+        Presentation.activeConnectivity(controller))
+    readonly property color connectionColor: signInRequired ? Theme.warning : Theme.active
+    readonly property real cardBudget: Math.max(420,
+        bodyHeight - footerHeight - 3 * sectionSpacing - 2)
     readonly property real connectionCardHeight: Math.max(220, Math.round(cardBudget * 0.44))
     readonly property real networkCardHeight: Math.max(130, Math.round(cardBudget * 0.255))
     readonly property real profileCardHeight: Math.max(150, cardBudget - connectionCardHeight - networkCardHeight)
 
     chooserController: controller
-    densityScale: uiScale
+    uiScale: Theme.densityScale(height, 0)
     sectionSpacing: Theme.verticalSpacing(Theme.spacingMd, uiScale)
     leftMargin: 18
     rightMargin: 16
     emptyText: "Select a network"
     emptyFontSize: 20
-
-    NetworkDetailsHeader {
-        id: actionHeader
-        width: parent.width
-        controller: pane.controller
-        uiScale: pane.uiScale
-        headerHeight: pane.headerHeight
-        controlHeight: pane.detailControlHeight
-        sectionSpacing: pane.sectionSpacing
-    }
+    headerHeight: Math.max(56, Math.round(64 * uiScale))
+    controlHeight: detailControlHeight
+    signalIcon: true
+    iconColor: Theme.accent
+    title: Presentation.networkName(ap)
+    subtitle: [connectionLabel, Presentation.lastSeenLabel(ap)].filter(function (value) {
+        return value.length > 0;
+    }).join(" / ")
+    subtitleColor: controller.isActive(ap) ? connectionColor : Theme.mutedText
+    statusIndicatorVisible: controller.isActive(ap)
+    statusIndicatorColor: connectionColor
+    titlePixelSize: Math.round(22 * uiScale)
+    subtitleWeight: Theme.fontWeightMedium
+    actions: controller.detailActions
+    actionWidth: 156
+    onActionTriggered: function (actionId) { controller.triggerDetailAction(actionId); }
 
     Item {
         id: tabViewport
@@ -40,7 +50,7 @@ DetailsPane {
         property real advancedTransitionProgress: pane.controller.advanced.open ? 1 : 0
 
         width: parent.width
-        height: Math.max(0, parent.height - actionHeader.height - pane.footerHeight - 2 * pane.sectionSpacing)
+        height: Math.max(0, parent.height - pane.footerHeight - pane.sectionSpacing)
         clip: true
 
         Behavior on advancedTransitionProgress {
@@ -72,6 +82,7 @@ DetailsPane {
     }
 
     DetailsTabBar {
+        anchors.bottom: parent.bottom
         width: parent.width
         height: pane.footerHeight
         selectedValue: pane.controller.detailsTab

@@ -57,17 +57,21 @@ Item {
     function openNavigationHelp() { navigationHelpOpen = true; }
     function closeNavigationHelp() { navigationHelpOpen = false; }
     function toggleNavigationHelp() { navigationHelpOpen ? closeNavigationHelp() : openNavigationHelp(); }
-    function dismissNavigation() {
-        if (navigationHelpOpen) {
-            closeNavigationHelp();
-            return true;
-        }
-        if (detailsOpen) {
-            closeDetails();
-            return true;
-        }
-        closeWindowRequested();
+    function dismissNavigationHelp(): bool {
+        if (!navigationHelpOpen)
+            return false;
+        closeNavigationHelp();
         return true;
+    }
+    function dismissDetailsOrWindow(): bool {
+        if (detailsOpen)
+            closeDetails();
+        else
+            closeWindowRequested();
+        return true;
+    }
+    function dismissNavigation(): bool {
+        return dismissNavigationHelp() || dismissDetailsOrWindow();
     }
 
     function moveSelection(delta) { if (selectionModel) selectionModel.move(delta); }
