@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls as Controls
 import Shelllist.Ui as Ui
 import "BarPresentation.js" as Presentation
 
@@ -12,20 +13,41 @@ Item {
     readonly property var workspace: Presentation.workspaceFor(controller.workspaces, workspaceId)
     readonly property bool active: Presentation.activeWorkspaceId(controller.workspaces,
         screenName) === workspaceId
+    readonly property bool occupied: !!workspace && Number(workspace.windows || 0) > 0
     readonly property string asset: Presentation.workspaceAsset(workspaceId)
+    readonly property string tooltipText: {
+        const label = workspace && workspace.name ? workspace.name : "Workspace " + workspaceId;
+        const windows = workspace ? Number(workspace.windows || 0) : 0;
+        return label + " • " + windows + (windows === 1 ? " window" : " windows")
+            + (workspace && workspace.last_window_title ? "\n" + workspace.last_window_title : "");
+    }
 
     width: compact ? 23 : 27
     height: 51
 
     Rectangle {
+        id: tile
+
         anchors.centerIn: parent
         width: button.compact ? 23 : 27
         height: width
         radius: Ui.Theme.baseRadius
-        color: button.workspaceId === 1 ? Ui.Theme.window : Ui.Theme.input
-        opacity: button.active ? 1 : 0.45
+        color: button.active ? "transparent"
+            : (button.workspaceId === 1
+                ? Ui.Theme.withAlpha(Ui.Theme.window, 0.58)
+                : Ui.Theme.withAlpha(Ui.Theme.input, button.occupied ? 0.72 : 0.42))
+        opacity: button.active ? 1 : (button.occupied ? 0.82 : 0.48)
         border.width: button.workspace && button.workspace.urgent ? 2 : 0
         border.color: Ui.Theme.danger
+
+        Behavior on color {
+            enabled: !Ui.Theme.noAnimations
+            ColorAnimation { duration: Ui.Theme.animationFast }
+        }
+        Behavior on opacity {
+            enabled: !Ui.Theme.noAnimations
+            NumberAnimation { duration: Ui.Theme.animationFast }
+        }
 
         Image {
             anchors.centerIn: parent
@@ -35,21 +57,66 @@ Item {
             source: visible ? Qt.resolvedUrl(button.asset) : ""
             fillMode: Image.PreserveAspectFit
             smooth: true
+            scale: button.active ? 1.08 : 0.94
+
+            Behavior on scale {
+                enabled: !Ui.Theme.noAnimations
+                NumberAnimation {
+                    duration: Ui.Theme.animationNormal
+                    easing.type: Easing.OutBack
+                }
+            }
         }
 
         Text {
             anchors.centerIn: parent
             visible: button.asset.length === 0
             text: Presentation.workspaceGlyph(button.workspaceId)
-            color: "#ffffff"
+            color: button.active ? Ui.Theme.accent : Ui.Theme.text
             font.family: Ui.Theme.iconFontFamily
             font.pixelSize: Ui.Theme.fontSizeLabel
             font.weight: Ui.Theme.fontWeightBold
+
+            Behavior on color {
+                enabled: !Ui.Theme.noAnimations
+                ColorAnimation { duration: Ui.Theme.animationFast }
+            }
         }
     }
 
-    MouseArea {
-        anchors.fill: parent
+    Rectangle {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 6
+        width: button.occupied && !button.active ? 4 : 0
+        height: width
+        radius: width / 2
+        color: button.workspace && button.workspace.urgent ? Ui.Theme.danger : Ui.Theme.accent
+        opacity: width > 0 ? 0.9 : 0
+
+        Behavior on width {
+            enabled: !Ui.Theme.noAnimations
+            NumberAnimation { duration: Ui.Theme.animationFast; easing.type: Easing.OutCubic }
+        }
+        Behavior on opacity {
+            enabled: !Ui.Theme.noAnimations
+            NumberAnimation { duration: Ui.Theme.animationFast }
+        }
+    }
+
+    Ui.StateLayer {
+        id: workspaceState
+
+        focusTarget: button
+        radius: height / 2
+        stateColor: Ui.Theme.accent
+        showStateBackground: true
+        hoverOpacity: 0.10
+        pressedOpacity: 0.16
         onClicked: button.controller.focusWorkspace(button.workspaceId)
     }
+
+    Controls.ToolTip.visible: workspaceState.hovered
+    Controls.ToolTip.text: button.tooltipText
+    Controls.ToolTip.delay: 500
 }
