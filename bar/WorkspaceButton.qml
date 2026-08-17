@@ -1,3 +1,5 @@
+import Quickshell
+import Quickshell.Widgets
 import QtQuick
 import Shelllist.Ui as Ui
 import "BarPresentation.js" as Presentation
@@ -13,7 +15,7 @@ Item {
     readonly property bool active: Presentation.activeWorkspaceId(controller.workspaces,
         screenName) === workspaceId
     readonly property bool occupied: !!workspace && Number(workspace.windows || 0) > 0
-    readonly property string asset: Presentation.workspaceAsset(workspaceId)
+    readonly property string iconName: Presentation.workspaceIconName(workspaceId)
 
     width: compact ? 23 : 27
     height: 51
@@ -42,14 +44,11 @@ Item {
             NumberAnimation { duration: Ui.Theme.animationFast }
         }
 
-        Image {
+        IconImage {
             anchors.centerIn: parent
-            width: button.compact ? 17 : 20
-            height: width
-            visible: button.asset.length > 0
-            source: visible ? Qt.resolvedUrl(button.asset) : ""
-            fillMode: Image.PreserveAspectFit
-            smooth: true
+            implicitSize: button.compact ? 17 : 20
+            visible: button.iconName.length > 0
+            source: Quickshell.iconPath(button.iconName, "application-x-executable")
             scale: button.active ? 1.08 : 0.94
 
             Behavior on scale {
@@ -63,7 +62,7 @@ Item {
 
         Text {
             anchors.centerIn: parent
-            visible: button.asset.length === 0
+            visible: button.iconName.length === 0
             text: Presentation.workspaceGlyph(button.workspaceId)
             color: button.active ? Ui.Theme.accent : Ui.Theme.text
             font.family: Ui.Theme.iconFontFamily
@@ -74,26 +73,6 @@ Item {
                 enabled: !Ui.Theme.noAnimations
                 ColorAnimation { duration: Ui.Theme.animationFast }
             }
-        }
-    }
-
-    Rectangle {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 6
-        width: button.occupied && !button.active ? 4 : 0
-        height: width
-        radius: width / 2
-        color: button.workspace && button.workspace.urgent ? Ui.Theme.danger : Ui.Theme.accent
-        opacity: width > 0 ? 0.9 : 0
-
-        Behavior on width {
-            enabled: !Ui.Theme.noAnimations
-            NumberAnimation { duration: Ui.Theme.animationFast; easing.type: Easing.OutCubic }
-        }
-        Behavior on opacity {
-            enabled: !Ui.Theme.noAnimations
-            NumberAnimation { duration: Ui.Theme.animationFast }
         }
     }
 

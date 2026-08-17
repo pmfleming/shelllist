@@ -32,14 +32,14 @@ function workspaceGlyph(workspaceId) {
     return workspaceId === 1 ? "󰊠" : workspaceId > 5 ? String(workspaceId) : "";
 }
 
-function workspaceAsset(workspaceId) {
-    const assets = {
-        2: "assets/zen-workspace.svg",
-        3: "assets/vscode-workspace.svg",
-        4: "assets/spotify-workspace.svg",
-        5: "assets/scratchpad-workspace.svg"
+function workspaceIconName(workspaceId) {
+    const icons = {
+        2: "zen",
+        3: "vscode",
+        4: "spotify-client",
+        5: "scratchpad"
     };
-    return assets[workspaceId] || "";
+    return icons[workspaceId] || "";
 }
 
 function playerFor(media) {

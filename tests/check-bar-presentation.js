@@ -18,6 +18,10 @@ equal(context.workspaceIds({ workspaces: [
 equal(context.activeWorkspaceId({ monitors: [
     { name: "eDP-1", active_workspace_id: 3 }
 ] }, "eDP-1"), 3, "monitor-local active workspace");
+equal(context.workspaceIconName(2), "zen", "Zen workspace uses its desktop icon");
+equal(context.workspaceIconName(3), "vscode", "VS Code workspace uses its desktop icon");
+equal(context.workspaceIconName(4), "spotify-client", "Spotify workspace uses its desktop icon");
+equal(context.workspaceIconName(5), "scratchpad", "Scratchpad workspace uses its desktop icon");
 equal(context.activeWindowFor({ focused_monitor: "eDP-1", active_window: { title: "Terminal" } }, "eDP-1"),
     { title: "Terminal" }, "active window belongs to focused monitor");
 equal(context.activeWindowFor({ focused_monitor: "eDP-1", active_window: { title: "Terminal" } }, "DP-1"),
