@@ -1,5 +1,12 @@
 .pragma library
 
+function expectedRevision(value) {
+    if (typeof value !== "number")
+        return null;
+    return isFinite(value) && value >= 0 && Math.floor(value) === value
+        && value <= 9007199254740991 ? value : null;
+}
+
 function expectedOperationAction(actionId) {
     const value = String(actionId || "");
     if (value.indexOf("focus-window-") === 0)

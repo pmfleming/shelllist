@@ -13,6 +13,13 @@ function equal(actual, expected, message) {
         throw new Error(`${message}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
 
+equal(context.expectedRevision(15592525670148626000), null,
+    "unsafe daemon revision disables stale-state validation");
+equal(context.expectedRevision(9007199254740991), 9007199254740991,
+    "largest JavaScript-safe revision is retained");
+equal(context.expectedRevision(42), 42, "ordinary revision is retained");
+equal(context.expectedRevision(null), null, "missing revision remains absent");
+
 equal(context.expectedOperationAction("focus-window-2"), "focus-window", "focus action maps");
 equal(context.expectedOperationAction("close-window-3"), "close-window", "close action maps");
 equal(context.expectedOperationAction("desktop-action-1"), "desktop-action", "desktop action maps");
@@ -44,4 +51,4 @@ equal(context.operationTransition(request, "app.desktop", "operation-1", "", {
     id: "operation-2", status: "running"
 }), null, "events from another operation are rejected");
 
-console.log("application lifecycle: 12 checks passed");
+console.log("application lifecycle: 16 checks passed");

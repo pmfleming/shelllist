@@ -1,4 +1,5 @@
 import Shelllist.Core as Core
+import "ApplicationLifecycle.js" as Lifecycle
 
 Core.Provider {
     id: provider
@@ -141,7 +142,7 @@ Core.Provider {
             action: operationFor(request.actionId),
             window_id: metadata.windowId || null,
             desktop_action_id: metadata.desktopActionId || null,
-            expected_revision: request.result.payload.revision || null,
+            expected_revision: Lifecycle.expectedRevision(request.result.payload.revision),
             workspace_id: controller.currentWorkspaceId || null
         });
     }
