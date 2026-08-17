@@ -18,8 +18,8 @@ PanelWindow { // qmllint disable uncreatable-type
     // Keep the focused monitor's layer surface mapped so a media-key press does
     // not pay a Wayland surface creation/configure round trip before appearing.
     visible: targetIsFocused
-    implicitWidth: 340
-    implicitHeight: 92
+    implicitWidth: 376
+    implicitHeight: 104
     color: "transparent"
     mask: Region {}
     aboveWindows: true
@@ -33,7 +33,7 @@ PanelWindow { // qmllint disable uncreatable-type
     }
     margins { // qmllint disable unresolved-type unqualified
         bottom: 86
-        left: Math.max(0, Math.round(((window.screen ? window.screen.width : 340)
+        left: Math.max(0, Math.round(((window.screen ? window.screen.width : 376)
             - window.implicitWidth) / 2))
     }
 
@@ -41,11 +41,34 @@ PanelWindow { // qmllint disable uncreatable-type
         id: surface
 
         anchors.fill: parent
-        radius: Ui.Theme.panelRadius
-        color: Ui.Theme.surfaceRaised
+        radius: Ui.Theme.panelRadius + 4
+        color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.97)
         border.width: 1
-        border.color: Ui.Theme.controlBorder
+        border.color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.38)
         opacity: window.controller.osdVisible ? 1 : 0
+        y: window.controller.osdVisible ? 0 : 8
+
+        Ui.Elevation {
+            anchors.fill: parent
+            radius: surface.radius
+            level: 3
+            z: -1
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: Ui.Theme.withAlpha(Ui.Theme.accent, Ui.Theme.dark ? 0.055 : 0.035)
+        }
+
+        Rectangle {
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width - parent.radius * 2
+            height: 2
+            radius: 1
+            color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.72)
+        }
 
         Behavior on opacity {
             enabled: !Ui.Theme.noAnimations
@@ -53,6 +76,13 @@ PanelWindow { // qmllint disable uncreatable-type
                 // Feedback should appear immediately; only its dismissal fades.
                 duration: window.controller.osdVisible ? 0 : Ui.Theme.animationFast
                 easing.type: Ui.Theme.easingStandard
+            }
+        }
+        Behavior on y {
+            enabled: !Ui.Theme.noAnimations
+            NumberAnimation {
+                duration: Ui.Theme.animationFast
+                easing.type: Easing.OutCubic
             }
         }
 
@@ -66,18 +96,35 @@ PanelWindow { // qmllint disable uncreatable-type
             }
             spacing: Ui.Theme.spacingMd
 
-            Text {
-                width: 38
+            Rectangle {
+                id: iconBadge
+
+                width: 52
+                height: 52
                 anchors.verticalCenter: parent.verticalCenter
-                horizontalAlignment: Text.AlignHCenter
-                text: window.controller.osdIcon
-                color: Ui.Theme.accent
-                font.family: Ui.Theme.iconFontFamily
-                font.pixelSize: 28
+                radius: width / 2
+                color: Ui.Theme.mix(Ui.Theme.selected, Ui.Theme.accent, 0.12)
+                border.width: 1
+                border.color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.48)
+
+                Ui.Elevation {
+                    anchors.fill: parent
+                    radius: iconBadge.radius
+                    level: 1
+                    z: -1
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: window.controller.osdIcon
+                    color: Ui.Theme.accent
+                    font.family: Ui.Theme.iconFontFamily
+                    font.pixelSize: 27
+                }
             }
 
             Column {
-                width: parent.width - 38 - valueLabel.width - parent.spacing * 2
+                width: parent.width - iconBadge.width - valueBadge.width - parent.spacing * 2
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Ui.Theme.spacingSm
 
@@ -92,13 +139,19 @@ PanelWindow { // qmllint disable uncreatable-type
                 }
 
                 Rectangle {
+                    id: track
+
                     width: parent.width
-                    height: 7
+                    height: 10
                     visible: window.controller.osdProgressVisible
                     radius: height / 2
                     color: Ui.Theme.input
+                    border.width: 1
+                    border.color: Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72)
 
                     Rectangle {
+                        id: progressFill
+
                         width: parent.width * window.controller.osdPercent / 100
                         height: parent.height
                         radius: parent.radius
@@ -108,22 +161,75 @@ PanelWindow { // qmllint disable uncreatable-type
                             enabled: !Ui.Theme.noAnimations
                             NumberAnimation {
                                 duration: Ui.Theme.animationFast
-                                easing.type: Ui.Theme.easingStandard
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        x: Math.max(0, Math.min(track.width - width,
+                            progressFill.width - width / 2))
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 18
+                        height: 18
+                        radius: width / 2
+                        color: Ui.Theme.accentText
+                        border.width: 4
+                        border.color: Ui.Theme.accent
+                        visible: track.visible
+
+                        Behavior on x {
+                            enabled: !Ui.Theme.noAnimations
+                            NumberAnimation {
+                                duration: Ui.Theme.animationFast
+                                easing.type: Easing.OutCubic
                             }
                         }
                     }
                 }
             }
 
-            Text {
-                id: valueLabel
+            Rectangle {
+                id: valueBadge
 
+                width: Math.max(58, valueLabel.implicitWidth + Ui.Theme.spacingMd * 2)
+                height: 38
                 anchors.verticalCenter: parent.verticalCenter
-                text: window.controller.osdValueLabel
-                color: Ui.Theme.text
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeLabel
-                font.weight: Ui.Theme.fontWeightDemiBold
+                radius: height / 2
+                color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.16)
+                border.width: 1
+                border.color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.40)
+
+                Text {
+                    id: valueLabel
+
+                    anchors.centerIn: parent
+                    text: window.controller.osdValueLabel
+                    color: Ui.Theme.text
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: Ui.Theme.fontSizeLabel
+                    font.weight: Ui.Theme.fontWeightDemiBold
+                    onTextChanged: if (!Ui.Theme.noAnimations) valuePulse.restart()
+                }
+
+                SequentialAnimation {
+                    id: valuePulse
+
+                    NumberAnimation {
+                        target: valueBadge
+                        property: "scale"
+                        to: 0.88
+                        duration: Math.round(Ui.Theme.animationFast * 0.35)
+                        easing.type: Easing.InCubic
+                    }
+                    NumberAnimation {
+                        target: valueBadge
+                        property: "scale"
+                        to: 1
+                        duration: Math.round(Ui.Theme.animationFast * 0.65)
+                        easing.type: Easing.OutBack
+                    }
+                }
             }
         }
     }

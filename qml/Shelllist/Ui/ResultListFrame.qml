@@ -53,7 +53,46 @@ Rectangle {
         delegate: frame.rowDelegate
     }
 
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: Math.min(28, Math.max(16, frame.delegateHeight * 0.48))
+        z: 2
+        opacity: list.count > 0 && !list.atYBeginning ? 1 : 0
+        gradient: Gradient {
+            orientation: Gradient.Vertical
+            GradientStop { position: 0; color: Theme.surface }
+            GradientStop { position: 1; color: Theme.withAlpha(Theme.surface, 0) }
+        }
+
+        Behavior on opacity {
+            enabled: !Theme.noAnimations
+            NumberAnimation { duration: Theme.animationFast }
+        }
+    }
+
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: Math.min(28, Math.max(16, frame.delegateHeight * 0.48))
+        z: 2
+        opacity: list.count > 0 && !list.atYEnd ? 1 : 0
+        gradient: Gradient {
+            orientation: Gradient.Vertical
+            GradientStop { position: 0; color: Theme.withAlpha(Theme.surface, 0) }
+            GradientStop { position: 1; color: Theme.surface }
+        }
+
+        Behavior on opacity {
+            enabled: !Theme.noAnimations
+            NumberAnimation { duration: Theme.animationFast }
+        }
+    }
+
     CenteredMessage {
+        z: 3
         visible: frame.emptyVisible
         text: frame.emptyText
         font.pixelSize: Math.max(Theme.fontSizeCaption, Math.round(Theme.fontSizeBody * frame.uiScale))
