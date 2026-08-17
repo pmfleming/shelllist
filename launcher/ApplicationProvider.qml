@@ -76,8 +76,10 @@ Core.Provider {
         if (!application)
             return [];
         const busy = controller.actionInFlight;
+        const runtimeActions = application.kind === "desktop-shortcut"
+            ? [] : [closeAction(application, busy)].concat(windowActions(application, busy));
         return primaryActions(application, busy)
-            .concat([closeAction(application, busy)], windowActions(application, busy), desktopActions(application, busy));
+            .concat(runtimeActions, desktopActions(application, busy));
     }
 
     function subtitleFor(application: var): string {
