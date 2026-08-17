@@ -97,9 +97,12 @@ Item {
             height: 26
             icon: ""
             iconSize: 12
+            backgroundColor: "transparent"
+            border.width: 0
             flatIconColor: Ui.Theme.mutedText
             highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
             highlightedIconColor: Ui.Theme.accent
+            pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
             enabled: !!root.player && !!root.player.can_previous
             onClicked: root.controller.mediaOperation("previous")
         }
@@ -109,9 +112,12 @@ Item {
             height: 28
             icon: Presentation.playPauseActionIcon(root.player)
             iconSize: 13
-            flatIconColor: Ui.Theme.accent
-            highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.22)
+            backgroundColor: "transparent"
+            border.width: 0
+            flatIconColor: Ui.Theme.mutedText
+            highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
             highlightedIconColor: Ui.Theme.accent
+            pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
             enabled: !!root.player && (!!root.player.can_control
                 || !!root.player.can_play || !!root.player.can_pause)
             onClicked: root.controller.mediaOperation("play-pause")
@@ -122,9 +128,12 @@ Item {
             height: 26
             icon: ""
             iconSize: 12
+            backgroundColor: "transparent"
+            border.width: 0
             flatIconColor: Ui.Theme.mutedText
             highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
             highlightedIconColor: Ui.Theme.accent
+            pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
             enabled: !!root.player && !!root.player.can_next
             onClicked: root.controller.mediaOperation("next")
         }
