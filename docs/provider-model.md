@@ -1,22 +1,29 @@
-# Shelllist provider model
+# Provider model
 
-Shelllist's launcher-facing boundary is a normalized result/action/provider model. System APIs remain behind providers; views consume provider-neutral results and dispatch actions by stable identifiers.
+Shelllist surfaces share a normalized provider/result/action model. Generic views render results and dispatch stable action IDs; provider adapters translate those values to domain-daemon requests.
 
-## Design rules
+## Rules
 
-1. **Providers own capabilities and execution.** Views never call a system backend directly.
-2. **Results are serializable values.** They contain no function callbacks. `payload` is provider-private data and must not be interpreted by generic views.
-3. **Actions are identifiers, not callbacks.** The registry resolves the provider and sends an execution request containing provider, result, and action IDs.
-4. **Stable identity is mandatory.** A result key is derived as `<provider-id>::<encoded-provider-result-id>`. Display titles are never identity.
-5. **Provider data is untrusted at the boundary.** `qml/Shelllist/Core/Model.js` normalizes defaults, validates identifiers and enums, and rejects duplicate results/actions.
-6. **Live state is resolved at activation time.** `Provider.actionsFor(result)` may recalculate visibility, enabled state, and toggle state immediately before dispatch. This prevents stale snapshots from enabling unsafe actions.
-7. **Async queries are generation-scoped.** `ResultStore` ignores batches whose `queryId` is not the active query. Providers should also cancel superseded backend work where possible.
-8. **Presentation is separate from semantics.** Action role/kind/close policy are semantic; toolbar group, tone, and width live under `action.presentation`.
-9. **Destructive actions declare confirmation intent.** The provider still owns the actual confirmation workflow and must not trust the UI to have confirmed it.
-10. **Secrets do not belong in results, metadata, query context, or logs.** Secret prompts use a dedicated backend flow.
-11. **Visible model identity is persistent.** `ResultStore.visibleResults` remains the provider-neutral ranked array used by controllers, while `visibleModel` is one keyed `ListModel` synchronized with insert/move/update/remove operations so views do not reset every delegate for each backend snapshot.
-12. **Do not duplicate dynamic actions in snapshots.** A provider that overrides `actionsFor(result)` may leave `result.actions` empty and resolve current actions only when rendering or dispatching them. Providers use `Core.Model.keepOpenAction()` for the shared normalized keep-open action defaults instead of cloning action factories.
-13. **Details use one clear action hierarchy.** Exactly one visible primary action sits in the header, in line with the selected item's title and status. Zero or more mutually exclusive primary state alternatives may be declared as hidden actions, but only one may be visible. Secondary actions render in a toolbar directly below the header; settings and item-level actions remain in their relevant content sections. Wi-Fi's connect/cancel/disconnect header action with forget/sign-in/share below is the canonical layout.
+1. Providers own capabilities and execution. Generic views never call domain backends.
+2. Results and actions are serializable values, not callbacks.
+3. Display text is never identity. Result keys are derived from provider and result IDs.
+4. Provider payloads are private to their provider and controller.
+5. Boundary data is normalized and validated by `qml/Shelllist/Core/Model.js`.
+6. Providers resolve live actions immediately before rendering or execution.
+7. Queries are generation-scoped; stale batches are rejected.
+8. Destructive actions declare confirmation intent, but providers still own validation and effects.
+9. Secrets never appear in results, metadata, query context, command lines, or logs.
+10. Backends must revalidate identifiers and state before applying an effect.
+
+## Components
+
+- `Provider.qml` defines the adapter interface and execution signals.
+- `ProviderRegistry.qml` validates descriptors, resolves providers, and dispatches actions.
+- `ResultStore.qml` owns source results, query generations, ranking, and the visible model.
+- `Model.js` normalizes descriptors/results/actions and performs generic text ranking.
+- `ProviderChooserController.qml` connects a provider and result store to shared chooser behavior.
+
+`ResultStore.visibleResults` is the ranked provider-neutral array. `visibleModel` is a persistent keyed `ListModel`; snapshots are reconciled with insert/move/update/remove operations so recurring backend changes do not recreate every delegate.
 
 ## Provider descriptor
 
@@ -39,7 +46,7 @@ Shelllist's launcher-facing boundary is a normalized result/action/provider mode
 }
 ```
 
-Provider IDs are lowercase portable identifiers matching `[a-z0-9][a-z0-9._-]*`.
+Provider IDs match `[a-z0-9][a-z0-9._-]*`.
 
 ## Result
 
@@ -47,25 +54,27 @@ Provider IDs are lowercase portable identifiers matching `[a-z0-9][a-z0-9._-]*`.
 {
   schemaVersion: 1,
   providerId: "applications",
-  providerPriority: 50,
+  providerPriority: 100,
   id: "org.example.App.desktop",
   key: "applications::org.example.App.desktop",
   title: "Example",
-  subtitle: "An application",
+  subtitle: "Text editor",
   icon: "org.example.App",
   score: 120,
-  keywords: ["utility"],
+  keywords: ["editor", "utility"],
   badges: ["running"],
-  primaryActionId: "launch",
+  primaryActionId: "activate",
   actions: [],
-  preview: { kind: "application" },
+  preview: { kind: "application", available: true },
   state: { active: false, busy: false },
   payload: {},
   metadata: {}
 }
 ```
 
-`id` is stable within a provider. `key` is generated by the model and globally stable. `score` is provider relevance/priority for an empty query; generic textual relevance takes precedence when filtering.
+`id` is stable within one provider. `key` is generated globally. `payload` may contain the daemon summary but must not be interpreted by generic views.
+
+Providers with dynamic state normally leave `actions` empty and implement `actionsFor(result)`. This avoids normalizing duplicated action objects on every scan or resource snapshot.
 
 ## Action
 
@@ -96,11 +105,13 @@ Provider IDs are lowercase portable identifiers matching `[a-z0-9][a-z0-9._-]*`.
 }
 ```
 
-The registry fetches current actions from the provider and rejects hidden or disabled actions before calling `execute`.
+The registry fetches current actions and rejects hidden or disabled actions before calling `execute`. Semantic fields such as role, kind, confirmation, and close policy remain separate from visual placement and tone.
 
-## Query and batches
+Details use one visible primary header action. Secondary actions belong in the toolbar; settings and item-specific actions stay in their relevant content section.
 
-A query has a stable request ID, monotonic generation, text, limit, exact-match flag, selected provider IDs, and non-secret context. Providers return replacement or incremental batches tagged with that query ID.
+## Queries
+
+A query has a request ID, monotonic generation, text, limit, exact-match flag, selected providers, and non-secret context. Each batch belongs to exactly one provider:
 
 ```js
 {
@@ -112,9 +123,9 @@ A query has a stable request ID, monotonic generation, text, limit, exact-match 
 }
 ```
 
-A batch may contain results from exactly one provider. Cross-provider batches and duplicate keys are rejected. Replacement and removal paths assign `sourceResults` before consulting the `visibleResults` binding, so ranking is evaluated once per update; the resulting array is then reconciled into the persistent visible model by stable result key.
+Replacement and removal update source results first, rank once, then reconcile the visible model by stable key. Cross-provider batches, duplicate IDs, and inactive query IDs are rejected.
 
-## Execution request
+## Execution
 
 ```js
 {
@@ -129,10 +140,23 @@ A batch may contain results from exactly one provider. Cross-provider batches an
 }
 ```
 
-The full normalized result/action are included for convenience, but providers must route on IDs and revalidate system state before effects.
+The normalized result and action are included for adapter convenience. Routing still uses IDs, and Rust daemons remain authoritative for identity, stale-state checks, authorization, and effects.
 
 ## Current adapters
 
-`WifiProvider.qml` maps `nm-api` network values to generic results and translates generic action IDs back to `WifiController` operations. `BluetoothProvider.qml` does the same for opaque-keyed `bt-api` devices and pair/connect/disconnect/settings operations. Both adapters keep snapshot action arrays empty and implement `actionsFor(result)`, avoiding per-device action normalization during recurring backend snapshots while preserving live enabled/visible/toggle state. Both backend protocols remain independent of the generic UI contract.
+- `ApplicationProvider.qml` maps `app-api` catalog/window summaries and asynchronous operations.
+- `WifiProvider.qml` maps `nm-api` network state and connection/profile actions.
+- `BluetoothProvider.qml` maps opaque-keyed `bt-api` devices and operations.
+- `ClipboardProvider.qml` maps `clip-api` history entries and clipboard actions.
 
-Generic contracts live in the shared `Shelllist.Core` QML module under `qml/Shelllist/Core/`. Future application, clipboard, window, and file providers should implement `Shelllist.Core.Provider` rather than adding provider-specific behavior to generic result views or the registry.
+All four use the same result store and chooser navigation while retaining independent backend protocols and domain-specific details views. New searchable domains should add a provider adapter instead of adding domain branches to generic UI components.
+
+## Validation
+
+```sh
+node tests/check-provider-model.js qml/Shelllist/Core/Model.js
+tests/run-qml-tests.sh
+nix flake check
+```
+
+The QML tests cover provider registration, result-store reconciliation, query routing, and shared navigation. Checked daemon fixtures cover each external JSON boundary.

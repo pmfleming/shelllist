@@ -1,35 +1,83 @@
-# QML quality review
+# QML quality and maintenance
 
-This review used the local `qmlqualitylens` 0.3 checkout against `qmlqualitylens.config.json`. The before and after runs used `measure all`; QML lint, unit tests, the Nix flake, and a live Quickshell/bar-daemon session provide separate authoritative validation.
+Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract checks, and the Nix build as authoritative. `qmlqualitylens` is an additional structural review tool; generated reports live under `target/` and are not a release contract.
 
-## Static results
+## Current structure
 
-| Metric | Before | After |
-| --- | ---: | ---: |
-| Maintainability score | 89 | 90 |
-| Source lines | 13,165 | 13,104 |
-| Functions/handlers | 1,354 | 1,352 |
-| Bindings | 3,968 | 3,909 |
-| Findings | 592 | 556 |
-| High-risk hotspots | 13 | 11 |
-| Highest hotspot score | 147 | 131 |
-| Normalized clone groups | 27 | 26 |
-| Low-locality components | 15 | 13 |
-| Active cleanup findings | 7 | 3 |
-| Unresolved types | 3 | 0 |
-| Semantic high-severity findings | 1 | 0 |
+The UI is divided by ownership rather than by screen size:
 
-The aggregate leverage-class counts remain unchanged, but leverage improved at the changed boundaries: `ChooserShortcuts` is a 100-score, four-use shared component; `BarContent` leverage rose while its effort fell from 261 to 141; and `NavigationHelpDialog` leverage rose while effort fell from 200 to 175.
+- `shell/` owns the resident host, surface registry, IPC, and monitor-local bar creation.
+- `bar/` owns bar and OSD presentation only.
+- `launcher/`, `wifi/`, `bluetooth/`, and `clipboard/` own domain-specific controllers and views.
+- `Shelllist.Core` owns provider contracts, normalization, ranking, and keyed result models.
+- `Shelllist.Io` owns daemon transport and process boundaries.
+- `Shelllist.Ui` owns theme tokens, windows, chooser layout, controls, state layers, elevation, details, prompts, and navigation.
 
-## Refactoring decisions
+Rust daemons remain responsible for system parsing, identity, validation, policy, and effects. QML should not grow alternate compositor, NetworkManager, BlueZ, PipeWire, process, or clipboard parsers.
 
-- Replaced repeated chooser Escape/F5/Ctrl+Tab handlers with `ChooserShortcuts`.
-- Replaced ten static bar status blocks with normalized presentation descriptors and one delegate.
-- Isolated workspace rendering in `WorkspaceButton` and moved visual policy into presentation helpers.
-- Split terminal-operation handling into small transition functions for application, clipboard, and Bluetooth flows.
-- Replaced the nested shortcut Flickable/Column/Repeater tree with one ListView.
-- Removed unused frontend protocol methods, aliases, policy fields, Bluetooth mutation helpers, and test-only production helpers.
-- Removed unused configurable surface load policies; the registry now expresses the one load strategy it actually uses.
-- Added explicit QML type evidence for Quickshell/Qt plugin types instead of leaving unresolved symbols.
+## Maintained design decisions
 
-The remaining cleanup findings are parser limitations around alias targets and a same-directory component. Existing suppressions document Qt Quick Test discovery and dynamically supplied delegates; this review added no new suppressions.
+- One `shell/shell.qml` host replaces per-surface Quickshell processes.
+- Wi-Fi and Bluetooth load eagerly; Applications and Clipboard load on demand and remain warm.
+- `ChooserShortcuts` centralizes Escape, refresh, and details-tab shortcuts.
+- `ResultStore` reconciles one persistent keyed model instead of replacing ListView models.
+- Providers resolve dynamic actions at use time rather than copying actions into recurring snapshots.
+- `BarContent` renders normalized status descriptors through one delegate.
+- Workspace, focused-window, media, tray, and OSD presentation are isolated components.
+- `StateLayer` and `Elevation` centralize interaction feedback and depth.
+- Operation lifecycle policy is kept in small JavaScript helpers where it can be tested without a running shell.
+- Terminal backend events are correlated by request/operation IDs before changing UI state.
+
+## Review rules
+
+When changing QML:
+
+1. Keep backend transport in `Shelllist.Io` or a domain backend component.
+2. Keep controllers responsible for state transitions, not visual formatting.
+3. Put pure formatting and policy in testable JavaScript helpers.
+4. Prefer shared UI primitives when behavior is repeated across domains.
+5. Preserve stable delegate identity and avoid replacing models for live updates.
+6. Do not add polling when the daemon already exposes a subscription.
+7. Bound any unavoidable UI timer and stop it while the relevant surface is inactive.
+8. Respect `Theme.noAnimations` for nonessential motion.
+9. Keep expensive effects small and local; do not add frame-driven decoration to the bar.
+10. Document every lint suppression next to the framework limitation it addresses.
+
+## Quality gates
+
+Run the complete gate before merging structural changes:
+
+```sh
+nix flake check
+```
+
+Useful focused commands:
+
+```sh
+shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml bar/*.qml \
+  bluetooth/*.qml clipboard/*.qml launcher/*.qml wifi/*.qml \
+  wifi/networkinput/*.qml wifi/process/*.qml
+node tests/check-provider-model.js qml/Shelllist/Core/Model.js
+node tests/check-bar-presentation.js bar/BarPresentation.js
+tests/run-qml-tests.sh
+```
+
+For an optional structural report:
+
+```sh
+qmlqualitylens measure all --config qmlqualitylens.config.json
+```
+
+Review the generated hotspot, clone, locality, semantic, runtime-warning, and QML health reports together. Aggregate scores are directional; lint, tests, runtime behavior, and clear ownership boundaries take precedence over optimizing one metric.
+
+## Areas to watch
+
+The largest controllers coordinate many legitimate workflows and deserve extra review when modified:
+
+- Wi-Fi connection, prompt, advanced-profile, and sharing flows;
+- Bluetooth discovery, pairing, per-device operations, and adapter settings;
+- application lifecycle and resource-history refresh;
+- shared popup focus and monitor recovery;
+- provider model reconciliation.
+
+Prefer extracting a cohesive state machine or service component over creating thin forwarding wrappers solely to reduce file size.
