@@ -5,14 +5,12 @@ import QtQuick
 import QtQuick.Controls as Controls
 import Shelllist.Ui as Ui
 
-MouseArea {
+Item {
     id: root
 
     required property SystemTrayItem item
-    hoverEnabled: true
-    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-    implicitWidth: 24
-    implicitHeight: 51
+    implicitWidth: 26
+    implicitHeight: 37
 
     function displayMenu(): void {
         if (item.hasMenu)
@@ -35,14 +33,6 @@ MouseArea {
         return item.tooltipDescription ? title + "\n" + item.tooltipDescription : title;
     }
 
-    onClicked: function (mouse) { routeClick(mouse.button); }
-    onWheel: function (wheel) { scroll(wheel.angleDelta.y); }
-
-    Rectangle {
-        anchors.fill: parent
-        color: root.containsMouse ? Ui.Theme.hover : "transparent"
-    }
-
     IconImage {
         anchors.centerIn: parent
         width: 18
@@ -50,7 +40,18 @@ MouseArea {
         source: root.item.icon
     }
 
-    Controls.ToolTip.visible: root.containsMouse
+    Ui.StateLayer {
+        id: pointer
+
+        focusTarget: root
+        radius: height / 2
+        stateColor: Ui.Theme.text
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+        onClicked: function (mouse) { root.routeClick(mouse.button); }
+        onWheel: function (event) { root.scroll(event.angleDelta.y); }
+    }
+
+    Controls.ToolTip.visible: pointer.hovered
     Controls.ToolTip.text: root.tooltip()
     Controls.ToolTip.delay: 500
 }

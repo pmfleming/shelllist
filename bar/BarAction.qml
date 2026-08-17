@@ -9,6 +9,8 @@ Item {
     required property string tooltipText
     property color foreground: Ui.Theme.text
     property color hoverColor: Ui.Theme.hover
+    property color backgroundColor: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.56)
+    property color borderColor: Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72)
     property int horizontalPadding: 10
     property int minimumWidth: 0
     property bool interactive: true
@@ -39,11 +41,19 @@ Item {
     }
 
     implicitWidth: Math.max(minimumWidth, label.implicitWidth + horizontalPadding * 2)
-    implicitHeight: 51
+    implicitHeight: 37
 
     Rectangle {
         anchors.fill: parent
-        color: pointer.containsMouse && root.interactive ? root.hoverColor : "transparent"
+        radius: height / 2
+        color: root.backgroundColor
+        border.width: 1
+        border.color: root.borderColor
+
+        Behavior on color {
+            enabled: !Ui.Theme.noAnimations
+            ColorAnimation { duration: Ui.Theme.animationFast }
+        }
     }
 
     Text {
@@ -59,18 +69,29 @@ Item {
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideNone
+
+        Behavior on color {
+            enabled: !Ui.Theme.noAnimations
+            ColorAnimation { duration: Ui.Theme.animationFast }
+        }
     }
 
-    MouseArea {
+    Ui.StateLayer {
         id: pointer
-        anchors.fill: parent
-        hoverEnabled: true
+
+        focusTarget: root
+        radius: height / 2
+        stateColor: root.foreground
+        showStateBackground: true
+        hoverOpacity: 0.09
+        pressedOpacity: 0.15
+        interactive: root.interactive
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         onClicked: function (mouse) { root.routeClick(mouse.button); }
-        onWheel: function (wheel) { root.routeWheel(wheel.angleDelta.y); }
+        onWheel: function (event) { root.routeWheel(event.angleDelta.y); }
     }
 
-    Controls.ToolTip.visible: pointer.containsMouse && tooltipText.length > 0
+    Controls.ToolTip.visible: pointer.hovered && tooltipText.length > 0
     Controls.ToolTip.text: tooltipText
     Controls.ToolTip.delay: 500
 }

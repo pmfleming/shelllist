@@ -20,10 +20,30 @@ Item {
     })
 
     function moduleColor(tone: string): color { return toneColors[tone] || Ui.Theme.text; }
+    function moduleBackground(tone: string): color {
+        const foreground = moduleColor(tone);
+        const base = Ui.Theme.mix(Ui.Theme.surfaceRaised, foreground,
+            tone === "text" || tone === "muted" ? 0.02 : 0.08);
+        return Ui.Theme.withAlpha(base, 0.62);
+    }
 
     Rectangle {
         anchors.fill: parent
-        color: Ui.Theme.withAlpha(Ui.Theme.window, 0.92)
+        color: Ui.Theme.withAlpha(Ui.Theme.window, 0.80)
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0; color: Ui.Theme.withAlpha(Ui.Theme.window, 0.88) }
+            GradientStop { position: 0.5; color: Ui.Theme.withAlpha(Ui.Theme.surface, 0.76) }
+            GradientStop { position: 1; color: Ui.Theme.withAlpha(Ui.Theme.window, 0.88) }
+        }
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 1
+            color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.12)
+        }
 
         Rectangle {
             anchors.left: parent.left
@@ -49,9 +69,14 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.bottom: parent.bottom
+        anchors.topMargin: 7
+        anchors.bottomMargin: 7
         visible: root.controller.activePlayer !== null && root.centerClearance >= 72
         width: Math.min(420, implicitWidth, root.centerClearance)
-        horizontalPadding: root.layoutDensity === 0 ? 10 : 6
+        horizontalPadding: root.layoutDensity === 0 ? 12 : 8
+        backgroundColor: Ui.Theme.withAlpha(Ui.Theme.mix(Ui.Theme.surfaceRaised,
+            Ui.Theme.accent, 0.08), 0.68)
+        borderColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.42)
         text: Presentation.mediaText(root.controller.activePlayer)
         tooltipText: root.controller.activePlayer
             ? [root.controller.activePlayer.artist || root.controller.activePlayer.identity || "",
@@ -67,7 +92,9 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        spacing: root.layoutDensity === 0 ? 2 : 0
+        anchors.topMargin: 7
+        anchors.bottomMargin: 7
+        spacing: root.layoutDensity === 0 ? 5 : 3
 
         BarTray {
             height: parent.height
@@ -87,6 +114,9 @@ Item {
                 horizontalPadding: root.layoutDensity === 0 ? 10
                     : root.layoutDensity === 1 ? 7 : 5
                 foreground: root.moduleColor(modelData.tone)
+                backgroundColor: root.moduleBackground(modelData.tone)
+                borderColor: Ui.Theme.withAlpha(root.moduleColor(modelData.tone),
+                    modelData.tone === "text" || modelData.tone === "muted" ? 0.16 : 0.34)
                 fontWeight: modelData.weight
                 interactive: modelData.interactive
                 onPrimaryTriggered: root.controller.triggerModuleAction(modelData.primary)

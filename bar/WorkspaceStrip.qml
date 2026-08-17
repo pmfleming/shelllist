@@ -30,6 +30,17 @@ Item {
     implicitHeight: 51
 
     Rectangle {
+        x: 4
+        anchors.verticalCenter: parent.verticalCenter
+        width: Math.max(0, parent.width - 8)
+        height: 37
+        radius: height / 2
+        color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.56)
+        border.width: 1
+        border.color: Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72)
+    }
+
+    Rectangle {
         id: activeIndicator
 
         x: root.activeButton ? workspaceRow.x + root.activeButton.x : workspaceRow.leftPadding
