@@ -11,8 +11,10 @@ Item {
     required property string screenName
     property date now
     readonly property int layoutDensity: Presentation.layoutDensity(width)
+    readonly property real leftExtent: activeWindowChip.visible
+        ? activeWindowChip.x + activeWindowChip.width : workspaceCluster.width
     readonly property real centerClearance: Math.max(0, 2 * Math.min(
-        width / 2 - workspaceCluster.width - 8,
+        width / 2 - leftExtent - 8,
         width / 2 - statusCluster.width - 8))
     readonly property var toneColors: ({
         text: Ui.Theme.text, muted: Ui.Theme.mutedText, accent: Ui.Theme.accent,
@@ -64,27 +66,30 @@ Item {
         layoutDensity: root.layoutDensity
     }
 
-    BarAction {
+    ActiveWindowChip {
+        id: activeWindowChip
+
+        anchors.left: workspaceCluster.right
+        anchors.leftMargin: 6
+        anchors.verticalCenter: parent.verticalCenter
+        width: implicitWidth
+        controller: root.controller
+        screenName: root.screenName
+        layoutDensity: root.layoutDensity
+    }
+
+    MediaChip {
         id: mediaAction
+
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.topMargin: 7
         anchors.bottomMargin: 7
-        visible: root.controller.activePlayer !== null && root.centerClearance >= 72
-        width: Math.min(420, implicitWidth, root.centerClearance)
-        horizontalPadding: root.layoutDensity === 0 ? 12 : 8
-        backgroundColor: Ui.Theme.withAlpha(Ui.Theme.mix(Ui.Theme.surfaceRaised,
-            Ui.Theme.accent, 0.08), 0.68)
-        borderColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.42)
-        text: Presentation.mediaText(root.controller.activePlayer)
-        tooltipText: root.controller.activePlayer
-            ? [root.controller.activePlayer.artist || root.controller.activePlayer.identity || "",
-                root.controller.activePlayer.album || ""].filter(Boolean).join("\n") : ""
-        elide: Text.ElideRight
-        onPrimaryTriggered: root.controller.mediaOperation("play-pause")
-        onSecondaryTriggered: root.controller.mediaOperation("next")
-        onMiddleTriggered: root.controller.mediaOperation("previous")
+        visible: root.controller.activePlayer !== null && root.centerClearance >= 96
+        width: Math.min(implicitWidth, root.centerClearance)
+        controller: root.controller
+        layoutDensity: root.layoutDensity
     }
 
     Row {

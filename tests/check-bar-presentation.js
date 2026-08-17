@@ -18,8 +18,22 @@ equal(context.workspaceIds({ workspaces: [
 equal(context.activeWorkspaceId({ monitors: [
     { name: "eDP-1", active_workspace_id: 3 }
 ] }, "eDP-1"), 3, "monitor-local active workspace");
+equal(context.activeWindowFor({ focused_monitor: "eDP-1", active_window: { title: "Terminal" } }, "eDP-1"),
+    { title: "Terminal" }, "active window belongs to focused monitor");
+equal(context.activeWindowFor({ focused_monitor: "eDP-1", active_window: { title: "Terminal" } }, "DP-1"),
+    null, "active window is hidden on other monitors");
+equal(context.windowIconName({ initial_class: "ghostty", class_name: "fallback" }), "ghostty",
+    "initial window class drives icon lookup");
 equal(context.playerIcon({ desktop_entry: "spotify" }), "", "Spotify icon");
 equal(context.playbackIcon({ playback_status: "paused" }), "", "paused icon");
+equal(context.mediaPositionPercent({
+    length_us: 240000000, position_us: 60000000, playback_status: "playing",
+    position_observed_at_unix_ms: 1000, playback_rate: 1
+}, 61000), 50, "media progress advances from observed position");
+equal(context.mediaPositionPercent({
+    length_us: 100, position_us: 90, playback_status: "playing",
+    position_observed_at_unix_ms: 0, playback_rate: 2
+}, 1000), 100, "media progress is bounded");
 equal(context.audioIcon({ available: true, muted: false, volume_percent: 80 }), "", "high-volume icon");
 equal(context.outputOsd({ available: true, muted: false, volume_percent: 80, sink_description: "Speakers" }), {
     kind: "audio", icon: "", label: "Speakers", valueLabel: "80%", percent: 80, progressVisible: true

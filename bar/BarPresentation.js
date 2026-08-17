@@ -47,6 +47,21 @@ function playerFor(media) {
     return players.find(function (player) { return player.id === media.active_player; }) || null;
 }
 
+function activeWindowFor(state, monitorName) {
+    if (!state || !state.active_window)
+        return null;
+    const focusedMonitor = String(state.focused_monitor || "");
+    return focusedMonitor.length === 0 || focusedMonitor === monitorName
+        ? state.active_window : null;
+}
+
+function windowIconName(window) {
+    if (!window)
+        return "application-x-executable";
+    const value = String(window.initial_class || window.class_name || "").trim();
+    return value.length > 0 ? value : "application-x-executable";
+}
+
 function playerIcon(player) {
     return player && String(player.desktop_entry || "").toLowerCase().indexOf("spotify") >= 0 ? "" : "";
 }
@@ -61,6 +76,23 @@ function mediaText(player) {
         return "";
     const title = player.title || player.identity || "Unknown track";
     return playerIcon(player) + " " + title + "  " + playbackIcon(player);
+}
+
+function mediaPositionPercent(player, nowMs) {
+    if (!player)
+        return 0;
+    const length = Math.max(0, Number(player.length_us) || 0);
+    if (length <= 0)
+        return 0;
+    let position = Math.max(0, Number(player.position_us) || 0);
+    const status = String(player.playback_status || "").toLowerCase();
+    if (status === "playing") {
+        const observedAt = Math.max(0, Number(player.position_observed_at_unix_ms) || 0);
+        const elapsedMs = Math.max(0, (Number(nowMs) || 0) - observedAt);
+        const rate = Math.max(0, Number(player.playback_rate) || 1);
+        position += elapsedMs * 1000 * rate;
+    }
+    return clamp(position / length * 100, 0, 100);
 }
 
 function audioIcon(audio) {
