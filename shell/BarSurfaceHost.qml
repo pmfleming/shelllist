@@ -10,7 +10,7 @@ Item {
 
     required property Bar.BarController controller
     property bool barsEnabled: true
-    property bool surfacesActive: barsEnabled
+    property bool surfacesActive: false
     property string lastScreenSignature: ""
     property double lastHeartbeatMs: 0
     property bool initialized: false
@@ -72,6 +72,7 @@ Item {
     }
 
     Component.onCompleted: {
+        surfacesActive = barsEnabled;
         lastHeartbeatMs = Date.now();
         observeScreens();
     }
@@ -82,7 +83,6 @@ Item {
     }
 
     Timer {
-        id: heartbeat
         interval: 2000
         repeat: true
         running: root.barsEnabled

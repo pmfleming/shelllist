@@ -11,8 +11,10 @@ Item {
     property int acceptedButtons: Qt.LeftButton
     property real hoverOpacity: 0.08
     property real pressedOpacity: 0.14
-    property real pressX: width / 2
-    property real pressY: height / 2
+    property real pressX: -1
+    property real pressY: -1
+    readonly property real effectivePressX: pressX >= 0 ? pressX : width / 2
+    readonly property real effectivePressY: pressY >= 0 ? pressY : height / 2
     readonly property bool containsMouse: pointer.containsMouse
     readonly property bool hovered: containsMouse
     readonly property bool pressed: pointer.pressed
@@ -46,8 +48,8 @@ Item {
 
         property real diameter: 0
 
-        x: root.pressX - diameter / 2
-        y: root.pressY - diameter / 2
+        x: root.effectivePressX - diameter / 2
+        y: root.effectivePressY - diameter / 2
         width: diameter
         height: diameter
         radius: diameter / 2

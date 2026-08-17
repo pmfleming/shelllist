@@ -2,66 +2,44 @@
   "project_name": "shelllist",
   "project_root": ".",
   "source_roots": ["bar", "shell", "wifi", "bluetooth", "clipboard", "launcher", "qml", "tests/qml"],
+  "entrypoints": [
+    "shell/shell.qml",
+    "tests/qml/tst_hyprland_dispatch.qml",
+    "tests/qml/tst_ip_settings_state.qml",
+    "tests/qml/tst_jsonl_routing.qml",
+    "tests/qml/tst_provider_registry.qml",
+    "tests/qml/tst_result_store.qml",
+    "tests/qml/tst_segmented_navigation.qml",
+    "tests/qml/tst_wifi_prompt.qml"
+  ],
+  "dynamic_component_edges": [
+    { "from": "shell/SurfaceRegistry.qml", "to": "shell/SurfaceBundle.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "launcher/ApplicationContent.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "launcher/ApplicationController.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "wifi/WifiContent.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "wifi/WifiPromptController.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "wifi/WifiController.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "bluetooth/BluetoothContent.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "bluetooth/BluetoothController.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "clipboard/ClipboardContent.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "clipboard/ClipboardController.qml" },
+    { "from": "bluetooth/BluetoothContent.qml", "to": "bluetooth/BluetoothDeviceListPane.qml" },
+    { "from": "bluetooth/BluetoothContent.qml", "to": "bluetooth/BluetoothDeviceDetails.qml" },
+    { "from": "bluetooth/BluetoothDeviceListPane.qml", "to": "bluetooth/BluetoothDeviceListRow.qml" },
+    { "from": "wifi/WifiContent.qml", "to": "wifi/NetworkListPane.qml" },
+    { "from": "wifi/WifiContent.qml", "to": "wifi/NetworkDetailsPane.qml" },
+    { "from": "clipboard/ClipboardContent.qml", "to": "clipboard/ClipboardListPane.qml" },
+    { "from": "clipboard/ClipboardContent.qml", "to": "clipboard/ClipboardDetails.qml" }
+  ],
   "output_dir": "target/qmlqualitylens",
   "profile": "quickshell",
   "external_modules": ["QtTest"],
-  "external_types": ["GlobalShortcut", "IconImage", "IpcHandler", "PanelWindow", "Region", "Settings", "Shortcut", "SignalSpy", "TestCase", "Variants"],
+  "external_types": ["GlobalShortcut", "IconImage", "IpcHandler", "PanelWindow", "RectangularShadow", "Region", "Settings", "Shortcut", "SignalSpy", "TestCase", "Variants"],
   "tools": {
     "qmllint": { "check": false },
     "qmltestrunner": { "check": false },
     "runtime": { "check": false }
   },
-  "suppressions": [
-    {
-      "kind": "cleanup.unused_component",
-      "file": "bluetooth/BluetoothDeviceDetails.qml",
-      "reason": "Instantiated through SplitChooserLayout's details Component"
-    },
-    {
-      "kind": "cleanup.unused_component",
-      "file": "bluetooth/BluetoothDeviceListPane.qml",
-      "reason": "Instantiated through SplitChooserLayout's list Component"
-    },
-    {
-      "kind": "cleanup.unused_component",
-      "file": "bluetooth/BluetoothDeviceListRow.qml",
-      "reason": "Instantiated as ResultListFrame's delegate Component"
-    },
-    {
-      "kind": "cleanup.unused_component",
-      "file": "tests/qml/tst_hyprland_dispatch.qml",
-      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
-    },
-    {
-      "kind": "cleanup.unused_component",
-      "file": "tests/qml/tst_ip_settings_state.qml",
-      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
-    },
-    {
-      "kind": "cleanup.unused_component",
-      "file": "tests/qml/tst_jsonl_routing.qml",
-      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
-    },
-    {
-      "kind": "cleanup.unused_component",
-      "file": "tests/qml/tst_provider_registry.qml",
-      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
-    },
-    {
-      "kind": "cleanup.unused_component",
-      "file": "tests/qml/tst_result_store.qml",
-      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
-    },
-    {
-      "kind": "cleanup.unused_component",
-      "file": "tests/qml/tst_segmented_navigation.qml",
-      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
-    },
-    {
-      "kind": "cleanup.unused_component",
-      "file": "tests/qml/tst_wifi_prompt.qml",
-      "reason": "Discovered directly by qmltestrunner as a test entrypoint"
-    }
-  ],
+  "suppressions": [],
   "exclude": []
 }

@@ -7,7 +7,7 @@ Item {
 
     required property BarController controller
     required property int layoutDensity
-    property double nowMs: Date.now()
+    property double nowMs: 0
     readonly property var player: controller.activePlayer
     readonly property string title: player
         ? (player.title || player.identity || "Unknown track") : ""
@@ -184,8 +184,6 @@ Item {
     }
 
     Ui.StateLayer {
-        id: pointer
-
         anchors.right: mediaControls.left
         anchors.rightMargin: 2
         focusTarget: root
@@ -196,6 +194,8 @@ Item {
         onClicked: root.controller.mediaOperation("play-pause")
     }
 
+
+    Component.onCompleted: nowMs = Date.now()
 
     Timer {
         interval: 500

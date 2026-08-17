@@ -35,8 +35,6 @@ Item {
     }
 
     Ui.StateLayer {
-        id: pointer
-
         focusTarget: root
         radius: height / 2
         stateColor: Ui.Theme.text

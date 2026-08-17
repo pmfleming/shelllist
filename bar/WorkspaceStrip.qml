@@ -41,8 +41,6 @@ Item {
     }
 
     Rectangle {
-        id: activeIndicator
-
         x: root.activeButton ? workspaceRow.x + root.activeButton.x : workspaceRow.leftPadding
         anchors.verticalCenter: parent.verticalCenter
         width: root.activeButton ? root.activeButton.width : 0

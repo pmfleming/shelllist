@@ -40,7 +40,9 @@ PanelWindow { // qmllint disable uncreatable-type
     Rectangle {
         id: surface
 
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: parent.height
         radius: Ui.Theme.panelRadius + 4
         color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.97)
         border.width: 1

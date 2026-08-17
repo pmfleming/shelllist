@@ -21,8 +21,6 @@ Item {
     height: 51
 
     Rectangle {
-        id: tile
-
         anchors.centerIn: parent
         width: button.compact ? 23 : 27
         height: width

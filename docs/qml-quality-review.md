@@ -28,6 +28,18 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - Operation lifecycle policy is kept in small JavaScript helpers where it can be tested without a running shell.
 - Terminal backend events are correlated by request/operation IDs before changing UI state.
 
+## Reachability evidence
+
+`qmlqualitylens.config.json` declares the resident shell and QML test files as entrypoints. It also records dynamic component edges hidden behind `Component`, `Loader.sourceComponent`, and `SplitChooserLayout` factories. These edges are analysis metadata, not runtime dependencies. Keep them synchronized when a surface gains or removes dynamically instantiated content; prefer an explicit edge over a broad unused-component suppression.
+
+The v0.5 calibration resolves all local imports/types, reaches 142 of 161 components from eight application/test roots, and leaves the remaining 19 as exported module components rather than dead-code findings. Cleanup currently reports no unused components or ids.
+
+## Focused declarative-state refactoring
+
+When a property is intentionally mutable, initialize it as state rather than first creating a binding that an event handler later destroys. Keep responsive defaults in separate readonly derived properties. Similarly, an animated geometry axis must have one owner: do not combine `anchors.fill` with an explicit animated `x` or `y` binding.
+
+The first focused pass applied these rules to bar surface recovery, media progress time, StateLayer ripple origins, and OSD vertical motion. It also removed unreferenced presentation ids. This eliminated the high-confidence binding-loss and geometry-conflict findings without changing the heuristic score or broad component architecture.
+
 ## Review rules
 
 When changing QML:
@@ -68,7 +80,7 @@ For an optional structural report:
 qmlqualitylens measure all --config qmlqualitylens.config.json
 ```
 
-Review the generated hotspot, clone, locality, semantic, runtime-warning, and QML health reports together. Aggregate scores are directional; lint, tests, runtime behavior, and clear ownership boundaries take precedence over optimizing one metric.
+Review the generated reachability, cleanup, hotspot, clone, locality, semantic, runtime-warning, and QML health reports together. Aggregate scores are directional; lint, tests, runtime behavior, and clear ownership boundaries take precedence over optimizing one metric.
 
 ## Areas to watch
 
