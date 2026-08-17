@@ -1,7 +1,6 @@
 import Quickshell
 import Quickshell.Widgets
 import QtQuick
-import QtQuick.Controls as Controls
 import Shelllist.Ui as Ui
 import "BarPresentation.js" as Presentation
 
@@ -107,11 +106,6 @@ Item {
         onClicked: root.controller.openSurface("applications")
     }
 
-    Controls.ToolTip.visible: pointer.hovered
-    Controls.ToolTip.text: root.sourceTitle
-        + (root.activeWindow ? "\n" + (root.activeWindow.class_name || "Application") : "")
-        + "\nClick to open Applications"
-    Controls.ToolTip.delay: 500
 
     Behavior on implicitWidth {
         enabled: !Ui.Theme.noAnimations

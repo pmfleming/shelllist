@@ -1,12 +1,10 @@
 import QtQuick
-import QtQuick.Controls as Controls
 import Shelllist.Ui as Ui
 
 Item {
     id: root
 
     required property string text
-    required property string tooltipText
     property color foreground: Ui.Theme.text
     property color hoverColor: Ui.Theme.hover
     property color backgroundColor: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.56)
@@ -91,7 +89,4 @@ Item {
         onWheel: function (event) { root.routeWheel(event.angleDelta.y); }
     }
 
-    Controls.ToolTip.visible: pointer.hovered && tooltipText.length > 0
-    Controls.ToolTip.text: tooltipText
-    Controls.ToolTip.delay: 500
 }

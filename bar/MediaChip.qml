@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls as Controls
 import Shelllist.Ui as Ui
 import "BarPresentation.js" as Presentation
 
@@ -101,7 +100,6 @@ Item {
             flatIconColor: Ui.Theme.mutedText
             highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
             highlightedIconColor: Ui.Theme.accent
-            toolTip: "Previous track"
             enabled: !!root.player && !!root.player.can_previous
             onClicked: root.controller.mediaOperation("previous")
         }
@@ -114,9 +112,6 @@ Item {
             flatIconColor: Ui.Theme.accent
             highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.22)
             highlightedIconColor: Ui.Theme.accent
-            toolTip: root.player
-                && String(root.player.playback_status || "").toLowerCase() === "playing"
-                ? "Pause" : "Play"
             enabled: !!root.player && (!!root.player.can_control
                 || !!root.player.can_play || !!root.player.can_pause)
             onClicked: root.controller.mediaOperation("play-pause")
@@ -130,7 +125,6 @@ Item {
             flatIconColor: Ui.Theme.mutedText
             highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
             highlightedIconColor: Ui.Theme.accent
-            toolTip: "Next track"
             enabled: !!root.player && !!root.player.can_next
             onClicked: root.controller.mediaOperation("next")
         }
@@ -193,11 +187,6 @@ Item {
         onClicked: root.controller.mediaOperation("play-pause")
     }
 
-    Controls.ToolTip.visible: pointer.hovered
-    Controls.ToolTip.text: root.player
-        ? [root.player.artist || root.player.identity || "", root.player.album || ""]
-            .filter(Boolean).join("\n") : ""
-    Controls.ToolTip.delay: 500
 
     Timer {
         interval: 500

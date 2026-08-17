@@ -2,7 +2,6 @@ import Quickshell
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import QtQuick
-import QtQuick.Controls as Controls
 import Shelllist.Ui as Ui
 
 Item {
@@ -28,11 +27,6 @@ Item {
         if (delta !== 0)
             item.scroll(Math.round(delta / 8), false);
     }
-    function tooltip(): string {
-        const title = item.tooltipTitle || item.title || item.id;
-        return item.tooltipDescription ? title + "\n" + item.tooltipDescription : title;
-    }
-
     IconImage {
         anchors.centerIn: parent
         width: 18
@@ -51,7 +45,4 @@ Item {
         onWheel: function (event) { root.scroll(event.angleDelta.y); }
     }
 
-    Controls.ToolTip.visible: pointer.hovered
-    Controls.ToolTip.text: root.tooltip()
-    Controls.ToolTip.delay: 500
 }

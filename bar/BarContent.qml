@@ -115,7 +115,6 @@ Item {
 
                 height: parent.height
                 text: Presentation.moduleText(modelData, root.layoutDensity)
-                tooltipText: modelData.tooltip
                 horizontalPadding: root.layoutDensity === 0 ? 10
                     : root.layoutDensity === 1 ? 7 : 5
                 foreground: root.moduleColor(modelData.tone)
