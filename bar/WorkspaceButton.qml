@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls as Controls
 import Shelllist.Ui as Ui
 import "BarPresentation.js" as Presentation
 
@@ -15,12 +14,6 @@ Item {
         screenName) === workspaceId
     readonly property bool occupied: !!workspace && Number(workspace.windows || 0) > 0
     readonly property string asset: Presentation.workspaceAsset(workspaceId)
-    readonly property string tooltipText: {
-        const label = workspace && workspace.name ? workspace.name : "Workspace " + workspaceId;
-        const windows = workspace ? Number(workspace.windows || 0) : 0;
-        return label + " • " + windows + (windows === 1 ? " window" : " windows")
-            + (workspace && workspace.last_window_title ? "\n" + workspace.last_window_title : "");
-    }
 
     width: compact ? 23 : 27
     height: 51
@@ -105,8 +98,6 @@ Item {
     }
 
     Ui.StateLayer {
-        id: workspaceState
-
         focusTarget: button
         radius: height / 2
         stateColor: Ui.Theme.accent
@@ -116,7 +107,4 @@ Item {
         onClicked: button.controller.focusWorkspace(button.workspaceId)
     }
 
-    Controls.ToolTip.visible: workspaceState.hovered
-    Controls.ToolTip.text: button.tooltipText
-    Controls.ToolTip.delay: 500
 }
