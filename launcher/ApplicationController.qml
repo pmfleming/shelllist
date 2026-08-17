@@ -35,6 +35,14 @@ Ui.ProviderChooserController {
         activeOperationId = "";
         activeRequest = null;
     }
+    function recoverTimedOutAction(): void {
+        if (!actionInFlight)
+            return;
+        clearActiveAction();
+        status = "Application launch status timed out; refreshed current state";
+        forceRefresh = false;
+        beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
+    }
     function clearResourceHistory(): void {
         resourceHistory = [];
         historyTargetId = "";
@@ -56,11 +64,13 @@ Ui.ProviderChooserController {
         beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
     }
     function selectDetailsTab(value: string): void {
-        if (value === "application" || value === "resources")
+        if (value === "application"
+                || (value === "resources" && selectedApplication
+                    && selectedApplication.kind !== "desktop-shortcut"))
             detailsTab = value;
     }
     function cycleDetailsTab(): bool {
-        if (!detailsOpen || !hasSelection)
+        if (!detailsOpen || !hasSelection || selectedApplication.kind === "desktop-shortcut")
             return false;
         detailsTab = detailsTab === "application" ? "resources" : "application";
         return true;
@@ -205,7 +215,12 @@ Ui.ProviderChooserController {
             clearResourceHistory();
     }
     onDetailsTabChanged: if (detailsTab === "resources") requestResourceHistory()
-    onSelectedResultChanged: if (detailsOpen && detailsTab === "resources") requestResourceHistory()
+    onSelectedResultChanged: {
+        if (selectedApplication && selectedApplication.kind === "desktop-shortcut")
+            detailsTab = "application";
+        else if (detailsOpen && detailsTab === "resources")
+            requestResourceHistory();
+    }
 
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture
@@ -213,6 +228,13 @@ Ui.ProviderChooserController {
         blocked: controller.actionInFlight
         startMessage: "Capturing Applications window…"
         onStatusChanged: function (message) { controller.status = message; }
+    }
+
+    Timer {
+        interval: 20000
+        running: controller.actionInFlight
+        repeat: false
+        onTriggered: controller.recoverTimedOutAction()
     }
 
     Timer {

@@ -411,10 +411,18 @@
               }
 
               place_and_focus() {
-                if [ -n "$workspace" ]; then
-                  hyprctl dispatch movetoworkspacesilent "$workspace,class:^($window_class)$" >/dev/null 2>&1 || true
-                fi
-                hyprctl dispatch focuswindow "class:^($window_class)$" >/dev/null 2>&1 || true
+                case "$workspace" in
+                  "") ;;
+                  *[!A-Za-z0-9_.:+-]*) workspace= ;;
+                  *)
+                    hyprctl dispatch "hl.dsp.window.move({ workspace = '$workspace', follow = false, window = 'class:^($window_class)$' })" >/dev/null 2>&1 \
+                      || hyprctl dispatch movetoworkspacesilent "$workspace,class:^($window_class)$" >/dev/null 2>&1 \
+                      || true
+                    ;;
+                esac
+                hyprctl dispatch "hl.dsp.focus({ window = 'class:^($window_class)$' })" >/dev/null 2>&1 \
+                  || hyprctl dispatch focuswindow "class:^($window_class)$" >/dev/null 2>&1 \
+                  || true
               }
 
               log_event() {
@@ -470,6 +478,7 @@
               "$browser" \
                 --user-data-dir="$profile_dir" \
                 --class="$window_class" \
+                --ozone-platform=x11 \
                 --no-first-run \
                 --no-default-browser-check \
                 --disable-search-engine-choice-screen \

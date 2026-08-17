@@ -29,10 +29,12 @@ Ui.ActionDetailsPane {
         footerHeight: pane.footerHeight
         sectionSpacing: pane.sectionSpacing
         selectedValue: pane.controller.detailsTab
-        tabs: [
-            { value: "application", icon: "󰀻", label: "Application" },
-            { value: "resources", icon: "󰄪", label: "Resources" }
-        ]
+        tabs: pane.application.kind === "desktop-shortcut"
+            ? [{ value: "application", icon: "󰀻", label: "Shortcut" }]
+            : [
+                { value: "application", icon: "󰀻", label: "Application" },
+                { value: "resources", icon: "󰄪", label: "Resources" }
+            ]
         onSelected: function (value) { pane.controller.selectDetailsTab(value); }
 
         ApplicationPage {
