@@ -17,7 +17,7 @@ Item {
     readonly property real progress: Presentation.mediaPositionPercent(player, nowMs)
 
     implicitWidth: Math.min(420, artFrame.width + titleLabel.implicitWidth
-        + playbackLabel.implicitWidth + 36)
+        + mediaControls.implicitWidth + 34)
     implicitHeight: 37
 
     Rectangle {
@@ -73,8 +73,8 @@ Item {
 
         anchors.left: artFrame.right
         anchors.leftMargin: 8
-        anchors.right: playbackLabel.left
-        anchors.rightMargin: 8
+        anchors.right: mediaControls.left
+        anchors.rightMargin: 7
         anchors.verticalCenter: parent.verticalCenter
         text: root.labelText
         color: Ui.Theme.text
@@ -85,16 +85,55 @@ Item {
         onTextChanged: if (!Ui.Theme.noAnimations) titlePulse.restart()
     }
 
-    Text {
-        id: playbackLabel
+    Row {
+        id: mediaControls
 
         anchors.right: parent.right
-        anchors.rightMargin: 11
+        anchors.rightMargin: 6
         anchors.verticalCenter: parent.verticalCenter
-        text: Presentation.playbackIcon(root.player)
-        color: Ui.Theme.accent
-        font.family: Ui.Theme.iconFontFamily
-        font.pixelSize: Ui.Theme.fontSizeSmall
+        spacing: 1
+
+        Ui.FlatIconButton {
+            width: 26
+            height: 26
+            icon: ""
+            iconSize: 12
+            flatIconColor: Ui.Theme.mutedText
+            highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
+            highlightedIconColor: Ui.Theme.accent
+            toolTip: "Previous track"
+            enabled: !!root.player && !!root.player.can_previous
+            onClicked: root.controller.mediaOperation("previous")
+        }
+
+        Ui.FlatIconButton {
+            width: 28
+            height: 28
+            icon: Presentation.playPauseActionIcon(root.player)
+            iconSize: 13
+            flatIconColor: Ui.Theme.accent
+            highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.22)
+            highlightedIconColor: Ui.Theme.accent
+            toolTip: root.player
+                && String(root.player.playback_status || "").toLowerCase() === "playing"
+                ? "Pause" : "Play"
+            enabled: !!root.player && (!!root.player.can_control
+                || !!root.player.can_play || !!root.player.can_pause)
+            onClicked: root.controller.mediaOperation("play-pause")
+        }
+
+        Ui.FlatIconButton {
+            width: 26
+            height: 26
+            icon: ""
+            iconSize: 12
+            flatIconColor: Ui.Theme.mutedText
+            highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
+            highlightedIconColor: Ui.Theme.accent
+            toolTip: "Next track"
+            enabled: !!root.player && !!root.player.can_next
+            onClicked: root.controller.mediaOperation("next")
+        }
     }
 
     Rectangle {
@@ -144,19 +183,14 @@ Item {
     Ui.StateLayer {
         id: pointer
 
+        anchors.right: mediaControls.left
+        anchors.rightMargin: 2
         focusTarget: root
         radius: height / 2
         stateColor: Ui.Theme.accent
         showStateBackground: true
-        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-        onClicked: function (mouse) {
-            if (mouse.button === Qt.RightButton)
-                root.controller.mediaOperation("next");
-            else if (mouse.button === Qt.MiddleButton)
-                root.controller.mediaOperation("previous");
-            else
-                root.controller.mediaOperation("play-pause");
-        }
+        acceptedButtons: Qt.LeftButton
+        onClicked: root.controller.mediaOperation("play-pause")
     }
 
     Controls.ToolTip.visible: pointer.hovered

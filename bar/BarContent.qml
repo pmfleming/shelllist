@@ -86,7 +86,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.topMargin: 7
         anchors.bottomMargin: 7
-        visible: root.controller.activePlayer !== null && root.centerClearance >= 96
+        visible: root.controller.activePlayer !== null && root.centerClearance >= 150
         width: Math.min(implicitWidth, root.centerClearance)
         controller: root.controller
         layoutDensity: root.layoutDensity

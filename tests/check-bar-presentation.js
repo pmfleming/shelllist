@@ -29,7 +29,9 @@ equal(context.activeWindowFor({ focused_monitor: "eDP-1", active_window: { title
 equal(context.windowIconName({ initial_class: "ghostty", class_name: "fallback" }), "ghostty",
     "initial window class drives icon lookup");
 equal(context.playerIcon({ desktop_entry: "spotify" }), "", "Spotify icon");
-equal(context.playbackIcon({ playback_status: "paused" }), "", "paused icon");
+equal(context.playbackIcon({ playback_status: "paused" }), "", "paused status icon");
+equal(context.playPauseActionIcon({ playback_status: "playing" }), "", "playing media exposes pause action");
+equal(context.playPauseActionIcon({ playback_status: "paused" }), "", "paused media exposes play action");
 equal(context.mediaPositionPercent({
     length_us: 240000000, position_us: 60000000, playback_status: "playing",
     position_observed_at_unix_ms: 1000, playback_rate: 1

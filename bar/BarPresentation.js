@@ -71,6 +71,11 @@ function playbackIcon(player) {
     return status === "playing" ? "" : status === "paused" ? "" : "";
 }
 
+function playPauseActionIcon(player) {
+    const status = player ? String(player.playback_status || "").toLowerCase() : "stopped";
+    return status === "playing" ? "" : "";
+}
+
 function mediaText(player) {
     if (!player)
         return "";
