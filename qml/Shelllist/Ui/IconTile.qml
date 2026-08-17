@@ -36,5 +36,13 @@ Rectangle {
         rotation: tile.iconRotation
     }
 
-    ControlPointerArea { id: area; focusTarget: tile; enabled: tile.clickable && tile.enabled; onClicked: tile.clicked() }
+    StateLayer {
+        id: area
+        focusTarget: tile
+        radius: tile.radius
+        stateColor: tile.iconColor
+        showStateBackground: false
+        interactive: tile.clickable
+        onClicked: tile.clicked()
+    }
 }

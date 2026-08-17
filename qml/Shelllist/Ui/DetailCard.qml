@@ -19,6 +19,13 @@ Rectangle {
     border.color: Theme.mix(Theme.border, Theme.text, 0.12)
     border.width: 1
 
+    Elevation {
+        anchors.fill: parent
+        radius: card.radius
+        level: 1
+        z: -1
+    }
+
     Column {
         anchors.fill: parent
         anchors.leftMargin: card.contentPadding

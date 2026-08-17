@@ -56,7 +56,14 @@ Rectangle {
         labelColor: control.labelColor
     }
 
-    ControlPointerArea { id: area; focusTarget: control; onClicked: control.clicked() }
+    StateLayer {
+        id: area
+        focusTarget: control
+        radius: control.radius
+        stateColor: control.labelColor
+        showStateBackground: false
+        onClicked: control.clicked()
+    }
 
     Controls.ToolTip.visible: area.containsMouse && control.toolTip.length > 0
     Controls.ToolTip.text: control.toolTip

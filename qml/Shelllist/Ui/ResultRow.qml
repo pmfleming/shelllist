@@ -92,13 +92,14 @@ Rectangle {
         onClicked: row.detailsToggled(row.index)
     }
 
-    MouseArea {
+    StateLayer {
         id: rowMouse
 
-        anchors.fill: parent
         anchors.rightMargin: row.scaled(38) + row.trailingActionWidth
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
+        focusTarget: row
+        radius: row.radius
+        stateColor: Theme.text
+        showStateBackground: false
         onClicked: row.picked(row.index)
         onDoubleClicked: row.primaryRequested()
     }
