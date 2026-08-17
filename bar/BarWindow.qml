@@ -7,12 +7,15 @@ PanelWindow { // qmllint disable uncreatable-type
 
     required property var targetScreen
     required property BarController controller
+    readonly property int barHeight: 51
     screen: targetScreen
-    implicitHeight: 51
+    implicitHeight: barHeight
     color: "transparent"
     aboveWindows: true
-    exclusiveZone: 51
+    exclusiveZone: barHeight
+    exclusionMode: ExclusionMode.Normal
     WlrLayershell.namespace: "shelllist-bar"
+    WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     anchors {
         top: true

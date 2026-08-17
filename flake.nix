@@ -36,6 +36,16 @@
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
     in
     {
+      homeManagerModules = {
+        default = import ./nix/home-manager.nix self;
+        shelllist = self.homeManagerModules.default;
+      };
+
+      nixosModules = {
+        default = import ./nix/nixos.nix self;
+        shelllist = self.nixosModules.default;
+      };
+
       packages = forAllSystems (system: pkgs:
         let
           nmDaemon = inputs."nm-daemon".packages.${system}.default;
@@ -52,7 +62,7 @@
         {
           connectParityProbe = nmDaemonConnectParityProbe;
 
-          default = pkgs.writeShellApplication {
+          shelllistApplication = pkgs.writeShellApplication {
             name = "shelllist";
             meta = mkMeta "Single-host Shelllist desktop action center" "shelllist";
             runtimeInputs = [
@@ -91,6 +101,7 @@
                 shelllist status                  Print host status as JSON
                 shelllist list                    List surfaces as JSON
                 shelllist daemon                  Ensure the resident host is running
+                shelllist run                     Run the resident host in the foreground
 
               Surfaces: applications, wifi, bluetooth, clipboard
 
@@ -235,6 +246,11 @@
                 "") surface_call toggle applications ;;
                 -h|--help|help) usage ;;
                 daemon) [ "$#" -eq 1 ] || { usage >&2; exit 2; }; ensure_daemon ;;
+                run)
+                  [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+                  stop_stale_hosts
+                  SHELLLIST_MODE=popover exec quickshell --path "$config_path" --no-duplicate
+                  ;;
                 open|toggle)
                   surface=''${2:-applications}
                   [ "$#" -le 2 ] || { usage >&2; exit 2; }
@@ -297,6 +313,12 @@
                 *) usage >&2; exit 2 ;;
               esac
             '';
+          };
+
+          default = pkgs.symlinkJoin {
+            name = "shelllist";
+            paths = [ self.packages.${system}.shelllistApplication barDaemon ];
+            meta = mkMeta "Single-host Shelllist desktop action center" "shelllist";
           };
 
           captivePortalBrowser = pkgs.writeShellApplication {
@@ -613,6 +635,30 @@
             node ${./tests/check-bar-presentation.js} ${./bar/BarPresentation.js}
             touch $out
           '';
+
+          barSurfaceRecovery = pkgs.runCommand "shelllist-bar-surface-recovery"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-bar-surface-recovery.js} ${./shell/BarSurfaceRecovery.js}
+            touch $out
+          '';
+
+          moduleEvaluation =
+            let
+              evaluated = nixpkgs.lib.nixosSystem {
+                inherit system;
+                modules = [
+                  self.nixosModules.default
+                  { programs.shelllist.enable = true; }
+                ];
+              };
+            in
+            pkgs.runCommand "shelllist-module-evaluation" { } ''
+              test '${evaluated.config.systemd.user.services.shelllist.serviceConfig.ExecStart}' = '${self.packages.${system}.default}/bin/shelllist run'
+              test '${evaluated.config.systemd.user.services.bar-daemon.serviceConfig.BusName}' = 'org.laufan.BarDaemon'
+              touch $out
+            '';
 
           applicationPresentation = pkgs.runCommand "shelllist-application-presentation"
             {

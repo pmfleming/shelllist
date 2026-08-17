@@ -8,18 +8,19 @@ Item {
     required property BarController controller
     required property string screenName
     required property int workspaceId
+    property bool compact: false
     readonly property var workspace: Presentation.workspaceFor(controller.workspaces, workspaceId)
     readonly property bool active: Presentation.activeWorkspaceId(controller.workspaces,
         screenName) === workspaceId
     readonly property string asset: Presentation.workspaceAsset(workspaceId)
 
-    width: 27
+    width: compact ? 23 : 27
     height: 51
 
     Rectangle {
         anchors.centerIn: parent
-        width: 27
-        height: 27
+        width: button.compact ? 23 : 27
+        height: width
         radius: Ui.Theme.baseRadius
         color: button.workspaceId === 1 ? Ui.Theme.window : Ui.Theme.input
         opacity: button.active ? 1 : 0.45
@@ -28,8 +29,8 @@ Item {
 
         Image {
             anchors.centerIn: parent
-            width: 20
-            height: 20
+            width: button.compact ? 17 : 20
+            height: width
             visible: button.asset.length > 0
             source: visible ? Qt.resolvedUrl(button.asset) : ""
             fillMode: Image.PreserveAspectFit

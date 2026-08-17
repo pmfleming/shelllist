@@ -5,6 +5,8 @@ import QtQuick
 
 Row {
     id: root
+    required property int layoutDensity
+    visible: layoutDensity === 0
     spacing: 6
     leftPadding: trayRepeater.count > 0 ? 10 : 0
     rightPadding: trayRepeater.count > 0 ? 10 : 0

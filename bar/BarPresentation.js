@@ -156,31 +156,51 @@ function utcOffset(seconds) {
     return sign + String(hours).padStart(2, "0") + String(minutes).padStart(2, "0");
 }
 
-function statusModule(text, tooltip, options) {
+function statusModule(id, text, tooltip, options) {
     return Object.assign({
-        text: text, tooltip: tooltip, visible: true, interactive: true,
+        id: id, text: text, compactText: text, tooltip: tooltip,
+        visible: true, maxDensity: 2, interactive: true,
         tone: "text", weight: 400, primary: "", secondary: "", middle: "",
         wheelUp: "", wheelDown: ""
     }, options || ({}));
 }
 
+function layoutDensity(width) {
+    const available = Number(width) || 0;
+    if (available >= 1800) return 0;
+    if (available >= 1200) return 1;
+    if (available >= 700) return 2;
+    return 3;
+}
+
+function visibleStatusModules(modules, density) {
+    return (modules || []).filter(function (module) {
+        return module.visible && density <= (module.maxDensity === undefined ? 2 : module.maxDensity);
+    });
+}
+
+function moduleText(module, density) {
+    return density > 0 && module.compactText !== undefined ? module.compactText : module.text;
+}
+
 function networkModule(status) {
-    return statusModule(networkIcon(status), networkTooltip(status), {
-        tone: networkKind(status) === "disconnected" ? "muted" : "text",
+    return statusModule("network", networkIcon(status), networkTooltip(status), {
+        maxDensity: 3, tone: networkKind(status) === "disconnected" ? "muted" : "text",
         primary: "wifi", secondary: "portal"
     });
 }
 
 function updateModule(updates) {
-    return statusModule("󰚰", "A checked and built NixOS update is waiting for automatic safety or manual approval", {
-        visible: !!(updates && updates.available && updates.ready), tone: "accent",
-        weight: 700, primary: "updates"
+    return statusModule("updates", "󰚰", "A checked and built NixOS update is waiting for automatic safety or manual approval", {
+        visible: !!(updates && updates.available && updates.ready), maxDensity: 3,
+        tone: "accent", weight: 700, primary: "updates"
     });
 }
 
 function bluetoothModule(bluetooth) {
-    return statusModule("", bluetoothTooltip(bluetooth), {
-        tone: bluetooth && bluetooth.powered ? "text" : "muted", primary: "bluetooth"
+    return statusModule("bluetooth", "", bluetoothTooltip(bluetooth), {
+        maxDensity: 1, tone: bluetooth && bluetooth.powered ? "text" : "muted",
+        primary: "bluetooth"
     });
 }
 
@@ -190,18 +210,20 @@ function audioModule(audio) {
         ? (audio.sink_description || "Audio") + ": " + audio.volume_percent + "%"
             + (audio.muted ? " (muted)" : "")
         : "Audio unavailable";
-    return statusModule(audioIcon(audio), tooltip, {
-        tone: audio && audio.muted ? "muted" : "text", primary: "audio-mixer",
-        secondary: "audio-mute", wheelUp: "audio-up", wheelDown: "audio-down"
+    return statusModule("audio", audioIcon(audio), tooltip, {
+        maxDensity: 2, tone: audio && audio.muted ? "muted" : "text",
+        primary: "audio-mixer", secondary: "audio-mute",
+        wheelUp: "audio-up", wheelDown: "audio-down"
     });
 }
 
 function brightnessModule(brightness) {
     const percent = brightness ? brightness.percent : 0;
-    return statusModule("󰃠", "Brightness: " + percent
+    return statusModule("brightness", "󰃠", "Brightness: " + percent
         + "%\nLeft click: brighter\nRight click: dimmer", {
-        visible: !!(brightness && brightness.available), primary: "brightness-up",
-        secondary: "brightness-down", wheelUp: "brightness-up", wheelDown: "brightness-down"
+        visible: !!(brightness && brightness.available), maxDensity: 1,
+        primary: "brightness-up", secondary: "brightness-down",
+        wheelUp: "brightness-up", wheelDown: "brightness-down"
     });
 }
 
@@ -212,17 +234,18 @@ function batteryTone(battery) {
 }
 
 function batteryModule(battery) {
-    return statusModule(batteryIcon(battery) + " " + ((battery && battery.percentage) || 0) + "%",
+    return statusModule("battery",
+        batteryIcon(battery) + " " + ((battery && battery.percentage) || 0) + "%",
         batteryTooltip(battery), {
-            visible: !!(battery && battery.available), interactive: false,
-            tone: batteryTone(battery)
+            compactText: batteryIcon(battery), visible: !!(battery && battery.available),
+            maxDensity: 3, interactive: false, tone: batteryTone(battery)
         });
 }
 
 function powerModule(profile) {
-    return statusModule(powerProfileIcon(profile), "Power profile: " + (profile.profile || "")
+    return statusModule("power", powerProfileIcon(profile), "Power profile: " + (profile.profile || "")
         + "\nDriver: " + (profile.driver || "unknown"), {
-        visible: !!profile.available, interactive: false,
+        visible: !!profile.available, maxDensity: 1, interactive: false,
         tone: profile.profile === "performance" ? "danger"
             : profile.profile === "power-saver" ? "success" : "accent"
     });
@@ -231,26 +254,28 @@ function powerModule(profile) {
 function notificationModule(notifications) {
     const count = (notifications && notifications.count) || 0;
     const dnd = !!(notifications && notifications.dnd);
-    return statusModule(" " + count, "Notifications: " + count
+    return statusModule("notifications", " " + count, "Notifications: " + count
         + "\nLeft click: open history\nRight click: toggle do not disturb"
         + (dnd ? "\nDo not disturb is on" : ""), {
-        tone: dnd ? "muted" : "text", primary: "notifications",
-        secondary: "notifications-dnd"
+        compactText: "", maxDensity: 2, tone: dnd ? "muted" : "text",
+        primary: "notifications", secondary: "notifications-dnd"
     });
 }
 
 function timezoneModule(timezone) {
     const city = (timezone && timezone.city) || "";
-    return statusModule("󰅐 " + city, "Timezone city: " + city
+    return statusModule("timezone", "󰅐 " + city, "Timezone city: " + city
         + "\nTimezone is updated automatically from location", {
-        visible: !!(timezone && timezone.available), primary: "timezone"
+        visible: !!(timezone && timezone.available), maxDensity: 0, primary: "timezone"
     });
 }
 
 function clockModule(now, timezone) {
-    return statusModule(Qt.formatDateTime(now, "ddd dd MMM  HH:mm"),
+    return statusModule("clock", Qt.formatDateTime(now, "ddd dd MMM  HH:mm"),
         Qt.formatDateTime(now, "yyyy-MM-dd") + " " + (timezone.abbreviation || "")
-            + " " + utcOffset(timezone.utc_offset_seconds), { interactive: false });
+            + " " + utcOffset(timezone.utc_offset_seconds), {
+            compactText: Qt.formatDateTime(now, "HH:mm"), maxDensity: 3, interactive: false
+        });
 }
 
 function statusModules(state, now) {

@@ -72,14 +72,9 @@ ShellRoot {
         surfaceRegistry: surfaces
     }
 
-    Variants {
-        model: windowHost.popoverMode ? Quickshell.screens : []
-
-        Bar.BarWindow {
-            required property var modelData
-            targetScreen: modelData
-            controller: barController
-        }
+    BarSurfaceHost {
+        barsEnabled: windowHost.popoverMode
+        controller: barController
     }
 
     Ui.PopupWindowHost {

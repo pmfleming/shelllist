@@ -43,5 +43,20 @@ equal(modules[0].primary, "wifi", "network action routing");
 equal(modules[1].visible, true, "ready update visibility");
 equal(modules[4].wheelDown, "brightness-down", "brightness wheel routing");
 equal(modules[9].interactive, false, "clock is presentation-only");
+equal(context.layoutDensity(1920), 0, "wide layout density");
+equal(context.layoutDensity(1366), 1, "compact layout density");
+equal(context.layoutDensity(900), 2, "narrow layout density");
+equal(context.layoutDensity(600), 3, "ultra-narrow layout density");
+equal(context.visibleStatusModules(modules, 0).length, 10, "wide layout modules");
+equal(context.visibleStatusModules(modules, 1).map(module => module.id),
+    ["network", "updates", "bluetooth", "audio", "brightness", "battery", "power", "notifications", "clock"],
+    "compact layout modules");
+equal(context.visibleStatusModules(modules, 2).map(module => module.id),
+    ["network", "updates", "audio", "battery", "notifications", "clock"],
+    "narrow layout modules");
+equal(context.visibleStatusModules(modules, 3).map(module => module.id),
+    ["network", "updates", "battery", "clock"], "ultra-narrow layout modules");
+equal(context.moduleText(modules[5], 1), "󰂂", "compact battery text");
+equal(context.moduleText(modules[9], 1), "HH:mm", "compact clock text");
 
-console.log("bar presentation: workspace and status formatting passed");
+console.log("bar presentation: workspace, responsive layout, and status formatting passed");

@@ -11,14 +11,16 @@ Shelllist is a Hyprland-focused desktop action center and top bar. Wi-Fi, Blueto
 - Only one surface is visible at a time; `Ctrl+Alt+Left/Right` switches between loaded surfaces through the common host.
 - Default mode: a monitor-aware popover controlled through one IPC target, Waybar, or Hyprland global shortcuts.
 - Optional mode: an explicit one-shot floating host for development and fallback use.
-- Backend: sibling Rust daemon Git inputs while their current API histories are unpublished; repin them to portable GitHub inputs after publication.
+- Backend: sibling Rust daemon Git inputs while their current API histories are unpublished; repin them to portable GitHub inputs after publication. The default package includes `bar-daemon` plus its D-Bus and systemd user activation descriptors. Home Manager and NixOS modules install both user services declaratively.
 - Target platform: `x86_64-linux` with NetworkManager and Quickshell.
 
 ## Top bar
 
 The resident popover-mode host creates one `PanelWindow` per Quickshell screen. `bar-daemon` supplies workspace, media, audio, brightness, battery, power-profile, notification, update, and timezone state through `bar-api` v1. The existing Wi-Fi and Bluetooth controllers remain authoritative for their icons and open their Shelllist surfaces directly. Quickshell owns StatusNotifierItem rendering and native DBusMenu display.
 
-The initial layout intentionally matches the previous Waybar order and 51 px geometry: monitor-local workspaces, centered MPRIS, then tray, network, updates, Bluetooth, audio, brightness, battery, power profile, notifications, timezone city, and clock. The QML frontend contains no compositor, PipeWire, UPower, SwayNC, or update-state parsing.
+The initial layout intentionally matches the previous Waybar order and 51 px geometry: monitor-local workspaces, centered MPRIS, then tray, network, updates, Bluetooth, audio, brightness, battery, power profile, notifications, timezone city, and clock. It responds to each monitor independently: progressively narrower layouts reduce padding, shorten labels, hide lower-priority status modules, and elide or finally hide media before the left and right clusters can collide. The QML frontend contains no compositor, PipeWire, UPower, SwayNC, or update-state parsing.
+
+The visual bar remains the exclusive-zone owner: each screen gets one fixed-height top-layer `PanelWindow` with `ExclusionMode.Normal`. A debounced surface host reconstructs those windows after output topology changes and detects suspend/resume from a delayed event-loop heartbeat. Recovery is cooldown-limited so DPMS or monitor flapping cannot create a rebuild storm.
 
 ## Usage
 
@@ -44,8 +46,23 @@ shelllist quit                    # stop the resident host
 shelllist status                  # JSON host state
 shelllist list                    # JSON surface descriptors
 shelllist daemon                  # ensure the resident host is running
+shelllist run                     # foreground host for systemd/supervision
 shelllist floating wifi           # one-shot floating host
 ```
+
+For declarative startup, import either exported module. Both install the bundled package and supervise Shelllist plus `bar-daemon` under the graphical user session:
+
+```nix
+# Home Manager
+imports = [ inputs.shelllist.homeManagerModules.default ];
+programs.shelllist.enable = true;
+
+# Or in NixOS configuration
+imports = [ inputs.shelllist.nixosModules.default ];
+programs.shelllist.enable = true;
+```
+
+Set `programs.shelllist.systemd.target` for a compositor-specific session target, `systemd.startBarDaemon = false` to rely only on D-Bus activation, or `systemd.environment` for `SHELLLIST_*` theme overrides.
 
 There are deliberately no per-surface compatibility wrappers. Waybar can call `shelllist toggle wifi`. Hyprland can invoke the registered shortcuts directly:
 
