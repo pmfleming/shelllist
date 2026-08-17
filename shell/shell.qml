@@ -175,6 +175,36 @@ ShellRoot {
         description: "Toggle Shelllist Clipboard"
         onTriggered: shell.toggleSurface("clipboard")
     }
+    Ui.ShelllistGlobalShortcut {
+        shortcutName: "volume-up"
+        description: "Raise Output Volume"
+        onTriggered: barController.adjustAudio(5)
+    }
+    Ui.ShelllistGlobalShortcut {
+        shortcutName: "volume-down"
+        description: "Lower Output Volume"
+        onTriggered: barController.adjustAudio(-5)
+    }
+    Ui.ShelllistGlobalShortcut {
+        shortcutName: "volume-mute"
+        description: "Toggle Output Mute"
+        onTriggered: barController.toggleMuted()
+    }
+    Ui.ShelllistGlobalShortcut {
+        shortcutName: "microphone-mute"
+        description: "Toggle Microphone Mute"
+        onTriggered: barController.toggleInputMuted()
+    }
+    Ui.ShelllistGlobalShortcut {
+        shortcutName: "brightness-up"
+        description: "Raise Display Brightness"
+        onTriggered: barController.adjustBrightness(5)
+    }
+    Ui.ShelllistGlobalShortcut {
+        shortcutName: "brightness-down"
+        description: "Lower Display Brightness"
+        onTriggered: barController.adjustBrightness(-5)
+    }
 
     Shortcut {
         sequence: "Ctrl+Alt+Right"

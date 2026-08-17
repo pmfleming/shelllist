@@ -70,6 +70,45 @@ function audioIcon(audio) {
     return percent < 34 ? "" : percent < 67 ? "" : "";
 }
 
+function outputOsd(audio) {
+    const value = audio || ({});
+    const percent = clamp(value.volume_percent, 0, 100);
+    return {
+        kind: "audio",
+        icon: audioIcon(value),
+        label: value.sink_description || "Volume",
+        valueLabel: value.muted ? "Muted" : percent + "%",
+        percent: percent,
+        progressVisible: true
+    };
+}
+
+function inputOsd(audio) {
+    const value = audio || ({});
+    const muted = !!value.input_muted;
+    return {
+        kind: "input",
+        icon: muted ? "󰍭" : "󰍬",
+        label: value.source_description || "Microphone",
+        valueLabel: muted ? "Muted" : "On",
+        percent: muted ? 0 : 100,
+        progressVisible: false
+    };
+}
+
+function brightnessOsd(brightness) {
+    const value = brightness || ({});
+    const percent = clamp(value.percent, 0, 100);
+    return {
+        kind: "brightness",
+        icon: "󰃠",
+        label: "Brightness",
+        valueLabel: percent + "%",
+        percent: percent,
+        progressVisible: true
+    };
+}
+
 function batteryIcon(battery) {
     if (!battery)
         return "󰂑";

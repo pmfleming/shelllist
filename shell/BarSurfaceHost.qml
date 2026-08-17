@@ -137,4 +137,14 @@ Item {
             controller: root.controller
         }
     }
+
+    Variants {
+        model: root.barsEnabled && root.surfacesActive ? Quickshell.screens : []
+
+        Bar.BarOsdWindow {
+            required property var modelData
+            targetScreen: modelData
+            controller: root.controller
+        }
+    }
 }

@@ -8,6 +8,12 @@ Io.DaemonBackend {
     daemonName: "bar-daemon"
     streams: BarApi.subscribedStreams
     active: true
+    property int operationSequence: 0
+
+    function operationId(prefix: string): string {
+        operationSequence += 1;
+        return prefix + "-" + operationSequence;
+    }
 
     function snapshot(): bool {
         return call("snapshot", BarApi.methods.snapshot, {});
@@ -24,17 +30,23 @@ Io.DaemonBackend {
     }
 
     function adjustAudio(deltaPercent: int): bool {
-        return call("audio-adjust", BarApi.methods.audioAdjust,
+        return call(operationId("audio-adjust"), BarApi.methods.audioAdjust,
             { delta_percent: deltaPercent });
     }
 
     function toggleMuted(): bool {
-        return call("audio-muted", BarApi.methods.audioSetMuted, { muted: null });
+        return call(operationId("audio-muted"), BarApi.methods.audioSetMuted,
+            { muted: null });
+    }
+
+    function toggleInputMuted(): bool {
+        return call(operationId("audio-input-muted"),
+            BarApi.methods.audioSetInputMuted, { muted: null });
     }
 
     function adjustBrightness(deltaPercent: int): bool {
-        return call("brightness-adjust", BarApi.methods.brightnessAdjust,
-            { delta_percent: deltaPercent });
+        return call(operationId("brightness-adjust"),
+            BarApi.methods.brightnessAdjust, { delta_percent: deltaPercent });
     }
 
     function toggleNotifications(): bool {
@@ -52,7 +64,14 @@ Io.DaemonBackend {
             console.error("shelllist bar request failed id=" + id + " error=" + error);
             return;
         }
-        controller.applyResponse(envelope.data || ({}));
+        const data = envelope.data || ({});
+        controller.applyResponse(data);
+        if (id.startsWith("audio-adjust-") || id.startsWith("audio-muted-"))
+            controller.showOutputOsd(data.audio || controller.audio);
+        else if (id.startsWith("audio-input-muted-"))
+            controller.showInputOsd(data.audio || controller.audio);
+        else if (id.startsWith("brightness-adjust-"))
+            controller.showBrightnessOsd(data.brightness || controller.brightness);
     }
 
     onResponseReceived: function (id, envelope, transportError) {

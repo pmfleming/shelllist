@@ -10,13 +10,26 @@ Item {
     required property var surfaceRegistry
     property var workspaces: ({ available: false, monitors: [], workspaces: [] })
     property var media: ({ available: false, active_player: "", players: [] })
-    property var audio: ({ available: false, volume_percent: 0, muted: false })
+    property var audio: ({
+        available: false,
+        volume_percent: 0,
+        muted: false,
+        input_available: false,
+        input_muted: false
+    })
     property var brightness: ({ available: false, percent: 0 })
     property var battery: ({ available: false, percentage: 0 })
     property var powerProfile: ({ available: false, profile: "" })
     property var notifications: ({ available: false, count: 0, dnd: false })
     property var updates: ({ available: false, ready: false, lanes: [] })
     property var timezone: ({ available: false, timezone: "", city: "", abbreviation: "", utc_offset_seconds: 0 })
+    property bool osdVisible: false
+    property string osdKind: ""
+    property string osdIcon: ""
+    property string osdLabel: ""
+    property string osdValueLabel: ""
+    property int osdPercent: 0
+    property bool osdProgressVisible: true
 
     readonly property var wifiController: surfaceRegistry ? surfaceRegistry.wifiController : null
     readonly property var bluetoothController: surfaceRegistry ? surfaceRegistry.bluetoothController : null
@@ -70,6 +83,34 @@ Item {
 
     function focusWorkspace(workspaceId: int): bool { return backend.focusWorkspace(workspaceId); }
     function mediaOperation(operation: string): bool { return backend.mediaOperation(operation); }
+    function adjustAudio(deltaPercent: int): bool { return backend.adjustAudio(deltaPercent); }
+    function toggleMuted(): bool { return backend.toggleMuted(); }
+    function toggleInputMuted(): bool { return backend.toggleInputMuted(); }
+    function adjustBrightness(deltaPercent: int): bool { return backend.adjustBrightness(deltaPercent); }
+
+    function presentOsd(osd: var): void {
+        osdKind = osd.kind || "";
+        osdIcon = osd.icon || "";
+        osdLabel = osd.label || "";
+        osdValueLabel = osd.valueLabel || "";
+        osdPercent = Math.max(0, Math.min(100, Number(osd.percent) || 0));
+        osdProgressVisible = !!osd.progressVisible;
+        osdVisible = true;
+        osdTimeout.restart();
+    }
+
+    function showOutputOsd(state: var): void {
+        presentOsd(Presentation.outputOsd(state));
+    }
+
+    function showInputOsd(state: var): void {
+        presentOsd(Presentation.inputOsd(state));
+    }
+
+    function showBrightnessOsd(state: var): void {
+        presentOsd(Presentation.brightnessOsd(state));
+    }
+
     function statusModules(now: date): var {
         return Presentation.statusModules({
             network: networkStatus, bluetooth: bluetoothController, updates: updates,
@@ -98,6 +139,13 @@ Item {
             return false;
         handler();
         return true;
+    }
+
+    Timer {
+        id: osdTimeout
+        interval: 1400
+        repeat: false
+        onTriggered: controller.osdVisible = false
     }
 
     BarBackend { id: barBackend; controller: controller }

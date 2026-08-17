@@ -21,6 +21,15 @@ equal(context.activeWorkspaceId({ monitors: [
 equal(context.playerIcon({ desktop_entry: "spotify" }), "", "Spotify icon");
 equal(context.playbackIcon({ playback_status: "paused" }), "", "paused icon");
 equal(context.audioIcon({ available: true, muted: false, volume_percent: 80 }), "", "high-volume icon");
+equal(context.outputOsd({ available: true, muted: false, volume_percent: 80, sink_description: "Speakers" }), {
+    kind: "audio", icon: "", label: "Speakers", valueLabel: "80%", percent: 80, progressVisible: true
+}, "output OSD presentation");
+equal(context.inputOsd({ input_muted: true, source_description: "Microphone" }), {
+    kind: "input", icon: "󰍭", label: "Microphone", valueLabel: "Muted", percent: 0, progressVisible: false
+}, "microphone OSD presentation");
+equal(context.brightnessOsd({ percent: 65 }), {
+    kind: "brightness", icon: "󰃠", label: "Brightness", valueLabel: "65%", percent: 65, progressVisible: true
+}, "brightness OSD presentation");
 equal(context.batteryIcon({ charging: true, plugged: true, percentage: 60 }), "󰂄", "charging icon");
 equal(context.duration(7500), "2h 5m", "battery duration");
 equal(context.networkKind({ active: true, access_point: { ssid: "Test" } }), "wifi", "Wi-Fi status");

@@ -9,6 +9,7 @@ var methods = {
     mediaOperation: "media.operation",
     audioAdjust: "audio.adjust",
     audioSetMuted: "audio.setMuted",
+    audioSetInputMuted: "audio.setInputMuted",
     brightnessAdjust: "brightness.adjust",
     brightnessSet: "brightness.set",
     notificationsTogglePanel: "notifications.togglePanel",

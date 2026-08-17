@@ -16,6 +16,8 @@ jq -e '
   (.snapshot.workspaces.monitors[0].active_workspace_id | type == "number") and
   (.snapshot.media.players[0].playback_status | type == "string") and
   (.snapshot.audio.volume_percent | type == "number") and
+  (.snapshot.audio.input_available | type == "boolean") and
+  (.snapshot.audio.input_muted | type == "boolean") and
   (.snapshot.brightness.percent | type == "number") and
   (.snapshot.battery.percentage | type == "number") and
   (.snapshot.power_profile.profile | type == "string") and

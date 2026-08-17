@@ -22,6 +22,8 @@ The initial layout intentionally matches the previous Waybar order and 51 px geo
 
 The visual bar remains the exclusive-zone owner: each screen gets one fixed-height top-layer `PanelWindow` with `ExclusionMode.Normal`. A debounced surface host reconstructs those windows after output topology changes and detects suspend/resume from a delayed event-loop heartbeat. Recovery is cooldown-limited so DPMS or monitor flapping cannot create a rebuild storm.
 
+Shelllist also replaces a standalone OSD service. Hyprland media-key global shortcuts call `bar-daemon` for output volume/mute, microphone mute, and brightness changes; a non-interactive transient overlay appears on the focused monitor with the resulting state.
+
 ## Usage
 
 `nix run` toggles Applications in the resident host. Pass Shelllist arguments after `--`:
@@ -71,6 +73,12 @@ bind = SUPER, SPACE, global, shelllist:applications
 bind = SUPER, N, global, shelllist:wifi
 bind = SUPER, B, global, shelllist:bluetooth
 bind = SUPER, V, global, shelllist:clipboard
+bindel = , XF86AudioRaiseVolume, global, shelllist:volume-up
+bindel = , XF86AudioLowerVolume, global, shelllist:volume-down
+bindl = , XF86AudioMute, global, shelllist:volume-mute
+bindl = , XF86AudioMicMute, global, shelllist:microphone-mute
+bindel = , XF86MonBrightnessUp, global, shelllist:brightness-up
+bindel = , XF86MonBrightnessDown, global, shelllist:brightness-down
 ```
 
 The application surface lists standards-visible desktop applications, groups live Hyprland windows, focuses the most-recent running instance with `Enter`, launches non-running applications, and exposes instances plus desktop-defined actions with `Right`. Running rows use single- or multiple-window icons. The details pane separates running instances and desktop-defined actions under **Application** from live usage and compact 30-minute CPU, proportional memory, GPU, disk-I/O, permanent-storage, temporary-storage, and estimated-power graphs under **Resources**. Its header action focuses the first running instance (or launches on the current workspace), **New tile** launches another instance, and each instance has an icon-only focus control with a tooltip. `Shift+Enter` also launches a new tile.
