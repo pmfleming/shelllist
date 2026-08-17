@@ -15,7 +15,9 @@ PanelWindow { // qmllint disable uncreatable-type
         : (Quickshell.screens.length > 0 && screen === Quickshell.screens[0])
 
     screen: targetScreen
-    visible: controller.osdVisible && targetIsFocused
+    // Keep the focused monitor's layer surface mapped so a media-key press does
+    // not pay a Wayland surface creation/configure round trip before appearing.
+    visible: targetIsFocused
     implicitWidth: 340
     implicitHeight: 92
     color: "transparent"
@@ -43,12 +45,13 @@ PanelWindow { // qmllint disable uncreatable-type
         color: Ui.Theme.surfaceRaised
         border.width: 1
         border.color: Ui.Theme.controlBorder
-        opacity: window.visible ? 1 : 0
+        opacity: window.controller.osdVisible ? 1 : 0
 
         Behavior on opacity {
             enabled: !Ui.Theme.noAnimations
             NumberAnimation {
-                duration: Ui.Theme.animationFast
+                // Feedback should appear immediately; only its dismissal fades.
+                duration: window.controller.osdVisible ? 0 : Ui.Theme.animationFast
                 easing.type: Ui.Theme.easingStandard
             }
         }
