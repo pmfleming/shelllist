@@ -103,7 +103,7 @@
                 shelllist daemon                  Ensure the resident host is running
                 shelllist run                     Run the resident host in the foreground
 
-              Surfaces: applications, wifi, bluetooth, clipboard
+              Surfaces: applications, wifi, bluetooth, clipboard, activity
 
               Clipboard settings:
                 shelllist clipboard pause
@@ -115,7 +115,7 @@
 
               valid_surface() {
                 case "$1" in
-                  applications|wifi|bluetooth|clipboard) return 0 ;;
+                  applications|wifi|bluetooth|clipboard|activity) return 0 ;;
                   *) return 1 ;;
                 esac
               }
@@ -141,7 +141,7 @@
                   | awk '
                       /^Instance / { pid = ""; shelllist = 0 }
                       /Process ID:/ { pid = $3 }
-                      /Config path: .*share\/shelllist\/(shell|wifi|bluetooth|clipboard|launcher)\/shell.qml/ { shelllist = 1 }
+                      /Config path: .*share\/shelllist\/(shell|wifi|bluetooth|clipboard|launcher|activity)\/shell.qml/ { shelllist = 1 }
                       shelllist && pid != "" { print pid; pid = ""; shelllist = 0 }
                     ' \
                   | while read -r pid; do
@@ -305,7 +305,7 @@
                     *) usage >&2; exit 2 ;;
                   esac
                   ;;
-                applications|wifi|bluetooth)
+                applications|wifi|bluetooth|activity)
                   action=''${2:-toggle}
                   [ "$#" -le 2 ] || { usage >&2; exit 2; }
                   case "$action" in open|toggle) surface_call "$action" "$command" ;; *) usage >&2; exit 2 ;; esac
@@ -525,7 +525,7 @@
             installPhase = ''
               runHook preInstall
               mkdir -p $out/share/shelllist
-              cp -r shell bar wifi bluetooth clipboard launcher qml $out/share/shelllist/
+              cp -r shell bar wifi bluetooth clipboard launcher activity qml $out/share/shelllist/
               runHook postInstall
             '';
           };
@@ -591,7 +591,8 @@
             ${pkgs.bash}/bin/bash ${./tests/check-bar-api-contract.sh} \
               ${barDaemon}/bin/bar-daemon \
               ${./contracts/bar-api-ui-contract.fixture.json} \
-              ${./bar/BarApi.js}
+              ${./bar/BarApi.js} \
+              ${./activity/ActivityApi.js}
             touch $out
           '';
 
@@ -617,6 +618,7 @@
               ${./bluetooth}/*.qml
               ${./clipboard}/*.qml
               ${./launcher}/*.qml
+              ${./activity}/*.qml
               ${./wifi}/*.qml
               ${./wifi}/networkinput/*.qml
               ${./wifi}/process/*.qml

@@ -176,6 +176,11 @@ ShellRoot {
         onTriggered: shell.toggleSurface("clipboard")
     }
     Ui.ShelllistGlobalShortcut {
+        shortcutName: "activity"
+        description: "Toggle Shelllist Activity"
+        onTriggered: shell.toggleSurface("activity")
+    }
+    Ui.ShelllistGlobalShortcut {
         shortcutName: "volume-up"
         description: "Raise Output Volume"
         onTriggered: barController.adjustAudio(5)

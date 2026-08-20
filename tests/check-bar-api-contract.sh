@@ -4,6 +4,7 @@ set -euo pipefail
 bar_daemon=${1:?bar-daemon binary required}
 fixture=${2:?checked fixture required}
 api_js=${3:?BarApi.js required}
+activity_api_js=${4:-}
 
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
@@ -13,6 +14,8 @@ diff -u <(jq -S . "$fixture") <(jq -S . "$tmp")
 jq -e '
   (.protocol == "bar-api") and
   (.version == 1) and
+  (.snapshot.activity.event_count | type == "number") and
+  (.snapshot.activity.incomplete_todo_count | type == "number") and
   (.snapshot.workspaces.monitors[0].active_workspace_id | type == "number") and
   (.snapshot.media.players[0].playback_status | type == "string") and
   (.snapshot.audio.volume_percent | type == "number") and
@@ -32,7 +35,7 @@ while IFS= read -r name; do
     echo "BarApi.js declares unknown protocol entry $name" >&2
     exit 1
   }
-done < <(grep -oE '"(bar|workspace|media|audio|brightness|battery|powerProfile|power-profile|notifications|updates|timezone)\.[A-Za-z0-9.-]+"' "$api_js" \
-  | tr -d '"' | sort -u)
+done < <(grep -h -oE '"(bar|activity|todos|workspace|media|audio|brightness|battery|powerProfile|power-profile|notifications|updates|timezone)\.[A-Za-z0-9.-]+"' \
+  "$api_js" ${activity_api_js:+"$activity_api_js"} | tr -d '"' | sort -u)
 
 echo "bar-api contract: checked fixture and frontend registry match"

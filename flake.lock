@@ -28,11 +28,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786984761,
-        "narHash": "sha256-P0EWr13PUyrAk0OMrw6ewhzaB8F8LjfLnqn7KJaOfIw=",
+        "lastModified": 1787231261,
+        "narHash": "sha256-YL6WCizV5HUReNWqFC33B5BPkZeuLI+FO1ulZYSbLfE=",
         "ref": "main",
-        "rev": "38b4485c79a29d4b68802cd67bbfcdc06c07d7a1",
-        "revCount": 13,
+        "rev": "e4fc4b573fca0d063cdca110c51939e21e95b9d8",
+        "revCount": 16,
         "type": "git",
         "url": "file:../bar-daemon"
       },

@@ -1,7 +1,7 @@
 {
   "project_name": "shelllist",
   "project_root": ".",
-  "source_roots": ["bar", "shell", "wifi", "bluetooth", "clipboard", "launcher", "qml", "tests/qml"],
+  "source_roots": ["bar", "shell", "wifi", "bluetooth", "clipboard", "launcher", "activity", "qml", "tests/qml"],
   "entrypoints": [
     "shell/shell.qml",
     "tests/qml/tst_hyprland_dispatch.qml",
@@ -23,6 +23,8 @@
     { "from": "shell/SurfaceRegistry.qml", "to": "bluetooth/BluetoothController.qml" },
     { "from": "shell/SurfaceRegistry.qml", "to": "clipboard/ClipboardContent.qml" },
     { "from": "shell/SurfaceRegistry.qml", "to": "clipboard/ClipboardController.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "activity/ActivityContent.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "activity/ActivityController.qml" },
     { "from": "bluetooth/BluetoothContent.qml", "to": "bluetooth/BluetoothDeviceListPane.qml" },
     { "from": "bluetooth/BluetoothContent.qml", "to": "bluetooth/BluetoothDeviceDetails.qml" },
     { "from": "bluetooth/BluetoothDeviceListPane.qml", "to": "bluetooth/BluetoothDeviceListRow.qml" },

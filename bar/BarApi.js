@@ -17,6 +17,7 @@ var methods = {
 };
 
 var streams = {
+    activity: "activity.changed",
     workspaces: "workspaces.changed",
     media: "media.changed",
     audio: "audio.changed",
@@ -31,6 +32,7 @@ var streams = {
 var subscribedStreams = Object.keys(streams).map(function (name) { return streams[name]; });
 
 var propertyByStream = {};
+propertyByStream[streams.activity] = "activity";
 propertyByStream[streams.workspaces] = "workspaces";
 propertyByStream[streams.media] = "media";
 propertyByStream[streams.audio] = "audio";
@@ -42,6 +44,7 @@ propertyByStream[streams.updates] = "updates";
 propertyByStream[streams.timezone] = "timezone";
 
 var propertyByPayload = {
+    activity: "activity",
     workspaces: "workspaces",
     media: "media",
     audio: "audio",

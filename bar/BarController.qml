@@ -8,6 +8,8 @@ Item {
     id: controller
 
     required property var surfaceRegistry
+    property var activity: ({ available: false, syncing: false, event_count: 0,
+        incomplete_todo_count: 0, next_event: null, sources: [], world_clocks: [] })
     property var workspaces: ({ available: false, monitors: [], workspaces: [] })
     property var media: ({ available: false, active_player: "", players: [] })
     property var audio: ({
@@ -113,8 +115,8 @@ Item {
 
     function statusModules(now: date): var {
         return Presentation.statusModules({
-            network: networkStatus, bluetooth: bluetoothController, updates: updates,
-            audio: audio, brightness: brightness, battery: battery,
+            activity: activity, network: networkStatus, bluetooth: bluetoothController,
+            updates: updates, audio: audio, brightness: brightness, battery: battery,
             powerProfile: powerProfile, notifications: notifications, timezone: timezone
         }, now);
     }
@@ -130,9 +132,10 @@ Item {
             "audio-down": function () { backend.adjustAudio(-5); },
             "brightness-up": function () { backend.adjustBrightness(5); },
             "brightness-down": function () { backend.adjustBrightness(-5); },
-            notifications: function () { backend.toggleNotifications(); },
+            activity: function () { openSurface("activity"); },
+            notifications: function () { openSurface("activity"); },
             "notifications-dnd": function () { backend.toggleDnd(); },
-            timezone: function () { Quickshell.execDetached(["ghostty", "-e", "bash", "-lc", "timedatectl; read -r -p 'Press enter to close'"]); }
+            timezone: function () { openSurface("activity"); }
         });
         const handler = actions[action];
         if (!handler)

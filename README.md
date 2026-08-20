@@ -1,13 +1,13 @@
 # Shelllist
 
-Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and four keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, and **Clipboard**.
+Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and five keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, and **Activity**.
 
 Rust daemons handle system integration and policy. Shelllist handles windows, layout, navigation, animation, and presentation.
 
 ## What it provides
 
 - A 51 px adaptive top bar on every monitor.
-- A centered popover that switches between all four surfaces without starting another UI process.
+- A centered popover that switches between all five surfaces without starting another UI process.
 - A one-shot floating mode for development and fallback use.
 - Integrated volume, microphone, and brightness OSD feedback.
 - Global shortcuts and one IPC/CLI entry point.
@@ -36,7 +36,8 @@ Common bar interactions:
 | Bluetooth | Open Bluetooth | — | — |
 | Audio | Open `pavucontrol` | Toggle mute | Adjust volume |
 | Brightness | Increase | Decrease | Adjust brightness |
-| Notifications | Open history | Toggle DND | — |
+| Activity / clock | Open Activity | — | — |
+| Notifications | Open Activity | Toggle DND | — |
 
 `bar-daemon` supplies normalized bar state through `bar-api` v1. Wi-Fi and Bluetooth remain owned by their dedicated Shelllist controllers, while Quickshell owns tray rendering and menus.
 
@@ -60,6 +61,10 @@ The Bluetooth surface supports adapter power, bounded discovery, known and nearb
 
 The UI uses opaque daemon device keys and live subscriptions. It does not parse `bluetoothctl`, route actions by MAC address, or issue unauthenticated Fast Pair noise-control changes.
 
+### Activity
+
+The Activity surface combines a month calendar, selected-day agenda, persistent todos, notification status/DND access, source health, and world clocks. `bar-daemon` loads and normalizes sources, persists mutations, and owns policy; Shelllist only requests visible ranges and renders them. See [`docs/activity-ui-plan.md`](docs/activity-ui-plan.md).
+
 ### Clipboard
 
 The clipboard surface supports text, image, and binary history; copy and paste actions; inline text editing; favorites; entry deletion; and confirmed history clearing.
@@ -81,7 +86,7 @@ shelllist clipboard kept 750
 | Wi-Fi and NetworkManager policy | `nm-daemon` / `nm-api` v1 |
 | Bluetooth, pairing, and audio profiles | `bt-daemon` / `bt-api` v1 |
 | Clipboard history and capture | `clip-daemon` / `clip-api` v1 |
-| Bar state and media-key effects | `bar-daemon` / `bar-api` v1 |
+| Bar state, Activity data, and media-key effects | `bar-daemon` / `bar-api` v1 |
 | Windows, rendering, navigation, and tray menus | Shelllist / Quickshell |
 
 `shell/shell.qml` is the only UI entry point. Wi-Fi and Bluetooth load eagerly because the bar and hidden pairing requests need them. Applications and Clipboard load on first use. Opened surfaces remain warm.
@@ -137,7 +142,7 @@ shelllist run                     Run the host in the foreground
 shelllist quit                    Stop the resident host
 ```
 
-Surfaces are `applications`, `wifi`, `bluetooth`, and `clipboard`.
+Surfaces are `applications`, `wifi`, `bluetooth`, `clipboard`, and `activity`.
 
 ## Keyboard use
 

@@ -58,6 +58,7 @@ equal(context.networkKind({ active: false }), "disconnected", "disconnected stat
 equal(context.utcOffset(-18000), "-0500", "negative UTC offset");
 equal(context.utcOffset(19800), "+0530", "fractional UTC offset");
 const modules = context.statusModules({
+    activity: { available: true, incomplete_todo_count: 1, next_event: null },
     network: { active: false }, updates: { available: true, ready: true },
     bluetooth: { powered: true, allDevices: [] },
     audio: { available: true, muted: false, volume_percent: 50 },
@@ -67,25 +68,26 @@ const modules = context.statusModules({
     notifications: { count: 2, dnd: false },
     timezone: { available: true, city: "Taipei", abbreviation: "CST", utc_offset_seconds: 28800 }
 }, new Date(0));
-equal(modules.length, 10, "status module count");
+equal(modules.length, 11, "status module count");
 equal(modules[0].primary, "wifi", "network action routing");
 equal(modules[1].visible, true, "ready update visibility");
 equal(modules[4].wheelDown, "brightness-down", "brightness wheel routing");
-equal(modules[9].interactive, false, "clock is presentation-only");
+equal(modules[7].primary, "activity", "calendar opens the activity surface");
+equal(modules[10].primary, "activity", "clock opens the activity surface");
 equal(context.layoutDensity(1920), 0, "wide layout density");
 equal(context.layoutDensity(1366), 1, "compact layout density");
 equal(context.layoutDensity(900), 2, "narrow layout density");
 equal(context.layoutDensity(600), 3, "ultra-narrow layout density");
-equal(context.visibleStatusModules(modules, 0).length, 10, "wide layout modules");
+equal(context.visibleStatusModules(modules, 0).length, 11, "wide layout modules");
 equal(context.visibleStatusModules(modules, 1).map(module => module.id),
-    ["network", "updates", "bluetooth", "audio", "brightness", "battery", "power", "notifications", "clock"],
+    ["network", "updates", "bluetooth", "audio", "brightness", "battery", "power", "activity", "notifications", "clock"],
     "compact layout modules");
 equal(context.visibleStatusModules(modules, 2).map(module => module.id),
-    ["network", "updates", "audio", "battery", "notifications", "clock"],
+    ["network", "updates", "audio", "battery", "activity", "notifications", "clock"],
     "narrow layout modules");
 equal(context.visibleStatusModules(modules, 3).map(module => module.id),
     ["network", "updates", "battery", "clock"], "ultra-narrow layout modules");
 equal(context.moduleText(modules[5], 1), "󰂂", "compact battery text");
-equal(context.moduleText(modules[9], 1), "HH:mm", "compact clock text");
+equal(context.moduleText(modules[10], 1), "HH:mm", "compact clock text");
 
 console.log("bar presentation: workspace, responsive layout, and status formatting passed");
