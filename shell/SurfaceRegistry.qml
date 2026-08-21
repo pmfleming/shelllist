@@ -8,6 +8,7 @@ import Shelllist.Bluetooth as Bluetooth
 import Shelllist.Clipboard as Clipboard
 import Shelllist.Launcher as Launcher
 import Shelllist.Activity as Activity
+import Shelllist.Battery as Battery
 
 Item {
     id: registry
@@ -17,6 +18,7 @@ Item {
         { id: "wifi", name: "Wi-Fi", icon: "󰖩" },
         { id: "bluetooth", name: "Bluetooth", icon: "󰂯" },
         { id: "clipboard", name: "Clipboard", icon: "󰅇" },
+        { id: "battery", name: "Battery", icon: "󰂂" },
         { id: "activity", name: "Activity", icon: "󰃭" }
     ]
     property var loadedSurfaces: ({ wifi: true, bluetooth: true })
@@ -76,6 +78,7 @@ Item {
             wifi: wifiBundle.item,
             bluetooth: bluetoothBundle.item,
             clipboard: clipboardBundle.item,
+            battery: batteryBundle.item,
             activity: activityBundle.item
         });
         return bundles[surfaceId] || null;
@@ -163,6 +166,23 @@ Item {
                     id: bluetoothController
                     onPairingInteractionRequested: registry.surfaceRequested("bluetooth")
                 }
+            }
+        }
+    }
+
+    Loader {
+        id: batteryBundle
+        active: registry.isLoaded("battery")
+        sourceComponent: Component {
+            SurfaceBundle {
+                surfaceId: "battery"
+                displayName: "Battery"
+                icon: "󰂂"
+                controller: batteryController
+                content: Component {
+                    Battery.BatteryContent { controller: batteryController }
+                }
+                Battery.BatteryController { id: batteryController }
             }
         }
     }

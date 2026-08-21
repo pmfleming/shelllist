@@ -1,0 +1,4 @@
+module Shelllist.Battery
+BatteryBackend 1.0 BatteryBackend.qml
+BatteryContent 1.0 BatteryContent.qml
+BatteryController 1.0 BatteryController.qml

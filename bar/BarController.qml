@@ -149,6 +149,7 @@ Item {
             "audio-down": function () { backend.adjustAudio(-5); },
             "brightness-up": function () { backend.adjustBrightness(5); },
             "brightness-down": function () { backend.adjustBrightness(-5); },
+            battery: function () { openSurface("battery"); },
             activity: function () { openSurface("activity"); },
             notifications: function () { openSurface("activity"); },
             "notifications-dnd": function () { backend.toggleDnd(); },

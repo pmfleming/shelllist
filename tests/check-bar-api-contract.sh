@@ -5,6 +5,7 @@ bar_daemon=${1:?bar-daemon binary required}
 fixture=${2:?checked fixture required}
 api_js=${3:?BarApi.js required}
 activity_api_js=${4:-}
+battery_api_js=${5:-}
 
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
@@ -23,6 +24,11 @@ jq -e '
   (.snapshot.audio.input_muted | type == "boolean") and
   (.snapshot.brightness.percent | type == "number") and
   (.snapshot.battery.percentage | type == "number") and
+  (.snapshot.battery.devices | type == "array") and
+  (.snapshot.battery.policy.warning_percent | type == "number") and
+  (.snapshot.battery.protection.supported | type == "boolean") and
+  (.snapshot.battery.protection.managed | type == "boolean") and
+  (.snapshot.battery.protection.charge_once_active | type == "boolean") and
   (.snapshot.power_profile.profile | type == "string") and
   (.snapshot.notifications.count | type == "number") and
   (.snapshot.notifications.backend | type == "string") and
@@ -38,6 +44,7 @@ while IFS= read -r name; do
     exit 1
   }
 done < <(grep -h -oE '"(bar|activity|todos|workspace|media|audio|brightness|battery|powerProfile|power-profile|notifications|updates|timezone)\.[A-Za-z0-9.-]+"' \
-  "$api_js" ${activity_api_js:+"$activity_api_js"} | tr -d '"' | sort -u)
+  "$api_js" ${activity_api_js:+"$activity_api_js"} ${battery_api_js:+"$battery_api_js"} \
+  | tr -d '"' | sort -u)
 
 echo "bar-api contract: checked fixture and frontend registry match"

@@ -103,7 +103,7 @@
                 shelllist daemon                  Ensure the resident host is running
                 shelllist run                     Run the resident host in the foreground
 
-              Surfaces: applications, wifi, bluetooth, clipboard, activity
+              Surfaces: applications, wifi, bluetooth, clipboard, battery, activity
 
               Clipboard settings:
                 shelllist clipboard pause
@@ -115,7 +115,7 @@
 
               valid_surface() {
                 case "$1" in
-                  applications|wifi|bluetooth|clipboard|activity) return 0 ;;
+                  applications|wifi|bluetooth|clipboard|battery|activity) return 0 ;;
                   *) return 1 ;;
                 esac
               }
@@ -141,7 +141,7 @@
                   | awk '
                       /^Instance / { pid = ""; shelllist = 0 }
                       /Process ID:/ { pid = $3 }
-                      /Config path: .*share\/shelllist\/(shell|wifi|bluetooth|clipboard|launcher|activity)\/shell.qml/ { shelllist = 1 }
+                      /Config path: .*share\/shelllist\/(shell|wifi|bluetooth|clipboard|launcher|battery|activity)\/shell.qml/ { shelllist = 1 }
                       shelllist && pid != "" { print pid; pid = ""; shelllist = 0 }
                     ' \
                   | while read -r pid; do
@@ -305,7 +305,7 @@
                     *) usage >&2; exit 2 ;;
                   esac
                   ;;
-                applications|wifi|bluetooth|activity)
+                applications|wifi|bluetooth|battery|activity)
                   action=''${2:-toggle}
                   [ "$#" -le 2 ] || { usage >&2; exit 2; }
                   case "$action" in open|toggle) surface_call "$action" "$command" ;; *) usage >&2; exit 2 ;; esac
@@ -525,7 +525,7 @@
             installPhase = ''
               runHook preInstall
               mkdir -p $out/share/shelllist
-              cp -r shell bar wifi bluetooth clipboard launcher activity qml $out/share/shelllist/
+              cp -r shell bar wifi bluetooth clipboard launcher battery activity qml $out/share/shelllist/
               runHook postInstall
             '';
           };
@@ -592,7 +592,8 @@
               ${barDaemon}/bin/bar-daemon \
               ${./contracts/bar-api-ui-contract.fixture.json} \
               ${./bar/BarApi.js} \
-              ${./activity/ActivityApi.js}
+              ${./activity/ActivityApi.js} \
+              ${./battery/BatteryApi.js}
             touch $out
           '';
 
@@ -618,6 +619,7 @@
               ${./bluetooth}/*.qml
               ${./clipboard}/*.qml
               ${./launcher}/*.qml
+              ${./battery}/*.qml
               ${./activity}/*.qml
               ${./wifi}/*.qml
               ${./wifi}/networkinput/*.qml
@@ -655,6 +657,14 @@
             touch $out
           '';
 
+          batteryPresentation = pkgs.runCommand "shelllist-battery-presentation"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-battery-presentation.js} ${./battery/BatteryPresentation.js}
+            touch $out
+          '';
+
           moduleEvaluation =
             let
               evaluated = nixpkgs.lib.nixosSystem {
@@ -670,7 +680,12 @@
               test '${evaluated.config.systemd.user.services.bar-daemon.serviceConfig.BusName}' = 'org.laufan.BarDaemon'
               test '${evaluated.config.systemd.user.services.bar-daemon.environment.BAR_DAEMON_NOTIFICATION_BACKEND}' = 'native'
               test '${builtins.concatStringsSep " " evaluated.config.systemd.user.services.bar-daemon.conflicts}' = 'swaync.service'
+              test '${toString evaluated.config.security.polkit.enable}' = '1'
               test -f '${self.packages.${system}.default}/share/dbus-1/services/org.freedesktop.Notifications.service'
+              test -f '${self.packages.${system}.default}/share/dbus-1/system-services/org.laufan.BarBatteryHelper.service'
+              test -f '${self.packages.${system}.default}/share/dbus-1/system.d/org.laufan.BarBatteryHelper.conf'
+              test -f '${self.packages.${system}.default}/share/polkit-1/actions/org.laufan.bar-daemon.policy'
+              test -f '${self.packages.${system}.default}/lib/systemd/system/bar-battery-helper.service'
               touch $out
             '';
 

@@ -44,6 +44,9 @@ in
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ cfg.package ];
+    services.dbus.packages = [ cfg.package ];
+    security.polkit.enable = true;
+    systemd.packages = [ cfg.package ];
 
     systemd.user.services.shelllist = lib.mkIf cfg.systemd.enable {
       description = "Shelllist desktop action center and top bar";

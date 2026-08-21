@@ -72,6 +72,8 @@ equal(modules.length, 11, "status module count");
 equal(modules[0].primary, "wifi", "network action routing");
 equal(modules[1].visible, true, "ready update visibility");
 equal(modules[4].wheelDown, "brightness-down", "brightness wheel routing");
+equal(modules[5].primary, "battery", "battery opens the battery surface");
+equal(modules[5].interactive, true, "battery module is interactive");
 equal(modules[7].primary, "activity", "calendar opens the activity surface");
 equal(modules[10].primary, "activity", "clock opens the activity surface");
 equal(context.layoutDensity(1920), 0, "wide layout density");

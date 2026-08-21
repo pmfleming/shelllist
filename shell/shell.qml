@@ -176,6 +176,11 @@ ShellRoot {
         onTriggered: shell.toggleSurface("clipboard")
     }
     Ui.ShelllistGlobalShortcut {
+        shortcutName: "battery"
+        description: "Toggle Shelllist Battery"
+        onTriggered: shell.toggleSurface("battery")
+    }
+    Ui.ShelllistGlobalShortcut {
         shortcutName: "activity"
         description: "Toggle Shelllist Activity"
         onTriggered: shell.toggleSurface("activity")

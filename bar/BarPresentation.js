@@ -314,7 +314,7 @@ function batteryModule(battery) {
         batteryIcon(battery) + " " + ((battery && battery.percentage) || 0) + "%",
         batteryTooltip(battery), {
             compactText: batteryIcon(battery), visible: !!(battery && battery.available),
-            maxDensity: 3, interactive: false, tone: batteryTone(battery)
+            maxDensity: 3, interactive: true, primary: "battery", tone: batteryTone(battery)
         });
 }
 

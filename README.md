@@ -1,13 +1,13 @@
 # Shelllist
 
-Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and five keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, and **Activity**.
+Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and six keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, **Activity**, and **Battery**.
 
 Rust daemons handle system integration and policy. Shelllist handles windows, layout, navigation, animation, and presentation.
 
 ## What it provides
 
 - A 51 px adaptive top bar on every monitor.
-- A centered popover that switches between all five surfaces without starting another UI process.
+- A centered popover that switches between all six surfaces without starting another UI process.
 - A one-shot floating mode for development and fallback use.
 - Integrated volume, microphone, and brightness OSD feedback.
 - Global shortcuts and one IPC/CLI entry point.
@@ -36,6 +36,7 @@ Common bar interactions:
 | Bluetooth | Open Bluetooth | — | — |
 | Audio | Open `pavucontrol` | Toggle mute | Adjust volume |
 | Brightness | Increase | Decrease | Adjust brightness |
+| Battery | Open Battery | — | — |
 | Activity / clock | Open Activity | — | — |
 | Notifications | Open Activity | Toggle DND | — |
 
@@ -78,6 +79,12 @@ shelllist clipboard resume
 shelllist clipboard kept 750
 ```
 
+### Battery
+
+The Battery surface shows live charge, power state, remaining time, health, cycle count, and per-device details from `bar-daemon`. On supported ThinkPads it also manages the native firmware charge-start and charge-stop thresholds, enables or disables threshold protection, and provides a one-time charge-to-100% action. Alert thresholds and full-charge notifications are editable in the same surface.
+
+Battery settings are written through a privileged system D-Bus helper with polkit authorization; Shelllist itself remains unprivileged. The NixOS module installs and registers the helper automatically. A Home Manager-only installation can display telemetry, but setting ThinkPad firmware thresholds additionally requires installing the `bar-daemon` system D-Bus, systemd, and polkit artifacts at the system level.
+
 ## Architecture
 
 | Area | Owner |
@@ -86,7 +93,7 @@ shelllist clipboard kept 750
 | Wi-Fi and NetworkManager policy | `nm-daemon` / `nm-api` v1 |
 | Bluetooth, pairing, and audio profiles | `bt-daemon` / `bt-api` v1 |
 | Clipboard history and capture | `clip-daemon` / `clip-api` v1 |
-| Bar state, Activity data, and media-key effects | `bar-daemon` / `bar-api` v1 |
+| Bar state, Battery/ThinkPad policy, Activity data, and media-key effects | `bar-daemon` / `bar-api` v1 |
 | Windows, rendering, navigation, and tray menus | Shelllist / Quickshell |
 
 `shell/shell.qml` is the only UI entry point. Wi-Fi and Bluetooth load eagerly because the bar and hidden pairing requests need them. Applications and Clipboard load on first use. Opened surfaces remain warm.
@@ -142,7 +149,7 @@ shelllist run                     Run the host in the foreground
 shelllist quit                    Stop the resident host
 ```
 
-Surfaces are `applications`, `wifi`, `bluetooth`, `clipboard`, and `activity`.
+Surfaces are `applications`, `wifi`, `bluetooth`, `clipboard`, `activity`, and `battery`.
 
 ## Keyboard use
 
@@ -169,6 +176,7 @@ bind = SUPER, SPACE, global, shelllist:applications
 bind = SUPER, N, global, shelllist:wifi
 bind = SUPER, B, global, shelllist:bluetooth
 bind = SUPER, V, global, shelllist:clipboard
+bind = SUPER, P, global, shelllist:battery
 bindel = , XF86AudioRaiseVolume, global, shelllist:volume-up
 bindel = , XF86AudioLowerVolume, global, shelllist:volume-down
 bindl = , XF86AudioMute, global, shelllist:volume-mute
@@ -212,7 +220,7 @@ Focused checks:
 
 ```sh
 shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml bar/*.qml \
-  bluetooth/*.qml clipboard/*.qml launcher/*.qml wifi/*.qml \
+  battery/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml wifi/*.qml \
   wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-bar-presentation.js bar/BarPresentation.js
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
