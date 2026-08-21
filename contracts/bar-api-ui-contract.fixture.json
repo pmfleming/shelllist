@@ -108,13 +108,16 @@
       {
         "name": "battery.setProtection",
         "params": {
+          "battery_id": "BAT0",
           "enabled": true
         },
         "result": "battery"
       },
       {
         "name": "battery.chargeOnce",
-        "params": {},
+        "params": {
+          "battery_id": "BAT0"
+        },
         "result": "battery"
       },
       {
@@ -130,6 +133,21 @@
         "name": "powerProfile.set",
         "params": {
           "profile": "balanced"
+        },
+        "result": "power_profile"
+      },
+      {
+        "name": "powerProfile.setBatteryAware",
+        "params": {
+          "enabled": true
+        },
+        "result": "power_profile"
+      },
+      {
+        "name": "powerProfile.setActionEnabled",
+        "params": {
+          "action": "amdgpu_panel_power",
+          "enabled": true
         },
         "result": "power_profile"
       },
@@ -370,6 +388,7 @@
         "desired_start_percent": 75,
         "desired_end_percent": 80,
         "desired_enabled": true,
+        "thresholds_verified": true,
         "charge_once_active": false,
         "supports_start": true,
         "supports_end": true,
@@ -404,6 +423,7 @@
             "desired_start_percent": 75,
             "desired_end_percent": 80,
             "desired_enabled": true,
+            "thresholds_verified": true,
             "charge_once_active": false,
             "supports_start": true,
             "supports_end": true,
@@ -463,7 +483,22 @@
       "history_revision": 1
     },
     "power_profile": {
+      "actions": [
+        {
+          "description": "Panel power savings",
+          "enabled": true,
+          "name": "amdgpu_panel_power"
+        }
+      ],
+      "active_holds": [
+        {
+          "application_id": "org.example.Compiler",
+          "profile": "performance",
+          "reason": "Building"
+        }
+      ],
       "available": true,
+      "battery_aware": true,
       "driver": "amd_pstate",
       "error": null,
       "performance_degraded": "",
@@ -474,7 +509,8 @@
           "name": "balanced",
           "platform_driver": "platform_profile"
         }
-      ]
+      ],
+      "version": "0.30"
     },
     "timezone": {
       "abbreviation": "CEST",

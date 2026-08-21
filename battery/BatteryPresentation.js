@@ -16,6 +16,16 @@ function duration(seconds) {
 function stateLabel(battery) {
     if (!battery || !battery.available)
         return "Unavailable";
+    const labels = {
+        "charge-paused": "Charging paused at limit",
+        "charging-inhibited": "Charging inhibited",
+        "calibrating": "Calibrating battery",
+        "fully-charged": "Fully charged",
+        "pending-charge": "Waiting to charge",
+        "pending-discharge": "Waiting to discharge"
+    };
+    if (labels[battery.state])
+        return labels[battery.state];
     if (battery.charging)
         return "Charging";
     if (battery.plugged && battery.percentage >= 100)
@@ -28,10 +38,32 @@ function stateLabel(battery) {
 function timeLabel(battery) {
     if (!battery || !battery.available)
         return "No estimate";
+    if (battery.plugged && !battery.charging)
+        return "No active charge estimate";
     const seconds = battery.charging
         ? battery.time_to_full_seconds : battery.time_to_empty_seconds;
     const suffix = battery.charging ? " until full" : " remaining";
     return duration(seconds) + suffix;
+}
+
+function profileName(profile) {
+    const labels = { "power-saver": "Power saver", "balanced": "Balanced",
+        "performance": "Performance" };
+    return labels[profile] || profile || "Unavailable";
+}
+
+function actionName(action) {
+    return String(action || "").split("_").map(function (part) {
+        return part.length > 0 ? part[0].toUpperCase() + part.slice(1) : part;
+    }).join(" ");
+}
+
+function holdSummary(hold) {
+    if (!hold)
+        return "";
+    const owner = hold.application_id || "An application";
+    const reason = hold.reason ? ": " + hold.reason : "";
+    return owner + " holds " + profileName(hold.profile) + reason;
 }
 
 function protectionRange(protection) {

@@ -36,7 +36,7 @@ Ui.ChooserSurface {
 
             Text {
                 Layout.fillWidth: true
-                text: "Battery"
+                text: "Battery & Power"
                 color: Ui.Theme.text
                 font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeTitle
@@ -98,6 +98,102 @@ Ui.ChooserSurface {
             }
 
             Ui.DetailColumnCard {
+                height: 100
+                visible: (content.battery.devices || []).length > 1
+                title: "Battery device"
+
+                Ui.SegmentedControl {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Ui.Theme.compactControlHeight
+                    options: (content.battery.devices || []).map(function (batteryDevice) {
+                        return { value: batteryDevice.id,
+                            label: Presentation.deviceName(batteryDevice) };
+                    })
+                    value: content.device.id || ""
+                    interactive: !content.controller.actionInFlight
+                    onSelected: function (value) { content.controller.selectDevice(value); }
+                }
+            }
+
+            Ui.DetailColumnCard {
+                height: 150 + (content.controller.powerProfile.battery_aware === null
+                    || content.controller.powerProfile.battery_aware === undefined ? 0 : 48)
+                    + (content.controller.powerProfile.actions || []).length * 48
+                    + (content.controller.powerProfile.active_holds || []).length * 34
+                title: "Power mode"
+
+                Ui.FieldLabel {
+                    Layout.fillWidth: true
+                    text: content.controller.powerProfile.available
+                        ? "Driver: " + (content.controller.powerProfile.driver || "unknown")
+                            + (content.controller.powerProfile.version
+                                ? " · power-profiles-daemon "
+                                    + content.controller.powerProfile.version : "")
+                        : "power-profiles-daemon is unavailable"
+                    color: content.controller.powerProfile.available
+                        ? Ui.Theme.mutedText : Ui.Theme.warning
+                }
+
+                Ui.SegmentedControl {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Ui.Theme.compactControlHeight
+                    options: content.controller.profileOptions
+                    value: content.controller.powerProfile.profile || ""
+                    interactive: content.controller.powerProfile.available
+                        && !content.controller.actionInFlight
+                    onSelected: function (value) { content.controller.setPowerProfile(value); }
+                }
+
+                Ui.FieldLabel {
+                    Layout.fillWidth: true
+                    visible: !!content.controller.powerProfile.performance_degraded
+                    text: "Performance is limited: "
+                        + content.controller.powerProfile.performance_degraded
+                    color: Ui.Theme.warning
+                }
+
+                Repeater {
+                    model: content.controller.powerProfile.active_holds || []
+
+                    delegate: Ui.FieldLabel {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 26
+                        text: Presentation.holdSummary(modelData)
+                        color: Ui.Theme.active
+                    }
+                }
+
+                Ui.ToggleRow {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 42
+                    visible: content.controller.powerProfile.battery_aware !== null
+                        && content.controller.powerProfile.battery_aware !== undefined
+                    title: "Battery-aware profiles"
+                    subtitle: "Let the daemon adapt profiles to battery state"
+                    checked: !!content.controller.powerProfile.battery_aware
+                    interactive: !content.controller.actionInFlight
+                    onClicked: content.controller.setBatteryAware(!checked)
+                }
+
+                Repeater {
+                    model: content.controller.powerProfile.actions || []
+
+                    delegate: Ui.ToggleRow {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 42
+                        title: Presentation.actionName(modelData.name)
+                        subtitle: modelData.description || "Power-saving action"
+                        checked: !!modelData.enabled
+                        interactive: !content.controller.actionInFlight
+                        onClicked: content.controller.setPowerActionEnabled(
+                            modelData.name, !checked)
+                    }
+                }
+            }
+
+            Ui.DetailColumnCard {
                 height: 330
                 title: "ThinkPad battery protection"
 
@@ -112,6 +208,15 @@ Ui.ChooserSurface {
                                 + " · not managed yet")
                     color: content.controller.protectionSupported
                         ? Ui.Theme.mutedText : Ui.Theme.warning
+                }
+
+                Ui.FieldLabel {
+                    Layout.fillWidth: true
+                    visible: content.controller.protectionSupported
+                        && content.protection.managed
+                        && !content.protection.thresholds_verified
+                    text: "The firmware accepted the range but reported a different value."
+                    color: Ui.Theme.warning
                 }
 
                 Ui.ToggleRow {

@@ -29,14 +29,36 @@ Io.DaemonBackend {
         });
     }
 
-    function setProtection(enabled: bool): bool {
+    function setProtection(batteryId: string, enabled: bool): bool {
         return call(nextId("battery-protection"), BatteryApi.methods.setProtection, {
+            battery_id: batteryId,
             enabled: enabled
         });
     }
 
-    function chargeOnce(): bool {
-        return call(nextId("battery-charge-once"), BatteryApi.methods.chargeOnce, {});
+    function chargeOnce(batteryId: string): bool {
+        return call(nextId("battery-charge-once"), BatteryApi.methods.chargeOnce, {
+            battery_id: batteryId
+        });
+    }
+
+    function setPowerProfile(profile: string): bool {
+        return call(nextId("power-profile"), BatteryApi.methods.setPowerProfile, {
+            profile: profile
+        });
+    }
+
+    function setBatteryAware(enabled: bool): bool {
+        return call(nextId("power-battery-aware"), BatteryApi.methods.setBatteryAware, {
+            enabled: enabled
+        });
+    }
+
+    function setPowerActionEnabled(action: string, enabled: bool): bool {
+        return call(nextId("power-action"), BatteryApi.methods.setPowerActionEnabled, {
+            action: action,
+            enabled: enabled
+        });
     }
 
     function setAlertPolicy(warningPercent: int, criticalPercent: int,
@@ -59,8 +81,12 @@ Io.DaemonBackend {
         const data = envelope.data || ({});
         if (data.snapshot && data.snapshot.battery)
             controller.applyBattery(data.snapshot.battery);
+        if (data.snapshot && data.snapshot.power_profile)
+            controller.applyPowerProfile(data.snapshot.power_profile);
         if (data.battery)
             controller.applyBattery(data.battery);
+        if (data.power_profile)
+            controller.applyPowerProfile(data.power_profile);
     }
 
     onResponseReceived: function (id, envelope, transportError) {

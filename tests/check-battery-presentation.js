@@ -15,6 +15,10 @@ function equal(actual, expected, message) {
 equal(context.duration(7500), "2h 5m", "duration formatting");
 equal(context.stateLabel({ available: true, charging: true }), "Charging", "charging state");
 equal(context.stateLabel({ available: true, plugged: false }), "On battery", "discharging state");
+equal(context.stateLabel({ available: true, state: "charge-paused", plugged: true }),
+    "Charging paused at limit", "charge limit state");
+equal(context.stateLabel({ available: true, state: "charging-inhibited", plugged: true }),
+    "Charging inhibited", "inhibited state");
 equal(context.protectionRange({ supported: true, start_percent: 75, end_percent: 80 }),
     "75–80%", "observed protection range");
 equal(context.desiredRange({ desired_start_percent: 70, desired_end_percent: 85 }),
@@ -25,5 +29,9 @@ equal(context.alertRangeValid(25, 12), true, "valid alert range");
 equal(context.alertRangeValid(10, 12), false, "critical above warning rejected");
 equal(context.deviceName({ vendor: "Sunwoda", model: "5B11" }),
     "Sunwoda 5B11", "device identity");
+equal(context.profileName("power-saver"), "Power saver", "power profile label");
+equal(context.actionName("amdgpu_panel_power"), "Amdgpu Panel Power", "power action label");
+equal(context.holdSummary({ application_id: "org.example.Build", profile: "performance",
+    reason: "Compiling" }), "org.example.Build holds Performance: Compiling", "profile hold summary");
 
 console.log("battery presentation: formatting and policy validation passed");

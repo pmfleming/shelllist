@@ -12,7 +12,10 @@ Ui.ChooserController {
         protection: ({ supported: false, managed: false, enabled: false,
             desired_enabled: false, desired_start_percent: 75,
             desired_end_percent: 80, charge_once_active: false }) })
+    property var powerProfile: ({ available: false, profile: "", profiles: [],
+        performance_degraded: "", battery_aware: null, actions: [], active_holds: [] })
     property string lastError: ""
+    property int selectedDeviceIndex: 0
     property int draftStartPercent: 75
     property int draftEndPercent: 80
     property int draftWarningPercent: 25
@@ -24,11 +27,18 @@ Ui.ChooserController {
     detailsOpen: false
     navigationPrimaryEnabled: false
     readonly property BatteryBackend backend: batteryBackend
-    readonly property var protection: battery.protection || ({})
     readonly property var policy: battery.policy || ({})
-    readonly property var primaryDevice: battery.devices && battery.devices.length > 0
-        ? battery.devices[0] : null
+    readonly property var selectedDevice: battery.devices && battery.devices.length > selectedDeviceIndex
+        ? battery.devices[selectedDeviceIndex] : null
+    readonly property var primaryDevice: selectedDevice
+    readonly property var protection: selectedDevice && selectedDevice.protection
+        ? selectedDevice.protection : (battery.protection || ({}))
     readonly property bool protectionSupported: !!protection.supported
+    readonly property var profileOptions: (powerProfile.profiles || []).map(function (profile) {
+        const labels = { "power-saver": "Power saver", "balanced": "Balanced",
+            "performance": "Performance" };
+        return { value: profile.name, label: labels[profile.name] || profile.name };
+    })
     readonly property bool thresholdDraftValid: Presentation.thresholdRangeValid(
         draftStartPercent, draftEndPercent)
     readonly property bool alertDraftValid: Presentation.alertRangeValid(
@@ -40,15 +50,35 @@ Ui.ChooserController {
 
     function applyBattery(value: var): void {
         battery = value || ({ available: false, percentage: 0, devices: [] });
-        if (!thresholdDraftDirty) {
-            draftStartPercent = Number(valueOr(protection.desired_start_percent, 75));
-            draftEndPercent = Number(valueOr(protection.desired_end_percent, 80));
-        }
+        if (selectedDeviceIndex >= (battery.devices || []).length)
+            selectedDeviceIndex = 0;
+        syncThresholdDraft();
         if (!alertDraftDirty) {
             draftWarningPercent = Number(valueOr(policy.warning_percent, 25));
             draftCriticalPercent = Number(valueOr(policy.critical_percent, 12));
             draftNotifyWhenFull = valueOr(policy.notify_when_full, true);
         }
+    }
+
+    function syncThresholdDraft(): void {
+        if (!thresholdDraftDirty) {
+            draftStartPercent = Number(valueOr(protection.desired_start_percent, 75));
+            draftEndPercent = Number(valueOr(protection.desired_end_percent, 80));
+        }
+    }
+
+    function applyPowerProfile(value: var): void {
+        powerProfile = value || ({ available: false, profile: "", profiles: [] });
+    }
+
+    function selectDevice(batteryId: string): void {
+        const devices = battery.devices || [];
+        const index = devices.findIndex(function (device) { return device.id === batteryId; });
+        if (index < 0 || actionInFlight)
+            return;
+        selectedDeviceIndex = index;
+        thresholdDraftDirty = false;
+        syncThresholdDraft();
     }
 
     function handleEvent(event: var): void {
@@ -65,6 +95,9 @@ Ui.ChooserController {
         if ((event.event === "subscribed" || event.event === "changed")
                 && event.stream === BatteryApi.streams.battery)
             applyBattery(event.data || ({}));
+        if ((event.event === "subscribed" || event.event === "changed")
+                && event.stream === BatteryApi.streams.powerProfile)
+            applyPowerProfile(event.data || ({}));
     }
 
     function startOperation(started: bool): bool {
@@ -119,7 +152,7 @@ Ui.ChooserController {
     function setProtection(enabled: bool): bool {
         if (actionInFlight || !protectionSupported)
             return false;
-        return startOperation(backend.setProtection(enabled));
+        return startOperation(backend.setProtection(selectedDevice.id, enabled));
     }
 
     function applyThresholds(): bool {
@@ -133,7 +166,7 @@ Ui.ChooserController {
     function chargeOnce(): bool {
         if (actionInFlight || !protectionSupported || !battery.plugged)
             return false;
-        return startOperation(backend.chargeOnce());
+        return startOperation(backend.chargeOnce(selectedDevice.id));
     }
 
     function applyAlertPolicy(): bool {
@@ -141,6 +174,25 @@ Ui.ChooserController {
             return false;
         return startOperation(backend.setAlertPolicy(draftWarningPercent,
             draftCriticalPercent, draftNotifyWhenFull));
+    }
+
+    function setPowerProfile(profile: string): bool {
+        if (actionInFlight || !powerProfile.available)
+            return false;
+        return startOperation(backend.setPowerProfile(profile));
+    }
+
+    function setBatteryAware(enabled: bool): bool {
+        if (actionInFlight || powerProfile.battery_aware === null
+                || powerProfile.battery_aware === undefined)
+            return false;
+        return startOperation(backend.setBatteryAware(enabled));
+    }
+
+    function setPowerActionEnabled(action: string, enabled: bool): bool {
+        if (actionInFlight || !action.length)
+            return false;
+        return startOperation(backend.setPowerActionEnabled(action, enabled));
     }
 
     function activateUi(workspaceId) {

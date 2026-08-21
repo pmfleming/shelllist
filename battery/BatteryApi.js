@@ -8,11 +8,15 @@ var methods = {
     setThresholds: "battery.setThresholds",
     setProtection: "battery.setProtection",
     chargeOnce: "battery.chargeOnce",
-    setAlertPolicy: "battery.setAlertPolicy"
+    setAlertPolicy: "battery.setAlertPolicy",
+    setPowerProfile: "powerProfile.set",
+    setBatteryAware: "powerProfile.setBatteryAware",
+    setPowerActionEnabled: "powerProfile.setActionEnabled"
 };
 
 var streams = {
-    battery: "battery.changed"
+    battery: "battery.changed",
+    powerProfile: "power-profile.changed"
 };
 
-var subscribedStreams = [streams.battery];
+var subscribedStreams = [streams.battery, streams.powerProfile];
