@@ -43,7 +43,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: height / 2
+        radius: 0
         color: root.backgroundColor
         border.width: 1
         border.color: root.borderColor
@@ -76,7 +76,7 @@ Item {
 
     Ui.StateLayer {
         focusTarget: root
-        radius: height / 2
+        radius: 0
         stateColor: root.foreground
         showStateBackground: true
         hoverOpacity: 0.09

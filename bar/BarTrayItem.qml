@@ -36,7 +36,7 @@ Item {
 
     Ui.StateLayer {
         focusTarget: root
-        radius: height / 2
+        radius: 0
         stateColor: Ui.Theme.text
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         onClicked: function (mouse) { root.routeClick(mouse.button); }

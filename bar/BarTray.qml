@@ -14,7 +14,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: height / 2
+        radius: 0
         color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.56)
         border.width: 1
         border.color: Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72)

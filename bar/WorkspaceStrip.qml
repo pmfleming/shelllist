@@ -34,7 +34,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: Math.max(0, parent.width - 8)
         height: 37
-        radius: height / 2
+        radius: 0
         color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.56)
         border.width: 1
         border.color: Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72)
@@ -45,7 +45,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: root.activeButton ? root.activeButton.width : 0
         height: root.layoutDensity >= 2 ? 27 : 31
-        radius: height / 2
+        radius: 0
         color: Ui.Theme.mix(Ui.Theme.selected, Ui.Theme.accent, Ui.Theme.dark ? 0.18 : 0.10)
         border.width: 1
         border.color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.68)

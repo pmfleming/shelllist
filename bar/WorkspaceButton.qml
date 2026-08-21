@@ -24,7 +24,7 @@ Item {
         anchors.centerIn: parent
         width: button.compact ? 23 : 27
         height: width
-        radius: Ui.Theme.baseRadius
+        radius: 0
         color: button.active ? "transparent"
             : (button.workspaceId === 1
                 ? Ui.Theme.withAlpha(Ui.Theme.window, 0.58)
@@ -76,7 +76,7 @@ Item {
 
     Ui.StateLayer {
         focusTarget: button
-        radius: height / 2
+        radius: 0
         stateColor: Ui.Theme.accent
         showStateBackground: true
         hoverOpacity: 0.10

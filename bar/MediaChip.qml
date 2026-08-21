@@ -21,7 +21,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: height / 2
+        radius: 0
         color: Ui.Theme.withAlpha(Ui.Theme.mix(Ui.Theme.surfaceRaised,
             Ui.Theme.accent, 0.08), 0.72)
         border.width: 1
@@ -36,7 +36,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: 27
         height: 27
-        radius: width / 2
+        radius: 0
         color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
         clip: true
 
@@ -98,6 +98,7 @@ Item {
             icon: ""
             iconSize: 12
             backgroundColor: "transparent"
+            radius: 0
             border.width: 0
             flatIconColor: Ui.Theme.mutedText
             highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
@@ -113,6 +114,7 @@ Item {
             icon: Presentation.playPauseActionIcon(root.player)
             iconSize: 13
             backgroundColor: "transparent"
+            radius: 0
             border.width: 0
             flatIconColor: Ui.Theme.mutedText
             highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
@@ -129,6 +131,7 @@ Item {
             icon: ""
             iconSize: 12
             backgroundColor: "transparent"
+            radius: 0
             border.width: 0
             flatIconColor: Ui.Theme.mutedText
             highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
@@ -146,14 +149,14 @@ Item {
         anchors.rightMargin: 2
         anchors.bottom: parent.bottom
         height: root.player && Number(root.player.length_us || 0) > 0 ? 3 : 0
-        radius: height / 2
+        radius: 0
         color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.14)
         clip: true
 
         Rectangle {
             width: parent.width * root.progress / 100
             height: parent.height
-            radius: parent.radius
+            radius: 0
             color: Ui.Theme.accent
 
             Behavior on width {
@@ -187,7 +190,7 @@ Item {
         anchors.right: mediaControls.left
         anchors.rightMargin: 2
         focusTarget: root
-        radius: height / 2
+        radius: 0
         stateColor: Ui.Theme.accent
         showStateBackground: true
         acceptedButtons: Qt.LeftButton

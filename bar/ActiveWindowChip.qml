@@ -23,7 +23,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: height / 2
+        radius: 0
         color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.56)
         border.width: 1
         border.color: Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72)
@@ -37,7 +37,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: 27
         height: 27
-        radius: width / 2
+        radius: 0
         color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.14)
 
         IconImage {
@@ -98,7 +98,7 @@ Item {
 
     Ui.StateLayer {
         focusTarget: root
-        radius: height / 2
+        radius: 0
         stateColor: Ui.Theme.text
         showStateBackground: true
         onClicked: root.controller.openSurface("applications")
