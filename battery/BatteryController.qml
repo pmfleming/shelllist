@@ -35,7 +35,19 @@ Ui.ChooserController {
     readonly property var primaryDevice: selectedDevice
     readonly property var protection: selectedDevice && selectedDevice.protection
         ? selectedDevice.protection : (battery.protection || ({}))
+    readonly property var batteryOperation: battery.operation || ({ kind: "" })
+    readonly property bool operationForSelected: !!selectedDevice
+        && batteryOperation.battery_id === selectedDevice.id
+    readonly property bool chargingInhibited: operationForSelected
+        && batteryOperation.kind === "inhibit"
+    readonly property bool calibrating: operationForSelected
+        && batteryOperation.kind === "calibration"
+    readonly property bool batteryOperationActive: !!batteryOperation.kind
     readonly property bool protectionSupported: !!protection.supported
+    readonly property bool inhibitionSupported: (protection.available_behaviours || [])
+        .indexOf("inhibit-charge") >= 0
+    readonly property bool calibrationSupported: protectionSupported
+        && (protection.available_behaviours || []).indexOf("force-discharge") >= 0
     readonly property var profileOptions: (powerProfile.profiles || []).map(function (profile) {
         const labels = { "power-saver": "Power saver", "balanced": "Balanced",
             "performance": "Performance" };
@@ -158,13 +170,13 @@ Ui.ChooserController {
     }
 
     function setProtection(enabled: bool): bool {
-        if (actionInFlight || !protectionSupported)
+        if (actionInFlight || batteryOperationActive || !protectionSupported)
             return false;
         return startOperation(backend.setProtection(selectedDevice.id, enabled));
     }
 
     function applyThresholds(): bool {
-        if (actionInFlight || !protectionSupported || !thresholdDraftValid
+        if (actionInFlight || batteryOperationActive || !protectionSupported || !thresholdDraftValid
                 || !primaryDevice)
             return false;
         return startOperation(backend.setThresholds(primaryDevice.id,
@@ -172,9 +184,25 @@ Ui.ChooserController {
     }
 
     function chargeOnce(): bool {
-        if (actionInFlight || !protectionSupported || !battery.plugged)
+        if (actionInFlight || batteryOperationActive || !protectionSupported || !battery.plugged)
             return false;
         return startOperation(backend.chargeOnce(selectedDevice.id));
+    }
+
+    function setChargingInhibited(enabled: bool): bool {
+        if (actionInFlight || !inhibitionSupported || !selectedDevice
+                || (batteryOperationActive && !chargingInhibited))
+            return false;
+        return startOperation(backend.setChargingInhibited(selectedDevice.id, enabled));
+    }
+
+    function toggleCalibration(): bool {
+        if (actionInFlight || !calibrationSupported || !selectedDevice
+                || (batteryOperationActive && !calibrating))
+            return false;
+        return startOperation(calibrating
+            ? backend.cancelCalibration(selectedDevice.id)
+            : backend.startCalibration(selectedDevice.id));
     }
 
     function applyAlertPolicy(): bool {

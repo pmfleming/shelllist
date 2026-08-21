@@ -42,6 +42,25 @@ Io.DaemonBackend {
         });
     }
 
+    function setChargingInhibited(batteryId: string, enabled: bool): bool {
+        return call(nextId("battery-inhibit"), BatteryApi.methods.setChargingInhibited, {
+            battery_id: batteryId,
+            enabled: enabled
+        });
+    }
+
+    function startCalibration(batteryId: string): bool {
+        return call(nextId("battery-calibrate"), BatteryApi.methods.startCalibration, {
+            battery_id: batteryId
+        });
+    }
+
+    function cancelCalibration(batteryId: string): bool {
+        return call(nextId("battery-calibrate-cancel"), BatteryApi.methods.cancelCalibration, {
+            battery_id: batteryId
+        });
+    }
+
     function setPowerProfile(profile: string): bool {
         return call(nextId("power-profile"), BatteryApi.methods.setPowerProfile, {
             profile: profile

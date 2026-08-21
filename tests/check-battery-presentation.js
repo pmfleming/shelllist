@@ -33,5 +33,9 @@ equal(context.profileName("power-saver"), "Power saver", "power profile label");
 equal(context.actionName("amdgpu_panel_power"), "Amdgpu Panel Power", "power action label");
 equal(context.holdSummary({ application_id: "org.example.Build", profile: "performance",
     reason: "Compiling" }), "org.example.Build holds Performance: Compiling", "profile hold summary");
+equal(context.calibrationLabel({ kind: "calibration", phase: "discharging" }),
+    "Calibration: force-discharging to 1%", "calibration discharge phase");
+equal(context.calibrationLabel({ kind: "calibration", phase: "charging" }),
+    "Calibration: charging fully before restoring thresholds", "calibration charge phase");
 
 console.log("battery presentation: formatting and policy validation passed");

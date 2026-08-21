@@ -66,6 +66,16 @@ function holdSummary(hold) {
     return owner + " holds " + profileName(hold.profile) + reason;
 }
 
+function calibrationLabel(operation) {
+    if (!operation || operation.kind !== "calibration")
+        return "";
+    if (operation.phase === "discharging")
+        return "Calibration: force-discharging to 1%";
+    if (operation.phase === "charging")
+        return "Calibration: charging fully before restoring thresholds";
+    return "Calibration is recovering its saved battery policy";
+}
+
 function protectionRange(protection) {
     if (!protection || !protection.supported)
         return "Unsupported";

@@ -194,7 +194,7 @@ Ui.ChooserSurface {
             }
 
             Ui.DetailColumnCard {
-                height: 330
+                height: 450
                 title: "ThinkPad battery protection"
 
                 Ui.FieldLabel {
@@ -226,6 +226,7 @@ Ui.ChooserSurface {
                     subtitle: "Keep charging within the configured threshold range"
                     checked: !!content.protection.desired_enabled
                     interactive: content.controller.protectionSupported
+                        && !content.controller.batteryOperationActive
                         && !content.controller.actionInFlight
                     onClicked: content.controller.setProtection(!checked)
                 }
@@ -240,6 +241,7 @@ Ui.ChooserSurface {
                     value: content.controller.draftStartPercent
                     valueText: Math.round(value) + "%"
                     enabled: content.controller.protectionSupported
+                        && !content.controller.batteryOperationActive
                         && !content.controller.actionInFlight
                     onEdited: function (_dragging) {
                         content.controller.updateStartPercent(Math.round(value));
@@ -256,6 +258,7 @@ Ui.ChooserSurface {
                     value: content.controller.draftEndPercent
                     valueText: Math.round(value) + "%"
                     enabled: content.controller.protectionSupported
+                        && !content.controller.batteryOperationActive
                         && !content.controller.actionInFlight
                     onEdited: function (_dragging) {
                         content.controller.updateEndPercent(Math.round(value));
@@ -283,6 +286,7 @@ Ui.ChooserSurface {
                         enabled: content.controller.thresholdDraftDirty
                             && content.controller.thresholdDraftValid
                             && content.controller.protectionSupported
+                            && !content.controller.batteryOperationActive
                             && !content.controller.actionInFlight
                         onClicked: content.controller.applyThresholds()
                     }
@@ -294,9 +298,48 @@ Ui.ChooserSurface {
                         tone: content.protection.charge_once_active ? "active" : "normal"
                         enabled: content.battery.plugged
                             && !content.protection.charge_once_active
+                            && !content.controller.batteryOperationActive
                             && content.controller.protectionSupported
                             && !content.controller.actionInFlight
                         onClicked: content.controller.chargeOnce()
+                    }
+                }
+
+                Ui.FieldLabel {
+                    Layout.fillWidth: true
+                    visible: content.controller.calibrating
+                    text: Presentation.calibrationLabel(content.controller.batteryOperation)
+                    color: Ui.Theme.active
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Ui.Theme.spacingSm
+
+                    Ui.ActionButton {
+                        Layout.fillWidth: true
+                        label: content.controller.chargingInhibited
+                            ? "Resume charging" : "Pause charging"
+                        tone: content.controller.chargingInhibited ? "active" : "normal"
+                        enabled: content.controller.inhibitionSupported
+                            && (!content.controller.batteryOperationActive
+                                || content.controller.chargingInhibited)
+                            && !content.controller.actionInFlight
+                        onClicked: content.controller.setChargingInhibited(
+                            !content.controller.chargingInhibited)
+                    }
+
+                    Ui.ActionButton {
+                        Layout.fillWidth: true
+                        label: content.controller.calibrating
+                            ? "Cancel calibration" : "Calibrate battery"
+                        tone: content.controller.calibrating ? "active" : "normal"
+                        enabled: content.controller.calibrationSupported
+                            && content.battery.plugged
+                            && (!content.controller.batteryOperationActive
+                                || content.controller.calibrating)
+                            && !content.controller.actionInFlight
+                        onClicked: content.controller.toggleCalibration()
                     }
                 }
             }
