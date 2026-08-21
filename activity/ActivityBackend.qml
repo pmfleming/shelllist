@@ -56,8 +56,38 @@ Io.DaemonBackend {
         return call(nextId("notifications-dnd"), ActivityApi.methods.notificationsToggleDnd, {});
     }
 
-    function openNotificationHistory(): bool {
-        return call(nextId("notifications-history"), ActivityApi.methods.notificationsTogglePanel, {});
+    function loadNotificationHistory(beforeHistoryId: var): bool {
+        const prefix = beforeHistoryId === null || beforeHistoryId === undefined
+            ? "notifications-history-reset" : "notifications-history-more";
+        return call(nextId(prefix), ActivityApi.methods.notificationsList, {
+            before_history_id: beforeHistoryId,
+            limit: 50
+        });
+    }
+
+    function dismissNotification(notificationId: int): bool {
+        return call(nextId("notification-dismiss"),
+            ActivityApi.methods.notificationsDismiss, { id: notificationId });
+    }
+
+    function clearNotifications(): bool {
+        return call(nextId("notifications-clear"), ActivityApi.methods.notificationsClear, {});
+    }
+
+    function invokeNotificationAction(notificationId: int, actionKey: string): bool {
+        return call(nextId("notification-action"),
+            ActivityApi.methods.notificationsInvokeAction, {
+                id: notificationId,
+                action_key: actionKey,
+                activation_token: null
+            });
+    }
+
+    function replyNotification(notificationId: int, text: string): bool {
+        return call(nextId("notification-reply"), ActivityApi.methods.notificationsReply, {
+            id: notificationId,
+            text: text
+        });
     }
 
     function finish(id: string, envelope: var, transportError: string): void {
@@ -67,6 +97,8 @@ Io.DaemonBackend {
             controller.lastError = error;
             if (id.startsWith("activity-range"))
                 controller.rangeLoading = false;
+            if (id.startsWith("notifications-history"))
+                controller.notificationHistoryLoading = false;
             return;
         }
         controller.lastError = "";
@@ -77,8 +109,13 @@ Io.DaemonBackend {
             controller.activity = data.activity;
         if (data.activity_range)
             controller.applyRange(data.activity_range);
+        if (data.notification_history)
+            controller.applyNotificationHistory(data.notification_history,
+                id.startsWith("notifications-history-more"));
         if (id.startsWith("todo-") || id.startsWith("activity-refresh"))
             controller.scheduleRangeQuery();
+        if (id.startsWith("notification-") || id.startsWith("notifications-clear"))
+            controller.scheduleNotificationHistory();
     }
 
     onResponseReceived: function (id, envelope, transportError) {

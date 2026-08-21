@@ -212,34 +212,87 @@ Ui.ChooserSurface {
                     }
 
                     Rectangle {
+                        id: notificationPanel
                         width: parent.width
-                        height: notificationColumn.implicitHeight + 20
+                        height: Math.max(120, parent.height - y)
                         radius: Ui.Theme.cardRadius
                         color: Ui.Theme.surfaceRaised
                         border.color: Ui.Theme.border
+
                         Column {
-                            id: notificationColumn
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.fill: parent
                             anchors.margins: 10
-                            spacing: 7
-                            Text {
-                                text: "Notifications  " + (content.controller.notifications.count || 0)
-                                color: Ui.Theme.text
-                                font.family: Ui.Theme.fontFamily
-                                font.pixelSize: Ui.Theme.fontSizeLabel
-                                font.weight: Ui.Theme.fontWeightDemiBold
-                            }
+                            spacing: Ui.Theme.spacingSm
+
                             Row {
+                                width: parent.width
+                                height: 34
                                 spacing: Ui.Theme.spacingSm
+                                Text {
+                                    width: parent.width - dndButton.width - clearButton.width
+                                        - parent.spacing * 2
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "Notifications  " + (content.controller.notifications.count || 0)
+                                    color: Ui.Theme.text
+                                    elide: Text.ElideRight
+                                    font.family: Ui.Theme.fontFamily
+                                    font.pixelSize: Ui.Theme.fontSizeLabel
+                                    font.weight: Ui.Theme.fontWeightDemiBold
+                                }
                                 HeaderButton {
-                                    label: content.controller.notifications.dnd ? "Disable DND" : "Enable DND"
+                                    id: dndButton
+                                    label: content.controller.notifications.dnd ? "DND on" : "DND off"
                                     onTriggered: content.controller.toggleDnd()
                                 }
                                 HeaderButton {
-                                    label: "Open history"
-                                    onTriggered: content.controller.openNotificationHistory()
+                                    id: clearButton
+                                    label: "Dismiss all"
+                                    enabled: content.controller.notificationHistory.length > 0
+                                    onTriggered: content.controller.clearNotifications()
+                                }
+                            }
+
+                            Text {
+                                visible: content.controller.notificationHistory.length === 0
+                                width: parent.width
+                                text: content.controller.notificationHistoryLoading
+                                    ? "Loading history…" : "No notification history"
+                                color: Ui.Theme.mutedText
+                                horizontalAlignment: Text.AlignHCenter
+                                font.family: Ui.Theme.fontFamily
+                                font.pixelSize: Ui.Theme.fontSizeSmall
+                            }
+
+                            ListView {
+                                id: notificationHistoryList
+                                width: parent.width
+                                height: parent.height - y - historyFooter.height - parent.spacing
+                                visible: content.controller.notificationHistory.length > 0
+                                clip: true
+                                spacing: Ui.Theme.spacingSm
+                                model: content.controller.notificationHistory
+                                delegate: NotificationHistoryRow {
+                                    required property var modelData
+                                    record: modelData
+                                    controller: content.controller
+                                }
+                            }
+
+                            Row {
+                                id: historyFooter
+                                width: parent.width
+                                height: 32
+                                spacing: Ui.Theme.spacingSm
+                                HeaderButton {
+                                    label: "Refresh"
+                                    onTriggered: content.controller.reloadNotificationHistory()
+                                }
+                                HeaderButton {
+                                    label: content.controller.notificationHistoryLoading
+                                        ? "Loading…" : "Load more"
+                                    enabled: content.controller.notificationHistoryHasMore
+                                        && !content.controller.notificationHistoryLoading
+                                    onTriggered: content.controller.loadMoreNotificationHistory()
                                 }
                             }
                         }

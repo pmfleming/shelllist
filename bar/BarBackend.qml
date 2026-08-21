@@ -57,6 +57,25 @@ Io.DaemonBackend {
         return call("notifications-dnd", BarApi.methods.notificationsToggleDnd, {});
     }
 
+    function dismissNotification(notificationId: int): bool {
+        return call(operationId("notification-dismiss"),
+            BarApi.methods.notificationsDismiss, { id: notificationId });
+    }
+
+    function invokeNotificationAction(notificationId: int, actionKey: string): bool {
+        return call(operationId("notification-action"),
+            BarApi.methods.notificationsInvokeAction, {
+                id: notificationId,
+                action_key: actionKey,
+                activation_token: null
+            });
+    }
+
+    function replyNotification(notificationId: int, text: string): bool {
+        return call(operationId("notification-reply"),
+            BarApi.methods.notificationsReply, { id: notificationId, text: text });
+    }
+
     function finish(id: string, envelope: var, transportError: string): void {
         const error = Core.ApiEnvelope.responseError(envelope, transportError,
             BarApi.protocol, BarApi.version, daemonName, "Bar operation failed");

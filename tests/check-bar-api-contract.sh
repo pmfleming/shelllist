@@ -25,6 +25,8 @@ jq -e '
   (.snapshot.battery.percentage | type == "number") and
   (.snapshot.power_profile.profile | type == "string") and
   (.snapshot.notifications.count | type == "number") and
+  (.snapshot.notifications.backend | type == "string") and
+  (.snapshot.notification_active.notifications | type == "array") and
   (.snapshot.updates.ready | type == "boolean") and
   (.snapshot.timezone.utc_offset_seconds | type == "number")
 ' "$fixture" >/dev/null

@@ -147,4 +147,14 @@ Item {
             controller: root.controller
         }
     }
+
+    Variants {
+        model: root.barsEnabled && root.surfacesActive ? Quickshell.screens : []
+
+        Bar.NotificationToastWindow {
+            required property var modelData
+            targetScreen: modelData
+            controller: root.controller
+        }
+    }
 }

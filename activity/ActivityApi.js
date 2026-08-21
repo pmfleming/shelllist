@@ -10,13 +10,18 @@ var methods = {
     todoCreate: "todos.create",
     todoComplete: "todos.complete",
     todoDelete: "todos.delete",
-    notificationsTogglePanel: "notifications.togglePanel",
-    notificationsToggleDnd: "notifications.toggleDnd"
+    notificationsToggleDnd: "notifications.toggleDnd",
+    notificationsList: "notifications.list",
+    notificationsDismiss: "notifications.dismiss",
+    notificationsClear: "notifications.clear",
+    notificationsInvokeAction: "notifications.invokeAction",
+    notificationsReply: "notifications.reply"
 };
 
 var streams = {
     activity: "activity.changed",
-    notifications: "notifications.changed"
+    notifications: "notifications.changed",
+    notificationActive: "notifications.active.changed"
 };
 
-var subscribedStreams = [streams.activity, streams.notifications];
+var subscribedStreams = [streams.activity, streams.notifications, streams.notificationActive];

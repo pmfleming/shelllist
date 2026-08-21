@@ -9,6 +9,10 @@ Ui.ChooserController {
     property var activity: ({ available: false, syncing: false, event_count: 0,
         incomplete_todo_count: 0, next_event: null, sources: [], world_clocks: [] })
     property var notifications: ({ available: false, count: 0, dnd: false })
+    property var notificationActive: ({ available: false, revision: 0, notifications: [] })
+    property var notificationHistory: []
+    property bool notificationHistoryLoading: false
+    property bool notificationHistoryHasMore: false
     property var events: []
     property var todos: []
     property var busyDates: []
@@ -68,7 +72,17 @@ Ui.ChooserController {
             activity = snapshot.activity;
         if (snapshot.notifications)
             notifications = snapshot.notifications;
+        if (snapshot.notification_active)
+            notificationActive = snapshot.notification_active;
         scheduleRangeQuery();
+        scheduleNotificationHistory();
+    }
+
+    function applyNotificationHistory(records: var, append: bool): void {
+        const values = Array.isArray(records) ? records : [];
+        notificationHistory = append ? notificationHistory.concat(values) : values;
+        notificationHistoryHasMore = values.length === 50;
+        notificationHistoryLoading = false;
     }
 
     function applyRange(range: var): void {
@@ -98,10 +112,32 @@ Ui.ChooserController {
             scheduleRangeQuery();
         } else if (event.stream === ActivityApi.streams.notifications) {
             notifications = event.data || ({});
+            scheduleNotificationHistory();
+        } else if (event.stream === ActivityApi.streams.notificationActive) {
+            notificationActive = event.data || ({});
         }
     }
 
     function scheduleRangeQuery(): void { rangeQueryDebounce.restart(); }
+    function scheduleNotificationHistory(): void { notificationHistoryDebounce.restart(); }
+
+    function reloadNotificationHistory(): void {
+        notificationHistoryLoading = backend.loadNotificationHistory(null);
+    }
+
+    function loadMoreNotificationHistory(): void {
+        if (notificationHistoryLoading || !notificationHistoryHasMore
+                || notificationHistory.length === 0)
+            return;
+        const cursor = notificationHistory[notificationHistory.length - 1].history_id;
+        notificationHistoryLoading = backend.loadNotificationHistory(cursor);
+    }
+
+    function isNotificationActive(notificationId: int): bool {
+        const values = notificationActive && Array.isArray(notificationActive.notifications)
+            ? notificationActive.notifications : [];
+        return values.some(function (notification) { return notification.id === notificationId; });
+    }
 
     function queryVisibleRange(): void {
         const range = monthRange();
@@ -144,14 +180,31 @@ Ui.ChooserController {
     function deleteTodo(todo: var): bool { return backend.deleteTodo(todo.id); }
     function refresh(): void { backend.refresh(); }
     function toggleDnd(): void { backend.toggleDnd(); }
-    function openNotificationHistory(): void { backend.openNotificationHistory(); }
+    function dismissNotification(notificationId: int): bool {
+        return backend.dismissNotification(notificationId);
+    }
+    function clearNotifications(): bool { return backend.clearNotifications(); }
+    function invokeNotificationAction(notificationId: int, actionKey: string): bool {
+        return backend.invokeNotificationAction(notificationId, actionKey);
+    }
+    function replyNotification(notificationId: int, text: string): bool {
+        return backend.replyNotification(notificationId, text);
+    }
 
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
         scheduleRangeQuery();
+        scheduleNotificationHistory();
     }
 
     onFocusSearchRequested: focusTodoInputRequested()
+
+    Timer {
+        id: notificationHistoryDebounce
+        interval: 120
+        repeat: false
+        onTriggered: controller.reloadNotificationHistory()
+    }
 
     Timer {
         id: rangeQueryDebounce

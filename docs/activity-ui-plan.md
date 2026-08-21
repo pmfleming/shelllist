@@ -27,7 +27,7 @@ Shelllist owns only:
 
 The initial wide layout has a month/notification-summary column, selected-day agenda, and todo/world-clock column. The frontend asks only for the buffered range around the visible month. Changing compact `activity.changed` state schedules a debounced range refresh.
 
-During the native notification migration, the surface uses the existing SwayNC summary and opens SwayNC history. Once `bar-daemon` owns `org.freedesktop.Notifications`, the same surface will render daemon-provided history and toast streams without changing its ownership boundary.
+In native mode, `bar-daemon` owns `org.freedesktop.Notifications`, expiry, actions, DND, and SQLite history. Shelllist renders at most three active notifications on the focused monitor from the recoverable `notifications.active.changed` snapshot. Activity queries paginated history and routes dismiss, clear, action, and inline-reply requests back through `bar-api`.
 
 ## Frontend contract
 

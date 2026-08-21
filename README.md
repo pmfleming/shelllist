@@ -63,7 +63,7 @@ The UI uses opaque daemon device keys and live subscriptions. It does not parse 
 
 ### Activity
 
-The Activity surface combines a month calendar, selected-day agenda, persistent todos, notification status/DND access, source health, and world clocks. `bar-daemon` loads and normalizes sources, persists mutations, and owns policy; Shelllist only requests visible ranges and renders them. See [`docs/activity-ui-plan.md`](docs/activity-ui-plan.md).
+The Activity surface combines a month calendar, selected-day agenda, persistent todos, native notification history/actions/DND, source health, and world clocks. `bar-daemon` owns notification ingestion, expiry, policy, and persistent history; Shelllist renders recoverable active-toast snapshots and paginated history. See [`docs/activity-ui-plan.md`](docs/activity-ui-plan.md).
 
 ### Clipboard
 

@@ -23,6 +23,7 @@ Item {
     property var battery: ({ available: false, percentage: 0 })
     property var powerProfile: ({ available: false, profile: "" })
     property var notifications: ({ available: false, count: 0, dnd: false })
+    property var notificationActive: ({ available: false, revision: 0, notifications: [] })
     property var updates: ({ available: false, ready: false, lanes: [] })
     property var timezone: ({ available: false, timezone: "", city: "", abbreviation: "", utc_offset_seconds: 0 })
     property bool osdVisible: false
@@ -89,6 +90,22 @@ Item {
     function toggleMuted(): bool { return backend.toggleMuted(); }
     function toggleInputMuted(): bool { return backend.toggleInputMuted(); }
     function adjustBrightness(deltaPercent: int): bool { return backend.adjustBrightness(deltaPercent); }
+    function dismissNotification(notificationId: int): bool {
+        return backend.dismissNotification(notificationId);
+    }
+    function invokeNotificationAction(notificationId: int, actionKey: string): bool {
+        return backend.invokeNotificationAction(notificationId, actionKey);
+    }
+    function replyNotification(notificationId: int, text: string): bool {
+        return backend.replyNotification(notificationId, text);
+    }
+    function visibleToasts(): var {
+        if (notifications.dnd)
+            return [];
+        const active = notificationActive && Array.isArray(notificationActive.notifications)
+            ? notificationActive.notifications : [];
+        return active.slice(Math.max(0, active.length - 3)).reverse();
+    }
 
     function presentOsd(osd: var): void {
         osdKind = osd.kind || "";

@@ -13,7 +13,10 @@ var methods = {
     brightnessAdjust: "brightness.adjust",
     brightnessSet: "brightness.set",
     notificationsTogglePanel: "notifications.togglePanel",
-    notificationsToggleDnd: "notifications.toggleDnd"
+    notificationsToggleDnd: "notifications.toggleDnd",
+    notificationsDismiss: "notifications.dismiss",
+    notificationsInvokeAction: "notifications.invokeAction",
+    notificationsReply: "notifications.reply"
 };
 
 var streams = {
@@ -25,6 +28,7 @@ var streams = {
     battery: "battery.changed",
     powerProfile: "power-profile.changed",
     notifications: "notifications.changed",
+    notificationActive: "notifications.active.changed",
     updates: "updates.changed",
     timezone: "timezone.changed"
 };
@@ -40,6 +44,7 @@ propertyByStream[streams.brightness] = "brightness";
 propertyByStream[streams.battery] = "battery";
 propertyByStream[streams.powerProfile] = "powerProfile";
 propertyByStream[streams.notifications] = "notifications";
+propertyByStream[streams.notificationActive] = "notificationActive";
 propertyByStream[streams.updates] = "updates";
 propertyByStream[streams.timezone] = "timezone";
 
@@ -52,6 +57,7 @@ var propertyByPayload = {
     battery: "battery",
     power_profile: "powerProfile",
     notifications: "notifications",
+    notification_active: "notificationActive",
     updates: "updates",
     timezone: "timezone"
 };
