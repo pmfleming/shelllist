@@ -62,11 +62,12 @@ Io.DaemonBackend {
     }
 
     function setAlertPolicy(warningPercent: int, criticalPercent: int,
-            notifyWhenFull: bool): bool {
+            notifyWhenFull: bool, autoPowerSaver: bool): bool {
         return call(nextId("battery-alerts"), BatteryApi.methods.setAlertPolicy, {
             warning_percent: warningPercent,
             critical_percent: criticalPercent,
-            notify_when_full: notifyWhenFull
+            notify_when_full: notifyWhenFull,
+            auto_power_saver: autoPowerSaver
         });
     }
 

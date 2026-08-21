@@ -302,7 +302,7 @@ Ui.ChooserSurface {
             }
 
             Ui.DetailColumnCard {
-                height: 285
+                height: 335
                 title: "Alerts"
 
                 Ui.LabeledValueSlider {
@@ -341,6 +341,16 @@ Ui.ChooserSurface {
                     checked: content.controller.draftNotifyWhenFull
                     interactive: !content.controller.actionInFlight
                     onClicked: content.controller.updateNotifyWhenFull(!checked)
+                }
+
+                Ui.ToggleRow {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 42
+                    title: "Automatic power saver"
+                    subtitle: "Hold power saver below the low-battery level"
+                    checked: content.controller.draftAutoPowerSaver
+                    interactive: !content.controller.actionInFlight
+                    onClicked: content.controller.updateAutoPowerSaver(!checked)
                 }
 
                 Text {

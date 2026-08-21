@@ -8,7 +8,8 @@ Ui.ChooserController {
     id: controller
 
     property var battery: ({ available: false, percentage: 0, devices: [],
-        policy: ({ warning_percent: 25, critical_percent: 12, notify_when_full: true }),
+        policy: ({ warning_percent: 25, critical_percent: 12, notify_when_full: true,
+            auto_power_saver: true }),
         protection: ({ supported: false, managed: false, enabled: false,
             desired_enabled: false, desired_start_percent: 75,
             desired_end_percent: 80, charge_once_active: false }) })
@@ -21,6 +22,7 @@ Ui.ChooserController {
     property int draftWarningPercent: 25
     property int draftCriticalPercent: 12
     property bool draftNotifyWhenFull: true
+    property bool draftAutoPowerSaver: true
     property bool thresholdDraftDirty: false
     property bool alertDraftDirty: false
 
@@ -57,6 +59,7 @@ Ui.ChooserController {
             draftWarningPercent = Number(valueOr(policy.warning_percent, 25));
             draftCriticalPercent = Number(valueOr(policy.critical_percent, 12));
             draftNotifyWhenFull = valueOr(policy.notify_when_full, true);
+            draftAutoPowerSaver = valueOr(policy.auto_power_saver, true);
         }
     }
 
@@ -149,6 +152,11 @@ Ui.ChooserController {
         alertDraftDirty = true;
     }
 
+    function updateAutoPowerSaver(value: bool): void {
+        draftAutoPowerSaver = value;
+        alertDraftDirty = true;
+    }
+
     function setProtection(enabled: bool): bool {
         if (actionInFlight || !protectionSupported)
             return false;
@@ -173,7 +181,7 @@ Ui.ChooserController {
         if (actionInFlight || !alertDraftValid)
             return false;
         return startOperation(backend.setAlertPolicy(draftWarningPercent,
-            draftCriticalPercent, draftNotifyWhenFull));
+            draftCriticalPercent, draftNotifyWhenFull, draftAutoPowerSaver));
     }
 
     function setPowerProfile(profile: string): bool {
