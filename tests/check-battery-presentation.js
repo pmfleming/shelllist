@@ -13,6 +13,8 @@ function equal(actual, expected, message) {
 }
 
 equal(context.duration(7500), "2h 5m", "duration formatting");
+equal(context.energy(1250), "1.25 Wh", "energy formatting");
+equal(context.energy(42), "42.0 mWh", "small energy formatting");
 equal(context.stateLabel({ available: true, charging: true }), "Charging", "charging state");
 equal(context.stateLabel({ available: true, plugged: false }), "On battery", "discharging state");
 equal(context.stateLabel({ available: true, state: "charge-paused", plugged: true }),
@@ -37,5 +39,9 @@ equal(context.calibrationLabel({ kind: "calibration", phase: "discharging" }),
     "Calibration: force-discharging to 1%", "calibration discharge phase");
 equal(context.calibrationLabel({ kind: "calibration", phase: "charging" }),
     "Calibration: charging fully before restoring thresholds", "calibration charge phase");
+equal(context.sleepCapabilityAvailable("challenge"), true, "authorizable sleep capability");
+equal(context.sleepCapabilityAvailable("no"), false, "unavailable sleep capability");
+equal(context.inhibitorSummary({ who: "Backup", what: "sleep", why: "Writing snapshot" }),
+    "Backup may delay sleep: Writing snapshot", "sleep inhibitor summary");
 
 console.log("battery presentation: formatting and policy validation passed");

@@ -14,12 +14,16 @@ var methods = {
     setAlertPolicy: "battery.setAlertPolicy",
     setPowerProfile: "powerProfile.set",
     setBatteryAware: "powerProfile.setBatteryAware",
-    setPowerActionEnabled: "powerProfile.setActionEnabled"
+    setPowerActionEnabled: "powerProfile.setActionEnabled",
+    lock: "powerSleep.lock",
+    suspend: "powerSleep.suspend",
+    hibernate: "powerSleep.hibernate"
 };
 
 var streams = {
     battery: "battery.changed",
-    powerProfile: "power-profile.changed"
+    powerProfile: "power-profile.changed",
+    powerSleep: "power-sleep.changed"
 };
 
-var subscribedStreams = [streams.battery, streams.powerProfile];
+var subscribedStreams = [streams.battery, streams.powerProfile, streams.powerSleep];

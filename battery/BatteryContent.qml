@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import Quickshell
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
@@ -98,6 +99,162 @@ Ui.ChooserSurface {
             }
 
             Ui.DetailColumnCard {
+                height: 250
+                title: "Battery history · 7 days"
+
+                Ui.FieldLabel {
+                    Layout.fillWidth: true
+                    text: Presentation.historyRange(content.controller.batteryHistory)
+                    color: Ui.Theme.mutedText
+                }
+
+                BatteryHistoryGraph {
+                    points: content.controller.batteryHistory.points || []
+                    metric: "percentage"
+                    label: "Charge level"
+                    valueText: Math.round(Number(content.battery.percentage) || 0) + "%"
+                    lineColor: content.battery.warning ? Ui.Theme.warning : Ui.Theme.accent
+                    minimumMaximum: 100
+                }
+
+                BatteryHistoryGraph {
+                    points: content.controller.batteryHistory.points || []
+                    metric: "time_to_full_seconds"
+                    label: "Time until fully charged"
+                    valueText: content.battery.charging
+                        ? Presentation.duration(content.battery.time_to_full_seconds) : "Not charging"
+                    lineColor: Ui.Theme.active
+                    minimumMaximum: 3600
+                    positiveOnly: true
+                }
+            }
+
+            Ui.DetailColumnCard {
+                height: 152 + Math.min(8,
+                    (content.controller.energyOverview.applications || []).length) * 42
+                title: "Application energy"
+
+                Ui.SegmentedControl {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Ui.Theme.compactControlHeight
+                    options: [
+                        { value: "last-charge", label: "Since last charge" },
+                        { value: "week", label: "Last 7 days" }
+                    ]
+                    value: content.controller.energyPeriod
+                    onSelected: function (value) {
+                        content.controller.selectEnergyPeriod(value);
+                    }
+                }
+
+                Ui.FieldLabel {
+                    Layout.fillWidth: true
+                    text: content.controller.energyLoading
+                        ? "Updating estimated energy…"
+                        : (content.controller.energyError.length > 0
+                            ? content.controller.energyError
+                            : Presentation.energy(
+                                content.controller.energyOverview.total_energy_mwh)
+                                + " attributed · "
+                                + (content.controller.energyOverview.energy_confidence
+                                    || "low") + " confidence")
+                    color: content.controller.energyError.length > 0
+                        ? Ui.Theme.warning : Ui.Theme.mutedText
+                }
+
+                Repeater {
+                    model: (content.controller.energyOverview.applications || []).slice(0, 8)
+
+                    delegate: Item {
+                        id: energyRow
+                        required property var modelData
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 38
+
+                        RowLayout {
+                            anchors.fill: parent
+                            spacing: Ui.Theme.spacingSm
+
+                            Item {
+                                Layout.preferredWidth: 26
+                                Layout.preferredHeight: 26
+
+                                Image {
+                                    id: appIcon
+                                    anchors.fill: parent
+                                    source: Quickshell.iconPath(
+                                        energyRow.modelData.icon || "application-x-executable",
+                                        "application-x-executable")
+                                    sourceSize.width: width
+                                    sourceSize.height: height
+                                    fillMode: Image.PreserveAspectFit
+                                    asynchronous: true
+                                }
+
+                                Text {
+                                    anchors.fill: parent
+                                    visible: appIcon.status === Image.Error
+                                    text: "󰀻"
+                                    color: Ui.Theme.accent
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    font.family: Ui.Theme.iconFontFamily
+                                    font.pixelSize: Ui.Theme.iconSizeSmall
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: energyRow.modelData.name
+                                        || energyRow.modelData.target_id
+                                    color: Ui.Theme.text
+                                    elide: Text.ElideRight
+                                    font.family: Ui.Theme.fontFamily
+                                    font.pixelSize: Ui.Theme.fontSizeSmall
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 3
+                                    radius: 2
+                                    color: Ui.Theme.border
+
+                                    Rectangle {
+                                        width: parent.width * Math.max(0, Math.min(1,
+                                            Number(energyRow.modelData.share) || 0))
+                                        height: parent.height
+                                        radius: parent.radius
+                                        color: Ui.Theme.accent
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: Presentation.energy(energyRow.modelData.energy_mwh)
+                                color: Ui.Theme.accent
+                                font.family: Ui.Theme.fontFamily
+                                font.pixelSize: Ui.Theme.fontSizeCaption
+                                font.weight: Ui.Theme.fontWeightDemiBold
+                            }
+                        }
+                    }
+                }
+
+                Ui.FieldLabel {
+                    Layout.fillWidth: true
+                    visible: !content.controller.energyLoading
+                        && content.controller.energyError.length === 0
+                        && (content.controller.energyOverview.applications || []).length === 0
+                    text: "No attributable application energy in this period"
+                    color: Ui.Theme.mutedText
+                }
+            }
+
+            Ui.DetailColumnCard {
                 height: 100
                 visible: (content.battery.devices || []).length > 1
                 title: "Battery device"
@@ -189,6 +346,65 @@ Ui.ChooserSurface {
                         interactive: !content.controller.actionInFlight
                         onClicked: content.controller.setPowerActionEnabled(
                             modelData.name, !checked)
+                    }
+                }
+            }
+
+            Ui.DetailColumnCard {
+                height: 145 + (content.controller.powerSleep.inhibitors || []).length * 30
+                title: "Power & Sleep"
+
+                Ui.FieldLabel {
+                    Layout.fillWidth: true
+                    text: content.controller.powerSleep.available
+                        ? (content.controller.powerSleep.preparing_for_sleep
+                            ? "Preparing the session for sleep"
+                            : "The session locks through logind before sleeping")
+                        : "systemd-logind sleep controls are unavailable"
+                    color: content.controller.powerSleep.available
+                        ? Ui.Theme.mutedText : Ui.Theme.warning
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Ui.Theme.spacingSm
+
+                    Ui.ActionButton {
+                        Layout.fillWidth: true
+                        label: "Lock"
+                        enabled: content.controller.powerSleep.available
+                            && !content.controller.actionInFlight
+                        onClicked: content.controller.powerSleepAction("lock")
+                    }
+
+                    Ui.ActionButton {
+                        Layout.fillWidth: true
+                        label: "Suspend"
+                        enabled: Presentation.sleepCapabilityAvailable(
+                            content.controller.powerSleep.can_suspend)
+                            && !content.controller.actionInFlight
+                        onClicked: content.controller.powerSleepAction("suspend")
+                    }
+
+                    Ui.ActionButton {
+                        Layout.fillWidth: true
+                        label: "Hibernate"
+                        enabled: Presentation.sleepCapabilityAvailable(
+                            content.controller.powerSleep.can_hibernate)
+                            && !content.controller.actionInFlight
+                        onClicked: content.controller.powerSleepAction("hibernate")
+                    }
+                }
+
+                Repeater {
+                    model: content.controller.powerSleep.inhibitors || []
+
+                    delegate: Ui.FieldLabel {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 24
+                        text: Presentation.inhibitorSummary(modelData)
+                        color: modelData.mode === "block" ? Ui.Theme.warning : Ui.Theme.mutedText
                     }
                 }
             }

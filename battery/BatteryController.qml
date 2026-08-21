@@ -15,6 +15,8 @@ Ui.ChooserController {
             desired_end_percent: 80, charge_once_active: false }) })
     property var powerProfile: ({ available: false, profile: "", profiles: [],
         performance_degraded: "", battery_aware: null, actions: [], active_holds: [] })
+    property var powerSleep: ({ available: false, can_suspend: "no", can_hibernate: "no",
+        preparing_for_sleep: false, lock_before_sleep: true, inhibitors: [] })
     property string lastError: ""
     property int selectedDeviceIndex: 0
     property int draftStartPercent: 75
@@ -25,11 +27,23 @@ Ui.ChooserController {
     property bool draftAutoPowerSaver: true
     property bool thresholdDraftDirty: false
     property bool alertDraftDirty: false
+    property string energyPeriod: "last-charge"
+    property var energyLastCharge: ({ applications: [], total_energy_mwh: 0 })
+    property var energyWeek: ({ applications: [], total_energy_mwh: 0 })
+    property string energyError: ""
+    property int energyRequestsInFlight: 0
+    property bool energyRequestFailed: false
 
     detailsOpen: false
     navigationPrimaryEnabled: false
     readonly property BatteryBackend backend: batteryBackend
+    readonly property BatteryEnergyBackend energyBackend: batteryEnergyBackend
     readonly property var policy: battery.policy || ({})
+    readonly property var batteryHistory: battery.history || ({ points: [],
+        last_charge_timestamp_ms: 0, retention_days: 7 })
+    readonly property var energyOverview: energyPeriod === "week"
+        ? energyWeek : energyLastCharge
+    readonly property bool energyLoading: energyRequestsInFlight > 0
     readonly property var selectedDevice: battery.devices && battery.devices.length > selectedDeviceIndex
         ? battery.devices[selectedDeviceIndex] : null
     readonly property var primaryDevice: selectedDevice
@@ -63,7 +77,11 @@ Ui.ChooserController {
     }
 
     function applyBattery(value: var): void {
+        const previousCharge = Number(batteryHistory.last_charge_timestamp_ms || 0);
         battery = value || ({ available: false, percentage: 0, devices: [] });
+        const nextCharge = Number(batteryHistory.last_charge_timestamp_ms || 0);
+        if (uiActive && nextCharge !== previousCharge)
+            requestEnergyOverviews();
         if (selectedDeviceIndex >= (battery.devices || []).length)
             selectedDeviceIndex = 0;
         syncThresholdDraft();
@@ -84,6 +102,10 @@ Ui.ChooserController {
 
     function applyPowerProfile(value: var): void {
         powerProfile = value || ({ available: false, profile: "", profiles: [] });
+    }
+
+    function applyPowerSleep(value: var): void {
+        powerSleep = value || ({ available: false, inhibitors: [] });
     }
 
     function selectDevice(batteryId: string): void {
@@ -113,6 +135,9 @@ Ui.ChooserController {
         if ((event.event === "subscribed" || event.event === "changed")
                 && event.stream === BatteryApi.streams.powerProfile)
             applyPowerProfile(event.data || ({}));
+        if ((event.event === "subscribed" || event.event === "changed")
+                && event.stream === BatteryApi.streams.powerSleep)
+            applyPowerSleep(event.data || ({}));
     }
 
     function startOperation(started: bool): bool {
@@ -231,10 +256,76 @@ Ui.ChooserController {
         return startOperation(backend.setPowerActionEnabled(action, enabled));
     }
 
+    function powerSleepAction(action: string): bool {
+        if (actionInFlight || !powerSleep.available)
+            return false;
+        if (action === "suspend" && !Presentation.sleepCapabilityAvailable(
+                powerSleep.can_suspend))
+            return false;
+        if (action === "hibernate" && !Presentation.sleepCapabilityAvailable(
+                powerSleep.can_hibernate))
+            return false;
+        return startOperation(backend.powerSleepAction(action));
+    }
+
+    function selectEnergyPeriod(period: string): void {
+        if (period === "last-charge" || period === "week")
+            energyPeriod = period;
+    }
+
+    function requestEnergyOverviews(): void {
+        if (!uiActive || energyRequestsInFlight > 0)
+            return;
+        const now = Date.now();
+        const weekSince = now - 7 * 24 * 60 * 60 * 1000;
+        const chargeSince = Number(batteryHistory.last_charge_timestamp_ms || 0);
+        energyError = "";
+        energyRequestFailed = false;
+        energyRequestsInFlight = 2;
+        energyBackend.overview("last-charge", chargeSince > 0 ? chargeSince : weekSince);
+        energyBackend.overview("week", weekSince);
+    }
+
+    function applyEnergyOverview(id: string, overview: var): void {
+        energyRequestsInFlight = Math.max(0, energyRequestsInFlight - 1);
+        if (energyRequestsInFlight === 0 && !energyRequestFailed)
+            energyError = "";
+        if (id.indexOf("battery-energy-last-charge-") === 0)
+            energyLastCharge = overview || ({ applications: [], total_energy_mwh: 0 });
+        else if (id.indexOf("battery-energy-week-") === 0)
+            energyWeek = overview || ({ applications: [], total_energy_mwh: 0 });
+    }
+
+    function energyOverviewFailed(_id: string, message: string): void {
+        energyRequestsInFlight = Math.max(0, energyRequestsInFlight - 1);
+        energyRequestFailed = true;
+        energyError = message;
+    }
+
+    function energyTransportFailed(message: string): void {
+        energyRequestsInFlight = 0;
+        energyRequestFailed = true;
+        energyError = message;
+    }
+
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
         backend.snapshot();
+        requestEnergyOverviews();
+    }
+
+    function deactivateUi() {
+        energyRequestsInFlight = 0;
+        deactivateUiState();
+    }
+
+    Timer {
+        interval: 60000
+        repeat: true
+        running: controller.uiActive
+        onTriggered: controller.requestEnergyOverviews()
     }
 
     BatteryBackend { id: batteryBackend; controller: controller }
+    BatteryEnergyBackend { id: batteryEnergyBackend; controller: controller }
 }

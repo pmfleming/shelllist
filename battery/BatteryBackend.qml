@@ -80,6 +80,13 @@ Io.DaemonBackend {
         });
     }
 
+    function powerSleepAction(action: string): bool {
+        const method = action === "lock" ? BatteryApi.methods.lock
+            : (action === "suspend" ? BatteryApi.methods.suspend
+                : BatteryApi.methods.hibernate);
+        return call(nextId("power-sleep-" + action), method, {});
+    }
+
     function setAlertPolicy(warningPercent: int, criticalPercent: int,
             notifyWhenFull: bool, autoPowerSaver: bool): bool {
         return call(nextId("battery-alerts"), BatteryApi.methods.setAlertPolicy, {
@@ -103,10 +110,14 @@ Io.DaemonBackend {
             controller.applyBattery(data.snapshot.battery);
         if (data.snapshot && data.snapshot.power_profile)
             controller.applyPowerProfile(data.snapshot.power_profile);
+        if (data.snapshot && data.snapshot.power_sleep)
+            controller.applyPowerSleep(data.snapshot.power_sleep);
         if (data.battery)
             controller.applyBattery(data.battery);
         if (data.power_profile)
             controller.applyPowerProfile(data.power_profile);
+        if (data.power_sleep)
+            controller.applyPowerSleep(data.power_sleep);
     }
 
     onResponseReceived: function (id, envelope, transportError) {

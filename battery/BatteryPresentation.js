@@ -76,6 +76,18 @@ function calibrationLabel(operation) {
     return "Calibration is recovering its saved battery policy";
 }
 
+function sleepCapabilityAvailable(value) {
+    return value === "yes" || value === "challenge";
+}
+
+function inhibitorSummary(inhibitor) {
+    if (!inhibitor)
+        return "";
+    const owner = inhibitor.who || "An application";
+    const reason = inhibitor.why ? ": " + inhibitor.why : "";
+    return owner + " may delay " + (inhibitor.what || "sleep") + reason;
+}
+
 function protectionRange(protection) {
     if (!protection || !protection.supported)
         return "Unsupported";
@@ -99,6 +111,21 @@ function thresholdRangeValid(startPercent, endPercent) {
     const end = Number(endPercent);
     return Number.isInteger(start) && Number.isInteger(end)
         && start >= 0 && start < end && end <= 100;
+}
+
+function energy(milliwattHours) {
+    const value = Math.max(0, Number(milliwattHours) || 0);
+    return value >= 1000 ? (value / 1000).toFixed(2) + " Wh"
+        : value.toFixed(value >= 100 ? 0 : 1) + " mWh";
+}
+
+function historyRange(history) {
+    const points = history && history.points ? history.points : [];
+    if (points.length === 0)
+        return "Collecting samples";
+    const first = new Date(Number(points[0].timestamp_ms || 0));
+    const last = new Date(Number(points[points.length - 1].timestamp_ms || 0));
+    return first.toLocaleDateString() + " – " + last.toLocaleDateString();
 }
 
 function alertRangeValid(warningPercent, criticalPercent) {
