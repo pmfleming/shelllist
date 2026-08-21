@@ -23,7 +23,14 @@ Ui.ChooserSurface {
         controller: content.controller
         navigationEnabled: true
         refreshEnabled: !content.controller.actionInFlight
+        detailsTabEnabled: true
         onRefreshRequested: content.controller.refreshAll()
+        onDetailsTabRequested: content.controller.cycleViewTab()
+    }
+
+    Connections {
+        target: content.controller
+        function onViewTabChanged(): void { detailPage.contentY = 0; }
     }
 
     ColumnLayout {
@@ -76,12 +83,26 @@ Ui.ChooserSurface {
             }
         }
 
+        Ui.SegmentedControl {
+            Layout.fillWidth: true
+            Layout.preferredHeight: Ui.Theme.compactControlHeight
+            options: [
+                { value: "battery", label: "Battery" },
+                { value: "power", label: "Power" }
+            ]
+            value: content.controller.viewTab
+            interactive: !content.controller.actionInFlight
+            onSelected: function (value) { content.controller.selectViewTab(value); }
+        }
+
         Ui.DetailFlickable {
+            id: detailPage
             Layout.fillWidth: true
             Layout.fillHeight: true
 
             Ui.DetailCard {
                 height: 190
+                visible: content.controller.viewTab === "battery"
                 title: "Current status"
                 entries: [
                     { label: "State", value: Presentation.stateLabel(content.battery),
@@ -101,6 +122,7 @@ Ui.ChooserSurface {
 
             Ui.DetailColumnCard {
                 height: 250
+                visible: content.controller.viewTab === "battery"
                 title: "Battery history · 7 days"
 
                 Ui.FieldLabel {
@@ -133,6 +155,7 @@ Ui.ChooserSurface {
             Ui.DetailColumnCard {
                 height: 152 + Math.min(8,
                     (content.controller.energyOverview.applications || []).length) * 42
+                visible: content.controller.viewTab === "battery"
                 title: "Application energy"
 
                 Ui.SegmentedControl {
@@ -257,7 +280,8 @@ Ui.ChooserSurface {
 
             Ui.DetailColumnCard {
                 height: 100
-                visible: (content.battery.devices || []).length > 1
+                visible: content.controller.viewTab === "battery"
+                    && (content.battery.devices || []).length > 1
                 title: "Battery device"
 
                 Ui.SegmentedControl {
@@ -278,6 +302,7 @@ Ui.ChooserSurface {
                     || content.controller.powerProfile.battery_aware === undefined ? 0 : 48)
                     + (content.controller.powerProfile.actions || []).length * 48
                     + (content.controller.powerProfile.active_holds || []).length * 34
+                visible: content.controller.viewTab === "power"
                 title: "Power mode"
 
                 Ui.FieldLabel {
@@ -353,6 +378,7 @@ Ui.ChooserSurface {
 
             Ui.DetailColumnCard {
                 height: 145 + (content.controller.powerSleep.inhibitors || []).length * 30
+                visible: content.controller.viewTab === "power"
                 title: "Power & Sleep"
 
                 Ui.FieldLabel {
@@ -412,6 +438,7 @@ Ui.ChooserSurface {
 
             Ui.DetailColumnCard {
                 height: 450
+                visible: content.controller.viewTab === "battery"
                 title: "ThinkPad battery protection"
 
                 Ui.FieldLabel {
@@ -563,6 +590,7 @@ Ui.ChooserSurface {
 
             Ui.DetailColumnCard {
                 height: 335
+                visible: content.controller.viewTab === "battery"
                 title: "Alerts"
 
                 Ui.LabeledValueSlider {
@@ -635,6 +663,7 @@ Ui.ChooserSurface {
 
             Ui.DetailCard {
                 height: 190
+                visible: content.controller.viewTab === "battery"
                 title: Presentation.deviceName(content.device)
                 entries: [
                     { label: "Kernel device", value: content.device.id || content.battery.native_path || "Unknown" },

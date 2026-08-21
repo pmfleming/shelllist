@@ -19,6 +19,7 @@ Ui.ChooserController {
         preparing_for_sleep: false, lock_before_sleep: true, inhibitors: [] })
     property string lastError: ""
     property string refreshError: ""
+    property string viewTab: "battery"
     property int selectedDeviceIndex: 0
     property int draftStartPercent: 75
     property int draftEndPercent: 80
@@ -76,6 +77,16 @@ Ui.ChooserController {
 
     function valueOr(value: var, fallback: var): var {
         return value === null || value === undefined ? fallback : value;
+    }
+
+    function selectViewTab(tab: string): void {
+        if (tab === "battery" || tab === "power")
+            viewTab = tab;
+    }
+
+    function cycleViewTab(): bool {
+        viewTab = viewTab === "battery" ? "power" : "battery";
+        return true;
     }
 
     function applyBattery(value: var): void {
