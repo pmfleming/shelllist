@@ -1,6 +1,8 @@
 import Shelllist.Core as Core
 import Shelllist.Io as Io
-import "../launcher/AppApi.js" as AppApi
+// QML loads this file through qml/Shelllist/Battery, so use the module path's
+// case-sensitive Launcher sibling rather than the source-tree directory name.
+import "../Launcher/AppApi.js" as AppApi
 
 Io.DaemonBackend {
     id: backend
