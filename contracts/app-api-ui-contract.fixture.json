@@ -1,69 +1,65 @@
 {
   "protocol": "app-api",
+  "version": 1,
   "registry": {
     "methods": [
       {
         "name": "applications.query",
-        "params_example": {
-          "generation": 1,
-          "limit": 500,
-          "query": ""
-        },
+        "params_example": { "query": "", "category": "", "generation": 1, "limit": 500 },
         "response_key": "applications",
         "stream": "applications.changed"
       },
       {
         "name": "applications.history",
-        "pagination": {
-          "kind": "opaque-cursor",
-          "order": "oldest-first",
-          "request_field": "cursor",
-          "response_field": "next_cursor"
-        },
         "params_example": {
-          "cursor": null,
-          "limit": 1000,
+          "target_id": "org.example.App.desktop",
           "since_ms": 0,
-          "target_id": "org.example.App.desktop"
+          "cursor": null,
+          "limit": 1000
         },
         "response_key": "history",
-        "stream": "applications.changed"
+        "stream": "applications.changed",
+        "pagination": {
+          "kind": "opaque-cursor",
+          "request_field": "cursor",
+          "response_field": "next_cursor",
+          "order": "oldest-first"
+        }
       },
       {
         "name": "applications.refresh",
-        "params_example": {
-          "generation": 1,
-          "limit": 500,
-          "query": ""
-        },
+        "params_example": { "query": "", "category": "", "generation": 1, "limit": 500 },
         "response_key": "applications",
         "stream": "applications.changed"
       },
       {
         "name": "applications.execute",
         "params_example": {
+          "target_id": "org.example.App.desktop",
           "action": "activate",
+          "window_id": null,
           "desktop_action_id": null,
           "expected_revision": 1,
-          "target_id": "org.example.App.desktop",
-          "window_id": null,
           "workspace_id": "2"
         },
         "response_key": "operation",
         "stream": "applications.operation"
+      },
+      {
+        "name": "applications.settings.update",
+        "params_example": {
+          "target_id": "org.example.App.desktop",
+          "category": "code",
+          "workspace_id": "3"
+        },
+        "response_key": "settings",
+        "stream": "applications.changed"
       }
     ],
     "streams": [
-      {
-        "name": "applications.changed"
-      },
-      {
-        "name": "windows.changed"
-      },
-      {
-        "name": "applications.operation"
-      }
+      { "name": "applications.changed" },
+      { "name": "windows.changed" },
+      { "name": "applications.operation" }
     ]
-  },
-  "version": 1
+  }
 }

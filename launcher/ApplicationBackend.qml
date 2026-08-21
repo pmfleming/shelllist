@@ -20,13 +20,16 @@ Io.DaemonBackend {
             controller.applyApplications(id, data.applications);
         if (data.history)
             controller.applyResourceHistory(id, data.history);
+        if (data.settings)
+            controller.applyApplicationSettings(id, data.settings);
         if (data.operation)
             controller.applyOperation(id, data.operation);
     }
 
-    function query(id: string, text: string, generation: int, limit: int, forceRefresh: bool): bool {
+    function query(id: string, text: string, category: string,
+            generation: int, limit: int, forceRefresh: bool): bool {
         return call(id, forceRefresh ? AppApi.methods.refresh : AppApi.methods.query,
-            { query: text, generation: generation, limit: limit });
+            { query: text, category: category, generation: generation, limit: limit });
     }
 
     function history(id: string, targetId: string, sinceMs: double,
@@ -41,6 +44,15 @@ Io.DaemonBackend {
 
     function execute(id: string, params: var): bool {
         return call(id, AppApi.methods.execute, params);
+    }
+
+    function updateSettings(id: string, targetId: string, category: string,
+            workspaceId: var): bool {
+        return call(id, AppApi.methods.settingsUpdate, {
+            target_id: targetId,
+            category: category,
+            workspace_id: workspaceId
+        });
     }
 
     function cancelRequest(requestId: string): bool {

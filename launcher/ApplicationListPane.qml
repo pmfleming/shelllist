@@ -16,14 +16,21 @@ Ui.ChooserListPane {
     icon: "󰀻"
     powered: true
     refreshing: controller.refreshInFlight
-    busy: controller.refreshInFlight || controller.actionInFlight || controller.screenshotInFlight
+    busy: controller.refreshInFlight || controller.actionInFlight
+        || controller.screenshotInFlight || controller.settingsInFlight
     powerEnabled: false
     refreshEnabled: !controller.actionInFlight && !controller.screenshotInFlight
+        && !controller.settingsInFlight
     refreshHandler: function () { controller.refresh(true); }
     iconActionEnabled: !controller.actionInFlight && !controller.screenshotInFlight
+        && !controller.settingsInFlight
     filterText: controller.filterText
     status: controller.status
     focusOnCompleted: true
+    toolbarHeight: Math.max(34, Math.round(Ui.Theme.compactControlHeight * uiScale))
+    toolbarComponent: Component {
+        ApplicationCategoryTabs { controller: pane.controller }
+    }
     onIconClicked: controller.screenshotRequested()
 
     rowDelegate: Component {

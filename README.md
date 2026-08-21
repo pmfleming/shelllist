@@ -45,7 +45,7 @@ Common bar interactions:
 
 ### Applications
 
-The launcher lists standards-visible desktop entries and groups live Hyprland windows with their applications. `Enter` focuses the most-recent instance or launches the application; `Shift+Enter` launches another instance. Details expose running windows, desktop actions, close actions, and 30-minute resource graphs for CPU, memory, GPU, storage, I/O, and estimated energy.
+The launcher lists standards-visible desktop entries and groups live Hyprland windows with their applications. Apps can be browsed as **Shell**, **Browser**, **Code**, **Media**, or **Text**, with per-app category overrides. `Enter` focuses the most-recent instance or launches the application; `Shift+Enter` launches another instance. Details expose running windows, desktop actions, close actions, 30-minute resource graphs, category assignment, and a default-workspace setting for new windows.
 
 Launch-only desktop entries remain shortcuts and do not claim windows or resource usage. Application actions are asynchronous and protected by a frontend recovery timeout if a terminal backend event is lost.
 

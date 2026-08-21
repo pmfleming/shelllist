@@ -14,6 +14,7 @@ Ui.ProviderChooserController {
 
     property string status: "Loading applications…"
     property string detailsTab: "application"
+    property string categoryFilter: ""
     actionInFlight: false
     property string activeTargetId: ""
     property string activeOperationId: ""
@@ -22,12 +23,14 @@ Ui.ProviderChooserController {
     property var resourceHistory: []
     property string historyTargetId: ""
     property string activeHistoryRequestId: ""
+    property string activeSettingsRequestId: ""
     readonly property bool historyInFlight: activeHistoryRequestId.length > 0
+    readonly property bool settingsInFlight: activeSettingsRequestId.length > 0
     readonly property var selectedApplication: selectedResult ? selectedResult.payload : null
     readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
-    navigationPrimaryEnabled: hasSelection && !actionInFlight && !screenshotInFlight
-    navigationBlocked: actionInFlight || screenshotInFlight
+    navigationPrimaryEnabled: hasSelection && !actionInFlight && !screenshotInFlight && !settingsInFlight
+    navigationBlocked: actionInFlight || screenshotInFlight || settingsInFlight
 
     function clearActiveAction(): void {
         actionInFlight = false;
@@ -56,6 +59,7 @@ Ui.ProviderChooserController {
         deactivateUiState();
         clearActiveAction();
         clearResourceHistory();
+        activeSettingsRequestId = "";
         detailsOpen = false;
     }
     function refresh(explicitRefresh: var): void {
@@ -63,20 +67,52 @@ Ui.ProviderChooserController {
         status = forceRefresh ? "Refreshing applications…" : "Loading applications…";
         beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
     }
+    function selectCategory(value: string): void {
+        if (categoryFilter === value)
+            return;
+        categoryFilter = value;
+        detailsOpen = false;
+        refresh(false);
+    }
     function selectDetailsTab(value: string): void {
         if (value === "application"
                 || (value === "resources" && selectedApplication
-                    && selectedApplication.kind !== "desktop-shortcut"))
+                    && selectedApplication.kind !== "desktop-shortcut")
+                || ((value === "categories" || value === "settings") && selectedApplication
+                    && selectedApplication.kind === "desktop-application"))
             detailsTab = value;
     }
     function cycleDetailsTab(): bool {
         if (!detailsOpen || !hasSelection || selectedApplication.kind === "desktop-shortcut")
             return false;
-        detailsTab = detailsTab === "application" ? "resources" : "application";
+        const tabs = selectedApplication.kind === "desktop-application"
+            ? ["application", "resources", "categories", "settings"]
+            : ["application", "resources"];
+        const index = tabs.indexOf(detailsTab);
+        detailsTab = tabs[(index + 1) % tabs.length];
         return true;
     }
+    function updateApplicationSettings(category: string, workspaceId: string): bool {
+        if (!selectedResult || settingsInFlight || actionInFlight || screenshotInFlight)
+            return false;
+        activeSettingsRequestId = "settings-" + Date.now();
+        status = "Saving application settings…";
+        if (!backend.updateSettings(activeSettingsRequestId, selectedResult.id,
+                category, workspaceId.length > 0 ? workspaceId : null)) {
+            activeSettingsRequestId = "";
+            return false;
+        }
+        return true;
+    }
+    function applyApplicationSettings(id: string, settings: var): void {
+        if (id !== activeSettingsRequestId)
+            return;
+        activeSettingsRequestId = "";
+        status = "Saved settings for " + (selectedResult ? selectedResult.title : "application");
+        scheduleRefresh();
+    }
     function refreshMetrics(): void {
-        if (!uiActive || actionInFlight || screenshotInFlight || refreshInFlight)
+        if (!uiActive || actionInFlight || screenshotInFlight || settingsInFlight || refreshInFlight)
             return;
         forceRefresh = false;
         beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
@@ -87,7 +123,7 @@ Ui.ProviderChooserController {
     function requestApplications(id: string, text: string, generation: int, limit: int): void {
         const refreshCatalog = forceRefresh;
         forceRefresh = false;
-        backend.query(id, text, generation, limit, refreshCatalog);
+        backend.query(id, text, categoryFilter, generation, limit, refreshCatalog);
     }
     function resourceHistorySinceMs(): double {
         return Date.now() - 30 * 60 * 1000;
@@ -119,7 +155,7 @@ Ui.ProviderChooserController {
         status = Presentation.pageStatus(page);
     }
     function executeProviderAction(request: var, params: var): bool {
-        if (actionInFlight || screenshotInFlight)
+        if (actionInFlight || screenshotInFlight || settingsInFlight)
             return false;
         actionInFlight = true;
         activeTargetId = request.result.id;
@@ -176,6 +212,8 @@ Ui.ProviderChooserController {
                 activeHistoryRequestId = "";
             return;
         }
+        if (id.indexOf("settings-") === 0 && id === activeSettingsRequestId)
+            activeSettingsRequestId = "";
         if (id.indexOf("action-") === 0)
             clearActiveAction();
         if (isActiveQuery(id)) {
@@ -188,22 +226,23 @@ Ui.ProviderChooserController {
     function handleTransportFailure(message: string): void {
         clearActiveAction();
         clearResourceHistory();
+        activeSettingsRequestId = "";
         clearProviderResults();
         status = message;
     }
     function primarySelected(): bool {
-        if (!selectedResult || actionInFlight || screenshotInFlight)
+        if (!selectedResult || actionInFlight || screenshotInFlight || settingsInFlight)
             return false;
         return executeSelected("activate");
     }
     function launchSelected(): bool {
-        if (!selectedResult || actionInFlight || screenshotInFlight
+        if (!selectedResult || actionInFlight || screenshotInFlight || settingsInFlight
                 || selectedApplication.kind !== "desktop-application")
             return false;
         return executeSelected("launch");
     }
     function triggerDetailAction(actionId: string): bool {
-        if (!selectedResult || actionInFlight || screenshotInFlight)
+        if (!selectedResult || actionInFlight || screenshotInFlight || settingsInFlight)
             return false;
         return executeSelected(actionId);
     }
@@ -216,7 +255,9 @@ Ui.ProviderChooserController {
     }
     onDetailsTabChanged: if (detailsTab === "resources") requestResourceHistory()
     onSelectedResultChanged: {
-        if (selectedApplication && selectedApplication.kind === "desktop-shortcut")
+        if (selectedApplication && (selectedApplication.kind === "desktop-shortcut"
+                || (selectedApplication.kind !== "desktop-application"
+                    && (detailsTab === "categories" || detailsTab === "settings"))))
             detailsTab = "application";
         else if (detailsOpen && detailsTab === "resources")
             requestResourceHistory();

@@ -13,16 +13,18 @@ Ui.ChooserSurface {
         controller: content.controller
         navigationEnabled: !content.controller.navigationHelpOpen
         refreshEnabled: !content.controller.actionInFlight
+            && !content.controller.settingsInFlight
             && !content.controller.navigationHelpOpen
         detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection
-            && !content.controller.actionInFlight && !content.controller.navigationHelpOpen
+            && !content.controller.actionInFlight && !content.controller.settingsInFlight
+            && !content.controller.navigationHelpOpen
         onRefreshRequested: content.controller.refresh(true)
         onDetailsTabRequested: content.controller.cycleDetailsTab()
     }
     Shortcut {
         sequence: "Shift+Return"
         enabled: content.controller.uiActive && content.controller.hasSelection
-            && !content.controller.actionInFlight
+            && !content.controller.actionInFlight && !content.controller.settingsInFlight
             && !content.controller.navigationHelpOpen
             && (content.controller.selectedApplication || ({})).kind === "desktop-application"
         onActivated: content.controller.launchSelected()

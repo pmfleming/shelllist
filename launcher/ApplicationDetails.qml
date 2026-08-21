@@ -31,10 +31,17 @@ Ui.ActionDetailsPane {
         selectedValue: pane.controller.detailsTab
         tabs: pane.application.kind === "desktop-shortcut"
             ? [{ value: "application", icon: "󰀻", label: "Shortcut" }]
-            : [
-                { value: "application", icon: "󰀻", label: "Application" },
-                { value: "resources", icon: "󰄪", label: "Resources" }
-            ]
+            : pane.application.kind === "desktop-application"
+                ? [
+                    { value: "application", icon: "󰀻", label: "Application" },
+                    { value: "resources", icon: "󰄪", label: "Resources" },
+                    { value: "categories", icon: "󰉋", label: "Categories" },
+                    { value: "settings", icon: "󰒓", label: "Settings" }
+                ]
+                : [
+                    { value: "application", icon: "󰀻", label: "Window" },
+                    { value: "resources", icon: "󰄪", label: "Resources" }
+                ]
         onSelected: function (value) { pane.controller.selectDetailsTab(value); }
 
         ApplicationPage {
@@ -52,6 +59,20 @@ Ui.ActionDetailsPane {
             controller: pane.controller
             application: pane.application
             uiScale: pane.uiScale
+        }
+
+        ApplicationCategoryPage {
+            anchors.fill: parent
+            visible: pane.controller.detailsTab === "categories"
+            controller: pane.controller
+            application: pane.application
+        }
+
+        ApplicationSettingsPage {
+            anchors.fill: parent
+            visible: pane.controller.detailsTab === "settings"
+            controller: pane.controller
+            application: pane.application
         }
     }
 }

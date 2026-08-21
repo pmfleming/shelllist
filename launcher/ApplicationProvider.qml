@@ -27,13 +27,17 @@ Core.Provider {
             presentation: { group: "primary", tone: "active", width: 128 },
             metadata: { toolTip: running
                 ? "Focus the first running instance"
-                : "Launch on the current workspace" }
+                : (application.default_workspace_id
+                    ? "Launch on workspace " + application.default_workspace_id
+                    : "Launch on the current workspace") }
         })];
         if (application.kind === "desktop-application")
             actions.push(action("launch", "New tile", {
                 icon: "󰖲", shortcut: "Shift+Enter", enabled: !busy,
                 presentation: { group: "toolbar", tone: "normal", width: 120 },
-                metadata: { toolTip: "Launch another instance in a new tile on the current workspace" }
+                metadata: { toolTip: application.default_workspace_id
+                    ? "Launch another instance on workspace " + application.default_workspace_id
+                    : "Launch another instance in a new tile on the current workspace" }
             }));
         return actions;
     }
@@ -76,7 +80,7 @@ Core.Provider {
     function actionsForApplication(application: var): var {
         if (!application)
             return [];
-        const busy = controller.actionInFlight;
+        const busy = controller.actionInFlight || controller.settingsInFlight;
         const runtimeActions = application.kind === "desktop-shortcut"
             ? [] : [closeAction(application, busy)].concat(windowActions(application, busy));
         return primaryActions(application, busy)

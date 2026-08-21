@@ -6,7 +6,8 @@ var methods = ({
     query: "applications.query",
     history: "applications.history",
     refresh: "applications.refresh",
-    execute: "applications.execute"
+    execute: "applications.execute",
+    settingsUpdate: "applications.settings.update"
 });
 var streams = ({
     applications: "applications.changed",
