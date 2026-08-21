@@ -36,7 +36,7 @@ Ui.DetailFlickable {
                 subtitle: "Workspace " + modelData.workspace + " · " + modelData.description
                 checked: page.application.category === modelData.value
                     && page.application.default_workspace_id === modelData.workspace
-                interactive: !page.controller.settingsInFlight
+                interactive: !page.controller.settingsInFlight && !checked
                 onClicked: page.controller.updateApplicationSettings(modelData.value)
             }
         }

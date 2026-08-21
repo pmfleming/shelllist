@@ -16,13 +16,14 @@ Ui.ChooserSurface {
     readonly property var device: controller.primaryDevice || ({})
     readonly property string policyError: protection.error || ""
     readonly property string errorMessage: controller.lastError.length > 0
-        ? controller.lastError : policyError
+        ? controller.lastError : (controller.refreshError.length > 0
+            ? controller.refreshError : policyError)
 
     Ui.ChooserShortcuts {
         controller: content.controller
         navigationEnabled: true
         refreshEnabled: !content.controller.actionInFlight
-        onRefreshRequested: content.controller.backend.snapshot()
+        onRefreshRequested: content.controller.refreshAll()
     }
 
     ColumnLayout {

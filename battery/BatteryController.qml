@@ -18,6 +18,7 @@ Ui.ChooserController {
     property var powerSleep: ({ available: false, can_suspend: "no", can_hibernate: "no",
         preparing_for_sleep: false, lock_before_sleep: true, inhibitors: [] })
     property string lastError: ""
+    property string refreshError: ""
     property int selectedDeviceIndex: 0
     property int draftStartPercent: 75
     property int draftEndPercent: 80
@@ -27,20 +28,21 @@ Ui.ChooserController {
     property bool draftAutoPowerSaver: true
     property bool thresholdDraftDirty: false
     property bool alertDraftDirty: false
+    property var batteryHistory: ({ points: [], last_charge_timestamp_ms: 0,
+        latest_timestamp_ms: 0, retention_days: 7 })
     property string energyPeriod: "last-charge"
     property var energyLastCharge: ({ applications: [], total_energy_mwh: 0 })
     property var energyWeek: ({ applications: [], total_energy_mwh: 0 })
+    property double energyLastChargeUpdatedMs: 0
+    property double energyWeekUpdatedMs: 0
     property string energyError: ""
     property int energyRequestsInFlight: 0
-    property bool energyRequestFailed: false
 
     detailsOpen: false
     navigationPrimaryEnabled: false
     readonly property BatteryBackend backend: batteryBackend
     readonly property BatteryEnergyBackend energyBackend: batteryEnergyBackend
     readonly property var policy: battery.policy || ({})
-    readonly property var batteryHistory: battery.history || ({ points: [],
-        last_charge_timestamp_ms: 0, retention_days: 7 })
     readonly property var energyOverview: energyPeriod === "week"
         ? energyWeek : energyLastCharge
     readonly property bool energyLoading: energyRequestsInFlight > 0
@@ -77,11 +79,19 @@ Ui.ChooserController {
     }
 
     function applyBattery(value: var): void {
-        const previousCharge = Number(batteryHistory.last_charge_timestamp_ms || 0);
-        battery = value || ({ available: false, percentage: 0, devices: [] });
-        const nextCharge = Number(batteryHistory.last_charge_timestamp_ms || 0);
-        if (uiActive && nextCharge !== previousCharge)
-            requestEnergyOverviews();
+        const nextBattery = value || ({ available: false, percentage: 0, devices: [] });
+        const historySummary = nextBattery.history || ({});
+        const nextHistoryTimestamp = Number(historySummary.latest_timestamp_ms || 0);
+        const historyChanged = nextHistoryTimestamp > 0
+            && nextHistoryTimestamp !== Number(batteryHistory.latest_timestamp_ms || 0);
+        const chargeChanged = Number(historySummary.last_charge_timestamp_ms || 0) > 0
+            && Number(historySummary.last_charge_timestamp_ms)
+                !== Number(batteryHistory.last_charge_timestamp_ms || 0);
+        battery = nextBattery;
+        if (uiActive && historyChanged)
+            backend.history();
+        if (uiActive && chargeChanged)
+            requestEnergyPeriod("last-charge", true);
         if (selectedDeviceIndex >= (battery.devices || []).length)
             selectedDeviceIndex = 0;
         syncThresholdDraft();
@@ -98,6 +108,14 @@ Ui.ChooserController {
             draftStartPercent = Number(valueOr(protection.desired_start_percent, 75));
             draftEndPercent = Number(valueOr(protection.desired_end_percent, 80));
         }
+    }
+
+    function applyBatteryHistory(value: var): void {
+        const previousCharge = Number(batteryHistory.last_charge_timestamp_ms || 0);
+        batteryHistory = value || ({ points: [], last_charge_timestamp_ms: 0,
+            latest_timestamp_ms: 0, retention_days: 7 });
+        if (uiActive && Number(batteryHistory.last_charge_timestamp_ms || 0) !== previousCharge)
+            requestEnergyPeriod("last-charge", true);
     }
 
     function applyPowerProfile(value: var): void {
@@ -126,7 +144,7 @@ Ui.ChooserController {
             return;
         }
         if (event.event === "lagged") {
-            backend.snapshot();
+            refreshAll();
             return;
         }
         if ((event.event === "subscribed" || event.event === "changed")
@@ -162,6 +180,15 @@ Ui.ChooserController {
     function operationFailed(message: string): void {
         actionInFlight = false;
         lastError = message;
+    }
+
+    function refreshFailed(_id: string, message: string): void {
+        if (uiActive)
+            refreshError = message;
+    }
+
+    function refreshFinished(_id: string): void {
+        refreshError = "";
     }
 
     function updateStartPercent(value: int): void {
@@ -269,49 +296,62 @@ Ui.ChooserController {
     }
 
     function selectEnergyPeriod(period: string): void {
-        if (period === "last-charge" || period === "week")
-            energyPeriod = period;
+        if (period !== "last-charge" && period !== "week")
+            return;
+        energyPeriod = period;
+        requestEnergyPeriod(period, false);
     }
 
-    function requestEnergyOverviews(): void {
+    function requestEnergyPeriod(period: string, forceRefresh: bool): void {
         if (!uiActive || energyRequestsInFlight > 0)
             return;
         const now = Date.now();
+        const updated = period === "week" ? energyWeekUpdatedMs : energyLastChargeUpdatedMs;
+        if (!forceRefresh && now - updated < 60000)
+            return;
         const weekSince = now - 7 * 24 * 60 * 60 * 1000;
         const chargeSince = Number(batteryHistory.last_charge_timestamp_ms || 0);
         energyError = "";
-        energyRequestFailed = false;
-        energyRequestsInFlight = 2;
-        energyBackend.overview("last-charge", chargeSince > 0 ? chargeSince : weekSince);
-        energyBackend.overview("week", weekSince);
+        energyRequestsInFlight = 1;
+        energyBackend.overview(period,
+            period === "week" || chargeSince <= 0 ? weekSince : chargeSince);
     }
 
     function applyEnergyOverview(id: string, overview: var): void {
-        energyRequestsInFlight = Math.max(0, energyRequestsInFlight - 1);
-        if (energyRequestsInFlight === 0 && !energyRequestFailed)
-            energyError = "";
-        if (id.indexOf("battery-energy-last-charge-") === 0)
+        energyRequestsInFlight = 0;
+        energyError = "";
+        const returnedPeriod = id.indexOf("battery-energy-last-charge-") === 0
+            ? "last-charge" : "week";
+        if (returnedPeriod === "last-charge") {
             energyLastCharge = overview || ({ applications: [], total_energy_mwh: 0 });
-        else if (id.indexOf("battery-energy-week-") === 0)
+            energyLastChargeUpdatedMs = Date.now();
+        } else {
             energyWeek = overview || ({ applications: [], total_energy_mwh: 0 });
+            energyWeekUpdatedMs = Date.now();
+        }
+        if (returnedPeriod !== energyPeriod)
+            requestEnergyPeriod(energyPeriod, false);
     }
 
     function energyOverviewFailed(_id: string, message: string): void {
-        energyRequestsInFlight = Math.max(0, energyRequestsInFlight - 1);
-        energyRequestFailed = true;
+        energyRequestsInFlight = 0;
         energyError = message;
     }
 
     function energyTransportFailed(message: string): void {
         energyRequestsInFlight = 0;
-        energyRequestFailed = true;
         energyError = message;
+    }
+
+    function refreshAll(): void {
+        backend.snapshot();
+        backend.history();
+        requestEnergyPeriod(energyPeriod, true);
     }
 
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
-        backend.snapshot();
-        requestEnergyOverviews();
+        refreshAll();
     }
 
     function deactivateUi() {
@@ -323,7 +363,7 @@ Ui.ChooserController {
         interval: 60000
         repeat: true
         running: controller.uiActive
-        onTriggered: controller.requestEnergyOverviews()
+        onTriggered: controller.requestEnergyPeriod(controller.energyPeriod, true)
     }
 
     BatteryBackend { id: batteryBackend; controller: controller }

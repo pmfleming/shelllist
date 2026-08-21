@@ -18,7 +18,11 @@ Io.DaemonBackend {
     }
 
     function snapshot(): bool {
-        return call("battery-snapshot", BatteryApi.methods.snapshot, {});
+        return call(nextId("battery-snapshot"), BatteryApi.methods.snapshot, {});
+    }
+
+    function history(): bool {
+        return call(nextId("battery-history"), BatteryApi.methods.history, {});
     }
 
     function setThresholds(batteryId: string, startPercent: int, endPercent: int): bool {
@@ -98,13 +102,22 @@ Io.DaemonBackend {
     }
 
     function finish(id: string, envelope: var, transportError: string): void {
+        const backgroundRequest = id.startsWith("battery-snapshot-")
+            || id.startsWith("battery-history-");
         const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            BatteryApi.protocol, BatteryApi.version, daemonName, "Battery operation failed");
+            BatteryApi.protocol, BatteryApi.version, daemonName,
+            backgroundRequest ? "Battery refresh failed" : "Battery operation failed");
         if (error.length > 0) {
-            controller.operationFailed(error);
+            if (backgroundRequest)
+                controller.refreshFailed(id, error);
+            else
+                controller.operationFailed(error);
             return;
         }
-        controller.operationFinished(id);
+        if (backgroundRequest)
+            controller.refreshFinished(id);
+        else
+            controller.operationFinished(id);
         const data = envelope.data || ({});
         if (data.snapshot && data.snapshot.battery)
             controller.applyBattery(data.snapshot.battery);
@@ -118,13 +131,20 @@ Io.DaemonBackend {
             controller.applyPowerProfile(data.power_profile);
         if (data.power_sleep)
             controller.applyPowerSleep(data.power_sleep);
+        if (data.history)
+            controller.applyBatteryHistory(data.history);
     }
 
     onResponseReceived: function (id, envelope, transportError) {
         finish(id, envelope, transportError);
     }
     onEventReceived: function (event) { controller.handleEvent(event); }
-    onSendFailed: function (_id, message) { controller.operationFailed(message); }
+    onSendFailed: function (id, message) {
+        if (id.startsWith("battery-snapshot-") || id.startsWith("battery-history-"))
+            controller.refreshFailed(id, message);
+        else
+            controller.operationFailed(message);
+    }
     onTransportFailed: function (message) { controller.operationFailed(message); }
     onTransportReady: snapshot()
 }

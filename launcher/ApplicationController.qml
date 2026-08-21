@@ -111,7 +111,8 @@ Ui.ProviderChooserController {
         scheduleRefresh();
     }
     function refreshMetrics(): void {
-        if (!uiActive || actionInFlight || screenshotInFlight || settingsInFlight || refreshInFlight)
+        if (!uiActive || !detailsOpen || detailsTab !== "resources"
+                || actionInFlight || screenshotInFlight || settingsInFlight || refreshInFlight)
             return;
         forceRefresh = false;
         beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
@@ -279,7 +280,8 @@ Ui.ProviderChooserController {
 
     Timer {
         interval: 2000
-        running: controller.uiActive
+        running: controller.uiActive && controller.detailsOpen
+            && controller.detailsTab === "resources"
         repeat: true
         onTriggered: controller.refreshMetrics()
     }

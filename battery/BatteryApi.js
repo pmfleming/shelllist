@@ -5,6 +5,7 @@ var version = 1;
 
 var methods = {
     snapshot: "bar.snapshot",
+    history: "battery.history",
     setThresholds: "battery.setThresholds",
     setProtection: "battery.setProtection",
     chargeOnce: "battery.chargeOnce",

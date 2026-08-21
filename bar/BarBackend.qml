@@ -16,16 +16,16 @@ Io.DaemonBackend {
     }
 
     function snapshot(): bool {
-        return call("snapshot", BarApi.methods.snapshot, {});
+        return call(operationId("snapshot"), BarApi.methods.snapshot, {});
     }
 
     function focusWorkspace(workspaceId: int): bool {
-        return call("workspace-focus", BarApi.methods.workspaceFocus,
+        return call(operationId("workspace-focus"), BarApi.methods.workspaceFocus,
             { workspace_id: workspaceId, on_current_monitor: true });
     }
 
     function mediaOperation(operation: string): bool {
-        return call("media-" + operation, BarApi.methods.mediaOperation,
+        return call(operationId("media-" + operation), BarApi.methods.mediaOperation,
             { operation: operation, player_id: controller.activePlayerId || null });
     }
 
@@ -50,11 +50,13 @@ Io.DaemonBackend {
     }
 
     function toggleNotifications(): bool {
-        return call("notifications-panel", BarApi.methods.notificationsTogglePanel, {});
+        return call(operationId("notifications-panel"),
+            BarApi.methods.notificationsTogglePanel, {});
     }
 
     function toggleDnd(): bool {
-        return call("notifications-dnd", BarApi.methods.notificationsToggleDnd, {});
+        return call(operationId("notifications-dnd"),
+            BarApi.methods.notificationsToggleDnd, {});
     }
 
     function dismissNotification(notificationId: int): bool {

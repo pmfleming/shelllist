@@ -12,6 +12,7 @@ Rectangle {
     property color lineColor: Ui.Theme.accent
     property real minimumMaximum: 0
     property bool positiveOnly: false
+    property double maximumGapMilliseconds: 30 * 60 * 1000
 
     readonly property var values: (points || []).map(function (point) {
         const raw = point[metric];
@@ -22,6 +23,16 @@ Rectangle {
             return null;
         return Math.max(0, value);
     })
+    readonly property var timestamps: (points || []).map(function (point) {
+        const value = Number(point.timestamp_ms || 0);
+        return isFinite(value) && value > 0 ? value : 0;
+    })
+    readonly property double firstTimestamp: timestamps.reduce(function (current, value) {
+        return value > 0 ? Math.min(current, value) : current;
+    }, Number.MAX_VALUE)
+    readonly property double lastTimestamp: timestamps.reduce(function (current, value) {
+        return Math.max(current, value);
+    }, 0)
     readonly property real maximum: Math.max(minimumMaximum, 1,
         values.reduce(function (current, value) {
             return value === null ? current : Math.max(current, value);
@@ -35,6 +46,7 @@ Rectangle {
     border.width: 1
 
     onValuesChanged: chart.requestPaint()
+    onTimestampsChanged: chart.requestPaint()
     onMaximumChanged: chart.requestPaint()
     onWidthChanged: chart.requestPaint()
     onHeightChanged: chart.requestPaint()
@@ -78,28 +90,47 @@ Rectangle {
             const values = graph.values;
             if (values.length === 0)
                 return;
-            const denominator = Math.max(1, values.length - 1);
+            const first = graph.firstTimestamp === Number.MAX_VALUE
+                ? 0 : graph.firstTimestamp;
+            const span = Math.max(1, graph.lastTimestamp - first);
             let drawing = false;
+            let previousTimestamp = 0;
+            let validCount = 0;
+            let onlyX = 0;
+            let onlyY = 0;
             context.beginPath();
             values.forEach(function (value, index) {
-                if (value === null) {
+                const timestamp = graph.timestamps[index];
+                if (value === null || timestamp <= 0) {
                     drawing = false;
+                    previousTimestamp = 0;
                     return;
                 }
-                const x = index / denominator * width;
+                const x = (timestamp - first) / span * width;
                 const y = height - Math.min(1, value / graph.maximum) * height;
-                if (!drawing) {
+                if (!drawing || (previousTimestamp > 0
+                        && timestamp - previousTimestamp > graph.maximumGapMilliseconds)) {
                     context.moveTo(x, y);
-                    drawing = true;
                 } else {
                     context.lineTo(x, y);
                 }
+                drawing = true;
+                previousTimestamp = timestamp;
+                validCount += 1;
+                onlyX = x;
+                onlyY = y;
             });
             context.strokeStyle = graph.lineColor;
             context.lineWidth = 1.5;
             context.lineJoin = "round";
             context.lineCap = "round";
             context.stroke();
+            if (validCount === 1) {
+                context.beginPath();
+                context.arc(onlyX, onlyY, 2, 0, Math.PI * 2);
+                context.fillStyle = graph.lineColor;
+                context.fill();
+            }
         }
     }
 }
