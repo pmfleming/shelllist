@@ -54,13 +54,12 @@ The frontend does not parse desktop files, process tables, cgroups, or composito
 | `ApplicationPresentation.js` | Pure formatting and result-transition helpers |
 | `ApplicationLifecycle.js` | Safe operation correlation and revision handling |
 | `ApplicationListPane.qml` / `ApplicationListRow.qml` | Ranked application list |
-| `ApplicationDetails.qml` | Application/Resources tab shell |
+| `ApplicationDetails.qml` | Application/Resources/Settings tab shell |
 | `ApplicationPage.qml` | Metadata and top-level actions |
 | `ApplicationInstanceList.qml` | Per-window focus and close actions |
 | `ApplicationDesktopActions.qml` | Desktop-defined actions |
 | `ApplicationResourcesPage.qml` | Current resource cards and history graphs |
-| `ApplicationCategoryPage.qml` | Per-app Shell, Browser, Code, Media, or Text assignment |
-| `ApplicationSettingsPage.qml` | Default workspace selection for new windows |
+| `ApplicationSettingsPage.qml` | Combined category and default-workspace selection |
 
 The launcher uses `ProviderRegistry`, `ResultStore`, and the generic chooser components. It is loaded on first use by `SurfaceRegistry` and remains warm afterward.
 
@@ -86,7 +85,7 @@ applications.operation
 
 Queries are generation-scoped and can select one of the five app categories. Superseded results are ignored and cancellable backend work is cancelled. Catalog, settings, and window change events trigger a coalesced requery instead of carrying complete snapshots.
 
-Category and default-workspace overrides are persisted by `app-daemon`. Execution requests contain only a target ID, normalized action, optional window or desktop-action ID, a JavaScript-safe expected revision, and non-authoritative workspace context. The daemon resolves every identifier against current state before applying an effect, applies a saved workspace preference, and moves the newly created window without disturbing existing instances.
+Category overrides are persisted by `app-daemon` and map directly to default workspaces 1–5. Execution requests contain only a target ID, normalized action, optional window or desktop-action ID, a JavaScript-safe expected revision, and non-authoritative workspace context. The daemon resolves every identifier against current state before applying an effect, applies the category's saved workspace preference, and moves the newly created window without disturbing existing instances.
 
 ## Operation lifecycle
 

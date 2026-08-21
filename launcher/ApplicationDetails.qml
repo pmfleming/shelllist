@@ -35,7 +35,6 @@ Ui.ActionDetailsPane {
                 ? [
                     { value: "application", icon: "󰀻", label: "Application" },
                     { value: "resources", icon: "󰄪", label: "Resources" },
-                    { value: "categories", icon: "󰉋", label: "Categories" },
                     { value: "settings", icon: "󰒓", label: "Settings" }
                 ]
                 : [
@@ -59,13 +58,6 @@ Ui.ActionDetailsPane {
             controller: pane.controller
             application: pane.application
             uiScale: pane.uiScale
-        }
-
-        ApplicationCategoryPage {
-            anchors.fill: parent
-            visible: pane.controller.detailsTab === "categories"
-            controller: pane.controller
-            application: pane.application
         }
 
         ApplicationSettingsPage {

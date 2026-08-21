@@ -46,12 +46,10 @@ Io.DaemonBackend {
         return call(id, AppApi.methods.execute, params);
     }
 
-    function updateSettings(id: string, targetId: string, category: string,
-            workspaceId: var): bool {
+    function updateSettings(id: string, targetId: string, category: string): bool {
         return call(id, AppApi.methods.settingsUpdate, {
             target_id: targetId,
-            category: category,
-            workspace_id: workspaceId
+            category: category
         });
     }
 

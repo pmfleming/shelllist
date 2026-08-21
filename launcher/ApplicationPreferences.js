@@ -7,13 +7,3 @@ var categories = [
     { value: "media", label: "Media", icon: "󰎈", workspace: "4", description: "Audio, video, and graphics" },
     { value: "text", label: "Text", icon: "󰈙", workspace: "5", description: "Documents and text editors" }
 ];
-
-function category(value) {
-    return categories.find(function (entry) { return entry.value === value; }) || categories[0];
-}
-
-function workspaceOptions() {
-    return [{ value: "", label: "Current workspace" }].concat(categories.map(function (entry) {
-        return { value: entry.workspace, label: entry.workspace + " · " + entry.label };
-    }));
-}

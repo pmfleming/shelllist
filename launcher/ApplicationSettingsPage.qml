@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
@@ -11,7 +13,7 @@ Ui.DetailFlickable {
 
     Text {
         width: parent.width
-        text: "Set the workspace used when a new window is launched. Existing windows are not moved."
+        text: "Choose the application's category. Categories map directly to the first five workspaces, so this also sets where new windows launch."
         color: Ui.Theme.mutedText
         wrapMode: Text.Wrap
         font.family: Ui.Theme.fontFamily
@@ -19,30 +21,36 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailColumnCard {
-        height: 150
-        title: "Default workspace"
-        contentSpacing: Ui.Theme.spacingMd
+        height: 300
+        title: "Category & default workspace"
+        contentSpacing: Ui.Theme.spacingXs
 
-        Ui.DropDownList {
-            Layout.fillWidth: true
-            Layout.preferredHeight: Ui.Theme.compactControlHeight
-            options: Preferences.workspaceOptions()
-            value: page.application.default_workspace_id || ""
-            interactive: !page.controller.settingsInFlight
-            onSelected: function (value) {
-                page.controller.updateApplicationSettings(page.application.category || "shell", value);
+        Repeater {
+            model: Preferences.categories
+
+            delegate: Ui.ToggleRow {
+                required property var modelData
+
+                Layout.fillWidth: true
+                title: modelData.icon + "  " + modelData.label
+                subtitle: "Workspace " + modelData.workspace + " · " + modelData.description
+                checked: page.application.category === modelData.value
+                    && page.application.default_workspace_id === modelData.workspace
+                interactive: !page.controller.settingsInFlight
+                onClicked: page.controller.updateApplicationSettings(modelData.value)
             }
         }
+    }
 
-        Text {
-            Layout.fillWidth: true
-            text: page.application.default_workspace_id
-                ? "New windows default to workspace " + page.application.default_workspace_id + "."
-                : "New windows open on the workspace where the launcher was invoked."
-            color: Ui.Theme.subtleText
-            wrapMode: Text.Wrap
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeCaption
-        }
+    Text {
+        width: parent.width
+        text: page.application.default_workspace_id
+            ? "New windows launch on workspace "
+                + page.application.default_workspace_id + ". Existing windows are not moved."
+            : "No default workspace is set yet. Select a category to configure one."
+        color: Ui.Theme.subtleText
+        wrapMode: Text.Wrap
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Ui.Theme.fontSizeCaption
     }
 }

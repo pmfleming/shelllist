@@ -78,7 +78,7 @@ Ui.ProviderChooserController {
         if (value === "application"
                 || (value === "resources" && selectedApplication
                     && selectedApplication.kind !== "desktop-shortcut")
-                || ((value === "categories" || value === "settings") && selectedApplication
+                || (value === "settings" && selectedApplication
                     && selectedApplication.kind === "desktop-application"))
             detailsTab = value;
     }
@@ -86,19 +86,18 @@ Ui.ProviderChooserController {
         if (!detailsOpen || !hasSelection || selectedApplication.kind === "desktop-shortcut")
             return false;
         const tabs = selectedApplication.kind === "desktop-application"
-            ? ["application", "resources", "categories", "settings"]
+            ? ["application", "resources", "settings"]
             : ["application", "resources"];
         const index = tabs.indexOf(detailsTab);
         detailsTab = tabs[(index + 1) % tabs.length];
         return true;
     }
-    function updateApplicationSettings(category: string, workspaceId: string): bool {
+    function updateApplicationSettings(category: string): bool {
         if (!selectedResult || settingsInFlight || actionInFlight || screenshotInFlight)
             return false;
         activeSettingsRequestId = "settings-" + Date.now();
         status = "Saving application settings…";
-        if (!backend.updateSettings(activeSettingsRequestId, selectedResult.id,
-                category, workspaceId.length > 0 ? workspaceId : null)) {
+        if (!backend.updateSettings(activeSettingsRequestId, selectedResult.id, category)) {
             activeSettingsRequestId = "";
             return false;
         }
@@ -257,7 +256,7 @@ Ui.ProviderChooserController {
     onSelectedResultChanged: {
         if (selectedApplication && (selectedApplication.kind === "desktop-shortcut"
                 || (selectedApplication.kind !== "desktop-application"
-                    && (detailsTab === "categories" || detailsTab === "settings"))))
+                    && detailsTab === "settings")))
             detailsTab = "application";
         else if (detailsOpen && detailsTab === "resources")
             requestResourceHistory();
