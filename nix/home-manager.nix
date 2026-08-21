@@ -67,11 +67,14 @@ in
           Description = "Quickshell bar status and policy service";
           PartOf = [ cfg.systemd.target ];
           After = [ cfg.systemd.target "dbus.service" "pipewire.service" "wireplumber.service" ];
+          Before = [ "swaync.service" ];
+          Conflicts = [ "swaync.service" ];
         };
         Service = {
           Type = "dbus";
           BusName = "org.laufan.BarDaemon";
           ExecStart = "${cfg.package}/bin/bar-daemon daemon";
+          Environment = [ "BAR_DAEMON_NOTIFICATION_BACKEND=native" ];
           Restart = "on-failure";
           RestartSec = "2s";
         };

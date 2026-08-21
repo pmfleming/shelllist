@@ -124,7 +124,7 @@ imports = [ inputs.shelllist.nixosModules.default ];
 programs.shelllist.enable = true;
 ```
 
-The module installs Shelllist and supervises the resident host plus `bar-daemon`. Set `programs.shelllist.systemd.target` for a compositor-specific session target, `systemd.startBarDaemon = false` to use D-Bus activation, or `systemd.environment` for theme overrides. The other domain daemons must be running or D-Bus activatable through their own installations.
+The module installs Shelllist and supervises the resident host plus `bar-daemon`. The bundled daemon runs in native notification mode, owns `org.freedesktop.Notifications`, and conflicts with `swaync.service`. Disable any separately configured notification daemon. Set `programs.shelllist.systemd.target` for a compositor-specific session target, `systemd.startBarDaemon = false` to use D-Bus activation, or `systemd.environment` for theme overrides. The other domain daemons must be running or D-Bus activatable through their own installations.
 
 ## CLI
 

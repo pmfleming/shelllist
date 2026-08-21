@@ -63,6 +63,9 @@ in
       wantedBy = [ cfg.systemd.target ];
       partOf = [ cfg.systemd.target ];
       after = [ cfg.systemd.target "dbus.service" "pipewire.service" "wireplumber.service" ];
+      before = [ "swaync.service" ];
+      conflicts = [ "swaync.service" ];
+      environment.BAR_DAEMON_NOTIFICATION_BACKEND = "native";
       serviceConfig = {
         Type = "dbus";
         BusName = "org.laufan.BarDaemon";

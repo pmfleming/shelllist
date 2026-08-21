@@ -668,6 +668,9 @@
             pkgs.runCommand "shelllist-module-evaluation" { } ''
               test '${evaluated.config.systemd.user.services.shelllist.serviceConfig.ExecStart}' = '${self.packages.${system}.default}/bin/shelllist run'
               test '${evaluated.config.systemd.user.services.bar-daemon.serviceConfig.BusName}' = 'org.laufan.BarDaemon'
+              test '${evaluated.config.systemd.user.services.bar-daemon.environment.BAR_DAEMON_NOTIFICATION_BACKEND}' = 'native'
+              test '${builtins.concatStringsSep " " evaluated.config.systemd.user.services.bar-daemon.conflicts}' = 'swaync.service'
+              test -f '${self.packages.${system}.default}/share/dbus-1/services/org.freedesktop.Notifications.service'
               touch $out
             '';
 
