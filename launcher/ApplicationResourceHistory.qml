@@ -31,40 +31,40 @@ ColumnLayout {
         const models = [{
             metric: "cpu_percent_of_machine", label: "CPU",
             value: Presentation.cpuText(application.cpu_percent_of_machine),
-            color: Ui.Theme.accent, minimum: 10, available: true
+            color: Ui.Theme.accent, minimum: 10, peakMetric: "cpu_percent_of_machine", available: true
         }, {
             metric: "memory_bytes", label: "Memory",
             value: Presentation.memoryText(application.memory_bytes),
-            color: Ui.Theme.active, minimum: 0, available: true
+            color: Ui.Theme.active, minimum: 0, peakMetric: "memory_bytes", available: true
         }, {
             metric: "gpu_busy_percent", label: "GPU",
             value: Presentation.cpuText(application.gpu_busy_percent || application.gpu_percent),
-            color: Ui.Theme.warning, minimum: 10,
+            color: Ui.Theme.warning, minimum: 10, peakMetric: "gpu_busy_percent",
             available: running ? !!measurement.gpu_available : historyHas("gpu_busy_percent") || historyHas("gpu_percent")
         }, {
             metric: "disk_read_bytes_per_second", label: "Disk read",
             value: Presentation.rateText(application.disk_read_bytes_per_second),
-            color: Ui.Theme.accent, minimum: 0,
+            color: Ui.Theme.accent, minimum: 0, peakMetric: "disk_read_bytes_per_second",
             available: running ? !!measurement.storage_available : historyHas("disk_read_bytes_per_second")
         }, {
             metric: "disk_write_bytes_per_second", label: "Disk write",
             value: Presentation.rateText(application.disk_write_bytes_per_second),
-            color: Ui.Theme.warning, minimum: 0,
+            color: Ui.Theme.warning, minimum: 0, peakMetric: "disk_write_bytes_per_second",
             available: running ? !!measurement.storage_available : historyHas("disk_write_bytes_per_second")
         }, {
             metric: "disk_space_permanent_bytes", label: "Permanent storage",
             value: Presentation.memoryText(application.disk_space_permanent_bytes),
-            color: Ui.Theme.accent, minimum: 0,
+            color: Ui.Theme.accent, minimum: 0, peakMetric: "",
             available: running ? measurement.disk_space_scope !== "unavailable" : historyHas("disk_space_permanent_bytes")
         }, {
             metric: "disk_space_temporary_bytes", label: "Cache & temporary",
             value: Presentation.memoryText(application.disk_space_temporary_bytes),
-            color: Ui.Theme.warning, minimum: 0,
+            color: Ui.Theme.warning, minimum: 0, peakMetric: "",
             available: running ? measurement.disk_space_scope !== "unavailable" : historyHas("disk_space_temporary_bytes")
         }, {
             metric: "average_power_watts", label: "Estimated power",
             value: Presentation.powerText(application.estimated_app_power_watts || application.power_watts),
-            color: Ui.Theme.active, minimum: 0,
+            color: Ui.Theme.active, minimum: 0, peakMetric: "estimated_app_power_watts",
             available: running ? application.energy_source !== "unavailable" : historyHasEnergy()
         }];
         return models.filter(function (model) { return model.available; });
@@ -95,6 +95,9 @@ ColumnLayout {
                 points: history.controller.resourceHistory
                 uiScale: history.uiScale
                 metric: modelData.metric
+                peakMetric: modelData.peakMetric
+                rangeStartMilliseconds: history.controller.historyWindowStartMs
+                rangeEndMilliseconds: history.controller.historyWindowEndMs
                 label: modelData.label
                 valueText: modelData.value
                 lineColor: modelData.color

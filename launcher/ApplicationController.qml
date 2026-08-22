@@ -21,8 +21,12 @@ Ui.ProviderChooserController {
     property var activeRequest: null
     property bool forceRefresh: false
     property var resourceHistory: []
+    property var pendingResourceHistory: []
     property string historyTargetId: ""
     property string activeHistoryRequestId: ""
+    property double historyWindowStartMs: 0
+    property double historyWindowEndMs: 0
+    property int historyRequestSequence: 0
     property string activeSettingsRequestId: ""
     readonly property bool historyInFlight: activeHistoryRequestId.length > 0
     readonly property bool settingsInFlight: activeSettingsRequestId.length > 0
@@ -50,8 +54,11 @@ Ui.ProviderChooserController {
     }
     function clearResourceHistory(): void {
         resourceHistory = [];
+        pendingResourceHistory = [];
         historyTargetId = "";
         activeHistoryRequestId = "";
+        historyWindowStartMs = 0;
+        historyWindowEndMs = 0;
     }
     function activateUi(workspaceId: string): void {
         activateUiState(workspaceId);
@@ -128,20 +135,36 @@ Ui.ProviderChooserController {
     function resourceHistorySinceMs(): double {
         return Date.now() - 30 * 60 * 1000;
     }
+    function nextHistoryRequestId(): string {
+        historyRequestSequence += 1;
+        return "history-" + Date.now() + "-" + historyRequestSequence;
+    }
     function requestResourceHistory(forceRefresh: var): void {
         const targetId = resourcesVisible && selectedResult ? selectedResult.id : "";
         if (!targetId || Lifecycle.historyRequestCovered(
                 targetId, historyTargetId, historyInFlight, forceRefresh))
             return;
         historyTargetId = targetId;
-        activeHistoryRequestId = "history-" + Date.now();
-        backend.history(activeHistoryRequestId, targetId, resourceHistorySinceMs(), null, 120);
+        historyWindowStartMs = resourceHistorySinceMs();
+        historyWindowEndMs = Date.now();
+        pendingResourceHistory = [];
+        activeHistoryRequestId = nextHistoryRequestId();
+        backend.history(activeHistoryRequestId, targetId, historyWindowStartMs, null, 120);
     }
     function applyResourceHistory(id: string, history: var): void {
         if (id !== activeHistoryRequestId || (history.target_id || "") !== historyTargetId)
             return;
+        pendingResourceHistory = pendingResourceHistory.concat(history.points || []);
+        if (history.has_more && history.next_cursor) {
+            activeHistoryRequestId = nextHistoryRequestId();
+            backend.history(activeHistoryRequestId, historyTargetId,
+                historyWindowStartMs, history.next_cursor, 120);
+            return;
+        }
         activeHistoryRequestId = "";
-        resourceHistory = history.points || [];
+        historyWindowEndMs = Date.now();
+        resourceHistory = pendingResourceHistory;
+        pendingResourceHistory = [];
     }
     function cancelQuery(requestId: string): void { backend.cancelRequest(requestId); }
     function applyApplications(id: string, page: var): void {
@@ -212,8 +235,10 @@ Ui.ProviderChooserController {
     function handleFailure(id: string, message: string): void {
         const kind = Lifecycle.requestKind(id);
         if (kind === "history") {
-            if (id === activeHistoryRequestId)
+            if (id === activeHistoryRequestId) {
                 activeHistoryRequestId = "";
+                pendingResourceHistory = [];
+            }
             return;
         }
         clearFailedRequest(kind, id);
