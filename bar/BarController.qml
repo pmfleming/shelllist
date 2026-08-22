@@ -139,15 +139,15 @@ Item {
         return Ui.NotificationPresentation.groupRecords(routed).slice(0, 3);
     }
 
-    function presentOsd(osd: var): void {
+    function presentOsd(descriptor: var): void {
         const value = Object.assign({
             kind: "", icon: "", label: "", valueLabel: "", percent: 0,
             progressVisible: false, timeoutMs: 1400
-        }, osd);
+        }, descriptor);
         value.percent = Presentation.clamp(value.percent, 0, 100);
         value.progressVisible = !!value.progressVisible;
         value.timeoutMs = Math.max(400, Number(value.timeoutMs) || 1400);
-        osd = value;
+        controller.osd = value;
         osdVisible = true;
         osdTimeout.restart();
     }
