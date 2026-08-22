@@ -8,7 +8,9 @@ ColumnLayout {
 
     required property ChooserController chooserController
     required property Component rowDelegate
-    required property real densityScale
+    property real densityScale: Theme.densityScale(
+        height + 2 * chooserController.contentVerticalMargin,
+        chooserController.contentVerticalMargin)
     property var resultModel: null
     property string emptyText: ""
     property string placeholder: "Search…"

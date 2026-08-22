@@ -22,10 +22,11 @@ Item {
     })
 
     function moduleColor(tone: string): color { return toneColors[tone] || Ui.Theme.text; }
+    function neutralTone(tone: string): bool { return ["text", "muted"].includes(tone); }
     function moduleBackground(tone: string): color {
         const foreground = moduleColor(tone);
         const base = Ui.Theme.mix(Ui.Theme.surfaceRaised, foreground,
-            tone === "text" || tone === "muted" ? 0.02 : 0.08);
+            neutralTone(tone) ? 0.02 : 0.08);
         return Ui.Theme.withAlpha(base, 0.62);
     }
 
@@ -118,7 +119,7 @@ Item {
                 foreground: root.moduleColor(modelData.tone)
                 backgroundColor: root.moduleBackground(modelData.tone)
                 borderColor: Ui.Theme.withAlpha(root.moduleColor(modelData.tone),
-                    modelData.tone === "text" || modelData.tone === "muted" ? 0.16 : 0.34)
+                    root.neutralTone(modelData.tone) ? 0.16 : 0.34)
                 fontWeight: modelData.weight
                 interactive: modelData.interactive
                 onPrimaryTriggered: root.controller.triggerModuleAction(modelData.primary)

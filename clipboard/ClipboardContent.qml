@@ -3,59 +3,55 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 
-Ui.ChooserSurface {
+Ui.ProviderChooserSurface {
     id: content
 
     required property ClipboardController controller
-    readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
-    readonly property var selectedEntry: controller.selectedEntry || ({})
+    chooserController: controller
+    surfaceName: "Clipboard"
+    readonly property var selectedEntry: content.controller.selectedEntry || ({})
+    readonly property bool actionsEnabled: content.controller.uiActive
+        && content.controller.hasSelection && !content.controller.actionInFlight
+        && !content.controller.wipeChallenge && !content.controller.navigationHelpOpen
+    navigationEnabled: !content.controller.navigationHelpOpen
+    refreshEnabled: !content.controller.actionInFlight && !content.controller.navigationHelpOpen
+    helpEnabled: content.controller.uiActive && !content.controller.detailState.editorFocused
+        && !content.controller.deleteConfirmationOpen && !content.controller.wipeChallenge
+    helpEntries: [
+        { keys: "Ctrl+Enter", action: "Copy without pasting" },
+        { keys: "Shift+Enter", action: "Paste an image as a file" },
+        { keys: "Delete", action: "Delete the selected entry" },
+        { keys: "F5", action: "Refresh clipboard history" }
+    ]
+    onRefreshRequested: content.controller.refresh()
 
-    Ui.ChooserShortcuts {
-        controller: content.controller
-        navigationEnabled: !content.controller.navigationHelpOpen
-        refreshEnabled: !content.controller.actionInFlight
-            && !content.controller.navigationHelpOpen
-        onRefreshRequested: content.controller.refresh()
+    listComponent: Component {
+        ClipboardListPane { controller: content.controller }
     }
+    detailsComponent: Component {
+        ClipboardDetails { controller: content.controller; uiScale: content.uiScale }
+    }
+
     Shortcut {
         sequence: "Return"
-        enabled: content.controller.uiActive && content.controller.hasSelection
-            && content.selectedEntry.kind !== "binary"
-            && !content.controller.detailState.editorFocused && !content.controller.actionInFlight
-            && !content.controller.wipeChallenge && !content.controller.navigationHelpOpen
+        enabled: content.actionsEnabled && content.selectedEntry.kind !== "binary"
+            && !content.controller.detailState.editorFocused
         onActivated: content.controller.pasteSelected()
     }
     Shortcut {
         sequence: "Ctrl+Return"
-        enabled: content.controller.uiActive && content.controller.hasSelection
-            && !content.controller.actionInFlight && !content.controller.wipeChallenge
-            && !content.controller.navigationHelpOpen
+        enabled: content.actionsEnabled
         onActivated: content.controller.copySelected()
     }
     Shortcut {
         sequence: "Shift+Return"
-        enabled: content.controller.uiActive && content.controller.hasSelection
-            && content.selectedEntry.kind === "image"
-            && !content.controller.actionInFlight && !content.controller.wipeChallenge
-            && !content.controller.navigationHelpOpen
+        enabled: content.actionsEnabled && content.selectedEntry.kind === "image"
         onActivated: content.controller.pasteImageAsFile()
     }
     Shortcut {
         sequence: "Delete"
-        enabled: content.controller.uiActive && content.controller.hasSelection
-            && !content.controller.actionInFlight && !content.controller.wipeChallenge
-            && !content.controller.navigationHelpOpen
+        enabled: content.actionsEnabled
         onActivated: content.controller.requestDelete()
-    }
-
-    Ui.SplitChooserLayout {
-        controller: content.controller
-        listComponent: Component {
-            ClipboardListPane { controller: content.controller; uiScale: content.uiScale }
-        }
-        detailsComponent: Component {
-            ClipboardDetails { controller: content.controller; uiScale: content.uiScale }
-        }
     }
 
     Connections {
@@ -72,7 +68,6 @@ Ui.ChooserSurface {
         onAccepted: content.controller.confirmDelete()
         onCancelled: content.controller.cancelDelete()
     }
-
     Ui.ConfirmationDialog {
         visible: !!content.controller.wipeChallenge
         z: 120
@@ -81,19 +76,5 @@ Ui.ChooserSurface {
         acceptLabel: "Clear all"
         onAccepted: content.controller.confirmWipe()
         onCancelled: content.controller.cancelWipe()
-    }
-
-    Ui.NavigationHelpDialog {
-        controller: content.controller
-        surfaceName: "Clipboard"
-        helpEnabled: content.controller.uiActive
-            && !content.controller.detailState.editorFocused
-            && !content.controller.deleteConfirmationOpen && !content.controller.wipeChallenge
-        entries: [
-            { keys: "Ctrl+Enter", action: "Copy without pasting" },
-            { keys: "Shift+Enter", action: "Paste an image as a file" },
-            { keys: "Delete", action: "Delete the selected entry" },
-            { keys: "F5", action: "Refresh clipboard history" }
-        ]
     }
 }

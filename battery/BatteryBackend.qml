@@ -4,8 +4,6 @@ import Shelllist.Io as Io
 import "BatteryApi.js" as BatteryApi
 
 Io.DaemonBackend {
-    id: backend
-
     required property var controller
     daemonName: "bar-daemon"
     streams: BatteryApi.subscribedStreams

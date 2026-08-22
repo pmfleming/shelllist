@@ -476,7 +476,6 @@ Ui.ChooserSurface {
                 }
 
                 Ui.LabeledValueSlider {
-                    id: startThreshold
                     Layout.fillWidth: true
                     label: "Resume charging"
                     from: 0
@@ -493,7 +492,6 @@ Ui.ChooserSurface {
                 }
 
                 Ui.LabeledValueSlider {
-                    id: endThreshold
                     Layout.fillWidth: true
                     label: "Stop charging"
                     from: 1

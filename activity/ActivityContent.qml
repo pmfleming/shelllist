@@ -212,7 +212,6 @@ Ui.ChooserSurface {
                     }
 
                     Rectangle {
-                        id: notificationPanel
                         width: parent.width
                         height: Math.max(120, parent.height - y)
                         radius: Ui.Theme.cardRadius
@@ -264,7 +263,6 @@ Ui.ChooserSurface {
                             }
 
                             ListView {
-                                id: notificationHistoryList
                                 width: parent.width
                                 height: parent.height - y - historyFooter.height - parent.spacing
                                 visible: content.controller.notificationHistory.length > 0

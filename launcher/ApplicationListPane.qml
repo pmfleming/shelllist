@@ -7,27 +7,22 @@ Ui.ChooserListPane {
     id: pane
 
     required property ApplicationController controller
-    required property real uiScale
     chooserController: controller
-    densityScale: uiScale
     resultModel: controller.filteredResultsModel
     emptyText: controller.refreshInFlight ? "Loading applications…" : "No matching applications"
     placeholder: "Search applications…"
     icon: "󰀻"
     powered: true
     refreshing: controller.refreshInFlight
-    busy: controller.refreshInFlight || controller.actionInFlight
-        || controller.screenshotInFlight || controller.settingsInFlight
+    busy: controller.refreshInFlight || controller.operationBlocked
     powerEnabled: false
-    refreshEnabled: !controller.actionInFlight && !controller.screenshotInFlight
-        && !controller.settingsInFlight
+    refreshEnabled: !controller.operationBlocked
     refreshHandler: function () { controller.refresh(true); }
-    iconActionEnabled: !controller.actionInFlight && !controller.screenshotInFlight
-        && !controller.settingsInFlight
+    iconActionEnabled: !controller.operationBlocked
     filterText: controller.filterText
     status: controller.status
     focusOnCompleted: true
-    toolbarHeight: Math.max(34, Math.round(Ui.Theme.compactControlHeight * uiScale))
+    toolbarHeight: Math.max(34, Math.round(Ui.Theme.compactControlHeight * densityScale))
     toolbarComponent: Component {
         ApplicationCategoryTabs { controller: pane.controller }
     }

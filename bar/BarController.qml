@@ -63,6 +63,10 @@ Item {
         return true;
     }
 
+    function applyDomainEvent(event: var): void {
+        if (!applyDomain(event.stream || "", event.data || ({})))
+            console.warn("shelllist bar event ignored stream=" + (event.stream || "unknown"));
+    }
     function handleEvent(event: var): void {
         const compatibility = Core.ApiEnvelope.compatibilityError(event,
             BarApi.protocol, BarApi.version, "bar-daemon");
@@ -70,13 +74,10 @@ Item {
             console.warn("shelllist bar event rejected error=" + compatibility);
             return;
         }
-        if (event.event === "lagged") {
+        if (event.event === "lagged")
             backend.snapshot();
-            return;
-        }
-        if ((event.event === "subscribed" || event.event === "changed")
-                && !applyDomain(event.stream || "", event.data || ({})))
-            console.warn("shelllist bar event ignored stream=" + (event.stream || "unknown"));
+        else if (["subscribed", "changed"].includes(event.event))
+            applyDomainEvent(event);
     }
 
     function openSurface(surfaceId: string): void {
@@ -108,12 +109,16 @@ Item {
     }
 
     function presentOsd(osd: var): void {
-        osdKind = osd.kind || "";
-        osdIcon = osd.icon || "";
-        osdLabel = osd.label || "";
-        osdValueLabel = osd.valueLabel || "";
-        osdPercent = Math.max(0, Math.min(100, Number(osd.percent) || 0));
-        osdProgressVisible = !!osd.progressVisible;
+        const value = Object.assign({
+            kind: "", icon: "", label: "", valueLabel: "", percent: 0,
+            progressVisible: false
+        }, osd);
+        osdKind = value.kind;
+        osdIcon = value.icon;
+        osdLabel = value.label;
+        osdValueLabel = value.valueLabel;
+        osdPercent = Presentation.clamp(value.percent, 0, 100);
+        osdProgressVisible = !!value.progressVisible;
         osdVisible = true;
         osdTimeout.restart();
     }

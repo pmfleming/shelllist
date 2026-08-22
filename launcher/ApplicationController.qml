@@ -29,8 +29,10 @@ Ui.ProviderChooserController {
     readonly property var selectedApplication: selectedResult ? selectedResult.payload : null
     readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
-    navigationPrimaryEnabled: hasSelection && !actionInFlight && !screenshotInFlight && !settingsInFlight
-    navigationBlocked: actionInFlight || screenshotInFlight || settingsInFlight
+    readonly property bool operationBlocked: actionInFlight || screenshotInFlight || settingsInFlight
+    readonly property bool resourcesVisible: uiActive && detailsOpen && detailsTab === "resources"
+    navigationPrimaryEnabled: hasSelection && !operationBlocked
+    navigationBlocked: operationBlocked
 
     function clearActiveAction(): void {
         actionInFlight = false;
@@ -74,26 +76,25 @@ Ui.ProviderChooserController {
         detailsOpen = false;
         refresh(false);
     }
+    function availableDetailsTabs(): var {
+        if (!selectedApplication || selectedApplication.kind === "desktop-shortcut")
+            return ["application"];
+        return selectedApplication.kind === "desktop-application"
+            ? ["application", "resources", "settings"] : ["application", "resources"];
+    }
     function selectDetailsTab(value: string): void {
-        if (value === "application"
-                || (value === "resources" && selectedApplication
-                    && selectedApplication.kind !== "desktop-shortcut")
-                || (value === "settings" && selectedApplication
-                    && selectedApplication.kind === "desktop-application"))
+        if (availableDetailsTabs().includes(value))
             detailsTab = value;
     }
     function cycleDetailsTab(): bool {
-        if (!detailsOpen || !hasSelection || selectedApplication.kind === "desktop-shortcut")
+        if (!detailsOpen || !hasSelection)
             return false;
-        const tabs = selectedApplication.kind === "desktop-application"
-            ? ["application", "resources", "settings"]
-            : ["application", "resources"];
-        const index = tabs.indexOf(detailsTab);
-        detailsTab = tabs[(index + 1) % tabs.length];
+        const tabs = availableDetailsTabs();
+        detailsTab = tabs[(tabs.indexOf(detailsTab) + 1) % tabs.length];
         return true;
     }
     function updateApplicationSettings(category: string): bool {
-        if (!selectedResult || settingsInFlight || actionInFlight || screenshotInFlight)
+        if (!selectedResult || operationBlocked)
             return false;
         activeSettingsRequestId = "settings-" + Date.now();
         status = "Saving application settings…";
@@ -111,8 +112,7 @@ Ui.ProviderChooserController {
         scheduleRefresh();
     }
     function refreshMetrics(): void {
-        if (!uiActive || !detailsOpen || detailsTab !== "resources"
-                || actionInFlight || screenshotInFlight || settingsInFlight || refreshInFlight)
+        if (!resourcesVisible || operationBlocked || refreshInFlight)
             return;
         forceRefresh = false;
         beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
@@ -128,13 +128,12 @@ Ui.ProviderChooserController {
     function resourceHistorySinceMs(): double {
         return Date.now() - 30 * 60 * 1000;
     }
+    function historyRequestCovered(targetId: string, forceRefresh: var): bool {
+        return targetId === historyTargetId && (historyInFlight || forceRefresh !== true);
+    }
     function requestResourceHistory(forceRefresh: var): void {
-        if (!uiActive || !detailsOpen || detailsTab !== "resources" || !selectedResult)
-            return;
-        const targetId = selectedResult.id;
-        if (historyInFlight && targetId === historyTargetId)
-            return;
-        if (forceRefresh !== true && targetId === historyTargetId)
+        const targetId = resourcesVisible && selectedResult ? selectedResult.id : "";
+        if (!targetId || historyRequestCovered(targetId, forceRefresh))
             return;
         historyTargetId = targetId;
         activeHistoryRequestId = "history-" + Date.now();
@@ -155,7 +154,7 @@ Ui.ProviderChooserController {
         status = Presentation.pageStatus(page);
     }
     function executeProviderAction(request: var, params: var): bool {
-        if (actionInFlight || screenshotInFlight || settingsInFlight)
+        if (operationBlocked)
             return false;
         actionInFlight = true;
         activeTargetId = request.result.id;
@@ -230,21 +229,16 @@ Ui.ProviderChooserController {
         clearProviderResults();
         status = message;
     }
+    function canActOnSelection(): bool { return !!selectedResult && !operationBlocked; }
     function primarySelected(): bool {
-        if (!selectedResult || actionInFlight || screenshotInFlight || settingsInFlight)
-            return false;
-        return executeSelected("activate");
+        return canActOnSelection() && executeSelected("activate");
     }
     function launchSelected(): bool {
-        if (!selectedResult || actionInFlight || screenshotInFlight || settingsInFlight
-                || selectedApplication.kind !== "desktop-application")
-            return false;
-        return executeSelected("launch");
+        return canActOnSelection() && selectedApplication.kind === "desktop-application"
+            && executeSelected("launch");
     }
     function triggerDetailAction(actionId: string): bool {
-        if (!selectedResult || actionInFlight || screenshotInFlight || settingsInFlight)
-            return false;
-        return executeSelected(actionId);
+        return canActOnSelection() && executeSelected(actionId);
     }
 
     onDetailsOpenChanged: {
@@ -255,18 +249,16 @@ Ui.ProviderChooserController {
     }
     onDetailsTabChanged: if (detailsTab === "resources") requestResourceHistory()
     onSelectedResultChanged: {
-        if (selectedApplication && (selectedApplication.kind === "desktop-shortcut"
-                || (selectedApplication.kind !== "desktop-application"
-                    && detailsTab === "settings")))
+        if (!availableDetailsTabs().includes(detailsTab))
             detailsTab = "application";
-        else if (detailsOpen && detailsTab === "resources")
+        else if (resourcesVisible)
             requestResourceHistory();
     }
 
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture
         active: controller.uiActive
-        blocked: controller.actionInFlight
+        blocked: controller.operationBlocked
         startMessage: "Capturing Applications window…"
         onStatusChanged: function (message) { controller.status = message; }
     }
@@ -280,15 +272,14 @@ Ui.ProviderChooserController {
 
     Timer {
         interval: 2000
-        running: controller.uiActive && controller.detailsOpen
-            && controller.detailsTab === "resources"
+        running: controller.resourcesVisible
         repeat: true
         onTriggered: controller.refreshMetrics()
     }
 
     Timer {
         interval: 15000
-        running: controller.uiActive && controller.detailsOpen && controller.detailsTab === "resources"
+        running: controller.resourcesVisible
         repeat: true
         onTriggered: controller.requestResourceHistory(true)
     }

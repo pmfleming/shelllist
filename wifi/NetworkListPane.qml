@@ -9,9 +9,7 @@ ChooserListPane {
     id: pane
 
     required property WifiController controller
-    required property real uiScale
     chooserController: controller
-    densityScale: uiScale
     resultModel: controller.powered ? controller.filteredResultsModel : null
     emptyText: controller.powered ? "No Wi-Fi networks"
         : (!controller.radios.wireless_available ? "No Wi-Fi adapter"
@@ -30,7 +28,7 @@ ChooserListPane {
     focusOnCompleted: true
     filterText: controller.filterText
     status: controller.status
-    listInset: Math.round(12 * uiScale)
+    listInset: Math.round(12 * densityScale)
     onIconClicked: controller.screenshotRequested()
     onSearchActionRequested: controller.launchQrScanner()
     rowDelegate: Component {

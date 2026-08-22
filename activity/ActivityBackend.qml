@@ -4,8 +4,6 @@ import Shelllist.Io as Io
 import "ActivityApi.js" as ActivityApi
 
 Io.DaemonBackend {
-    id: backend
-
     required property var controller
     daemonName: "bar-daemon"
     streams: ActivityApi.subscribedStreams

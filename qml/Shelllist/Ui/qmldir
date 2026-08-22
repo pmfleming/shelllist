@@ -10,6 +10,7 @@ ChooserHeader 1.0 ChooserHeader.qml
 ChooserListPane 1.0 ChooserListPane.qml
 ChooserShortcuts 1.0 ChooserShortcuts.qml
 ProviderChooserController 1.0 ProviderChooserController.qml
+ProviderChooserSurface 1.0 ProviderChooserSurface.qml
 ChooserSurface 1.0 ChooserSurface.qml
 ChooserWindowHost 1.0 ChooserWindowHost.qml
 ConfirmationDialog 1.0 ConfirmationDialog.qml

@@ -19,7 +19,9 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 
 - One `shell/shell.qml` host replaces per-surface Quickshell processes.
 - Wi-Fi and Bluetooth load eagerly; Applications and Clipboard load on demand and remain warm.
+- `ProviderChooserSurface` composes chooser shortcuts, split layout, density, and navigation help once for Wi-Fi, Bluetooth, Clipboard, and Applications.
 - `ChooserShortcuts` centralizes Escape, refresh, and details-tab shortcuts.
+- `ChooserListPane` derives its own density instead of requiring every domain wrapper to forward presentation state.
 - `ResultStore` reconciles one persistent keyed model instead of replacing ListView models.
 - Providers resolve dynamic actions at use time rather than copying actions into recurring snapshots.
 - `BarContent` renders normalized status descriptors through one delegate.
@@ -32,7 +34,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 
 `qmlqualitylens.config.json` declares the resident shell and QML test files as entrypoints. It also records dynamic component edges hidden behind `Component`, `Loader.sourceComponent`, and `SplitChooserLayout` factories. These edges are analysis metadata, not runtime dependencies. Keep them synchronized when a surface gains or removes dynamically instantiated content; prefer an explicit edge over a broad unused-component suppression.
 
-The v0.5 calibration resolves all local imports/types, reaches 142 of 161 components from eight application/test roots, and leaves the remaining 19 as exported module components rather than dead-code findings. Cleanup currently reports no unused components or ids.
+The v0.5 calibration reaches 149 of 175 components from eight application/test roots. The remaining components are exported module API rather than dead-code findings. Configured edges cover list, details, toolbar, and tab components instantiated through loaders; cleanup reports no unused components or ids.
 
 ## Focused declarative-state refactoring
 

@@ -5,8 +5,6 @@ import Shelllist.Io as Io
 import "../Launcher/AppApi.js" as AppApi
 
 Io.DaemonBackend {
-    id: backend
-
     required property var controller
     daemonName: "app-daemon"
     streams: []

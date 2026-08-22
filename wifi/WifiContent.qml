@@ -4,67 +4,56 @@ import QtQuick
 import "."
 import Shelllist.Ui
 
-ChooserSurface {
+ProviderChooserSurface {
     id: content
 
     required property WifiController controller
-    readonly property real uiScale: Theme.densityScale(height, controller.contentVerticalMargin)
+    chooserController: controller
+    surfaceName: "Wi-Fi"
+    navigationEnabled: !content.controller.promptActive && !content.controller.navigationHelpOpen
+    refreshEnabled: content.controller.powered && navigationEnabled
+        && !content.controller.actionInFlight
+    detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection
+        && navigationEnabled
+    refreshAutoRepeat: false
+    helpEnabled: content.controller.uiActive && !content.controller.promptActive
+    helpEntries: [
+        { keys: "F5", action: "Refresh and scan for networks" },
+        { keys: "F6", action: "Connect to a hidden network" },
+        { keys: "F7", action: "Open Security & Privacy" },
+        { keys: "F8", action: "Open IP & DNS" },
+        { keys: "Ctrl+Tab", action: "Cycle detail tabs" }
+    ]
+    onRefreshRequested: content.controller.refresh()
+    onDetailsTabRequested: content.controller.cycleDetailsTab()
 
-    function cancelPrompt() {
-        controller.cancelPrompt("user");
+    function cancelPrompt(): void { content.controller.cancelPrompt("user"); }
+
+    listComponent: Component {
+        NetworkListPane { controller: content.controller }
     }
-
-    ChooserShortcuts {
-        controller: content.controller
-        navigationEnabled: !content.controller.promptActive
-            && !content.controller.navigationHelpOpen
-        refreshEnabled: content.controller.powered && !content.controller.promptActive
-            && !content.controller.navigationHelpOpen && !content.controller.actionInFlight
-        detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection
-            && !content.controller.promptActive && !content.controller.navigationHelpOpen
-        refreshAutoRepeat: false
-        onRefreshRequested: content.controller.refresh()
-        onDetailsTabRequested: content.controller.cycleDetailsTab()
+    detailsComponent: Component {
+        NetworkDetailsPane { controller: content.controller }
     }
 
     Shortcut {
         sequence: "F6"
         enabled: content.controller.uiActive && content.controller.powered
-            && !content.controller.promptActive && !content.controller.navigationHelpOpen
-            && !content.controller.advanced.open
+            && content.navigationEnabled && !content.controller.advanced.open
         autoRepeat: false
         onActivated: content.controller.openHiddenNetworkPrompt()
     }
-
     Shortcut {
         sequence: "F7"
         enabled: content.controller.uiActive && content.controller.powered
-            && !content.controller.promptActive && !content.controller.navigationHelpOpen
-            && !content.controller.advanced.open
+            && content.navigationEnabled && !content.controller.advanced.open
         onActivated: content.controller.advanced.openSettings("security")
     }
-
     Shortcut {
         sequence: "F8"
         enabled: content.controller.uiActive && content.controller.powered
-            && !content.controller.promptActive && !content.controller.navigationHelpOpen
-            && !content.controller.advanced.open
+            && content.navigationEnabled && !content.controller.advanced.open
         onActivated: content.controller.advanced.openSettings("hardware")
-    }
-
-    SplitChooserLayout {
-        controller: content.controller
-        listComponent: Component {
-            NetworkListPane {
-                controller: content.controller
-                uiScale: content.uiScale
-            }
-        }
-        detailsComponent: Component {
-            NetworkDetailsPane {
-                controller: content.controller
-            }
-        }
     }
 
     PromptDialog {
@@ -73,7 +62,8 @@ ChooserSurface {
         detail: content.controller.prompt.detail
         inputText: content.controller.prompt.text
         password: content.controller.prompt.password
-        optionVisible: content.controller.prompt.mode === "daemon-secret" && content.controller.prompt.saveSecretSupported
+        optionVisible: content.controller.prompt.mode === "daemon-secret"
+            && content.controller.prompt.saveSecretSupported
         optionChecked: content.controller.prompt.saveSecret
         optionLabel: "Save in the desktop keyring"
         actionsVisible: true
@@ -96,18 +86,5 @@ ChooserSurface {
         visible: content.controller.qr.open
         qr: content.controller.qr
         onClosed: content.controller.qr.close()
-    }
-
-    NavigationHelpDialog {
-        controller: content.controller
-        surfaceName: "Wi-Fi"
-        helpEnabled: content.controller.uiActive && !content.controller.promptActive
-        entries: [
-            { keys: "F5", action: "Refresh and scan for networks" },
-            { keys: "F6", action: "Connect to a hidden network" },
-            { keys: "F7", action: "Open Security & Privacy" },
-            { keys: "F8", action: "Open IP & DNS" },
-            { keys: "Ctrl+Tab", action: "Cycle detail tabs" }
-        ]
     }
 }

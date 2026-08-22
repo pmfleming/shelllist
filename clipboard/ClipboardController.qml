@@ -36,15 +36,18 @@ Ui.ProviderChooserController {
         backend.getSettings();
         refresh();
     }
+    function finishEditSession(): void {
+        if (!detailState.editing)
+            return;
+        if (detailState.editIsDirect && detailState.editDirty)
+            detailState.commitEdit();
+        else
+            detailState.cancelEdit();
+    }
     function deactivateUi() {
         if (sessionId.length > 0)
             backend.endSession(sessionId);
-        if (detailState.editing) {
-            if (detailState.editIsDirect && detailState.editDirty)
-                detailState.commitEdit();
-            else
-                detailState.cancelEdit();
-        }
+        finishEditSession();
         deactivateUiState();
         sessionId = "";
         actionInFlight = false;
@@ -86,35 +89,42 @@ Ui.ProviderChooserController {
     }
     function requestHistory(id, text, generation, limit) { backend.query(id, text, generation, limit); }
     function cancelQuery(requestId) { backend.cancelRequest(requestId); }
+    function selectCurrentEntry(currentEntry: var): void {
+        if (!selectCurrentAfterRefresh)
+            return;
+        const currentId = currentEntry ? currentEntry.id : "";
+        const currentIndex = filteredResults.findIndex(function (result) {
+            return result.id === currentId;
+        });
+        select(currentIndex >= 0 ? currentIndex : 0);
+        selectCurrentAfterRefresh = false;
+    }
     function applyHistory(id, history) {
         applyProviderQuery(id, clipboardProvider.resultsForEntries(history.entries || []));
-        const currentEntry = history.current || null;
-        if (selectCurrentAfterRefresh) {
-            const currentId = currentEntry ? currentEntry.id : "";
-            const currentIndex = filteredResults.findIndex(function (result) {
-                return result.id === currentId;
-            });
-            select(currentIndex >= 0 ? currentIndex : 0);
-            selectCurrentAfterRefresh = false;
-        }
-        status = history.entries.length + " clipboard entries" + (history.has_more ? " · more available" : "");
+        selectCurrentEntry(history.current || null);
+        status = history.entries.length + " clipboard entries"
+            + (history.has_more ? " · more available" : "");
         detailState.scheduleLoad();
     }
     function applySession(session) {
-        sessionId = session.state === "hidden" || session.state === "ended" ? "" : (session.id || "");
+        sessionId = ["hidden", "ended"].includes(session.state) ? "" : (session.id || "");
         if (session.state === "hidden")
             hideRequested();
+    }
+    function detailsMatchSelection(entry: var): bool {
+        if (!selectedEntry || !entry)
+            return false;
+        return entry.id === selectedEntry.id
+            || detailState.replacedSourceIds.includes(selectedEntry.id);
     }
     function actionEntry() {
         const details = detailState.value;
         const detailedEntry = details ? details.entry : null;
-        const detailsMatchSelection = selectedEntry && detailedEntry
-            && (detailedEntry.id === selectedEntry.id
-                || detailState.replacedSourceIds.indexOf(selectedEntry.id) >= 0);
-        if (detailsMatchSelection && (detailedEntry.id !== selectedEntry.id
-                || detailedEntry.revision >= selectedEntry.revision))
-            return detailedEntry;
-        return selectedEntry;
+        if (!detailsMatchSelection(detailedEntry))
+            return selectedEntry;
+        return detailedEntry.id !== selectedEntry.id
+                || detailedEntry.revision >= selectedEntry.revision
+            ? detailedEntry : selectedEntry;
     }
     function runAction(actionName, fileIndex, entry) {
         const target = entry || actionEntry();
@@ -194,9 +204,11 @@ Ui.ProviderChooserController {
         else if (operation.action === "image-as-file")
             scheduleRefresh();
     }
+    function operationRunning(operation: var): bool {
+        return operation.status === "started" || operation.status === "progress";
+    }
     function terminalOperationHandled(operation: var): bool {
-        if (!operation || !operation.id
-                || operation.status === "started" || operation.status === "progress")
+        if (!operation || !operation.id || operationRunning(operation))
             return false;
         if (handledTerminalOperations[operation.id])
             return true;
@@ -209,7 +221,7 @@ Ui.ProviderChooserController {
         return false;
     }
     function updateOperationState(operation: var): void {
-        actionInFlight = operation.status === "started" || operation.status === "progress";
+        actionInFlight = operationRunning(operation);
         activeAction = actionInFlight ? operation.action : "";
         activeOperationId = actionInFlight ? (operation.id || "") : "";
         status = operation.message || "Clipboard operation completed";

@@ -187,7 +187,8 @@ Ui.ProviderChooserController {
     function setAdapterPower(adapter, value) {
         if (!adapter || !adapter.key || backend.requestRunning)
             return false;
-        status = (value ? "Turning on " : "Turning off ") + (adapter.alias || adapter.name || "Bluetooth adapter") + "…";
+        status = (value ? "Turning on " : "Turning off ")
+            + (adapter.alias || adapter.name || "Bluetooth adapter") + "…";
         return backend.setPowered(!!value, adapter.key);
     }
     function toggleScan() {
@@ -270,13 +271,15 @@ Ui.ProviderChooserController {
         return backend.adapterOperation(operation, selectedAdapter, values || ({}));
     }
     function setAudioProfile(profile) {
-        if (!hasSelection || !profile || !profile.key || profile.available === false || actionInFlight) return false;
+        if (!hasSelection || !profile || !profile.key || profile.available === false || actionInFlight)
+            return false;
         status = "Switching Bluetooth audio to " + profile.label + "…";
         return backend.setAudioProfile(selectedDevice.key, profile.key);
     }
     function renameSelected(alias) {
         const value = (alias || "").trim();
-        if (!hasSelection || value.length === 0 || value === selectedDevice.name || selectedDeviceBusy) return false;
+        if (!hasSelection || value.length === 0 || value === selectedDevice.name || selectedDeviceBusy)
+            return false;
         status = "Renaming " + selectedDevice.name + "…";
         return backend.deviceOperation("set-alias", selectedDevice, { alias: value });
     }
@@ -293,15 +296,20 @@ Ui.ProviderChooserController {
         return true;
     }
     function primarySelected() { return hasSelection && executeSelected(""); }
+    function enabledDetailAction(id: string): var {
+        const action = detailActions.find(function (candidate) { return candidate.id === id; });
+        return action && action.visible !== false && action.enabled !== false ? action : null;
+    }
     function triggerDetailAction(id) {
-        if (!hasSelection) return false;
-        const action = detailActions.find(function (candidate) { return candidate.id === id; }) || null;
-        if (!action || action.visible === false || action.enabled === false) return false;
-        if (action.confirmation && action.confirmation.required) {
-            pendingConfirmationAction = action;
-            return true;
-        }
-        return executeSelected(id);
+        if (!hasSelection)
+            return false;
+        const action = enabledDetailAction(id);
+        if (!action)
+            return false;
+        if (!action.confirmation || !action.confirmation.required)
+            return executeSelected(id);
+        pendingConfirmationAction = action;
+        return true;
     }
     function cancelPendingConfirmation() { pendingConfirmationAction = null; }
     function confirmPendingAction() {

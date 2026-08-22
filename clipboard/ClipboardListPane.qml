@@ -7,9 +7,7 @@ Ui.ChooserListPane {
     id: pane
 
     required property ClipboardController controller
-    required property real uiScale
     chooserController: controller
-    densityScale: uiScale
     resultModel: controller.filteredResultsModel
     emptyText: controller.refreshInFlight ? "Loading clipboard history…" : "Clipboard history is empty"
     placeholder: "Search clipboard…"
@@ -24,7 +22,7 @@ Ui.ChooserListPane {
     iconActionEnabled: !controller.screenshotInFlight && !controller.actionInFlight
     filterText: controller.filterText
     status: controller.status
-    bodySpacing: Math.round(Ui.Theme.spacingMd * uiScale)
+    bodySpacing: Math.round(Ui.Theme.spacingMd * densityScale)
     onIconClicked: controller.screenshotRequested()
 
     rowDelegate: Component {

@@ -7,9 +7,7 @@ Ui.ChooserListPane {
     id: pane
 
     required property BluetoothController controller
-    required property real uiScale
     chooserController: controller
-    densityScale: uiScale
     resultModel: controller.filteredResultsModel
     emptyText: controller.radio.hard_blocked ? "Bluetooth is hardware-disabled"
         : (controller.radio.soft_blocked ? "Bluetooth is blocked"
@@ -29,7 +27,7 @@ Ui.ChooserListPane {
     searchActionEnabled: !controller.globalRequestInFlight && !controller.modalPromptOpen
     filterText: controller.filterText
     status: controller.status
-    listInset: Math.round(12 * uiScale)
+    listInset: Math.round(12 * densityScale)
     refreshHandler: function () { controller.refreshList(); }
     onIconClicked: controller.screenshotRequested()
     onSearchActionRequested: controller.toggleSearchScope()

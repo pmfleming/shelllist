@@ -119,6 +119,9 @@ ProviderChooserController {
         return dismissDetailsOrWindow();
     }
 
+    function promptMode(): string {
+        return prompt.credentialOpen ? prompt.credentialMode : prompt.mode;
+    }
     function cancelPrompt(reason) {
         if (qr.open) {
             qr.close();
@@ -126,11 +129,10 @@ ProviderChooserController {
         }
         if (!promptActive)
             return true;
-        const mode = prompt.credentialOpen ? prompt.credentialMode : prompt.mode;
+        const mode = promptMode();
         const requestId = prompt.secretRequestId;
-        let cancelled = true;
-        if (mode === "daemon-secret" && requestId.length > 0)
-            cancelled = connection.cancelSecret(requestId);
+        const cancelled = mode !== "daemon-secret" || !requestId
+            || connection.cancelSecret(requestId);
         prompt.cancel();
         console.info("shelllist wifi prompt closed mode=" + mode + " reason=" + (reason || "user")
             + " daemon_cancelled=" + cancelled);
@@ -149,7 +151,7 @@ ProviderChooserController {
         });
         if (lost.indexOf("share") >= 0)
             services.share.fail(message);
-        if (promptActive && (prompt.mode === "daemon-secret" || prompt.credentialMode === "daemon-secret")) {
+        if (promptActive && promptMode() === "daemon-secret") {
             console.warn("shelllist wifi daemon secret prompt discarded reason=transport-failure request_id=" + prompt.secretRequestId);
             prompt.cancel();
         }
@@ -216,13 +218,7 @@ ProviderChooserController {
             return event.message;
         return event.event === "cancelled" ? "Wi-Fi band change cancelled" : "Wi-Fi band change failed";
     }
-    function handleBandEvent(event: var): void {
-        if (ignoresBandEvent(event))
-            return;
-        if (bandEventRunning(event)) {
-            status = event.message || "Applying Wi-Fi band selection…";
-            return;
-        }
+    function finishBandEvent(event: var): void {
         bandRequestId = "";
         if (event.event !== "succeeded") {
             status = bandFailureStatus(event);
@@ -233,21 +229,32 @@ ProviderChooserController {
         status = result.message || "Wi-Fi band selection updated";
         refresh();
     }
+    function handleBandEvent(event: var): void {
+        if (ignoresBandEvent(event))
+            return;
+        if (!bandEventRunning(event)) {
+            finishBandEvent(event);
+            return;
+        }
+        status = event.message || "Applying Wi-Fi band selection…";
+    }
 
+    function secretRequestMatches(event: var): bool {
+        return promptMode() === "daemon-secret" && prompt.secretRequestId === event.request_id;
+    }
     function handleSecretEvent(event) {
         if (event.event === "requested") {
             prompt.openDaemonSecretPrompt(event);
             return;
         }
-        if (event.event === "cancelled"
-                && (prompt.mode === "daemon-secret" || prompt.credentialMode === "daemon-secret")
-                && prompt.secretRequestId === event.request_id) {
+        if (event.event === "cancelled" && secretRequestMatches(event)) {
             prompt.cancel();
             status = "NetworkManager cancelled the Wi-Fi secret request.";
             return;
         }
         if (event.event === "persistence")
-            status = event.status === "stored" ? "Wi-Fi secret saved to the keyring." : "Wi-Fi secret was accepted but could not be saved: " + event.status;
+            status = event.status === "stored" ? "Wi-Fi secret saved to the keyring."
+                : "Wi-Fi secret was accepted but could not be saved: " + event.status;
     }
 
     function applyStatusEvent(event) {
