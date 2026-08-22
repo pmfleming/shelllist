@@ -134,7 +134,7 @@ imports = [ inputs.shelllist.nixosModules.default ];
 programs.shelllist.enable = true;
 ```
 
-Both modules install Shelllist and can supervise the resident host plus `bar-daemon`. The bundled daemon runs in native notification mode, owns `org.freedesktop.Notifications`, and conflicts with `swaync.service`; disable any separately configured notification daemon. Set `programs.shelllist.systemd.target` for a compositor-specific session target, `systemd.startBarDaemon = false` to use D-Bus activation, or `systemd.environment` for theme overrides. The NixOS module additionally registers the packaged system D-Bus, systemd, and polkit artifacts used by privileged battery settings. The other domain daemons must be running or D-Bus activatable through their own installations.
+Both modules install Shelllist and can supervise the resident host plus `bar-daemon`. The bundled daemon runs in native notification mode, owns `org.freedesktop.Notifications`, and conflicts with `swaync.service`; disable any separately configured notification daemon. Set `programs.shelllist.systemd.target` for a compositor-specific session target, `systemd.startBarDaemon = false` to use D-Bus activation, or `systemd.environment` for theme overrides. The NixOS module additionally registers the packaged system D-Bus, systemd, and polkit artifacts used by privileged battery settings. It grants read-only access to Intel RAPL energy counters for application power estimates by default; set `programs.shelllist.resources.enableRaplAccess = false` to opt out. The other domain daemons must be running or D-Bus activatable through their own installations.
 
 ## CLI
 

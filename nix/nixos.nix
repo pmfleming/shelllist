@@ -15,6 +15,15 @@ in
       description = "Shelllist package to install and run.";
     };
 
+    resources.enableRaplAccess = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Grant read-only access to Intel RAPL energy counters so the unprivileged
+        application daemon can estimate per-application power usage.
+      '';
+    };
+
     systemd = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -47,6 +56,21 @@ in
     services.dbus.packages = [ cfg.package ];
     security.polkit.enable = true;
     systemd.packages = [ cfg.package ];
+
+    services.udev.extraRules = lib.mkIf cfg.resources.enableRaplAccess ''
+      ACTION=="add|change", SUBSYSTEM=="powercap", KERNEL=="intel-rapl:*", TEST=="energy_uj", RUN+="${pkgs.coreutils}/bin/chmod 0444 /sys%p/energy_uj"
+    '';
+
+    system.activationScripts.shelllistRaplAccess =
+      lib.mkIf cfg.resources.enableRaplAccess {
+        text = ''
+          for energy_file in /sys/class/powercap/intel-rapl:*/energy_uj; do
+            if [ -e "$energy_file" ]; then
+              ${pkgs.coreutils}/bin/chmod 0444 "$energy_file"
+            fi
+          done
+        '';
+      };
 
     systemd.user.services.shelllist = lib.mkIf cfg.systemd.enable {
       description = "Shelllist desktop action center and top bar";

@@ -708,6 +708,9 @@
               test '${evaluated.config.systemd.user.services.bar-daemon.environment.BAR_DAEMON_NOTIFICATION_BACKEND}' = 'native'
               test '${builtins.concatStringsSep " " evaluated.config.systemd.user.services.bar-daemon.conflicts}' = 'swaync.service'
               test '${toString evaluated.config.security.polkit.enable}' = '1'
+              test '${toString evaluated.config.programs.shelllist.resources.enableRaplAccess}' = '1'
+              printf '%s' ${nixpkgs.lib.escapeShellArg evaluated.config.services.udev.extraRules} \
+                | grep -F 'SUBSYSTEM=="powercap"' >/dev/null
               test -f '${self.packages.${system}.default}/share/dbus-1/services/org.freedesktop.Notifications.service'
               test -f '${self.packages.${system}.default}/share/dbus-1/system-services/org.laufan.BarBatteryHelper.service'
               test -f '${self.packages.${system}.default}/share/dbus-1/system.d/org.laufan.BarBatteryHelper.conf'
