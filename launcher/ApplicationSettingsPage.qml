@@ -10,6 +10,20 @@ Ui.DetailFlickable {
 
     required property ApplicationController controller
     required property var application
+    readonly property var selectedCategory: {
+        const category = Preferences.categories.find(function (entry) {
+            return entry.value === page.application.category;
+        });
+        return category
+            && String(page.application.default_workspace_id || "") === category.workspace
+            ? category : null;
+    }
+    readonly property var categoryOptions: Preferences.categories.map(function (category) {
+        return {
+            value: category.value,
+            label: category.icon + "  " + category.label + " · Workspace " + category.workspace
+        };
+    })
 
     Text {
         width: parent.width
@@ -21,24 +35,31 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailColumnCard {
-        height: 300
+        height: 150
         title: "Category & default workspace"
-        contentSpacing: Ui.Theme.spacingXs
+        contentSpacing: Ui.Theme.spacingSm
 
-        Repeater {
-            model: Preferences.categories
-
-            delegate: Ui.ToggleRow {
-                required property var modelData
-
-                Layout.fillWidth: true
-                title: modelData.icon + "  " + modelData.label
-                subtitle: "Workspace " + modelData.workspace + " · " + modelData.description
-                checked: page.application.category === modelData.value
-                    && page.application.default_workspace_id === modelData.workspace
-                interactive: !page.controller.settingsInFlight && !checked
-                onClicked: page.controller.updateApplicationSettings(modelData.value)
+        Ui.DropDownList {
+            Layout.fillWidth: true
+            Layout.preferredHeight: Ui.Theme.compactControlHeight
+            options: page.categoryOptions
+            value: page.selectedCategory ? page.selectedCategory.value : ""
+            placeholder: "Select a category"
+            interactive: !page.controller.settingsInFlight
+            onSelected: function (value) {
+                page.controller.updateApplicationSettings(value);
             }
+        }
+
+        Text {
+            Layout.fillWidth: true
+            text: page.selectedCategory
+                ? page.selectedCategory.description
+                : "Choose the category used to place new windows."
+            color: Ui.Theme.subtleText
+            elide: Text.ElideRight
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Ui.Theme.fontSizeCaption
         }
     }
 
