@@ -7,7 +7,7 @@ Ui.ChooserSurface {
     id: content
 
     required property ActivityController controller
-    property date now: new Date()
+    property date now
     readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
 
     function cellDate(index: int): date {
@@ -568,6 +568,8 @@ Ui.ChooserSurface {
         target: content.controller
         function onFocusTodoInputRequested() { todoInput.forceActiveFocus(); }
     }
+
+    Component.onCompleted: now = new Date()
 
     Timer {
         interval: 1000

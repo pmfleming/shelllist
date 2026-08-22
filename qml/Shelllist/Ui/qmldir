@@ -27,6 +27,7 @@ DestructiveIconButton 1.0 DestructiveIconButton.qml
 DetailsTab 1.0 DetailsTab.qml
 DetailsTabBar 1.0 DetailsTabBar.qml
 DropDownList 1.0 DropDownList.qml
+internal DropDownOptionDelegate DropDownOptionDelegate.qml
 Elevation 1.0 Elevation.qml
 FieldLabel 1.0 FieldLabel.qml
 FlatIconButton 1.0 FlatIconButton.qml

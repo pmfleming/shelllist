@@ -39,7 +39,19 @@ Controls.ComboBox {
     function optionLabel(index) {
         if (index < 0 || index >= options.length)
             return placeholder;
-        return options[index].label || options[index].value || placeholder;
+        return optionText(options[index]) || placeholder;
+    }
+    function optionText(option) { return option.label || option.value || ""; }
+    function delegateTextColor(highlighted) { return highlighted ? Theme.accentText : Theme.text; }
+    function delegateWeight(selected) {
+        return selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular;
+    }
+    function delegateBackground(highlighted, selected, hovered) {
+        if (highlighted)
+            return Theme.accent;
+        if (selected)
+            return Theme.selected;
+        return hovered ? Theme.hover : "transparent";
     }
 
     onActivated: function (index) {
@@ -88,39 +100,7 @@ Controls.ComboBox {
         border.color: control.activeFocus || control.popup.visible ? Theme.strongBorder : Theme.border
     }
 
-    delegate: Controls.ItemDelegate {
-        id: optionDelegate
-
-        required property int index
-        required property var modelData
-        readonly property bool selected: index === control.currentIndex
-        readonly property string optionText: modelData.label || modelData.value || ""
-
-        width: ListView.view ? ListView.view.width : control.width
-        height: Theme.compactControlHeight
-        enabled: control.optionEnabled(index)
-        highlighted: control.highlightedIndex === index
-        hoverEnabled: true
-        leftPadding: Theme.spacingMd
-        rightPadding: Theme.spacingMd
-
-        contentItem: Text {
-            text: optionDelegate.optionText
-            color: optionDelegate.highlighted ? Theme.accentText : Theme.text
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeBody
-            font.weight: optionDelegate.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
-            verticalAlignment: Text.AlignVCenter
-            elide: Text.ElideRight
-        }
-
-        background: Rectangle {
-            radius: Theme.controlRadius
-            color: optionDelegate.highlighted ? Theme.accent
-                : (optionDelegate.selected ? Theme.selected
-                    : (optionDelegate.hovered ? Theme.hover : "transparent"))
-        }
-    }
+    delegate: DropDownOptionDelegate { owner: control }
 
     popup: Controls.Popup {
         y: control.height + Theme.spacingXs

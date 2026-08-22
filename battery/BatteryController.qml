@@ -38,20 +38,18 @@ Ui.ChooserController {
     property double energyWeekUpdatedMs: 0
     property string energyError: ""
     property int energyRequestsInFlight: 0
+    property var policy: ({})
+    property var selectedDevice: null
+    property var protection: ({})
 
     detailsOpen: false
     navigationPrimaryEnabled: false
     readonly property BatteryBackend backend: batteryBackend
     readonly property BatteryEnergyBackend energyBackend: batteryEnergyBackend
-    readonly property var policy: battery.policy || ({})
     readonly property var energyOverview: energyPeriod === "week"
         ? energyWeek : energyLastCharge
     readonly property bool energyLoading: energyRequestsInFlight > 0
-    readonly property var selectedDevice: battery.devices && battery.devices.length > selectedDeviceIndex
-        ? battery.devices[selectedDeviceIndex] : null
     readonly property var primaryDevice: selectedDevice
-    readonly property var protection: selectedDevice && selectedDevice.protection
-        ? selectedDevice.protection : (battery.protection || ({}))
     readonly property var batteryOperation: battery.operation || ({ kind: "" })
     readonly property bool operationForSelected: !!selectedDevice
         && batteryOperation.battery_id === selectedDevice.id
@@ -89,6 +87,17 @@ Ui.ChooserController {
         return true;
     }
 
+    function syncBatterySelection(): void {
+        const devices = battery.devices || [];
+        if (selectedDeviceIndex >= devices.length)
+            selectedDeviceIndex = 0;
+        selectedDevice = devices.length > selectedDeviceIndex
+            ? devices[selectedDeviceIndex] : null;
+        policy = battery.policy || ({});
+        protection = selectedDevice && selectedDevice.protection
+            ? selectedDevice.protection : (battery.protection || ({}));
+    }
+
     function applyBattery(value: var): void {
         const nextBattery = value || ({ available: false, percentage: 0, devices: [] });
         const historySummary = nextBattery.history || ({});
@@ -103,8 +112,7 @@ Ui.ChooserController {
             backend.history();
         if (uiActive && chargeChanged)
             requestEnergyPeriod("last-charge", true);
-        if (selectedDeviceIndex >= (battery.devices || []).length)
-            selectedDeviceIndex = 0;
+        syncBatterySelection();
         syncThresholdDraft();
         if (!alertDraftDirty) {
             draftWarningPercent = Number(valueOr(policy.warning_percent, 25));
@@ -143,6 +151,7 @@ Ui.ChooserController {
         if (index < 0 || actionInFlight)
             return;
         selectedDeviceIndex = index;
+        syncBatterySelection();
         thresholdDraftDirty = false;
         syncThresholdDraft();
     }
