@@ -91,7 +91,7 @@ jq -e '
     "wifi.secret.capabilities", "wifi.secret.provide"
   ])) and
   ([.data.protocol.streams[] | select(.subscribable) | .name] | contains([
-    "wifi.status", "network.connectivity", "wifi.scan", "wifi.connect", "wifi.band", "wifi.secret"
+    "wifi.status", "network.connectivity", "wifi.networks", "wifi.scan", "wifi.connect", "wifi.band", "wifi.secret"
   ]))
 ' "$registry_actual" >/dev/null
 

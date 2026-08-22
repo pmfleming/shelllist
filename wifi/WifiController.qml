@@ -17,6 +17,7 @@ ProviderChooserController {
     property var activeStatus: null
     property bool statusMonitorActive: false
     property var networkSnapshot: null
+    property var visibleNetworks: []
     property string status
     property var bandStatus: null
     property string bandRequestId: ""
@@ -49,6 +50,7 @@ ProviderChooserController {
         const handlers = ({});
         handlers[NmApi.streams.wifi_status] = function (event) { wifi.applyStatusEvent(event); };
         handlers[NmApi.streams.network_connectivity] = function (event) { connection.applyConnectivityEvent(event); };
+        handlers[NmApi.streams.wifi_networks] = function (event) { wifi.applyNetworkEvent(event); };
         handlers[NmApi.streams.wifi_scan] = function (event) { scan.handleStream(event); };
         handlers[NmApi.streams.wifi_connect] = function (event) { connection.handleEvent(event); };
         handlers[NmApi.streams.wifi_band] = function (event) { wifi.handleBandEvent(event); };
@@ -235,6 +237,30 @@ ProviderChooserController {
         activeStatus = event.status || null;
     }
 
+    function applyNetworkEvent(event) {
+        if (event.event !== "changed")
+            return;
+        if (event.initial) {
+            applyNetworks(event.added || [], false, event.snapshot || null);
+            return;
+        }
+        const removed = ({});
+        (event.removed || []).forEach(function (network) { if (network.key) removed[network.key] = true; });
+        const replacements = ({});
+        (event.changed || []).concat(event.added || []).forEach(function (network) {
+            if (network.key) replacements[network.key] = network;
+        });
+        const next = visibleNetworks.filter(function (network) { return !removed[network.key]; }).map(function (network) {
+            return replacements[network.key] || network;
+        });
+        const present = ({});
+        next.forEach(function (network) { if (network.key) present[network.key] = true; });
+        (event.added || []).forEach(function (network) {
+            if (!network.key || !present[network.key]) next.push(network);
+        });
+        applyNetworks(next, false, event.snapshot || null);
+    }
+
     function dispatchDaemonEvent(event: var): void {
         const handler = daemonEventHandlerByStream[event.stream];
         if (handler)
@@ -276,9 +302,10 @@ ProviderChooserController {
     function primarySelected() { return executeSelected(""); }
     function triggerDetailAction(id) { return executeSelected(id); }
     function applyNetworks(networks, resetSelection, snapshot) {
+        visibleNetworks = networks || [];
         if (snapshot)
             networkSnapshot = snapshot;
-        replaceProviderResults(wifiProvider.resultsForNetworks(networks), resetSelection);
+        replaceProviderResults(wifiProvider.resultsForNetworks(visibleNetworks), resetSelection);
     }
 
     function openHiddenNetworkPrompt() { if (connection.beginAny()) prompt.openHiddenNetworkPrompt(); }

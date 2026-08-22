@@ -18,6 +18,7 @@ var methods = {
 var streams = {
     wifi_status: "wifi.status",
     network_connectivity: "network.connectivity",
+    wifi_networks: "wifi.networks",
     wifi_scan: "wifi.scan",
     wifi_connect: "wifi.connect",
     wifi_band: "wifi.band",
@@ -27,6 +28,7 @@ var streams = {
 var subscribedStreams = [
     streams.wifi_status,
     streams.network_connectivity,
+    streams.wifi_networks,
     streams.wifi_scan,
     streams.wifi_connect,
     streams.wifi_band,
