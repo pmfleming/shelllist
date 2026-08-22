@@ -7,6 +7,7 @@ ActionToolbar 1.0 ActionToolbar.qml
 CenteredMessage 1.0 CenteredMessage.qml
 ChooserController 1.0 ChooserController.qml
 ChooserHeader 1.0 ChooserHeader.qml
+internal ChooserListBody ChooserListBody.qml
 ChooserListPane 1.0 ChooserListPane.qml
 ChooserShortcuts 1.0 ChooserShortcuts.qml
 ProviderChooserController 1.0 ProviderChooserController.qml

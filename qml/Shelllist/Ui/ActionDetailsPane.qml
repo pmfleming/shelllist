@@ -4,22 +4,23 @@ DetailsPane {
     id: pane
 
     required property real uiScale
-    property alias icon: header.icon
-    property alias signalIcon: header.signalIcon
-    property alias iconColor: header.iconColor
-    property alias iconBorderColor: header.iconBorderColor
-    property alias title: header.title
-    property alias subtitle: header.subtitle
-    property alias subtitleColor: header.subtitleColor
-    property alias statusIndicatorVisible: header.statusIndicatorVisible
-    property alias statusIndicatorColor: header.statusIndicatorColor
-    property alias subtitleWeight: header.subtitleWeight
-    property alias titlePixelSize: header.titlePixelSize
-    property alias actions: header.actions
-    property alias actionWidth: header.actionWidth
-    property alias headerHeight: header.headerHeight
-    property alias controlHeight: header.controlHeight
-    property alias secondaryVisible: header.secondaryVisible
+    property string icon: ""
+    property bool signalIcon: false
+    property color iconColor: Theme.mutedText
+    property color iconBorderColor: Theme.strongBorder
+    property string title: ""
+    property string subtitle: ""
+    property color subtitleColor: Theme.mutedText
+    property bool statusIndicatorVisible: false
+    property color statusIndicatorColor: subtitleColor
+    property int subtitleWeight: Theme.fontWeightRegular
+    property int titlePixelSize: Math.round(Theme.fontSizeTitle * uiScale)
+    property var actions: []
+    property int actionWidth: 170
+    property int headerHeight: Math.max(56, Math.round(64 * uiScale))
+    property int controlHeight: Math.max(Theme.compactControlHeight,
+        Math.round(Theme.controlHeight * uiScale))
+    property bool secondaryVisible: true
     readonly property real bodyHeight: body.height
     default property alias bodyContent: body.data
 
@@ -32,6 +33,22 @@ DetailsPane {
         width: parent.width
         uiScale: pane.uiScale
         sectionSpacing: pane.sectionSpacing
+        icon: pane.icon
+        signalIcon: pane.signalIcon
+        iconColor: pane.iconColor
+        iconBorderColor: pane.iconBorderColor
+        title: pane.title
+        subtitle: pane.subtitle
+        subtitleColor: pane.subtitleColor
+        statusIndicatorVisible: pane.statusIndicatorVisible
+        statusIndicatorColor: pane.statusIndicatorColor
+        subtitleWeight: pane.subtitleWeight
+        titlePixelSize: pane.titlePixelSize
+        actions: pane.actions
+        actionWidth: pane.actionWidth
+        headerHeight: pane.headerHeight
+        controlHeight: pane.controlHeight
+        secondaryVisible: pane.secondaryVisible
         onActionTriggered: function (actionId) { pane.actionTriggered(actionId); }
     }
 

@@ -34,8 +34,8 @@ ColumnLayout {
     property int bodySpacing: Theme.verticalSpacing(Theme.spacingSm, densityScale)
     property Component toolbarComponent: null
     property int toolbarHeight: Math.round(Theme.controlHeight * densityScale)
-    readonly property real delegateHeight: listFrame.delegateHeight
-    readonly property bool listFocused: listFrame.listFocused
+    readonly property real delegateHeight: body.delegateHeight
+    readonly property bool listFocused: body.listFocused
     readonly property int selectedIndex: chooserController.selectionModel
         ? chooserController.selectionModel.selectedIndex : 0
 
@@ -59,9 +59,9 @@ ColumnLayout {
     spacing: Theme.verticalSpacing(Theme.spacingMd, densityScale)
 
     function focusSearch(): void { header.focusSearch(); }
-    function focusTop(): void { listFrame.focusTop(); }
-    function pick(rowIndex: int): void { listFrame.pick(rowIndex); }
-    function toggleDetails(rowIndex: int): void { listFrame.toggleDetails(rowIndex); }
+    function focusTop(): void { body.focusTop(); }
+    function pick(rowIndex: int): void { body.pick(rowIndex); }
+    function toggleDetails(rowIndex: int): void { body.toggleDetails(rowIndex); }
 
     ChooserHeader {
         id: header
@@ -88,44 +88,24 @@ ColumnLayout {
         onRefreshRequested: pane.requestRefresh()
     }
 
-    Item {
+    ChooserListBody {
+        id: body
         Layout.fillWidth: true
         Layout.fillHeight: true
-
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.leftMargin: pane.listInset
-            spacing: pane.bodySpacing
-
-            ResultListFrame {
-                id: listFrame
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                uiScale: pane.densityScale
-                controller: pane.chooserController
-                resultModel: pane.resultModel
-                selectedIndex: pane.selectedIndex
-                emptyText: pane.emptyText
-                rowDelegate: pane.rowDelegate
-                onKeyPressed: function (event) { pane.chooserController.navigation.handleListKey(event); }
-            }
-
-            Loader {
-                Layout.fillWidth: true
-                Layout.preferredHeight: active ? pane.toolbarHeight : 0
-                active: pane.toolbarComponent !== null
-                sourceComponent: pane.toolbarComponent
-            }
-
-            StatusPanel {
-                Layout.fillWidth: true
-                uiScale: pane.densityScale
-                status: pane.status
-                icon: pane.icon
-                signalIcon: pane.signalIcon
-                powered: pane.powered
-                busy: pane.busy
-            }
-        }
+        chooserController: pane.chooserController
+        rowDelegate: pane.rowDelegate
+        densityScale: pane.densityScale
+        resultModel: pane.resultModel
+        selectedIndex: pane.selectedIndex
+        emptyText: pane.emptyText
+        toolbarComponent: pane.toolbarComponent
+        toolbarHeight: pane.toolbarHeight
+        status: pane.status
+        icon: pane.icon
+        signalIcon: pane.signalIcon
+        powered: pane.powered
+        busy: pane.busy
+        listInset: pane.listInset
+        bodySpacing: pane.bodySpacing
     }
 }
