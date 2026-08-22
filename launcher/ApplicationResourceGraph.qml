@@ -1,16 +1,12 @@
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
-Rectangle {
+Ui.ChartFrame {
     id: graph
 
     required property var points
     required property real uiScale
     property string metric: "cpu_percent_of_machine"
-    property string label: "CPU"
-    property string valueText: ""
-    property color lineColor: Ui.Theme.accent
     property real minimumMaximum: 0
 
     readonly property var values: (points || []).map(function (point) {
@@ -20,50 +16,14 @@ Rectangle {
     readonly property real maximum: Math.max(minimumMaximum, 1,
         values.reduce(function (current, value) { return Math.max(current, value); }, 0))
 
-    Layout.fillWidth: true
-    Layout.preferredHeight: Math.round(82 * uiScale)
-    radius: Ui.Theme.cardRadius
-    color: Ui.Theme.surface
-    border.color: Ui.Theme.border
-    border.width: 1
-
+    graphHeight: Math.round(82 * uiScale)
     onValuesChanged: chart.requestPaint()
     onMaximumChanged: chart.requestPaint()
-    onWidthChanged: chart.requestPaint()
-    onHeightChanged: chart.requestPaint()
-
-    Text {
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.leftMargin: 10
-        anchors.topMargin: 7
-        text: graph.label
-        color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        font.weight: Ui.Theme.fontWeightDemiBold
-    }
-
-    Text {
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.rightMargin: 10
-        anchors.topMargin: 7
-        text: graph.valueText
-        color: graph.lineColor
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        font.weight: Ui.Theme.fontWeightDemiBold
-    }
+    onRepaintRequested: chart.requestPaint()
 
     Canvas {
         id: chart
-
         anchors.fill: parent
-        anchors.leftMargin: 10
-        anchors.rightMargin: 10
-        anchors.topMargin: 27
-        anchors.bottomMargin: 9
         antialiasing: true
 
         onPaint: {

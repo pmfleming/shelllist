@@ -2,27 +2,13 @@ import Quickshell
 import Quickshell.Wayland
 import QtQuick
 
-PanelWindow { // qmllint disable uncreatable-type
+BarOverlayWindow {
     id: window
-
-    required property var targetScreen
-    required property BarController controller
-    readonly property string focusedScreenName: controller.workspaces
-        ? (controller.workspaces.focused_monitor || "") : ""
-    readonly property bool targetIsFocused: focusedScreenName.length > 0
-        ? (!!screen && screen.name === focusedScreenName)
-        : (Quickshell.screens.length > 0 && screen === Quickshell.screens[0])
-
-    screen: targetScreen
     // Keep the focused monitor's layer surface mapped so a media-key press does
     // not pay a Wayland surface creation/configure round trip before appearing.
-    visible: targetIsFocused
     implicitWidth: 376
     implicitHeight: 104
-    color: "transparent"
     mask: Region {}
-    aboveWindows: true
-    exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "shelllist-osd"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None

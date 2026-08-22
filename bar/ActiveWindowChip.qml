@@ -49,7 +49,7 @@ Item {
         }
     }
 
-    Text {
+    Ui.PulsingLabel {
         id: titleLabel
 
         anchors.left: iconFrame.right
@@ -63,7 +63,6 @@ Item {
         font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeSmall
         font.weight: Ui.Theme.fontWeightMedium
-        onTextChanged: if (!Ui.Theme.noAnimations) titlePulse.restart()
     }
 
     Text {
@@ -77,23 +76,6 @@ Item {
         color: Ui.Theme.accent
         font.family: Ui.Theme.iconFontFamily
         font.pixelSize: Ui.Theme.fontSizeSmall
-    }
-
-    SequentialAnimation {
-        id: titlePulse
-
-        NumberAnimation {
-            target: titleLabel
-            property: "opacity"
-            to: 0.32
-            duration: Math.round(Ui.Theme.animationFast * 0.35)
-        }
-        NumberAnimation {
-            target: titleLabel
-            property: "opacity"
-            to: 1
-            duration: Math.round(Ui.Theme.animationFast * 0.65)
-        }
     }
 
     Ui.StateLayer {

@@ -1,28 +1,17 @@
+pragma ComponentBehavior: Bound
+
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
 import Shelllist.Ui as Ui
 
-PanelWindow { // qmllint disable uncreatable-type
+BarOverlayWindow {
     id: window
 
-    required property var targetScreen
-    required property BarController controller
-    readonly property string focusedScreenName: controller.workspaces
-        ? (controller.workspaces.focused_monitor || "") : ""
-    readonly property bool targetIsFocused: focusedScreenName.length > 0
-        ? (!!screen && screen.name === focusedScreenName)
-        : (Quickshell.screens.length > 0 && screen === Quickshell.screens[0])
     readonly property var toasts: controller.visibleToasts()
-
-    screen: targetScreen
-    visible: targetIsFocused
     implicitWidth: 414
     implicitHeight: 640
-    color: "transparent"
     mask: Region { item: toastColumn }
-    aboveWindows: true
-    exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "shelllist-notifications"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand

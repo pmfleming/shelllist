@@ -1,9 +1,18 @@
 #!/usr/bin/env node
 const fs = require("fs");
+const path = require("path");
 const vm = require("vm");
 
-const source = fs.readFileSync(process.argv[2], "utf8").replace(/^\.pragma library\s*$/m, "");
-const context = { Qt: { formatDateTime: (_date, format) => format } };
+let source = fs.readFileSync(process.argv[2], "utf8").replace(/^\.pragma library\s*$/m, "");
+const durationImport = source.match(/^\.import\s+"([^"]+)"\s+as\s+Duration\s*$/m);
+const Duration = {};
+vm.createContext(Duration);
+const durationPath = process.argv[3]
+    || path.resolve(path.dirname(process.argv[2]), durationImport[1]);
+vm.runInContext(fs.readFileSync(durationPath, "utf8")
+    .replace(/^\.pragma library\s*$/m, ""), Duration);
+source = source.replace(durationImport[0], "");
+const context = { Duration, Qt: { formatDateTime: (_date, format) => format } };
 vm.createContext(context);
 vm.runInContext(source, context);
 

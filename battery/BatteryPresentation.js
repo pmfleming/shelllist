@@ -1,17 +1,11 @@
 .pragma library
+.import "../qml/Shelllist/Core/Duration.js" as Duration
 
 function clamp(value, minimum, maximum) {
     return Math.max(minimum, Math.min(maximum, Number(value) || 0));
 }
 
-function duration(seconds) {
-    const value = Math.max(0, Number(seconds) || 0);
-    if (value <= 0)
-        return "Estimating";
-    const hours = Math.floor(value / 3600);
-    const minutes = Math.floor((value % 3600) / 60);
-    return hours > 0 ? hours + "h " + minutes + "m" : Math.max(1, minutes) + "m";
-}
+function duration(seconds) { return Duration.estimate(seconds, "Estimating"); }
 
 function stateLabel(battery) {
     if (!battery || !battery.available)

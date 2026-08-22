@@ -11,6 +11,8 @@ Rectangle {
     property int selectedIndex: listPane.selectedIndex
     property bool selectionFocused: listPane.listFocused
     property bool detailsOpen: listPane.chooserController.detailsOpen
+    property bool pointerHovered: false
+    property bool pointerPressed: false
     property string accessibleName: ""
     property real trailingActionWidth: 0
     readonly property bool selected: index === selectedIndex
@@ -31,7 +33,8 @@ Rectangle {
     width: ListView.view.width
     height: rowHeight
     radius: selected ? Theme.cardRadius : 0
-    color: selected ? Theme.selected : (rowMouse.pressed ? Theme.pressed : (rowMouse.containsMouse ? Theme.hover : "transparent"))
+    color: selected ? Theme.selected
+        : (pointerPressed ? Theme.pressed : (pointerHovered ? Theme.hover : "transparent"))
     border.color: selected && selectionFocused ? Theme.strongBorder : "transparent"
     border.width: selected && selectionFocused ? 1 : 0
     Accessible.role: Accessible.ListItem
@@ -93,13 +96,13 @@ Rectangle {
     }
 
     StateLayer {
-        id: rowMouse
-
         anchors.rightMargin: row.scaled(38) + row.trailingActionWidth
         focusTarget: row
         radius: row.radius
         stateColor: Theme.text
         showStateBackground: false
+        onHoveredChanged: row.pointerHovered = hovered
+        onPressedChanged: row.pointerPressed = pressed
         onClicked: row.picked(row.index)
         onDoubleClicked: row.primaryRequested()
     }

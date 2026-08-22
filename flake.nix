@@ -645,7 +645,8 @@
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-bar-presentation.js} ${./bar/BarPresentation.js}
+            node ${./tests/check-bar-presentation.js} \
+              ${./bar/BarPresentation.js} ${./qml/Shelllist/Core/Duration.js}
             touch $out
           '';
 
@@ -661,7 +662,8 @@
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-battery-presentation.js} ${./battery/BatteryPresentation.js}
+            node ${./tests/check-battery-presentation.js} \
+              ${./battery/BatteryPresentation.js} ${./qml/Shelllist/Core/Duration.js}
             touch $out
           '';
 
@@ -702,6 +704,17 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-application-lifecycle.js} ${./launcher/ApplicationLifecycle.js}
+            touch $out
+          '';
+
+          flowPolicies = pkgs.runCommand "shelllist-flow-policies"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-flow-policies.js} \
+              ${./activity/ActivityFlow.js} \
+              ${./battery/BatteryFlow.js} \
+              ${./clipboard/ClipboardFlow.js}
             touch $out
           '';
 

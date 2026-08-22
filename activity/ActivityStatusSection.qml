@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
 Column {
@@ -28,13 +29,13 @@ Column {
     }
     Repeater {
         model: section.controller.activity.world_clocks || []
-        delegate: Row {
+        delegate: RowLayout {
             id: worldClockRow
             required property var modelData
             width: parent.width
             height: 30
             Text {
-                width: parent.width - worldClockTime.width
+                Layout.fillWidth: true
                 text: worldClockRow.modelData.label || worldClockRow.modelData.city
                 color: Ui.Theme.text
                 elide: Text.ElideRight
@@ -42,7 +43,6 @@ Column {
                 font.pixelSize: Ui.Theme.fontSizeBody
             }
             Text {
-                id: worldClockTime
                 text: section.worldTime(worldClockRow.modelData) + "  "
                     + (worldClockRow.modelData.abbreviation || "")
                 color: Ui.Theme.mutedText

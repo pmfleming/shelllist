@@ -4,6 +4,7 @@
   "source_roots": ["bar", "shell", "wifi", "bluetooth", "clipboard", "launcher", "activity", "qml", "tests/qml"],
   "entrypoints": [
     "shell/shell.qml",
+    "tests/qml/smoke_shared_ui.qml",
     "tests/qml/tst_hyprland_dispatch.qml",
     "tests/qml/tst_ip_settings_state.qml",
     "tests/qml/tst_jsonl_routing.qml",
@@ -25,6 +26,8 @@
     { "from": "shell/SurfaceRegistry.qml", "to": "clipboard/ClipboardController.qml" },
     { "from": "shell/SurfaceRegistry.qml", "to": "activity/ActivityContent.qml" },
     { "from": "shell/SurfaceRegistry.qml", "to": "activity/ActivityController.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "qml/Shelllist/Battery/BatteryContent.qml" },
+    { "from": "shell/SurfaceRegistry.qml", "to": "qml/Shelllist/Battery/BatteryController.qml" },
     { "from": "launcher/ApplicationContent.qml", "to": "launcher/ApplicationListPane.qml" },
     { "from": "launcher/ApplicationContent.qml", "to": "launcher/ApplicationDetails.qml" },
     { "from": "launcher/ApplicationListPane.qml", "to": "launcher/ApplicationCategoryTabs.qml" },

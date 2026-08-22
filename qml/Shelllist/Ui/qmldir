@@ -5,6 +5,7 @@ ActionDetailsPane 1.0 ActionDetailsPane.qml
 ActionToggleList 1.0 ActionToggleList.qml
 ActionToolbar 1.0 ActionToolbar.qml
 CenteredMessage 1.0 CenteredMessage.qml
+ChartFrame 1.0 ChartFrame.qml
 ChooserController 1.0 ChooserController.qml
 ChooserHeader 1.0 ChooserHeader.qml
 internal ChooserListBody ChooserListBody.qml
@@ -37,8 +38,10 @@ IconTile 1.0 IconTile.qml
 LabeledValueSlider 1.0 LabeledValueSlider.qml
 ModalFrame 1.0 ModalFrame.qml
 NavigationHelpDialog 1.0 NavigationHelpDialog.qml
+NotificationReplyRow 1.0 NotificationReplyRow.qml
 PopupWindowHost 1.0 PopupWindowHost.qml
 PromptDialog 1.0 PromptDialog.qml
+PulsingLabel 1.0 PulsingLabel.qml
 RefreshTile 1.0 RefreshTile.qml
 ResultLabel 1.0 ResultLabel.qml
 ResultListFrame 1.0 ResultListFrame.qml

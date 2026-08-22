@@ -144,32 +144,13 @@ Rectangle {
             }
         }
 
-        Row {
-            width: parent.width
+        Ui.NotificationReplyRow {
             visible: card.replyAction !== null
-            spacing: Ui.Theme.spacingSm
-            Ui.TextField {
-                id: replyField
-                width: parent.width - replyButton.width - parent.spacing
-                height: 36
-                placeholder: "Reply…"
-                maximumLength: 4096
-                onAccepted: replyButton.sendReply()
-            }
-            Ui.ActionButton {
-                id: replyButton
-                width: 68
-                height: 36
-                label: "Send"
-                enabled: replyField.text.trim().length > 0
-                function sendReply(): void {
-                    const text = replyField.text.trim();
-                    if (text.length === 0)
-                        return;
-                    if (card.controller.replyNotification(card.notification.id, text))
-                        replyField.text = "";
-                }
-                onClicked: sendReply()
+            notificationId: Number(card.notification.id)
+            controlHeight: 36
+            buttonWidth: 68
+            submitReply: function (id, text) {
+                return card.controller.replyNotification(id, text);
             }
         }
     }

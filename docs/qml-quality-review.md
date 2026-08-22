@@ -26,6 +26,8 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - Providers resolve dynamic actions at use time rather than copying actions into recurring snapshots.
 - `BarContent` renders normalized status descriptors through one delegate.
 - Workspace, focused-window, media, tray, and OSD presentation are isolated components.
+- Activity, battery, power, and OSD views are split into cohesive panes rather than one large object tree.
+- `ChartFrame`, `PulsingLabel`, `NotificationReplyRow`, and `BarOverlayWindow` centralize repeated presentation behavior.
 - `StateLayer` and `Elevation` centralize interaction feedback and depth.
 - Operation lifecycle policy is kept in small JavaScript helpers where it can be tested without a running shell.
 - Terminal backend events are correlated by request/operation IDs before changing UI state.
@@ -34,13 +36,13 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 
 `qmlqualitylens.config.json` declares the resident shell and QML test files as entrypoints. It also records dynamic component edges hidden behind `Component`, `Loader.sourceComponent`, and `SplitChooserLayout` factories. These edges are analysis metadata, not runtime dependencies. Keep them synchronized when a surface gains or removes dynamically instantiated content; prefer an explicit edge over a broad unused-component suppression.
 
-The v0.5 calibration reaches 149 of 175 components from eight application/test roots. The remaining components are exported module API rather than dead-code findings. Configured edges cover list, details, toolbar, and tab components instantiated through loaders; cleanup reports no unused components or ids.
+The current calibration reaches 184 of 193 components from nine application/test roots. The remaining components are exported module API rather than dead-code findings. Configured edges cover list, details, toolbar, tab, and battery components instantiated through loaders; cleanup reports no unused components or ids, and resolution reports no unresolved imports or types.
 
 ## Focused declarative-state refactoring
 
 When a property is intentionally mutable, initialize it as state rather than first creating a binding that an event handler later destroys. Keep responsive defaults in separate readonly derived properties. Similarly, an animated geometry axis must have one owner: do not combine `anchors.fill` with an explicit animated `x` or `y` binding.
 
-The first focused pass applied these rules to bar surface recovery, media progress time, StateLayer ripple origins, and OSD vertical motion. It also removed unreferenced presentation ids. This eliminated the high-confidence binding-loss and geometry-conflict findings without changing the heuristic score or broad component architecture.
+The focused passes applied these rules to bar surface recovery, media progress time, Activity clock state, battery selection state, StateLayer ripple origins, and OSD vertical motion. Delegate computation was also moved out of `DropDownList`. The semantic report now has no active high- or medium-severity findings.
 
 ## Review rules
 
@@ -73,7 +75,10 @@ shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml bar/*.qml \
   wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
 node tests/check-bar-presentation.js bar/BarPresentation.js
+node tests/check-flow-policies.js activity/ActivityFlow.js \
+  battery/BatteryFlow.js clipboard/ClipboardFlow.js
 tests/run-qml-tests.sh
+tests/run-runtime-smoke.sh
 ```
 
 For an optional structural report:

@@ -1,15 +1,11 @@
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
-Rectangle {
+Ui.ChartFrame {
     id: graph
 
     required property var points
     property string metric: "percentage"
-    property string label: "Charge"
-    property string valueText: ""
-    property color lineColor: Ui.Theme.accent
     property real minimumMaximum: 0
     property bool positiveOnly: false
     property double maximumGapMilliseconds: 30 * 60 * 1000
@@ -38,50 +34,14 @@ Rectangle {
             return value === null ? current : Math.max(current, value);
         }, 0))
 
-    Layout.fillWidth: true
-    Layout.preferredHeight: 88
-    radius: Ui.Theme.cardRadius
-    color: Ui.Theme.surface
-    border.color: Ui.Theme.border
-    border.width: 1
-
     onValuesChanged: chart.requestPaint()
     onTimestampsChanged: chart.requestPaint()
     onMaximumChanged: chart.requestPaint()
-    onWidthChanged: chart.requestPaint()
-    onHeightChanged: chart.requestPaint()
-
-    Text {
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.leftMargin: 10
-        anchors.topMargin: 7
-        text: graph.label
-        color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        font.weight: Ui.Theme.fontWeightDemiBold
-    }
-
-    Text {
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.rightMargin: 10
-        anchors.topMargin: 7
-        text: graph.valueText
-        color: graph.lineColor
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        font.weight: Ui.Theme.fontWeightDemiBold
-    }
+    onRepaintRequested: chart.requestPaint()
 
     Canvas {
         id: chart
         anchors.fill: parent
-        anchors.leftMargin: 10
-        anchors.rightMargin: 10
-        anchors.topMargin: 27
-        anchors.bottomMargin: 9
         antialiasing: true
 
         onPaint: {
@@ -109,11 +69,10 @@ Rectangle {
                 const x = (timestamp - first) / span * width;
                 const y = height - Math.min(1, value / graph.maximum) * height;
                 if (!drawing || (previousTimestamp > 0
-                        && timestamp - previousTimestamp > graph.maximumGapMilliseconds)) {
+                        && timestamp - previousTimestamp > graph.maximumGapMilliseconds))
                     context.moveTo(x, y);
-                } else {
+                else
                     context.lineTo(x, y);
-                }
                 drawing = true;
                 previousTimestamp = timestamp;
                 validCount += 1;

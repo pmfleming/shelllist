@@ -124,32 +124,11 @@ Rectangle {
             }
         }
 
-        Row {
-            width: parent.width
+        Ui.NotificationReplyRow {
             visible: row.active && row.replyAction !== null
-            spacing: Ui.Theme.spacingSm
-            Ui.TextField {
-                id: replyField
-                width: parent.width - sendButton.width - parent.spacing
-                height: 34
-                placeholder: "Reply…"
-                maximumLength: 4096
-                onAccepted: sendButton.sendReply()
-            }
-            Ui.ActionButton {
-                id: sendButton
-                width: 62
-                height: 34
-                label: "Send"
-                enabled: replyField.text.trim().length > 0
-                function sendReply(): void {
-                    const text = replyField.text.trim();
-                    if (text.length === 0)
-                        return;
-                    if (row.controller.replyNotification(row.notification.id, text))
-                        replyField.text = "";
-                }
-                onClicked: sendReply()
+            notificationId: Number(row.notification.id)
+            submitReply: function (id, text) {
+                return row.controller.replyNotification(id, text);
             }
         }
     }
