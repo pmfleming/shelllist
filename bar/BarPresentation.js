@@ -113,7 +113,7 @@ function audioIcon(audio) {
 function osdTimeout(kind) {
     const value = String(kind || "");
     if (value.indexOf("privacy") === 0) return 3000;
-    if (["media", "device", "power-profile", "idle-inhibitor"].includes(value)) return 2200;
+    if (["device", "power-profile", "idle-inhibitor"].includes(value)) return 2200;
     return 1400;
 }
 
@@ -171,22 +171,6 @@ function powerProfileOsd(profile) {
         percent: 0,
         progressVisible: false,
         timeoutMs: osdTimeout("power-profile")
-    };
-}
-
-function mediaPlaybackOsd(media, nowMs) {
-    const player = playerFor(media);
-    if (!player)
-        return null;
-    const status = String(player.playback_status || "stopped").toLowerCase();
-    return {
-        kind: "media",
-        icon: playbackIcon(player),
-        label: player.title || player.identity || "Media",
-        valueLabel: status === "playing" ? "Playing" : status === "paused" ? "Paused" : "Stopped",
-        percent: mediaPositionPercent(player, nowMs),
-        progressVisible: Number(player.length_us || 0) > 0,
-        timeoutMs: osdTimeout("media")
     };
 }
 
@@ -267,18 +251,10 @@ function idleInhibitorOsd(powerSleep) {
     };
 }
 
-function domainOsd(streams, stream, previous, value, nowMs) {
+function domainOsd(streams, stream, previous, value) {
     if (stream === streams.powerProfile && previous && previous.available
             && previous.profile !== value.profile)
         return powerProfileOsd(value);
-    if (stream === streams.media && previous && previous.available) {
-        const before = playerFor(previous);
-        const current = playerFor(value);
-        return current && (!before || before.id !== current.id
-                || before.title !== current.title
-                || before.playback_status !== current.playback_status)
-            ? mediaPlaybackOsd(value, nowMs) : null;
-    }
     if (stream === streams.audio && previous && previous.available)
         return audioDeviceOsd(previous, value);
     if (stream === streams.workspaces && previous && previous.available)

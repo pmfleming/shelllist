@@ -64,10 +64,6 @@ equal(context.brightnessOsd({ percent: 65 }), {
 }, "brightness OSD presentation");
 equal(context.powerProfileOsd({ profile: "power-saver" }).valueLabel,
     "Power saver", "power profile OSD presentation");
-equal(context.mediaPlaybackOsd({ active_player: "player", players: [{
-    id: "player", title: "Track", playback_status: "playing", length_us: 100,
-    position_us: 25, position_observed_at_unix_ms: 1000, playback_rate: 1
-}] }, 1000).percent, 25, "media playback OSD progress");
 equal(context.lockKeyOsd("caps-lock", true).valueLabel, "On", "Caps Lock OSD state");
 equal(context.keyboardBacklightOsd(60).percent, 60, "keyboard backlight OSD progress");
 equal(context.hardwareOsd({ available: true, caps_lock: false },
@@ -82,8 +78,12 @@ equal(context.displayOutputOsd({ monitors: [{ name: "eDP-1" }] }, {
     monitors: [{ name: "eDP-1" }, { name: "DP-1" }]
 }).valueLabel, "DP-1 connected", "display output OSD");
 equal(context.domainOsd({ powerProfile: "power" }, "power",
-    { available: true, profile: "balanced" }, { available: true, profile: "performance" }, 0).kind,
+    { available: true, profile: "balanced" }, { available: true, profile: "performance" }).kind,
     "power-profile", "domain changes route through shared OSD policy");
+equal(context.domainOsd({ media: "media" }, "media",
+    { available: true, active_player: "player", players: [{ id: "player", title: "Old" }] },
+    { available: true, active_player: "player", players: [{ id: "player", title: "New" }] }),
+    null, "media changes do not produce an OSD");
 equal(context.batteryIcon({ charging: true, plugged: true, percentage: 60 }), "󰂄", "charging icon");
 equal(context.duration(7500), "2h 5m", "battery duration");
 equal(context.networkKind({ active: true, access_point: { ssid: "Test" } }), "wifi", "Wi-Fi status");

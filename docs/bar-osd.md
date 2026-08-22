@@ -26,7 +26,6 @@ Shelllist uses one shared OSD frame for transient system feedback, instantiated 
 | Microphone | Successful input-mute operation response | Hidden |
 | Display brightness | Successful brightness operation response | Brightness percent |
 | Power profile | `power-profile.changed` profile transition | Hidden |
-| Media playback | `media.changed` player, title, or playback-status transition | Track position when duration is known |
 | Caps Lock / Num Lock | `osd-hardware.changed` LED transition | Hidden |
 | Keyboard backlight | `osd-hardware.changed` brightness transition | Backlight percent |
 | Camera / microphone privacy | `osd-hardware.changed` privacy LED transition | Hidden |
@@ -34,14 +33,14 @@ Shelllist uses one shared OSD frame for transient system feedback, instantiated 
 | Audio input/output device | `audio.changed` default node transition | Hidden |
 | Display output | `workspaces.changed` monitor addition/removal | Hidden |
 
-Initial subscription snapshots do not produce an OSD. Domain OSDs require a previous available state so connecting or restarting `bar-daemon` does not replay every current condition as user feedback. Media position-only updates are also ignored.
+Initial subscription snapshots do not produce an OSD. Domain OSDs require a previous available state so connecting or restarting `bar-daemon` does not replay every current condition as user feedback. Media state remains visible in the top bar and never produces an OSD.
 
 ## Timeout policy
 
 | Family | Timeout |
 | --- | ---: |
 | Volume, microphone, brightness, lock keys, keyboard backlight | 1400 ms |
-| Media, power profile, idle inhibitor, audio/display device | 2200 ms |
+| Power profile, idle inhibitor, audio/display device | 2200 ms |
 | Camera and microphone privacy | 3000 ms |
 
 The policy is centralized in `BarPresentation.osdTimeout()`. A new OSD family should extend that function instead of introducing another QML timer or frame.

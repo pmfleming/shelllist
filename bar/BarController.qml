@@ -80,7 +80,7 @@ Item {
 
     function presentDomainOsd(stream: string, previous: var, value: var): void {
         const nextOsd = Presentation.domainOsd(
-            BarApi.streams, stream, previous, value, Date.now());
+            BarApi.streams, stream, previous, value);
         if (nextOsd)
             presentOsd(nextOsd);
     }
