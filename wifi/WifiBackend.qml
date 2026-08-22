@@ -27,6 +27,7 @@ Io.DaemonBackend {
         || isPending("vpn-connect") || isPending("vpn-disconnect")
         || isPending("inventory") || isPending("network-status")
         || isPending("activate-profile") || isPending("deactivate-connection")
+        || isPending("statistics-watch")
     readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
     readonly property var responseHandlerById: ({
         "networks": function (value) { backend.handleNetworks(value); },
@@ -56,7 +57,8 @@ Io.DaemonBackend {
         "inventory": function (value) { controller.inventory.applyInventory(Api.apiData(value, "inventory") || null); },
         "network-status": function (value) { controller.inventory.applyNetworkState(Api.apiData(value, "network") || null); },
         "activate-profile": function (value) { controller.inventory.applyActivation(Api.apiData(value, "result") || ({})); },
-        "deactivate-connection": function (value) { controller.inventory.applyDeactivation(Api.apiData(value, "result") || ({})); }
+        "deactivate-connection": function (value) { controller.inventory.applyDeactivation(Api.apiData(value, "result") || ({})); },
+        "statistics-watch": function (value) { controller.statistics.applyStart(Api.apiResult(value, "result") || ({})); }
     })
 
     function refreshNetworks(refreshCache) { return call("networks", NmApi.methods.wifi_networks, { cached: true, refresh_cache: !!refreshCache }); }

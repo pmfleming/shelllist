@@ -17,6 +17,7 @@ Item {
     readonly property HotspotController hotspot: hotspotModel
     readonly property VpnController vpn: vpnModel
     readonly property NetworkInventoryController inventory: inventoryModel
+    readonly property NetworkStatisticsController statistics: statisticsModel
     readonly property WifiBackend backend: backendModel
 
     ShareAvailabilityController { id: shareModel; controller: services.controller; backend: backendModel }
@@ -37,5 +38,6 @@ Item {
     HotspotController { id: hotspotModel; controller: services.controller; backend: backendModel }
     VpnController { id: vpnModel; controller: services.controller; backend: backendModel }
     NetworkInventoryController { id: inventoryModel; controller: services.controller; backend: backendModel }
+    NetworkStatisticsController { id: statisticsModel; controller: services.controller; backend: backendModel }
     WifiBackend { id: backendModel; controller: services.controller }
 }

@@ -13,6 +13,7 @@ internal NetworkHealthController NetworkHealthController.qml
 internal HotspotController HotspotController.qml
 internal VpnController VpnController.qml
 internal NetworkInventoryController NetworkInventoryController.qml
+internal NetworkStatisticsController NetworkStatisticsController.qml
 internal WifiControllerServices WifiControllerServices.qml
 internal WifiQrDialog WifiQrDialog.qml
 internal AdvancedIpSettingsPane AdvancedIpSettingsPane.qml

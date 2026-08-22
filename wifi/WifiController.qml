@@ -51,6 +51,7 @@ ProviderChooserController {
     readonly property HotspotController hotspot: services.hotspot
     readonly property VpnController vpn: services.vpn
     readonly property NetworkInventoryController inventory: services.inventory
+    readonly property NetworkStatisticsController statistics: services.statistics
     readonly property WifiQrService qr: qrController
     readonly property var daemonEventHandlerByStream: {
         const handlers = ({});
@@ -63,6 +64,7 @@ ProviderChooserController {
         handlers[NmApi.streams.wifi_secret] = function (event) { wifi.handleSecretEvent(event); };
         handlers[NmApi.streams.network_health] = function (event) { health.handleEvent(event); };
         handlers[NmApi.streams.network_inventory] = function (event) { inventory.handleEvent(event); };
+        handlers[NmApi.streams.network_statistics] = function (event) { statistics.handleEvent(event); };
         handlers[NmApi.streams.hotspot] = function (event) { hotspot.handleEvent(event); };
         handlers[NmApi.streams.vpn] = function (event) { vpn.handleEvent(event); };
         return handlers;
@@ -127,6 +129,7 @@ ProviderChooserController {
         connection.deactivate();
         hotspot.forgetCredentials();
         inventory.close();
+        statistics.stop();
     }
 
     // Entry points for hotspot, VPN, and cross-type connection views.
@@ -138,6 +141,8 @@ ProviderChooserController {
     function closeNetworkInventory() { inventory.close(); }
     function activateConnection(profile, device) { return inventory.activate(profile, device); }
     function deactivateConnection(activeConnection) { return inventory.deactivate(activeConnection); }
+    function watchNetworkStatistics(device, intervalMs) { return statistics.start(device, intervalMs); }
+    function stopNetworkStatistics() { return statistics.stop(); }
 
     function dismissNavigation(): bool {
         if (dismissNavigationHelp())
@@ -180,6 +185,7 @@ ProviderChooserController {
         const lost = lostRequestIds || [];
         scan.handleTransportFailure();
         connection.handleTransportFailure();
+        statistics.handleTransportFailure();
         bandRequestId = "";
         lost.forEach(function (id) {
             advanced.failCall(id, "nm-daemon transport failed before " + id + " completed: " + message);
