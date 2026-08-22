@@ -681,6 +681,17 @@
             touch $out
           '';
 
+          batteryAutoSave = pkgs.runCommand "shelllist-battery-auto-save"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-battery-auto-save.js} \
+              ${./battery/BatteryController.qml} \
+              ${./battery/BatteryBackend.qml} \
+              ${./battery/BatteryProtectionPane.qml}
+            touch $out
+          '';
+
           moduleEvaluation =
             let
               evaluated = nixpkgs.lib.nixosSystem {

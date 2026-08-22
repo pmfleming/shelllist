@@ -31,10 +31,13 @@ Io.DaemonBackend {
         });
     }
 
-    function setProtection(batteryId: string, enabled: bool): bool {
+    function setProtection(batteryId: string, enabled: bool, startPercent: int,
+            endPercent: int): bool {
         return call(nextId("battery-protection"), BatteryApi.methods.setProtection, {
             battery_id: batteryId,
-            enabled: enabled
+            enabled: enabled,
+            start_percent: startPercent,
+            end_percent: endPercent
         });
     }
 
@@ -102,6 +105,13 @@ Io.DaemonBackend {
     function isBackgroundRequest(id: string): bool {
         return id.startsWith("battery-snapshot-") || id.startsWith("battery-history-");
     }
+    function settingsDomain(id: string): string {
+        if (id.startsWith("battery-protection-") || id.startsWith("battery-thresholds-"))
+            return "threshold";
+        if (id.startsWith("battery-alerts-"))
+            return "alert";
+        return "";
+    }
     function applyData(data: var): void {
         const values = Object.assign({}, data.snapshot || ({}), data);
         const handlers = ({
@@ -116,14 +126,20 @@ Io.DaemonBackend {
         });
     }
     function rejectRequest(id: string, background: bool, error: string): void {
+        const domain = settingsDomain(id);
         if (background)
             controller.refreshFailed(id, error);
+        else if (domain.length > 0)
+            controller.settingsOperationFailed(domain, error);
         else
-            controller.operationFailed(error);
+            controller.operationFailed(id, error);
     }
     function acceptRequest(id: string, background: bool): void {
+        const domain = settingsDomain(id);
         if (background)
             controller.refreshFinished(id);
+        else if (domain.length > 0)
+            controller.settingsOperationFinished(domain);
         else
             controller.operationFinished(id);
     }
@@ -147,9 +163,17 @@ Io.DaemonBackend {
     onSendFailed: function (id, message) {
         if (isBackgroundRequest(id))
             controller.refreshFailed(id, message);
-        else
-            controller.operationFailed(message);
+        else {
+            const domain = settingsDomain(id);
+            if (domain.length > 0)
+                controller.settingsOperationFailed(domain, message);
+            else
+                controller.operationFailed(id, message);
+        }
     }
-    onTransportFailed: function (message) { controller.operationFailed(message); }
-    onTransportReady: snapshot()
+    onTransportFailed: function (message) { controller.transportFailed(message); }
+    onTransportReady: {
+        snapshot();
+        controller.resumePendingSettings();
+    }
 }

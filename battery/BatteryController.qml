@@ -22,6 +22,7 @@ Ui.ChooserController {
     property string refreshError: ""
     property string viewTab: "battery"
     property int selectedDeviceIndex: 0
+    property bool draftProtectionEnabled: false
     property int draftStartPercent: 75
     property int draftEndPercent: 80
     property int draftWarningPercent: 25
@@ -30,6 +31,17 @@ Ui.ChooserController {
     property bool draftAutoPowerSaver: true
     property bool thresholdDraftDirty: false
     property bool alertDraftDirty: false
+    property bool thresholdOperationActive: false
+    property bool alertOperationActive: false
+    property int thresholdRevision: 0
+    property int thresholdSentRevision: 0
+    property int protectionRevision: 0
+    property int protectionAcknowledgedRevision: 0
+    property int protectionSentRevision: 0
+    property int alertRevision: 0
+    property int alertSentRevision: 0
+    property string thresholdSaveError: ""
+    property string alertSaveError: ""
     property var batteryHistory: ({ points: [], last_charge_timestamp_ms: 0,
         latest_timestamp_ms: 0, retention_days: 7 })
     property string energyPeriod: "last-charge"
@@ -73,6 +85,18 @@ Ui.ChooserController {
         draftStartPercent, draftEndPercent)
     readonly property bool alertDraftValid: Presentation.alertRangeValid(
         draftWarningPercent, draftCriticalPercent)
+    readonly property bool settingsOperationActive: thresholdOperationActive
+        || alertOperationActive
+    readonly property string thresholdSaveStatus: !thresholdDraftValid
+        ? "Choose a valid range"
+        : (thresholdOperationActive ? "Applying automatically…"
+            : (thresholdSaveError.length > 0 ? "Automatic apply failed"
+                : (thresholdDraftDirty ? "Waiting to apply…" : "Applied automatically")))
+    readonly property string alertSaveStatus: !alertDraftValid
+        ? "Choose a valid alert range"
+        : (alertOperationActive ? "Applying automatically…"
+            : (alertSaveError.length > 0 ? "Automatic apply failed"
+                : (alertDraftDirty ? "Waiting to apply…" : "Applied automatically")))
 
     function valueOr(value: var, fallback: var): var {
         return value === null || value === undefined ? fallback : value;
@@ -116,6 +140,7 @@ Ui.ChooserController {
 
     function syncThresholdDraft(): void {
         if (!thresholdDraftDirty) {
+            draftProtectionEnabled = !!protection.desired_enabled;
             draftStartPercent = Number(valueOr(protection.desired_start_percent, 75));
             draftEndPercent = Number(valueOr(protection.desired_end_percent, 80));
         }
@@ -140,11 +165,15 @@ Ui.ChooserController {
     function selectDevice(batteryId: string): void {
         const devices = battery.devices || [];
         const index = devices.findIndex(function (device) { return device.id === batteryId; });
-        if (index < 0 || actionInFlight)
+        if (index < 0 || actionInFlight || settingsOperationActive)
             return;
+        thresholdAutoSave.stop();
         selectedDeviceIndex = index;
         syncBatterySelection();
         thresholdDraftDirty = false;
+        thresholdSaveError = "";
+        protectionAcknowledgedRevision = protectionRevision;
+        protectionSentRevision = protectionRevision;
         syncThresholdDraft();
     }
 
@@ -181,18 +210,77 @@ Ui.ChooserController {
         return true;
     }
 
-    function operationFinished(id: string): void {
-        actionInFlight = false;
-        lastError = "";
-        if (id.startsWith("battery-thresholds"))
-            thresholdDraftDirty = false;
-        if (id.startsWith("battery-alerts"))
-            alertDraftDirty = false;
+    function currentSettingsError(): string {
+        return thresholdSaveError.length > 0 ? thresholdSaveError : alertSaveError;
     }
 
-    function operationFailed(message: string): void {
+    function resumePendingSettings(): void {
+        if (thresholdDraftDirty && thresholdDraftValid && !thresholdOperationActive)
+            thresholdAutoSave.restart();
+        if (alertDraftDirty && alertDraftValid && !alertOperationActive)
+            alertAutoSave.restart();
+    }
+
+    function operationFinished(_id: string): void {
+        actionInFlight = false;
+        lastError = currentSettingsError();
+        resumePendingSettings();
+    }
+
+    function operationFailed(_id: string, message: string): void {
         actionInFlight = false;
         lastError = message;
+        resumePendingSettings();
+    }
+
+    function settingsOperationFinished(domain: string): void {
+        if (domain === "threshold") {
+            thresholdOperationActive = false;
+            thresholdSaveError = "";
+            protectionAcknowledgedRevision = protectionSentRevision;
+            if (thresholdRevision === thresholdSentRevision)
+                thresholdDraftDirty = false;
+            else
+                thresholdAutoSave.restart();
+        } else {
+            alertOperationActive = false;
+            alertSaveError = "";
+            if (alertRevision === alertSentRevision)
+                alertDraftDirty = false;
+            else
+                alertAutoSave.restart();
+        }
+        lastError = currentSettingsError();
+    }
+
+    function settingsOperationFailed(domain: string, message: string): void {
+        lastError = message;
+        if (domain === "threshold") {
+            thresholdOperationActive = false;
+            thresholdSaveError = message;
+            if (thresholdRevision !== thresholdSentRevision)
+                thresholdAutoSave.restart();
+        } else {
+            alertOperationActive = false;
+            alertSaveError = message;
+            if (alertRevision !== alertSentRevision)
+                alertAutoSave.restart();
+        }
+    }
+
+    function transportFailed(message: string): void {
+        thresholdAutoSave.stop();
+        alertAutoSave.stop();
+        actionInFlight = false;
+        lastError = message;
+        if (thresholdOperationActive) {
+            thresholdOperationActive = false;
+            thresholdSaveError = message;
+        }
+        if (alertOperationActive) {
+            alertOperationActive = false;
+            alertSaveError = message;
+        }
     }
 
     function refreshFailed(_id: string, message: string): void {
@@ -204,65 +292,130 @@ Ui.ChooserController {
         refreshError = "";
     }
 
-    function updateStartPercent(value: int): void {
+    function scheduleThresholdSave(immediate: bool): void {
+        thresholdAutoSave.stop();
+        if (!thresholdDraftValid || !thresholdDraftDirty)
+            return;
+        if (immediate)
+            flushThresholdPolicy();
+        else
+            thresholdAutoSave.restart();
+    }
+
+    function markThresholdChanged(immediate: bool): void {
+        thresholdRevision += 1;
+        thresholdDraftDirty = true;
+        thresholdSaveError = "";
+        scheduleThresholdSave(immediate);
+    }
+
+    function updateStartPercent(value: int, dragging: bool): void {
         draftStartPercent = value;
-        thresholdDraftDirty = true;
+        markThresholdChanged(false);
+        if (dragging)
+            thresholdAutoSave.stop();
     }
 
-    function updateEndPercent(value: int): void {
+    function updateEndPercent(value: int, dragging: bool): void {
         draftEndPercent = value;
-        thresholdDraftDirty = true;
+        markThresholdChanged(false);
+        if (dragging)
+            thresholdAutoSave.stop();
     }
 
-    function updateWarningPercent(value: int): void {
+    function finishThresholdEditing(): void {
+        scheduleThresholdSave(false);
+    }
+
+    function markAlertChanged(immediate: bool): void {
+        alertRevision += 1;
+        alertDraftDirty = true;
+        alertSaveError = "";
+        alertAutoSave.stop();
+        if (!alertDraftValid)
+            return;
+        if (immediate)
+            flushAlertPolicy();
+        else
+            alertAutoSave.restart();
+    }
+
+    function updateWarningPercent(value: int, dragging: bool): void {
         draftWarningPercent = value;
-        alertDraftDirty = true;
+        markAlertChanged(false);
+        if (dragging)
+            alertAutoSave.stop();
     }
 
-    function updateCriticalPercent(value: int): void {
+    function updateCriticalPercent(value: int, dragging: bool): void {
         draftCriticalPercent = value;
-        alertDraftDirty = true;
+        markAlertChanged(false);
+        if (dragging)
+            alertAutoSave.stop();
+    }
+
+    function finishAlertEditing(): void {
+        if (alertDraftValid && alertDraftDirty)
+            alertAutoSave.restart();
     }
 
     function updateNotifyWhenFull(value: bool): void {
         draftNotifyWhenFull = value;
-        alertDraftDirty = true;
+        markAlertChanged(true);
     }
 
     function updateAutoPowerSaver(value: bool): void {
         draftAutoPowerSaver = value;
-        alertDraftDirty = true;
+        markAlertChanged(true);
     }
 
     function setProtection(enabled: bool): bool {
-        if (actionInFlight || batteryOperationActive || !protectionSupported)
+        if (actionInFlight || batteryOperationActive || !protectionSupported || !selectedDevice)
             return false;
-        return startOperation(backend.setProtection(selectedDevice.id, enabled));
+        draftProtectionEnabled = enabled;
+        protectionRevision += 1;
+        markThresholdChanged(true);
+        return true;
     }
 
-    function applyThresholds(): bool {
-        if (actionInFlight || batteryOperationActive || !protectionSupported || !thresholdDraftValid
-                || !primaryDevice)
+    function flushThresholdPolicy(): bool {
+        if (thresholdOperationActive || actionInFlight || batteryOperationActive
+                || !protectionSupported || !thresholdDraftValid || !thresholdDraftDirty
+                || !selectedDevice)
             return false;
-        return startOperation(backend.setThresholds(primaryDevice.id,
-            draftStartPercent, draftEndPercent));
+        thresholdSentRevision = thresholdRevision;
+        protectionSentRevision = protectionRevision;
+        thresholdOperationActive = true;
+        thresholdSaveError = "";
+        lastError = "";
+        const started = protectionRevision !== protectionAcknowledgedRevision
+            ? backend.setProtection(selectedDevice.id, draftProtectionEnabled,
+                draftStartPercent, draftEndPercent)
+            : backend.setThresholds(selectedDevice.id, draftStartPercent, draftEndPercent);
+        if (started)
+            return true;
+        thresholdOperationActive = false;
+        thresholdSaveError = "Unable to send the battery protection policy";
+        lastError = thresholdSaveError;
+        return false;
     }
 
     function chargeOnce(): bool {
-        if (actionInFlight || batteryOperationActive || !protectionSupported || !battery.plugged)
+        if (actionInFlight || thresholdOperationActive || batteryOperationActive
+                || !protectionSupported || !battery.plugged || !selectedDevice)
             return false;
         return startOperation(backend.chargeOnce(selectedDevice.id));
     }
 
     function setChargingInhibited(enabled: bool): bool {
-        if (actionInFlight || !inhibitionSupported || !selectedDevice
+        if (actionInFlight || thresholdOperationActive || !inhibitionSupported || !selectedDevice
                 || (batteryOperationActive && !chargingInhibited))
             return false;
         return startOperation(backend.setChargingInhibited(selectedDevice.id, enabled));
     }
 
     function toggleCalibration(): bool {
-        if (actionInFlight || !calibrationSupported || !selectedDevice
+        if (actionInFlight || thresholdOperationActive || !calibrationSupported || !selectedDevice
                 || (batteryOperationActive && !calibrating))
             return false;
         return startOperation(calibrating
@@ -270,11 +423,20 @@ Ui.ChooserController {
             : backend.startCalibration(selectedDevice.id));
     }
 
-    function applyAlertPolicy(): bool {
-        if (actionInFlight || !alertDraftValid)
+    function flushAlertPolicy(): bool {
+        if (alertOperationActive || actionInFlight || !alertDraftValid || !alertDraftDirty)
             return false;
-        return startOperation(backend.setAlertPolicy(draftWarningPercent,
-            draftCriticalPercent, draftNotifyWhenFull, draftAutoPowerSaver));
+        alertSentRevision = alertRevision;
+        alertOperationActive = true;
+        alertSaveError = "";
+        lastError = "";
+        if (backend.setAlertPolicy(draftWarningPercent, draftCriticalPercent,
+                draftNotifyWhenFull, draftAutoPowerSaver))
+            return true;
+        alertOperationActive = false;
+        alertSaveError = "Unable to send the battery alert policy";
+        lastError = alertSaveError;
+        return false;
     }
 
     function setPowerProfile(profile: string): bool {
@@ -372,6 +534,20 @@ Ui.ChooserController {
     function deactivateUi() {
         energyRequestsInFlight = 0;
         deactivateUiState();
+    }
+
+    Timer {
+        id: thresholdAutoSave
+        interval: 500
+        repeat: false
+        onTriggered: controller.flushThresholdPolicy()
+    }
+
+    Timer {
+        id: alertAutoSave
+        interval: 500
+        repeat: false
+        onTriggered: controller.flushAlertPolicy()
     }
 
     Timer {

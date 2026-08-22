@@ -47,7 +47,7 @@ Column {
             Layout.preferredHeight: 42
             title: "Protect battery longevity"
             subtitle: "Keep charging within the configured threshold range"
-            checked: !!pane.protection.desired_enabled
+            checked: pane.controller.draftProtectionEnabled
             interactive: pane.controller.protectionSupported
                 && !pane.controller.batteryOperationActive
                 && !pane.controller.actionInFlight
@@ -65,9 +65,10 @@ Column {
             enabled: pane.controller.protectionSupported
                 && !pane.controller.batteryOperationActive
                 && !pane.controller.actionInFlight
-            onEdited: function (_dragging) {
-                pane.controller.updateStartPercent(Math.round(value));
+            onEdited: function (dragging) {
+                pane.controller.updateStartPercent(Math.round(value), dragging);
             }
+            onEditingFinished: pane.controller.finishThresholdEditing()
         }
 
         Ui.LabeledValueSlider {
@@ -81,9 +82,10 @@ Column {
             enabled: pane.controller.protectionSupported
                 && !pane.controller.batteryOperationActive
                 && !pane.controller.actionInFlight
-            onEdited: function (_dragging) {
-                pane.controller.updateEndPercent(Math.round(value));
+            onEdited: function (dragging) {
+                pane.controller.updateEndPercent(Math.round(value), dragging);
             }
+            onEditingFinished: pane.controller.finishThresholdEditing()
         }
 
         Text {
@@ -95,35 +97,29 @@ Column {
             font.pixelSize: Ui.Theme.fontSizeCaption
         }
 
-        RowLayout {
+        Ui.FieldLabel {
             Layout.fillWidth: true
-            spacing: Ui.Theme.spacingSm
+            visible: pane.controller.protectionSupported
+            text: pane.controller.thresholdSaveStatus
+            color: !pane.controller.thresholdDraftValid
+                    || pane.controller.thresholdSaveError.length > 0
+                ? Ui.Theme.danger
+                : (pane.controller.thresholdOperationActive
+                    ? Ui.Theme.active : Ui.Theme.mutedText)
+        }
 
-            Ui.ActionButton {
-                Layout.fillWidth: true
-                label: pane.controller.thresholdDraftDirty
-                    ? "Apply thresholds" : "Thresholds saved"
-                tone: pane.controller.thresholdDraftDirty ? "accent" : "normal"
-                enabled: pane.controller.thresholdDraftDirty
-                    && pane.controller.thresholdDraftValid
-                    && pane.controller.protectionSupported
-                    && !pane.controller.batteryOperationActive
-                    && !pane.controller.actionInFlight
-                onClicked: pane.controller.applyThresholds()
-            }
-
-            Ui.ActionButton {
-                Layout.fillWidth: true
-                label: pane.protection.charge_once_active
-                    ? "Charging to 100%" : "Charge to 100% once"
-                tone: pane.protection.charge_once_active ? "active" : "normal"
-                enabled: pane.battery.plugged
-                    && !pane.protection.charge_once_active
-                    && !pane.controller.batteryOperationActive
-                    && pane.controller.protectionSupported
-                    && !pane.controller.actionInFlight
-                onClicked: pane.controller.chargeOnce()
-            }
+        Ui.ActionButton {
+            Layout.fillWidth: true
+            label: pane.protection.charge_once_active
+                ? "Charging to 100%" : "Charge to 100% once"
+            tone: pane.protection.charge_once_active ? "active" : "normal"
+            enabled: pane.battery.plugged
+                && !pane.protection.charge_once_active
+                && !pane.controller.batteryOperationActive
+                && !pane.controller.thresholdOperationActive
+                && pane.controller.protectionSupported
+                && !pane.controller.actionInFlight
+            onClicked: pane.controller.chargeOnce()
         }
 
         Ui.FieldLabel {
@@ -145,6 +141,7 @@ Column {
                 enabled: pane.controller.inhibitionSupported
                     && (!pane.controller.batteryOperationActive
                         || pane.controller.chargingInhibited)
+                    && !pane.controller.thresholdOperationActive
                     && !pane.controller.actionInFlight
                 onClicked: pane.controller.setChargingInhibited(
                     !pane.controller.chargingInhibited)
@@ -159,6 +156,7 @@ Column {
                     && pane.battery.plugged
                     && (!pane.controller.batteryOperationActive
                         || pane.controller.calibrating)
+                    && !pane.controller.thresholdOperationActive
                     && !pane.controller.actionInFlight
                 onClicked: pane.controller.toggleCalibration()
             }
@@ -178,9 +176,10 @@ Column {
             value: pane.controller.draftWarningPercent
             valueText: Math.round(value) + "%"
             enabled: !pane.controller.actionInFlight
-            onEdited: function (_dragging) {
-                pane.controller.updateWarningPercent(Math.round(value));
+            onEdited: function (dragging) {
+                pane.controller.updateWarningPercent(Math.round(value), dragging);
             }
+            onEditingFinished: pane.controller.finishAlertEditing()
         }
 
         Ui.LabeledValueSlider {
@@ -192,9 +191,10 @@ Column {
             value: pane.controller.draftCriticalPercent
             valueText: Math.round(value) + "%"
             enabled: !pane.controller.actionInFlight
-            onEdited: function (_dragging) {
-                pane.controller.updateCriticalPercent(Math.round(value));
+            onEdited: function (dragging) {
+                pane.controller.updateCriticalPercent(Math.round(value), dragging);
             }
+            onEditingFinished: pane.controller.finishAlertEditing()
         }
 
         Ui.ToggleRow {
@@ -226,14 +226,14 @@ Column {
             font.pixelSize: Ui.Theme.fontSizeCaption
         }
 
-        Ui.ActionButton {
+        Ui.FieldLabel {
             Layout.fillWidth: true
-            label: pane.controller.alertDraftDirty ? "Save alert policy" : "Alert policy saved"
-            tone: pane.controller.alertDraftDirty ? "accent" : "normal"
-            enabled: pane.controller.alertDraftDirty
-                && pane.controller.alertDraftValid
-                && !pane.controller.actionInFlight
-            onClicked: pane.controller.applyAlertPolicy()
+            text: pane.controller.alertSaveStatus
+            color: !pane.controller.alertDraftValid
+                    || pane.controller.alertSaveError.length > 0
+                ? Ui.Theme.danger
+                : (pane.controller.alertOperationActive
+                    ? Ui.Theme.active : Ui.Theme.mutedText)
         }
     }
 }
