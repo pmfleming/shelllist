@@ -1,4 +1,5 @@
 module Shelllist.Activity
+internal ActivityHeaderButton ActivityHeaderButton.qml
 ActivityBackend 1.0 ActivityBackend.qml
 ActivityContent 1.0 ActivityContent.qml
 ActivityController 1.0 ActivityController.qml

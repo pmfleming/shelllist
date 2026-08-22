@@ -42,9 +42,22 @@
   "external_modules": ["QtTest"],
   "external_types": ["GlobalShortcut", "IconImage", "IpcHandler", "PanelWindow", "RectangularShadow", "Region", "Settings", "Shortcut", "SignalSpy", "TestCase", "Variants"],
   "tools": {
-    "qmllint": { "check": false },
-    "qmltestrunner": { "check": false },
-    "runtime": { "check": false }
+    "qmllint": {
+      "command": "tests/run-qmlquality-lint.sh",
+      "check": true,
+      "import_paths": ["qml"]
+    },
+    "qmltestrunner": {
+      "command": "tests/run-qmlquality-tests.sh",
+      "check": true,
+      "environment": { "QT_QPA_PLATFORM": "offscreen" }
+    },
+    "runtime": {
+      "command": "bash",
+      "check": true,
+      "arguments": ["tests/run-runtime-smoke.sh"],
+      "timeout_ms": 30000
+    }
   },
   "suppressions": [],
   "exclude": []

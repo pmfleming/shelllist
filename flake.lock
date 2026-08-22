@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786984324,
-        "narHash": "sha256-w0PZjytlrkF6rB7LOrCfg3gpL8pfc1gkrnkbOEC4rUE=",
+        "lastModified": 1787353375,
+        "narHash": "sha256-7FY88q54EgtsOyu07gTbDCUNYUUFMXcX+W40XeVtQ4Q=",
         "ref": "main",
-        "rev": "eb5d37ffa55b43b055ad355bf3a9f9fa48401589",
-        "revCount": 28,
+        "rev": "4522b2dd17e53ee0cff992666e0cbee03f2c558a",
+        "revCount": 32,
         "type": "git",
         "url": "file:../app-daemon"
       },

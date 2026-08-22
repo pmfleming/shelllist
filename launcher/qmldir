@@ -1,4 +1,5 @@
 module Shelllist.Launcher
+AppApi 1.0 AppApi.js
 ApplicationBackend 1.0 ApplicationBackend.qml
 ApplicationContent 1.0 ApplicationContent.qml
 ApplicationController 1.0 ApplicationController.qml

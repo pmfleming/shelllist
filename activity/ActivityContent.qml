@@ -29,33 +29,6 @@ Ui.ChooserSurface {
             + String(shifted.getUTCMinutes()).padStart(2, "0");
     }
 
-    component HeaderButton: Rectangle {
-        id: headerButton
-        required property string label
-        signal triggered
-        width: Math.max(38, buttonText.implicitWidth + 18)
-        height: 34
-        radius: Ui.Theme.controlRadius
-        color: pointer.containsMouse ? Ui.Theme.hover : Ui.Theme.controlBackground
-        border.color: Ui.Theme.controlBorder
-        Text {
-            id: buttonText
-            anchors.centerIn: parent
-            text: headerButton.label
-            color: Ui.Theme.text
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
-            font.weight: Ui.Theme.fontWeightDemiBold
-        }
-        MouseArea {
-            id: pointer
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: headerButton.triggered()
-        }
-    }
-
     Column {
         anchors.fill: parent
         anchors.margins: Ui.Theme.contentMargin
@@ -80,8 +53,8 @@ Ui.ChooserSurface {
                 id: headerActions
                 height: parent.height
                 spacing: Ui.Theme.spacingSm
-                HeaderButton { label: "Today"; onTriggered: content.controller.goToToday() }
-                HeaderButton { label: content.controller.activity.syncing ? "Syncing…" : "Refresh"; onTriggered: content.controller.refresh() }
+                ActivityHeaderButton { label: "Today"; onTriggered: content.controller.goToToday() }
+                ActivityHeaderButton { label: content.controller.activity.syncing ? "Syncing…" : "Refresh"; onTriggered: content.controller.refresh() }
             }
         }
 
@@ -123,7 +96,7 @@ Ui.ChooserSurface {
                     Row {
                         width: parent.width
                         height: 36
-                        HeaderButton { label: "‹"; onTriggered: content.controller.shiftMonth(-1) }
+                        ActivityHeaderButton { label: "‹"; onTriggered: content.controller.shiftMonth(-1) }
                         Text {
                             width: parent.width - 2 * 38
                             anchors.verticalCenter: parent.verticalCenter
@@ -134,7 +107,7 @@ Ui.ChooserSurface {
                             font.pixelSize: Ui.Theme.fontSizeHeading
                             font.weight: Ui.Theme.fontWeightDemiBold
                         }
-                        HeaderButton { label: "›"; onTriggered: content.controller.shiftMonth(1) }
+                        ActivityHeaderButton { label: "›"; onTriggered: content.controller.shiftMonth(1) }
                     }
 
                     Row {
@@ -238,12 +211,12 @@ Ui.ChooserSurface {
                                     font.pixelSize: Ui.Theme.fontSizeLabel
                                     font.weight: Ui.Theme.fontWeightDemiBold
                                 }
-                                HeaderButton {
+                                ActivityHeaderButton {
                                     id: dndButton
                                     label: content.controller.notifications.dnd ? "DND on" : "DND off"
                                     onTriggered: content.controller.toggleDnd()
                                 }
-                                HeaderButton {
+                                ActivityHeaderButton {
                                     id: clearButton
                                     label: "Dismiss all"
                                     enabled: content.controller.notificationHistory.length > 0
@@ -281,11 +254,11 @@ Ui.ChooserSurface {
                                 width: parent.width
                                 height: 32
                                 spacing: Ui.Theme.spacingSm
-                                HeaderButton {
+                                ActivityHeaderButton {
                                     label: "Refresh"
                                     onTriggered: content.controller.reloadNotificationHistory()
                                 }
-                                HeaderButton {
+                                ActivityHeaderButton {
                                     label: content.controller.notificationHistoryLoading
                                         ? "Loading…" : "Load more"
                                     enabled: content.controller.notificationHistoryHasMore
@@ -439,7 +412,7 @@ Ui.ChooserSurface {
                                 font.pixelSize: Ui.Theme.fontSizeBody
                             }
                         }
-                        HeaderButton {
+                        ActivityHeaderButton {
                             id: addTodo
                             label: "+"
                             onTriggered: {
