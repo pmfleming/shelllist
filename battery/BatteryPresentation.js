@@ -1,5 +1,7 @@
 .pragma library
-.import "../qml/Shelllist/Core/Duration.js" as Duration
+// This file is loaded through the Shelllist.Battery module symlink, so resolve
+// shared scripts relative to that logical module URL rather than the source tree.
+.import "../Core/Duration.js" as Duration
 
 function clamp(value, minimum, maximum) {
     return Math.max(minimum, Math.min(maximum, Number(value) || 0));
