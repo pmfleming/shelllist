@@ -713,6 +713,17 @@
             touch $out
           '';
 
+          applicationResources = pkgs.runCommand "shelllist-application-resources"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-application-resources.js} \
+              ${./launcher/ApplicationResources.js} \
+              ${./contracts/app-resource-ui-contract.fixture.json} \
+              ${inputs."app-daemon"}/src/model.rs
+            touch $out
+          '';
+
           applicationLifecycle = pkgs.runCommand "shelllist-application-lifecycle"
             {
               nativeBuildInputs = [ pkgs.nodejs ];
