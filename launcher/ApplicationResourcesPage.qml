@@ -8,6 +8,10 @@ Ui.DetailFlickable {
     required property ApplicationController controller
     required property var application
     required property real uiScale
+    readonly property var historyPoints: controller.resourceHistory || []
+    readonly property var latestHistoryPoint: historyPoints.length > 0
+        ? historyPoints[historyPoints.length - 1] : null
+    readonly property var detailResource: application.running ? application : latestHistoryPoint || ({})
 
     Text {
         visible: page.application.running
@@ -30,6 +34,14 @@ Ui.DetailFlickable {
         wrapMode: Text.Wrap
         font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
+    }
+
+    ApplicationResourceMetadata {
+        visible: page.application.running || page.latestHistoryPoint !== null
+        width: parent.width
+        application: page.application
+        latestPoint: page.latestHistoryPoint
+        uiScale: page.uiScale
     }
 
     Text {
@@ -59,5 +71,13 @@ Ui.DetailFlickable {
         height: 120
         text: "No resource measurements in the last 30 minutes"
         font.pixelSize: Ui.Theme.fontSizeBody
+    }
+
+    ApplicationResourceDetails {
+        visible: page.application.running || page.latestHistoryPoint !== null
+        width: parent.width
+        resource: page.detailResource
+        historical: !page.application.running
+        uiScale: page.uiScale
     }
 }

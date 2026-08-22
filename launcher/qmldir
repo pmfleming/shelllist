@@ -10,6 +10,10 @@ ApplicationListPane 1.0 ApplicationListPane.qml
 ApplicationListRow 1.0 ApplicationListRow.qml
 ApplicationPage 1.0 ApplicationPage.qml
 ApplicationProvider 1.0 ApplicationProvider.qml
+ApplicationResourceBadge 1.0 ApplicationResourceBadge.qml
+ApplicationResourceDetails 1.0 ApplicationResourceDetails.qml
 ApplicationResourceGraph 1.0 ApplicationResourceGraph.qml
 ApplicationResourceHistory 1.0 ApplicationResourceHistory.qml
+ApplicationResourceMetadata 1.0 ApplicationResourceMetadata.qml
+ApplicationResources 1.0 ApplicationResources.js
 ApplicationResourcesPage 1.0 ApplicationResourcesPage.qml
