@@ -26,6 +26,7 @@ Ui.ProviderChooserController {
     property string activeHistoryRequestId: ""
     property double historyWindowStartMs: 0
     property double historyWindowEndMs: 0
+    property string historyRange: "30m"
     property int historyRequestSequence: 0
     property string activeSettingsRequestId: ""
     readonly property bool historyInFlight: activeHistoryRequestId.length > 0
@@ -133,7 +134,15 @@ Ui.ProviderChooserController {
         backend.query(id, text, categoryFilter, generation, limit, refreshCatalog);
     }
     function resourceHistorySinceMs(): double {
-        return Date.now() - 30 * 60 * 1000;
+        const durations = { "30m": 30 * 60 * 1000, "2h": 2 * 60 * 60 * 1000,
+            "24h": 24 * 60 * 60 * 1000 };
+        return Date.now() - (durations[historyRange] || durations["30m"]);
+    }
+    function selectHistoryRange(value: string): void {
+        if (!["30m", "2h", "24h"].includes(value) || historyRange === value)
+            return;
+        historyRange = value;
+        requestResourceHistory(true);
     }
     function nextHistoryRequestId(): string {
         historyRequestSequence += 1;
@@ -149,7 +158,7 @@ Ui.ProviderChooserController {
         historyWindowEndMs = Date.now();
         pendingResourceHistory = [];
         activeHistoryRequestId = nextHistoryRequestId();
-        backend.history(activeHistoryRequestId, targetId, historyWindowStartMs, null, 120);
+        backend.history(activeHistoryRequestId, targetId, historyWindowStartMs, null, 1000);
     }
     function applyResourceHistory(id: string, history: var): void {
         if (id !== activeHistoryRequestId || (history.target_id || "") !== historyTargetId)
@@ -158,7 +167,7 @@ Ui.ProviderChooserController {
         if (history.has_more && history.next_cursor) {
             activeHistoryRequestId = nextHistoryRequestId();
             backend.history(activeHistoryRequestId, historyTargetId,
-                historyWindowStartMs, history.next_cursor, 120);
+                historyWindowStartMs, history.next_cursor, 1000);
             return;
         }
         activeHistoryRequestId = "";

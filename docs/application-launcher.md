@@ -102,9 +102,11 @@ A 20-second frontend watchdog clears uncertain state and requeries if a terminal
 
 ## Resources
 
-While the launcher is visible, the controller refreshes current metrics every two seconds. Opening Resources requests the latest 30 minutes of history and refreshes it every 15 seconds.
+While the launcher is visible, the controller refreshes current metrics every two seconds. Opening Resources requests history every 15 seconds. The user can select a 30-minute, two-hour, or 24-hour range; cursor pagination retrieves the complete range.
 
-The UI presents only capabilities reported by the daemon. Depending on attribution support, this can include CPU, proportional or resident memory, GPU activity/memory, physical and logical I/O, permanent and temporary application data, process/thread counts, file footprint, and estimated energy. Missing capabilities are not synthesized in QML.
+The Resources tab groups synchronized average and peak timelines for compute, memory, GPU, physical and logical I/O, process activity, network connections/traffic, and estimated energy. Slowly changing application-data and referenced-file footprints use composition bars. Hovering a timeline shows values at the nearest real timestamp, and gaps in sampling remain visible. Retained history remains available after an application exits.
+
+The UI presents only capabilities reported by the daemon. Unsupported GPU, storage, network-byte, and energy measurements are hidden or explicitly labelled unavailable rather than synthesized as zero. Attribution method, sample interval, coverage, memory source, energy confidence, and shared-resource warnings appear above the graphs. An expandable technical section exposes every current field or every field from the latest historical bucket.
 
 ## Intentional limits
 

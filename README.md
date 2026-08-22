@@ -46,7 +46,7 @@ Common bar interactions:
 
 ### Applications
 
-The launcher lists standards-visible desktop entries and groups live Hyprland windows with their applications. Apps can be browsed as **Shell**, **Browser**, **Code**, **Media**, or **Text**. Choosing a category in an app's Settings also chooses its default workspace: the five categories map to workspaces 1–5 respectively. `Enter` focuses the most-recent instance or launches the application; `Shift+Enter` launches another instance. Details expose running windows, desktop actions, close actions, 30-minute resource graphs, and the combined category/workspace setting.
+The launcher lists standards-visible desktop entries and groups live Hyprland windows with their applications. Apps can be browsed as **Shell**, **Browser**, **Code**, **Media**, or **Text**. Choosing a category in an app's Settings also chooses its default workspace: the five categories map to workspaces 1–5 respectively. `Enter` focuses the most-recent instance or launches the application; `Shift+Enter` launches another instance. Details expose running windows, desktop actions, close actions, interactive 30-minute, two-hour, and 24-hour resource graphs, and the combined category/workspace setting.
 
 Launch-only desktop entries remain shortcuts and do not claim windows or resource usage. Application actions are asynchronous and protected by a frontend recovery timeout if a terminal backend event is lost.
 
