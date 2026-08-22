@@ -14,6 +14,30 @@ function radioForSnapshot(snapshot) {
         adapter_count: adapters.length, rfkill_present: false, soft_blocked: false, hard_blocked: false };
 }
 
+function activeRequests(snapshot, groupName) {
+    const group = snapshot ? snapshot[groupName] : null;
+    return group && Array.isArray(group.active) ? group.active : [];
+}
+
+function requestState(snapshot) {
+    const operations = activeRequests(snapshot, "operations");
+    const scans = activeRequests(snapshot, "scans");
+    const pairing = activeRequests(snapshot, "pairing");
+    return {
+        operations: operations,
+        activeScan: scans.length > 0 ? scans[0] : null,
+        pairingPrompt: pairing.length > 0 ? pairing[pairing.length - 1] : null
+    };
+}
+
+function pairingStatus(prompt, envelope) {
+    if (prompt)
+        return prompt.response_required
+            ? "Pairing confirmation required" : "Complete pairing on the Bluetooth device";
+    return envelope.data && envelope.data.reason === "timeout"
+        ? "Bluetooth pairing request timed out" : "";
+}
+
 function pairingTransition(currentPrompt, envelope) {
     const event = envelope || ({});
     const prompt = event.data || ({});
@@ -81,6 +105,10 @@ function devicesForView(devices, scope, policy) {
         ? function (device) { return isDiscoverableDevice(device, showRecent); }
         : isKnownDevice;
     return (devices || []).filter(predicate);
+}
+
+function adapterLabel(adapter) {
+    return adapter.alias || adapter.name || "Bluetooth adapter";
 }
 
 function radioStatus(radio, searchAllDevices, scanning, count) {

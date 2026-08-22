@@ -1,6 +1,41 @@
 .pragma library
 .import "WifiPresentation.js" as Presentation
 
+function powerStatus(activeStatus, radios, enabled) {
+    const nextRadios = Object.assign({}, radios, { wireless_enabled: enabled });
+    const current = activeStatus || ({});
+    return Object.assign({}, current, {
+        enabled: enabled,
+        radios: nextRadios,
+        active: enabled ? !!current.active : false
+    });
+}
+
+function bandTransition(event, requestId) {
+    if (event.event === "subscribed" || (requestId && event.request_id !== requestId))
+        return { stage: "ignored" };
+    if (["started", "progress"].includes(event.event))
+        return { stage: "running", message: event.message || "Applying Wi-Fi band selection…" };
+    if (event.event !== "succeeded")
+        return { stage: "failed", message: event.message
+            || (event.event === "cancelled" ? "Wi-Fi band change cancelled" : "Wi-Fi band change failed") };
+    const result = event.result || ({});
+    return { stage: "completed", band: result.band || ({}),
+        message: result.message || "Wi-Fi band selection updated" };
+}
+
+function secretTransition(event, mode, requestId) {
+    if (event.event === "requested")
+        return { stage: "requested" };
+    if (event.event === "cancelled" && mode === "daemon-secret" && requestId === event.request_id)
+        return { stage: "cancelled", message: "NetworkManager cancelled the Wi-Fi secret request." };
+    if (event.event !== "persistence")
+        return { stage: "ignored" };
+    return { stage: "persistence", message: event.status === "stored"
+        ? "Wi-Fi secret saved to the keyring."
+        : "Wi-Fi secret was accepted but could not be saved: " + event.status };
+}
+
 function profileForAccessPoint(ap) {
     if (!ap)
         return null;

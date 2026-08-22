@@ -127,30 +127,21 @@ Ui.ProviderChooserController {
         return screenshotCapture.captureRegion(x, y, width, height);
     }
     function applyAudioSnapshot(devices) { audioDevices = devices || []; audioStatus = ""; }
-    function activeRequests(snapshot: var, groupName: string): var {
-        const group = snapshot ? snapshot[groupName] : null;
-        return group && Array.isArray(group.active) ? group.active : [];
-    }
-    function latestRequest(requests: var): var {
-        return requests.length > 0 ? requests[requests.length - 1] : null;
-    }
     function applyRequestSnapshot(requests: var): void {
-        const operations = activeRequests(requests, "operations");
-        const scans = activeRequests(requests, "scans");
-        operationState.restore(operations);
-        activeScan = scans.length > 0 ? scans[0] : null;
+        const state = BluetoothFlow.requestState(requests);
+        operationState.restore(state.operations);
+        activeScan = state.activeScan;
         scanRequested = !!activeScan;
-        pairingPrompt = latestRequest(activeRequests(requests, "pairing"));
+        pairingPrompt = state.pairingPrompt;
         pairingInput = "";
         if (pairingPrompt) {
             status = pairingPrompt.response_required
                 ? "Recovered Bluetooth pairing confirmation"
                 : "Recovered active Bluetooth pairing";
             pairingInteractionRequested();
-            return;
-        }
-        if (operations.length > 0)
+        } else if (state.operations.length > 0) {
             status = "Recovered active Bluetooth operation";
+        }
     }
     function applySnapshot(snapshot) {
         radio = BluetoothFlow.radioForSnapshot(snapshot);
@@ -188,7 +179,7 @@ Ui.ProviderChooserController {
         if (!adapter || !adapter.key || backend.requestRunning)
             return false;
         status = (value ? "Turning on " : "Turning off ")
-            + (adapter.alias || adapter.name || "Bluetooth adapter") + "…";
+            + BluetoothFlow.adapterLabel(adapter) + "…";
         return backend.setPowered(!!value, adapter.key);
     }
     function toggleScan() {
@@ -244,15 +235,13 @@ Ui.ProviderChooserController {
     }
     function handlePairingEvent(event) {
         const transition = BluetoothFlow.pairingTransition(pairingPrompt, event);
-        if (!transition.changed) return;
+        if (!transition.changed)
+            return;
         pairingPrompt = transition.prompt;
         pairingInput = "";
-        if (pairingPrompt) {
-            status = pairingPrompt.response_required ? "Pairing confirmation required" : "Complete pairing on the Bluetooth device";
+        status = BluetoothFlow.pairingStatus(pairingPrompt, event) || status;
+        if (pairingPrompt)
             pairingInteractionRequested();
-        } else if (event.data && event.data.reason === "timeout") {
-            status = "Bluetooth pairing request timed out";
-        }
     }
     function respondPairing(accept) {
         if (!pairingPromptOpen || !pairingPrompt.response_required) return false;

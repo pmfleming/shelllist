@@ -128,12 +128,10 @@ Ui.ProviderChooserController {
     function resourceHistorySinceMs(): double {
         return Date.now() - 30 * 60 * 1000;
     }
-    function historyRequestCovered(targetId: string, forceRefresh: var): bool {
-        return targetId === historyTargetId && (historyInFlight || forceRefresh !== true);
-    }
     function requestResourceHistory(forceRefresh: var): void {
         const targetId = resourcesVisible && selectedResult ? selectedResult.id : "";
-        if (!targetId || historyRequestCovered(targetId, forceRefresh))
+        if (!targetId || Lifecycle.historyRequestCovered(
+                targetId, historyTargetId, historyInFlight, forceRefresh))
             return;
         historyTargetId = targetId;
         activeHistoryRequestId = "history-" + Date.now();
@@ -174,14 +172,14 @@ Ui.ProviderChooserController {
     function applyCompletedOperation(transition: var, operation: var): void {
         const completedRequest = activeRequest;
         const action = completedRequest.actionId;
-        const completed = transition.status === "completed";
-        const closing = Presentation.isCloseAction(action);
-        if (completed && closing)
+        const disposition = Lifecycle.completionDisposition(
+            transition.status, Presentation.isCloseAction(action));
+        if (disposition.removeInstances)
             removeClosedInstances(completedRequest, action);
         clearActiveAction();
-        status = operation.message || (completed
+        status = operation.message || (disposition.completed
             ? "Application action completed" : "Application action " + transition.status);
-        if (completed && !closing)
+        if (disposition.closeSurface)
             closeWindowRequested();
     }
     function applyOperation(id: string, operation: var): void {
@@ -205,22 +203,23 @@ Ui.ProviderChooserController {
         });
         replaceProviderResults(next, false);
     }
+    function clearFailedRequest(kind: string, id: string): void {
+        if (kind === "settings" && id === activeSettingsRequestId)
+            activeSettingsRequestId = "";
+        else if (kind === "action")
+            clearActiveAction();
+    }
     function handleFailure(id: string, message: string): void {
-        if (id.indexOf("history-") === 0) {
+        const kind = Lifecycle.requestKind(id);
+        if (kind === "history") {
             if (id === activeHistoryRequestId)
                 activeHistoryRequestId = "";
             return;
         }
-        if (id.indexOf("settings-") === 0 && id === activeSettingsRequestId)
-            activeSettingsRequestId = "";
-        if (id.indexOf("action-") === 0)
-            clearActiveAction();
-        if (isActiveQuery(id)) {
+        clearFailedRequest(kind, id);
+        if (isActiveQuery(id))
             clearProviderResults();
-            status = message;
-        } else {
-            status = message;
-        }
+        status = message;
     }
     function handleTransportFailure(message: string): void {
         clearActiveAction();

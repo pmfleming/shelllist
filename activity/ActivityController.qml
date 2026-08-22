@@ -2,6 +2,7 @@ import QtQuick
 import Shelllist.Core as Core
 import Shelllist.Ui as Ui
 import "ActivityApi.js" as ActivityApi
+import "ActivityFlow.js" as Flow
 
 Ui.ChooserController {
     id: controller
@@ -31,34 +32,15 @@ Ui.ChooserController {
         return eventOverlapsDate(event, selectedDate);
     })
     readonly property var selectedTodos: todos.filter(function (todo) {
-        if (todo.due_date)
-            return todo.due_date === selectedDateKey;
-        if (todo.due_unix_ms !== null && todo.due_unix_ms !== undefined)
-            return dateKey(new Date(todo.due_unix_ms)) === selectedDateKey;
-        return selectedDateKey === dateKey(new Date()) && !todo.completed;
+        return Flow.todoVisible(todo, selectedDateKey, dateKey(new Date()));
     })
 
     signal focusTodoInputRequested
 
-    function dateKey(value: date): string {
-        const year = value.getFullYear();
-        const month = String(value.getMonth() + 1).padStart(2, "0");
-        const day = String(value.getDate()).padStart(2, "0");
-        return year + "-" + month + "-" + day;
-    }
-
-    function startOfDay(value: date): date {
-        return new Date(value.getFullYear(), value.getMonth(), value.getDate());
-    }
-
+    function dateKey(value: date): string { return Flow.dateKey(value); }
+    function startOfDay(value: date): date { return Flow.startOfDay(value); }
     function eventOverlapsDate(event: var, value: date): bool {
-        if (event.all_day && event.start_date) {
-            const end = event.end_date || event.start_date;
-            return event.start_date <= dateKey(value) && end > dateKey(value);
-        }
-        const start = startOfDay(value).getTime();
-        const end = start + 24 * 60 * 60 * 1000;
-        return Number(event.end_unix_ms) > start && Number(event.start_unix_ms) < end;
+        return Flow.eventOverlapsDate(event, value);
     }
 
     function monthRange(): var {
@@ -94,6 +76,17 @@ Ui.ChooserController {
         rangeLoading = false;
     }
 
+    function applyDomainEvent(kind: string, data: var): void {
+        if (kind === "activity") {
+            activity = data;
+            scheduleRangeQuery();
+        } else if (kind === "notifications") {
+            notifications = data;
+            scheduleNotificationHistory();
+        } else if (kind === "notificationActive") {
+            notificationActive = data;
+        }
+    }
     function handleEvent(event: var): void {
         const compatibility = Core.ApiEnvelope.compatibilityError(event,
             ActivityApi.protocol, ActivityApi.version, "bar-daemon");
@@ -101,21 +94,11 @@ Ui.ChooserController {
             lastError = compatibility;
             return;
         }
-        if (event.event === "lagged") {
+        const kind = Flow.eventKind(event, ActivityApi.streams);
+        if (kind === "lagged")
             backend.snapshot();
-            return;
-        }
-        if (event.event !== "subscribed" && event.event !== "changed")
-            return;
-        if (event.stream === ActivityApi.streams.activity) {
-            activity = event.data || ({});
-            scheduleRangeQuery();
-        } else if (event.stream === ActivityApi.streams.notifications) {
-            notifications = event.data || ({});
-            scheduleNotificationHistory();
-        } else if (event.stream === ActivityApi.streams.notificationActive) {
-            notificationActive = event.data || ({});
-        }
+        else if (kind)
+            applyDomainEvent(kind, event.data || ({}));
     }
 
     function scheduleRangeQuery(): void { rangeQueryDebounce.restart(); }

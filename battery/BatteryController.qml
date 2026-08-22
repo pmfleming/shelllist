@@ -2,6 +2,7 @@ import QtQuick
 import Shelllist.Core as Core
 import Shelllist.Ui as Ui
 import "BatteryApi.js" as BatteryApi
+import "BatteryFlow.js" as Flow
 import "BatteryPresentation.js" as Presentation
 
 Ui.ChooserController {
@@ -88,29 +89,20 @@ Ui.ChooserController {
     }
 
     function syncBatterySelection(): void {
-        const devices = battery.devices || [];
-        if (selectedDeviceIndex >= devices.length)
-            selectedDeviceIndex = 0;
-        selectedDevice = devices.length > selectedDeviceIndex
-            ? devices[selectedDeviceIndex] : null;
-        policy = battery.policy || ({});
-        protection = selectedDevice && selectedDevice.protection
-            ? selectedDevice.protection : (battery.protection || ({}));
+        const next = Flow.selection(battery, selectedDeviceIndex);
+        selectedDeviceIndex = next.index;
+        selectedDevice = next.device;
+        policy = next.policy;
+        protection = next.protection;
     }
 
     function applyBattery(value: var): void {
         const nextBattery = value || ({ available: false, percentage: 0, devices: [] });
-        const historySummary = nextBattery.history || ({});
-        const nextHistoryTimestamp = Number(historySummary.latest_timestamp_ms || 0);
-        const historyChanged = nextHistoryTimestamp > 0
-            && nextHistoryTimestamp !== Number(batteryHistory.latest_timestamp_ms || 0);
-        const chargeChanged = Number(historySummary.last_charge_timestamp_ms || 0) > 0
-            && Number(historySummary.last_charge_timestamp_ms)
-                !== Number(batteryHistory.last_charge_timestamp_ms || 0);
+        const changes = Flow.historyChanges(nextBattery, batteryHistory);
         battery = nextBattery;
-        if (uiActive && historyChanged)
+        if (uiActive && changes.history)
             backend.history();
-        if (uiActive && chargeChanged)
+        if (uiActive && changes.charge)
             requestEnergyPeriod("last-charge", true);
         syncBatterySelection();
         syncThresholdDraft();
@@ -156,6 +148,15 @@ Ui.ChooserController {
         syncThresholdDraft();
     }
 
+    function applyDomainEvent(kind: string, data: var): void {
+        const handlers = ({
+            battery: applyBattery,
+            powerProfile: applyPowerProfile,
+            powerSleep: applyPowerSleep
+        });
+        if (handlers[kind])
+            handlers[kind](data);
+    }
     function handleEvent(event: var): void {
         const compatibility = Core.ApiEnvelope.compatibilityError(event,
             BatteryApi.protocol, BatteryApi.version, "bar-daemon");
@@ -163,19 +164,11 @@ Ui.ChooserController {
             lastError = compatibility;
             return;
         }
-        if (event.event === "lagged") {
+        const kind = Flow.eventKind(event, BatteryApi.streams);
+        if (kind === "lagged")
             refreshAll();
-            return;
-        }
-        if ((event.event === "subscribed" || event.event === "changed")
-                && event.stream === BatteryApi.streams.battery)
-            applyBattery(event.data || ({}));
-        if ((event.event === "subscribed" || event.event === "changed")
-                && event.stream === BatteryApi.streams.powerProfile)
-            applyPowerProfile(event.data || ({}));
-        if ((event.event === "subscribed" || event.event === "changed")
-                && event.stream === BatteryApi.streams.powerSleep)
-            applyPowerSleep(event.data || ({}));
+        else if (kind)
+            applyDomainEvent(kind, event.data || ({}));
     }
 
     function startOperation(started: bool): bool {
@@ -325,30 +318,32 @@ Ui.ChooserController {
     function requestEnergyPeriod(period: string, forceRefresh: bool): void {
         if (!uiActive || energyRequestsInFlight > 0)
             return;
-        const now = Date.now();
         const updated = period === "week" ? energyWeekUpdatedMs : energyLastChargeUpdatedMs;
-        if (!forceRefresh && now - updated < 60000)
+        const request = Flow.energyRequest(period, forceRefresh, Date.now(), updated,
+            Number(batteryHistory.last_charge_timestamp_ms || 0));
+        if (!request)
             return;
-        const weekSince = now - 7 * 24 * 60 * 60 * 1000;
-        const chargeSince = Number(batteryHistory.last_charge_timestamp_ms || 0);
         energyError = "";
         energyRequestsInFlight = 1;
-        energyBackend.overview(period,
-            period === "week" || chargeSince <= 0 ? weekSince : chargeSince);
+        energyBackend.overview(request.period, request.since);
     }
 
+    function storeEnergyOverview(period: string, overview: var): void {
+        const value = overview || ({ applications: [], total_energy_mwh: 0 });
+        if (period === "last-charge") {
+            energyLastCharge = value;
+            energyLastChargeUpdatedMs = Date.now();
+        } else {
+            energyWeek = value;
+            energyWeekUpdatedMs = Date.now();
+        }
+    }
     function applyEnergyOverview(id: string, overview: var): void {
         energyRequestsInFlight = 0;
         energyError = "";
         const returnedPeriod = id.indexOf("battery-energy-last-charge-") === 0
             ? "last-charge" : "week";
-        if (returnedPeriod === "last-charge") {
-            energyLastCharge = overview || ({ applications: [], total_energy_mwh: 0 });
-            energyLastChargeUpdatedMs = Date.now();
-        } else {
-            energyWeek = overview || ({ applications: [], total_energy_mwh: 0 });
-            energyWeekUpdatedMs = Date.now();
-        }
+        storeEnergyOverview(returnedPeriod, overview);
         if (returnedPeriod !== energyPeriod)
             requestEnergyPeriod(energyPeriod, false);
     }

@@ -122,6 +122,11 @@ ProviderChooserController {
     function promptMode(): string {
         return prompt.credentialOpen ? prompt.credentialMode : prompt.mode;
     }
+    function cancelPendingSecret(mode: string, requestId: string): bool {
+        if (mode !== "daemon-secret" || !requestId)
+            return true;
+        return connection.cancelSecret(requestId);
+    }
     function cancelPrompt(reason) {
         if (qr.open) {
             qr.close();
@@ -130,9 +135,7 @@ ProviderChooserController {
         if (!promptActive)
             return true;
         const mode = promptMode();
-        const requestId = prompt.secretRequestId;
-        const cancelled = mode !== "daemon-secret" || !requestId
-            || connection.cancelSecret(requestId);
+        const cancelled = cancelPendingSecret(mode, prompt.secretRequestId);
         prompt.cancel();
         console.info("shelllist wifi prompt closed mode=" + mode + " reason=" + (reason || "user")
             + " daemon_cancelled=" + cancelled);
@@ -179,12 +182,7 @@ ProviderChooserController {
     }
     function applyPowerResult(result) {
         const enabled = !!result.enabled;
-        const nextRadios = Object.assign({}, radios, { wireless_enabled: enabled });
-        activeStatus = Object.assign({}, activeStatus || ({}), {
-            enabled: enabled,
-            radios: nextRadios,
-            active: enabled ? !!(activeStatus && activeStatus.active) : false
-        });
+        activeStatus = Flow.powerStatus(activeStatus, radios, enabled);
         status = result.message || (enabled ? "Wi-Fi turned on" : "Wi-Fi turned off");
     }
 
@@ -206,55 +204,29 @@ ProviderChooserController {
         bandRequestId = result.request_id || "";
         status = result.message || "Wi-Fi band change started…";
     }
-    function ignoresBandEvent(event: var): bool {
-        return event.event === "subscribed"
-            || (bandRequestId.length > 0 && event.request_id !== bandRequestId);
-    }
-    function bandEventRunning(event: var): bool {
-        return ["started", "progress"].includes(event.event);
-    }
-    function bandFailureStatus(event: var): string {
-        if (event.message)
-            return event.message;
-        return event.event === "cancelled" ? "Wi-Fi band change cancelled" : "Wi-Fi band change failed";
-    }
-    function finishBandEvent(event: var): void {
-        bandRequestId = "";
-        if (event.event !== "succeeded") {
-            status = bandFailureStatus(event);
-            return;
-        }
-        const result = event.result || ({});
-        applyBandStatus(result.band || ({}));
-        status = result.message || "Wi-Fi band selection updated";
-        refresh();
-    }
     function handleBandEvent(event: var): void {
-        if (ignoresBandEvent(event))
+        const transition = Flow.bandTransition(event, bandRequestId);
+        if (transition.stage === "ignored")
             return;
-        if (!bandEventRunning(event)) {
-            finishBandEvent(event);
+        status = transition.message || status;
+        if (transition.stage === "running")
             return;
+        bandRequestId = "";
+        if (transition.stage === "completed") {
+            applyBandStatus(transition.band);
+            refresh();
         }
-        status = event.message || "Applying Wi-Fi band selection…";
     }
 
-    function secretRequestMatches(event: var): bool {
-        return promptMode() === "daemon-secret" && prompt.secretRequestId === event.request_id;
-    }
     function handleSecretEvent(event) {
-        if (event.event === "requested") {
+        const transition = Flow.secretTransition(
+            event, promptMode(), prompt.secretRequestId);
+        if (transition.stage === "requested")
             prompt.openDaemonSecretPrompt(event);
-            return;
-        }
-        if (event.event === "cancelled" && secretRequestMatches(event)) {
+        else if (transition.stage === "cancelled")
             prompt.cancel();
-            status = "NetworkManager cancelled the Wi-Fi secret request.";
-            return;
-        }
-        if (event.event === "persistence")
-            status = event.status === "stored" ? "Wi-Fi secret saved to the keyring."
-                : "Wi-Fi secret was accepted but could not be saved: " + event.status;
+        if (transition.message)
+            status = transition.message;
     }
 
     function applyStatusEvent(event) {
@@ -263,17 +235,25 @@ ProviderChooserController {
         activeStatus = event.status || null;
     }
 
+    function dispatchDaemonEvent(event: var): void {
+        const handler = daemonEventHandlerByStream[event.stream];
+        if (handler)
+            handler(event);
+        else
+            console.warn("shelllist nm event ignored stream=" + event.stream
+                + " event=" + event.event + " reason=no-handler");
+    }
+    function rejectDaemonEvent(event: var, error: var): void {
+        const stream = event && event.stream ? event.stream : "unknown";
+        console.error("shelllist nm event rejected stream=" + stream + " error=" + error);
+        status = "Could not parse nm-daemon event: " + error;
+    }
     function handleDaemonEvent(event) {
         try {
             Api.requireApiEvent(event);
-            const handler = daemonEventHandlerByStream[event.stream];
-            if (handler)
-                handler(event);
-            else
-                console.warn("shelllist nm event ignored stream=" + event.stream + " event=" + event.event + " reason=no-handler");
+            dispatchDaemonEvent(event);
         } catch (error) {
-            console.error("shelllist nm event rejected stream=" + (event && event.stream ? event.stream : "unknown") + " error=" + error);
-            status = "Could not parse nm-daemon event: " + error;
+            rejectDaemonEvent(event, error);
         }
     }
 

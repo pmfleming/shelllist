@@ -1,5 +1,6 @@
 import QtQuick
 import Shelllist.Ui as Ui
+import "ClipboardFlow.js" as Flow
 
 Ui.ProviderChooserController {
     id: clipboardController
@@ -111,20 +112,9 @@ Ui.ProviderChooserController {
         if (session.state === "hidden")
             hideRequested();
     }
-    function detailsMatchSelection(entry: var): bool {
-        if (!selectedEntry || !entry)
-            return false;
-        return entry.id === selectedEntry.id
-            || detailState.replacedSourceIds.includes(selectedEntry.id);
-    }
     function actionEntry() {
-        const details = detailState.value;
-        const detailedEntry = details ? details.entry : null;
-        if (!detailsMatchSelection(detailedEntry))
-            return selectedEntry;
-        return detailedEntry.id !== selectedEntry.id
-                || detailedEntry.revision >= selectedEntry.revision
-            ? detailedEntry : selectedEntry;
+        return Flow.detailedEntry(
+            selectedEntry, detailState.value, detailState.replacedSourceIds);
     }
     function runAction(actionName, fileIndex, entry) {
         const target = entry || actionEntry();
@@ -204,24 +194,13 @@ Ui.ProviderChooserController {
         else if (operation.action === "image-as-file")
             scheduleRefresh();
     }
-    function operationRunning(operation: var): bool {
-        return operation.status === "started" || operation.status === "progress";
-    }
     function terminalOperationHandled(operation: var): bool {
-        if (!operation || !operation.id || operationRunning(operation))
-            return false;
-        if (handledTerminalOperations[operation.id])
-            return true;
-        const next = Object.assign({}, handledTerminalOperations);
-        next[operation.id] = true;
-        const ids = Object.keys(next);
-        if (ids.length > 64)
-            delete next[ids[0]];
-        handledTerminalOperations = next;
-        return false;
+        const result = Flow.rememberTerminal(operation, handledTerminalOperations, 64);
+        handledTerminalOperations = result.handled;
+        return result.duplicate;
     }
     function updateOperationState(operation: var): void {
-        actionInFlight = operationRunning(operation);
+        actionInFlight = Flow.operationRunning(operation);
         activeAction = actionInFlight ? operation.action : "";
         activeOperationId = actionInFlight ? (operation.id || "") : "";
         status = operation.message || "Clipboard operation completed";

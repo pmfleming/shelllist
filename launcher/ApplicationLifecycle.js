@@ -1,5 +1,28 @@
 .pragma library
 
+function completionDisposition(status, closingAction) {
+    const completed = status === "completed";
+    return {
+        completed: completed,
+        removeInstances: completed && closingAction,
+        closeSurface: completed && !closingAction
+    };
+}
+
+function requestKind(id) {
+    if (id.indexOf("history-") === 0)
+        return "history";
+    if (id.indexOf("settings-") === 0)
+        return "settings";
+    if (id.indexOf("action-") === 0)
+        return "action";
+    return "other";
+}
+
+function historyRequestCovered(targetId, currentTargetId, inFlight, forceRefresh) {
+    return targetId === currentTargetId && (inFlight || forceRefresh !== true);
+}
+
 function expectedRevision(value) {
     if (typeof value !== "number")
         return null;

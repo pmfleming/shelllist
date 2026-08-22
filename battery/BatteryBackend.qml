@@ -99,38 +99,45 @@ Io.DaemonBackend {
         });
     }
 
-    function finish(id: string, envelope: var, transportError: string): void {
-        const backgroundRequest = id.startsWith("battery-snapshot-")
-            || id.startsWith("battery-history-");
-        const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            BatteryApi.protocol, BatteryApi.version, daemonName,
-            backgroundRequest ? "Battery refresh failed" : "Battery operation failed");
-        if (error.length > 0) {
-            if (backgroundRequest)
-                controller.refreshFailed(id, error);
-            else
-                controller.operationFailed(error);
-            return;
-        }
-        if (backgroundRequest)
+    function isBackgroundRequest(id: string): bool {
+        return id.startsWith("battery-snapshot-") || id.startsWith("battery-history-");
+    }
+    function applyData(data: var): void {
+        const values = Object.assign({}, data.snapshot || ({}), data);
+        const handlers = ({
+            battery: controller.applyBattery,
+            power_profile: controller.applyPowerProfile,
+            power_sleep: controller.applyPowerSleep,
+            history: controller.applyBatteryHistory
+        });
+        Object.keys(handlers).forEach(function (key) {
+            if (values[key])
+                handlers[key](values[key]);
+        });
+    }
+    function rejectRequest(id: string, background: bool, error: string): void {
+        if (background)
+            controller.refreshFailed(id, error);
+        else
+            controller.operationFailed(error);
+    }
+    function acceptRequest(id: string, background: bool): void {
+        if (background)
             controller.refreshFinished(id);
         else
             controller.operationFinished(id);
-        const data = envelope.data || ({});
-        if (data.snapshot && data.snapshot.battery)
-            controller.applyBattery(data.snapshot.battery);
-        if (data.snapshot && data.snapshot.power_profile)
-            controller.applyPowerProfile(data.snapshot.power_profile);
-        if (data.snapshot && data.snapshot.power_sleep)
-            controller.applyPowerSleep(data.snapshot.power_sleep);
-        if (data.battery)
-            controller.applyBattery(data.battery);
-        if (data.power_profile)
-            controller.applyPowerProfile(data.power_profile);
-        if (data.power_sleep)
-            controller.applyPowerSleep(data.power_sleep);
-        if (data.history)
-            controller.applyBatteryHistory(data.history);
+    }
+    function finish(id: string, envelope: var, transportError: string): void {
+        const background = isBackgroundRequest(id);
+        const error = Core.ApiEnvelope.responseError(envelope, transportError,
+            BatteryApi.protocol, BatteryApi.version, daemonName,
+            background ? "Battery refresh failed" : "Battery operation failed");
+        if (error.length > 0) {
+            rejectRequest(id, background, error);
+            return;
+        }
+        acceptRequest(id, background);
+        applyData(envelope.data || ({}));
     }
 
     onResponseReceived: function (id, envelope, transportError) {
@@ -138,7 +145,7 @@ Io.DaemonBackend {
     }
     onEventReceived: function (event) { controller.handleEvent(event); }
     onSendFailed: function (id, message) {
-        if (id.startsWith("battery-snapshot-") || id.startsWith("battery-history-"))
+        if (isBackgroundRequest(id))
             controller.refreshFailed(id, message);
         else
             controller.operationFailed(message);
