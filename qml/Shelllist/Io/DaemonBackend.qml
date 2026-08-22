@@ -18,6 +18,10 @@ Item {
     // Subscription ids returned by on-demand subscribe requests, keyed by the
     // request id that asked for them.
     property var extraSubscriptions: ({})
+    // Subscribe replies are asynchronous. A view can close before its reply;
+    // remember that intent so the eventual subscription is cancelled rather
+    // than becoming an orphan that keeps daemon work alive.
+    property var extraSubscriptionCancellations: ({})
 
     signal responseReceived(string id, var envelope, string transportError)
     signal eventReceived(var event)
@@ -93,31 +97,60 @@ Item {
     }
 
     function unsubscribeStreams(id: string): bool {
+        if (!id)
+            return false;
         const subscriptionId = extraSubscriptions[id] || "";
         const next = Object.assign({}, extraSubscriptions);
         delete next[id];
         extraSubscriptions = next;
-        if (subscriptionId.length === 0)
+        if (subscriptionId.length > 0)
+            return cancel(subscriptionId);
+        if (!isPending(id))
             return false;
-        return cancel(subscriptionId);
+        const cancellations = Object.assign({}, extraSubscriptionCancellations);
+        cancellations[id] = true;
+        extraSubscriptionCancellations = cancellations;
+        return true;
+    }
+
+    function extraSubscriptionId(envelope: var): string {
+        const subscription = envelope && envelope.data ? (envelope.data.subscription || ({})) : ({});
+        return subscription.id || "";
     }
 
     function rememberExtraSubscription(id: string, envelope: var): void {
-        const subscription = envelope && envelope.data ? (envelope.data.subscription || ({})) : ({});
-        if (!subscription.id)
+        const subscriptionId = extraSubscriptionId(envelope);
+        if (!subscriptionId)
             return;
         const next = Object.assign({}, extraSubscriptions);
-        next[id] = subscription.id;
+        next[id] = subscriptionId;
         extraSubscriptions = next;
+    }
+
+    function finishExtraSubscription(id: string, envelope: var, transportError: string): void {
+        const cancelWhenReady = !!extraSubscriptionCancellations[id];
+        if (cancelWhenReady) {
+            const cancellations = Object.assign({}, extraSubscriptionCancellations);
+            delete cancellations[id];
+            extraSubscriptionCancellations = cancellations;
+        }
+        if (transportError.length > 0) {
+            console.warn("shelllist " + daemonName + " subscribe failed id=" + id + " error=" + transportError);
+            return;
+        }
+        const subscriptionId = extraSubscriptionId(envelope);
+        if (cancelWhenReady) {
+            if (subscriptionId.length > 0)
+                cancel(subscriptionId);
+            return;
+        }
+        rememberExtraSubscription(id, envelope);
     }
 
     function acceptResponse(id: string, envelope: var, transportError: string): void {
         setPending(id, false);
         if (id.startsWith("subscribe-")) {
-            if (transportError.length > 0)
-                console.warn("shelllist " + daemonName + " subscribe failed id=" + id + " error=" + transportError);
-            else
-                rememberExtraSubscription(id, envelope);
+            finishExtraSubscription(id, envelope, transportError);
             return;
         }
         if (!isTransportControl(id))
@@ -130,6 +163,7 @@ Item {
         // A new session resubscribes from scratch, so stale ids must not be
         // cancelled later against a subscription that no longer exists.
         extraSubscriptions = ({});
+        extraSubscriptionCancellations = ({});
         transportFailed(message, lostRequestIds);
     }
 
