@@ -12,8 +12,6 @@ Item {
     property var resultModel: null
     property int selectedIndex: 0
     property string emptyText: ""
-    property Component toolbarComponent: null
-    property int toolbarHeight: 0
     property string status: ""
     property string icon: ""
     property bool signalIcon: false
@@ -46,13 +44,6 @@ Item {
             onKeyPressed: function (event) {
                 body.chooserController.navigation.handleListKey(event);
             }
-        }
-
-        Loader {
-            Layout.fillWidth: true
-            Layout.preferredHeight: active ? body.toolbarHeight : 0
-            active: body.toolbarComponent !== null
-            sourceComponent: body.toolbarComponent
         }
 
         StatusPanel {

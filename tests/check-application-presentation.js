@@ -22,6 +22,17 @@ equal(context.runningWindowIcon(1), "󰖯", "single-window icon");
 equal(context.runningWindowIcon(3), "󰖲", "multiple-window icon");
 equal(context.isCloseAction("close-window-2"), true, "window close action");
 equal(context.isCloseAction("activate"), false, "non-close action");
+const categoryFilters = context.categoryFilterOptions([
+    { value: "shell", label: "Shell", icon: "shell-icon" },
+    { value: "browser", label: "Browser", icon: "browser-icon" }
+]);
+equal(categoryFilters.length, 3, "category filters include All");
+equal(context.categoryFilterOption(categoryFilters, "browser").icon,
+    "browser-icon", "active category exposes its icon");
+equal(context.nextCategoryFilterOption(categoryFilters, "").value,
+    "shell", "category action advances from All");
+equal(context.nextCategoryFilterOption(categoryFilters, "browser").value,
+    "", "category action wraps to All");
 equal(context.pageStatus({ applications: [{}], has_more: true, hyprland_available: false }),
     "1 application · more available · launch only", "application page status");
 const retained = context.withoutClosedInstances({

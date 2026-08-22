@@ -30,7 +30,6 @@
     { "from": "shell/SurfaceRegistry.qml", "to": "qml/Shelllist/Battery/BatteryController.qml" },
     { "from": "launcher/ApplicationContent.qml", "to": "launcher/ApplicationListPane.qml" },
     { "from": "launcher/ApplicationContent.qml", "to": "launcher/ApplicationDetails.qml" },
-    { "from": "launcher/ApplicationListPane.qml", "to": "launcher/ApplicationCategoryTabs.qml" },
     { "from": "launcher/ApplicationDetails.qml", "to": "launcher/ApplicationSettingsPage.qml" },
     { "from": "bluetooth/BluetoothContent.qml", "to": "bluetooth/BluetoothDeviceListPane.qml" },
     { "from": "bluetooth/BluetoothContent.qml", "to": "bluetooth/BluetoothDeviceDetails.qml" },

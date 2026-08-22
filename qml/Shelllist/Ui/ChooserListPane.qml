@@ -32,8 +32,6 @@ ColumnLayout {
     property string status: ""
     property real listInset: 0
     property int bodySpacing: Theme.verticalSpacing(Theme.spacingSm, densityScale)
-    property Component toolbarComponent: null
-    property int toolbarHeight: Math.round(Theme.controlHeight * densityScale)
     readonly property real delegateHeight: body.delegateHeight
     readonly property bool listFocused: body.listFocused
     readonly property int selectedIndex: chooserController.selectionModel
@@ -98,8 +96,6 @@ ColumnLayout {
         resultModel: pane.resultModel
         selectedIndex: pane.selectedIndex
         emptyText: pane.emptyText
-        toolbarComponent: pane.toolbarComponent
-        toolbarHeight: pane.toolbarHeight
         status: pane.status
         icon: pane.icon
         signalIcon: pane.signalIcon
