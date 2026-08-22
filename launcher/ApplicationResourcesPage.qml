@@ -32,8 +32,20 @@ Ui.DetailFlickable {
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 
+    Text {
+        visible: !page.application.running
+            && (page.controller.historyInFlight || page.controller.resourceHistory.length > 0)
+        width: parent.width
+        text: "Application is not running · showing retained measurements"
+        color: Ui.Theme.mutedText
+        wrapMode: Text.Wrap
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Ui.Theme.fontSizeCaption
+    }
+
     ApplicationResourceHistory {
-        visible: page.application.running
+        visible: page.application.running || page.controller.historyInFlight
+            || page.controller.resourceHistory.length > 0
         width: parent.width
         controller: page.controller
         application: page.application
@@ -41,10 +53,11 @@ Ui.DetailFlickable {
     }
 
     Ui.CenteredMessage {
-        visible: !page.application.running
+        visible: !page.application.running && !page.controller.historyInFlight
+            && page.controller.resourceHistory.length === 0
         width: parent.width
         height: 120
-        text: "Resources are available while the application is running"
+        text: "No resource measurements in the last 30 minutes"
         font.pixelSize: Ui.Theme.fontSizeBody
     }
 }
