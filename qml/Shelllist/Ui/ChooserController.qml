@@ -14,10 +14,22 @@ Item {
     property bool navigationCloseEnabled: true
     property bool navigationHelpOpen: false
     property real detailsExpansionProgress: detailsOpen ? 1 : 0
+    property real availableScreenWidth: 0
+    property real closedWidthFraction: 0
+    property real openWidthFraction: 0
+    property int minimumClosedWindowWidth: Theme.popupClosedWidth
+    property int maximumClosedWindowWidth: Theme.popupClosedWidth
+    property int minimumOpenWindowWidth: Theme.popupOpenWidth
+    property int maximumOpenWindowWidth: Theme.popupOpenWidth
+    property string surfaceAlignment: "center"
     readonly property alias navigation: navigationModel
 
-    readonly property int closedWindowWidth: Theme.popupClosedWidth
-    readonly property int openWindowWidth: Theme.popupOpenWidth
+    readonly property int closedWindowWidth: closedWidthFraction > 0 && availableScreenWidth > 0
+        ? Math.round(Math.max(minimumClosedWindowWidth, Math.min(maximumClosedWindowWidth,
+            availableScreenWidth * closedWidthFraction))) : Theme.popupClosedWidth
+    readonly property int openWindowWidth: openWidthFraction > 0 && availableScreenWidth > 0
+        ? Math.round(Math.max(minimumOpenWindowWidth, Math.min(maximumOpenWindowWidth,
+            availableScreenWidth * openWidthFraction))) : Theme.popupOpenWidth
     readonly property int surfaceWindowWidth: openWindowWidth
     readonly property int contentMargin: Theme.contentMargin
     readonly property int contentVerticalMargin: Theme.contentVerticalMargin

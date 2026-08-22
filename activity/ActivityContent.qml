@@ -8,7 +8,8 @@ Ui.ChooserSurface {
 
     required property ActivityController controller
     property date now
-    readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
+    readonly property real uiScale: Ui.Theme.densityScale(height,
+        controller.contentVerticalMargin)
 
     Column {
         anchors.fill: parent
@@ -21,10 +22,13 @@ Ui.ChooserSurface {
             spacing: Ui.Theme.spacingSm
 
             Text {
-                width: parent.width - headerActions.width - Ui.Theme.spacingSm
+                width: parent.width - headerActions.width - parent.spacing
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Activity"
+                text: content.controller.detailsOpen
+                    ? "Activity  /  " + content.sectionTitle(content.controller.detailSection)
+                    : "Activity"
                 color: Ui.Theme.text
+                elide: Text.ElideRight
                 font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeTitle
                 font.weight: Ui.Theme.fontWeightBold
@@ -34,8 +38,19 @@ Ui.ChooserSurface {
                 id: headerActions
                 height: parent.height
                 spacing: Ui.Theme.spacingSm
-                ActivityHeaderButton { label: "Today"; onTriggered: content.controller.goToToday() }
-                ActivityHeaderButton { label: content.controller.activity.syncing ? "Syncing…" : "Refresh"; onTriggered: content.controller.refresh() }
+                ActivityHeaderButton {
+                    visible: content.controller.detailsOpen
+                    label: "Overview"
+                    onTriggered: content.controller.closeSection()
+                }
+                ActivityHeaderButton {
+                    label: "Today"
+                    onTriggered: content.controller.goToToday()
+                }
+                ActivityHeaderButton {
+                    label: content.controller.activity.syncing ? "Syncing…" : "Refresh"
+                    onTriggered: content.controller.refresh()
+                }
             }
         }
 
@@ -60,39 +75,103 @@ Ui.ChooserSurface {
         Row {
             width: parent.width
             height: parent.height - y
-            spacing: Ui.Theme.spacingMd
+            spacing: 0
 
-            ActivityCalendarPane {
-                controller: content.controller
-                uiScale: content.uiScale
-                now: content.now
+            Loader {
+                id: detailLoader
+                visible: content.controller.detailsRendered
+                width: content.controller.detailsPaneWidth
+                height: parent.height
+                clip: true
+                active: content.controller.detailsRendered
+                sourceComponent: content.controller.detailSection === "weather"
+                    ? weatherComponent : content.controller.detailSection === "notifications"
+                        ? notificationsComponent : scheduleComponent
             }
 
-            ActivityAgendaPane {
-                width: parent.width - x - rightPane.width - Ui.Theme.spacingMd
-                controller: content.controller
+            Item {
+                visible: content.controller.detailsRendered
+                width: content.controller.detailsPaneGapWidth
+                height: parent.height
+                Ui.VerticalDivider {}
             }
 
-            ActivityOverviewPane {
-                id: rightPane
+            ActivityGlancePane {
+                width: content.controller.listPaneWidth
+                height: parent.height
                 controller: content.controller
-                uiScale: content.uiScale
                 now: content.now
             }
         }
     }
 
-    Shortcut { sequence: "Left"; onActivated: content.controller.selectDate(new Date(content.controller.selectedDate.getFullYear(), content.controller.selectedDate.getMonth(), content.controller.selectedDate.getDate() - 1)) }
-    Shortcut { sequence: "Right"; onActivated: content.controller.selectDate(new Date(content.controller.selectedDate.getFullYear(), content.controller.selectedDate.getMonth(), content.controller.selectedDate.getDate() + 1)) }
-    Shortcut { sequence: "PageUp"; onActivated: content.controller.shiftMonth(-1) }
-    Shortcut { sequence: "PageDown"; onActivated: content.controller.shiftMonth(1) }
+    Component {
+        id: weatherComponent
+        ActivityWeatherPane {
+            controller: content.controller
+            now: content.now
+        }
+    }
+
+    Component {
+        id: scheduleComponent
+        ActivitySchedulePane {
+            controller: content.controller
+            uiScale: content.uiScale
+            now: content.now
+        }
+    }
+
+    Component {
+        id: notificationsComponent
+        ActivityNotificationsPane { controller: content.controller }
+    }
+
+    function sectionTitle(section: string): string {
+        if (section === "weather")
+            return "Local time · Weather";
+        if (section === "notifications")
+            return "Notifications";
+        return "Calendar · Agenda · Todo";
+    }
+
+    Shortcut {
+        sequence: "Escape"
+        onActivated: content.controller.dismissNavigation()
+    }
+    Shortcut {
+        sequence: "Left"
+        enabled: content.controller.detailsOpen
+            && content.controller.detailSection === "schedule"
+        onActivated: content.controller.selectDate(new Date(
+            content.controller.selectedDate.getFullYear(),
+            content.controller.selectedDate.getMonth(),
+            content.controller.selectedDate.getDate() - 1))
+    }
+    Shortcut {
+        sequence: "Right"
+        enabled: content.controller.detailsOpen
+            && content.controller.detailSection === "schedule"
+        onActivated: content.controller.selectDate(new Date(
+            content.controller.selectedDate.getFullYear(),
+            content.controller.selectedDate.getMonth(),
+            content.controller.selectedDate.getDate() + 1))
+    }
+    Shortcut {
+        sequence: "PageUp"
+        enabled: content.controller.detailSection === "schedule"
+        onActivated: content.controller.shiftMonth(-1)
+    }
+    Shortcut {
+        sequence: "PageDown"
+        enabled: content.controller.detailSection === "schedule"
+        onActivated: content.controller.shiftMonth(1)
+    }
+    Shortcut { sequence: "1"; onActivated: content.controller.openSection("weather") }
+    Shortcut { sequence: "2"; onActivated: content.controller.openSection("schedule") }
+    Shortcut { sequence: "3"; onActivated: content.controller.openSection("notifications") }
     Shortcut { sequence: "T"; onActivated: content.controller.goToToday() }
     Shortcut { sequence: "F5"; onActivated: content.controller.refresh() }
-
-    Connections {
-        target: content.controller
-        function onFocusTodoInputRequested() { rightPane.focusTodoInput(); }
-    }
 
     Component.onCompleted: now = new Date()
 

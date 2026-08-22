@@ -7,7 +7,7 @@ Rust daemons handle system integration and policy. Shelllist handles windows, la
 ## What it provides
 
 - A 51 px adaptive top bar on every monitor.
-- A centered popover that switches between all six surfaces without starting another UI process.
+- One adaptive popover host: chooser surfaces are centered, while Activity uses a right-edge glance panel that expands inward.
 - A one-shot floating mode for development and fallback use.
 - One shared OSD frame for volume, microphone, brightness, power profile, lock keys, idle inhibition, keyboard backlight, privacy indicators, audio-device changes, and display-output changes. Now-playing state stays in the top bar instead of appearing as an OSD.
 - Global shortcuts and one IPC/CLI entry point.
@@ -64,7 +64,7 @@ The UI uses opaque daemon device keys and live subscriptions. It does not parse 
 
 ### Activity
 
-The Activity surface combines a month calendar, selected-day agenda, persistent todos, native notification history/actions/DND, source health, and world clocks. `bar-daemon` owns notification ingestion, expiry, timed DND, snooze wakeups, grouping metadata, and persistent history. Shelllist renders grouped expandable toast stacks on the originating monitor, with focused-monitor fallback, and paginated grouped history. Notifications support actions, inline replies, 15-minute snooze, per-group/application clearing, and clear-all. See [`docs/activity.md`](docs/activity.md).
+The Activity surface combines local time and optional Open-Meteo weather, a month calendar, selected-day agenda, persistent todos, native notification history/actions/DND, source health, and world clocks. `bar-daemon` owns notification ingestion, expiry, timed DND, snooze wakeups, grouping metadata, and persistent history. Shelllist renders grouped expandable toast stacks on the originating monitor, with focused-monitor fallback, and paginated grouped history. Notifications support actions, inline replies, 15-minute snooze, per-group/application clearing, and clear-all. See [`docs/activity.md`](docs/activity.md).
 
 ### Clipboard
 

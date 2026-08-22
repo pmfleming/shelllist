@@ -5,13 +5,16 @@ Rectangle {
     id: button
 
     required property string label
+    property bool checked: false
     signal triggered
 
     width: Math.max(38, labelText.implicitWidth + 18)
     height: 34
     radius: Ui.Theme.controlRadius
-    color: pointer.hovered ? Ui.Theme.hover : Ui.Theme.controlBackground
-    border.color: activeFocus ? Ui.Theme.strongBorder : Ui.Theme.controlBorder
+    color: checked ? Ui.Theme.selected
+        : pointer.hovered ? Ui.Theme.hover : Ui.Theme.controlBackground
+    border.color: checked ? Ui.Theme.accent
+        : activeFocus ? Ui.Theme.strongBorder : Ui.Theme.controlBorder
     opacity: enabled ? 1 : Ui.Theme.disabledOpacity
     activeFocusOnTab: enabled
     Accessible.role: Accessible.Button

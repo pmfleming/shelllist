@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1115" viewBox="0 0 1600 1115">
+  <rect width="1600" height="1115" fill="#070a0e"/>
+  <text x="36" y="42" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="24" font-weight="700">Agenda surface redesign</text>
+  <text x="36" y="68" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="13">Right-edge glance surface with three independently expandable Shelllist-style sections</text>
+  <g transform="translate(20 88)">
+    <rect width="770" height="481.25" rx="6" fill="#141b22" stroke="#273442"/>
+    <image href="01-glance.png" x="5" y="5" width="760" height="475"/>
+  </g>
+  <g transform="translate(810 88)">
+    <rect width="770" height="481.25" rx="6" fill="#141b22" stroke="#273442"/>
+    <image href="02-clock-weather-expanded.png" x="5" y="5" width="760" height="475"/>
+  </g>
+  <g transform="translate(20 589)">
+    <rect width="770" height="481.25" rx="6" fill="#141b22" stroke="#273442"/>
+    <image href="03-calendar-agenda-todo-expanded.png" x="5" y="5" width="760" height="475"/>
+  </g>
+  <g transform="translate(810 589)">
+    <rect width="770" height="481.25" rx="6" fill="#141b22" stroke="#273442"/>
+    <image href="04-notifications-expanded.png" x="5" y="5" width="760" height="475"/>
+  </g>
+  <text x="26" y="1098" fill="#697787" font-family="Noto Sans, sans-serif" font-size="11">Compact: 25–33% screen width · Expanded: overview rail remains visible · Same palette, cards, split-pane logic and keyboard model as Shelllist</text>
+</svg>

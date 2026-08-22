@@ -7,10 +7,13 @@ Item {
     required property real contentWidth
     required property bool loadWhen
     required property Component content
+    property string horizontalAlignment: "center"
     property bool retainLoaded: false
     property bool loadedOnce: false
 
-    x: Math.round((surfaceWidth - contentWidth) / 2)
+    x: horizontalAlignment === "right" ? Math.round(surfaceWidth - contentWidth)
+        : horizontalAlignment === "left" ? 0
+        : Math.round((surfaceWidth - contentWidth) / 2)
     width: contentWidth
     height: parent ? parent.height : 0
     clip: true

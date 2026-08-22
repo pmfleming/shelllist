@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<defs>
+ <linearGradient id="desktop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b1118"/><stop offset="1" stop-color="#070a0e"/></linearGradient>
+ <linearGradient id="weather" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#183654"/><stop offset="1" stop-color="#101a26"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#000" flood-opacity=".55"/></filter>
+ <filter id="soft"><feGaussianBlur stdDeviation="42"/></filter>
+</defs>
+<rect x="0" y="0" width="1600" height="1000" rx="0" fill="url(#desktop)" stroke="none" stroke-width="1" opacity="1" />
+<circle cx="300" cy="180" r="130" fill="#14263b" stroke="none" stroke-width="1" opacity="0.34"/>
+<circle cx="840" cy="730" r="210" fill="#10273a" stroke="none" stroke-width="1" opacity="0.18"/>
+<rect x="58" y="122" width="690" height="492" rx="8" fill="#0a0f15" stroke="#273442" stroke-width="1" opacity="0.58" />
+<rect x="80" y="148" width="646" height="38" rx="4" fill="#10161d" stroke="none" stroke-width="1" opacity="0.65" />
+<rect x="96" y="160" width="120" height="10" rx="5" fill="#273442" stroke="none" stroke-width="1" opacity="0.48" />
+<rect x="226" y="160" width="178" height="10" rx="5" fill="#273442" stroke="none" stroke-width="1" opacity="0.48" />
+<rect x="414" y="160" width="92" height="10" rx="5" fill="#273442" stroke="none" stroke-width="1" opacity="0.48" />
+<rect x="80" y="204" width="190" height="380" rx="4" fill="#10161d" stroke="none" stroke-width="1" opacity="0.48" />
+<rect x="286" y="204" width="440" height="380" rx="4" fill="#0d141b" stroke="none" stroke-width="1" opacity="0.5" />
+<rect x="310" y="230" width="250" height="8" rx="4" fill="#273442" stroke="none" stroke-width="1" opacity="0.38" />
+<rect x="310" y="246" width="150" height="6" rx="3" fill="#697787" stroke="none" stroke-width="1" opacity="0.18" />
+<rect x="310" y="274" width="298" height="8" rx="4" fill="#273442" stroke="none" stroke-width="1" opacity="0.38" />
+<rect x="310" y="290" width="230" height="6" rx="3" fill="#697787" stroke="none" stroke-width="1" opacity="0.18" />
+<rect x="310" y="318" width="346" height="8" rx="4" fill="#273442" stroke="none" stroke-width="1" opacity="0.38" />
+<rect x="310" y="334" width="150" height="6" rx="3" fill="#697787" stroke="none" stroke-width="1" opacity="0.18" />
+<rect x="310" y="362" width="250" height="8" rx="4" fill="#273442" stroke="none" stroke-width="1" opacity="0.38" />
+<rect x="310" y="378" width="230" height="6" rx="3" fill="#697787" stroke="none" stroke-width="1" opacity="0.18" />
+<rect x="310" y="406" width="298" height="8" rx="4" fill="#273442" stroke="none" stroke-width="1" opacity="0.38" />
+<rect x="310" y="422" width="150" height="6" rx="3" fill="#697787" stroke="none" stroke-width="1" opacity="0.18" />
+<rect x="310" y="450" width="346" height="8" rx="4" fill="#273442" stroke="none" stroke-width="1" opacity="0.38" />
+<rect x="310" y="466" width="230" height="6" rx="3" fill="#697787" stroke="none" stroke-width="1" opacity="0.18" />
+<rect x="310" y="494" width="250" height="8" rx="4" fill="#273442" stroke="none" stroke-width="1" opacity="0.38" />
+<rect x="310" y="510" width="150" height="6" rx="3" fill="#697787" stroke="none" stroke-width="1" opacity="0.18" />
+<rect x="0" y="0" width="1600" height="42" rx="0" fill="#090d12" stroke="#273442" stroke-width="1" opacity="0.98" />
+<circle cx="25" cy="21" r="9" fill="#141b22" stroke="none" stroke-width="1" opacity="1"/>
+<text x="25" y="25" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="9" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">1</text>
+<circle cx="53" cy="21" r="9" fill="#2f8cff" stroke="none" stroke-width="1" opacity="1"/>
+<text x="53" y="25" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="9" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">2</text>
+<circle cx="81" cy="21" r="9" fill="#141b22" stroke="none" stroke-width="1" opacity="1"/>
+<text x="81" y="25" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="9" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">3</text>
+<circle cx="109" cy="21" r="9" fill="#141b22" stroke="none" stroke-width="1" opacity="1"/>
+<text x="109" y="25" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="9" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">4</text>
+<circle cx="137" cy="21" r="9" fill="#141b22" stroke="none" stroke-width="1" opacity="1"/>
+<text x="137" y="25" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="9" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">5</text>
+<text x="178" y="26" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="12" font-weight="500" text-anchor="start" opacity="1" letter-spacing="0">Shelllist proposal</text>
+<text x="1150" y="26" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="12" font-weight="500" text-anchor="start" opacity="1" letter-spacing="0">17°  Clear</text>
+<text x="1272" y="26" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="12" font-weight="500" text-anchor="start" opacity="1" letter-spacing="0">󰂚  3</text>
+<text x="1370" y="26" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="12" font-weight="500" text-anchor="start" opacity="1" letter-spacing="0">Sat 22 Aug</text>
+<text x="1527" y="26" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="13" font-weight="600" text-anchor="start" opacity="1" letter-spacing="0">23:41</text>
+<text x="58" y="84" fill="#2f8cff" font-family="Noto Sans, sans-serif" font-size="12" font-weight="700" text-anchor="start" opacity="1" letter-spacing="1.8">STATE 01 · GLANCE</text>
+<text x="58" y="108" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="14" font-weight="400" text-anchor="start" opacity="1" letter-spacing="0">Right-edge surface · 460 px on this 1600 px concept (28.75% of screen)</text>
+<rect x="1128" y="54" width="456" height="930" rx="8" fill="#141b22" stroke="#273442" stroke-width="1" opacity="1" filter="url(#shadow)"/>
+<text x="1146" y="86" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="17" font-weight="700" text-anchor="start" opacity="1" letter-spacing="0">Activity</text>
+<text x="1518" y="85" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="11" font-weight="600" text-anchor="start" opacity="1" letter-spacing="0">Today</text>
+<text x="1564" y="85" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="19" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">×</text>
+<line x1="1128" y1="100" x2="1584" y2="100" stroke="#273442" stroke-width="1" opacity="1"/>
+<text x="1154" y="137" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="13" font-weight="650" text-anchor="start" opacity="1" letter-spacing="0">Local time · Weather</text>
+<text x="1558" y="137" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="15" font-weight="600" text-anchor="end" opacity="1" letter-spacing="0">↗</text>
+<text x="1155" y="194" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="44" font-weight="350" text-anchor="start" opacity="1" letter-spacing="0">23:41</text>
+<text x="1157" y="221" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="10" font-weight="650" text-anchor="start" opacity="1" letter-spacing="1.2">SATURDAY, 22 AUGUST</text>
+<text x="1488" y="186" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="34" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">17°</text>
+<text x="1488" y="211" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">Clear · feels 16°</text>
+<line x1="1155" y1="240" x2="1557" y2="240" stroke="#273442" stroke-width="1" opacity="1"/>
+<text x="1168.0" y="261" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">Now</text>
+<circle cx="1168.0" cy="274" r="3.5" fill="#f59e0b" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="1168.0" y="293" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">17°</text>
+<text x="1262.0" y="261" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">00</text>
+<circle cx="1262.0" cy="274" r="3.5" fill="#aeb8c4" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="1262.0" y="293" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">16°</text>
+<text x="1356.0" y="261" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">02</text>
+<circle cx="1356.0" cy="274" r="3.5" fill="#aeb8c4" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="1356.0" y="293" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">15°</text>
+<text x="1450.0" y="261" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">04</text>
+<circle cx="1450.0" cy="274" r="3.5" fill="#aeb8c4" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="1450.0" y="293" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">14°</text>
+<text x="1544.0" y="261" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">06</text>
+<circle cx="1544.0" cy="274" r="3.5" fill="#aeb8c4" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="1544.0" y="293" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">14°</text>
+<rect x="1140" y="112" width="432" height="190" rx="5" fill="url(#weather)" stroke="#273442" stroke-width="1" opacity="1" />
+<text x="1154" y="137" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="13" font-weight="650" text-anchor="start" opacity="1" letter-spacing="0">Local time · Weather</text>
+<text x="1558" y="137" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="15" font-weight="600" text-anchor="end" opacity="1" letter-spacing="0">↗</text>
+<text x="1155" y="194" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="44" font-weight="350" text-anchor="start" opacity="1" letter-spacing="0">23:41</text>
+<text x="1157" y="221" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="10" font-weight="650" text-anchor="start" opacity="1" letter-spacing="1.2">SATURDAY, 22 AUGUST</text>
+<text x="1488" y="186" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="34" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">17°</text>
+<text x="1488" y="211" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">Clear · feels 16°</text>
+<line x1="1155" y1="240" x2="1557" y2="240" stroke="#273442" stroke-width="1" opacity="1"/>
+<text x="1168.0" y="261" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">Now</text>
+<circle cx="1168.0" cy="274" r="3.5" fill="#f59e0b" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="1168.0" y="293" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">17°</text>
+<text x="1262.0" y="261" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">00</text>
+<circle cx="1262.0" cy="274" r="3.5" fill="#aeb8c4" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="1262.0" y="293" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">16°</text>
+<text x="1356.0" y="261" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">02</text>
+<circle cx="1356.0" cy="274" r="3.5" fill="#aeb8c4" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="1356.0" y="293" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">15°</text>
+<text x="1450.0" y="261" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">04</text>
+<circle cx="1450.0" cy="274" r="3.5" fill="#aeb8c4" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="1450.0" y="293" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">14°</text>
+<text x="1544.0" y="261" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">06</text>
+<circle cx="1544.0" cy="274" r="3.5" fill="#aeb8c4" stroke="none" stroke-width="1" opacity="0.9"/>
+<text x="1544.0" y="293" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="500" text-anchor="middle" opacity="1" letter-spacing="0">14°</text>
+<rect x="1140" y="314" width="432" height="322" rx="5" fill="#18212a" stroke="#273442" stroke-width="1" opacity="1" />
+<text x="1154" y="339" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="13" font-weight="650" text-anchor="start" opacity="1" letter-spacing="0">Calendar · Agenda · Todo</text>
+<rect x="1344.0" y="326" width="25" height="19" rx="10" fill="#26455f" stroke="none" stroke-width="1" opacity="1" />
+<text x="1356.5" y="340" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="650" text-anchor="middle" opacity="1" letter-spacing="0">4</text>
+<text x="1558" y="339" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="15" font-weight="600" text-anchor="end" opacity="1" letter-spacing="0">↗</text>
+<text x="1155" y="367" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="13" font-weight="650" text-anchor="start" opacity="1" letter-spacing="0">August 2026</text>
+<text x="1181.142857142857" y="388" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">M</text>
+<text x="1239.4285714285713" y="388" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">T</text>
+<text x="1297.7142857142858" y="388" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">W</text>
+<text x="1356.0" y="388" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">T</text>
+<text x="1414.2857142857142" y="388" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">F</text>
+<text x="1472.5714285714284" y="388" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">S</text>
+<text x="1530.857142857143" y="388" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">S</text>
+<text x="1181.142857142857" y="411" fill="#697787" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">27</text>
+<text x="1239.4285714285713" y="411" fill="#697787" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">28</text>
+<text x="1297.7142857142858" y="411" fill="#697787" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">29</text>
+<text x="1356.0" y="411" fill="#697787" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">30</text>
+<text x="1414.2857142857142" y="411" fill="#697787" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">31</text>
+<text x="1472.5714285714284" y="411" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">1</text>
+<text x="1530.857142857143" y="411" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">2</text>
+<text x="1181.142857142857" y="436" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">3</text>
+<circle cx="1181.142857142857" cy="441.5" r="1.6" fill="#2f8cff" stroke="none" stroke-width="1" opacity="1"/>
+<text x="1239.4285714285713" y="436" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">4</text>
+<text x="1297.7142857142858" y="436" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">5</text>
+<text x="1356.0" y="436" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">6</text>
+<text x="1414.2857142857142" y="436" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">7</text>
+<text x="1472.5714285714284" y="436" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">8</text>
+<circle cx="1472.5714285714284" cy="441.5" r="1.6" fill="#2f8cff" stroke="none" stroke-width="1" opacity="1"/>
+<text x="1530.857142857143" y="436" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">9</text>
+<text x="1181.142857142857" y="461" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">10</text>
+<text x="1239.4285714285713" y="461" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">11</text>
+<text x="1297.7142857142858" y="461" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">12</text>
+<text x="1356.0" y="461" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">13</text>
+<text x="1414.2857142857142" y="461" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">14</text>
+<text x="1472.5714285714284" y="461" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">15</text>
+<circle cx="1472.5714285714284" cy="466.5" r="1.6" fill="#2f8cff" stroke="none" stroke-width="1" opacity="1"/>
+<text x="1530.857142857143" y="461" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">16</text>
+<text x="1181.142857142857" y="486" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">17</text>
+<text x="1239.4285714285713" y="486" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">18</text>
+<text x="1297.7142857142858" y="486" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">19</text>
+<text x="1356.0" y="486" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">20</text>
+<text x="1414.2857142857142" y="486" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">21</text>
+<circle cx="1472.5714285714284" cy="482" r="13" fill="#2f8cff" stroke="none" stroke-width="1" opacity="1"/>
+<text x="1472.5714285714284" y="486" fill="#fff" font-family="Noto Sans, sans-serif" font-size="10" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">22</text>
+<circle cx="1472.5714285714284" cy="491.5" r="1.6" fill="#2f8cff" stroke="none" stroke-width="1" opacity="1"/>
+<text x="1530.857142857143" y="486" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">23</text>
+<text x="1181.142857142857" y="511" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">24</text>
+<text x="1239.4285714285713" y="511" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">25</text>
+<text x="1297.7142857142858" y="511" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">26</text>
+<text x="1356.0" y="511" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">27</text>
+<circle cx="1356.0" cy="516.5" r="1.6" fill="#2f8cff" stroke="none" stroke-width="1" opacity="1"/>
+<text x="1414.2857142857142" y="511" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">28</text>
+<text x="1472.5714285714284" y="511" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">29</text>
+<text x="1530.857142857143" y="511" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">30</text>
+<text x="1181.142857142857" y="536" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">31</text>
+<text x="1239.4285714285713" y="536" fill="#697787" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">1</text>
+<text x="1297.7142857142858" y="536" fill="#697787" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">2</text>
+<text x="1356.0" y="536" fill="#697787" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">3</text>
+<text x="1414.2857142857142" y="536" fill="#697787" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">4</text>
+<text x="1472.5714285714284" y="536" fill="#697787" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">5</text>
+<text x="1530.857142857143" y="536" fill="#697787" font-family="Noto Sans, sans-serif" font-size="10" font-weight="400" text-anchor="middle" opacity="1" letter-spacing="0">6</text>
+<rect x="1154" y="560" width="404" height="48" rx="4" fill="#10161d" stroke="#273442" stroke-width="1" opacity="1" />
+<rect x="1154" y="560" width="4" height="48" rx="2" fill="#2f8cff" stroke="none" stroke-width="1" opacity="1" />
+<text x="1168" y="580" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="11" font-weight="600" text-anchor="start" opacity="1" letter-spacing="0">09:30  Design review</text>
+<text x="1168" y="597" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="9" font-weight="400" text-anchor="start" opacity="1" letter-spacing="0">Tomorrow · Studio</text>
+<circle cx="1163" cy="628" r="7" fill="none" stroke="#273442" stroke-width="1" opacity="1"/>
+<text x="1178" y="632" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="10" font-weight="500" text-anchor="start" opacity="1" letter-spacing="0">2 open todos</text>
+<rect x="1140" y="648" width="432" height="324" rx="5" fill="#18212a" stroke="#273442" stroke-width="1" opacity="1" />
+<text x="1154" y="673" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="13" font-weight="650" text-anchor="start" opacity="1" letter-spacing="0">Notifications</text>
+<rect x="1261.5" y="660" width="25" height="19" rx="10" fill="#26455f" stroke="none" stroke-width="1" opacity="1" />
+<text x="1274.0" y="674" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="10" font-weight="650" text-anchor="middle" opacity="1" letter-spacing="0">3</text>
+<text x="1558" y="673" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="15" font-weight="600" text-anchor="end" opacity="1" letter-spacing="0">↗</text>
+<rect x="1481" y="685" width="76" height="32" rx="4" fill="#10161d" stroke="#273442" stroke-width="1" opacity="1" />
+<text x="1519.0" y="706" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="12" font-weight="600" text-anchor="middle" opacity="1" letter-spacing="0">DND off</text>
+<rect x="1154" y="726" width="404" height="58" rx="4" fill="#10161d" stroke="#273442" stroke-width="1" opacity="1" />
+<circle cx="1170" cy="746" r="7" fill="#2f8cff" stroke="none" stroke-width="1" opacity="1"/>
+<text x="1184" y="748" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="10" font-weight="600" text-anchor="start" opacity="1" letter-spacing="0">Calendar</text>
+<text x="1547" y="748" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="400" text-anchor="end" opacity="1" letter-spacing="0">09:10</text>
+<text x="1168" y="769" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="11" font-weight="500" text-anchor="start" opacity="1" letter-spacing="0">Design review in 20 minutes</text>
+<rect x="1154" y="792" width="404" height="58" rx="4" fill="#10161d" stroke="#273442" stroke-width="1" opacity="1" />
+<circle cx="1170" cy="812" r="7" fill="#a78bfa" stroke="none" stroke-width="1" opacity="1"/>
+<text x="1184" y="814" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="10" font-weight="600" text-anchor="start" opacity="1" letter-spacing="0">Messages</text>
+<text x="1547" y="814" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="400" text-anchor="end" opacity="1" letter-spacing="0">09:02</text>
+<text x="1168" y="835" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="11" font-weight="500" text-anchor="start" opacity="1" letter-spacing="0">Maya: The mockup looks good</text>
+<rect x="1154" y="858" width="404" height="58" rx="4" fill="#10161d" stroke="#273442" stroke-width="1" opacity="1" />
+<circle cx="1170" cy="878" r="7" fill="#3fb950" stroke="none" stroke-width="1" opacity="1"/>
+<text x="1184" y="880" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="10" font-weight="600" text-anchor="start" opacity="1" letter-spacing="0">System</text>
+<text x="1547" y="880" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="400" text-anchor="end" opacity="1" letter-spacing="0">08:44</text>
+<text x="1168" y="901" fill="#d7dee8" font-family="Noto Sans, sans-serif" font-size="11" font-weight="500" text-anchor="start" opacity="1" letter-spacing="0">Backup completed successfully</text>
+<text x="1154" y="934" fill="#aeb8c4" font-family="Noto Sans, sans-serif" font-size="10" font-weight="500" text-anchor="start" opacity="1" letter-spacing="0">Clear all</text>
+<text x="1558" y="934" fill="#2f8cff" font-family="Noto Sans, sans-serif" font-size="10" font-weight="600" text-anchor="end" opacity="1" letter-spacing="0">Open history  ›</text>
+<text x="1146" y="971" fill="#697787" font-family="Noto Sans, sans-serif" font-size="9" font-weight="400" text-anchor="start" opacity="1" letter-spacing="0">Super + A toggles · Esc closes · ↑/↓ moves between sections</text>
+</svg>

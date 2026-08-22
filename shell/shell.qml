@@ -85,6 +85,8 @@ ShellRoot {
             ? shell.activeController.surfaceWindowWidth : Ui.Theme.popupOpenWidth
         currentWindowWidth: shell.activeController
             ? shell.activeController.currentWindowWidth : Ui.Theme.popupClosedWidth
+        contentAlignment: shell.activeController
+            ? shell.activeController.surfaceAlignment : "center"
         modeEnvironment: "SHELLLIST_MODE"
         ipcTarget: "shelllist-window"
         ipcEnabled: false
@@ -110,6 +112,13 @@ ShellRoot {
         ShellContent { registry: surfaces }
     }
 
+    Binding {
+        target: shell.activeController
+        property: "availableScreenWidth"
+        value: windowHost.screenGeometry().width
+        when: shell.activeController !== null
+    }
+
     Connections {
         target: shell.activeController
         ignoreUnknownSignals: true
@@ -120,8 +129,7 @@ ShellRoot {
             if (!controller)
                 return;
             const width = Math.round(controller.currentWindowWidth);
-            const x = Math.round(windowHost.targetWindowX()
-                + (controller.surfaceWindowWidth - width) / 2);
+            const x = Math.round(windowHost.targetContentWindowX());
             controller.captureScreenshot(x, windowHost.targetWindowY(), width,
                 windowHost.currentWindowHeight);
         }

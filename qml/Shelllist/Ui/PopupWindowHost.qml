@@ -22,6 +22,7 @@ Item {
     required property string layerNamespace
 
     property real windowHeightRatio: Theme.popupHeightRatio
+    property string contentAlignment: "center"
     property string defaultLaunchMode: "popover"
     property bool popoverVisible: false
     property bool retainOnFocusLoss: false
@@ -81,10 +82,25 @@ Item {
         };
     }
 
-    function targetLayerMarginX() { return Math.round((screenGeometry().width - surfaceWindowWidth) / 2); }
+    function targetLayerMarginX() {
+        if (contentAlignment === "right")
+            return Math.max(Theme.contentMargin,
+                Math.round(screenGeometry().width - surfaceWindowWidth - Theme.contentMargin));
+        if (contentAlignment === "left")
+            return Theme.contentMargin;
+        return Math.round((screenGeometry().width - surfaceWindowWidth) / 2);
+    }
     function targetLayerMarginY() { return Math.round((screenGeometry().height - currentWindowHeight) / 2); }
     function targetWindowX() { return screenGeometry().x + targetLayerMarginX(); }
     function targetWindowY() { return screenGeometry().y + targetLayerMarginY(); }
+    function contentOffsetX() {
+        if (contentAlignment === "right")
+            return Math.round(surfaceWindowWidth - currentWindowWidth);
+        if (contentAlignment === "left")
+            return 0;
+        return Math.round((surfaceWindowWidth - currentWindowWidth) / 2);
+    }
+    function targetContentWindowX() { return targetWindowX() + contentOffsetX(); }
 
     function requestWindowPlacement() {
         if (!floatingMode || !Theme.hyprland)
@@ -225,6 +241,7 @@ Item {
             contentWidth: host.currentWindowWidth
             loadWhen: host.popoverWindowVisible
             retainLoaded: host.retainContentLoaded
+            horizontalAlignment: host.contentAlignment
             content: host.content
         }
     }
@@ -249,6 +266,7 @@ Item {
             contentWidth: host.currentWindowWidth
             loadWhen: host.floatingMode
             retainLoaded: host.retainContentLoaded
+            horizontalAlignment: host.contentAlignment
             content: host.content
         }
     }

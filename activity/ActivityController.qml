@@ -8,7 +8,8 @@ Ui.ChooserController {
     id: controller
 
     property var activity: ({ available: false, syncing: false, event_count: 0,
-        incomplete_todo_count: 0, next_event: null, sources: [], world_clocks: [] })
+        incomplete_todo_count: 0, next_event: null, sources: [], world_clocks: [],
+        weather: { available: false, location: "Local", error: "Weather is not configured" } })
     property var notifications: ({ available: false, count: 0, dnd: false })
     property var notificationActive: ({ available: false, revision: 0, notifications: [] })
     property var notificationHistory: []
@@ -23,8 +24,17 @@ Ui.ChooserController {
     property bool rangeLoading: false
     property date loadedFrom
     property date loadedTo
+    property string detailSection: "schedule"
+    property string notificationFilter: "All"
 
-    detailsOpen: true
+    detailsOpen: false
+    closedWidthFraction: 0.285
+    openWidthFraction: 0.66
+    minimumClosedWindowWidth: 460
+    maximumClosedWindowWidth: 760
+    minimumOpenWindowWidth: 1040
+    maximumOpenWindowWidth: 1840
+    surfaceAlignment: "right"
     navigationPrimaryEnabled: false
     readonly property ActivityBackend backend: activityBackend
     readonly property string selectedDateKey: dateKey(selectedDate)
@@ -36,6 +46,9 @@ Ui.ChooserController {
     })
     readonly property var notificationGroups: Ui.NotificationPresentation.groupRecords(
         notificationHistory)
+    readonly property var filteredNotificationGroups: notificationGroups.filter(function (group) {
+        return notificationGroupMatches(group, notificationFilter);
+    })
 
     signal focusTodoInputRequested
 
@@ -118,6 +131,24 @@ Ui.ChooserController {
         notificationHistoryLoading = backend.loadNotificationHistory(cursor);
     }
 
+    function notificationGroupMatches(group: var, filter: string): bool {
+        if (filter === "All")
+            return true;
+        if (filter === "Unread")
+            return group.records.some(function (record) {
+                return isNotificationActive((record.notification || ({})).id);
+            });
+        const identity = String(group.appName || "").toLowerCase();
+        if (filter === "Calendar")
+            return identity.indexOf("calendar") >= 0;
+        if (filter === "Messages")
+            return ["message", "signal", "slack", "discord", "whatsapp", "telegram"]
+                .some(function (name) { return identity.indexOf(name) >= 0; });
+        return filter === "System"
+            && !notificationGroupMatches(group, "Calendar")
+            && !notificationGroupMatches(group, "Messages");
+    }
+
     function activeNotifications(): var {
         return notificationActive && Array.isArray(notificationActive.notifications)
             ? notificationActive.notifications : [];
@@ -172,6 +203,13 @@ Ui.ChooserController {
     }
     function toggleTodo(todo: var): bool { return backend.completeTodo(todo.id, !todo.completed); }
     function deleteTodo(todo: var): bool { return backend.deleteTodo(todo.id); }
+    function openSection(section: string): void {
+        if (["weather", "schedule", "notifications"].indexOf(section) < 0)
+            return;
+        detailSection = section;
+        detailsOpen = true;
+    }
+    function closeSection(): void { detailsOpen = false; }
     function refresh(): void { backend.refresh(); }
     function toggleDnd(): void { backend.toggleDnd(); }
     function setDndForMinutes(minutes: int): bool {
@@ -202,7 +240,13 @@ Ui.ChooserController {
         scheduleNotificationHistory();
     }
 
-    onFocusSearchRequested: focusTodoInputRequested()
+    function deactivateUi() {
+        deactivateUiState();
+        closeSection();
+    }
+
+    onFocusSearchRequested: if (detailsOpen && detailSection === "schedule")
+        focusTodoInputRequested()
 
     Timer {
         id: notificationHistoryDebounce
