@@ -103,6 +103,7 @@ Every daemon connection uses the shared JSONL transport with bounded restart bac
 See:
 
 - [`docs/provider-model.md`](docs/provider-model.md) for normalized result/action contracts;
+- [`docs/list-interaction-contract.md`](docs/list-interaction-contract.md) for mouse, touchpad, and touch list scrolling;
 - [`docs/application-launcher-plan.md`](docs/application-launcher-plan.md) for the implemented launcher architecture;
 - [`docs/qml-quality-review.md`](docs/qml-quality-review.md) for QML structure and validation rules.
 

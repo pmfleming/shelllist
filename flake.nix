@@ -734,6 +734,14 @@
             touch $out
           '';
 
+          listScrollContract = pkgs.runCommand "shelllist-list-scroll-contract"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-list-scroll-contract.js} ${./.}
+            touch $out
+          '';
+
           wifiIcons = pkgs.runCommand "shelllist-wifi-icons"
             {
               nativeBuildInputs = [ pkgs.nodejs ];

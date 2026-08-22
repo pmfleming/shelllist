@@ -111,7 +111,7 @@ Controls.ComboBox {
             Theme.compactControlHeight * 6 + topPadding + bottomPadding
         )
 
-        contentItem: ListView {
+        contentItem: ScrollableListView {
             clip: true
             implicitHeight: contentHeight
             model: control.popup.visible ? control.delegateModel : null

@@ -19,6 +19,14 @@ ShellRoot {
             listComponent: Component { Item {} }
             detailsComponent: Component { Item {} }
         }
+
+        Ui.ScrollableListView {
+            visible: false
+            width: 120
+            height: 80
+            model: 4
+            delegate: Item { required property int index; width: 120; height: 24 }
+        }
     }
 
     Timer {

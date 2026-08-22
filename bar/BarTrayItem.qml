@@ -39,6 +39,7 @@ Item {
         radius: 0
         stateColor: Ui.Theme.text
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+        consumeWheel: true
         onClicked: function (mouse) { root.routeClick(mouse.button); }
         onWheel: function (event) { root.scroll(event.angleDelta.y); }
     }

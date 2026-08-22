@@ -65,7 +65,7 @@ Column {
             }
         }
     }
-    ListView {
+    Ui.ScrollableListView {
         width: parent.width
         height: Math.min(230 * section.uiScale, section.controller.selectedTodos.length * 46)
         spacing: 5

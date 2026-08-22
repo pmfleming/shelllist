@@ -169,7 +169,7 @@ Rectangle {
                     font.pixelSize: Ui.Theme.fontSizeSmall
                 }
 
-                ListView {
+                Ui.ScrollableListView {
                     width: parent.width
                     height: parent.height - y - historyFooter.height - parent.spacing
                     visible: pane.controller.notificationHistory.length > 0

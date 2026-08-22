@@ -9,6 +9,7 @@ Item {
     property bool showStateBackground: true
     property bool interactive: true
     property int acceptedButtons: Qt.LeftButton
+    property bool consumeWheel: false
     property real hoverOpacity: 0.08
     property real pressedOpacity: 0.14
     property real pressX: -1
@@ -106,6 +107,9 @@ Item {
         }
         onClicked: function (mouse) { root.clicked(mouse); }
         onDoubleClicked: function (mouse) { root.doubleClicked(mouse); }
-        onWheel: function (event) { root.wheel(event); }
+        onWheel: function (event) {
+            root.wheel(event);
+            event.accepted = root.consumeWheel;
+        }
     }
 }

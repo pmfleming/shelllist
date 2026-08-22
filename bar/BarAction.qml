@@ -83,6 +83,7 @@ Item {
         pressedOpacity: 0.15
         interactive: root.interactive
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+        consumeWheel: true
         onClicked: function (mouse) { root.routeClick(mouse.button); }
         onWheel: function (event) { root.routeWheel(event.angleDelta.y); }
     }

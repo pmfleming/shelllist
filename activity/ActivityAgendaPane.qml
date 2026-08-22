@@ -38,7 +38,7 @@ Rectangle {
             font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeBody
         }
-        ListView {
+        Ui.ScrollableListView {
             width: parent.width
             height: parent.height - y
             spacing: Ui.Theme.spacingSm

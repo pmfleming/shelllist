@@ -119,7 +119,7 @@ Ui.DetailFlickable {
                 verticalAlignment: Text.AlignVCenter
             }
 
-            ListView {
+            Ui.ScrollableListView {
                 id: fileList
 
                 anchors.fill: parent

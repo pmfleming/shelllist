@@ -48,6 +48,7 @@ ResultListFrame 1.0 ResultListFrame.qml
 ResultNavigation 1.0 ResultNavigation.qml
 ResultRow 1.0 ResultRow.qml
 SectionLabel 1.0 SectionLabel.qml
+ScrollableListView 1.0 list/ScrollableListView.qml
 SegmentedControl 1.0 SegmentedControl.qml
 ShelllistGlobalShortcut 1.0 ShelllistGlobalShortcut.qml
 SignalIcon 1.0 SignalIcon.qml

@@ -67,7 +67,7 @@ ModalFrame {
         width: parent.width
         spacing: Theme.spacingSm
 
-        ListView {
+        ScrollableListView {
             Layout.fillWidth: true
             Layout.preferredHeight: Math.min(contentHeight, Math.max(180, dialog.height - 230))
             model: dialog.allEntries

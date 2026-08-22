@@ -37,7 +37,7 @@ Rectangle {
     border.color: Theme.border
     clip: true
 
-    ListView {
+    ScrollableListView {
         id: list
 
         anchors.fill: parent
