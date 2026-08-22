@@ -20,6 +20,8 @@ ProviderChooserController {
     property var visibleNetworks: []
     property string status
     property var bandStatus: null
+    // Result of the most recent wifi.qr.parse; never contains the passphrase.
+    property var scannedQr: null
     property string bandRequestId: ""
     readonly property var radios: activeStatus && activeStatus.radios ? activeStatus.radios : ({
         wireless_enabled: !activeStatus || activeStatus.enabled !== false,
@@ -45,6 +47,10 @@ ProviderChooserController {
     readonly property WifiConnectionController connection: services.connection
     readonly property WifiNetworkActions actions: services.actions
     readonly property WifiScanController scan: services.scan
+    readonly property NetworkHealthController health: services.health
+    readonly property HotspotController hotspot: services.hotspot
+    readonly property VpnController vpn: services.vpn
+    readonly property NetworkInventoryController inventory: services.inventory
     readonly property WifiQrService qr: qrController
     readonly property var daemonEventHandlerByStream: {
         const handlers = ({});
@@ -55,6 +61,10 @@ ProviderChooserController {
         handlers[NmApi.streams.wifi_connect] = function (event) { connection.handleEvent(event); };
         handlers[NmApi.streams.wifi_band] = function (event) { wifi.handleBandEvent(event); };
         handlers[NmApi.streams.wifi_secret] = function (event) { wifi.handleSecretEvent(event); };
+        handlers[NmApi.streams.network_health] = function (event) { health.handleEvent(event); };
+        handlers[NmApi.streams.network_inventory] = function (event) { inventory.handleEvent(event); };
+        handlers[NmApi.streams.hotspot] = function (event) { hotspot.handleEvent(event); };
+        handlers[NmApi.streams.vpn] = function (event) { vpn.handleEvent(event); };
         return handlers;
     }
 
@@ -89,7 +99,10 @@ ProviderChooserController {
         }
         qr.show(services.share.payload, networkName(detailAp));
     }
-    function launchQrScanner() { return qr.launchScanner(); }
+    // Scanning from the network list joins the network it read; scanning from
+    // the share dialog only reports what it read.
+    function launchQrScanner() { return qr.launchScanner(true); }
+    function inspectQrScanner() { return qr.launchScanner(false); }
     function applyShareResponse(response, errorText) { services.share.applyResponse(response, errorText); }
     function statusIsHeld() { return Date.now() < statusHoldUntil; }
     function setBackgroundStatus(message) { if (!statusIsHeld()) status = message; }
@@ -99,6 +112,11 @@ ProviderChooserController {
         activateUiState(workspaceId);
         scan.activate();
         connection.activate();
+        // Hotspot and VPN state is cheap to read and needed the moment their
+        // controls are shown; the inventory stream stays unsubscribed until a
+        // view asks for it.
+        hotspot.refresh();
+        vpn.refresh();
     }
 
     function deactivateUi() {
@@ -107,7 +125,19 @@ ProviderChooserController {
         deactivateUiState();
         scan.deactivate();
         connection.deactivate();
+        hotspot.forgetCredentials();
+        inventory.close();
     }
+
+    // Entry points for hotspot, VPN, and cross-type connection views.
+    function startHotspot(options) { return hotspot.start(options); }
+    function stopHotspot() { return hotspot.stop(); }
+    function connectVpn(profile) { return vpn.connect(profile); }
+    function disconnectVpn(profile) { return vpn.disconnect(profile); }
+    function openNetworkInventory() { inventory.open(); }
+    function closeNetworkInventory() { inventory.close(); }
+    function activateConnection(profile, device) { return inventory.activate(profile, device); }
+    function deactivateConnection(activeConnection) { return inventory.deactivate(activeConnection); }
 
     function dismissNavigation(): bool {
         if (dismissNavigationHelp())
@@ -310,6 +340,31 @@ ProviderChooserController {
 
     function openHiddenNetworkPrompt() { if (connection.beginAny()) prompt.openHiddenNetworkPrompt(); }
 
+    // A scanned Wi-Fi QR payload. The payload carries a passphrase, so it is
+    // handed straight to the daemon and never held or logged here.
+    function joinScannedQr(payload) {
+        if (!payload || payload.length === 0) {
+            status = "Nothing was scanned.";
+            return false;
+        }
+        if (!connection.beginAny())
+            return false;
+        return backend.connectQr(payload, "");
+    }
+    function inspectScannedQr(payload) {
+        if (!payload || payload.length === 0) {
+            status = "Nothing was scanned.";
+            return false;
+        }
+        return backend.parseQr(payload);
+    }
+    function applyScannedQr(parsed) {
+        scannedQr = parsed || null;
+        status = parsed && parsed.ssid
+            ? ("Scanned " + parsed.ssid + (parsed.hidden ? " (hidden)" : ""))
+            : "The scanned code is not a Wi-Fi network.";
+    }
+
     onDetailsOpenChanged: {
         if (detailsOpen)
             Qt.callLater(services.share.refresh);
@@ -345,5 +400,14 @@ ProviderChooserController {
         onStatusChanged: function (message) { wifi.status = message; }
     }
     WifiControllerServices { id: services; controller: wifi; prompt: wifi.prompt }
-    WifiQrService { id: qrController; controller: wifi }
+    WifiQrService {
+        id: qrController
+        controller: wifi
+        onScanned: function (payload, join) {
+            if (join)
+                wifi.joinScannedQr(payload);
+            else
+                wifi.inspectScannedQr(payload);
+        }
+    }
 }

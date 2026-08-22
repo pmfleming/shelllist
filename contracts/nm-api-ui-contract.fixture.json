@@ -12,8 +12,12 @@
       "connect_success": {
         "connectivity": {
           "captive_portal": false,
+          "check_available": false,
+          "check_enabled": false,
+          "check_uri": null,
           "code": 4,
           "full": true,
+          "primary_connection": null,
           "state": "full"
         },
         "message": "Connected to Example via D-Bus",
@@ -212,14 +216,29 @@
         "active_since_ms": 1762000000000,
         "connectivity": {
           "captive_portal": true,
+          "check_available": false,
+          "check_enabled": false,
+          "check_uri": null,
           "code": 2,
           "full": false,
+          "primary_connection": null,
           "state": "portal"
         },
         "device_iface": "wlan0",
+        "device_path": "/org/freedesktop/NetworkManager/Devices/1",
         "enabled": true,
         "ip4": {
           "address": "192.0.2.10",
+          "addresses": [
+            {
+              "address": "192.0.2.10",
+              "prefix": 24
+            },
+            {
+              "address": "192.0.2.11",
+              "prefix": 24
+            }
+          ],
           "dhcp_lease": {
             "domain_name": "example.test",
             "expires_at_ms": 1762086400000,
@@ -230,8 +249,69 @@
             "192.0.2.1",
             "1.1.1.1"
           ],
+          "domains": [
+            "example.test"
+          ],
           "gateway": "192.0.2.1",
-          "prefix": 24
+          "prefix": 24,
+          "routes": [
+            {
+              "dest": "0.0.0.0",
+              "metric": 600,
+              "next_hop": "192.0.2.1",
+              "prefix": 0
+            }
+          ],
+          "searches": [
+            "example.test"
+          ]
+        },
+        "ip6": {
+          "address": "2001:db8::10",
+          "addresses": [
+            {
+              "address": "2001:db8::10",
+              "prefix": 64
+            }
+          ],
+          "dhcp_lease": {
+            "domain_name": "example.test",
+            "expires_at_ms": 1762003600000,
+            "lease_time_seconds": 3600,
+            "server_identifier": null
+          },
+          "dns": [
+            "2001:db8::1"
+          ],
+          "domains": [
+            "example.test"
+          ],
+          "gateway": "fe80::1",
+          "prefix": 64,
+          "routes": [
+            {
+              "dest": "::",
+              "metric": 1024,
+              "next_hop": "fe80::1",
+              "prefix": 0
+            }
+          ],
+          "searches": []
+        },
+        "link": {
+          "active_connection_state": 2,
+          "active_connection_state_flags": 92,
+          "active_connection_state_name": "activated",
+          "default4": true,
+          "default6": false,
+          "device_state": 100,
+          "device_state_name": "activated",
+          "device_state_reason": {
+            "category": "none",
+            "code": 0,
+            "name": "none"
+          },
+          "primary": true
         },
         "metered": {
           "code": 4,

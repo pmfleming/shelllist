@@ -37,4 +37,22 @@ TestCase {
         }), "subscription-1");
         compare(Routing.subscriptionId({ id: "other", ok: true }), "");
     }
+
+    function test_extractsOnDemandSubscriptionId() {
+        verify(Routing.isExtraSubscribe("subscribe-3"));
+        verify(!Routing.isExtraSubscribe("session-subscribe"));
+        verify(!Routing.isExtraSubscribe("networks"));
+        compare(Routing.subscriptionId({
+            id: "subscribe-3", ok: true,
+            response: { data: { subscription: { id: "subscription-9" } } }
+        }), "subscription-9");
+    }
+
+    function test_onDemandSubscriptionFailureDoesNotTearDownTheSession() {
+        const outcome = Routing.responseOutcome({
+            id: "subscribe-3", ok: false, error: "subscription refused"
+        }, "test-daemon");
+        compare(outcome.error, "subscription refused");
+        verify(!outcome.recover);
+    }
 }

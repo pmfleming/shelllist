@@ -20,6 +20,13 @@ Io.DaemonBackend {
         || isPending("profile") || isPending("advanced-load") || isPending("advanced-save")
         || isPending("advanced-secret") || isPending("band-status") || isPending("band-set")
         || isPending("secret-provide") || isPending("secret-cancel")
+        || isPending("qr-parse") || isPending("qr-connect")
+        || isPending("hotspot-capabilities") || isPending("hotspot-status")
+        || isPending("hotspot-start") || isPending("hotspot-stop")
+        || isPending("vpn-list") || isPending("vpn-status")
+        || isPending("vpn-connect") || isPending("vpn-disconnect")
+        || isPending("inventory") || isPending("network-status")
+        || isPending("activate-profile") || isPending("deactivate-connection")
     readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
     readonly property var responseHandlerById: ({
         "networks": function (value) { backend.handleNetworks(value); },
@@ -35,7 +42,21 @@ Io.DaemonBackend {
         "profile": function (value) { backend.handleProfile(value); },
         "share": function (value) { controller.applyShareResponse(value, "Saved profile could not be shared"); },
         "secret-provide": function (value) { backend.handleSecretResponse(value); },
-        "secret-cancel": function (value) { backend.handleSecretResponse(value); }
+        "secret-cancel": function (value) { backend.handleSecretResponse(value); },
+        "qr-parse": function (value) { backend.handleQrParse(value); },
+        "qr-connect": function (value) { backend.handleConnectStart(value); },
+        "hotspot-capabilities": function (value) { controller.hotspot.applyCapabilities(Api.apiData(value, "hotspot") || null); },
+        "hotspot-status": function (value) { controller.hotspot.applyStatus(Api.apiData(value, "hotspot") || null); },
+        "hotspot-start": function (value) { controller.hotspot.applyStart(Api.apiResult(value, "result") || ({})); },
+        "hotspot-stop": function (value) { controller.hotspot.applyStop(Api.apiData(value, "result") || ({})); },
+        "vpn-list": function (value) { controller.vpn.applyProfiles(Api.apiData(value, "vpns") || []); },
+        "vpn-status": function (value) { controller.vpn.applyStatus(Api.apiData(value, "vpn") || null); },
+        "vpn-connect": function (value) { controller.vpn.applyConnectStart(Api.apiResult(value, "result") || ({})); },
+        "vpn-disconnect": function (value) { controller.vpn.applyDisconnect(Api.apiData(value, "result") || ({})); },
+        "inventory": function (value) { controller.inventory.applyInventory(Api.apiData(value, "inventory") || null); },
+        "network-status": function (value) { controller.inventory.applyNetworkState(Api.apiData(value, "network") || null); },
+        "activate-profile": function (value) { controller.inventory.applyActivation(Api.apiData(value, "result") || ({})); },
+        "deactivate-connection": function (value) { controller.inventory.applyDeactivation(Api.apiData(value, "result") || ({})); }
     })
 
     function refreshNetworks(refreshCache) { return call("networks", NmApi.methods.wifi_networks, { cached: true, refresh_cache: !!refreshCache }); }
@@ -64,6 +85,34 @@ Io.DaemonBackend {
             { request_id: requestId, values: values || ({}), save: !!save, cancel: false });
     }
     function cancelSecret(requestId) { return call("secret-cancel", NmApi.methods.wifi_secret_provide, { request_id: requestId, cancel: true }); }
+
+    // A scanned QR payload carries a passphrase. It is passed straight to the
+    // daemon over the protected transport and never logged here.
+    function parseQr(payload) { return call("qr-parse", NmApi.methods.wifi_qr_parse, { payload: payload }); }
+    function connectQr(payload, ifname) {
+        return call("qr-connect", NmApi.methods.wifi_qr_connect,
+            ifname ? { payload: payload, ifname: ifname } : { payload: payload });
+    }
+
+    function loadHotspotCapabilities() { return call("hotspot-capabilities", NmApi.methods.hotspot_capabilities, {}); }
+    function loadHotspotStatus() { return call("hotspot-status", NmApi.methods.hotspot_status, {}); }
+    function startHotspot(options) { return call("hotspot-start", NmApi.methods.hotspot_start, options || ({})); }
+    function stopHotspot() { return call("hotspot-stop", NmApi.methods.hotspot_stop, {}); }
+
+    function loadVpnProfiles() { return call("vpn-list", NmApi.methods.vpn_list, {}); }
+    function loadVpnStatus() { return call("vpn-status", NmApi.methods.vpn_status, {}); }
+    function connectVpn(request) { return call("vpn-connect", NmApi.methods.vpn_connect, request || ({})); }
+    function disconnectVpn(request) { return call("vpn-disconnect", NmApi.methods.vpn_disconnect, request || ({})); }
+
+    function loadInventory() { return call("inventory", NmApi.methods.network_inventory, {}); }
+    function loadNetworkState() { return call("network-status", NmApi.methods.network_status, {}); }
+    function activateProfile(request) { return call("activate-profile", NmApi.methods.network_activateProfile, request || ({})); }
+    function deactivateConnection(request) { return call("deactivate-connection", NmApi.methods.network_deactivate, request || ({})); }
+    function watchStatistics(request) { return call("statistics-watch", NmApi.methods.network_statistics_watch, request || ({})); }
+
+    function handleQrParse(envelope) {
+        controller.applyScannedQr(Api.apiData(envelope, "qr") || ({}));
+    }
     function handleNetworks(envelope) {
         const data = Api.apiPayload(envelope);
         if (!envelope.ok)
@@ -164,6 +213,10 @@ Io.DaemonBackend {
             "--identity", context.identity, "--connectivity", context.connectivity,
             "--request-id", context.requestId, "--workspace", context.workspaceId
         ];
+        if (context.checkUri && context.checkUri.length > 0)
+            args.push("--check-uri", context.checkUri);
+        if (context.primaryConnection && context.primaryConnection.length > 0)
+            args.push("--primary-connection", context.primaryConnection);
         if (context.automatic)
             args.push("--episode", context.episode);
         if (context.fallback)

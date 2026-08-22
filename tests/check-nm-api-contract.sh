@@ -40,6 +40,11 @@ jq -e '
   (.data.fixture.status.radios.wwan_enabled | type == "boolean") and
   (.data.fixture.status.radios.airplane_mode | type == "boolean") and
   (.data.fixture.status.connectivity.state | type == "string") and
+  (.data.fixture.status.connectivity.check_enabled | type == "boolean") and
+  (.data.fixture.status.ip4.addresses | type == "array") and
+  (.data.fixture.status.ip4.routes | type == "array") and
+  (.data.fixture.status.link.primary | type == "boolean") and
+  (.data.fixture.status.device_path | type == "string") and
   (.data.fixture.status.ip4.dhcp_lease.server_identifier | type == "string") and
   (.data.fixture.status.ip4.dhcp_lease.domain_name | type == "string") and
   (.data.fixture.status.ip4.dhcp_lease.lease_time_seconds | type == "number") and
@@ -77,7 +82,30 @@ jq -e '
   .data.fixtures."wifi-connect.secret-required".result.reason == "secret-required" and
   .data.fixtures."wifi-scan.stream".events[0].protocol == "nm-api" and
   .data.fixtures."wifi-scan.stream".events[0].stream == "wifi.scan" and
-  .data.fixtures."wifi-profile.share".result.shareable == true
+  .data.fixtures."wifi-profile.share".result.shareable == true and
+  .data.fixtures."wifi-profile.details".result.version != null and
+  (.data.fixtures."wifi-profile.details".result.enterprise.password_flags.agent_owned | type == "boolean") and
+  .data.fixtures."wifi-profile.update-conflict".error.code == "conflict" and
+  (.data.fixtures."wifi-status.active".status.ip6.addresses | type == "array") and
+  (.data.fixtures."wifi-status.active".status.link.device_state_reason.category | type == "string") and
+  (.data.fixtures."network-inventory.snapshot".inventory.devices | type == "array") and
+  .data.fixtures."network-devices.list".devices[0].type_name == "wifi" and
+  .data.fixtures."network-status.connected".network.state_name == "connected-global" and
+  .data.fixtures."network-activate-profile.started".result.status == "activating" and
+  .data.fixtures."network-deactivate.success".result.status == "deactivated" and
+  .data.fixtures."network-statistics.watch".result.stream == "network.statistics" and
+  .data.fixtures."hotspot.capabilities".hotspot.supported == true and
+  .data.fixtures."hotspot.capabilities-unsupported".hotspot.unsupported_reason == "ap-mode-unsupported" and
+  (.data.fixtures."hotspot.stream".events[] | select(.event == "succeeded") | .result.hotspot.share.qr_payload | startswith("WIFI:")) and
+  .data.fixtures."vpn.list".vpns[0].plugin == "openconnect" and
+  .data.fixtures."vpn.list".vpns[1].plugin == "wireguard" and
+  (.data.fixtures."vpn.status-connected".vpn.active[0].vpn_state_name | type == "string") and
+  (.data.fixtures."vpn.stream".events[] | select(.event == "failed") | .details.reason == "no-secrets") and
+  .data.fixtures."wifi-qr.parse".qr.auth == "wpa" and
+  .data.fixtures."wifi-qr.parse".qr.has_password == true and
+  (.data.fixtures."wifi-qr.parse".qr | has("password") | not) and
+  .data.fixtures."wifi-qr.parse-open".qr.auth == "open" and
+  (.data.fixtures."network-health.stream".events[] | select(.event == "device") | .health.reason.category == "authentication")
 ' "$method_actual" >/dev/null
 
 jq -e '
@@ -88,10 +116,17 @@ jq -e '
     "wifi.status", "wifi.setEnabled", "radio.setWwanEnabled", "radio.setAirplaneMode",
     "network.connectivity", "wifi.networks", "wifi.band.status", "wifi.band.set", "wifi.scan",
     "wifi.connectTarget", "wifi.disconnect", "wifi.profile.operation",
-    "wifi.secret.capabilities", "wifi.secret.provide"
+    "wifi.secret.capabilities", "wifi.secret.provide",
+    "network.inventory", "network.devices", "network.connections", "network.status",
+    "network.activateProfile", "network.deactivate", "network.statistics.watch",
+    "hotspot.capabilities", "hotspot.status", "hotspot.start", "hotspot.stop",
+    "vpn.list", "vpn.status", "vpn.connect", "vpn.disconnect",
+    "wifi.qr.parse", "wifi.qr.connect"
   ])) and
   ([.data.protocol.streams[] | select(.subscribable) | .name] | contains([
-    "wifi.status", "network.connectivity", "wifi.networks", "wifi.scan", "wifi.connect", "wifi.band", "wifi.secret"
+    "wifi.status", "network.connectivity", "wifi.networks", "wifi.scan", "wifi.connect",
+    "wifi.band", "wifi.secret", "network.inventory", "network.statistics", "hotspot", "vpn",
+    "network.health"
   ]))
 ' "$registry_actual" >/dev/null
 
@@ -110,14 +145,49 @@ jq -r '
           or .name == "wifi.connectTarget"
           or .name == "wifi.disconnect"
           or .name == "wifi.profile.operation"
-          or .name == "wifi.secret.provide")
+          or .name == "wifi.secret.provide"
+          or .name == "wifi.qr.parse"
+          or .name == "wifi.qr.connect"
+          or .name == "network.inventory"
+          or .name == "network.status"
+          or .name == "network.activateProfile"
+          or .name == "network.deactivate"
+          or .name == "network.statistics.watch"
+          or .name == "hotspot.capabilities"
+          or .name == "hotspot.status"
+          or .name == "hotspot.start"
+          or .name == "hotspot.stop"
+          or .name == "vpn.list"
+          or .name == "vpn.status"
+          or .name == "vpn.connect"
+          or .name == "vpn.disconnect")
       | "    " + (.name | identifier) + ": " + (.name | tojson)] | join(",\n"))
   + "\n};\n\n"
   + "var streams = {\n"
   + ([.data.protocol.streams[] | select(.subscribable) | "    " + (.name | identifier) + ": " + (.name | tojson)] | join(",\n"))
   + "\n};\n\n"
   + "var subscribedStreams = [\n"
-  + ([.data.protocol.streams[] | select(.subscribable) | "    streams." + (.name | identifier)] | join(",\n"))
+  + ([.data.protocol.streams[]
+      | select(.name == "wifi.status"
+          or .name == "network.connectivity"
+          or .name == "wifi.networks"
+          or .name == "wifi.scan"
+          or .name == "wifi.connect"
+          or .name == "wifi.band"
+          or .name == "wifi.secret"
+          or .name == "network.health")
+      | "    streams." + (.name | identifier)] | join(",\n"))
+  + "\n];\n\n"
+  + "// Streams tied to an operation the shell starts on demand. Subscribing to\n"
+  + "// them by default would make the daemon compute payloads nobody is reading.\n"
+  + "var onDemandStreams = [\n"
+  + ([.data.protocol.streams[]
+      | select(.subscribable)
+      | select(.name == "network.inventory"
+          or .name == "network.statistics"
+          or .name == "hotspot"
+          or .name == "vpn")
+      | "    streams." + (.name | identifier)] | join(",\n"))
   + "\n];"
 ' "$registry_actual" > "$frontend_actual"
 

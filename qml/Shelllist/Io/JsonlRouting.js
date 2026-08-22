@@ -15,8 +15,17 @@ function responseOutcome(message, daemonName) {
     };
 }
 
+// The session subscription is the one whose failure means the transport is
+// unusable. Extra, on-demand subscriptions are identified separately so a
+// failure there is reported without tearing the session down.
+function isExtraSubscribe(id) {
+    return typeof id === "string" && id.indexOf("subscribe-") === 0;
+}
+
 function subscriptionId(message) {
-    if (message.id !== "session-subscribe" || !message.ok || !message.response || !message.response.data)
+    if (!message.ok || !message.response || !message.response.data)
+        return "";
+    if (message.id !== "session-subscribe" && !isExtraSubscribe(message.id))
         return "";
     return ((message.response.data.subscription || ({})).id || "");
 }

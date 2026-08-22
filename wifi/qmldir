@@ -9,6 +9,10 @@ internal WifiConnectionController WifiConnectionController.qml
 internal WifiCredentialDialog WifiCredentialDialog.qml
 internal WifiNetworkActions WifiNetworkActions.qml
 internal WifiScanController WifiScanController.qml
+internal NetworkHealthController NetworkHealthController.qml
+internal HotspotController HotspotController.qml
+internal VpnController VpnController.qml
+internal NetworkInventoryController NetworkInventoryController.qml
 internal WifiControllerServices WifiControllerServices.qml
 internal WifiQrDialog WifiQrDialog.qml
 internal AdvancedIpSettingsPane AdvancedIpSettingsPane.qml

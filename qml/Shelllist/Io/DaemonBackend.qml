@@ -9,10 +9,15 @@ Item {
     required property bool active
     property bool recoverProtocolErrors: true
     property var pending: ({})
+    property int subscriptionSequence: 0
 
     readonly property bool requestRunning: pendingCount > 0
     readonly property int pendingCount: Object.keys(pending).length
     readonly property alias ready: client.ready
+
+    // Subscription ids returned by on-demand subscribe requests, keyed by the
+    // request id that asked for them.
+    property var extraSubscriptions: ({})
 
     signal responseReceived(string id, var envelope, string transportError)
     signal eventReceived(var event)
@@ -67,11 +72,54 @@ Item {
     }
 
     function isTransportControl(id: string): bool {
-        return id === "session-subscribe" || id.startsWith("cancel-") || id.startsWith("shutdown-");
+        return id === "session-subscribe" || id.startsWith("cancel-") || id.startsWith("shutdown-")
+            || id.startsWith("subscribe-");
+    }
+
+    /// Subscribes to extra streams for as long as a view needs them. Returns
+    /// the request id; the resulting subscription id arrives asynchronously and
+    /// is what `unsubscribe` cancels.
+    function subscribeStreams(streamNames: var): string {
+        const id = "subscribe-" + (++subscriptionSequence);
+        setPending(id, true);
+        try {
+            client.subscribeExtra(id, streamNames);
+            return id;
+        } catch (error) {
+            setPending(id, false);
+            console.error("shelllist " + daemonName + " subscribe failed id=" + id + " error=" + error);
+            return "";
+        }
+    }
+
+    function unsubscribeStreams(id: string): bool {
+        const subscriptionId = extraSubscriptions[id] || "";
+        const next = Object.assign({}, extraSubscriptions);
+        delete next[id];
+        extraSubscriptions = next;
+        if (subscriptionId.length === 0)
+            return false;
+        return cancel(subscriptionId);
+    }
+
+    function rememberExtraSubscription(id: string, envelope: var): void {
+        const subscription = envelope && envelope.data ? (envelope.data.subscription || ({})) : ({});
+        if (!subscription.id)
+            return;
+        const next = Object.assign({}, extraSubscriptions);
+        next[id] = subscription.id;
+        extraSubscriptions = next;
     }
 
     function acceptResponse(id: string, envelope: var, transportError: string): void {
         setPending(id, false);
+        if (id.startsWith("subscribe-")) {
+            if (transportError.length > 0)
+                console.warn("shelllist " + daemonName + " subscribe failed id=" + id + " error=" + transportError);
+            else
+                rememberExtraSubscription(id, envelope);
+            return;
+        }
         if (!isTransportControl(id))
             responseReceived(id, envelope, transportError);
     }
@@ -79,6 +127,9 @@ Item {
     function failTransport(message: string): void {
         const lostRequestIds = Object.keys(pending);
         pending = ({});
+        // A new session resubscribes from scratch, so stale ids must not be
+        // cancelled later against a subscription that no longer exists.
+        extraSubscriptions = ({});
         transportFailed(message, lostRequestIds);
     }
 

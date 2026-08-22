@@ -50,10 +50,19 @@ Item {
         if (controller.isActive(controller.detailAp))
             controller.loadBandStatus(profilePath);
     }
+    // The daemon rejects an update whose expected_version no longer matches the
+    // saved profile, so a stale editor cannot overwrite a change made
+    // elsewhere. The token comes from the details response this editor loaded.
+    function versionedSettings(settings) {
+        const version = (profile && profile.version) || "";
+        if (version.length === 0)
+            return settings;
+        return Object.assign({}, settings, { expected_version: version });
+    }
     function save(settings, origin) {
         if (!open || profilePath.length === 0 || saving) return false;
         error = ""; saveOrigin = origin || section;
-        if (backend.saveAdvancedProfile(profilePath, settings)) return true;
+        if (backend.saveAdvancedProfile(profilePath, versionedSettings(settings))) return true;
         saveOrigin = ""; error = "Advanced profile settings are already being saved."; return false;
     }
     function applySave(result) {
@@ -73,8 +82,16 @@ Item {
     function handlesCall(id) { return id === "advanced-load" || id === "advanced-save" || id === "advanced-secret"; }
     function failCall(id, message) {
         if (!handlesCall(id)) return false;
-        error = message;
-        if (id === "advanced-save") saveOrigin = "";
+        // A conflict means somebody else changed the profile; reloading is the
+        // fix, so say that rather than repeating the daemon's wording.
+        error = id === "advanced-save" && message.indexOf("conflict:") >= 0
+            ? "These settings changed elsewhere. Reloading the saved profile…"
+            : message;
+        if (id === "advanced-save") {
+            saveOrigin = "";
+            if (message.indexOf("conflict:") >= 0 && open && profilePath.length > 0)
+                backend.loadAdvancedProfile(profilePath);
+        }
         return true;
     }
     function selectionChanged() {

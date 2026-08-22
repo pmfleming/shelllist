@@ -16,6 +16,10 @@ Item {
     property string outputPath: ""
     property int generation: 0
 
+    /// Emitted with a scanned Wi-Fi QR payload. The payload carries a
+    /// passphrase, so the handler must pass it straight to the daemon.
+    signal scanned(string payload, bool join)
+
     function runtimeDirectory() {
         return Quickshell.env("XDG_RUNTIME_DIR") || "";
     }
@@ -56,11 +60,16 @@ Item {
         controller.status = "Wi-Fi QR payload copied to clipboard";
     }
 
-    function launchScanner() {
+    // Set when the scanner should join the scanned network rather than only
+    // report what it read.
+    property bool joinAfterScan: false
+
+    function launchScanner(join) {
         if (scanner.running) {
             controller.status = "Wi-Fi QR scanner is already open";
             return false;
         }
+        joinAfterScan = !!join;
         scanner.exec(["qrca"]);
         controller.status = "Opening Wi-Fi QR scanner…";
         return true;
@@ -77,9 +86,22 @@ Item {
     }
 
     function finishScanning(exitCode) {
-        if (exitCode === 0) return;
-        const detail = scannerError.text.length > 0 ? scannerError.text : "exit " + exitCode;
-        controller.status = "Wi-Fi QR scanner failed: " + detail;
+        if (exitCode !== 0) {
+            const detail = scannerError.text.length > 0 ? scannerError.text : "exit " + exitCode;
+            controller.status = "Wi-Fi QR scanner failed: " + detail;
+            joinAfterScan = false;
+            return;
+        }
+        // The scanned payload carries a passphrase, so it goes straight to the
+        // daemon for validation and is never logged or kept here.
+        const scannedText = scannedOutput.text.trim();
+        const join = joinAfterScan;
+        joinAfterScan = false;
+        if (scannedText.length === 0) {
+            controller.status = "Nothing was scanned.";
+            return;
+        }
+        qr.scanned(scannedText, join);
     }
 
     Process {
@@ -98,6 +120,7 @@ Item {
 
     Process {
         id: scanner
+        stdout: StdioCollector { id: scannedOutput; waitForEnd: true }
         stderr: StdioCollector { id: scannerError; waitForEnd: true }
         onExited: function (exitCode) { qr.finishScanning(exitCode); } // qmllint disable signal-handler-parameters
     }

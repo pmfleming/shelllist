@@ -70,7 +70,7 @@ ModalFrame {
         }]
         onTriggered: function (actionId) {
             if (actionId === "copy") dialog.qr.copyPayload();
-            else if (actionId === "scan") dialog.qr.launchScanner();
+            else if (actionId === "scan") dialog.qr.launchScanner(false);
             else dialog.closed();
         }
     }

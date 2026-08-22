@@ -81,6 +81,14 @@ Item {
     }
 
     function subscribe() { send({ id: "session-subscribe", op: "subscribe", streams: streams }); }
+
+    // Adds a subscription beyond the session's default streams, for a view that
+    // only wants a stream while it is open. The daemon computes those payloads
+    // only while somebody is subscribed, so dropping it again matters.
+    function subscribeExtra(id, extraStreams) {
+        send({ id: id, op: "subscribe", streams: extraStreams });
+    }
+
     function rememberSubscription(message) {
         if (message.id === "session-subscribe" && message.ok)
             subscriptionId = Routing.subscriptionId(message);

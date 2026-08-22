@@ -349,6 +349,8 @@
               episode=
               workspace=
               fallback=0
+              check_uri=
+              primary_connection=
               portal_url="http://neverssl.com/"
 
               require_value() {
@@ -370,6 +372,8 @@
                   --request-id) require_value "$@"; request_id=$2; shift ;;
                   --episode) require_value "$@"; episode=$2; shift ;;
                   --workspace) require_value "$@"; workspace=$2; shift ;;
+                  --check-uri) require_value "$@"; check_uri=$2; shift ;;
+                  --primary-connection) require_value "$@"; primary_connection=$2; shift ;;
                   *) echo "Unknown option: $1" >&2; exit 2 ;;
                 esac
                 shift
@@ -398,6 +402,15 @@
                   *) portal_url="http://nmcheck.gnome.org/check_network_status.txt"; fallback_index=2 ;;
                 esac
                 printf '%s\n' $(((fallback_index + 1) % 3)) > "$fallback_index_file"
+              elif [ -n "$check_uri" ]; then
+                # NetworkManager already probed this URL and got the portal
+                # verdict, so it is the one most likely to redirect to the
+                # login page. Only plain HTTP is used; an HTTPS probe cannot be
+                # intercepted by a portal without a certificate warning.
+                case "$check_uri" in
+                  http://*) portal_url="$check_uri" ;;
+                  *) ;;
+                esac
               fi
 
               if [ -z "$workspace" ] && command -v hyprctl >/dev/null 2>&1; then
@@ -443,8 +456,9 @@
                   --arg browser_pid "$browser_pid" \
                   --arg window_title "$window_title" \
                   --arg url "$portal_url" \
+                  --arg primary_connection "$primary_connection" \
                   --argjson helper_elapsed_ms "$helper_elapsed_ms" \
-                  '{decision:$decision,trigger:$trigger,ssid:$ssid,identity:$identity,connectivity:$connectivity,request_id:$request_id,episode:$episode,workspace:$workspace,browser_pid:$browser_pid,url:$url,window_title:$window_title,helper_elapsed_ms:$helper_elapsed_ms}' \
+                  '{decision:$decision,trigger:$trigger,ssid:$ssid,identity:$identity,connectivity:$connectivity,request_id:$request_id,episode:$episode,workspace:$workspace,browser_pid:$browser_pid,url:$url,window_title:$window_title,primary_connection:$primary_connection,helper_elapsed_ms:$helper_elapsed_ms}' \
                   | logger -t shelllist-captive-portal
               }
 
@@ -764,6 +778,14 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-wifi-qr.js} ${./wifi/WifiQr.js}
+            touch $out
+          '';
+
+          networkHealth = pkgs.runCommand "shelllist-network-health"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-network-health.js} ${./wifi/NetworkHealth.js}
             touch $out
           '';
 
