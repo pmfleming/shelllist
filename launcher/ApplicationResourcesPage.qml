@@ -56,21 +56,10 @@ Ui.DetailFlickable {
     }
 
     ApplicationResourceHistory {
-        visible: page.application.running || page.controller.historyInFlight
-            || page.controller.resourceHistory.length > 0
         width: parent.width
         controller: page.controller
         application: page.application
         uiScale: page.uiScale
-    }
-
-    Ui.CenteredMessage {
-        visible: !page.application.running && !page.controller.historyInFlight
-            && page.controller.resourceHistory.length === 0
-        width: parent.width
-        height: 120
-        text: "No resource measurements in the last 30 minutes"
-        font.pixelSize: Ui.Theme.fontSizeBody
     }
 
     ApplicationResourceDetails {

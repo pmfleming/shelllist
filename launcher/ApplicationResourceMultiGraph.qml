@@ -9,6 +9,8 @@ Ui.ChartFrame {
     required property var series
     required property real uiScale
     property real minimumMaximum: 0
+    property string chartStyle: "area"
+    property bool available: true
     property double rangeStartMilliseconds: 0
     property double rangeEndMilliseconds: 0
     property double maximumGapMilliseconds: 30000
@@ -97,6 +99,47 @@ Ui.ChartFrame {
         function yFor(value) {
             return height - Math.min(1, Math.max(0, value) / graph.maximum) * height;
         }
+        function hatch(context, left, right) {
+            const start = Math.max(0, left);
+            const end = Math.min(width, right);
+            if (end <= start)
+                return;
+            context.fillStyle = Ui.Theme.withAlpha(Ui.Theme.mutedText, 0.055);
+            context.fillRect(start, 0, end - start, height);
+            context.save();
+            context.beginPath();
+            context.rect(start, 0, end - start, height);
+            context.clip();
+            context.beginPath();
+            for (let x = start - height; x < end + height; x += 8) {
+                context.moveTo(x, height);
+                context.lineTo(x + height, 0);
+            }
+            context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.mutedText, 0.18);
+            context.lineWidth = 1;
+            context.stroke();
+            context.restore();
+        }
+        function drawUnavailablePeriods(context) {
+            if (!graph.available) {
+                hatch(context, 0, width);
+                return;
+            }
+            const valid = graph.timestamps.filter(function (timestamp) {
+                return timestamp >= graph.firstTimestamp && timestamp <= graph.lastTimestamp;
+            });
+            const radius = graph.maximumGapMilliseconds / 2;
+            if (valid.length === 0) {
+                hatch(context, 0, width);
+                return;
+            }
+            hatch(context, 0, xFor(Math.max(graph.firstTimestamp, valid[0] - radius)));
+            for (let index = 1; index < valid.length; ++index) {
+                if (valid[index] - valid[index - 1] > graph.maximumGapMilliseconds)
+                    hatch(context, xFor(valid[index - 1] + radius), xFor(valid[index] - radius));
+            }
+            hatch(context, xFor(Math.min(graph.lastTimestamp, valid[valid.length - 1] + radius)), width);
+        }
         function drawGrid(context) {
             context.beginPath();
             [0.25, 0.5, 0.75].forEach(function (fraction) {
@@ -130,10 +173,32 @@ Ui.ChartFrame {
             if (segment.length > 0) segments.push(segment);
             return segments;
         }
+        function drawBars(context) {
+            const descriptors = graph.series || [];
+            const bucketWidth = Math.max(1, graph.maximumGapMilliseconds
+                / Math.max(1, graph.lastTimestamp - graph.firstTimestamp) * width);
+            graph.points.forEach(function (point, pointIndex) {
+                const timestamp = graph.timestamps[pointIndex];
+                if (timestamp < graph.firstTimestamp || timestamp > graph.lastTimestamp)
+                    return;
+                const groupWidth = Math.max(1, bucketWidth * 0.82);
+                const barWidth = Math.max(0.55, groupWidth / Math.max(1, descriptors.length));
+                const groupLeft = xFor(timestamp) - groupWidth / 2;
+                descriptors.forEach(function (descriptor, seriesIndex) {
+                    const value = Number(point[descriptor.metric]);
+                    if (!isFinite(value) || value < 0)
+                        return;
+                    const top = yFor(value);
+                    context.fillStyle = Ui.Theme.withAlpha(descriptor.color, 0.78);
+                    context.fillRect(groupLeft + seriesIndex * barWidth, top,
+                        Math.max(0.55, barWidth - 0.4), height - top);
+                });
+            });
+        }
         function drawSeries(context, descriptor, index) {
             const segments = segmentsFor(descriptor, false);
             segments.forEach(function (points) {
-                if (index === 0 && points.length > 1) {
+                if (graph.chartStyle === "area" && index === 0 && points.length > 1) {
                     context.beginPath();
                     context.moveTo(points[0].x, height);
                     points.forEach(function (point) { context.lineTo(point.x, point.y); });
@@ -175,10 +240,16 @@ Ui.ChartFrame {
         onPaint: {
             const context = getContext("2d");
             context.reset();
+            drawUnavailablePeriods(context);
             drawGrid(context);
-            graph.series.forEach(function (descriptor, index) {
-                drawSeries(context, descriptor, index);
-            });
+            if (!graph.available)
+                return;
+            if (graph.chartStyle === "bar")
+                drawBars(context);
+            else
+                graph.series.forEach(function (descriptor, index) {
+                    drawSeries(context, descriptor, index);
+                });
             if (graph.hoveredIndex >= 0) {
                 const x = xFor(graph.timestamps[graph.hoveredIndex]);
                 context.beginPath();
@@ -199,7 +270,7 @@ Ui.ChartFrame {
     }
 
     Rectangle {
-        visible: pointer.containsMouse && graph.hoveredPoint !== null
+        visible: graph.available && pointer.containsMouse && graph.hoveredPoint !== null
         x: Math.max(2, Math.min(parent.width - width - 2, pointer.mouseX + 10))
         y: 2
         width: tooltip.implicitWidth + 16
