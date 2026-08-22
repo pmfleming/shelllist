@@ -145,10 +145,24 @@ Rectangle {
                         font.pixelSize: Ui.Theme.fontSizeLabel
                         font.weight: Ui.Theme.fontWeightDemiBold
                     }
-                    ActivityHeaderButton {
+                    Ui.DropDownList {
                         id: dndButton
-                        label: pane.controller.notifications.dnd ? "DND on" : "DND off"
-                        onTriggered: pane.controller.toggleDnd()
+                        width: 112
+                        height: 32
+                        value: pane.controller.notifications.dnd ? -1 : 0
+                        options: [
+                            { value: -1, label: Ui.NotificationPresentation.dndLabel(
+                                pane.controller.notifications, Date.now()) },
+                            { value: 0, label: "DND off" },
+                            { value: 30, label: "For 30 min" },
+                            { value: 60, label: "For 1 hour" },
+                            { value: 120, label: "For 2 hours" },
+                            { value: 480, label: "For 8 hours" }
+                        ]
+                        onSelected: function (minutes) {
+                            if (minutes >= 0)
+                                pane.controller.setDndForMinutes(minutes);
+                        }
                     }
                     ActivityHeaderButton {
                         id: clearButton
@@ -175,10 +189,10 @@ Rectangle {
                     visible: pane.controller.notificationHistory.length > 0
                     clip: true
                     spacing: Ui.Theme.spacingSm
-                    model: pane.controller.notificationHistory
-                    delegate: NotificationHistoryRow {
+                    model: pane.controller.notificationGroups
+                    delegate: NotificationHistoryGroup {
                         required property var modelData
-                        record: modelData
+                        group: modelData
                         controller: pane.controller
                     }
                 }

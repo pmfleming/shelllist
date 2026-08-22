@@ -16,6 +16,7 @@ Rectangle {
     readonly property var replyAction: Array.isArray(notification.actions)
         ? notification.actions.find(function (action) { return row.isReplyAction(action); }) || null
         : null
+    property bool removing: false
 
     function isReplyAction(action: var): bool {
         return String(action && action.key || "").toLowerCase().indexOf("reply") >= 0;
@@ -61,7 +62,9 @@ Rectangle {
             }
             Column {
                 id: titleColumn
-                width: parent.width - 32 - (row.active ? dismissButton.width + parent.spacing * 2 : parent.spacing)
+                width: parent.width - 32 - (row.active
+                    ? dismissButton.width + snoozeButton.width + parent.spacing * 3
+                    : parent.spacing)
                 spacing: 2
                 Text {
                     width: parent.width
@@ -83,13 +86,23 @@ Rectangle {
                 }
             }
             Ui.FlatIconButton {
+                id: snoozeButton
+                visible: row.active
+                width: visible ? 28 : 0
+                height: 28
+                icon: "󰒲"
+                accessibleName: "Snooze notification for 15 minutes"
+                toolTip: accessibleName
+                onClicked: row.controller.snoozeNotification(row.notification.id, 15)
+            }
+            Ui.FlatIconButton {
                 id: dismissButton
                 visible: row.active
                 width: visible ? 28 : 0
                 height: 28
                 icon: "󰅖"
                 accessibleName: "Dismiss notification"
-                onClicked: row.controller.dismissNotification(row.notification.id)
+                onClicked: row.removing = true
             }
         }
 
@@ -130,6 +143,14 @@ Rectangle {
             submitReply: function (id, text) {
                 return row.controller.replyNotification(id, text);
             }
+        }
+    }
+
+    Ui.RemovalAnimation {
+        targetItem: row
+        removalRequested: row.removing
+        finishRemoval: function () {
+            row.controller.dismissNotification(row.notification.id);
         }
     }
 }

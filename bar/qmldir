@@ -12,6 +12,7 @@ BarTrayItem 1.0 BarTrayItem.qml
 BarWindow 1.0 BarWindow.qml
 MediaChip 1.0 MediaChip.qml
 NotificationToastCard 1.0 NotificationToastCard.qml
+NotificationToastStack 1.0 NotificationToastStack.qml
 NotificationToastWindow 1.0 NotificationToastWindow.qml
 WorkspaceButton 1.0 WorkspaceButton.qml
 WorkspaceStrip 1.0 WorkspaceStrip.qml

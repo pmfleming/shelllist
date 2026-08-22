@@ -11,9 +11,12 @@ var methods = {
     todoComplete: "todos.complete",
     todoDelete: "todos.delete",
     notificationsToggleDnd: "notifications.toggleDnd",
+    notificationsSetDnd: "notifications.setDnd",
     notificationsList: "notifications.list",
     notificationsDismiss: "notifications.dismiss",
     notificationsClear: "notifications.clear",
+    notificationsClearGroup: "notifications.clearGroup",
+    notificationsSnooze: "notifications.snooze",
     notificationsInvokeAction: "notifications.invokeAction",
     notificationsReply: "notifications.reply"
 };

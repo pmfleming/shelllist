@@ -51,14 +51,39 @@ equal(context.mediaPositionPercent({
 }, 1000), 100, "media progress is bounded");
 equal(context.audioIcon({ available: true, muted: false, volume_percent: 80 }), "", "high-volume icon");
 equal(context.outputOsd({ available: true, muted: false, volume_percent: 80, sink_description: "Speakers" }), {
-    kind: "audio", icon: "", label: "Speakers", valueLabel: "80%", percent: 80, progressVisible: true
+    kind: "audio", icon: "", label: "Speakers", valueLabel: "80%", percent: 80,
+    progressVisible: true, timeoutMs: 1400
 }, "output OSD presentation");
 equal(context.inputOsd({ input_muted: true, source_description: "Microphone" }), {
-    kind: "input", icon: "󰍭", label: "Microphone", valueLabel: "Muted", percent: 0, progressVisible: false
+    kind: "input", icon: "󰍭", label: "Microphone", valueLabel: "Muted", percent: 0,
+    progressVisible: false, timeoutMs: 1400
 }, "microphone OSD presentation");
 equal(context.brightnessOsd({ percent: 65 }), {
-    kind: "brightness", icon: "󰃠", label: "Brightness", valueLabel: "65%", percent: 65, progressVisible: true
+    kind: "brightness", icon: "󰃠", label: "Brightness", valueLabel: "65%", percent: 65,
+    progressVisible: true, timeoutMs: 1400
 }, "brightness OSD presentation");
+equal(context.powerProfileOsd({ profile: "power-saver" }).valueLabel,
+    "Power saver", "power profile OSD presentation");
+equal(context.mediaPlaybackOsd({ active_player: "player", players: [{
+    id: "player", title: "Track", playback_status: "playing", length_us: 100,
+    position_us: 25, position_observed_at_unix_ms: 1000, playback_rate: 1
+}] }, 1000).percent, 25, "media playback OSD progress");
+equal(context.lockKeyOsd("caps-lock", true).valueLabel, "On", "Caps Lock OSD state");
+equal(context.keyboardBacklightOsd(60).percent, 60, "keyboard backlight OSD progress");
+equal(context.hardwareOsd({ available: true, caps_lock: false },
+    { available: true, caps_lock: true }).kind, "caps-lock", "hardware changes select OSD");
+equal(context.privacyOsd("camera", true).timeoutMs, 3000, "privacy OSD stays visible longer");
+equal(context.idleInhibited({ inhibitors: [{ what: "sleep:idle" }] }), true,
+    "idle inhibitor detection");
+equal(context.audioDeviceOsd({ sink_name: "old" }, {
+    sink_name: "new", sink_description: "Headphones"
+}).valueLabel, "Headphones", "audio output device OSD");
+equal(context.displayOutputOsd({ monitors: [{ name: "eDP-1" }] }, {
+    monitors: [{ name: "eDP-1" }, { name: "DP-1" }]
+}).valueLabel, "DP-1 connected", "display output OSD");
+equal(context.domainOsd({ powerProfile: "power" }, "power",
+    { available: true, profile: "balanced" }, { available: true, profile: "performance" }, 0).kind,
+    "power-profile", "domain changes route through shared OSD policy");
 equal(context.batteryIcon({ charging: true, plugged: true, percentage: 60 }), "󰂄", "charging icon");
 equal(context.duration(7500), "2h 5m", "battery duration");
 equal(context.networkKind({ active: true, access_point: { ssid: "Test" } }), "wifi", "Wi-Fi status");

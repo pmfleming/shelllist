@@ -16,6 +16,7 @@ Rectangle {
         : null
     readonly property int urgency: notification.hints ? Number(notification.hints.urgency || 0) : 0
     readonly property string iconSource: resolveIconSource()
+    property bool removing: false
 
     function isReplyAction(action: var): bool {
         const key = String(action && action.key || "").toLowerCase();
@@ -81,7 +82,8 @@ Rectangle {
 
             Column {
                 id: headingColumn
-                width: parent.width - 40 - dismissButton.width - parent.spacing * 2
+                width: parent.width - 40 - snoozeButton.width - dismissButton.width
+                    - parent.spacing * 3
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
                 Text {
@@ -105,12 +107,22 @@ Rectangle {
             }
 
             Ui.FlatIconButton {
+                id: snoozeButton
+                width: 30
+                height: 30
+                icon: "󰒲"
+                accessibleName: "Snooze notification for 15 minutes"
+                toolTip: accessibleName
+                onClicked: card.controller.snoozeNotification(card.notification.id, 15)
+            }
+
+            Ui.FlatIconButton {
                 id: dismissButton
                 width: 30
                 height: 30
                 icon: "󰅖"
                 accessibleName: "Dismiss notification"
-                onClicked: card.controller.dismissNotification(card.notification.id)
+                onClicked: card.removing = true
             }
         }
 
@@ -152,6 +164,14 @@ Rectangle {
             submitReply: function (id, text) {
                 return card.controller.replyNotification(id, text);
             }
+        }
+    }
+
+    Ui.RemovalAnimation {
+        targetItem: card
+        removalRequested: card.removing
+        finishRemoval: function () {
+            card.controller.dismissNotification(card.notification.id);
         }
     }
 }

@@ -84,7 +84,7 @@ Rectangle {
 
             Text {
                 anchors.centerIn: parent
-                text: surface.controller.osdIcon
+                text: surface.controller.osd.icon
                 color: Ui.Theme.accent
                 font.family: Ui.Theme.iconFontFamily
                 font.pixelSize: 27
@@ -98,7 +98,7 @@ Rectangle {
 
             Text {
                 width: parent.width
-                text: surface.controller.osdLabel
+                text: surface.controller.osd.label
                 color: Ui.Theme.text
                 elide: Text.ElideRight
                 font.family: Ui.Theme.fontFamily
@@ -111,7 +111,7 @@ Rectangle {
 
                 width: parent.width
                 height: 10
-                visible: surface.controller.osdProgressVisible
+                visible: surface.controller.osd.progressVisible
                 radius: height / 2
                 color: Ui.Theme.input
                 border.width: 1
@@ -120,7 +120,7 @@ Rectangle {
                 Rectangle {
                     id: progressFill
 
-                    width: parent.width * surface.controller.osdPercent / 100
+                    width: parent.width * surface.controller.osd.percent / 100
                     height: parent.height
                     radius: parent.radius
                     color: Ui.Theme.accent
@@ -172,7 +172,7 @@ Rectangle {
                 id: valueLabel
 
                 anchors.centerIn: parent
-                text: surface.controller.osdValueLabel
+                text: surface.controller.osd.valueLabel
                 color: Ui.Theme.text
                 font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeLabel

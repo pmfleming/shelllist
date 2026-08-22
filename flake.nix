@@ -742,6 +742,15 @@
             touch $out
           '';
 
+          notificationPresentation = pkgs.runCommand "shelllist-notification-presentation"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-notification-presentation.js} \
+              ${./qml/Shelllist/Ui/NotificationPresentation.js}
+            touch $out
+          '';
+
           wifiIcons = pkgs.runCommand "shelllist-wifi-icons"
             {
               nativeBuildInputs = [ pkgs.nodejs ];

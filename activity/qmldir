@@ -8,4 +8,5 @@ internal ActivityTodoSection ActivityTodoSection.qml
 ActivityBackend 1.0 ActivityBackend.qml
 ActivityContent 1.0 ActivityContent.qml
 ActivityController 1.0 ActivityController.qml
+NotificationHistoryGroup 1.0 NotificationHistoryGroup.qml
 NotificationHistoryRow 1.0 NotificationHistoryRow.qml

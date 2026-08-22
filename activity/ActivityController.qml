@@ -34,6 +34,8 @@ Ui.ChooserController {
     readonly property var selectedTodos: todos.filter(function (todo) {
         return Flow.todoVisible(todo, selectedDateKey, dateKey(new Date()));
     })
+    readonly property var notificationGroups: Ui.NotificationPresentation.groupRecords(
+        notificationHistory)
 
     signal focusTodoInputRequested
 
@@ -116,10 +118,19 @@ Ui.ChooserController {
         notificationHistoryLoading = backend.loadNotificationHistory(cursor);
     }
 
-    function isNotificationActive(notificationId: int): bool {
-        const values = notificationActive && Array.isArray(notificationActive.notifications)
+    function activeNotifications(): var {
+        return notificationActive && Array.isArray(notificationActive.notifications)
             ? notificationActive.notifications : [];
-        return values.some(function (notification) { return notification.id === notificationId; });
+    }
+    function isNotificationActive(notificationId: int): bool {
+        return activeNotifications().some(function (notification) {
+            return notification.id === notificationId;
+        });
+    }
+    function isNotificationGroupActive(groupKey: string): bool {
+        return activeNotifications().some(function (notification) {
+            return Ui.NotificationPresentation.groupKey(notification) === groupKey;
+        });
     }
 
     function queryVisibleRange(): void {
@@ -163,10 +174,21 @@ Ui.ChooserController {
     function deleteTodo(todo: var): bool { return backend.deleteTodo(todo.id); }
     function refresh(): void { backend.refresh(); }
     function toggleDnd(): void { backend.toggleDnd(); }
+    function setDndForMinutes(minutes: int): bool {
+        return minutes > 0
+            ? backend.setDnd(true, Date.now() + minutes * 60 * 1000)
+            : backend.setDnd(false, null);
+    }
     function dismissNotification(notificationId: int): bool {
         return backend.dismissNotification(notificationId);
     }
     function clearNotifications(): bool { return backend.clearNotifications(); }
+    function clearNotificationGroup(groupKey: string): bool {
+        return backend.clearNotificationGroup(groupKey);
+    }
+    function snoozeNotification(notificationId: int, minutes: int): bool {
+        return backend.snoozeNotification(notificationId, Date.now() + minutes * 60 * 1000);
+    }
     function invokeNotificationAction(notificationId: int, actionKey: string): bool {
         return backend.invokeNotificationAction(notificationId, actionKey);
     }

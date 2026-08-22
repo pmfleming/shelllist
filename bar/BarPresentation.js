@@ -108,6 +108,13 @@ function audioIcon(audio) {
     return percent < 34 ? "" : percent < 67 ? "" : "";
 }
 
+function osdTimeout(kind) {
+    const value = String(kind || "");
+    if (value.indexOf("privacy") === 0) return 3000;
+    if (["media", "device", "power-profile", "idle-inhibitor"].includes(value)) return 2200;
+    return 1400;
+}
+
 function outputOsd(audio) {
     const value = audio || ({});
     const percent = clamp(value.volume_percent, 0, 100);
@@ -117,7 +124,8 @@ function outputOsd(audio) {
         label: value.sink_description || "Volume",
         valueLabel: value.muted ? "Muted" : percent + "%",
         percent: percent,
-        progressVisible: true
+        progressVisible: true,
+        timeoutMs: osdTimeout("audio")
     };
 }
 
@@ -130,7 +138,8 @@ function inputOsd(audio) {
         label: value.source_description || "Microphone",
         valueLabel: muted ? "Muted" : "On",
         percent: muted ? 0 : 100,
-        progressVisible: false
+        progressVisible: false,
+        timeoutMs: osdTimeout("input")
     };
 }
 
@@ -143,8 +152,181 @@ function brightnessOsd(brightness) {
         label: "Brightness",
         valueLabel: percent + "%",
         percent: percent,
-        progressVisible: true
+        progressVisible: true,
+        timeoutMs: osdTimeout("brightness")
     };
+}
+
+function powerProfileOsd(profile) {
+    const value = profile || ({});
+    const name = value.profile || "unknown";
+    const labels = { "power-saver": "Power saver", balanced: "Balanced", performance: "Performance" };
+    return {
+        kind: "power-profile",
+        icon: powerProfileIcon(value),
+        label: "Power profile",
+        valueLabel: labels[name] || name,
+        percent: 0,
+        progressVisible: false,
+        timeoutMs: osdTimeout("power-profile")
+    };
+}
+
+function mediaPlaybackOsd(media, nowMs) {
+    const player = playerFor(media);
+    if (!player)
+        return null;
+    const status = String(player.playback_status || "stopped").toLowerCase();
+    return {
+        kind: "media",
+        icon: playbackIcon(player),
+        label: player.title || player.identity || "Media",
+        valueLabel: status === "playing" ? "Playing" : status === "paused" ? "Paused" : "Stopped",
+        percent: mediaPositionPercent(player, nowMs),
+        progressVisible: Number(player.length_us || 0) > 0,
+        timeoutMs: osdTimeout("media")
+    };
+}
+
+function lockKeyOsd(kind, enabled) {
+    const caps = kind === "caps-lock";
+    return {
+        kind: kind,
+        icon: caps ? "󰪛" : "󰎠",
+        label: caps ? "Caps Lock" : "Num Lock",
+        valueLabel: enabled ? "On" : "Off",
+        percent: enabled ? 100 : 0,
+        progressVisible: false,
+        timeoutMs: osdTimeout(kind)
+    };
+}
+
+function keyboardBacklightOsd(percent) {
+    const value = clamp(percent, 0, 100);
+    return {
+        kind: "keyboard-backlight",
+        icon: "󰌌",
+        label: "Keyboard backlight",
+        valueLabel: value + "%",
+        percent: value,
+        progressVisible: true,
+        timeoutMs: osdTimeout("keyboard-backlight")
+    };
+}
+
+function privacyOsd(device, active) {
+    const camera = device === "camera";
+    return {
+        kind: "privacy-" + device,
+        icon: camera ? (active ? "󰄀" : "󰄁") : (active ? "󰍭" : "󰍬"),
+        label: camera ? "Camera privacy" : "Microphone privacy",
+        valueLabel: active ? "Active" : "Inactive",
+        percent: active ? 100 : 0,
+        progressVisible: false,
+        timeoutMs: osdTimeout("privacy-" + device)
+    };
+}
+
+function hardwareOsd(previous, current) {
+    const before = previous || ({});
+    const value = current || ({});
+    if (before.camera_privacy !== value.camera_privacy)
+        return privacyOsd("camera", !!value.camera_privacy);
+    if (before.microphone_privacy !== value.microphone_privacy)
+        return privacyOsd("microphone", !!value.microphone_privacy);
+    if (before.caps_lock !== value.caps_lock)
+        return lockKeyOsd("caps-lock", !!value.caps_lock);
+    if (before.num_lock !== value.num_lock)
+        return lockKeyOsd("num-lock", !!value.num_lock);
+    if (before.keyboard_backlight_percent !== value.keyboard_backlight_percent
+            && value.keyboard_backlight_percent !== null
+            && value.keyboard_backlight_percent !== undefined)
+        return keyboardBacklightOsd(value.keyboard_backlight_percent);
+    return null;
+}
+
+function idleInhibited(powerSleep) {
+    return (powerSleep && Array.isArray(powerSleep.inhibitors) ? powerSleep.inhibitors : [])
+        .some(function (inhibitor) {
+            return String(inhibitor.what || "").split(":").includes("idle");
+        });
+}
+
+function idleInhibitorOsd(powerSleep) {
+    const active = idleInhibited(powerSleep);
+    return {
+        kind: "idle-inhibitor",
+        icon: active ? "󰒳" : "󰒲",
+        label: "Idle inhibitor",
+        valueLabel: active ? "Active" : "Inactive",
+        percent: active ? 100 : 0,
+        progressVisible: false,
+        timeoutMs: osdTimeout("idle-inhibitor")
+    };
+}
+
+function domainOsd(streams, stream, previous, value, nowMs) {
+    if (stream === streams.powerProfile && previous && previous.available
+            && previous.profile !== value.profile)
+        return powerProfileOsd(value);
+    if (stream === streams.media && previous && previous.available) {
+        const before = playerFor(previous);
+        const current = playerFor(value);
+        return current && (!before || before.id !== current.id
+                || before.title !== current.title
+                || before.playback_status !== current.playback_status)
+            ? mediaPlaybackOsd(value, nowMs) : null;
+    }
+    if (stream === streams.audio && previous && previous.available)
+        return audioDeviceOsd(previous, value);
+    if (stream === streams.workspaces && previous && previous.available)
+        return displayOutputOsd(previous, value);
+    if (stream === streams.powerSleep && previous && previous.available
+            && idleInhibited(previous) !== idleInhibited(value))
+        return idleInhibitorOsd(value);
+    if (stream === streams.osdHardware && previous && previous.available)
+        return hardwareOsd(previous, value);
+    return null;
+}
+
+function displayOutputOsd(previous, current) {
+    const before = (previous && previous.monitors || []).map(function (monitor) {
+        return monitor.name;
+    });
+    const after = (current && current.monitors || []).map(function (monitor) {
+        return monitor.name;
+    });
+    const added = after.find(function (name) { return !before.includes(name); });
+    const removed = before.find(function (name) { return !after.includes(name); });
+    if (!added && !removed)
+        return null;
+    return {
+        kind: "device",
+        icon: added ? "󰍹" : "󰶐",
+        label: "Display output",
+        valueLabel: added ? added + " connected" : removed + " disconnected",
+        percent: 0,
+        progressVisible: false,
+        timeoutMs: osdTimeout("device")
+    };
+}
+
+function audioDeviceOsd(previous, current) {
+    const before = previous || ({});
+    const value = current || ({});
+    if (before.sink_name !== value.sink_name)
+        return {
+            kind: "device", icon: "󰓃", label: "Audio output",
+            valueLabel: value.sink_description || value.sink_name || "Unavailable",
+            percent: 0, progressVisible: false, timeoutMs: osdTimeout("device")
+        };
+    if (before.source_name !== value.source_name)
+        return {
+            kind: "device", icon: "󰍬", label: "Audio input",
+            valueLabel: value.source_description || value.source_name || "Unavailable",
+            percent: 0, progressVisible: false, timeoutMs: osdTimeout("device")
+        };
+    return null;
 }
 
 function batteryIcon(battery) {

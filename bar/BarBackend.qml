@@ -64,6 +64,18 @@ Io.DaemonBackend {
             BarApi.methods.notificationsDismiss, { id: notificationId });
     }
 
+    function clearNotificationGroup(groupKey: string): bool {
+        return call(operationId("notifications-clear-group"),
+            BarApi.methods.notificationsClearGroup, { group_key: groupKey });
+    }
+
+    function snoozeNotification(notificationId: int, untilUnixMs: double): bool {
+        return call(operationId("notification-snooze"), BarApi.methods.notificationsSnooze, {
+            id: notificationId,
+            until_unix_ms: untilUnixMs
+        });
+    }
+
     function invokeNotificationAction(notificationId: int, actionKey: string): bool {
         return call(operationId("notification-action"),
             BarApi.methods.notificationsInvokeAction, {

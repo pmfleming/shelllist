@@ -1,6 +1,6 @@
 # Application launcher
 
-The Shelllist application launcher is implemented by `launcher/` and the sibling `app-daemon` repository. This document describes the current boundary and behavior; it is no longer a delivery plan.
+The Shelllist application launcher is implemented by `launcher/` and the sibling `app-daemon` repository. This document describes its current behavior, ownership boundary, and validation contract.
 
 ## User behavior
 
@@ -11,6 +11,7 @@ The launcher presents standards-visible desktop applications and live Hyprland w
 - `Right` opens application details, running instances, close actions, and desktop actions.
 - `Ctrl+Tab` switches between Application and Resources details.
 - `F5` refreshes the catalog and current windows.
+- The icon inside the search field cycles **All → Shell → Browser → Code → Media → Text → All**.
 - Launch-only desktop entries remain shortcuts without runtime state or resource attribution.
 
 Empty queries put focused and running applications before launch-only results. Typed queries use daemon match scores and the shared provider model. Selection is retained by stable result key when snapshots change.
@@ -83,7 +84,7 @@ windows.changed
 applications.operation
 ```
 
-Queries are generation-scoped and can select one of the five app categories. Superseded results are ignored and cancellable backend work is cancelled. Catalog, settings, and window change events trigger a coalesced requery instead of carrying complete snapshots.
+Queries are generation-scoped and can select all applications or one of the five app categories. The compact search-field selector owns that transient filter; no category tab bar is rendered. Superseded results are ignored and cancellable backend work is cancelled. Catalog, settings, and window change events trigger a coalesced requery instead of carrying complete snapshots.
 
 Category overrides are persisted by `app-daemon` and map directly to default workspaces 1–5. Execution requests contain only a target ID, normalized action, optional window or desktop-action ID, a JavaScript-safe expected revision, and non-authoritative workspace context. The daemon resolves every identifier against current state before applying an effect, applies the category's saved workspace preference, and moves the newly created window without disturbing existing instances.
 
@@ -117,7 +118,8 @@ The checked frontend fixture is `contracts/app-api-ui-contract.fixture.json`. Re
 node tests/check-application-presentation.js launcher/ApplicationPresentation.js
 node tests/check-application-lifecycle.js launcher/ApplicationLifecycle.js
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
-tests/check-app-api-contract.sh
+bash tests/check-app-api-contract.sh ../app-daemon/target/debug/app-daemon \
+  contracts/app-api-ui-contract.fixture.json launcher/AppApi.js
 tests/run-qml-tests.sh
 ```
 

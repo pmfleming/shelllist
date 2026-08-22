@@ -7,8 +7,8 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 The UI is divided by ownership rather than by screen size:
 
 - `shell/` owns the resident host, surface registry, IPC, and monitor-local bar creation.
-- `bar/` owns bar and OSD presentation only.
-- `launcher/`, `wifi/`, `bluetooth/`, and `clipboard/` own domain-specific controllers and views.
+- `bar/` owns bar, active notification, and OSD presentation only.
+- `activity/`, `battery/`, `launcher/`, `wifi/`, `bluetooth/`, and `clipboard/` own domain-specific controllers and views.
 - `Shelllist.Core` owns provider contracts, normalization, ranking, and keyed result models.
 - `Shelllist.Io` owns daemon transport and process boundaries.
 - `Shelllist.Ui` owns theme tokens, windows, chooser layout, controls, state layers, elevation, details, prompts, and navigation.
@@ -28,6 +28,8 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - Workspace, focused-window, media, tray, and OSD presentation are isolated components.
 - Activity, battery, power, and OSD views are split into cohesive panes rather than one large object tree.
 - `ChartFrame`, `PulsingLabel`, `NotificationReplyRow`, and `BarOverlayWindow` centralize repeated presentation behavior.
+- `NotificationPresentation`, `NotificationStackHeader`, and `RemovalAnimation` keep grouping, routing, stack headers, and transient removal behavior common between active and historical notifications.
+- Every OSD family uses one normalized descriptor, one `BarOsdContent` frame, and one dismissal timer; pure transition and timeout policy stays in `BarPresentation.js`.
 - `StateLayer` and `Elevation` centralize interaction feedback and depth.
 - Operation lifecycle policy is kept in small JavaScript helpers where it can be tested without a running shell.
 - Terminal backend events are correlated by request/operation IDs before changing UI state.
@@ -36,7 +38,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 
 `qmlqualitylens.config.json` declares the resident shell and QML test files as entrypoints. It also records dynamic component edges hidden behind `Component`, `Loader.sourceComponent`, and `SplitChooserLayout` factories. These edges are analysis metadata, not runtime dependencies. Keep them synchronized when a surface gains or removes dynamically instantiated content; prefer an explicit edge over a broad unused-component suppression.
 
-The current calibration reaches 184 of 193 components from nine application/test roots. The remaining components are exported module API rather than dead-code findings. Configured edges cover list, details, toolbar, tab, and battery components instantiated through loaders; cleanup reports no unused components or ids, and resolution reports no unresolved imports or types.
+The current calibration reaches 188 of 197 components from nine application/test roots. The remaining components are exported module API rather than dead-code findings. Configured edges cover list, details, toolbar, tab, and battery components instantiated through loaders; cleanup reports no unused components or ids, and resolution reports no unresolved imports or types.
 
 ## Focused declarative-state refactoring
 
@@ -70,9 +72,9 @@ nix flake check
 Useful focused commands:
 
 ```sh
-shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml bar/*.qml \
-  bluetooth/*.qml clipboard/*.qml launcher/*.qml wifi/*.qml \
-  wifi/networkinput/*.qml wifi/process/*.qml
+shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml activity/*.qml \
+  bar/*.qml battery/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml \
+  wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
 node tests/check-bar-presentation.js bar/BarPresentation.js
 node tests/check-flow-policies.js activity/ActivityFlow.js \

@@ -8,7 +8,10 @@ import Shelllist.Ui as Ui
 BarOverlayWindow {
     id: window
 
-    readonly property var toasts: controller.visibleToasts()
+    readonly property string targetScreenName: targetScreen ? targetScreen.name : ""
+    readonly property var toastGroups: controller.visibleToastGroups(targetScreenName)
+    focusedScreenOnly: false
+    visible: toastGroups.length > 0
     implicitWidth: 414
     implicitHeight: 640
     mask: Region { item: toastColumn }
@@ -31,10 +34,10 @@ BarOverlayWindow {
         spacing: Ui.Theme.spacingSm
 
         Repeater {
-            model: window.toasts
-            NotificationToastCard {
+            model: window.toastGroups
+            NotificationToastStack {
                 required property var modelData
-                notification: modelData
+                group: modelData
                 controller: window.controller
                 width: toastColumn.width
             }

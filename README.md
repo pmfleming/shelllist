@@ -9,7 +9,7 @@ Rust daemons handle system integration and policy. Shelllist handles windows, la
 - A 51 px adaptive top bar on every monitor.
 - A centered popover that switches between all six surfaces without starting another UI process.
 - A one-shot floating mode for development and fallback use.
-- Integrated volume, microphone, and brightness OSD feedback.
+- One shared OSD frame for volume, microphone, brightness, power profile, media, lock keys, idle inhibition, keyboard backlight, privacy indicators, audio-device changes, and display-output changes.
 - Global shortcuts and one IPC/CLI entry point.
 - Shared result, action, details, theme, and daemon-transport components.
 
@@ -64,7 +64,7 @@ The UI uses opaque daemon device keys and live subscriptions. It does not parse 
 
 ### Activity
 
-The Activity surface combines a month calendar, selected-day agenda, persistent todos, native notification history/actions/DND, source health, and world clocks. `bar-daemon` owns notification ingestion, expiry, policy, and persistent history; Shelllist renders recoverable active-toast snapshots and paginated history. See [`docs/activity-ui-plan.md`](docs/activity-ui-plan.md).
+The Activity surface combines a month calendar, selected-day agenda, persistent todos, native notification history/actions/DND, source health, and world clocks. `bar-daemon` owns notification ingestion, expiry, timed DND, snooze wakeups, grouping metadata, and persistent history. Shelllist renders grouped expandable toast stacks on the originating monitor, with focused-monitor fallback, and paginated grouped history. Notifications support actions, inline replies, 15-minute snooze, per-group/application clearing, and clear-all. See [`docs/activity.md`](docs/activity.md).
 
 ### Clipboard
 
@@ -93,18 +93,20 @@ Battery settings are written through a privileged system D-Bus helper with polki
 | Wi-Fi and NetworkManager policy | `nm-daemon` / `nm-api` v1 |
 | Bluetooth, pairing, and audio profiles | `bt-daemon` / `bt-api` v1 |
 | Clipboard history and capture | `clip-daemon` / `clip-api` v1 |
-| Bar state, Battery/ThinkPad policy, Activity data, and media-key effects | `bar-daemon` / `bar-api` v1 |
-| Windows, rendering, navigation, and tray menus | Shelllist / Quickshell |
+| Bar state, Battery/ThinkPad policy, Activity/notification data, hardware OSD state, and media-key effects | `bar-daemon` / `bar-api` v1 |
+| Windows, rendering, navigation, monitor routing, tray menus, and transient OSD policy | Shelllist / Quickshell |
 
 `shell/shell.qml` is the only UI entry point. Wi-Fi and Bluetooth load eagerly because the bar and hidden pairing requests need them. Applications and Clipboard load on first use. Opened surfaces remain warm.
 
 Every daemon connection uses the shared JSONL transport with bounded restart backoff. Checked fixtures in `contracts/` prevent frontend/backend protocol drift.
 
-See:
+See the [`docs/` index](docs/README.md), especially:
 
 - [`docs/provider-model.md`](docs/provider-model.md) for normalized result/action contracts;
 - [`docs/list-interaction-contract.md`](docs/list-interaction-contract.md) for mouse, touchpad, and touch list scrolling;
-- [`docs/application-launcher-plan.md`](docs/application-launcher-plan.md) for the implemented launcher architecture;
+- [`docs/application-launcher.md`](docs/application-launcher.md) for launcher behavior and ownership;
+- [`docs/activity.md`](docs/activity.md) for Activity and notification behavior;
+- [`docs/bar-osd.md`](docs/bar-osd.md) for OSD sources, presentation, and timeout policy;
 - [`docs/qml-quality-review.md`](docs/qml-quality-review.md) for QML structure and validation rules.
 
 ## Installation
@@ -132,7 +134,7 @@ imports = [ inputs.shelllist.nixosModules.default ];
 programs.shelllist.enable = true;
 ```
 
-The module installs Shelllist and supervises the resident host plus `bar-daemon`. The bundled daemon runs in native notification mode, owns `org.freedesktop.Notifications`, and conflicts with `swaync.service`. Disable any separately configured notification daemon. Set `programs.shelllist.systemd.target` for a compositor-specific session target, `systemd.startBarDaemon = false` to use D-Bus activation, or `systemd.environment` for theme overrides. The other domain daemons must be running or D-Bus activatable through their own installations.
+Both modules install Shelllist and can supervise the resident host plus `bar-daemon`. The bundled daemon runs in native notification mode, owns `org.freedesktop.Notifications`, and conflicts with `swaync.service`; disable any separately configured notification daemon. Set `programs.shelllist.systemd.target` for a compositor-specific session target, `systemd.startBarDaemon = false` to use D-Bus activation, or `systemd.environment` for theme overrides. The NixOS module additionally registers the packaged system D-Bus, systemd, and polkit artifacts used by privileged battery settings. The other domain daemons must be running or D-Bus activatable through their own installations.
 
 ## CLI
 
@@ -220,9 +222,9 @@ nix flake check
 Focused checks:
 
 ```sh
-shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml bar/*.qml \
-  battery/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml wifi/*.qml \
-  wifi/networkinput/*.qml wifi/process/*.qml
+shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml activity/*.qml \
+  bar/*.qml battery/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml \
+  wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-bar-presentation.js bar/BarPresentation.js
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
 tests/run-qml-tests.sh

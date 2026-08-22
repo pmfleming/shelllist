@@ -39,6 +39,8 @@ LabeledValueSlider 1.0 LabeledValueSlider.qml
 ModalFrame 1.0 ModalFrame.qml
 NavigationHelpDialog 1.0 NavigationHelpDialog.qml
 NotificationReplyRow 1.0 NotificationReplyRow.qml
+NotificationStackHeader 1.0 NotificationStackHeader.qml
+NotificationPresentation 1.0 NotificationPresentation.js
 PopupWindowHost 1.0 PopupWindowHost.qml
 PromptDialog 1.0 PromptDialog.qml
 PulsingLabel 1.0 PulsingLabel.qml
@@ -47,6 +49,7 @@ ResultLabel 1.0 ResultLabel.qml
 ResultListFrame 1.0 ResultListFrame.qml
 ResultNavigation 1.0 ResultNavigation.qml
 ResultRow 1.0 ResultRow.qml
+RemovalAnimation 1.0 RemovalAnimation.qml
 SectionLabel 1.0 SectionLabel.qml
 ScrollableListView 1.0 list/ScrollableListView.qml
 SegmentedControl 1.0 SegmentedControl.qml

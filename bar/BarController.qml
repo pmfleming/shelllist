@@ -1,6 +1,7 @@
 import Quickshell
 import QtQuick
 import Shelllist.Core as Core
+import Shelllist.Ui as Ui
 import "BarApi.js" as BarApi
 import "BarPresentation.js" as Presentation
 
@@ -22,17 +23,18 @@ Item {
     property var brightness: ({ available: false, percent: 0 })
     property var battery: ({ available: false, percentage: 0 })
     property var powerProfile: ({ available: false, profile: "" })
+    property var powerSleep: ({ available: false, inhibitors: [] })
+    property var osdHardware: ({ available: false, caps_lock: false, num_lock: false,
+        keyboard_backlight_percent: null, microphone_privacy: false, camera_privacy: false })
     property var notifications: ({ available: false, count: 0, dnd: false })
     property var notificationActive: ({ available: false, revision: 0, notifications: [] })
     property var updates: ({ available: false, ready: false, lanes: [] })
     property var timezone: ({ available: false, timezone: "", city: "", abbreviation: "", utc_offset_seconds: 0 })
     property bool osdVisible: false
-    property string osdKind: ""
-    property string osdIcon: ""
-    property string osdLabel: ""
-    property string osdValueLabel: ""
-    property int osdPercent: 0
-    property bool osdProgressVisible: true
+    property var osd: ({
+        kind: "", icon: "", label: "", valueLabel: "", percent: 0,
+        progressVisible: false, timeoutMs: 1400
+    })
 
     readonly property var wifiController: surfaceRegistry ? surfaceRegistry.wifiController : null
     readonly property var bluetoothController: surfaceRegistry ? surfaceRegistry.bluetoothController : null
@@ -64,8 +66,23 @@ Item {
     }
 
     function applyDomainEvent(event: var): void {
-        if (!applyDomain(event.stream || "", event.data || ({})))
-            console.warn("shelllist bar event ignored stream=" + (event.stream || "unknown"));
+        const stream = event.stream || "";
+        const propertyName = BarApi.propertyByStream[stream] || "";
+        const previous = propertyName.length > 0 ? controller[propertyName] : null;
+        const value = event.data || ({});
+        if (!applyDomain(stream, value)) {
+            console.warn("shelllist bar event ignored stream=" + (stream || "unknown"));
+            return;
+        }
+        if (event.event === "changed")
+            presentDomainOsd(stream, previous, value);
+    }
+
+    function presentDomainOsd(stream: string, previous: var, value: var): void {
+        const nextOsd = Presentation.domainOsd(
+            BarApi.streams, stream, previous, value, Date.now());
+        if (nextOsd)
+            presentOsd(nextOsd);
     }
     function handleEvent(event: var): void {
         const compatibility = Core.ApiEnvelope.compatibilityError(event,
@@ -94,31 +111,43 @@ Item {
     function dismissNotification(notificationId: int): bool {
         return backend.dismissNotification(notificationId);
     }
+    function clearNotificationGroup(groupKey: string): bool {
+        return backend.clearNotificationGroup(groupKey);
+    }
+    function snoozeNotification(notificationId: int, minutes: int): bool {
+        return backend.snoozeNotification(notificationId, Date.now() + minutes * 60 * 1000);
+    }
     function invokeNotificationAction(notificationId: int, actionKey: string): bool {
         return backend.invokeNotificationAction(notificationId, actionKey);
     }
     function replyNotification(notificationId: int, text: string): bool {
         return backend.replyNotification(notificationId, text);
     }
-    function visibleToasts(): var {
+    function visibleToastGroups(monitorName: string): var {
         if (notifications.dnd)
             return [];
         const active = notificationActive && Array.isArray(notificationActive.notifications)
             ? notificationActive.notifications : [];
-        return active.slice(Math.max(0, active.length - 3)).reverse();
+        const monitors = (workspaces.monitors || []).map(function (monitor) {
+            return monitor.name;
+        });
+        const focused = workspaces.focused_monitor || "";
+        const routed = active.filter(function (notification) {
+            return Ui.NotificationPresentation.notificationMonitor(
+                notification, focused, monitors) === monitorName;
+        }).reverse();
+        return Ui.NotificationPresentation.groupRecords(routed).slice(0, 3);
     }
 
     function presentOsd(osd: var): void {
         const value = Object.assign({
             kind: "", icon: "", label: "", valueLabel: "", percent: 0,
-            progressVisible: false
+            progressVisible: false, timeoutMs: 1400
         }, osd);
-        osdKind = value.kind;
-        osdIcon = value.icon;
-        osdLabel = value.label;
-        osdValueLabel = value.valueLabel;
-        osdPercent = Presentation.clamp(value.percent, 0, 100);
-        osdProgressVisible = !!value.progressVisible;
+        value.percent = Presentation.clamp(value.percent, 0, 100);
+        value.progressVisible = !!value.progressVisible;
+        value.timeoutMs = Math.max(400, Number(value.timeoutMs) || 1400);
+        osd = value;
         osdVisible = true;
         osdTimeout.restart();
     }
@@ -169,7 +198,7 @@ Item {
 
     Timer {
         id: osdTimeout
-        interval: 1400
+        interval: controller.osd.timeoutMs
         repeat: false
         onTriggered: controller.osdVisible = false
     }

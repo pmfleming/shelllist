@@ -15,6 +15,8 @@ var methods = {
     notificationsTogglePanel: "notifications.togglePanel",
     notificationsToggleDnd: "notifications.toggleDnd",
     notificationsDismiss: "notifications.dismiss",
+    notificationsClearGroup: "notifications.clearGroup",
+    notificationsSnooze: "notifications.snooze",
     notificationsInvokeAction: "notifications.invokeAction",
     notificationsReply: "notifications.reply"
 };
@@ -27,6 +29,8 @@ var streams = {
     brightness: "brightness.changed",
     battery: "battery.changed",
     powerProfile: "power-profile.changed",
+    powerSleep: "power-sleep.changed",
+    osdHardware: "osd-hardware.changed",
     notifications: "notifications.changed",
     notificationActive: "notifications.active.changed",
     updates: "updates.changed",
@@ -43,6 +47,8 @@ propertyByStream[streams.audio] = "audio";
 propertyByStream[streams.brightness] = "brightness";
 propertyByStream[streams.battery] = "battery";
 propertyByStream[streams.powerProfile] = "powerProfile";
+propertyByStream[streams.powerSleep] = "powerSleep";
+propertyByStream[streams.osdHardware] = "osdHardware";
 propertyByStream[streams.notifications] = "notifications";
 propertyByStream[streams.notificationActive] = "notificationActive";
 propertyByStream[streams.updates] = "updates";
@@ -56,6 +62,8 @@ var propertyByPayload = {
     brightness: "brightness",
     battery: "battery",
     power_profile: "powerProfile",
+    power_sleep: "powerSleep",
+    osd_hardware: "osdHardware",
     notifications: "notifications",
     notification_active: "notificationActive",
     updates: "updates",

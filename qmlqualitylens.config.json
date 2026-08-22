@@ -42,7 +42,7 @@
   "output_dir": "target/qmlqualitylens",
   "profile": "quickshell",
   "external_modules": ["QtTest"],
-  "external_types": ["GlobalShortcut", "IconImage", "IpcHandler", "PanelWindow", "RectangularShadow", "Region", "Settings", "Shortcut", "SignalSpy", "TestCase", "Variants"],
+  "external_types": ["GlobalShortcut", "IconImage", "IpcHandler", "PanelWindow", "RectangularShadow", "Region", "ScriptAction", "Settings", "Shortcut", "SignalSpy", "TestCase", "Variants"],
   "tools": {
     "qmllint": {
       "command": "tests/run-qmlquality-lint.sh",

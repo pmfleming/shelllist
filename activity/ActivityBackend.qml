@@ -54,6 +54,13 @@ Io.DaemonBackend {
         return call(nextId("notifications-dnd"), ActivityApi.methods.notificationsToggleDnd, {});
     }
 
+    function setDnd(enabled: bool, untilUnixMs: var): bool {
+        return call(nextId("notifications-dnd"), ActivityApi.methods.notificationsSetDnd, {
+            enabled: enabled,
+            until_unix_ms: untilUnixMs
+        });
+    }
+
     function loadNotificationHistory(beforeHistoryId: var): bool {
         const prefix = beforeHistoryId === null || beforeHistoryId === undefined
             ? "notifications-history-reset" : "notifications-history-more";
@@ -70,6 +77,18 @@ Io.DaemonBackend {
 
     function clearNotifications(): bool {
         return call(nextId("notifications-clear"), ActivityApi.methods.notificationsClear, {});
+    }
+
+    function clearNotificationGroup(groupKey: string): bool {
+        return call(nextId("notifications-clear-group"),
+            ActivityApi.methods.notificationsClearGroup, { group_key: groupKey });
+    }
+
+    function snoozeNotification(notificationId: int, untilUnixMs: double): bool {
+        return call(nextId("notification-snooze"), ActivityApi.methods.notificationsSnooze, {
+            id: notificationId,
+            until_unix_ms: untilUnixMs
+        });
     }
 
     function invokeNotificationAction(notificationId: int, actionKey: string): bool {
@@ -112,7 +131,8 @@ Io.DaemonBackend {
                 id.startsWith("notifications-history-more"));
         if (id.startsWith("todo-") || id.startsWith("activity-refresh"))
             controller.scheduleRangeQuery();
-        if (id.startsWith("notification-") || id.startsWith("notifications-clear"))
+        if (id.startsWith("notification-") || id.startsWith("notifications-clear")
+                || id.startsWith("notifications-dnd"))
             controller.scheduleNotificationHistory();
     }
 
