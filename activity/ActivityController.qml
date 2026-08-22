@@ -34,6 +34,9 @@ Ui.ChooserController {
     maximumClosedWindowWidth: 760
     minimumOpenWindowWidth: 1040
     maximumOpenWindowWidth: 1840
+    surfaceHeightRatio: 1
+    surfaceTopInset: 51
+    surfaceBottomInset: 0
     surfaceAlignment: "right"
     navigationPrimaryEnabled: false
     readonly property ActivityBackend backend: activityBackend

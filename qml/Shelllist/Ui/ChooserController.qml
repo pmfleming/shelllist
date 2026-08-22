@@ -21,6 +21,9 @@ Item {
     property int maximumClosedWindowWidth: Theme.popupClosedWidth
     property int minimumOpenWindowWidth: Theme.popupOpenWidth
     property int maximumOpenWindowWidth: Theme.popupOpenWidth
+    property real surfaceHeightRatio: Theme.popupHeightRatio
+    property int surfaceTopInset: 0
+    property int surfaceBottomInset: 0
     property string surfaceAlignment: "center"
     readonly property alias navigation: navigationModel
 

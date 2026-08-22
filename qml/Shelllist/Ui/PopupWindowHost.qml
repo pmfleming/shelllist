@@ -22,6 +22,8 @@ Item {
     required property string layerNamespace
 
     property real windowHeightRatio: Theme.popupHeightRatio
+    property int windowTopInset: 0
+    property int windowBottomInset: 0
     property string contentAlignment: "center"
     property string defaultLaunchMode: "popover"
     property bool popoverVisible: false
@@ -40,7 +42,9 @@ Item {
     readonly property var placementScreen: floatingMode
         ? (floatingWindow && floatingWindow.screen ? floatingWindow.screen : null)
         : (popoverAnchor && popoverAnchor.screen ? popoverAnchor.screen : null)
-    readonly property int currentWindowHeight: Math.round(screenGeometry().height * windowHeightRatio)
+    readonly property int currentWindowHeight: windowTopInset > 0 || windowBottomInset > 0
+        ? Math.max(1, Math.round(screenGeometry().height - windowTopInset - windowBottomInset))
+        : Math.round(screenGeometry().height * windowHeightRatio)
 
     signal uiActivated(string workspaceId)
     signal uiDeactivated
@@ -90,7 +94,11 @@ Item {
             return Theme.contentMargin;
         return Math.round((screenGeometry().width - surfaceWindowWidth) / 2);
     }
-    function targetLayerMarginY() { return Math.round((screenGeometry().height - currentWindowHeight) / 2); }
+    function targetLayerMarginY() {
+        return windowTopInset > 0 || windowBottomInset > 0
+            ? windowTopInset
+            : Math.round((screenGeometry().height - currentWindowHeight) / 2);
+    }
     function targetWindowX() { return screenGeometry().x + targetLayerMarginX(); }
     function targetWindowY() { return screenGeometry().y + targetLayerMarginY(); }
     function contentOffsetX() {

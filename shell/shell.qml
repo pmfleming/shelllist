@@ -85,6 +85,12 @@ ShellRoot {
             ? shell.activeController.surfaceWindowWidth : Ui.Theme.popupOpenWidth
         currentWindowWidth: shell.activeController
             ? shell.activeController.currentWindowWidth : Ui.Theme.popupClosedWidth
+        windowHeightRatio: shell.activeController
+            ? shell.activeController.surfaceHeightRatio : Ui.Theme.popupHeightRatio
+        windowTopInset: shell.activeController
+            ? shell.activeController.surfaceTopInset : 0
+        windowBottomInset: shell.activeController
+            ? shell.activeController.surfaceBottomInset : 0
         contentAlignment: shell.activeController
             ? shell.activeController.surfaceAlignment : "center"
         modeEnvironment: "SHELLLIST_MODE"

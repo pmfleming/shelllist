@@ -30,7 +30,7 @@ Shelllist owns only:
 
 ## Data and presentation flow
 
-The closed layout is a right-edge glance panel constrained to roughly 25–33% of the focused screen. It stacks time/weather, schedule/todo, and notification summaries. Selecting a card expands a detail pane inward while preserving the glance rail, following the same master/detail model as the Applications, Wi-Fi, and Bluetooth surfaces. `1`, `2`, and `3` open the three detail sections; `Escape` returns to the glance panel before closing the surface.
+The closed layout is a right-edge glance panel constrained to roughly 25–33% of the focused screen. It starts directly below the 51 px top bar and extends to the bottom edge. It stacks time/weather, schedule/todo, and notification summaries. Selecting a card expands a detail pane inward while preserving the glance rail, following the same master/detail model as the Applications, Wi-Fi, and Bluetooth surfaces. `1`, `2`, and `3` open the three detail sections; `Escape` returns to the glance panel before closing the surface.
 
 Shelllist requests only a buffered range around the visible month. A compact `activity.changed` event schedules a debounced range refresh rather than carrying the full range in every event. When weather coordinates are configured, `bar-daemon` refreshes Open-Meteo data at most every 15 minutes and retains the last successful forecast through transient failures.
 
