@@ -1,5 +1,10 @@
 module Shelllist.Activity
+internal ActivityAgendaPane ActivityAgendaPane.qml
+internal ActivityCalendarPane ActivityCalendarPane.qml
 internal ActivityHeaderButton ActivityHeaderButton.qml
+internal ActivityOverviewPane ActivityOverviewPane.qml
+internal ActivityStatusSection ActivityStatusSection.qml
+internal ActivityTodoSection ActivityTodoSection.qml
 ActivityBackend 1.0 ActivityBackend.qml
 ActivityContent 1.0 ActivityContent.qml
 ActivityController 1.0 ActivityController.qml

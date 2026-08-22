@@ -4,6 +4,7 @@ BarAction 1.0 BarAction.qml
 BarBackend 1.0 BarBackend.qml
 BarContent 1.0 BarContent.qml
 BarController 1.0 BarController.qml
+internal BarOsdContent BarOsdContent.qml
 BarOsdWindow 1.0 BarOsdWindow.qml
 BarTray 1.0 BarTray.qml
 BarTrayItem 1.0 BarTrayItem.qml
