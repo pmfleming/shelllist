@@ -11,12 +11,9 @@ ApplicationListRow 1.0 ApplicationListRow.qml
 ApplicationPage 1.0 ApplicationPage.qml
 ApplicationProvider 1.0 ApplicationProvider.qml
 ApplicationResourceBadge 1.0 ApplicationResourceBadge.qml
-ApplicationResourceBullet 1.0 ApplicationResourceBullet.qml
-ApplicationResourceDetails 1.0 ApplicationResourceDetails.qml
-ApplicationResourceDonut 1.0 ApplicationResourceDonut.qml
+ApplicationResourceCapacity 1.0 ApplicationResourceCapacity.qml
 ApplicationResourceHistory 1.0 ApplicationResourceHistory.qml
 ApplicationResourceLaneChart 1.0 ApplicationResourceLaneChart.qml
-ApplicationResourceMultiGraph 1.0 ApplicationResourceMultiGraph.qml
 ApplicationResourceMetadata 1.0 ApplicationResourceMetadata.qml
 ApplicationResources 1.0 ApplicationResources.js
 ApplicationResourcesPage 1.0 ApplicationResourcesPage.qml
