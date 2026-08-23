@@ -9,7 +9,9 @@ Ui.ChooserController {
 
     property var activity: ({ available: false, syncing: false, event_count: 0,
         incomplete_todo_count: 0, next_event: null, sources: [], world_clocks: [],
-        weather: { available: false, location: "Local", error: "Weather is not configured" } })
+        weather_locations: [],
+        weather: { available: false, id: "", location: "Local",
+            error: "Weather is not configured" } })
     property var notifications: ({ available: false, count: 0, dnd: false })
     property var notificationActive: ({ available: false, revision: 0, notifications: [] })
     property var notificationHistory: []
@@ -26,6 +28,7 @@ Ui.ChooserController {
     property date loadedTo
     property string detailSection: "schedule"
     property string notificationFilter: "All"
+    property string weatherLocationId: ""
 
     detailsOpen: false
     closedWidthFraction: 0.285
@@ -52,6 +55,18 @@ Ui.ChooserController {
     readonly property var filteredNotificationGroups: notificationGroups.filter(function (group) {
         return notificationGroupMatches(group, notificationFilter);
     })
+    readonly property var weatherLocations: {
+        const locations = activity.weather_locations || [];
+        return locations.length > 0 ? locations
+            : activity.weather ? [activity.weather] : [];
+    }
+    readonly property var selectedWeather: {
+        const requested = weatherLocations.find(function (weather) {
+            return weather.id === weatherLocationId;
+        });
+        return requested || weatherLocations.find(function (weather) { return weather.home; })
+            || weatherLocations[0] || ({ available: false, location: "Local" });
+    }
 
     signal focusTodoInputRequested
 
@@ -206,6 +221,11 @@ Ui.ChooserController {
     }
     function toggleTodo(todo: var): bool { return backend.completeTodo(todo.id, !todo.completed); }
     function deleteTodo(todo: var): bool { return backend.deleteTodo(todo.id); }
+    function selectWeatherLocation(locationId: string): void {
+        if (weatherLocations.some(function (weather) { return weather.id === locationId; }))
+            weatherLocationId = locationId;
+    }
+
     function openSection(section: string): void {
         if (["weather", "schedule", "notifications"].indexOf(section) < 0)
             return;

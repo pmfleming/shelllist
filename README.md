@@ -64,7 +64,7 @@ The UI uses opaque daemon device keys and live subscriptions. It does not parse 
 
 ### Activity
 
-The Activity surface combines local time and optional Open-Meteo weather, a month calendar, selected-day agenda, persistent todos, native notification history/actions/DND, source health, and world clocks. `bar-daemon` owns notification ingestion, expiry, timed DND, snooze wakeups, grouping metadata, and persistent history. Shelllist renders grouped expandable toast stacks on the originating monitor, with focused-monitor fallback, and paginated grouped history. Notifications support actions, inline replies, 15-minute snooze, per-group/application clearing, and clear-all. See [`docs/activity.md`](docs/activity.md).
+The Activity surface combines configurable city clocks and optional multi-location Open-Meteo weather, a month calendar, selected-day agenda, persistent todos, native notification history/actions/DND, source health, and world clocks. `bar-daemon` owns notification ingestion, expiry, timed DND, snooze wakeups, grouping metadata, and persistent history. Shelllist renders grouped expandable toast stacks on the originating monitor, with focused-monitor fallback, and paginated grouped history. Notifications support actions, inline replies, 15-minute snooze, per-group/application clearing, and clear-all. See [`docs/activity.md`](docs/activity.md).
 
 ### Clipboard
 

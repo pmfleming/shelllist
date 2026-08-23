@@ -30,12 +30,6 @@ Column {
             return "All day";
         return Qt.formatTime(new Date(event.start_unix_ms), "HH:mm");
     }
-    function notificationRecord(index: int): var {
-        if (index < 0 || index >= controller.notificationHistory.length)
-            return null;
-        return controller.notificationHistory[index];
-    }
-
     Rectangle {
         width: parent.width
         height: Math.max(150, Math.min(190, pane.height * 0.23))
@@ -256,9 +250,8 @@ Column {
                     spacing: 2
                     Text {
                         width: parent.width
-                        text: pane.eventTime(pane.controller.activity.next_event) + "  "
-                            + (pane.controller.activity.next_event
-                                ? pane.controller.activity.next_event.title : "")
+                        text: String(pane.controller.activity.event_count || 0)
+                            + " upcoming calendar items"
                         color: Ui.Theme.text
                         elide: Text.ElideRight
                         font.family: Ui.Theme.fontFamily
@@ -266,7 +259,8 @@ Column {
                         font.weight: Ui.Theme.fontWeightDemiBold
                     }
                     Text {
-                        text: String(pane.controller.activity.incomplete_todo_count || 0)
+                        text: "Next " + pane.eventTime(pane.controller.activity.next_event)
+                            + "  ·  " + String(pane.controller.activity.incomplete_todo_count || 0)
                             + " open todos"
                         color: Ui.Theme.mutedText
                         font.family: Ui.Theme.fontFamily
@@ -316,60 +310,61 @@ Column {
                     font.pixelSize: Ui.Theme.fontSizeHeading
                 }
             }
-            Text {
-                visible: pane.controller.notificationHistory.length === 0
+            Row {
+                id: notificationMetrics
                 width: parent.width
-                text: pane.controller.notificationHistoryLoading
-                    ? "Loading notifications…" : "No notifications"
-                color: Ui.Theme.mutedText
-                horizontalAlignment: Text.AlignHCenter
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeSmall
-            }
-            Repeater {
-                model: Math.min(3, pane.controller.notificationHistory.length)
-                delegate: Rectangle {
-                    id: notificationRow
-                    required property int index
-                    readonly property var record: pane.notificationRecord(index)
-                    readonly property var notification: record ? record.notification || ({}) : ({})
-                    width: parent.width
-                    height: 51
-                    radius: Ui.Theme.controlRadius
-                    color: Ui.Theme.surfaceRaised
-                    border.color: Ui.Theme.border
-                    Column {
-                        anchors.fill: parent
-                        anchors.margins: 8
-                        spacing: 2
-                        Text {
-                            width: parent.width
-                            text: notificationRow.notification.app_name || "Notification"
-                            color: Ui.Theme.mutedText
-                            elide: Text.ElideRight
-                            font.family: Ui.Theme.fontFamily
-                            font.pixelSize: Ui.Theme.fontSizeCaption
-                            font.weight: Ui.Theme.fontWeightDemiBold
-                        }
-                        Text {
-                            width: parent.width
-                            text: notificationRow.notification.summary
-                                || notificationRow.notification.body || ""
-                            color: Ui.Theme.text
-                            elide: Text.ElideRight
-                            font.family: Ui.Theme.fontFamily
-                            font.pixelSize: Ui.Theme.fontSizeSmall
+                height: 78
+                spacing: Ui.Theme.spacingSm
+                Repeater {
+                    model: [
+                        { label: "Active", value: String(pane.controller.notifications.count || 0) },
+                        { label: "Applications", value: String(pane.controller.notificationGroups.length) },
+                        { label: "History", value: String(pane.controller.notificationHistory.length) }
+                    ]
+                    delegate: Rectangle {
+                        id: notificationMetric
+                        required property var modelData
+                        width: (notificationMetrics.width - notificationMetrics.spacing * 2) / 3
+                        height: parent.height
+                        radius: Ui.Theme.controlRadius
+                        color: Ui.Theme.surfaceRaised
+                        border.color: Ui.Theme.border
+                        Column {
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            spacing: 5
+                            Text {
+                                text: notificationMetric.modelData.label
+                                color: Ui.Theme.mutedText
+                                font.family: Ui.Theme.fontFamily
+                                font.pixelSize: Ui.Theme.fontSizeCaption
+                            }
+                            Text {
+                                text: notificationMetric.modelData.value
+                                color: Ui.Theme.text
+                                font.family: Ui.Theme.fontFamily
+                                font.pixelSize: Ui.Theme.fontSizeDisplay
+                                font.weight: Ui.Theme.fontWeightDemiBold
+                            }
                         }
                     }
                 }
             }
             Text {
-                visible: pane.controller.notificationHistory.length > 3
                 width: parent.width
-                text: "+ " + String(pane.controller.notificationHistory.length - 3)
-                    + " older notifications"
+                text: pane.controller.notifications.dnd
+                    ? "Do Not Disturb is on" : "Do Not Disturb is off"
+                color: pane.controller.notifications.dnd
+                    ? Ui.Theme.warning : Ui.Theme.mutedText
+                font.family: Ui.Theme.fontFamily
+                font.pixelSize: Ui.Theme.fontSizeSmall
+            }
+            Text {
+                width: parent.width
+                text: "Open grouped history, actions, replies and filters  ›"
                 color: Ui.Theme.accent
                 horizontalAlignment: Text.AlignRight
+                elide: Text.ElideRight
                 font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeCaption
             }
