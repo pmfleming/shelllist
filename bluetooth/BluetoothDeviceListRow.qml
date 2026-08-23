@@ -37,15 +37,12 @@ Ui.ResultRow {
         opacity: row.signalLive ? 1 : 0.58
     }
 
-    Text {
+    Ui.GlyphLabel {
         Layout.preferredWidth: row.scaled(28)
         Layout.fillHeight: true
-        verticalAlignment: Text.AlignVCenter
-        horizontalAlignment: Text.AlignHCenter
-        text: row.resultData.icon || "󰂯"
+        glyph: row.resultData.icon || "󰂯"
         color: row.device.blocked ? Ui.Theme.danger
             : (row.device.connected ? Ui.Theme.active : Ui.Theme.mutedText)
-        font.family: Ui.Theme.iconFontFamily
         font.pixelSize: Math.max(Ui.Theme.iconSize, row.scaled(Ui.Theme.fontSizeTitle))
     }
 

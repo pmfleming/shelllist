@@ -1,12 +1,9 @@
 module Shelllist.Activity
 internal ActivityAgendaPane ActivityAgendaPane.qml
-internal ActivityCalendarPane ActivityCalendarPane.qml
 internal ActivityGlancePane ActivityGlancePane.qml
 internal ActivityHeaderButton ActivityHeaderButton.qml
 internal ActivityNotificationsPane ActivityNotificationsPane.qml
-internal ActivityOverviewPane ActivityOverviewPane.qml
 internal ActivitySchedulePane ActivitySchedulePane.qml
-internal ActivityStatusSection ActivityStatusSection.qml
 internal ActivityWeatherPane ActivityWeatherPane.qml
 internal ActivityTodoSection ActivityTodoSection.qml
 ActivityBackend 1.0 ActivityBackend.qml

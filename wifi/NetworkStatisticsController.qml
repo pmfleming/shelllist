@@ -4,8 +4,6 @@ import "NmApiClient.js" as Api
 // Owner-scoped aggregate transfer counters for one NetworkManager device.
 // Samples contain byte totals and rates only; no packet or destination data.
 Item {
-    id: statistics
-
     required property WifiController controller
     required property WifiBackend backend
 

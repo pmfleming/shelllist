@@ -65,16 +65,15 @@ Item {
         font.weight: Ui.Theme.fontWeightMedium
     }
 
-    Text {
+    Ui.GlyphLabel {
         id: stateGlyph
 
         anchors.right: parent.right
         anchors.rightMargin: 10
         anchors.verticalCenter: parent.verticalCenter
-        text: root.activeWindow && root.activeWindow.fullscreen ? "󰊓"
+        glyph: root.activeWindow && root.activeWindow.fullscreen ? "󰊓"
             : (root.activeWindow && root.activeWindow.floating ? "󰉈" : "")
         color: Ui.Theme.accent
-        font.family: Ui.Theme.iconFontFamily
         font.pixelSize: Ui.Theme.fontSizeSmall
     }
 

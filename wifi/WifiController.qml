@@ -256,7 +256,7 @@ ProviderChooserController {
         }
     }
 
-    function handleSecretEvent(event) {
+    function handleSecretEvent(event: var): void {
         const transition = Flow.secretTransition(
             event, promptMode(), prompt.secretRequestId);
         if (transition.stage === "requested")
@@ -267,34 +267,19 @@ ProviderChooserController {
             status = transition.message;
     }
 
-    function applyStatusEvent(event) {
+    function applyStatusEvent(event: var): void {
         if (event.event !== "changed")
             return;
         activeStatus = event.status || null;
     }
 
-    function applyNetworkEvent(event) {
+    function applyNetworkEvent(event: var): void {
         if (event.event !== "changed")
             return;
-        if (event.initial) {
-            applyNetworks(event.added || [], false, event.snapshot || null);
-            return;
-        }
-        const removed = ({});
-        (event.removed || []).forEach(function (network) { if (network.key) removed[network.key] = true; });
-        const replacements = ({});
-        (event.changed || []).concat(event.added || []).forEach(function (network) {
-            if (network.key) replacements[network.key] = network;
-        });
-        const next = visibleNetworks.filter(function (network) { return !removed[network.key]; }).map(function (network) {
-            return replacements[network.key] || network;
-        });
-        const present = ({});
-        next.forEach(function (network) { if (network.key) present[network.key] = true; });
-        (event.added || []).forEach(function (network) {
-            if (!network.key || !present[network.key]) next.push(network);
-        });
-        applyNetworks(next, false, event.snapshot || null);
+        const networks = event.initial
+            ? (event.added || [])
+            : Flow.mergeNetworkChanges(visibleNetworks, event);
+        applyNetworks(networks, false, event.snapshot || null);
     }
 
     function dispatchDaemonEvent(event: var): void {

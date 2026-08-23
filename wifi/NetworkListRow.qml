@@ -46,26 +46,21 @@ ResultRow {
         }
     }
 
-    Text {
+    GlyphLabel {
         Layout.preferredWidth: row.scaled(18)
         Layout.fillHeight: true
-        verticalAlignment: Text.AlignVCenter
-        horizontalAlignment: Text.AlignHCenter
-        text: row.connecting ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length] : row.networkTypeIcon
+        glyph: row.connecting ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length] : row.networkTypeIcon
         color: row.connecting ? Theme.accent : (row.captivePortal ? Theme.warning : Theme.mutedText)
         font.family: row.connecting ? Theme.fontFamily : Theme.iconFontFamily
         font.pixelSize: Math.round(Theme.fontSizeLabel * row.density)
     }
 
-    Text {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        verticalAlignment: Text.AlignVCenter
-        text: row.connecting ? row.name + " — connecting…" : row.name
-        color: row.connecting ? Theme.accent : Theme.text
-        font.family: Theme.fontFamily
-        font.pixelSize: Math.round(Theme.fontSizeBody * row.density)
-        font.bold: row.active || row.connecting
-        elide: Text.ElideRight
+    ResultLabel {
+        title: row.connecting ? row.name + " — connecting…" : row.name
+        titleColor: row.connecting ? Theme.accent : Theme.text
+        titlePixelSize: Math.round(Theme.fontSizeBody * row.density)
+        titleWeight: row.active || row.connecting ? Theme.fontWeightBold : Theme.fontWeightRegular
+        uiScale: row.density
+        singleLine: true
     }
 }

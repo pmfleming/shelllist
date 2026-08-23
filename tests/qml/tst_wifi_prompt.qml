@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../wifi/WifiFlow.js" as Flow
 
 TestCase {
     name: "WifiPrompt"
@@ -38,6 +39,22 @@ TestCase {
         capturedSecrets = null;
         capturedConnect = null;
         prompt.cancel();
+    }
+
+    function test_mergesIncrementalNetworkChanges() {
+        const current = [{ key: "keep", strength: 10 }, { key: "change", strength: 20 },
+            { key: "remove", strength: 30 }];
+        const merged = Flow.mergeNetworkChanges(current, {
+            removed: [{ key: "remove" }],
+            changed: [{ key: "change", strength: 80 }],
+            added: [{ key: "add", strength: 40 }, { ssid: "Hidden" }]
+        });
+
+        compare(merged.length, 4);
+        compare(merged[0].key, "keep");
+        compare(merged[1].strength, 80);
+        compare(merged[2].key, "add");
+        compare(merged[3].ssid, "Hidden");
     }
 
     function test_submitsEveryRequestedSecret() {

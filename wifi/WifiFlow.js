@@ -1,6 +1,25 @@
 .pragma library
 .import "WifiPresentation.js" as Presentation
 
+function mergeNetworkChanges(currentNetworks, event) {
+    const removedKeys = (event.removed || []).map(function (network) {
+        return network.key;
+    }).filter(Boolean);
+    const replacements = (event.changed || []).concat(event.added || []);
+    const retained = currentNetworks.filter(function (network) {
+        return !removedKeys.includes(network.key);
+    }).map(function (network) {
+        return replacements.find(function (candidate) {
+            return candidate.key === network.key;
+        }) || network;
+    });
+    const retainedKeys = retained.map(function (network) { return network.key; });
+    const additions = (event.added || []).filter(function (network) {
+        return !network.key || !retainedKeys.includes(network.key);
+    });
+    return retained.concat(additions);
+}
+
 function powerStatus(activeStatus, radios, enabled) {
     const nextRadios = Object.assign({}, radios, { wireless_enabled: enabled });
     const current = activeStatus || ({});

@@ -251,20 +251,29 @@ function idleInhibitorOsd(powerSleep) {
     };
 }
 
+function changedPowerProfileOsd(previous, value) {
+    return previous && previous.available && previous.profile !== value.profile
+        ? powerProfileOsd(value) : null;
+}
+
+function changedIdleInhibitorOsd(previous, value) {
+    return previous && previous.available
+        && idleInhibited(previous) !== idleInhibited(value)
+        ? idleInhibitorOsd(value) : null;
+}
+
+function availableDomainOsd(previous, value, renderer) {
+    return previous && previous.available ? renderer(previous, value) : null;
+}
+
 function domainOsd(streams, stream, previous, value) {
-    if (stream === streams.powerProfile && previous && previous.available
-            && previous.profile !== value.profile)
-        return powerProfileOsd(value);
-    if (stream === streams.audio && previous && previous.available)
-        return audioDeviceOsd(previous, value);
-    if (stream === streams.workspaces && previous && previous.available)
-        return displayOutputOsd(previous, value);
-    if (stream === streams.powerSleep && previous && previous.available
-            && idleInhibited(previous) !== idleInhibited(value))
-        return idleInhibitorOsd(value);
-    if (stream === streams.osdHardware && previous && previous.available)
-        return hardwareOsd(previous, value);
-    return null;
+    const handlers = ({});
+    handlers[streams.powerProfile] = function () { return changedPowerProfileOsd(previous, value); };
+    handlers[streams.audio] = function () { return availableDomainOsd(previous, value, audioDeviceOsd); };
+    handlers[streams.workspaces] = function () { return availableDomainOsd(previous, value, displayOutputOsd); };
+    handlers[streams.powerSleep] = function () { return changedIdleInhibitorOsd(previous, value); };
+    handlers[streams.osdHardware] = function () { return availableDomainOsd(previous, value, hardwareOsd); };
+    return handlers[stream] ? handlers[stream]() : null;
 }
 
 function displayOutputOsd(previous, current) {
@@ -481,11 +490,17 @@ function powerModule(profile) {
     });
 }
 
+function nextEventTime(next) {
+    if (!next)
+        return "";
+    return next.all_day ? "All day"
+        : Qt.formatDateTime(new Date(next.start_unix_ms), "ddd HH:mm");
+}
+
 function activityModule(activity) {
     const next = activity && activity.next_event;
     const nextTitle = next ? (next.title || "Untitled event") : "No upcoming events";
-    const nextTime = next && !next.all_day
-        ? Qt.formatDateTime(new Date(next.start_unix_ms), "ddd HH:mm") : next ? "All day" : "";
+    const nextTime = nextEventTime(next);
     return statusModule("activity", next ? "󰃭 " + nextTime : "󰃭",
         nextTitle + (nextTime ? "\n" + nextTime : "")
             + "\nTodos: " + ((activity && activity.incomplete_todo_count) || 0), {

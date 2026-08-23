@@ -25,27 +25,21 @@ Ui.ResultRow {
             asynchronous: true
         }
 
-        Text {
+        Ui.GlyphLabel {
             anchors.fill: parent
             visible: applicationIcon.status === Image.Error
-            text: "󰀻"
+            glyph: "󰀻"
             color: Ui.Theme.accent
-            verticalAlignment: Text.AlignVCenter
-            horizontalAlignment: Text.AlignHCenter
-            font.family: Ui.Theme.iconFontFamily
             font.pixelSize: row.scaled(Ui.Theme.iconSize)
         }
     }
 
-    Text {
-        Layout.fillWidth: true
-        text: row.resultData.title
-        color: Ui.Theme.text
-        verticalAlignment: Text.AlignVCenter
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Math.max(Ui.Theme.fontSizeSmall, row.scaled(Ui.Theme.fontSizeLabel))
-        font.weight: row.application.focused ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
-        elide: Text.ElideRight
+    Ui.ResultLabel {
+        title: row.resultData.title
+        titlePixelSize: Math.max(Ui.Theme.fontSizeSmall, row.scaled(Ui.Theme.fontSizeLabel))
+        titleWeight: row.application.focused ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
+        uiScale: row.uiScale
+        singleLine: true
     }
 
     Ui.FlatIconButton {

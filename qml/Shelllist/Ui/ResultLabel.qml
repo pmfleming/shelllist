@@ -8,6 +8,7 @@ ColumnLayout {
     property string subtitle: ""
     property color titleColor: Theme.text
     property color subtitleColor: Theme.subtleText
+    property bool singleLine: false
     property bool statusIndicatorVisible: false
     property color statusIndicatorColor: subtitleColor
     property int titleWeight: Theme.fontWeightRegular
@@ -23,7 +24,7 @@ ColumnLayout {
     Text {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        verticalAlignment: Text.AlignBottom
+        verticalAlignment: label.singleLine ? Text.AlignVCenter : Text.AlignBottom
         text: label.title
         color: label.titleColor
         font.family: Theme.fontFamily
@@ -33,6 +34,7 @@ ColumnLayout {
     }
 
     RowLayout {
+        visible: !label.singleLine
         Layout.fillWidth: true
         Layout.fillHeight: true
         spacing: Math.max(Theme.spacingXs, Math.round(Theme.spacingSm * label.uiScale))

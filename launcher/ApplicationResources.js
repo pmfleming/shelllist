@@ -201,27 +201,31 @@ function detailGroups(resource, historical) {
     return groups;
 }
 
+function currentMetadataBadges(application) {
+    const measurement = application.measurement || ({});
+    const badges = [
+        { text: text(measurement.attribution_method, "Unknown attribution"), tone: "accent" },
+        { text: ratioPercent(measurement.coverage) + " coverage", tone: measurement.coverage < 0.8 ? "warning" : "normal" },
+        { text: duration(measurement.sample_interval_ms) + " samples", tone: "normal" },
+        { text: text(measurement.memory_source, "Unknown memory").toUpperCase() + " memory", tone: "normal" },
+        { text: "Energy " + text(application.energy_confidence).toLowerCase(), tone: application.energy_confidence === "low" ? "warning" : "normal" }
+    ];
+    if (measurement.resources_shared)
+        badges.push({ text: "Shared attribution", tone: "warning" });
+    return badges;
+}
+
+function historicalMetadataBadges(latestPoint) {
+    return [
+        { text: "Retained history", tone: "accent" },
+        { text: ratioPercent(latestPoint.coverage) + " coverage", tone: latestPoint.coverage < 0.8 ? "warning" : "normal" },
+        { text: integer(latestPoint.sample_count) + " samples", tone: "normal" },
+        { text: "Energy " + text(latestPoint.energy_confidence).toLowerCase(), tone: latestPoint.energy_confidence === "low" ? "warning" : "normal" }
+    ];
+}
+
 function metadataBadges(application, latestPoint) {
-    if (application && application.running) {
-        const measurement = application.measurement || ({});
-        const badges = [
-            { text: text(measurement.attribution_method, "Unknown attribution"), tone: "accent" },
-            { text: ratioPercent(measurement.coverage) + " coverage", tone: measurement.coverage < 0.8 ? "warning" : "normal" },
-            { text: duration(measurement.sample_interval_ms) + " samples", tone: "normal" },
-            { text: text(measurement.memory_source, "Unknown memory").toUpperCase() + " memory", tone: "normal" },
-            { text: "Energy " + text(application.energy_confidence).toLowerCase(), tone: application.energy_confidence === "low" ? "warning" : "normal" }
-        ];
-        if (measurement.resources_shared)
-            badges.push({ text: "Shared attribution", tone: "warning" });
-        return badges;
-    }
-    if (latestPoint) {
-        return [
-            { text: "Retained history", tone: "accent" },
-            { text: ratioPercent(latestPoint.coverage) + " coverage", tone: latestPoint.coverage < 0.8 ? "warning" : "normal" },
-            { text: integer(latestPoint.sample_count) + " samples", tone: "normal" },
-            { text: "Energy " + text(latestPoint.energy_confidence).toLowerCase(), tone: latestPoint.energy_confidence === "low" ? "warning" : "normal" }
-        ];
-    }
-    return [];
+    if (application && application.running)
+        return currentMetadataBadges(application);
+    return latestPoint ? historicalMetadataBadges(latestPoint) : [];
 }

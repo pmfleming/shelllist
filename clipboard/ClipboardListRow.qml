@@ -10,26 +10,19 @@ Ui.ResultRow {
     readonly property var entry: resultData.payload || ({})
     trailingActionWidth: scaled(40)
 
-    Text {
+    Ui.GlyphLabel {
         Layout.preferredWidth: row.scaled(30)
         Layout.fillHeight: true
-        verticalAlignment: Text.AlignVCenter
-        horizontalAlignment: Text.AlignHCenter
-        text: row.resultData.icon
+        glyph: row.resultData.icon
         color: row.entry.current ? Ui.Theme.active : Ui.Theme.accent
-        font.family: Ui.Theme.iconFontFamily
         font.pixelSize: Math.max(Ui.Theme.iconSize, row.scaled(Ui.Theme.fontSizeTitle))
     }
 
-    Text {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        verticalAlignment: Text.AlignVCenter
-        text: row.resultData.title
-        color: Ui.Theme.text
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Math.max(Ui.Theme.fontSizeSmall, row.scaled(Ui.Theme.fontSizeLabel))
-        elide: Text.ElideRight
+    Ui.ResultLabel {
+        title: row.resultData.title
+        titlePixelSize: Math.max(Ui.Theme.fontSizeSmall, row.scaled(Ui.Theme.fontSizeLabel))
+        uiScale: row.uiScale
+        singleLine: true
     }
 
     Text {

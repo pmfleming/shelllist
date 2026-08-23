@@ -95,7 +95,6 @@ Ui.ChooserSurface {
             spacing: 0
 
             Loader {
-                id: detailLoader
                 visible: content.controller.detailsRendered
                 width: content.controller.detailsPaneWidth
                 height: parent.height

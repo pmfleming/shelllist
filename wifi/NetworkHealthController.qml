@@ -4,8 +4,6 @@ import "NetworkHealth.js" as Health
 // Consumes the daemon's network.health stream. The daemon reports what
 // NetworkManager did; deciding what the user sees is this controller's job.
 Item {
-    id: health
-
     required property WifiController controller
 
     // Most recent transition, whether or not it was worth surfacing.

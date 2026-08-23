@@ -8,8 +8,6 @@ import "NmApi.js" as NmApi
 // payload while somebody is watching, so the subscription is taken when this
 // view opens and dropped when it closes.
 Item {
-    id: inventory
-
     required property WifiController controller
     required property WifiBackend backend
 

@@ -4,8 +4,6 @@ import "NmApiClient.js" as Api
 // Saved VPN and WireGuard profiles. Activation is event-driven so a plugin's
 // own failure reason reaches the user instead of a generic "could not connect".
 Item {
-    id: vpn
-
     required property WifiController controller
     required property WifiBackend backend
 

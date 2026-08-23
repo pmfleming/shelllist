@@ -5,8 +5,6 @@ import "NmApiClient.js" as Api
 // protected transport, and the generated passphrase is held for display only
 // while the hotspot page is open.
 Item {
-    id: hotspot
-
     required property WifiController controller
     required property WifiBackend backend
 
