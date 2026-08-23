@@ -13,6 +13,8 @@ The Activity surface is opened from the top-bar Activity module, clock, notifica
 - notification actions, inline replies, dismissal, snooze, and clearing;
 - indefinite DND and timed presets for 30 minutes, 1 hour, 2 hours, or 8 hours.
 
+The Activity glyph in the panel header identifies the surface and acts as its screenshot control. Activating it captures the complete visible Activity panel through `clip-daemon` and copies the image into clipboard history.
+
 Active notifications appear in up to three expandable notification groups per monitor. A group can be cleared as one stack, while individual cards can be dismissed or snoozed for 15 minutes. Clear-all applies across all groups.
 
 ## Ownership

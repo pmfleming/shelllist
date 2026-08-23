@@ -1,5 +1,6 @@
 import QtQuick
 import Shelllist.Core as Core
+import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "ActivityApi.js" as ActivityApi
 import "ActivityFlow.js" as Flow
@@ -29,6 +30,8 @@ Ui.ChooserController {
     property string detailSection: "schedule"
     property string notificationFilter: "All"
     property string weatherLocationId: ""
+    property string screenshotStatus: ""
+    readonly property bool screenshotInFlight: screenshotCapture.inFlight
 
     detailsOpen: false
     closedWidthFraction: 0.285
@@ -233,6 +236,9 @@ Ui.ChooserController {
         detailsOpen = true;
     }
     function closeSection(): void { detailsOpen = false; }
+    function captureScreenshot(x: real, y: real, width: real, height: real): bool {
+        return screenshotCapture.captureRegion(x, y, width, height);
+    }
     function refresh(): void { backend.refresh(); }
     function toggleDnd(): void { backend.toggleDnd(); }
     function setDndForMinutes(minutes: int): bool {
@@ -266,6 +272,7 @@ Ui.ChooserController {
     function deactivateUi() {
         deactivateUiState();
         closeSection();
+        screenshotStatus = "";
     }
 
     onFocusSearchRequested: if (detailsOpen && detailSection === "schedule")
@@ -286,4 +293,22 @@ Ui.ChooserController {
     }
 
     ActivityBackend { id: activityBackend; controller: controller }
+
+    Io.ClipboardScreenshotCapture {
+        id: screenshotCapture
+        active: controller.uiActive
+        startMessage: "Capturing Activity panel…"
+        onStatusChanged: function (message) {
+            controller.screenshotStatus = message;
+            if (!inFlight)
+                screenshotStatusTimer.restart();
+        }
+    }
+
+    Timer {
+        id: screenshotStatusTimer
+        interval: 2500
+        repeat: false
+        onTriggered: controller.screenshotStatus = ""
+    }
 }

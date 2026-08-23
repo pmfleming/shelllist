@@ -21,8 +21,25 @@ Ui.ChooserSurface {
             height: 42
             spacing: Ui.Theme.spacingSm
 
+            Ui.FlatIconButton {
+                id: activityIcon
+                width: 34
+                height: 34
+                anchors.verticalCenter: parent.verticalCenter
+                icon: "󰃭"
+                iconSize: Ui.Theme.iconSizeLarge
+                flatIconColor: Ui.Theme.accent
+                enabled: !content.controller.screenshotInFlight
+                accessibleName: "Copy Activity panel screenshot"
+                toolTip: content.controller.screenshotStatus.length > 0
+                    ? content.controller.screenshotStatus
+                    : "Activity · click to copy a screenshot"
+                onClicked: content.controller.screenshotRequested()
+            }
+
             Text {
-                width: parent.width - headerActions.width - parent.spacing
+                width: parent.width - activityIcon.width - headerActions.width
+                    - parent.spacing * 2
                 anchors.verticalCenter: parent.verticalCenter
                 text: content.controller.detailsOpen
                     ? "Activity  /  " + content.sectionTitle(content.controller.detailSection)
