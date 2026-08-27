@@ -4,8 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     daemon-framework = {
-      # Use the sibling framework until its initial release is published.
-      url = "git+file:../daemon-framework?ref=main";
+      url = "github:pmfleming/daemon-framework/v0.1.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nm-daemon = {
