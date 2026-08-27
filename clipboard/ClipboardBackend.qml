@@ -39,8 +39,10 @@ Io.DaemonBackend {
         });
     }
 
-    function query(id: string, text: string, generation: int, limit: int): bool {
-        return call(id, ClipApi.methods.historyQuery, { query: text, generation: generation, limit: limit });
+    function query(id: string, text: string, generation: int, limit: int, offset: int): bool {
+        return call(id, ClipApi.methods.historyQuery, {
+            query: text, generation: generation, limit: limit, offset: offset || 0
+        });
     }
     function details(id: string, entry: var): bool {
         return call(id, ClipApi.methods.entryDetails, { entry_id: entry.id, revision: entry.revision });

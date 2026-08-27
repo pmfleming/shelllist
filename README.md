@@ -50,6 +50,8 @@ The launcher lists standards-visible desktop entries and groups live Hyprland wi
 
 Launch-only desktop entries remain shortcuts and do not claim windows or resource usage. Application actions are asynchronous and protected by a frontend recovery timeout if a terminal backend event is lost.
 
+Chooser search is ranked by the bundled Rust matcher. It supports middle-of-item substrings, ordered-character/acronym matches, diacritic folding, multiple terms, and conservative typo correction (including adjacent transpositions). Exact and prefix matches remain ahead of fuzzy matches.
+
 ### Wi-Fi
 
 The Wi-Fi surface supports scanning, saved and hidden networks, open/WEP/WPA personal and enterprise credentials, NetworkManager secret prompts, disconnect/forget, autoconnect and privacy settings, IPv4/IPv6 and DNS editing, Wi-Fi QR sharing, and captive-portal launch.

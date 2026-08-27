@@ -8,11 +8,13 @@ Ui.ProviderChooserController {
     id: controller
 
     provider: ApplicationProvider { id: applicationProvider; controller: controller }
-    filterRefreshDelay: 90
+    // Keep the complete catalog local; Shelllist's Rust matcher ranks each edit.
+    filterRefreshDelay: 0
     scheduledRefreshDelay: 120
     closeDetailsWithoutSelection: true
 
     property string status: "Loading applications…"
+    readonly property int applicationSearchLimit: 1000
     property string detailsTab: "application"
     property string categoryFilter: ""
     actionInFlight: false
@@ -51,7 +53,7 @@ Ui.ProviderChooserController {
         clearActiveAction();
         status = "Application launch status timed out; refreshed current state";
         forceRefresh = false;
-        beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
+        beginProviderQuery({ workspaceId: currentWorkspaceId }, applicationSearchLimit);
     }
     function clearResourceHistory(): void {
         resourceHistory = [];
@@ -75,7 +77,7 @@ Ui.ProviderChooserController {
     function refresh(explicitRefresh: var): void {
         forceRefresh = explicitRefresh === true;
         status = forceRefresh ? "Refreshing applications…" : "Loading applications…";
-        beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
+        beginProviderQuery({ workspaceId: currentWorkspaceId }, applicationSearchLimit);
     }
     function selectCategory(value: string): void {
         if (categoryFilter === value)
@@ -123,7 +125,7 @@ Ui.ProviderChooserController {
         if (!resourcesVisible || operationBlocked || refreshInFlight)
             return;
         forceRefresh = false;
-        beginProviderQuery({ workspaceId: currentWorkspaceId }, 500);
+        beginProviderQuery({ workspaceId: currentWorkspaceId }, applicationSearchLimit);
     }
     function captureScreenshot(x: real, y: real, width: real, height: real): bool {
         return screenshotCapture.captureRegion(x, y, width, height);
@@ -131,7 +133,7 @@ Ui.ProviderChooserController {
     function requestApplications(id: string, text: string, generation: int, limit: int): void {
         const refreshCatalog = forceRefresh;
         forceRefresh = false;
-        backend.query(id, text, categoryFilter, generation, limit, refreshCatalog);
+        backend.query(id, "", categoryFilter, generation, limit, refreshCatalog);
     }
     function resourceHistorySinceMs(): double {
         const durations = { "30m": 30 * 60 * 1000, "2h": 2 * 60 * 60 * 1000,

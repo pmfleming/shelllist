@@ -6,7 +6,8 @@ Ui.ProviderChooserController {
     id: clipboardController
 
     provider: ClipboardProvider { id: clipboardProvider; controller: clipboardController }
-    filterRefreshDelay: 120
+    // Load history pages once and let the shared Rust matcher rank each edit.
+    filterRefreshDelay: 0
     scheduledRefreshDelay: 90
 
     property string status: "Loading clipboard history…"
@@ -20,6 +21,12 @@ Ui.ProviderChooserController {
     property var wipeChallenge: null
     property bool deleteConfirmationOpen
     property bool selectCurrentAfterRefresh: false
+    property string activeHistoryQueryId: ""
+    property int activeHistoryGeneration: 0
+    property var pendingHistoryEntries: []
+    readonly property int historyPageSize: 200
+    readonly property int historySearchLimit: Math.min(5000,
+        Math.max(historyPageSize, Number(settings.max_entries) || 750))
     readonly property alias detailState: detailsModel
     readonly property var selectedEntry: selectedResult ? selectedResult.payload : null
     navigationPrimaryEnabled: hasSelection
@@ -56,6 +63,8 @@ Ui.ProviderChooserController {
         activeAction = "";
         activeOperationId = "";
         handledTerminalOperations = ({});
+        activeHistoryQueryId = "";
+        pendingHistoryEntries = [];
         detailsOpen = false;
         detailState.clear();
     }
@@ -88,8 +97,19 @@ Ui.ProviderChooserController {
         status = "Loading clipboard history…";
         beginProviderQuery({}, 100);
     }
-    function requestHistory(id, text, generation, limit) { backend.query(id, text, generation, limit); }
-    function cancelQuery(requestId) { backend.cancelRequest(requestId); }
+    function requestHistory(id, text, generation, limit) {
+        activeHistoryQueryId = id;
+        activeHistoryGeneration = generation;
+        pendingHistoryEntries = [];
+        backend.query(id, "", generation, historyPageSize, 0);
+    }
+    function cancelQuery(requestId) {
+        if (requestId === activeHistoryQueryId) {
+            activeHistoryQueryId = "";
+            pendingHistoryEntries = [];
+        }
+        backend.cancelRequest(requestId);
+    }
     function selectCurrentEntry(currentEntry: var): void {
         if (!selectCurrentAfterRefresh)
             return;
@@ -101,10 +121,21 @@ Ui.ProviderChooserController {
         selectCurrentAfterRefresh = false;
     }
     function applyHistory(id, history) {
-        applyProviderQuery(id, clipboardProvider.resultsForEntries(history.entries || []));
+        if (id !== activeHistoryQueryId)
+            return;
+        pendingHistoryEntries = pendingHistoryEntries.concat(history.entries || []);
+        if (history.has_more && pendingHistoryEntries.length < historySearchLimit) {
+            backend.query(id, "", activeHistoryGeneration, historyPageSize,
+                pendingHistoryEntries.length);
+            return;
+        }
+        const entries = pendingHistoryEntries;
+        activeHistoryQueryId = "";
+        pendingHistoryEntries = [];
+        applyProviderQuery(id, clipboardProvider.resultsForEntries(entries));
         selectCurrentEntry(history.current || null);
-        status = history.entries.length + " clipboard entries"
-            + (history.has_more ? " · more available" : "");
+        status = entries.length + " clipboard entries"
+            + (history.has_more ? " · search limited to recent entries" : "");
         detailState.scheduleLoad();
     }
     function applySession(session) {
@@ -257,6 +288,8 @@ Ui.ProviderChooserController {
                 screenshotInFlight = false;
         }
         if (isActiveQuery(id)) {
+            activeHistoryQueryId = "";
+            pendingHistoryEntries = [];
             clearProviderResults();
             status = message;
         } else if (!detailState.handleFailure(id, message)) {
@@ -279,6 +312,8 @@ Ui.ProviderChooserController {
         screenshotInFlight = false;
         activeAction = "";
         activeOperationId = "";
+        activeHistoryQueryId = "";
+        pendingHistoryEntries = [];
         status = message;
     }
     onSelectedResultChanged: {

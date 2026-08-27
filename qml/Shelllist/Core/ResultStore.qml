@@ -8,7 +8,13 @@ Item {
     property int selectedIndex
     property int queryGeneration: 0
     property string activeQueryId: ""
-    readonly property var visibleResults: Model.rankResults(sourceResults, queryText)
+    property string searchOwner: ""
+    property int searchGeneration: 0
+    property int appliedSearchGeneration: -1
+    property var rustRankedResults: []
+    readonly property bool fuzzyQuery: queryText.trim().length > 0
+    readonly property var visibleResults: fuzzyQuery && appliedSearchGeneration === searchGeneration
+        ? rustRankedResults : Model.rankResults(sourceResults, queryText)
     readonly property var visibleModel: visibleListModel
     readonly property int count: visibleResults.length
 
@@ -16,6 +22,29 @@ Item {
 
     function selected(): var {
         return count === 0 ? null : visibleResults[clampIndex(selectedIndex)];
+    }
+
+    function requestRustRanking(): void {
+        searchGeneration += 1;
+        appliedSearchGeneration = -1;
+        rustRankedResults = [];
+        if (fuzzyQuery)
+            SearchService.rank(searchOwner, searchGeneration, queryText, sourceResults);
+    }
+
+    function applyRustRanking(owner: string, generation: int, keys: var): void {
+        if (owner !== searchOwner || generation !== searchGeneration)
+            return;
+        const previous = selected();
+        const byKey = ({});
+        sourceResults.forEach(function (item) { byKey[item.key] = item; });
+        rustRankedResults = (keys || []).map(function (key) { return byKey[key]; })
+            .filter(function (item) { return !!item; });
+        appliedSearchGeneration = generation;
+        if (previous) {
+            const retainedIndex = Model.indexByKey(visibleResults, previous.key);
+            selectedIndex = retainedIndex >= 0 ? retainedIndex : clampIndex(selectedIndex);
+        }
     }
 
     function clampIndex(index: int): int {
@@ -116,10 +145,26 @@ Item {
             visibleListModel.remove(visibleResults.length, visibleListModel.count - visibleResults.length);
     }
 
-    onQueryTextChanged: selectedIndex = 0
+    onSourceResultsChanged: requestRustRanking()
+    onQueryTextChanged: {
+        selectedIndex = 0;
+        requestRustRanking();
+    }
     onVisibleResultsChanged: {
         selectedIndex = clampIndex(selectedIndex);
         syncVisibleModel();
+    }
+
+    Component.onCompleted: {
+        searchOwner = SearchService.allocateOwner();
+        requestRustRanking();
+    }
+
+    Connections {
+        target: SearchService
+        function onRanked(owner: string, generation: int, keys: var): void {
+            applyRustRanking(owner, generation, keys);
+        }
     }
 
     ListModel {

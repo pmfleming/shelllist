@@ -62,6 +62,17 @@
         {
           connectParityProbe = nmDaemonConnectParityProbe;
 
+          shelllistSearch = pkgs.rustPlatform.buildRustPackage {
+            pname = "shelllist-search";
+            version = "0.1.0";
+            src = pkgs.lib.fileset.toSource {
+              root = ./.;
+              fileset = pkgs.lib.fileset.unions [ ./Cargo.toml ./Cargo.lock ./src ];
+            };
+            cargoLock.lockFile = ./Cargo.lock;
+            meta = mkMeta "Typo-tolerant fuzzy result ranking for Shelllist" "shelllist-search";
+          };
+
           shelllistApplication = pkgs.writeShellApplication {
             name = "shelllist";
             meta = mkMeta "Single-host Shelllist desktop action center" "shelllist";
@@ -70,6 +81,7 @@
               pkgs.gawk
               pkgs.jq
               pkgs.quickshell
+              self.packages.${system}.shelllistSearch
               pkgs.qrencode
               pkgs.kdePackages.qrca
               self.packages.${system}.captivePortalBrowser
@@ -872,6 +884,8 @@
             touch $out
           '';
 
+          fuzzySearch = self.packages.${system}.shelllistSearch;
+
           providerModel = pkgs.runCommand "shelllist-provider-model"
             {
               nativeBuildInputs = [ pkgs.nodejs ];
@@ -898,6 +912,9 @@
         default = pkgs.mkShell {
           packages = [
             pkgs.nixpkgs-fmt
+            pkgs.cargo
+            pkgs.rustc
+            pkgs.rustfmt
             pkgs.qt6.qtdeclarative # qmlformat, qmllint
             pkgs.quickshell
             pkgs.shellcheck

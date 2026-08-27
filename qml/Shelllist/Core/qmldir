@@ -1,6 +1,7 @@
 module Shelllist.Core
 singleton ApiEnvelope 1.0 ApiEnvelope.qml
 singleton Model 1.0 ModelApi.qml
+singleton SearchService 1.0 SearchService.qml
 Provider 1.0 Provider.qml
 ProviderRegistry 1.0 ProviderRegistry.qml
 ResultStore 1.0 ResultStore.qml
