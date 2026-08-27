@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import "."
 import Shelllist.Ui
 import "WifiPresentation.js" as Presentation
@@ -92,40 +91,32 @@ AdvancedSettingsFlickable {
 
                     FieldLabel { width: parent.width; height: 13; text: "Network password" }
 
-                    RowLayout {
+                    TextField {
                         width: securityControls.width
                         height: 40
-                        spacing: 8
-
-                        TextField {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            readOnly: !securityFlick.settings.personalSecurity
-                            password: !securityFlick.settings.passwordRevealed
-                            text: securityFlick.settings.passwordValue
-                            placeholder: securityFlick.settings.personalSecurity
-                                ? "Saved password" : "Unavailable for this security type"
-                            onEdited: function (value) {
-                                securityFlick.settings.passwordValue = value;
-                                securityFlick.settings.passwordDirty = true;
-                                securityFlick.settings.queueSecuritySave();
-                            }
+                        readOnly: !securityFlick.settings.personalSecurity
+                        password: !securityFlick.settings.passwordRevealed
+                        showPasswordButton: false
+                        text: securityFlick.settings.passwordValue
+                        placeholder: securityFlick.settings.personalSecurity
+                            ? "Saved password" : "Unavailable for this security type"
+                        trailingActionIcon: securityFlick.settings.personalSecurity
+                            ? (securityFlick.settings.passwordRevealed ? "󰈉" : "󰈈") : ""
+                        trailingActionToolTip: securityFlick.settings.controller.advanced.secretLoading
+                            ? "Loading password" : (securityFlick.settings.passwordRevealed
+                                ? "Hide password" : "Show password")
+                        trailingActionEnabled: securityFlick.settings.personalSecurity
+                            && !securityFlick.settings.controller.advanced.secretLoading
+                        onEdited: function (value) {
+                            securityFlick.settings.passwordValue = value;
+                            securityFlick.settings.passwordDirty = true;
+                            securityFlick.settings.queueSecuritySave();
                         }
-
-                        ActionButton {
-                            Layout.preferredWidth: 98
-                            Layout.fillHeight: true
-                            enabled: securityFlick.settings.personalSecurity
-                                && !securityFlick.settings.controller.advanced.secretLoading
-                            icon: securityFlick.settings.passwordRevealed ? "󰈉" : "󰈈"
-                            label: securityFlick.settings.controller.advanced.secretLoading
-                                ? "Loading" : (securityFlick.settings.passwordRevealed ? "Hide" : "Show")
-                            onClicked: {
-                                if (securityFlick.settings.passwordRevealed)
-                                    securityFlick.settings.passwordRevealed = false;
-                                else
-                                    securityFlick.settings.controller.advanced.revealSecret();
-                            }
+                        onTrailingActionRequested: {
+                            if (securityFlick.settings.passwordRevealed)
+                                securityFlick.settings.passwordRevealed = false;
+                            else
+                                securityFlick.settings.controller.advanced.revealSecret();
                         }
                     }
                 }
