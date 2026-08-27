@@ -1,5 +1,6 @@
 import QtQuick
 import Shelllist.Core as Core
+import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "BatteryApi.js" as BatteryApi
 import "BatteryFlow.js" as Flow
@@ -20,6 +21,7 @@ Ui.ChooserController {
         preparing_for_sleep: false, lock_before_sleep: true, inhibitors: [] })
     property string lastError: ""
     property string refreshError: ""
+    property string screenshotStatus: ""
     property string viewTab: "battery"
     property int selectedDeviceIndex: 0
     property bool draftProtectionEnabled: false
@@ -62,6 +64,7 @@ Ui.ChooserController {
     readonly property var energyOverview: energyPeriod === "week"
         ? energyWeek : energyLastCharge
     readonly property bool energyLoading: energyRequestsInFlight > 0
+    readonly property bool screenshotInFlight: screenshotCapture.inFlight
     readonly property var primaryDevice: selectedDevice
     readonly property var batteryOperation: battery.operation || ({ kind: "" })
     readonly property bool operationForSelected: !!selectedDevice
@@ -526,6 +529,10 @@ Ui.ChooserController {
         requestEnergyPeriod(energyPeriod, true);
     }
 
+    function captureScreenshot(x: real, y: real, width: real, height: real): bool {
+        return screenshotCapture.captureRegion(x, y, width, height);
+    }
+
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
         refreshAll();
@@ -533,7 +540,27 @@ Ui.ChooserController {
 
     function deactivateUi() {
         energyRequestsInFlight = 0;
+        screenshotStatus = "";
         deactivateUiState();
+    }
+
+    Io.ClipboardScreenshotCapture {
+        id: screenshotCapture
+        active: controller.uiActive
+        blocked: controller.actionInFlight || controller.settingsOperationActive
+        startMessage: "Capturing Battery & Power panel…"
+        onStatusChanged: function (message) {
+            controller.screenshotStatus = message;
+            if (!inFlight)
+                screenshotStatusTimer.restart();
+        }
+    }
+
+    Timer {
+        id: screenshotStatusTimer
+        interval: 2500
+        repeat: false
+        onTriggered: controller.screenshotStatus = ""
     }
 
     Timer {

@@ -41,6 +41,23 @@ Ui.ChooserSurface {
             Layout.preferredHeight: Ui.Theme.headerHeight
             spacing: Ui.Theme.spacingMd
 
+            Ui.FlatIconButton {
+                Layout.preferredWidth: 34
+                Layout.preferredHeight: 34
+                Layout.alignment: Qt.AlignVCenter
+                icon: "󰂂"
+                iconSize: Ui.Theme.iconSizeLarge
+                flatIconColor: Ui.Theme.accent
+                enabled: !content.controller.screenshotInFlight
+                    && !content.controller.actionInFlight
+                    && !content.controller.settingsOperationActive
+                accessibleName: "Copy Battery & Power panel screenshot"
+                toolTip: content.controller.screenshotStatus.length > 0
+                    ? content.controller.screenshotStatus
+                    : "Battery & Power · click to copy a screenshot"
+                onClicked: content.controller.screenshotRequested()
+            }
+
             Text {
                 Layout.fillWidth: true
                 text: "Battery & Power"
