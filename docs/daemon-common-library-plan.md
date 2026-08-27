@@ -12,6 +12,14 @@ Extract stable, reusable infrastructure from the five Rust daemons used by Shell
 
 The extraction must reduce duplicated transport, ownership, envelope, lifecycle, protocol-test, and persistence code without moving domain policy out of its owning daemon or changing any frontend contract.
 
+## Implementation status
+
+The initial `daemon-framework` v0.1.0 workspace is implemented and published. `shelllist-search` now builds from that repository, and Shelllist consumes its flake package. `shelllist-daemon-core` and `shelllist-daemon-tokio` provide shared identities, API/event envelopes, JSONL wire types, protocol checks, ordered output, D-Bus proxying, restart detection, bounded shutdown, owner-safe subscription tasks, and secure atomic JSON state.
+
+All five daemons use the common core. All five JSONL clients use the shared runner, including NetworkManager's custom response/event correlation and unit-returning cancellation. Application, bar, Bluetooth, and clipboard subscriptions now use shared owner/destination helpers; the application, Bluetooth, and clipboard cancellation paths are owner scoped. Bluetooth state persistence is the first secure-state migration. Shelllist's full flake and all five daemon contract checks pass against the migrated processes.
+
+Further storage adoption is intentionally incremental because application, bar, clipboard, and NetworkManager repositories have different locking, corruption, and durability semantics. Hyprland extraction remains a separate follow-up decision rather than part of the general daemon framework.
+
 ## Reassessment
 
 The largest common boundary is still the JSONL frontend bridge. The five `src/client.rs` files now total roughly 1,670 lines and all implement the same wire operations:
