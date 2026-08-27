@@ -3,6 +3,11 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    daemon-framework = {
+      # Use the sibling framework until its initial release is published.
+      url = "git+file:../daemon-framework?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nm-daemon = {
       # Use the portable sibling layout until the current API history is published.
       url = "git+file:../nm-daemon?ref=main";
@@ -48,6 +53,7 @@
 
       packages = forAllSystems (system: pkgs:
         let
+          daemonFrameworkSearch = inputs."daemon-framework".packages.${system}.shelllistSearch;
           nmDaemon = inputs."nm-daemon".packages.${system}.default;
           btDaemon = inputs."bt-daemon".packages.${system}.default;
           clipDaemon = inputs."clip-daemon".packages.${system}.default;
@@ -62,16 +68,7 @@
         {
           connectParityProbe = nmDaemonConnectParityProbe;
 
-          shelllistSearch = pkgs.rustPlatform.buildRustPackage {
-            pname = "shelllist-search";
-            version = "0.1.0";
-            src = pkgs.lib.fileset.toSource {
-              root = ./.;
-              fileset = pkgs.lib.fileset.unions [ ./Cargo.toml ./Cargo.lock ./src ];
-            };
-            cargoLock.lockFile = ./Cargo.lock;
-            meta = mkMeta "Typo-tolerant fuzzy result ranking for Shelllist" "shelllist-search";
-          };
+          shelllistSearch = daemonFrameworkSearch;
 
           shelllistApplication = pkgs.writeShellApplication {
             name = "shelllist";
@@ -912,9 +909,6 @@
         default = pkgs.mkShell {
           packages = [
             pkgs.nixpkgs-fmt
-            pkgs.cargo
-            pkgs.rustc
-            pkgs.rustfmt
             pkgs.qt6.qtdeclarative # qmlformat, qmllint
             pkgs.quickshell
             pkgs.shellcheck
