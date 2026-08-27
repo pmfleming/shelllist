@@ -48,14 +48,58 @@ function ordered(reports) {
         .map(function (entry) { return entry.report; });
 }
 
-function visualOrdered(reports) {
-    return ordered(reports).slice().sort(function (left, right) {
+function visuallySorted(reports) {
+    return (reports || []).slice().sort(function (left, right) {
         const leftComponent = componentName(left);
         const rightComponent = componentName(right);
         const leftOrder = visualComponentOrder[leftComponent] === undefined ? 100 : visualComponentOrder[leftComponent];
         const rightOrder = visualComponentOrder[rightComponent] === undefined ? 100 : visualComponentOrder[rightComponent];
         return leftOrder - rightOrder;
     });
+}
+
+function visualOrdered(reports) {
+    return visuallySorted(ordered(reports));
+}
+
+function rememberedComponents(device) {
+    const seen = ({});
+    const components = ((device && device.components) || []).map(function (component) {
+        return String(component || "").toLowerCase();
+    }).filter(function (component) {
+        if (!componentImages[component] || seen[component])
+            return false;
+        seen[component] = true;
+        return true;
+    });
+    const knownType = String((device && device.device_type) || "").toLowerCase();
+    return components.length > 0 || knownType !== "earbuds" ? components : ["left", "right"];
+}
+
+function displayReports(device) {
+    const current = ordered((device && device.battery) || []);
+    const components = rememberedComponents(device);
+    if (components.length === 0)
+        return current.length > 0 ? visualOrdered(current) : [{ component: "main", percentage: -1, source: "" }];
+    const byComponent = ({});
+    current.forEach(function (report) {
+        const component = componentName(report);
+        if (componentImages[component])
+            byComponent[component] = report;
+    });
+    const display = components.map(function (component) {
+        return byComponent[component] || {
+            component: component,
+            percentage: -1,
+            source: "remembered-presentation"
+        };
+    });
+    current.forEach(function (report) {
+        const component = componentName(report);
+        if (componentImages[component] && components.indexOf(component) < 0)
+            display.push(report);
+    });
+    return visuallySorted(display);
 }
 
 function serviceText(device) {

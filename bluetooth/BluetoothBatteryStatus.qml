@@ -9,13 +9,7 @@ Item {
     id: root
 
     required property var device
-    readonly property var reports: BluetoothBattery.visualOrdered(device.battery || [])
-    readonly property bool hasBatteryReports: reports.length > 0
-    readonly property var displayReports: hasBatteryReports ? reports : [{
-        component: "main",
-        percentage: -1,
-        source: ""
-    }]
+    readonly property var displayReports: BluetoothBattery.displayReports(device)
     readonly property int indicatorHeight: 166
     readonly property int artworkSize: Math.round((displayReports.length === 1 ? 126 : 108) * 0.68)
 

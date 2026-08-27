@@ -20,6 +20,8 @@ jq -e '
   | all(.[]; (.signal_live | type == "boolean")
       and ((.signal_strength == null) or (.signal_strength | type == "number"))
       and ((.rssi == null) or (.rssi | type == "number"))
+      and (.components | type == "array")
+      and ((.model_id == null) or (.model_id | type == "string"))
       and ((.last_seen_ms == null) or (.last_seen_ms | type == "number"))))
 ' "$fixture" >/dev/null
 

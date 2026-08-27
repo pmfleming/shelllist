@@ -45,6 +45,24 @@ expect(
     "Fast Pair visual layout places the case between the earbuds",
     battery.visualOrdered(fastPair).map(value => value.component).join(",") === "left,case,right"
 );
+const rememberedLayout = battery.displayReports({
+    device_type: "Earbuds", components: ["left", "right", "case"], battery: []
+});
+expect("remembered topology is shown before live reports",
+    rememberedLayout.map(value => value.component).join(",") === "left,case,right");
+expect("remembered topology does not invent battery percentages",
+    rememberedLayout.every(value => !battery.isValid(value)));
+const partiallyVerified = battery.displayReports({
+    device_type: "Earbuds",
+    components: ["left", "right", "case"],
+    battery: [{ component: "right", percentage: 55, source: "test" }]
+});
+expect("fresh reports fill remembered topology without changing its layout",
+    partiallyVerified.map(value => value.component).join(",") === "left,case,right"
+        && partiallyVerified.filter(value => battery.isValid(value))[0].component === "right");
+expect("legacy remembered earbud types infer a stable two-component layout",
+    battery.displayReports({ device_type: "Earbuds", battery: [] })
+        .map(value => value.component).join(",") === "left,right");
 const aggregate = [{ component: "main", label: "Battery", percentage: 64, source: "bluez" }];
 expect("aggregate summary remains compact", battery.summary(aggregate) === "64%");
 
