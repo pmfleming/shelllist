@@ -67,9 +67,12 @@ Item {
             console.warn("shelllist wifi scan watchdog cancellation failed request_id=" + requestId);
         requestId = "";
         if (!snapshotSeen) {
-            controller.status = "Wi-Fi scan events timed out; loading refreshed cache…";
-            if (!backend.listRunning && !backend.refreshNetworks(true))
-                console.warn("shelllist wifi cache refresh rejected after scan watchdog");
+            // The event stream is unavailable, so do not schedule a background
+            // cache refresh whose completion would arrive over that same stream.
+            // Read NetworkManager's current AP table through the request/reply path.
+            controller.status = "Wi-Fi scan events timed out; loading current NetworkManager results…";
+            if (!backend.listRunning && !backend.loadCurrentNetworks())
+                console.warn("shelllist wifi live network load rejected after scan watchdog");
         } else controller.setBackgroundStatus("Wi-Fi scan finished without a completion event.");
         maybeRefresh();
     }

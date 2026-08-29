@@ -62,6 +62,7 @@ Io.DaemonBackend {
     })
 
     function refreshNetworks(refreshCache) { return call("networks", NmApi.methods.wifi_networks, { cached: true, refresh_cache: !!refreshCache }); }
+    function loadCurrentNetworks() { return call("networks", NmApi.methods.wifi_networks, { cached: false, refresh_cache: false }); }
     function loadBandStatus(path) { return call("band-status", NmApi.methods.wifi_band_status, { path: path }); }
     function setBand(path, band) { return call("band-set", NmApi.methods.wifi_band_set, { path: path, band: band }); }
     function startScan() { return call("scan-start", NmApi.methods.wifi_scan, { timeout: 12, cache: true }); }
