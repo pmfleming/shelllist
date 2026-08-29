@@ -14,8 +14,13 @@ function mergeNetworkChanges(currentNetworks, event) {
         }) || network;
     });
     const retainedKeys = retained.map(function (network) { return network.key; });
-    const additions = (event.added || []).filter(function (network) {
-        return !network.key || !retainedKeys.includes(network.key);
+    const additions = [];
+    replacements.forEach(function (network) {
+        if (!network.key || !retainedKeys.includes(network.key)) {
+            additions.push(network);
+            if (network.key)
+                retainedKeys.push(network.key);
+        }
     });
     return retained.concat(additions);
 }

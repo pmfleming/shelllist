@@ -57,6 +57,17 @@ TestCase {
         compare(merged[3].ssid, "Hidden");
     }
 
+    function test_changedNetworkRepairsDivergedLocalState() {
+        const merged = Flow.mergeNetworkChanges([{ key: "keep", strength: 10 }], {
+            changed: [{ key: "missing", strength: 80 }],
+            added: []
+        });
+
+        compare(merged.length, 2);
+        compare(merged[1].key, "missing");
+        compare(merged[1].strength, 80);
+    }
+
     function test_submitsEveryRequestedSecret() {
         prompt.openDaemonSecretPrompt({
             request_id: "secret-1",
