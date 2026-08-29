@@ -9,6 +9,10 @@ TestCase {
         verify(Routing.isFailureKind("transport-error"));
         verify(Routing.isFailureKind("protocol-error"));
         verify(!Routing.isFailureKind("event"));
+        verify(Routing.shouldRecoverFailure("transport-error", false));
+        verify(Routing.shouldRecoverFailure("transport-error", true));
+        verify(!Routing.shouldRecoverFailure("protocol-error", false));
+        verify(Routing.shouldRecoverFailure("protocol-error", true));
     }
 
     function test_normalizesSuccessfulResponse() {

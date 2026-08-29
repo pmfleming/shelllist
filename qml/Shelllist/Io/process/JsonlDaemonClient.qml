@@ -137,7 +137,7 @@ Item {
         }
         if (Routing.isFailureKind(message.kind)) {
             const detail = message.error || daemonName + " client failed";
-            if (recoverProtocolErrors)
+            if (Routing.shouldRecoverFailure(message.kind, recoverProtocolErrors))
                 recover(detail);
             else
                 transportFailed(detail);

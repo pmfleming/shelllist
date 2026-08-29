@@ -4,6 +4,10 @@ function isFailureKind(kind) {
     return kind === "transport-error" || kind === "protocol-error";
 }
 
+function shouldRecoverFailure(kind, recoverProtocolErrors) {
+    return kind === "transport-error" || (kind === "protocol-error" && recoverProtocolErrors);
+}
+
 function responseOutcome(message, daemonName) {
     const subscriptionFailure = message.id === "session-subscribe" && !message.ok;
     const fallback = subscriptionFailure ? daemonName + " subscription failed" : daemonName + " call failed";
