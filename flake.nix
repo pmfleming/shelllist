@@ -4,33 +4,33 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     daemon-framework = {
-      url = "github:pmfleming/daemon-framework/v0.1.0";
+      url = "git+file:../daemon-framework?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nm-daemon = {
-      # Use the portable sibling layout until the current API history is published.
       url = "git+file:../nm-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.daemonFramework.follows = "daemon-framework";
     };
     bt-daemon = {
-      # Use the portable sibling layout until the initial API history is published.
       url = "git+file:../bt-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.daemonFramework.follows = "daemon-framework";
     };
     clip-daemon = {
-      # Use the sibling daemon during clipboard UI development.
       url = "git+file:../clip-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.daemonFramework.follows = "daemon-framework";
     };
     app-daemon = {
-      # Use the sibling daemon during launcher development.
       url = "git+file:../app-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.daemonFramework.follows = "daemon-framework";
     };
     bar-daemon = {
-      # Use the sibling daemon during top-bar development.
       url = "git+file:../bar-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.daemonFramework.follows = "daemon-framework";
     };
   };
 

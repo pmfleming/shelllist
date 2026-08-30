@@ -113,7 +113,7 @@ See the [`docs/` index](docs/README.md), especially:
 
 ## Installation
 
-The flake currently pins sibling daemon checkouts through relative Git inputs. Keep `shelllist`, `app-daemon`, `bar-daemon`, `bt-daemon`, `clip-daemon`, and `nm-daemon` in the same parent directory, or override those inputs.
+The flake pins the shared framework and sibling daemon checkouts through relative Git inputs. Keep `shelllist`, `daemon-framework`, `app-daemon`, `bar-daemon`, `bt-daemon`, `clip-daemon`, and `nm-daemon` in the same parent directory, or override those inputs.
 
 Run directly:
 

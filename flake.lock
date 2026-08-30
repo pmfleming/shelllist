@@ -2,16 +2,19 @@
   "nodes": {
     "app-daemon": {
       "inputs": {
+        "daemonFramework": [
+          "daemon-framework"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1787873191,
-        "narHash": "sha256-dUHie2X9AxcNW3Cfby1l29oh3LCZ+TRIVOvKUhsPyDo=",
+        "lastModified": 1788056332,
+        "narHash": "sha256-i5lE1/mu+yTDq3XGhGicWm1CK9Xsfp5TdTEooEPECi4=",
         "ref": "main",
-        "rev": "2d1f36c0cb3fdb1223b8a101a057646f58650fb4",
-        "revCount": 40,
+        "rev": "acff0aae3af60db0fe9a0074bfe911b50bdab7c0",
+        "revCount": 48,
         "type": "git",
         "url": "file:../app-daemon"
       },
@@ -23,16 +26,19 @@
     },
     "bar-daemon": {
       "inputs": {
+        "daemonFramework": [
+          "daemon-framework"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1788050363,
-        "narHash": "sha256-gYccgYsBT27xps0klVQKy8bDwUch2Efl91jvhyMFMQI=",
+        "lastModified": 1788056332,
+        "narHash": "sha256-6YN0h5G0gkZQ+JH/TGL9xmyDzZEkOL1y33hYS+wu9q8=",
         "ref": "main",
-        "rev": "e9fead338791ed1fb6647d001c547152209a0471",
-        "revCount": 69,
+        "rev": "999c243f1be068b34f144509395b8ccb2f02848d",
+        "revCount": 75,
         "type": "git",
         "url": "file:../bar-daemon"
       },
@@ -44,16 +50,19 @@
     },
     "bt-daemon": {
       "inputs": {
+        "daemonFramework": [
+          "daemon-framework"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1787869143,
-        "narHash": "sha256-N2m8fNuKJSIdAvJAc74dF1QS67mCDsY2uj8v9CAdOns=",
+        "lastModified": 1788056332,
+        "narHash": "sha256-D/0GDXPYHqUdxZeX99y/JXaBY35K5e/0gsEnwjIM+68=",
         "ref": "main",
-        "rev": "231e04642422e09193b68e6765394e8d62e36449",
-        "revCount": 64,
+        "rev": "dba02c01f6b0b0e72b296cddb7efd9d775fd4cf2",
+        "revCount": 72,
         "type": "git",
         "url": "file:../bt-daemon"
       },
@@ -65,16 +74,19 @@
     },
     "clip-daemon": {
       "inputs": {
+        "daemonFramework": [
+          "daemon-framework"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1788048939,
-        "narHash": "sha256-tNEDxIZRfPywfBeU+YoDiXcC4pNNDcYtpReXnQ22Z4s=",
+        "lastModified": 1788056332,
+        "narHash": "sha256-bdCEkH8NG1nW7WJMhxaCtzZcRUqKf5HXXYHhLcG7GNQ=",
         "ref": "main",
-        "rev": "0937549eb49a37ccd3797a351be0114cb638837d",
-        "revCount": 61,
+        "rev": "f60ed230914e51bd38d94f101a4fa51b51919735",
+        "revCount": 70,
         "type": "git",
         "url": "file:../clip-daemon"
       },
@@ -91,18 +103,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1787869763,
-        "narHash": "sha256-PiHsCKoW0DoHuBDI7AYNts9GhmCTp1nUoLiC+nUoItQ=",
-        "owner": "pmfleming",
-        "repo": "daemon-framework",
-        "rev": "4fc6b276b851c69788866a077240ad69b889df8a",
-        "type": "github"
+        "lastModified": 1788051473,
+        "narHash": "sha256-KvdGb1Gdad8JSo8r/rVBGdZKkuLm/GlgvF/H1ft7Fkw=",
+        "ref": "main",
+        "rev": "2624c56a58657b27dd03e3fd7e5a4ca1e2c49bf7",
+        "revCount": 20,
+        "type": "git",
+        "url": "file:../daemon-framework"
       },
       "original": {
-        "owner": "pmfleming",
-        "ref": "v0.1.0",
-        "repo": "daemon-framework",
-        "type": "github"
+        "ref": "main",
+        "type": "git",
+        "url": "file:../daemon-framework"
       }
     },
     "nixpkgs": {
@@ -123,16 +135,19 @@
     },
     "nm-daemon": {
       "inputs": {
+        "daemonFramework": [
+          "daemon-framework"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1788047993,
-        "narHash": "sha256-lOvmFNTV43Lyp2vijee7yQrqvcgdu/+wmm1oKsPyiIw=",
+        "lastModified": 1788056332,
+        "narHash": "sha256-85NGlaoux73BjbG1rWqIpXWpkbtl/Wj58HsYHnFQ0qk=",
         "ref": "main",
-        "rev": "7faf0d7ea3e6d45fbda77d69fd2637c04170ab94",
-        "revCount": 93,
+        "rev": "1b400401be0b6a5c278f03abc574845c634cde80",
+        "revCount": 101,
         "type": "git",
         "url": "file:../nm-daemon"
       },
