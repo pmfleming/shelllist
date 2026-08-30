@@ -5,6 +5,8 @@ import Shelllist.Launcher as Launcher
 Io.DaemonBackend {
     required property var controller
     daemonName: "app-daemon"
+    expectedProtocol: Launcher.AppApi.protocol
+    expectedVersion: Launcher.AppApi.version
     streams: []
     active: controller.uiActive
     property int sequence: 0

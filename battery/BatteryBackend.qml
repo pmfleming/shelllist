@@ -6,8 +6,12 @@ import "BatteryApi.js" as BatteryApi
 Io.DaemonBackend {
     required property var controller
     daemonName: "bar-daemon"
+    expectedProtocol: BatteryApi.protocol
+    expectedVersion: BatteryApi.version
     streams: BatteryApi.subscribedStreams
-    active: true
+    // Battery does not need a second permanent copy of the resident bar
+    // subscription while its surface is hidden.
+    active: controller.uiActive
     property int sequence: 0
 
     function nextId(prefix: string): string {

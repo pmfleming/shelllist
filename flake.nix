@@ -750,8 +750,7 @@
             } ''
             node ${./tests/check-application-resources.js} \
               ${./launcher/ApplicationResources.js} \
-              ${./contracts/app-resource-ui-contract.fixture.json} \
-              ${inputs."app-daemon"}/src/model.rs
+              ${./contracts/app-resource-ui-contract.fixture.json}
             touch $out
           '';
 
@@ -795,6 +794,14 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-list-scroll-contract.js} ${./.}
+            touch $out
+          '';
+
+          daemonBoundary = pkgs.runCommand "shelllist-daemon-boundary"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-daemon-boundary.js} ${./.}
             touch $out
           '';
 

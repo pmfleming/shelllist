@@ -6,6 +6,8 @@ import "BarApi.js" as BarApi
 Io.DaemonBackend {
     required property var controller
     daemonName: "bar-daemon"
+    expectedProtocol: BarApi.protocol
+    expectedVersion: BarApi.version
     streams: BarApi.subscribedStreams
     active: true
     property int operationSequence: 0

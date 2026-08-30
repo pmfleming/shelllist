@@ -3,9 +3,9 @@
 const fs = require("fs");
 const vm = require("vm");
 
-const [resourcesPath, fixturePath, modelPath] = process.argv.slice(2);
-if (!resourcesPath || !fixturePath || !modelPath)
-    throw new Error("usage: check-application-resources.js <ApplicationResources.js> <fixture.json> <app-daemon model.rs>");
+const [resourcesPath, fixturePath] = process.argv.slice(2);
+if (!resourcesPath || !fixturePath)
+    throw new Error("usage: check-application-resources.js <ApplicationResources.js> <fixture.json>");
 
 const source = fs.readFileSync(resourcesPath, "utf8").replace(/^\.pragma library\s*/, "");
 const context = {};
@@ -13,27 +13,6 @@ vm.createContext(context);
 vm.runInContext(source, context, { filename: resourcesPath });
 
 const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
-const model = fs.readFileSync(modelPath, "utf8");
-
-function body(pattern, description) {
-    const match = model.match(pattern);
-    if (!match)
-        throw new Error(`could not find ${description} in ${modelPath}`);
-    return match[1];
-}
-
-function fields(structBody) {
-    return [...structBody.matchAll(/^\s*(?:pub\s+)?([a-z][a-z0-9_]*)\s*:/gm)]
-        .map(match => match[1]);
-}
-
-function usageFields(name) {
-    return fields(body(new RegExp(`usage_fields!\\(${name}\\s*\\{([\\s\\S]*?)\\n\\}\\);`), name));
-}
-
-function structFields(name) {
-    return fields(body(new RegExp(`pub struct ${name}\\s*\\{([\\s\\S]*?)\\n\\}`), name));
-}
 
 function leafPaths(value, prefix = "") {
     return Object.entries(value).flatMap(([key, child]) => {
@@ -60,23 +39,14 @@ function compare(actual, expected, description) {
         throw new Error(`${description} contains duplicate field dispositions`);
 }
 
-const compute = usageFields("ComputeUsage");
-const storage = usageFields("StorageUsage");
-const network = usageFields("NetworkUsage");
-const energy = usageFields("EnergyUsage");
-const measurement = structFields("ResourceMeasurement").map(key => `measurement.${key}`);
-const currentExpected = [...compute, ...storage, ...network, ...energy, ...measurement];
+// The daemon owns this wire fixture and tests it against the serialized Rust
+// model. This check deliberately consumes only that public contract instead of
+// parsing private Rust source layout.
+const currentExpected = leafPaths(fixture.current);
+const historyExpected = leafPaths(fixture.history_point);
 
-const historicalDirect = structFields("HistoricalResourceUsage")
-    .filter(key => !["compute", "storage", "network", "peaks"].includes(key));
-const peaks = structFields("ResourcePeaks").map(key => `peaks.${key}`);
-const historyExpected = ["timestamp_ms", "duration_ms", ...compute, ...storage, ...network,
-    ...historicalDirect, ...peaks];
-
-compare(leafPaths(fixture.current), currentExpected, "current fixture/backend model");
-compare(detailKeys(fixture.current, false), currentExpected, "current UI/backend model");
-compare(leafPaths(fixture.history_point), historyExpected, "history fixture/backend model");
-compare(detailKeys(fixture.history_point, true), historyExpected, "history UI/backend model");
+compare(detailKeys(fixture.current, false), currentExpected, "current UI/wire contract");
+compare(detailKeys(fixture.history_point, true), historyExpected, "history UI/wire contract");
 
 const unavailableNetwork = Object.assign({}, fixture.current, {
     measurement: Object.assign({}, fixture.current.measurement, { network_bytes_available: false })

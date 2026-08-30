@@ -232,4 +232,8 @@ node tests/check-provider-model.js qml/Shelllist/Core/Model.js
 tests/run-qml-tests.sh
 ```
 
-`nix flake check` also verifies every daemon contract fixture, JavaScript policy test, QML test, module evaluation, and the packaged host.
+`nix flake check` verifies the reproducibly locked daemon contract fixtures, JavaScript policy tests, QML tests, module evaluation, and the packaged host. Before advancing daemon locks, run the candidate worktree matrix:
+
+```sh
+tests/check-sibling-boundary.sh
+```

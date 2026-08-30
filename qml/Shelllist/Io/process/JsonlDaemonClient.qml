@@ -29,6 +29,10 @@ Item {
             process.exec([daemonName, "client"]);
         } catch (error) {
             process.stdinEnabled = false;
+            // Requests belong to one transport generation. Once that
+            // generation is reported failed they must never be replayed by a
+            // later process, especially when they may carry an effect.
+            queuedLines = [];
             const message = "Could not start " + daemonName + " client: " + error;
             console.error("shelllist transport failed daemon=" + daemonName + " stage=start error=" + error);
             transportFailed(message);
@@ -182,6 +186,9 @@ Item {
         }
         onExited: function (exitCode) { // qmllint disable signal-handler-parameters
             client.ready = false;
+            // Anything queued against the process that just exited is lost,
+            // even if it was queued during the small exit notification race.
+            client.queuedLines = [];
             if (!client.active)
                 return;
             const detail = processError.text.length > 0 ? processError.text : "exit " + exitCode;

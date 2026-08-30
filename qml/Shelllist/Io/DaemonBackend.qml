@@ -1,10 +1,13 @@
 import QtQuick
+import Shelllist.Core as Core
 import "process"
 
 Item {
     id: backend
 
     required property string daemonName
+    required property string expectedProtocol
+    required property int expectedVersion
     required property var streams
     required property bool active
     property bool recoverProtocolErrors: true
@@ -167,6 +170,17 @@ Item {
         transportFailed(message, lostRequestIds);
     }
 
+    function acceptEvent(event: var): void {
+        const compatibility = Core.ApiEnvelope.compatibilityError(event,
+            expectedProtocol, expectedVersion, daemonName);
+        if (compatibility.length > 0) {
+            console.warn("shelllist " + daemonName
+                + " event rejected error=" + compatibility);
+            return;
+        }
+        eventReceived(event);
+    }
+
     JsonlDaemonClient {
         id: client
         daemonName: backend.daemonName
@@ -176,7 +190,7 @@ Item {
         onResponse: function (id, envelope, transportError) {
             backend.acceptResponse(id, envelope, transportError);
         }
-        onEventReceived: function (event) { backend.eventReceived(event); }
+        onEventReceived: function (event) { backend.acceptEvent(event); }
         onTransportFailed: function (message) { backend.failTransport(message); }
         onReadyChanged: if (ready) backend.transportReady()
     }

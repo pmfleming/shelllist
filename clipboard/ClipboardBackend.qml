@@ -5,6 +5,8 @@ import "ClipApi.js" as ClipApi
 Io.DaemonBackend {
     required property ClipboardController controller
     daemonName: "clip-daemon"
+    expectedProtocol: "clip-api"
+    expectedVersion: 1
     streams: [ClipApi.streams.history, ClipApi.streams.current, ClipApi.streams.operation,
         ClipApi.streams.capture, ClipApi.streams.session]
     active: controller.uiActive

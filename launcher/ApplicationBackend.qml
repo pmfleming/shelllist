@@ -5,6 +5,8 @@ import "AppApi.js" as AppApi
 Io.DaemonBackend {
     required property ApplicationController controller
     daemonName: "app-daemon"
+    expectedProtocol: AppApi.protocol
+    expectedVersion: AppApi.version
     streams: [AppApi.streams.applications, AppApi.streams.windows, AppApi.streams.operation]
     active: controller.uiActive
 

@@ -15,7 +15,7 @@ The repository README is the user-facing overview and installation guide. These 
 
 When documentation and generated evidence differ, use this order:
 
-1. checked daemon protocol fixtures under `contracts/`;
+1. checked daemon protocol fixtures under `contracts/`, including resource wire-shape fixtures exported by their owning daemon;
 2. executable tests and strict `qmllint`;
 3. QML/JavaScript implementation;
 4. these explanatory documents;

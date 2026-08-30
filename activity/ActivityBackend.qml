@@ -6,8 +6,12 @@ import "ActivityApi.js" as ActivityApi
 Io.DaemonBackend {
     required property var controller
     daemonName: "bar-daemon"
+    expectedProtocol: ActivityApi.protocol
+    expectedVersion: ActivityApi.version
     streams: ActivityApi.subscribedStreams
-    active: true
+    // The resident BarBackend already owns these streams for the panel. Keep
+    // this domain-specific command session only while Activity is visible.
+    active: controller.uiActive
     property int sequence: 0
 
     function nextId(prefix: string): string {

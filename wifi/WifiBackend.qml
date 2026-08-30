@@ -9,6 +9,8 @@ Io.DaemonBackend {
 
     required property WifiController controller
     daemonName: "nm-daemon"
+    expectedProtocol: NmApi.protocol
+    expectedVersion: NmApi.version
     streams: NmApi.subscribedStreams
     recoverProtocolErrors: false
     active: controller.statusMonitorActive || controller.uiActive || requestRunning
