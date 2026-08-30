@@ -21,23 +21,44 @@ Rectangle {
             width: parent.width
             height: 42
             spacing: Ui.Theme.spacingSm
-            Column {
+
+            Row {
                 width: parent.width - dndButton.width - clearButton.width
                     - parent.spacing * 2
+                height: parent.height
+                spacing: 6
+                Accessible.role: Accessible.StaticText
+                Accessible.name: String(pane.controller.notifications.count || 0)
+                    + " active notifications, "
+                    + String(pane.controller.notificationHistory.length) + " in history"
                 Text {
-                    text: "Notifications"
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: ""
+                    color: Ui.Theme.accent
+                    font.family: Ui.Theme.iconFontFamily
+                    font.pixelSize: Ui.Theme.iconSize
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: String(pane.controller.notifications.count || 0)
                     color: Ui.Theme.text
                     font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Ui.Theme.fontSizeHeading
+                    font.pixelSize: Ui.Theme.fontSizeLabel
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
                 Text {
-                    text: String(pane.controller.notifications.count || 0)
-                        + " active · " + String(pane.controller.notificationHistory.length)
-                        + " in history"
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "󰋚"
+                    color: Ui.Theme.mutedText
+                    font.family: Ui.Theme.iconFontFamily
+                    font.pixelSize: Ui.Theme.iconSize
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: String(pane.controller.notificationHistory.length)
                     color: Ui.Theme.mutedText
                     font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Ui.Theme.fontSizeCaption
+                    font.pixelSize: Ui.Theme.fontSizeLabel
                 }
             }
             Ui.DropDownList {
@@ -59,11 +80,15 @@ Rectangle {
                         pane.controller.setDndForMinutes(minutes);
                 }
             }
-            ActivityHeaderButton {
+            Ui.FlatIconButton {
                 id: clearButton
-                label: "Clear all"
+                width: 34
+                height: 34
+                icon: "󰩹"
                 enabled: pane.controller.notificationHistory.length > 0
-                onTriggered: pane.controller.clearNotifications()
+                accessibleName: "Clear all notifications"
+                toolTip: accessibleName
+                onClicked: pane.controller.clearNotifications()
             }
         }
 
@@ -72,7 +97,7 @@ Rectangle {
             height: 34
             spacing: Ui.Theme.spacingSm
             Repeater {
-                model: ["All", "Unread", "Calendar", "Messages", "System"]
+                model: ["All", "Active", "Calendar", "Messages", "System"]
                 ActivityHeaderButton {
                     required property string modelData
                     label: modelData
@@ -112,15 +137,24 @@ Rectangle {
             width: parent.width
             height: 34
             spacing: Ui.Theme.spacingSm
-            ActivityHeaderButton {
-                label: "Refresh"
-                onTriggered: pane.controller.reloadNotificationHistory()
+            Ui.FlatIconButton {
+                width: 34
+                height: 34
+                icon: "󰑐"
+                enabled: !pane.controller.notificationHistoryLoading
+                accessibleName: "Refresh notification history"
+                toolTip: accessibleName
+                onClicked: pane.controller.reloadNotificationHistory()
             }
-            ActivityHeaderButton {
-                label: pane.controller.notificationHistoryLoading ? "Loading…" : "Load more"
+            Ui.FlatIconButton {
+                width: 34
+                height: 34
+                icon: "󰅀"
                 enabled: pane.controller.notificationHistoryHasMore
                     && !pane.controller.notificationHistoryLoading
-                onTriggered: pane.controller.loadMoreNotificationHistory()
+                accessibleName: "Load more notification history"
+                toolTip: accessibleName
+                onClicked: pane.controller.loadMoreNotificationHistory()
             }
         }
     }

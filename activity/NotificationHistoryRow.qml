@@ -9,6 +9,9 @@ Rectangle {
 
     required property var record
     required property ActivityController controller
+    property int groupCount: 1
+    property bool groupedContext: false
+    property bool groupToggleVisible: false
     readonly property var notification: record.notification || ({})
     readonly property bool active: controller.isNotificationActive(notification.id)
     readonly property var actions: Array.isArray(notification.actions)
@@ -17,6 +20,8 @@ Rectangle {
         ? notification.actions.find(function (action) { return row.isReplyAction(action); }) || null
         : null
     property bool removing: false
+
+    signal groupToggled
 
     function isReplyAction(action: var): bool {
         return String(action && action.key || "").toLowerCase().indexOf("reply") >= 0;
@@ -53,18 +58,49 @@ Rectangle {
             width: parent.width
             height: Math.max(34, titleColumn.implicitHeight)
             spacing: Ui.Theme.spacingSm
-            Image {
-                width: 32
+
+            Item {
+                id: iconSlot
+                visible: !row.groupedContext
+                width: visible ? 32 : 0
                 height: 32
-                source: row.iconSource()
-                fillMode: Image.PreserveAspectFit
-                asynchronous: true
+
+                Image {
+                    anchors.fill: parent
+                    source: row.iconSource()
+                    fillMode: Image.PreserveAspectFit
+                    asynchronous: true
+                }
+
+                Rectangle {
+                    visible: row.groupToggleVisible && row.groupCount > 1
+                    width: 18
+                    height: 18
+                    radius: 9
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    color: Ui.Theme.accent
+                    border.color: Ui.Theme.surfaceRaised
+                    border.width: 2
+                    Text {
+                        anchors.centerIn: parent
+                        text: row.groupCount > 9 ? "9+" : String(row.groupCount)
+                        color: Ui.Theme.accentText
+                        font.family: Ui.Theme.fontFamily
+                        font.pixelSize: 9
+                        font.weight: Ui.Theme.fontWeightBold
+                    }
+                }
             }
+
             Column {
                 id: titleColumn
-                width: parent.width - 32 - (row.active
-                    ? dismissButton.width + snoozeButton.width + parent.spacing * 3
-                    : parent.spacing)
+                width: parent.width - iconSlot.width - expandButton.width
+                    - snoozeButton.width - dismissButton.width
+                    - parent.spacing * ((iconSlot.visible ? 1 : 0)
+                        + (expandButton.visible ? 1 : 0)
+                        + (snoozeButton.visible ? 1 : 0)
+                        + (dismissButton.visible ? 1 : 0))
                 spacing: 2
                 Text {
                     width: parent.width
@@ -77,13 +113,25 @@ Rectangle {
                 }
                 Text {
                     width: parent.width
-                    text: (row.notification.app_name || "") + "  "
-                        + Qt.formatDateTime(new Date(Number(row.notification.created_unix_ms || 0)), "d MMM HH:mm")
+                    text: (row.groupedContext ? "" : (row.notification.app_name || "") + "  ")
+                        + Qt.formatDateTime(new Date(Number(
+                            row.notification.created_unix_ms || 0)), "d MMM HH:mm")
                     color: Ui.Theme.mutedText
                     elide: Text.ElideRight
                     font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeCaption
                 }
+            }
+
+            Ui.FlatIconButton {
+                id: expandButton
+                visible: row.groupToggleVisible
+                width: visible ? 28 : 0
+                height: 28
+                icon: "󰅂"
+                accessibleName: "Expand notification stack"
+                toolTip: accessibleName
+                onClicked: row.groupToggled()
             }
             Ui.FlatIconButton {
                 id: snoozeButton

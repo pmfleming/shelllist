@@ -53,6 +53,8 @@ Ui.ChooserController {
     readonly property var selectedTodos: todos.filter(function (todo) {
         return Flow.todoVisible(todo, selectedDateKey, dateKey(new Date()));
     })
+    readonly property var activeNotificationGroups: Ui.NotificationPresentation.groupRecords(
+        activeNotifications().slice().reverse())
     readonly property var notificationGroups: Ui.NotificationPresentation.groupRecords(
         notificationHistory)
     readonly property var filteredNotificationGroups: notificationGroups.filter(function (group) {
@@ -155,7 +157,7 @@ Ui.ChooserController {
     function notificationGroupMatches(group: var, filter: string): bool {
         if (filter === "All")
             return true;
-        if (filter === "Unread")
+        if (filter === "Active")
             return group.records.some(function (record) {
                 return isNotificationActive((record.notification || ({})).id);
             });

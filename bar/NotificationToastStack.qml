@@ -3,50 +3,46 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 
-Rectangle {
+Item {
     id: stack
 
     required property var group
     required property BarController controller
-    property bool expanded: false
-    readonly property var visibleNotifications: expanded ? group.records : group.records.slice(0, 1)
+    readonly property bool stacked: group.records.length > 1
+    readonly property int peekDepth: stacked ? 8 : 0
 
     width: 390
-    implicitHeight: content.implicitHeight + (group.records.length > 1 ? Ui.Theme.spacingSm * 2 : 0)
-    radius: Ui.Theme.panelRadius
-    color: group.records.length > 1 ? Ui.Theme.withAlpha(Ui.Theme.surface, 0.94) : "transparent"
-    border.width: group.records.length > 1 ? 1 : 0
-    border.color: Ui.Theme.border
+    implicitHeight: toastCard.implicitHeight + peekDepth
 
-    Column {
-        id: content
-        anchors {
-            left: parent.left
-            right: parent.right
-            top: parent.top
-            margins: stack.group.records.length > 1 ? Ui.Theme.spacingSm : 0
-        }
-        spacing: Ui.Theme.spacingSm
+    Rectangle {
+        visible: stack.stacked
+        width: parent.width - 16
+        height: toastCard.implicitHeight
+        x: 8
+        y: 8
+        radius: Ui.Theme.panelRadius
+        color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.62)
+        border.color: Ui.Theme.border
+    }
 
-        Ui.NotificationStackHeader {
-            width: parent.width
-            visible: stack.group.records.length > 1
-            height: visible ? 30 : 0
-            appName: stack.group.appName
-            count: stack.group.records.length
-            expanded: stack.expanded
-            onClearRequested: stack.controller.clearNotificationGroup(stack.group.key)
-            onExpandedToggled: stack.expanded = !stack.expanded
-        }
+    Rectangle {
+        visible: stack.stacked
+        width: parent.width - 8
+        height: toastCard.implicitHeight
+        x: 4
+        y: 4
+        radius: Ui.Theme.panelRadius
+        color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.82)
+        border.color: Ui.Theme.border
+    }
 
-        Repeater {
-            model: stack.visibleNotifications
-            NotificationToastCard {
-                required property var modelData
-                notification: modelData
-                controller: stack.controller
-                width: content.width
-            }
-        }
+    NotificationToastCard {
+        id: toastCard
+        notification: stack.group.records[0]
+        controller: stack.controller
+        width: parent.width
+        groupCount: stack.group.records.length
+        breakoutVisible: stack.stacked
+        onBreakoutRequested: stack.controller.openNotificationCenter()
     }
 }

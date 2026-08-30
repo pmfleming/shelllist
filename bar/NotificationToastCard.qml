@@ -9,6 +9,8 @@ Rectangle {
 
     required property var notification
     required property BarController controller
+    property int groupCount: 1
+    property bool breakoutVisible: false
     readonly property var actions: Array.isArray(notification.actions)
         ? notification.actions.filter(function (action) { return !card.isReplyAction(action); }) : []
     readonly property var replyAction: Array.isArray(notification.actions)
@@ -17,6 +19,8 @@ Rectangle {
     readonly property int urgency: notification.hints ? Number(notification.hints.urgency || 0) : 0
     readonly property string iconSource: resolveIconSource()
     property bool removing: false
+
+    signal breakoutRequested
 
     function isReplyAction(action: var): bool {
         const key = String(action && action.key || "").toLowerCase();
@@ -78,12 +82,31 @@ Rectangle {
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                 }
+                Rectangle {
+                    visible: card.groupCount > 1
+                    width: 18
+                    height: 18
+                    radius: 9
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    color: Ui.Theme.accent
+                    border.color: Ui.Theme.surfaceRaised
+                    border.width: 2
+                    Text {
+                        anchors.centerIn: parent
+                        text: card.groupCount > 9 ? "9+" : String(card.groupCount)
+                        color: Ui.Theme.accentText
+                        font.family: Ui.Theme.fontFamily
+                        font.pixelSize: 9
+                        font.weight: Ui.Theme.fontWeightBold
+                    }
+                }
             }
 
             Column {
                 id: headingColumn
-                width: parent.width - 40 - snoozeButton.width - dismissButton.width
-                    - parent.spacing * 3
+                width: parent.width - 40 - breakoutButton.width - snoozeButton.width
+                    - dismissButton.width - parent.spacing * (card.breakoutVisible ? 4 : 3)
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
                 Text {
@@ -104,6 +127,17 @@ Rectangle {
                     font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeCaption
                 }
+            }
+
+            Ui.FlatIconButton {
+                id: breakoutButton
+                visible: card.breakoutVisible
+                width: visible ? 30 : 0
+                height: 30
+                icon: "󰅂"
+                accessibleName: "Open notification center"
+                toolTip: accessibleName
+                onClicked: card.breakoutRequested()
             }
 
             Ui.FlatIconButton {

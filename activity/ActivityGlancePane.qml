@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import Quickshell
 import QtQuick
 import Shelllist.Ui as Ui
 
@@ -29,6 +30,21 @@ Column {
         if (event.all_day)
             return "All day";
         return Qt.formatTime(new Date(event.start_unix_ms), "HH:mm");
+    }
+    function notificationForGroup(group: var): var {
+        const record = group && group.records && group.records.length > 0
+            ? group.records[0] : ({});
+        return record.notification || record;
+    }
+    function notificationIconSource(group: var): string {
+        const notification = notificationForGroup(group);
+        const hints = notification.hints || ({});
+        const candidate = String(hints.image_path || notification.app_icon || "");
+        if (candidate.startsWith("/"))
+            return "file://" + candidate;
+        if (candidate.startsWith("file://"))
+            return candidate;
+        return Quickshell.iconPath(candidate || "dialog-information", "dialog-information");
     }
     Rectangle {
         width: parent.width
@@ -279,11 +295,20 @@ Column {
     }
 
     Rectangle {
+        id: notificationCard
+
+        readonly property bool detailMode: pane.controller.detailsOpen
+            && pane.controller.detailSection === "notifications"
+        readonly property int previewLimit: height >= 230 ? 3 : 2
+        readonly property var previewGroups: pane.controller.activeNotificationGroups.slice(
+            0, previewLimit)
+
         width: parent.width
         height: Math.max(170, pane.height - y)
         radius: Ui.Theme.panelRadius
-        color: Ui.Theme.surface
+        color: detailMode ? Ui.Theme.selected : Ui.Theme.surface
         border.color: Ui.Theme.border
+        clip: true
 
         Column {
             anchors.fill: parent
@@ -292,7 +317,8 @@ Column {
 
             Row {
                 width: parent.width
-                height: 28
+                visible: !notificationCard.detailMode
+                height: visible ? 28 : 0
                 Text {
                     width: parent.width - notificationExpand.width
                     text: "Notifications    "
@@ -304,69 +330,149 @@ Column {
                 }
                 Text {
                     id: notificationExpand
-                    text: "↗"
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "󰅂"
                     color: Ui.Theme.accent
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Ui.Theme.fontSizeHeading
+                    font.family: Ui.Theme.iconFontFamily
+                    font.pixelSize: Ui.Theme.iconSize
                 }
             }
-            Row {
-                id: notificationMetrics
-                width: parent.width
-                height: 78
-                spacing: Ui.Theme.spacingSm
-                Repeater {
-                    model: [
-                        { label: "Active", value: String(pane.controller.notifications.count || 0) },
-                        { label: "Applications", value: String(pane.controller.notificationGroups.length) },
-                        { label: "History", value: String(pane.controller.notificationHistory.length) }
-                    ]
-                    delegate: Rectangle {
-                        id: notificationMetric
-                        required property var modelData
-                        width: (notificationMetrics.width - notificationMetrics.spacing * 2) / 3
-                        height: parent.height
-                        radius: Ui.Theme.controlRadius
-                        color: Ui.Theme.surfaceRaised
-                        border.color: Ui.Theme.border
+
+            Repeater {
+                model: notificationCard.detailMode ? [] : notificationCard.previewGroups
+                delegate: Rectangle {
+                    id: notificationPreview
+                    required property var modelData
+                    readonly property var notification: pane.notificationForGroup(modelData)
+
+                    width: parent.width
+                    height: 44
+                    radius: Ui.Theme.controlRadius
+                    color: Ui.Theme.surfaceRaised
+                    border.color: Ui.Theme.border
+
+                    Row {
+                        anchors.fill: parent
+                        anchors.margins: 6
+                        spacing: Ui.Theme.spacingSm
+
+                        Item {
+                            width: 32
+                            height: 32
+                            anchors.verticalCenter: parent.verticalCenter
+                            Image {
+                                anchors.fill: parent
+                                anchors.margins: 2
+                                source: pane.notificationIconSource(notificationPreview.modelData)
+                                fillMode: Image.PreserveAspectFit
+                                asynchronous: true
+                            }
+                            Rectangle {
+                                visible: notificationPreview.modelData.records.length > 1
+                                width: 16
+                                height: 16
+                                radius: 8
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                color: Ui.Theme.accent
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: notificationPreview.modelData.records.length > 9
+                                        ? "9+" : String(notificationPreview.modelData.records.length)
+                                    color: Ui.Theme.accentText
+                                    font.family: Ui.Theme.fontFamily
+                                    font.pixelSize: 8
+                                    font.weight: Ui.Theme.fontWeightBold
+                                }
+                            }
+                        }
+
                         Column {
-                            anchors.fill: parent
-                            anchors.margins: 8
-                            spacing: 5
+                            width: parent.width - 32 - parent.spacing
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 1
                             Text {
-                                text: notificationMetric.modelData.label
-                                color: Ui.Theme.mutedText
+                                width: parent.width
+                                text: notificationPreview.notification.summary
+                                    || notificationPreview.modelData.appName
+                                color: Ui.Theme.text
+                                elide: Text.ElideRight
                                 font.family: Ui.Theme.fontFamily
-                                font.pixelSize: Ui.Theme.fontSizeCaption
+                                font.pixelSize: Ui.Theme.fontSizeSmall
+                                font.weight: Ui.Theme.fontWeightDemiBold
                             }
                             Text {
-                                text: notificationMetric.modelData.value
-                                color: Ui.Theme.text
+                                width: parent.width
+                                text: notificationPreview.modelData.appName
+                                color: Ui.Theme.mutedText
+                                elide: Text.ElideRight
                                 font.family: Ui.Theme.fontFamily
-                                font.pixelSize: Ui.Theme.fontSizeDisplay
-                                font.weight: Ui.Theme.fontWeightDemiBold
+                                font.pixelSize: Ui.Theme.fontSizeCaption
                             }
                         }
                     }
                 }
             }
-            Text {
+
+            Item {
+                visible: notificationCard.detailMode
+                    || notificationCard.previewGroups.length === 0
                 width: parent.width
-                text: pane.controller.notifications.dnd
-                    ? "Do Not Disturb is on" : "Do Not Disturb is off"
-                color: pane.controller.notifications.dnd
-                    ? Ui.Theme.warning : Ui.Theme.mutedText
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeSmall
+                height: visible ? 72 : 0
+                Text {
+                    anchors.centerIn: parent
+                    text: ""
+                    color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.72)
+                    font.family: Ui.Theme.iconFontFamily
+                    font.pixelSize: 36
+                }
+                Rectangle {
+                    visible: Number(pane.controller.notifications.count || 0) > 0
+                    width: 22
+                    height: 22
+                    radius: 11
+                    anchors.centerIn: parent
+                    anchors.horizontalCenterOffset: 19
+                    anchors.verticalCenterOffset: -15
+                    color: Ui.Theme.accent
+                    Text {
+                        anchors.centerIn: parent
+                        text: pane.controller.notifications.count > 99
+                            ? "99+" : String(pane.controller.notifications.count || 0)
+                        color: Ui.Theme.accentText
+                        font.family: Ui.Theme.fontFamily
+                        font.pixelSize: pane.controller.notifications.count > 99
+                            ? 8 : Ui.Theme.fontSizeCaption
+                        font.weight: Ui.Theme.fontWeightBold
+                    }
+                }
             }
-            Text {
+
+            Row {
                 width: parent.width
-                text: "Open grouped history, actions, replies and filters  ›"
-                color: Ui.Theme.accent
-                horizontalAlignment: Text.AlignRight
-                elide: Text.ElideRight
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeCaption
+                height: 22
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: pane.controller.notifications.dnd ? "󰂛" : ""
+                    color: pane.controller.notifications.dnd
+                        ? Ui.Theme.warning : Ui.Theme.mutedText
+                    font.family: Ui.Theme.iconFontFamily
+                    font.pixelSize: Ui.Theme.iconSize
+                }
+                Text {
+                    width: parent.width - x
+                    visible: !notificationCard.detailMode
+                        && pane.controller.activeNotificationGroups.length
+                            > notificationCard.previewGroups.length
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignRight
+                    text: "+" + String(pane.controller.activeNotificationGroups.length
+                        - notificationCard.previewGroups.length)
+                    color: Ui.Theme.mutedText
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: Ui.Theme.fontSizeCaption
+                    font.weight: Ui.Theme.fontWeightDemiBold
+                }
             }
         }
 
@@ -374,6 +480,8 @@ Column {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
+            Accessible.role: Accessible.Button
+            Accessible.name: "Open notifications"
             onClicked: pane.controller.openSection("notifications")
         }
     }

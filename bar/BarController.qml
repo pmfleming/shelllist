@@ -101,6 +101,14 @@ Item {
         if (surfaceRegistry)
             surfaceRegistry.surfaceRequested(surfaceId);
     }
+    function openNotificationCenter(): void {
+        if (surfaceRegistry) {
+            surfaceRegistry.ensureLoaded("activity");
+            if (surfaceRegistry.activityController)
+                surfaceRegistry.activityController.openSection("notifications");
+        }
+        openSurface("activity");
+    }
 
     function focusWorkspace(workspaceId: int): bool { return backend.focusWorkspace(workspaceId); }
     function mediaOperation(operation: string): bool { return backend.mediaOperation(operation); }
@@ -185,7 +193,7 @@ Item {
             "brightness-down": function () { backend.adjustBrightness(-5); },
             battery: function () { openSurface("battery"); },
             activity: function () { openSurface("activity"); },
-            notifications: function () { openSurface("activity"); },
+            notifications: function () { openNotificationCenter(); },
             "notifications-dnd": function () { backend.toggleDnd(); },
             timezone: function () { openSurface("activity"); }
         });
