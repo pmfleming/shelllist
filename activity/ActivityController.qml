@@ -230,6 +230,17 @@ Ui.ChooserController {
         if (weatherLocations.some(function (weather) { return weather.id === locationId; }))
             weatherLocationId = locationId;
     }
+    function cycleWeatherLocation(delta: int): void {
+        if (weatherLocations.length < 2)
+            return;
+        const selectedId = selectedWeather.id;
+        const current = weatherLocations.findIndex(function (weather) {
+            return weather.id === selectedId;
+        });
+        const next = (Math.max(0, current) + delta + weatherLocations.length)
+            % weatherLocations.length;
+        weatherLocationId = weatherLocations[next].id;
+    }
 
     function openSection(section: string): void {
         if (["weather", "schedule", "notifications"].indexOf(section) < 0)

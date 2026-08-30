@@ -680,6 +680,15 @@
             touch $out
           '';
 
+          weatherPresentation = pkgs.runCommand "shelllist-weather-presentation"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-weather-presentation.js} \
+              ${./activity/WeatherVisuals.js}
+            touch $out
+          '';
+
           batteryPresentation = pkgs.runCommand "shelllist-battery-presentation"
             {
               nativeBuildInputs = [ pkgs.nodejs ];

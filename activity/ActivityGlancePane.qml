@@ -19,10 +19,12 @@ Column {
         const value = Number(weather().temperature_c);
         return weather().available && Number.isFinite(value) ? Math.round(value) + "°" : "—";
     }
-    function weatherLabel(): string {
-        if (!weather().available)
-            return weather().error || "Weather unavailable";
-        return weather().condition || "Current conditions";
+    function iconSource(name: string): url {
+        return Qt.resolvedUrl("assets/weather/" + name + ".svg");
+    }
+    function conditionCode(value: var): int {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : -1;
     }
     function eventTime(event: var): string {
         if (!event)
@@ -98,40 +100,72 @@ Column {
                         font.weight: Ui.Theme.fontWeightDemiBold
                     }
                 }
-                Column {
+                Row {
                     width: parent.width * 0.38
+                    height: parent.height
                     anchors.verticalCenter: parent.verticalCenter
-                    Text {
-                        width: parent.width
-                        horizontalAlignment: Text.AlignHCenter
-                        text: pane.temperature()
-                        color: Ui.Theme.text
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: 31
+                    spacing: 2
+                    WeatherIcon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.min(70, parent.width * 0.48)
+                        height: width
+                        conditionCode: pane.conditionCode(pane.weather().condition_code)
+                        daytime: pane.weather().is_day !== false
+                        description: pane.weather().condition || ""
                     }
-                    Text {
-                        width: parent.width
-                        horizontalAlignment: Text.AlignHCenter
-                        text: pane.weatherLabel()
-                        color: Ui.Theme.mutedText
-                        elide: Text.ElideRight
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: Ui.Theme.fontSizeCaption
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        Text {
+                            text: pane.temperature()
+                            color: Ui.Theme.text
+                            font.family: Ui.Theme.fontFamily
+                            font.pixelSize: 31
+                        }
+                        Text {
+                            text: pane.weather().available
+                                ? Math.round(Number(pane.weather().high_c)) + "°  "
+                                    + Math.round(Number(pane.weather().low_c)) + "°" : "—"
+                            color: Ui.Theme.mutedText
+                            font.family: Ui.Theme.fontFamily
+                            font.pixelSize: Ui.Theme.fontSizeCaption
+                        }
                     }
                 }
             }
-            Text {
+            Row {
                 id: weatherMeta
                 width: parent.width
-                text: pane.weather().available
-                    ? "Feels " + Math.round(Number(pane.weather().apparent_temperature_c))
-                        + "°  ·  H " + Math.round(Number(pane.weather().high_c))
-                        + "°  L " + Math.round(Number(pane.weather().low_c)) + "°"
-                    : "Open for world clocks and weather details"
-                color: Ui.Theme.mutedText
-                elide: Text.ElideRight
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeCaption
+                height: 20
+                spacing: Ui.Theme.spacingMd
+                Repeater {
+                    model: [
+                        { icon: "thermometer", value: pane.weather().available
+                            ? Math.round(Number(pane.weather().apparent_temperature_c)) + "°" : "—" },
+                        { icon: "raindrop", value: pane.weather().available
+                            ? Math.round(Number(pane.weather().precipitation_probability)) + "%" : "—" },
+                        { icon: "wind", value: pane.weather().available
+                            ? Math.round(Number(pane.weather().wind_speed_kmh)) + " km/h" : "—" }
+                    ]
+                    delegate: Row {
+                        id: glanceMetric
+                        required property var modelData
+                        height: weatherMeta.height
+                        spacing: 3
+                        Image {
+                            width: 18
+                            height: 18
+                            source: pane.iconSource(glanceMetric.modelData.icon)
+                            fillMode: Image.PreserveAspectFit
+                        }
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: glanceMetric.modelData.value
+                            color: Ui.Theme.mutedText
+                            font.family: Ui.Theme.fontFamily
+                            font.pixelSize: Ui.Theme.fontSizeCaption
+                        }
+                    }
+                }
             }
         }
 

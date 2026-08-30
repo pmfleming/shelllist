@@ -17,6 +17,12 @@ jq -e '
   (.version == 1) and
   (.snapshot.activity.event_count | type == "number") and
   (.snapshot.activity.incomplete_todo_count | type == "number") and
+  (.snapshot.activity.weather.condition_code | type == "number") and
+  (.snapshot.activity.weather.is_day | type == "boolean") and
+  (.snapshot.activity.weather.precipitation_mm | type == "number") and
+  (.snapshot.activity.weather.wind_direction_degrees | type == "number") and
+  (.snapshot.activity.weather.hourly[0].condition_code | type == "number") and
+  (.snapshot.activity.weather.daily[0].condition_code | type == "number") and
   (.snapshot.workspaces.monitors[0].active_workspace_id | type == "number") and
   (.snapshot.media.players[0].playback_status | type == "string") and
   (.snapshot.audio.volume_percent | type == "number") and

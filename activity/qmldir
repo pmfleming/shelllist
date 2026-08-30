@@ -5,6 +5,7 @@ internal ActivityHeaderButton ActivityHeaderButton.qml
 internal ActivityNotificationsPane ActivityNotificationsPane.qml
 internal ActivitySchedulePane ActivitySchedulePane.qml
 internal ActivityWeatherPane ActivityWeatherPane.qml
+internal WeatherIcon WeatherIcon.qml
 internal ActivityTodoSection ActivityTodoSection.qml
 ActivityBackend 1.0 ActivityBackend.qml
 ActivityContent 1.0 ActivityContent.qml

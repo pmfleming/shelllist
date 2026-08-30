@@ -174,6 +174,18 @@ Ui.ChooserSurface {
             content.controller.selectedDate.getDate() + 1))
     }
     Shortcut {
+        sequence: "Left"
+        enabled: content.controller.detailsOpen
+            && content.controller.detailSection === "weather"
+        onActivated: content.controller.cycleWeatherLocation(-1)
+    }
+    Shortcut {
+        sequence: "Right"
+        enabled: content.controller.detailsOpen
+            && content.controller.detailSection === "weather"
+        onActivated: content.controller.cycleWeatherLocation(1)
+    }
+    Shortcut {
         sequence: "PageUp"
         enabled: content.controller.detailSection === "schedule"
         onActivated: content.controller.shiftMonth(-1)
