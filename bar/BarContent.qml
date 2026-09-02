@@ -20,6 +20,8 @@ Item {
         text: Ui.Theme.text, muted: Ui.Theme.mutedText, accent: Ui.Theme.accent,
         success: Ui.Theme.active, danger: Ui.Theme.danger, warning: Ui.Theme.warning
     })
+    readonly property var statusDescriptors: Presentation.visibleStatusModules(
+        controller.statusModules(now), layoutDensity)
 
     function moduleColor(tone: string): color { return toneColors[tone] || Ui.Theme.text; }
     function neutralTone(tone: string): bool { return ["text", "muted"].includes(tone); }
@@ -29,6 +31,35 @@ Item {
             neutralTone(tone) ? 0.02 : 0.08);
         return Ui.Theme.withAlpha(base, 0.62);
     }
+    function rebuildStatusModel(): void {
+        statusModel.clear();
+        for (let index = 0; index < statusDescriptors.length; index++)
+            statusModel.append({ descriptor: statusDescriptors[index] });
+    }
+    function syncStatusModel(): void {
+        if (statusModel.count !== statusDescriptors.length) {
+            rebuildStatusModel();
+            return;
+        }
+        for (let index = 0; index < statusDescriptors.length; index++) {
+            if (statusModel.get(index).descriptor.id !== statusDescriptors[index].id) {
+                rebuildStatusModel();
+                return;
+            }
+        }
+        for (let index = 0; index < statusDescriptors.length; index++) {
+            const descriptor = statusDescriptors[index];
+            if (!Presentation.statusModuleEqual(statusModel.get(index).descriptor, descriptor))
+                statusModel.setProperty(index, "descriptor", descriptor);
+        }
+    }
+    function updateClock(): void {
+        now = new Date();
+        clockTimer.interval = Presentation.nextMinuteDelay(now.getTime());
+        clockTimer.restart();
+    }
+
+    onStatusDescriptorsChanged: syncStatusModel()
 
     Rectangle {
         anchors.fill: parent
@@ -106,36 +137,40 @@ Item {
         }
 
         Repeater {
-            model: Presentation.visibleStatusModules(
-                root.controller.statusModules(root.now), root.layoutDensity)
+            model: ListModel {
+                id: statusModel
+                dynamicRoles: true
+            }
 
             delegate: BarAction {
-                required property var modelData
+                required property var descriptor
 
                 height: parent.height
-                text: Presentation.moduleText(modelData, root.layoutDensity)
+                text: Presentation.moduleText(descriptor, root.layoutDensity)
                 horizontalPadding: root.layoutDensity === 0 ? 10
                     : root.layoutDensity === 1 ? 7 : 5
-                foreground: root.moduleColor(modelData.tone)
-                backgroundColor: root.moduleBackground(modelData.tone)
-                borderColor: Ui.Theme.withAlpha(root.moduleColor(modelData.tone),
-                    root.neutralTone(modelData.tone) ? 0.16 : 0.34)
-                fontWeight: modelData.weight
-                interactive: modelData.interactive
-                onPrimaryTriggered: root.controller.triggerModuleAction(modelData.primary)
-                onSecondaryTriggered: root.controller.triggerModuleAction(modelData.secondary)
-                onMiddleTriggered: root.controller.triggerModuleAction(modelData.middle)
-                onWheelUp: root.controller.triggerModuleAction(modelData.wheelUp)
-                onWheelDown: root.controller.triggerModuleAction(modelData.wheelDown)
+                foreground: root.moduleColor(descriptor.tone)
+                backgroundColor: root.moduleBackground(descriptor.tone)
+                borderColor: Ui.Theme.withAlpha(root.moduleColor(descriptor.tone),
+                    root.neutralTone(descriptor.tone) ? 0.16 : 0.34)
+                fontWeight: descriptor.weight
+                interactive: descriptor.interactive
+                onPrimaryTriggered: root.controller.triggerModuleAction(descriptor.primary)
+                onSecondaryTriggered: root.controller.triggerModuleAction(descriptor.secondary)
+                onMiddleTriggered: root.controller.triggerModuleAction(descriptor.middle)
+                onWheelUp: root.controller.triggerModuleAction(descriptor.wheelUp)
+                onWheelDown: root.controller.triggerModuleAction(descriptor.wheelDown)
             }
         }
     }
 
-    Component.onCompleted: now = new Date()
+    Component.onCompleted: {
+        updateClock();
+        syncStatusModel();
+    }
     Timer {
-        interval: 1000
-        repeat: true
-        running: true
-        onTriggered: root.now = new Date()
+        id: clockTimer
+        repeat: false
+        onTriggered: root.updateClock()
     }
 }

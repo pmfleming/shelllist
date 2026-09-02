@@ -445,6 +445,20 @@ function moduleText(module, density) {
     return density > 0 && module.compactText !== undefined ? module.compactText : module.text;
 }
 
+function statusModuleEqual(left, right) {
+    if (!left || !right)
+        return false;
+    const fields = ["id", "text", "compactText", "tooltip", "visible", "maxDensity",
+        "interactive", "tone", "weight", "primary", "secondary", "middle", "wheelUp",
+        "wheelDown"];
+    return fields.every(function (field) { return left[field] === right[field]; });
+}
+
+function nextMinuteDelay(nowMilliseconds) {
+    const remainder = Math.max(0, Number(nowMilliseconds) || 0) % 60000;
+    return Math.max(1, 60000 - remainder);
+}
+
 function networkModule(status) {
     return statusModule("network", networkIcon(status), networkTooltip(status), {
         maxDensity: 3, tone: networkKind(status) === "disconnected" ? "muted" : "text",

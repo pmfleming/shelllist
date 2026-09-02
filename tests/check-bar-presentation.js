@@ -153,5 +153,11 @@ equal(context.visibleStatusModules(modules, 3).map(module => module.id),
     ["network", "updates", "battery", "clock"], "ultra-narrow layout modules");
 equal(context.moduleText(modules[5], 1), "󰂁", "compact battery text exposes level");
 equal(context.moduleText(modules[10], 1), "HH:mm", "compact clock text");
+equal(context.statusModuleEqual(modules[5], { ...modules[5] }), true,
+    "unchanged status modules retain their delegates");
+equal(context.statusModuleEqual(modules[5], { ...modules[5], text: "changed" }), false,
+    "changed status modules update their delegate role");
+equal(context.nextMinuteDelay(0), 60000, "clock schedules a complete first minute");
+equal(context.nextMinuteDelay(61234), 58766, "clock aligns updates to minute boundaries");
 
 console.log("bar presentation: workspace, responsive layout, and status formatting passed");
