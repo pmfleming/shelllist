@@ -41,6 +41,12 @@ equal(context.activeWindowFor({ focused_monitor: "eDP-1", active_window: { title
 equal(context.windowIconName({ initial_class: "ghostty", class_name: "fallback" }), "ghostty",
     "initial window class drives icon lookup");
 equal(context.playerIcon({ desktop_entry: "spotify" }), "", "Spotify icon");
+const mediaPlayers = {
+    active_player: "browser",
+    players: [{ id: "browser", title: "Podcast" }, { id: "spotify", title: "Music" }]
+};
+equal(context.playerFor(mediaPlayers).id, "browser", "daemon-selected media player");
+equal(context.mediaPlayerOrdinal(mediaPlayers, "spotify"), "2/2", "media player ordinal");
 equal(context.playbackIcon({ playback_status: "paused" }), "", "paused status icon");
 equal(context.playPauseActionIcon({ playback_status: "playing" }), "", "playing media exposes pause action");
 equal(context.playPauseActionIcon({ playback_status: "paused" }), "", "paused media exposes play action");

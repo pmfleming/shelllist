@@ -112,6 +112,12 @@ Item {
 
     function focusWorkspace(workspaceId: int): bool { return backend.focusWorkspace(workspaceId); }
     function mediaOperation(operation: string): bool { return backend.mediaOperation(operation); }
+    function cycleMediaPlayer(): bool {
+        return (media.players || []).length > 1 && backend.mediaOperation("cycle");
+    }
+    function seekMedia(offsetSeconds: int): bool {
+        return !!activePlayer && !!activePlayer.can_seek && backend.seekMedia(offsetSeconds);
+    }
     function adjustAudio(deltaPercent: int): bool { return backend.adjustAudio(deltaPercent); }
     function toggleMuted(): bool { return backend.toggleMuted(); }
     function toggleInputMuted(): bool { return backend.toggleInputMuted(); }

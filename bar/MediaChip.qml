@@ -11,8 +11,14 @@ Item {
     readonly property var player: controller.activePlayer
     readonly property string title: player
         ? (player.title || player.identity || "Unknown track") : ""
-    readonly property string labelText: player && player.artist && layoutDensity === 0
+    readonly property int playerCount: controller.media && Array.isArray(controller.media.players)
+        ? controller.media.players.length : 0
+    readonly property string playerOrdinal: Presentation.mediaPlayerOrdinal(
+        controller.media, controller.activePlayerId)
+    readonly property string trackLabel: player && player.artist && layoutDensity === 0
         ? title + " — " + player.artist : title
+    readonly property string labelText: playerCount > 1
+        ? playerOrdinal + " · " + trackLabel : trackLabel
     readonly property real progress: Presentation.mediaPositionPercent(player, nowMs)
 
     implicitWidth: Math.min(420, artFrame.width + titleLabel.implicitWidth
@@ -94,7 +100,25 @@ Item {
         Ui.FlatIconButton {
             width: 26
             height: 26
-            icon: ""
+            icon: "󰑖"
+            iconSize: 13
+            backgroundColor: "transparent"
+            radius: 0
+            border.width: 0
+            flatIconColor: Ui.Theme.mutedText
+            highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
+            highlightedIconColor: Ui.Theme.accent
+            pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
+            visible: root.playerCount > 1
+            accessibleName: "Show next media player"
+            toolTip: "Next media player (" + root.playerOrdinal + ")"
+            onClicked: root.controller.cycleMediaPlayer()
+        }
+
+        Ui.FlatIconButton {
+            width: 26
+            height: 26
+            icon: ""
             iconSize: 12
             backgroundColor: "transparent"
             radius: 0
@@ -103,8 +127,10 @@ Item {
             highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
             highlightedIconColor: Ui.Theme.accent
             pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
-            enabled: !!root.player && !!root.player.can_previous
-            onClicked: root.controller.mediaOperation("previous")
+            enabled: !!root.player && !!root.player.can_seek
+            accessibleName: "Rewind 15 seconds"
+            toolTip: "Rewind 15 seconds"
+            onClicked: root.controller.seekMedia(-15)
         }
 
         Ui.FlatIconButton {
@@ -127,7 +153,7 @@ Item {
         Ui.FlatIconButton {
             width: 26
             height: 26
-            icon: ""
+            icon: ""
             iconSize: 12
             backgroundColor: "transparent"
             radius: 0
@@ -136,8 +162,10 @@ Item {
             highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
             highlightedIconColor: Ui.Theme.accent
             pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
-            enabled: !!root.player && !!root.player.can_next
-            onClicked: root.controller.mediaOperation("next")
+            enabled: !!root.player && !!root.player.can_seek
+            accessibleName: "Fast-forward 30 seconds"
+            toolTip: "Fast-forward 30 seconds"
+            onClicked: root.controller.seekMedia(30)
         }
     }
 

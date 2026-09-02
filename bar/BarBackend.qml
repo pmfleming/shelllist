@@ -31,6 +31,14 @@ Io.DaemonBackend {
             { operation: operation, player_id: controller.activePlayerId || null });
     }
 
+    function seekMedia(offsetSeconds: int): bool {
+        return call(operationId("media-seek"), BarApi.methods.mediaOperation, {
+            operation: "seek",
+            player_id: controller.activePlayerId || null,
+            offset_seconds: offsetSeconds
+        });
+    }
+
     function adjustAudio(deltaPercent: int): bool {
         return call(operationId("audio-adjust"), BarApi.methods.audioAdjust,
             { delta_percent: deltaPercent });

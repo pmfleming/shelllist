@@ -54,6 +54,12 @@ function playerFor(media) {
     return players.find(function (player) { return player.id === media.active_player; }) || null;
 }
 
+function mediaPlayerOrdinal(media, playerId) {
+    const players = media && Array.isArray(media.players) ? media.players : [];
+    const index = players.findIndex(function (player) { return player.id === playerId; });
+    return index < 0 ? "" : (index + 1) + "/" + players.length;
+}
+
 function activeWindowFor(state, monitorName) {
     if (!state || !state.active_window)
         return null;
