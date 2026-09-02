@@ -99,6 +99,20 @@ TestCase {
         compare(store.visibleModel.get(99).resultData.id, "item-99");
     }
 
+    function test_largeCatalogIsPopulatedProgressively() {
+        const values = [];
+        for (let index = 0; index < 1000; index++)
+            values.push(result("large-" + index, "Large " + index, 1000 - index));
+
+        store.replaceProviderResults("test", values, true);
+
+        compare(store.count, 1000);
+        verify(store.visibleModel.count > 0);
+        verify(store.visibleModel.count < 1000);
+        tryCompare(store.visibleModel, "count", 1000);
+        compare(store.visibleModel.get(999).resultData.id, "large-999");
+    }
+
     Core.ProviderRegistry {
         id: providerRegistry
         Core.Provider { providerId: "test"; displayName: "Test" }

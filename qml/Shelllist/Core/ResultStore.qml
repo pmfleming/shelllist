@@ -13,6 +13,11 @@ Item {
     property int appliedSearchGeneration: -1
     property var rustRankedResults: []
     property int maximumIncrementalOrderChanges: 32
+    property int maximumSynchronousModelItems: 200
+    property int modelRebuildChunkSize: 64
+    property int modelSyncGeneration: 0
+    property int pendingModelIndex: 0
+    property var pendingModelResults: []
     property bool rankRequestsEnabled: true
     readonly property bool fuzzyQuery: queryText.trim().length > 0
     readonly property var baselineResults: Model.rankResults(sourceResults, "")
@@ -89,21 +94,17 @@ Item {
         return request;
     }
 
-    function replaceProviderResults(providerId: string, values: var, resetSelection: bool): void {
+    // Provider adapters already return Model.result() values. Keep that trusted
+    // path separate from the public/raw path so a large catalog is validated
+    // once instead of being cloned and normalized at every handoff.
+    function replaceNormalizedProviderResults(providerId: string, values: var, resetSelection: bool): void {
         const itemProvider = registry.providerById(providerId);
         if (!itemProvider)
             throw new Error("results: unknown provider " + JSON.stringify(providerId));
         const previous = selected();
-        const normalized = (values || []).map(function (value) {
-            const candidate = Object.assign({}, value, {
-                providerId: providerId,
-                providerPriority: itemProvider.priority
-            });
-            return Model.result(candidate);
-        });
+        const normalized = Array.isArray(values) ? values : [];
         const retained = sourceResults.filter(function (item) { return item.providerId !== providerId; });
-        const next = Model.resultList(retained.concat(normalized));
-        sourceResults = next;
+        sourceResults = retained.concat(normalized);
         if (resetSelection || !previous) {
             selectedIndex = 0;
             return;
@@ -112,22 +113,44 @@ Item {
         selectedIndex = retainedIndex >= 0 ? retainedIndex : Math.max(0, Math.min(selectedIndex, visibleResults.length - 1));
     }
 
-    function applyBatch(value: var): bool {
-        const batch = Model.resultBatch(value);
-        if (batch.queryId.length > 0 && batch.queryId !== activeQueryId) {
-            staleBatchIgnored(batch.providerId, batch.queryId);
+    function replaceProviderResults(providerId: string, values: var, resetSelection: bool): void {
+        const itemProvider = registry.providerById(providerId);
+        if (!itemProvider)
+            throw new Error("results: unknown provider " + JSON.stringify(providerId));
+        const normalized = (values || []).map(function (value) {
+            return Model.result(Object.assign({}, value, {
+                providerId: providerId,
+                providerPriority: itemProvider.priority
+            }));
+        });
+        replaceNormalizedProviderResults(providerId, normalized, resetSelection);
+    }
+
+    function applyNormalizedBatch(value: var): bool {
+        const batch = value || ({});
+        const providerId = String(batch.providerId || "");
+        const queryId = String(batch.queryId || "");
+        if (!registry.providerById(providerId))
+            throw new Error("results: unknown provider " + JSON.stringify(providerId));
+        if (queryId.length > 0 && queryId !== activeQueryId) {
+            staleBatchIgnored(providerId, queryId);
             return false;
         }
-        if (batch.replace) {
-            replaceProviderResults(batch.providerId, batch.results, false);
+        if (batch.replace !== false) {
+            replaceNormalizedProviderResults(providerId, batch.results, false);
             return true;
         }
-        const existing = sourceResults.filter(function (item) { return item.providerId === batch.providerId; });
         const byKey = ({});
-        existing.forEach(function (item) { byKey[item.key] = item; });
-        batch.results.forEach(function (item) { byKey[item.key] = item; });
-        replaceProviderResults(batch.providerId, Object.keys(byKey).map(function (key) { return byKey[key]; }), false);
+        sourceResults.filter(function (item) { return item.providerId === providerId; })
+            .forEach(function (item) { byKey[item.key] = item; });
+        (batch.results || []).forEach(function (item) { byKey[item.key] = item; });
+        replaceNormalizedProviderResults(providerId,
+            Object.keys(byKey).map(function (key) { return byKey[key]; }), false);
         return true;
+    }
+
+    function applyBatch(value: var): bool {
+        return applyNormalizedBatch(Model.resultBatch(value));
     }
 
     function clear(): void {
@@ -137,11 +160,41 @@ Item {
     }
 
     function rebuildVisibleModel(): void {
+        modelSyncGeneration += 1;
+        pendingModelResults = [];
+        pendingModelIndex = 0;
         visibleListModel.clear();
         for (let index = 0; index < visibleResults.length; index++) {
             const result = visibleResults[index];
             visibleListModel.append({ resultKey: result.key, resultData: result });
         }
+    }
+
+    function continueProgressiveModelRebuild(generation: int): void {
+        if (generation !== modelSyncGeneration)
+            return;
+        const end = Math.min(pendingModelIndex + modelRebuildChunkSize,
+            pendingModelResults.length);
+        while (pendingModelIndex < end) {
+            const result = pendingModelResults[pendingModelIndex];
+            visibleListModel.append({ resultKey: result.key, resultData: result });
+            pendingModelIndex += 1;
+        }
+        if (pendingModelIndex < pendingModelResults.length) {
+            Qt.callLater(continueProgressiveModelRebuild, generation);
+            return;
+        }
+        pendingModelResults = [];
+        pendingModelIndex = 0;
+    }
+
+    function startProgressiveModelRebuild(): void {
+        modelSyncGeneration += 1;
+        const generation = modelSyncGeneration;
+        pendingModelResults = visibleResults.slice();
+        pendingModelIndex = 0;
+        visibleListModel.clear();
+        continueProgressiveModelRebuild(generation);
     }
 
     function currentModelOrder(): var {
@@ -174,9 +227,16 @@ Item {
     function syncVisibleModel(): void {
         const keys = currentModelOrder();
         if (orderChangeCount(keys) > maximumIncrementalOrderChanges) {
-            rebuildVisibleModel();
+            if (visibleResults.length > maximumSynchronousModelItems)
+                startProgressiveModelRebuild();
+            else
+                rebuildVisibleModel();
             return;
         }
+
+        modelSyncGeneration += 1;
+        pendingModelResults = [];
+        pendingModelIndex = 0;
 
         const indexes = ({});
         for (let index = 0; index < keys.length; index++)

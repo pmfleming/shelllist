@@ -22,7 +22,7 @@ ChooserController {
     function beginProviderQuery(context: var, limit: int): var { return results.beginQuery(filterText, context || ({}), [provider.providerId], limit); }
 
     function applyProviderQuery(id: string, values: var): bool {
-        return results.applyBatch({
+        return results.applyNormalizedBatch({
             providerId: provider.providerId,
             queryId: id,
             replace: true,
@@ -31,7 +31,10 @@ ChooserController {
         });
     }
 
-    function replaceProviderResults(values: var, resetSelection: bool): void { results.replaceProviderResults(provider.providerId, values || [], resetSelection); }
+    function replaceProviderResults(values: var, resetSelection: bool): void {
+        results.replaceNormalizedProviderResults(provider.providerId,
+            values || [], resetSelection);
+    }
 
     function clearProviderResults(): void { results.clear(); }
     function isActiveQuery(id: string): bool { return id === results.activeQueryId; }
