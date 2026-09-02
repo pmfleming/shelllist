@@ -27,6 +27,10 @@ Item {
     property string contentAlignment: "center"
     property string defaultLaunchMode: "popover"
     property bool popoverVisible: false
+    property double openRequestedAtMs: 0
+    property double firstFrameAtMs: 0
+    property double lastOpenToFirstFrameMs: -1
+    property bool firstFramePending: false
     property bool retainOnFocusLoss: false
     property bool retainContentLoaded: false
     property bool ipcEnabled: true
@@ -166,9 +170,21 @@ Item {
         if (!popoverMode)
             return;
         syncPopoverAnimationRule();
+        openRequestedAtMs = Date.now();
+        firstFrameAtMs = 0;
+        lastOpenToFirstFrameMs = -1;
+        firstFramePending = true;
         popoverVisible = true;
         uiActivated(shelllistWorkspaceId());
         focusSearchRequested();
+    }
+    function recordFirstFrame(): void {
+        if (!firstFramePending)
+            return;
+        firstFramePending = false;
+        firstFrameAtMs = Date.now();
+        lastOpenToFirstFrameMs = Math.max(0,
+            firstFrameAtMs - openRequestedAtMs);
     }
     function hidePopover() {
         if (!popoverMode)
@@ -252,6 +268,16 @@ Item {
             horizontalAlignment: host.contentAlignment
             content: host.content
         }
+    }
+
+    Connections {
+        // ProxyWindowBase exposes its QQuickWindow only through this framework
+        // property; the backing window owns the actual frameSwapped signal.
+        // qmllint disable missing-property
+        target: popoverAnchor["_backingWindow"]
+        // qmllint enable missing-property
+        ignoreUnknownSignals: true
+        function onFrameSwapped(): void { host.recordFirstFrame(); }
     }
 
     FloatingWindow {

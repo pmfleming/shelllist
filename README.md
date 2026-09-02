@@ -233,12 +233,17 @@ tests/run-qml-tests.sh
 tests/run-performance-benchmarks.sh
 # With the installed resident host hidden:
 tests/benchmark-resident.py --duration 20 --check
+# In a target Wayland session; this opens every surface twice:
+tests/benchmark-responsiveness.py --check
 ```
 
 The policy benchmark writes qmlbench-compatible evidence to
 `target/performance/qmlbench.json`. The resident benchmark reports hidden CPU,
 PSS, page faults, and daemon-bridge thread counts without opening or closing a
-surface.
+surface. The responsiveness benchmark records command acknowledgement, first
+presented frame, cold content readiness, search ranking, and catalog-to-model
+latency. `shelllist responsiveness` exposes the latest in-process timestamps for
+manual diagnosis.
 
 `nix flake check` verifies the reproducibly locked daemon contract fixtures, JavaScript policy tests, QML tests, module evaluation, and the packaged host. Before advancing daemon locks, run the candidate worktree matrix:
 

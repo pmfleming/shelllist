@@ -83,6 +83,7 @@ tests/run-qml-tests.sh
 tests/run-runtime-smoke.sh
 tests/run-performance-benchmarks.sh
 tests/benchmark-resident.py --duration 20 --check
+tests/benchmark-responsiveness.py --check
 ```
 
 The deterministic policy benchmark emits qmlbench-compatible samples under
@@ -90,6 +91,14 @@ The deterministic policy benchmark emits qmlbench-compatible samples under
 is intentionally manual because it measures the installed Wayland session; run
 it only with Shelllist hidden. It enforces budgets for host CPU, PSS, and bridge
 thread counts without mutating UI state.
+
+The responsiveness benchmark is also target-session-only and deliberately opens
+each surface once cold (when possible) and once warm. The resident host records
+shortcut/IPC request-to-first-frame, content incubation, Rust search, and first
+model-chunk timestamps. The script reports median, p95, and maximum values and
+enforces acknowledgement, warm-frame, and cold-content budgets. Use
+`shelllist responsiveness` to inspect the latest sample without running the
+complete scenario.
 
 For an optional structural report, generate benchmark evidence first:
 

@@ -107,6 +107,7 @@ TestCase {
         store.replaceProviderResults("test", values, true);
 
         compare(store.count, 1000);
+        verify(store.lastCatalogToModelLatencyMs >= 0);
         verify(store.visibleModel.count > 0);
         verify(store.visibleModel.count < 1000);
         tryCompare(store.visibleModel, "count", 1000);

@@ -107,6 +107,7 @@
                 shelllist hide                    Hide the active surface
                 shelllist quit                    Stop the resident host
                 shelllist status                  Print host status as JSON
+                shelllist responsiveness          Print latest interaction timings as JSON
                 shelllist list                    List surfaces as JSON
                 shelllist daemon                  Ensure the resident host is running
                 shelllist run                     Run the resident host in the foreground
@@ -279,6 +280,10 @@
                   else
                     printf '%s\n' '{"running":false,"visible":false}'
                   fi
+                  ;;
+                responsiveness)
+                  [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+                  ensure_daemon && popover_ipc responsiveness
                   ;;
                 list)
                   [ "$#" -eq 1 ] || { usage >&2; exit 2; }
@@ -756,9 +761,12 @@
 
           performanceBenchmarks = pkgs.runCommand "shelllist-performance-benchmarks"
             {
-              nativeBuildInputs = [ pkgs.jq pkgs.nodejs ];
+              nativeBuildInputs = [ pkgs.jq pkgs.nodejs pkgs.python3 ];
             } ''
             mkdir -p $out
+            PYTHONPYCACHEPREFIX=$TMPDIR/python-cache python -m py_compile \
+              ${./tests/benchmark-resident.py} \
+              ${./tests/benchmark-responsiveness.py}
             node ${./tests/generate-performance-benchmarks.js} \
               ${./qml/Shelllist/Core/Model.js} $out/qmlbench.json
             test "$(jq -r '."rank-empty-1000-results-per-second"."samples-in-average"' \

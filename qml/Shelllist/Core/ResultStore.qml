@@ -2,6 +2,8 @@ import QtQuick
 import "Model.js" as Model
 
 Item {
+    id: resultStore
+
     required property ProviderRegistry registry
     property var sourceResults: []
     property string queryText: ""
@@ -17,6 +19,10 @@ Item {
     property int modelRebuildChunkSize: 64
     property int modelSyncGeneration: 0
     property int pendingModelIndex: 0
+    property double catalogUpdateStartedAtMs: 0
+    property double searchRankRequestedAtMs: 0
+    property double lastCatalogToModelLatencyMs: -1
+    property double lastSearchRankLatencyMs: -1
     property var pendingModelResults: []
     property bool rankRequestsEnabled: true
     readonly property bool fuzzyQuery: queryText.trim().length > 0
@@ -47,8 +53,10 @@ Item {
         }
         if (rustRankedResults.length === 0)
             rustRankedResults = baselineResults;
-        if (rankRequestsEnabled && searchOwner.length > 0)
+        if (rankRequestsEnabled && searchOwner.length > 0) {
+            searchRankRequestedAtMs = Date.now();
             SearchService.rank(searchOwner, searchGeneration, queryText);
+        }
     }
 
     function applyRustRanking(owner: string, generation: int, keys: var): void {
@@ -60,6 +68,11 @@ Item {
         rustRankedResults = (keys || []).map(function (key) { return byKey[key]; })
             .filter(function (item) { return !!item; });
         appliedSearchGeneration = generation;
+        if (searchRankRequestedAtMs > 0) {
+            lastSearchRankLatencyMs = Math.max(0,
+                Date.now() - searchRankRequestedAtMs);
+            searchRankRequestedAtMs = 0;
+        }
         if (previous) {
             const retainedIndex = Model.indexByKey(visibleResults, previous.key);
             selectedIndex = retainedIndex >= 0 ? retainedIndex : clampIndex(selectedIndex);
@@ -104,6 +117,7 @@ Item {
         const previous = selected();
         const normalized = Array.isArray(values) ? values : [];
         const retained = sourceResults.filter(function (item) { return item.providerId !== providerId; });
+        catalogUpdateStartedAtMs = Date.now();
         sourceResults = retained.concat(normalized);
         if (resetSelection || !previous) {
             selectedIndex = 0;
@@ -159,6 +173,14 @@ Item {
         activeQueryId = "";
     }
 
+    function recordCatalogToModelLatency(): void {
+        if (catalogUpdateStartedAtMs <= 0)
+            return;
+        lastCatalogToModelLatencyMs = Math.max(0,
+            Date.now() - catalogUpdateStartedAtMs);
+        catalogUpdateStartedAtMs = 0;
+    }
+
     function rebuildVisibleModel(): void {
         modelSyncGeneration += 1;
         pendingModelResults = [];
@@ -168,6 +190,7 @@ Item {
             const result = visibleResults[index];
             visibleListModel.append({ resultKey: result.key, resultData: result });
         }
+        recordCatalogToModelLatency();
     }
 
     function continueProgressiveModelRebuild(generation: int): void {
@@ -180,6 +203,7 @@ Item {
             visibleListModel.append({ resultKey: result.key, resultData: result });
             pendingModelIndex += 1;
         }
+        recordCatalogToModelLatency();
         if (pendingModelIndex < pendingModelResults.length) {
             Qt.callLater(continueProgressiveModelRebuild, generation);
             return;
@@ -262,6 +286,7 @@ Item {
         }
         if (visibleListModel.count > visibleResults.length)
             visibleListModel.remove(visibleResults.length, visibleListModel.count - visibleResults.length);
+        recordCatalogToModelLatency();
     }
 
     onSourceResultsChanged: {
@@ -288,7 +313,7 @@ Item {
     Connections {
         target: SearchService
         function onRanked(owner: string, generation: int, keys: var): void {
-            applyRustRanking(owner, generation, keys);
+            resultStore.applyRustRanking(owner, generation, keys);
         }
     }
 

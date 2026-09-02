@@ -10,6 +10,20 @@ ShellRoot {
     id: shell
 
     readonly property Ui.ChooserController activeController: surfaces.currentController
+    property double surfaceRequestStartedAtMs: 0
+    property var lastSurfaceContentMetric: ({
+        surface: "", latency_ms: -1, warm: false, recorded_at_ms: 0
+    })
+
+    function recordSurfaceContent(surfaceId: string, latencyMs: double,
+            warm: bool): void {
+        lastSurfaceContentMetric = {
+            surface: surfaceId,
+            latency_ms: latencyMs,
+            warm: warm,
+            recorded_at_ms: Date.now()
+        };
+    }
 
     function selectSurface(surfaceId: string): bool {
         const requested = surfaces.validSurfaceId(surfaceId);
@@ -18,8 +32,13 @@ ShellRoot {
 
         const previousId = surfaces.currentId;
         const previousController = surfaces.currentController;
+        const warm = surfaces.wasOpened(requested);
+        surfaceRequestStartedAtMs = Date.now();
         if (!surfaces.select(requested))
             return false;
+
+        if (warm)
+            recordSurfaceContent(requested, 0, true);
 
         if (windowHost.uiActive && previousId !== surfaces.currentId) {
             if (previousController)
@@ -123,7 +142,13 @@ ShellRoot {
 
     Component {
         id: shellContentComponent
-        ShellContent { registry: surfaces }
+        ShellContent {
+            registry: surfaces
+            surfaceRequestStartedAtMs: shell.surfaceRequestStartedAtMs
+            onSurfaceContentReady: function (surfaceId, latencyMs) {
+                shell.recordSurfaceContent(surfaceId, latencyMs, false);
+            }
+        }
     }
 
     Binding {
@@ -173,6 +198,25 @@ ShellRoot {
                 loaded: surfaces.loadedSurfaces,
                 opened: surfaces.openedSurfaces
             });
+        }
+        function responsiveness(): string {
+            const controller = shell.activeController;
+            // Provider chooser metrics are dynamic on the shared base type.
+            // qmllint disable missing-property
+            const result = JSON.stringify({
+                schema_version: 1,
+                surface: surfaces.currentId,
+                open_requested_at_ms: windowHost.openRequestedAtMs,
+                first_frame_at_ms: windowHost.firstFrameAtMs,
+                open_to_first_frame_ms: windowHost.lastOpenToFirstFrameMs,
+                content: shell.lastSurfaceContentMetric,
+                search_rank_ms: controller && controller["lastSearchRankLatencyMs"] !== undefined
+                    ? controller["lastSearchRankLatencyMs"] : -1,
+                catalog_to_model_ms: controller && controller["lastCatalogToModelLatencyMs"] !== undefined
+                    ? controller["lastCatalogToModelLatencyMs"] : -1
+            });
+            // qmllint enable missing-property
+            return result;
         }
         function listSurfaces(): string { return surfaces.listJson(); }
     }

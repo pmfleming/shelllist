@@ -7,9 +7,12 @@ Item {
     id: content
 
     required property SurfaceRegistry registry
+    property double surfaceRequestStartedAtMs: 0
     property var readySurfaces: ({})
     readonly property bool currentSurfaceReady:
         readySurfaces[registry.currentId] === true
+
+    signal surfaceContentReady(string surfaceId, double latencyMs)
 
     function markSurfaceReady(surfaceId: string): void {
         const next = Object.assign({}, readySurfaces);
@@ -50,6 +53,9 @@ Item {
             sourceComponent: bundle ? bundle.content : null
             onLoaded: {
                 content.markSurfaceReady(modelData.id);
+                const latency = content.surfaceRequestStartedAtMs > 0
+                    ? Math.max(0, Date.now() - content.surfaceRequestStartedAtMs) : -1;
+                content.surfaceContentReady(modelData.id, latency);
                 if (bundle && content.registry.currentId === modelData.id)
                     Qt.callLater(bundle.controller.focusSearchRequested);
             }
