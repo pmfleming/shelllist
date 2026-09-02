@@ -9,7 +9,7 @@ Item {
     property var queuedRequests: []
     property var catalogs: ({})
     property int rankDebounceMs: 35
-    // Loader.item is dynamically resolved as SearchProcess.qml at runtime.
+    // Loader.item is dynamically resolved as the process-boundary adapter.
     // qmllint disable missing-property
     readonly property bool ready: processLoader.item
         ? !!processLoader.item["ready"] : false
@@ -115,7 +115,7 @@ Item {
     Loader {
         id: processLoader
         active: false
-        source: "SearchProcess.qml"
+        source: "../Io/process/SearchProcess.qml"
         onLoaded: service.start()
     }
 

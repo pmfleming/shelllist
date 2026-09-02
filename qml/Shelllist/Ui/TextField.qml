@@ -89,8 +89,6 @@ Rectangle {
     }
 
     IconTile {
-        id: passwordButton
-
         visible: field.showPasswordButton
         anchors.right: trailingAction.visible ? trailingAction.left : parent.right
         anchors.rightMargin: Theme.spacingXs

@@ -183,6 +183,26 @@ QtObject {
         return subscription.id || "";
     }
 
+    function recordSubscription(session, route, consumer, envelope, transportError) {
+        const id = registry.subscriptionId(envelope);
+        if (route.kind === "subscription") {
+            if (id)
+                session.subscriptionOwners[id] = route.consumerId;
+            return;
+        }
+        if (route.kind !== "base-subscription")
+            return;
+        consumer.baseSubscriptionPending = false;
+        if (!id)
+            return;
+        if (consumer.active && !transportError) {
+            consumer.baseSubscriptionId = id;
+            session.subscriptionOwners[id] = route.consumerId;
+        } else {
+            session.client.cancel(namespace(route.consumerId, "cancel-stale-subscription"), id);
+        }
+    }
+
     function routeResponse(daemonName, transportId, envelope, transportError) {
         const session = sessions[daemonName];
         if (!session)
@@ -194,22 +214,7 @@ QtObject {
         const consumer = session.consumers[route.consumerId];
         if (!consumer)
             return;
-        const subscriptionId = registry.subscriptionId(envelope);
-        if (subscriptionId) {
-            if (route.kind === "base-subscription") {
-                consumer.baseSubscriptionPending = false;
-                if (consumer.active && !transportError) {
-                    consumer.baseSubscriptionId = subscriptionId;
-                    session.subscriptionOwners[subscriptionId] = route.consumerId;
-                } else {
-                    session.client.cancel(namespace(route.consumerId, "cancel-stale-subscription"), subscriptionId);
-                }
-            } else if (route.kind === "subscription") {
-                session.subscriptionOwners[subscriptionId] = route.consumerId;
-            }
-        } else if (route.kind === "base-subscription") {
-            consumer.baseSubscriptionPending = false;
-        }
+        recordSubscription(session, route, consumer, envelope, transportError);
         consumer.backend.acceptSharedResponse(route.localId, envelope, transportError);
     }
 
@@ -222,15 +227,13 @@ QtObject {
             session.consumers[owner].backend.acceptSharedEvent(event);
             return;
         }
-        // Events without a subscription identity are transport-wide. Deliver
-        // them to active consumers that requested the stream.
-        if (!event.subscription_id) {
-            Object.keys(session.consumers).forEach(function (id) {
-                const consumer = session.consumers[id];
-                if (consumer.active && consumer.streams.indexOf(event.stream) >= 0)
-                    consumer.backend.acceptSharedEvent(event);
-            });
-        }
+        if (event.subscription_id)
+            return;
+        Object.keys(session.consumers).forEach(function (id) {
+            const consumer = session.consumers[id];
+            if (consumer.active && consumer.streams.indexOf(event.stream) >= 0)
+                consumer.backend.acceptSharedEvent(event);
+        });
     }
 
     function restoreSubscriptions(daemonName) {

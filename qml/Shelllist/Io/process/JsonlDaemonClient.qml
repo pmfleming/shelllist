@@ -33,7 +33,7 @@ Item {
             // Requests belong to one transport generation. Once that
             // generation is reported failed they must never be replayed by a
             // later process, especially when they may carry an effect.
-            queuedLines = [];
+            clearQueue();
             const message = "Could not start " + daemonName + " client: " + error;
             console.error("shelllist transport failed daemon=" + daemonName + " stage=start error=" + error);
             transportFailed(message);
@@ -41,9 +41,11 @@ Item {
         }
     }
 
+    function clearQueue() { queuedLines = []; }
+
     function stop() {
         retryTimer.stop();
-        queuedLines = [];
+        clearQueue();
         if (!process.running)
             return;
         if (ready) {
@@ -196,7 +198,7 @@ Item {
             client.ready = false;
             // Anything queued against the process that just exited is lost,
             // even if it was queued during the small exit notification race.
-            client.queuedLines = [];
+            client.clearQueue();
             if (!client.active)
                 return;
             const detail = processError.text.length > 0 ? processError.text : "exit " + exitCode;

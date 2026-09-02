@@ -71,7 +71,6 @@ Item {
         rightPadding: leftPadding
 
         Repeater {
-            id: workspaceRepeater
             model: root.workspaceIds
 
             delegate: WorkspaceButton {

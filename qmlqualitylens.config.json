@@ -34,15 +34,22 @@
     { "from": "bluetooth/BluetoothContent.qml", "to": "bluetooth/BluetoothDeviceListPane.qml" },
     { "from": "bluetooth/BluetoothContent.qml", "to": "bluetooth/BluetoothDeviceDetails.qml" },
     { "from": "bluetooth/BluetoothDeviceListPane.qml", "to": "bluetooth/BluetoothDeviceListRow.qml" },
+    { "from": "bluetooth/BluetoothDeviceDetails.qml", "to": "bluetooth/BluetoothDevicePage.qml" },
+    { "from": "bluetooth/BluetoothDeviceDetails.qml", "to": "bluetooth/BluetoothInformationPage.qml" },
+    { "from": "bluetooth/BluetoothDeviceDetails.qml", "to": "bluetooth/BluetoothAdapterPage.qml" },
     { "from": "wifi/WifiContent.qml", "to": "wifi/NetworkListPane.qml" },
     { "from": "wifi/WifiContent.qml", "to": "wifi/NetworkDetailsPane.qml" },
+    { "from": "wifi/NetworkDetailsPane.qml", "to": "wifi/AdvancedSecurityPane.qml" },
+    { "from": "wifi/NetworkDetailsPane.qml", "to": "wifi/AdvancedIpSettingsPane.qml" },
+    { "from": "wifi/NetworkDetailsPane.qml", "to": "wifi/IpSettingsState.qml" },
+    { "from": "qml/Shelllist/Core/ResultStore.qml", "to": "qml/Shelllist/Io/process/SearchProcess.qml" },
     { "from": "clipboard/ClipboardContent.qml", "to": "clipboard/ClipboardListPane.qml" },
     { "from": "clipboard/ClipboardContent.qml", "to": "clipboard/ClipboardDetails.qml" }
   ],
   "output_dir": "target/qmlqualitylens",
   "profile": "quickshell",
   "external_modules": ["QtTest"],
-  "external_types": ["GlobalShortcut", "IconImage", "IpcHandler", "PanelWindow", "RectangularShadow", "Region", "ScriptAction", "Settings", "Shortcut", "SignalSpy", "TestCase", "Variants"],
+  "external_types": ["GlobalShortcut", "IconImage", "IpcHandler", "PanelWindow", "RectangularShadow", "Region", "ScriptAction", "Settings", "Shortcut", "SignalSpy", "TestCase", "TextMetrics", "Variants"],
   "reports": {
     "qmlbench": "target/performance/qmlbench.json"
   },

@@ -1,25 +1,24 @@
 .pragma library
 
+const ICON_BY_CODE = {
+    0: "clear", 1: "partly-cloudy", 2: "partly-cloudy", 3: "overcast",
+    45: "fog", 48: "fog",
+    51: "drizzle", 52: "drizzle", 53: "drizzle", 54: "drizzle", 55: "drizzle",
+    56: "drizzle", 57: "drizzle",
+    61: "rain", 62: "rain", 63: "rain", 64: "rain", 65: "rain", 66: "rain", 67: "rain",
+    71: "snow", 72: "snow", 73: "snow", 74: "snow", 75: "snow", 76: "snow", 77: "snow",
+    80: "rain", 81: "rain", 82: "rain", 85: "snow", 86: "snow",
+    95: "thunderstorms", 96: "thunderstorms", 97: "thunderstorms",
+    98: "thunderstorms", 99: "thunderstorms"
+};
+const PERIOD_ICONS = ["clear", "partly-cloudy", "overcast", "fog", "thunderstorms"];
+
 function iconName(code, isDay) {
-    const value = Number(code);
+    const name = ICON_BY_CODE[Number(code)] || "not-available";
+    if (PERIOD_ICONS.indexOf(name) < 0)
+        return name;
     const daytime = isDay === undefined || isDay === null ? true : !!isDay;
-    if (value === 0)
-        return daytime ? "clear-day" : "clear-night";
-    if (value === 1 || value === 2)
-        return daytime ? "partly-cloudy-day" : "partly-cloudy-night";
-    if (value === 3)
-        return daytime ? "overcast-day" : "overcast-night";
-    if (value === 45 || value === 48)
-        return daytime ? "fog-day" : "fog-night";
-    if (value >= 51 && value <= 57)
-        return "drizzle";
-    if ((value >= 61 && value <= 67) || (value >= 80 && value <= 82))
-        return "rain";
-    if ((value >= 71 && value <= 77) || value === 85 || value === 86)
-        return "snow";
-    if (value >= 95 && value <= 99)
-        return daytime ? "thunderstorms-day" : "thunderstorms-night";
-    return "not-available";
+    return name + (daytime ? "-day" : "-night");
 }
 
 function shiftedDate(unixMs, utcOffsetSeconds) {

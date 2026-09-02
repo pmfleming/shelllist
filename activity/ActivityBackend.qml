@@ -104,19 +104,15 @@ Io.DaemonBackend {
         });
     }
 
-    function finish(id: string, envelope: var, transportError: string): void {
-        const error = responseError(envelope, transportError,
-            "Activity operation failed");
-        if (error.length > 0) {
-            controller.lastError = error;
-            if (id.startsWith("activity-range"))
-                controller.rangeLoading = false;
-            if (id.startsWith("notifications-history"))
-                controller.notificationHistoryLoading = false;
-            return;
-        }
-        controller.lastError = "";
-        const data = envelope.data || ({});
+    function fail(id: string, message: string): void {
+        controller.lastError = message;
+        if (id.startsWith("activity-range"))
+            controller.rangeLoading = false;
+        if (id.startsWith("notifications-history"))
+            controller.notificationHistoryLoading = false;
+    }
+
+    function applyData(id: string, data: var): void {
         if (data.snapshot)
             controller.applySnapshot(data.snapshot);
         if (data.activity)
@@ -126,11 +122,26 @@ Io.DaemonBackend {
         if (data.notification_history)
             controller.applyNotificationHistory(data.notification_history,
                 id.startsWith("notifications-history-more"));
+    }
+
+    function scheduleFollowUp(id: string): void {
         if (id.startsWith("todo-") || id.startsWith("activity-refresh"))
             controller.scheduleRangeQuery();
         if (id.startsWith("notification-") || id.startsWith("notifications-clear")
                 || id.startsWith("notifications-dnd"))
             controller.scheduleNotificationHistory();
+    }
+
+    function finish(id: string, envelope: var, transportError: string): void {
+        const error = responseError(envelope, transportError,
+            "Activity operation failed");
+        if (error.length > 0) {
+            fail(id, error);
+            return;
+        }
+        controller.lastError = "";
+        applyData(id, envelope.data || ({}));
+        scheduleFollowUp(id);
     }
 
     onResponseReceived: function (id, envelope, transportError) {

@@ -229,7 +229,6 @@ Ui.DetailFlickable {
     }
 
     Rectangle {
-        id: hero
         width: parent.width
         height: 192
         radius: Ui.Theme.panelRadius
@@ -484,7 +483,6 @@ Ui.DetailFlickable {
     }
 
     Rectangle {
-        id: dailyCard
         width: parent.width
         height: 43 + pane.forecastDays.length * 43
         radius: Ui.Theme.panelRadius
