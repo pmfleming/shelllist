@@ -17,3 +17,4 @@ var streams = ({
     windows: Protocol.streams["windows.changed"],
     operation: Protocol.streams["applications.operation"]
 });
+var subscribedStreams = Object.keys(streams).map(function (name) { return streams[name]; });

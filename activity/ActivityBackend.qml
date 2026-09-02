@@ -1,5 +1,4 @@
 import QtQuick
-import Shelllist.Core as Core
 import Shelllist.Io as Io
 import "ActivityApi.js" as ActivityApi
 
@@ -12,11 +11,9 @@ Io.DaemonBackend {
     // The resident BarBackend already owns these streams for the panel. Keep
     // this domain-specific command session only while Activity is visible.
     active: controller.uiActive
-    property int sequence: 0
 
     function nextId(prefix: string): string {
-        sequence += 1;
-        return prefix + "-" + sequence;
+        return nextRequestId(prefix);
     }
 
     function snapshot(): bool {
@@ -112,8 +109,8 @@ Io.DaemonBackend {
     }
 
     function finish(id: string, envelope: var, transportError: string): void {
-        const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            ActivityApi.protocol, ActivityApi.version, daemonName, "Activity operation failed");
+        const error = responseError(envelope, transportError,
+            "Activity operation failed");
         if (error.length > 0) {
             controller.lastError = error;
             if (id.startsWith("activity-range"))

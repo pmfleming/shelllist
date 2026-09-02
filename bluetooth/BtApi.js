@@ -1,6 +1,9 @@
 .pragma library
 .import "BtProtocol.generated.js" as Protocol
 
+var protocol = Protocol.protocol;
+var version = Protocol.version;
+
 var streams = {
     changed: Protocol.streams["bluetooth.changed"],
     pairing: Protocol.streams["pairing.request"],
@@ -8,6 +11,8 @@ var streams = {
     operation: Protocol.streams["bluetooth.operation"],
     scan: Protocol.streams["bluetooth.scan"]
 };
+
+var subscribedStreams = Object.keys(streams).map(function (name) { return streams[name]; });
 
 var responseKeys = ["scan", "audio_devices", "operation", "requests"];
 

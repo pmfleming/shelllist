@@ -1,4 +1,3 @@
-import Shelllist.Core as Core
 import Shelllist.Io as Io
 import "AppApi.js" as AppApi
 
@@ -7,12 +6,12 @@ Io.DaemonBackend {
     daemonName: "app-daemon"
     expectedProtocol: AppApi.protocol
     expectedVersion: AppApi.version
-    streams: [AppApi.streams.applications, AppApi.streams.windows, AppApi.streams.operation]
+    streams: AppApi.subscribedStreams
     active: controller.uiActive
 
     function finish(id: string, envelope: var, transportError: string): void {
-        const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            AppApi.protocol, AppApi.version, daemonName, "Application operation failed");
+        const error = responseError(envelope, transportError,
+            "Application operation failed");
         if (error) {
             controller.handleFailure(id, error);
             return;

@@ -836,6 +836,14 @@
             touch $out
           '';
 
+          daemonCommonality = pkgs.runCommand "shelllist-daemon-commonality"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-daemon-commonality.js} ${./.}
+            touch $out
+          '';
+
           notificationPresentation = pkgs.runCommand "shelllist-notification-presentation"
             {
               nativeBuildInputs = [ pkgs.nodejs ];

@@ -1,5 +1,4 @@
 import QtQuick
-import Shelllist.Core as Core
 import Shelllist.Io as Io
 import "BarApi.js" as BarApi
 
@@ -10,11 +9,9 @@ Io.DaemonBackend {
     expectedVersion: BarApi.version
     streams: BarApi.subscribedStreams
     active: true
-    property int operationSequence: 0
 
     function operationId(prefix: string): string {
-        operationSequence += 1;
-        return prefix + "-" + operationSequence;
+        return nextRequestId(prefix);
     }
 
     function snapshot(): bool {
@@ -106,8 +103,8 @@ Io.DaemonBackend {
     }
 
     function finish(id: string, envelope: var, transportError: string): void {
-        const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            BarApi.protocol, BarApi.version, daemonName, "Bar operation failed");
+        const error = responseError(envelope, transportError,
+            "Bar operation failed");
         if (error.length > 0) {
             console.error("shelllist bar request failed id=" + id + " error=" + error);
             return;

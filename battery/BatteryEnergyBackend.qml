@@ -1,4 +1,3 @@
-import Shelllist.Core as Core
 import Shelllist.Io as Io
 import Shelllist.Launcher as Launcher
 
@@ -9,17 +8,14 @@ Io.DaemonBackend {
     expectedVersion: Launcher.AppApi.version
     streams: []
     active: controller.uiActive
-    property int sequence: 0
 
     function overview(period: string, sinceMs: double): bool {
-        sequence += 1;
-        return call("battery-energy-" + period + "-" + sequence,
+        return call(nextRequestId("battery-energy-" + period),
             Launcher.AppApi.methods.energyOverview, { since_ms: sinceMs, limit: 12 });
     }
 
     onResponseReceived: function (id, envelope, transportError) {
-        const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            Launcher.AppApi.protocol, Launcher.AppApi.version, daemonName,
+        const error = responseError(envelope, transportError,
             "Application energy history is unavailable");
         if (error.length > 0) {
             controller.energyOverviewFailed(id, error);

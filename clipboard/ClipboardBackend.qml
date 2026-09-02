@@ -1,19 +1,17 @@
-import Shelllist.Core as Core
 import Shelllist.Io as Io
 import "ClipApi.js" as ClipApi
 
 Io.DaemonBackend {
     required property ClipboardController controller
     daemonName: "clip-daemon"
-    expectedProtocol: "clip-api"
-    expectedVersion: 1
-    streams: [ClipApi.streams.history, ClipApi.streams.current, ClipApi.streams.operation,
-        ClipApi.streams.capture, ClipApi.streams.session]
+    expectedProtocol: ClipApi.protocol
+    expectedVersion: ClipApi.version
+    streams: ClipApi.subscribedStreams
     active: controller.uiActive
 
     function finish(id: string, envelope: var, transportError: string): void {
-        const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            "clip-api", 1, daemonName, "Clipboard operation failed");
+        const error = responseError(envelope, transportError,
+            "Clipboard operation failed");
         if (error) {
             controller.handleFailure(id, error);
             return;

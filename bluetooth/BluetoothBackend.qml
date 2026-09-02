@@ -1,5 +1,4 @@
 import QtQuick
-import Shelllist.Core as Core
 import Shelllist.Io as Io
 import "BtApi.js" as BtApi
 
@@ -11,10 +10,9 @@ Io.DaemonBackend {
     property var finishedOperations
 
     daemonName: "bt-daemon"
-    expectedProtocol: "bt-api"
-    expectedVersion: 1
-    streams: [BtApi.streams.changed, BtApi.streams.pairing, BtApi.streams.operation,
-        BtApi.streams.scan, BtApi.streams.audio]
+    expectedProtocol: BtApi.protocol
+    expectedVersion: BtApi.version
+    streams: BtApi.subscribedStreams
     // Pairing authorization can arrive while the popup is hidden.
     active: true
     readonly property bool running: requestRunning || itemCount(operations) > 0
@@ -65,8 +63,8 @@ Io.DaemonBackend {
         return "";
     }
     function finish(id, envelope, transportError) {
-        const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            "bt-api", 1, daemonName, "Bluetooth operation failed");
+        const error = responseError(envelope, transportError,
+            "Bluetooth operation failed");
         if (error.length > 0) {
             console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
             controller.status = error;
@@ -112,11 +110,7 @@ Io.DaemonBackend {
     }
 
     function dispatchStreamEvent(event) {
-        const handler = eventHandlers[event.stream];
-        if (!handler)
-            return false;
-        handler(event);
-        return true;
+        return routeEvent(event, eventHandlers);
     }
     function applyUnhandledEvent(event) {
         if (event.event === "unavailable") {
@@ -130,20 +124,12 @@ Io.DaemonBackend {
         console.warn("shelllist bluetooth event ignored stream=" + (event.stream || "unknown")
             + " event=" + (event.event || "unknown"));
     }
-    function compatibleEvent(event: var): bool {
-        if (!Core.ApiEnvelope.compatibilityError(event, "bt-api", 1, "bt-daemon"))
-            return true;
-        console.warn("shelllist bluetooth event rejected reason=incompatible-envelope");
-        return false;
-    }
     function recoverEventGap(): void {
         controller.status = "Bluetooth events were missed; recovering current state…";
         recoverRequests();
         if (!isPending("snapshot")) refresh();
     }
     function processEvent(event: var): void {
-        if (!compatibleEvent(event))
-            return;
         if (event.event === "lagged") {
             recoverEventGap();
             return;

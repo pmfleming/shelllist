@@ -1,5 +1,5 @@
 import QtQuick
-import Shelllist.Core as Core
+import "../../../clipboard/ClipApi.js" as ClipApi
 
 Item {
     id: capture
@@ -16,7 +16,7 @@ Item {
             return false;
         inFlight = true;
         statusChanged(startMessage);
-        client.call("capture-screenshot", "clipboard.capture.screenshot", {
+        client.call("capture-screenshot", ClipApi.methods.captureScreenshot, {
             x: Math.round(x),
             y: Math.round(y),
             width: Math.round(width),
@@ -41,8 +41,8 @@ Item {
     }
 
     function finish(envelope: var, transportError: string): void {
-        const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            "clip-api", 1, "clip-daemon", "Screenshot capture failed");
+        const error = client.responseError(envelope, transportError,
+            "Screenshot capture failed");
         if (error) {
             reject(error);
             return;
@@ -63,9 +63,9 @@ Item {
     DaemonBackend {
         id: client
         daemonName: "clip-daemon"
-        expectedProtocol: "clip-api"
-        expectedVersion: 1
-        streams: ["clipboard.operation"]
+        expectedProtocol: ClipApi.protocol
+        expectedVersion: ClipApi.version
+        streams: [ClipApi.streams.operation]
         recoverProtocolErrors: true
         active: capture.active
         onResponseReceived: function (id, envelope, transportError) {

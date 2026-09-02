@@ -1,6 +1,9 @@
 .pragma library
 .import "ClipProtocol.generated.js" as Protocol
 
+var protocol = Protocol.protocol;
+var version = Protocol.version;
+
 var streams = {
     history: Protocol.streams["clipboard.history.changed"],
     current: Protocol.streams["clipboard.current.changed"],
@@ -8,6 +11,8 @@ var streams = {
     capture: Protocol.streams["clipboard.capture.changed"],
     session: Protocol.streams["clipboard.session"]
 };
+
+var subscribedStreams = Object.keys(streams).map(function (name) { return streams[name]; });
 
 var methods = {
     sessionBegin: Protocol.methods["clipboard.session.begin"],

@@ -11,6 +11,7 @@ Item {
     required property bool active
     property bool recoverProtocolErrors: true
     property var pending: ({})
+    property int requestSequence: 0
     property int subscriptionSequence: 0
     property string sharedConsumerId: ""
 
@@ -36,6 +37,29 @@ Item {
     signal sendFailed(string id, string message)
 
     function isPending(id: string): bool { return !!pending[id]; }
+
+    function nextRequestId(prefix: string): string {
+        requestSequence += 1;
+        return prefix + "-" + requestSequence;
+    }
+
+    function callSequenced(prefix: string, method: string, params: var): bool {
+        return call(nextRequestId(prefix), method, params || ({}));
+    }
+
+    function responseError(envelope: var, transportError: string,
+            fallbackMessage: string): string {
+        return Core.ApiEnvelope.responseError(envelope, transportError,
+            expectedProtocol, expectedVersion, daemonName, fallbackMessage);
+    }
+
+    function routeEvent(event: var, handlers: var): bool {
+        const handler = handlers ? handlers[event.stream] : null;
+        if (!handler)
+            return false;
+        handler(event);
+        return true;
+    }
 
     function setPending(id: string, value: bool): void {
         const next = Object.assign({}, pending);

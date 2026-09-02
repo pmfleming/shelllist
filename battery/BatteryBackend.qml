@@ -1,5 +1,4 @@
 import QtQuick
-import Shelllist.Core as Core
 import Shelllist.Io as Io
 import "BatteryApi.js" as BatteryApi
 
@@ -12,11 +11,9 @@ Io.DaemonBackend {
     // Battery does not need a second permanent copy of the resident bar
     // subscription while its surface is hidden.
     active: controller.uiActive
-    property int sequence: 0
 
     function nextId(prefix: string): string {
-        sequence += 1;
-        return prefix + "-" + sequence;
+        return nextRequestId(prefix);
     }
 
     function snapshot(): bool {
@@ -149,8 +146,7 @@ Io.DaemonBackend {
     }
     function finish(id: string, envelope: var, transportError: string): void {
         const background = isBackgroundRequest(id);
-        const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            BatteryApi.protocol, BatteryApi.version, daemonName,
+        const error = responseError(envelope, transportError,
             background ? "Battery refresh failed" : "Battery operation failed");
         if (error.length > 0) {
             rejectRequest(id, background, error);

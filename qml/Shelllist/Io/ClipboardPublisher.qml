@@ -1,5 +1,5 @@
 import QtQuick
-import Shelllist.Core as Core
+import "../../../clipboard/ClipApi.js" as ClipApi
 
 Item {
     id: publisher
@@ -14,7 +14,7 @@ Item {
             return false;
         inFlight = true;
         successMessage = message || "Copied to the clipboard";
-        if (!backend.call("publish-text", "clipboard.selection.publishText", { text: text })) {
+        if (!backend.call("publish-text", ClipApi.methods.selectionPublishText, { text: text })) {
             inFlight = false;
             return false;
         }
@@ -22,8 +22,8 @@ Item {
     }
 
     function complete(envelope: var, transportError: string): void {
-        const error = Core.ApiEnvelope.responseError(envelope, transportError,
-            "clip-api", 1, "clip-daemon", "Clipboard publication failed");
+        const error = backend.responseError(envelope, transportError,
+            "Clipboard publication failed");
         inFlight = false;
         if (error.length > 0) {
             finished(false, error);
@@ -35,8 +35,8 @@ Item {
     DaemonBackend {
         id: backend
         daemonName: "clip-daemon"
-        expectedProtocol: "clip-api"
-        expectedVersion: 1
+        expectedProtocol: ClipApi.protocol
+        expectedVersion: ClipApi.version
         streams: []
         recoverProtocolErrors: true
         active: publisher.inFlight
