@@ -5,16 +5,19 @@
         "daemonFramework": [
           "daemon-framework"
         ],
+        "hyprlandIpc": [
+          "shelllist-hyprland"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1788381903,
-        "narHash": "sha256-TtYD/4oahr6DRjSsKaubFReH1ds9IJfrwJ4sbR+h2/k=",
+        "lastModified": 1788384693,
+        "narHash": "sha256-EJZGyeuKqAcSTalq10dRLWxWM6pAnEKhkLbMpwaW2v0=",
         "ref": "main",
-        "rev": "5eb1d4c286b657a3887a1e68bd986d873dcb9bf9",
-        "revCount": 53,
+        "rev": "43130e559d338951aaabea684d234aae8ad013a9",
+        "revCount": 55,
         "type": "git",
         "url": "file:../app-daemon"
       },
@@ -29,16 +32,19 @@
         "daemonFramework": [
           "daemon-framework"
         ],
+        "hyprlandIpc": [
+          "shelllist-hyprland"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1788056332,
-        "narHash": "sha256-6YN0h5G0gkZQ+JH/TGL9xmyDzZEkOL1y33hYS+wu9q8=",
+        "lastModified": 1788384693,
+        "narHash": "sha256-IjOvpRaTRqRgIzzImb7HkWL7jfUXCYN06PmH4qwDJaQ=",
         "ref": "main",
-        "rev": "999c243f1be068b34f144509395b8ccb2f02848d",
-        "revCount": 75,
+        "rev": "0b331eee3268b83b650f73aff913c9b7b487d49a",
+        "revCount": 81,
         "type": "git",
         "url": "file:../bar-daemon"
       },
@@ -58,11 +64,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788056332,
-        "narHash": "sha256-D/0GDXPYHqUdxZeX99y/JXaBY35K5e/0gsEnwjIM+68=",
+        "lastModified": 1788383327,
+        "narHash": "sha256-4qOiTBkIf/XI2Wm8y1JSRB/bhnjMNh4GcjZ2xWRR9Dg=",
         "ref": "main",
-        "rev": "dba02c01f6b0b0e72b296cddb7efd9d775fd4cf2",
-        "revCount": 72,
+        "rev": "bd7efb51f90520f35d76bd1783fba2e5d9786c51",
+        "revCount": 76,
         "type": "git",
         "url": "file:../bt-daemon"
       },
@@ -82,11 +88,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788380936,
-        "narHash": "sha256-insuNTkhCvYA20MKmb7A89WPXUW8hUAqCA77UNgROtw=",
+        "lastModified": 1788383160,
+        "narHash": "sha256-eIdPRJVBzphxx0aSv/agScpQ87YEhjEEZ1W/m8tdvzc=",
         "ref": "main",
-        "rev": "4aa518c85f82a09186501d7a8138d04a2bc646bb",
-        "revCount": 76,
+        "rev": "936a16b5d57fd10c769a2bb0d45e45c95d46b798",
+        "revCount": 78,
         "type": "git",
         "url": "file:../clip-daemon"
       },
@@ -103,11 +109,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788380376,
-        "narHash": "sha256-UBFcZKlxXmJ8EzdNhe3dARXmpHsD+q/rfxLVwn+dsqA=",
+        "lastModified": 1788384005,
+        "narHash": "sha256-b+tVRRctw4KIo69/c6sxshBsKmgRrVcOMGVzuwf5gPo=",
         "ref": "main",
-        "rev": "8fb585894edf7c7b76b7e3408b113f81c40bd4eb",
-        "revCount": 26,
+        "rev": "c90883428ed83baa8e451dec5b598ad4e3141d25",
+        "revCount": 28,
         "type": "git",
         "url": "file:../daemon-framework"
       },
@@ -143,11 +149,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788056332,
-        "narHash": "sha256-85NGlaoux73BjbG1rWqIpXWpkbtl/Wj58HsYHnFQ0qk=",
+        "lastModified": 1788382944,
+        "narHash": "sha256-9kcuBJOZ0Tp6a709WhD3U18/bPyNe/FRMY62MSg1Ug8=",
         "ref": "main",
-        "rev": "1b400401be0b6a5c278f03abc574845c634cde80",
-        "revCount": 101,
+        "rev": "7ab1d36eb649ebd222f44f1b660f13f9b64e5843",
+        "revCount": 109,
         "type": "git",
         "url": "file:../nm-daemon"
       },
@@ -165,7 +171,29 @@
         "clip-daemon": "clip-daemon",
         "daemon-framework": "daemon-framework",
         "nixpkgs": "nixpkgs",
-        "nm-daemon": "nm-daemon"
+        "nm-daemon": "nm-daemon",
+        "shelllist-hyprland": "shelllist-hyprland"
+      }
+    },
+    "shelllist-hyprland": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788384196,
+        "narHash": "sha256-QxDFv7aC4uvLrDpE5nDV8XTnL8mqkX1SFNx+S9w+GN4=",
+        "ref": "main",
+        "rev": "d667023032344adb3e4526414a63527520357c2f",
+        "revCount": 1,
+        "type": "git",
+        "url": "file:../shelllist-hyprland"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "file:../shelllist-hyprland"
       }
     }
   },

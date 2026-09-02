@@ -7,6 +7,10 @@
       url = "git+file:../daemon-framework?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    shelllist-hyprland = {
+      url = "git+file:../shelllist-hyprland?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nm-daemon = {
       url = "git+file:../nm-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -26,11 +30,13 @@
       url = "git+file:../app-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.daemonFramework.follows = "daemon-framework";
+      inputs.hyprlandIpc.follows = "shelllist-hyprland";
     };
     bar-daemon = {
       url = "git+file:../bar-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.daemonFramework.follows = "daemon-framework";
+      inputs.hyprlandIpc.follows = "shelllist-hyprland";
     };
   };
 
