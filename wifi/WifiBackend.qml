@@ -67,7 +67,7 @@ Io.DaemonBackend {
     function loadCurrentNetworks() { return call("networks", NmApi.methods.wifi_networks, { cached: false, refresh_cache: false }); }
     function loadBandStatus(path) { return call("band-status", NmApi.methods.wifi_band_status, { path: path }); }
     function setBand(path, band) { return call("band-set", NmApi.methods.wifi_band_set, { path: path, band: band }); }
-    function startScan() { return call("scan-start", NmApi.methods.wifi_scan, { timeout: 12, cache: true }); }
+    function startScan() { return call("scan-start", NmApi.methods.wifi_scan, { timeout: 20, cache: true }); }
     function setPowered(enabled) { return call("power", NmApi.methods.wifi_setEnabled, { enabled: enabled }); }
     function connect(request) { return call("connect-start", NmApi.methods.wifi_connectTarget, request); }
     function disconnect() { return call("disconnect", NmApi.methods.wifi_disconnect, {}); }
@@ -127,7 +127,9 @@ Io.DaemonBackend {
         if (!controller.scan.snapshotSeen)
             controller.applyNetworks(networks, true, snapshot);
         const stale = snapshot && snapshot.stale ? "stale " : "";
-        controller.setBackgroundStatus(networks.length + " " + stale + "cached networks; scanning…");
+        const refreshing = snapshot && snapshot.refresh_requested;
+        controller.setBackgroundStatus(networks.length + " " + stale + "cached networks"
+            + (refreshing ? "; refreshing…" : ""));
     }
 
     function handleScanStart(envelope) {

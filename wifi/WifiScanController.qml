@@ -11,12 +11,19 @@ Item {
     property string requestId: ""
     readonly property bool running: backend.listRunning || backend.scanRunning
 
-    function activate() { refresh(); refreshTimer.restart(); }
+    function activate() { warmCache(); }
+    function warmCache() {
+        if (!controller.uiActive || !controller.powered)
+            return;
+        controller.setBackgroundStatus("Loading cached Wi-Fi networks…");
+        if (!backend.refreshNetworks(true))
+            console.warn("shelllist wifi cache warmup was rejected");
+    }
     function deactivate() {
         pendingRefresh = false;
         if (requestId.length > 0 && !backend.cancel(requestId))
             console.warn("shelllist wifi scan cancellation failed request_id=" + requestId);
-        requestId = ""; snapshotSeen = false; refreshTimer.stop();
+        requestId = ""; snapshotSeen = false;
     }
     function cancelForPowerOff() {
         pendingRefresh = false;
@@ -66,6 +73,7 @@ Item {
         if (!backend.cancel(requestId))
             console.warn("shelllist wifi scan watchdog cancellation failed request_id=" + requestId);
         requestId = "";
+        pendingRefresh = false;
         if (!snapshotSeen) {
             // The event stream is unavailable, so do not schedule a background
             // cache refresh whose completion would arrive over that same stream.
@@ -73,8 +81,7 @@ Item {
             controller.status = "Wi-Fi scan events timed out; loading current NetworkManager results…";
             if (!backend.listRunning && !backend.loadCurrentNetworks())
                 console.warn("shelllist wifi live network load rejected after scan watchdog");
-        } else controller.setBackgroundStatus("Wi-Fi scan finished without a completion event.");
-        maybeRefresh();
+        } else controller.setBackgroundStatus("Wi-Fi scan finished without a completion event; refresh manually to retry.");
     }
     function applyEvent(event) {
         if (event.event === "snapshot") {
@@ -90,6 +97,5 @@ Item {
     }
 
     onRequestIdChanged: requestId.length > 0 ? watchdogTimer.restart() : watchdogTimer.stop()
-    Timer { id: watchdogTimer; interval: 15000; repeat: false; onTriggered: scan.handleWatchdog() }
-    Timer { id: refreshTimer; interval: 30000; repeat: true; onTriggered: scan.refresh() }
+    Timer { id: watchdogTimer; interval: 25000; repeat: false; onTriggered: scan.handleWatchdog() }
 }

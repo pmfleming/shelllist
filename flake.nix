@@ -822,6 +822,16 @@
             touch $out
           '';
 
+          wifiScanPolicy = pkgs.runCommand "shelllist-wifi-scan-policy"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-wifi-scan-policy.js} \
+              ${./wifi/WifiScanController.qml} \
+              ${./wifi/WifiBackend.qml}
+            touch $out
+          '';
+
           wifiQr = pkgs.runCommand "shelllist-wifi-qr"
             {
               nativeBuildInputs = [ pkgs.nodejs ];
