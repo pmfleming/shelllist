@@ -722,7 +722,8 @@
             node ${./tests/check-battery-auto-save.js} \
               ${./battery/BatteryController.qml} \
               ${./battery/BatteryBackend.qml} \
-              ${./battery/BatteryProtectionPane.qml}
+              ${./battery/BatteryProtectionPane.qml} \
+              ${./battery/BatteryContent.qml}
             touch $out
           '';
 

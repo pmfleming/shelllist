@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 const fs = require("fs");
 
-const [controllerPath, backendPath, panePath] = process.argv.slice(2);
+const [controllerPath, backendPath, panePath, contentPath] = process.argv.slice(2);
+if (!controllerPath || !backendPath || !panePath || !contentPath)
+    throw new Error("usage: check-battery-auto-save.js <controller> <backend> <protection-pane> <content>");
 const controller = fs.readFileSync(controllerPath, "utf8");
 const backend = fs.readFileSync(backendPath, "utf8");
 const pane = fs.readFileSync(panePath, "utf8");
+const content = fs.readFileSync(contentPath, "utf8");
 
 function requireMatch(source, pattern, message) {
     if (!pattern.test(source))
@@ -42,5 +45,13 @@ requireMatch(controller, /alertRevision !== alertSentRevision/,
     "new alert edits must be retained after an in-flight request");
 requireMatch(pane, /thresholdSaveStatus/, "threshold auto-apply state must be visible");
 requireMatch(pane, /alertSaveStatus/, "alert auto-apply state must be visible");
+requireMatch(content,
+    /BatteryOverviewPane\s*\{\s*visible: content\.controller\.viewTab === "battery"/,
+    "the battery tab must retain a synchronously sized pane");
+requireMatch(content,
+    /PowerControlsPane\s*\{\s*visible: content\.controller\.viewTab === "power"/,
+    "the power tab must retain a synchronously sized pane");
+rejectMatch(content, /Loader\s*\{[\s\S]*PowerControlsPane/,
+    "an asynchronous tab loader can leave the power pane at zero height");
 
 console.log("battery auto-save: no-save policy and coalesced updates passed");
