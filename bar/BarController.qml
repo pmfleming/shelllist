@@ -84,9 +84,7 @@ Item {
             presentOsd(nextOsd);
     }
     function handleEvent(event: var): void {
-        if (event.event === "lagged")
-            backend.snapshot();
-        else if (["subscribed", "changed"].includes(event.event))
+        if (["subscribed", "changed"].includes(event.event))
             applyDomainEvent(event);
     }
 

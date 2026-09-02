@@ -5,6 +5,7 @@ var protocol = Protocol.protocol;
 var version = Protocol.version;
 
 var methods = {
+    wifi_status: Protocol.methods["wifi.status"],
     wifi_setEnabled: Protocol.methods["wifi.setEnabled"],
     network_inventory: Protocol.methods["network.inventory"],
     network_status: Protocol.methods["network.status"],

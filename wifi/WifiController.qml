@@ -275,10 +275,14 @@ ProviderChooserController {
             status = transition.message;
     }
 
+    function applyRecoveredStatus(value: var): void {
+        activeStatus = value || null;
+    }
+
     function applyStatusEvent(event: var): void {
         if (event.event !== "changed")
             return;
-        activeStatus = event.status || null;
+        applyRecoveredStatus(event.status || null);
     }
 
     function applyNetworkEvent(event: var): void {
@@ -299,6 +303,27 @@ ProviderChooserController {
         const stream = event && event.stream ? event.stream : "unknown";
         console.error("shelllist nm event rejected stream=" + stream + " error=" + error);
         status = "Could not parse nm-daemon event: " + error;
+    }
+    function handleDaemonEventGap(stream: string): void {
+        status = "Network events were missed; recovering current state…";
+        if (stream === NmApi.streams.network_inventory) {
+            inventory.refresh();
+            return;
+        }
+        if (stream === NmApi.streams.network_statistics) {
+            statistics.handleEventGap();
+            return;
+        }
+        if (stream === NmApi.streams.hotspot) {
+            hotspot.refresh();
+            return;
+        }
+        if (stream === NmApi.streams.vpn) {
+            vpn.refresh();
+            return;
+        }
+        backend.recoverStatus();
+        backend.refreshNetworks(true);
     }
     function handleDaemonEvent(event) {
         try {

@@ -126,9 +126,7 @@ Ui.ChooserController {
     }
     function handleEvent(event: var): void {
         const kind = Flow.eventKind(event, ActivityApi.streams);
-        if (kind === "lagged")
-            backend.snapshot();
-        else if (kind)
+        if (kind)
             applyDomainEvent(kind, event.data || ({}));
     }
 

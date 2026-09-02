@@ -78,6 +78,11 @@ Item {
         sample = null;
     }
 
+    function handleEventGap() {
+        error = "Some network statistics samples were missed; live sampling continues.";
+        controller.status = error;
+    }
+
     function handleTransportFailure() {
         if (watching || backend.isPending("statistics-watch"))
             error = "Network statistics stopped because the daemon connection was lost.";

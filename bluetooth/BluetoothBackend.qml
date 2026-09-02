@@ -130,10 +130,6 @@ Io.DaemonBackend {
         if (!isPending("snapshot")) refresh();
     }
     function processEvent(event: var): void {
-        if (event.event === "lagged") {
-            recoverEventGap();
-            return;
-        }
         if (!dispatchStreamEvent(event))
             applyUnhandledEvent(event);
     }
@@ -212,6 +208,7 @@ Io.DaemonBackend {
     }
 
     onResponseReceived: function (id, envelope, transportError) { finish(id, envelope, transportError); }
+    onEventGapDetected: recoverEventGap()
     onEventReceived: function (event) { handleEvent(event); }
     onSendFailed: function (id, message) { controller.status = message; }
     onTransportFailed: function (message) {

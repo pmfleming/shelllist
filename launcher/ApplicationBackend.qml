@@ -67,6 +67,7 @@ Io.DaemonBackend {
     onResponseReceived: function (id, envelope, transportError) {
         finish(id, envelope, transportError);
     }
+    onEventGapDetected: controller.scheduleRefresh()
     onEventReceived: function (event) {
         if (event.event === "subscribed")
             return;

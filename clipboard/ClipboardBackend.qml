@@ -102,14 +102,13 @@ Io.DaemonBackend {
     function cancelOperation(operationId: string): bool { return cancel(operationId, "cancel-operation-" + operationId); }
 
     onResponseReceived: function (id, envelope, transportError) { finish(id, envelope, transportError); }
+    onEventGapDetected: function (stream) {
+        controller.handleEventGap(stream);
+        if (stream === ClipApi.streams.capture)
+            getSettings();
+    }
     onEventReceived: function (event) {
         if (event.event === "subscribed") return;
-        if (event.data && event.data.resync_required) {
-            controller.handleEventGap(event.stream);
-            if (event.stream === ClipApi.streams.capture)
-                getSettings();
-            return;
-        }
         routeEvent(event, eventHandlers);
     }
     onSendFailed: function (id, message) { controller.handleFailure(id, message); }

@@ -122,6 +122,7 @@ Io.DaemonBackend {
     onResponseReceived: function (id, envelope, transportError) {
         finish(id, envelope, transportError);
     }
+    onEventGapDetected: snapshot()
     onEventReceived: function (event) { controller.handleEvent(event); }
     onSendFailed: function (id, message) {
         console.error("shelllist bar send failed id=" + id + " error=" + message);

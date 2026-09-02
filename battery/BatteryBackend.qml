@@ -159,6 +159,7 @@ Io.DaemonBackend {
     onResponseReceived: function (id, envelope, transportError) {
         finish(id, envelope, transportError);
     }
+    onEventGapDetected: controller.refreshAll()
     onEventReceived: function (event) { controller.handleEvent(event); }
     onSendFailed: function (id, message) {
         if (isBackgroundRequest(id))

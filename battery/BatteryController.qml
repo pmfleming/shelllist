@@ -190,9 +190,7 @@ Ui.ChooserController {
     }
     function handleEvent(event: var): void {
         const kind = Flow.eventKind(event, BatteryApi.streams);
-        if (kind === "lagged")
-            refreshAll();
-        else if (kind)
+        if (kind)
             applyDomainEvent(kind, event.data || ({}));
     }
 

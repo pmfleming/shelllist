@@ -140,6 +140,7 @@ Io.DaemonBackend {
     onResponseReceived: function (id, envelope, transportError) {
         finish(id, envelope, transportError);
     }
+    onEventGapDetected: snapshot()
     onEventReceived: function (event) { controller.handleEvent(event); }
     onSendFailed: function (id, message) { controller.lastError = message; }
     onTransportFailed: function (message) { controller.lastError = message; }

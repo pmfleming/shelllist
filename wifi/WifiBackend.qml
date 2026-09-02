@@ -18,7 +18,8 @@ Io.DaemonBackend {
     readonly property bool listRunning: isPending("networks")
     readonly property bool scanRunning: isPending("scan-start") || controller.scan.requestId.length > 0
     readonly property bool connectStarting: isPending("connect-start")
-    readonly property bool nonConnectRunning: isPending("power") || isPending("disconnect")
+    readonly property bool nonConnectRunning: isPending("status-recovery")
+        || isPending("power") || isPending("disconnect")
         || isPending("profile") || isPending("advanced-load") || isPending("advanced-save")
         || isPending("advanced-secret") || isPending("band-status") || isPending("band-set")
         || isPending("secret-provide") || isPending("secret-cancel")
@@ -32,6 +33,7 @@ Io.DaemonBackend {
         || isPending("statistics-watch")
     readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
     readonly property var responseHandlerById: ({
+        "status-recovery": function (value) { controller.applyRecoveredStatus(Api.apiData(value, "status") || null); },
         "networks": function (value) { backend.handleNetworks(value); },
         "band-status": function (value) { controller.applyBandStatus(Api.apiData(value, "band") || ({})); },
         "band-set": function (value) { controller.applyBandStart(Api.apiData(value, "result") || ({})); },
@@ -63,6 +65,7 @@ Io.DaemonBackend {
         "statistics-watch": function (value) { controller.statistics.applyStart(Api.apiResult(value, "result") || ({})); }
     })
 
+    function recoverStatus() { return call("status-recovery", NmApi.methods.wifi_status, {}); }
     function refreshNetworks(refreshCache) { return call("networks", NmApi.methods.wifi_networks, { cached: true, refresh_cache: !!refreshCache }); }
     function loadCurrentNetworks() { return call("networks", NmApi.methods.wifi_networks, { cached: false, refresh_cache: false }); }
     function loadBandStatus(path) { return call("band-status", NmApi.methods.wifi_band_status, { path: path }); }
@@ -248,6 +251,7 @@ Io.DaemonBackend {
     }
 
     onResponseReceived: function (id, envelope, transportError) { finish(id, envelope, transportError); }
+    onEventGapDetected: function (stream) { controller.handleDaemonEventGap(stream); }
     onEventReceived: function (event) { controller.handleDaemonEvent(event); }
     onSendFailed: function (id, message) { controller.failCall(id, message); }
     onTransportFailed: function (message, lostRequestIds) {

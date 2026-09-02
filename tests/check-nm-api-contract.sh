@@ -137,7 +137,8 @@ jq -r '
   + "var version = Protocol.version;\n\n"
   + "var methods = {\n"
   + ([.data.protocol.methods[]
-      | select(.name == "wifi.setEnabled"
+      | select(.name == "wifi.status"
+          or .name == "wifi.setEnabled"
           or .name == "wifi.networks"
           or .name == "wifi.band.status"
           or .name == "wifi.band.set"

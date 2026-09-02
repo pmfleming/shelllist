@@ -13,7 +13,8 @@ function source(relative) {
 
 const commonBackend = source("qml/Shelllist/Io/DaemonBackend.qml");
 for (const token of ["function nextRequestId", "function callSequenced",
-        "function responseError", "function eventEnvelopeError", "function routeEvent"]) {
+        "function responseError", "function eventEnvelopeError", "function isEventGap",
+        "signal eventGapDetected", "function routeEvent"]) {
     if (!commonBackend.includes(token))
         throw new Error(`DaemonBackend is missing common primitive: ${token}`);
 }
@@ -75,6 +76,11 @@ for (const token of ["property bool sharedScreenshotEnabled",
     if (!providerController.includes(token))
         throw new Error(`ProviderChooserController is missing shared capture token: ${token}`);
 }
+for (const domain of domains) {
+    if (!source(domain.backend).includes("onEventGapDetected"))
+        throw new Error(`${domain.backend} does not use common event-gap recovery`);
+}
+
 for (const file of ["launcher/ApplicationController.qml",
         "wifi/WifiController.qml", "bluetooth/BluetoothController.qml"]) {
     const text = source(file);

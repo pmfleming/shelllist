@@ -32,6 +32,7 @@ Item {
 
     signal responseReceived(string id, var envelope, string transportError)
     signal eventReceived(var event)
+    signal eventGapDetected(string stream, var event)
     signal transportFailed(string message, var lostRequestIds)
     signal transportReady
     signal sendFailed(string id, string message)
@@ -206,11 +207,20 @@ Item {
         return "";
     }
 
+    function isEventGap(event: var): bool {
+        return event.event === "lagged"
+            || !!(event.data && event.data.resync_required);
+    }
+
     function acceptEvent(event: var): void {
         const error = eventEnvelopeError(event);
         if (error.length > 0) {
             console.warn("shelllist " + daemonName
                 + " event rejected error=" + error);
+            return;
+        }
+        if (isEventGap(event)) {
+            eventGapDetected(event.stream, event);
             return;
         }
         eventReceived(event);
