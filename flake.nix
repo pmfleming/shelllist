@@ -52,7 +52,13 @@
 
       packages = forAllSystems (system: pkgs:
         let
-          daemonFrameworkSearch = inputs."daemon-framework".packages.${system}.shelllistSearch;
+          shelllistSearch = pkgs.rustPlatform.buildRustPackage {
+            pname = "shelllist-search";
+            version = "0.1.0";
+            src = ./rust/shelllist-search;
+            cargoLock.lockFile = ./rust/shelllist-search/Cargo.lock;
+            meta = mkMeta "Fuzzy result ranking service for Shelllist" "shelllist-search";
+          };
           nmDaemon = inputs."nm-daemon".packages.${system}.default;
           btDaemon = inputs."bt-daemon".packages.${system}.default;
           clipDaemon = inputs."clip-daemon".packages.${system}.default;
@@ -67,7 +73,7 @@
         {
           connectParityProbe = nmDaemonConnectParityProbe;
 
-          shelllistSearch = daemonFrameworkSearch;
+          inherit shelllistSearch;
 
           shelllistApplication = pkgs.writeShellApplication {
             name = "shelllist";
