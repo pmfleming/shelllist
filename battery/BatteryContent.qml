@@ -115,17 +115,27 @@ Ui.ChooserSurface {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            BatteryOverviewPane {
-                visible: content.controller.viewTab === "battery"
-                controller: content.controller
-                battery: content.battery
-                device: content.device
-                protection: content.protection
+            Loader {
+                width: parent.width
+                active: content.controller.viewTab === "battery"
+                asynchronous: true
+                sourceComponent: Component {
+                    BatteryOverviewPane {
+                        controller: content.controller
+                        battery: content.battery
+                        device: content.device
+                        protection: content.protection
+                    }
+                }
             }
 
-            PowerControlsPane {
-                visible: content.controller.viewTab === "power"
-                controller: content.controller
+            Loader {
+                width: parent.width
+                active: content.controller.viewTab === "power"
+                asynchronous: true
+                sourceComponent: Component {
+                    PowerControlsPane { controller: content.controller }
+                }
             }
         }
     }

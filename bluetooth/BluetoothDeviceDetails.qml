@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Shelllist.Ui as Ui
 import "BluetoothFlow.js" as BluetoothFlow
@@ -6,7 +8,12 @@ Ui.ActionDetailsPane {
     id: pane
 
     required property BluetoothController controller
-    readonly property bool editingText: devicePage.editingName || adapterPage.editing
+    // Loader.item is dynamically resolved to the selected detail component.
+    // qmllint disable missing-property
+    readonly property bool editingText:
+        (deviceLoader.item ? !!deviceLoader.item["editingName"] : false)
+        || (adapterLoader.item ? !!adapterLoader.item["editing"] : false)
+    // qmllint enable missing-property
     readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     readonly property int footerHeight: actionHeight
 
@@ -51,22 +58,33 @@ Ui.ActionDetailsPane {
             scale: pane.uiScale
             transformOrigin: Item.TopLeft
 
-            BluetoothDevicePage {
-                id: devicePage
+            Loader {
+                id: deviceLoader
                 anchors.fill: parent
-                visible: pane.controller.hasSelection && pane.controller.detailsTab === "device"
-                controller: pane.controller
+                active: pane.controller.hasSelection
+                    && pane.controller.detailsTab === "device"
+                asynchronous: true
+                sourceComponent: Component {
+                    BluetoothDevicePage { controller: pane.controller }
+                }
             }
-            BluetoothInformationPage {
+            Loader {
                 anchors.fill: parent
-                visible: pane.controller.hasSelection && pane.controller.detailsTab === "information"
-                controller: pane.controller
+                active: pane.controller.hasSelection
+                    && pane.controller.detailsTab === "information"
+                asynchronous: true
+                sourceComponent: Component {
+                    BluetoothInformationPage { controller: pane.controller }
+                }
             }
-            BluetoothAdapterPage {
-                id: adapterPage
+            Loader {
+                id: adapterLoader
                 anchors.fill: parent
-                visible: pane.controller.detailsTab === "adapter"
-                controller: pane.controller
+                active: pane.controller.detailsTab === "adapter"
+                asynchronous: true
+                sourceComponent: Component {
+                    BluetoothAdapterPage { controller: pane.controller }
+                }
             }
         }
     }

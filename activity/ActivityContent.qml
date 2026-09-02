@@ -100,6 +100,7 @@ Ui.ChooserSurface {
                 height: parent.height
                 clip: true
                 active: content.controller.detailsRendered
+                asynchronous: true
                 sourceComponent: content.controller.detailSection === "weather"
                     ? weatherComponent : content.controller.detailSection === "notifications"
                         ? notificationsComponent : scheduleComponent

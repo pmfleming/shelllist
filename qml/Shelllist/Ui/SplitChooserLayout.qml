@@ -49,15 +49,30 @@ RowLayout {
         VerticalDivider {}
     }
 
-    Loader {
-        id: detailsLoader
-
+    Item {
         visible: layout.controller.detailsRendered
         Layout.preferredWidth: layout.controller.detailsPaneWidth
         Layout.minimumWidth: layout.controller.detailsPaneWidth
         Layout.maximumWidth: layout.controller.detailsPaneWidth
         Layout.fillHeight: true
-        active: layout.controller.detailsRendered
-        sourceComponent: layout.detailsComponent
+        clip: true
+
+        PulsingLabel {
+            anchors.centerIn: parent
+            visible: detailsLoader.status === Loader.Loading
+            text: "Loading details…"
+            color: Theme.mutedText
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeBody
+        }
+
+        Loader {
+            id: detailsLoader
+
+            anchors.fill: parent
+            active: layout.controller.detailsRendered
+            asynchronous: true
+            sourceComponent: layout.detailsComponent
+        }
     }
 }

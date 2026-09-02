@@ -48,6 +48,7 @@ Ui.ActionDetailsPane {
         Loader {
             anchors.fill: parent
             active: pane.controller.detailsTab === "application"
+            asynchronous: true
             sourceComponent: Component {
                 ApplicationPage {
                     controller: pane.controller
@@ -74,6 +75,7 @@ Ui.ActionDetailsPane {
         Loader {
             anchors.fill: parent
             active: pane.controller.detailsTab === "settings"
+            asynchronous: true
             sourceComponent: Component {
                 ApplicationSettingsPage {
                     controller: pane.controller

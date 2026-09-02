@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import "."
 import Shelllist.Ui
@@ -47,7 +49,8 @@ ActionDetailsPane {
     Item {
         id: tabViewport
 
-        property real advancedTransitionProgress: pane.controller.advanced.open ? 1 : 0
+        property real advancedTransitionProgress: pane.controller.advanced.open
+            && advancedLoader.status === Loader.Ready ? 1 : 0
 
         width: parent.width
         height: Math.max(0, parent.height - pane.footerHeight - pane.sectionSpacing)
@@ -60,6 +63,7 @@ ActionDetailsPane {
 
         NetworkDetailCards {
             enabled: !pane.controller.advanced.open
+                || advancedLoader.status !== Loader.Ready
             width: parent.width
             height: parent.height
             x: -width * tabViewport.advancedTransitionProgress
@@ -71,13 +75,32 @@ ActionDetailsPane {
             profileCardHeight: pane.profileCardHeight
         }
 
-        AdvancedSettingsPage {
+        Loader {
+            id: advancedLoader
+
+            active: pane.controller.advanced.open
+                || tabViewport.advancedTransitionProgress > 0
+            asynchronous: true
             enabled: pane.controller.advanced.open
             width: parent.width
             height: parent.height
             x: width * (1 - tabViewport.advancedTransitionProgress)
-            controller: pane.controller
-            sectionSpacing: pane.sectionSpacing
+            sourceComponent: Component {
+                AdvancedSettingsPage {
+                    controller: pane.controller
+                    sectionSpacing: pane.sectionSpacing
+                }
+            }
+        }
+
+        PulsingLabel {
+            anchors.centerIn: parent
+            visible: pane.controller.advanced.open
+                && advancedLoader.status === Loader.Loading
+            text: "Loading advanced settings…"
+            color: Theme.mutedText
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeBody
         }
     }
 
