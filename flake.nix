@@ -883,7 +883,10 @@
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-bluetooth-lifecycle.js} ${./bluetooth/BluetoothFlow.js} ${./bluetooth/BtApi.js}
+            node ${./tests/check-bluetooth-lifecycle.js} \
+              ${./bluetooth/BluetoothFlow.js} \
+              ${./bluetooth/BtApi.js} \
+              ${./bluetooth/BtProtocol.generated.js}
             touch $out
           '';
 
@@ -933,7 +936,9 @@
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-clipboard-actions.js} ${./clipboard/ClipApi.js}
+            node ${./tests/check-clipboard-actions.js} \
+              ${./clipboard/ClipApi.js} \
+              ${./clipboard/ClipProtocol.generated.js}
             touch $out
           '';
 

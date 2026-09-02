@@ -4,13 +4,14 @@ const fs = require("fs");
 const vm = require("vm");
 
 const apiPath = process.argv[2];
+const protocolPath = process.argv[3];
 if (!apiPath)
-    throw new Error("usage: check-clipboard-actions.js <ClipApi.js>");
+    throw new Error("usage: check-clipboard-actions.js <ClipApi.js> [ClipProtocol.generated.js]");
 const source = fs.readFileSync(apiPath, "utf8");
 const importMatch = source.match(/^\.import\s+"([^"]+)"\s+as\s+Protocol$/m);
 const context = {};
 if (importMatch) {
-    const generated = fs.readFileSync(require("path").resolve(require("path").dirname(apiPath), importMatch[1]), "utf8")
+    const generated = fs.readFileSync(protocolPath || require("path").resolve(require("path").dirname(apiPath), importMatch[1]), "utf8")
         .replace(/^\.pragma library\s*/, "");
     const protocol = {};
     vm.createContext(protocol);
