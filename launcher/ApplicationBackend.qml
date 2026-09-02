@@ -20,12 +20,18 @@ Io.DaemonBackend {
         const data = envelope.data || ({});
         if (data.applications)
             controller.applyApplications(id, data.applications);
+        if (data.revision !== undefined)
+            controller.applyRevision(id, data.revision);
         if (data.history)
             controller.applyResourceHistory(id, data.history);
         if (data.settings)
             controller.applyApplicationSettings(id, data.settings);
         if (data.operation)
             controller.applyOperation(id, data.operation);
+    }
+
+    function revision(id: string): bool {
+        return call(id, AppApi.methods.revision, {});
     }
 
     function query(id: string, text: string, category: string,

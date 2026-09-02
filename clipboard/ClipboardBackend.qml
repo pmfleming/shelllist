@@ -24,6 +24,7 @@ Io.DaemonBackend {
     function applyResponse(id: string, data: var): void {
         const handlers = ({
             history: function (value) { controller.applyHistory(id, value); },
+            revision: function (value) { controller.applyRevision(id, value); },
             session: controller.applySession,
             entry: function (value) {
                 if (id === "edit-commit") controller.detailState.applyEditCommit(value);
@@ -41,6 +42,9 @@ Io.DaemonBackend {
         });
     }
 
+    function revision(id: string): bool {
+        return call(id, ClipApi.methods.historyRevision, {});
+    }
     function query(id: string, text: string, generation: int, limit: int, offset: int): bool {
         return call(id, ClipApi.methods.historyQuery, {
             query: text, generation: generation, limit: limit, offset: offset || 0
@@ -91,8 +95,14 @@ Io.DaemonBackend {
             return;
         }
         const handlers = ({});
-        handlers[ClipApi.streams.history] = controller.scheduleRefresh;
-        handlers[ClipApi.streams.current] = controller.scheduleRefresh;
+        handlers[ClipApi.streams.history] = function () {
+            controller.handleHistoryChanged(event.data
+                ? event.data.history_revision : undefined);
+        };
+        handlers[ClipApi.streams.current] = function () {
+            controller.handleHistoryChanged(event.data
+                ? event.data.history_revision : undefined);
+        };
         handlers[ClipApi.streams.capture] = getSettings;
         handlers[ClipApi.streams.operation] = function () {
             const operation = event.data && event.data.operation;

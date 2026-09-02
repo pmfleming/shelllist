@@ -22,6 +22,8 @@ Ui.ProviderChooserController {
     property string activeOperationId: ""
     property var activeRequest: null
     property bool forceRefresh: false
+    property double catalogRevision: -1
+    property string revisionRequestId: ""
     property var resourceHistory: []
     property var pendingResourceHistory: []
     property string historyTargetId: ""
@@ -65,7 +67,15 @@ Ui.ProviderChooserController {
     }
     function activateUi(workspaceId: string): void {
         activateUiState(workspaceId);
-        refresh(false);
+        if (catalogRevision < 0) {
+            refresh(false);
+            return;
+        }
+        revisionRequestId = "revision-" + Date.now();
+        if (!backend.revision(revisionRequestId)) {
+            revisionRequestId = "";
+            refresh(false);
+        }
     }
     function deactivateUi(): void {
         deactivateUiState();
@@ -178,7 +188,18 @@ Ui.ProviderChooserController {
         pendingResourceHistory = [];
     }
     function cancelQuery(requestId: string): void { backend.cancelRequest(requestId); }
+    function applyRevision(id: string, revision: var): void {
+        if (id !== revisionRequestId)
+            return;
+        revisionRequestId = "";
+        if (Number(revision) !== catalogRevision) {
+            refresh(false);
+            return;
+        }
+        status = filteredResults.length + " applications";
+    }
     function applyApplications(id: string, page: var): void {
+        catalogRevision = Number(page.revision);
         applyProviderQuery(id, applicationProvider.resultsForApplications(page.applications || []));
         if (detailsOpen && detailsTab === "resources"
                 && selectedResult && selectedResult.id !== historyTargetId)
@@ -244,6 +265,11 @@ Ui.ProviderChooserController {
             clearActiveAction();
     }
     function handleFailure(id: string, message: string): void {
+        if (id === revisionRequestId) {
+            revisionRequestId = "";
+            refresh(false);
+            return;
+        }
         const kind = Lifecycle.requestKind(id);
         if (kind === "history") {
             if (id === activeHistoryRequestId) {
@@ -261,6 +287,8 @@ Ui.ProviderChooserController {
         clearActiveAction();
         clearResourceHistory();
         activeSettingsRequestId = "";
+        revisionRequestId = "";
+        catalogRevision = -1;
         clearProviderResults();
         status = message;
     }

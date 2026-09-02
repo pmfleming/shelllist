@@ -4,6 +4,7 @@ var protocol = "app-api";
 var version = 1;
 var methods = ({
     query: "applications.query",
+    revision: "applications.revision",
     history: "applications.history",
     energyOverview: "applications.energyOverview",
     refresh: "applications.refresh",

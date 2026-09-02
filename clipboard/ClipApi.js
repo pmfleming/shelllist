@@ -13,6 +13,7 @@ var methods = {
     sessionEnd: "clipboard.session.end",
     sessionHidden: "clipboard.session.hidden",
     historyQuery: "clipboard.history.query",
+    historyRevision: "clipboard.history.revision",
     entryDetails: "clipboard.entry.details",
     entryThumbnail: "clipboard.entry.thumbnail",
     entryAction: "clipboard.entry.action",

@@ -22,6 +22,8 @@ Ui.ProviderChooserController {
     property bool deleteConfirmationOpen
     property bool selectCurrentAfterRefresh: false
     property string activeHistoryQueryId: ""
+    property string revisionRequestId: ""
+    property double historyRevision: -1
     property int activeHistoryGeneration: 0
     property var pendingHistoryEntries: []
     readonly property int historyPageSize: 200
@@ -38,11 +40,20 @@ Ui.ProviderChooserController {
 
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
-        selectCurrentAfterRefresh = true;
-        selectFirst();
         backend.beginSession();
         backend.getSettings();
-        refresh();
+        if (historyRevision < 0) {
+            selectCurrentAfterRefresh = true;
+            selectFirst();
+            refresh();
+            return;
+        }
+        revisionRequestId = "revision-" + Date.now();
+        if (!backend.revision(revisionRequestId)) {
+            revisionRequestId = "";
+            selectCurrentAfterRefresh = true;
+            refresh();
+        }
     }
     function finishEditSession(): void {
         if (!detailState.editing)
@@ -64,6 +75,7 @@ Ui.ProviderChooserController {
         activeOperationId = "";
         handledTerminalOperations = ({});
         activeHistoryQueryId = "";
+        revisionRequestId = "";
         pendingHistoryEntries = [];
         detailsOpen = false;
         detailState.clear();
@@ -120,9 +132,21 @@ Ui.ProviderChooserController {
         select(currentIndex >= 0 ? currentIndex : 0);
         selectCurrentAfterRefresh = false;
     }
+    function applyRevision(id: string, revision: var): void {
+        if (id !== revisionRequestId)
+            return;
+        revisionRequestId = "";
+        if (Number(revision) !== historyRevision) {
+            selectCurrentAfterRefresh = true;
+            refresh();
+            return;
+        }
+        status = filteredResults.length + " clipboard entries";
+    }
     function applyHistory(id, history) {
         if (id !== activeHistoryQueryId)
             return;
+        historyRevision = Number(history.revision);
         pendingHistoryEntries = pendingHistoryEntries.concat(history.entries || []);
         if (history.has_more && pendingHistoryEntries.length < historySearchLimit) {
             backend.query(id, "", activeHistoryGeneration, historyPageSize,
@@ -142,6 +166,13 @@ Ui.ProviderChooserController {
         sessionId = ["hidden", "ended"].includes(session.state) ? "" : (session.id || "");
         if (session.state === "hidden")
             hideRequested();
+    }
+    function handleHistoryChanged(revision: var): void {
+        if (revisionRequestId.length > 0)
+            return;
+        if (historyRevision >= 0 && Number(revision) === historyRevision)
+            return;
+        scheduleRefresh();
     }
     function actionEntry() {
         return Flow.detailedEntry(
@@ -280,6 +311,12 @@ Ui.ProviderChooserController {
             || id.indexOf("edit-") === 0 || id === "capture-screenshot";
     }
     function handleFailure(id, message) {
+        if (id === revisionRequestId) {
+            revisionRequestId = "";
+            selectCurrentAfterRefresh = true;
+            refresh();
+            return;
+        }
         if (isActionRequest(id)) {
             actionInFlight = false;
             activeAction = "";
@@ -313,6 +350,8 @@ Ui.ProviderChooserController {
         activeAction = "";
         activeOperationId = "";
         activeHistoryQueryId = "";
+        revisionRequestId = "";
+        historyRevision = -1;
         pendingHistoryEntries = [];
         status = message;
     }
