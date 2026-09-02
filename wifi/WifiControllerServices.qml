@@ -8,7 +8,6 @@ Item {
 
     readonly property ShareAvailabilityController share: shareModel
     readonly property CaptivePortalController portal: portalModel
-    readonly property WifiConnectPolicy policy: policyModel
     readonly property WifiConnectionController connection: connectionModel
     readonly property WifiAdvancedController advanced: advancedModel
     readonly property WifiNetworkActions actions: actionModel
@@ -22,13 +21,11 @@ Item {
 
     ShareAvailabilityController { id: shareModel; controller: services.controller; backend: backendModel }
     CaptivePortalController { id: portalModel; controller: services.controller; backend: backendModel }
-    WifiConnectPolicy { id: policyModel }
     WifiConnectionController {
         id: connectionModel
         controller: services.controller
         backend: backendModel
         prompt: services.prompt
-        policy: policyModel
         portal: portalModel
     }
     WifiAdvancedController { id: advancedModel; controller: services.controller; backend: backendModel }

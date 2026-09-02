@@ -104,12 +104,6 @@ Item {
             return;
         }
         const ap = network;
-        const retryDelay = controller.connectPolicy.retryDelayRemainingMs(ap, value);
-        if (retryDelay > 0) {
-            controller.status = "Waiting " + Math.ceil(retryDelay / 1000)
-                + "s before retrying; NetworkManager is temporarily ignoring this AP.";
-            return;
-        }
         cancel();
         if (ap) controller.connection.runTarget(ap, Presentation.networkName(ap), value);
     }

@@ -9,7 +9,6 @@ Item {
     required property WifiController controller
     required property WifiBackend backend
     required property WifiPromptController prompt
-    required property WifiConnectPolicy policy
     required property CaptivePortalController portal
     property var connectivity: null
     property string networkName: ""
@@ -17,6 +16,7 @@ Item {
     property int progressTick: 0
     property string workspaceId: ""
     property string requestId: ""
+    property var lastConnectAp: null
     readonly property bool running: backend.connectStarting || requestId.length > 0
 
     function activate() { if (running) progressTimer.restart(); }
@@ -39,6 +39,7 @@ Item {
         requestId = "";
         resetProgress();
         connectivity = null;
+        lastConnectAp = null;
         if (lostRequestId.length > 0)
             console.warn("shelllist wifi connection discarded reason=transport-failure request_id=" + lostRequestId);
     }
@@ -70,7 +71,6 @@ Item {
     }
 
     function deferForPrompt(ap) {
-        if (policy.secretStale(ap)) { prompt.openPasswordPrompt(ap, "Saved password failed. Enter a new Wi-Fi password."); return true; }
         const promptKind = ap && ap.connect_prompt ? (ap.connect_prompt.kind || "none") : "none";
         const handlers = { password: function () { prompt.openPasswordPrompt(ap); }, enterprise: function () { prompt.openEnterpriseIdentityPrompt(ap); } };
         if (handlers[promptKind]) { handlers[promptKind](); return true; }
@@ -91,16 +91,7 @@ Item {
         return request;
     }
     function runTarget(ap, displayName, password, enterpriseIdentity, enterprise, wepKeyType) {
-        const attemptKey = Flow.connectAttemptKey(ap);
-        const secretFingerprint = Flow.passwordFingerprint(password);
-        if (running && policy.lastConnectAttemptKey === attemptKey && policy.lastConnectSecretFingerprint === secretFingerprint) {
-            controller.status = "Connection attempt for " + displayName + " is already running…"; return;
-        }
-        const retryDelay = policy.retryDelayRemainingMs(ap, password);
-        if (retryDelay > 0) {
-            controller.status = "Waiting " + Math.ceil(retryDelay / 1000) + "s before retrying " + displayName + "; NetworkManager is temporarily ignoring this AP."; return;
-        }
-        policy.rememberConnectAttempt(ap, password);
+        lastConnectAp = ap;
         run(targetRequest(ap, password, enterpriseIdentity, enterprise, wepKeyType), displayName);
     }
     function run(request, displayName) {
@@ -119,14 +110,13 @@ Item {
     function applyResult(result, fallbackText, completedRequestId) {
         const message = result.message || fallbackText || "Wi-Fi connection failed";
         if (result.status === "error") { controller.status = message; handleConnectError(result); }
-        else { policy.clearSecretStale(policy.lastConnectAp); controller.invalidateShareAvailabilityCache(); controller.setHeldStatus(message, 2500); }
-        if (Flow.confirmedPortalResult(result)) portal.launchForConnect(policy.lastConnectAp, result, completedRequestId || "", workspaceId);
+        else { controller.invalidateShareAvailabilityCache(); controller.setHeldStatus(message, 2500); }
+        if (Flow.confirmedPortalResult(result)) portal.launchForConnect(lastConnectAp, result, completedRequestId || "", workspaceId);
         controller.maybeRunPendingRefresh();
     }
     function handleConnectError(result) {
         if (!Flow.isSecretFailureReason(result.reason)) return;
-        policy.markSecretStale(policy.lastConnectAp); policy.blockLastConnectRetry(Flow.connectFailureRetryMs(result.reason));
-        if (policy.lastConnectAp) prompt.openPasswordPrompt(policy.lastConnectAp, Flow.isWrongPasswordReason(result.reason)
+        if (lastConnectAp) prompt.openPasswordPrompt(lastConnectAp, Flow.isWrongPasswordReason(result.reason)
             ? "Wrong password. Enter a new Wi-Fi password." : "Saved password failed. Enter a new Wi-Fi password.");
     }
     function provideSecrets(id, values, save) {

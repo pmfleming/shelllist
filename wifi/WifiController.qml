@@ -41,7 +41,6 @@ ProviderChooserController {
     readonly property var detailAp: detailResult ? detailResult.payload : ({})
     readonly property string busyMessage: "Wait for the current Wi-Fi action to finish…"
     readonly property ShareAvailabilityController shareController: services.share
-    readonly property WifiConnectPolicy connectPolicy: services.policy
     navigationBlocked: promptActive || !powered
     readonly property WifiAdvancedController advanced: services.advanced
     readonly property WifiConnectionController connection: services.connection

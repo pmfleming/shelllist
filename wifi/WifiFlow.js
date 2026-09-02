@@ -90,24 +90,8 @@ function shareCheckAvailability(result, fallbackMessage) {
     };
 }
 
-function networkKey(ap) {
-    if (ap && ap.key)
-        return ap.key;
-    return "hidden:" + (ap && ap.ssid ? ap.ssid : "") + "\n" + (ap && ap.security ? ap.security : "");
-}
-function secretKey(ap) { return networkKey(ap); }
-function connectAttemptKey(ap) { return networkKey(ap); }
-function passwordFingerprint(password) {
-    if (password === undefined || password === null)
-        return "saved";
-    let hash = 0;
-    for (let i = 0; i < password.length; i++)
-        hash = ((hash << 5) - hash + password.charCodeAt(i)) | 0;
-    return "pw:" + password.length + ":" + hash;
-}
 function isWrongPasswordReason(reason) { return reason === "wrong-password"; }
 function isSecretFailureReason(reason) { return isWrongPasswordReason(reason) || reason === "password-unavailable" || reason === "secret-required"; }
-function connectFailureRetryMs(reason) { return isWrongPasswordReason(reason) ? 10000 : 0; }
 
 function portalNetworkIdentity(ap, result) {
     const profile = profileForAccessPoint(ap);
