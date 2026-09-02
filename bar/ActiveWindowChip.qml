@@ -18,7 +18,7 @@ Item {
 
     visible: activeWindow !== null && layoutDensity <= 1
     implicitWidth: visible ? Math.min(maximumWidth,
-        iconFrame.width + titleLabel.implicitWidth + stateGlyph.implicitWidth + 34) : 0
+        iconFrame.width + titleMetrics.advanceWidth + stateGlyph.implicitWidth + 34) : 0
     implicitHeight: 37
 
     Rectangle {
@@ -47,6 +47,12 @@ Item {
             source: Quickshell.iconPath(Presentation.windowIconName(root.activeWindow),
                 "application-x-executable")
         }
+    }
+
+    TextMetrics {
+        id: titleMetrics
+        font: titleLabel.font
+        text: root.sourceTitle
     }
 
     Ui.PulsingLabel {
@@ -86,7 +92,7 @@ Item {
     }
 
 
-    Behavior on implicitWidth {
+    Behavior on width {
         enabled: !Ui.Theme.noAnimations
         NumberAnimation {
             duration: Ui.Theme.animationNormal
