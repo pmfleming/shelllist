@@ -754,6 +754,17 @@
             touch $out
           '';
 
+          performanceBenchmarks = pkgs.runCommand "shelllist-performance-benchmarks"
+            {
+              nativeBuildInputs = [ pkgs.jq pkgs.nodejs ];
+            } ''
+            mkdir -p $out
+            node ${./tests/generate-performance-benchmarks.js} \
+              ${./qml/Shelllist/Core/Model.js} $out/qmlbench.json
+            test "$(jq -r '."rank-empty-1000-results-per-second"."samples-in-average"' \
+              $out/qmlbench.json)" -ge 10
+          '';
+
           applicationLifecycle = pkgs.runCommand "shelllist-application-lifecycle"
             {
               nativeBuildInputs = [ pkgs.nodejs ];

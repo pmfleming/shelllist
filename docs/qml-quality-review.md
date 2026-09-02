@@ -81,11 +81,20 @@ node tests/check-flow-policies.js activity/ActivityFlow.js \
   battery/BatteryFlow.js clipboard/ClipboardFlow.js
 tests/run-qml-tests.sh
 tests/run-runtime-smoke.sh
+tests/run-performance-benchmarks.sh
+tests/benchmark-resident.py --duration 20 --check
 ```
 
-For an optional structural report:
+The deterministic policy benchmark emits qmlbench-compatible samples under
+`target/performance/` and is part of `nix flake check`. The resident benchmark
+is intentionally manual because it measures the installed Wayland session; run
+it only with Shelllist hidden. It enforces budgets for host CPU, PSS, and bridge
+thread counts without mutating UI state.
+
+For an optional structural report, generate benchmark evidence first:
 
 ```sh
+tests/run-performance-benchmarks.sh
 qmlqualitylens measure all --config qmlqualitylens.config.json
 ```
 

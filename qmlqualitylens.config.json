@@ -43,6 +43,14 @@
   "profile": "quickshell",
   "external_modules": ["QtTest"],
   "external_types": ["GlobalShortcut", "IconImage", "IpcHandler", "PanelWindow", "RectangularShadow", "Region", "ScriptAction", "Settings", "Shortcut", "SignalSpy", "TestCase", "Variants"],
+  "reports": {
+    "qmlbench": "target/performance/qmlbench.json"
+  },
+  "benchmark_policy": {
+    "max_regression_percent": 10,
+    "max_coefficient_of_variation": 0.20,
+    "min_samples": 10
+  },
   "tools": {
     "qmllint": {
       "command": "tests/run-qmlquality-lint.sh",

@@ -230,7 +230,15 @@ shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml activity/*.qml \
 node tests/check-bar-presentation.js bar/BarPresentation.js
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
 tests/run-qml-tests.sh
+tests/run-performance-benchmarks.sh
+# With the installed resident host hidden:
+tests/benchmark-resident.py --duration 20 --check
 ```
+
+The policy benchmark writes qmlbench-compatible evidence to
+`target/performance/qmlbench.json`. The resident benchmark reports hidden CPU,
+PSS, page faults, and daemon-bridge thread counts without opening or closing a
+surface.
 
 `nix flake check` verifies the reproducibly locked daemon contract fixtures, JavaScript policy tests, QML tests, module evaluation, and the packaged host. Before advancing daemon locks, run the candidate worktree matrix:
 
