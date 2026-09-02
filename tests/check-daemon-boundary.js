@@ -24,10 +24,20 @@ if (!/environment:\s*\(\{\s*TOKIO_WORKER_THREADS:\s*"1"\s*\}\)/.test(transport))
 const backend = source("qml/Shelllist/Io/DaemonBackend.qml");
 for (const token of ["required property string expectedProtocol",
         "required property int expectedVersion", "function acceptEvent",
-        "ApiEnvelope.compatibilityError", "backend.acceptEvent(event)"]) {
+        "ApiEnvelope.compatibilityError", "function acceptSharedEvent",
+        "DaemonSessions.attach(backend)"]) {
     if (!backend.includes(token))
         throw new Error(`DaemonBackend is missing boundary token: ${token}`);
 }
+
+const sessions = source("qml/Shelllist/Io/DaemonSessions.qml");
+for (const token of ["property var sessions", "clientFactory.createObject",
+        "function namespace", "function routeResponse", "function routeEvent"]) {
+    if (!sessions.includes(token))
+        throw new Error(`shared daemon session registry is missing boundary token: ${token}`);
+}
+if (/JsonlDaemonClient\s*\{/.test(backend))
+    throw new Error("DaemonBackend still owns a per-consumer bridge process");
 
 const adapters = [
     "launcher/ApplicationBackend.qml",
