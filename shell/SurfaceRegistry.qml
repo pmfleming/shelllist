@@ -24,6 +24,7 @@ Item {
     property var loadedSurfaces: ({ wifi: true, bluetooth: true })
     property var openedSurfaces: ({})
     property string currentId: "applications"
+    property string pendingActivitySection: ""
 
     readonly property SurfaceBundle currentBundle: bundleFor(currentId)
     readonly property Ui.ChooserController currentController: currentBundle
@@ -42,6 +43,7 @@ Item {
     }
 
     signal surfaceRequested(string surfaceId)
+    signal surfaceReady(string surfaceId)
 
     function descriptorFor(surfaceId: string): var {
         return descriptors.find(function (descriptor) { return descriptor.id === surfaceId; }) || null;
@@ -93,7 +95,7 @@ Item {
         if (id.length === 0)
             return false;
         markLoaded(id);
-        return bundleFor(id) !== null;
+        return true;
     }
 
     function select(surfaceId: string): bool {
@@ -103,6 +105,25 @@ Item {
         markOpened(id);
         currentId = id;
         return true;
+    }
+
+    function requestActivitySection(section: string): void {
+        pendingActivitySection = section;
+        ensureLoaded("activity");
+        applyPendingActivitySection();
+    }
+
+    function applyPendingActivitySection(): void {
+        if (pendingActivitySection.length === 0 || !activityController)
+            return;
+        activityController.openSection(pendingActivitySection);
+        pendingActivitySection = "";
+    }
+
+    function notifySurfaceReady(surfaceId: string): void {
+        if (surfaceId === "activity")
+            applyPendingActivitySection();
+        surfaceReady(surfaceId);
     }
 
     function listJson(): string {
@@ -118,6 +139,8 @@ Item {
     Loader {
         id: applicationBundle
         active: registry.isLoaded("applications")
+        asynchronous: true
+        onLoaded: registry.notifySurfaceReady("applications")
         sourceComponent: Component {
             SurfaceBundle {
                 surfaceId: "applications"
@@ -135,6 +158,8 @@ Item {
     Loader {
         id: wifiBundle
         active: registry.isLoaded("wifi")
+        asynchronous: true
+        onLoaded: registry.notifySurfaceReady("wifi")
         sourceComponent: Component {
             SurfaceBundle {
                 surfaceId: "wifi"
@@ -157,6 +182,8 @@ Item {
     Loader {
         id: bluetoothBundle
         active: registry.isLoaded("bluetooth")
+        asynchronous: true
+        onLoaded: registry.notifySurfaceReady("bluetooth")
         sourceComponent: Component {
             SurfaceBundle {
                 surfaceId: "bluetooth"
@@ -177,6 +204,8 @@ Item {
     Loader {
         id: batteryBundle
         active: registry.isLoaded("battery")
+        asynchronous: true
+        onLoaded: registry.notifySurfaceReady("battery")
         sourceComponent: Component {
             SurfaceBundle {
                 surfaceId: "battery"
@@ -194,6 +223,8 @@ Item {
     Loader {
         id: activityBundle
         active: registry.isLoaded("activity")
+        asynchronous: true
+        onLoaded: registry.notifySurfaceReady("activity")
         sourceComponent: Component {
             SurfaceBundle {
                 surfaceId: "activity"
@@ -211,6 +242,8 @@ Item {
     Loader {
         id: clipboardBundle
         active: registry.isLoaded("clipboard")
+        asynchronous: true
+        onLoaded: registry.notifySurfaceReady("clipboard")
         sourceComponent: Component {
             SurfaceBundle {
                 surfaceId: "clipboard"

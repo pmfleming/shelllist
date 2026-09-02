@@ -65,6 +65,14 @@ ShellRoot {
     SurfaceRegistry {
         id: surfaces
         onSurfaceRequested: function (surfaceId) { shell.openSurface(surfaceId); }
+        onSurfaceReady: function (surfaceId) {
+            if (surfaceId !== surfaces.currentId || !windowHost.uiActive
+                    || !surfaces.currentController)
+                return;
+            if (!surfaces.currentController.uiActive)
+                surfaces.currentController.activateUi(windowHost.shelllistWorkspaceId());
+            surfaces.currentController.focusSearchRequested();
+        }
     }
 
     Bar.BarController {

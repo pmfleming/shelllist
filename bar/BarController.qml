@@ -102,11 +102,8 @@ Item {
             surfaceRegistry.surfaceRequested(surfaceId);
     }
     function openNotificationCenter(): void {
-        if (surfaceRegistry) {
-            surfaceRegistry.ensureLoaded("activity");
-            if (surfaceRegistry.activityController)
-                surfaceRegistry.activityController.openSection("notifications");
-        }
+        if (surfaceRegistry)
+            surfaceRegistry.requestActivitySection("notifications");
         openSurface("activity");
     }
 
