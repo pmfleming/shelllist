@@ -43,7 +43,10 @@ Rectangle {
         anchors.fill: parent
         clip: true
         model: frame.resultModel
-        currentIndex: frame.selectedIndex
+        // A large catalog is appended over several event-loop turns. Keep the
+        // logical selection without asking ListView for an index it does not
+        // have yet; this binding reactivates as soon as that chunk arrives.
+        currentIndex: frame.selectedIndex < count ? frame.selectedIndex : -1
         activeFocusOnTab: true
         Keys.onPressed: function (event) {
             frame.keyPressed(event);
