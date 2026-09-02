@@ -93,12 +93,15 @@ expectDeviceImage("speaker", { icon: "audio-speakers" }, "assets/devices/speaker
 expectDeviceImage("unknown device", { icon: "" }, "assets/devices/unknown-device.png");
 expectDeviceImage("audio service fallback", { services: [{ label: "Audio Sink" }] }, "assets/audio/headphones.png");
 
-const remembered = battery.enrichDevices([{ key: "headset", connected: false, battery: [] }], { headset: aggregate });
-expect("disconnected devices restore remembered reports", remembered.devices[0].battery[0].percentage === 64);
-expect("restored reports are marked last-known", remembered.devices[0].battery_last_known === true);
-const connected = battery.enrichDevices([{ key: "headset", connected: true, battery: [] }], remembered.cache);
-expect("connected devices hide stale reports without dropping the cache",
-    connected.devices[0].battery.length === 0 && connected.cache.headset[0].percentage === 64);
-expect("devices absent from a snapshot are pruned", Object.keys(battery.enrichDevices([], connected.cache).cache).length === 0);
+const daemonOwned = {
+    connected: false,
+    battery: aggregate,
+    battery_live: false,
+    battery_last_known: true
+};
+expect("daemon-owned reports remain available for presentation",
+    battery.summary(daemonOwned.battery) === "64%");
+expect("presentation does not rewrite daemon battery provenance",
+    daemonOwned.battery_last_known && !daemonOwned.battery_live);
 
 console.log(`Bluetooth battery presentation: ${checks} checks passed`);

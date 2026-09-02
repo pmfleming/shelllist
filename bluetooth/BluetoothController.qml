@@ -3,7 +3,6 @@ import QtCore
 import QtQuick
 import Shelllist.Io as Io
 import Shelllist.Ui as Ui
-import "BluetoothBattery.js" as BluetoothBattery
 import "BluetoothFlow.js" as BluetoothFlow
 
 Ui.ProviderChooserController {
@@ -21,7 +20,6 @@ Ui.ProviderChooserController {
     property var adapters: []
     property var allDevices: []
     property var audioDevices: []
-    property var lastKnownBatteryByDevice: ({})
     property string audioStatus: ""
     property var pairingPrompt: null
     readonly property alias activeOperations: operationState.activeOperations
@@ -150,9 +148,7 @@ Ui.ProviderChooserController {
         trustAfterPair = management.trust_after_pair !== false;
         const policyAdapter = management.preferred_adapter_key || preferredAdapterKey;
         preferredAdapterKey = BluetoothFlow.retainedAdapterKey(adapters, policyAdapter);
-        const enrichment = BluetoothBattery.enrichDevices(snapshot.devices, lastKnownBatteryByDevice);
-        lastKnownBatteryByDevice = enrichment.cache;
-        allDevices = enrichment.devices;
+        allDevices = snapshot.devices || [];
         rebuildResults(false);
         if (BluetoothFlow.shouldStartScan(uiActive && searchAllDevices, powered, scanning, scanRequested)) {
             scanRequested = true;

@@ -139,28 +139,6 @@ function imageFor(device, report) {
     return componentImages[componentName(report)] || deviceImage(device);
 }
 
-function batteryState(device, previousCache) {
-    const key = device.key || "";
-    const current = ordered(device.battery || []);
-    const remembered = key ? ((previousCache || ({}))[key] || []) : [];
-    return { key: key, retained: current.length > 0 ? current : remembered,
-        reports: current.length > 0 ? current : (!device.connected ? remembered : []) };
-}
-
-function enrichDevices(devices, previousCache) {
-    const cache = ({});
-    const enriched = (devices || []).map(function (device) {
-        const state = batteryState(device, previousCache);
-        if (state.key && state.retained.length > 0)
-            cache[state.key] = state.retained;
-        return Object.assign({}, device, {
-            battery: state.reports,
-            battery_last_known: !device.connected && state.reports.length > 0
-        });
-    });
-    return { devices: enriched, cache: cache };
-}
-
 function compactLabel(report) {
     const component = componentName(report);
     if (component === "left")
