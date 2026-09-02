@@ -1,4 +1,3 @@
-import Quickshell
 import QtQuick
 import "WifiPresentation.js" as Presentation
 import "WifiFlow.js" as Flow
@@ -63,8 +62,8 @@ Item {
     function copySelected() {
         if (!canShareSelected())
             return controller.status = status;
-        Quickshell.clipboardText = payload;
-        controller.status = "Wi-Fi QR payload for " + Presentation.networkName(controller.detailAp) + " copied to clipboard";
+        controller.copyText(payload,
+            "Wi-Fi QR payload for " + Presentation.networkName(controller.detailAp) + " copied to clipboard");
     }
     function setAvailability(isAvailable, qrPayload, message) {
         available = isAvailable;

@@ -19,6 +19,7 @@ Item {
     /// Emitted with a scanned Wi-Fi QR payload. The payload carries a
     /// passphrase, so the handler must pass it straight to the daemon.
     signal scanned(string payload, bool join)
+    signal copyRequested(string text, string message)
 
     function runtimeDirectory() {
         return Quickshell.env("XDG_RUNTIME_DIR") || "";
@@ -56,8 +57,7 @@ Item {
     function copyPayload() {
         if (!payload.length)
             return;
-        Quickshell.clipboardText = payload;
-        controller.status = "Wi-Fi QR payload copied to clipboard";
+        copyRequested(payload, "Wi-Fi QR payload copied to clipboard");
     }
 
     // Set when the scanner should join the scanned network rather than only

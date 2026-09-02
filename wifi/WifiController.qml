@@ -207,6 +207,14 @@ ProviderChooserController {
     function captureScreenshot(x, y, width, height) {
         return screenshotCapture.captureRegion(x, y, width, height);
     }
+    function copyText(text, message) {
+        if (!clipboardPublisher.publishText(text, message)) {
+            status = "Clipboard publication is already in progress";
+            return false;
+        }
+        status = "Copying to the clipboard…";
+        return true;
+    }
     function maybeRunPendingRefresh() { scan.maybeRefresh(); }
     function setPower() {
         if (!beginAction())
@@ -382,6 +390,10 @@ ProviderChooserController {
         function onOpenChanged() { if (!wifi.promptActive) Qt.callLater(wifi.navigation.focusSearch); }
         function onCredentialOpenChanged() { if (!wifi.promptActive) Qt.callLater(wifi.navigation.focusSearch); }
     }
+    Io.ClipboardPublisher {
+        id: clipboardPublisher
+        onFinished: function (succeeded, message) { wifi.status = message; }
+    }
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture
         active: wifi.uiActive
@@ -399,5 +411,6 @@ ProviderChooserController {
             else
                 wifi.inspectScannedQr(payload);
         }
+        onCopyRequested: function (text, message) { wifi.copyText(text, message); }
     }
 }

@@ -1,6 +1,7 @@
 module Shelllist.Io
 singleton DaemonSessions 1.0 DaemonSessions.qml
 DaemonBackend 1.0 DaemonBackend.qml
+ClipboardPublisher 1.0 ClipboardPublisher.qml
 ClipboardScreenshotCapture 1.0 ClipboardScreenshotCapture.qml
 HyprlandLayerRuleClient 1.0 process/HyprlandLayerRuleClient.qml
 JsonlDaemonClient 1.0 process/JsonlDaemonClient.qml
