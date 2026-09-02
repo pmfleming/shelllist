@@ -203,10 +203,18 @@ Ui.ChooserSurface {
 
     Component.onCompleted: now = new Date()
 
+    Connections {
+        target: content.controller
+        function onUiActiveChanged(): void {
+            if (content.controller.uiActive)
+                content.now = new Date();
+        }
+    }
+
     Timer {
-        interval: 1000
+        interval: 60000
         repeat: true
-        running: true
+        running: content.controller.uiActive
         onTriggered: content.now = new Date()
     }
 }
