@@ -1,5 +1,5 @@
 .pragma library
-.import "../bar/BarProtocol.generated.js" as Protocol
+.import "../Bar/BarProtocol.generated.js" as Protocol
 
 var protocol = Protocol.protocol;
 var version = Protocol.version;

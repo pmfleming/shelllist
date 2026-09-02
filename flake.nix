@@ -753,6 +753,15 @@
               touch $out
             '';
 
+          packagedImports = pkgs.runCommand "shelllist-packaged-imports"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            } ''
+            node ${./tests/check-packaged-imports.js} \
+              ${self.packages.${system}.shelllistConfig}/share/shelllist
+            touch $out
+          '';
+
           applicationPresentation = pkgs.runCommand "shelllist-application-presentation"
             {
               nativeBuildInputs = [ pkgs.nodejs ];
