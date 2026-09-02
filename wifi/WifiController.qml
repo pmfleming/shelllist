@@ -290,10 +290,7 @@ ProviderChooserController {
     }
 
     function dispatchDaemonEvent(event: var): void {
-        const handler = daemonEventHandlerByStream[event.stream];
-        if (handler)
-            handler(event);
-        else
+        if (!backend.routeEvent(event, daemonEventHandlerByStream))
             console.warn("shelllist nm event ignored stream=" + event.stream
                 + " event=" + event.event + " reason=no-handler");
     }
@@ -304,7 +301,6 @@ ProviderChooserController {
     }
     function handleDaemonEvent(event) {
         try {
-            Api.requireApiEvent(event);
             dispatchDaemonEvent(event);
         } catch (error) {
             rejectDaemonEvent(event, error);

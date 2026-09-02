@@ -13,7 +13,7 @@ function source(relative) {
 
 const commonBackend = source("qml/Shelllist/Io/DaemonBackend.qml");
 for (const token of ["function nextRequestId", "function callSequenced",
-        "function responseError", "function routeEvent"]) {
+        "function responseError", "function eventEnvelopeError", "function routeEvent"]) {
     if (!commonBackend.includes(token))
         throw new Error(`DaemonBackend is missing common primitive: ${token}`);
 }
@@ -59,5 +59,13 @@ for (const file of migratedBackends) {
     if (/property int (?:operationS|s)equence\b/.test(text))
         throw new Error(`${file} owns a duplicate request sequence`);
 }
+
+for (const file of ["wifi/WifiController.qml", "activity/ActivityController.qml",
+        "battery/BatteryController.qml", "bar/BarController.qml"]) {
+    if (source(file).includes("compatibilityError"))
+        throw new Error(`${file} duplicates transport-level event validation`);
+}
+if (source("wifi/NmApiClient.js").includes("requireApiEvent"))
+    throw new Error("NmApiClient duplicates transport-level event validation");
 
 console.log("daemon commonality checks passed");

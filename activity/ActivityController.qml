@@ -1,5 +1,4 @@
 import QtQuick
-import Shelllist.Core as Core
 import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "ActivityApi.js" as ActivityApi
@@ -126,12 +125,6 @@ Ui.ChooserController {
         }
     }
     function handleEvent(event: var): void {
-        const compatibility = Core.ApiEnvelope.compatibilityError(event,
-            ActivityApi.protocol, ActivityApi.version, "bar-daemon");
-        if (compatibility.length > 0) {
-            lastError = compatibility;
-            return;
-        }
         const kind = Flow.eventKind(event, ActivityApi.streams);
         if (kind === "lagged")
             backend.snapshot();

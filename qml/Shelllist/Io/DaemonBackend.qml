@@ -195,12 +195,22 @@ Item {
         transportFailed(message, lostRequestIds);
     }
 
-    function acceptEvent(event: var): void {
+    function eventEnvelopeError(event: var): string {
         const compatibility = Core.ApiEnvelope.compatibilityError(event,
             expectedProtocol, expectedVersion, daemonName);
-        if (compatibility.length > 0) {
+        if (compatibility.length > 0)
+            return compatibility;
+        if (typeof event.stream !== "string" || event.stream.length === 0
+                || typeof event.event !== "string" || event.event.length === 0)
+            return daemonName + " returned a malformed event";
+        return "";
+    }
+
+    function acceptEvent(event: var): void {
+        const error = eventEnvelopeError(event);
+        if (error.length > 0) {
             console.warn("shelllist " + daemonName
-                + " event rejected error=" + compatibility);
+                + " event rejected error=" + error);
             return;
         }
         eventReceived(event);

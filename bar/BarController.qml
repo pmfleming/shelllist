@@ -1,6 +1,5 @@
 import Quickshell
 import QtQuick
-import Shelllist.Core as Core
 import Shelllist.Ui as Ui
 import "BarApi.js" as BarApi
 import "BarPresentation.js" as Presentation
@@ -85,12 +84,6 @@ Item {
             presentOsd(nextOsd);
     }
     function handleEvent(event: var): void {
-        const compatibility = Core.ApiEnvelope.compatibilityError(event,
-            BarApi.protocol, BarApi.version, "bar-daemon");
-        if (compatibility.length > 0) {
-            console.warn("shelllist bar event rejected error=" + compatibility);
-            return;
-        }
         if (event.event === "lagged")
             backend.snapshot();
         else if (["subscribed", "changed"].includes(event.event))

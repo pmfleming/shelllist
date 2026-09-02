@@ -1,5 +1,4 @@
 import QtQuick
-import Shelllist.Core as Core
 import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "BatteryApi.js" as BatteryApi
@@ -190,12 +189,6 @@ Ui.ChooserController {
             handlers[kind](data);
     }
     function handleEvent(event: var): void {
-        const compatibility = Core.ApiEnvelope.compatibilityError(event,
-            BatteryApi.protocol, BatteryApi.version, "bar-daemon");
-        if (compatibility.length > 0) {
-            lastError = compatibility;
-            return;
-        }
         const kind = Flow.eventKind(event, BatteryApi.streams);
         if (kind === "lagged")
             refreshAll();

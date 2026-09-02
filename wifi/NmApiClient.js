@@ -30,11 +30,6 @@ function apiResult(response, key) {
         return key && data[key] ? data[key] : apiErrorResult(response);
     return pick(data, key);
 }
-function requireApiEvent(event) {
-    if (!isApiEnvelope(event) || event.version !== NmApi.version || !event.stream || !event.event)
-        throw new Error("Expected nm-api v1 event envelope");
-    return event;
-}
 function scanEventStatus(event, fallback) {
     const messages = {
         snapshot: event.networks_found + (event.scanning ? " networks found; scanning…" : " networks available"),

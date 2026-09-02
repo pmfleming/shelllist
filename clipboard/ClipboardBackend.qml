@@ -8,6 +8,24 @@ Io.DaemonBackend {
     expectedVersion: ClipApi.version
     streams: ClipApi.subscribedStreams
     active: controller.uiActive
+    readonly property var eventHandlers: {
+        const handlers = ({});
+        handlers[ClipApi.streams.history] = function (event) {
+            controller.handleHistoryChanged(event.data
+                ? event.data.history_revision : undefined);
+        };
+        handlers[ClipApi.streams.current] = handlers[ClipApi.streams.history];
+        handlers[ClipApi.streams.capture] = function () { getSettings(); };
+        handlers[ClipApi.streams.operation] = function (event) {
+            const operation = event.data && event.data.operation;
+            if (operation) {
+                controller.applyOperation(operation);
+                if (operation.status !== "started")
+                    controller.scheduleRefresh();
+            }
+        };
+        return handlers;
+    }
 
     function finish(id: string, envelope: var, transportError: string): void {
         const error = responseError(envelope, transportError,
@@ -92,25 +110,7 @@ Io.DaemonBackend {
                 getSettings();
             return;
         }
-        const handlers = ({});
-        handlers[ClipApi.streams.history] = function () {
-            controller.handleHistoryChanged(event.data
-                ? event.data.history_revision : undefined);
-        };
-        handlers[ClipApi.streams.current] = function () {
-            controller.handleHistoryChanged(event.data
-                ? event.data.history_revision : undefined);
-        };
-        handlers[ClipApi.streams.capture] = getSettings;
-        handlers[ClipApi.streams.operation] = function () {
-            const operation = event.data && event.data.operation;
-            if (operation) {
-                controller.applyOperation(operation);
-                if (operation.status !== "started")
-                    controller.scheduleRefresh();
-            }
-        };
-        if (handlers[event.stream]) handlers[event.stream]();
+        routeEvent(event, eventHandlers);
     }
     onSendFailed: function (id, message) { controller.handleFailure(id, message); }
     onTransportFailed: function (message) { controller.handleTransportFailure(message); }
