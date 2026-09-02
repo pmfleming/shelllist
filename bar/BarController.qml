@@ -22,7 +22,7 @@ Item {
     })
     property var brightness: ({ available: false, percent: 0 })
     property var battery: ({ available: false, percentage: 0 })
-    property var powerProfile: ({ available: false, profile: "" })
+    property var powerProfile: ({ available: false, profile: "", profiles: [] })
     property var powerSleep: ({ available: false, inhibitors: [] })
     property var osdHardware: ({ available: false, caps_lock: false, num_lock: false,
         keyboard_backlight_percent: null, microphone_privacy: false, camera_privacy: false })
@@ -116,6 +116,12 @@ Item {
     function toggleMuted(): bool { return backend.toggleMuted(); }
     function toggleInputMuted(): bool { return backend.toggleInputMuted(); }
     function adjustBrightness(deltaPercent: int): bool { return backend.adjustBrightness(deltaPercent); }
+    function cyclePowerProfile(): bool {
+        if (!powerProfile.available || backend.requestRunning)
+            return false;
+        const profile = Presentation.nextPowerProfile(powerProfile);
+        return profile.length > 0 && backend.setPowerProfile(profile);
+    }
     function dismissNotification(notificationId: int): bool {
         return backend.dismissNotification(notificationId);
     }
@@ -192,6 +198,7 @@ Item {
             "brightness-up": function () { backend.adjustBrightness(5); },
             "brightness-down": function () { backend.adjustBrightness(-5); },
             battery: function () { openSurface("battery"); },
+            "power-profile-next": function () { cyclePowerProfile(); },
             activity: function () { openSurface("activity"); },
             notifications: function () { openNotificationCenter(); },
             "notifications-dnd": function () { backend.toggleDnd(); },

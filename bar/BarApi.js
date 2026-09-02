@@ -12,6 +12,7 @@ var methods = {
     audioSetInputMuted: "audio.setInputMuted",
     brightnessAdjust: "brightness.adjust",
     brightnessSet: "brightness.set",
+    powerProfileSet: "powerProfile.set",
     notificationsTogglePanel: "notifications.togglePanel",
     notificationsToggleDnd: "notifications.toggleDnd",
     notificationsDismiss: "notifications.dismiss",

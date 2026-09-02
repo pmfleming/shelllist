@@ -84,7 +84,20 @@ equal(context.domainOsd({ media: "media" }, "media",
     { available: true, active_player: "player", players: [{ id: "player", title: "Old" }] },
     { available: true, active_player: "player", players: [{ id: "player", title: "New" }] }),
     null, "media changes do not produce an OSD");
-equal(context.batteryIcon({ charging: true, plugged: true, percentage: 60 }), "󰂄", "charging icon");
+equal(context.batteryIcon({ charging: true, plugged: true, percentage: 60 }), "󰂉",
+    "charging icon exposes its segment");
+equal(context.batteryIcon({ charging: false, plugged: false, percentage: 0 }), "󰂎",
+    "empty battery icon");
+equal(context.batteryIcon({ charging: false, plugged: false, percentage: 80 }), "󰂁",
+    "battery level selects the matching segment");
+equal(context.batteryIcon({ charging: false, plugged: true, percentage: 80 }), "󰂁",
+    "plugged battery retains its level");
+equal(context.nextPowerProfile({ profile: "balanced", profiles: [
+    { name: "performance" }, { name: "power-saver" }, { name: "balanced" }
+] }), "performance", "power profile cycles toward performance");
+equal(context.nextPowerProfile({ profile: "performance", profiles: [
+    { name: "performance" }, { name: "power-saver" }, { name: "balanced" }
+] }), "power-saver", "power profile cycling wraps");
 equal(context.duration(7500), "2h 5m", "battery duration");
 equal(context.networkKind({ active: true, access_point: { ssid: "Test" } }), "wifi", "Wi-Fi status");
 equal(context.networkKind({ active: true, device_iface: "enp1s0" }), "ethernet", "Ethernet status");
@@ -98,7 +111,9 @@ const modules = context.statusModules({
     audio: { available: true, muted: false, volume_percent: 50 },
     brightness: { available: true, percent: 70 },
     battery: { available: true, percentage: 80 },
-    powerProfile: { available: true, profile: "balanced", driver: "test" },
+    powerProfile: { available: true, profile: "balanced", driver: "test", profiles: [
+        { name: "power-saver" }, { name: "balanced" }, { name: "performance" }
+    ] },
     notifications: { count: 2, dnd: false },
     timezone: { available: true, city: "Taipei", abbreviation: "CST", utc_offset_seconds: 28800 }
 }, new Date(0));
@@ -108,6 +123,10 @@ equal(modules[1].visible, true, "ready update visibility");
 equal(modules[4].wheelDown, "brightness-down", "brightness wheel routing");
 equal(modules[5].primary, "battery", "battery opens the battery surface");
 equal(modules[5].interactive, true, "battery module is interactive");
+equal(modules[6].primary, "power-profile-next", "power mode cycles from the bar");
+equal(modules[6].secondary, "", "power mode has no right-click action");
+equal(modules[6].middle, "", "power mode has no middle-click action");
+equal(modules[6].wheelUp, "", "power mode has no wheel action");
 equal(modules[7].primary, "activity", "calendar opens the activity surface");
 equal(modules[10].primary, "activity", "clock opens the activity surface");
 equal(context.layoutDensity(1920), 0, "wide layout density");
@@ -123,7 +142,7 @@ equal(context.visibleStatusModules(modules, 2).map(module => module.id),
     "narrow layout modules");
 equal(context.visibleStatusModules(modules, 3).map(module => module.id),
     ["network", "updates", "battery", "clock"], "ultra-narrow layout modules");
-equal(context.moduleText(modules[5], 1), "󰂂", "compact battery text");
+equal(context.moduleText(modules[5], 1), "󰂁", "compact battery text exposes level");
 equal(context.moduleText(modules[10], 1), "HH:mm", "compact clock text");
 
 console.log("bar presentation: workspace, responsive layout, and status formatting passed");

@@ -51,6 +51,11 @@ Io.DaemonBackend {
             BarApi.methods.brightnessAdjust, { delta_percent: deltaPercent });
     }
 
+    function setPowerProfile(profile: string): bool {
+        return call(operationId("power-profile"),
+            BarApi.methods.powerProfileSet, { profile: profile });
+    }
+
     function toggleNotifications(): bool {
         return call(operationId("notifications-panel"),
             BarApi.methods.notificationsTogglePanel, {});

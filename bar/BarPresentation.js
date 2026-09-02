@@ -319,15 +319,10 @@ function audioDeviceOsd(previous, current) {
 function batteryIcon(battery) {
     if (!battery)
         return "󰂑";
-    if (battery.charging)
-        return "󰂄";
-    if (battery.plugged && battery.percentage >= 99)
-        return "󰁹";
-    if (battery.plugged)
-        return "󰚥";
-    const icons = ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"];
-    const index = Math.min(icons.length - 1, Math.floor(clamp(battery.percentage, 0, 100) / 10));
-    return icons[index];
+    const level = Math.round(clamp(battery.percentage, 0, 100) / 10);
+    const discharging = ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"];
+    const charging = ["󰢟", "󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"];
+    return (battery.charging ? charging : discharging)[level];
 }
 
 function batterySeconds(battery) {
@@ -345,12 +340,30 @@ function batteryTooltip(battery) {
     const cycles = battery.cycles === null || battery.cycles === undefined ? "—" : battery.cycles;
     return battery.percentage + "% • " + duration(batterySeconds(battery))
         + "\n" + Number(battery.power_watts || 0).toFixed(1) + " W"
-        + "\nHealth " + health + " • " + cycles + " cycles";
+        + "\nHealth " + health + " • " + cycles + " cycles"
+        + "\nLeft click: open battery & power settings";
 }
 
 function powerProfileIcon(profile) {
     const value = profile && profile.profile ? profile.profile : "";
     return value === "power-saver" ? "" : value === "balanced" ? "" : "";
+}
+
+function orderedPowerProfiles(profile) {
+    const preferred = ["power-saver", "balanced", "performance"];
+    const available = (profile && Array.isArray(profile.profiles) ? profile.profiles : [])
+        .map(function (entry) { return entry.name || ""; }).filter(Boolean);
+    return preferred.filter(function (name) { return available.includes(name); })
+        .concat(available.filter(function (name) { return !preferred.includes(name); }));
+}
+
+function nextPowerProfile(profile) {
+    const profiles = orderedPowerProfiles(profile);
+    if (profiles.length < 2)
+        return "";
+    const current = profiles.indexOf((profile && profile.profile) || "");
+    const index = current < 0 ? 0 : current;
+    return profiles[(index + 1) % profiles.length];
 }
 
 function networkKind(status) {
@@ -483,8 +496,10 @@ function batteryModule(battery) {
 
 function powerModule(profile) {
     return statusModule("power", powerProfileIcon(profile), "Power profile: " + (profile.profile || "")
+        + "\nLeft click: cycle power mode"
         + "\nDriver: " + (profile.driver || "unknown"), {
-        visible: !!profile.available, maxDensity: 1, interactive: false,
+        visible: !!profile.available, maxDensity: 1, interactive: true,
+        primary: "power-profile-next",
         tone: profile.profile === "performance" ? "danger"
             : profile.profile === "power-saver" ? "success" : "accent"
     });
