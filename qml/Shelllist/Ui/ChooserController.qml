@@ -109,6 +109,9 @@ Item {
 
     Behavior on detailsExpansionProgress {
         enabled: !Theme.noAnimations
-        NumberAnimation { duration: Theme.animationNormal; easing.type: Theme.easingGentle }
+        NumberAnimation {
+            duration: Theme.animationInteractive
+            easing.type: Theme.easingResponsive
+        }
     }
 }

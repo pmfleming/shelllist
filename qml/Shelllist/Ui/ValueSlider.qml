@@ -41,8 +41,8 @@ Controls.Slider {
         Behavior on x {
             enabled: !slider.pressed && !Theme.noAnimations
             NumberAnimation {
-                duration: Theme.animationFast
-                easing.type: Theme.easingGentle
+                duration: Theme.animationInteractive
+                easing.type: Theme.easingResponsive
             }
         }
     }

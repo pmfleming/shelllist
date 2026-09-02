@@ -58,7 +58,10 @@ ActionDetailsPane {
 
         Behavior on advancedTransitionProgress {
             enabled: !Theme.noAnimations
-            NumberAnimation { duration: Theme.animationSlow; easing.type: Theme.easingStandard }
+            NumberAnimation {
+                duration: Theme.animationInteractive
+                easing.type: Theme.easingResponsive
+            }
         }
 
         NetworkDetailCards {

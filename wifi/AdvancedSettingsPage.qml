@@ -70,8 +70,8 @@ Item {
         target: page
         property: "sectionOffset"
         to: 0
-        duration: Theme.animationSlow
-        easing.type: Theme.easingStandard
+        duration: Theme.animationInteractive
+        easing.type: Theme.easingResponsive
     }
 
     function resetEditState(): void {

@@ -102,8 +102,8 @@ Ui.DetailFlickable {
             Behavior on contentX {
                 enabled: !Ui.Theme.noAnimations
                 NumberAnimation {
-                    duration: Ui.Theme.animationNormal
-                    easing.type: Ui.Theme.easingStandard
+                    duration: Ui.Theme.animationInteractive
+                    easing.type: Ui.Theme.easingResponsive
                 }
             }
 

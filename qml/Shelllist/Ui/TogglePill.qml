@@ -23,7 +23,10 @@ Rectangle {
 
         Behavior on x {
             enabled: !Theme.noAnimations
-            NumberAnimation { duration: Theme.animationFast; easing.type: Theme.easingStandard }
+            NumberAnimation {
+                duration: Theme.animationInteractive
+                easing.type: Theme.easingResponsive
+            }
         }
     }
 }

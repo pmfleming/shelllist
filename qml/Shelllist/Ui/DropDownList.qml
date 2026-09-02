@@ -86,8 +86,8 @@ Controls.ComboBox {
         Behavior on rotation {
             enabled: !Theme.noAnimations
             NumberAnimation {
-                duration: Theme.animationFast
-                easing.type: Theme.easingStandard
+                duration: Theme.animationInteractive
+                easing.type: Theme.easingResponsive
             }
         }
     }
@@ -131,8 +131,8 @@ Controls.ComboBox {
                 property: "opacity"
                 from: 0
                 to: 1
-                duration: Theme.noAnimations ? 0 : Theme.animationFast
-                easing.type: Theme.easingStandard
+                duration: Theme.noAnimations ? 0 : Theme.animationInteractive
+                easing.type: Theme.easingResponsive
             }
         }
         exit: Transition {
@@ -140,8 +140,8 @@ Controls.ComboBox {
                 property: "opacity"
                 from: 1
                 to: 0
-                duration: Theme.noAnimations ? 0 : Theme.animationFast
-                easing.type: Theme.easingStandard
+                duration: Theme.noAnimations ? 0 : Theme.animationInteractive
+                easing.type: Theme.easingResponsive
             }
         }
     }

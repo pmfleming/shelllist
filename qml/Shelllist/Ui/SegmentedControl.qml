@@ -83,8 +83,8 @@ Rectangle {
         Behavior on selectedPosition {
             enabled: !Theme.noAnimations
             NumberAnimation {
-                duration: Theme.animationFast
-                easing.type: Theme.easingStandard
+                duration: Theme.animationInteractive
+                easing.type: Theme.easingResponsive
             }
         }
     }
