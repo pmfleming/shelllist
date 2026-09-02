@@ -47,8 +47,8 @@ Item {
         }
         if (rustRankedResults.length === 0)
             rustRankedResults = baselineResults;
-        if (rankRequestsEnabled)
-            SearchService.rank(searchOwner, searchGeneration, queryText, sourceResults);
+        if (rankRequestsEnabled && searchOwner.length > 0)
+            SearchService.rank(searchOwner, searchGeneration, queryText);
     }
 
     function applyRustRanking(owner: string, generation: int, keys: var): void {
@@ -264,7 +264,11 @@ Item {
             visibleListModel.remove(visibleResults.length, visibleListModel.count - visibleResults.length);
     }
 
-    onSourceResultsChanged: requestRustRanking()
+    onSourceResultsChanged: {
+        if (rankRequestsEnabled && searchOwner.length > 0)
+            SearchService.updateCatalog(searchOwner, sourceResults);
+        requestRustRanking();
+    }
     onQueryTextChanged: {
         selectedIndex = 0;
         requestRustRanking();
@@ -276,6 +280,8 @@ Item {
 
     Component.onCompleted: {
         searchOwner = SearchService.allocateOwner();
+        if (rankRequestsEnabled)
+            SearchService.updateCatalog(searchOwner, sourceResults);
         requestRustRanking();
     }
 

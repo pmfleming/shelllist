@@ -7,6 +7,8 @@ Item {
 
     property int ownerSequence: 0
     property var queuedRequests: []
+    property var catalogs: ({})
+    property int rankDebounceMs: 35
     // Loader.item is dynamically resolved as SearchProcess.qml at runtime.
     // qmllint disable missing-property
     readonly property bool ready: processLoader.item
@@ -20,32 +22,57 @@ Item {
         return "result-store-" + ownerSequence;
     }
 
-    function rank(owner: string, generation: int, query: string, items: var): void {
+    function compactItems(items: var): var {
+        return (items || []).map(function (item) {
+            return {
+                key: item.key,
+                title: item.title,
+                subtitle: item.subtitle,
+                keywords: item.keywords || [],
+                score: item.score || 0,
+                providerPriority: item.providerPriority || 0
+            };
+        });
+    }
+
+    function writeMessage(message: var): void {
+        if (!processLoader.item)
+            return;
+        // qmllint disable missing-property
+        processLoader.item["write"](JSON.stringify(message) + "\n");
+        // qmllint enable missing-property
+    }
+
+    function updateCatalog(owner: string, items: var): void {
+        const next = Object.assign({}, catalogs);
+        next[owner] = compactItems(items);
+        catalogs = next;
+        if (ready)
+            writeMessage({ type: "catalog", owner: owner, items: next[owner] });
+    }
+
+    function sendCatalogs(): void {
+        Object.keys(catalogs).forEach(function (owner) {
+            writeMessage({ type: "catalog", owner: owner, items: catalogs[owner] });
+        });
+    }
+
+    function rank(owner: string, generation: int, query: string): void {
         const request = {
+            type: "query",
             owner: owner,
             generation: generation,
-            query: query || "",
-            items: (items || []).map(function (item) {
-                return {
-                    key: item.key,
-                    title: item.title,
-                    subtitle: item.subtitle,
-                    keywords: item.keywords || [],
-                    score: item.score || 0,
-                    providerPriority: item.providerPriority || 0
-                };
-            })
+            query: query || ""
         };
-        // Requests that have not reached Rust yet can be superseded. Requests
-        // already in flight are rejected by generation in ResultStore.
+        // Keep only the latest query per owner during the typing debounce. The
+        // Rust worker also coalesces commands received behind in-flight work.
         queuedRequests = queuedRequests.filter(function (queued) {
             return queued.owner !== owner;
         }).concat([request]);
+        rankDebounce.restart();
         if (!processLoader.active)
             processLoader.active = true;
-        else if (ready)
-            flush();
-        else
+        else if (!ready)
             start();
     }
 
@@ -67,10 +94,8 @@ Item {
             return;
         const requests = queuedRequests;
         queuedRequests = [];
-        // qmllint disable missing-property
         for (let index = 0; index < requests.length; index++)
-            processLoader.item["write"](JSON.stringify(requests[index]) + "\n");
-        // qmllint enable missing-property
+            writeMessage(requests[index]);
     }
 
     function handleLine(line: string): void {
@@ -97,7 +122,11 @@ Item {
     Connections {
         target: processLoader.item
         ignoreUnknownSignals: true
-        function onProcessReady(): void { service.flush(); }
+        function onProcessReady(): void {
+            service.sendCatalogs();
+            if (!rankDebounce.running)
+                service.flush();
+        }
         function onLineReceived(line: string): void { service.handleLine(line); }
         function onStopped(error: string): void {
             if (error.length > 0)
@@ -105,6 +134,13 @@ Item {
             if (service.queuedRequests.length > 0)
                 restartTimer.restart();
         }
+    }
+
+    Timer {
+        id: rankDebounce
+        interval: service.rankDebounceMs
+        repeat: false
+        onTriggered: if (service.ready) service.flush()
     }
 
     Timer {
