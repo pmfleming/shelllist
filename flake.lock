@@ -13,11 +13,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788384693,
-        "narHash": "sha256-EJZGyeuKqAcSTalq10dRLWxWM6pAnEKhkLbMpwaW2v0=",
+        "lastModified": 1788384763,
+        "narHash": "sha256-s/fZeBPzPgSO4xoodmWx+6Xe0Wg4YGkmifGzC3bH/3w=",
         "ref": "main",
-        "rev": "43130e559d338951aaabea684d234aae8ad013a9",
-        "revCount": 55,
+        "rev": "b52ed2dab85008f2c7f0d5361b2e61f5ca1c54fb",
+        "revCount": 56,
         "type": "git",
         "url": "file:../app-daemon"
       },
@@ -40,11 +40,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788384693,
-        "narHash": "sha256-IjOvpRaTRqRgIzzImb7HkWL7jfUXCYN06PmH4qwDJaQ=",
+        "lastModified": 1788384763,
+        "narHash": "sha256-iFiDejCh5oMzMlI6agI3gITaKReLm+MseoicBeO4EGA=",
         "ref": "main",
-        "rev": "0b331eee3268b83b650f73aff913c9b7b487d49a",
-        "revCount": 81,
+        "rev": "965f7aed8b7d7f6558824934e55126dbeca099cb",
+        "revCount": 82,
         "type": "git",
         "url": "file:../bar-daemon"
       },
@@ -64,11 +64,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788383327,
-        "narHash": "sha256-4qOiTBkIf/XI2Wm8y1JSRB/bhnjMNh4GcjZ2xWRR9Dg=",
+        "lastModified": 1788384763,
+        "narHash": "sha256-WYHTlbTBmZkVoCKl1fIvfG6qMYr8EYtLDutvw3EuoK8=",
         "ref": "main",
-        "rev": "bd7efb51f90520f35d76bd1783fba2e5d9786c51",
-        "revCount": 76,
+        "rev": "fab8f38b0dbc8f8ad16e90b12b40b3fa9dea0ff7",
+        "revCount": 77,
         "type": "git",
         "url": "file:../bt-daemon"
       },
@@ -88,11 +88,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788383160,
-        "narHash": "sha256-eIdPRJVBzphxx0aSv/agScpQ87YEhjEEZ1W/m8tdvzc=",
+        "lastModified": 1788384763,
+        "narHash": "sha256-cVxC3vl9i+PswLgKcrE/nYtjpSHiV9uLsXmHANY+zls=",
         "ref": "main",
-        "rev": "936a16b5d57fd10c769a2bb0d45e45c95d46b798",
-        "revCount": 78,
+        "rev": "c23d14b13f932cfc5a60e3bace5ba7b8712d728a",
+        "revCount": 79,
         "type": "git",
         "url": "file:../clip-daemon"
       },
@@ -149,11 +149,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788382944,
-        "narHash": "sha256-9kcuBJOZ0Tp6a709WhD3U18/bPyNe/FRMY62MSg1Ug8=",
+        "lastModified": 1788384763,
+        "narHash": "sha256-TKUS9m48xhxHXBzA/FG5w4YB4E3KyqvvFBWn/QAFg1E=",
         "ref": "main",
-        "rev": "7ab1d36eb649ebd222f44f1b660f13f9b64e5843",
-        "revCount": 109,
+        "rev": "4f149815912b05f742ba1bd7045f611b75a86f80",
+        "revCount": 110,
         "type": "git",
         "url": "file:../nm-daemon"
       },
