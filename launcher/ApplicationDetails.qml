@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Shelllist.Ui as Ui
 
@@ -43,28 +45,41 @@ Ui.ActionDetailsPane {
                 ]
         onSelected: function (value) { pane.controller.selectDetailsTab(value); }
 
-        ApplicationPage {
+        Loader {
             anchors.fill: parent
-            visible: pane.controller.detailsTab === "application"
-            controller: pane.controller
-            application: pane.application
-            uiScale: pane.uiScale
-            actionHeight: pane.actionHeight
+            active: pane.controller.detailsTab === "application"
+            sourceComponent: Component {
+                ApplicationPage {
+                    controller: pane.controller
+                    application: pane.application
+                    uiScale: pane.uiScale
+                    actionHeight: pane.actionHeight
+                }
+            }
         }
 
-        ApplicationResourcesPage {
+        Loader {
             anchors.fill: parent
-            visible: pane.controller.detailsTab === "resources"
-            controller: pane.controller
-            application: pane.application
-            uiScale: pane.uiScale
+            active: pane.controller.detailsTab === "resources"
+            asynchronous: true
+            sourceComponent: Component {
+                ApplicationResourcesPage {
+                    controller: pane.controller
+                    application: pane.application
+                    uiScale: pane.uiScale
+                }
+            }
         }
 
-        ApplicationSettingsPage {
+        Loader {
             anchors.fill: parent
-            visible: pane.controller.detailsTab === "settings"
-            controller: pane.controller
-            application: pane.application
+            active: pane.controller.detailsTab === "settings"
+            sourceComponent: Component {
+                ApplicationSettingsPage {
+                    controller: pane.controller
+                    application: pane.application
+                }
+            }
         }
     }
 }
