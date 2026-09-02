@@ -1,5 +1,6 @@
 import QtQuick
 import Shelllist.Core as Core
+import Shelllist.Io as Io
 
 ChooserController {
     id: controller
@@ -10,7 +11,11 @@ ChooserController {
     property int filterRefreshDelay: 0
     property int scheduledRefreshDelay: 0
     property bool closeDetailsWithoutSelection: false
+    property bool sharedScreenshotEnabled: false
+    property bool sharedScreenshotBlocked: actionInFlight
+    property string sharedScreenshotStartMessage: "Capturing window…"
 
+    readonly property bool sharedScreenshotInFlight: sharedScreenshotCapture.inFlight
     readonly property var filteredResults: results.visibleResults
     readonly property var filteredResultsModel: results.visibleModel
     readonly property var selectedResult: results.selected()
@@ -46,6 +51,11 @@ ChooserController {
         return !!selectedResult && providers.execute(selectedResult, actionId, { workspaceId: currentWorkspaceId });
     }
 
+    function captureScreenshot(x: real, y: real, width: real, height: real): bool {
+        return sharedScreenshotEnabled
+            && sharedScreenshotCapture.captureRegion(x, y, width, height);
+    }
+
     function scheduleRefresh(): void {
         if (scheduledRefreshDelay > 0)
             scheduledRefreshTimer.restart();
@@ -64,6 +74,18 @@ ChooserController {
         providers: [controller.provider]
     }
     Core.ResultStore { id: results; registry: providers }
+
+    Io.ClipboardScreenshotCapture {
+        id: sharedScreenshotCapture
+        active: controller.sharedScreenshotEnabled && controller.uiActive
+        blocked: controller.sharedScreenshotBlocked
+        startMessage: controller.sharedScreenshotStartMessage
+        onStatusChanged: function (message) {
+            controller.sharedScreenshotStatusChanged(message);
+        }
+    }
+
+    signal sharedScreenshotStatusChanged(string message)
 
     Timer {
         id: filterRefreshTimer

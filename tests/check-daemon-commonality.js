@@ -68,4 +68,20 @@ for (const file of ["wifi/WifiController.qml", "activity/ActivityController.qml"
 if (source("wifi/NmApiClient.js").includes("requireApiEvent"))
     throw new Error("NmApiClient duplicates transport-level event validation");
 
+const providerController = source("qml/Shelllist/Ui/ProviderChooserController.qml");
+for (const token of ["property bool sharedScreenshotEnabled",
+        "readonly property bool sharedScreenshotInFlight",
+        "Io.ClipboardScreenshotCapture", "function captureScreenshot"]) {
+    if (!providerController.includes(token))
+        throw new Error(`ProviderChooserController is missing shared capture token: ${token}`);
+}
+for (const file of ["launcher/ApplicationController.qml",
+        "wifi/WifiController.qml", "bluetooth/BluetoothController.qml"]) {
+    const text = source(file);
+    if (!text.includes("sharedScreenshotEnabled: true"))
+        throw new Error(`${file} does not opt into shared screenshot capture`);
+    if (text.includes("Io.ClipboardScreenshotCapture"))
+        throw new Error(`${file} still owns duplicate screenshot transport composition`);
+}
+
 console.log("daemon commonality checks passed");

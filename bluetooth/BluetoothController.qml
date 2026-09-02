@@ -1,7 +1,6 @@
 import Quickshell
 import QtCore
 import QtQuick
-import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "BluetoothFlow.js" as BluetoothFlow
 
@@ -9,6 +8,11 @@ Ui.ProviderChooserController {
     id: bluetoothController
 
     provider: BluetoothProvider { id: bluetoothProvider; controller: bluetoothController }
+    sharedScreenshotEnabled: true
+    sharedScreenshotBlocked: anyActionInFlight || modalPromptOpen
+    sharedScreenshotStartMessage: "Capturing Bluetooth window…"
+    onSharedScreenshotStatusChanged: function (message) { status = message; }
+
     property string detailsTab: "device"
     property alias searchScope: scopeSettings.searchScope
     property var pendingConfirmationAction
@@ -28,7 +32,7 @@ Ui.ProviderChooserController {
     property string preferredAdapterKey: ""
     property string pairingInput: ""
     property string status: "Loading Bluetooth devices…"
-    readonly property bool screenshotInFlight: screenshotCapture.inFlight
+    readonly property bool screenshotInFlight: sharedScreenshotInFlight
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
     navigationBlocked: modalPromptOpen
     readonly property var selectedAdapter: adapters.find(function (adapter) { return adapter.key === preferredAdapterKey; })
@@ -120,9 +124,6 @@ Ui.ProviderChooserController {
     }
     function toggleSearchScope() {
         setSearchScope(searchAllDevices ? "mine" : "all");
-    }
-    function captureScreenshot(x, y, width, height) {
-        return screenshotCapture.captureRegion(x, y, width, height);
     }
     function applyAudioSnapshot(devices) { audioDevices = devices || []; audioStatus = ""; }
     function applyRequestSnapshot(requests: var): void {
@@ -313,13 +314,6 @@ Ui.ProviderChooserController {
     onModalPromptOpenChanged: if (!modalPromptOpen) Qt.callLater(focusSearchRequested)
     onSelectedResultChanged: pendingConfirmationAction = null
 
-    Io.ClipboardScreenshotCapture {
-        id: screenshotCapture
-        active: bluetoothController.uiActive
-        blocked: bluetoothController.anyActionInFlight || bluetoothController.modalPromptOpen
-        startMessage: "Capturing Bluetooth window…"
-        onStatusChanged: function (message) { bluetoothController.status = message; }
-    }
     BluetoothBackend { id: backend; controller: bluetoothController }
     BluetoothOperationController {
         id: operationState

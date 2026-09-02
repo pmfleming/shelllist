@@ -1,5 +1,4 @@
 import QtQuick
-import Shelllist.Io as Io
 import Shelllist.Ui as Ui
 import "ApplicationPresentation.js" as Presentation
 import "ApplicationLifecycle.js" as Lifecycle
@@ -12,6 +11,10 @@ Ui.ProviderChooserController {
     filterRefreshDelay: 0
     scheduledRefreshDelay: 120
     closeDetailsWithoutSelection: true
+    sharedScreenshotEnabled: true
+    sharedScreenshotBlocked: operationBlocked
+    sharedScreenshotStartMessage: "Capturing Applications window…"
+    onSharedScreenshotStatusChanged: function (message) { status = message; }
 
     property string status: "Loading applications…"
     readonly property int applicationSearchLimit: 1000
@@ -37,7 +40,7 @@ Ui.ProviderChooserController {
     readonly property bool settingsInFlight: activeSettingsRequestId.length > 0
     readonly property var selectedApplication: selectedResult ? selectedResult.payload : null
     readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
-    readonly property bool screenshotInFlight: screenshotCapture.inFlight
+    readonly property bool screenshotInFlight: sharedScreenshotInFlight
     readonly property bool operationBlocked: actionInFlight || screenshotInFlight || settingsInFlight
     readonly property bool resourcesVisible: uiActive && detailsOpen && detailsTab === "resources"
     navigationPrimaryEnabled: hasSelection && !operationBlocked
@@ -136,9 +139,6 @@ Ui.ProviderChooserController {
             return;
         forceRefresh = false;
         beginProviderQuery({ workspaceId: currentWorkspaceId }, applicationSearchLimit);
-    }
-    function captureScreenshot(x: real, y: real, width: real, height: real): bool {
-        return screenshotCapture.captureRegion(x, y, width, height);
     }
     function requestApplications(id: string, text: string, generation: int, limit: int): void {
         const refreshCatalog = forceRefresh;
@@ -316,14 +316,6 @@ Ui.ProviderChooserController {
             detailsTab = "application";
         else if (resourcesVisible)
             requestResourceHistory();
-    }
-
-    Io.ClipboardScreenshotCapture {
-        id: screenshotCapture
-        active: controller.uiActive
-        blocked: controller.operationBlocked
-        startMessage: "Capturing Applications window…"
-        onStatusChanged: function (message) { controller.status = message; }
     }
 
     Timer {

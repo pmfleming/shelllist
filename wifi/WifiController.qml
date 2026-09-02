@@ -13,6 +13,10 @@ ProviderChooserController {
 
     required property WifiPromptController prompt
     provider: WifiProvider { id: wifiProvider; controller: wifi }
+    sharedScreenshotEnabled: true
+    sharedScreenshotBlocked: actionInFlight || promptActive
+    sharedScreenshotStartMessage: "Capturing Wi-Fi window…"
+    onSharedScreenshotStatusChanged: function (message) { status = message; }
 
     property var activeStatus: null
     property bool statusMonitorActive: false
@@ -32,7 +36,7 @@ ProviderChooserController {
         && radios.wireless_hardware_enabled !== false
     property double statusHoldUntil: 0
     readonly property WifiBackend backend: services.backend
-    readonly property bool screenshotInFlight: screenshotCapture.inFlight
+    readonly property bool screenshotInFlight: sharedScreenshotInFlight
     readonly property bool promptActive: prompt.open || prompt.credentialOpen || qr.open
     actionInFlight: backend.running || screenshotInFlight || bandRequestId.length > 0
     readonly property string detailsTab: advanced.open ? advanced.section : "network"
@@ -204,9 +208,6 @@ ProviderChooserController {
     }
 
     function refresh() { scan.refresh(); }
-    function captureScreenshot(x, y, width, height) {
-        return screenshotCapture.captureRegion(x, y, width, height);
-    }
     function copyText(text, message) {
         if (!clipboardPublisher.publishText(text, message)) {
             status = "Clipboard publication is already in progress";
@@ -389,13 +390,6 @@ ProviderChooserController {
     Io.ClipboardPublisher {
         id: clipboardPublisher
         onFinished: function (succeeded, message) { wifi.status = message; }
-    }
-    Io.ClipboardScreenshotCapture {
-        id: screenshotCapture
-        active: wifi.uiActive
-        blocked: wifi.actionInFlight || wifi.promptActive
-        startMessage: "Capturing Wi-Fi window…"
-        onStatusChanged: function (message) { wifi.status = message; }
     }
     WifiControllerServices { id: services; controller: wifi; prompt: wifi.prompt }
     WifiQrService {
