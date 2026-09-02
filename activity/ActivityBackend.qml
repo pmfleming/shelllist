@@ -12,27 +12,23 @@ Io.DaemonBackend {
     // this domain-specific command session only while Activity is visible.
     active: controller.uiActive
 
-    function nextId(prefix: string): string {
-        return nextRequestId(prefix);
-    }
-
     function snapshot(): bool {
         return call("activity-snapshot", ActivityApi.methods.snapshot, {});
     }
 
     function queryRange(fromDate: date, toDate: date): bool {
-        return call(nextId("activity-range"), ActivityApi.methods.queryRange, {
+        return callSequenced("activity-range", ActivityApi.methods.queryRange, {
             from_unix_ms: fromDate.getTime(),
             to_unix_ms: toDate.getTime()
         });
     }
 
     function refresh(): bool {
-        return call(nextId("activity-refresh"), ActivityApi.methods.refresh, {});
+        return callSequenced("activity-refresh", ActivityApi.methods.refresh, {});
     }
 
     function createTodo(title: string, dueDate: string): bool {
-        return call(nextId("todo-create"), ActivityApi.methods.todoCreate, {
+        return callSequenced("todo-create", ActivityApi.methods.todoCreate, {
             title: title,
             due_unix_ms: null,
             due_date: dueDate.length > 0 ? dueDate : null,
@@ -41,22 +37,22 @@ Io.DaemonBackend {
     }
 
     function completeTodo(todoId: string, completed: bool): bool {
-        return call(nextId("todo-complete"), ActivityApi.methods.todoComplete, {
+        return callSequenced("todo-complete", ActivityApi.methods.todoComplete, {
             id: todoId,
             completed: completed
         });
     }
 
     function deleteTodo(todoId: string): bool {
-        return call(nextId("todo-delete"), ActivityApi.methods.todoDelete, { id: todoId });
+        return callSequenced("todo-delete", ActivityApi.methods.todoDelete, { id: todoId });
     }
 
     function toggleDnd(): bool {
-        return call(nextId("notifications-dnd"), ActivityApi.methods.notificationsToggleDnd, {});
+        return callSequenced("notifications-dnd", ActivityApi.methods.notificationsToggleDnd, {});
     }
 
     function setDnd(enabled: bool, untilUnixMs: var): bool {
-        return call(nextId("notifications-dnd"), ActivityApi.methods.notificationsSetDnd, {
+        return callSequenced("notifications-dnd", ActivityApi.methods.notificationsSetDnd, {
             enabled: enabled,
             until_unix_ms: untilUnixMs
         });
@@ -65,35 +61,35 @@ Io.DaemonBackend {
     function loadNotificationHistory(beforeHistoryId: var): bool {
         const prefix = beforeHistoryId === null || beforeHistoryId === undefined
             ? "notifications-history-reset" : "notifications-history-more";
-        return call(nextId(prefix), ActivityApi.methods.notificationsList, {
+        return callSequenced(prefix, ActivityApi.methods.notificationsList, {
             before_history_id: beforeHistoryId,
             limit: 50
         });
     }
 
     function dismissNotification(notificationId: int): bool {
-        return call(nextId("notification-dismiss"),
+        return callSequenced("notification-dismiss",
             ActivityApi.methods.notificationsDismiss, { id: notificationId });
     }
 
     function clearNotifications(): bool {
-        return call(nextId("notifications-clear"), ActivityApi.methods.notificationsClear, {});
+        return callSequenced("notifications-clear", ActivityApi.methods.notificationsClear, {});
     }
 
     function clearNotificationGroup(groupKey: string): bool {
-        return call(nextId("notifications-clear-group"),
+        return callSequenced("notifications-clear-group",
             ActivityApi.methods.notificationsClearGroup, { group_key: groupKey });
     }
 
     function snoozeNotification(notificationId: int, untilUnixMs: double): bool {
-        return call(nextId("notification-snooze"), ActivityApi.methods.notificationsSnooze, {
+        return callSequenced("notification-snooze", ActivityApi.methods.notificationsSnooze, {
             id: notificationId,
             until_unix_ms: untilUnixMs
         });
     }
 
     function invokeNotificationAction(notificationId: int, actionKey: string): bool {
-        return call(nextId("notification-action"),
+        return callSequenced("notification-action",
             ActivityApi.methods.notificationsInvokeAction, {
                 id: notificationId,
                 action_key: actionKey,
@@ -102,7 +98,7 @@ Io.DaemonBackend {
     }
 
     function replyNotification(notificationId: int, text: string): bool {
-        return call(nextId("notification-reply"), ActivityApi.methods.notificationsReply, {
+        return callSequenced("notification-reply", ActivityApi.methods.notificationsReply, {
             id: notificationId,
             text: text
         });

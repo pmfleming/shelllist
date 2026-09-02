@@ -10,7 +10,7 @@ Io.DaemonBackend {
     active: controller.uiActive
 
     function overview(period: string, sinceMs: double): bool {
-        return call(nextRequestId("battery-energy-" + period),
+        return callSequenced("battery-energy-" + period,
             Launcher.AppApi.methods.energyOverview, { since_ms: sinceMs, limit: 12 });
     }
 

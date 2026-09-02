@@ -34,7 +34,6 @@ Ui.ProviderChooserController {
     property double historyWindowStartMs: 0
     property double historyWindowEndMs: 0
     property string historyRange: "30m"
-    property int historyRequestSequence: 0
     property string activeSettingsRequestId: ""
     readonly property bool historyInFlight: activeHistoryRequestId.length > 0
     readonly property bool settingsInFlight: activeSettingsRequestId.length > 0
@@ -157,8 +156,7 @@ Ui.ProviderChooserController {
         requestResourceHistory(true);
     }
     function nextHistoryRequestId(): string {
-        historyRequestSequence += 1;
-        return "history-" + Date.now() + "-" + historyRequestSequence;
+        return backend.nextRequestId("history");
     }
     function requestResourceHistory(forceRefresh: var): void {
         const targetId = resourcesVisible && selectedResult ? selectedResult.id : "";

@@ -12,20 +12,16 @@ Io.DaemonBackend {
     // subscription while its surface is hidden.
     active: controller.uiActive
 
-    function nextId(prefix: string): string {
-        return nextRequestId(prefix);
-    }
-
     function snapshot(): bool {
-        return call(nextId("battery-snapshot"), BatteryApi.methods.snapshot, {});
+        return callSequenced("battery-snapshot", BatteryApi.methods.snapshot, {});
     }
 
     function history(): bool {
-        return call(nextId("battery-history"), BatteryApi.methods.history, {});
+        return callSequenced("battery-history", BatteryApi.methods.history, {});
     }
 
     function setThresholds(batteryId: string, startPercent: int, endPercent: int): bool {
-        return call(nextId("battery-thresholds"), BatteryApi.methods.setThresholds, {
+        return callSequenced("battery-thresholds", BatteryApi.methods.setThresholds, {
             battery_id: batteryId,
             start_percent: startPercent,
             end_percent: endPercent
@@ -34,7 +30,7 @@ Io.DaemonBackend {
 
     function setProtection(batteryId: string, enabled: bool, startPercent: int,
             endPercent: int): bool {
-        return call(nextId("battery-protection"), BatteryApi.methods.setProtection, {
+        return callSequenced("battery-protection", BatteryApi.methods.setProtection, {
             battery_id: batteryId,
             enabled: enabled,
             start_percent: startPercent,
@@ -43,44 +39,44 @@ Io.DaemonBackend {
     }
 
     function chargeOnce(batteryId: string): bool {
-        return call(nextId("battery-charge-once"), BatteryApi.methods.chargeOnce, {
+        return callSequenced("battery-charge-once", BatteryApi.methods.chargeOnce, {
             battery_id: batteryId
         });
     }
 
     function setChargingInhibited(batteryId: string, enabled: bool): bool {
-        return call(nextId("battery-inhibit"), BatteryApi.methods.setChargingInhibited, {
+        return callSequenced("battery-inhibit", BatteryApi.methods.setChargingInhibited, {
             battery_id: batteryId,
             enabled: enabled
         });
     }
 
     function startCalibration(batteryId: string): bool {
-        return call(nextId("battery-calibrate"), BatteryApi.methods.startCalibration, {
+        return callSequenced("battery-calibrate", BatteryApi.methods.startCalibration, {
             battery_id: batteryId
         });
     }
 
     function cancelCalibration(batteryId: string): bool {
-        return call(nextId("battery-calibrate-cancel"), BatteryApi.methods.cancelCalibration, {
+        return callSequenced("battery-calibrate-cancel", BatteryApi.methods.cancelCalibration, {
             battery_id: batteryId
         });
     }
 
     function setPowerProfile(profile: string): bool {
-        return call(nextId("power-profile"), BatteryApi.methods.setPowerProfile, {
+        return callSequenced("power-profile", BatteryApi.methods.setPowerProfile, {
             profile: profile
         });
     }
 
     function setBatteryAware(enabled: bool): bool {
-        return call(nextId("power-battery-aware"), BatteryApi.methods.setBatteryAware, {
+        return callSequenced("power-battery-aware", BatteryApi.methods.setBatteryAware, {
             enabled: enabled
         });
     }
 
     function setPowerActionEnabled(action: string, enabled: bool): bool {
-        return call(nextId("power-action"), BatteryApi.methods.setPowerActionEnabled, {
+        return callSequenced("power-action", BatteryApi.methods.setPowerActionEnabled, {
             action: action,
             enabled: enabled
         });
@@ -90,12 +86,12 @@ Io.DaemonBackend {
         const method = action === "lock" ? BatteryApi.methods.lock
             : (action === "suspend" ? BatteryApi.methods.suspend
                 : BatteryApi.methods.hibernate);
-        return call(nextId("power-sleep-" + action), method, {});
+        return callSequenced("power-sleep-" + action, method, {});
     }
 
     function setAlertPolicy(warningPercent: int, criticalPercent: int,
             notifyWhenFull: bool, autoPowerSaver: bool): bool {
-        return call(nextId("battery-alerts"), BatteryApi.methods.setAlertPolicy, {
+        return callSequenced("battery-alerts", BatteryApi.methods.setAlertPolicy, {
             warning_percent: warningPercent,
             critical_percent: criticalPercent,
             notify_when_full: notifyWhenFull,

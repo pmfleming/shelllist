@@ -61,6 +61,17 @@ for (const file of migratedBackends) {
         throw new Error(`${file} owns a duplicate request sequence`);
 }
 
+for (const file of ["activity/ActivityBackend.qml", "battery/BatteryBackend.qml",
+        "battery/BatteryEnergyBackend.qml", "bar/BarBackend.qml"]) {
+    const text = source(file);
+    if (!text.includes("callSequenced("))
+        throw new Error(`${file} bypasses common request sequencing`);
+    if (/function (?:nextId|operationId)\b/.test(text))
+        throw new Error(`${file} retains a duplicate request-id wrapper`);
+}
+if (source("launcher/ApplicationController.qml").includes("historyRequestSequence"))
+    throw new Error("ApplicationController retains duplicate request sequencing");
+
 for (const file of ["wifi/WifiController.qml", "activity/ActivityController.qml",
         "battery/BatteryController.qml", "bar/BarController.qml"]) {
     if (source(file).includes("compatibilityError"))
