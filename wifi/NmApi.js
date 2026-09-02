@@ -1,48 +1,49 @@
 .pragma library
+.import "NmProtocol.generated.js" as Protocol
 
-var protocol = "nm-api";
-var version = 1;
+var protocol = Protocol.protocol;
+var version = Protocol.version;
 
 var methods = {
-    wifi_setEnabled: "wifi.setEnabled",
-    network_inventory: "network.inventory",
-    network_status: "network.status",
-    network_activateProfile: "network.activateProfile",
-    network_deactivate: "network.deactivate",
-    network_statistics_watch: "network.statistics.watch",
-    hotspot_capabilities: "hotspot.capabilities",
-    hotspot_status: "hotspot.status",
-    hotspot_start: "hotspot.start",
-    hotspot_stop: "hotspot.stop",
-    vpn_list: "vpn.list",
-    vpn_status: "vpn.status",
-    vpn_connect: "vpn.connect",
-    vpn_disconnect: "vpn.disconnect",
-    wifi_qr_parse: "wifi.qr.parse",
-    wifi_qr_connect: "wifi.qr.connect",
-    wifi_networks: "wifi.networks",
-    wifi_band_status: "wifi.band.status",
-    wifi_band_set: "wifi.band.set",
-    wifi_scan: "wifi.scan",
-    wifi_connectTarget: "wifi.connectTarget",
-    wifi_disconnect: "wifi.disconnect",
-    wifi_profile_operation: "wifi.profile.operation",
-    wifi_secret_provide: "wifi.secret.provide"
+    wifi_setEnabled: Protocol.methods["wifi.setEnabled"],
+    network_inventory: Protocol.methods["network.inventory"],
+    network_status: Protocol.methods["network.status"],
+    network_activateProfile: Protocol.methods["network.activateProfile"],
+    network_deactivate: Protocol.methods["network.deactivate"],
+    network_statistics_watch: Protocol.methods["network.statistics.watch"],
+    hotspot_capabilities: Protocol.methods["hotspot.capabilities"],
+    hotspot_status: Protocol.methods["hotspot.status"],
+    hotspot_start: Protocol.methods["hotspot.start"],
+    hotspot_stop: Protocol.methods["hotspot.stop"],
+    vpn_list: Protocol.methods["vpn.list"],
+    vpn_status: Protocol.methods["vpn.status"],
+    vpn_connect: Protocol.methods["vpn.connect"],
+    vpn_disconnect: Protocol.methods["vpn.disconnect"],
+    wifi_qr_parse: Protocol.methods["wifi.qr.parse"],
+    wifi_qr_connect: Protocol.methods["wifi.qr.connect"],
+    wifi_networks: Protocol.methods["wifi.networks"],
+    wifi_band_status: Protocol.methods["wifi.band.status"],
+    wifi_band_set: Protocol.methods["wifi.band.set"],
+    wifi_scan: Protocol.methods["wifi.scan"],
+    wifi_connectTarget: Protocol.methods["wifi.connectTarget"],
+    wifi_disconnect: Protocol.methods["wifi.disconnect"],
+    wifi_profile_operation: Protocol.methods["wifi.profile.operation"],
+    wifi_secret_provide: Protocol.methods["wifi.secret.provide"]
 };
 
 var streams = {
-    wifi_status: "wifi.status",
-    network_connectivity: "network.connectivity",
-    network_inventory: "network.inventory",
-    network_statistics: "network.statistics",
-    hotspot: "hotspot",
-    vpn: "vpn",
-    network_health: "network.health",
-    wifi_networks: "wifi.networks",
-    wifi_scan: "wifi.scan",
-    wifi_connect: "wifi.connect",
-    wifi_band: "wifi.band",
-    wifi_secret: "wifi.secret"
+    wifi_status: Protocol.streams["wifi.status"],
+    network_connectivity: Protocol.streams["network.connectivity"],
+    network_inventory: Protocol.streams["network.inventory"],
+    network_statistics: Protocol.streams["network.statistics"],
+    hotspot: Protocol.streams["hotspot"],
+    vpn: Protocol.streams["vpn"],
+    network_health: Protocol.streams["network.health"],
+    wifi_networks: Protocol.streams["wifi.networks"],
+    wifi_scan: Protocol.streams["wifi.scan"],
+    wifi_connect: Protocol.streams["wifi.connect"],
+    wifi_band: Protocol.streams["wifi.band"],
+    wifi_secret: Protocol.streams["wifi.secret"]
 };
 
 var subscribedStreams = [

@@ -84,6 +84,7 @@
           "can_set_send_hostname": true,
           "can_share_qr": true,
           "can_toggle_autoconnect": true,
+          "can_toggle_casting": true,
           "needs_credentials": false,
           "needs_password": false,
           "supported_auth": true,
@@ -112,6 +113,7 @@
         },
         "primary_profile": {
           "autoconnect": true,
+          "casting_enabled": false,
           "id": "Example",
           "path": "/org/freedesktop/NetworkManager/Settings/1",
           "privacy": {
@@ -133,6 +135,7 @@
         "profiles": [
           {
             "autoconnect": true,
+            "casting_enabled": false,
             "id": "Example",
             "path": "/org/freedesktop/NetworkManager/Settings/1",
             "privacy": {
@@ -377,6 +380,7 @@
             "can_set_send_hostname": true,
             "can_share_qr": true,
             "can_toggle_autoconnect": true,
+            "can_toggle_casting": true,
             "needs_credentials": false,
             "needs_password": false,
             "supported_auth": true,
@@ -405,6 +409,7 @@
           },
           "primary_profile": {
             "autoconnect": true,
+            "casting_enabled": false,
             "id": "Example",
             "path": "/org/freedesktop/NetworkManager/Settings/1",
             "privacy": {
@@ -426,6 +431,7 @@
           "profiles": [
             {
               "autoconnect": true,
+              "casting_enabled": false,
               "id": "Example",
               "path": "/org/freedesktop/NetworkManager/Settings/1",
               "privacy": {
@@ -472,6 +478,7 @@
         },
         "profile": {
           "autoconnect": true,
+          "casting_enabled": false,
           "id": "Example",
           "path": "/org/freedesktop/NetworkManager/Settings/1",
           "privacy": {

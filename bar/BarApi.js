@@ -1,41 +1,42 @@
 .pragma library
+.import "BarProtocol.generated.js" as Protocol
 
-var protocol = "bar-api";
-var version = 1;
+var protocol = Protocol.protocol;
+var version = Protocol.version;
 
 var methods = {
-    snapshot: "bar.snapshot",
-    workspaceFocus: "workspace.focus",
-    mediaOperation: "media.operation",
-    audioAdjust: "audio.adjust",
-    audioSetMuted: "audio.setMuted",
-    audioSetInputMuted: "audio.setInputMuted",
-    brightnessAdjust: "brightness.adjust",
-    brightnessSet: "brightness.set",
-    powerProfileSet: "powerProfile.set",
-    notificationsTogglePanel: "notifications.togglePanel",
-    notificationsToggleDnd: "notifications.toggleDnd",
-    notificationsDismiss: "notifications.dismiss",
-    notificationsClearGroup: "notifications.clearGroup",
-    notificationsSnooze: "notifications.snooze",
-    notificationsInvokeAction: "notifications.invokeAction",
-    notificationsReply: "notifications.reply"
+    snapshot: Protocol.methods["bar.snapshot"],
+    workspaceFocus: Protocol.methods["workspace.focus"],
+    mediaOperation: Protocol.methods["media.operation"],
+    audioAdjust: Protocol.methods["audio.adjust"],
+    audioSetMuted: Protocol.methods["audio.setMuted"],
+    audioSetInputMuted: Protocol.methods["audio.setInputMuted"],
+    brightnessAdjust: Protocol.methods["brightness.adjust"],
+    brightnessSet: Protocol.methods["brightness.set"],
+    powerProfileSet: Protocol.methods["powerProfile.set"],
+    notificationsTogglePanel: Protocol.methods["notifications.togglePanel"],
+    notificationsToggleDnd: Protocol.methods["notifications.toggleDnd"],
+    notificationsDismiss: Protocol.methods["notifications.dismiss"],
+    notificationsClearGroup: Protocol.methods["notifications.clearGroup"],
+    notificationsSnooze: Protocol.methods["notifications.snooze"],
+    notificationsInvokeAction: Protocol.methods["notifications.invokeAction"],
+    notificationsReply: Protocol.methods["notifications.reply"]
 };
 
 var streams = {
-    activity: "activity.changed",
-    workspaces: "workspaces.changed",
-    media: "media.changed",
-    audio: "audio.changed",
-    brightness: "brightness.changed",
-    battery: "battery.changed",
-    powerProfile: "power-profile.changed",
-    powerSleep: "power-sleep.changed",
-    osdHardware: "osd-hardware.changed",
-    notifications: "notifications.changed",
-    notificationActive: "notifications.active.changed",
-    updates: "updates.changed",
-    timezone: "timezone.changed"
+    activity: Protocol.streams["activity.changed"],
+    workspaces: Protocol.streams["workspaces.changed"],
+    media: Protocol.streams["media.changed"],
+    audio: Protocol.streams["audio.changed"],
+    brightness: Protocol.streams["brightness.changed"],
+    battery: Protocol.streams["battery.changed"],
+    powerProfile: Protocol.streams["power-profile.changed"],
+    powerSleep: Protocol.streams["power-sleep.changed"],
+    osdHardware: Protocol.streams["osd-hardware.changed"],
+    notifications: Protocol.streams["notifications.changed"],
+    notificationActive: Protocol.streams["notifications.active.changed"],
+    updates: Protocol.streams["updates.changed"],
+    timezone: Protocol.streams["timezone.changed"]
 };
 
 var subscribedStreams = Object.keys(streams).map(function (name) { return streams[name]; });

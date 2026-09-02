@@ -1,18 +1,19 @@
 .pragma library
+.import "AppProtocol.generated.js" as Protocol
 
-var protocol = "app-api";
-var version = 1;
+var protocol = Protocol.protocol;
+var version = Protocol.version;
 var methods = ({
-    query: "applications.query",
-    revision: "applications.revision",
-    history: "applications.history",
-    energyOverview: "applications.energyOverview",
-    refresh: "applications.refresh",
-    execute: "applications.execute",
-    settingsUpdate: "applications.settings.update"
+    query: Protocol.methods["applications.query"],
+    revision: Protocol.methods["applications.revision"],
+    history: Protocol.methods["applications.history"],
+    energyOverview: Protocol.methods["applications.energyOverview"],
+    refresh: Protocol.methods["applications.refresh"],
+    execute: Protocol.methods["applications.execute"],
+    settingsUpdate: Protocol.methods["applications.settings.update"]
 });
 var streams = ({
-    applications: "applications.changed",
-    windows: "windows.changed",
-    operation: "applications.operation"
+    applications: Protocol.streams["applications.changed"],
+    windows: Protocol.streams["windows.changed"],
+    operation: Protocol.streams["applications.operation"]
 });

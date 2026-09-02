@@ -1,30 +1,31 @@
 .pragma library
+.import "../bar/BarProtocol.generated.js" as Protocol
 
-var protocol = "bar-api";
-var version = 1;
+var protocol = Protocol.protocol;
+var version = Protocol.version;
 
 var methods = {
-    snapshot: "bar.snapshot",
-    history: "battery.history",
-    setThresholds: "battery.setThresholds",
-    setProtection: "battery.setProtection",
-    chargeOnce: "battery.chargeOnce",
-    setChargingInhibited: "battery.setChargingInhibited",
-    startCalibration: "battery.startCalibration",
-    cancelCalibration: "battery.cancelCalibration",
-    setAlertPolicy: "battery.setAlertPolicy",
-    setPowerProfile: "powerProfile.set",
-    setBatteryAware: "powerProfile.setBatteryAware",
-    setPowerActionEnabled: "powerProfile.setActionEnabled",
-    lock: "powerSleep.lock",
-    suspend: "powerSleep.suspend",
-    hibernate: "powerSleep.hibernate"
+    snapshot: Protocol.methods["bar.snapshot"],
+    history: Protocol.methods["battery.history"],
+    setThresholds: Protocol.methods["battery.setThresholds"],
+    setProtection: Protocol.methods["battery.setProtection"],
+    chargeOnce: Protocol.methods["battery.chargeOnce"],
+    setChargingInhibited: Protocol.methods["battery.setChargingInhibited"],
+    startCalibration: Protocol.methods["battery.startCalibration"],
+    cancelCalibration: Protocol.methods["battery.cancelCalibration"],
+    setAlertPolicy: Protocol.methods["battery.setAlertPolicy"],
+    setPowerProfile: Protocol.methods["powerProfile.set"],
+    setBatteryAware: Protocol.methods["powerProfile.setBatteryAware"],
+    setPowerActionEnabled: Protocol.methods["powerProfile.setActionEnabled"],
+    lock: Protocol.methods["powerSleep.lock"],
+    suspend: Protocol.methods["powerSleep.suspend"],
+    hibernate: Protocol.methods["powerSleep.hibernate"]
 };
 
 var streams = {
-    battery: "battery.changed",
-    powerProfile: "power-profile.changed",
-    powerSleep: "power-sleep.changed"
+    battery: Protocol.streams["battery.changed"],
+    powerProfile: Protocol.streams["power-profile.changed"],
+    powerSleep: Protocol.streams["power-sleep.changed"]
 };
 
 var subscribedStreams = [streams.battery, streams.powerProfile, streams.powerSleep];

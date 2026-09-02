@@ -1,11 +1,12 @@
 .pragma library
+.import "BtProtocol.generated.js" as Protocol
 
 var streams = {
-    changed: "bluetooth.changed",
-    pairing: "pairing.request",
-    audio: "bluetooth.audio.changed",
-    operation: "bluetooth.operation",
-    scan: "bluetooth.scan"
+    changed: Protocol.streams["bluetooth.changed"],
+    pairing: Protocol.streams["pairing.request"],
+    audio: Protocol.streams["bluetooth.audio.changed"],
+    operation: Protocol.streams["bluetooth.operation"],
+    scan: Protocol.streams["bluetooth.scan"]
 };
 
 var responseKeys = ["scan", "audio_devices", "operation", "requests"];
@@ -39,14 +40,14 @@ function lifecycleState(item, activeItems, finishedItems, state, terminalStates)
 }
 
 var methods = {
-    protocolDescribe: "bluetooth.protocol.describe",
-    snapshot: "bluetooth.snapshot",
-    setPowered: "bluetooth.setPowered",
-    scan: "bluetooth.scan",
-    adapterOperation: "bluetooth.adapter.operation",
-    managementUpdate: "bluetooth.management.update",
-    audioSetProfile: "bluetooth.audio.setProfile",
-    requestsSnapshot: "bluetooth.requests.snapshot",
-    pairingRespond: "bluetooth.pairing.respond",
-    deviceOperation: "bluetooth.device.operation"
+    protocolDescribe: Protocol.methods["bluetooth.protocol.describe"],
+    snapshot: Protocol.methods["bluetooth.snapshot"],
+    setPowered: Protocol.methods["bluetooth.setPowered"],
+    scan: Protocol.methods["bluetooth.scan"],
+    adapterOperation: Protocol.methods["bluetooth.adapter.operation"],
+    managementUpdate: Protocol.methods["bluetooth.management.update"],
+    audioSetProfile: Protocol.methods["bluetooth.audio.setProfile"],
+    requestsSnapshot: Protocol.methods["bluetooth.requests.snapshot"],
+    pairingRespond: Protocol.methods["bluetooth.pairing.respond"],
+    deviceOperation: Protocol.methods["bluetooth.device.operation"]
 };

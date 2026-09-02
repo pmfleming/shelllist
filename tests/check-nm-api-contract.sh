@@ -132,9 +132,9 @@ jq -e '
 
 jq -r '
   def identifier: gsub("[.-]"; "_");
-  ".pragma library\n\n"
-  + "var protocol = " + (.protocol | tojson) + ";\n"
-  + "var version = " + (.version | tostring) + ";\n\n"
+  ".pragma library\n.import \"NmProtocol.generated.js\" as Protocol\n\n"
+  + "var protocol = Protocol.protocol;\n"
+  + "var version = Protocol.version;\n\n"
   + "var methods = {\n"
   + ([.data.protocol.methods[]
       | select(.name == "wifi.setEnabled"
@@ -161,10 +161,10 @@ jq -r '
           or .name == "vpn.status"
           or .name == "vpn.connect"
           or .name == "vpn.disconnect")
-      | "    " + (.name | identifier) + ": " + (.name | tojson)] | join(",\n"))
+      | "    " + (.name | identifier) + ": Protocol.methods[" + (.name | tojson) + "]"] | join(",\n"))
   + "\n};\n\n"
   + "var streams = {\n"
-  + ([.data.protocol.streams[] | select(.subscribable) | "    " + (.name | identifier) + ": " + (.name | tojson)] | join(",\n"))
+  + ([.data.protocol.streams[] | select(.subscribable) | "    " + (.name | identifier) + ": Protocol.streams[" + (.name | tojson) + "]"] | join(",\n"))
   + "\n};\n\n"
   + "var subscribedStreams = [\n"
   + ([.data.protocol.streams[]

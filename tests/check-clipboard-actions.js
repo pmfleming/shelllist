@@ -6,9 +6,19 @@ const vm = require("vm");
 const apiPath = process.argv[2];
 if (!apiPath)
     throw new Error("usage: check-clipboard-actions.js <ClipApi.js>");
+const source = fs.readFileSync(apiPath, "utf8");
+const importMatch = source.match(/^\.import\s+"([^"]+)"\s+as\s+Protocol$/m);
 const context = {};
+if (importMatch) {
+    const generated = fs.readFileSync(require("path").resolve(require("path").dirname(apiPath), importMatch[1]), "utf8")
+        .replace(/^\.pragma library\s*/, "");
+    const protocol = {};
+    vm.createContext(protocol);
+    vm.runInContext(generated, protocol);
+    context.Protocol = protocol;
+}
 vm.createContext(context);
-vm.runInContext(fs.readFileSync(apiPath, "utf8").replace(/^\.pragma library\s*/, ""), context);
+vm.runInContext(source.replace(/^\.pragma library\s*/, "").replace(/^\.import.*$/m, ""), context);
 
 function expect(kind, expected) {
     const actual = context.actionsForKind(kind);

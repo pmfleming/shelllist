@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require("fs");
+const path = require("path");
 const vm = require("vm");
 
 const flowPath = process.argv[2];
@@ -8,11 +9,23 @@ const apiPath = process.argv[3];
 if (!flowPath || !apiPath)
     throw new Error("usage: check-bluetooth-lifecycle.js <BluetoothFlow.js> <BtApi.js>");
 
-function loadLibrary(path) {
-    const source = fs.readFileSync(path, "utf8").replace(/^\.pragma library\s*/, "");
+function loadLibrary(file) {
+    let source = fs.readFileSync(file, "utf8").replace(/^\.pragma library\s*/, "");
     const library = {};
+    const importMatch = source.match(/^\.import\s+"([^"]+)"\s+as\s+Protocol$/m);
+    if (importMatch) {
+        const protocol = {};
+        vm.createContext(protocol);
+        vm.runInContext(
+            fs.readFileSync(path.resolve(path.dirname(file), importMatch[1]), "utf8")
+                .replace(/^\.pragma library\s*/, ""),
+            protocol
+        );
+        library.Protocol = protocol;
+        source = source.replace(/^\.import.*$/m, "");
+    }
     vm.createContext(library);
-    vm.runInContext(source, library, { filename: path });
+    vm.runInContext(source, library, { filename: file });
     return library;
 }
 

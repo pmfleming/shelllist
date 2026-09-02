@@ -1,33 +1,34 @@
 .pragma library
+.import "ClipProtocol.generated.js" as Protocol
 
 var streams = {
-    history: "clipboard.history.changed",
-    current: "clipboard.current.changed",
-    operation: "clipboard.operation",
-    capture: "clipboard.capture.changed",
-    session: "clipboard.session"
+    history: Protocol.streams["clipboard.history.changed"],
+    current: Protocol.streams["clipboard.current.changed"],
+    operation: Protocol.streams["clipboard.operation"],
+    capture: Protocol.streams["clipboard.capture.changed"],
+    session: Protocol.streams["clipboard.session"]
 };
 
 var methods = {
-    sessionBegin: "clipboard.session.begin",
-    sessionEnd: "clipboard.session.end",
-    sessionHidden: "clipboard.session.hidden",
-    historyQuery: "clipboard.history.query",
-    historyRevision: "clipboard.history.revision",
-    entryDetails: "clipboard.entry.details",
-    entryThumbnail: "clipboard.entry.thumbnail",
-    entryAction: "clipboard.entry.action",
-    editBegin: "clipboard.entry.edit.begin",
-    editCommit: "clipboard.entry.edit.commit",
-    editCancel: "clipboard.entry.edit.cancel",
-    captureSetPaused: "clipboard.capture.setPaused",
-    captureScreenshot: "clipboard.capture.screenshot",
-    selectionPublishText: "clipboard.selection.publishText",
-    selectionPublishFiles: "clipboard.selection.publishFiles",
-    settingsGet: "clipboard.settings.get",
-    settingsUpdate: "clipboard.settings.update",
-    wipePrepare: "clipboard.history.wipe.prepare",
-    wipeCommit: "clipboard.history.wipe.commit"
+    sessionBegin: Protocol.methods["clipboard.session.begin"],
+    sessionEnd: Protocol.methods["clipboard.session.end"],
+    sessionHidden: Protocol.methods["clipboard.session.hidden"],
+    historyQuery: Protocol.methods["clipboard.history.query"],
+    historyRevision: Protocol.methods["clipboard.history.revision"],
+    entryDetails: Protocol.methods["clipboard.entry.details"],
+    entryThumbnail: Protocol.methods["clipboard.entry.thumbnail"],
+    entryAction: Protocol.methods["clipboard.entry.action"],
+    editBegin: Protocol.methods["clipboard.entry.edit.begin"],
+    editCommit: Protocol.methods["clipboard.entry.edit.commit"],
+    editCancel: Protocol.methods["clipboard.entry.edit.cancel"],
+    captureSetPaused: Protocol.methods["clipboard.capture.setPaused"],
+    captureScreenshot: Protocol.methods["clipboard.capture.screenshot"],
+    selectionPublishText: Protocol.methods["clipboard.selection.publishText"],
+    selectionPublishFiles: Protocol.methods["clipboard.selection.publishFiles"],
+    settingsGet: Protocol.methods["clipboard.settings.get"],
+    settingsUpdate: Protocol.methods["clipboard.settings.update"],
+    wipePrepare: Protocol.methods["clipboard.history.wipe.prepare"],
+    wipeCommit: Protocol.methods["clipboard.history.wipe.commit"]
 };
 
 function actionsForKind(kind) {
