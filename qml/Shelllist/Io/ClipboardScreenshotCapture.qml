@@ -60,15 +60,21 @@ Item {
 
     onActiveChanged: if (!active) inFlight = false
 
-    JsonlDaemonClient {
+    DaemonBackend {
         id: client
         daemonName: "clip-daemon"
+        expectedProtocol: "clip-api"
+        expectedVersion: 1
         streams: ["clipboard.operation"]
         recoverProtocolErrors: true
         active: capture.active
-        onResponse: function (id, envelope, transportError) {
+        onResponseReceived: function (id, envelope, transportError) {
             if (id === "capture-screenshot")
                 capture.finish(envelope, transportError);
+        }
+        onSendFailed: function (id, message) {
+            if (id === "capture-screenshot")
+                capture.reject(message);
         }
         onTransportFailed: function (message) {
             if (capture.inFlight)

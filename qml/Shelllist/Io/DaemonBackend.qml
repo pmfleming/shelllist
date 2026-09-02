@@ -1,6 +1,5 @@
 import QtQuick
 import Shelllist.Core as Core
-import "process"
 
 Item {
     id: backend
@@ -13,10 +12,14 @@ Item {
     property bool recoverProtocolErrors: true
     property var pending: ({})
     property int subscriptionSequence: 0
+    property string sharedConsumerId: ""
 
     readonly property bool requestRunning: pendingCount > 0
     readonly property int pendingCount: Object.keys(pending).length
-    readonly property alias ready: client.ready
+    readonly property bool ready: {
+        DaemonSessions.revision;
+        return DaemonSessions.isReady(daemonName);
+    }
 
     // Subscription ids returned by on-demand subscribe requests, keyed by the
     // request id that asked for them.
@@ -50,7 +53,7 @@ Item {
         }
         setPending(id, true);
         try {
-            client.call(id, method, params || ({}));
+            DaemonSessions.call(daemonName, sharedConsumerId, id, method, params || ({}));
             return true;
         } catch (error) {
             setPending(id, false);
@@ -65,10 +68,8 @@ Item {
         if (!requestId)
             return false;
         try {
-            if (cancellationId)
-                client.cancel(cancellationId, requestId);
-            else
-                client.cancel(requestId);
+            DaemonSessions.cancel(daemonName, sharedConsumerId, requestId,
+                cancellationId || ("cancel-" + requestId));
             return true;
         } catch (error) {
             const message = "Could not cancel " + daemonName + " request " + requestId + ": " + error;
@@ -90,7 +91,7 @@ Item {
         const id = "subscribe-" + (++subscriptionSequence);
         setPending(id, true);
         try {
-            client.subscribeExtra(id, streamNames);
+            DaemonSessions.subscribe(daemonName, sharedConsumerId, id, streamNames, false);
             return id;
         } catch (error) {
             setPending(id, false);
@@ -181,17 +182,36 @@ Item {
         eventReceived(event);
     }
 
-    JsonlDaemonClient {
-        id: client
-        daemonName: backend.daemonName
-        streams: backend.streams
-        active: backend.active
-        recoverProtocolErrors: backend.recoverProtocolErrors
-        onResponse: function (id, envelope, transportError) {
-            backend.acceptResponse(id, envelope, transportError);
-        }
-        onEventReceived: function (event) { backend.acceptEvent(event); }
-        onTransportFailed: function (message) { backend.failTransport(message); }
-        onReadyChanged: if (ready) backend.transportReady()
+    function acceptSharedResponse(id: string, envelope: var, transportError: string): void {
+        acceptResponse(id, envelope, transportError);
     }
+
+    function acceptSharedEvent(event: var): void {
+        acceptEvent(event);
+    }
+
+    function failSharedTransport(message: string): void {
+        failTransport(message);
+    }
+
+    function updateSharedSession(): void {
+        if (!sharedConsumerId)
+            return;
+        DaemonSessions.update(daemonName, sharedConsumerId, active, streams,
+            recoverProtocolErrors);
+    }
+
+    Component.onCompleted: {
+        sharedConsumerId = DaemonSessions.attach(backend);
+        if (ready)
+            transportReady();
+    }
+    Component.onDestruction: {
+        if (sharedConsumerId)
+            DaemonSessions.detach(daemonName, sharedConsumerId);
+    }
+    onActiveChanged: updateSharedSession()
+    onStreamsChanged: updateSharedSession()
+    onRecoverProtocolErrorsChanged: updateSharedSession()
+    onReadyChanged: if (ready) transportReady()
 }

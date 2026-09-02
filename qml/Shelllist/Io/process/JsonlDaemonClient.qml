@@ -9,6 +9,7 @@ Item {
     required property var streams
     required property bool active
     property bool ready
+    property bool automaticSubscribe: true
     required property bool recoverProtocolErrors
     property var queuedLines: []
     property var counters: ({ sequence: 0, retryAttempt: 0 })
@@ -47,7 +48,7 @@ Item {
             return;
         if (ready) {
             try {
-                if (subscriptionId.length > 0)
+                if (automaticSubscribe && subscriptionId.length > 0)
                     cancel("cancel-subscription-" + (++counters.sequence), subscriptionId);
                 send({ id: "shutdown-" + (++counters.sequence), op: "shutdown" });
             } catch (error) {
@@ -184,7 +185,8 @@ Item {
             console.info("shelllist transport started daemon=" + client.daemonName);
             client.ready = true;
             try {
-                client.subscribe();
+                if (client.automaticSubscribe)
+                    client.subscribe();
                 client.flushQueue();
             } catch (error) {
                 client.recover("Could not initialize " + client.daemonName + " client: " + error);
