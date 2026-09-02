@@ -10,21 +10,11 @@ Item {
     required property BarController controller
     required property string screenName
     required property int layoutDensity
-    readonly property int activeWorkspaceId: Presentation.activeWorkspaceId(
+    readonly property var workspaceIds: Presentation.workspaceIds(
         controller.workspaces, screenName)
-    readonly property Item activeButton: {
-        activeWorkspaceId;
-        workspaceRepeater.count;
-        for (let index = 0; index < workspaceRepeater.count; index++) {
-            const candidate = workspaceRepeater.itemAt(index);
-            // Repeater.itemAt() is typed as Item; every delegate is a WorkspaceButton.
-            // qmllint disable missing-property
-            if (candidate && candidate.workspaceId === activeWorkspaceId)
-                return candidate;
-            // qmllint enable missing-property
-        }
-        return null;
-    }
+    readonly property int activeWorkspaceIndex: Presentation.activeWorkspaceIndex(
+        controller.workspaces, screenName)
+    readonly property int workspaceButtonWidth: layoutDensity >= 2 ? 23 : 27
 
     implicitWidth: workspaceRow.implicitWidth
     implicitHeight: 51
@@ -41,15 +31,16 @@ Item {
     }
 
     Rectangle {
-        x: root.activeButton ? workspaceRow.x + root.activeButton.x : workspaceRow.leftPadding
+        x: workspaceRow.leftPadding + Math.max(0, root.activeWorkspaceIndex)
+            * (root.workspaceButtonWidth + workspaceRow.spacing)
         anchors.verticalCenter: parent.verticalCenter
-        width: root.activeButton ? root.activeButton.width : 0
+        width: root.activeWorkspaceIndex >= 0 ? root.workspaceButtonWidth : 0
         height: root.layoutDensity >= 2 ? 27 : 31
         radius: 0
         color: Ui.Theme.mix(Ui.Theme.selected, Ui.Theme.accent, Ui.Theme.dark ? 0.18 : 0.10)
         border.width: 1
         border.color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.68)
-        opacity: root.activeButton ? 1 : 0
+        opacity: root.activeWorkspaceIndex >= 0 ? 1 : 0
 
         Behavior on x {
             enabled: !Ui.Theme.noAnimations
@@ -81,7 +72,7 @@ Item {
 
         Repeater {
             id: workspaceRepeater
-            model: Presentation.workspaceIds(root.controller.workspaces, root.screenName)
+            model: root.workspaceIds
 
             delegate: WorkspaceButton {
                 required property int modelData

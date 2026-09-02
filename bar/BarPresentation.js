@@ -31,6 +31,10 @@ function activeWorkspaceId(state, monitorName) {
     return monitor ? monitor.active_workspace_id : 0;
 }
 
+function activeWorkspaceIndex(state, monitorName) {
+    return workspaceIds(state, monitorName).indexOf(activeWorkspaceId(state, monitorName));
+}
+
 function workspaceGlyph(workspaceId) {
     return workspaceId === 1 ? "󰊠" : workspaceId > 5 ? String(workspaceId) : "";
 }
