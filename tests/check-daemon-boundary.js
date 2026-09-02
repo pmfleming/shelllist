@@ -18,6 +18,8 @@ if (!startFailure || !/queuedLines\s*=\s*\[\]/.test(startFailure[0]))
 const exitHandler = transport.match(/onExited:[\s\S]*?\n\s*\}/);
 if (!exitHandler || !/queuedLines\s*=\s*\[\]/.test(exitHandler[0]))
     throw new Error("daemon exit does not retire queued requests");
+if (!/environment:\s*\(\{\s*TOKIO_WORKER_THREADS:\s*"1"\s*\}\)/.test(transport))
+    throw new Error("daemon bridge clients are not constrained to one Tokio worker");
 
 const backend = source("qml/Shelllist/Io/DaemonBackend.qml");
 for (const token of ["required property string expectedProtocol",

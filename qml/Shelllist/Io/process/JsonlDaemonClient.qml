@@ -172,6 +172,12 @@ Item {
     Process {
         id: process
         stdinEnabled: true
+        // Tokio's default multi-thread runtime otherwise creates one worker per
+        // logical CPU for each lightweight JSONL-to-D-Bus bridge process. QML's
+        // object literal reaches Process's QVariantHash correctly at runtime.
+        // qmllint disable incompatible-type
+        environment: ({ TOKIO_WORKER_THREADS: "1" })
+        // qmllint enable incompatible-type
         stdout: SplitParser { splitMarker: "\n"; onRead: function (line) { client.handleLine(line); } }
         stderr: StdioCollector { id: processError; waitForEnd: true }
         onStarted: {
