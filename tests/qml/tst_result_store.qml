@@ -69,10 +69,44 @@ TestCase {
         compare(store.count, 0);
     }
 
+    function test_keepsBaselineWhileRustRankingIsPending() {
+        store.replaceProviderResults("test", [
+            result("first", "First", 20), result("second", "Second", 10)
+        ], true);
+
+        store.queryText = "no-synchronous-match";
+        compare(store.count, 2);
+        compare(store.visibleModel.get(0).resultData.id, "first");
+
+        const generation = store.searchGeneration;
+        store.applyRustRanking(store.searchOwner, generation, ["test::second"]);
+        compare(store.count, 1);
+        compare(store.visibleModel.get(0).resultData.id, "second");
+    }
+
+    function test_largeReorderKeepsModelCorrect() {
+        const initial = [];
+        const reordered = [];
+        for (let index = 0; index < 100; index++) {
+            initial.push(result("item-" + index, "Item " + index, index));
+            reordered.push(result("item-" + index, "Item " + index, 100 - index));
+        }
+        store.replaceProviderResults("test", initial, true);
+        store.replaceProviderResults("test", reordered, false);
+
+        compare(store.visibleModel.count, 100);
+        compare(store.visibleModel.get(0).resultData.id, "item-0");
+        compare(store.visibleModel.get(99).resultData.id, "item-99");
+    }
+
     Core.ProviderRegistry {
         id: providerRegistry
         Core.Provider { providerId: "test"; displayName: "Test" }
     }
-    Core.ResultStore { id: store; registry: providerRegistry }
+    Core.ResultStore {
+        id: store
+        registry: providerRegistry
+        rankRequestsEnabled: false
+    }
     SignalSpy { id: staleSpy; target: store; signalName: "staleBatchIgnored" }
 }

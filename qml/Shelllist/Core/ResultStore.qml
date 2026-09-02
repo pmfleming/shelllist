@@ -12,9 +12,18 @@ Item {
     property int searchGeneration: 0
     property int appliedSearchGeneration: -1
     property var rustRankedResults: []
+    property int maximumIncrementalOrderChanges: 32
+    property bool rankRequestsEnabled: true
     readonly property bool fuzzyQuery: queryText.trim().length > 0
-    readonly property var visibleResults: fuzzyQuery && appliedSearchGeneration === searchGeneration
-        ? rustRankedResults : Model.rankResults(sourceResults, queryText)
+    readonly property var baselineResults: Model.rankResults(sourceResults, "")
+    // Fuzzy work belongs to the Rust matcher. While a request is pending, keep
+    // the previous keyed model (or the unfiltered baseline for the first edit)
+    // instead of ranking the same catalog synchronously on the UI thread.
+    readonly property var visibleResults: fuzzyQuery
+        ? appliedSearchGeneration === searchGeneration
+            ? rustRankedResults
+            : rustRankedResults.length > 0 ? rustRankedResults : baselineResults
+        : baselineResults
     readonly property var visibleModel: visibleListModel
     readonly property int count: visibleResults.length
 
@@ -27,8 +36,13 @@ Item {
     function requestRustRanking(): void {
         searchGeneration += 1;
         appliedSearchGeneration = -1;
-        rustRankedResults = [];
-        if (fuzzyQuery)
+        if (!fuzzyQuery) {
+            rustRankedResults = [];
+            return;
+        }
+        if (rustRankedResults.length === 0)
+            rustRankedResults = baselineResults;
+        if (rankRequestsEnabled)
             SearchService.rank(searchOwner, searchGeneration, queryText, sourceResults);
     }
 
@@ -122,24 +136,69 @@ Item {
         activeQueryId = "";
     }
 
-    function modelIndexFor(key: string, startIndex: int): int {
-        for (let index = startIndex; index < visibleListModel.count; index++)
-            if (visibleListModel.get(index).resultKey === key)
-                return index;
-        return -1;
+    function rebuildVisibleModel(): void {
+        visibleListModel.clear();
+        for (let index = 0; index < visibleResults.length; index++) {
+            const result = visibleResults[index];
+            visibleListModel.append({ resultKey: result.key, resultData: result });
+        }
+    }
+
+    function currentModelOrder(): var {
+        const keys = [];
+        for (let index = 0; index < visibleListModel.count; index++)
+            keys.push(visibleListModel.get(index).resultKey);
+        return keys;
+    }
+
+    function orderChangeCount(currentKeys: var): int {
+        const largest = Math.max(currentKeys.length, visibleResults.length);
+        let changed = Math.abs(currentKeys.length - visibleResults.length);
+        const shared = Math.min(currentKeys.length, visibleResults.length);
+        for (let index = 0; index < shared; index++) {
+            if (currentKeys[index] !== visibleResults[index].key)
+                changed += 1;
+            if (changed > maximumIncrementalOrderChanges)
+                return changed;
+        }
+        return Math.min(changed, largest);
+    }
+
+    function refreshIndexes(keys: var, indexes: var, from: int, to: int): void {
+        const first = Math.max(0, Math.min(from, to));
+        const last = Math.min(keys.length - 1, Math.max(from, to));
+        for (let index = first; index <= last; index++)
+            indexes[keys[index]] = index;
     }
 
     function syncVisibleModel(): void {
+        const keys = currentModelOrder();
+        if (orderChangeCount(keys) > maximumIncrementalOrderChanges) {
+            rebuildVisibleModel();
+            return;
+        }
+
+        const indexes = ({});
+        for (let index = 0; index < keys.length; index++)
+            indexes[keys[index]] = index;
+
         for (let desiredIndex = 0; desiredIndex < visibleResults.length; desiredIndex++) {
             const desired = visibleResults[desiredIndex];
-            const currentIndex = modelIndexFor(desired.key, desiredIndex);
-            if (currentIndex < 0) {
-                visibleListModel.insert(desiredIndex, { resultKey: desired.key, resultData: desired });
-            } else {
-                if (currentIndex !== desiredIndex)
-                    visibleListModel.move(currentIndex, desiredIndex, 1);
-                visibleListModel.setProperty(desiredIndex, "resultData", desired);
+            const found = indexes[desired.key];
+            if (found === undefined) {
+                visibleListModel.insert(desiredIndex,
+                    { resultKey: desired.key, resultData: desired });
+                keys.splice(desiredIndex, 0, desired.key);
+                refreshIndexes(keys, indexes, desiredIndex, keys.length - 1);
+                continue;
             }
+            const currentIndex = Number(found);
+            if (currentIndex !== desiredIndex) {
+                visibleListModel.move(currentIndex, desiredIndex, 1);
+                keys.splice(desiredIndex, 0, keys.splice(currentIndex, 1)[0]);
+                refreshIndexes(keys, indexes, currentIndex, desiredIndex);
+            }
+            visibleListModel.setProperty(desiredIndex, "resultData", desired);
         }
         if (visibleListModel.count > visibleResults.length)
             visibleListModel.remove(visibleResults.length, visibleListModel.count - visibleResults.length);
