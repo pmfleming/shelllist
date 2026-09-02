@@ -153,14 +153,28 @@ Item {
     function selectedEntryMatches(id: string, revision: var): bool {
         return !!selectedEntry && selectedEntry.id === id && selectedEntry.revision === revision;
     }
+    function cancelPreviewRequests(): void {
+        if (requestId.length > 0)
+            daemonBackend.cancelRequest(requestId);
+        if (thumbnailRequestId.length > 0)
+            daemonBackend.cancelRequest(thumbnailRequestId);
+        requestId = "";
+        thumbnailRequestId = "";
+    }
+    function clearPreview(): void {
+        cancelPreviewRequests();
+        value = null; thumbnail = null; error = ""; loading = false;
+        entryId = ""; entryRevision = -1;
+    }
     function clear(): void {
+        loadTimer.stop();
         autoSaveTimer.stop();
+        cancelPreviewRequests();
         editing = false; editBeginPending = false; editDirty = false; editIsDirect = false; editorFocused = false;
         saveInFlight = false; savingDirectEdit = false; pasteAfterSave = false;
         editId = ""; editDraft = ""; committedDraft = "";
         value = null; thumbnail = null; error = ""; loading = false;
         entryId = ""; replacedSourceIds = []; entryRevision = -1;
-        requestId = ""; thumbnailRequestId = "";
     }
     function alreadyLoaded(entry: var): bool {
         return (loading && entryId === entry.id && entryRevision === entry.revision)
@@ -196,8 +210,18 @@ Item {
     function selectionChanged(): void {
         if (editOperationActive && selectedEntryId === entryId)
             return;
-        if (editing)
-            editIsDirect && editDirty ? commitEdit() : cancelEdit();
+        if (editing) {
+            if (editIsDirect && editDirty) {
+                commitEdit();
+                cancelPreviewRequests();
+                value = null; thumbnail = null; error = ""; loading = false;
+                return;
+            }
+            cancelEdit();
+        }
+        // Drop stale content immediately, but wait briefly before asking the
+        // daemon so key-repeat navigation does not decode every image crossed.
+        clearPreview();
         scheduleLoad();
     }
     function applyDetails(id: string, nextValue: var): void {
@@ -243,6 +267,6 @@ Item {
         }
         return id.indexOf("details-") === 0 || id.indexOf("thumbnail-") === 0;
     }
-    Timer { id: loadTimer; interval: 0; repeat: false; onTriggered: detailsController.load() }
+    Timer { id: loadTimer; interval: 65; repeat: false; onTriggered: detailsController.load() }
     Timer { id: autoSaveTimer; interval: 650; repeat: false; onTriggered: detailsController.commitEdit() }
 }
