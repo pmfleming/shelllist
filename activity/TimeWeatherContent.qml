@@ -12,8 +12,10 @@ Ui.ProviderChooserSurface {
     chooserController: controller
     surfaceName: "Time & Weather"
     navigationEnabled: !controller.navigationHelpOpen
-    refreshEnabled: !controller.activity.syncing
+        && !controller.screenshotInFlight
+    refreshEnabled: !controller.activity.syncing && !controller.screenshotInFlight
     detailsTabEnabled: controller.detailsOpen && controller.hasSelection
+        && navigationEnabled
     helpEnabled: controller.uiActive
     helpEntries: [
         { keys: "Right", action: "Expand the selected city" },
@@ -31,6 +33,7 @@ Ui.ProviderChooserSurface {
         TimeWeatherDetails {
             controller: content.controller
             now: content.now
+            uiScale: content.uiScale
         }
     }
 

@@ -3,62 +3,61 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 
-Item {
-    id: details
+Ui.ActionDetailsPane {
+    id: pane
 
     required property TimeWeatherController controller
     required property date now
     readonly property var city: controller.selectedCity
-    readonly property real uiScale: Ui.Theme.densityScale(height,
-        controller.contentVerticalMargin)
+    readonly property int footerHeight: Math.max(36,
+        Math.round(Ui.Theme.controlHeight * uiScale))
 
-    Column {
+    chooserController: controller
+    emptyText: "Select a city"
+    headerHeight: Math.max(58, Math.round(66 * uiScale))
+    controlHeight: footerHeight
+    icon: city.home ? "󰋜" : "󰍎"
+    iconColor: Ui.Theme.accent
+    title: city.label || "City"
+    subtitle: city.timezone || "Timezone unavailable"
+
+    Ui.TabbedDetailsStack {
         anchors.fill: parent
-        spacing: Ui.Theme.spacingMd
+        footerHeight: pane.footerHeight
+        sectionSpacing: pane.sectionSpacing
+        selectedValue: pane.controller.detailsTab
+        tabs: [
+            { value: "time", icon: "󰥔", label: "Time" },
+            { value: "weather", icon: "󰖐", label: "Weather" }
+        ]
+        onSelected: function (value) { pane.controller.setDetailsTab(value); }
 
-        Ui.DetailsHeader {
-            width: parent.width
-            uiScale: details.uiScale
-            icon: details.controller.detailsTab === "time" ? "󰥔" : "󰖐"
-            iconColor: Ui.Theme.accent
-            title: details.city.label || "City"
-            subtitle: details.city.timezone || "Timezone unavailable"
-        }
-
-        Ui.SegmentedControl {
-            width: parent.width
-            height: Ui.Theme.compactControlHeight
-            options: [
-                { value: "time", label: "Time" },
-                { value: "weather", label: "Weather" }
-            ]
-            value: details.controller.detailsTab
-            onSelected: function (value) { details.controller.setDetailsTab(value); }
+        Loader {
+            anchors.fill: parent
+            active: pane.controller.detailsTab === "time"
+            asynchronous: true
+            sourceComponent: Component {
+                TimeWeatherTimePane {
+                    city: pane.city
+                    now: pane.now
+                }
+            }
         }
 
         Loader {
-            width: parent.width
-            height: parent.height - y
-            active: details.controller.detailsOpen
-            sourceComponent: details.controller.detailsTab === "time"
-                ? timeComponent : details.city.has_weather
-                    ? weatherComponent : noWeatherComponent
-        }
-    }
-
-    Component {
-        id: timeComponent
-        TimeWeatherTimePane {
-            city: details.city
-            now: details.now
+            anchors.fill: parent
+            active: pane.controller.detailsTab === "weather"
+            asynchronous: true
+            sourceComponent: pane.city.has_weather
+                ? weatherComponent : noWeatherComponent
         }
     }
 
     Component {
         id: weatherComponent
         ActivityWeatherPane {
-            controller: details.controller
-            now: details.now
+            controller: pane.controller
+            now: pane.now
             showLocationRail: false
         }
     }
@@ -67,7 +66,7 @@ Item {
         id: noWeatherComponent
         Ui.CenteredMessage {
             text: "Weather is not configured for "
-                + String(details.city.label || "this city")
+                + String(pane.city.label || "this city")
         }
     }
 }

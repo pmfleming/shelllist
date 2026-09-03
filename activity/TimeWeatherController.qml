@@ -1,4 +1,5 @@
 import QtQuick
+import Shelllist.Ui as Ui
 
 ActivityController {
     id: controller
@@ -6,6 +7,7 @@ ActivityController {
     property string detailsTab: "time"
     property string filterText: ""
     property double currentTimeMs: Date.now()
+    screenshotStartMessage: "Capturing Time & Weather window…"
     rangeQueriesEnabled: false
     notificationHistoryEnabled: false
     readonly property var cities: combinedCities()
@@ -20,11 +22,11 @@ ActivityController {
     detailSection: "weather"
     closedWidthFraction: 0
     openWidthFraction: 0
-    minimumClosedWindowWidth: 560
-    maximumClosedWindowWidth: 560
-    minimumOpenWindowWidth: 1240
-    maximumOpenWindowWidth: 1240
-    surfaceHeightRatio: 0.82
+    minimumClosedWindowWidth: Ui.Theme.popupClosedWidth
+    maximumClosedWindowWidth: Ui.Theme.popupClosedWidth
+    minimumOpenWindowWidth: Ui.Theme.popupOpenWidth
+    maximumOpenWindowWidth: Ui.Theme.popupOpenWidth
+    surfaceHeightRatio: Ui.Theme.popupHeightRatio
     surfaceTopInset: 0
     surfaceAlignment: "center"
 
@@ -163,6 +165,7 @@ ActivityController {
         deactivateUiState();
         detailsOpen = false;
         filterText = "";
+        screenshotStatus = "";
     }
 
     onCitiesChanged: Qt.callLater(rebuildCityModel)

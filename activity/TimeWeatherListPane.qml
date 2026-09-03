@@ -14,15 +14,18 @@ Ui.ChooserListPane {
     icon: "󰅐"
     powered: true
     refreshing: controller.activity.syncing
-    busy: controller.activity.syncing
+    busy: controller.activity.syncing || controller.screenshotInFlight
     powerEnabled: false
-    refreshEnabled: !controller.activity.syncing
+    refreshEnabled: !controller.activity.syncing && !controller.screenshotInFlight
+    iconActionEnabled: !controller.screenshotInFlight
     filterText: controller.filterText
-    status: controller.activity.syncing ? "Updating time and weather…"
-        : controller.cities.length + (controller.cities.length === 1 ? " city" : " cities")
+    status: controller.screenshotStatus.length > 0 ? controller.screenshotStatus
+        : (controller.activity.syncing ? "Updating time and weather…"
+        : controller.cities.length + (controller.cities.length === 1 ? " city" : " cities"))
     listInset: Math.round(12 * densityScale)
     focusOnCompleted: true
     refreshHandler: function () { controller.refresh(); }
+    onIconClicked: controller.screenshotRequested()
 
     rowDelegate: Component {
         TimeWeatherListRow {

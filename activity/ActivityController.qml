@@ -34,6 +34,7 @@ Ui.ChooserController {
     property string notificationFilter: "All"
     property string weatherLocationId: ""
     property string screenshotStatus: ""
+    property string screenshotStartMessage: "Capturing Activity panel…"
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
 
     detailsOpen: false
@@ -320,7 +321,7 @@ Ui.ChooserController {
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture
         active: controller.uiActive
-        startMessage: "Capturing Activity panel…"
+        startMessage: controller.screenshotStartMessage
         onStatusChanged: function (message) {
             controller.screenshotStatus = message;
             if (!inFlight)
