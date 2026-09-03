@@ -12,15 +12,32 @@ Rectangle {
     property real latitude: 0
     property real longitude: 0
     property bool hasCoordinates: false
-    readonly property string selectedOffsetPath: Geometry.pathForOffset(offsetSeconds, now.getTime())
+    readonly property string selectedLandPath: Geometry.landPathForOffset(offsetSeconds,
+        now.getTime())
+    readonly property var selectedOceanBand: Geometry.oceanBandForOffset(offsetSeconds)
+    readonly property bool hasSelectedRegions: selectedLandPath.length > 0
+        || selectedOceanBand.width > 0
 
     function selectedOffsetSource(): string {
-        if (selectedOffsetPath.length === 0)
+        if (!hasSelectedRegions)
             return "";
+        const accent = String(Ui.Theme.accent);
+        const outline = String(Ui.Theme.text);
+        let regions = "";
+        if (selectedOceanBand.width > 0) {
+            regions += "<defs><mask id='ocean'><rect width='720' height='360' fill='white'/>"
+                + "<path d='" + Geometry.landMaskPath() + "' fill='black'/></mask></defs>"
+                + "<rect x='" + selectedOceanBand.x + "' width='" + selectedOceanBand.width
+                + "' height='360' fill='" + accent + "' fill-opacity='.48' stroke='" + outline
+                + "' stroke-width='1.4' vector-effect='non-scaling-stroke' mask='url(#ocean)'/>";
+        }
+        if (selectedLandPath.length > 0) {
+            regions += "<path d='" + selectedLandPath + "' fill='" + accent
+                + "' fill-opacity='.48' stroke='" + outline
+                + "' stroke-width='1.8' vector-effect='non-scaling-stroke'/>";
+        }
         const svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 360'>"
-            + "<path d='" + selectedOffsetPath + "' fill='" + String(Ui.Theme.accent)
-            + "' fill-opacity='.48' stroke='" + String(Ui.Theme.text)
-            + "' stroke-width='1.8' vector-effect='non-scaling-stroke'/></svg>";
+            + regions + "</svg>";
         return "data:image/svg+xml," + encodeURIComponent(svg);
     }
 
@@ -100,7 +117,7 @@ Rectangle {
             smooth: true
             mipmap: true
             asynchronous: false
-            visible: map.selectedOffsetPath.length > 0
+            visible: map.hasSelectedRegions
             Accessible.ignored: true
         }
 
