@@ -704,6 +704,15 @@
             touch $out
           '';
 
+          typescript = pkgs.runCommand "shelllist-typescript-current"
+            {
+              nativeBuildInputs = [ pkgs.nodejs pkgs.typescript ];
+            } ''
+            node ${./.}/tools/build-typescript.mjs --check
+            tsc --project ${./.}/tsconfig.json
+            touch $out
+          '';
+
           weatherPresentation = pkgs.runCommand "shelllist-weather-presentation"
             {
               nativeBuildInputs = [ pkgs.nodejs ];
@@ -1011,6 +1020,8 @@
         default = pkgs.mkShell {
           packages = [
             pkgs.nixpkgs-fmt
+            pkgs.nodejs
+            pkgs.typescript
             pkgs.qt6.qtdeclarative # qmlformat, qmllint
             pkgs.quickshell
             pkgs.shellcheck

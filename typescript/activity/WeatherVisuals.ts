@@ -1,7 +1,12 @@
-.pragma library
+type Numeric = number | string | null | undefined;
 
-"use strict";
-const ICON_BY_CODE = {
+interface MoonPhase {
+    name: string;
+    illumination: number;
+    age_days: number;
+}
+
+const ICON_BY_CODE: Readonly<Record<number, string>> = {
     0: "clear", 1: "partly-cloudy", 2: "partly-cloudy", 3: "overcast",
     45: "fog", 48: "fog",
     51: "drizzle", 52: "drizzle", 53: "drizzle", 54: "drizzle", 55: "drizzle",
@@ -13,28 +18,34 @@ const ICON_BY_CODE = {
     98: "thunderstorms", 99: "thunderstorms"
 };
 const PERIOD_ICONS = ["clear", "partly-cloudy", "overcast", "fog", "thunderstorms"];
-function iconName(code, isDay) {
+
+function iconName(code: Numeric, isDay?: boolean | null): string {
     const name = ICON_BY_CODE[Number(code)] || "not-available";
     if (PERIOD_ICONS.indexOf(name) < 0)
         return name;
     const daytime = isDay === undefined || isDay === null ? true : !!isDay;
     return name + (daytime ? "-day" : "-night");
 }
-function shiftedDate(unixMs, utcOffsetSeconds) {
+
+function shiftedDate(unixMs: Numeric, utcOffsetSeconds: Numeric): Date {
     return new Date(Number(unixMs || 0) + Number(utcOffsetSeconds || 0) * 1000);
 }
-function twoDigits(value) {
+
+function twoDigits(value: Numeric): string {
     return String(value).padStart(2, "0");
 }
-function localTime(unixMs, utcOffsetSeconds) {
+
+function localTime(unixMs: Numeric, utcOffsetSeconds: Numeric): string {
     const value = shiftedDate(unixMs, utcOffsetSeconds);
     return twoDigits(value.getUTCHours()) + ":" + twoDigits(value.getUTCMinutes());
 }
-function localDay(unixMs, utcOffsetSeconds) {
+
+function localDay(unixMs: Numeric, utcOffsetSeconds: Numeric): string {
     const names = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
     return names[shiftedDate(unixMs, utcOffsetSeconds).getUTCDay()];
 }
-function localDate(unixMs, utcOffsetSeconds) {
+
+function localDate(unixMs: Numeric, utcOffsetSeconds: Numeric): string {
     const value = shiftedDate(unixMs, utcOffsetSeconds);
     const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const months = ["January", "February", "March", "April", "May", "June",
@@ -42,20 +53,23 @@ function localDate(unixMs, utcOffsetSeconds) {
     return weekdays[value.getUTCDay()] + ", " + value.getUTCDate() + " "
         + months[value.getUTCMonth()] + " " + value.getUTCFullYear();
 }
-function utcOffset(utcOffsetSeconds) {
+
+function utcOffset(utcOffsetSeconds: Numeric): string {
     const totalMinutes = Math.round(Number(utcOffsetSeconds || 0) / 60);
     const sign = totalMinutes >= 0 ? "+" : "−";
     const absolute = Math.abs(totalMinutes);
     return "UTC" + (absolute === 0 ? "" : sign + Math.floor(absolute / 60)
         + (absolute % 60 ? ":" + twoDigits(absolute % 60) : ""));
 }
-function duration(seconds) {
+
+function duration(seconds: Numeric): string {
     const totalMinutes = Math.max(0, Math.round(Number(seconds || 0) / 60));
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     return hours + " h " + twoDigits(minutes) + " min";
 }
-function moonPhase(unixMs) {
+
+function moonPhase(unixMs: Numeric): MoonPhase {
     const synodicMonth = 29.530588853;
     const referenceNewMoon = Date.UTC(2000, 0, 6, 18, 14, 0);
     const days = (Number(unixMs || Date.now()) - referenceNewMoon) / 86400000;
@@ -66,12 +80,14 @@ function moonPhase(unixMs) {
         "Full moon", "Waning gibbous", "Last quarter", "Waning crescent"];
     return { name: names[Math.round(fraction * 8) % 8], illumination, age_days: age };
 }
-function windCompass(degrees) {
+
+function windCompass(degrees: Numeric): string {
     const names = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
     const normalized = ((Number(degrees || 0) % 360) + 360) % 360;
     return names[Math.round(normalized / 45) % names.length];
 }
-function heroColors(code, isDay) {
+
+function heroColors(code: Numeric, isDay: boolean): string[] {
     const value = Number(code);
     if (!isDay)
         return ["#111c3a", "#18243d"];

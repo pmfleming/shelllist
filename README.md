@@ -235,6 +235,8 @@ shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml activity/*.qml \
   wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-bar-presentation.js bar/BarPresentation.js
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
+node tools/build-typescript.mjs --check
+tsc --project tsconfig.json
 tests/run-qml-tests.sh
 tests/run-performance-benchmarks.sh
 # With the installed resident host hidden:

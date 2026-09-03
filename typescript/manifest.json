@@ -1,0 +1,6 @@
+[
+  {
+    "source": "typescript/activity/WeatherVisuals.ts",
+    "output": "activity/WeatherVisuals.js"
+  }
+]
