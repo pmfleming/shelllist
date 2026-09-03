@@ -256,7 +256,7 @@ Ui.DetailFlickable {
     Rectangle {
         id: timezoneCard
         width: parent.width
-        height: 188
+        height: 310
         radius: Ui.Theme.panelRadius
         color: Ui.Theme.surface
         border.color: Ui.Theme.border
@@ -294,79 +294,19 @@ Ui.DetailFlickable {
             font.weight: Ui.Theme.fontWeightDemiBold
         }
 
-        Item {
-            id: offsetRail
+        TimezoneMap {
             anchors.left: parent.left
             anchors.right: parent.right
+            anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.leftMargin: Ui.Theme.spacingMd
             anchors.rightMargin: Ui.Theme.spacingMd
+            anchors.topMargin: 74
             anchors.bottomMargin: Ui.Theme.spacingMd
-            height: 74
-            readonly property real offsetHours: pane.offsetSeconds / 3600
-            readonly property real markerX: Math.max(0, Math.min(width,
-                (offsetHours + 12) / 26 * width))
-
-            Row {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                height: 30
-                spacing: 1
-                Repeater {
-                    model: 26
-                    Rectangle {
-                        required property int index
-                        width: (offsetRail.width - 25) / 26
-                        height: parent.height
-                        color: index % 2 === 0
-                            ? Ui.Theme.withAlpha(Ui.Theme.accent, 0.24)
-                            : Ui.Theme.withAlpha(Ui.Theme.warning, 0.20)
-                    }
-                }
-            }
-            Rectangle {
-                x: offsetRail.markerX - 1
-                y: -5
-                width: 3
-                height: 45
-                radius: 2
-                color: Ui.Theme.accent
-            }
-            Text {
-                x: Math.max(0, Math.min(parent.width - width,
-                    offsetRail.markerX - width / 2))
-                y: 40
-                text: pane.city.abbreviation || Visuals.utcOffset(pane.offsetSeconds)
-                color: Ui.Theme.accent
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeCaption
-                font.weight: Ui.Theme.fontWeightBold
-            }
-            Text {
-                anchors.left: parent.left
-                y: 40
-                text: "−12"
-                color: Ui.Theme.subtleText
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: 9
-            }
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 40
-                text: "UTC"
-                color: Ui.Theme.subtleText
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: 9
-            }
-            Text {
-                anchors.right: parent.right
-                y: 40
-                text: "+14"
-                color: Ui.Theme.subtleText
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: 9
-            }
+            now: pane.now
+            offsetSeconds: pane.offsetSeconds
+            timezoneName: pane.city.timezone || ""
+            abbreviation: pane.city.abbreviation || ""
         }
     }
 }

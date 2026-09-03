@@ -22,10 +22,13 @@ equal(context.localTime(0, -5 * 3600), "19:00", "negative location offset");
 equal(context.localTime(0, 5.5 * 3600), "05:30", "fractional location offset");
 equal(context.utcOffset(-5 * 3600), "UTC−5", "negative UTC offset");
 equal(context.utcOffset(5.5 * 3600), "UTC+5:30", "fractional UTC offset");
+equal(context.timezonePosition(-12 * 3600), 0, "western map edge");
+equal(context.timezonePosition(14 * 3600), 1, "eastern map edge");
+equal(context.timezonePosition(3600), 0.5, "timezone map position");
 equal(context.duration(13 * 3600 + 32 * 60), "13 h 32 min", "day length");
 equal(context.moonPhase(Date.UTC(2000, 0, 6, 18, 14)).name,
     "New moon", "known new moon");
 equal(context.windCompass(315), "NW", "wind direction");
 equal(context.windCompass(359), "N", "wrapped wind direction");
 
-console.log("weather presentation: artwork, local times, and wind direction passed");
+console.log("weather presentation: artwork, local times, timezone maps, and wind direction passed");

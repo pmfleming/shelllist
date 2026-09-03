@@ -11,6 +11,7 @@ internal TimeWeatherDetails TimeWeatherDetails.qml
 internal TimeWeatherListPane TimeWeatherListPane.qml
 internal TimeWeatherListRow TimeWeatherListRow.qml
 internal TimeWeatherTimePane TimeWeatherTimePane.qml
+internal TimezoneMap TimezoneMap.qml
 ActivityBackend 1.0 ActivityBackend.qml
 ActivityContent 1.0 ActivityContent.qml
 ActivityController 1.0 ActivityController.qml
