@@ -12,11 +12,15 @@ function source(relative) {
 }
 
 const transport = source("qml/Shelllist/Io/process/JsonlDaemonClient.qml");
+function clearsQueue(block) {
+    return /(?:queuedLines\s*=\s*\[\]|clearQueue\(\))/.test(block);
+}
+
 const startFailure = transport.match(/catch \(error\) \{[\s\S]*?Could not start/);
-if (!startFailure || !/queuedLines\s*=\s*\[\]/.test(startFailure[0]))
+if (!startFailure || !clearsQueue(startFailure[0]))
     throw new Error("daemon start failure does not retire queued requests");
 const exitHandler = transport.match(/onExited:[\s\S]*?\n\s*\}/);
-if (!exitHandler || !/queuedLines\s*=\s*\[\]/.test(exitHandler[0]))
+if (!exitHandler || !clearsQueue(exitHandler[0]))
     throw new Error("daemon exit does not retire queued requests");
 if (!/environment:\s*\(\{\s*TOKIO_WORKER_THREADS:\s*"1"\s*\}\)/.test(transport))
     throw new Error("daemon bridge clients are not constrained to one Tokio worker");
