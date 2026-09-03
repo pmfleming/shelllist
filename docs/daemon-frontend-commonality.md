@@ -27,7 +27,7 @@ Common infrastructure does not interpret domain payloads. In particular:
 
 - Wi-Fi keeps typed connection, secret, hotspot, VPN, and statistics transitions;
 - Bluetooth keeps pairing and cancellable device-operation state;
-- clipboard keeps history pagination, edit sessions, and wipe confirmation;
+- clipboard keeps history pagination, edit sessions, validated multi-entry deletion, and wipe confirmation;
 - applications keep catalog generation, lifecycle operations, and resource history;
 - the top bar keeps OSD and notification presentation.
 

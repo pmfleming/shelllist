@@ -11,16 +11,21 @@ Ui.ProviderChooserSurface {
     surfaceName: "Clipboard"
     readonly property var selectedEntry: content.controller.selectedEntry || ({})
     readonly property bool actionsEnabled: content.controller.uiActive
-        && content.controller.hasSelection && !content.controller.actionInFlight
-        && !content.controller.wipeChallenge && !content.controller.navigationHelpOpen
+        && content.controller.hasSelection && !content.controller.multiSelectMode
+        && !content.controller.deleteMenuOpen
+        && !content.controller.actionInFlight && !content.controller.wipeChallenge
+        && !content.controller.navigationHelpOpen
     navigationEnabled: !content.controller.navigationHelpOpen
     refreshEnabled: !content.controller.actionInFlight && !content.controller.navigationHelpOpen
-    helpEnabled: content.controller.uiActive && !content.controller.detailState.editorFocused
-        && !content.controller.deleteConfirmationOpen && !content.controller.wipeChallenge
+    helpEnabled: content.controller.uiActive && !content.controller.multiSelectMode
+        && !content.controller.deleteMenuOpen && !content.controller.detailState.editorFocused
+        && !content.controller.deleteConfirmationOpen
+        && !content.controller.bulkDeleteConfirmationOpen && !content.controller.wipeChallenge
     helpEntries: [
         { keys: "Ctrl+Enter", action: "Copy without pasting" },
         { keys: "Shift+Enter", action: "Paste an image as a file" },
         { keys: "Delete", action: "Delete the selected entry" },
+        { keys: "Ctrl+A", action: "Select all in multi-select mode" },
         { keys: "F5", action: "Refresh clipboard history" }
     ]
     onRefreshRequested: content.controller.refresh()
@@ -50,8 +55,22 @@ Ui.ProviderChooserSurface {
     }
     Shortcut {
         sequence: "Delete"
-        enabled: content.actionsEnabled
-        onActivated: content.controller.requestDelete()
+        enabled: content.controller.uiActive && !content.controller.actionInFlight
+            && !content.controller.deleteMenuOpen
+            && (content.controller.multiSelectMode
+                ? content.controller.multiSelectedCount > 0 : content.controller.hasSelection)
+        onActivated: {
+            if (content.controller.multiSelectMode)
+                content.controller.requestBulkDelete();
+            else
+                content.controller.requestDelete();
+        }
+    }
+    Shortcut {
+        sequence: "Ctrl+A"
+        enabled: content.controller.uiActive && content.controller.multiSelectMode
+            && !content.controller.actionInFlight
+        onActivated: content.controller.selectAllVisible()
     }
 
     Connections {
@@ -59,6 +78,44 @@ Ui.ProviderChooserSurface {
         function onHideRequested() { content.controller.closeWindowRequested(); }
     }
 
+    Ui.PromptDialog {
+        visible: content.controller.deleteMenuOpen
+        z: 120
+        title: "Delete clipboard entries"
+        detail: "Delete the current item, choose several items, or clear the complete history."
+        inputVisible: false
+        actionsVisible: false
+        instruction: "Esc close"
+        onCancelled: content.controller.closeDeleteMenu()
+
+        Ui.ActionToggleList {
+            width: parent.width
+            actions: [{
+                id: "current", label: "Delete current item",
+                subtitle: content.controller.selectedEntry
+                    ? content.controller.selectedEntry.preview : "No item selected",
+                enabled: content.controller.hasSelection,
+                presentation: { tone: "danger" }
+            }, {
+                id: "multiple", label: "Select multiple…",
+                subtitle: "Choose individual entries, then delete them together",
+                enabled: content.controller.filteredResults.length > 0
+            }, {
+                id: "all", label: "Delete all history…",
+                subtitle: "Remove regular entries, favorites, and generated previews",
+                enabled: true,
+                presentation: { tone: "danger" }
+            }]
+            onTriggered: function (actionId) {
+                if (actionId === "current")
+                    content.controller.requestDeleteCurrent();
+                else if (actionId === "multiple")
+                    content.controller.enterMultiSelect();
+                else if (actionId === "all")
+                    content.controller.requestDeleteAll();
+            }
+        }
+    }
     Ui.ConfirmationDialog {
         visible: content.controller.deleteConfirmationOpen
         z: 120
@@ -67,6 +124,15 @@ Ui.ProviderChooserSurface {
         acceptLabel: "Delete"
         onAccepted: content.controller.confirmDelete()
         onCancelled: content.controller.cancelDelete()
+    }
+    Ui.ConfirmationDialog {
+        visible: content.controller.bulkDeleteConfirmationOpen
+        z: 120
+        title: "Delete " + content.controller.multiSelectedCount + " clipboard entries?"
+        detail: "Only the selected entries will be permanently removed."
+        acceptLabel: "Delete selected"
+        onAccepted: content.controller.confirmBulkDelete()
+        onCancelled: content.controller.cancelBulkDelete()
     }
     Ui.ConfirmationDialog {
         visible: !!content.controller.wipeChallenge

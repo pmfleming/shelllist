@@ -39,6 +39,8 @@ if (context.actionLabels["image-as-file"] !== "Paste as file")
     throw new Error("image-as-file must be presented as the alternative image paste action");
 if (context.actionLabels.annotate !== "Edit")
     throw new Error("image annotation must be presented as editing");
+if (context.methods.entriesDelete !== "clipboard.entries.delete")
+    throw new Error("bulk deletion must use the daemon-owned entries.delete method");
 
 for (const kind of ["text", "link", "image", "files", "binary"]) {
     const descriptors = context.actionDescriptorsForKind(kind);
@@ -63,5 +65,13 @@ if (controllerPath && backendPath) {
         throw new Error("annotation state must survive picker deactivation");
     if (!/active:\s*controller\.uiActive \|\| controller\.backgroundOperationInFlight/.test(backend))
         throw new Error("clipboard transport must remain active for background annotation");
+    if (!/activeAnnotationSelectionIndex\s*=\s*originalIndex/.test(controller)
+            || !/selectionIndexAfterRefresh\s*=\s*activeAnnotationSelectionIndex/.test(controller)
+            || !/if \(selectionIndexAfterRefresh >= 0\)[\s\S]*select\(retainedIndex\)/.test(controller))
+        throw new Error("annotation refresh must restore the edited history position");
+    if (!/function toggleEntrySelection/.test(controller)
+            || !/backend\.deleteEntries\("delete-many-"/.test(controller)
+            || !/ClipApi\.methods\.entriesDelete/.test(backend))
+        throw new Error("multi-select deletion must remain one validated daemon request");
 }
 console.log("clipboard action and lifecycle checks passed");

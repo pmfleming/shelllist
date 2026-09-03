@@ -12,6 +12,7 @@ var methods = ({
     "clipboard.entry.details": "clipboard.entry.details",
     "clipboard.entry.thumbnail": "clipboard.entry.thumbnail",
     "clipboard.entry.action": "clipboard.entry.action",
+    "clipboard.entries.delete": "clipboard.entries.delete",
     "clipboard.entry.edit.begin": "clipboard.entry.edit.begin",
     "clipboard.entry.edit.commit": "clipboard.entry.edit.commit",
     "clipboard.entry.edit.cancel": "clipboard.entry.edit.cancel",

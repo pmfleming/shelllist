@@ -23,6 +23,7 @@ var methods = {
     entryDetails: Protocol.methods["clipboard.entry.details"],
     entryThumbnail: Protocol.methods["clipboard.entry.thumbnail"],
     entryAction: Protocol.methods["clipboard.entry.action"],
+    entriesDelete: Protocol.methods["clipboard.entries.delete"],
     editBegin: Protocol.methods["clipboard.entry.edit.begin"],
     editCommit: Protocol.methods["clipboard.entry.edit.commit"],
     editCancel: Protocol.methods["clipboard.entry.edit.cancel"],

@@ -83,6 +83,9 @@ Io.DaemonBackend {
             session_id: sessionId || null, file_index: fileIndex === undefined ? null : fileIndex
         });
     }
+    function deleteEntries(id: string, entries: var): bool {
+        return call(id, ClipApi.methods.entriesDelete, { entries: entries });
+    }
     function beginEdit(entry: var): bool {
         return call("edit-begin", ClipApi.methods.editBegin, { entry_id: entry.id, revision: entry.revision });
     }

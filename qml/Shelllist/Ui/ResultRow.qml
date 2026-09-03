@@ -15,6 +15,9 @@ Rectangle {
     property bool pointerPressed: false
     property string accessibleName: ""
     property real trailingActionWidth: 0
+    property var pickHandler: null
+    property bool primaryEnabled: true
+    property bool detailsActionVisible: true
     readonly property bool selected: index === selectedIndex
     default property alias content: rowContent.data
 
@@ -22,8 +25,13 @@ Rectangle {
     signal primaryRequested
     signal detailsToggled(int rowIndex)
 
-    onPicked: function (rowIndex) { listPane.pick(rowIndex); }
-    onPrimaryRequested: listPane.chooserController.primarySelected()
+    onPicked: function (rowIndex) {
+        if (pickHandler)
+            pickHandler(rowIndex);
+        else
+            listPane.pick(rowIndex);
+    }
+    onPrimaryRequested: if (primaryEnabled) listPane.chooserController.primarySelected()
     onDetailsToggled: function (rowIndex) { listPane.toggleDetails(rowIndex); }
 
     function scaled(value) {
@@ -77,6 +85,7 @@ Rectangle {
     }
 
     FlatIconButton {
+        visible: row.detailsActionVisible
         z: 2
         anchors.right: parent.right
         anchors.rightMargin: row.scaled(10)

@@ -10,18 +10,33 @@ Ui.ChooserListPane {
     chooserController: controller
     resultModel: controller.filteredResultsModel
     emptyText: controller.refreshInFlight ? "Loading clipboard history…" : "Clipboard history is empty"
-    placeholder: "Search clipboard…"
+    placeholder: controller.multiSelectMode
+        ? controller.multiSelectedCount + " selected" : "Search clipboard…"
     icon: "󰅇"
     powered: true
     refreshing: false
     busy: controller.refreshInFlight
     powerEnabled: false
     refreshEnabled: !controller.actionInFlight && !controller.wipeChallenge
+        && (!controller.multiSelectMode || controller.multiSelectedCount > 0)
     refreshIcon: "󰆴"
-    refreshHandler: function () { pane.controller.requestWipe(); }
-    iconActionEnabled: !controller.screenshotInFlight && !controller.actionInFlight
+    refreshHandler: function () {
+        if (pane.controller.multiSelectMode)
+            pane.controller.requestBulkDelete();
+        else
+            pane.controller.openDeleteMenu();
+    }
+    iconActionEnabled: !controller.multiSelectMode
+        && !controller.screenshotInFlight && !controller.actionInFlight
+    searchActionIcon: controller.multiSelectMode ? "󰒆" : ""
+    searchActionToolTip: "Select all visible entries"
+    searchActionEnabled: controller.multiSelectMode
+        && !controller.allVisibleSelected
     filterText: controller.filterText
-    status: controller.status
+    status: controller.multiSelectMode
+        ? controller.multiSelectedCount + " selected · Esc to finish"
+        : controller.status
+    onSearchActionRequested: controller.selectAllVisible()
     bodySpacing: Math.round(Ui.Theme.spacingMd * densityScale)
     onIconClicked: controller.screenshotRequested()
 

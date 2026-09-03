@@ -19,8 +19,14 @@ Ui.ProviderChooserController {
     property var handledTerminalOperations: ({})
     property var settings: ({ max_entries: 750, max_favorites: 100, max_entry_bytes: 16777216, capture_paused: false, private_mode: false })
     property var wipeChallenge: null
-    property bool deleteConfirmationOpen
+    property bool deleteMenuOpen: false
+    property bool deleteConfirmationOpen: false
+    property bool bulkDeleteConfirmationOpen: false
+    property bool multiSelectMode: false
+    property var multiSelectedIds: ({})
     property bool selectCurrentAfterRefresh: false
+    property int activeAnnotationSelectionIndex: -1
+    property int selectionIndexAfterRefresh: -1
     property string activeHistoryQueryId: ""
     property string revisionRequestId: ""
     property double historyRevision: -1
@@ -31,7 +37,15 @@ Ui.ProviderChooserController {
         Math.max(historyPageSize, Number(settings.max_entries) || 750))
     readonly property alias detailState: detailsModel
     readonly property var selectedEntry: selectedResult ? selectedResult.payload : null
-    navigationPrimaryEnabled: hasSelection
+    readonly property var multiSelectedEntries: Object.keys(multiSelectedIds).map(function (entryId) {
+        return multiSelectedIds[entryId];
+    })
+    readonly property int multiSelectedCount: multiSelectedEntries.length
+    readonly property bool allVisibleSelected: filteredResults.length > 0
+        && filteredResults.every(function (result) {
+            return !!result.payload && !!multiSelectedIds[result.payload.id];
+        })
+    navigationPrimaryEnabled: hasSelection && !multiSelectMode
         && !actionInFlight && !wipeChallenge && !detailState.editorFocused
     navigationCloseEnabled: false
 
@@ -82,6 +96,10 @@ Ui.ProviderChooserController {
         activeHistoryQueryId = "";
         revisionRequestId = "";
         pendingHistoryEntries = [];
+        deleteMenuOpen = false;
+        deleteConfirmationOpen = false;
+        bulkDeleteConfirmationOpen = false;
+        leaveMultiSelect();
         detailsOpen = false;
         detailState.clear();
     }
@@ -97,6 +115,8 @@ Ui.ProviderChooserController {
     function dismissClipboardOperation(): bool {
         if (activeOperationId.length > 0)
             cancelActiveOperation();
+        else if (bulkDeleteConfirmationOpen)
+            cancelBulkDelete();
         else if (deleteConfirmationOpen)
             cancelDelete();
         else if (wipeChallenge)
@@ -108,6 +128,14 @@ Ui.ProviderChooserController {
     function dismissNavigation(): bool {
         if (dismissNavigationHelp() || dismissEditor() || dismissClipboardOperation())
             return true;
+        if (deleteMenuOpen) {
+            closeDeleteMenu();
+            return true;
+        }
+        if (multiSelectMode) {
+            leaveMultiSelect();
+            return true;
+        }
         return dismissDetailsOrWindow();
     }
     function refresh() {
@@ -130,6 +158,14 @@ Ui.ProviderChooserController {
     function selectCurrentEntry(currentEntry: var): void {
         if (!selectCurrentAfterRefresh)
             return;
+        if (selectionIndexAfterRefresh >= 0) {
+            const retainedIndex = filteredResults.length > 0
+                ? Math.min(selectionIndexAfterRefresh, filteredResults.length - 1) : 0;
+            selectionIndexAfterRefresh = -1;
+            selectCurrentAfterRefresh = false;
+            select(retainedIndex);
+            return;
+        }
         const currentId = currentEntry ? currentEntry.id : "";
         const currentIndex = filteredResults.findIndex(function (result) {
             return result.id === currentId;
@@ -162,6 +198,7 @@ Ui.ProviderChooserController {
         activeHistoryQueryId = "";
         pendingHistoryEntries = [];
         applyProviderQuery(id, clipboardProvider.resultsForEntries(entries));
+        reconcileMultiSelection(entries);
         selectCurrentEntry(history.current || null);
         status = entries.length + " clipboard entries"
             + (history.has_more ? " · search limited to recent entries" : "");
@@ -217,7 +254,88 @@ Ui.ProviderChooserController {
         return true;
     }
     function pasteImageAsFile() { runAction("image-as-file"); }
-    function annotateImage() { runAction("annotate"); }
+    function openDeleteMenu() {
+        if (!actionInFlight && !wipeChallenge)
+            deleteMenuOpen = true;
+    }
+    function closeDeleteMenu() { deleteMenuOpen = false; }
+    function reconcileMultiSelection(entries: var): void {
+        if (!multiSelectMode)
+            return;
+        const next = ({});
+        (entries || []).forEach(function (entry) {
+            if (multiSelectedIds[entry.id])
+                next[entry.id] = entry;
+        });
+        multiSelectedIds = next;
+    }
+    function enterMultiSelect() {
+        closeDeleteMenu();
+        closeDetails();
+        multiSelectMode = true;
+        multiSelectedIds = ({});
+        if (selectedEntry)
+            setEntrySelected(selectedEntry, true);
+    }
+    function leaveMultiSelect() {
+        multiSelectMode = false;
+        multiSelectedIds = ({});
+    }
+    function setEntrySelected(entry: var, selected: bool): void {
+        if (!entry || !entry.id)
+            return;
+        const next = Object.assign({}, multiSelectedIds);
+        if (selected)
+            next[entry.id] = entry;
+        else
+            delete next[entry.id];
+        multiSelectedIds = next;
+    }
+    function toggleEntrySelection(rowIndex: int): void {
+        const result = filteredResults[rowIndex];
+        if (!result || !result.payload)
+            return;
+        select(rowIndex);
+        const entryId = result.payload.id;
+        setEntrySelected(result.payload, !multiSelectedIds[entryId]);
+    }
+    function selectAllVisible() {
+        const next = Object.assign({}, multiSelectedIds);
+        filteredResults.forEach(function (result) {
+            if (result.payload)
+                next[result.payload.id] = result.payload;
+        });
+        multiSelectedIds = next;
+    }
+    function requestDeleteCurrent() {
+        closeDeleteMenu();
+        requestDelete();
+    }
+    function requestDeleteAll() {
+        closeDeleteMenu();
+        requestWipe();
+    }
+    function requestBulkDelete() {
+        if (multiSelectedCount > 0 && !actionInFlight)
+            bulkDeleteConfirmationOpen = true;
+    }
+    function cancelBulkDelete() { bulkDeleteConfirmationOpen = false; }
+    function confirmBulkDelete() {
+        if (multiSelectedCount <= 0 || actionInFlight)
+            return;
+        const entries = multiSelectedEntries.map(function (entry) {
+            return { entry_id: entry.id, revision: entry.revision };
+        });
+        bulkDeleteConfirmationOpen = false;
+        actionInFlight = true;
+        activeAction = "delete-many";
+        backend.deleteEntries("delete-many-" + Date.now(), entries);
+    }
+    function annotateImage() {
+        const originalIndex = selectedIndex;
+        if (runAction("annotate"))
+            activeAnnotationSelectionIndex = originalIndex;
+    }
     function openUrl() { runAction("open-url"); }
     function requestDelete() { if (selectedEntry) deleteConfirmationOpen = true; }
     function cancelDelete() { deleteConfirmationOpen = false; }
@@ -246,12 +364,23 @@ Ui.ProviderChooserController {
         closeDetails();
         scheduleRefresh();
     }
+    function finishBulkDelete() {
+        cancelBulkDelete();
+        leaveMultiSelect();
+        closeDetails();
+        scheduleRefresh();
+    }
     function finishScreenshot() {
         screenshotInFlight = false;
         selectCurrentAfterRefresh = true;
         scheduleRefresh();
     }
     function finishAnnotate() {
+        // Annotation changes the entry's content-derived ID, so stable-key
+        // retention cannot find it. The daemon preserves its history position;
+        // restore that position instead of selecting an unrelated current item.
+        selectionIndexAfterRefresh = activeAnnotationSelectionIndex;
+        activeAnnotationSelectionIndex = -1;
         selectCurrentAfterRefresh = true;
         scheduleRefresh();
     }
@@ -275,7 +404,8 @@ Ui.ProviderChooserController {
     function completeOperation(operation: var): void {
         const completions = ({
             paste: finishPaste, "image-as-file": finishPaste,
-            wipe: finishWipe, "delete": finishDelete, screenshot: finishScreenshot,
+            wipe: finishWipe, "delete": finishDelete,
+            "delete-many": finishBulkDelete, screenshot: finishScreenshot,
             annotate: finishAnnotate, copy: scheduleRefresh,
             favorite: scheduleRefresh, unfavorite: scheduleRefresh
         });
@@ -304,7 +434,7 @@ Ui.ProviderChooserController {
         backend.commitWipe(wipeChallenge.id);
     }
     function openDetails() {
-        if (!hasSelection)
+        if (!hasSelection || multiSelectMode)
             return;
         detailsOpen = true;
         detailState.load();
@@ -313,7 +443,8 @@ Ui.ProviderChooserController {
     function toggleDetails() { detailsOpen ? closeDetails() : openDetails(); }
     function isActionRequest(id) {
         return id.indexOf("action-") === 0 || id.indexOf("wipe-") === 0
-            || id.indexOf("edit-") === 0 || id === "capture-screenshot";
+            || id.indexOf("delete-many-") === 0 || id.indexOf("edit-") === 0
+            || id === "capture-screenshot";
     }
     function handleFailure(id, message) {
         if (id === revisionRequestId) {
@@ -326,6 +457,8 @@ Ui.ProviderChooserController {
             actionInFlight = false;
             activeAction = "";
             activeOperationId = "";
+            if (id === "action-annotate")
+                activeAnnotationSelectionIndex = -1;
             if (id === "capture-screenshot")
                 screenshotInFlight = false;
         }
@@ -354,6 +487,12 @@ Ui.ProviderChooserController {
         screenshotInFlight = false;
         activeAction = "";
         activeOperationId = "";
+        activeAnnotationSelectionIndex = -1;
+        selectionIndexAfterRefresh = -1;
+        deleteMenuOpen = false;
+        deleteConfirmationOpen = false;
+        bulkDeleteConfirmationOpen = false;
+        leaveMultiSelect();
         activeHistoryQueryId = "";
         revisionRequestId = "";
         historyRevision = -1;

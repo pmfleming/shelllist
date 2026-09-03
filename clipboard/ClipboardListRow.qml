@@ -8,7 +8,13 @@ Ui.ResultRow {
     required property ClipboardController controller
     required property var resultData
     readonly property var entry: resultData.payload || ({})
+    readonly property bool bulkSelected: !!controller.multiSelectedIds[entry.id]
     trailingActionWidth: scaled(40)
+    primaryEnabled: !controller.multiSelectMode
+    detailsActionVisible: !controller.multiSelectMode
+    pickHandler: controller.multiSelectMode
+        ? function (rowIndex) { controller.toggleEntrySelection(rowIndex); }
+        : null
 
     Ui.GlyphLabel {
         Layout.preferredWidth: row.scaled(30)
@@ -38,7 +44,29 @@ Ui.ResultRow {
         font.weight: Ui.Theme.fontWeightDemiBold
     }
 
+    Rectangle {
+        visible: row.controller.multiSelectMode
+        z: 2
+        Layout.preferredWidth: row.scaled(24)
+        Layout.preferredHeight: row.scaled(24)
+        radius: row.scaled(6)
+        color: row.bulkSelected ? Ui.Theme.accent : "transparent"
+        border.width: 1
+        border.color: row.bulkSelected ? Ui.Theme.accent : Ui.Theme.strongBorder
+
+        Text {
+            anchors.centerIn: parent
+            text: "✓"
+            visible: row.bulkSelected
+            color: Ui.Theme.accentText
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Math.max(11, row.scaled(Ui.Theme.fontSizeBody))
+            font.weight: Ui.Theme.fontWeightDemiBold
+        }
+    }
+
     Ui.DestructiveIconButton {
+        visible: !row.controller.multiSelectMode
         z: 2
         Layout.preferredWidth: row.scaled(30)
         Layout.preferredHeight: row.scaled(30)
