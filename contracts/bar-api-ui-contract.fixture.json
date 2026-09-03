@@ -460,6 +460,10 @@
         "sunset_unix_ms": 1766436420000,
         "temperature_c": 17.0,
         "timezone": "Europe/Amsterdam",
+        "timezone_region_ids": [
+          "Africa-Johannesburg",
+          "Europe-Paris"
+        ],
         "updated_unix_ms": 1766446800000,
         "utc_offset_seconds": 7200,
         "wind_direction_degrees": 315,
@@ -513,6 +517,10 @@
           "sunset_unix_ms": 1766436420000,
           "temperature_c": 17.0,
           "timezone": "Europe/Amsterdam",
+          "timezone_region_ids": [
+            "Africa-Johannesburg",
+            "Europe-Paris"
+          ],
           "updated_unix_ms": 1766446800000,
           "utc_offset_seconds": 7200,
           "wind_direction_degrees": 315,
@@ -526,6 +534,9 @@
           "city": "Tokyo",
           "label": "Tokyo",
           "timezone": "Asia/Tokyo",
+          "timezone_region_ids": [
+            "Asia-Tokyo"
+          ],
           "utc_offset_seconds": 32400
         }
       ]
@@ -791,6 +802,10 @@
       "city": "Amsterdam",
       "error": null,
       "timezone": "Europe/Amsterdam",
+      "timezone_region_ids": [
+        "Africa-Johannesburg",
+        "Europe-Paris"
+      ],
       "utc_offset_seconds": 7200
     },
     "updates": {

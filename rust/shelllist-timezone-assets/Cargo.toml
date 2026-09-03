@@ -1,0 +1,14 @@
+[package]
+name = "shelllist-timezone-assets"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+description = "Generate Shelllist timezone overlay assets"
+repository = "https://github.com/pmfleming/shelllist"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "warn"

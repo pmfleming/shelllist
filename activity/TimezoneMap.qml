@@ -1,6 +1,5 @@
 import QtQuick
 import Shelllist.Ui as Ui
-import "TimezoneGeometry.js" as Geometry
 import "WeatherVisuals.js" as Visuals
 
 Rectangle {
@@ -11,34 +10,13 @@ Rectangle {
     property real latitude: 0
     property real longitude: 0
     property bool hasCoordinates: false
-    readonly property string selectedLandPath: Geometry.landPathForOffset(offsetSeconds,
-        now.getTime())
-    readonly property var selectedOceanBand: Geometry.oceanBandForOffset(offsetSeconds)
-    readonly property bool hasSelectedRegions: selectedLandPath.length > 0
-        || selectedOceanBand.width > 0
-
-    function selectedOffsetSource(): string {
-        if (!hasSelectedRegions)
-            return "";
-        const accent = String(Ui.Theme.accent);
-        const outline = String(Ui.Theme.text);
-        let regions = "";
-        if (selectedOceanBand.width > 0) {
-            regions += "<defs><mask id='ocean'><rect width='720' height='360' fill='white'/>"
-                + "<path d='" + Geometry.landMaskPath() + "' fill='black'/></mask></defs>"
-                + "<rect x='" + selectedOceanBand.x + "' width='" + selectedOceanBand.width
-                + "' height='360' fill='" + accent + "' fill-opacity='.48' stroke='" + outline
-                + "' stroke-width='1.4' vector-effect='non-scaling-stroke' mask='url(#ocean)'/>";
-        }
-        if (selectedLandPath.length > 0) {
-            regions += "<path d='" + selectedLandPath + "' fill='" + accent
-                + "' fill-opacity='.48' stroke='" + outline
-                + "' stroke-width='1.8' vector-effect='non-scaling-stroke'/>";
-        }
-        const svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 360'>"
-            + regions + "</svg>";
-        return "data:image/svg+xml," + encodeURIComponent(svg);
-    }
+    property var regionIds: []
+    readonly property bool hasOceanBand: offsetSeconds % 3600 === 0
+        && offsetSeconds >= -12 * 3600 && offsetSeconds <= 12 * 3600
+    readonly property real oceanBandCenter: (offsetSeconds / 3600 * 15 + 180) * 2
+    readonly property real oceanBandLeft: Math.max(0, oceanBandCenter - 15)
+    readonly property real oceanBandWidth: hasOceanBand
+        ? Math.min(720, oceanBandCenter + 15) - oceanBandLeft : 0
 
     radius: Ui.Theme.controlRadius
     color: Ui.Theme.surfaceRaised
@@ -58,6 +36,18 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.margins: 6
 
+        Rectangle {
+            visible: map.hasOceanBand && baseMap.status === Image.Ready
+            x: (baseMap.width - baseMap.paintedWidth) / 2
+                + map.oceanBandLeft / 720 * baseMap.paintedWidth
+            y: (baseMap.height - baseMap.paintedHeight) / 2
+            width: map.oceanBandWidth / 720 * baseMap.paintedWidth
+            height: baseMap.paintedHeight
+            color: Ui.Theme.accent
+            border.color: Ui.Theme.text
+            border.width: 1
+        }
+
         Image {
             id: baseMap
             anchors.fill: parent
@@ -71,17 +61,21 @@ Rectangle {
             Accessible.ignored: true
         }
 
-        Image {
-            anchors.fill: parent
-            source: map.selectedOffsetSource()
-            fillMode: Image.PreserveAspectFit
-            horizontalAlignment: Image.AlignHCenter
-            verticalAlignment: Image.AlignVCenter
-            smooth: true
-            mipmap: true
-            asynchronous: false
-            visible: map.hasSelectedRegions
-            Accessible.ignored: true
+        Repeater {
+            model: map.regionIds
+
+            delegate: Image {
+                required property string modelData
+                anchors.fill: mapViewport
+                source: Qt.resolvedUrl("assets/timezones/regions/" + modelData + ".svg")
+                fillMode: Image.PreserveAspectFit
+                horizontalAlignment: Image.AlignHCenter
+                verticalAlignment: Image.AlignVCenter
+                smooth: true
+                mipmap: true
+                asynchronous: true
+                Accessible.ignored: true
+            }
         }
 
         Rectangle {

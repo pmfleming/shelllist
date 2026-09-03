@@ -60,6 +60,8 @@ ActivityController {
                     && weather.utc_offset_seconds !== null ? weather.utc_offset_seconds
                     : (clock.utc_offset_seconds !== undefined
                         && clock.utc_offset_seconds !== null ? clock.utc_offset_seconds : 0)),
+                timezone_region_ids: weather.timezone_region_ids
+                    || clock.timezone_region_ids || [],
                 latitude: hasCoordinates ? latitude : 0,
                 longitude: hasCoordinates ? longitude : 0,
                 has_coordinates: hasCoordinates,
@@ -83,6 +85,8 @@ ActivityController {
                 abbreviation: String(controller.timezone.abbreviation
                     || localClock.abbreviation || ""),
                 utc_offset_seconds: Number(controller.timezone.utc_offset_seconds || 0),
+                timezone_region_ids: controller.timezone.timezone_region_ids
+                    || localClock.timezone_region_ids || [],
                 latitude: 0,
                 longitude: 0,
                 has_coordinates: false,
@@ -105,6 +109,7 @@ ActivityController {
                 timezone: timezone,
                 abbreviation: String(clock.abbreviation || ""),
                 utc_offset_seconds: Number(clock.utc_offset_seconds || 0),
+                timezone_region_ids: clock.timezone_region_ids || [],
                 latitude: 0,
                 longitude: 0,
                 has_coordinates: false,

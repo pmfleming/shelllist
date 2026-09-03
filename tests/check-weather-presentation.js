@@ -1,19 +1,17 @@
 #!/usr/bin/env node
 const fs = require("fs");
+const path = require("path");
 const vm = require("vm");
 
 const source = fs.readFileSync(process.argv[2], "utf8")
     .replace(/^\.pragma library\s*$/m, "");
 const timezoneMap = fs.readFileSync(process.argv[3], "utf8");
 const timezoneAsset = fs.readFileSync(process.argv[4], "utf8");
-const timezoneGeometry = fs.readFileSync(process.argv[5], "utf8");
-const geometrySource = timezoneGeometry.replace(/^\.pragma library\s*$/m, "");
+const regionDirectory = process.argv[5];
+const timeWeatherController = fs.readFileSync(process.argv[6], "utf8");
 const context = { Date, Number, Math, String };
 vm.createContext(context);
 vm.runInContext(source, context);
-const geometryContext = { Date, Number, Math, String };
-vm.createContext(geometryContext);
-vm.runInContext(geometrySource, geometryContext);
 
 function equal(actual, expected, message) {
     if (actual !== expected)
@@ -39,17 +37,24 @@ equal(context.moonPhase(Date.UTC(2000, 0, 6, 18, 14)).name,
     "New moon", "known new moon");
 equal(context.windCompass(315), "NW", "wind direction");
 equal(context.windCompass(359), "N", "wrapped wind direction");
+
 assert(timezoneMap.includes("assets/timezones/world-time-zones.svg"),
     "timezone presentation must use the geographic map asset");
-assert(!timezoneMap.includes("Canvas"),
-    "timezone presentation must not approximate zones with straight canvas bands");
+assert(timezoneMap.includes("assets/timezones/regions/")
+        && timezoneMap.includes("regionIds"),
+    "timezone presentation must load Rust-selected region assets");
+assert(!timezoneMap.includes("TimezoneGeometry.js")
+        && !timezoneMap.includes("data:image/svg+xml")
+        && !timezoneMap.includes("Canvas"),
+    "timezone presentation must keep generated geometry out of QML JavaScript");
 assert(!timezoneMap.includes("WORLD TIME ZONES")
         && !timezoneMap.includes("selectedLabel"),
     "timezone map must not repeat the surrounding card heading and local time");
 assert(/id=["']land-Europe-Paris["']/.test(timezoneAsset)
         && /id=["']land-America-New_York["']/.test(timezoneAsset),
     "timezone map must retain geographic IANA land shapes");
-const oceanBands = [...timezoneAsset.matchAll(/<rect id="ocean-offset-([^"]+)" x="([^"]+)" width="([^"]+)"/g)];
+const oceanBands = [...timezoneAsset.matchAll(
+    /<rect id="ocean-offset-([^"]+)" x="([^"]+)" width="([^"]+)"/g)];
 assert(oceanBands.length === 25,
     "timezone map must include all 25 canonical whole-hour ocean bands");
 assert(/id="ocean-offset-minus-12" x="0" width="15"/.test(timezoneAsset)
@@ -58,63 +63,20 @@ assert(/id="ocean-offset-minus-12" x="0" width="15"/.test(timezoneAsset)
     "canonical ocean bands must cover the map continuously across the date line");
 assert(!/<text\b/.test(timezoneAsset),
     "compact timezone map must omit busy country and city labels");
-const parisPath = vm.runInContext('LAND_PATHS["Europe/Paris"]', geometryContext);
-const johannesburgPath = vm.runInContext('LAND_PATHS["Africa/Johannesburg"]', geometryContext);
-const kolkataPath = vm.runInContext('LAND_PATHS["Asia/Kolkata"]', geometryContext);
-const karachiPath = vm.runInContext('LAND_PATHS["Asia/Karachi"]', geometryContext);
-const summerUtc2 = geometryContext.landPathForOffset(2 * 3600, Date.UTC(2026, 6, 1));
-const winterUtc1 = geometryContext.landPathForOffset(1 * 3600, Date.UTC(2026, 0, 1));
-const fractionalUtc530 = geometryContext.landPathForOffset(5.5 * 3600, Date.UTC(2026, 6, 1));
-assert(summerUtc2.includes(parisPath) && summerUtc2.includes(johannesburgPath)
-        && winterUtc1.includes(parisPath),
-    "offset highlighting must include every region at that seasonal UTC offset");
-assert(fractionalUtc530.includes(kolkataPath) && !fractionalUtc530.includes(karachiPath),
-    "fractional-hour timezone exceptions must remain separate");
-const canonicalOffsets = [
-    ["Europe/London", 0, 3600],
-    ["Europe/Paris", 3600, 7200],
-    ["America/New_York", -18000, -14400],
-    ["Australia/Sydney", 39600, 36000],
-    ["Asia/Kolkata", 19800, 19800],
-    ["Pacific/Chatham", 49500, 45900],
-    ["Pacific/Kiritimati", 50400, 50400]
-];
-for (const [timezone, januaryOffset, julyOffset] of canonicalOffsets) {
-    const schedule = vm.runInContext(`OFFSET_SCHEDULES["${timezone}"]`, geometryContext);
-    equal(geometryContext.offsetAt(schedule, Date.UTC(2026, 0, 15)), januaryOffset,
-        `${timezone} canonical January offset`);
-    equal(geometryContext.offsetAt(schedule, Date.UTC(2026, 6, 15)), julyOffset,
-        `${timezone} canonical July offset`);
-}
-const landZones = vm.runInContext("Object.keys(LAND_PATHS)", geometryContext);
-equal(landZones.length, 62,
+
+const regionAssets = fs.readdirSync(regionDirectory)
+    .filter(name => name.endsWith(".svg"));
+equal(regionAssets.length, 62,
     "all non-Antarctic timezone-boundary-builder regions must be retained");
-assert(landZones.includes("Pacific/Kiritimati")
-        && landZones.includes("Pacific/Chatham")
-        && landZones.includes("Pacific/Marquesas"),
-    "small and fractional-offset island regions must not be simplified away");
-for (const instant of [Date.UTC(2026, 0, 15), Date.UTC(2026, 6, 15)]) {
-    for (const timezone of landZones) {
-        const schedule = vm.runInContext(`OFFSET_SCHEDULES["${timezone}"]`, geometryContext);
-        const path = vm.runInContext(`LAND_PATHS["${timezone}"]`, geometryContext);
-        const offset = geometryContext.offsetAt(schedule, instant);
-        assert(geometryContext.landPathForOffset(offset, instant).includes(path),
-            `${timezone} must appear in its rendered UTC-offset region`);
-    }
+for (const name of ["Europe-Paris.svg", "America-New_York.svg",
+    "Pacific-Kiritimati.svg", "Pacific-Chatham.svg", "Pacific-Marquesas.svg"]) {
+    assert(regionAssets.includes(name), `missing timezone region asset ${name}`);
+    assert(/<path\b/.test(fs.readFileSync(path.join(regionDirectory, name), "utf8")),
+        `timezone region asset ${name} must contain geometry`);
 }
-for (let offset = -12; offset <= 12; ++offset) {
-    const band = geometryContext.oceanBandForOffset(offset * 3600);
-    equal(band.x, offset === -12 ? 0 : (offset * 15 + 180) * 2 - 15,
-        `UTC${offset} canonical ocean band position`);
-    equal(band.width, Math.abs(offset) === 12 ? 15 : 30,
-        `UTC${offset} canonical ocean band width`);
-}
-equal(geometryContext.oceanBandForOffset(5.5 * 3600).width, 0,
-    "fractional offsets must not claim canonical ocean bands");
-assert(timezoneMap.includes("selectedOffsetSource()")
-        && timezoneMap.includes("landPathForOffset(offsetSeconds")
-        && timezoneMap.includes("oceanBandForOffset(offsetSeconds)")
+assert(timeWeatherController.includes("timezone_region_ids")
+        && timezoneMap.includes("offsetSeconds % 3600 === 0")
         && timezoneMap.includes("locationMarker"),
-    "timezone map must highlight the selected UTC offset and mark its location");
+    "timezone map must separate fractional ocean offsets and mark its location");
 
 console.log("weather presentation: artwork, local times, timezone maps, and wind direction passed");

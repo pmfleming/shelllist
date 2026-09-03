@@ -47,7 +47,10 @@ jq -e '
   (.snapshot.notification_active.notifications[0].group_key | type == "string") and
   (.snapshot.notification_active.notifications[0].source_monitor | type == "string") and
   (.snapshot.updates.ready | type == "boolean") and
-  (.snapshot.timezone.utc_offset_seconds | type == "number")
+  (.snapshot.activity.weather.timezone_region_ids | type == "array") and
+  (.snapshot.activity.world_clocks[0].timezone_region_ids | type == "array") and
+  (.snapshot.timezone.utc_offset_seconds | type == "number") and
+  (.snapshot.timezone.timezone_region_ids | type == "array")
 ' "$fixture" >/dev/null
 
 registry=$("$bar_daemon" debug protocol-registry)

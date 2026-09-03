@@ -314,6 +314,7 @@ Ui.DetailFlickable {
             anchors.bottomMargin: Ui.Theme.spacingMd
             now: pane.now
             offsetSeconds: pane.offsetSeconds
+            regionIds: pane.city.timezone_region_ids || []
             latitude: Number(pane.city.latitude || 0)
             longitude: Number(pane.city.longitude || 0)
             hasCoordinates: !!pane.city.has_coordinates

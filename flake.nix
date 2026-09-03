@@ -65,6 +65,13 @@
             cargoLock.lockFile = ./rust/shelllist-search/Cargo.lock;
             meta = mkMeta "Fuzzy result ranking service for Shelllist" "shelllist-search";
           };
+          shelllistTimezoneAssets = pkgs.rustPlatform.buildRustPackage {
+            pname = "shelllist-timezone-assets";
+            version = "0.1.0";
+            src = ./rust/shelllist-timezone-assets;
+            cargoLock.lockFile = ./rust/shelllist-timezone-assets/Cargo.lock;
+            meta = mkMeta "Generate Shelllist timezone overlay assets" "shelllist-timezone-assets";
+          };
           nmDaemon = inputs."nm-daemon".packages.${system}.default;
           btDaemon = inputs."bt-daemon".packages.${system}.default;
           clipDaemon = inputs."clip-daemon".packages.${system}.default;
@@ -79,7 +86,7 @@
         {
           connectParityProbe = nmDaemonConnectParityProbe;
 
-          inherit shelllistSearch;
+          inherit shelllistSearch shelllistTimezoneAssets;
 
           shelllistApplication = pkgs.writeShellApplication {
             name = "shelllist";
@@ -705,7 +712,18 @@
               ${./activity/WeatherVisuals.js} \
               ${./activity/TimezoneMap.qml} \
               ${./activity/assets/timezones/world-time-zones.svg} \
-              ${./activity/TimezoneGeometry.js}
+              ${./activity/assets/timezones/regions} \
+              ${./activity/TimeWeatherController.qml}
+            touch $out
+          '';
+
+          timezoneAssets = pkgs.runCommand "shelllist-timezone-assets-current"
+            {
+              nativeBuildInputs = [ pkgs.diffutils self.packages.${system}.shelllistTimezoneAssets ];
+            } ''
+            shelllist-timezone-assets \
+              ${./activity/assets/timezones/world-time-zones.svg} generated
+            diff -ru ${./activity/assets/timezones/regions} generated
             touch $out
           '';
 
