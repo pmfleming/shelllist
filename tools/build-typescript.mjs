@@ -18,6 +18,8 @@ try {
             "--target", "ES2020", "--module", "none", "--strict",
             "--skipLibCheck", "--outFile", compiled, join(root, entry.source)
         ], { encoding: "utf8" });
+        if (result.error)
+            throw result.error;
         if (result.status !== 0)
             throw new Error(result.stdout + result.stderr);
         const output = ".pragma library\n\n" + readFileSync(compiled, "utf8");

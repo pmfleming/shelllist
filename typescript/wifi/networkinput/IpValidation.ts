@@ -1,18 +1,18 @@
-.pragma library
-
-"use strict";
 var Invalid = 0;
 var Intermediate = 1;
 var Acceptable = 2;
-function normalizedFamily(family) {
+
+function normalizedFamily(family: any) {
     return String(family || "").toLowerCase() === "ipv6" ? "ipv6" : "ipv4";
 }
-function ipv4PartState(part, finalPart) {
+
+function ipv4PartState(part: any, finalPart: any) {
     if (part.length === 0)
         return finalPart ? Intermediate : Invalid;
     return /^\d{1,3}$/.test(part) && Number(part) <= 255 ? Acceptable : Invalid;
 }
-function ipv4State(value) {
+
+function ipv4State(value: any) {
     const address = String(value || "").trim();
     if (address.length === 0)
         return Intermediate;
@@ -28,10 +28,12 @@ function ipv4State(value) {
     }
     return parts.length === 4 ? Acceptable : Intermediate;
 }
-function isIpv4(value) {
+
+function isIpv4(value: any) {
     return ipv4State(value) === Acceptable;
 }
-function ipv6PartResult(part, finalPart, allowPartial) {
+
+function ipv6PartResult(part: any, finalPart: any, allowPartial: any) {
     if (part.length === 0)
         return { valid: false, units: 0, incomplete: false };
     if (part.indexOf(".") < 0)
@@ -41,7 +43,8 @@ function ipv6PartResult(part, finalPart, allowPartial) {
     const state = ipv4State(part);
     return { valid: allowPartial ? state !== Invalid : state === Acceptable, units: 2, incomplete: state === Intermediate };
 }
-function measureIpv6Parts(parts, allowPartial) {
+
+function measureIpv6Parts(parts: any, allowPartial: any) {
     let result = { valid: true, units: 0, incomplete: false };
     for (let index = 0; index < parts.length; ++index) {
         const part = ipv6PartResult(parts[index], index === parts.length - 1, allowPartial);
@@ -52,12 +55,14 @@ function measureIpv6Parts(parts, allowPartial) {
     }
     return result;
 }
-function ipv6UnitCount(parts) {
+
+function ipv6UnitCount(parts: any) {
     const result = measureIpv6Parts(parts, false);
     return result.valid ? result.units : -1;
 }
-function splitNonEmpty(value) { return value.length > 0 ? value.split(":") : []; }
-function splitIpv6(address) {
+
+function splitNonEmpty(value: any) { return value.length > 0 ? value.split(":") : []; }
+function splitIpv6(address: any) {
     const compression = address.indexOf("::");
     if (compression < 0)
         return { compressed: false, parts: address.split(":") };
@@ -66,14 +71,15 @@ function splitIpv6(address) {
         parts: splitNonEmpty(address.slice(0, compression)).concat(splitNonEmpty(address.slice(compression + 2)))
     };
 }
-function hasRepeatedCompression(address) {
+function hasRepeatedCompression(address: any) {
     const compression = address.indexOf("::");
     return compression >= 0 && address.indexOf("::", compression + 2) >= 0;
 }
-function hasMalformedEmbeddedIpv4(address) {
+function hasMalformedEmbeddedIpv4(address: any) {
     return address.indexOf(".") >= 0 && !/\d{1,3}(?:\.\d{1,3}){3}$/.test(address);
 }
-function isIpv6Complete(value) {
+
+function isIpv6Complete(value: any) {
     const address = String(value || "").trim();
     if (address.length === 0 || address.indexOf("%") >= 0 || hasRepeatedCompression(address) || hasMalformedEmbeddedIpv4(address))
         return false;
@@ -83,14 +89,17 @@ function isIpv6Complete(value) {
         return units >= 0 && units < 8;
     return address[0] !== ":" && address[address.length - 1] !== ":" && units === 8;
 }
-function partialIpv6Units(parts) { return measureIpv6Parts(parts, true); }
-function invalidPartialIpv6Syntax(address) {
+
+function partialIpv6Units(parts: any) { return measureIpv6Parts(parts, true); }
+
+function invalidPartialIpv6Syntax(address: any) {
     return !/^[0-9a-fA-F:.]+$/.test(address)
         || address.indexOf("%") >= 0
         || address.indexOf(":::") >= 0
         || hasRepeatedCompression(address);
 }
-function partialIpv6State(result, compressed, trailingSeparator) {
+
+function partialIpv6State(result: any, compressed: any, trailingSeparator: any) {
     if (!result.valid)
         return Invalid;
     if (compressed)
@@ -99,7 +108,8 @@ function partialIpv6State(result, compressed, trailingSeparator) {
         return Invalid;
     return result.incomplete || result.units < 8 ? Intermediate : Invalid;
 }
-function ipv6State(value) {
+
+function ipv6State(value: any) {
     const address = String(value || "").trim();
     if (address.length === 0 || address === ":")
         return Intermediate;
@@ -114,22 +124,27 @@ function ipv6State(value) {
         return Invalid;
     return partialIpv6State(partialIpv6Units(parsed.parts), parsed.compressed, trailingSeparator);
 }
-function isIpv6(value) {
+
+function isIpv6(value: any) {
     return ipv6State(value) === Acceptable;
 }
-function addressState(value, family) {
+
+function addressState(value: any, family: any) {
     return normalizedFamily(family) === "ipv6" ? ipv6State(value) : ipv4State(value);
 }
-function isAddress(value, family) {
+
+function isAddress(value: any, family: any) {
     return addressState(value, family) === Acceptable;
 }
-function groupedAddressState(value, family, finalAddress) {
+
+function groupedAddressState(value: any, family: any, finalAddress: any) {
     const state = addressState(value, family);
     if (state === Invalid)
         return Invalid;
     return finalAddress || state === Acceptable ? state : Invalid;
 }
-function addressGroupState(group, family, finalGroup) {
+
+function addressGroupState(group: any, family: any, finalGroup: any) {
     if (group.length === 0)
         return finalGroup ? Intermediate : Invalid;
     const addresses = group.split(/\s+/);
@@ -141,7 +156,8 @@ function addressGroupState(group, family, finalGroup) {
     }
     return Acceptable;
 }
-function addressInputState(value, family, multiple, allowEmpty) {
+
+function addressInputState(value: any, family: any, multiple: any, allowEmpty: any) {
     const input = String(value || "").trim();
     if (input.length === 0)
         return allowEmpty ? Acceptable : Intermediate;
@@ -157,10 +173,12 @@ function addressInputState(value, family, multiple, allowEmpty) {
     }
     return Acceptable;
 }
-function isAddressInput(value, family, multiple, allowEmpty) {
+
+function isAddressInput(value: any, family: any, multiple: any, allowEmpty: any) {
     return addressInputState(value, family, multiple, allowEmpty) === Acceptable;
 }
-function prefixState(value, family, allowEmpty) {
+
+function prefixState(value: any, family: any, allowEmpty: any) {
     const input = String(value || "").trim();
     if (input.length === 0)
         return allowEmpty ? Acceptable : Intermediate;
@@ -169,6 +187,7 @@ function prefixState(value, family, allowEmpty) {
     const maximum = normalizedFamily(family) === "ipv6" ? 128 : 32;
     return Number(input) <= maximum ? Acceptable : Invalid;
 }
-function isPrefix(value, family, allowEmpty) {
+
+function isPrefix(value: any, family: any, allowEmpty: any) {
     return prefixState(value, family, allowEmpty) === Acceptable;
 }

@@ -1,13 +1,10 @@
-.pragma library
-
-"use strict";
 const hiddenSecurityModes = ["open", "owe", "wpa-psk", "sae", "wep-key", "wep-phrase", "wpa-eap"];
 const passwordSecurityModes = ["wpa-psk", "sae", "wep-key", "wep-phrase"];
-const keyManagement = {
+const keyManagement: Record<string, string> = {
     "open": "open", "owe": "owe", "wpa-psk": "wpa-psk", "sae": "sae",
     "wep-key": "wep", "wep-phrase": "wep", "wpa-eap": "wpa-eap"
 };
-const enterpriseLabels = {
+const enterpriseLabels: Record<string, string> = {
     "enterprise.eap": "EAP methods (comma-separated)",
     "enterprise.identity": "Identity",
     "password": "Password",
@@ -19,14 +16,16 @@ const enterpriseLabels = {
     "enterprise.private_key": "Private key path",
     "enterprise.private_key_password": "Private key password"
 };
-const secretLabels = {
+const secretLabels: Record<string, string> = {
     "psk": "Wi-Fi password", "wep-key0": "WEP key", "wep-key1": "WEP key",
     "wep-key2": "WEP key", "wep-key3": "WEP key", "leap-password": "LEAP password",
     "password": "Password", "private-key-password": "Private key password", "pin": "PIN"
 };
-function field(key, label, required, password, value) {
+
+function field(key: any, label: any, required: any, password: any, value: any) {
     return { key: key, label: label, required: required, password: password, value: value || "" };
 }
+
 function hiddenFields() {
     return [
         field("ssid", "Network name (SSID)", true, false, ""),
@@ -39,33 +38,40 @@ function hiddenFields() {
         field("enterprise.ca_cert", "CA certificate path", false, false, "")
     ];
 }
-function initialValues(fields) {
-    const values = ({});
-    fields.forEach(function (item) { values[item.key] = item.value || ""; });
+
+function initialValues(fields: any) {
+    const values: Record<string, any> = ({});
+    fields.forEach(function (item: any) { values[item.key] = item.value || ""; });
     return values;
 }
-function enterpriseLabel(key) {
+
+function enterpriseLabel(key: any) {
     return enterpriseLabels[key] || key.replace(/^enterprise\./, "").replace(/_/g, " ");
 }
-function enterpriseDefault(key, defaults) {
+
+function enterpriseDefault(key: any, defaults: any) {
     const name = key.replace(/^enterprise\./, "");
     if (key === "enterprise.eap")
         return (defaults.eap || ["peap"]).join(",");
     return defaults[name] === undefined || defaults[name] === null ? "" : String(defaults[name]);
 }
-function enterpriseSecret(key) { return key === "password" || key.includes("password") || key === "enterprise.pin"; }
-function enterpriseFields(ap) {
+
+function enterpriseSecret(key: any) { return key === "password" || key.includes("password") || key === "enterprise.pin"; }
+
+function enterpriseFields(ap: any) {
     const prompt = ap.connect_prompt || ({});
     const defaults = prompt.enterprise_defaults || ({});
     const required = prompt.required_fields || ["enterprise.eap", "enterprise.identity"];
     const keys = required.concat(prompt.optional_fields || ["password"])
-        .filter(function (key, index, values) { return values.indexOf(key) === index; });
-    return keys.map(function (key) {
-        return field(key, enterpriseLabel(key), required.includes(key), enterpriseSecret(key), enterpriseDefault(key, defaults));
+        .filter(function (key: any, index: any, values: any) { return values.indexOf(key) === index; });
+    return keys.map(function (key: any) {
+        return field(key, enterpriseLabel(key), required.includes(key),
+            enterpriseSecret(key), enterpriseDefault(key, defaults));
     });
 }
-function forgetCopy(networkName, active, profiles) {
-    const names = (profiles || []).map(function (profile) { return profile.id; });
+
+function forgetCopy(networkName: any, active: any, profiles: any) {
+    const names = (profiles || []).map(function (profile: any) { return profile.id; });
     const profileText = names.length === 0 ? "no saved profile is currently listed"
         : names.length + " saved profile" + (names.length === 1 ? "" : "s") + ": " + names.join(", ");
     return {
@@ -74,31 +80,35 @@ function forgetCopy(networkName, active, profiles) {
             + ". The hotspot may still recognize this device until its login session expires. Type FORGET to confirm."
     };
 }
-function secretLabel(key) {
+
+function secretLabel(key: any) {
     return secretLabels[key] || (key ? key.replace(/-/g, " ") : "Secret");
 }
-function daemonSecretSpec(event) {
+
+function daemonSecretSpec(event: any) {
     const keys = event.secret_keys && event.secret_keys.length > 0
         ? event.secret_keys : [event.primary_secret_key || "password"];
     const setting = event.setting_name ? " for " + event.setting_name : "";
     return {
         detail: "NetworkManager requested " + keys.map(secretLabel).join(", ") + setting + ".",
-        fields: keys.map(function (key) { return field(key, secretLabel(key), true, key !== "pin", ""); })
+        fields: keys.map(function (key: any) { return field(key, secretLabel(key), true, key !== "pin", ""); })
     };
 }
-function enterpriseObject(values) {
-    const enterprise = ({});
-    Object.keys(values).filter(function (key) {
+
+function enterpriseObject(values: any) {
+    const enterprise: Record<string, any> = ({});
+    Object.keys(values).filter(function (key: any) {
         return key.indexOf("enterprise.") === 0 && String(values[key]).length > 0;
-    }).forEach(function (key) {
+    }).forEach(function (key: any) {
         const name = key.slice("enterprise.".length);
         enterprise[name] = name === "eap"
-            ? String(values[key]).split(",").map(function (item) { return item.trim(); }).filter(Boolean)
+            ? String(values[key]).split(",").map(function (item: any) { return item.trim(); }).filter(Boolean)
             : values[key];
     });
     return enterprise;
 }
-function hiddenValidationError(values) {
+
+function hiddenValidationError(values: any) {
     const security = String(values.security || "").toLowerCase();
     if (!hiddenSecurityModes.includes(security))
         return "Choose a supported hidden-network security value.";
@@ -108,21 +118,24 @@ function hiddenValidationError(values) {
         return "Enter the identity required by this hidden enterprise network.";
     return "";
 }
-function validationError(mode, fields, values) {
-    const missing = fields.find(function (item) {
+
+function validationError(mode: any, fields: any, values: any) {
+    const missing = fields.find(function (item: any) {
         return item.required && !String(values[item.key] || "").trim();
     });
     if (missing)
         return "Complete required field: " + missing.label;
     return mode === "hidden" ? hiddenValidationError(values) : "";
 }
-function hiddenSecurityLabel(security) {
+
+function hiddenSecurityLabel(security: any) {
     return security === "open" ? "--" : (security === "owe" ? "OWE" : "WPA2/3");
 }
-function wepKeyType(security) {
+function wepKeyType(security: any) {
     return security === "wep-phrase" ? "phrase" : (security === "wep-key" ? "key" : null);
 }
-function connectionRequest(mode, network, values) {
+
+function connectionRequest(mode: any, network: any, values: any) {
     const security = String(values.security || "").toLowerCase();
     const enterprise = mode === "enterprise" || security === "wpa-eap" ? enterpriseObject(values) : null;
     if (mode === "enterprise")

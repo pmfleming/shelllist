@@ -2,5 +2,21 @@
   {
     "source": "typescript/activity/WeatherVisuals.ts",
     "output": "activity/WeatherVisuals.js"
+  },
+  {
+    "source": "typescript/wifi/networkinput/IpValidation.ts",
+    "output": "wifi/networkinput/IpValidation.js"
+  },
+  {
+    "source": "typescript/wifi/WifiPromptPolicy.ts",
+    "output": "wifi/WifiPromptPolicy.js"
+  },
+  {
+    "source": "typescript/bluetooth/BluetoothFlow.ts",
+    "output": "bluetooth/BluetoothFlow.js"
+  },
+  {
+    "source": "typescript/launcher/ApplicationResources.ts",
+    "output": "launcher/ApplicationResources.js"
   }
 ]

@@ -1,23 +1,25 @@
-.pragma library
-
-"use strict";
-function finite(value) {
+function finite(value: any) {
     const number = Number(value);
     return isFinite(number) ? number : 0;
 }
-function decimal(value, digits) {
+
+function decimal(value: any, digits: any) {
     return finite(value).toFixed(digits === undefined ? 1 : digits);
 }
-function integer(value) {
+
+function integer(value: any) {
     return Math.round(finite(value)).toLocaleString();
 }
-function percent(value) {
+
+function percent(value: any) {
     return decimal(value, 1) + "%";
 }
-function ratioPercent(value) {
+
+function ratioPercent(value: any) {
     return decimal(finite(value) * 100, 1) + "%";
 }
-function bytes(value) {
+
+function bytes(value: any) {
     const amount = Math.max(0, finite(value));
     const units = ["B", "KiB", "MiB", "GiB", "TiB"];
     let scaled = amount;
@@ -29,34 +31,43 @@ function bytes(value) {
     const digits = unit === 0 ? 0 : scaled >= 100 ? 0 : 1;
     return scaled.toFixed(digits) + " " + units[unit];
 }
-function rate(value) {
+
+function rate(value: any) {
     return bytes(value) + "/s";
 }
-function operationsRate(value) {
+
+function operationsRate(value: any) {
     return decimal(value, 1) + " ops/s";
 }
-function energy(value) {
+
+function energy(value: any) {
     const amount = Math.max(0, finite(value));
     return amount >= 1000 ? decimal(amount / 1000, 2) + " Wh" : decimal(amount, 2) + " mWh";
 }
-function power(value) {
+
+function power(value: any) {
     return decimal(value, 2) + " W";
 }
-function duration(value) {
+
+function duration(value: any) {
     const milliseconds = Math.max(0, finite(value));
     return milliseconds >= 1000 ? decimal(milliseconds / 1000, 1) + " s" : integer(milliseconds) + " ms";
 }
-function text(value, fallback) {
+
+function text(value: any, fallback?: any) {
     const result = String(value === undefined || value === null ? "" : value).trim();
     return result || fallback || "Unavailable";
 }
-function availability(value) {
+
+function availability(value: any) {
     return value ? "Available" : "Unavailable";
 }
-function field(key, label, value) {
+
+function field(key: any, label: any, value: any) {
     return { key: key, label: label, value: value };
 }
-function computeFields(resource) {
+
+function computeFields(resource: any) {
     return [
         field("cpu_percent", "CPU · logical cores", percent(resource.cpu_percent)),
         field("cpu_percent_of_machine", "CPU · whole machine", percent(resource.cpu_percent_of_machine)),
@@ -76,7 +87,8 @@ function computeFields(resource) {
         field("gpu_memory_allocated_bytes", "GPU memory · allocated", bytes(resource.gpu_memory_allocated_bytes))
     ];
 }
-function storageFields(resource) {
+
+function storageFields(resource: any) {
     return [
         field("disk_read_bytes", "Physical reads · interval", bytes(resource.disk_read_bytes)),
         field("disk_write_bytes", "Physical writes · interval", bytes(resource.disk_write_bytes)),
@@ -100,7 +112,8 @@ function storageFields(resource) {
         field("disk_space_permanent_bytes", "Application data · permanent", bytes(resource.disk_space_permanent_bytes))
     ];
 }
-function networkFields(resource) {
+
+function networkFields(resource: any) {
     return [
         field("network_receive_bytes", "Network received · interval", bytes(resource.network_receive_bytes)),
         field("network_transmit_bytes", "Network transmitted · interval", bytes(resource.network_transmit_bytes)),
@@ -109,7 +122,8 @@ function networkFields(resource) {
         field("network_connection_count", "Network connections", integer(resource.network_connection_count))
     ];
 }
-function currentEnergyFields(resource) {
+
+function currentEnergyFields(resource: any) {
     return [
         field("energy_mwh", "Attributed energy · interval", energy(resource.energy_mwh)),
         field("battery_percent", "Attributed battery · interval", percent(resource.battery_percent)),
@@ -122,7 +136,8 @@ function currentEnergyFields(resource) {
         field("energy_confidence", "Energy confidence", text(resource.energy_confidence))
     ];
 }
-function historicalEnergyFields(resource) {
+
+function historicalEnergyFields(resource: any) {
     return [
         field("energy_mwh", "Attributed energy · bucket", energy(resource.energy_mwh)),
         field("battery_percent", "Attributed battery · bucket", percent(resource.battery_percent)),
@@ -133,7 +148,8 @@ function historicalEnergyFields(resource) {
         field("energy_confidence", "Energy confidence", text(resource.energy_confidence))
     ];
 }
-function measurementFields(resource) {
+
+function measurementFields(resource: any) {
     const measurement = resource.measurement || ({});
     return [
         field("measurement.sample_interval_ms", "Sample interval", duration(measurement.sample_interval_ms)),
@@ -149,7 +165,8 @@ function measurementFields(resource) {
         field("measurement.resources_shared", "Resources shared", measurement.resources_shared ? "Yes" : "No")
     ];
 }
-function historyFields(resource) {
+
+function historyFields(resource: any) {
     const peaks = resource.peaks || ({});
     return [
         field("timestamp_ms", "Bucket timestamp", resource.timestamp_ms ? new Date(resource.timestamp_ms).toLocaleString() : "Unavailable"),
@@ -166,7 +183,8 @@ function historyFields(resource) {
         field("peaks.estimated_app_power_watts", "Peak application power", power(peaks.estimated_app_power_watts))
     ];
 }
-function detailGroups(resource, historical) {
+
+function detailGroups(resource: any, historical: any) {
     const value = resource || ({});
     const groups = [
         { title: "Compute and memory", fields: computeFields(value) },
@@ -180,7 +198,8 @@ function detailGroups(resource, historical) {
         groups.push({ title: "Measurement and capabilities", fields: measurementFields(value) });
     return groups;
 }
-function currentMetadataBadges(application) {
+
+function currentMetadataBadges(application: any) {
     const measurement = application.measurement || ({});
     const badges = [
         { text: text(measurement.attribution_method, "Unknown attribution"), tone: "accent" },
@@ -193,7 +212,8 @@ function currentMetadataBadges(application) {
         badges.push({ text: "Shared attribution", tone: "warning" });
     return badges;
 }
-function historicalMetadataBadges(latestPoint) {
+
+function historicalMetadataBadges(latestPoint: any) {
     return [
         { text: "Retained history", tone: "accent" },
         { text: ratioPercent(latestPoint.coverage) + " coverage", tone: latestPoint.coverage < 0.8 ? "warning" : "normal" },
@@ -201,7 +221,8 @@ function historicalMetadataBadges(latestPoint) {
         { text: "Energy " + text(latestPoint.energy_confidence).toLowerCase(), tone: latestPoint.energy_confidence === "low" ? "warning" : "normal" }
     ];
 }
-function metadataBadges(application, latestPoint) {
+
+function metadataBadges(application: any, latestPoint: any) {
     if (application && application.running)
         return currentMetadataBadges(application);
     return latestPoint ? historicalMetadataBadges(latestPoint) : [];
