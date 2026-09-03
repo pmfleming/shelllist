@@ -78,6 +78,14 @@ Column {
                     font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeHeading
                 }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    Accessible.role: Accessible.Button
+                    Accessible.name: "Open Time and Weather"
+                    onClicked: pane.controller.requestTimeWeather("weather")
+                }
             }
             Row {
                 width: parent.width
@@ -98,6 +106,14 @@ Column {
                         font.family: Ui.Theme.fontFamily
                         font.pixelSize: Ui.Theme.fontSizeCaption
                         font.weight: Ui.Theme.fontWeightDemiBold
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        Accessible.role: Accessible.Button
+                        Accessible.name: "Open city times"
+                        onClicked: pane.controller.requestTimeWeather("time")
                     }
                 }
                 Row {
@@ -129,6 +145,14 @@ Column {
                             font.family: Ui.Theme.fontFamily
                             font.pixelSize: Ui.Theme.fontSizeCaption
                         }
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        Accessible.role: Accessible.Button
+                        Accessible.name: "Open city weather"
+                        onClicked: pane.controller.requestTimeWeather("weather")
                     }
                 }
             }
@@ -166,14 +190,15 @@ Column {
                         }
                     }
                 }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    Accessible.role: Accessible.Button
+                    Accessible.name: "Open city weather"
+                    onClicked: pane.controller.requestTimeWeather("weather")
+                }
             }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: pane.controller.openSection("weather")
         }
     }
 

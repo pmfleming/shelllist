@@ -20,6 +20,11 @@ equal(context.iconName(75, false), "snow", "snow artwork");
 equal(context.iconName(95, false), "thunderstorms-night", "night storm artwork");
 equal(context.localTime(0, -5 * 3600), "19:00", "negative location offset");
 equal(context.localTime(0, 5.5 * 3600), "05:30", "fractional location offset");
+equal(context.utcOffset(-5 * 3600), "UTC−5", "negative UTC offset");
+equal(context.utcOffset(5.5 * 3600), "UTC+5:30", "fractional UTC offset");
+equal(context.duration(13 * 3600 + 32 * 60), "13 h 32 min", "day length");
+equal(context.moonPhase(Date.UTC(2000, 0, 6, 18, 14)).name,
+    "New moon", "known new moon");
 equal(context.windCompass(315), "NW", "wind direction");
 equal(context.windCompass(359), "N", "wrapped wind direction");
 

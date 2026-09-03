@@ -4,9 +4,9 @@ Shelllist is the presentation client for the `bar-daemon` Activity domain. It do
 
 ## User behavior
 
-The Activity surface is opened from the top-bar Activity module, clock, notification indicator, `shelllist activity open|toggle`, or the `activity` global shortcut. It combines:
+The Activity surface is opened from the top-bar Activity module, notification indicator, `shelllist activity open|toggle`, or the `activity` global shortcut. It combines:
 
-- local time, optional Open-Meteo weather, and world clocks;
+- a time/weather callout that opens the separate Time & Weather city chooser;
 - a month calendar and selected-day agenda;
 - persistent todos and source-health reporting;
 - grouped, paginated notification history;
@@ -32,7 +32,9 @@ Shelllist owns only:
 
 ## Data and presentation flow
 
-The closed layout is a right-edge glance panel constrained to roughly 25–33% of the focused screen. It starts directly below the 51 px top bar and extends to the bottom edge. It stacks time/weather, schedule/todo, and up to three active notification previews. Selecting a card expands a detail pane inward while preserving the glance rail, following the same master/detail model as the Applications, Wi-Fi, and Bluetooth surfaces. Detail panes complement rather than duplicate the visible glance card: Weather starts with future trends and other locations, Schedule omits the month already visible in the rail, and the Notifications card replaces its previews with a compact selected-state glyph while grouped history owns the records. `1`, `2`, and `3` open the three detail sections; `Escape` returns to the glance panel before closing the surface.
+The closed layout is a right-edge glance panel constrained to roughly 25–33% of the focused screen. It starts directly below the 51 px top bar and extends to the bottom edge. It stacks time/weather, schedule/todo, and up to three active notification previews. Time and weather open the dedicated city chooser; schedule and notifications expand a detail pane inward while preserving the glance rail. `1` opens Time & Weather, while `2` and `3` open the Activity detail sections. `Escape` returns to the glance panel before closing the surface.
+
+Time & Weather follows the same list/detail interaction as Wi-Fi and Bluetooth. The list combines configured weather locations and world clocks by timezone, showing city, current weather, and local time. `Right` expands the selected city. The detail pane has **Time** and **Weather** tabs; Time renders timezone, sun position, day length, and moon phase, while Weather reuses the existing hourly, daily, and weather-metric presentation. The bar clock and timezone modules open this chooser directly.
 
 Shelllist requests only a buffered range around the visible month. A compact `activity.changed` event schedules a debounced range refresh rather than carrying the full range in every event. Weather locations—including which location is home, labels, coordinates, and timezones—come entirely from `bar-daemon/activity.json`; no city is compiled into the UI. `bar-daemon` refreshes configured Open-Meteo locations concurrently at most every 15 minutes and retains each last successful forecast through transient failures.
 
@@ -58,7 +60,9 @@ Removal animation is presentation-only. Dismiss, clear-group, clear-all, snooze,
 | `activity/ActivityController.qml` | Ephemeral range, pagination, selection, and presentation state |
 | `activity/ActivityContent.qml` | Right-edge glance/detail composition |
 | `activity/ActivityGlancePane.qml` | Compact time, schedule, and notification summaries |
-| `activity/ActivityWeatherPane.qml` | Local weather, forecast, and world-clock detail |
+| `activity/TimeWeatherContent.qml` | City list and two-tab Time & Weather composition |
+| `activity/TimeWeatherTimePane.qml` | Local time, sun position, moon, and timezone detail |
+| `activity/ActivityWeatherPane.qml` | Reusable local weather and forecast detail |
 | `activity/ActivitySchedulePane.qml` | Calendar, selected-day agenda, and todo detail |
 | `activity/ActivityNotificationsPane.qml` | Filtered notification history and DND controls |
 | `activity/NotificationHistoryGroup.qml` | Expandable historical groups |

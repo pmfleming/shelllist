@@ -1,6 +1,6 @@
 # Shelllist
 
-Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and six keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, **Activity**, and **Battery**.
+Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and seven keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, **Activity**, **Time & Weather**, and **Battery**.
 
 Rust daemons handle system integration and policy. Shelllist handles windows, layout, navigation, animation, and presentation.
 
@@ -37,7 +37,8 @@ Common bar interactions:
 | Audio | Open `pavucontrol` | Toggle mute | Adjust volume |
 | Brightness | Increase | Decrease | Adjust brightness |
 | Battery | Open Battery | — | — |
-| Activity / clock | Open Activity | — | — |
+| Activity | Open Activity | — | — |
+| Timezone / clock | Open Time & Weather | — | — |
 | Notifications | Open Activity | Toggle DND | — |
 
 `bar-daemon` supplies normalized bar state through `bar-api` v1. Wi-Fi and Bluetooth remain owned by their dedicated Shelllist controllers, while Quickshell owns tray rendering and menus.
@@ -66,7 +67,11 @@ The UI uses opaque daemon device keys and live subscriptions. It does not parse 
 
 ### Activity
 
-The Activity surface combines configurable city clocks and optional multi-location Open-Meteo weather, a month calendar, selected-day agenda, persistent todos, native notification history/actions/DND, source health, and world clocks. `bar-daemon` owns notification ingestion, expiry, timed DND, snooze wakeups, grouping metadata, and persistent history. Shelllist renders compact grouped toast stacks on the originating monitor, with focused-monitor fallback, and opens their complete paginated groups in the Activity notification breakout. Notifications support actions, inline replies, 15-minute snooze, per-group/application clearing, and clear-all. See [`docs/activity.md`](docs/activity.md).
+The Activity surface combines a month calendar, selected-day agenda, persistent todos, native notification history/actions/DND, source health, and a time/weather callout. `bar-daemon` owns notification ingestion, expiry, timed DND, snooze wakeups, grouping metadata, and persistent history. Shelllist renders compact grouped toast stacks on the originating monitor, with focused-monitor fallback, and opens their complete paginated groups in the Activity notification breakout. Notifications support actions, inline replies, 15-minute snooze, per-group/application clearing, and clear-all. See [`docs/activity.md`](docs/activity.md).
+
+### Time & Weather
+
+Time & Weather lists every configured city with its current condition, high/low temperature, and local time. `Right` expands the selected city; **Time** shows local date/time, timezone, sun position, daylight length, and moon phase, while **Weather** reuses the hourly and seven-day forecast view. Open it from the Activity time/weather callout, the bar clock/timezone, `shelllist time-weather open`, or the `time-weather` global shortcut.
 
 ### Clipboard
 
@@ -154,7 +159,7 @@ shelllist run                     Run the host in the foreground
 shelllist quit                    Stop the resident host
 ```
 
-Surfaces are `applications`, `wifi`, `bluetooth`, `clipboard`, `activity`, and `battery`.
+Surfaces are `applications`, `wifi`, `bluetooth`, `clipboard`, `activity`, `time-weather`, and `battery`.
 
 ## Keyboard use
 
@@ -182,6 +187,7 @@ bind = SUPER, N, global, shelllist:wifi
 bind = SUPER, B, global, shelllist:bluetooth
 bind = SUPER, V, global, shelllist:clipboard
 bind = SUPER, P, global, shelllist:battery
+bind = SUPER, T, global, shelllist:time-weather
 bindel = , XF86AudioRaiseVolume, global, shelllist:volume-up
 bindel = , XF86AudioLowerVolume, global, shelllist:volume-down
 bindl = , XF86AudioMute, global, shelllist:volume-mute

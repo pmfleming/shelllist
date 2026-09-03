@@ -9,6 +9,7 @@ Ui.DetailFlickable {
 
     required property ActivityController controller
     required property date now
+    property bool showLocationRail: true
 
     readonly property var weather: controller.selectedWeather
     readonly property var locations: controller.weatherLocations
@@ -78,12 +79,13 @@ Ui.DetailFlickable {
             Math.min(target, Math.max(0, locationFlick.contentWidth - locationFlick.width)));
     }
 
-    onWeatherChanged: Qt.callLater(revealSelectedLocation)
+    onWeatherChanged: if (showLocationRail) Qt.callLater(revealSelectedLocation)
 
     Rectangle {
         id: locationRail
+        visible: pane.showLocationRail
         width: parent.width
-        height: 108
+        height: visible ? 108 : 0
         radius: Ui.Theme.panelRadius
         color: Ui.Theme.surface
         border.color: Ui.Theme.border

@@ -97,6 +97,11 @@ Item {
             surfaceRegistry.requestActivitySection("notifications");
         openSurface("activity");
     }
+    function openTimeWeather(tab: string): void {
+        if (surfaceRegistry)
+            surfaceRegistry.requestTimeWeatherTab(tab);
+        openSurface("time-weather");
+    }
 
     function focusWorkspace(workspaceId: int): bool { return backend.focusWorkspace(workspaceId); }
     function mediaOperation(operation: string): bool { return backend.mediaOperation(operation); }
@@ -196,7 +201,8 @@ Item {
             activity: function () { openSurface("activity"); },
             notifications: function () { openNotificationCenter(); },
             "notifications-dnd": function () { backend.toggleDnd(); },
-            timezone: function () { openSurface("activity"); }
+            "time-weather": function () { openTimeWeather("time"); },
+            timezone: function () { openTimeWeather("time"); }
         });
         const handler = actions[action];
         if (!handler)

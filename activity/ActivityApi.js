@@ -25,7 +25,9 @@ var methods = {
 var streams = {
     activity: Protocol.streams["activity.changed"],
     notifications: Protocol.streams["notifications.changed"],
-    notificationActive: Protocol.streams["notifications.active.changed"]
+    notificationActive: Protocol.streams["notifications.active.changed"],
+    timezone: Protocol.streams["timezone.changed"]
 };
 
-var subscribedStreams = [streams.activity, streams.notifications, streams.notificationActive];
+var subscribedStreams = [streams.activity, streams.notifications,
+    streams.notificationActive, streams.timezone];

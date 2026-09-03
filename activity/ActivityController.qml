@@ -13,10 +13,14 @@ Ui.ChooserController {
         weather: { available: false, id: "", location: "Local",
             error: "Weather is not configured" } })
     property var notifications: ({ available: false, count: 0, dnd: false })
+    property var timezone: ({ available: false, timezone: "", city: "",
+        abbreviation: "", utc_offset_seconds: 0 })
     property var notificationActive: ({ available: false, revision: 0, notifications: [] })
     property var notificationHistory: []
     property bool notificationHistoryLoading: false
     property bool notificationHistoryHasMore: false
+    property bool rangeQueriesEnabled: true
+    property bool notificationHistoryEnabled: true
     property var events: []
     property var todos: []
     property var busyDates: []
@@ -73,6 +77,7 @@ Ui.ChooserController {
     }
 
     signal focusTodoInputRequested
+    signal timeWeatherRequested(string tab)
 
     function dateKey(value: date): string { return Flow.dateKey(value); }
     function startOfDay(value: date): date { return Flow.startOfDay(value); }
@@ -91,6 +96,8 @@ Ui.ChooserController {
             activity = snapshot.activity;
         if (snapshot.notifications)
             notifications = snapshot.notifications;
+        if (snapshot.timezone)
+            timezone = snapshot.timezone;
         if (snapshot.notification_active)
             notificationActive = snapshot.notification_active;
         scheduleRangeQuery();
@@ -122,6 +129,8 @@ Ui.ChooserController {
             scheduleNotificationHistory();
         } else if (kind === "notificationActive") {
             notificationActive = data;
+        } else if (kind === "timezone") {
+            timezone = data;
         }
     }
     function handleEvent(event: var): void {
@@ -130,8 +139,14 @@ Ui.ChooserController {
             applyDomainEvent(kind, event.data || ({}));
     }
 
-    function scheduleRangeQuery(): void { rangeQueryDebounce.restart(); }
-    function scheduleNotificationHistory(): void { notificationHistoryDebounce.restart(); }
+    function scheduleRangeQuery(): void {
+        if (rangeQueriesEnabled)
+            rangeQueryDebounce.restart();
+    }
+    function scheduleNotificationHistory(): void {
+        if (notificationHistoryEnabled)
+            notificationHistoryDebounce.restart();
+    }
 
     function reloadNotificationHistory(): void {
         notificationHistoryLoading = backend.loadNotificationHistory(null);
@@ -233,8 +248,12 @@ Ui.ChooserController {
         weatherLocationId = weatherLocations[next].id;
     }
 
+    function requestTimeWeather(tab: string): void {
+        timeWeatherRequested(tab === "time" ? "time" : "weather");
+    }
+
     function openSection(section: string): void {
-        if (["weather", "schedule", "notifications"].indexOf(section) < 0)
+        if (["schedule", "notifications"].indexOf(section) < 0)
             return;
         detailSection = section;
         detailsOpen = true;

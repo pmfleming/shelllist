@@ -19,12 +19,14 @@ Item {
         { id: "bluetooth", name: "Bluetooth", icon: "󰂯" },
         { id: "clipboard", name: "Clipboard", icon: "󰅇" },
         { id: "battery", name: "Battery", icon: "󰂂" },
-        { id: "activity", name: "Activity", icon: "󰃭" }
+        { id: "activity", name: "Activity", icon: "󰃭" },
+        { id: "time-weather", name: "Time & Weather", icon: "󰅐" }
     ]
     property var loadedSurfaces: ({ wifi: true, bluetooth: true })
     property var openedSurfaces: ({})
     property string currentId: "applications"
     property string pendingActivitySection: ""
+    property string pendingTimeWeatherTab: ""
 
     readonly property SurfaceBundle currentBundle: bundleFor(currentId)
     readonly property Ui.ChooserController currentController: currentBundle
@@ -85,7 +87,8 @@ Item {
             bluetooth: bluetoothBundle.item,
             clipboard: clipboardBundle.item,
             battery: batteryBundle.item,
-            activity: activityBundle.item
+            activity: activityBundle.item,
+            "time-weather": timeWeatherBundle.item
         });
         return bundles[surfaceId] || null;
     }
@@ -120,9 +123,34 @@ Item {
         pendingActivitySection = "";
     }
 
+    function requestTimeWeatherTab(tab: string): void {
+        pendingTimeWeatherTab = tab === "weather" ? "weather" : "time";
+        ensureLoaded("time-weather");
+        applyPendingTimeWeatherTab();
+    }
+
+    function applyPendingTimeWeatherTab(): void {
+        const bundle = bundleFor("time-weather");
+        const timeWeatherController = bundle ? bundle.controller : null;
+        if (pendingTimeWeatherTab.length === 0 || !timeWeatherController)
+            return;
+        // SurfaceBundle intentionally exposes the shared controller base type.
+        // qmllint disable missing-property
+        timeWeatherController.setDetailsTab(pendingTimeWeatherTab);
+        // qmllint enable missing-property
+        pendingTimeWeatherTab = "";
+    }
+
+    function openTimeWeather(tab: string): void {
+        requestTimeWeatherTab(tab);
+        surfaceRequested("time-weather");
+    }
+
     function notifySurfaceReady(surfaceId: string): void {
         if (surfaceId === "activity")
             applyPendingActivitySection();
+        else if (surfaceId === "time-weather")
+            applyPendingTimeWeatherTab();
         surfaceReady(surfaceId);
     }
 
@@ -234,7 +262,29 @@ Item {
                 content: Component {
                     Activity.ActivityContent { controller: activityController }
                 }
-                Activity.ActivityController { id: activityController }
+                Activity.ActivityController {
+                    id: activityController
+                    onTimeWeatherRequested: function (tab) { registry.openTimeWeather(tab); }
+                }
+            }
+        }
+    }
+
+    Loader {
+        id: timeWeatherBundle
+        active: registry.isLoaded("time-weather")
+        asynchronous: true
+        onLoaded: registry.notifySurfaceReady("time-weather")
+        sourceComponent: Component {
+            SurfaceBundle {
+                surfaceId: "time-weather"
+                displayName: "Time & Weather"
+                icon: "󰅐"
+                controller: timeWeatherController
+                content: Component {
+                    Activity.TimeWeatherContent { controller: timeWeatherController }
+                }
+                Activity.TimeWeatherController { id: timeWeatherController }
             }
         }
     }

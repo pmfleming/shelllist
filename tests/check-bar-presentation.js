@@ -137,7 +137,7 @@ equal(modules[6].secondary, "", "power mode has no right-click action");
 equal(modules[6].middle, "", "power mode has no middle-click action");
 equal(modules[6].wheelUp, "", "power mode has no wheel action");
 equal(modules[7].primary, "activity", "calendar opens the activity surface");
-equal(modules[10].primary, "activity", "clock opens the activity surface");
+equal(modules[10].primary, "time-weather", "clock opens Time & Weather");
 equal(context.layoutDensity(1920), 0, "wide layout density");
 equal(context.layoutDensity(1366), 1, "compact layout density");
 equal(context.layoutDensity(900), 2, "narrow layout density");

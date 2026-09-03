@@ -23,6 +23,10 @@ equal(activity.dateKey(selected), "2026-08-22", "activity date key");
 ok(activity.eventOverlapsDate({ start_unix_ms: selected.getTime(), end_unix_ms: selected.getTime() + 1000 }, selected), "timed event overlaps selected date");
 ok(activity.todoVisible({ due_date: "2026-08-22" }, "2026-08-22", "2026-08-23"), "dated todo is visible");
 equal(activity.eventKind({ event: "changed", stream: "activity" }, { activity: "activity", notifications: "notifications", notificationActive: "active" }), "activity", "activity stream routing");
+equal(activity.eventKind({ event: "changed", stream: "timezone" }, {
+    activity: "activity", notifications: "notifications",
+    notificationActive: "active", timezone: "timezone"
+}), "timezone", "timezone stream routing");
 
 const battery = load(process.argv[3]);
 const batteryState = { policy: { warning_percent: 20 }, devices: [{ id: "BAT0", protection: { supported: true } }] };

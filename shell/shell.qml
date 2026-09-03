@@ -252,6 +252,11 @@ ShellRoot {
         onTriggered: shell.toggleSurface("activity")
     }
     Ui.ShelllistGlobalShortcut {
+        shortcutName: "time-weather"
+        description: "Toggle Shelllist Time & Weather"
+        onTriggered: shell.toggleSurface("time-weather")
+    }
+    Ui.ShelllistGlobalShortcut {
         shortcutName: "volume-up"
         description: "Raise Output Volume"
         onTriggered: barController.adjustAudio(5)

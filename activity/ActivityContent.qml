@@ -101,9 +101,8 @@ Ui.ChooserSurface {
                 clip: true
                 active: content.controller.detailsRendered
                 asynchronous: true
-                sourceComponent: content.controller.detailSection === "weather"
-                    ? weatherComponent : content.controller.detailSection === "notifications"
-                        ? notificationsComponent : scheduleComponent
+                sourceComponent: content.controller.detailSection === "notifications"
+                    ? notificationsComponent : scheduleComponent
             }
 
             Item {
@@ -123,14 +122,6 @@ Ui.ChooserSurface {
     }
 
     Component {
-        id: weatherComponent
-        ActivityWeatherPane {
-            controller: content.controller
-            now: content.now
-        }
-    }
-
-    Component {
         id: scheduleComponent
         ActivitySchedulePane {
             controller: content.controller
@@ -145,8 +136,6 @@ Ui.ChooserSurface {
     }
 
     function sectionTitle(section: string): string {
-        if (section === "weather")
-            return "Local time · Weather";
         if (section === "notifications")
             return "Notifications";
         return "Calendar · Agenda · Todo";
@@ -175,18 +164,6 @@ Ui.ChooserSurface {
             content.controller.selectedDate.getDate() + 1))
     }
     Shortcut {
-        sequence: "Left"
-        enabled: content.controller.detailsOpen
-            && content.controller.detailSection === "weather"
-        onActivated: content.controller.cycleWeatherLocation(-1)
-    }
-    Shortcut {
-        sequence: "Right"
-        enabled: content.controller.detailsOpen
-            && content.controller.detailSection === "weather"
-        onActivated: content.controller.cycleWeatherLocation(1)
-    }
-    Shortcut {
         sequence: "PageUp"
         enabled: content.controller.detailSection === "schedule"
         onActivated: content.controller.shiftMonth(-1)
@@ -196,7 +173,7 @@ Ui.ChooserSurface {
         enabled: content.controller.detailSection === "schedule"
         onActivated: content.controller.shiftMonth(1)
     }
-    Shortcut { sequence: "1"; onActivated: content.controller.openSection("weather") }
+    Shortcut { sequence: "1"; onActivated: content.controller.requestTimeWeather("weather") }
     Shortcut { sequence: "2"; onActivated: content.controller.openSection("schedule") }
     Shortcut { sequence: "3"; onActivated: content.controller.openSection("notifications") }
     Shortcut { sequence: "T"; onActivated: content.controller.goToToday() }

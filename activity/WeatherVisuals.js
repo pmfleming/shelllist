@@ -39,6 +39,46 @@ function localDay(unixMs, utcOffsetSeconds) {
     return names[shiftedDate(unixMs, utcOffsetSeconds).getUTCDay()];
 }
 
+function localDate(unixMs, utcOffsetSeconds) {
+    const value = shiftedDate(unixMs, utcOffsetSeconds);
+    const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const months = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+    return weekdays[value.getUTCDay()] + ", " + value.getUTCDate() + " "
+        + months[value.getUTCMonth()] + " " + value.getUTCFullYear();
+}
+
+function utcOffset(utcOffsetSeconds) {
+    const totalMinutes = Math.round(Number(utcOffsetSeconds || 0) / 60);
+    const sign = totalMinutes >= 0 ? "+" : "−";
+    const absolute = Math.abs(totalMinutes);
+    return "UTC" + (absolute === 0 ? "" : sign + Math.floor(absolute / 60)
+        + (absolute % 60 ? ":" + twoDigits(absolute % 60) : ""));
+}
+
+function duration(seconds) {
+    const totalMinutes = Math.max(0, Math.round(Number(seconds || 0) / 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return hours + " h " + twoDigits(minutes) + " min";
+}
+
+function moonPhase(unixMs) {
+    const synodicMonth = 29.530588853;
+    const referenceNewMoon = Date.UTC(2000, 0, 6, 18, 14, 0);
+    const days = (Number(unixMs || Date.now()) - referenceNewMoon) / 86400000;
+    const age = ((days % synodicMonth) + synodicMonth) % synodicMonth;
+    const fraction = age / synodicMonth;
+    const illumination = Math.round((1 - Math.cos(2 * Math.PI * fraction)) * 50);
+    const names = ["New moon", "Waxing crescent", "First quarter", "Waxing gibbous",
+        "Full moon", "Waning gibbous", "Last quarter", "Waning crescent"];
+    return {
+        name: names[Math.round(fraction * 8) % 8],
+        illumination: illumination,
+        age_days: age
+    };
+}
+
 function windCompass(degrees) {
     const names = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
     const normalized = ((Number(degrees || 0) % 360) + 360) % 360;

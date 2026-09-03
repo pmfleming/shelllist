@@ -38,5 +38,7 @@ function eventKind(event, streams) {
         return "activity";
     if (event.stream === streams.notifications)
         return "notifications";
-    return event.stream === streams.notificationActive ? "notificationActive" : "";
+    if (event.stream === streams.notificationActive)
+        return "notificationActive";
+    return event.stream === streams.timezone ? "timezone" : "";
 }

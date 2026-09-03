@@ -562,7 +562,8 @@ function notificationModule(notifications) {
 function timezoneModule(timezone) {
     const city = (timezone && timezone.city) || "";
     return statusModule("timezone", "󰅐 " + city, "Timezone city: " + city
-        + "\nTimezone is updated automatically from location", {
+        + "\nTimezone is updated automatically from location"
+        + "\nLeft click: open Time & Weather", {
         visible: !!(timezone && timezone.available), maxDensity: 0, primary: "timezone"
     });
 }
@@ -570,8 +571,10 @@ function timezoneModule(timezone) {
 function clockModule(now, timezone) {
     return statusModule("clock", Qt.formatDateTime(now, "ddd dd MMM  HH:mm"),
         Qt.formatDateTime(now, "yyyy-MM-dd") + " " + (timezone.abbreviation || "")
-            + " " + utcOffset(timezone.utc_offset_seconds), {
-            compactText: Qt.formatDateTime(now, "HH:mm"), maxDensity: 3, primary: "activity"
+            + " " + utcOffset(timezone.utc_offset_seconds)
+            + "\nLeft click: open Time & Weather", {
+            compactText: Qt.formatDateTime(now, "HH:mm"), maxDensity: 3,
+            primary: "time-weather"
         });
 }
 
