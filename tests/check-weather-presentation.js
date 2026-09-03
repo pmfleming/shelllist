@@ -39,11 +39,15 @@ assert(timezoneMap.includes("assets/timezones/world-time-zones.svg"),
     "timezone presentation must use the geographic map asset");
 assert(!timezoneMap.includes("Canvas"),
     "timezone presentation must not approximate zones with straight canvas bands");
-assert(/id=["']Europe-Paris["']/.test(timezoneAsset)
-        && /id=["']America-New_York["']/.test(timezoneAsset),
-    "timezone map must retain geographic IANA regional shapes");
-assert(!/<rect\b/.test(timezoneAsset),
-    "timezone map must not render offsets as straight bands");
+assert(/id=["']land-Europe-Paris["']/.test(timezoneAsset)
+        && /id=["']land-America-New_York["']/.test(timezoneAsset),
+    "timezone map must retain geographic IANA land shapes");
+const oceanPaths = [...timezoneAsset.matchAll(/<path id="ocean-[^"]+" d="([^"]+)"/g)]
+    .map(match => match[1]);
+assert(/id=["']ocean-Etc-GMT\+12["']/.test(timezoneAsset)
+        && oceanPaths.some(path => path.includes(",0.0"))
+        && oceanPaths.some(path => path.includes(",360.0")),
+    "timezone map must include ocean timezone regions through both map edges");
 assert(!/<text\b/.test(timezoneAsset),
     "compact timezone map must omit busy country and city labels");
 assert(timezoneGeometry.includes('"Europe/Amsterdam":"Europe/Paris"'),

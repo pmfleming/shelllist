@@ -113,7 +113,7 @@ Rectangle {
                 + (Math.max(-180, Math.min(180, map.longitude)) + 180) / 360
                     * baseMap.paintedWidth - width / 2
             y: (baseMap.height - baseMap.paintedHeight) / 2
-                + (90 - Math.max(-60, Math.min(90, map.latitude))) / 150
+                + (85 - Math.max(-60, Math.min(85, map.latitude))) / 145
                     * baseMap.paintedHeight - height / 2
             width: 14
             height: 14
