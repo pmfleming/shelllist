@@ -8,18 +8,17 @@ Rectangle {
 
     required property date now
     property int offsetSeconds: 0
-    property string timezoneName: ""
     property string abbreviation: ""
     property real latitude: 0
     property real longitude: 0
     property bool hasCoordinates: false
-    readonly property string selectedZonePath: Geometry.pathFor(timezoneName)
+    readonly property string selectedOffsetPath: Geometry.pathForOffset(offsetSeconds, now.getTime())
 
-    function selectedZoneSource(): string {
-        if (selectedZonePath.length === 0)
+    function selectedOffsetSource(): string {
+        if (selectedOffsetPath.length === 0)
             return "";
         const svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 360'>"
-            + "<path d='" + selectedZonePath + "' fill='" + String(Ui.Theme.accent)
+            + "<path d='" + selectedOffsetPath + "' fill='" + String(Ui.Theme.accent)
             + "' fill-opacity='.48' stroke='" + String(Ui.Theme.text)
             + "' stroke-width='1.8' vector-effect='non-scaling-stroke'/></svg>";
         return "data:image/svg+xml," + encodeURIComponent(svg);
@@ -30,9 +29,8 @@ Rectangle {
     border.color: Ui.Theme.border
     clip: true
     Accessible.role: Accessible.Graphic
-    Accessible.name: "World map of geographic timezone areas. "
-        + (timezoneName || "Selected timezone") + " is highlighted, "
-        + Visuals.utcOffset(offsetSeconds) + ", local time "
+    Accessible.name: "World map of geographic timezone areas. All regions at "
+        + Visuals.utcOffset(offsetSeconds) + " are highlighted, local time "
         + Visuals.localTime(now.getTime(), offsetSeconds)
         + (hasCoordinates ? ". Location marked on the map" : "")
 
@@ -95,14 +93,14 @@ Rectangle {
 
         Image {
             anchors.fill: parent
-            source: map.selectedZoneSource()
+            source: map.selectedOffsetSource()
             fillMode: Image.PreserveAspectFit
             horizontalAlignment: Image.AlignHCenter
             verticalAlignment: Image.AlignVCenter
             smooth: true
             mipmap: true
             asynchronous: false
-            visible: map.selectedZonePath.length > 0
+            visible: map.selectedOffsetPath.length > 0
             Accessible.ignored: true
         }
 

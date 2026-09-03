@@ -8,6 +8,8 @@ from OpenStreetMap and publishes generated data under the
 
 The source geometry was simplified for the compact Shelllist view. Muted ocean
 regions continue each timezone from the north to south map edges, while brighter land polygons
-preserve their geographic boundaries. `TimezoneGeometry.js` retains the land
-paths and IANA aliases so the selected timezone can be highlighted without
-network access. Country/city labels and political borders are omitted.
+preserve their geographic boundaries. `TimezoneGeometry.js` retains complete
+land-and-ocean paths plus IANA offset transitions for 2020–2050, allowing every
+region at the selected current UTC offset to be highlighted without network
+access. Fractional-hour regions remain separate. Country/city labels and
+political borders are omitted.

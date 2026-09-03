@@ -7,9 +7,13 @@ const source = fs.readFileSync(process.argv[2], "utf8")
 const timezoneMap = fs.readFileSync(process.argv[3], "utf8");
 const timezoneAsset = fs.readFileSync(process.argv[4], "utf8");
 const timezoneGeometry = fs.readFileSync(process.argv[5], "utf8");
+const geometrySource = timezoneGeometry.replace(/^\.pragma library\s*$/m, "");
 const context = { Date, Number, Math, String };
 vm.createContext(context);
 vm.runInContext(source, context);
+const geometryContext = { Date, Number, Math, String };
+vm.createContext(geometryContext);
+vm.runInContext(geometrySource, geometryContext);
 
 function equal(actual, expected, message) {
     if (actual !== expected)
@@ -50,10 +54,21 @@ assert(/id=["']ocean-Etc-GMT\+12["']/.test(timezoneAsset)
     "timezone map must include ocean timezone regions through both map edges");
 assert(!/<text\b/.test(timezoneAsset),
     "compact timezone map must omit busy country and city labels");
-assert(timezoneGeometry.includes('"Europe/Amsterdam":"Europe/Paris"'),
-    "timezone aliases must resolve to highlightable geometry");
-assert(timezoneMap.includes("selectedZoneSource()")
+const parisPath = vm.runInContext('PATHS["Europe/Paris"]', geometryContext);
+const johannesburgPath = vm.runInContext('PATHS["Africa/Johannesburg"]', geometryContext);
+const kolkataPath = vm.runInContext('PATHS["Asia/Kolkata"]', geometryContext);
+const karachiPath = vm.runInContext('PATHS["Asia/Karachi"]', geometryContext);
+const summerUtc2 = geometryContext.pathForOffset(2 * 3600, Date.UTC(2026, 6, 1));
+const winterUtc1 = geometryContext.pathForOffset(1 * 3600, Date.UTC(2026, 0, 1));
+const fractionalUtc530 = geometryContext.pathForOffset(5.5 * 3600, Date.UTC(2026, 6, 1));
+assert(summerUtc2.includes(parisPath) && summerUtc2.includes(johannesburgPath)
+        && winterUtc1.includes(parisPath),
+    "offset highlighting must include every region at that seasonal UTC offset");
+assert(fractionalUtc530.includes(kolkataPath) && !fractionalUtc530.includes(karachiPath),
+    "fractional-hour timezone exceptions must remain separate");
+assert(timezoneMap.includes("selectedOffsetSource()")
+        && timezoneMap.includes("pathForOffset(offsetSeconds, now.getTime())")
         && timezoneMap.includes("locationMarker"),
-    "timezone map must highlight the selected zone and mark its location");
+    "timezone map must highlight the selected UTC offset and mark its location");
 
 console.log("weather presentation: artwork, local times, timezone maps, and wind direction passed");
