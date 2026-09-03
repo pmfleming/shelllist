@@ -43,6 +43,9 @@ assert(timezoneMap.includes("assets/timezones/world-time-zones.svg"),
     "timezone presentation must use the geographic map asset");
 assert(!timezoneMap.includes("Canvas"),
     "timezone presentation must not approximate zones with straight canvas bands");
+assert(!timezoneMap.includes("WORLD TIME ZONES")
+        && !timezoneMap.includes("selectedLabel"),
+    "timezone map must not repeat the surrounding card heading and local time");
 assert(/id=["']land-Europe-Paris["']/.test(timezoneAsset)
         && /id=["']land-America-New_York["']/.test(timezoneAsset),
     "timezone map must retain geographic IANA land shapes");

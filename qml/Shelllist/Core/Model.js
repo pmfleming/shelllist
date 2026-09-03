@@ -37,24 +37,24 @@ function enumValue(value, allowed, fallback, path) {
 function stringList(values) {
     if (!Array.isArray(values))
         return [];
-    const seen = ({});
+    const seen = [];
     const result = [];
     values.forEach(function (value) {
         const text = stringValue(value, "").trim();
-        if (text.length > 0 && !seen[text]) {
-            seen[text] = true;
+        if (text.length > 0 && seen.indexOf(text) < 0) {
+            seen.push(text);
             result.push(text);
         }
     });
     return result;
 }
 function ensureUnique(items, field, path) {
-    const seen = ({});
+    const seen = [];
     items.forEach(function (item) {
         const value = item[field];
-        if (seen[value])
+        if (seen.indexOf(value) >= 0)
             fail(path, "duplicate " + field + " " + JSON.stringify(value));
-        seen[value] = true;
+        seen.push(value);
     });
 }
 
