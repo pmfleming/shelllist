@@ -22,7 +22,9 @@ try {
             throw result.error;
         if (result.status !== 0)
             throw new Error(result.stdout + result.stderr);
-        const output = ".pragma library\n\n" + readFileSync(compiled, "utf8");
+        const imports = (entry.imports || []).join("\n");
+        const header = ".pragma library\n" + (imports ? imports + "\n" : "") + "\n";
+        const output = header + readFileSync(compiled, "utf8");
         const destination = join(root, entry.output);
         if (check) {
             if (readFileSync(destination, "utf8") !== output)

@@ -18,5 +18,24 @@
   {
     "source": "typescript/launcher/ApplicationResources.ts",
     "output": "launcher/ApplicationResources.js"
+  },
+  {
+    "source": "typescript/bar/BarWorkspacePresentation.ts",
+    "output": "bar/BarWorkspacePresentation.js"
+  },
+  {
+    "source": "typescript/bar/BarMediaPresentation.ts",
+    "output": "bar/BarMediaPresentation.js"
+  },
+  {
+    "source": "typescript/bar/BarOsdPresentation.ts",
+    "output": "bar/BarOsdPresentation.js"
+  },
+  {
+    "source": "typescript/bar/BarStatusPresentation.ts",
+    "output": "bar/BarStatusPresentation.js",
+    "imports": [
+      ".import \"../Core/Duration.js\" as Duration"
+    ]
   }
 ]

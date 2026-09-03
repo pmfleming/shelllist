@@ -29,7 +29,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - Activity, battery, power, and OSD views are split into cohesive panes rather than one large object tree.
 - `ChartFrame`, `PulsingLabel`, `NotificationReplyRow`, and `BarOverlayWindow` centralize repeated presentation behavior.
 - `NotificationPresentation`, `NotificationStackHeader`, and `RemovalAnimation` keep grouping, routing, stack headers, and transient removal behavior common between active and historical notifications.
-- Every OSD family uses one normalized descriptor, one `BarOsdContent` frame, and one dismissal timer; pure transition and timeout policy stays in `BarPresentation.js`.
+- Every OSD family uses one normalized descriptor, one `BarOsdContent` frame, and one dismissal timer; pure transition and timeout policy stays in `BarOsdPresentation.js`.
 - `StateLayer` and `Elevation` centralize interaction feedback and depth.
 - Operation lifecycle policy is kept in small JavaScript helpers where it can be tested without a running shell.
 - Terminal backend events are correlated by request/operation IDs before changing UI state.
@@ -76,7 +76,8 @@ shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml activity/*.qml \
   bar/*.qml battery/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml \
   wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
-node tests/check-bar-presentation.js bar/BarPresentation.js
+node tests/check-bar-presentation.js bar/Bar{Workspace,Media,Osd,Status}Presentation.js \
+  qml/Shelllist/Core/Duration.js
 node tests/check-flow-policies.js activity/ActivityFlow.js \
   battery/BatteryFlow.js clipboard/ClipboardFlow.js
 tests/run-qml-tests.sh

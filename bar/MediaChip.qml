@@ -1,6 +1,6 @@
 import QtQuick
 import Shelllist.Ui as Ui
-import "BarPresentation.js" as Presentation
+import "BarMediaPresentation.js" as Presentation
 
 Item {
     id: root

@@ -2,7 +2,9 @@ import Quickshell
 import QtQuick
 import Shelllist.Ui as Ui
 import "BarApi.js" as BarApi
-import "BarPresentation.js" as Presentation
+import "BarMediaPresentation.js" as MediaPresentation
+import "BarOsdPresentation.js" as OsdPresentation
+import "BarStatusPresentation.js" as StatusPresentation
 
 Item {
     id: controller
@@ -38,7 +40,7 @@ Item {
     readonly property var wifiController: surfaceRegistry ? surfaceRegistry.wifiController : null
     readonly property var bluetoothController: surfaceRegistry ? surfaceRegistry.bluetoothController : null
     readonly property var networkStatus: wifiController ? wifiController.activeStatus : null
-    readonly property var activePlayer: Presentation.playerFor(media)
+    readonly property var activePlayer: MediaPresentation.playerFor(media)
     readonly property string activePlayerId: activePlayer ? activePlayer.id : ""
     readonly property BarBackend backend: barBackend
 
@@ -78,7 +80,7 @@ Item {
     }
 
     function presentDomainOsd(stream: string, previous: var, value: var): void {
-        const nextOsd = Presentation.domainOsd(
+        const nextOsd = OsdPresentation.domainOsd(
             BarApi.streams, stream, previous, value);
         if (nextOsd)
             presentOsd(nextOsd);
@@ -118,7 +120,7 @@ Item {
     function cyclePowerProfile(): bool {
         if (!powerProfile.available || backend.requestRunning)
             return false;
-        const profile = Presentation.nextPowerProfile(powerProfile);
+        const profile = StatusPresentation.nextPowerProfile(powerProfile);
         return profile.length > 0 && backend.setPowerProfile(profile);
     }
     function dismissNotification(notificationId: int): bool {
@@ -157,7 +159,7 @@ Item {
             kind: "", icon: "", label: "", valueLabel: "", percent: 0,
             progressVisible: false, timeoutMs: 1400
         }, descriptor);
-        value.percent = Presentation.clamp(value.percent, 0, 100);
+        value.percent = OsdPresentation.clamp(value.percent, 0, 100);
         value.progressVisible = !!value.progressVisible;
         value.timeoutMs = Math.max(400, Number(value.timeoutMs) || 1400);
         controller.osd = value;
@@ -166,19 +168,19 @@ Item {
     }
 
     function showOutputOsd(state: var): void {
-        presentOsd(Presentation.outputOsd(state));
+        presentOsd(OsdPresentation.outputOsd(state));
     }
 
     function showInputOsd(state: var): void {
-        presentOsd(Presentation.inputOsd(state));
+        presentOsd(OsdPresentation.inputOsd(state));
     }
 
     function showBrightnessOsd(state: var): void {
-        presentOsd(Presentation.brightnessOsd(state));
+        presentOsd(OsdPresentation.brightnessOsd(state));
     }
 
     function statusModules(now: date): var {
-        return Presentation.statusModules({
+        return StatusPresentation.statusModules({
             activity: activity, network: networkStatus, bluetooth: bluetoothController,
             updates: updates, audio: audio, brightness: brightness, battery: battery,
             powerProfile: powerProfile, notifications: notifications, timezone: timezone

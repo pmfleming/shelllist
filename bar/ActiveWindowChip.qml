@@ -2,7 +2,7 @@ import Quickshell
 import Quickshell.Widgets
 import QtQuick
 import Shelllist.Ui as Ui
-import "BarPresentation.js" as Presentation
+import "BarWorkspacePresentation.js" as Presentation
 
 Item {
     id: root

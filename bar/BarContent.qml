@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
-import "BarPresentation.js" as Presentation
+import "BarStatusPresentation.js" as Presentation
 
 Item {
     id: root

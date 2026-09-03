@@ -3,18 +3,23 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-let source = fs.readFileSync(process.argv[2], "utf8").replace(/^\.pragma library\s*$/m, "");
-const durationImport = source.match(/^\.import\s+"([^"]+)"\s+as\s+Duration\s*$/m);
+const presentationPaths = process.argv.slice(2, 6);
+if (presentationPaths.length !== 4)
+    throw new Error("usage: check-bar-presentation.js <workspace.js> <media.js> <osd.js> <status.js> [Duration.js]");
+const sources = presentationPaths.map(file => fs.readFileSync(file, "utf8")
+    .replace(/^\.pragma library\s*$/m, ""));
+const durationImport = sources.join("\n").match(
+    /^\.import\s+"([^"]+)"\s+as\s+Duration\s*$/m);
 const Duration = {};
 vm.createContext(Duration);
-const durationPath = process.argv[3]
-    || path.resolve(path.dirname(process.argv[2]), durationImport[1]);
+const durationPath = process.argv[6]
+    || path.resolve(path.dirname(presentationPaths[3]), durationImport[1]);
 vm.runInContext(fs.readFileSync(durationPath, "utf8")
     .replace(/^\.pragma library\s*$/m, ""), Duration);
-source = source.replace(durationImport[0], "");
 const context = { Duration, Qt: { formatDateTime: (_date, format) => format } };
 vm.createContext(context);
-vm.runInContext(source, context);
+for (const source of sources)
+    vm.runInContext(source.replace(/^\.import.*$/m, ""), context);
 
 function equal(actual, expected, message) {
     if (JSON.stringify(actual) !== JSON.stringify(expected))

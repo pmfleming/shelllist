@@ -692,7 +692,11 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-bar-presentation.js} \
-              ${./bar/BarPresentation.js} ${./qml/Shelllist/Core/Duration.js}
+              ${./bar/BarWorkspacePresentation.js} \
+              ${./bar/BarMediaPresentation.js} \
+              ${./bar/BarOsdPresentation.js} \
+              ${./bar/BarStatusPresentation.js} \
+              ${./qml/Shelllist/Core/Duration.js}
             touch $out
           '';
 

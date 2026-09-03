@@ -16,7 +16,7 @@ Shelllist uses one shared OSD frame for transient system feedback, instantiated 
 }
 ```
 
-`BarController.presentOsd()` applies defaults, clamps `percent` to 0–100, enforces a minimum 400 ms timeout, replaces the current descriptor, and restarts the single dismissal timer. `BarOsdContent.qml` owns only frame layout and animation; type-specific formatting and transition selection live in `bar/BarPresentation.js`.
+`BarController.presentOsd()` applies defaults, clamps `percent` to 0–100, enforces a minimum 400 ms timeout, replaces the current descriptor, and restarts the single dismissal timer. `BarOsdContent.qml` owns only frame layout and animation; type-specific formatting and transition selection live in `bar/BarOsdPresentation.js`.
 
 ## Event sources
 
@@ -54,7 +54,7 @@ Shelllist owns transition detection, text, icons, progress visibility, timeout c
 ## Adding an OSD
 
 1. Add or reuse a normalized daemon/API state field and checked stream contract.
-2. Add a pure descriptor helper in `bar/BarPresentation.js`.
+2. Add a pure descriptor helper in `bar/BarOsdPresentation.js`.
 3. Add transition selection to `domainOsd()` or present the descriptor only after a successful operation response.
 4. Reuse `BarController.presentOsd()` and `BarOsdContent.qml`; do not add a parallel window or timer.
 5. Add presentation-policy and API-contract assertions.
@@ -62,7 +62,7 @@ Shelllist owns transition detection, text, icons, progress visibility, timeout c
 Focused validation:
 
 ```sh
-node tests/check-bar-presentation.js bar/BarPresentation.js \
+node tests/check-bar-presentation.js bar/Bar{Workspace,Media,Osd,Status}Presentation.js \
   qml/Shelllist/Core/Duration.js
 tests/check-bar-api-contract.sh ../bar-daemon/target/debug/bar-daemon \
   contracts/bar-api-ui-contract.fixture.json bar/BarApi.js \
