@@ -7,7 +7,9 @@ Io.DaemonBackend {
     expectedProtocol: ClipApi.protocol
     expectedVersion: ClipApi.version
     streams: ClipApi.subscribedStreams
-    active: controller.uiActive
+    // Annotation continues after the picker hides. Keep the bridge alive until
+    // its terminal event arrives, otherwise bridge shutdown cancels Satty.
+    active: controller.uiActive || controller.backgroundOperationInFlight
     readonly property var eventHandlers: {
         const handlers = ({});
         handlers[ClipApi.streams.history] = function (event) {

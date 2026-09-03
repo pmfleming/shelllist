@@ -6,7 +6,7 @@ const vm = require("vm");
 const apiPath = process.argv[2];
 const protocolPath = process.argv[3];
 if (!apiPath)
-    throw new Error("usage: check-clipboard-actions.js <ClipApi.js> [ClipProtocol.generated.js]");
+    throw new Error("usage: check-clipboard-actions.js <ClipApi.js> [ClipProtocol.generated.js] [ClipboardController.qml] [ClipboardBackend.qml]");
 const source = fs.readFileSync(apiPath, "utf8");
 const importMatch = source.match(/^\.import\s+"([^"]+)"\s+as\s+Protocol$/m);
 const context = {};
@@ -52,4 +52,16 @@ for (const kind of ["text", "link", "image", "files", "binary"]) {
     if (descriptors.filter(action => action.presentation.group === "toolbar").some(action => action.role !== "secondary"))
         throw new Error(`${kind}: toolbar actions must be secondary`);
 }
-console.log("clipboard action matrix checks passed");
+
+const controllerPath = process.argv[4];
+const backendPath = process.argv[5];
+if (controllerPath && backendPath) {
+    const controller = fs.readFileSync(controllerPath, "utf8");
+    const backend = fs.readFileSync(backendPath, "utf8");
+    if (!/backgroundOperationInFlight:\s*activeAction === "annotate"/.test(controller)
+            || !/if \(!keepBackgroundOperation\)\s*\{[\s\S]*activeOperationId = "";/.test(controller))
+        throw new Error("annotation state must survive picker deactivation");
+    if (!/active:\s*controller\.uiActive \|\| controller\.backgroundOperationInFlight/.test(backend))
+        throw new Error("clipboard transport must remain active for background annotation");
+}
+console.log("clipboard action and lifecycle checks passed");

@@ -956,7 +956,9 @@
             } ''
             node ${./tests/check-clipboard-actions.js} \
               ${./clipboard/ClipApi.js} \
-              ${./clipboard/ClipProtocol.generated.js}
+              ${./clipboard/ClipProtocol.generated.js} \
+              ${./clipboard/ClipboardController.qml} \
+              ${./clipboard/ClipboardBackend.qml}
             touch $out
           '';
 

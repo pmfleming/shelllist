@@ -36,6 +36,8 @@ Ui.ProviderChooserController {
     navigationCloseEnabled: false
 
     readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
+    readonly property bool backgroundOperationInFlight: activeAction === "annotate"
+        && activeOperationId.length > 0
     signal hideRequested
 
     function activateUi(workspaceId) {
@@ -67,13 +69,16 @@ Ui.ProviderChooserController {
         if (sessionId.length > 0)
             backend.endSession(sessionId);
         finishEditSession();
+        const keepBackgroundOperation = backgroundOperationInFlight;
         deactivateUiState();
         sessionId = "";
-        actionInFlight = false;
+        if (!keepBackgroundOperation) {
+            actionInFlight = false;
+            activeAction = "";
+            activeOperationId = "";
+            handledTerminalOperations = ({});
+        }
         screenshotInFlight = false;
-        activeAction = "";
-        activeOperationId = "";
-        handledTerminalOperations = ({});
         activeHistoryQueryId = "";
         revisionRequestId = "";
         pendingHistoryEntries = [];
