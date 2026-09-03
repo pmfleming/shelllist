@@ -71,7 +71,7 @@ The Activity surface combines a month calendar, selected-day agenda, persistent 
 
 ### Time & Weather
 
-Time & Weather lists every configured city with its current condition, high/low temperature, rain chance, and local time. `Right` expands the selected city; **Time** shows local date/time, a world timezone map, sun position, daylight length, and moon phase, while **Weather** reuses the hourly and seven-day forecast view. Open it from the Activity time/weather callout, the bar clock/timezone, `shelllist time-weather open`, or the `time-weather` global shortcut.
+Time & Weather lists every configured city with its current condition, high/low temperature, rain chance, and local time. `Right` expands the selected city; **Time** shows local date/time, a world map with the selected timezone and location highlighted, sun position, daylight length, and moon phase, while **Weather** reuses the hourly and seven-day forecast view. Open it from the Activity time/weather callout, the bar clock/timezone, `shelllist time-weather open`, or the `time-weather` global shortcut.
 
 ### Clipboard
 

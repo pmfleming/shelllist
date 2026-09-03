@@ -6,6 +6,7 @@ const source = fs.readFileSync(process.argv[2], "utf8")
     .replace(/^\.pragma library\s*$/m, "");
 const timezoneMap = fs.readFileSync(process.argv[3], "utf8");
 const timezoneAsset = fs.readFileSync(process.argv[4], "utf8");
+const timezoneGeometry = fs.readFileSync(process.argv[5], "utf8");
 const context = { Date, Number, Math, String };
 vm.createContext(context);
 vm.runInContext(source, context);
@@ -18,18 +19,6 @@ function equal(actual, expected, message) {
 function assert(condition, message) {
     if (!condition)
         throw new Error(message);
-}
-
-function timezoneBandColor(offset) {
-    const match = timezoneAsset.match(new RegExp("\\.w" + offset
-        + "\\s*\\{fill:(#[0-9A-Fa-f]{6})"));
-    assert(match, `missing timezone band color for UTC${offset}`);
-    return match[1].slice(1).match(/../g).map(value => parseInt(value, 16));
-}
-
-function colorDistance(left, right) {
-    return Math.sqrt(left.reduce((sum, value, index) =>
-        sum + Math.pow(value - right[index], 2), 0));
 }
 
 equal(context.iconName(0, true), "clear-day", "clear day artwork");
@@ -50,15 +39,17 @@ assert(timezoneMap.includes("assets/timezones/world-time-zones.svg"),
     "timezone presentation must use the geographic map asset");
 assert(!timezoneMap.includes("Canvas"),
     "timezone presentation must not approximate zones with straight canvas bands");
-assert(/class=["']z["']/.test(timezoneAsset),
-    "timezone map must retain geographic timezone boundaries");
-for (let offset = -12; offset < 14; offset++) {
-    assert(colorDistance(timezoneBandColor(offset), timezoneBandColor(offset + 1)) >= 72,
-        `adjacent UTC${offset} and UTC${offset + 1} bands need stronger contrast`);
-}
-assert(/\.z\s*\{stroke:#F4FAFF;\s*stroke-width:2\.2;/.test(timezoneAsset),
-    "timezone boundaries must remain bright and visible at compact size");
+assert(/id=["']Europe-Paris["']/.test(timezoneAsset)
+        && /id=["']America-New_York["']/.test(timezoneAsset),
+    "timezone map must retain geographic IANA regional shapes");
+assert(!/<rect\b/.test(timezoneAsset),
+    "timezone map must not render offsets as straight bands");
 assert(!/<text\b/.test(timezoneAsset),
     "compact timezone map must omit busy country and city labels");
+assert(timezoneGeometry.includes('"Europe/Amsterdam":"Europe/Paris"'),
+    "timezone aliases must resolve to highlightable geometry");
+assert(timezoneMap.includes("selectedZoneSource()")
+        && timezoneMap.includes("locationMarker"),
+    "timezone map must highlight the selected zone and mark its location");
 
 console.log("weather presentation: artwork, local times, timezone maps, and wind direction passed");

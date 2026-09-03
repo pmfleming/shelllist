@@ -20,6 +20,8 @@ jq -e '
   (.snapshot.activity.weather.condition_code | type == "number") and
   (.snapshot.activity.weather.is_day | type == "boolean") and
   (.snapshot.activity.weather.precipitation_mm | type == "number") and
+  (.snapshot.activity.weather.latitude | type == "number") and
+  (.snapshot.activity.weather.longitude | type == "number") and
   (.snapshot.activity.weather.wind_direction_degrees | type == "number") and
   (.snapshot.activity.weather.hourly[0].condition_code | type == "number") and
   (.snapshot.activity.weather.daily[0].condition_code | type == "number") and

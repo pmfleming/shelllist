@@ -316,6 +316,9 @@ Ui.DetailFlickable {
             offsetSeconds: pane.offsetSeconds
             timezoneName: pane.city.timezone || ""
             abbreviation: pane.city.abbreviation || ""
+            latitude: Number(pane.city.latitude || 0)
+            longitude: Number(pane.city.longitude || 0)
+            hasCoordinates: !!pane.city.has_coordinates
         }
     }
 }

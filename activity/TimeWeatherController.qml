@@ -42,6 +42,10 @@ ActivityController {
         const values = weatherValues.map(function (weather, index) {
             const timezone = String(weather.timezone || "");
             const clock = clockByTimezone[timezone] || ({});
+            const latitude = Number(weather.latitude);
+            const longitude = Number(weather.longitude);
+            const hasCoordinates = Number.isFinite(latitude)
+                && Number.isFinite(longitude);
             if (timezone.length > 0) {
                 representedTimezones[timezone] = true;
                 delete clockByTimezone[timezone];
@@ -56,6 +60,9 @@ ActivityController {
                     && weather.utc_offset_seconds !== null ? weather.utc_offset_seconds
                     : (clock.utc_offset_seconds !== undefined
                         && clock.utc_offset_seconds !== null ? clock.utc_offset_seconds : 0)),
+                latitude: hasCoordinates ? latitude : 0,
+                longitude: hasCoordinates ? longitude : 0,
+                has_coordinates: hasCoordinates,
                 home: !!weather.home,
                 weather: weather,
                 has_weather: true
@@ -76,6 +83,9 @@ ActivityController {
                 abbreviation: String(controller.timezone.abbreviation
                     || localClock.abbreviation || ""),
                 utc_offset_seconds: Number(controller.timezone.utc_offset_seconds || 0),
+                latitude: 0,
+                longitude: 0,
+                has_coordinates: false,
                 home: true,
                 weather: null,
                 has_weather: false
@@ -95,6 +105,9 @@ ActivityController {
                 timezone: timezone,
                 abbreviation: String(clock.abbreviation || ""),
                 utc_offset_seconds: Number(clock.utc_offset_seconds || 0),
+                latitude: 0,
+                longitude: 0,
+                has_coordinates: false,
                 home: false,
                 weather: null,
                 has_weather: false

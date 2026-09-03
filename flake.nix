@@ -704,7 +704,8 @@
             node ${./tests/check-weather-presentation.js} \
               ${./activity/WeatherVisuals.js} \
               ${./activity/TimezoneMap.qml} \
-              ${./activity/assets/timezones/world-time-zones.svg}
+              ${./activity/assets/timezones/world-time-zones.svg} \
+              ${./activity/TimezoneGeometry.js}
             touch $out
           '';
 
