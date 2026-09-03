@@ -13,12 +13,18 @@ Ui.ResultRow {
     readonly property bool hasWeather: !!city.has_weather && !!weather.available
 
     accessibleName: city.label + ". "
-        + (hasWeather ? weather.condition + ", " + temperature(weather.temperature_c) : "No weather")
+        + (hasWeather ? weather.condition + ", " + temperature(weather.temperature_c)
+            + ", " + percentage(weather.precipitation_probability) + " chance of rain"
+            : "No weather")
         + ". " + localTime()
 
     function temperature(value: var): string {
         const number = Number(value);
         return Number.isFinite(number) ? Math.round(number) + "°" : "—";
+    }
+    function percentage(value: var): string {
+        const number = Number(value);
+        return Number.isFinite(number) ? Math.round(number) + "%" : "—";
     }
     function localTime(): string {
         return Visuals.localTime(nowMs, Number(city.utc_offset_seconds || 0));
@@ -41,19 +47,15 @@ Ui.ResultRow {
         uiScale: row.uiScale
     }
 
-    Rectangle {
-        Layout.preferredWidth: row.scaled(96)
+    Item {
+        Layout.preferredWidth: row.scaled(104)
         Layout.preferredHeight: row.scaled(48)
         Layout.alignment: Qt.AlignVCenter
-        radius: row.scaled(Ui.Theme.controlRadius)
-        color: Ui.Theme.surfaceRaised
-        border.color: Ui.Theme.border
 
         WeatherIcon {
             anchors.left: parent.left
-            anchors.leftMargin: row.scaled(5)
             anchors.verticalCenter: parent.verticalCenter
-            width: row.scaled(42)
+            width: row.scaled(40)
             height: width
             visible: row.hasWeather
             conditionCode: Number(row.weather.condition_code || 0)
@@ -73,9 +75,8 @@ Ui.ResultRow {
         Column {
             visible: row.hasWeather
             anchors.right: parent.right
-            anchors.rightMargin: row.scaled(7)
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 1
+            spacing: 0
 
             Text {
                 anchors.right: parent.right
@@ -92,6 +93,26 @@ Ui.ResultRow {
                 color: Ui.Theme.mutedText
                 font.family: Ui.Theme.fontFamily
                 font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
+            }
+            Row {
+                anchors.right: parent.right
+                spacing: row.scaled(2)
+
+                Image {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: row.scaled(11)
+                    height: width
+                    source: Qt.resolvedUrl("assets/weather/raindrop.svg")
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    mipmap: true
+                }
+                Text {
+                    text: row.percentage(row.weather.precipitation_probability)
+                    color: Ui.Theme.mutedText
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
+                }
             }
         }
     }
