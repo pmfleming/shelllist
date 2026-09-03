@@ -56,11 +56,6 @@ function utcOffset(utcOffsetSeconds) {
         + (absolute % 60 ? ":" + twoDigits(absolute % 60) : ""));
 }
 
-function timezonePosition(utcOffsetSeconds) {
-    const offsetHours = Number(utcOffsetSeconds || 0) / 3600;
-    return Math.max(0, Math.min(1, (offsetHours + 12) / 26));
-}
-
 function duration(seconds) {
     const totalMinutes = Math.max(0, Math.round(Number(seconds || 0) / 60));
     const hours = Math.floor(totalMinutes / 60);

@@ -702,7 +702,9 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-weather-presentation.js} \
-              ${./activity/WeatherVisuals.js}
+              ${./activity/WeatherVisuals.js} \
+              ${./activity/TimezoneMap.qml} \
+              ${./activity/assets/timezones/world-time-zones.svg}
             touch $out
           '';
 

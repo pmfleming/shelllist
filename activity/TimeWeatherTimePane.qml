@@ -87,6 +87,68 @@ Ui.DetailFlickable {
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
         }
+
+        Row {
+            id: heroTimeMetrics
+            anchors.right: parent.right
+            anchors.rightMargin: Ui.Theme.spacingLg
+            anchors.top: parent.top
+            anchors.topMargin: 56
+            width: Math.min(300, parent.width * 0.46)
+            height: 104
+
+            Repeater {
+                model: [
+                    { icon: "󰖙", label: "Day length", value: pane.hasSunTimes
+                        ? Visuals.duration((pane.sunset - pane.sunrise) / 1000) : "—" },
+                    { icon: "󰽤", label: "Moon", value: pane.moon.name,
+                        detail: pane.moon.illumination + "% illuminated" }
+                ]
+                delegate: Column {
+                    id: heroTimeMetric
+                    required property var modelData
+                    width: heroTimeMetrics.width / 2
+                    spacing: 2
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: heroTimeMetric.modelData.icon
+                        color: Ui.Theme.accent
+                        font.family: Ui.Theme.iconFontFamily
+                        font.pixelSize: 28
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: heroTimeMetric.modelData.label
+                        color: Ui.Theme.mutedText
+                        font.family: Ui.Theme.fontFamily
+                        font.pixelSize: Ui.Theme.fontSizeCaption
+                    }
+                    Text {
+                        width: parent.width - Ui.Theme.spacingSm
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        horizontalAlignment: Text.AlignHCenter
+                        text: heroTimeMetric.modelData.value
+                        color: Ui.Theme.text
+                        elide: Text.ElideRight
+                        font.family: Ui.Theme.fontFamily
+                        font.pixelSize: Ui.Theme.fontSizeSmall
+                        font.weight: Ui.Theme.fontWeightDemiBold
+                    }
+                    Text {
+                        visible: String(heroTimeMetric.modelData.detail || "").length > 0
+                        width: parent.width - Ui.Theme.spacingSm
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        horizontalAlignment: Text.AlignHCenter
+                        text: heroTimeMetric.modelData.detail || ""
+                        color: Ui.Theme.subtleText
+                        elide: Text.ElideRight
+                        font.family: Ui.Theme.fontFamily
+                        font.pixelSize: 9
+                    }
+                }
+            }
+        }
     }
 
     Rectangle {
@@ -199,64 +261,11 @@ Ui.DetailFlickable {
         }
     }
 
-    Row {
-        id: timeMetrics
-        width: parent.width
-        height: 126
-        spacing: Ui.Theme.spacingMd
-
-        Repeater {
-            model: [
-                { icon: "󰖙", label: "Day length", value: pane.hasSunTimes
-                    ? Visuals.duration((pane.sunset - pane.sunrise) / 1000) : "—" },
-                { icon: "󰽤", label: "Moon", value: pane.moon.name
-                    + "  ·  " + pane.moon.illumination + "%" }
-            ]
-            delegate: Rectangle {
-                id: timeMetric
-                required property var modelData
-                width: (timeMetrics.width - timeMetrics.spacing) / 2
-                height: parent.height
-                radius: Ui.Theme.panelRadius
-                color: Ui.Theme.surface
-                border.color: Ui.Theme.border
-
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.top
-                    anchors.topMargin: 14
-                    text: timeMetric.modelData.icon
-                    color: Ui.Theme.accent
-                    font.family: Ui.Theme.iconFontFamily
-                    font.pixelSize: 34
-                }
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.top
-                    anchors.topMargin: 55
-                    text: timeMetric.modelData.label
-                    color: Ui.Theme.mutedText
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Ui.Theme.fontSizeCaption
-                }
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 15
-                    text: timeMetric.modelData.value
-                    color: Ui.Theme.text
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Ui.Theme.fontSizeBody
-                    font.weight: Ui.Theme.fontWeightDemiBold
-                }
-            }
-        }
-    }
-
     Rectangle {
         id: timezoneCard
         width: parent.width
-        height: 310
+        height: Math.round(116 + Math.max(0,
+            width - Ui.Theme.spacingMd * 2) / 1.94)
         radius: Ui.Theme.panelRadius
         color: Ui.Theme.surface
         border.color: Ui.Theme.border
