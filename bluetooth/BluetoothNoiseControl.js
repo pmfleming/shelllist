@@ -22,7 +22,11 @@ function isActive(control, mode) {
     return !!control && control.active_mode === mode;
 }
 
-function activeLabel(control) {
+function activeMode(control) {
     const active = modeDefinitions.find(function (mode) { return isActive(control, mode.value); });
-    return active ? active.label : "Unknown";
+    return active ? Object.assign({}, active) : { value: "", label: "Unknown", image: "" };
+}
+
+function activeLabel(control) {
+    return activeMode(control).label;
 }

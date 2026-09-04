@@ -38,7 +38,10 @@ expect("unsupported status modes are omitted",
     helper.availableModes({ available_modes: ["off", "transparent"] }).map(mode => mode.value).join(",") === "transparent,off");
 expect("reported active mode is selected", helper.isActive(control, "adaptive"));
 expect("non-active mode is not selected", !helper.isActive(control, "transparent"));
+expect("active mode has the expected artwork", helper.activeMode(control).image === "assets/noise-control/adaptive.png");
 expect("active status has a user-facing label", helper.activeLabel(control) === "Adaptive");
 expect("unknown active status has a safe label", helper.activeLabel({ active_mode: "vendor-mode" }) === "Unknown");
+expect("unknown active status has no misleading artwork",
+    helper.activeMode({ active_mode: "vendor-mode" }).image === "");
 
 console.log(`Bluetooth noise control presentation: ${checks} checks passed`);
