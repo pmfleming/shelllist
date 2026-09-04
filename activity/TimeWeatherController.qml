@@ -6,7 +6,7 @@ ActivityController {
 
     property string detailsTab: "time"
     property string filterText: ""
-    property double currentTimeMs: Date.now()
+    property double currentTimeMs: 0
     screenshotStartMessage: "Capturing Time & Weather window…"
     rangeQueriesEnabled: false
     notificationHistoryEnabled: false
@@ -30,100 +30,139 @@ ActivityController {
     surfaceTopInset: 0
     surfaceAlignment: "center"
 
-    function combinedCities(): var {
-        const weatherValues = activity.weather_locations || [];
-        const clockValues = activity.world_clocks || [];
-        const clockByTimezone = ({});
-        clockValues.forEach(function (clock) {
-            clockByTimezone[String(clock.timezone || "")] = clock;
+    function clocksByTimezone(clocks: var): var {
+        const indexed = ({});
+        clocks.forEach(function (clock) {
+            indexed[String(clock.timezone || "")] = clock;
         });
+        return indexed;
+    }
 
-        const representedTimezones = ({});
-        const values = weatherValues.map(function (weather, index) {
-            const timezone = String(weather.timezone || "");
-            const clock = clockByTimezone[timezone] || ({});
-            const latitude = Number(weather.latitude);
-            const longitude = Number(weather.longitude);
-            const hasCoordinates = Number.isFinite(latitude)
-                && Number.isFinite(longitude);
-            if (timezone.length > 0) {
-                representedTimezones[timezone] = true;
-                delete clockByTimezone[timezone];
+    function offset(primary: var, fallback: var): real {
+        if (primary !== undefined && primary !== null)
+            return Number(primary);
+        return fallback !== undefined && fallback !== null ? Number(fallback) : 0;
+    }
+
+    function firstPresent(values: var, fallback: var): var {
+        const value = values.find(function (candidate) { return !!candidate; });
+        return value || fallback;
+    }
+
+    function cityRecord(id: string, label: string, city: string, timezoneName: string,
+            abbreviation: string, utcOffset: real, regionIds: var): var {
+        return {
+            id: id,
+            label: label,
+            city: city,
+            timezone: timezoneName,
+            abbreviation: abbreviation,
+            utc_offset_seconds: utcOffset,
+            timezone_region_ids: regionIds,
+            latitude: 0,
+            longitude: 0,
+            has_coordinates: false,
+            home: false,
+            weather: null,
+            has_weather: false
+        };
+    }
+
+    function weatherCity(weather: var, index: int, clock: var): var {
+        const timezoneName = String(firstPresent([weather.timezone], ""));
+        const city = cityRecord(
+            "weather:" + String(firstPresent([weather.id], index)),
+            String(firstPresent([weather.location, clock.label, clock.city], "Location")),
+            String(firstPresent([clock.city, weather.location], "Location")),
+            timezoneName,
+            String(firstPresent([clock.abbreviation], "")),
+            offset(weather.utc_offset_seconds, clock.utc_offset_seconds),
+            firstPresent([weather.timezone_region_ids, clock.timezone_region_ids], []));
+        const latitude = Number(weather.latitude);
+        const longitude = Number(weather.longitude);
+        city.has_coordinates = Number.isFinite(latitude) && Number.isFinite(longitude);
+        city.latitude = city.has_coordinates ? latitude : 0;
+        city.longitude = city.has_coordinates ? longitude : 0;
+        city.home = !!weather.home;
+        city.weather = weather;
+        city.has_weather = true;
+        return city;
+    }
+
+    function localCity(timezoneName: string, clock: var): var {
+        const local = controller.timezone;
+        const city = cityRecord(
+            "local:" + timezoneName,
+            String(firstPresent([local.city, clock.label, clock.city], timezoneName)),
+            String(firstPresent([local.city, clock.city], timezoneName)),
+            timezoneName,
+            String(firstPresent([local.abbreviation, clock.abbreviation], "")),
+            Number(firstPresent([local.utc_offset_seconds], 0)),
+            firstPresent([local.timezone_region_ids, clock.timezone_region_ids], []));
+        city.home = true;
+        return city;
+    }
+
+    function clockCity(clock: var, index: int): var {
+        const timezoneName = String(firstPresent([clock.timezone], ""));
+        return cityRecord(
+            "clock:" + timezoneName + ":" + index,
+            String(firstPresent([clock.label, clock.city, timezoneName], "Location")),
+            String(firstPresent([clock.city, clock.label, timezoneName], "Location")),
+            timezoneName,
+            String(firstPresent([clock.abbreviation], "")),
+            Number(firstPresent([clock.utc_offset_seconds], 0)),
+            firstPresent([clock.timezone_region_ids], []));
+    }
+
+    function appendWeatherCities(values: var, weatherValues: var,
+            clockIndex: var, represented: var): void {
+        weatherValues.forEach(function (weather, index) {
+            const timezoneName = String(weather.timezone || "");
+            values.push(weatherCity(weather, index, clockIndex[timezoneName] || ({})));
+            if (timezoneName.length > 0) {
+                represented[timezoneName] = true;
+                delete clockIndex[timezoneName];
             }
-            return {
-                id: "weather:" + String(weather.id || index),
-                label: String(weather.location || clock.label || clock.city || "Location"),
-                city: String(clock.city || weather.location || "Location"),
-                timezone: timezone,
-                abbreviation: String(clock.abbreviation || ""),
-                utc_offset_seconds: Number(weather.utc_offset_seconds !== undefined
-                    && weather.utc_offset_seconds !== null ? weather.utc_offset_seconds
-                    : (clock.utc_offset_seconds !== undefined
-                        && clock.utc_offset_seconds !== null ? clock.utc_offset_seconds : 0)),
-                timezone_region_ids: weather.timezone_region_ids
-                    || clock.timezone_region_ids || [],
-                latitude: hasCoordinates ? latitude : 0,
-                longitude: hasCoordinates ? longitude : 0,
-                has_coordinates: hasCoordinates,
-                home: !!weather.home,
-                weather: weather,
-                has_weather: true
-            };
         });
+    }
 
-        const localTimezone = String(controller.timezone.timezone || "");
-        if (controller.timezone.available && localTimezone.length > 0
-                && !representedTimezones[localTimezone]
-                && !values.some(function (city) { return city.home; })) {
-            const localClock = clockByTimezone[localTimezone] || ({});
-            values.push({
-                id: "local:" + localTimezone,
-                label: String(controller.timezone.city || localClock.label
-                    || localClock.city || localTimezone),
-                city: String(controller.timezone.city || localClock.city || localTimezone),
-                timezone: localTimezone,
-                abbreviation: String(controller.timezone.abbreviation
-                    || localClock.abbreviation || ""),
-                utc_offset_seconds: Number(controller.timezone.utc_offset_seconds || 0),
-                timezone_region_ids: controller.timezone.timezone_region_ids
-                    || localClock.timezone_region_ids || [],
-                latitude: 0,
-                longitude: 0,
-                has_coordinates: false,
-                home: true,
-                weather: null,
-                has_weather: false
-            });
-            representedTimezones[localTimezone] = true;
-            delete clockByTimezone[localTimezone];
-        }
+    function appendLocalCity(values: var, clockIndex: var, represented: var): void {
+        const timezoneName = String(controller.timezone.timezone || "");
+        const alreadyHome = values.some(function (city) { return city.home; });
+        if (!controller.timezone.available || timezoneName.length === 0
+                || represented[timezoneName] || alreadyHome)
+            return;
+        values.push(localCity(timezoneName, clockIndex[timezoneName] || ({})));
+        represented[timezoneName] = true;
+        delete clockIndex[timezoneName];
+    }
 
-        clockValues.forEach(function (clock, index) {
-            const timezone = String(clock.timezone || "");
-            if (!clockByTimezone[timezone])
-                return;
-            values.push({
-                id: "clock:" + timezone + ":" + index,
-                label: String(clock.label || clock.city || timezone || "Location"),
-                city: String(clock.city || clock.label || timezone || "Location"),
-                timezone: timezone,
-                abbreviation: String(clock.abbreviation || ""),
-                utc_offset_seconds: Number(clock.utc_offset_seconds || 0),
-                timezone_region_ids: clock.timezone_region_ids || [],
-                latitude: 0,
-                longitude: 0,
-                has_coordinates: false,
-                home: false,
-                weather: null,
-                has_weather: false
-            });
-            delete clockByTimezone[timezone];
+    function appendClockCities(values: var, clocks: var, clockIndex: var): void {
+        clocks.forEach(function (clock, index) {
+            const timezoneName = String(clock.timezone || "");
+            if (clockIndex[timezoneName]) {
+                values.push(clockCity(clock, index));
+                delete clockIndex[timezoneName];
+            }
         });
-        return values.sort(function (left, right) {
-            if (left.home !== right.home)
-                return left.home ? -1 : 1;
-            return left.label.localeCompare(right.label);
-        });
+    }
+
+    function compareCities(left: var, right: var): int {
+        if (left.home !== right.home)
+            return left.home ? -1 : 1;
+        return left.label.localeCompare(right.label);
+    }
+
+    function combinedCities(): var {
+        const clocks = activity.world_clocks || [];
+        const clockIndex = clocksByTimezone(clocks);
+        const represented = ({});
+        const values = [];
+        appendWeatherCities(values, activity.weather_locations || [], clockIndex, represented);
+        appendLocalCity(values, clockIndex, represented);
+        appendClockCities(values, clocks, clockIndex);
+        return values.sort(compareCities);
     }
 
     function filterCities(values: var, query: string): var {
@@ -187,12 +226,15 @@ ActivityController {
     }
 
     onCitiesChanged: Qt.callLater(rebuildCityModel)
-    Component.onCompleted: rebuildCityModel()
+    Component.onCompleted: {
+        currentTimeMs = Date.now();
+        rebuildCityModel();
+    }
 
     QtObject {
         id: citySelection
         property int selectedIndex: 0
-        property string queryText: controller.filterText
+        property string queryText: ""
 
         function move(delta: int): void {
             selectedIndex = Math.max(0, Math.min(selectedIndex + delta,

@@ -13,8 +13,6 @@ ProviderChooserSurface {
     navigationEnabled: !content.controller.promptActive && !content.controller.navigationHelpOpen
     refreshEnabled: content.controller.powered && navigationEnabled
         && !content.controller.actionInFlight
-    detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection
-        && navigationEnabled
     refreshAutoRepeat: false
     helpEnabled: content.controller.uiActive && !content.controller.promptActive
     helpEntries: [

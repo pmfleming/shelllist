@@ -108,9 +108,37 @@ fn token_score(field: &str, token: &str) -> Option<i64> {
     best
 }
 
+fn best_token_score(title: &str, subtitle: &str, keywords: &[String], token: &str) -> Option<i64> {
+    let keyword = keywords
+        .iter()
+        .filter_map(|field| token_score(field, token))
+        .max();
+    [
+        token_score(title, token).map(|score| score + 1_800),
+        token_score(subtitle, token).map(|score| score + 600),
+        keyword,
+    ]
+    .into_iter()
+    .flatten()
+    .max()
+}
+
+fn title_bonus(title: &str, query: &str) -> i64 {
+    if title == query {
+        20_000
+    } else if title.starts_with(query) {
+        12_000
+    } else if title.contains(query) {
+        8_000
+    } else {
+        0
+    }
+}
+
 fn item_match(item: &SearchItem, query: &str) -> Option<(i64, String)> {
     let title = normalize(&item.title);
-    if query.is_empty() {
+    let tokens = words(query).collect::<Vec<_>>();
+    if tokens.is_empty() {
         return Some((0, title));
     }
 
@@ -120,34 +148,10 @@ fn item_match(item: &SearchItem, query: &str) -> Option<(i64, String)> {
         .iter()
         .map(|value| normalize(value))
         .collect::<Vec<_>>();
-    let tokens = words(query).collect::<Vec<_>>();
-    if tokens.is_empty() {
-        return Some((0, title));
-    }
-
-    let mut total = 0;
-    for token in tokens {
-        let title_score = token_score(&title, token).map(|score| score + 1_800);
-        let subtitle_score = token_score(&subtitle, token).map(|score| score + 600);
-        let keyword_score = keywords
-            .iter()
-            .filter_map(|field| token_score(field, token))
-            .max();
-        total += title_score
-            .into_iter()
-            .chain(subtitle_score)
-            .chain(keyword_score)
-            .max()?;
-    }
-
-    if title == query {
-        total += 20_000;
-    } else if title.starts_with(query) {
-        total += 12_000;
-    } else if title.contains(query) {
-        total += 8_000;
-    }
-    Some((total, title))
+    let score = tokens.into_iter().try_fold(0, |total, token| {
+        best_token_score(&title, &subtitle, &keywords, token).map(|score| total + score)
+    })?;
+    Some((score + title_bonus(&title, query), title))
 }
 
 fn rank(owner: String, generation: u64, query: &str, items: &[SearchItem]) -> SearchResponse {
@@ -188,6 +192,51 @@ fn rank(owner: String, generation: u64, query: &str, items: &[SearchItem]) -> Se
     }
 }
 
+fn write_line(output: &mut impl Write, value: &impl Serialize) -> io::Result<()> {
+    serde_json::to_writer(&mut *output, value)?;
+    output.write_all(b"\n")?;
+    output.flush()
+}
+
+fn apply_command(
+    command: Result<SearchCommand, String>,
+    catalogs: &mut HashMap<String, Vec<SearchItem>>,
+    pending: &mut HashMap<String, (u64, String)>,
+    output: &mut impl Write,
+) -> io::Result<()> {
+    match command {
+        Ok(SearchCommand::Catalog { owner, items }) => {
+            catalogs.insert(owner, items);
+        }
+        Ok(SearchCommand::Query {
+            owner,
+            generation,
+            query,
+        }) => {
+            if pending
+                .get(&owner)
+                .is_none_or(|(current, _)| generation >= *current)
+            {
+                pending.insert(owner, (generation, query));
+            }
+        }
+        Err(error) => write_line(output, &serde_json::json!({ "error": error }))?,
+    }
+    Ok(())
+}
+
+fn send_pending(
+    catalogs: &HashMap<String, Vec<SearchItem>>,
+    pending: &mut HashMap<String, (u64, String)>,
+    output: &mut impl Write,
+) -> io::Result<()> {
+    for (owner, (generation, query)) in std::mem::take(pending) {
+        let items: &[SearchItem] = catalogs.get(&owner).map_or(&[], Vec::as_slice);
+        write_line(output, &rank(owner, generation, &query, items))?;
+    }
+    Ok(())
+}
+
 fn serve_commands(
     commands: mpsc::Receiver<Result<SearchCommand, String>>,
     mut output: impl Write,
@@ -195,54 +244,13 @@ fn serve_commands(
     let mut catalogs = HashMap::<String, Vec<SearchItem>>::new();
     let mut pending = HashMap::<String, (u64, String)>::new();
 
-    loop {
-        let first = match commands.recv() {
-            Ok(command) => command,
-            Err(_) => return Ok(()),
-        };
-        let mut drained = vec![first];
-        drained.extend(commands.try_iter());
-        for command in drained {
-            match command {
-                Ok(SearchCommand::Catalog { owner, items }) => {
-                    catalogs.insert(owner, items);
-                }
-                Ok(SearchCommand::Query {
-                    owner,
-                    generation,
-                    query,
-                }) => {
-                    let replace = pending
-                        .get(&owner)
-                        .is_none_or(|(current, _)| generation >= *current);
-                    if replace {
-                        pending.insert(owner, (generation, query));
-                    }
-                }
-                Err(error) => {
-                    serde_json::to_writer(
-                        &mut output,
-                        &serde_json::json!({ "error": error }),
-                    )?;
-                    output.write_all(b"\n")?;
-                    output.flush()?;
-                }
-            }
+    while let Ok(first) = commands.recv() {
+        for command in std::iter::once(first).chain(commands.try_iter()) {
+            apply_command(command, &mut catalogs, &mut pending, &mut output)?;
         }
-
-        let requests = std::mem::take(&mut pending);
-        for (owner, (generation, query)) in requests {
-            let response = rank(
-                owner.clone(),
-                generation,
-                &query,
-                catalogs.get(&owner).map_or(&[], Vec::as_slice),
-            );
-            serde_json::to_writer(&mut output, &response)?;
-            output.write_all(b"\n")?;
-            output.flush()?;
-        }
+        send_pending(&catalogs, &mut pending, &mut output)?;
     }
+    Ok(())
 }
 
 pub fn serve() -> io::Result<()> {
@@ -290,12 +298,14 @@ mod tests {
     }
 
     #[test]
-    fn finds_middle_substrings_and_ordered_characters() {
+    fn matches_normalized_substrings_and_rejects_unrelated_items() {
         assert_eq!(
             keys("fox", vec![item("firefox", "Mozilla Firefox")]),
             ["firefox"]
         );
         assert_eq!(keys("ffx", vec![item("firefox", "Firefox")]), ["firefox"]);
+        assert_eq!(keys("cafe", vec![item("cafe", "Café")]), ["cafe"]);
+        assert!(keys("terminal", vec![item("files", "Files")]).is_empty());
     }
 
     #[test]
@@ -326,43 +336,32 @@ mod tests {
     }
 
     #[test]
-    fn normalizes_diacritics_without_matching_unrelated_items() {
-        assert_eq!(keys("cafe", vec![item("cafe", "Café")]), ["cafe"]);
-        assert!(keys("terminal", vec![item("files", "Files")]).is_empty());
-    }
-
-    #[test]
-    fn reuses_catalog_and_coalesces_waiting_queries() {
+    fn reuses_catalog_and_coalesces_waiting_queries() -> Result<(), Box<dyn std::error::Error>> {
         let (sender, receiver) = mpsc::channel();
-        sender
-            .send(Ok(SearchCommand::Catalog {
-                owner: "test".into(),
-                items: vec![item("firefox", "Firefox"), item("files", "Files")],
-            }))
-            .unwrap();
-        sender
-            .send(Ok(SearchCommand::Query {
-                owner: "test".into(),
-                generation: 1,
-                query: "files".into(),
-            }))
-            .unwrap();
-        sender
-            .send(Ok(SearchCommand::Query {
-                owner: "test".into(),
-                generation: 2,
-                query: "fire".into(),
-            }))
-            .unwrap();
+        sender.send(Ok(SearchCommand::Catalog {
+            owner: "test".into(),
+            items: vec![item("firefox", "Firefox"), item("files", "Files")],
+        }))?;
+        sender.send(Ok(SearchCommand::Query {
+            owner: "test".into(),
+            generation: 1,
+            query: "files".into(),
+        }))?;
+        sender.send(Ok(SearchCommand::Query {
+            owner: "test".into(),
+            generation: 2,
+            query: "fire".into(),
+        }))?;
         drop(sender);
 
         let mut output = Vec::new();
-        serve_commands(receiver, &mut output).unwrap();
-        let lines = String::from_utf8(output).unwrap();
+        serve_commands(receiver, &mut output)?;
+        let lines = String::from_utf8(output)?;
         let responses = lines.lines().collect::<Vec<_>>();
         assert_eq!(responses.len(), 1);
-        let response: serde_json::Value = serde_json::from_str(responses[0]).unwrap();
+        let response: serde_json::Value = serde_json::from_str(responses[0])?;
         assert_eq!(response["generation"], 2);
         assert_eq!(response["keys"], serde_json::json!(["firefox"]));
+        Ok(())
     }
 }

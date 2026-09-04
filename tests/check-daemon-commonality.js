@@ -35,8 +35,8 @@ for (const domain of domains) {
         if (!api.includes(declaration))
             throw new Error(`${domain.api} is missing the common API member: ${declaration}`);
     }
-    for (const binding of [`expectedProtocol: ${domain.alias}.protocol`,
-            `expectedVersion: ${domain.alias}.version`, `streams: ${domain.alias}.subscribedStreams`]) {
+    for (const binding of ["endpoint:", `${domain.alias}.protocol`,
+            `${domain.alias}.version`, `${domain.alias}.subscribedStreams`]) {
         if (!backend.includes(binding))
             throw new Error(`${domain.backend} is missing common endpoint binding: ${binding}`);
     }

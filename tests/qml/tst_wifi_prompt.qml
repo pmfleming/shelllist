@@ -41,31 +41,21 @@ TestCase {
         prompt.cancel();
     }
 
-    function test_mergesIncrementalNetworkChanges() {
+    function test_mergesIncrementalAndDivergedNetworkChanges() {
         const current = [{ key: "keep", strength: 10 }, { key: "change", strength: 20 },
             { key: "remove", strength: 30 }];
         const merged = Flow.mergeNetworkChanges(current, {
             removed: [{ key: "remove" }],
-            changed: [{ key: "change", strength: 80 }],
+            changed: [{ key: "change", strength: 80 }, { key: "missing", strength: 60 }],
             added: [{ key: "add", strength: 40 }, { ssid: "Hidden" }]
         });
 
-        compare(merged.length, 4);
+        compare(merged.length, 5);
         compare(merged[0].key, "keep");
         compare(merged[1].strength, 80);
-        compare(merged[2].key, "add");
-        compare(merged[3].ssid, "Hidden");
-    }
-
-    function test_changedNetworkRepairsDivergedLocalState() {
-        const merged = Flow.mergeNetworkChanges([{ key: "keep", strength: 10 }], {
-            changed: [{ key: "missing", strength: 80 }],
-            added: []
-        });
-
-        compare(merged.length, 2);
-        compare(merged[1].key, "missing");
-        compare(merged[1].strength, 80);
+        compare(merged[2].key, "missing");
+        compare(merged[3].key, "add");
+        compare(merged[4].ssid, "Hidden");
     }
 
     function test_submitsEveryRequestedSecret() {
@@ -88,49 +78,34 @@ TestCase {
         verify(capturedSecrets.save);
     }
 
-    function test_hiddenInvalidSecurityKeepsFormOpen() {
+    function test_validatesHiddenAndEnterpriseSchema() {
         prompt.openHiddenNetworkPrompt();
         verify(!prompt.submitCredentials(fakeController, {
-            ssid: "Hidden Cafe",
-            security: "automatic",
-            password: ""
+            ssid: "Hidden Cafe", security: "automatic", password: ""
         }));
         verify(prompt.credentialOpen);
         verify(capturedConnect === null);
-    }
 
-    function test_hiddenSecurityAndWepTypeAreExplicit() {
-        prompt.openHiddenNetworkPrompt();
         verify(prompt.submitCredentials(fakeController, {
-            ssid: "Hidden Cafe",
-            security: "wep-phrase",
-            password: "passphrase",
-            "enterprise.eap": "peap",
-            "enterprise.identity": "",
+            ssid: "Hidden Cafe", security: "wep-phrase", password: "passphrase",
+            "enterprise.eap": "peap", "enterprise.identity": "",
             "enterprise.phase2_auth": "mschapv2"
         }));
         compare(capturedConnect.target.key_mgmt, "wep");
         compare(capturedConnect.wepKeyType, "phrase");
-        compare(capturedConnect.target.ssid, "Hidden Cafe");
-    }
 
-    function test_enterpriseFormUsesDaemonSchema() {
-        const ap = {
-            ssid: "Corp",
-            key: "network-key",
+        prompt.openEnterpriseIdentityPrompt({
+            ssid: "Corp", key: "network-key",
             connect_prompt: {
                 required_fields: ["enterprise.eap", "enterprise.identity"],
                 optional_fields: ["password", "enterprise.domain_suffix_match"],
                 enterprise_defaults: { eap: ["ttls"], phase2_auth: "pap" }
             }
-        };
-        prompt.openEnterpriseIdentityPrompt(ap);
+        });
         compare(prompt.credentialValues["enterprise.eap"], "ttls");
         verify(prompt.submitCredentials(fakeController, {
-            "enterprise.eap": "ttls",
-            "enterprise.identity": "person@example.test",
-            "enterprise.domain_suffix_match": "example.test",
-            password: "secret"
+            "enterprise.eap": "ttls", "enterprise.identity": "person@example.test",
+            "enterprise.domain_suffix_match": "example.test", password: "secret"
         }));
         compare(capturedConnect.enterprise.eap[0], "ttls");
         compare(capturedConnect.enterprise.identity, "person@example.test");

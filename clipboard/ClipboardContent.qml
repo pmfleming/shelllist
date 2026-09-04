@@ -15,8 +15,7 @@ Ui.ProviderChooserSurface {
         && !content.controller.deleteMenuOpen
         && !content.controller.actionInFlight && !content.controller.wipeChallenge
         && !content.controller.navigationHelpOpen
-    navigationEnabled: !content.controller.navigationHelpOpen
-    refreshEnabled: !content.controller.actionInFlight && !content.controller.navigationHelpOpen
+    detailsTabEnabled: false
     helpEnabled: content.controller.uiActive && !content.controller.multiSelectMode
         && !content.controller.deleteMenuOpen && !content.controller.detailState.editorFocused
         && !content.controller.deleteConfirmationOpen

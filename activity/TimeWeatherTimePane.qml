@@ -152,7 +152,6 @@ Ui.DetailFlickable {
     }
 
     Rectangle {
-        id: solarCard
         width: parent.width
         height: 250
         radius: Ui.Theme.panelRadius
@@ -262,7 +261,6 @@ Ui.DetailFlickable {
     }
 
     Rectangle {
-        id: timezoneCard
         width: parent.width
         height: Math.round(116 + Math.max(0,
             width - Ui.Theme.spacingMd * 2) / 1.94)

@@ -81,7 +81,6 @@ Rectangle {
         }
 
         Rectangle {
-            id: locationMarker
             visible: map.hasCoordinates && baseMap.status === Image.Ready
             x: (baseMap.width - baseMap.paintedWidth) / 2
                 + (Math.max(-180, Math.min(180, map.longitude)) + 180) / 360

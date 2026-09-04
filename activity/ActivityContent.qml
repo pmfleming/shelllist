@@ -7,7 +7,7 @@ Ui.ChooserSurface {
     id: content
 
     required property ActivityController controller
-    property date now
+    readonly property alias now: liveClock.now
     readonly property real uiScale: Ui.Theme.densityScale(height,
         controller.contentVerticalMargin)
 
@@ -179,20 +179,8 @@ Ui.ChooserSurface {
     Shortcut { sequence: "T"; onActivated: content.controller.goToToday() }
     Shortcut { sequence: "F5"; onActivated: content.controller.refresh() }
 
-    Component.onCompleted: now = new Date()
-
-    Connections {
-        target: content.controller
-        function onUiActiveChanged(): void {
-            if (content.controller.uiActive)
-                content.now = new Date();
-        }
-    }
-
-    Timer {
-        interval: 60000
-        repeat: true
-        running: content.controller.uiActive
-        onTriggered: content.now = new Date()
+    Ui.LiveClock {
+        id: liveClock
+        active: content.controller.uiActive
     }
 }

@@ -22,6 +22,10 @@ Ui.DetailFlickable {
     readonly property real weekMinimum: collectionMinimum(forecastDays, "low_c")
     readonly property real weekMaximum: collectionMaximum(forecastDays, "high_c")
 
+    onHourlyPointsChanged: hourlyChart.requestPaint()
+    onHourlyMinimumChanged: hourlyChart.requestPaint()
+    onHourlyMaximumChanged: hourlyChart.requestPaint()
+
     function numberLabel(value: var, suffix: string): string {
         const number = Number(value);
         return Number.isFinite(number) ? Math.round(number) + suffix : "—";
@@ -379,12 +383,6 @@ Ui.DetailFlickable {
 
             onWidthChanged: requestPaint()
             onHeightChanged: requestPaint()
-            Connections {
-                target: pane
-                function onHourlyPointsChanged() { hourlyChart.requestPaint(); }
-                function onHourlyMinimumChanged() { hourlyChart.requestPaint(); }
-                function onHourlyMaximumChanged() { hourlyChart.requestPaint(); }
-            }
             onPaint: {
                 const context = getContext("2d");
                 context.clearRect(0, 0, width, height);

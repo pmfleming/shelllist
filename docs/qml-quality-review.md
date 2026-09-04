@@ -19,7 +19,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 
 - One `shell/shell.qml` host replaces per-surface Quickshell processes.
 - Wi-Fi and Bluetooth load eagerly; Applications and Clipboard load on demand and remain warm.
-- `ProviderChooserSurface` composes chooser shortcuts, split layout, density, and navigation help once for Wi-Fi, Bluetooth, Clipboard, and Applications.
+- `ProviderChooserSurface` composes chooser shortcuts, split layout, density, default navigation/refresh/detail policy, and navigation help once for Wi-Fi, Bluetooth, Clipboard, and Applications.
 - `ChooserShortcuts` centralizes Escape, refresh, and details-tab shortcuts.
 - `ChooserListPane` derives its own density instead of requiring every domain wrapper to forward presentation state.
 - `ResultStore` reconciles one persistent keyed model instead of replacing ListView models.
@@ -27,7 +27,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - `BarContent` renders normalized status descriptors through one delegate.
 - Workspace, focused-window, media, tray, and OSD presentation are isolated components.
 - Activity, battery, power, and OSD views are split into cohesive panes rather than one large object tree.
-- `ChartFrame`, `PulsingLabel`, `NotificationReplyRow`, and `BarOverlayWindow` centralize repeated presentation behavior.
+- `ChartFrame`, `LiveClock`, `PulsingLabel`, `NotificationReplyRow`, and `BarOverlayWindow` centralize repeated presentation behavior.
 - `NotificationPresentation`, `NotificationStackHeader`, and `RemovalAnimation` keep grouping, routing, stack headers, and transient removal behavior common between active and historical notifications.
 - Every OSD family uses one normalized descriptor, one `BarOsdContent` frame, and one dismissal timer; pure transition and timeout policy stays in `BarOsdPresentation.js`.
 - `StateLayer` and `Elevation` centralize interaction feedback and depth.
@@ -38,7 +38,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 
 `qmlqualitylens.config.json` declares the resident shell and QML test files as entrypoints. It also records dynamic component edges hidden behind `Component`, `Loader.sourceComponent`, and `SplitChooserLayout` factories. These edges are analysis metadata, not runtime dependencies. Keep them synchronized when a surface gains or removes dynamically instantiated content; prefer an explicit edge over a broad unused-component suppression.
 
-The current calibration reaches 188 of 197 components from nine application/test roots. The remaining components are exported module API rather than dead-code findings. Configured edges cover list, details, toolbar, tab, and battery components instantiated through loaders; cleanup reports no unused components or ids, and resolution reports no unresolved imports or types.
+The current calibration reaches 196 of 221 components from ten application/test roots. The remaining components are exported module API rather than dead-code findings. Configured edges cover list, details, toolbar, tab, battery, and Time & Weather components instantiated through loaders; cleanup reports no unused components or ids, and resolution reports no unresolved imports or types.
 
 ## Focused declarative-state refactoring
 

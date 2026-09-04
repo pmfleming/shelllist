@@ -201,8 +201,6 @@ ShellRoot {
         }
         function responsiveness(): string {
             const controller = shell.activeController;
-            // Provider chooser metrics are dynamic on the shared base type.
-            // qmllint disable missing-property
             const result = JSON.stringify({
                 schema_version: 1,
                 surface: surfaces.currentId,
@@ -210,12 +208,9 @@ ShellRoot {
                 first_frame_at_ms: windowHost.firstFrameAtMs,
                 open_to_first_frame_ms: windowHost.lastOpenToFirstFrameMs,
                 content: shell.lastSurfaceContentMetric,
-                search_rank_ms: controller && controller["lastSearchRankLatencyMs"] !== undefined
-                    ? controller["lastSearchRankLatencyMs"] : -1,
-                catalog_to_model_ms: controller && controller["lastCatalogToModelLatencyMs"] !== undefined
-                    ? controller["lastCatalogToModelLatencyMs"] : -1
+                search_rank_ms: controller ? controller.lastSearchRankLatencyMs : -1,
+                catalog_to_model_ms: controller ? controller.lastCatalogToModelLatencyMs : -1
             });
-            // qmllint enable missing-property
             return result;
         }
         function listSurfaces(): string { return surfaces.listJson(); }

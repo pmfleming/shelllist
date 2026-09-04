@@ -7,15 +7,13 @@ Ui.ProviderChooserSurface {
     id: content
 
     required property TimeWeatherController controller
-    property date now
+    readonly property alias now: liveClock.now
 
     chooserController: controller
     surfaceName: "Time & Weather"
     navigationEnabled: !controller.navigationHelpOpen
         && !controller.screenshotInFlight
     refreshEnabled: !controller.activity.syncing && !controller.screenshotInFlight
-    detailsTabEnabled: controller.detailsOpen && controller.hasSelection
-        && navigationEnabled
     helpEnabled: controller.uiActive
     helpEntries: [
         { keys: "Right", action: "Expand the selected city" },
@@ -37,20 +35,9 @@ Ui.ProviderChooserSurface {
         }
     }
 
-    Component.onCompleted: now = new Date()
-
-    Connections {
-        target: content.controller
-        function onUiActiveChanged(): void {
-            if (content.controller.uiActive)
-                content.now = new Date();
-        }
-    }
-
-    Timer {
-        interval: 30000
-        repeat: true
-        running: content.controller.uiActive
-        onTriggered: content.now = new Date()
+    Ui.LiveClock {
+        id: liveClock
+        active: content.controller.uiActive
+        updateInterval: 30000
     }
 }

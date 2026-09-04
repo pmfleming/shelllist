@@ -4,10 +4,11 @@ import Shelllist.Core as Core
 Item {
     id: backend
 
-    required property string daemonName
-    required property string expectedProtocol
-    required property int expectedVersion
-    required property var streams
+    property var endpoint: null
+    property string daemonName: endpoint ? String(endpoint.daemonName || "") : ""
+    property string expectedProtocol: endpoint ? String(endpoint.protocol || "") : ""
+    property int expectedVersion: endpoint ? Number(endpoint.version || 0) : 0
+    property var streams: endpoint ? (endpoint.subscribedStreams || []) : []
     required property bool active
     property bool recoverProtocolErrors: true
     property var pending: ({})

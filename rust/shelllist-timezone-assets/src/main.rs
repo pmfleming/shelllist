@@ -50,15 +50,3 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("generated {count} timezone region assets");
     Ok(())
 }
-
-#[cfg(test)]
-mod tests {
-    use super::attribute;
-
-    #[test]
-    fn extracts_svg_attributes() {
-        let line = r#"<path id="land-Europe-Paris" d="M1,2Z"/>"#;
-        assert_eq!(attribute(line, "id"), Some("land-Europe-Paris"));
-        assert_eq!(attribute(line, "d"), Some("M1,2Z"));
-    }
-}

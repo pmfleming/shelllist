@@ -11,15 +11,9 @@ TestCase {
         { value: "third" }
     ]
 
-    function test_skipsDisabledOptions() {
+    function test_navigatesEnabledOptionsAndBoundaries() {
         compare(Navigation.nextEnabledIndex(options, 0, 1), 2);
-    }
-
-    function test_stopsAtBoundary() {
         compare(Navigation.nextEnabledIndex(options, 2, 1), -1);
-    }
-
-    function test_startsFromDirectionalEdge() {
         compare(Navigation.nextEnabledIndex(options, -1, -1), 2);
         compare(Navigation.nextEnabledIndex(options, -1, 1), 0);
     }

@@ -9,10 +9,7 @@ Io.DaemonBackend {
     property var operations
     property var finishedOperations
 
-    daemonName: "bt-daemon"
-    expectedProtocol: BtApi.protocol
-    expectedVersion: BtApi.version
-    streams: BtApi.subscribedStreams
+    endpoint: ({ daemonName: "bt-daemon", protocol: BtApi.protocol, version: BtApi.version, subscribedStreams: BtApi.subscribedStreams })
     // Pairing authorization can arrive while the popup is hidden.
     active: true
     readonly property bool running: requestRunning || itemCount(operations) > 0

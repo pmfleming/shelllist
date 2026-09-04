@@ -14,8 +14,6 @@ Ui.ProviderChooserSurface {
         && !controller.navigationHelpOpen && !editingDetails
     refreshEnabled: controller.powered && !controller.refreshInFlight
         && !controller.actionInFlight && navigationEnabled
-    detailsTabEnabled: controller.detailsOpen && controller.hasSelection
-        && navigationEnabled
     helpEnabled: controller.uiActive && !controller.modalPromptOpen && !editingDetails
     helpEntries: [
         { keys: "F5", action: "Refresh devices or toggle discovery" },

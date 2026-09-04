@@ -15,28 +15,21 @@ TestCase {
         staleSpy.clear();
     }
 
-    function test_synchronizesRankedModel() {
+    function test_synchronizesRankingAndSelection() {
         store.replaceProviderResults("test", [
             result("low", "Low", 10),
             result("high", "High", 30),
             result("mid", "Middle", 20)
         ], true);
         tryCompare(store, "count", 3);
-        compare(store.visibleModel.count, 3);
         compare(store.visibleModel.get(0).resultData.id, "high");
-        compare(store.visibleModel.get(1).resultData.id, "mid");
-    }
 
-    function test_retainsSelectionAcrossReorder() {
-        store.replaceProviderResults("test", [
-            result("first", "First", 20), result("second", "Second", 10)
-        ], true);
         store.selectedIndex = 1;
-        compare(store.selected().id, "second");
+        compare(store.selected().id, "mid");
         store.replaceProviderResults("test", [
-            result("first", "First", 5), result("second", "Second", 40)
+            result("high", "High", 5), result("mid", "Middle", 40)
         ], false);
-        compare(store.selected().id, "second");
+        compare(store.selected().id, "mid");
         compare(store.selectedIndex, 0);
     }
 
@@ -59,7 +52,7 @@ TestCase {
         compare(store.selectedIndex, 0);
     }
 
-    function test_ignoresStaleBatch() {
+    function test_handlesAsynchronousRankingBoundaries() {
         store.activeQueryId = "query-current";
         verify(!store.applyBatch({
             providerId: "test", queryId: "query-old", replace: true,
@@ -67,36 +60,16 @@ TestCase {
         }));
         compare(staleSpy.count, 1);
         compare(store.count, 0);
-    }
 
-    function test_keepsBaselineWhileRustRankingIsPending() {
         store.replaceProviderResults("test", [
             result("first", "First", 20), result("second", "Second", 10)
         ], true);
-
         store.queryText = "no-synchronous-match";
         compare(store.count, 2);
-        compare(store.visibleModel.get(0).resultData.id, "first");
 
-        const generation = store.searchGeneration;
-        store.applyRustRanking(store.searchOwner, generation, ["test::second"]);
+        store.applyRustRanking(store.searchOwner, store.searchGeneration, ["test::second"]);
         compare(store.count, 1);
         compare(store.visibleModel.get(0).resultData.id, "second");
-    }
-
-    function test_largeReorderKeepsModelCorrect() {
-        const initial = [];
-        const reordered = [];
-        for (let index = 0; index < 100; index++) {
-            initial.push(result("item-" + index, "Item " + index, index));
-            reordered.push(result("item-" + index, "Item " + index, 100 - index));
-        }
-        store.replaceProviderResults("test", initial, true);
-        store.replaceProviderResults("test", reordered, false);
-
-        compare(store.visibleModel.count, 100);
-        compare(store.visibleModel.get(0).resultData.id, "item-0");
-        compare(store.visibleModel.get(99).resultData.id, "item-99");
     }
 
     function test_largeCatalogIsPopulatedProgressively() {

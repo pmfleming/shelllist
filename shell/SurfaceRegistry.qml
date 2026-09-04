@@ -134,10 +134,7 @@ Item {
         const timeWeatherController = bundle ? bundle.controller : null;
         if (pendingTimeWeatherTab.length === 0 || !timeWeatherController)
             return;
-        // SurfaceBundle intentionally exposes the shared controller base type.
-        // qmllint disable missing-property
         timeWeatherController.setDetailsTab(pendingTimeWeatherTab);
-        // qmllint enable missing-property
         pendingTimeWeatherTab = "";
     }
 

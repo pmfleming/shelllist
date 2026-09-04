@@ -19,9 +19,8 @@ ChooserController {
     readonly property var filteredResults: results.visibleResults
     readonly property var filteredResultsModel: results.visibleModel
     readonly property var selectedResult: results.selected()
-    readonly property double lastSearchRankLatencyMs: results.lastSearchRankLatencyMs
-    readonly property double lastCatalogToModelLatencyMs:
-        results.lastCatalogToModelLatencyMs
+    lastSearchRankLatencyMs: results.lastSearchRankLatencyMs
+    lastCatalogToModelLatencyMs: results.lastCatalogToModelLatencyMs
 
     hasSelection: !!selectedResult
     selectionModel: results

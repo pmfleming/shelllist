@@ -10,9 +10,10 @@ ChooserSurface {
     required property Component detailsComponent
     property string surfaceName: "Shelllist"
     property var helpEntries: []
-    property bool navigationEnabled: true
-    property bool refreshEnabled: true
-    property bool detailsTabEnabled: false
+    property bool navigationEnabled: !chooserController.navigationHelpOpen
+    property bool refreshEnabled: navigationEnabled && !chooserController.actionInFlight
+    property bool detailsTabEnabled: navigationEnabled
+        && chooserController.detailsOpen && chooserController.hasSelection
     property bool refreshAutoRepeat: true
     property bool helpEnabled: chooserController.uiActive
     readonly property real uiScale: Theme.densityScale(height,

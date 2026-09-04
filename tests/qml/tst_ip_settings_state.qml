@@ -41,14 +41,12 @@ TestCase {
         compare(payload.route_metric, 50);
     }
 
-    function test_automaticDnsCanBeDisabledAndReenabled() {
+    function test_validatesEditsAndAutomaticDnsPolicy() {
         ipState.setAutoDns(false);
         verify(ipState.payload({}).ignore_auto_dns);
         ipState.setAutoDns(true);
         verify(!ipState.payload({}).ignore_auto_dns);
-    }
 
-    function test_rejectsIncompleteManualAddress() {
         ipState.method = "manual";
         ipState.address = "192.168.1";
         ipState.prefix = "24";

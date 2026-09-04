@@ -9,11 +9,9 @@ Ui.ProviderChooserSurface {
     required property ApplicationController controller
     chooserController: controller
     surfaceName: "Applications"
-    navigationEnabled: !content.controller.navigationHelpOpen
     refreshEnabled: !content.controller.operationBlocked && navigationEnabled
     detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection
         && refreshEnabled
-    helpEnabled: content.controller.uiActive
     helpEntries: [
         { keys: "Shift+Enter", action: "Launch a new application instance" },
         { keys: "F5", action: "Refresh applications and windows" },

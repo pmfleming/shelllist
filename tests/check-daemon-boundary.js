@@ -26,8 +26,8 @@ if (!/environment:\s*\(\{\s*TOKIO_WORKER_THREADS:\s*"1"\s*\}\)/.test(transport))
     throw new Error("daemon bridge clients are not constrained to one Tokio worker");
 
 const backend = source("qml/Shelllist/Io/DaemonBackend.qml");
-for (const token of ["required property string expectedProtocol",
-        "required property int expectedVersion", "function acceptEvent",
+for (const token of ["property var endpoint", "property string expectedProtocol",
+        "property int expectedVersion", "function acceptEvent",
         "ApiEnvelope.compatibilityError", "function acceptSharedEvent",
         "DaemonSessions.attach(backend)"]) {
     if (!backend.includes(token))
@@ -55,8 +55,11 @@ const adapters = [
 ];
 for (const adapter of adapters) {
     const text = source(adapter);
-    if (!/expectedProtocol\s*:/.test(text) || !/expectedVersion\s*:/.test(text))
-        throw new Error(`${adapter} does not declare its expected API identity`);
+    const endpoint = /endpoint\s*:/.test(text);
+    const explicitIdentity = /expectedProtocol\s*:/.test(text)
+        && /expectedVersion\s*:/.test(text);
+    if (!endpoint && !explicitIdentity)
+        throw new Error(`${adapter} does not declare its daemon API identity`);
 }
 
 for (const adapter of ["activity/ActivityBackend.qml", "battery/BatteryBackend.qml"]) {

@@ -95,7 +95,6 @@ Column {
             }
 
             Item {
-                id: weatherBody
                 anchors.left: parent.left
                 anchors.top: weatherHeader.bottom
                 anchors.topMargin: 2
@@ -140,7 +139,6 @@ Column {
                 }
 
                 Item {
-                    id: weatherSummary
                     anchors.left: timeSummary.right
                     anchors.top: parent.top
                     anchors.right: parent.right

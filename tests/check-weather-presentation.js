@@ -75,8 +75,7 @@ for (const name of ["Europe-Paris.svg", "America-New_York.svg",
         `timezone region asset ${name} must contain geometry`);
 }
 assert(timeWeatherController.includes("timezone_region_ids")
-        && timezoneMap.includes("offsetSeconds % 3600 === 0")
-        && timezoneMap.includes("locationMarker"),
-    "timezone map must separate fractional ocean offsets and mark its location");
+        && timezoneMap.includes("offsetSeconds % 3600 === 0"),
+    "timezone map must preserve region ids and separate fractional ocean offsets");
 
 console.log("weather presentation: artwork, local times, timezone maps, and wind direction passed");

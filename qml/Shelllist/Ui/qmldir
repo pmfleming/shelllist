@@ -37,6 +37,7 @@ singleton Format 1.0 Format.qml
 GlyphLabel 1.0 GlyphLabel.qml
 IconTile 1.0 IconTile.qml
 LabeledValueSlider 1.0 LabeledValueSlider.qml
+LiveClock 1.0 LiveClock.qml
 ModalFrame 1.0 ModalFrame.qml
 NavigationHelpDialog 1.0 NavigationHelpDialog.qml
 NotificationReplyRow 1.0 NotificationReplyRow.qml

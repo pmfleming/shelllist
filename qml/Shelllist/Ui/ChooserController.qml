@@ -25,6 +25,8 @@ Item {
     property int surfaceTopInset: 0
     property int surfaceBottomInset: 0
     property string surfaceAlignment: "center"
+    property double lastSearchRankLatencyMs: -1
+    property double lastCatalogToModelLatencyMs: -1
     readonly property alias navigation: navigationModel
 
     readonly property int closedWindowWidth: closedWidthFraction > 0 && availableScreenWidth > 0
@@ -57,6 +59,7 @@ Item {
     function deactivateUi() { deactivateUiState(); }
     function refresh() {}
     function setPower() {}
+    function setDetailsTab(tab: string): void {}
     function captureScreenshot(x, y, width, height) { return false; }
 
     function activateUiState(workspaceId) {
