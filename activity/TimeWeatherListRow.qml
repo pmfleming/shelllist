@@ -52,15 +52,41 @@ Ui.ResultRow {
         Layout.preferredHeight: row.scaled(48)
         Layout.alignment: Qt.AlignVCenter
 
-        WeatherIcon {
+        Column {
+            visible: row.hasWeather
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             width: row.scaled(40)
-            height: width
-            visible: row.hasWeather
-            conditionCode: Number(row.weather.condition_code || 0)
-            daytime: row.weather.is_day !== false
-            description: row.weather.condition || ""
+            spacing: 0
+
+            WeatherIcon {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: row.scaled(34)
+                height: width
+                conditionCode: Number(row.weather.condition_code || 0)
+                daytime: row.weather.is_day !== false
+                description: row.weather.condition || ""
+            }
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: row.scaled(2)
+
+                Image {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: row.scaled(11)
+                    height: width
+                    source: Qt.resolvedUrl("assets/weather/raindrop.svg")
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    mipmap: true
+                }
+                Text {
+                    text: row.percentage(row.weather.precipitation_probability)
+                    color: Ui.Theme.mutedText
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
+                }
+            }
         }
 
         Text {
@@ -93,26 +119,6 @@ Ui.ResultRow {
                 color: Ui.Theme.mutedText
                 font.family: Ui.Theme.fontFamily
                 font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
-            }
-            Row {
-                anchors.right: parent.right
-                spacing: row.scaled(2)
-
-                Image {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: row.scaled(11)
-                    height: width
-                    source: Qt.resolvedUrl("assets/weather/raindrop.svg")
-                    fillMode: Image.PreserveAspectFit
-                    smooth: true
-                    mipmap: true
-                }
-                Text {
-                    text: row.percentage(row.weather.precipitation_probability)
-                    color: Ui.Theme.mutedText
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
-                }
             }
         }
     }
