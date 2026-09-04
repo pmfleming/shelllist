@@ -65,7 +65,7 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailCard {
-        height: Math.max(410, settings.implicitHeight + 76)
+        height: settings.implicitHeight + 64
         title: "Device settings"
 
         BluetoothDeviceActions {

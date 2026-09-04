@@ -14,7 +14,7 @@ ColumnLayout {
     readonly property bool renameValid: renameInput.text.trim().length > 0
 
     Layout.fillWidth: true
-    spacing: Ui.Theme.spacingMd
+    spacing: Ui.Theme.spacingSm
 
     function syncDeviceName(force) {
         const nextKey = controller.selectedDevice.key || "";
@@ -72,7 +72,27 @@ ColumnLayout {
         }
     }
 
-    Ui.FieldLabel { text: "Device name" }
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Ui.Theme.spacingSm
+
+        Ui.FieldLabel {
+            Layout.fillWidth: true
+            text: "Device name"
+        }
+
+        Text {
+            Layout.maximumWidth: Math.round(section.width * 0.55)
+            text: section.controller.selectedDevice.remote_name
+                ? "Original: " + section.controller.selectedDevice.remote_name
+                : "Original name unavailable"
+            color: Ui.Theme.mutedText
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Ui.Theme.fontSizeCaption
+            horizontalAlignment: Text.AlignRight
+            elide: Text.ElideRight
+        }
+    }
 
     RowLayout {
         Layout.fillWidth: true
@@ -101,17 +121,6 @@ ColumnLayout {
                 && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
             onClicked: section.controller.resetSelectedName()
         }
-    }
-
-    Text {
-        Layout.fillWidth: true
-        text: section.controller.selectedDevice.remote_name
-            ? "Original name: " + section.controller.selectedDevice.remote_name
-            : "Original device name unavailable"
-        color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        elide: Text.ElideRight
     }
 
     Ui.ActionToggleList {
