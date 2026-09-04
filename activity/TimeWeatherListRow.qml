@@ -102,10 +102,12 @@ Ui.ResultRow {
             visible: row.hasWeather
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
+            width: row.scaled(54)
             spacing: 0
 
             Text {
-                anchors.right: parent.right
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
                 text: row.temperature(row.weather.temperature_c)
                 color: Ui.Theme.text
                 font.family: Ui.Theme.fontFamily
@@ -113,7 +115,8 @@ Ui.ResultRow {
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
             Text {
-                anchors.right: parent.right
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
                 text: row.temperature(row.weather.high_c) + " "
                     + row.temperature(row.weather.low_c)
                 color: Ui.Theme.mutedText
@@ -129,7 +132,8 @@ Ui.ResultRow {
         spacing: 1
 
         Text {
-            anchors.right: parent.right
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
             text: row.localTime()
             color: Ui.Theme.text
             font.family: Ui.Theme.fontFamily
@@ -137,7 +141,8 @@ Ui.ResultRow {
             font.weight: Ui.Theme.fontWeightDemiBold
         }
         Text {
-            anchors.right: parent.right
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
             text: row.city.abbreviation || Visuals.utcOffset(row.city.utc_offset_seconds)
             color: Ui.Theme.mutedText
             font.family: Ui.Theme.fontFamily
