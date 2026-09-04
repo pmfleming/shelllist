@@ -17,6 +17,10 @@ Rectangle {
     signal keyPressed(var event)
 
     function focusList() { list.forceActiveFocus(); }
+    function revealSelection() {
+        if (list.currentIndex >= 0 && list.count > 0)
+            list.positionViewAtIndex(list.currentIndex, ListView.Contain);
+    }
     function focusTop() {
         controller.selectFirst();
         focusList();
@@ -39,6 +43,7 @@ Rectangle {
 
     ScrollableListView {
         id: list
+        objectName: "resultListView"
 
         anchors.fill: parent
         clip: true
@@ -51,10 +56,19 @@ Rectangle {
         Keys.onPressed: function (event) {
             frame.keyPressed(event);
         }
-        onCurrentIndexChanged: if (currentIndex >= 0 && count > 0)
-            positionViewAtIndex(currentIndex, ListView.Contain)
+        onCurrentIndexChanged: frame.revealSelection()
         delegate: frame.rowDelegate
     }
+
+    Connections {
+        target: frame.controller
+        function onUiActiveChanged() {
+            if (frame.controller.uiActive)
+                Qt.callLater(frame.revealSelection);
+        }
+    }
+
+    Component.onCompleted: if (controller.uiActive) Qt.callLater(revealSelection)
 
     Rectangle {
         anchors.left: parent.left

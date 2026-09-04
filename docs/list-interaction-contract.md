@@ -13,4 +13,6 @@ The component preserves the normal `ListView` API and guarantees:
 
 Domain views must not declare raw `ListView` objects or add wheel handlers to list delegates. `StateLayer` passes wheel events through by default. A non-list action that intentionally maps wheel input to an action must set `consumeWheel: true`; currently this applies to bar actions and tray items.
 
-`tests/check-list-scroll-contract.js` enforces shared-list use and wheel ownership. The runtime smoke test validates that the exported component loads with the shared UI module.
+When a warm chooser is reopened, its result list reveals the existing logical selection without changing that selection. An edited first item therefore reopens at the top, while an edited item in the middle remains selected and is brought back into view.
+
+`tests/check-list-scroll-contract.js` enforces shared-list use and wheel ownership. The runtime smoke test validates that the exported component loads with the shared UI module, and `tst_result_list_reactivation.qml` covers top and middle selection restoration.

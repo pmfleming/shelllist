@@ -954,6 +954,7 @@
             export XDG_CACHE_HOME=$TMPDIR/cache
             QT_QPA_PLATFORM=offscreen qmltestrunner \
               -input test-root/tests/qml \
+              -import test-root/tests/qml/imports \
               -import ${./qml} \
               -import ${pkgs.qt6.qtdeclarative}/lib/qt-6/qml \
               -o -,txt
