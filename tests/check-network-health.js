@@ -82,6 +82,46 @@ const progress = event({
 });
 expect("ordinary progress is quiet", health.isFailure(progress), false);
 
+const successfulActivationTrace = [
+    { subject: "connection", state_name: "activating", transition_kind: "progress" },
+    { subject: "device", state_name: "prepare", transition_kind: "progress" },
+    { subject: "device", state_name: "config", transition_kind: "progress" },
+    { subject: "device", state_name: "ip-config", transition_kind: "progress" },
+    { subject: "device", state_name: "activated", transition_kind: "success" },
+    { subject: "connection", state_name: "activated", transition_kind: "success" }
+].map(detail => event(Object.assign(detail, {
+    unexpected: false, user_requested: false, notification_recommended: false,
+    reason: { code: 0, name: "unknown", category: "unknown" }
+})));
+expect("successful activation trace is quiet",
+    successfulActivationTrace.some(health.isFailure), false);
+
+const sleepTrace = [
+    { subject: "device", state_name: "deactivating", reason: "sleeping" },
+    { subject: "connection", state_name: "deactivating", reason: "unknown" },
+    { subject: "device", state_name: "disconnected", reason: "sleeping" },
+    { subject: "device", state_name: "unmanaged", reason: "unmanaged-sleeping" }
+].map(item => event({
+    subject: item.subject, state_name: item.state_name, transition_kind: "expected-lifecycle",
+    unexpected: false, user_requested: false, notification_recommended: false,
+    reason: { code: 37, name: item.reason, category: "lifecycle" }
+}));
+expect("sleep trace is quiet", sleepTrace.some(health.isFailure), false);
+
+for (const [label, detail] of [
+    ["DHCP failure", { subject: "device", state_name: "failed", reason: "ip-config-unavailable", category: "address-assignment" }],
+    ["authentication failure", { subject: "device", state_name: "failed", reason: "no-secrets", category: "authentication" }],
+    ["link loss", { subject: "device", state_name: "disconnected", reason: "supplicant-disconnect", category: "authentication" }],
+    ["unknown VPN failure", { subject: "vpn", state_name: "failed", reason: "unknown", category: "unknown" }]
+]) {
+    const failure = event({
+        subject: detail.subject, state_name: detail.state_name, transition_kind: "failure",
+        unexpected: true, user_requested: false, notification_recommended: true,
+        reason: { code: 1, name: detail.reason, category: detail.category }
+    });
+    expect(label + " remains actionable", health.isFailure(failure), true);
+}
+
 expect("log line has no secret field", health.logLine(authFailure).indexOf("password") >= 0, false);
 expect("log line reports reason", health.logLine(authFailure).indexOf("reason=no-secrets") >= 0, true);
 
