@@ -50,21 +50,26 @@ Column {
     }
     Rectangle {
         width: parent.width
-        height: Math.max(150, Math.min(190, pane.height * 0.23))
+        height: Math.max(88, Math.min(96, pane.height * 0.11))
         radius: Ui.Theme.panelRadius
         color: Ui.Theme.selected
         border.color: Ui.Theme.border
+        clip: true
 
-        Column {
+        Item {
             anchors.fill: parent
-            anchors.margins: Ui.Theme.spacingMd
-            spacing: 3
+            anchors.margins: Ui.Theme.spacingSm
 
-            Row {
-                width: parent.width
-                height: 25
+            Item {
+                id: weatherHeader
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.right: parent.right
+                height: 18
+
                 Text {
-                    width: parent.width - weatherExpand.width
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
                     text: "Local time · Weather"
                     color: Ui.Theme.text
                     font.family: Ui.Theme.fontFamily
@@ -72,7 +77,8 @@ Column {
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
                 Text {
-                    id: weatherExpand
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
                     text: "↗"
                     color: Ui.Theme.accent
                     font.family: Ui.Theme.fontFamily
@@ -87,25 +93,41 @@ Column {
                     onClicked: pane.controller.requestTimeWeather("weather")
                 }
             }
-            Row {
-                width: parent.width
-                height: parent.height - y - weatherMeta.height
-                Column {
-                    width: parent.width * 0.62
-                    anchors.verticalCenter: parent.verticalCenter
-                    Text {
-                        text: Qt.formatTime(pane.now, "HH:mm")
-                        color: Ui.Theme.text
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: 42
-                        font.weight: Ui.Theme.fontWeightRegular
-                    }
-                    Text {
-                        text: Qt.formatDate(pane.now, "dddd, d MMMM").toUpperCase()
-                        color: Ui.Theme.mutedText
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: Ui.Theme.fontSizeCaption
-                        font.weight: Ui.Theme.fontWeightDemiBold
+
+            Item {
+                id: weatherBody
+                anchors.left: parent.left
+                anchors.top: weatherHeader.bottom
+                anchors.topMargin: 2
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+
+                Item {
+                    id: timeSummary
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    width: Math.round(parent.width * 0.38)
+
+                    Column {
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 0
+
+                        Text {
+                            text: Qt.formatTime(pane.now, "HH:mm")
+                            color: Ui.Theme.text
+                            font.family: Ui.Theme.fontFamily
+                            font.pixelSize: 26
+                            font.weight: Ui.Theme.fontWeightDemiBold
+                        }
+                        Text {
+                            text: Qt.formatDate(pane.now, "ddd, d MMM").toUpperCase()
+                            color: Ui.Theme.mutedText
+                            font.family: Ui.Theme.fontFamily
+                            font.pixelSize: Ui.Theme.fontSizeCaption
+                            font.weight: Ui.Theme.fontWeightDemiBold
+                        }
                     }
                     MouseArea {
                         anchors.fill: parent
@@ -116,28 +138,72 @@ Column {
                         onClicked: pane.controller.requestTimeWeather("time")
                     }
                 }
-                Row {
-                    width: parent.width * 0.38
-                    height: parent.height
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-                    WeatherIcon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.min(70, parent.width * 0.48)
-                        height: width
-                        conditionCode: pane.conditionCode(pane.weather().condition_code)
-                        daytime: pane.weather().is_day !== false
-                        description: pane.weather().condition || ""
+
+                Item {
+                    id: weatherSummary
+                    anchors.left: timeSummary.right
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+
+                    Item {
+                        id: weatherVisual
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: 54
+
+                        WeatherIcon {
+                            anchors.top: parent.top
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 34
+                            height: width
+                            conditionCode: pane.conditionCode(pane.weather().condition_code)
+                            daytime: pane.weather().is_day !== false
+                            description: pane.weather().condition || ""
+                        }
+                        Row {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+                            spacing: 2
+
+                            Image {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 11
+                                height: width
+                                source: pane.iconSource("raindrop")
+                                fillMode: Image.PreserveAspectFit
+                            }
+                            Text {
+                                text: pane.weather().available
+                                    ? Math.round(Number(
+                                        pane.weather().precipitation_probability)) + "%" : "—"
+                                color: Ui.Theme.mutedText
+                                font.family: Ui.Theme.fontFamily
+                                font.pixelSize: Ui.Theme.fontSizeCaption
+                            }
+                        }
                     }
+
                     Column {
+                        id: temperatureSummary
+                        anchors.left: weatherVisual.right
                         anchors.verticalCenter: parent.verticalCenter
+                        width: 76
+                        spacing: 0
+
                         Text {
+                            width: parent.width
+                            horizontalAlignment: Text.AlignHCenter
                             text: pane.temperature()
                             color: Ui.Theme.text
                             font.family: Ui.Theme.fontFamily
-                            font.pixelSize: 31
+                            font.pixelSize: 24
+                            font.weight: Ui.Theme.fontWeightDemiBold
                         }
                         Text {
+                            width: parent.width
+                            horizontalAlignment: Text.AlignHCenter
                             text: pane.weather().available
                                 ? Math.round(Number(pane.weather().high_c)) + "°  "
                                     + Math.round(Number(pane.weather().low_c)) + "°" : "—"
@@ -146,6 +212,52 @@ Column {
                             font.pixelSize: Ui.Theme.fontSizeCaption
                         }
                     }
+
+                    Column {
+                        anchors.left: temperatureSummary.right
+                        anchors.leftMargin: Ui.Theme.spacingSm
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 3
+
+                        Row {
+                            spacing: 3
+                            Image {
+                                width: 15
+                                height: 15
+                                source: pane.iconSource("thermometer")
+                                fillMode: Image.PreserveAspectFit
+                            }
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "Feels " + (pane.weather().available
+                                    ? Math.round(Number(
+                                        pane.weather().apparent_temperature_c)) + "°" : "—")
+                                color: Ui.Theme.mutedText
+                                font.family: Ui.Theme.fontFamily
+                                font.pixelSize: Ui.Theme.fontSizeCaption
+                            }
+                        }
+                        Row {
+                            spacing: 3
+                            Image {
+                                width: 15
+                                height: 15
+                                source: pane.iconSource("wind")
+                                fillMode: Image.PreserveAspectFit
+                            }
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: pane.weather().available
+                                    ? Math.round(Number(pane.weather().wind_speed_kmh))
+                                        + " km/h" : "—"
+                                color: Ui.Theme.mutedText
+                                font.family: Ui.Theme.fontFamily
+                                font.pixelSize: Ui.Theme.fontSizeCaption
+                            }
+                        }
+                    }
+
                     MouseArea {
                         anchors.fill: parent
                         hoverEnabled: true
@@ -154,49 +266,6 @@ Column {
                         Accessible.name: "Open city weather"
                         onClicked: pane.controller.requestTimeWeather("weather")
                     }
-                }
-            }
-            Row {
-                id: weatherMeta
-                width: parent.width
-                height: 20
-                spacing: Ui.Theme.spacingMd
-                Repeater {
-                    model: [
-                        { icon: "thermometer", value: pane.weather().available
-                            ? Math.round(Number(pane.weather().apparent_temperature_c)) + "°" : "—" },
-                        { icon: "raindrop", value: pane.weather().available
-                            ? Math.round(Number(pane.weather().precipitation_probability)) + "%" : "—" },
-                        { icon: "wind", value: pane.weather().available
-                            ? Math.round(Number(pane.weather().wind_speed_kmh)) + " km/h" : "—" }
-                    ]
-                    delegate: Row {
-                        id: glanceMetric
-                        required property var modelData
-                        height: weatherMeta.height
-                        spacing: 3
-                        Image {
-                            width: 18
-                            height: 18
-                            source: pane.iconSource(glanceMetric.modelData.icon)
-                            fillMode: Image.PreserveAspectFit
-                        }
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: glanceMetric.modelData.value
-                            color: Ui.Theme.mutedText
-                            font.family: Ui.Theme.fontFamily
-                            font.pixelSize: Ui.Theme.fontSizeCaption
-                        }
-                    }
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    Accessible.role: Accessible.Button
-                    Accessible.name: "Open city weather"
-                    onClicked: pane.controller.requestTimeWeather("weather")
                 }
             }
         }
