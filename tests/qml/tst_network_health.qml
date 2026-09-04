@@ -19,6 +19,36 @@ TestCase {
         compare(Health.message(failure), "Example needs a password.");
     }
 
+    function test_daemonNotificationPolicyIsRequiredWhenPresent() {
+        const failure = event({
+            subject: "device", state_name: "failed", unexpected: true, user_requested: false,
+            transition_kind: "failure", notification_recommended: true, severity: "error",
+            message: "Example failed to authenticate.", device_path: "/devices/1",
+            reason: { code: 7, name: "no-secrets", category: "authentication" }, id: "Example"
+        });
+        verify(Health.isFailure(failure));
+        compare(Health.message(failure), "Example failed to authenticate.");
+        compare(Health.notificationKey(failure), "/devices/1|failed|no-secrets");
+        verify(Health.isDuplicateNotification(
+            failure, "/devices/1|failed|no-secrets", 1000, 2000, 3000));
+
+        const suppressed = event({
+            subject: "connection", state_name: "deactivated", unexpected: true,
+            user_requested: false, transition_kind: "failure", notification_recommended: false,
+            reason: { code: 3, name: "device-disconnected", category: "dependency" }
+        });
+        verify(!Health.isFailure(suppressed));
+    }
+
+    function test_nonFailureTransitionKindStaysQuiet() {
+        const progress = event({
+            subject: "device", state_name: "failed", unexpected: true, user_requested: false,
+            transition_kind: "progress", notification_recommended: true,
+            reason: { code: 17, name: "dhcp-failed", category: "address-assignment" }
+        });
+        verify(!Health.isFailure(progress));
+    }
+
     function test_userRequestedTransitionsStayQuiet() {
         const disconnect = event({
             subject: "connection", state_name: "deactivated", unexpected: false, user_requested: true,

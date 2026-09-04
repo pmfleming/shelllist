@@ -24,13 +24,35 @@ function isQuiet(event) {
     return QUIET_CATEGORIES.indexOf(reason(event).category || "unknown") >= 0;
 }
 
-// Only a genuine failure is worth interrupting the user with.
+// Only a daemon-recommended terminal failure is worth interrupting the user
+// with. The `unexpected` fallback keeps compatibility with older daemons.
 function isFailure(event) {
     const detail = health(event);
-    if (!detail.unexpected || isQuiet(event))
+    if (detail.notification_recommended !== undefined) {
+        if (detail.notification_recommended !== true)
+            return false;
+    } else if (!detail.unexpected) {
+        return false;
+    }
+    if (detail.transition_kind !== undefined && detail.transition_kind !== "failure")
+        return false;
+    if (isQuiet(event))
         return false;
     return detail.state_name === "failed" || detail.state_name === "deactivated"
-        || detail.state_name === "disconnected" || detail.state_name === "unavailable";
+        || detail.state_name === "disconnected" || detail.state_name === "unavailable"
+        || detail.state_name === "unmanaged";
+}
+
+function notificationKey(event) {
+    const detail = health(event);
+    const connection = detail.device_path || detail.active_connection_path
+        || detail.profile_path || detail.uuid || identity(event);
+    return connection + "|" + (detail.state_name || "unknown")
+        + "|" + (reason(event).name || "unknown");
+}
+
+function isDuplicateNotification(event, lastKey, lastAtMs, nowMs, windowMs) {
+    return notificationKey(event) === lastKey && nowMs - lastAtMs < windowMs;
 }
 
 function identity(event) {
@@ -62,6 +84,8 @@ var REASON_MESSAGE = {
 
 function message(event) {
     const detail = health(event);
+    if (typeof detail.message === "string" && detail.message.length > 0)
+        return detail.message;
     const known = REASON_MESSAGE[reason(event).name];
     if (known)
         return identity(event) + " " + known + ".";
@@ -78,6 +102,9 @@ function logLine(event) {
         + " reason=" + (reason(event).name || "unknown")
         + " category=" + (reason(event).category || "unknown")
         + " unexpected=" + !!detail.unexpected
+        + " kind=" + (detail.transition_kind || "legacy")
+        + " notify=" + (detail.notification_recommended === true)
+        + " severity=" + (detail.severity || "unknown")
         + " id=" + (detail.id || "")
         + " iface=" + (detail.device_iface || "");
 }

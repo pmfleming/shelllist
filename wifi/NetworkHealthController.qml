@@ -10,6 +10,9 @@ Item {
     property var lastEvent: null
     // Most recent transition that looked like a real failure.
     property var lastFailure: null
+    property string lastNotificationKey: ""
+    property double lastNotificationAtMs: 0
+    readonly property int notificationDeduplicationMs: 3000
 
     readonly property string lastFailureMessage: lastFailure ? Health.message(lastFailure) : ""
 
@@ -27,6 +30,13 @@ Item {
         // health event about the same attempt would only duplicate it.
         if (controller.connection.running)
             return;
+        const key = Health.notificationKey(event);
+        const now = Date.now();
+        if (Health.isDuplicateNotification(
+                event, lastNotificationKey, lastNotificationAtMs, now, notificationDeduplicationMs))
+            return;
+        lastNotificationKey = key;
+        lastNotificationAtMs = now;
         controller.status = Health.message(event);
     }
 }

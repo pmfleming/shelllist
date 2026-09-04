@@ -27,6 +27,32 @@ const authFailure = event({
 expect("auth failure is a failure", health.isFailure(authFailure), true);
 expect("auth failure message", health.message(authFailure), "Example needs a password.");
 
+const daemonFailure = event({
+    subject: "device", state_name: "failed", unexpected: true, user_requested: false,
+    transition_kind: "failure", notification_recommended: true, severity: "error",
+    message: "Example failed to authenticate.", device_path: "/devices/1",
+    reason: { code: 7, name: "no-secrets", category: "authentication" }, id: "Example"
+});
+expect("daemon recommended failure is surfaced", health.isFailure(daemonFailure), true);
+expect("daemon message is preferred", health.message(daemonFailure), "Example failed to authenticate.");
+expect("notification key is stable", health.notificationKey(daemonFailure), "/devices/1|failed|no-secrets");
+expect("duplicate notification is suppressed", health.isDuplicateNotification(
+    daemonFailure, "/devices/1|failed|no-secrets", 1000, 2000, 3000), true);
+
+const daemonSuppressed = event({
+    subject: "connection", state_name: "deactivated", unexpected: true, user_requested: false,
+    transition_kind: "failure", notification_recommended: false, severity: "warning",
+    reason: { code: 3, name: "device-disconnected", category: "dependency" }, id: "Example"
+});
+expect("daemon suppressed failure stays quiet", health.isFailure(daemonSuppressed), false);
+
+const inconsistentProgress = event({
+    subject: "device", state_name: "failed", unexpected: true, user_requested: false,
+    transition_kind: "progress", notification_recommended: true,
+    reason: { code: 17, name: "dhcp-failed", category: "address-assignment" }
+});
+expect("non-failure transition kind stays quiet", health.isFailure(inconsistentProgress), false);
+
 const userDisconnect = event({
     subject: "connection", state_name: "deactivated", unexpected: false, user_requested: true,
     reason: { code: 2, name: "user-disconnected", category: "user-requested" },
