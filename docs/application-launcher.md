@@ -122,7 +122,7 @@ node tests/check-application-lifecycle.js launcher/ApplicationLifecycle.js
 node tests/check-application-history.js
 node tests/check-resource-availability.js
 node tests/check-application-resources.js launcher/ApplicationResources.js \
-  contracts/app-resource-ui-contract.fixture.json ../app-daemon/src/model.rs
+  contracts/app-resource-ui-contract.fixture.json
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
 bash tests/check-app-api-contract.sh ../app-daemon/target/debug/app-daemon \
   contracts/app-api-ui-contract.fixture.json launcher/AppApi.js

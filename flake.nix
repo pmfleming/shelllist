@@ -808,6 +808,7 @@
             node ${./tests/check-application-resources.js} \
               ${./launcher/ApplicationResources.js} \
               ${./contracts/app-resource-ui-contract.fixture.json}
+            node ${./tests/check-resource-availability.js} ${./launcher}
             touch $out
           '';
 
@@ -830,6 +831,7 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-application-lifecycle.js} ${./launcher/ApplicationLifecycle.js}
+            node ${./tests/check-application-history.js} ${./launcher}
             touch $out
           '';
 

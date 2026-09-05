@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
 const path = require("node:path");
-const launcher = path.resolve(__dirname, "../launcher");
+const launcher = path.resolve(process.argv[2] || path.join(__dirname, "../launcher"));
 const source = fs.readFileSync(path.join(launcher, "ApplicationController.qml"), "utf8");
 const Lifecycle = {};
 vm.createContext(Lifecycle);
