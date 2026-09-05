@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
+import "ApplicationResources.js" as Resources
 
 Rectangle {
     id: chart
@@ -81,7 +82,7 @@ Rectangle {
                     anchors.top: parent.top
                     anchors.topMargin: 20
                     width: chart.plotLeft - 22
-                    text: lane.modelData.unavailable ? "" : lane.modelData.valueText
+                    text: lane.modelData.currentUnavailable ? "" : lane.modelData.valueText
                     color: lane.modelData.color
                     elide: Text.ElideRight
                     font.family: Ui.Theme.fontFamily
@@ -95,7 +96,7 @@ Rectangle {
                     anchors.top: parent.top
                     anchors.topMargin: 39
                     width: chart.plotLeft - 22
-                    text: lane.modelData.unavailable ? "No measurements"
+                    text: lane.modelData.currentUnavailable ? "No measurements"
                         : lane.modelData.secondaryText || lane.modelData.referenceText || ""
                     color: Ui.Theme.subtleText
                     elide: Text.ElideRight
@@ -125,6 +126,8 @@ Rectangle {
                             return configured;
                         const largest = chart.points.reduce(function (current, point) {
                             return descriptors.reduce(function (next, descriptor) {
+                                if (!Resources.historicalMetricAvailable(point, descriptor.metric))
+                                    return next;
                                 const average = Number(point[descriptor.metric]);
                                 const peak = Number((point.peaks || ({}))[descriptor.peakMetric || ""]);
                                 return Math.max(next, isFinite(average) ? average : 0,
@@ -152,7 +155,8 @@ Rectangle {
                         chart.points.forEach(function (point, pointIndex) {
                             const timestamp = chart.timestamps[pointIndex];
                             const value = Number(point[descriptor.metric]);
-                            const valid = isFinite(value) && value >= 0
+                            const valid = Resources.historicalMetricAvailable(point, descriptor.metric)
+                                && isFinite(value) && value >= 0
                                 && timestamp >= chart.rangeStartMilliseconds
                                 && timestamp <= chart.rangeEndMilliseconds;
                             if (!valid || (previousTimestamp > 0
@@ -183,24 +187,25 @@ Rectangle {
                             dimRegion(context, 0, width);
                             return;
                         }
-                        const valid = chart.timestamps.filter(function (timestamp) {
-                            return timestamp >= chart.rangeStartMilliseconds
-                                && timestamp <= chart.rangeEndMilliseconds;
+                        // Dim unavailable buckets even when adjacent timestamps are close.
+                        // Capability gaps must not be mistaken for measured zero activity.
+                        let previousEnd = 0;
+                        chart.points.forEach(function (point) {
+                            const supported = (lane.modelData.series || []).some(function (descriptor) {
+                                return Resources.historicalMetricAvailable(point, descriptor.metric);
+                            });
+                            if (!supported)
+                                return;
+                            const timestamp = Number(point.timestamp_ms);
+                            const radius = Math.min(15000, Number(point.duration_ms) || 15000) / 2;
+                            const left = Math.max(0, xFor(timestamp - radius));
+                            const right = Math.min(width, xFor(timestamp + radius));
+                            if (right <= 0 || left >= width)
+                                return;
+                            dimRegion(context, previousEnd, left);
+                            previousEnd = Math.max(previousEnd, right);
                         });
-                        if (valid.length === 0) {
-                            dimRegion(context, 0, width);
-                            return;
-                        }
-                        const radius = chart.maximumGapMilliseconds / 2;
-                        dimRegion(context, 0, xFor(Math.max(chart.rangeStartMilliseconds,
-                            valid[0] - radius)));
-                        for (let index = 1; index < valid.length; ++index) {
-                            if (valid[index] - valid[index - 1] > chart.maximumGapMilliseconds)
-                                dimRegion(context, xFor(valid[index - 1] + radius),
-                                    xFor(valid[index] - radius));
-                        }
-                        dimRegion(context, xFor(Math.min(chart.rangeEndMilliseconds,
-                            valid[valid.length - 1] + radius)), width);
+                        dimRegion(context, previousEnd, width);
                     }
                     function drawTimeGuides(context) {
                         context.beginPath();
@@ -217,6 +222,8 @@ Rectangle {
                         const values = [];
                         let peak = 0;
                         chart.points.forEach(function (point) {
+                            if (!Resources.historicalMetricAvailable(point, descriptor.metric))
+                                return;
                             const value = Number(point[descriptor.metric]);
                             if (isFinite(value) && value >= 0)
                                 values.push(value);

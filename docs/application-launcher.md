@@ -106,7 +106,7 @@ While the launcher is visible, the controller refreshes current metrics every tw
 
 The Resources tab places current values directly beside a single set of filled activity sparklines for CPU, memory, GPU, disk, network, and power. Disk read/write and network receive/transmit share centred, two-direction lanes, while one aligned five-point time ruler applies to every lane. Fixed percentage scales and subtle average/peak references keep low-level noise from appearing anomalous. Compact stacked capacity bars replace the former storage, GPU-memory, and energy rings. Missing sampling periods remain empty with a dimmed surface rather than synthesized zeroes or visual hatching. Retained history remains available after an application exits.
 
-The UI presents only capabilities reported by the daemon. Unsupported GPU, storage, network-byte, and energy measurements are hidden or explicitly labelled unavailable rather than synthesized as zero. Attribution method, sample interval, coverage, memory source, energy confidence, and shared-resource warnings remain available as compact provenance badges above the graphs; low-level daemon fields are intentionally omitted from the launcher view.
+The UI presents only capabilities reported by the daemon. Historical `availability` flags distinguish supported idle measurements from unavailable or mixed-availability buckets; the latter render as gaps and are excluded from graph references. Legacy records retain CPU/memory and explicitly sourced energy, but optional capabilities without provenance are treated as unknown. Unsupported GPU, storage, network-byte, and energy measurements are hidden or explicitly labelled unavailable rather than synthesized as zero. Attribution method, sample interval, coverage, memory source, energy confidence, and shared-resource warnings remain available as compact provenance badges above the graphs; low-level daemon fields are intentionally omitted from the launcher view.
 
 ## Intentional limits
 
@@ -120,6 +120,7 @@ The checked frontend fixture is `contracts/app-api-ui-contract.fixture.json`. Re
 node tests/check-application-presentation.js launcher/ApplicationPresentation.js
 node tests/check-application-lifecycle.js launcher/ApplicationLifecycle.js
 node tests/check-application-history.js
+node tests/check-resource-availability.js
 node tests/check-application-resources.js launcher/ApplicationResources.js \
   contracts/app-resource-ui-contract.fixture.json ../app-daemon/src/model.rs
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js

@@ -53,6 +53,49 @@ function text(value, fallback) {
 function availability(value) {
     return value ? "Available" : "Unavailable";
 }
+function metricCapability(metric) {
+    if (metric.startsWith("gpu_"))
+        return "gpu";
+    if (metric.startsWith("memory_"))
+        return "memory";
+    if (metric.startsWith("cpu_") || ["process_count", "thread_count", "major_faults_per_second"].includes(metric))
+        return "cpu";
+    if (metric.startsWith("disk_space_"))
+        return "disk_space";
+    if (metric.startsWith("referenced_file_") || metric === "open_file_disk_bytes")
+        return "referenced_files";
+    if (metric === "network_connection_count")
+        return "network_connections";
+    if (metric.startsWith("network_"))
+        return "network_bytes";
+    if (metric.includes("power_watts") || ["energy_mwh", "battery_percent", "attributed_fraction"].includes(metric))
+        return "energy";
+    return "storage";
+}
+function historicalMetricAvailable(point, metric) {
+    const capability = metricCapability(metric);
+    if (!point || !isFinite(Number(point[metric])))
+        return false;
+    if (point.availability)
+        return point.availability[capability] === true;
+    // Old records did not retain optional capabilities. Never infer support from
+    // a nonzero value; keep their CPU/memory and explicitly sourced RAPL history.
+    if (capability === "cpu" || capability === "memory")
+        return Number(point.coverage) > 0;
+    if (capability === "energy")
+        return point.energy_source === "rapl";
+    return false;
+}
+function currentMetricAvailable(resource, metric) {
+    const measurement = resource.measurement || ({});
+    switch (metricCapability(metric)) {
+        case "cpu": return Number(measurement.coverage) > 0;
+        case "memory": return ["pss", "rss-fallback"].includes(measurement.memory_source);
+        case "disk_space": return measurement.disk_space_scope === "identified-app-directories";
+        case "energy": return resource.energy_source === "rapl";
+        default: return measurement[metricCapability(metric) + "_available"] === true;
+    }
+}
 function field(key, label, value) {
     return { key: key, label: label, value: value };
 }
@@ -142,6 +185,7 @@ function measurementFields(resource) {
         field("measurement.memory_source", "Memory source", text(measurement.memory_source)),
         field("measurement.gpu_available", "GPU accounting", availability(measurement.gpu_available)),
         field("measurement.storage_available", "Storage accounting", availability(measurement.storage_available)),
+        field("measurement.referenced_files_available", "Referenced-file accounting", availability(measurement.referenced_files_available)),
         field("measurement.disk_space_scope", "Application-data scope", text(measurement.disk_space_scope)),
         field("measurement.network_available", "Network inspection", availability(measurement.network_available)),
         field("measurement.network_bytes_available", "Network byte accounting", availability(measurement.network_bytes_available)),
@@ -166,6 +210,13 @@ function historyFields(resource) {
         field("peaks.estimated_app_power_watts", "Peak application power", power(peaks.estimated_app_power_watts))
     ];
 }
+function historyAvailabilityFields(resource) {
+    if (!resource.availability)
+        return [];
+    return Object.keys(resource.availability).map(function (capability) {
+        return field("availability." + capability, "Bucket availability · " + capability, availability(resource.availability[capability]));
+    });
+}
 function detailGroups(resource, historical) {
     const value = resource || ({});
     const groups = [
@@ -175,7 +226,7 @@ function detailGroups(resource, historical) {
         { title: "Energy", fields: historical ? historicalEnergyFields(value) : currentEnergyFields(value) }
     ];
     if (historical)
-        groups.push({ title: "History quality and peaks", fields: historyFields(value) });
+        groups.push({ title: "History quality and peaks", fields: historyFields(value).concat(historyAvailabilityFields(value)) });
     else
         groups.push({ title: "Measurement and capabilities", fields: measurementFields(value) });
     return groups;

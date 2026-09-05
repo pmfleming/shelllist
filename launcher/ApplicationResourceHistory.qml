@@ -17,21 +17,14 @@ ColumnLayout {
     readonly property var points: controller.resourceHistory || []
     readonly property var latestPoint: points.length > 0 ? points[points.length - 1] : ({})
     readonly property var current: application.running ? application : latestPoint
-    readonly property bool hasMeasurements: application.running || points.length > 0
-    readonly property bool gpuAvailable: application.running
-        ? !!measurement.gpu_available : historyHas("gpu_busy_percent") || historyHas("gpu_percent")
-    readonly property bool storageAvailable: application.running
-        ? !!measurement.storage_available : historyHas("disk_read_bytes_per_second")
-            || historyHas("disk_write_bytes_per_second")
-    readonly property bool diskSpaceAvailable: application.running
-        ? measurement.disk_space_scope !== "unavailable" : historyHas("disk_space_total_bytes")
-    readonly property bool referencedFilesAvailable: storageAvailable
-        || historyHas("referenced_file_disk_bytes")
-    readonly property bool networkBytesAvailable: application.running
-        ? !!measurement.network_bytes_available : historyHas("network_receive_bytes_per_second")
-            || historyHas("network_transmit_bytes_per_second")
-    readonly property bool energyAvailable: application.running
-        ? application.energy_source && application.energy_source !== "unavailable" : historyHasEnergy()
+    readonly property bool cpuAvailable: currentHas("cpu_percent_of_machine")
+    readonly property bool memoryAvailable: currentHas("memory_bytes")
+    readonly property bool gpuAvailable: currentHas("gpu_busy_percent")
+    readonly property bool storageAvailable: currentHas("disk_read_bytes_per_second")
+    readonly property bool diskSpaceAvailable: currentHas("disk_space_total_bytes")
+    readonly property bool referencedFilesAvailable: currentHas("referenced_file_disk_bytes")
+    readonly property bool networkBytesAvailable: currentHas("network_receive_bytes_per_second")
+    readonly property bool energyAvailable: currentHas("average_power_watts")
     readonly property real energyFraction: Math.max(0, Math.min(1,
         Number(current.attributed_fraction || 0)))
 
@@ -44,15 +37,13 @@ ColumnLayout {
     readonly property color networkTransmitColor: Ui.Theme.dark ? "#22d3ee" : "#0e7490"
     readonly property color powerColor: Ui.Theme.dark ? "#fb7185" : "#be123c"
 
+    function currentHas(metric) {
+        return application.running ? Resources.currentMetricAvailable(application, metric)
+            : Resources.historicalMetricAvailable(latestPoint, metric);
+    }
     function historyHas(metric) {
         return points.some(function (point) {
-            const value = Number(point[metric] || 0);
-            return isFinite(value) && value > 0;
-        });
-    }
-    function historyHasEnergy() {
-        return points.some(function (point) {
-            return point.energy_source && point.energy_source !== "unavailable";
+            return Resources.historicalMetricAvailable(point, metric);
         });
     }
     function currentPower() {
@@ -61,7 +52,9 @@ ColumnLayout {
             : latestPoint.average_power_watts;
     }
     function average(metric) {
-        const values = points.map(function (point) { return Number(point[metric]); })
+        const values = points.filter(function (point) {
+            return Resources.historicalMetricAvailable(point, metric);
+        }).map(function (point) { return Number(point[metric]); })
             .filter(function (value) { return isFinite(value) && value >= 0; });
         return values.length > 0 ? values.reduce(function (sum, value) {
             return sum + value;
@@ -69,6 +62,9 @@ ColumnLayout {
     }
     function peak(metric, nested) {
         return points.reduce(function (maximum, point) {
+            const availabilityMetric = metric === "estimated_app_power_watts" ? "average_power_watts" : metric;
+            if (!Resources.historicalMetricAvailable(point, availabilityMetric))
+                return maximum;
             const source = nested ? point.peaks || ({}) : point;
             const value = Number(source[metric] || 0);
             return isFinite(value) ? Math.max(maximum, value) : maximum;
@@ -92,7 +88,9 @@ ColumnLayout {
             unavailable, chartStyle, series) {
         return { label: label, valueText: valueText, secondaryText: secondaryText,
             referenceText: referenceText, color: color, maximum: maximum,
-            unavailable: unavailable, chartStyle: chartStyle, series: series };
+            currentUnavailable: unavailable,
+            unavailable: !series.some(function (descriptor) { return historyHas(descriptor.metric); }),
+            chartStyle: chartStyle, series: series };
     }
 
     Layout.fillWidth: true
@@ -212,13 +210,13 @@ ColumnLayout {
         lanes: [
             history.lane("CPU", Presentation.cpuText(history.current.cpu_percent_of_machine), "",
                 history.reference("cpu_percent_of_machine", "cpu_percent_of_machine", "percent"),
-                history.cpuColor, 100, !history.hasMeasurements, "area", [
+                history.cpuColor, 100, !history.cpuAvailable, "area", [
                     history.graphSeries("cpu_percent_of_machine", "cpu_percent_of_machine",
                         "CPU", history.cpuColor, "percent", 0)
                 ]),
             history.lane("Memory", Presentation.memoryText(history.current.memory_bytes), "",
                 history.reference("memory_bytes", "memory_bytes", "bytes"),
-                history.memoryColor, 0, !history.hasMeasurements, "area", [
+                history.memoryColor, 0, !history.memoryAvailable, "area", [
                     history.graphSeries("memory_bytes", "memory_bytes",
                         "Memory", history.memoryColor, "bytes", 0)
                 ]),
