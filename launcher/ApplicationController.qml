@@ -163,6 +163,12 @@ Ui.ProviderChooserController {
         if (!targetId || Lifecycle.historyRequestCovered(
                 targetId, historyTargetId, historyInFlight, forceRefresh))
             return;
+        if (targetId !== historyTargetId) {
+            const previousRequestId = activeHistoryRequestId;
+            clearResourceHistory();
+            if (previousRequestId)
+                backend.cancelRequest(previousRequestId);
+        }
         historyTargetId = targetId;
         historyWindowStartMs = resourceHistorySinceMs();
         historyWindowEndMs = Date.now();
