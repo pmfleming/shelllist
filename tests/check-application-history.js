@@ -19,7 +19,7 @@ function controller() {
         resourcesVisible: true, selectedResult: { id: "A" },
         resourceHistory: [], pendingResourceHistory: [], historyTargetId: "",
         activeHistoryRequestId: "", historyWindowStartMs: 0, historyWindowEndMs: 0,
-        historyRange: "30m", revisionRequestId: "",
+        historyRange: "30m", historyRequestRange: "", revisionRequestId: "",
         backend: {
             nextRequestId: () => "history-" + (++sequence),
             history: (...args) => { calls.push(args); return true; },
@@ -58,4 +58,23 @@ function controller() {
     assert.equal(c.resourceHistory.length, 0, "failure must not retain another target's history");
 }
 
-console.log("application history: target isolation checks passed");
+{
+    const c = controller();
+    c.requestResourceHistory();
+    const oldId = c.activeHistoryRequestId;
+    const oldSince = c.calls[0][2];
+    c.requestResourceHistory(true);
+    assert.equal(c.calls.length, 1, "periodic refresh must not interrupt pagination");
+    c.selectHistoryRange("24h");
+    assert.equal(c.calls.length, 2, "range changes supersede in-flight requests immediately");
+    assert.equal(c.historyRequestRange, "24h");
+    assert.ok(c.calls[1][2] < oldSince - 23 * 60 * 60 * 1000);
+    assert.ok(c.cancelled.includes(oldId));
+    c.applyResourceHistory(oldId, { target_id: "A", points: [{ timestamp_ms: 1 }], has_more: false });
+    assert.equal(c.resourceHistory.length, 0, "old range cannot populate the new selection");
+    c.applyResourceHistory(c.activeHistoryRequestId,
+        { target_id: "A", points: [{ timestamp_ms: 2 }], has_more: false });
+    assert.equal(c.resourceHistory[0].timestamp_ms, 2);
+}
+
+console.log("application history: target isolation and range supersession checks passed");

@@ -34,6 +34,7 @@ Ui.ProviderChooserController {
     property double historyWindowStartMs: 0
     property double historyWindowEndMs: 0
     property string historyRange: "30m"
+    property string historyRequestRange: ""
     property string activeSettingsRequestId: ""
     readonly property bool historyInFlight: activeHistoryRequestId.length > 0
     readonly property bool settingsInFlight: activeSettingsRequestId.length > 0
@@ -66,6 +67,7 @@ Ui.ProviderChooserController {
         activeHistoryRequestId = "";
         historyWindowStartMs = 0;
         historyWindowEndMs = 0;
+        historyRequestRange = "";
     }
     function activateUi(workspaceId: string): void {
         activateUiState(workspaceId);
@@ -161,15 +163,17 @@ Ui.ProviderChooserController {
     function requestResourceHistory(forceRefresh: var): void {
         const targetId = resourcesVisible && selectedResult ? selectedResult.id : "";
         if (!targetId || Lifecycle.historyRequestCovered(
-                targetId, historyTargetId, historyInFlight, forceRefresh))
+                targetId, historyTargetId, historyInFlight, forceRefresh,
+                historyRange, historyRequestRange))
             return;
-        if (targetId !== historyTargetId) {
+        if (targetId !== historyTargetId || historyRange !== historyRequestRange) {
             const previousRequestId = activeHistoryRequestId;
             clearResourceHistory();
             if (previousRequestId)
                 backend.cancelRequest(previousRequestId);
         }
         historyTargetId = targetId;
+        historyRequestRange = historyRange;
         historyWindowStartMs = resourceHistorySinceMs();
         historyWindowEndMs = Date.now();
         pendingResourceHistory = [];

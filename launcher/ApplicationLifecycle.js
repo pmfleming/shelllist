@@ -19,8 +19,9 @@ function requestKind(id) {
     return "other";
 }
 
-function historyRequestCovered(targetId, currentTargetId, inFlight, forceRefresh) {
-    return targetId === currentTargetId && (inFlight || forceRefresh !== true);
+function historyRequestCovered(targetId, currentTargetId, inFlight, forceRefresh, range, currentRange) {
+    return targetId === currentTargetId && range === currentRange
+        && (inFlight || forceRefresh !== true);
 }
 
 function expectedRevision(value) {
