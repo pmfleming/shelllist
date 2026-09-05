@@ -24,6 +24,25 @@ function historyRequestCovered(targetId, currentTargetId, inFlight, forceRefresh
         && (inFlight || forceRefresh !== true);
 }
 
+function mergeResourceHistory(existing, incoming, sinceMs, untilMs) {
+    const inRange = function (point) {
+        const timestamp = Number(point.timestamp_ms);
+        return isFinite(timestamp) && timestamp >= sinceMs && timestamp <= untilMs;
+    };
+    if (incoming.length === 0) {
+        const retained = existing.filter(inRange);
+        return retained.length === existing.length ? existing : retained;
+    }
+    const byTimestamp = new Map();
+    existing.concat(incoming).forEach(function (point) {
+        if (inRange(point))
+            byTimestamp.set(Number(point.timestamp_ms), point);
+    });
+    return Array.from(byTimestamp.values()).sort(function (left, right) {
+        return Number(left.timestamp_ms) - Number(right.timestamp_ms);
+    });
+}
+
 function expectedRevision(value) {
     if (typeof value !== "number")
         return null;

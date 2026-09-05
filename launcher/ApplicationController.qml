@@ -35,6 +35,8 @@ Ui.ProviderChooserController {
     property double historyWindowEndMs: 0
     property string historyRange: "30m"
     property string historyRequestRange: ""
+    property string historyCursor: ""
+    property string pendingHistoryCursor: ""
     property string activeSettingsRequestId: ""
     readonly property bool historyInFlight: activeHistoryRequestId.length > 0
     readonly property bool settingsInFlight: activeSettingsRequestId.length > 0
@@ -68,6 +70,8 @@ Ui.ProviderChooserController {
         historyWindowStartMs = 0;
         historyWindowEndMs = 0;
         historyRequestRange = "";
+        historyCursor = "";
+        pendingHistoryCursor = "";
     }
     function activateUi(workspaceId: string): void {
         activateUiState(workspaceId);
@@ -176,24 +180,36 @@ Ui.ProviderChooserController {
         historyRequestRange = historyRange;
         historyWindowStartMs = resourceHistorySinceMs();
         historyWindowEndMs = Date.now();
+        resourceHistory = Lifecycle.mergeResourceHistory(resourceHistory, [],
+            historyWindowStartMs, historyWindowEndMs);
         pendingResourceHistory = [];
+        pendingHistoryCursor = historyCursor;
         activeHistoryRequestId = nextHistoryRequestId();
-        backend.history(activeHistoryRequestId, targetId, historyWindowStartMs, null, 1000);
+        backend.history(activeHistoryRequestId, targetId, historyWindowStartMs, historyCursor || null, 1000);
     }
     function applyResourceHistory(id: string, history: var): void {
         if (id !== activeHistoryRequestId || (history.target_id || "") !== historyTargetId)
             return;
+        if (history.has_more && (!history.next_cursor || history.next_cursor === pendingHistoryCursor)) {
+            handleFailure(id, "History pagination did not advance");
+            return;
+        }
         pendingResourceHistory = pendingResourceHistory.concat(history.points || []);
-        if (history.has_more && history.next_cursor) {
+        pendingHistoryCursor = history.next_cursor || pendingHistoryCursor;
+        if (history.has_more) {
             activeHistoryRequestId = nextHistoryRequestId();
             backend.history(activeHistoryRequestId, historyTargetId,
-                historyWindowStartMs, history.next_cursor, 1000);
+                historyWindowStartMs, pendingHistoryCursor, 1000);
             return;
         }
         activeHistoryRequestId = "";
+        historyWindowStartMs = resourceHistorySinceMs();
         historyWindowEndMs = Date.now();
-        resourceHistory = pendingResourceHistory;
+        resourceHistory = Lifecycle.mergeResourceHistory(resourceHistory, pendingResourceHistory,
+            historyWindowStartMs, historyWindowEndMs);
+        historyCursor = pendingHistoryCursor;
         pendingResourceHistory = [];
+        pendingHistoryCursor = "";
     }
     function cancelQuery(requestId: string): void { backend.cancelRequest(requestId); }
     function applyRevision(id: string, revision: var): void {
@@ -283,6 +299,7 @@ Ui.ProviderChooserController {
             if (id === activeHistoryRequestId) {
                 activeHistoryRequestId = "";
                 pendingResourceHistory = [];
+                pendingHistoryCursor = "";
             }
             return;
         }

@@ -102,7 +102,7 @@ A 20-second frontend watchdog clears uncertain state and requeries if a terminal
 
 ## Resources
 
-While the launcher is visible, the controller refreshes current metrics every two seconds. Opening Resources requests history every 15 seconds. The user can select a 30-minute, two-hour, or 24-hour range; cursor pagination retrieves the complete range.
+While Resources is visible, the controller refreshes current metrics every two seconds and polls history every fifteen seconds. The user can select a 30-minute, two-hour, or 24-hour range. The first request paginates the complete range; later polls resume from the last successfully committed cursor, append new buckets, and prune expired points. Empty polls retain the cursor, and failed pagination retries from the last complete response without losing samples. Changing application or range clears the old data and starts fresh pagination.
 
 The Resources tab places current values directly beside a single set of filled activity sparklines for CPU, memory, GPU, disk, network, and power. Disk read/write and network receive/transmit share centred, two-direction lanes, while one aligned five-point time ruler applies to every lane. Fixed percentage scales and subtle average/peak references keep low-level noise from appearing anomalous. Compact stacked capacity bars replace the former storage, GPU-memory, and energy rings. Missing sampling periods remain empty with a dimmed surface rather than synthesized zeroes or visual hatching. Retained history remains available after an application exits.
 
