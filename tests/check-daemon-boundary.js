@@ -106,6 +106,7 @@ for (const [kind, localId, ok] of [
         consumers: { "consumer-1": consumer },
         routes: { [transportId]: { consumerId: "consumer-1", localId, kind } },
         subscriptionOwners: {},
+        subscriptionSequence: 0,
         client: {
             recover(message) {
                 recoveries.push(message);
@@ -133,9 +134,110 @@ for (const [kind, localId, ok] of [
         assert.equal(Object.keys(session.subscriptionOwners).length, 0);
         registry.restoreSubscriptions("test-daemon");
         assert.equal(subscriptions.length, 1);
-        assert.equal(subscriptions[0][0], "consumer-1::session-subscribe");
+        assert.equal(subscriptions[0][0], "consumer-1::session-subscribe::1");
         assert.equal(consumer.baseSubscriptionPending, true);
     }
+}
+
+function subscriptionLifecycle() {
+    const subscriptions = [], cancellations = [], responses = [];
+    const view = {
+        active: false, streams: ["battery.changed"],
+        baseSubscriptionId: "", baseSubscriptionPending: false,
+        backend: {
+            acceptSharedResponse: (...args) => responses.push(args),
+            failSharedTransport() {}
+        }
+    };
+    const session = {
+        daemonName: "test-daemon", subscriptionSequence: 0,
+        consumers: {
+            resident: { active: true, streams: [], baseSubscriptionId: "resident-sub",
+                baseSubscriptionPending: false, backend: { failSharedTransport() {} } },
+            view
+        },
+        routes: {}, subscriptionOwners: { "resident-sub": "resident" },
+        client: {
+            ready: true, active: true,
+            subscribeExtra: (...args) => subscriptions.push(args),
+            cancel: (...args) => cancellations.push(args)
+        }
+    };
+    registry.sessions[session.daemonName] = session;
+    return {
+        session, view, subscriptions, cancellations, responses,
+        open: () => registry.update(session.daemonName, "view", true, view.streams, true),
+        close: () => registry.update(session.daemonName, "view", false, view.streams, true),
+        reply: (index, id) => registry.routeResponse(session.daemonName, subscriptions[index][0],
+            { ok: true, data: { subscription: { id } } }, "")
+    };
+}
+
+// Reopening while Subscribe is pending adopts that request, rather than
+// overwriting its route and orphaning a second daemon subscription.
+{
+    const fixture = subscriptionLifecycle();
+    fixture.open();
+    fixture.close();
+    assert.equal(fixture.view.baseSubscriptionPending, true);
+    fixture.open();
+    assert.equal(fixture.subscriptions.length, 1);
+    fixture.reply(0, "view-sub-1");
+    assert.equal(fixture.view.baseSubscriptionId, "view-sub-1");
+    assert.equal(fixture.responses[0][0], "session-subscribe");
+    fixture.close();
+    assert.deepEqual(fixture.cancellations.map(([, id]) => id), ["view-sub-1"]);
+    fixture.open();
+    assert.notEqual(fixture.subscriptions[0][0], fixture.subscriptions[1][0]);
+    fixture.reply(1, "view-sub-2");
+    fixture.close();
+    assert.deepEqual(fixture.cancellations.map(([, id]) => id), ["view-sub-1", "view-sub-2"]);
+}
+
+// A reply while closed must be cancelled, and a later open starts afresh.
+{
+    const fixture = subscriptionLifecycle();
+    fixture.open();
+    fixture.close();
+    fixture.reply(0, "closed-sub");
+    assert.equal(fixture.view.baseSubscriptionPending, false);
+    assert.equal(fixture.view.baseSubscriptionId, "");
+    assert.deepEqual(fixture.cancellations.map(([, id]) => id), ["closed-sub"]);
+    fixture.open();
+    assert.equal(fixture.subscriptions.length, 2);
+    assert.notEqual(fixture.subscriptions[0][0], fixture.subscriptions[1][0]);
+}
+
+// Destruction must also cancel late base and extra subscription replies.
+{
+    const fixture = subscriptionLifecycle();
+    fixture.open();
+    registry.subscribe("test-daemon", "view", "subscribe-extra", ["updates"], false);
+    registry.detach("test-daemon", "view");
+    assert.equal(fixture.session.client.active, true, "the resident bar keeps the bridge alive");
+    fixture.reply(0, "detached-base");
+    fixture.reply(1, "detached-extra");
+    assert.deepEqual(fixture.cancellations.map(([, id]) => id), ["detached-base", "detached-extra"]);
+    assert.equal(Object.keys(fixture.session.routes).length, 0);
+    assert.equal(fixture.responses.length, 0);
+}
+
+// A delayed response from a retired transport must not claim a new request.
+{
+    const fixture = subscriptionLifecycle();
+    fixture.open();
+    registry.failSession("test-daemon", "connection lost");
+    // The resident consumer also resubscribes; find the new view request.
+    registry.restoreSubscriptions("test-daemon");
+    const nextIndex = fixture.subscriptions.findIndex(([id], index) => index > 0 && id.startsWith("view::"));
+    assert.notEqual(fixture.subscriptions[0][0], fixture.subscriptions[nextIndex][0]);
+    fixture.reply(0, "old-generation");
+    assert.equal(fixture.view.baseSubscriptionPending, true);
+    assert.equal(fixture.view.baseSubscriptionId, "");
+    fixture.reply(nextIndex, "new-generation");
+    assert.equal(fixture.view.baseSubscriptionId, "new-generation");
+    fixture.close();
+    assert.deepEqual(fixture.cancellations.map(([, id]) => id), ["new-generation"]);
 }
 
 console.log("daemon boundary checks passed");

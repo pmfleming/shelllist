@@ -34,7 +34,8 @@ QtObject {
             client: client,
             consumers: ({}),
             routes: ({}),
-            subscriptionOwners: ({})
+            subscriptionOwners: ({}),
+            subscriptionSequence: 0
         };
         client.response.connect(function (id, envelope, transportError) {
             registry.routeResponse(daemonName, id, envelope, transportError);
@@ -85,7 +86,11 @@ QtObject {
         cancelOwnedSubscriptions(session, consumerId);
         delete session.consumers[consumerId];
         Object.keys(session.routes).forEach(function (id) {
-            if (session.routes[id].consumerId === consumerId)
+            const route = session.routes[id];
+            // Keep pending subscription replies routable so their daemon-issued
+            // IDs can be cancelled even after the consumer has disappeared.
+            if (route.consumerId === consumerId
+                    && route.kind !== "base-subscription" && route.kind !== "subscription")
                 delete session.routes[id];
         });
         updateSession(session);
@@ -143,7 +148,9 @@ QtObject {
         const session = sessions[daemonName];
         if (!session)
             throw new Error("Shared daemon session is unavailable");
-        const id = namespace(consumerId, localId);
+        const transportLocalId = base
+            ? localId + "::" + (++session.subscriptionSequence) : localId;
+        const id = namespace(consumerId, transportLocalId);
         session.routes[id] = {
             consumerId: consumerId,
             localId: localId,
@@ -160,7 +167,9 @@ QtObject {
     }
 
     function cancelBaseSubscription(session, consumerId, consumer) {
-        consumer.baseSubscriptionPending = false;
+        // Do not retire a request before its reply. While closed, a successful
+        // reply is cancelled by recordSubscription; a reopen can adopt it
+        // instead of issuing a second subscription with no owner.
         if (!consumer.baseSubscriptionId)
             return;
         const subscriptionId = consumer.baseSubscriptionId;
@@ -212,8 +221,14 @@ QtObject {
             return;
         delete session.routes[transportId];
         const consumer = session.consumers[route.consumerId];
-        if (!consumer)
+        if (!consumer) {
+            if (route.kind === "base-subscription" || route.kind === "subscription") {
+                const id = registry.subscriptionId(envelope);
+                if (id)
+                    session.client.cancel(namespace(route.consumerId, "cancel-detached-" + id), id);
+            }
             return;
+        }
         recordSubscription(session, route, consumer, envelope, transportError);
         consumer.backend.acceptSharedResponse(route.localId, envelope, transportError);
         // Shared request IDs are namespaced, so the transport cannot recognize
