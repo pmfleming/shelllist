@@ -21,6 +21,7 @@ Rectangle {
 
     onWidthChanged: repaintRequested()
     onHeightChanged: repaintRequested()
+    onLineColorChanged: repaintRequested()
 
     Text {
         anchors.left: parent.left

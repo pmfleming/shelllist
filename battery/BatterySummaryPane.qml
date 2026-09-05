@@ -36,35 +36,9 @@ Column {
         ]
     }
 
-    Ui.DetailColumnCard {
-        height: 250
-        title: "Battery history · 7 days"
-
-        Ui.FieldLabel {
-            Layout.fillWidth: true
-            text: Presentation.historyRange(pane.controller.batteryHistory)
-            color: Ui.Theme.mutedText
-        }
-
-        BatteryHistoryGraph {
-            points: pane.controller.batteryHistory.points || []
-            metric: "percentage"
-            label: "Charge level"
-            valueText: Math.round(Number(pane.battery.percentage) || 0) + "%"
-            lineColor: pane.battery.warning ? Ui.Theme.warning : Ui.Theme.accent
-            minimumMaximum: 100
-        }
-
-        BatteryHistoryGraph {
-            points: pane.controller.batteryHistory.points || []
-            metric: "time_to_full_seconds"
-            label: "Time until fully charged"
-            valueText: pane.battery.charging
-                ? Presentation.duration(pane.battery.time_to_full_seconds) : "Not charging"
-            lineColor: Ui.Theme.active
-            minimumMaximum: 3600
-            positiveOnly: true
-        }
+    BatteryHistoryCard {
+        history: pane.controller.batteryHistory
+        battery: pane.battery
     }
 
     Ui.DetailColumnCard {

@@ -741,6 +741,7 @@
             } ''
             node ${./tests/check-battery-presentation.js} \
               ${./battery/BatteryPresentation.js} ${./qml/Shelllist/Core/Duration.js}
+            node ${./tests/check-battery-history.js} ${./battery/BatteryHistory.js}
             touch $out
           '';
 
@@ -917,14 +918,16 @@
             } ''
             mkdir -p test-root/tests
             cp -r ${./tests/qml} test-root/tests/qml
-            ln -s ${./qml} test-root/qml
+            cp -r ${./qml} test-root/qml
+            chmod -R u+w test-root/qml
+            ln -sfn ${./battery} test-root/qml/Shelllist/Battery
             ln -s ${./wifi} test-root/wifi
             export HOME=$TMPDIR
             export XDG_CACHE_HOME=$TMPDIR/cache
             QT_QPA_PLATFORM=offscreen qmltestrunner \
               -input test-root/tests/qml \
               -import test-root/tests/qml/imports \
-              -import ${./qml} \
+              -import test-root/qml \
               -import ${pkgs.qt6.qtdeclarative}/lib/qt-6/qml \
               -o -,txt
             touch $out

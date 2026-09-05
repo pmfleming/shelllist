@@ -5,6 +5,7 @@ Rectangle {
 
     property string title: ""
     property var entries: null
+    readonly property real headingHeight: title.length > 0 ? heading.implicitHeight : 0
     property real contentPadding: Math.max(Theme.spacingMd, Math.min(Theme.spacingLg, height * 0.06))
     readonly property real verticalDensity: Math.max(Theme.densityMinimum, Math.min(1, height / 260))
     property real verticalContentPadding: Theme.verticalSpacing(Theme.spacingMd, verticalDensity)

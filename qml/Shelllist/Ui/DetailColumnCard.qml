@@ -5,6 +5,7 @@ DetailCard {
 
     default property alias columnContent: contentLayout.data
     property int contentSpacing: Theme.spacingSm
+    readonly property real contentImplicitHeight: contentLayout.implicitHeight
 
     ColumnLayout {
         id: contentLayout
