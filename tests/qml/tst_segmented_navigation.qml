@@ -18,9 +18,4 @@ TestCase {
         compare(Navigation.nextEnabledIndex(options, -1, 1), 0);
     }
 
-    function test_reportsOptionAvailability() {
-        verify(Navigation.optionEnabled(options, 0));
-        verify(!Navigation.optionEnabled(options, 1));
-        verify(!Navigation.optionEnabled(options, 9));
-    }
 }

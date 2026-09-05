@@ -15,4 +15,4 @@ Domain views must not declare raw `ListView` objects or add wheel handlers to li
 
 When a warm chooser is reopened, its result list reveals the existing logical selection without changing that selection. An edited first item therefore reopens at the top, while an edited item in the middle remains selected and is brought back into view.
 
-`tests/check-list-scroll-contract.js` enforces shared-list use and wheel ownership. The runtime smoke test validates that the exported component loads with the shared UI module, and `tst_result_list_reactivation.qml` covers top and middle selection restoration.
+The runtime smoke test validates that the exported component loads with the shared UI module, and `tst_result_list_reactivation.qml` checks that reopening reveals an offscreen selection without changing it. Shared-list use and wheel ownership remain review requirements rather than source-token assertions.

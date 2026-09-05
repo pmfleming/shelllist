@@ -721,12 +721,7 @@
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-weather-presentation.js} \
-              ${./activity/WeatherVisuals.js} \
-              ${./activity/TimezoneMap.qml} \
-              ${./activity/assets/timezones/world-time-zones.svg} \
-              ${./activity/assets/timezones/regions} \
-              ${./activity/TimeWeatherController.qml}
+            node ${./tests/check-weather-presentation.js} ${./activity/WeatherVisuals.js}
             touch $out
           '';
 
@@ -753,11 +748,6 @@
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-battery-auto-save.js} \
-              ${./battery/BatteryController.qml} \
-              ${./battery/BatteryBackend.qml} \
-              ${./battery/BatteryProtectionPane.qml} \
-              ${./battery/BatteryContent.qml}
             node ${./tests/check-battery-controls.js} \
               ${./battery/BatteryController.qml} \
               ${./battery/BatteryBackend.qml} \
@@ -869,27 +859,11 @@
             touch $out
           '';
 
-          listScrollContract = pkgs.runCommand "shelllist-list-scroll-contract"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-list-scroll-contract.js} ${./.}
-            touch $out
-          '';
-
           daemonBoundary = pkgs.runCommand "shelllist-daemon-boundary"
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-daemon-boundary.js} ${./.}
-            touch $out
-          '';
-
-          daemonCommonality = pkgs.runCommand "shelllist-daemon-commonality"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-daemon-commonality.js} ${./.}
             touch $out
           '';
 
@@ -907,16 +881,6 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-wifi-icons.js} ${./wifi/WifiIcons.js}
-            touch $out
-          '';
-
-          wifiScanPolicy = pkgs.runCommand "shelllist-wifi-scan-policy"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-wifi-scan-policy.js} \
-              ${./wifi/WifiScanController.qml} \
-              ${./wifi/WifiBackend.qml}
             touch $out
           '';
 

@@ -31,15 +31,15 @@ TestCase {
         compare(dispatchedRequest.context.workspaceId, "4");
     }
 
-    function test_rejectsMissingResult() {
-        verify(!registry.execute(null, "", {}));
-        compare(rejectedSpy.count, 1);
-    }
-
-    function test_rejectsDisabledAction() {
-        verify(!registry.execute(result(false), "open", {}));
-        compare(rejectedSpy.count, 1);
-        compare(rejectedSpy.signalArguments[0][0].code, "action-disabled");
+    function test_rejectsInvalidActionsWithoutDispatch() {
+        for (const candidate of [null, result(false)]) {
+            rejectedSpy.clear();
+            verify(!registry.execute(candidate, "open", {}));
+            compare(rejectedSpy.count, 1);
+            compare(dispatchedSpy.count, 0);
+            if (candidate !== null)
+                compare(rejectedSpy.signalArguments[0][0].code, "action-disabled");
+        }
     }
 
     Core.ProviderRegistry {

@@ -35,4 +35,4 @@ These differences should remain in domain controllers or adapters rather than be
 
 ## Validation
 
-`tests/check-daemon-commonality.js` prevents endpoint identity, response validation, request sequencing, event-gap handling, and screenshot composition from drifting back into per-domain copies. It runs as the `daemonCommonality` flake check alongside QML tests, protocol contracts, and strict `qmllint`.
+Protocol fixture checks, `tests/check-daemon-boundary.js`, and QML routing tests cover endpoint compatibility and shared-session behavior. Strict `qmllint` checks component integration. Common helper names and composition choices are review concerns, not source-token test contracts.

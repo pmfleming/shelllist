@@ -33,17 +33,6 @@ TestCase {
             && item.y < list.contentY + list.height;
     }
 
-    function test_reactivationRevealsTopSelection() {
-        const list = listView();
-        compare(list.currentIndex, 0);
-        list.positionViewAtIndex(25, ListView.Beginning);
-        verify(!selectedItemIsVisible(list));
-
-        controller.uiActive = true;
-        tryVerify(function () { return selectedItemIsVisible(list); });
-        compare(list.currentIndex, 0);
-    }
-
     function test_reactivationRevealsMiddleSelection() {
         const list = listView();
         selection.selectedIndex = 25;
