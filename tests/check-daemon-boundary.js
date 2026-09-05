@@ -2,6 +2,8 @@
 
 const fs = require("fs");
 const path = require("path");
+const assert = require("assert/strict");
+const vm = require("vm");
 
 const root = process.argv[2];
 if (!root)
@@ -65,6 +67,75 @@ for (const adapter of adapters) {
 for (const adapter of ["activity/ActivityBackend.qml", "battery/BatteryBackend.qml"]) {
     if (!/active:\s*controller\.uiActive/.test(source(adapter)))
         throw new Error(`${adapter} keeps a duplicate permanent bar transport`);
+}
+
+// Execute the registry's JavaScript routing with a fake transport. Keep the
+// recorded route kind authoritative, even when local IDs resemble controls.
+const registry = { sessions: {}, revision: 0 };
+registry.registry = registry;
+vm.createContext(registry);
+vm.runInContext(sessions.match(/^    function [\s\S]*?^    }/gm).join("\n"), registry);
+const routing = {};
+vm.createContext(routing);
+vm.runInContext(source("qml/Shelllist/Io/JsonlRouting.js").replace(/^\.pragma library\s*/, ""), routing);
+
+for (const [kind, localId, ok] of [
+    ["base-subscription", "session-subscribe", false],
+    ["base-subscription", "different-base-id", false],
+    ["base-subscription", "session-subscribe", true],
+    ["subscription", "subscribe-1", false],
+    ["subscription", "session-subscribe", false],
+    ["call", "session-subscribe", false],
+    ["control", "cancel-1", false]
+]) {
+    const responses = [];
+    const recoveries = [];
+    const failures = [];
+    const subscriptions = [];
+    const consumer = {
+        active: true, streams: ["updates"],
+        baseSubscriptionId: "", baseSubscriptionPending: kind === "base-subscription",
+        backend: {
+            acceptSharedResponse: (...args) => responses.push(args),
+            failSharedTransport: message => failures.push(message)
+        }
+    };
+    const transportId = registry.namespace("consumer-1", localId);
+    const session = {
+        daemonName: "test-daemon",
+        consumers: { "consumer-1": consumer },
+        routes: { [transportId]: { consumerId: "consumer-1", localId, kind } },
+        subscriptionOwners: {},
+        client: {
+            recover(message) {
+                recoveries.push(message);
+                registry.failSession("test-daemon", message);
+            },
+            subscribeExtra: (...args) => subscriptions.push(args)
+        }
+    };
+    registry.sessions["test-daemon"] = session;
+    const outcome = routing.responseOutcome({
+        id: transportId, ok, error: "subscription refused",
+        response: { data: { subscription: { id: "subscription-1" } } }
+    }, "test-daemon");
+    registry.routeResponse("test-daemon", outcome.id, outcome.envelope, outcome.error);
+    assert.deepEqual(responses, [[localId, outcome.envelope, outcome.error]]);
+    assert.equal(session.routes[transportId], undefined);
+    const shouldRecover = kind === "base-subscription" && !ok;
+    assert.deepEqual(recoveries, shouldRecover ? ["subscription refused"] : [], `${kind}: ${localId}`);
+    assert.deepEqual(failures, recoveries);
+    if (kind === "base-subscription") {
+        assert.equal(consumer.baseSubscriptionPending, false);
+        assert.equal(consumer.baseSubscriptionId, ok ? "subscription-1" : "");
+    }
+    if (shouldRecover) {
+        assert.equal(Object.keys(session.subscriptionOwners).length, 0);
+        registry.restoreSubscriptions("test-daemon");
+        assert.equal(subscriptions.length, 1);
+        assert.equal(subscriptions[0][0], "consumer-1::session-subscribe");
+        assert.equal(consumer.baseSubscriptionPending, true);
+    }
 }
 
 console.log("daemon boundary checks passed");

@@ -216,6 +216,10 @@ QtObject {
             return;
         recordSubscription(session, route, consumer, envelope, transportError);
         consumer.backend.acceptSharedResponse(route.localId, envelope, transportError);
+        // Shared request IDs are namespaced, so the transport cannot recognize
+        // base subscriptions by its standalone "session-subscribe" ID.
+        if (route.kind === "base-subscription" && transportError)
+            session.client.recover(transportError);
     }
 
     function routeEvent(daemonName, event) {
