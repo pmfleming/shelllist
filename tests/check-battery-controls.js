@@ -1,0 +1,212 @@
+#!/usr/bin/env node
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const vm = require("node:vm");
+
+const [controllerPath, backendPath, flowPath, presentationPath] = process.argv.slice(2);
+if (!presentationPath)
+    throw new Error("usage: check-battery-controls.js <controller> <backend> <flow> <presentation>");
+const source = fs.readFileSync(controllerPath, "utf8");
+function library(path) {
+    const context = vm.createContext({});
+    vm.runInContext(fs.readFileSync(path, "utf8").replace(/^\.(pragma|import).*$/gm, ""), context);
+    return context;
+}
+function functions(source) {
+    return source.match(/^    function [\s\S]*?^    }/gm).join("\n")
+        .replace(/function\s+\w+\([^)]*\)\s*(?::\s*\w+)?\s*\{/g,
+            header => header.replace(/:\s*(string|bool|var|int|real|void)\b/g, ""));
+}
+function timer() {
+    return { running: false, restart() { this.running = true; }, stop() { this.running = false; } };
+}
+function controller() {
+    const calls = [];
+    const context = vm.createContext({
+        Flow: library(flowPath), Presentation: library(presentationPath),
+        uiActive: false, actionInFlight: false,
+        thresholdAutoSave: timer(), alertAutoSave: timer(),
+        batteryBackend: new Proxy({}, { get: (_, method) => (...args) => {
+            calls.push({ method, args });
+            return true;
+        } })
+    });
+    // Execute the actual controller methods and property expressions, with only
+    // its transport and Qt timers replaced. No hardware or D-Bus calls are made.
+    for (const match of source.matchAll(/^    (readonly )?property \w+ (\w+): ([\s\S]*?)(?=\n    (?:readonly property|property|function)|\n\n)/gm)) {
+        const [, readonly, name, expression] = match;
+        if (readonly)
+            Object.defineProperty(context, name, { get: () => vm.runInContext(`(${expression})`, context) });
+        else
+            context[name] = vm.runInContext(`(${expression})`, context);
+    }
+    vm.runInContext(functions(source), context);
+    return { c: context, calls };
+}
+function device(id, start = 75, end = 80) {
+    return { id, protection: { supported: true, desired_enabled: true,
+        desired_start_percent: start, desired_end_percent: end,
+        available_behaviours: ["inhibit-charge", "force-discharge"] } };
+}
+function state(devices, extra = {}) {
+    return { available: true, plugged: true, devices, ...extra };
+}
+
+{
+    const { c, calls } = controller();
+    c.applyBattery(state([device("BAT0"), device("BAT1", 60, 85)]));
+    c.selectDevice("BAT1");
+    c.updateStartPercent(65, false);
+    c.selectDevice("BAT1");
+    assert.equal(c.thresholdAutoSave.running, true, "reselecting must not cancel pending auto-save");
+    c.applyBattery(state([device("BAT1", 60, 85), device("BAT0")]));
+    assert.equal(c.selectedDevice.id, "BAT1", "reordering must preserve identity");
+    assert.equal(c.selectedDeviceIndex, 0);
+    assert.equal(c.draftStartPercent, 65, "telemetry must preserve pending edits");
+    assert.equal(c.flushThresholdPolicy(), true);
+    assert.deepEqual(calls[0], { method: "setThresholds", args: ["BAT1", 65, 85] });
+    c.settingsOperationFinished("threshold");
+    c.updateStartPercent(66, false);
+    c.applyBattery(state([device("BAT0")]));
+    assert.equal(c.selectedDevice.id, "BAT0");
+    assert.equal(c.thresholdDraftDirty, false, "removed-device edits must not leak to a replacement");
+    assert.equal(c.thresholdAutoSave.running, false);
+    assert.equal(c.draftStartPercent, 75);
+    assert.equal(c.flushThresholdPolicy(), false);
+    c.applyBattery(state([]));
+    assert.equal(c.protectionSupported, false);
+}
+
+{
+    const { c, calls } = controller();
+    c.applyBattery(state([device("BAT0")]));
+    c.setProtection(false);
+    c.setProtection(true); // A newer toggle is queued behind the first write.
+    c.applyBattery(state([device("BAT1", 60, 85)]));
+    c.updateStartPercent(65, false);
+    c.settingsOperationFinished("threshold");
+    assert.equal(c.thresholdDraftDirty, true, "an old battery's completion must not acknowledge new edits");
+    assert.equal(c.flushThresholdPolicy(), true);
+    assert.deepEqual(calls[1], { method: "setThresholds", args: ["BAT1", 65, 85] },
+        "an abandoned protection toggle must not take ownership of the replacement battery");
+}
+
+for (const domain of ["threshold", "alert"]) {
+    const { c, calls } = controller();
+    c.applyBattery(state([device("BAT0")]));
+    const update = domain === "threshold" ? c.updateStartPercent : c.updateWarningPercent;
+    const flush = domain === "threshold" ? c.flushThresholdPolicy : c.flushAlertPolicy;
+    const finish = domain === "threshold" ? c.finishThresholdEditing : c.finishAlertEditing;
+    const autoSave = c[domain + "AutoSave"];
+    update(30, false);
+    assert.equal(flush(), true);
+    autoSave.stop(); // Model the timer which dispatched the first request.
+    update(31, true);
+    c.settingsOperationFinished(domain);
+    assert.equal(autoSave.running, false, "completion must not restart a timer during dragging");
+    c.resumePendingSettings();
+    assert.equal(autoSave.running, false, "recovery must not save during dragging");
+    assert.equal(flush(), false);
+    assert.equal(calls.length, 1);
+    finish();
+    assert.equal(autoSave.running, true);
+    assert.equal(flush(), true);
+    update(32, true);
+    autoSave.stop();
+    c.settingsOperationFailed(domain, "test failure");
+    assert.equal(autoSave.running, false, "failure must also respect active editing");
+    finish();
+    assert.equal(flush(), true);
+    c.settingsOperationFinished(domain);
+    assert.equal(c[domain + "DraftDirty"], false);
+}
+
+for (const extra of [
+    { protection: { charge_once_active: true } },
+    { operation: { kind: "calibration", battery_id: "BAT1" } },
+    { operation: { kind: "inhibit", battery_id: "BAT1" } }
+]) {
+    const { c, calls } = controller();
+    c.applyBattery(state([device("BAT0"), device("BAT1")], extra));
+    assert.equal(c.batteryOperationActive, true);
+    c.updateStartPercent(65, false);
+    assert.equal(c.flushThresholdPolicy(), false);
+    assert.equal(c.setProtection(false), false);
+    assert.equal(c.chargeOnce(), false);
+    assert.equal(c.setChargingInhibited(true), false);
+    assert.equal(c.toggleCalibration(), false);
+    assert.equal(calls.length, 0);
+    c.thresholdAutoSave.stop();
+    c.applyBattery(state([device("BAT0")]));
+    // Simulate Qt's binding notification using the actual signal handler.
+    const handler = source.match(/onBatteryOperationActiveChanged: \{([\s\S]*?)^    }/m)[1];
+    vm.runInContext(handler, c);
+    assert.equal(c.thresholdAutoSave.running, true, "temporary-operation completion must resume pending settings");
+    assert.equal(c.flushThresholdPolicy(), true);
+}
+{
+    const { c } = controller();
+    const other = device("BAT1");
+    other.protection.charge_once_active = true;
+    c.applyBattery(state([device("BAT0"), other]));
+    assert.equal(c.batteryOperationActive, true, "charge-once on a secondary battery is global");
+}
+{
+    const { c, calls } = controller();
+    c.applyBattery(state([device("BAT0")], { plugged: false }));
+    assert.equal(c.toggleCalibration(), false, "starting calibration requires AC");
+    c.applyBattery(state([device("BAT0")], { plugged: false,
+        operation: { kind: "calibration", battery_id: "BAT0" } }));
+    assert.equal(c.toggleCalibration(), true, "cancellation must remain available after unplugging");
+    assert.equal(calls[0].method, "cancelCalibration");
+}
+{
+    const { c, calls } = controller();
+    c.powerSleep = { available: true, can_suspend: "yes", can_hibernate: "challenge" };
+    for (const action of ["", "reboot", "toString", "Suspend"])
+        assert.equal(c.powerSleepAction(action), false);
+    for (const capability of ["no", "na", "", undefined]) {
+        c.powerSleep.can_suspend = capability;
+        assert.equal(c.powerSleepAction("suspend"), false);
+    }
+    c.powerSleep.can_suspend = "yes";
+    c.powerSleep.preparing_for_sleep = true;
+    assert.equal(c.powerSleepAction("suspend"), false);
+    assert.equal(c.powerSleepAction("hibernate"), false);
+    assert.equal(c.powerSleepAction("lock"), true);
+    c.actionInFlight = false;
+    c.powerSleep.preparing_for_sleep = false;
+    assert.equal(c.powerSleepAction("hibernate"), true);
+    c.actionInFlight = false;
+    c.powerSleep.available = false;
+    assert.equal(c.powerSleepAction("lock"), false);
+    assert.equal(calls.length, 2);
+}
+{
+    const { c, calls } = controller();
+    c.powerProfile = { available: false, profiles: [{ name: "balanced" }],
+        battery_aware: true, actions: [{ name: "test-action" }] };
+    assert.equal(c.setBatteryAware(false), false);
+    assert.equal(c.setPowerActionEnabled("test-action", false), false);
+    assert.equal(c.setPowerProfile("balanced"), false);
+    c.powerProfile.available = true;
+    assert.equal(c.setPowerProfile("performance"), false);
+    assert.equal(c.setPowerActionEnabled("unknown", false), false);
+    assert.equal(calls.length, 0);
+    assert.equal(c.setPowerProfile("balanced"), true);
+}
+{
+    const calls = [];
+    const backend = vm.createContext({
+        BatteryApi: { methods: { lock: "lock", suspend: "suspend", hibernate: "hibernate" } },
+        callSequenced: (...args) => { calls.push(args); return true; }
+    });
+    vm.runInContext(functions(fs.readFileSync(backendPath, "utf8")), backend);
+    for (const action of ["", "typo", "toString", "__proto__"])
+        assert.equal(backend.powerSleepAction(action), false);
+    assert.equal(calls.length, 0, "unknown actions must never dispatch hibernate");
+    for (const action of ["lock", "suspend", "hibernate"])
+        assert.equal(backend.powerSleepAction(action), true);
+    assert.deepEqual(calls.map(call => call[1]), ["lock", "suspend", "hibernate"]);
+}
+console.log("battery controls: selection, auto-save, operation guards and power dispatch passed");

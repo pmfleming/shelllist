@@ -153,7 +153,7 @@ Column {
                     ? "Cancel calibration" : "Calibrate battery"
                 tone: pane.controller.calibrating ? "active" : "normal"
                 enabled: pane.controller.calibrationSupported
-                    && pane.battery.plugged
+                    && (pane.controller.calibrating || pane.battery.plugged)
                     && (!pane.controller.batteryOperationActive
                         || pane.controller.calibrating)
                     && !pane.controller.thresholdOperationActive
@@ -201,7 +201,7 @@ Column {
             Layout.fillWidth: true
             Layout.preferredHeight: 42
             title: "Notify when full"
-            subtitle: "Show one notification when charging reaches 100%"
+            subtitle: "Notify at the charge limit, or 100% when unprotected"
             checked: pane.controller.draftNotifyWhenFull
             interactive: !pane.controller.actionInFlight
             onClicked: pane.controller.updateNotifyWhenFull(!checked)

@@ -758,6 +758,11 @@
               ${./battery/BatteryBackend.qml} \
               ${./battery/BatteryProtectionPane.qml} \
               ${./battery/BatteryContent.qml}
+            node ${./tests/check-battery-controls.js} \
+              ${./battery/BatteryController.qml} \
+              ${./battery/BatteryBackend.qml} \
+              ${./battery/BatteryFlow.js} \
+              ${./battery/BatteryPresentation.js}
             touch $out
           '';
 

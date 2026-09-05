@@ -1,9 +1,12 @@
 .pragma library
 
-function selection(state, requestedIndex) {
+function selection(state, requestedIndex, requestedId) {
     const battery = state || ({});
     const devices = Array.isArray(battery.devices) ? battery.devices : [];
-    const index = requestedIndex >= 0 && requestedIndex < devices.length ? requestedIndex : 0;
+    const matchingIndex = requestedId
+        ? devices.findIndex(function (device) { return device.id === requestedId; })
+        : requestedIndex;
+    const index = matchingIndex >= 0 && matchingIndex < devices.length ? matchingIndex : 0;
     const device = devices.length > index ? devices[index] : null;
     return {
         index: index,
@@ -12,6 +15,15 @@ function selection(state, requestedIndex) {
         protection: device && device.protection
             ? device.protection : (battery.protection || ({}))
     };
+}
+
+function operationActive(state) {
+    const battery = state || ({});
+    return !!(battery.operation && battery.operation.kind)
+        || !!(battery.protection && battery.protection.charge_once_active)
+        || (battery.devices || []).some(function (device) {
+            return !!(device.protection && device.protection.charge_once_active);
+        });
 }
 
 function historyChanges(nextBattery, currentHistory) {

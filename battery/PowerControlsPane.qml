@@ -70,7 +70,8 @@ Column {
             title: "Battery-aware profiles"
             subtitle: "Let the daemon adapt profiles to battery state"
             checked: !!pane.controller.powerProfile.battery_aware
-            interactive: !pane.controller.actionInFlight
+            interactive: pane.controller.powerProfile.available
+                && !pane.controller.actionInFlight
             onClicked: pane.controller.setBatteryAware(!checked)
         }
 
@@ -84,7 +85,8 @@ Column {
                 title: Presentation.actionName(modelData.name)
                 subtitle: modelData.description || "Power-saving action"
                 checked: !!modelData.enabled
-                interactive: !pane.controller.actionInFlight
+                interactive: pane.controller.powerProfile.available
+                    && !pane.controller.actionInFlight
                 onClicked: pane.controller.setPowerActionEnabled(
                     modelData.name, !checked)
             }
@@ -100,7 +102,7 @@ Column {
             text: pane.controller.powerSleep.available
                 ? (pane.controller.powerSleep.preparing_for_sleep
                     ? "Preparing the session for sleep"
-                    : "The session locks through logind before sleeping")
+                    : "Requests a session lock through logind before sleeping")
                 : "systemd-logind sleep controls are unavailable"
             color: pane.controller.powerSleep.available
                 ? Ui.Theme.mutedText : Ui.Theme.warning
@@ -121,8 +123,9 @@ Column {
             Ui.ActionButton {
                 Layout.fillWidth: true
                 label: "Suspend"
-                enabled: Presentation.sleepCapabilityAvailable(
-                    pane.controller.powerSleep.can_suspend)
+                enabled: pane.controller.powerSleep.available
+                    && Presentation.sleepCapabilityAvailable(pane.controller.powerSleep.can_suspend)
+                    && !pane.controller.powerSleep.preparing_for_sleep
                     && !pane.controller.actionInFlight
                 onClicked: pane.controller.powerSleepAction("suspend")
             }
@@ -130,8 +133,9 @@ Column {
             Ui.ActionButton {
                 Layout.fillWidth: true
                 label: "Hibernate"
-                enabled: Presentation.sleepCapabilityAvailable(
-                    pane.controller.powerSleep.can_hibernate)
+                enabled: pane.controller.powerSleep.available
+                    && Presentation.sleepCapabilityAvailable(pane.controller.powerSleep.can_hibernate)
+                    && !pane.controller.powerSleep.preparing_for_sleep
                     && !pane.controller.actionInFlight
                 onClicked: pane.controller.powerSleepAction("hibernate")
             }

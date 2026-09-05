@@ -83,10 +83,11 @@ Io.DaemonBackend {
     }
 
     function powerSleepAction(action: string): bool {
-        const method = action === "lock" ? BatteryApi.methods.lock
-            : (action === "suspend" ? BatteryApi.methods.suspend
-                : BatteryApi.methods.hibernate);
-        return callSequenced("power-sleep-" + action, method, {});
+        const methods = { lock: BatteryApi.methods.lock, suspend: BatteryApi.methods.suspend,
+            hibernate: BatteryApi.methods.hibernate };
+        if (!["lock", "suspend", "hibernate"].includes(action))
+            return false;
+        return callSequenced("power-sleep-" + action, methods[action], {});
     }
 
     function setAlertPolicy(warningPercent: int, criticalPercent: int,

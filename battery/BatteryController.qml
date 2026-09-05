@@ -32,6 +32,8 @@ Ui.ChooserController {
     property bool draftAutoPowerSaver: true
     property bool thresholdDraftDirty: false
     property bool alertDraftDirty: false
+    property bool thresholdEditing: false
+    property bool alertEditing: false
     property bool thresholdOperationActive: false
     property bool alertOperationActive: false
     property int thresholdRevision: 0
@@ -72,10 +74,10 @@ Ui.ChooserController {
         && batteryOperation.kind === "inhibit"
     readonly property bool calibrating: operationForSelected
         && batteryOperation.kind === "calibration"
-    readonly property bool batteryOperationActive: !!batteryOperation.kind
-    readonly property bool protectionSupported: !!protection.supported
-    readonly property bool inhibitionSupported: (protection.available_behaviours || [])
-        .indexOf("inhibit-charge") >= 0
+    readonly property bool batteryOperationActive: Flow.operationActive(battery)
+    readonly property bool protectionSupported: !!selectedDevice && !!protection.supported
+    readonly property bool inhibitionSupported: !!selectedDevice
+        && (protection.available_behaviours || []).indexOf("inhibit-charge") >= 0
     readonly property bool calibrationSupported: protectionSupported
         && (protection.available_behaviours || []).indexOf("force-discharge") >= 0
     readonly property var profileOptions: (powerProfile.profiles || []).map(function (profile) {
@@ -114,8 +116,18 @@ Ui.ChooserController {
         return true;
     }
 
-    function syncBatterySelection(): void {
-        const next = Flow.selection(battery, selectedDeviceIndex);
+    function syncBatterySelection(requestedId: string): void {
+        const next = Flow.selection(battery, selectedDeviceIndex, requestedId);
+        if ((selectedDevice ? selectedDevice.id : "") !== (next.device ? next.device.id : "")) {
+            // Never apply a removed battery's pending range to its replacement.
+            thresholdAutoSave.stop();
+            thresholdDraftDirty = false;
+            thresholdEditing = false;
+            thresholdSaveError = "";
+            thresholdRevision += 1;
+            protectionAcknowledgedRevision = protectionRevision;
+            protectionSentRevision = protectionRevision;
+        }
         selectedDeviceIndex = next.index;
         selectedDevice = next.device;
         policy = next.policy;
@@ -130,7 +142,7 @@ Ui.ChooserController {
             backend.history();
         if (uiActive && changes.charge)
             requestEnergyPeriod("last-charge", true);
-        syncBatterySelection();
+        syncBatterySelection(selectedDevice ? selectedDevice.id : "");
         syncThresholdDraft();
         if (!alertDraftDirty) {
             draftWarningPercent = Number(valueOr(policy.warning_percent, 25));
@@ -167,15 +179,12 @@ Ui.ChooserController {
     function selectDevice(batteryId: string): void {
         const devices = battery.devices || [];
         const index = devices.findIndex(function (device) { return device.id === batteryId; });
-        if (index < 0 || actionInFlight || settingsOperationActive)
+        if (index < 0 || actionInFlight || settingsOperationActive
+                || (selectedDevice && selectedDevice.id === batteryId))
             return;
         thresholdAutoSave.stop();
         selectedDeviceIndex = index;
-        syncBatterySelection();
-        thresholdDraftDirty = false;
-        thresholdSaveError = "";
-        protectionAcknowledgedRevision = protectionRevision;
-        protectionSentRevision = protectionRevision;
+        syncBatterySelection(batteryId);
         syncThresholdDraft();
     }
 
@@ -209,10 +218,13 @@ Ui.ChooserController {
     }
 
     function resumePendingSettings(): void {
-        if (thresholdDraftDirty && thresholdDraftValid && !thresholdOperationActive)
-            thresholdAutoSave.restart();
-        if (alertDraftDirty && alertDraftValid && !alertOperationActive)
-            alertAutoSave.restart();
+        scheduleThresholdSave(false);
+        finishAlertEditingIfIdle();
+    }
+
+    onBatteryOperationActiveChanged: {
+        if (!batteryOperationActive)
+            resumePendingSettings();
     }
 
     function operationFinished(_id: string): void {
@@ -235,14 +247,14 @@ Ui.ChooserController {
             if (thresholdRevision === thresholdSentRevision)
                 thresholdDraftDirty = false;
             else
-                thresholdAutoSave.restart();
+                scheduleThresholdSave(false);
         } else {
             alertOperationActive = false;
             alertSaveError = "";
             if (alertRevision === alertSentRevision)
                 alertDraftDirty = false;
             else
-                alertAutoSave.restart();
+                finishAlertEditingIfIdle();
         }
         lastError = currentSettingsError();
     }
@@ -253,12 +265,12 @@ Ui.ChooserController {
             thresholdOperationActive = false;
             thresholdSaveError = message;
             if (thresholdRevision !== thresholdSentRevision)
-                thresholdAutoSave.restart();
+                scheduleThresholdSave(false);
         } else {
             alertOperationActive = false;
             alertSaveError = message;
             if (alertRevision !== alertSentRevision)
-                alertAutoSave.restart();
+                finishAlertEditingIfIdle();
         }
     }
 
@@ -288,7 +300,7 @@ Ui.ChooserController {
 
     function scheduleThresholdSave(immediate: bool): void {
         thresholdAutoSave.stop();
-        if (!thresholdDraftValid || !thresholdDraftDirty)
+        if (thresholdEditing || !thresholdDraftValid || !thresholdDraftDirty)
             return;
         if (immediate)
             flushThresholdPolicy();
@@ -304,20 +316,19 @@ Ui.ChooserController {
     }
 
     function updateStartPercent(value: int, dragging: bool): void {
+        thresholdEditing = dragging;
         draftStartPercent = value;
         markThresholdChanged(false);
-        if (dragging)
-            thresholdAutoSave.stop();
     }
 
     function updateEndPercent(value: int, dragging: bool): void {
+        thresholdEditing = dragging;
         draftEndPercent = value;
         markThresholdChanged(false);
-        if (dragging)
-            thresholdAutoSave.stop();
     }
 
     function finishThresholdEditing(): void {
+        thresholdEditing = false;
         scheduleThresholdSave(false);
     }
 
@@ -326,7 +337,7 @@ Ui.ChooserController {
         alertDraftDirty = true;
         alertSaveError = "";
         alertAutoSave.stop();
-        if (!alertDraftValid)
+        if (alertEditing || !alertDraftValid)
             return;
         if (immediate)
             flushAlertPolicy();
@@ -335,21 +346,24 @@ Ui.ChooserController {
     }
 
     function updateWarningPercent(value: int, dragging: bool): void {
+        alertEditing = dragging;
         draftWarningPercent = value;
         markAlertChanged(false);
-        if (dragging)
-            alertAutoSave.stop();
     }
 
     function updateCriticalPercent(value: int, dragging: bool): void {
+        alertEditing = dragging;
         draftCriticalPercent = value;
         markAlertChanged(false);
-        if (dragging)
-            alertAutoSave.stop();
     }
 
     function finishAlertEditing(): void {
-        if (alertDraftValid && alertDraftDirty)
+        alertEditing = false;
+        finishAlertEditingIfIdle();
+    }
+
+    function finishAlertEditingIfIdle(): void {
+        if (!alertEditing && alertDraftValid && alertDraftDirty)
             alertAutoSave.restart();
     }
 
@@ -373,7 +387,7 @@ Ui.ChooserController {
     }
 
     function flushThresholdPolicy(): bool {
-        if (thresholdOperationActive || actionInFlight || batteryOperationActive
+        if (thresholdEditing || thresholdOperationActive || actionInFlight || batteryOperationActive
                 || !protectionSupported || !thresholdDraftValid || !thresholdDraftDirty
                 || !selectedDevice)
             return false;
@@ -410,7 +424,7 @@ Ui.ChooserController {
 
     function toggleCalibration(): bool {
         if (actionInFlight || thresholdOperationActive || !calibrationSupported || !selectedDevice
-                || (batteryOperationActive && !calibrating))
+                || (!calibrating && (!battery.plugged || batteryOperationActive)))
             return false;
         return startOperation(calibrating
             ? backend.cancelCalibration(selectedDevice.id)
@@ -418,7 +432,7 @@ Ui.ChooserController {
     }
 
     function flushAlertPolicy(): bool {
-        if (alertOperationActive || actionInFlight || !alertDraftValid || !alertDraftDirty)
+        if (alertEditing || alertOperationActive || actionInFlight || !alertDraftValid || !alertDraftDirty)
             return false;
         alertSentRevision = alertRevision;
         alertOperationActive = true;
@@ -434,26 +448,30 @@ Ui.ChooserController {
     }
 
     function setPowerProfile(profile: string): bool {
-        if (actionInFlight || !powerProfile.available)
+        if (actionInFlight || !powerProfile.available
+                || !profileOptions.some(function (option) { return option.value === profile; }))
             return false;
         return startOperation(backend.setPowerProfile(profile));
     }
 
     function setBatteryAware(enabled: bool): bool {
-        if (actionInFlight || powerProfile.battery_aware === null
+        if (actionInFlight || !powerProfile.available || powerProfile.battery_aware === null
                 || powerProfile.battery_aware === undefined)
             return false;
         return startOperation(backend.setBatteryAware(enabled));
     }
 
     function setPowerActionEnabled(action: string, enabled: bool): bool {
-        if (actionInFlight || !action.length)
+        if (actionInFlight || !powerProfile.available
+                || !(powerProfile.actions || []).some(function (item) { return item.name === action; }))
             return false;
         return startOperation(backend.setPowerActionEnabled(action, enabled));
     }
 
     function powerSleepAction(action: string): bool {
-        if (actionInFlight || !powerSleep.available)
+        if (actionInFlight || !powerSleep.available
+                || ["lock", "suspend", "hibernate"].indexOf(action) < 0
+                || (action !== "lock" && powerSleep.preparing_for_sleep))
             return false;
         if (action === "suspend" && !Presentation.sleepCapabilityAvailable(
                 powerSleep.can_suspend))
