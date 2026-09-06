@@ -923,6 +923,9 @@
             cp -r ${./qml} test-root/qml
             chmod -R u+w test-root/qml
             ln -sfn ${./battery} test-root/qml/Shelllist/Battery
+            ln -sfn ${./activity} test-root/qml/Shelllist/Activity
+            ln -sfn ${./bar} test-root/qml/Shelllist/Bar
+            ln -s ${./clipboard} test-root/clipboard
             ln -s ${./wifi} test-root/wifi
             export HOME=$TMPDIR
             export XDG_CACHE_HOME=$TMPDIR/cache

@@ -20,6 +20,7 @@ ActivityController {
     hasSelection: filteredCities.length > 0
     selectionModel: citySelection
     detailSection: "weather"
+    weatherLocationId: selectedCity.weather ? String(selectedCity.weather.id || "") : ""
     closedWidthFraction: 0
     openWidthFraction: 0
     minimumClosedWindowWidth: Ui.Theme.popupClosedWidth
@@ -188,12 +189,6 @@ ActivityController {
         citySelection.selectedIndex = retained >= 0 ? retained
             : Math.max(0, Math.min(citySelection.selectedIndex,
                 filteredCities.length - 1));
-        syncWeatherSelection();
-    }
-
-    function syncWeatherSelection(): void {
-        const weather = selectedCity.weather;
-        weatherLocationId = weather ? String(weather.id || "") : "";
     }
 
     function setDetailsTab(tab: string): void {
@@ -242,7 +237,6 @@ ActivityController {
         }
         function selectFirst(): void { selectedIndex = 0; }
 
-        onSelectedIndexChanged: controller.syncWeatherSelection()
         onQueryTextChanged: {
             if (controller.filterText !== queryText)
                 controller.filterText = queryText;
