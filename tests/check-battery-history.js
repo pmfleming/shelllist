@@ -63,4 +63,53 @@ const backwards = series([point(minute, minute, 80), point(0, 0, 70)]);
 assert.equal(backwards.segments.length, 2, "never interpolate backwards through a clock reset");
 assert.equal(series([]).segments.length, 0);
 assert.equal(history.activeDuration([]), "Collecting active-time samples");
-console.log("battery history: active-only axis, discontinuities, isolated samples and estimate validation passed");
+// Estimated energy is integrated in Wh, split into equal active-time bins.
+const discharge = { mode: "discharging", power_watts: 8 };
+const energy = history.energySeries([
+    point(0, 0, 80, false, discharge),
+    point(15 * minute, 15 * minute, 75, true, { ...discharge, power_watts: 12 }),
+    point(2 * day, 15 * minute, 70, false, discharge),
+    point(2 * day + 15 * minute, 30 * minute, 65, true, discharge)
+]);
+equal(energy.bars.map(bar => [bar.x0, bar.x1, bar.value]), [[0, 0.5, 2.5], [0.5, 1, 2]]);
+assert.equal(energy.totalWh, 4.5, "sleep must not consume energy or axis width");
+assert.equal(energy.intervalMs, 15 * minute);
+const split = history.energySeries([point(0, 0, 80, false, discharge),
+    point(30 * minute, 30 * minute, 70, true, { ...discharge, power_watts: 16 })]);
+equal(split.bars.map(bar => bar.value), [2.5, 3.5], "integrate the ramp on each side of a bin boundary");
+for (const extra of [{ power_watts: null }, { power_watts: -1 }, { power_watts: Infinity },
+    { mode: "charging" }, { mode: "holding" }, { continuous: false }, { timestamp_ms: 0 }]) {
+    assert.equal(history.energySeries([point(0, 0, 80, false, discharge),
+        point(minute, minute, 79, true, { ...discharge, ...extra })]).bars.length, 0);
+}
+assert.equal(history.energySeries([point(0, 0, 80, false, discharge),
+    point(day, 0, 70, false, discharge)]).bars.length, 0);
+assert.equal(history.energySeries([]).totalWh, 0);
+const partial = history.energySeries([point(0, 0, 80, false, discharge),
+    point(5 * minute, 5 * minute, 79, true, discharge)]);
+assert.equal(partial.bars[0].observedMs, 5 * minute, "partial coverage stays explicit");
+assert.equal(partial.totalWh, 8 / 12, "do not extrapolate unobserved parts of a bin");
+
+const battery = { available: true, percentage: 60, charging: true, time_to_full_seconds: 3600 };
+assert.equal(history.chargeForecast(battery).seconds, 3600);
+const capped = { ...battery, protection: { enabled: true, end_percent: 80 } };
+assert.equal(history.chargeForecast(capped).seconds, 1800);
+assert.equal(history.chargeForecast(capped).limit, 80);
+assert.equal(history.chargeForecast({ ...capped, percentage: 88 }).seconds, 0);
+assert.equal(history.chargeForecast({ ...capped, charging: false }).seconds, 0);
+assert.equal(history.chargeForecast({ ...battery, percentage: 100 }).seconds, 0);
+assert.equal(history.chargeForecast({ ...battery, available: false }).seconds, 0);
+for (const seconds of [0, null, -1, NaN, Infinity, 234972]) {
+    const forecast = history.chargeForecast({ ...battery, time_to_full_seconds: seconds });
+    assert.equal(forecast.seconds, 0);
+    assert.equal(forecast.estimating, true);
+}
+for (const protection of [{ enabled: false, desired_enabled: true, end_percent: 80 },
+    { enabled: true, end_percent: 80, charge_once_active: true },
+    { enabled: true, end_percent: null }]) {
+    assert.equal(history.chargeForecast({ ...battery, protection }).limit, null,
+        "show actual limits, not desired or temporarily bypassed ones");
+}
+assert.equal(history.nearestSample(compact.segments, 0.9).value, 60);
+assert.equal(history.nearestSample([], 0.5), null);
+console.log("battery history: timelines, discharge energy, forecasts, limits and hover passed");
