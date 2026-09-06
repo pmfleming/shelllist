@@ -18,9 +18,16 @@ Rectangle {
 
     function focusList() { list.forceActiveFocus(); }
     function revealSelection() {
-        if (list.currentIndex >= 0 && list.count > 0)
-            list.positionViewAtIndex(list.currentIndex, ListView.Contain);
+        // ListView tracks the old delegate through inserts/moves/removals, even
+        // when the controller's index has not changed. Reconcile from the
+        // logical selection after model changes, never from that delegate.
+        const index = frame.selectedIndex >= 0 && frame.selectedIndex < list.count
+            ? frame.selectedIndex : -1;
+        list.currentIndex = index;
+        if (index >= 0)
+            list.positionViewAtIndex(index, ListView.Contain);
     }
+    onSelectedIndexChanged: revealSelection()
     function focusTop() {
         controller.selectFirst();
         focusList();
@@ -48,15 +55,14 @@ Rectangle {
         anchors.fill: parent
         clip: true
         model: frame.resultModel
-        // A large catalog is appended over several event-loop turns. Keep the
-        // logical selection without asking ListView for an index it does not
-        // have yet; this binding reactivates as soon as that chunk arrives.
-        currentIndex: frame.selectedIndex < count ? frame.selectedIndex : -1
+        // Reconcile after a mutation batch; a binding alone does not undo
+        // ListView's internal index changes when selectedIndex stays the same.
+        onCountChanged: Qt.callLater(frame.revealSelection)
         activeFocusOnTab: true
         Keys.onPressed: function (event) {
             frame.keyPressed(event);
         }
-        onCurrentIndexChanged: frame.revealSelection()
+        onCurrentIndexChanged: Qt.callLater(frame.revealSelection)
         delegate: frame.rowDelegate
     }
 
