@@ -99,12 +99,10 @@ Ui.ChooserSurface {
         }
 
         Ui.SegmentedControl {
+            objectName: "batteryViewTabs"
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
-            options: [
-                { value: "battery", label: "Battery" },
-                { value: "power", label: "Power" }
-            ]
+            options: content.controller.viewTabs
             value: content.controller.viewTab
             interactive: !content.controller.actionInFlight
             onSelected: function (value) { content.controller.selectViewTab(value); }
@@ -112,11 +110,20 @@ Ui.ChooserSurface {
 
         Ui.DetailFlickable {
             id: detailPage
+            objectName: "batteryDetailPage"
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            BatteryOverviewPane {
-                visible: content.controller.viewTab === "battery"
+            BatterySummaryPane {
+                objectName: "batteryOverviewPane"
+                visible: content.controller.viewTab === "overview"
+                controller: content.controller
+                battery: content.battery
+            }
+
+            BatteryCarePane {
+                objectName: "batteryCarePane"
+                visible: content.controller.viewTab === "care"
                 controller: content.controller
                 battery: content.battery
                 device: content.device
@@ -124,6 +131,7 @@ Ui.ChooserSurface {
             }
 
             PowerControlsPane {
+                objectName: "batteryPowerPane"
                 visible: content.controller.viewTab === "power"
                 controller: content.controller
             }

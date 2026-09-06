@@ -17,8 +17,16 @@ Column {
     spacing: Ui.Theme.verticalSpacing(Ui.Theme.spacingMd, Ui.Theme.densityScale(height, 0))
 
     Ui.DetailColumnCard {
-        height: 450
-        title: "ThinkPad battery protection"
+        objectName: "batteryProtectionCard"
+        verticalContentPadding: Ui.Theme.spacingMd
+        headingSpacing: Ui.Theme.spacingMd
+        height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
+        title: "Charging & protection"
+
+        Ui.FieldLabel {
+            Layout.fillWidth: true
+            text: "Applies to " + Presentation.deviceName(pane.device)
+        }
 
         Ui.FieldLabel {
             Layout.fillWidth: true
@@ -36,7 +44,7 @@ Column {
         Ui.FieldLabel {
             Layout.fillWidth: true
             visible: pane.controller.protectionSupported
-                && pane.protection.managed
+                && !!pane.protection.managed
                 && !pane.protection.thresholds_verified
             text: "The firmware accepted the range but reported a different value."
             color: Ui.Theme.warning
@@ -113,7 +121,7 @@ Column {
             label: pane.protection.charge_once_active
                 ? "Charging to 100%" : "Charge to 100% once"
             tone: pane.protection.charge_once_active ? "active" : "normal"
-            enabled: pane.battery.plugged
+            enabled: !!pane.battery.plugged
                 && !pane.protection.charge_once_active
                 && !pane.controller.batteryOperationActive
                 && !pane.controller.thresholdOperationActive
@@ -153,7 +161,7 @@ Column {
                     ? "Cancel calibration" : "Calibrate battery"
                 tone: pane.controller.calibrating ? "active" : "normal"
                 enabled: pane.controller.calibrationSupported
-                    && (pane.controller.calibrating || pane.battery.plugged)
+                    && (pane.controller.calibrating || !!pane.battery.plugged)
                     && (!pane.controller.batteryOperationActive
                         || pane.controller.calibrating)
                     && !pane.controller.thresholdOperationActive
@@ -164,8 +172,11 @@ Column {
     }
 
     Ui.DetailColumnCard {
-        height: 335
-        title: "Alerts"
+        objectName: "batteryAlertsCard"
+        verticalContentPadding: Ui.Theme.spacingMd
+        headingSpacing: Ui.Theme.spacingMd
+        height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
+        title: "Battery alerts"
 
         Ui.LabeledValueSlider {
             Layout.fillWidth: true
@@ -205,16 +216,6 @@ Column {
             checked: pane.controller.draftNotifyWhenFull
             interactive: !pane.controller.actionInFlight
             onClicked: pane.controller.updateNotifyWhenFull(!checked)
-        }
-
-        Ui.ToggleRow {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 42
-            title: "Automatic power saver"
-            subtitle: "Hold power saver below the low-battery level"
-            checked: pane.controller.draftAutoPowerSaver
-            interactive: !pane.controller.actionInFlight
-            onClicked: pane.controller.updateAutoPowerSaver(!checked)
         }
 
         Text {

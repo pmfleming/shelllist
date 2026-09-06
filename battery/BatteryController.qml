@@ -21,7 +21,12 @@ Ui.ChooserController {
     property string lastError: ""
     property string refreshError: ""
     property string screenshotStatus: ""
-    property string viewTab: "battery"
+    readonly property var viewTabs: [
+        { value: "overview", label: "Overview" },
+        { value: "care", label: "Battery care" },
+        { value: "power", label: "Power & sleep" }
+    ]
+    property string viewTab: "overview"
     property int selectedDeviceIndex: 0
     property bool draftProtectionEnabled: false
     property int draftStartPercent: 75
@@ -107,12 +112,13 @@ Ui.ChooserController {
     }
 
     function selectViewTab(tab: string): void {
-        if (tab === "battery" || tab === "power")
+        if (viewTabs.some(function (option) { return option.value === tab; }))
             viewTab = tab;
     }
 
     function cycleViewTab(): bool {
-        viewTab = viewTab === "battery" ? "power" : "battery";
+        const index = viewTabs.findIndex(function (option) { return option.value === viewTab; });
+        viewTab = viewTabs[(index + 1) % viewTabs.length].value;
         return true;
     }
 

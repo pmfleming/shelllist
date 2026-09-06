@@ -14,10 +14,10 @@ Column {
     spacing: Ui.Theme.verticalSpacing(Ui.Theme.spacingMd, Ui.Theme.densityScale(height, 0))
 
     Ui.DetailColumnCard {
-        height: 150 + (pane.controller.powerProfile.battery_aware === null
-            || pane.controller.powerProfile.battery_aware === undefined ? 0 : 48)
-            + (pane.controller.powerProfile.actions || []).length * 48
-            + (pane.controller.powerProfile.active_holds || []).length * 34
+        objectName: "powerModeCard"
+        verticalContentPadding: Ui.Theme.spacingMd
+        headingSpacing: Ui.Theme.spacingMd
+        height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
         title: "Power mode"
 
         Ui.FieldLabel {
@@ -40,6 +40,28 @@ Column {
             interactive: pane.controller.powerProfile.available
                 && !pane.controller.actionInFlight
             onSelected: function (value) { pane.controller.setPowerProfile(value); }
+        }
+
+        Ui.ToggleRow {
+            objectName: "automaticPowerSaverToggle"
+            Layout.fillWidth: true
+            Layout.preferredHeight: 42
+            title: "Automatic power saver"
+            subtitle: "Hold power saver below " + pane.controller.draftWarningPercent
+                + "% · threshold in Battery care"
+            checked: pane.controller.draftAutoPowerSaver
+            interactive: !pane.controller.actionInFlight
+            onClicked: pane.controller.updateAutoPowerSaver(!checked)
+        }
+
+        Ui.FieldLabel {
+            Layout.fillWidth: true
+            text: pane.controller.alertSaveStatus
+            color: !pane.controller.alertDraftValid
+                    || pane.controller.alertSaveError.length > 0
+                ? Ui.Theme.danger
+                : (pane.controller.alertOperationActive
+                    ? Ui.Theme.active : Ui.Theme.mutedText)
         }
 
         Ui.FieldLabel {
@@ -94,8 +116,9 @@ Column {
     }
 
     Ui.DetailColumnCard {
+        objectName: "powerSleepCard"
         height: 145 + (pane.controller.powerSleep.inhibitors || []).length * 30
-        title: "Power & Sleep"
+        title: "Lock & sleep"
 
         Ui.FieldLabel {
             Layout.fillWidth: true

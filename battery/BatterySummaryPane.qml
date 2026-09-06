@@ -11,28 +11,19 @@ Column {
 
     required property BatteryController controller
     required property var battery
-    required property var device
-    required property var protection
 
     width: parent.width
     spacing: Ui.Theme.verticalSpacing(Ui.Theme.spacingMd, Ui.Theme.densityScale(height, 0))
 
     Ui.DetailCard {
-        height: 190
+        height: 142
         title: "Current status"
         entries: [
             { label: "State", value: Presentation.stateLabel(pane.battery),
                 valueColor: pane.battery.plugged ? Ui.Theme.active : Ui.Theme.text,
                 valueBold: true },
             { label: "Time", value: Presentation.timeLabel(pane.battery) },
-            { label: "Power", value: Number(pane.battery.power_watts || 0).toFixed(1) + " W" },
-            { label: "Health", value: pane.battery.health_percent === null
-                || pane.battery.health_percent === undefined ? "Unknown"
-                : pane.battery.health_percent + "%" },
-            { label: "Cycles", value: pane.battery.cycles === null
-                || pane.battery.cycles === undefined ? "Unknown"
-                : String(pane.battery.cycles) },
-            { label: "Charge", value: Math.round(Number(pane.battery.percentage) || 0) + "%" }
+            { label: "Power", value: Number(pane.battery.power_watts || 0).toFixed(1) + " W" }
         ]
     }
 
@@ -164,42 +155,5 @@ Column {
             text: "No attributable application energy in this period"
             color: Ui.Theme.mutedText
         }
-    }
-
-    Ui.DetailColumnCard {
-        height: 100
-            && (pane.battery.devices || []).length > 1
-        title: "Battery device"
-
-        Ui.SegmentedControl {
-            Layout.fillWidth: true
-            Layout.preferredHeight: Ui.Theme.compactControlHeight
-            options: (pane.battery.devices || []).map(function (batteryDevice) {
-                return { value: batteryDevice.id,
-                    label: Presentation.deviceName(batteryDevice) };
-            })
-            value: pane.device.id || ""
-            interactive: !pane.controller.actionInFlight
-            onSelected: function (value) { pane.controller.selectDevice(value); }
-        }
-    }
-
-    Ui.DetailCard {
-        height: 190
-        title: Presentation.deviceName(pane.device)
-        entries: [
-            { label: "Kernel device", value: pane.device.id || pane.battery.native_path || "Unknown" },
-            { label: "Serial", value: pane.device.serial || "Unavailable" },
-            { label: "Energy now", value: pane.device.energy_now_wh === null
-                || pane.device.energy_now_wh === undefined ? "Unknown"
-                : Number(pane.device.energy_now_wh).toFixed(1) + " Wh" },
-            { label: "Full capacity", value: pane.device.energy_full_wh === null
-                || pane.device.energy_full_wh === undefined ? "Unknown"
-                : Number(pane.device.energy_full_wh).toFixed(1) + " Wh" },
-            { label: "Design capacity", value: pane.device.energy_full_design_wh === null
-                || pane.device.energy_full_design_wh === undefined ? "Unknown"
-                : Number(pane.device.energy_full_design_wh).toFixed(1) + " Wh" },
-            { label: "Desired range", value: Presentation.desiredRange(pane.protection) }
-        ]
     }
 }

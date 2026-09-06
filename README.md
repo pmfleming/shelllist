@@ -88,7 +88,15 @@ shelllist clipboard kept 750
 
 ### Battery
 
-The Battery surface shows live charge, power state, remaining time, health, cycle count, and per-device details from `bar-daemon`. Its seven-day charge and estimated time-to-full graphs use observed awake time, omit sleep/offline periods, and break lines where observations are missing. Time-to-full is an instantaneous estimate, not a measured charging duration; the displayed scale includes unusually large readings. It also shows estimated per-application energy ranked since the last charge or across the last week. Application attribution comes from `app-daemon`'s low-confidence RAPL CPU-time estimate; system-only loads such as the display and radios are not assigned to apps. On supported ThinkPads it also manages the native firmware charge-start and charge-stop thresholds, enables or disables threshold protection, and provides a one-time charge-to-100% action. Alert thresholds and full-charge notifications are editable in the same surface. Battery settings apply automatically: toggles are immediate, while slider changes are coalesced and applied after editing finishes without Save or Apply buttons. The battery glyph in the panel header copies a screenshot of the complete visible Battery & Power panel to clipboard history.
+The Battery & Power surface has three tabs, cycled with `Ctrl+Tab`:
+
+- **Overview:** live status, charge/energy history, and estimated per-application energy since the last charge or across the last week.
+- **Battery care:** device selection, firmware charge thresholds, one-time full charging, pause/resume charging, calibration, battery alerts, health, cycles, and hardware details. Device selection stays beside the settings and health information it controls.
+- **Power & sleep:** power profiles and their actions, automatic power saver, battery-aware profiles, and lock/suspend/hibernate controls with sleep inhibitors. Automatic power saver uses the low-battery threshold configured in Battery care.
+
+The seven-day history uses aligned charge and estimated discharge-energy tracks on an observed-time axis, omitting sleep/offline periods and breaking lines at missing observations. While charging, a dotted projection and approximate ETA point to full charge or the active protection limit; a dashed reference marks that limit. Missing or unusually large charging estimates are shown as still estimating rather than plotted. Application attribution comes from `app-daemon`'s low-confidence RAPL CPU-time estimate; system-only loads such as the display and radios are not assigned to apps.
+
+Battery settings apply automatically: toggles are immediate, while slider changes are coalesced and applied after editing finishes without Save or Apply buttons. The battery glyph in the panel header copies a screenshot of the complete visible Battery & Power panel to clipboard history.
 
 Battery settings are written through a privileged system D-Bus helper with polkit authorization; Shelllist itself remains unprivileged. The NixOS module installs and registers the helper automatically. A Home Manager-only installation can display telemetry, but setting ThinkPad firmware thresholds additionally requires installing the `bar-daemon` system D-Bus, systemd, and polkit artifacts at the system level.
 

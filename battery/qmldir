@@ -1,5 +1,5 @@
 module Shelllist.Battery
-internal BatteryOverviewPane BatteryOverviewPane.qml
+internal BatteryCarePane BatteryCarePane.qml
 internal BatteryProtectionPane BatteryProtectionPane.qml
 internal BatterySummaryPane BatterySummaryPane.qml
 internal PowerControlsPane PowerControlsPane.qml
