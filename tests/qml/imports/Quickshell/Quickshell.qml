@@ -3,5 +3,6 @@ pragma Singleton
 import QtQml
 
 QtObject {
-    function env(name: string): string { return ""; }
+    property var environment: ({})
+    function env(name: string): string { return environment[name] || ""; }
 }

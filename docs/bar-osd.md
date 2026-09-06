@@ -35,6 +35,28 @@ Shelllist uses one shared OSD frame for transient system feedback, instantiated 
 
 Initial subscription snapshots do not produce an OSD. Domain OSDs require a previous available state so connecting or restarting `bar-daemon` does not replay every current condition as user feedback. Media state remains visible in the top bar and never produces an OSD.
 
+## Responsiveness
+
+- Bind compositor keys directly to `shelllist:*` global shortcuts, not to CLI
+  processes. The CLI remains useful for scripts and starting a stopped host.
+- The focused monitor's OSD surface stays mapped. Appearance and confirmed
+  progress/thumb changes are immediate; dismissal and decorative motion may
+  animate. Do not animate both the fill and a thumb bound to that fill.
+- Audio effects reuse one PipeWire control connection on a dedicated thread.
+  The first request runs immediately; only already-queued, same-direction
+  repeats are coalesced. Replies still carry verified state, not optimistic
+  values. Failed effects are never automatically replayed.
+- LED hardware notifications (`brightness_hw_changed`/`POLLPRI`) wake the daemon
+  where supported. A 50 ms cached-file fallback covers other drivers and
+  software writes; device discovery runs every five seconds. Extremely brief
+  transitions can still be missed by the fallback. No raw keyboard access or
+  extra input-device permissions are required.
+
+Regression coverage: `tests/qml/tst_bar_osd_responsiveness.qml` checks immediate
+progress updates with animations enabled and reappearance during dismissal.
+The daemon's isolated PipeWire test uses only virtual devices:
+`cargo test --lib private_pipewire_control -- --ignored --nocapture`.
+
 ## Timeout policy
 
 | Family | Timeout |

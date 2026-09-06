@@ -39,10 +39,12 @@ Rectangle {
     }
 
     Behavior on opacity {
-        enabled: !Ui.Theme.noAnimations
+        id: opacityBehavior
+        // Base this on the incoming value, not another property's binding
+        // update order. A new key must also interrupt an in-flight dismissal.
+        enabled: !Ui.Theme.noAnimations && opacityBehavior.targetValue === 0
         NumberAnimation {
-            // Feedback should appear immediately; only its dismissal fades.
-            duration: surface.controller.osdVisible ? 0 : Ui.Theme.animationFast
+            duration: Ui.Theme.animationFast
             easing.type: Ui.Theme.easingStandard
         }
     }
@@ -119,22 +121,19 @@ Rectangle {
 
                 Rectangle {
                     id: progressFill
+                    objectName: "osdProgressFill"
 
                     width: parent.width * surface.controller.osd.percent / 100
                     height: parent.height
                     radius: parent.radius
                     color: Ui.Theme.accent
 
-                    Behavior on width {
-                        enabled: !Ui.Theme.noAnimations
-                        NumberAnimation {
-                            duration: Ui.Theme.animationFast
-                            easing.type: Easing.OutCubic
-                        }
-                    }
+                    // Input feedback tracks the confirmed value in the same frame.
+                    // Animating this and then the dependent thumb compounds lag.
                 }
 
                 Rectangle {
+                    objectName: "osdProgressThumb"
                     x: Math.max(0, Math.min(track.width - width,
                         progressFill.width - width / 2))
                     anchors.verticalCenter: parent.verticalCenter
@@ -145,14 +144,6 @@ Rectangle {
                     border.width: 4
                     border.color: Ui.Theme.accent
                     visible: track.visible
-
-                    Behavior on x {
-                        enabled: !Ui.Theme.noAnimations
-                        NumberAnimation {
-                            duration: Ui.Theme.animationFast
-                            easing.type: Easing.OutCubic
-                        }
-                    }
                 }
             }
         }
