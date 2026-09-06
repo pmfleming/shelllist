@@ -94,10 +94,9 @@ Item {
         if (surfaceRegistry)
             surfaceRegistry.surfaceRequested(surfaceId);
     }
-    function openNotificationCenter(): void {
+    function openNotificationCenter(groupKey: string): void {
         if (surfaceRegistry)
-            surfaceRegistry.requestActivitySection("notifications");
-        openSurface("activity");
+            surfaceRegistry.openNotifications(groupKey || "", "active", "");
     }
     function openTimeWeather(tab: string): void {
         if (surfaceRegistry)
@@ -135,8 +134,12 @@ Item {
     function invokeNotificationAction(notificationId: int, actionKey: string): bool {
         return backend.invokeNotificationAction(notificationId, actionKey);
     }
+    readonly property var notificationState: surfaceRegistry ? surfaceRegistry.notificationState : null
+    onNotificationsChanged: if (notificationState) notificationState.notifications = notifications
+    onNotificationActiveChanged: if (notificationState) notificationState.notificationActive = notificationActive
+
     function replyNotification(notificationId: int, text: string): bool {
-        return backend.replyNotification(notificationId, text);
+        return notificationState ? notificationState.replyNotification(notificationId, text) : false;
     }
     function visibleToastGroups(monitorName: string): var {
         if (notifications.dnd)
@@ -201,7 +204,7 @@ Item {
             battery: function () { openSurface("battery"); },
             "power-profile-next": function () { cyclePowerProfile(); },
             activity: function () { openSurface("activity"); },
-            notifications: function () { openNotificationCenter(); },
+            notifications: function () { openNotificationCenter(""); },
             "notifications-dnd": function () { backend.toggleDnd(); },
             "time-weather": function () { openTimeWeather("time"); },
             timezone: function () { openTimeWeather("time"); }

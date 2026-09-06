@@ -48,7 +48,7 @@ Row {
         height: 28
         icon: "󰩹"
         enabled: header.clearEnabled
-        accessibleName: "Clear notifications from " + header.appName
+        accessibleName: "Dismiss active notifications from " + header.appName
         toolTip: accessibleName
         onClicked: header.clearRequested()
     }

@@ -5,157 +5,222 @@ import Shelllist.Ui as Ui
 
 Rectangle {
     id: pane
-
-    required property ActivityController controller
+    required property NotificationController controller
+    readonly property NotificationState notificationState: controller.notificationState
+    property string scrollAnchorKey: ""
+    property real scrollAnchorOffset: 0
 
     radius: Ui.Theme.panelRadius
     color: Ui.Theme.surface
     border.color: Ui.Theme.border
 
+    function revealGroup(key: string): void {
+        const index = controller.visibleGroups.findIndex(function (group) { return group.key === key; });
+        if (index >= 0) {
+            list.currentIndex = index;
+            list.positionViewAtIndex(index, ListView.Contain);
+        }
+    }
+
     Column {
-        anchors.fill: parent
+        id: toolbar
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
         anchors.margins: Ui.Theme.spacingMd
         spacing: Ui.Theme.spacingSm
 
-        Row {
+        Flow {
             width: parent.width
-            height: 42
             spacing: Ui.Theme.spacingSm
-
-            Row {
-                width: parent.width - dndButton.width - clearButton.width
-                    - parent.spacing * 2
-                height: parent.height
-                spacing: 6
-                Accessible.role: Accessible.StaticText
-                Accessible.name: String(pane.controller.notifications.count || 0)
-                    + " active notifications, "
-                    + String(pane.controller.notificationHistory.length) + " in history"
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: ""
-                    color: Ui.Theme.accent
-                    font.family: Ui.Theme.iconFontFamily
-                    font.pixelSize: Ui.Theme.iconSize
-                }
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: String(pane.controller.notifications.count || 0)
-                    color: Ui.Theme.text
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Ui.Theme.fontSizeLabel
-                    font.weight: Ui.Theme.fontWeightDemiBold
-                }
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "󰋚"
-                    color: Ui.Theme.mutedText
-                    font.family: Ui.Theme.iconFontFamily
-                    font.pixelSize: Ui.Theme.iconSize
-                }
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: String(pane.controller.notificationHistory.length)
-                    color: Ui.Theme.mutedText
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Ui.Theme.fontSizeLabel
-                }
-            }
             Ui.DropDownList {
-                id: dndButton
-                width: 122
+                width: Math.min(180, parent.width)
                 height: 36
-                value: pane.controller.notifications.dnd ? -1 : 0
+                objectName: "notificationDnd"
+                value: pane.notificationState.notifications.dnd ? "-1" : "0"
                 options: [
-                    { value: -1, label: Ui.NotificationPresentation.dndLabel(
-                        pane.controller.notifications, Date.now()) },
-                    { value: 0, label: "DND off" },
-                    { value: 30, label: "For 30 min" },
-                    { value: 60, label: "For 1 hour" },
-                    { value: 120, label: "For 2 hours" },
-                    { value: 480, label: "For 8 hours" }
+                    { value: "-1", label: Ui.NotificationPresentation.dndLabel(
+                        pane.notificationState.notifications, pane.controller.nowMs) },
+                    { value: "0", label: "DND off" },
+                    { value: "30", label: "Pause for 30 min" },
+                    { value: "60", label: "Pause for 1 hour" },
+                    { value: "120", label: "Pause for 2 hours" },
+                    { value: "480", label: "Pause for 8 hours" }
                 ]
                 onSelected: function (minutes) {
-                    if (minutes >= 0)
-                        pane.controller.setDndForMinutes(minutes);
+                    if (Number(minutes) >= 0) pane.notificationState.setDndForMinutes(Number(minutes));
                 }
             }
-            Ui.FlatIconButton {
-                id: clearButton
-                width: 34
-                height: 34
-                icon: "󰩹"
-                enabled: pane.controller.notificationHistory.length > 0
-                accessibleName: "Clear all notifications"
-                toolTip: accessibleName
-                onClicked: pane.controller.clearNotifications()
+            Ui.ActionButton {
+                width: Math.min(164, parent.width)
+                height: 36
+                label: "Dismiss all active"
+                enabled: pane.notificationState.activeNotifications.length > 0
+                toolTip: "Dismiss across all apps, including snoozed notifications; history is kept"
+                onClicked: pane.notificationState.clearNotifications()
             }
         }
-
-        Row {
+        Flow {
             width: parent.width
-            height: 34
             spacing: Ui.Theme.spacingSm
-            Repeater {
-                model: ["All", "Active", "Calendar", "Messages", "System"]
-                ActivityHeaderButton {
-                    required property string modelData
-                    label: modelData
-                    checked: pane.controller.notificationFilter === modelData
-                    onTriggered: pane.controller.notificationFilter = modelData
+            ActivityHeaderButton {
+                label: "Active " + pane.notificationState.activeNotifications.length
+                checked: pane.controller.tab === "active"
+                onTriggered: pane.controller.tab = "active"
+            }
+            ActivityHeaderButton {
+                label: "History"
+                checked: pane.controller.tab === "history"
+                onTriggered: pane.controller.tab = "history"
+            }
+            Text {
+                height: 34
+                verticalAlignment: Text.AlignVCenter
+                text: pane.controller.tab === "history"
+                    ? pane.notificationState.history.length + " loaded" : ""
+                color: Ui.Theme.mutedText
+                font.family: Ui.Theme.fontFamily
+                font.pixelSize: Ui.Theme.fontSizeCaption
+            }
+        }
+        Ui.TextField {
+            id: search
+            width: parent.width
+            height: 36
+            placeholder: pane.controller.tab === "history"
+                ? "Search loaded history…" : "Search app, title or message…"
+            text: pane.controller.filterText
+            onEdited: function (value) { pane.controller.filterText = value; }
+            onKeyPressed: function (event) {
+                if (event.key === Qt.Key_Down) {
+                    list.forceActiveFocus();
+                    event.accepted = true;
                 }
             }
         }
-
         Text {
-            visible: pane.controller.notificationHistory.length === 0
+            visible: pane.notificationState.draftCount > 0
             width: parent.width
-            text: pane.controller.notificationHistoryLoading
-                ? "Loading history…" : "No notification history"
+            text: pane.notificationState.draftCount
+                + (pane.notificationState.draftCount === 1 ? " unsent draft" : " unsent drafts")
+                + " · retained when closed"
             color: Ui.Theme.mutedText
-            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.Wrap
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Ui.Theme.fontSizeCaption
+        }
+        Text {
+            visible: text.length > 0
+            width: parent.width
+            text: pane.notificationState.lastError || (pane.controller.tab === "history"
+                ? pane.notificationState.historyError : "")
+            color: Ui.Theme.danger
+            wrapMode: Text.Wrap
             font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeSmall
         }
+    }
 
-        Ui.ScrollableListView {
-            width: parent.width
-            height: parent.height - y - historyFooter.height - parent.spacing
-            visible: pane.controller.notificationHistory.length > 0
-            clip: true
-            spacing: Ui.Theme.spacingSm
-            model: pane.controller.filteredNotificationGroups
-            delegate: NotificationHistoryGroup {
-                required property var modelData
-                group: modelData
-                controller: pane.controller
-            }
+    Ui.ScrollableListView {
+        id: list
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: toolbar.bottom
+        anchors.bottom: footer.top
+        anchors.margins: Ui.Theme.spacingMd
+        clip: true
+        spacing: Ui.Theme.spacingSm
+        model: pane.controller.groupModel
+        activeFocusOnTab: true
+        keyNavigationEnabled: false
+        delegate: NotificationHistoryGroup {
+            required property string payload
+            group: JSON.parse(payload)
+            controller: pane.controller
         }
+        Keys.onDownPressed: pane.controller.moveGroup(1)
+        Keys.onUpPressed: pane.controller.moveGroup(-1)
+        Keys.onRightPressed: pane.controller.expandSelected(true)
+        Keys.onLeftPressed: pane.controller.expandSelected(false)
+        Keys.onReturnPressed: pane.controller.expandSelected(true)
 
-        Row {
-            id: historyFooter
-            width: parent.width
-            height: 34
-            spacing: Ui.Theme.spacingSm
-            Ui.FlatIconButton {
-                width: 34
-                height: 34
-                icon: "󰑐"
-                enabled: !pane.controller.notificationHistoryLoading
-                accessibleName: "Refresh notification history"
-                toolTip: accessibleName
-                onClicked: pane.controller.reloadNotificationHistory()
+        Text {
+            anchors.centerIn: parent
+            width: parent.width - 20
+            visible: pane.controller.visibleGroups.length === 0
+            text: {
+                if (pane.controller.tab === "history" && (pane.notificationState.historyLoading
+                        || (!pane.notificationState.historyLoaded && !pane.notificationState.historyError)))
+                    return "Loading history…";
+                if (pane.controller.tab === "history" && pane.notificationState.historyError)
+                    return "Could not load history. Use Refresh to retry.";
+                if (pane.controller.filterText.trim())
+                    return "No matching notifications";
+                if (pane.controller.tab === "history")
+                    return "No notification history";
+                return pane.notificationState.notifications.available
+                    ? "No active notifications · History is still available"
+                    : "Notifications unavailable";
             }
-            Ui.FlatIconButton {
-                width: 34
-                height: 34
-                icon: "󰅀"
-                enabled: pane.controller.notificationHistoryHasMore
-                    && !pane.controller.notificationHistoryLoading
-                accessibleName: "Load more notification history"
-                toolTip: accessibleName
-                onClicked: pane.controller.loadMoreNotificationHistory()
-            }
+            color: Ui.Theme.mutedText
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.Wrap
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Ui.Theme.fontSizeSmall
         }
     }
+    Flow {
+        id: footer
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: Ui.Theme.spacingMd
+        spacing: Ui.Theme.spacingSm
+        Ui.ActionButton {
+            width: 88
+            height: 34
+            label: "Refresh"
+            enabled: !pane.notificationState.historyLoading
+            onClicked: pane.controller.refresh()
+        }
+        Ui.ActionButton {
+            visible: pane.controller.tab === "history" && pane.notificationState.historyHasMore
+            width: Math.min(190, parent.width)
+            height: 34
+            label: pane.notificationState.historyLoading ? "Loading…" : "Load older notifications"
+            enabled: !pane.notificationState.historyLoading
+            onClicked: pane.notificationState.loadMoreHistory()
+        }
+    }
+    Connections {
+        target: pane.controller
+        function onFocusSearchRequested(): void { search.focusInput(false); }
+        function onRevealGroupRequested(key: string): void {
+            Qt.callLater(function () { pane.revealGroup(key); });
+        }
+        function onGroupsAboutToChange(): void {
+            const index = list.indexAt(1, list.contentY + 1);
+            const item = index >= 0 ? list.itemAtIndex(index) : null;
+            pane.scrollAnchorKey = item ? item.group.key : "";
+            pane.scrollAnchorOffset = item ? list.contentY - item.y : 0;
+        }
+        function onGroupsUpdated(): void {
+            const key = pane.scrollAnchorKey;
+            const offset = pane.scrollAnchorOffset;
+            if (!key) return;
+            Qt.callLater(function () {
+                const index = pane.controller.visibleGroups.findIndex(function (group) {
+                    return group.key === key;
+                });
+                if (index < 0) return;
+                list.positionViewAtIndex(index, ListView.Beginning);
+                const item = list.itemAtIndex(index);
+                if (item) list.contentY = item.y + offset;
+                list.returnToBounds();
+            });
+        }
+    }
+    Component.onCompleted: Qt.callLater(function () {
+        pane.revealGroup(pane.controller.selectedGroupKey);
+    })
 }

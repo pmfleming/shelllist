@@ -43,6 +43,6 @@ Item {
         width: parent.width
         groupCount: stack.group.records.length
         breakoutVisible: stack.stacked
-        onBreakoutRequested: stack.controller.openNotificationCenter()
+        onBreakoutRequested: stack.controller.openNotificationCenter(stack.group.key)
     }
 }

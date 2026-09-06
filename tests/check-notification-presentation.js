@@ -30,4 +30,22 @@ equal(context.notificationMonitor({ source_monitor: "missing" }, "eDP-1", ["eDP-
 equal(context.dndLabel({ dnd: true, dnd_until_unix_ms: 3_600_000 }, 0),
     "DND 1h", "timed DND label");
 
+const active = context.newestFirst([
+    { id: 1, created_unix_ms: 100, app_name: "Chat" },
+    { id: 2, created_unix_ms: 200, app_name: "Chat" }
+]);
+equal(active[0].id, 2, "active records are newest first independently of history");
+equal(context.filterRecords(records, "Calendar").length, 2, "search filters records before grouping");
+equal(context.filterRecords(records, "missing").length, 0, "search has a true empty result");
+const merged = context.mergeHistory([
+    { history_id: 2, notification: { summary: "old" } }, { history_id: 1 }
+], [{ history_id: 3 }, { history_id: 2, notification: { summary: "updated" } }]);
+equal(merged.length, 3, "refresh deduplicates without dropping older pages");
+equal(merged[0].history_id, 3, "history is newest first");
+equal(merged[1].notification.summary, "updated", "incoming records update existing history");
+equal(context.groupRecords([{ app_name: "__proto__" }, { app_name: "constructor" }]).length,
+    2, "app-controlled group keys cannot collide with object prototypes");
+equal(context.relativeTime(60000, 120000), "1m ago", "relative preview time");
+equal(context.relativeTime(0, 120000), "", "missing time is not an epoch date");
+
 console.log("notification presentation checks passed");

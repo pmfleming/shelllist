@@ -20,6 +20,7 @@ Item {
         { id: "clipboard", name: "Clipboard", icon: "󰅇" },
         { id: "battery", name: "Battery", icon: "󰂂" },
         { id: "activity", name: "Activity", icon: "󰃭" },
+        { id: "notifications", name: "Notifications", icon: "" },
         { id: "time-weather", name: "Time & Weather", icon: "󰅐" }
     ]
     property var loadedSurfaces: ({ wifi: true, bluetooth: true })
@@ -27,6 +28,19 @@ Item {
     property string currentId: "applications"
     property string pendingActivitySection: ""
     property string pendingTimeWeatherTab: ""
+    property var pendingNotificationRequest: null
+    readonly property alias notificationState: sharedNotifications
+    readonly property var notificationController: {
+        const bundle = bundleFor("notifications");
+        return bundle ? bundle.controller : null;
+    }
+
+    Activity.NotificationState {
+        id: sharedNotifications
+        uiActive: (registry.activityController !== null && registry.activityController.uiActive)
+            || (registry.notificationController !== null && registry.notificationController.uiActive)
+        historyEnabled: registry.notificationController !== null && registry.notificationController.uiActive
+    }
 
     readonly property SurfaceBundle currentBundle: bundleFor(currentId)
     readonly property Ui.ChooserController currentController: currentBundle
@@ -88,6 +102,7 @@ Item {
             clipboard: clipboardBundle.item,
             battery: batteryBundle.item,
             activity: activityBundle.item,
+            notifications: notificationBundle.item,
             "time-weather": timeWeatherBundle.item
         });
         return bundles[surfaceId] || null;
@@ -111,6 +126,10 @@ Item {
     }
 
     function requestActivitySection(section: string): void {
+        if (section === "notifications") {
+            openNotifications("", "active", "");
+            return;
+        }
         pendingActivitySection = section;
         ensureLoaded("activity");
         applyPendingActivitySection();
@@ -143,11 +162,28 @@ Item {
         surfaceRequested("time-weather");
     }
 
+    function openNotifications(groupKey: string, tab: string, origin: string): void {
+        pendingNotificationRequest = { key: groupKey || "", tab: tab || "active", origin: origin || "" };
+        ensureLoaded("notifications");
+        applyPendingNotifications();
+        surfaceRequested("notifications");
+    }
+
+    function applyPendingNotifications(): void {
+        if (!pendingNotificationRequest || !notificationController)
+            return;
+        const request = pendingNotificationRequest;
+        pendingNotificationRequest = null;
+        notificationController.openNotifications(request.key, request.tab, request.origin);
+    }
+
     function notifySurfaceReady(surfaceId: string): void {
         if (surfaceId === "activity")
             applyPendingActivitySection();
         else if (surfaceId === "time-weather")
             applyPendingTimeWeatherTab();
+        else if (surfaceId === "notifications")
+            applyPendingNotifications();
         surfaceReady(surfaceId);
     }
 
@@ -261,7 +297,34 @@ Item {
                 }
                 Activity.ActivityController {
                     id: activityController
+                    notificationState: registry.notificationState
                     onTimeWeatherRequested: function (tab) { registry.openTimeWeather(tab); }
+                    onNotificationsRequested: function (groupKey, tab) {
+                        registry.openNotifications(groupKey, tab, "activity");
+                    }
+                }
+            }
+        }
+    }
+
+    Loader {
+        id: notificationBundle
+        active: registry.isLoaded("notifications")
+        asynchronous: true
+        onLoaded: registry.notifySurfaceReady("notifications")
+        sourceComponent: Component {
+            SurfaceBundle {
+                surfaceId: "notifications"
+                displayName: "Notifications"
+                icon: ""
+                controller: notificationController
+                content: Component {
+                    Activity.NotificationContent { controller: notificationController }
+                }
+                Activity.NotificationController {
+                    id: notificationController
+                    notificationState: registry.notificationState
+                    onBackRequested: registry.surfaceRequested("activity")
                 }
             }
         }

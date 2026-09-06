@@ -8,20 +8,30 @@ Rectangle {
     id: row
 
     required property var record
-    required property ActivityController controller
+    required property NotificationController controller
+    readonly property NotificationState notificationState: controller.notificationState
+    property bool bodyExpanded: false
+    property bool replyOpen: false
+    readonly property var replyStatus: notificationState.replies[notification.id] || ({})
+    readonly property string draft: String(notificationState.drafts[notification.id] || "")
     property int groupCount: 1
     property bool groupedContext: false
     property bool groupToggleVisible: false
-    readonly property var notification: record.notification || ({})
-    readonly property bool active: controller.isNotificationActive(notification.id)
+    readonly property var notification: Ui.NotificationPresentation.notificationFor(record)
+    readonly property bool active: notificationState.isActive(notification.id)
     readonly property var actions: Array.isArray(notification.actions)
         ? notification.actions.filter(function (action) { return !row.isReplyAction(action); }) : []
     readonly property var replyAction: Array.isArray(notification.actions)
         ? notification.actions.find(function (action) { return row.isReplyAction(action); }) || null
         : null
-    property bool removing: false
 
     signal groupToggled
+
+    FontMetrics {
+        id: actionFont
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Ui.Theme.fontSizeBody
+    }
 
     function isReplyAction(action: var): bool {
         return String(action && action.key || "").toLowerCase().indexOf("reply") >= 0;
@@ -37,12 +47,12 @@ Rectangle {
         return Quickshell.iconPath(candidate || "dialog-information", "dialog-information");
     }
 
+    objectName: "notificationHistoryRow-" + notification.id
     width: ListView.view ? ListView.view.width : 300
     implicitHeight: Math.max(78, historyContent.implicitHeight + Ui.Theme.spacingMd * 2)
     radius: Ui.Theme.cardRadius
     color: Ui.Theme.surfaceRaised
     border.color: active ? Ui.Theme.withAlpha(Ui.Theme.accent, 0.48) : Ui.Theme.border
-    opacity: active ? 1 : Ui.Theme.readOnlyOpacity
 
     Column {
         id: historyContent
@@ -116,6 +126,7 @@ Rectangle {
                     text: (row.groupedContext ? "" : (row.notification.app_name || "") + "  ")
                         + Qt.formatDateTime(new Date(Number(
                             row.notification.created_unix_ms || 0)), "d MMM HH:mm")
+                        + (row.active ? "" : " · History")
                     color: Ui.Theme.mutedText
                     elide: Text.ElideRight
                     font.family: Ui.Theme.fontFamily
@@ -141,7 +152,7 @@ Rectangle {
                 icon: "󰒲"
                 accessibleName: "Snooze notification for 15 minutes"
                 toolTip: accessibleName
-                onClicked: row.controller.snoozeNotification(row.notification.id, 15)
+                onClicked: row.notificationState.snoozeNotification(row.notification.id, 15)
             }
             Ui.FlatIconButton {
                 id: dismissButton
@@ -150,24 +161,33 @@ Rectangle {
                 height: 28
                 icon: "󰅖"
                 accessibleName: "Dismiss notification"
-                onClicked: row.removing = true
+                toolTip: accessibleName
+                onClicked: row.notificationState.dismissNotification(row.notification.id)
             }
         }
 
         Text {
+            id: bodyText
             width: parent.width
             visible: text.length > 0
             text: row.notification.body || ""
             textFormat: Text.PlainText
             color: Ui.Theme.text
             wrapMode: Text.Wrap
-            maximumLineCount: 3
+            maximumLineCount: row.bodyExpanded ? 2147483647 : 3
             elide: Text.ElideRight
             font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeSmall
         }
 
-        Row {
+        ActivityHeaderButton {
+            visible: bodyText.truncated || row.bodyExpanded
+            label: row.bodyExpanded ? "Show less" : "Show more"
+            onTriggered: row.bodyExpanded = !row.bodyExpanded
+        }
+
+        Flow {
+            id: actionsFlow
             width: parent.width
             visible: row.active && row.actions.length > 0
             spacing: Ui.Theme.spacingSm
@@ -175,30 +195,37 @@ Rectangle {
                 model: row.actions
                 Ui.ActionButton {
                     required property var modelData
-                    width: Math.max(68, Math.min(130,
-                        String(modelData.label || "Action").length * 7 + 22))
+                    width: Math.min(actionsFlow.width, Math.max(68, Math.min(130,
+                        String(modelData.label || "Action").length * 7 + 22)))
                     height: 32
-                    label: modelData.label || "Action"
-                    onClicked: row.controller.invokeNotificationAction(
+                    label: actionFont.elidedText(String(modelData.label || "Action"),
+                        Qt.ElideRight, width - 20)
+                    accessibleName: modelData.label || "Action"
+                    toolTip: accessibleName
+                    onClicked: row.notificationState.invokeNotificationAction(
                         row.notification.id, modelData.key)
                 }
             }
         }
 
-        Ui.NotificationReplyRow {
-            visible: row.active && row.replyAction !== null
-            notificationId: Number(row.notification.id)
-            submitReply: function (id, text) {
-                return row.controller.replyNotification(id, text);
-            }
+        ActivityHeaderButton {
+            visible: row.active && row.replyAction !== null && !replyRow.visible
+            label: "Reply"
+            onTriggered: row.replyOpen = true
         }
-    }
-
-    Ui.RemovalAnimation {
-        targetItem: row
-        removalRequested: row.removing
-        finishRemoval: function () {
-            row.controller.dismissNotification(row.notification.id);
+        Ui.NotificationReplyRow {
+            id: replyRow
+            visible: row.replyOpen || row.draft.length > 0 || row.replyStatus.pending === true
+                || String(row.replyStatus.error || "").length > 0
+            notificationId: Number(row.notification.id)
+            draftText: row.draft
+            sending: row.replyStatus.pending === true
+            canReply: row.active && row.replyAction !== null
+            errorText: row.replyStatus.error || ""
+            onDraftEdited: function (text) { row.notificationState.setDraft(notificationId, text); }
+            submitReply: function (id, text) {
+                return row.notificationState.replyNotification(id, text);
+            }
         }
     }
 }

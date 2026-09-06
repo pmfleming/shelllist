@@ -22,6 +22,12 @@ Rectangle {
 
     signal breakoutRequested
 
+    FontMetrics {
+        id: actionFont
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Ui.Theme.fontSizeBody
+    }
+
     function isReplyAction(action: var): bool {
         const key = String(action && action.key || "").toLowerCase();
         return key.indexOf("reply") >= 0;
@@ -173,7 +179,7 @@ Rectangle {
             font.pixelSize: Ui.Theme.fontSizeBody
         }
 
-        Row {
+        Flow {
             width: parent.width
             visible: card.actions.length > 0
             spacing: Ui.Theme.spacingSm
@@ -181,9 +187,13 @@ Rectangle {
                 model: card.actions
                 Ui.ActionButton {
                     required property var modelData
-                    width: Math.max(74, Math.min(150, String(modelData.label || "Action").length * 8 + 24))
+                    width: Math.min(bodyColumn.width, Math.max(74,
+                        Math.min(150, String(modelData.label || "Action").length * 8 + 24)))
                     height: 34
-                    label: modelData.label || "Action"
+                    label: actionFont.elidedText(String(modelData.label || "Action"),
+                        Qt.ElideRight, width - 20)
+                    accessibleName: modelData.label || "Action"
+                    toolTip: accessibleName
                     onClicked: card.controller.invokeNotificationAction(
                         card.notification.id, modelData.key)
                 }
@@ -195,6 +205,15 @@ Rectangle {
             notificationId: Number(card.notification.id)
             controlHeight: 36
             buttonWidth: 68
+            readonly property var replyState: card.controller.notificationState
+            readonly property var status: replyState
+                ? replyState.replies[notificationId] || ({}) : ({})
+            draftText: replyState ? String(replyState.drafts[notificationId] || "") : ""
+            sending: status.pending === true
+            errorText: status.error || ""
+            onDraftEdited: function (text) {
+                if (replyState) replyState.setDraft(notificationId, text);
+            }
             submitReply: function (id, text) {
                 return card.controller.replyNotification(id, text);
             }

@@ -52,6 +52,7 @@ const adapters = [
     "clipboard/ClipboardBackend.qml",
     "bar/BarBackend.qml",
     "activity/ActivityBackend.qml",
+    "activity/NotificationBackend.qml",
     "battery/BatteryBackend.qml",
     "battery/BatteryEnergyBackend.qml"
 ];

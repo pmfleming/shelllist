@@ -423,16 +423,16 @@ Column {
     Rectangle {
         id: notificationCard
 
-        readonly property bool detailMode: pane.controller.detailsOpen
-            && pane.controller.detailSection === "notifications"
-        readonly property int previewLimit: height >= 230 ? 3 : 2
+        readonly property int previewLimit: Math.max(0, Math.min(3, Math.floor(
+            (height - 28 - 34 - Ui.Theme.spacingMd * 2 - Ui.Theme.spacingSm * 2)
+                / (48 + Ui.Theme.spacingSm))))
         readonly property var previewGroups: pane.controller.activeNotificationGroups.slice(
             0, previewLimit)
 
         width: parent.width
         height: Math.max(170, pane.height - y)
         radius: Ui.Theme.panelRadius
-        color: detailMode ? Ui.Theme.selected : Ui.Theme.surface
+        color: Ui.Theme.surface
         border.color: Ui.Theme.border
         clip: true
 
@@ -443,8 +443,7 @@ Column {
 
             Row {
                 width: parent.width
-                visible: !notificationCard.detailMode
-                height: visible ? 28 : 0
+                height: 28
                 Text {
                     width: parent.width - notificationExpand.width
                     text: "Notifications    "
@@ -457,25 +456,44 @@ Column {
                 Text {
                     id: notificationExpand
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "󰅂"
+                    text: "↗"
                     color: Ui.Theme.accent
-                    font.family: Ui.Theme.iconFontFamily
+                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.iconSize
                 }
             }
 
             Repeater {
-                model: notificationCard.detailMode ? [] : notificationCard.previewGroups
+                model: notificationCard.previewGroups
                 delegate: Rectangle {
                     id: notificationPreview
                     required property var modelData
                     readonly property var notification: pane.notificationForGroup(modelData)
 
                     width: parent.width
-                    height: 44
+                    height: 48
                     radius: Ui.Theme.controlRadius
-                    color: Ui.Theme.surfaceRaised
-                    border.color: Ui.Theme.border
+                    color: previewMouse.containsMouse || activeFocus
+                        ? Ui.Theme.selected : Ui.Theme.surfaceRaised
+                    border.color: activeFocus ? Ui.Theme.accent : Ui.Theme.border
+                    activeFocusOnTab: true
+                    Accessible.role: Accessible.Button
+                    Accessible.name: "Open " + modelData.appName + " notifications: "
+                        + String(notification.summary || "")
+                    function openGroup(): void {
+                        pane.controller.requestNotifications(modelData.key, "active");
+                    }
+                    Accessible.onPressAction: openGroup()
+                    Keys.onReturnPressed: openGroup()
+                    Keys.onSpacePressed: openGroup()
+
+                    MouseArea {
+                        id: previewMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: notificationPreview.openGroup()
+                    }
 
                     Row {
                         anchors.fill: parent
@@ -530,6 +548,10 @@ Column {
                             Text {
                                 width: parent.width
                                 text: notificationPreview.modelData.appName
+                                    + (notificationPreview.notification.created_unix_ms
+                                        ? " · " + Ui.NotificationPresentation.relativeTime(
+                                            notificationPreview.notification.created_unix_ms,
+                                            pane.now.getTime()) : "")
                                 color: Ui.Theme.mutedText
                                 elide: Text.ElideRight
                                 font.family: Ui.Theme.fontFamily
@@ -541,74 +563,69 @@ Column {
             }
 
             Item {
-                visible: notificationCard.detailMode
-                    || notificationCard.previewGroups.length === 0
+                visible: notificationCard.previewGroups.length === 0
                 width: parent.width
-                height: visible ? 72 : 0
+                height: visible ? 48 : 0
                 Text {
                     anchors.centerIn: parent
-                    text: ""
-                    color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.72)
-                    font.family: Ui.Theme.iconFontFamily
-                    font.pixelSize: 36
-                }
-                Rectangle {
-                    visible: Number(pane.controller.notifications.count || 0) > 0
-                    width: 22
-                    height: 22
-                    radius: 11
-                    anchors.centerIn: parent
-                    anchors.horizontalCenterOffset: 19
-                    anchors.verticalCenterOffset: -15
-                    color: Ui.Theme.accent
-                    Text {
-                        anchors.centerIn: parent
-                        text: pane.controller.notifications.count > 99
-                            ? "99+" : String(pane.controller.notifications.count || 0)
-                        color: Ui.Theme.accentText
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: pane.controller.notifications.count > 99
-                            ? 8 : Ui.Theme.fontSizeCaption
-                        font.weight: Ui.Theme.fontWeightBold
-                    }
+                    text: pane.controller.notifications.available
+                        ? "No active notifications" : "Notifications unavailable"
+                    color: Ui.Theme.mutedText
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: Ui.Theme.fontSizeSmall
                 }
             }
 
-            Row {
+            Flow {
                 width: parent.width
-                height: 22
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: pane.controller.notifications.dnd ? "󰂛" : ""
-                    color: pane.controller.notifications.dnd
-                        ? Ui.Theme.warning : Ui.Theme.mutedText
-                    font.family: Ui.Theme.iconFontFamily
-                    font.pixelSize: Ui.Theme.iconSize
+                spacing: Ui.Theme.spacingSm
+                Ui.DropDownList {
+                    width: Math.min(180, parent.width)
+                    height: 34
+                    value: pane.controller.notifications.dnd ? "-1" : "0"
+                    options: [
+                        { value: "-1", label: pane.controller.notifications.dnd_until_unix_ms
+                            ? "Paused until " + Qt.formatTime(new Date(Number(
+                                pane.controller.notifications.dnd_until_unix_ms)), "HH:mm")
+                            : "DND on" },
+                        { value: "0", label: "DND off" },
+                        { value: "30", label: "Pause for 30 min" },
+                        { value: "60", label: "Pause for 1 hour" }
+                    ]
+                    onSelected: function (minutes) {
+                        if (Number(minutes) >= 0)
+                            pane.controller.notificationState.setDndForMinutes(Number(minutes));
+                    }
                 }
-                Text {
-                    width: parent.width - x
-                    visible: !notificationCard.detailMode
-                        && pane.controller.activeNotificationGroups.length
-                            > notificationCard.previewGroups.length
-                    anchors.verticalCenter: parent.verticalCenter
-                    horizontalAlignment: Text.AlignRight
-                    text: "+" + String(pane.controller.activeNotificationGroups.length
-                        - notificationCard.previewGroups.length)
-                    color: Ui.Theme.mutedText
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Ui.Theme.fontSizeCaption
-                    font.weight: Ui.Theme.fontWeightDemiBold
+                ActivityHeaderButton {
+                    label: notificationCard.previewGroups.length === 0 ? "View history"
+                        : pane.controller.activeNotificationGroups.length > notificationCard.previewGroups.length
+                            ? String(pane.controller.activeNotificationGroups.length
+                                - notificationCard.previewGroups.length) + " more apps"
+                            : "View all"
+                    onTriggered: pane.controller.requestNotifications("",
+                        notificationCard.previewGroups.length === 0 ? "history" : "active")
                 }
             }
         }
 
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
+        Item {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 28 + Ui.Theme.spacingMd
+            activeFocusOnTab: true
             Accessible.role: Accessible.Button
             Accessible.name: "Open notifications"
-            onClicked: pane.controller.openSection("notifications")
+            Accessible.onPressAction: pane.controller.requestNotifications("", "active")
+            Keys.onReturnPressed: pane.controller.requestNotifications("", "active")
+            Keys.onSpacePressed: pane.controller.requestNotifications("", "active")
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: pane.controller.requestNotifications("", "active")
+            }
         }
     }
 }

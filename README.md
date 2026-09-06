@@ -1,6 +1,6 @@
 # Shelllist
 
-Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and seven keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, **Activity**, **Time & Weather**, and **Battery**.
+Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and eight keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, **Activity**, **Notifications**, **Time & Weather**, and **Battery**.
 
 Rust daemons handle system integration and policy. Shelllist handles windows, layout, navigation, animation, and presentation.
 
@@ -39,7 +39,7 @@ Common bar interactions:
 | Battery | Open Battery | — | — |
 | Activity | Open Activity | — | — |
 | Timezone / clock | Open Time & Weather | — | — |
-| Notifications | Open Activity | Toggle DND | — |
+| Notifications | Open Notifications | Toggle DND | — |
 
 `bar-daemon` supplies normalized bar state through `bar-api` v1. Wi-Fi and Bluetooth remain owned by their dedicated Shelllist controllers, while Quickshell owns tray rendering and menus.
 
@@ -67,7 +67,7 @@ The UI uses opaque daemon device keys and live subscriptions. It does not parse 
 
 ### Activity
 
-The Activity surface combines a month calendar, selected-day agenda, persistent todos, native notification history/actions/DND, source health, and a time/weather callout. `bar-daemon` owns notification ingestion, expiry, timed DND, snooze wakeups, grouping metadata, and persistent history. Shelllist renders compact grouped toast stacks on the originating monitor, with focused-monitor fallback, and opens their complete paginated groups in the Activity notification breakout. Notifications support actions, inline replies, 15-minute snooze, per-group/application clearing, and clear-all. See [`docs/activity.md`](docs/activity.md).
+The Activity surface combines a month calendar, selected-day agenda, persistent todos, source health, and time/weather and notification previews. Notifications open a dedicated callout without widening Activity. Its Active/History tabs offer search, DND, actions, inline replies, 15-minute snooze and dismissal that retains history. Toast chevrons and Activity previews open the selected group. Drafts survive navigation and only clear after successful replies. `bar-daemon` owns notification ingestion, expiry, DND, snooze and persistent history. Open directly with `shelllist notifications open` or the `notifications` global shortcut. See [`docs/activity.md`](docs/activity.md).
 
 ### Time & Weather
 
@@ -167,7 +167,7 @@ shelllist run                     Run the host in the foreground
 shelllist quit                    Stop the resident host
 ```
 
-Surfaces are `applications`, `wifi`, `bluetooth`, `clipboard`, `activity`, `time-weather`, and `battery`.
+Surfaces are `applications`, `wifi`, `bluetooth`, `clipboard`, `activity`, `notifications`, `time-weather`, and `battery`.
 
 ## Keyboard use
 

@@ -12,15 +12,15 @@ Ui.ChooserController {
         weather_locations: [],
         weather: { available: false, id: "", location: "Local",
             error: "Weather is not configured" } })
-    property var notifications: ({ available: false, count: 0, dnd: false })
+    property NotificationState notificationState: NotificationState {
+        uiActive: controller.uiActive
+    }
+    readonly property var notifications: notificationState.notifications
+    readonly property var activeNotificationGroups: notificationState.activeGroups
+    property bool preserveNavigationOnDeactivate: false
     property var timezone: ({ available: false, timezone: "", city: "",
         abbreviation: "", utc_offset_seconds: 0 })
-    property var notificationActive: ({ available: false, revision: 0, notifications: [] })
-    property var notificationHistory: []
-    property bool notificationHistoryLoading: false
-    property bool notificationHistoryHasMore: false
     property bool rangeQueriesEnabled: true
-    property bool notificationHistoryEnabled: true
     property var events: []
     property var todos: []
     property var busyDates: []
@@ -31,7 +31,6 @@ Ui.ChooserController {
     property date loadedFrom
     property date loadedTo
     property string detailSection: "schedule"
-    property string notificationFilter: "All"
     property string weatherLocationId: ""
     property string screenshotStatus: ""
     property string screenshotStartMessage: "Capturing Activity panel…"
@@ -57,13 +56,6 @@ Ui.ChooserController {
     readonly property var selectedTodos: todos.filter(function (todo) {
         return Flow.todoVisible(todo, selectedDateKey, dateKey(new Date()));
     })
-    readonly property var activeNotificationGroups: Ui.NotificationPresentation.groupRecords(
-        activeNotifications().slice().reverse())
-    readonly property var notificationGroups: Ui.NotificationPresentation.groupRecords(
-        notificationHistory)
-    readonly property var filteredNotificationGroups: notificationGroups.filter(function (group) {
-        return notificationGroupMatches(group, notificationFilter);
-    })
     readonly property var weatherLocations: {
         const locations = activity.weather_locations || [];
         return locations.length > 0 ? locations
@@ -79,6 +71,12 @@ Ui.ChooserController {
 
     signal focusTodoInputRequested
     signal timeWeatherRequested(string tab)
+    signal notificationsRequested(string groupKey, string tab)
+
+    function requestNotifications(groupKey: string, tab: string): void {
+        preserveNavigationOnDeactivate = true;
+        notificationsRequested(groupKey, tab);
+    }
 
     function dateKey(value: date): string { return Flow.dateKey(value); }
     function startOfDay(value: date): date { return Flow.startOfDay(value); }
@@ -95,21 +93,10 @@ Ui.ChooserController {
     function applySnapshot(snapshot: var): void {
         if (snapshot.activity)
             activity = snapshot.activity;
-        if (snapshot.notifications)
-            notifications = snapshot.notifications;
+        notificationState.applySnapshot(snapshot);
         if (snapshot.timezone)
             timezone = snapshot.timezone;
-        if (snapshot.notification_active)
-            notificationActive = snapshot.notification_active;
         scheduleRangeQuery();
-        scheduleNotificationHistory();
-    }
-
-    function applyNotificationHistory(records: var, append: bool): void {
-        const values = Array.isArray(records) ? records : [];
-        notificationHistory = append ? notificationHistory.concat(values) : values;
-        notificationHistoryHasMore = values.length === 50;
-        notificationHistoryLoading = false;
     }
 
     function applyRange(range: var): void {
@@ -126,10 +113,9 @@ Ui.ChooserController {
             activity = data;
             scheduleRangeQuery();
         } else if (kind === "notifications") {
-            notifications = data;
-            scheduleNotificationHistory();
+            notificationState.notifications = data;
         } else if (kind === "notificationActive") {
-            notificationActive = data;
+            notificationState.notificationActive = data;
         } else if (kind === "timezone") {
             timezone = data;
         }
@@ -144,56 +130,6 @@ Ui.ChooserController {
         if (rangeQueriesEnabled)
             rangeQueryDebounce.restart();
     }
-    function scheduleNotificationHistory(): void {
-        if (notificationHistoryEnabled)
-            notificationHistoryDebounce.restart();
-    }
-
-    function reloadNotificationHistory(): void {
-        notificationHistoryLoading = backend.loadNotificationHistory(null);
-    }
-
-    function loadMoreNotificationHistory(): void {
-        if (notificationHistoryLoading || !notificationHistoryHasMore
-                || notificationHistory.length === 0)
-            return;
-        const cursor = notificationHistory[notificationHistory.length - 1].history_id;
-        notificationHistoryLoading = backend.loadNotificationHistory(cursor);
-    }
-
-    function notificationGroupMatches(group: var, filter: string): bool {
-        if (filter === "All")
-            return true;
-        if (filter === "Active")
-            return group.records.some(function (record) {
-                return isNotificationActive((record.notification || ({})).id);
-            });
-        const identity = String(group.appName || "").toLowerCase();
-        if (filter === "Calendar")
-            return identity.indexOf("calendar") >= 0;
-        if (filter === "Messages")
-            return ["message", "signal", "slack", "discord", "whatsapp", "telegram"]
-                .some(function (name) { return identity.indexOf(name) >= 0; });
-        return filter === "System"
-            && !notificationGroupMatches(group, "Calendar")
-            && !notificationGroupMatches(group, "Messages");
-    }
-
-    function activeNotifications(): var {
-        return notificationActive && Array.isArray(notificationActive.notifications)
-            ? notificationActive.notifications : [];
-    }
-    function isNotificationActive(notificationId: int): bool {
-        return activeNotifications().some(function (notification) {
-            return notification.id === notificationId;
-        });
-    }
-    function isNotificationGroupActive(groupKey: string): bool {
-        return activeNotifications().some(function (notification) {
-            return Ui.NotificationPresentation.groupKey(notification) === groupKey;
-        });
-    }
-
     function queryVisibleRange(): void {
         const range = monthRange();
         rangeLoading = backend.queryRange(range.from, range.to);
@@ -254,7 +190,11 @@ Ui.ChooserController {
     }
 
     function openSection(section: string): void {
-        if (["schedule", "notifications"].indexOf(section) < 0)
+        if (section === "notifications") {
+            requestNotifications("", "active");
+            return;
+        }
+        if (section !== "schedule")
             return;
         detailSection = section;
         detailsOpen = true;
@@ -264,50 +204,21 @@ Ui.ChooserController {
         return screenshotCapture.captureRegion(x, y, width, height);
     }
     function refresh(): void { backend.refresh(); }
-    function toggleDnd(): void { backend.toggleDnd(); }
-    function setDndForMinutes(minutes: int): bool {
-        return minutes > 0
-            ? backend.setDnd(true, Date.now() + minutes * 60 * 1000)
-            : backend.setDnd(false, null);
-    }
-    function dismissNotification(notificationId: int): bool {
-        return backend.dismissNotification(notificationId);
-    }
-    function clearNotifications(): bool { return backend.clearNotifications(); }
-    function clearNotificationGroup(groupKey: string): bool {
-        return backend.clearNotificationGroup(groupKey);
-    }
-    function snoozeNotification(notificationId: int, minutes: int): bool {
-        return backend.snoozeNotification(notificationId, Date.now() + minutes * 60 * 1000);
-    }
-    function invokeNotificationAction(notificationId: int, actionKey: string): bool {
-        return backend.invokeNotificationAction(notificationId, actionKey);
-    }
-    function replyNotification(notificationId: int, text: string): bool {
-        return backend.replyNotification(notificationId, text);
-    }
-
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
         scheduleRangeQuery();
-        scheduleNotificationHistory();
     }
 
     function deactivateUi() {
         deactivateUiState();
-        closeSection();
+        if (!preserveNavigationOnDeactivate)
+            closeSection();
+        preserveNavigationOnDeactivate = false;
         screenshotStatus = "";
     }
 
     onFocusSearchRequested: if (detailsOpen && detailSection === "schedule")
         focusTodoInputRequested()
-
-    Timer {
-        id: notificationHistoryDebounce
-        interval: 120
-        repeat: false
-        onTriggered: controller.reloadNotificationHistory()
-    }
 
     Timer {
         id: rangeQueryDebounce

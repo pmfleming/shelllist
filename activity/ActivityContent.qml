@@ -101,8 +101,7 @@ Ui.ChooserSurface {
                 clip: true
                 active: content.controller.detailsRendered
                 asynchronous: true
-                sourceComponent: content.controller.detailSection === "notifications"
-                    ? notificationsComponent : scheduleComponent
+                sourceComponent: scheduleComponent
             }
 
             Item {
@@ -130,24 +129,18 @@ Ui.ChooserSurface {
         }
     }
 
-    Component {
-        id: notificationsComponent
-        ActivityNotificationsPane { controller: content.controller }
-    }
-
     function sectionTitle(section: string): string {
-        if (section === "notifications")
-            return "Notifications";
         return "Calendar · Agenda · Todo";
     }
 
     Shortcut {
         sequence: "Escape"
+        enabled: content.controller.uiActive
         onActivated: content.controller.dismissNavigation()
     }
     Shortcut {
         sequence: "Left"
-        enabled: content.controller.detailsOpen
+        enabled: content.controller.uiActive && content.controller.detailsOpen
             && content.controller.detailSection === "schedule"
         onActivated: content.controller.selectDate(new Date(
             content.controller.selectedDate.getFullYear(),
@@ -156,7 +149,7 @@ Ui.ChooserSurface {
     }
     Shortcut {
         sequence: "Right"
-        enabled: content.controller.detailsOpen
+        enabled: content.controller.uiActive && content.controller.detailsOpen
             && content.controller.detailSection === "schedule"
         onActivated: content.controller.selectDate(new Date(
             content.controller.selectedDate.getFullYear(),
@@ -165,19 +158,39 @@ Ui.ChooserSurface {
     }
     Shortcut {
         sequence: "PageUp"
-        enabled: content.controller.detailSection === "schedule"
+        enabled: content.controller.uiActive && content.controller.detailSection === "schedule"
         onActivated: content.controller.shiftMonth(-1)
     }
     Shortcut {
         sequence: "PageDown"
-        enabled: content.controller.detailSection === "schedule"
+        enabled: content.controller.uiActive && content.controller.detailSection === "schedule"
         onActivated: content.controller.shiftMonth(1)
     }
-    Shortcut { sequence: "1"; onActivated: content.controller.requestTimeWeather("weather") }
-    Shortcut { sequence: "2"; onActivated: content.controller.openSection("schedule") }
-    Shortcut { sequence: "3"; onActivated: content.controller.openSection("notifications") }
-    Shortcut { sequence: "T"; onActivated: content.controller.goToToday() }
-    Shortcut { sequence: "F5"; onActivated: content.controller.refresh() }
+    Shortcut {
+        sequence: "1"
+        enabled: content.controller.uiActive
+        onActivated: content.controller.requestTimeWeather("weather")
+    }
+    Shortcut {
+        sequence: "2"
+        enabled: content.controller.uiActive
+        onActivated: content.controller.openSection("schedule")
+    }
+    Shortcut {
+        sequence: "3"
+        enabled: content.controller.uiActive
+        onActivated: content.controller.requestNotifications("", "active")
+    }
+    Shortcut {
+        sequence: "T"
+        enabled: content.controller.uiActive
+        onActivated: content.controller.goToToday()
+    }
+    Shortcut {
+        sequence: "F5"
+        enabled: content.controller.uiActive
+        onActivated: content.controller.refresh()
+    }
 
     Ui.LiveClock {
         id: liveClock

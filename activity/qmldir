@@ -17,5 +17,9 @@ ActivityContent 1.0 ActivityContent.qml
 ActivityController 1.0 ActivityController.qml
 TimeWeatherContent 1.0 TimeWeatherContent.qml
 TimeWeatherController 1.0 TimeWeatherController.qml
+NotificationState 1.0 NotificationState.qml
+NotificationBackend 1.0 NotificationBackend.qml
+NotificationController 1.0 NotificationController.qml
+NotificationContent 1.0 NotificationContent.qml
 NotificationHistoryGroup 1.0 NotificationHistoryGroup.qml
 NotificationHistoryRow 1.0 NotificationHistoryRow.qml

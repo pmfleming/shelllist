@@ -9,7 +9,6 @@ ActivityController {
     property double currentTimeMs: 0
     screenshotStartMessage: "Capturing Time & Weather window…"
     rangeQueriesEnabled: false
-    notificationHistoryEnabled: false
     readonly property var cities: combinedCities()
     readonly property var filteredCities: filterCities(cities, filterText)
     readonly property alias cityModel: cityListModel

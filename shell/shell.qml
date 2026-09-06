@@ -247,6 +247,11 @@ ShellRoot {
         onTriggered: shell.toggleSurface("activity")
     }
     Ui.ShelllistGlobalShortcut {
+        shortcutName: "notifications"
+        description: "Toggle Shelllist Notifications"
+        onTriggered: shell.toggleSurface("notifications")
+    }
+    Ui.ShelllistGlobalShortcut {
         shortcutName: "time-weather"
         description: "Toggle Shelllist Time & Weather"
         onTriggered: shell.toggleSurface("time-weather")

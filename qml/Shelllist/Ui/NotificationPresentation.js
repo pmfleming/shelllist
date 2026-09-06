@@ -13,7 +13,7 @@ function groupKey(record) {
 
 function groupRecords(records) {
     const groups = [];
-    const byKey = {};
+    const byKey = Object.create(null);
     (records || []).forEach(function (record) {
         const key = groupKey(record);
         let group = byKey[key];
@@ -31,6 +31,68 @@ function groupRecords(records) {
         group.records.push(record);
     });
     return groups;
+}
+
+function newestFirst(records) {
+    return (records || []).slice().sort(function (left, right) {
+        return Number(notificationFor(right).created_unix_ms || 0)
+            - Number(notificationFor(left).created_unix_ms || 0)
+            || Number(notificationFor(right).id || 0) - Number(notificationFor(left).id || 0);
+    });
+}
+
+function mergeHistory(existing, incoming) {
+    const byId = Object.create(null);
+    (existing || []).concat(incoming || []).forEach(function (record) {
+        byId[record.history_id] = record;
+    });
+    return Object.keys(byId).map(function (id) { return byId[id]; })
+        .sort(function (left, right) { return Number(right.history_id) - Number(left.history_id); });
+}
+
+// Reconcile QML ListModels without resetting existing delegates and their focus.
+function syncKeyedModel(model, rows) {
+    for (let i = 0; i < rows.length; ++i) {
+        // Store JSON as a scalar role: ListModel otherwise converts nested action
+        // arrays into QQmlListModels, breaking Array.isArray/filter in delegates.
+        const row = { key: rows[i].key, payload: JSON.stringify(rows[i].payload) };
+        let found = -1;
+        for (let j = i; j < model.count; ++j) {
+            if (model.get(j).key === row.key) { found = j; break; }
+        }
+        if (found < 0)
+            model.insert(i, row);
+        else {
+            if (found !== i)
+                model.move(found, i, 1);
+            if (model.get(i).payload !== row.payload)
+                model.setProperty(i, "payload", row.payload);
+        }
+    }
+    if (model.count > rows.length)
+        model.remove(rows.length, model.count - rows.length);
+}
+
+function filterRecords(records, query) {
+    const needle = String(query || "").trim().toLowerCase();
+    return (records || []).filter(function (record) {
+        const n = notificationFor(record);
+        return [n.app_name, n.summary, n.body].join(" ").toLowerCase().indexOf(needle) >= 0;
+    });
+}
+
+function relativeTime(createdMs, nowMs) {
+    const created = Number(createdMs);
+    if (!Number.isFinite(created) || created <= 0)
+        return "";
+    const minutes = Math.max(0, Math.floor((nowMs - created) / 60000));
+    if (minutes < 1)
+        return "now";
+    if (minutes < 60)
+        return minutes + "m ago";
+    if (minutes < 1440)
+        return Math.floor(minutes / 60) + "h ago";
+    return Math.floor(minutes / 1440) + "d ago";
 }
 
 function notificationMonitor(notification, focusedMonitor, monitorNames) {
