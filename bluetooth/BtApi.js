@@ -4,6 +4,10 @@
 var protocol = Protocol.protocol;
 var version = Protocol.version;
 
+// File transfer (OBEX) is implemented in bt-daemon, NOT in Shelllist.
+// This frontend has no send/receive approval, progress, or cancellation UI.
+// Do not subscribe to or advertise OBEX until that complete workflow exists;
+// use Blueman for transfers. bt-daemon's incoming agent is opt-in for other clients.
 var streams = {
     changed: Protocol.streams["bluetooth.changed"],
     pairing: Protocol.streams["pairing.request"],
