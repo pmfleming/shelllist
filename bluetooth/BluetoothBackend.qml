@@ -62,6 +62,7 @@ Io.DaemonBackend {
     function finish(id, envelope, transportError) {
         const error = responseError(envelope, transportError,
             "Bluetooth operation failed");
+        if (id === "pairing-response") controller.finishPairingResponse(error.length === 0);
         if (error.length > 0) {
             console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
             controller.status = error;

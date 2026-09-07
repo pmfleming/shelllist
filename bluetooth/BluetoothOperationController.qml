@@ -66,10 +66,7 @@ Item {
             controller.rebuildResults(false);
     }
     function closePairing(operation: var): void {
-        if (!controller.pairingPrompt || controller.pairingPrompt.device_key !== operation.device_key)
-            return;
-        controller.pairingPrompt = null;
-        controller.pairingInput = "";
+        controller.closePairingForDevice(operation.device_key);
     }
     function resumeScan(operation: var, device: var): void {
         if (!BluetoothFlow.shouldRescanAfterOperation(operation,

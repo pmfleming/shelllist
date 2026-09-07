@@ -44,6 +44,16 @@ const requested = {
     event: "requested",
     data: { request_id: "pairing-1", device_key: "device-1", response_required: true }
 };
+let queue = flow.pairingQueue([], requested);
+queue = flow.pairingQueue(queue, { event: "requested", data: { request_id: "pairing-2", device_key: "device-2" } });
+expect("concurrent prompts stay queued", queue.length === 2 && queue[0].request_id === "pairing-1");
+queue = flow.pairingQueue(queue, { event: "cancelled", data: { request_id: "pairing-2" } });
+expect("cancelling B preserves pending A", queue.length === 1 && queue[0].request_id === "pairing-1");
+queue = flow.pairingQueue(queue, { event: "answered", data: { request_id: "pairing-1" } });
+expect("answer removes only matching prompt", queue.length === 0);
+queue = flow.pairingQueue([], { event: "display", data: { request_id: "display-1", device_key: "keyboard", kind: "display-passkey", entered: 1 } });
+queue = flow.pairingQueue(queue, { event: "display", data: { request_id: "display-2", device_key: "keyboard", kind: "display-passkey", entered: 2 } });
+expect("display progress replaces rather than queues", queue.length === 1 && queue[0].entered === 2);
 let transition = flow.pairingTransition(null, requested);
 expect("requested prompt opens", transition.changed && transition.prompt.request_id === "pairing-1");
 

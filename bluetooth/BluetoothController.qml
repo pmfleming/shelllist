@@ -25,7 +25,10 @@ Ui.ProviderChooserController {
     property var allDevices: []
     property var audioDevices: []
     property string audioStatus: ""
-    property var pairingPrompt: null
+    property var pairingPrompts: []
+    readonly property var pairingPrompt: pairingPrompts.length > 0 ? pairingPrompts[0] : null
+    property string respondingPairingId: ""
+    readonly property bool pairingResponsePending: !!pairingPrompt && respondingPairingId === pairingPrompt.request_id
     readonly property alias activeOperations: operationState.activeOperations
     property var activeScan: null
     property bool trustAfterPair: true
@@ -131,7 +134,8 @@ Ui.ProviderChooserController {
         operationState.restore(state.operations);
         activeScan = state.activeScan;
         scanRequested = !!activeScan;
-        pairingPrompt = state.pairingPrompt;
+        pairingPrompts = state.pairingPrompts || [];
+        respondingPairingId = "";
         pairingInput = "";
         if (pairingPrompt) {
             status = pairingPrompt.response_required
@@ -231,22 +235,31 @@ Ui.ProviderChooserController {
         return backend.cancelOperation(selectedOperation.request_id);
     }
     function handlePairingEvent(event) {
-        const transition = BluetoothFlow.pairingTransition(pairingPrompt, event);
-        if (!transition.changed)
-            return;
-        pairingPrompt = transition.prompt;
-        pairingInput = "";
+        const previousId = pairingPrompt ? pairingPrompt.request_id : "";
+        pairingPrompts = BluetoothFlow.pairingQueue(pairingPrompts, event);
+        const nextId = pairingPrompt ? pairingPrompt.request_id : "";
+        if (previousId !== nextId) pairingInput = "";
         status = BluetoothFlow.pairingStatus(pairingPrompt, event) || status;
-        if (pairingPrompt)
-            pairingInteractionRequested();
+        if (nextId && previousId !== nextId) pairingInteractionRequested();
+    }
+    function closePairingForDevice(deviceKey) {
+        pairingPrompts = pairingPrompts.filter(function (prompt) { return prompt.device_key !== deviceKey; });
+        pairingInput = "";
+    }
+    function finishPairingResponse(success) {
+        const requestId = respondingPairingId;
+        respondingPairingId = "";
+        if (success) handlePairingEvent({ event: "answered", data: { request_id: requestId } });
     }
     function respondPairing(accept) {
-        if (!pairingPromptOpen || !pairingPrompt.response_required) return false;
+        if (!pairingPromptOpen || !pairingPrompt.response_required || pairingResponsePending) return false;
         const requestId = pairingPrompt.request_id;
-        const value = pairingInput;
-        pairingPrompt = null;
-        pairingInput = "";
-        return backend.respondPairing(requestId, accept, value);
+        respondingPairingId = requestId;
+        const sent = backend.respondPairing(requestId, accept, pairingInput);
+        if (!sent) respondingPairingId = "";
+        // Keep the prompt/input until the backend accepts the response, so a
+        // validation or transport error does not strand the pending request.
+        return sent;
     }
     function adapterOperation(operation, values) {
         if (!selectedAdapter.key || backend.requestRunning) {

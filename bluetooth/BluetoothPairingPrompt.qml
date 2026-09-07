@@ -35,9 +35,9 @@ Ui.PromptDialog {
     actionsVisible: responseRequired
     rejectLabel: "Reject"
     acceptLabel: "Confirm"
-    acceptEnabled: valueValid
+    acceptEnabled: valueValid && !controller.pairingResponsePending
     escapeEnabled: responseRequired
-    enterEnabled: responseRequired
+    enterEnabled: responseRequired && !controller.pairingResponsePending
     instruction: responseRequired ? "Enter confirm   •   Esc reject" : "Waiting for the remote device…"
     onInputEdited: function (text) { controller.pairingInput = text; }
     onAccepted: controller.respondPairing(true)

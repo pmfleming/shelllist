@@ -24,7 +24,8 @@ function requestState(snapshot) {
     return {
         operations: operations,
         activeScan: scans.length > 0 ? scans[0] : null,
-        pairingPrompt: pairing.length > 0 ? pairing[pairing.length - 1] : null
+        pairingPrompts: pairing,
+        pairingPrompt: pairing.length > 0 ? pairing[0] : null
     };
 }
 function pairingStatus(prompt, envelope) {
@@ -34,12 +35,31 @@ function pairingStatus(prompt, envelope) {
     return envelope.data && envelope.data.reason === "timeout"
         ? "Bluetooth pairing request timed out" : "";
 }
+function pairingQueue(prompts, envelope) {
+    const event = envelope || ({});
+    const prompt = event.data || ({});
+    if (!prompt.request_id)
+        return prompts || [];
+    const current = prompts || [];
+    if (["requested", "display"].includes(event.event)) {
+        const index = current.findIndex(function (item) {
+            return item.request_id === prompt.request_id
+                || (event.event === "display" && item.device_key === prompt.device_key && item.kind === prompt.kind);
+        });
+        if (index < 0)
+            return current.concat([prompt]);
+        return current.map(function (item, i) { return i === index ? prompt : item; });
+    }
+    if (["cancelled", "answered"].includes(event.event))
+        return current.filter(function (item) { return item.request_id !== prompt.request_id; });
+    return current;
+}
 function pairingTransition(currentPrompt, envelope) {
     const event = envelope || ({});
     const prompt = event.data || ({});
     if (["requested", "display"].includes(event.event))
         return { changed: true, prompt: prompt };
-    const matchingCancellation = event.event === "cancelled"
+    const matchingCancellation = ["cancelled", "answered"].includes(event.event)
         && currentPrompt && currentPrompt.request_id === prompt.request_id;
     return matchingCancellation
         ? { changed: true, prompt: null }
