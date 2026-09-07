@@ -332,10 +332,10 @@ ProviderChooserController {
         }
     }
 
-    function failCall(id, message) {
+    function failCall(id, message, details) {
         if (id === "connect-start")
             connection.resetProgress();
-        advanced.failCall(id, message);
+        advanced.failCall(id, message, details);
         if (id === "share")
             services.share.fail(message);
         status = message;

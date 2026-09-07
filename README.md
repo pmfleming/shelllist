@@ -57,6 +57,8 @@ Chooser search is ranked by the bundled Rust matcher. It supports middle-of-item
 
 The Wi-Fi surface supports scanning, saved and hidden networks, open/WEP/WPA personal and enterprise credentials, NetworkManager secret prompts, disconnect/forget, autoconnect and privacy settings, IPv4/IPv6 and DNS editing, Wi-Fi QR sharing, and captive-portal launch.
 
+**Security & Privacy → Cast discovery** saves per-network mDNS policy and applies it live through nm-daemon without reconnecting. It controls systemd-resolved discovery, not casting sessions or applications such as Chromium that use their own mDNS sockets. The NixOS module configures NetworkManager's inherited mDNS default to off, enables resolve-only systemd-resolved support, and permits UDP 5353 replies. Set `programs.shelllist.discovery.openFirewall = false` for custom/interface-specific firewall rules, or `programs.shelllist.discovery.enable = false` to manage the entire resolver stack yourself. Home Manager alone does not configure these system settings. Changed defaults require a host rebuild; existing active inherited policies may need one reconnect when installing the configuration.
+
 Shelllist opens an automatic captive portal only after a successful connection reports captive connectivity. User-entered secrets travel through stdin-backed JSON requests and are never placed in command-line arguments.
 
 ### Bluetooth

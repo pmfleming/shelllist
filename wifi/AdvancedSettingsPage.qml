@@ -13,6 +13,8 @@ Item {
     property int sectionSpacing: 12
     property string macPolicy
     property bool sendHostname
+    property bool castingEnabled: false
+    property bool castingDirty: false
     property string passwordValue
     property bool passwordDirty
     property bool passwordRevealed
@@ -81,6 +83,8 @@ Item {
         passwordRevealed = false;
         securityDirty = false;
         hardwareDirty = false;
+        castingEnabled = false;
+        castingDirty = false;
     }
 
     function syncProfile(): void {
@@ -89,6 +93,7 @@ Item {
             return;
         macPolicy = profile.mac_address_policy || "default";
         sendHostname = profile.send_hostname !== false;
+        castingEnabled = profile.casting_enabled === true;
         ipv4State.sync(profile.ipv4);
         ipv6State.sync(profile.ipv6);
     }
@@ -108,6 +113,14 @@ Item {
         if (macPolicy === value)
             return;
         macPolicy = value;
+        queueSecuritySave();
+    }
+
+    function setCastingEnabled(value: bool): void {
+        if (!profile.path || controller.actionInFlight || castingEnabled === value)
+            return;
+        castingEnabled = value;
+        castingDirty = true;
         queueSecuritySave();
     }
 
@@ -131,6 +144,9 @@ Item {
             hidden: !!profile.hidden,
             mac_address_policy: macPolicy,
             send_hostname: sendHostname,
+            // Explicit intent must survive failed/partial saves, including a
+            // toggle back to the old value. Unrelated edits preserve mDNS policy.
+            advanced: castingDirty ? ({ casting_enabled: castingEnabled }) : ({}),
             ipv4: ipv4State.payload(profile.ipv4),
             ipv6: ipv6State.payload(profile.ipv6),
             password: passwordDirty && passwordValue.length > 0 ? passwordValue : null

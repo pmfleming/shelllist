@@ -11,6 +11,7 @@ Item {
     property string secret: ""
     property string error: ""
     property string saveOrigin: ""
+    property string reloadError: ""
     readonly property bool loading: backend.isPending("advanced-load")
     readonly property bool saving: backend.isPending("advanced-save")
     readonly property bool secretLoading: backend.isPending("advanced-secret")
@@ -22,6 +23,7 @@ Item {
         profile = ({});
         secret = "";
         error = "";
+        reloadError = "";
         controller.bandStatus = null;
     }
     function openSettings(nextSection) {
@@ -46,7 +48,7 @@ Item {
     }
     function applyProfile(value) {
         if (!open || (value.path || "") !== profilePath) return;
-        profile = value; error = "";
+        profile = value; error = reloadError; reloadError = "";
         if (controller.isActive(controller.detailAp))
             controller.loadBandStatus(profilePath);
     }
@@ -80,7 +82,7 @@ Item {
         error = result.available ? "" : "The saved Wi-Fi password is not readable.";
     }
     function handlesCall(id) { return id === "advanced-load" || id === "advanced-save" || id === "advanced-secret"; }
-    function failCall(id, message) {
+    function failCall(id, message, details) {
         if (!handlesCall(id)) return false;
         // A conflict means somebody else changed the profile; reloading is the
         // fix, so say that rather than repeating the daemon's wording.
@@ -89,8 +91,13 @@ Item {
             : message;
         if (id === "advanced-save") {
             saveOrigin = "";
-            if (message.indexOf("conflict:") >= 0 && open && profilePath.length > 0)
+            const partiallySaved = details && details.profile_saved === true;
+            if ((partiallySaved || message.indexOf("conflict:") >= 0) && open && profilePath.length > 0) {
+                // A failed live reapply still changed the saved version. Reload
+                // that token for the next edit, but keep the live-failure warning.
+                reloadError = partiallySaved ? error : "";
                 backend.loadAdvancedProfile(profilePath);
+            }
         }
         return true;
     }

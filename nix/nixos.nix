@@ -15,6 +15,28 @@ in
       description = "Shelllist package to install and run.";
     };
 
+    discovery = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Configure NetworkManager and systemd-resolved for live, opt-in mDNS
+          discovery. Inherited NetworkManager mDNS policy is disabled; enabled
+          Wi-Fi profiles use resolve-only discovery without hostname advertising.
+          Disable this when managing the resolver/network stack separately.
+        '';
+      };
+      openFirewall = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Permit inbound UDP 5353 for multicast DNS replies, including application
+          discovery such as Chromium. Applications using their own mDNS sockets
+          are independent of the system resolver's per-network discovery toggle.
+        '';
+      };
+    };
+
     resources.enableRaplAccess = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -56,6 +78,30 @@ in
     services.dbus.packages = [ cfg.package ];
     security.polkit.enable = true;
     systemd.packages = [ cfg.package ];
+
+    networking.networkmanager = lib.mkIf cfg.discovery.enable {
+      enable = true;
+      dns = "systemd-resolved";
+      connectionConfig.mdns = 0;
+    };
+    services.resolved = lib.mkIf cfg.discovery.enable {
+      enable = true;
+      # A global "no" would veto even explicitly enabled per-link discovery.
+      settings.Resolve.MulticastDNS = "resolve";
+    };
+    networking.firewall.allowedUDPPorts =
+      lib.mkIf (cfg.discovery.enable && cfg.discovery.openFirewall) [ 5353 ];
+
+    assertions = lib.optionals cfg.discovery.enable [
+      {
+        assertion = config.networking.networkmanager.enable
+          && config.networking.networkmanager.dns == "systemd-resolved"
+          && config.networking.networkmanager.connectionConfig.mdns == 0
+          && config.services.resolved.enable
+          && config.services.resolved.settings.Resolve.MulticastDNS == "resolve";
+        message = "Shelllist discovery requires NetworkManager mDNS default 0 and systemd-resolved MulticastDNS=resolve; disable programs.shelllist.discovery.enable to manage these independently.";
+      }
+    ];
 
     services.udev.extraRules = lib.mkIf cfg.resources.enableRaplAccess ''
       ACTION=="add|change", SUBSYSTEM=="powercap", KERNEL=="intel-rapl:*", TEST=="energy_uj", RUN+="${pkgs.coreutils}/bin/chmod 0444 /sys%p/energy_uj"

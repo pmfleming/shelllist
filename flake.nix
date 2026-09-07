@@ -766,6 +766,18 @@
                   { programs.shelllist.enable = true; }
                 ];
               };
+              withoutDiscovery = nixpkgs.lib.nixosSystem {
+                inherit system;
+                modules = [
+                  self.nixosModules.default
+                  {
+                    programs.shelllist = {
+                      enable = true;
+                      discovery.enable = false;
+                    };
+                  }
+                ];
+              };
             in
             pkgs.runCommand "shelllist-module-evaluation" { } ''
               test '${evaluated.config.systemd.user.services.shelllist.serviceConfig.ExecStart}' = '${self.packages.${system}.default}/bin/shelllist run'
@@ -773,6 +785,15 @@
               test '${evaluated.config.systemd.user.services.bar-daemon.environment.BAR_DAEMON_NOTIFICATION_BACKEND}' = 'native'
               test '${builtins.concatStringsSep " " evaluated.config.systemd.user.services.bar-daemon.conflicts}' = 'swaync.service'
               test '${toString evaluated.config.security.polkit.enable}' = '1'
+              test '${toString evaluated.config.networking.networkmanager.enable}' = '1'
+              test '${evaluated.config.networking.networkmanager.dns}' = 'systemd-resolved'
+              test '${toString evaluated.config.networking.networkmanager.connectionConfig.mdns}' = '0'
+              test '${toString evaluated.config.services.resolved.enable}' = '1'
+              test '${evaluated.config.services.resolved.settings.Resolve.MulticastDNS}' = 'resolve'
+              test '${toString (builtins.elem 5353 evaluated.config.networking.firewall.allowedUDPPorts)}' = '1'
+              test '${toString withoutDiscovery.config.services.resolved.enable}' = ""
+              test '${toString withoutDiscovery.config.networking.networkmanager.enable}' = ""
+              test '${toString (builtins.elem 5353 withoutDiscovery.config.networking.firewall.allowedUDPPorts)}' = ""
               test '${toString evaluated.config.programs.shelllist.resources.enableRaplAccess}' = '1'
               printf '%s' ${nixpkgs.lib.escapeShellArg evaluated.config.services.udev.extraRules} \
                 | grep -F 'SUBSYSTEM=="powercap"' >/dev/null

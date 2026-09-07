@@ -191,7 +191,8 @@ Io.DaemonBackend {
     function finish(id, envelope, transportError) {
         if (transportError.length > 0) {
             console.error("shelllist nm request failed id=" + id + " stage=response error=" + transportError);
-            controller.failCall(id, "nm-daemon request failed: " + transportError);
+            controller.failCall(id, "nm-daemon request failed: " + transportError,
+                envelope && envelope.error ? (envelope.error.details || ({})) : ({}));
             return;
         }
         try {

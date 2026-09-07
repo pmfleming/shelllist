@@ -34,7 +34,7 @@ AdvancedSettingsFlickable {
         }
 
         DetailCard {
-            height: Math.max(315, securityFlick.height - 245 - securityCards.spacing)
+            height: Math.max(365, securityFlick.height - 245 - securityCards.spacing)
             title: "Security"
 
             Column {
@@ -71,6 +71,17 @@ AdvancedSettingsFlickable {
                         { value: "permanent", label: "Permanent" }
                     ]
                     onSelected: function (value) { securityFlick.settings.setMacPolicy(value); }
+                }
+
+                ToggleRow {
+                    objectName: "castingToggle"
+                    height: 40
+                    title: "Cast discovery"
+                    subtitle: "System mDNS discovery on this network. Applies immediately."
+                    checked: securityFlick.settings.castingEnabled
+                    enabled: !!securityFlick.settings.profile.path
+                        && !securityFlick.settings.controller.actionInFlight
+                    onClicked: securityFlick.settings.setCastingEnabled(!checked)
                 }
 
                 DetailGrid {
