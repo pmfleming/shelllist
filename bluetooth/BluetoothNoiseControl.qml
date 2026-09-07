@@ -26,18 +26,6 @@ Rectangle {
         anchors.centerIn: parent
         spacing: Ui.Theme.spacingMd
 
-        Image {
-            width: control.iconExtent
-            height: control.iconExtent
-            source: control.activeMode.image
-            sourceSize.width: 256
-            sourceSize.height: 256
-            fillMode: Image.PreserveAspectFit
-            smooth: true
-            mipmap: true
-            Accessible.ignored: true
-        }
-
         Column {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Ui.Theme.spacingXs
@@ -59,6 +47,18 @@ Rectangle {
                 font.weight: Ui.Theme.fontWeightDemiBold
                 Accessible.ignored: true
             }
+        }
+
+        Image {
+            width: control.iconExtent
+            height: control.iconExtent
+            source: control.activeMode.image
+            sourceSize.width: 256
+            sourceSize.height: 256
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            mipmap: true
+            Accessible.ignored: true
         }
     }
 }

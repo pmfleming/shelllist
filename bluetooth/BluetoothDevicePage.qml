@@ -18,17 +18,29 @@ Ui.DetailFlickable {
         return route.is_default ? "Ready · default" : "Ready";
     }
 
-    BluetoothBatteryStatus {
-        id: batteryStatus
-
+    Item {
         width: parent.width
-        device: page.controller.selectedDevice
-    }
+        height: noiseControl.visible
+            ? noiseControl.y + noiseControl.implicitHeight : batteryStatus.implicitHeight
 
-    BluetoothNoiseControl {
-        width: parent.width
-        controller: page.controller
-        referenceArtworkSize: batteryStatus.artworkSize
+        BluetoothBatteryStatus {
+            id: batteryStatus
+
+            width: parent.width
+            height: implicitHeight
+            device: page.controller.selectedDevice
+        }
+
+        BluetoothNoiseControl {
+            id: noiseControl
+
+            width: parent.width
+            height: implicitHeight
+            // Account for the icon's top padding so exactly its top third overlaps.
+            y: batteryStatus.height - iconExtent / 3 - Ui.Theme.spacingSm
+            controller: page.controller
+            referenceArtworkSize: batteryStatus.artworkSize
+        }
     }
 
     Ui.DetailColumnCard {

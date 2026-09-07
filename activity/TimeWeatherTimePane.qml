@@ -99,9 +99,13 @@ Ui.DetailFlickable {
 
             Repeater {
                 model: [
-                    { icon: "󰖙", label: "Day length", value: pane.hasSunTimes
-                        ? Visuals.duration((pane.sunset - pane.sunrise) / 1000) : "—" },
-                    { icon: "󰽤", label: "Moon", value: pane.moon.name,
+                    { daylight: true, label: "Day length", value: pane.hasSunTimes
+                        ? Visuals.duration((pane.sunset - pane.sunrise) / 1000) : "—",
+                        fraction: Visuals.daylightFraction(pane.sunrise, pane.sunset),
+                        available: pane.hasSunTimes,
+                        detail: pane.hasSunTimes ? "of 24 hours" : "Sun times unavailable" },
+                    { daylight: false, label: "Moon", value: pane.moon.name,
+                        fraction: pane.moon.fraction, available: true,
                         detail: pane.moon.illumination + "% illuminated" }
                 ]
                 delegate: Column {
@@ -110,12 +114,16 @@ Ui.DetailFlickable {
                     width: heroTimeMetrics.width / 2
                     spacing: 2
 
-                    Text {
+                    TimeWeatherMetricIcon {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: heroTimeMetric.modelData.icon
-                        color: Ui.Theme.accent
-                        font.family: Ui.Theme.iconFontFamily
-                        font.pixelSize: 28
+                        width: Math.min(56, parent.width - Ui.Theme.spacingSm)
+                        height: width
+                        daylight: heroTimeMetric.modelData.daylight
+                        fraction: heroTimeMetric.modelData.fraction
+                        dataAvailable: heroTimeMetric.modelData.available
+                        description: heroTimeMetric.modelData.label + ": "
+                            + heroTimeMetric.modelData.value + ", "
+                            + heroTimeMetric.modelData.detail
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter

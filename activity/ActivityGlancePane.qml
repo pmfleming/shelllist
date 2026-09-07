@@ -147,8 +147,9 @@ Column {
                     Item {
                         id: weatherVisual
                         anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
+                        // Match the temperature block, not the taller card body.
+                        anchors.top: temperatureSummary.top
+                        anchors.bottom: temperatureSummary.bottom
                         width: 54
 
                         WeatherIcon {

@@ -57,18 +57,25 @@ Ui.ResultRow {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             width: row.scaled(40)
-            spacing: 0
+            spacing: 1
 
-            WeatherIcon {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: row.scaled(34)
-                height: width
-                conditionCode: Number(row.weather.condition_code || 0)
-                daytime: row.weather.is_day !== false
-                description: row.weather.condition || ""
+            // Keep the artwork from pushing the rain caption below the other captions.
+            Item {
+                width: parent.width
+                height: currentTemperature.height
+
+                WeatherIcon {
+                    anchors.centerIn: parent
+                    width: row.scaled(28)
+                    height: width
+                    conditionCode: Number(row.weather.condition_code || 0)
+                    daytime: row.weather.is_day !== false
+                    description: row.weather.condition || ""
+                }
             }
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
+                height: temperatureRange.height
                 spacing: row.scaled(2)
 
                 Image {
@@ -81,6 +88,7 @@ Ui.ResultRow {
                     mipmap: true
                 }
                 Text {
+                    anchors.verticalCenter: parent.verticalCenter
                     text: row.percentage(row.weather.precipitation_probability)
                     color: Ui.Theme.mutedText
                     font.family: Ui.Theme.fontFamily
@@ -103,9 +111,10 @@ Ui.ResultRow {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             width: row.scaled(54)
-            spacing: 0
+            spacing: 1
 
             Text {
+                id: currentTemperature
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 text: row.temperature(row.weather.temperature_c)
@@ -115,6 +124,7 @@ Ui.ResultRow {
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
             Text {
+                id: temperatureRange
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 text: row.temperature(row.weather.high_c) + " "

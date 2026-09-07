@@ -55,6 +55,23 @@ function duration(seconds) {
     const minutes = totalMinutes % 60;
     return hours + " h " + twoDigits(minutes) + " min";
 }
+function daylightFraction(sunriseMs, sunsetMs) {
+    const sunrise = Number(sunriseMs);
+    const sunset = Number(sunsetMs);
+    if (!Number.isFinite(sunrise) || !Number.isFinite(sunset)
+            || sunrise <= 0 || sunset <= sunrise)
+        return 0;
+    return Math.min(1, (sunset - sunrise) / 86400000);
+}
+// Horizontal bounds of the illuminated lunar disc at a normalized vertical position.
+// Waxing illuminates the right limb; waning illuminates the left limb.
+function moonLitBounds(fraction, y) {
+    const limb = Math.sqrt(Math.max(0, 1 - y * y));
+    const phase = ((fraction % 1) + 1) % 1;
+    const terminator = Math.cos(2 * Math.PI * phase) * limb;
+    return phase < 0.5 ? { left: terminator, right: limb }
+        : { left: -limb, right: -terminator };
+}
 function moonPhase(unixMs) {
     const synodicMonth = 29.530588853;
     const referenceNewMoon = Date.UTC(2000, 0, 6, 18, 14, 0);
@@ -64,7 +81,8 @@ function moonPhase(unixMs) {
     const illumination = Math.round((1 - Math.cos(2 * Math.PI * fraction)) * 50);
     const names = ["New moon", "Waxing crescent", "First quarter", "Waxing gibbous",
         "Full moon", "Waning gibbous", "Last quarter", "Waning crescent"];
-    return { name: names[Math.round(fraction * 8) % 8], illumination, age_days: age };
+    return { name: names[Math.round(fraction * 8) % 8], illumination,
+        age_days: age, fraction };
 }
 function windCompass(degrees) {
     const names = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
