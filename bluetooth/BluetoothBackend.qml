@@ -111,8 +111,9 @@ Io.DaemonBackend {
         return routeEvent(event, eventHandlers);
     }
     function applyUnhandledEvent(event) {
-        if (event.event === "unavailable") {
-            controller.status = (event.error && event.error.message) || "BlueZ is unavailable";
+        if (event.event === "unavailable" || event.event === "loading") {
+            controller.invalidateBluetooth((event.error && event.error.message)
+                || (event.event === "loading" ? "Bluetooth is loading…" : "BlueZ is unavailable"));
             return;
         }
         if (event.data && event.data.snapshot) {
@@ -144,7 +145,7 @@ Io.DaemonBackend {
     function handleScanEvent(event) { controller.handleScanEvent(event.data || ({})); }
     function handleAudioEvent(event) {
         if (event.event === "unavailable")
-            controller.audioStatus = (event.error && event.error.message) || "Bluetooth audio is unavailable";
+            controller.invalidateAudio((event.error && event.error.message) || "Bluetooth audio is unavailable");
         else
             controller.applyAudioSnapshot((event.data && event.data.audio_devices) || []);
     }
@@ -159,6 +160,9 @@ Io.DaemonBackend {
     Component.onCompleted: resetTransportState()
 
     function refresh() { return call("snapshot", BtApi.methods.snapshot, {}); }
+    function refreshAudio() {
+        return !isPending("audio-snapshot") && call("audio-snapshot", BtApi.methods.audioSnapshot, {});
+    }
     function cancelActive(kind, requestId, activeItems) {
         if (!requestId || !activeItems[requestId]) {
             console.warn("shelllist bluetooth " + kind + " cancellation rejected request_id="

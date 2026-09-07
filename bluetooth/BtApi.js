@@ -55,6 +55,7 @@ var methods = {
     scan: Protocol.methods["bluetooth.scan"],
     adapterOperation: Protocol.methods["bluetooth.adapter.operation"],
     managementUpdate: Protocol.methods["bluetooth.management.update"],
+    audioSnapshot: Protocol.methods["bluetooth.audio.snapshot"],
     audioSetProfile: Protocol.methods["bluetooth.audio.setProfile"],
     requestsSnapshot: Protocol.methods["bluetooth.requests.snapshot"],
     pairingRespond: Protocol.methods["bluetooth.pairing.respond"],

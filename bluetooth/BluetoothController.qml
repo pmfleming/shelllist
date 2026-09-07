@@ -21,6 +21,7 @@ Ui.ProviderChooserController {
     property var management: ({ launch_state: "remember", reconnect_on_resume: true,
         trust_after_pair: true, preferred_adapter_key: "", show_blocked_devices: false,
         show_recent_devices: false })
+    property bool backendAvailable: false
     property var adapters: []
     property var allDevices: []
     property var audioDevices: []
@@ -49,7 +50,7 @@ Ui.ProviderChooserController {
     readonly property var selectedOperation: operationForDevice(selectedDevice.key)
     readonly property var selectedOperationError: operationErrorForDevice(selectedDevice.key)
     readonly property bool selectedDeviceBusy: !!selectedOperation
-    readonly property bool globalRequestInFlight: backend.requestRunning
+    readonly property bool globalRequestInFlight: !backendAvailable || backend.requestRunning
     actionInFlight: globalRequestInFlight || selectedDeviceBusy || screenshotInFlight
     readonly property bool anyActionInFlight: backend.running || screenshotInFlight
 
@@ -93,7 +94,27 @@ Ui.ProviderChooserController {
         activeScan = null;
         deactivateUiState();
     }
+    function invalidateBluetooth(message) {
+        backendAvailable = false;
+        radio = BluetoothFlow.emptyRadio();
+        adapters = [];
+        allDevices = [];
+        invalidateAudio(message);
+        pairingPrompts = [];
+        respondingPairingId = "";
+        pairingInput = "";
+        activeScan = null;
+        scanRequested = false;
+        operationState.reset();
+        rebuildResults(false);
+        status = message;
+    }
+    function invalidateAudio(message) {
+        audioDevices = [];
+        audioStatus = message;
+    }
     function handleTransportFailure(message) {
+        invalidateBluetooth(message);
         scanRequested = false;
         operationState.reset();
         activeScan = null;
@@ -147,6 +168,9 @@ Ui.ProviderChooserController {
         }
     }
     function applySnapshot(snapshot) {
+        const recovering = !backendAvailable;
+        backendAvailable = true;
+        if (recovering) Qt.callLater(function () { backend.recoverRequests(); backend.refreshAudio(); });
         radio = BluetoothFlow.radioForSnapshot(snapshot);
         adapters = snapshot.adapters || [];
         management = snapshot.management || management;
