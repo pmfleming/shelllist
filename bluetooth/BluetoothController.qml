@@ -303,6 +303,15 @@ Ui.ProviderChooserController {
         status = "Updating default Bluetooth audio route…";
         return backend.setAudioDefault(selectedDevice.key, endpoint.key);
     }
+    function provisionFastPair() {
+        if (!hasSelection || actionInFlight) return false;
+        const caps = selectedDevice.capabilities || ({});
+        if (!selectedDevice.paired && caps.can_pair)
+            return executeDeviceAction("pair", selectedDevice);
+        if (!caps.can_provision_fast_pair) return false;
+        status = "Enabling Fast Pair controls using trusted local metadata…";
+        return backend.deviceOperation("provision-fast-pair", selectedDevice, {});
+    }
     function setNoiseControl(mode) {
         const caps = selectedDevice.capabilities || ({});
         const control = (selectedDevice.fast_pair || {}).noise_control || ({});

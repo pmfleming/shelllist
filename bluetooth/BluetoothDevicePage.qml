@@ -124,6 +124,17 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailCard {
+        visible: !!page.controller.selectedDevice.fast_pair
+        height: visible ? fastPairSetup.implicitHeight + 64 : 0
+        title: "Fast Pair setup"
+        BluetoothFastPairSetup {
+            id: fastPairSetup
+            anchors.fill: parent
+            controller: page.controller
+        }
+    }
+
+    Ui.DetailCard {
         height: devicePolicy.implicitHeight + 64
         title: "Connection policy"
         BluetoothDevicePolicy {
