@@ -63,6 +63,8 @@ expect("fresh reports fill remembered topology without changing its layout",
 expect("legacy remembered earbud types infer a stable two-component layout",
     battery.displayReports({ device_type: "Earbuds", battery: [] })
         .map(value => value.component).join(",") === "left,right");
+expect("charging state is visible in summaries", battery.summary([{component: "left", percentage: 40, charging: true}]) === "L 40% charging");
+expect("missing charging flag is not inferred", battery.summary([{component: "left", percentage: 40}]) === "L 40%");
 const aggregate = [{ component: "main", label: "Battery", percentage: 64, source: "bluez" }];
 expect("aggregate summary remains compact", battery.summary(aggregate) === "64%");
 

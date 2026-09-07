@@ -155,6 +155,7 @@ function compactLabel(report) {
 function summary(reports) {
     return ordered(reports).map(function (report) {
         const label = compactLabel(report);
-        return (label.length > 0 ? label + " " : "") + report.percentage + "%";
+        return (label.length > 0 ? label + " " : "") + report.percentage + "%"
+            + (report.charging === true ? " charging" : "");
     }).join(" · ");
 }

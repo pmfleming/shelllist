@@ -43,6 +43,8 @@ Item {
                 required property var modelData
                 readonly property bool batteryAvailable: BluetoothBattery.isValid(modelData)
                 readonly property real percentage: batteryAvailable ? modelData.percentage : 0
+                readonly property bool charging: !!root.device.battery_live && modelData.charging === true
+                Accessible.name: BluetoothBattery.compactLabel(modelData) + " " + percentage + "%" + (charging ? " charging" : "")
                 readonly property color statusColor: root.ringColor(percentage)
                 readonly property string imageSource: BluetoothBattery.imageFor(root.device, modelData)
                 readonly property int ringSize: root.displayReports.length === 1 ? 126 : 108
@@ -132,7 +134,7 @@ Item {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "󰁹"
+                        text: indicator.charging ? "󰂄" : "󰁹"
                         color: Ui.Theme.readableOn(indicator.statusColor)
                         font.family: Ui.Theme.iconFontFamily
                         font.pixelSize: 17
