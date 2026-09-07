@@ -377,7 +377,7 @@ Ui.ProviderChooserController {
     onModalPromptOpenChanged: if (!modalPromptOpen) Qt.callLater(focusSearchRequested)
     onSelectedResultChanged: pendingConfirmationAction = null
 
-    BluetoothBackend { id: backend; controller: bluetoothController }
+    BluetoothBackend { id: backend; objectName: "bluetoothBackend"; controller: bluetoothController }
     BluetoothOperationController {
         id: operationState
         controller: bluetoothController
