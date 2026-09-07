@@ -101,10 +101,11 @@ const allDevices = flow.devicesForView([
     { key: "nearby", paired: false, blocked: false, present: true },
     { key: "blocked", paired: false, blocked: true, present: false },
     { key: "recent", paired: false, blocked: false, present: false }
-], "all", { show_recent_devices: true });
+], "all", { show_recent_devices: true, show_blocked_devices: true });
 expect("Search all includes paired, nearby, blocked, and retained devices", allDevices.length === 4);
 const currentDevices = flow.devicesForView(allDevices, "all", { show_recent_devices: false });
-expect("Search all always includes blocked devices", currentDevices.some(device => device.key === "blocked"));
+expect("Search all honors hidden blocked devices", !currentDevices.some(device => device.key === "blocked"));
+expect("blocked paired devices can be managed from My Devices", flow.devicesForView([{key: "blocked", paired: true, blocked: true}], "mine", {show_blocked_devices: true}).length === 1);
 expect("Search all can hide an unblocked stale device", !currentDevices.some(device => device.key === "recent"));
 expect("radio status distinguishes hardware blocks", flow.radioStatus({ hard_blocked: true }, false, false, 0).includes("hardware switch"));
 expect("radio status distinguishes missing adapters", flow.radioStatus({ available: false, adapter_count: 0 }, false, false, 0) === "No Bluetooth adapters available");

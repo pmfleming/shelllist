@@ -24,6 +24,11 @@ ColumnLayout {
         state: { checked: controller.management.reconnect_on_resume !== false },
         enabled: !controller.globalRequestInFlight
     }, {
+        id: "blocked", label: "Show blocked devices",
+        subtitle: "Include blocked devices so they can be unblocked",
+        state: { checked: !!controller.management.show_blocked_devices },
+        enabled: !controller.globalRequestInFlight
+    }, {
         id: "recent", label: "Keep recently found devices",
         subtitle: "Retain cached devices in Search all",
         state: { checked: !!controller.management.show_recent_devices },
@@ -107,6 +112,8 @@ ColumnLayout {
             controller.setTrustAfterPair(!controller.trustAfterPair);
         else if (actionId === "reconnect")
             controller.updateManagement({ reconnect_on_resume: controller.management.reconnect_on_resume === false });
+        else if (actionId === "blocked")
+            controller.updateManagement({ show_blocked_devices: !controller.management.show_blocked_devices });
         else if (actionId === "recent")
             controller.updateManagement({ show_recent_devices: !controller.management.show_recent_devices });
     }
@@ -221,7 +228,7 @@ ColumnLayout {
 
     Ui.DetailColumnCard {
         Layout.fillWidth: true
-        Layout.preferredHeight: 290
+        Layout.preferredHeight: 350
         title: "Bluetooth behavior"
 
         Ui.ActionToggleList {

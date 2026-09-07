@@ -111,7 +111,12 @@ function devicesForView(devices, scope, policy) {
     const predicate = scope === "all"
         ? function (device) { return isDiscoverableDevice(device, showRecent); }
         : isKnownDevice;
-    return (devices || []).filter(predicate);
+    const showBlocked = !!policy && !!policy.show_blocked_devices;
+    return (devices || []).filter(function (device) {
+        if (device.blocked)
+            return showBlocked && (scope === "all" || device.paired || device.connected);
+        return predicate(device);
+    });
 }
 function adapterLabel(adapter) {
     return adapter.alias || adapter.name || "Bluetooth adapter";

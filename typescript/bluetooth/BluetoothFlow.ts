@@ -121,7 +121,11 @@ function devicesForView(devices: any, scope: any, policy: any) {
     const predicate = scope === "all"
         ? function (device: any) { return isDiscoverableDevice(device, showRecent); }
         : isKnownDevice;
-    return (devices || []).filter(predicate);
+    const showBlocked = !!policy && !!policy.show_blocked_devices;
+    return (devices || []).filter(function (device: any) {
+        if (device.blocked) return showBlocked && (scope === "all" || device.paired || device.connected);
+        return predicate(device);
+    });
 }
 
 function adapterLabel(adapter: any) {
