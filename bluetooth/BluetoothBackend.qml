@@ -174,6 +174,12 @@ Io.DaemonBackend {
             console.info("shelllist bluetooth " + kind + " cancellation requested request_id=" + requestId);
         return accepted;
     }
+    function updateDevicePolicy(deviceKey, values) {
+        return call("device-policy", BtApi.methods.devicePolicyUpdate, Object.assign({ key: deviceKey }, values));
+    }
+    function setAudioDefault(deviceKey, endpointKey) {
+        return call("audio-set-default", BtApi.methods.audioSetDefault, { device_key: deviceKey, endpoint_key: endpointKey });
+    }
     function setAudioProfile(deviceKey, profileKey) { return call("audio-set-profile", BtApi.methods.audioSetProfile, { device_key: deviceKey, profile_key: profileKey }); }
     function recoverRequests() {
         if (isPending("requests")) return false;

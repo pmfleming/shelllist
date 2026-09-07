@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
+import "BluetoothNoiseControl.js" as NoiseControl
 
 Ui.DetailFlickable {
     id: page
@@ -45,7 +46,7 @@ Ui.DetailFlickable {
 
     Ui.DetailColumnCard {
         visible: page.hasAudio
-        height: visible ? 190 : 0
+        height: visible ? 240 : 0
         title: "Audio profile"
         contentSpacing: Ui.Theme.spacingMd
 
@@ -64,6 +65,24 @@ Ui.DetailFlickable {
             }
         }
 
+        RowLayout {
+            Layout.fillWidth: true
+            Ui.ActionButton {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Ui.Theme.compactControlHeight
+                label: "Use as output"
+                enabled: !page.controller.actionInFlight && !!page.controller.selectedSink.ready && !page.controller.selectedSink.is_default
+                onClicked: page.controller.setAudioDefault(page.controller.selectedSink)
+            }
+            Ui.ActionButton {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Ui.Theme.compactControlHeight
+                label: "Use as input"
+                enabled: !page.controller.actionInFlight && !!page.controller.selectedSource.ready && !page.controller.selectedSource.is_default
+                onClicked: page.controller.setAudioDefault(page.controller.selectedSource)
+            }
+        }
+
         Ui.DetailGrid {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -73,6 +92,44 @@ Ui.DetailFlickable {
                 { label: "Output", value: page.routeLabel(page.controller.selectedSink, page.controller.selectedAudio.sink !== null && page.controller.selectedAudio.sink !== undefined) },
                 { label: "Input", value: page.routeLabel(page.controller.selectedSource, page.controller.selectedAudio.source !== null && page.controller.selectedAudio.source !== undefined) }
             ]
+        }
+    }
+
+    Ui.DetailColumnCard {
+        id: soundCard
+        readonly property var control: (page.controller.selectedDevice.fast_pair || {}).noise_control || ({})
+        readonly property var caps: page.controller.selectedDevice.capabilities || ({})
+        visible: NoiseControl.isAdvertised(control)
+        height: visible ? 155 : 0
+        title: "Sound isolation control"
+        Ui.DropDownList {
+            Layout.fillWidth: true
+            Layout.preferredHeight: Ui.Theme.compactControlHeight
+            options: NoiseControl.availableModes(soundCard.control).map(function (mode) {
+                return { value: mode.value, label: mode.label, enabled: (soundCard.control.settable_modes || []).includes(mode.value) };
+            })
+            value: soundCard.control.active_mode || ""
+            interactive: !page.controller.actionInFlight && !!soundCard.caps.can_set_noise_control
+            onSelected: function (mode) { page.controller.setNoiseControl(mode); }
+        }
+        Text {
+            Layout.fillWidth: true
+            text: soundCard.caps.can_set_noise_control ? "Only modes currently allowed by the earbuds can be selected."
+                : ((soundCard.caps.unsupported_reasons || {}).set_noise_control || "Fast Pair account-key provisioning is required.")
+            wrapMode: Text.WordWrap
+            color: Ui.Theme.mutedText
+            font.family: Ui.Theme.fontFamily
+            font.pixelSize: Ui.Theme.fontSizeSmall
+        }
+    }
+
+    Ui.DetailCard {
+        height: devicePolicy.implicitHeight + 64
+        title: "Connection policy"
+        BluetoothDevicePolicy {
+            id: devicePolicy
+            anchors.fill: parent
+            controller: page.controller
         }
     }
 

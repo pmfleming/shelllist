@@ -222,7 +222,7 @@ function directActionRequest(actionId: any, device: any, trustAfterPair: any) {
         return null;
     const verb = actionId === "forget" ? "Forgetting" : operation.charAt(0).toUpperCase() + operation.slice(1);
     return { operation: operation,
-        values: operation === "pair" ? { trust_after_pair: trustAfterPair } : ({}),
+        values: operation === "pair" && !device.policy ? { trust_after_pair: trustAfterPair } : ({}),
         status: verb + " " + device.name + "…" };
 }
 
