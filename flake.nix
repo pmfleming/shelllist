@@ -948,6 +948,8 @@
             ln -sfn ${./bar} test-root/qml/Shelllist/Bar
             ln -s ${./clipboard} test-root/clipboard
             ln -s ${./wifi} test-root/wifi
+            ln -s ${./bluetooth} test-root/bluetooth
+            ln -s ${./launcher} test-root/launcher
             export HOME=$TMPDIR
             export XDG_CACHE_HOME=$TMPDIR/cache
             QT_QPA_PLATFORM=offscreen qmltestrunner \
