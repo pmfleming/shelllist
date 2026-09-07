@@ -64,11 +64,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788384763,
-        "narHash": "sha256-WYHTlbTBmZkVoCKl1fIvfG6qMYr8EYtLDutvw3EuoK8=",
+        "lastModified": 1788816283,
+        "narHash": "sha256-6AlQejRIxhQHuz1vkIvPOphcvIqmaNFb08aTIcPqIjM=",
         "ref": "main",
-        "rev": "fab8f38b0dbc8f8ad16e90b12b40b3fa9dea0ff7",
-        "revCount": 77,
+        "rev": "0f06566eb0ad0a32d10c76617044c1ddb1529d29",
+        "revCount": 99,
         "type": "git",
         "url": "file:../bt-daemon"
       },
