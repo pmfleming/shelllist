@@ -34,9 +34,10 @@ Ui.DetailFlickable {
 
     Ui.DetailCard {
         visible: page.hasAudio
-        height: visible ? 190 : 0
+        height: visible ? 230 : 0
         title: "Audio state"
         entries: [
+            { label: "Last audio switch", value: BluetoothFlow.audioSwitchStatus((page.controller.selectedDevice.fast_pair || {}).last_switch) },
             { label: "Profile", value: page.controller.activeAudioProfile.label || "Unavailable" },
             { label: "Codec", value: page.controller.activeAudioProfile.codec || "Unavailable" },
             { label: "Output", value: page.routeState(page.controller.selectedSink, page.hasSink) },

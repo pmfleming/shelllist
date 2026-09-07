@@ -231,6 +231,14 @@ function deviceActionRequest(actionId, device, trustAfterPair) {
         || toggleActionRequest(actionId, device)
         || (actionId === "multipoint" ? multipointActionRequest(device) : null);
 }
+function audioSwitchStatus(event) {
+    if (!event)
+        return "No switch reported";
+    const activity = event.reason === "call" ? "Call" : (event.reason === "media" ? "Media" : "Audio");
+    const target = event.target === "this-device" ? "this computer"
+        : (event.target === "another-device" ? "another connected device" : "an unknown device");
+    return activity + " switched to " + target;
+}
 function deviceState(device) {
     if (device.blocked)
         return "Blocked";

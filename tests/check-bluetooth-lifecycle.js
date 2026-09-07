@@ -69,6 +69,9 @@ transition = flow.pairingTransition(requested.data, {
 });
 expect("matching timeout closes prompt", transition.changed && transition.prompt === null);
 
+expect("multipoint explains audio moving to a phone", flow.audioSwitchStatus({reason: "call", target: "another-device"}) === "Call switched to another connected device");
+expect("multipoint explains audio returning locally", flow.audioSwitchStatus({reason: "media", target: "this-device"}) === "Media switched to this computer");
+expect("missing switch reports are not invented", flow.audioSwitchStatus(null) === "No switch reported");
 expect("running operation is active", flow.isActiveOperation({ state: "running" }));
 expect("completed operation is terminal", flow.isTerminalOperation({ state: "completed" }));
 expect("running operation is not terminal", !flow.isTerminalOperation({ state: "running" }));
