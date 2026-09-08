@@ -22,8 +22,11 @@ Item {
             id: stderrCollector
             waitForEnd: command.stderrWaitForEnd
         }
-        onExited: function (exitCode) {
+        // Quickshell's qmltypes omit QProcess::ExitStatus; keep this scoped.
+        // qmllint disable signal-handler-parameters
+        onExited: function (exitCode: int): void {
             command.finished(exitCode, stdoutCollector.text, stderrCollector.text);
-        } // qmllint disable signal-handler-parameters
+        }
+        // qmllint enable signal-handler-parameters
     }
 }

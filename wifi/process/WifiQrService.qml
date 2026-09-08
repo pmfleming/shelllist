@@ -117,9 +117,12 @@ Item {
             renderer.write(qr.payload);
             renderer.stdinEnabled = false;
         }
-        onExited: function (exitCode) {
+        // Quickshell's qmltypes omit QProcess::ExitStatus; keep this scoped.
+        // qmllint disable signal-handler-parameters
+        onExited: function (exitCode: int): void {
             qr.finishRendering(exitCode);
-        } // qmllint disable signal-handler-parameters
+        }
+        // qmllint enable signal-handler-parameters
     }
 
     Process {
@@ -136,8 +139,10 @@ Item {
             id: scannerError
             waitForEnd: true
         }
-        onExited: function (exitCode) {
+        // qmllint disable signal-handler-parameters
+        onExited: function (exitCode: int): void {
             qr.finishScanning(exitCode);
-        } // qmllint disable signal-handler-parameters
+        }
+        // qmllint enable signal-handler-parameters
     }
 }

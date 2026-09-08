@@ -20,8 +20,9 @@ Item {
     }
     Process {
         id: process
-        onExited: function (exitCode) {
-            client.applyPending();
-        } // qmllint disable signal-handler-parameters
+        // Quickshell's qmltypes omit QProcess::ExitStatus; keep this scoped.
+        // qmllint disable signal-handler-parameters
+        onExited: client.applyPending()
+        // qmllint enable signal-handler-parameters
     }
 }

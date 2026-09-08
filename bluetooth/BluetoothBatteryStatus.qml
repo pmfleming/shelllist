@@ -101,11 +101,13 @@ Item {
                 }
 
                 Image {
+                    objectName: "batteryArtwork-" + indicator.modelData.component
                     x: ring.x + Math.round((ring.width - width) / 2)
                     y: ring.y + Math.round((ring.height - height) / 2)
                     width: root.artworkSize
                     height: root.artworkSize
                     source: indicator.imageSource
+                    asynchronous: true
                     sourceSize.width: 180
                     sourceSize.height: 180
                     fillMode: Image.PreserveAspectFit

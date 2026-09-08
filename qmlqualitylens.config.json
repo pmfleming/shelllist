@@ -59,7 +59,9 @@
   "external_modules": ["QtTest"],
   "external_types": ["GlobalShortcut", "IconImage", "IpcHandler", "PanelWindow", "RectangularShadow", "Region", "ScriptAction", "Settings", "Shortcut", "SignalSpy", "TestCase", "TextMetrics", "Variants"],
   "reports": {
-    "qmlbench": "target/performance/qmlbench.json"
+    "qmlbench": "target/performance/qmlbench.json",
+    "coverage": "target/profiling/coverage.json",
+    "qml_profiler": "target/profiling/runtime.json"
   },
   "benchmark_policy": {
     "max_regression_percent": 10,
@@ -82,7 +84,7 @@
       "import_paths": ["qml"]
     },
     "qmltestrunner": {
-      "command": "tests/run-qmlquality-tests.sh",
+      "command": "tests/profile-qml.py",
       "check": true,
       "environment": { "QT_QPA_PLATFORM": "offscreen" }
     },
