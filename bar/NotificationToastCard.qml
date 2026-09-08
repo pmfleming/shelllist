@@ -11,27 +11,13 @@ Rectangle {
     required property BarController controller
     property int groupCount: 1
     property bool breakoutVisible: false
-    readonly property var actions: Array.isArray(notification.actions)
-        ? notification.actions.filter(function (action) { return !card.isReplyAction(action); }) : []
-    readonly property var replyAction: Array.isArray(notification.actions)
-        ? notification.actions.find(function (action) { return card.isReplyAction(action); }) || null
-        : null
+    readonly property var actions: Ui.NotificationPresentation.standardActions(notification)
+    readonly property var replyAction: Ui.NotificationPresentation.replyAction(notification)
     readonly property int urgency: notification.hints ? Number(notification.hints.urgency || 0) : 0
     readonly property string iconSource: resolveIconSource()
     property bool removing: false
 
     signal breakoutRequested
-
-    FontMetrics {
-        id: actionFont
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeBody
-    }
-
-    function isReplyAction(action: var): bool {
-        const key = String(action && action.key || "").toLowerCase();
-        return key.indexOf("reply") >= 0;
-    }
 
     function resolveIconSource(): string {
         const hints = notification.hints || ({});
@@ -88,23 +74,10 @@ Rectangle {
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                 }
-                Rectangle {
-                    visible: card.groupCount > 1
-                    width: 18
-                    height: 18
-                    radius: 9
+                Ui.GroupCountBadge {
+                    count: card.groupCount
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
-                    color: Ui.Theme.accent
-                    border.color: Ui.Theme.surfaceRaised
-                    border.width: 2
-                    Ui.ThemeText {
-                        anchors.centerIn: parent
-                        text: card.groupCount > 9 ? "9+" : String(card.groupCount)
-                        color: Ui.Theme.accentText
-                        font.pixelSize: 9
-                        font.weight: Ui.Theme.fontWeightBold
-                    }
                 }
             }
 
@@ -172,24 +145,11 @@ Rectangle {
             elide: Text.ElideRight
         }
 
-        Flow {
+        Ui.NotificationActionList {
             width: parent.width
-            visible: card.actions.length > 0
-            spacing: Ui.Theme.spacingSm
-            Repeater {
-                model: card.actions
-                Ui.ActionButton {
-                    required property var modelData
-                    width: Math.min(bodyColumn.width, Math.max(74,
-                        Math.min(150, String(modelData.label || "Action").length * 8 + 24)))
-                    height: 34
-                    label: actionFont.elidedText(String(modelData.label || "Action"),
-                        Qt.ElideRight, width - 20)
-                    accessibleName: modelData.label || "Action"
-                    toolTip: accessibleName
-                    onClicked: card.controller.invokeNotificationAction(
-                        card.notification.id, modelData.key)
-                }
+            actions: card.actions
+            onTriggered: function (actionKey) {
+                card.controller.invokeNotificationAction(card.notification.id, actionKey);
             }
         }
 

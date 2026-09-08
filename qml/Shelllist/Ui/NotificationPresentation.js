@@ -4,6 +4,22 @@ function notificationFor(record) {
     return record && record.notification ? record.notification : (record || ({}));
 }
 
+function isReplyAction(action) {
+    return String(action && action.key || "").toLowerCase().indexOf("reply") >= 0;
+}
+
+function notificationActions(notification) {
+    return Array.isArray(notification.actions) ? notification.actions : [];
+}
+
+function standardActions(notification) {
+    return notificationActions(notification).filter(function (action) { return !isReplyAction(action); });
+}
+
+function replyAction(notification) {
+    return notificationActions(notification).find(isReplyAction) || null;
+}
+
 function groupKey(record) {
     const notification = notificationFor(record);
     const hints = notification.hints || ({});

@@ -19,23 +19,10 @@ Rectangle {
     property bool groupToggleVisible: false
     readonly property var notification: Ui.NotificationPresentation.notificationFor(record)
     readonly property bool active: notificationState.isActive(notification.id)
-    readonly property var actions: Array.isArray(notification.actions)
-        ? notification.actions.filter(function (action) { return !row.isReplyAction(action); }) : []
-    readonly property var replyAction: Array.isArray(notification.actions)
-        ? notification.actions.find(function (action) { return row.isReplyAction(action); }) || null
-        : null
+    readonly property var actions: Ui.NotificationPresentation.standardActions(notification)
+    readonly property var replyAction: Ui.NotificationPresentation.replyAction(notification)
 
     signal groupToggled
-
-    FontMetrics {
-        id: actionFont
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeBody
-    }
-
-    function isReplyAction(action: var): bool {
-        return String(action && action.key || "").toLowerCase().indexOf("reply") >= 0;
-    }
 
     function iconSource(): string {
         const hints = notification.hints || ({});
@@ -82,23 +69,11 @@ Rectangle {
                     asynchronous: true
                 }
 
-                Rectangle {
-                    visible: row.groupToggleVisible && row.groupCount > 1
-                    width: 18
-                    height: 18
-                    radius: 9
+                Ui.GroupCountBadge {
+                    count: row.groupCount
+                    visible: row.groupToggleVisible && count > 1
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
-                    color: Ui.Theme.accent
-                    border.color: Ui.Theme.surfaceRaised
-                    border.width: 2
-                    Ui.ThemeText {
-                        anchors.centerIn: parent
-                        text: row.groupCount > 9 ? "9+" : String(row.groupCount)
-                        color: Ui.Theme.accentText
-                        font.pixelSize: 9
-                        font.weight: Ui.Theme.fontWeightBold
-                    }
                 }
             }
 
@@ -179,25 +154,17 @@ Rectangle {
             onTriggered: row.bodyExpanded = !row.bodyExpanded
         }
 
-        Flow {
-            id: actionsFlow
+        Ui.NotificationActionList {
             width: parent.width
-            visible: row.active && row.actions.length > 0
-            spacing: Ui.Theme.spacingSm
-            Repeater {
-                model: row.actions
-                Ui.ActionButton {
-                    required property var modelData
-                    width: Math.min(actionsFlow.width, Math.max(68, Math.min(130,
-                        String(modelData.label || "Action").length * 7 + 22)))
-                    height: 32
-                    label: actionFont.elidedText(String(modelData.label || "Action"),
-                        Qt.ElideRight, width - 20)
-                    accessibleName: modelData.label || "Action"
-                    toolTip: accessibleName
-                    onClicked: row.notificationState.invokeNotificationAction(
-                        row.notification.id, modelData.key)
-                }
+            visible: row.active && actions.length > 0
+            actions: row.actions
+            minimumButtonWidth: 68
+            maximumButtonWidth: 130
+            characterWidth: 7
+            horizontalPadding: 22
+            controlHeight: 32
+            onTriggered: function (actionKey) {
+                row.notificationState.invokeNotificationAction(row.notification.id, actionKey);
             }
         }
 
