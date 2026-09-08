@@ -4,6 +4,7 @@ interface MoonPhase {
     name: string;
     illumination: number;
     age_days: number;
+    fraction: number;
 }
 
 const ICON_BY_CODE: Readonly<Record<number, string>> = {
@@ -18,6 +19,45 @@ const ICON_BY_CODE: Readonly<Record<number, string>> = {
     98: "thunderstorms", 99: "thunderstorms"
 };
 const PERIOD_ICONS = ["clear", "partly-cloudy", "overcast", "fog", "thunderstorms"];
+type WeatherValue = Readonly<Record<string, unknown>>;
+
+function numberLabel(value: unknown, suffix: string): string {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.round(number) + suffix : "—";
+}
+
+function conditionCode(value: unknown): number {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : -1;
+}
+
+function futureHours(hours: WeatherValue[], nowMs: number): WeatherValue[] {
+    const cutoff = nowMs - 15 * 60 * 1000;
+    const future = hours.filter(hour => Number(hour.time_unix_ms || 0) >= cutoff);
+    return (future.length > 0 ? future : hours).slice(0, 8);
+}
+
+function collectionNumbers(values: WeatherValue[], field: string): number[] {
+    return (values || []).map(value => Number(value[field] || 0)).filter(Number.isFinite);
+}
+
+function collectionMinimum(values: WeatherValue[], field: string): number {
+    const numbers = collectionNumbers(values, field);
+    return numbers.length ? Math.min.apply(null, numbers) : 0;
+}
+
+function collectionMaximum(values: WeatherValue[], field: string): number {
+    const numbers = collectionNumbers(values, field);
+    return numbers.length ? Math.max.apply(null, numbers) : 1;
+}
+
+function temperatureY(value: unknown, minimum: number, maximum: number): number {
+    return 143 - (Number(value || 0) - minimum) / Math.max(1, maximum - minimum) * 66;
+}
+
+function weatherTime(unixMs: Numeric, weather: WeatherValue): string {
+    return localTime(unixMs, Number(weather.utc_offset_seconds || 0));
+}
 
 function iconName(code: Numeric, isDay?: boolean | null): string {
     const name = ICON_BY_CODE[Number(code)] || "not-available";
@@ -69,6 +109,25 @@ function duration(seconds: Numeric): string {
     return hours + " h " + twoDigits(minutes) + " min";
 }
 
+function daylightFraction(sunriseMs: Numeric, sunsetMs: Numeric): number {
+    const sunrise = Number(sunriseMs);
+    const sunset = Number(sunsetMs);
+    if (!Number.isFinite(sunrise) || !Number.isFinite(sunset)
+            || sunrise <= 0 || sunset <= sunrise)
+        return 0;
+    return Math.min(1, (sunset - sunrise) / 86400000);
+}
+
+// Horizontal bounds of the illuminated lunar disc at a normalized vertical position.
+// Waxing illuminates the right limb; waning illuminates the left limb.
+function moonLitBounds(fraction: number, y: number): { left: number; right: number } {
+    const limb = Math.sqrt(Math.max(0, 1 - y * y));
+    const phase = ((fraction % 1) + 1) % 1;
+    const terminator = Math.cos(2 * Math.PI * phase) * limb;
+    return phase < 0.5 ? { left: terminator, right: limb }
+        : { left: -limb, right: -terminator };
+}
+
 function moonPhase(unixMs: Numeric): MoonPhase {
     const synodicMonth = 29.530588853;
     const referenceNewMoon = Date.UTC(2000, 0, 6, 18, 14, 0);
@@ -78,7 +137,8 @@ function moonPhase(unixMs: Numeric): MoonPhase {
     const illumination = Math.round((1 - Math.cos(2 * Math.PI * fraction)) * 50);
     const names = ["New moon", "Waxing crescent", "First quarter", "Waxing gibbous",
         "Full moon", "Waning gibbous", "Last quarter", "Waning crescent"];
-    return { name: names[Math.round(fraction * 8) % 8], illumination, age_days: age };
+    return { name: names[Math.round(fraction * 8) % 8], illumination,
+        age_days: age, fraction };
 }
 
 function windCompass(degrees: Numeric): string {

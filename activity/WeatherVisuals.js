@@ -13,6 +13,36 @@ const ICON_BY_CODE = {
     98: "thunderstorms", 99: "thunderstorms"
 };
 const PERIOD_ICONS = ["clear", "partly-cloudy", "overcast", "fog", "thunderstorms"];
+function numberLabel(value, suffix) {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.round(number) + suffix : "—";
+}
+function conditionCode(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : -1;
+}
+function futureHours(hours, nowMs) {
+    const cutoff = nowMs - 15 * 60 * 1000;
+    const future = hours.filter(hour => Number(hour.time_unix_ms || 0) >= cutoff);
+    return (future.length > 0 ? future : hours).slice(0, 8);
+}
+function collectionNumbers(values, field) {
+    return (values || []).map(value => Number(value[field] || 0)).filter(Number.isFinite);
+}
+function collectionMinimum(values, field) {
+    const numbers = collectionNumbers(values, field);
+    return numbers.length ? Math.min.apply(null, numbers) : 0;
+}
+function collectionMaximum(values, field) {
+    const numbers = collectionNumbers(values, field);
+    return numbers.length ? Math.max.apply(null, numbers) : 1;
+}
+function temperatureY(value, minimum, maximum) {
+    return 143 - (Number(value || 0) - minimum) / Math.max(1, maximum - minimum) * 66;
+}
+function weatherTime(unixMs, weather) {
+    return localTime(unixMs, Number(weather.utc_offset_seconds || 0));
+}
 function iconName(code, isDay) {
     const name = ICON_BY_CODE[Number(code)] || "not-available";
     if (PERIOD_ICONS.indexOf(name) < 0)
@@ -59,7 +89,7 @@ function daylightFraction(sunriseMs, sunsetMs) {
     const sunrise = Number(sunriseMs);
     const sunset = Number(sunsetMs);
     if (!Number.isFinite(sunrise) || !Number.isFinite(sunset)
-            || sunrise <= 0 || sunset <= sunrise)
+        || sunrise <= 0 || sunset <= sunrise)
         return 0;
     return Math.min(1, (sunset - sunrise) / 86400000);
 }

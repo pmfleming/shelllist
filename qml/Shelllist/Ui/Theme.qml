@@ -38,6 +38,15 @@ Item {
     readonly property color controlBackground: surfaceRaised
     readonly property color controlBorder: mix(border, text, 0.16)
 
+    // Forecast artwork has a dark backdrop independently of the desktop palette.
+    readonly property color weatherHeroText: "#f4f7fb"
+    readonly property color weatherHeroSecondaryText: "#d6dfec"
+    readonly property color weatherHeroMutedText: "#aebdd0"
+    readonly property color weatherHeroTemperature: "#ffffff"
+    readonly property color weatherHeroMetricText: "#e2e9f2"
+    readonly property color weatherHeroBorder: Qt.rgba(1, 1, 1, 0.12)
+    readonly property color weatherPrecipitation: Qt.rgba(47 / 255, 140 / 255, 1, 0.22)
+
     readonly property string fontFamily: envText("SHELLLIST_FONT") || "Noto Sans"
     readonly property string iconFontFamily: envText("SHELLLIST_ICON_FONT") || "JetBrainsMono Nerd Font"
 

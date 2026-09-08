@@ -7,6 +7,12 @@ internal NotificationDndDuration NotificationDndDuration.qml
 internal ActivitySchedulePane ActivitySchedulePane.qml
 internal ActivityWeatherPane ActivityWeatherPane.qml
 internal WeatherIcon WeatherIcon.qml
+internal WeatherLocationCard WeatherLocationCard.qml
+internal WeatherLocationRail WeatherLocationRail.qml
+internal WeatherHero WeatherHero.qml
+internal WeatherHourlyForecast WeatherHourlyForecast.qml
+internal WeatherDailyForecast WeatherDailyForecast.qml
+internal WeatherMetrics WeatherMetrics.qml
 internal ActivityTodoSection ActivityTodoSection.qml
 internal TimeWeatherDetails TimeWeatherDetails.qml
 internal TimeWeatherListPane TimeWeatherListPane.qml
