@@ -67,6 +67,15 @@
     "min_samples": 10
   },
   "tools": {
+    "parser_oracle": {
+      "check": true,
+      "qmldom_command": "qmldom",
+      "tree_sitter": true
+    },
+    "qmlformat": {
+      "check": true,
+      "command": "qmlformat"
+    },
     "qmllint": {
       "command": "tests/run-qmlquality-lint.sh",
       "check": true,
