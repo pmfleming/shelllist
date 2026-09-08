@@ -77,7 +77,6 @@ AdvancedSettingsFlickable {
                     objectName: "castingToggle"
                     height: 40
                     title: "Cast discovery"
-                    subtitle: "System mDNS discovery on this network. Applies immediately."
                     checked: securityFlick.settings.castingEnabled
                     enabled: !!securityFlick.settings.profile.path
                         && !securityFlick.settings.controller.actionInFlight
