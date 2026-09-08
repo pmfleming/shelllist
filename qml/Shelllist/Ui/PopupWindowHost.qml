@@ -7,6 +7,7 @@ import Shelllist.Io as Io
 import Quickshell.Wayland
 import QtQuick
 import "HyprlandDispatch.js" as HyprlandDispatch
+import "../Io/HyprlandWorkArea.js" as WorkArea
 
 Item {
     id: host
@@ -24,6 +25,7 @@ Item {
     property real windowHeightRatio: Theme.popupHeightRatio
     property int windowTopInset: 0
     property int windowBottomInset: 0
+    property bool fitToWorkspace: false
     property string contentAlignment: "center"
     property string defaultLaunchMode: "popover"
     property bool popoverVisible: false
@@ -41,14 +43,25 @@ Item {
     readonly property bool popoverMode: launchMode === "popover"
     readonly property bool floatingMode: !popoverMode
     readonly property bool popoverWindowVisible: popoverMode && popoverVisible
-    readonly property bool uiActive: floatingMode || popoverWindowVisible
+        && (!workspaceClient.active || workspaceClient.ready)
+    readonly property bool uiActive: floatingMode || (popoverMode && popoverVisible)
     readonly property bool noAnimations: Theme.noAnimations
     readonly property var placementScreen: floatingMode
         ? (floatingWindow && floatingWindow.screen ? floatingWindow.screen : null)
         : (popoverAnchor && popoverAnchor.screen ? popoverAnchor.screen : null)
-    readonly property int currentWindowHeight: windowTopInset > 0 || windowBottomInset > 0
-        ? Math.max(1, Math.round(screenGeometry().height - windowTopInset - windowBottomInset))
-        : Math.round(screenGeometry().height * windowHeightRatio)
+    readonly property var workspaceArea: fitToWorkspace && Theme.hyprland
+        ? WorkArea.rectangle(screenGeometry(), workspaceClient.insets) : null
+    readonly property real availableWindowWidth: workspaceArea ? workspaceArea.width : screenGeometry().width
+    readonly property real renderSurfaceWidth: workspaceArea
+        ? Math.min(surfaceWindowWidth, workspaceArea.width) : surfaceWindowWidth
+    readonly property real renderContentWidth: Math.min(currentWindowWidth, renderSurfaceWidth)
+    readonly property bool workspaceRightAnchored: workspaceArea !== null && contentAlignment === "right"
+    readonly property int currentWindowHeight: workspaceArea ? workspaceArea.height
+        : windowTopInset > 0 || windowBottomInset > 0
+            ? Math.max(1, Math.round(screenGeometry().height - windowTopInset - windowBottomInset))
+            : Math.round(screenGeometry().height * windowHeightRatio)
+    readonly property real placementX: targetWindowX()
+    readonly property real placementY: targetWindowY()
 
     signal uiActivated(string workspaceId)
     signal uiDeactivated
@@ -91,14 +104,22 @@ Item {
     }
 
     function targetLayerMarginX() {
+        if (workspaceArea) {
+            if (contentAlignment === "right")
+                return screenGeometry().width - workspaceArea.right - renderSurfaceWidth;
+            if (contentAlignment === "left")
+                return workspaceArea.left;
+            return workspaceArea.left + Math.round((workspaceArea.width - renderSurfaceWidth) / 2);
+        }
         if (contentAlignment === "right")
             return Math.max(Theme.contentMargin,
-                Math.round(screenGeometry().width - surfaceWindowWidth - Theme.contentMargin));
+                Math.round(screenGeometry().width - renderSurfaceWidth - Theme.contentMargin));
         if (contentAlignment === "left")
             return Theme.contentMargin;
-        return Math.round((screenGeometry().width - surfaceWindowWidth) / 2);
+        return Math.round((screenGeometry().width - renderSurfaceWidth) / 2);
     }
     function targetLayerMarginY() {
+        if (workspaceArea) return workspaceArea.top;
         return windowTopInset > 0 || windowBottomInset > 0
             ? windowTopInset
             : Math.round((screenGeometry().height - currentWindowHeight) / 2);
@@ -107,10 +128,10 @@ Item {
     function targetWindowY() { return screenGeometry().y + targetLayerMarginY(); }
     function contentOffsetX() {
         if (contentAlignment === "right")
-            return Math.round(surfaceWindowWidth - currentWindowWidth);
+            return Math.round(renderSurfaceWidth - renderContentWidth);
         if (contentAlignment === "left")
             return 0;
-        return Math.round((surfaceWindowWidth - currentWindowWidth) / 2);
+        return Math.round((renderSurfaceWidth - renderContentWidth) / 2);
     }
     function targetContentWindowX() { return targetWindowX() + contentOffsetX(); }
 
@@ -210,6 +231,16 @@ Item {
         }
     }
 
+    // Geometry updates should move a floating preview without stealing focus.
+    onPlacementXChanged: if (floatingMode) floatingMoveTimer.restart()
+    onPlacementYChanged: if (floatingMode) floatingMoveTimer.restart()
+    Timer {
+        id: floatingMoveTimer
+        interval: 0
+        onTriggered: if (host.floatingMode && Theme.hyprland)
+            host.moveWindow("title:" + host.windowTitle)
+    }
+
     onNoAnimationsChanged: syncPopoverAnimationRule()
     Component.onCompleted: if (floatingMode) Qt.callLater(function () {
         host.uiActivated(host.shelllistWorkspaceId());
@@ -217,6 +248,18 @@ Item {
     })
 
     Io.HyprlandLayerRuleClient { id: layerRuleClient }
+    Io.HyprlandWorkAreaClient {
+        id: workspaceClient
+        active: host.fitToWorkspace && Theme.hyprland && host.uiActive
+        monitorName: host.screenValue("name", "")
+    }
+    Connections {
+        target: host.placementScreen
+        ignoreUnknownSignals: true
+        function onWidthChanged(): void { workspaceClient.scheduleRefresh(); }
+        function onHeightChanged(): void { workspaceClient.scheduleRefresh(); }
+        function onDevicePixelRatioChanged(): void { workspaceClient.scheduleRefresh(); }
+    }
 
     IpcHandler {
         enabled: host.popoverMode && host.ipcEnabled
@@ -244,7 +287,7 @@ Item {
         id: popoverAnchor
         screen: host.focusedScreen()
         visible: host.popoverWindowVisible
-        implicitWidth: host.surfaceWindowWidth
+        implicitWidth: host.renderSurfaceWidth
         implicitHeight: host.currentWindowHeight
         color: "transparent"
         mask: Region { item: popoverVisualSurface }
@@ -252,17 +295,25 @@ Item {
         aboveWindows: true
         focusable: true
         WlrLayershell.namespace: host.layerNamespace
-        anchors { top: true; left: true }
+        // Let layer-shell anchor the outer edges; size changes must not move them.
+        anchors {
+            top: true
+            bottom: host.workspaceArea !== null
+            right: host.workspaceRightAnchored
+            left: !host.workspaceRightAnchored
+        }
         margins { // qmllint disable unresolved-type unqualified
             top: host.targetLayerMarginY()
-            left: host.targetLayerMarginX()
+            bottom: host.workspaceArea ? host.workspaceArea.bottom : 0
+            right: host.workspaceRightAnchored ? host.workspaceArea.right : 0
+            left: host.workspaceRightAnchored ? 0 : host.targetLayerMarginX()
         }
         onVisibleChanged: if (visible) host.focusSearchRequested()
 
         VisualSurface {
             id: popoverVisualSurface
-            surfaceWidth: host.surfaceWindowWidth
-            contentWidth: host.currentWindowWidth
+            surfaceWidth: host.renderSurfaceWidth
+            contentWidth: host.renderContentWidth
             loadWhen: host.popoverWindowVisible
             retainLoaded: host.retainContentLoaded
             horizontalAlignment: host.contentAlignment
@@ -283,7 +334,7 @@ Item {
     FloatingWindow {
         id: floatingWindow
         visible: host.floatingMode
-        implicitWidth: host.surfaceWindowWidth
+        implicitWidth: host.renderSurfaceWidth
         implicitHeight: host.currentWindowHeight
         title: host.windowTitle
         color: "transparent"
@@ -296,8 +347,8 @@ Item {
 
         VisualSurface {
             id: floatingVisualSurface
-            surfaceWidth: host.surfaceWindowWidth
-            contentWidth: host.currentWindowWidth
+            surfaceWidth: host.renderSurfaceWidth
+            contentWidth: host.renderContentWidth
             loadWhen: host.floatingMode
             retainLoaded: host.retainContentLoaded
             horizontalAlignment: host.contentAlignment
@@ -306,7 +357,7 @@ Item {
     }
 
     HyprlandFocusGrab {
-        active: Theme.hyprland && host.popoverMode && host.popoverVisible
+        active: Theme.hyprland && host.popoverWindowVisible
         windows: [popoverAnchor]
         onCleared: if (!host.retainOnFocusLoss) host.hidePopover()
     }

@@ -4,4 +4,5 @@ DaemonBackend 1.0 DaemonBackend.qml
 ClipboardPublisher 1.0 ClipboardPublisher.qml
 ClipboardScreenshotCapture 1.0 ClipboardScreenshotCapture.qml
 HyprlandLayerRuleClient 1.0 process/HyprlandLayerRuleClient.qml
+HyprlandWorkAreaClient 1.0 process/HyprlandWorkAreaClient.qml
 JsonlDaemonClient 1.0 process/JsonlDaemonClient.qml

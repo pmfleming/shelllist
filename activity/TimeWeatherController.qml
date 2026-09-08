@@ -27,7 +27,7 @@ ActivityController {
     minimumOpenWindowWidth: Ui.Theme.popupOpenWidth
     maximumOpenWindowWidth: Ui.Theme.popupOpenWidth
     surfaceHeightRatio: Ui.Theme.popupHeightRatio
-    surfaceTopInset: 0
+    surfaceFitsWorkspace: false
     surfaceAlignment: "center"
 
     function clocksByTimezone(clocks: var): var {

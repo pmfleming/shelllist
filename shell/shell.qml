@@ -118,6 +118,8 @@ ShellRoot {
             ? shell.activeController.surfaceTopInset : 0
         windowBottomInset: shell.activeController
             ? shell.activeController.surfaceBottomInset : 0
+        fitToWorkspace: shell.activeController
+            ? shell.activeController.surfaceFitsWorkspace : false
         contentAlignment: shell.activeController
             ? shell.activeController.surfaceAlignment : "center"
         modeEnvironment: "SHELLLIST_MODE"
@@ -154,7 +156,7 @@ ShellRoot {
     Binding {
         target: shell.activeController
         property: "availableScreenWidth"
-        value: windowHost.screenGeometry().width
+        value: windowHost.availableWindowWidth
         when: shell.activeController !== null
     }
 
@@ -167,7 +169,7 @@ ShellRoot {
             const controller = shell.activeController;
             if (!controller)
                 return;
-            const width = Math.round(controller.currentWindowWidth);
+            const width = Math.round(windowHost.renderContentWidth);
             const x = Math.round(windowHost.targetContentWindowX());
             controller.captureScreenshot(x, windowHost.targetWindowY(), width,
                 windowHost.currentWindowHeight);

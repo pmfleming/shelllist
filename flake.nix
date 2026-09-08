@@ -96,6 +96,7 @@
               pkgs.gawk
               pkgs.jq
               pkgs.quickshell
+              pkgs.hyprland # hyprctl: layer rules and live workspace placement
               self.packages.${system}.shelllistSearch
               pkgs.qrencode
               pkgs.kdePackages.qrca

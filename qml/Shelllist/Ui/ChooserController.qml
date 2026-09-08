@@ -24,6 +24,7 @@ Item {
     property real surfaceHeightRatio: Theme.popupHeightRatio
     property int surfaceTopInset: 0
     property int surfaceBottomInset: 0
+    property bool surfaceFitsWorkspace: false
     property string surfaceAlignment: "center"
     property double lastSearchRankLatencyMs: -1
     property double lastCatalogToModelLatencyMs: -1
