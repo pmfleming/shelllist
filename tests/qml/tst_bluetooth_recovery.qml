@@ -185,6 +185,53 @@ TestCase {
         compare(calls[0].params.operation, "set-noise-control");
         compare(calls[0].params.mode, "off");
     }
+    Component {
+        id: fastPairToggleComponent
+        Bt.BluetoothFastPairSetup {}
+    }
+    function test_fastPairToggleUsesBackendState() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const toggle = createTemporaryObject(fastPairToggleComponent, panel, {controller: controller});
+        verify(toggle !== null);
+        compare(toggle.title, "Fast Pair controls");
+        compare(toggle.subtitle, "");
+        verify(!toggle.showSubtitle);
+        verify(!toggle.checked);
+        verify(toggle.interactive);
+        toggle.clicked();
+        compare(calls.length, 1);
+        compare(calls[0].params.operation, "provision-fast-pair");
+        verify(!toggle.checked); // Wait for the daemon's confirmed credential state.
+        verify(!toggle.interactive);
+        toggle.clicked();
+        compare(calls.length, 1);
+
+        findChild(controller, "bluetoothBackend").pending = ({});
+        const device = Object.assign({}, controller.selectedDevice, {
+            fast_pair: Object.assign({}, controller.selectedDevice.fast_pair, {
+                account_key_available: true, authenticated_controls: false
+            })
+        });
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [device]});
+        verify(toggle.checked); // Remains enabled even while authentication is unavailable.
+        verify(!toggle.interactive); // No destructive credential removal masquerading as an off switch.
+        toggle.clicked();
+        compare(calls.length, 1);
+    }
+    function test_fastPairToggleRespectsProvisioningAvailability() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const toggle = createTemporaryObject(fastPairToggleComponent, panel, {controller: controller});
+        const device = Object.assign({}, controller.selectedDevice, {
+            capabilities: Object.assign({}, controller.selectedDevice.capabilities, {can_provision_fast_pair: false})
+        });
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [device]});
+        verify(!toggle.checked);
+        verify(!toggle.interactive);
+        toggle.clicked();
+        compare(calls.length, 0);
+    }
     function test_provisioningUsesDaemonTrustedMetadataNotFrontendKeys() {
         const controller = makePanel().controller;
         verify(controller.provisionFastPair());
