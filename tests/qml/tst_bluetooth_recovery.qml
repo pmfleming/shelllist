@@ -73,6 +73,33 @@ TestCase {
         verify(panel.controller.hasSelection);
         return panel;
     }
+    Component {
+        id: detailsComponent
+        Bt.BluetoothDeviceDetails { uiScale: 1 }
+    }
+    function test_openDetailsFollowPowerCycleEvents() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const details = createTemporaryObject(detailsComponent, panel, {controller: controller, width: 600, height: 900});
+        verify(details !== null);
+        controller.detailsOpen = true;
+        compare(details.subtitle, "Connected");
+        const original = controller.selectedDevice;
+        const backend = findChild(controller, "bluetoothBackend");
+        for (const connected of [false, true, false, true]) {
+            const device = Object.assign({}, original, {connected: connected, battery_live: connected,
+                battery: connected ? [{component: "left", percentage: 75}] : [],
+                fast_pair: connected ? original.fast_pair : null});
+            backend.handleEvent({stream: "bluetooth.changed", event: "changed", data: {snapshot: {
+                radio: controller.radio, adapters: controller.adapters, devices: [device]
+            }}});
+            compare(controller.selectedDevice.connected, connected);
+            compare(details.subtitle, connected ? "Connected" : "Paired");
+            compare(controller.selectedDevice.battery_live, connected);
+            verify(controller.detailsOpen);
+            wait(0);
+        }
+    }
     function test_unavailableInvalidatesCapabilitiesAndSelection() {
         const panel = makePanel(); const controller = panel.controller;
         controller.handlePairingEvent({event: "requested", data: {request_id: "a", device_key: "buds", response_required: true}});

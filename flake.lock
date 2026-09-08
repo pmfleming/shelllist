@@ -64,11 +64,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788816283,
-        "narHash": "sha256-6AlQejRIxhQHuz1vkIvPOphcvIqmaNFb08aTIcPqIjM=",
+        "lastModified": 1788883105,
+        "narHash": "sha256-vFBuTI7NqaQUhWF2XZD4rFB3CQe+mWZjQjULs0RDcro=",
         "ref": "main",
-        "rev": "0f06566eb0ad0a32d10c76617044c1ddb1529d29",
-        "revCount": 99,
+        "rev": "9b3a9185748df762abef4ed782ee5d391cf26a69",
+        "revCount": 100,
         "type": "git",
         "url": "file:../bt-daemon"
       },
@@ -109,11 +109,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788384005,
-        "narHash": "sha256-b+tVRRctw4KIo69/c6sxshBsKmgRrVcOMGVzuwf5gPo=",
+        "lastModified": 1788649527,
+        "narHash": "sha256-cyOa1/ODfi5Xp1gBVBK03okxjX0e1vRSe4d36tzfaAs=",
         "ref": "main",
-        "rev": "c90883428ed83baa8e451dec5b598ad4e3141d25",
-        "revCount": 28,
+        "rev": "5b17083569a0bed82c8934ed77494c29a08832bf",
+        "revCount": 33,
         "type": "git",
         "url": "file:../daemon-framework"
       },
