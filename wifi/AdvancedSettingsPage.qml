@@ -284,6 +284,6 @@ Item {
 
     CenteredMessage {
         visible: page.controller.advanced.loading
-        text: "Loading saved profile…"
+        text: qsTr("Loading saved profile…")
     }
 }

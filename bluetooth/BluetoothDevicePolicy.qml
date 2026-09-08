@@ -26,7 +26,7 @@ ColumnLayout {
     spacing: Ui.Theme.spacingSm
     Ui.ThemeText {
         Layout.fillWidth: true
-        text: "Effective device settings. Changes override defaults; Reset restores inheritance."
+        text: qsTr("Effective device settings. Changes override defaults; Reset restores inheritance.")
         wrapMode: Text.WordWrap
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeSmall
@@ -41,7 +41,7 @@ ColumnLayout {
             section.controller.updateDevicePolicy(values);
         }
     }
-    Ui.FieldLabel { text: "Preferred audio profile on connect" }
+    Ui.FieldLabel { text: qsTr("Preferred audio profile on connect") }
     Ui.DropDownList {
         Layout.fillWidth: true
         Layout.preferredHeight: Ui.Theme.compactControlHeight

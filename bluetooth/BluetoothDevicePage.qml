@@ -47,7 +47,7 @@ Ui.DetailFlickable {
     Ui.DetailColumnCard {
         visible: page.hasAudio
         height: visible ? 240 : 0
-        title: "Audio profile"
+        title: qsTr("Audio profile")
         contentSpacing: Ui.Theme.spacingMd
 
         Ui.DropDownList {
@@ -101,7 +101,7 @@ Ui.DetailFlickable {
         readonly property var caps: page.controller.selectedDevice.capabilities || ({})
         visible: NoiseControl.isAdvertised(control)
         height: visible ? 155 : 0
-        title: "Sound isolation control"
+        title: qsTr("Sound isolation control")
         Ui.DropDownList {
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
@@ -125,7 +125,7 @@ Ui.DetailFlickable {
     Ui.DetailCard {
         visible: !!page.controller.selectedDevice.fast_pair
         height: visible ? fastPairSetup.implicitHeight + 64 : 0
-        title: "Fast Pair setup"
+        title: qsTr("Fast Pair setup")
         BluetoothFastPairSetup {
             id: fastPairSetup
             anchors.fill: parent
@@ -135,7 +135,7 @@ Ui.DetailFlickable {
 
     Ui.DetailCard {
         height: devicePolicy.implicitHeight + 64
-        title: "Connection policy"
+        title: qsTr("Connection policy")
         BluetoothDevicePolicy {
             id: devicePolicy
             anchors.fill: parent
@@ -145,7 +145,7 @@ Ui.DetailFlickable {
 
     Ui.DetailCard {
         height: settings.implicitHeight + 64
-        title: "Device settings"
+        title: qsTr("Device settings")
 
         BluetoothDeviceActions {
             id: settings

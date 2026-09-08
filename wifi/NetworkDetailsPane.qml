@@ -100,7 +100,7 @@ ActionDetailsPane {
             anchors.centerIn: parent
             visible: pane.controller.advanced.open
                 && advancedLoader.status === Loader.Loading
-            text: "Loading advanced settings…"
+            text: qsTr("Loading advanced settings…")
             color: Theme.mutedText
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeBody

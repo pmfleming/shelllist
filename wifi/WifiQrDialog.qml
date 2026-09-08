@@ -48,7 +48,7 @@ ModalFrame {
         spacing: Theme.spacingXs
         visible: dialog.qr.password.length > 0
 
-        FieldLabel { width: parent.width; height: 16; text: "Wi-Fi password" }
+        FieldLabel { width: parent.width; height: 16; text: qsTr("Wi-Fi password") }
         TextField {
             width: parent.width
             height: Theme.controlHeight

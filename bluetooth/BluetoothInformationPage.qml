@@ -21,7 +21,7 @@ Ui.DetailFlickable {
 
     Ui.DetailCard {
         height: 190
-        title: "Device status"
+        title: qsTr("Device status")
         entries: [
             { label: "Connection", value: BluetoothFlow.deviceState(page.controller.selectedDevice), valueColor: page.controller.selectedDevice.blocked ? Ui.Theme.danger : (page.controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.text), valueBold: page.controller.selectedDevice.connected || page.controller.selectedDevice.blocked },
             { label: "Type", value: page.controller.selectedDevice.device_type || "Bluetooth device" },
@@ -35,7 +35,7 @@ Ui.DetailFlickable {
     Ui.DetailCard {
         visible: page.hasAudio
         height: visible ? 230 : 0
-        title: "Audio state"
+        title: qsTr("Audio state")
         entries: [
             { label: "Last audio switch", value: BluetoothFlow.audioSwitchStatus((page.controller.selectedDevice.fast_pair || {}).last_switch) },
             { label: "Profile", value: page.controller.activeAudioProfile.label || "Unavailable" },
@@ -49,7 +49,7 @@ Ui.DetailFlickable {
 
     Ui.DetailCard {
         height: 190
-        title: "Device information"
+        title: qsTr("Device information")
         entries: [
             { label: "Original name", value: page.controller.selectedDevice.remote_name || "Unavailable" },
             { label: "Address", value: page.controller.selectedDevice.address || "Unavailable" },

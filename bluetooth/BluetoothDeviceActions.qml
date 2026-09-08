@@ -78,7 +78,7 @@ ColumnLayout {
 
         Ui.FieldLabel {
             Layout.fillWidth: true
-            text: "Device name"
+            text: qsTr("Device name")
         }
 
         Ui.ThemeText {

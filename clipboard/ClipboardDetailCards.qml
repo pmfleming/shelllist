@@ -58,7 +58,7 @@ Ui.DetailFlickable {
             anchors.fill: parent
             visible: !cards.detailState.thumbnail
                 && (!cards.detailState.value || cards.detailState.value.text === null)
-            text: "Binary preview is unavailable"
+            text: qsTr("Binary preview is unavailable")
             font.pixelSize: Ui.Theme.fontSizeBody
         }
     }
@@ -110,7 +110,7 @@ Ui.DetailFlickable {
             Ui.ThemeText {
                 anchors.fill: parent
                 visible: cards.files.length === 0
-                text: "No associated files"
+                text: qsTr("No associated files")
                 color: Ui.Theme.mutedText
                 font.pixelSize: Ui.Theme.fontSizeCaption
                 verticalAlignment: Text.AlignVCenter

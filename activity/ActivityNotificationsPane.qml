@@ -40,7 +40,7 @@ Rectangle {
                 height: 36
                 label: "Dismiss all active"
                 enabled: pane.notificationState.activeNotifications.length > 0
-                toolTip: "Dismiss across all apps, including snoozed notifications; history is kept"
+                toolTip: qsTr("Dismiss across all apps, including snoozed notifications; history is kept")
                 onClicked: pane.notificationState.clearNotifications()
             }
         }

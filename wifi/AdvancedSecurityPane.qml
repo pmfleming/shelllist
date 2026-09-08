@@ -76,7 +76,7 @@ AdvancedSettingsFlickable {
                 ToggleRow {
                     objectName: "castingToggle"
                     height: 40
-                    title: "Cast discovery"
+                    title: qsTr("Cast discovery")
                     checked: securityFlick.settings.castingEnabled
                     enabled: !!securityFlick.settings.profile.path
                         && !securityFlick.settings.controller.actionInFlight
@@ -99,7 +99,7 @@ AdvancedSettingsFlickable {
                     height: 58
                     spacing: 5
 
-                    FieldLabel { width: parent.width; height: 13; text: "Network password" }
+                    FieldLabel { width: parent.width; height: 13; text: qsTr("Network password") }
 
                     TextField {
                         width: securityControls.width

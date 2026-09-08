@@ -73,7 +73,7 @@ Ui.ActionDetailsPane {
         Ui.CenteredMessage {
             anchors.fill: parent
             visible: pane.detailState.loading
-            text: "Loading entry details…"
+            text: qsTr("Loading entry details…")
             font.pixelSize: Ui.Theme.fontSizeTitle
         }
         Ui.CenteredMessage {

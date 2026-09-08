@@ -56,7 +56,7 @@ Ui.DetailFlickable {
                 Ui.ThemeText {
                     id: homeLabel
                     visible: !!pane.city.home
-                    text: "⌂  HOME"
+                    text: qsTr("⌂  HOME")
                     color: Ui.Theme.accent
                     font.pixelSize: Ui.Theme.fontSizeCaption
                     font.weight: Ui.Theme.fontWeightDemiBold

@@ -71,8 +71,8 @@ Ui.ResultRow {
         enabled: !row.controller.actionInFlight
             && !row.controller.screenshotInFlight
             && !row.controller.wipeChallenge
-        accessibleName: "Delete clipboard entry"
-        toolTip: "Delete this clipboard entry"
+        accessibleName: qsTr("Delete clipboard entry")
+        toolTip: qsTr("Delete this clipboard entry")
         onClicked: {
             row.controller.select(row.index);
             row.controller.requestDelete();

@@ -23,7 +23,7 @@ Ui.DetailFlickable {
         visible: !page.application.running
             && (page.controller.historyInFlight || page.controller.resourceHistory.length > 0)
         width: parent.width
-        text: "Application is not running · showing retained measurements"
+        text: qsTr("Application is not running · showing retained measurements")
         color: Ui.Theme.mutedText
         wrapMode: Text.Wrap
         font.pixelSize: Ui.Theme.fontSizeCaption

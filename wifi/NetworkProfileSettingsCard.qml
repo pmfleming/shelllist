@@ -9,7 +9,7 @@ DetailCard {
 
     required property WifiController controller
     height: 174
-    title: "Profile settings"
+    title: qsTr("Profile settings")
 
     ActionToggleList {
         anchors.fill: parent

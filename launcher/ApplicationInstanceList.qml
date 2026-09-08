@@ -19,7 +19,7 @@ ColumnLayout {
 
     Ui.SectionLabel {
         visible: list.instances.length > 0
-        text: "Running instances"
+        text: qsTr("Running instances")
     }
 
     Repeater {

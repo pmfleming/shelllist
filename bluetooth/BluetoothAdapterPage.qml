@@ -15,7 +15,7 @@ Ui.DetailFlickable {
 
     Ui.DetailCard {
         height: 150
-        title: "Adapter information"
+        title: qsTr("Adapter information")
         entries: [
             { label: "Controller", value: page.controller.selectedAdapter.name || "Unavailable" },
             { label: "Address", value: page.controller.selectedAdapter.address || "Unavailable" },

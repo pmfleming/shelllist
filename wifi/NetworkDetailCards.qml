@@ -22,7 +22,7 @@ DetailFlickable {
 
     DetailCard {
         height: cards.networkCardHeight
-        title: "Network details"
+        title: qsTr("Network details")
         entries: Presentation.networkDetailRows(cards.controller, cards.accessPoint).slice(0, 4)
     }
 

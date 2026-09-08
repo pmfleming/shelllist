@@ -98,7 +98,7 @@ ColumnLayout {
 
     Ui.SectionLabel {
         Layout.fillWidth: true
-        text: "Resource composition"
+        text: qsTr("Resource composition")
     }
 
     GridLayout {
@@ -200,7 +200,7 @@ ColumnLayout {
 
     ApplicationResourceLaneChart {
         Layout.fillWidth: true
-        title: "Shared timeline"
+        title: qsTr("Shared timeline")
         points: history.points
         rangeStartMilliseconds: history.controller.historyWindowStartMs
         rangeEndMilliseconds: history.controller.historyWindowEndMs

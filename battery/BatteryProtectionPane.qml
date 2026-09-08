@@ -23,7 +23,7 @@ Column {
         verticalContentPadding: Ui.Theme.spacingMd
         headingSpacing: Ui.Theme.spacingMd
         height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
-        title: "Charging & protection"
+        title: qsTr("Charging & protection")
 
         Ui.FieldLabel {
             Layout.fillWidth: true
@@ -48,15 +48,15 @@ Column {
             visible: pane.controller.protectionSupported
                 && !!pane.protection.managed
                 && !pane.protection.thresholds_verified
-            text: "The firmware accepted the range but reported a different value."
+            text: qsTr("The firmware accepted the range but reported a different value.")
             color: Ui.Theme.warning
         }
 
         Ui.ToggleRow {
             Layout.fillWidth: true
             Layout.preferredHeight: 42
-            title: "Protect battery longevity"
-            subtitle: "Keep charging within the configured threshold range"
+            title: qsTr("Protect battery longevity")
+            subtitle: qsTr("Keep charging within the configured threshold range")
             checked: pane.controller.draftProtectionEnabled
             interactive: pane.thresholdsEditable
             onClicked: pane.controller.setProtection(!checked)
@@ -89,7 +89,7 @@ Column {
         Ui.ThemeText {
             Layout.fillWidth: true
             visible: !pane.controller.thresholdDraftValid
-            text: "Resume charging must be lower than stop charging."
+            text: qsTr("Resume charging must be lower than stop charging.")
             color: Ui.Theme.danger
             font.pixelSize: Ui.Theme.fontSizeCaption
         }
@@ -163,7 +163,7 @@ Column {
         verticalContentPadding: Ui.Theme.spacingMd
         headingSpacing: Ui.Theme.spacingMd
         height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
-        title: "Battery alerts"
+        title: qsTr("Battery alerts")
 
         Ui.PercentageSlider {
             Layout.fillWidth: true
@@ -190,8 +190,8 @@ Column {
         Ui.ToggleRow {
             Layout.fillWidth: true
             Layout.preferredHeight: 42
-            title: "Notify when full"
-            subtitle: "Notify at the charge limit, or 100% when unprotected"
+            title: qsTr("Notify when full")
+            subtitle: qsTr("Notify at the charge limit, or 100% when unprotected")
             checked: pane.controller.draftNotifyWhenFull
             interactive: !pane.controller.actionInFlight
             onClicked: pane.controller.updateNotifyWhenFull(!checked)
@@ -200,7 +200,7 @@ Column {
         Ui.ThemeText {
             Layout.fillWidth: true
             visible: !pane.controller.alertDraftValid
-            text: "Critical percentage cannot exceed the low-battery percentage."
+            text: qsTr("Critical percentage cannot exceed the low-battery percentage.")
             color: Ui.Theme.danger
             font.pixelSize: Ui.Theme.fontSizeCaption
         }

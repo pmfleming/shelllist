@@ -31,7 +31,7 @@ Rectangle {
             spacing: Ui.Theme.spacingXs
 
             Ui.ThemeText {
-                text: "Sound isolation"
+                text: qsTr("Sound isolation")
                 color: Ui.Theme.mutedText
                 font.pixelSize: Ui.Theme.fontSizeSmall
                 font.weight: Ui.Theme.fontWeightMedium

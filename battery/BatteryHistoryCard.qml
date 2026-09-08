@@ -32,7 +32,7 @@ Ui.DetailColumnCard {
             : (battery.available && forecast.limit !== null && battery.percentage >= forecast.target
                 ? "Charge limit reached" : ""))
 
-    title: "Battery history · 7 days"
+    title: qsTr("Battery history · 7 days")
     verticalContentPadding: Ui.Theme.spacingMd
     headingSpacing: Ui.Theme.spacingMd
     height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding

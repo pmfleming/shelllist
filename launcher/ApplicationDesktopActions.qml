@@ -17,7 +17,7 @@ ColumnLayout {
 
     Ui.SectionLabel {
         visible: actions.desktopActions.length > 0
-        text: "Application actions"
+        text: qsTr("Application actions")
     }
 
     Repeater {

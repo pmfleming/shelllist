@@ -159,7 +159,7 @@ ColumnLayout {
         Layout.preferredHeight: 235
         title: "Adapter"
 
-        Ui.FieldLabel { text: "Selected adapter" }
+        Ui.FieldLabel { text: qsTr("Selected adapter") }
         Ui.SegmentedControl {
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
@@ -176,7 +176,7 @@ ColumnLayout {
         Ui.ToggleRow {
             Layout.fillWidth: true
             Layout.preferredHeight: 38
-            title: "Adapter powered"
+            title: qsTr("Adapter powered")
             subtitle: "Power only this Bluetooth adapter"
             checked: !!section.controller.selectedAdapter.powered
             interactive: !!section.controller.selectedAdapter.key && !section.controller.globalRequestInFlight
@@ -184,7 +184,7 @@ ColumnLayout {
                 !section.controller.selectedAdapter.powered)
         }
 
-        Ui.FieldLabel { text: "Adapter alias" }
+        Ui.FieldLabel { text: qsTr("Adapter alias") }
         Ui.TextField {
             id: adapterAliasInput
             Layout.fillWidth: true
@@ -201,7 +201,7 @@ ColumnLayout {
     Ui.DetailColumnCard {
         Layout.fillWidth: true
         Layout.preferredHeight: 230
-        title: "Visibility and pairing"
+        title: qsTr("Visibility and pairing")
 
         BluetoothAdapterAccessControl {
             id: discoverableTimeoutRow
@@ -229,7 +229,7 @@ ColumnLayout {
     Ui.DetailColumnCard {
         Layout.fillWidth: true
         Layout.preferredHeight: 350
-        title: "Bluetooth behavior"
+        title: qsTr("Bluetooth behavior")
 
         Ui.ActionToggleList {
             Layout.fillWidth: true
@@ -237,7 +237,7 @@ ColumnLayout {
             onTriggered: function (actionId) { section.toggleSetting(actionId); }
         }
 
-        Ui.FieldLabel { text: "State on login" }
+        Ui.FieldLabel { text: qsTr("State on login") }
         Ui.SegmentedControl {
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight

@@ -64,7 +64,7 @@ ModalFrame {
         width: parent.width
         height: Theme.controlHeight
         visible: dialog.prompt.credentialMode === "daemon-secret" && dialog.prompt.saveSecretSupported
-        title: "Save in the desktop keyring"
+        title: qsTr("Save in the desktop keyring")
         showSubtitle: false
         checked: dialog.prompt.saveSecret
         onClicked: dialog.prompt.saveSecret = !dialog.prompt.saveSecret
