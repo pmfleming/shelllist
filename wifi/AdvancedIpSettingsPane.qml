@@ -21,7 +21,7 @@ AdvancedSettingsFlickable {
 
         DetailCard {
             height: Math.max(500, hardwareFlick.height)
-            title: "IP & DNS"
+            title: qsTr("IP & DNS")
 
             Column {
                 anchors.fill: parent
@@ -49,7 +49,7 @@ AdvancedSettingsFlickable {
                 ToggleRow {
                     width: parent.width
                     height: 44
-                    title: "Automatic addressing"
+                    title: qsTr("Automatic addressing")
                     showSubtitle: false
                     checked: hardwareFlick.settings.currentMethod === "auto"
                     interactive: hardwareFlick.settings.currentFamilyEnabled
@@ -59,7 +59,7 @@ AdvancedSettingsFlickable {
                 ToggleRow {
                     width: parent.width
                     height: 44
-                    title: "Automatic DNS"
+                    title: qsTr("Automatic DNS")
                     showSubtitle: false
                     checked: hardwareFlick.settings.currentAutoDns
                     interactive: hardwareFlick.settings.currentFamilyEnabled
@@ -72,7 +72,7 @@ AdvancedSettingsFlickable {
                     columnSpacing: 12
                     rowSpacing: 8
 
-                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "IP address" }
+                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: qsTr("IP address") }
                     NetworkInput.IpAddressField {
                         Layout.fillWidth: true
                         family: hardwareFlick.settings.ipFamily
@@ -83,7 +83,7 @@ AdvancedSettingsFlickable {
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
 
-                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "Prefix length" }
+                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: qsTr("Prefix length") }
                     NetworkInput.PrefixLengthField {
                         Layout.fillWidth: true
                         family: hardwareFlick.settings.ipFamily
@@ -104,7 +104,7 @@ AdvancedSettingsFlickable {
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
 
-                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "DNS servers" }
+                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: qsTr("DNS servers") }
                     NetworkInput.IpAddressField {
                         Layout.fillWidth: true
                         family: hardwareFlick.settings.ipFamily
@@ -115,7 +115,7 @@ AdvancedSettingsFlickable {
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
 
-                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "DNS search domains" }
+                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: qsTr("DNS search domains") }
                     TextField {
                         Layout.fillWidth: true
                         readOnly: !hardwareFlick.settings.currentFamilyEnabled

@@ -17,7 +17,7 @@ Column {
 
     Ui.DetailCard {
         height: 142
-        title: "Current status"
+        title: qsTr("Current status")
         entries: [
             { label: "State", value: Presentation.stateLabel(pane.battery),
                 valueColor: pane.battery.plugged ? Ui.Theme.active : Ui.Theme.text,
@@ -35,7 +35,7 @@ Column {
     Ui.DetailColumnCard {
         height: 152 + Math.min(8,
             (pane.controller.energyOverview.applications || []).length) * 42
-        title: "Application energy"
+        title: qsTr("Application energy")
 
         Ui.SegmentedControl {
             Layout.fillWidth: true
@@ -149,7 +149,7 @@ Column {
             visible: !pane.controller.energyLoading
                 && pane.controller.energyError.length === 0
                 && (pane.controller.energyOverview.applications || []).length === 0
-            text: "No attributable application energy in this period"
+            text: qsTr("No attributable application energy in this period")
             color: Ui.Theme.mutedText
         }
     }

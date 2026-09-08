@@ -18,7 +18,7 @@ Column {
         verticalContentPadding: Ui.Theme.spacingMd
         headingSpacing: Ui.Theme.spacingMd
         height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
-        title: "Power mode"
+        title: qsTr("Power mode")
 
         Ui.FieldLabel {
             Layout.fillWidth: true
@@ -46,7 +46,7 @@ Column {
             objectName: "automaticPowerSaverToggle"
             Layout.fillWidth: true
             Layout.preferredHeight: 42
-            title: "Automatic power saver"
+            title: qsTr("Automatic power saver")
             subtitle: "Hold power saver below " + pane.controller.draftWarningPercent
                 + "% · threshold in Battery care"
             checked: pane.controller.draftAutoPowerSaver
@@ -89,7 +89,7 @@ Column {
             Layout.preferredHeight: 42
             visible: pane.controller.powerProfile.battery_aware !== null
                 && pane.controller.powerProfile.battery_aware !== undefined
-            title: "Battery-aware profiles"
+            title: qsTr("Battery-aware profiles")
             subtitle: "Let the daemon adapt profiles to battery state"
             checked: !!pane.controller.powerProfile.battery_aware
             interactive: pane.controller.powerProfile.available
@@ -118,7 +118,7 @@ Column {
     Ui.DetailColumnCard {
         objectName: "powerSleepCard"
         height: 145 + (pane.controller.powerSleep.inhibitors || []).length * 30
-        title: "Lock & sleep"
+        title: qsTr("Lock & sleep")
 
         Ui.FieldLabel {
             Layout.fillWidth: true

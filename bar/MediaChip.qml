@@ -110,8 +110,8 @@ Item {
             highlightedIconColor: Ui.Theme.accent
             pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
             visible: root.playerCount > 1
-            accessibleName: "Show next media player"
-            toolTip: "Next media player (" + root.playerOrdinal + ")"
+            accessibleName: qsTr("Show next media player")
+            toolTip: qsTr("Next media player (%1)").arg(root.playerOrdinal)
             onClicked: root.controller.cycleMediaPlayer()
         }
 
@@ -128,8 +128,8 @@ Item {
             highlightedIconColor: Ui.Theme.accent
             pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
             enabled: !!root.player && !!root.player.can_seek
-            accessibleName: "Rewind 15 seconds"
-            toolTip: "Rewind 15 seconds"
+            accessibleName: toolTip
+            toolTip: qsTr("Rewind 15 seconds")
             onClicked: root.controller.seekMedia(-15)
         }
 
@@ -163,8 +163,8 @@ Item {
             highlightedIconColor: Ui.Theme.accent
             pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
             enabled: !!root.player && !!root.player.can_seek
-            accessibleName: "Fast-forward 30 seconds"
-            toolTip: "Fast-forward 30 seconds"
+            accessibleName: toolTip
+            toolTip: qsTr("Fast-forward 30 seconds")
             onClicked: root.controller.seekMedia(30)
         }
     }

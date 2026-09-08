@@ -60,7 +60,7 @@ Ui.ChooserSurface {
 
             Ui.ThemeText {
                 Layout.fillWidth: true
-                text: "Battery & Power"
+                text: qsTr("Battery & Power")
                 font.pixelSize: Ui.Theme.fontSizeTitle
                 font.weight: Ui.Theme.fontWeightBold
             }

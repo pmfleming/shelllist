@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
-import "WeatherVisuals.js" as Visuals
 
 Rectangle {
     id: locationRail

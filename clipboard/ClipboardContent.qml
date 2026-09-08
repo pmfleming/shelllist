@@ -80,7 +80,7 @@ Ui.ProviderChooserSurface {
     Ui.PromptDialog {
         visible: content.controller.deleteMenuOpen
         z: 120
-        title: "Delete clipboard entries"
+        title: qsTr("Delete clipboard entries")
         detail: "Delete the current item, choose several items, or clear the complete history."
         inputVisible: false
         actionsVisible: false
@@ -118,7 +118,7 @@ Ui.ProviderChooserSurface {
     Ui.ConfirmationDialog {
         visible: content.controller.deleteConfirmationOpen
         z: 120
-        title: "Delete clipboard entry?"
+        title: qsTr("Delete clipboard entry?")
         detail: "This entry will be permanently removed from Ringboard history."
         acceptLabel: "Delete"
         onAccepted: content.controller.confirmDelete()
@@ -136,7 +136,7 @@ Ui.ProviderChooserSurface {
     Ui.ConfirmationDialog {
         visible: !!content.controller.wipeChallenge
         z: 120
-        title: "Clear clipboard history?"
+        title: qsTr("Clear clipboard history?")
         detail: "This permanently removes regular and favorite entries plus generated previews."
         acceptLabel: "Clear all"
         onAccepted: content.controller.confirmWipe()

@@ -3,8 +3,6 @@ import Shelllist.Ui as Ui
 import "WeatherVisuals.js" as Visuals
 
 Canvas {
-    id: icon
-
     required property bool daylight
     required property real fraction
     property bool dataAvailable: true

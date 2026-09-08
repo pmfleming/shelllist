@@ -20,7 +20,7 @@ Column {
         objectName: "batteryDeviceCard"
         visible: (pane.battery.devices || []).length > 1
         height: 100
-        title: "Battery device"
+        title: qsTr("Battery device")
 
         Ui.SegmentedControl {
             objectName: "batteryDeviceSelector"
@@ -46,7 +46,7 @@ Column {
     Ui.DetailCard {
         objectName: "batteryHealthCard"
         height: 240
-        title: "Health & hardware"
+        title: qsTr("Health & hardware")
         entries: [
             { label: "Health", value: pane.device.health_percent === null
                 || pane.device.health_percent === undefined ? "Unknown"

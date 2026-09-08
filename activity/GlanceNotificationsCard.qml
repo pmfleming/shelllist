@@ -177,7 +177,7 @@ Rectangle {
                 checked: notificationCard.controller.notifications.dnd
                 enabled: notificationCard.controller.notifications.available
                 Accessible.role: Accessible.CheckBox
-                Accessible.name: "Do not disturb"
+                Accessible.name: qsTr("Do not disturb")
                 Accessible.checked: checked
                 Accessible.onToggleAction: toggle()
                 onToggled: function (checked) {
@@ -202,7 +202,7 @@ Rectangle {
         height: 28 + Ui.Theme.spacingMd
         activeFocusOnTab: true
         Accessible.role: Accessible.Button
-        Accessible.name: "Open notifications"
+        Accessible.name: qsTr("Open notifications")
         Accessible.onPressAction: notificationCard.controller.requestNotifications("", "active")
         Keys.onReturnPressed: notificationCard.controller.requestNotifications("", "active")
         Keys.onSpacePressed: notificationCard.controller.requestNotifications("", "active")

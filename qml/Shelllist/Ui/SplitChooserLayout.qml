@@ -60,7 +60,7 @@ RowLayout {
         PulsingLabel {
             anchors.centerIn: parent
             visible: detailsLoader.status === Loader.Loading
-            text: "Loading details…"
+            text: qsTr("Loading details…")
             color: Theme.mutedText
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeBody

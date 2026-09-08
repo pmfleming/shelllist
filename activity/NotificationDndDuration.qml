@@ -2,7 +2,6 @@ import QtQuick
 import Shelllist.Ui as Ui
 
 Ui.ActionButton {
-    id: button
     required property NotificationState notificationState
 
     implicitWidth: 68

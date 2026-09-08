@@ -47,7 +47,7 @@ Column {
                 visible: todoInput.text.length === 0 && !todoInput.activeFocus
                 anchors.fill: parent
                 anchors.margins: 9
-                text: "Add for selected day"
+                text: qsTr("Add for selected day")
                 color: Ui.Theme.mutedText
             }
         }
