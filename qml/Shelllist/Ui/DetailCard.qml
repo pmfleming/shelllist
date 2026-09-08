@@ -35,13 +35,11 @@ Rectangle {
         anchors.bottomMargin: card.verticalContentPadding
         spacing: card.headingSpacing
 
-        Text {
+        ThemeText {
             id: heading
 
             visible: card.title.length > 0
             text: card.title
-            color: Theme.text
-            font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeHeading
             font.weight: Theme.fontWeightBold
         }

@@ -92,11 +92,10 @@ Rectangle {
                     color: Ui.Theme.accent
                     border.color: Ui.Theme.surfaceRaised
                     border.width: 2
-                    Text {
+                    Ui.ThemeText {
                         anchors.centerIn: parent
                         text: row.groupCount > 9 ? "9+" : String(row.groupCount)
                         color: Ui.Theme.accentText
-                        font.family: Ui.Theme.fontFamily
                         font.pixelSize: 9
                         font.weight: Ui.Theme.fontWeightBold
                     }
@@ -112,16 +111,13 @@ Rectangle {
                         + (snoozeButton.visible ? 1 : 0)
                         + (dismissButton.visible ? 1 : 0))
                 spacing: 2
-                Text {
+                Ui.ThemeText {
                     width: parent.width
                     text: row.notification.summary || row.notification.app_name || "Notification"
-                    color: Ui.Theme.text
                     elide: Text.ElideRight
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Ui.Theme.fontSizeBody
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
-                Text {
+                Ui.ThemeText {
                     width: parent.width
                     text: (row.groupedContext ? "" : (row.notification.app_name || "") + "  ")
                         + Qt.formatDateTime(new Date(Number(
@@ -129,7 +125,6 @@ Rectangle {
                         + (row.active ? "" : " · History")
                     color: Ui.Theme.mutedText
                     elide: Text.ElideRight
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeCaption
                 }
             }
@@ -166,17 +161,15 @@ Rectangle {
             }
         }
 
-        Text {
+        Ui.ThemeText {
             id: bodyText
             width: parent.width
             visible: text.length > 0
             text: row.notification.body || ""
             textFormat: Text.PlainText
-            color: Ui.Theme.text
             wrapMode: Text.Wrap
             maximumLineCount: row.bodyExpanded ? 2147483647 : 3
             elide: Text.ElideRight
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeSmall
         }
 

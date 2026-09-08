@@ -110,13 +110,11 @@ Column {
                         Layout.fillWidth: true
                         spacing: 2
 
-                        Text {
+                        Ui.ThemeText {
                             Layout.fillWidth: true
                             text: energyRow.modelData.name
                                 || energyRow.modelData.target_id
-                            color: Ui.Theme.text
                             elide: Text.ElideRight
-                            font.family: Ui.Theme.fontFamily
                             font.pixelSize: Ui.Theme.fontSizeSmall
                         }
 
@@ -136,10 +134,9 @@ Column {
                         }
                     }
 
-                    Text {
+                    Ui.ThemeText {
                         text: Presentation.energy(energyRow.modelData.energy_mwh)
                         color: Ui.Theme.accent
-                        font.family: Ui.Theme.fontFamily
                         font.pixelSize: Ui.Theme.fontSizeCaption
                         font.weight: Ui.Theme.fontWeightDemiBold
                     }

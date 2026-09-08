@@ -25,13 +25,10 @@ Rectangle {
     Keys.onEnterPressed: function (event) { triggered(); event.accepted = true; }
     Keys.onSpacePressed: function (event) { triggered(); event.accepted = true; }
 
-    Text {
+    Ui.ThemeText {
         id: labelText
         anchors.centerIn: parent
         text: button.label
-        color: Ui.Theme.text
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeBody
         font.weight: Ui.Theme.fontWeightDemiBold
     }
 

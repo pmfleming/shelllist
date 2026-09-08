@@ -18,11 +18,9 @@ Controls.AbstractButton {
     leftPadding: Theme.spacingMd
     rightPadding: Theme.spacingMd
 
-    contentItem: Text {
+    contentItem: ThemeText {
         text: option.optionText
         color: option.owner.delegateTextColor(option.highlighted)
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeBody
         font.weight: option.owner.delegateWeight(option.selected)
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight

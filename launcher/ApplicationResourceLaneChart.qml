@@ -36,14 +36,12 @@ Rectangle {
     color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.7)
     border.width: 0
 
-    Text {
+    Ui.ThemeText {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: 12
         anchors.topMargin: 11
         text: chart.title
-        color: Ui.Theme.text
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeLabel
         font.weight: Ui.Theme.fontWeightDemiBold
     }
@@ -62,7 +60,7 @@ Rectangle {
                 width: parent.width
                 height: Math.round(64 * chart.uiScale)
 
-                Text {
+                Ui.ThemeText {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.top: parent.top
@@ -71,12 +69,11 @@ Rectangle {
                     text: lane.modelData.label
                     color: Ui.Theme.mutedText
                     elide: Text.ElideRight
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeCaption
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
 
-                Text {
+                Ui.ThemeText {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.top: parent.top
@@ -85,12 +82,10 @@ Rectangle {
                     text: lane.modelData.currentUnavailable ? "" : lane.modelData.valueText
                     color: lane.modelData.color
                     elide: Text.ElideRight
-                    font.family: Ui.Theme.fontFamily
-                    font.pixelSize: Ui.Theme.fontSizeBody
                     font.weight: Ui.Theme.fontWeightBold
                 }
 
-                Text {
+                Ui.ThemeText {
                     anchors.left: parent.left
                     anchors.leftMargin: 12
                     anchors.top: parent.top
@@ -100,7 +95,6 @@ Rectangle {
                         : lane.modelData.secondaryText || lane.modelData.referenceText || ""
                     color: Ui.Theme.subtleText
                     elide: Text.ElideRight
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeCaption
                 }
 
@@ -335,7 +329,7 @@ Rectangle {
 
         Repeater {
             model: 5
-            delegate: Text {
+            delegate: Ui.ThemeText {
                 required property int index
                 x: index === 0 ? 0 : index === 4 ? parent.width - width
                     : parent.width * index / 4 - width / 2
@@ -344,7 +338,6 @@ Rectangle {
                 color: index === 4 ? Ui.Theme.mutedText : Ui.Theme.subtleText
                 horizontalAlignment: index === 0 ? Text.AlignLeft
                     : index === 4 ? Text.AlignRight : Text.AlignHCenter
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeCaption
                 font.weight: index === 4 ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
             }

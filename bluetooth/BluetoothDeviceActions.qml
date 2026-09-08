@@ -81,13 +81,12 @@ ColumnLayout {
             text: "Device name"
         }
 
-        Text {
+        Ui.ThemeText {
             Layout.maximumWidth: Math.round(section.width * 0.55)
             text: section.controller.selectedDevice.remote_name
                 ? "Original: " + section.controller.selectedDevice.remote_name
                 : "Original name unavailable"
             color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeCaption
             horizontalAlignment: Text.AlignRight
             elide: Text.ElideRight

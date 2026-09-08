@@ -51,11 +51,10 @@ Rectangle {
             }
         }
 
-        Text {
+        ThemeText {
             Layout.fillWidth: true
             text: panel.status
             color: panel.busy ? Theme.accent : Theme.subtleText
-            font.family: Theme.fontFamily
             font.pixelSize: Math.max(Theme.fontSizeCaption, panel.scaled(Theme.fontSizeCaption))
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter

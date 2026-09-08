@@ -16,14 +16,13 @@ Rectangle {
     color: Ui.Theme.surface
     border.color: Ui.Theme.border
 
-    Text {
+    Ui.ThemeText {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: Ui.Theme.spacingMd
         anchors.topMargin: 10
         text: "7D"
         color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
         font.weight: Ui.Theme.fontWeightDemiBold
     }
@@ -50,14 +49,12 @@ Rectangle {
                     color: Ui.Theme.border
                     opacity: 0.6
                 }
-                Text {
+                Ui.ThemeText {
                     anchors.left: parent.left
                     anchors.leftMargin: Ui.Theme.spacingMd
                     anchors.verticalCenter: parent.verticalCenter
                     width: 43
                     text: Visuals.localDay(dayRow.modelData.date_unix_ms, Number(forecast.weather.utc_offset_seconds || 0))
-                    color: Ui.Theme.text
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeSmall
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
@@ -80,23 +77,21 @@ Rectangle {
                     source: "assets/weather/raindrop.svg"
                     fillMode: Image.PreserveAspectFit
                 }
-                Text {
+                Ui.ThemeText {
                     anchors.left: parent.left
                     anchors.leftMargin: 123
                     anchors.verticalCenter: parent.verticalCenter
                     width: 39
                     text: Visuals.numberLabel(dayRow.modelData.precipitation_probability, "%")
                     color: Ui.Theme.accent
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeCaption
                 }
-                Text {
+                Ui.ThemeText {
                     anchors.right: temperatureRange.left
                     anchors.rightMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
                     text: Visuals.numberLabel(dayRow.modelData.low_c, "°")
                     color: Ui.Theme.mutedText
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeSmall
                 }
                 Item {
@@ -127,13 +122,11 @@ Rectangle {
                         color: Ui.Theme.accent
                     }
                 }
-                Text {
+                Ui.ThemeText {
                     anchors.left: temperatureRange.right
                     anchors.leftMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
                     text: Visuals.numberLabel(dayRow.modelData.high_c, "°")
-                    color: Ui.Theme.text
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeSmall
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }

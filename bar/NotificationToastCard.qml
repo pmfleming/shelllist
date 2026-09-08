@@ -98,11 +98,10 @@ Rectangle {
                     color: Ui.Theme.accent
                     border.color: Ui.Theme.surfaceRaised
                     border.width: 2
-                    Text {
+                    Ui.ThemeText {
                         anchors.centerIn: parent
                         text: card.groupCount > 9 ? "9+" : String(card.groupCount)
                         color: Ui.Theme.accentText
-                        font.family: Ui.Theme.fontFamily
                         font.pixelSize: 9
                         font.weight: Ui.Theme.fontWeightBold
                     }
@@ -115,22 +114,19 @@ Rectangle {
                     - dismissButton.width - parent.spacing * (card.breakoutVisible ? 4 : 3)
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
-                Text {
+                Ui.ThemeText {
                     width: parent.width
                     text: card.notification.summary || card.notification.app_name || "Notification"
-                    color: Ui.Theme.text
                     elide: Text.ElideRight
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeLabel
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
-                Text {
+                Ui.ThemeText {
                     width: parent.width
                     visible: text.length > 0
                     text: card.notification.app_name || ""
                     color: Ui.Theme.mutedText
                     elide: Text.ElideRight
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeCaption
                 }
             }
@@ -166,17 +162,14 @@ Rectangle {
             }
         }
 
-        Text {
+        Ui.ThemeText {
             width: parent.width
             visible: text.length > 0
             text: card.notification.body || ""
             textFormat: Text.PlainText
-            color: Ui.Theme.text
             wrapMode: Text.Wrap
             maximumLineCount: 4
             elide: Text.ElideRight
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
         }
 
         Flow {

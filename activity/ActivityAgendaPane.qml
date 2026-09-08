@@ -24,19 +24,15 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: Ui.Theme.spacingMd
         spacing: Ui.Theme.spacingSm
-        Text {
+        Ui.ThemeText {
             text: Qt.formatDate(pane.controller.selectedDate, "dddd, d MMMM")
-            color: Ui.Theme.text
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeHeading
             font.weight: Ui.Theme.fontWeightDemiBold
         }
-        Text {
+        Ui.ThemeText {
             visible: pane.controller.selectedEvents.length === 0
             text: pane.controller.rangeLoading ? "Loading events…" : "No events"
             color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
         }
         Ui.ScrollableListView {
             width: parent.width
@@ -67,32 +63,28 @@ Rectangle {
                     anchors.topMargin: 9
                     anchors.bottomMargin: 9
                     spacing: 3
-                    Text {
+                    Ui.ThemeText {
                         id: eventTitle
                         width: parent.width
                         text: eventRow.modelData.title || "Untitled event"
-                        color: Ui.Theme.text
                         elide: Text.ElideRight
-                        font.family: Ui.Theme.fontFamily
                         font.pixelSize: Ui.Theme.fontSizeLabel
                         font.weight: Ui.Theme.fontWeightDemiBold
                     }
-                    Text {
+                    Ui.ThemeText {
                         width: parent.width
                         text: pane.eventTime(eventRow.modelData) + "  ·  "
                             + (eventRow.modelData.calendar_name || "Calendar")
                         color: Ui.Theme.mutedText
                         elide: Text.ElideRight
-                        font.family: Ui.Theme.fontFamily
                         font.pixelSize: Ui.Theme.fontSizeSmall
                     }
-                    Text {
+                    Ui.ThemeText {
                         visible: (eventRow.modelData.location || "").length > 0
                         width: parent.width
                         text: eventRow.modelData.location || ""
                         color: Ui.Theme.mutedText
                         elide: Text.ElideRight
-                        font.family: Ui.Theme.fontFamily
                         font.pixelSize: Ui.Theme.fontSizeSmall
                     }
                 }

@@ -96,12 +96,11 @@ Column {
             onEditingFinished: pane.controller.finishThresholdEditing()
         }
 
-        Text {
+        Ui.ThemeText {
             Layout.fillWidth: true
             visible: !pane.controller.thresholdDraftValid
             text: "Resume charging must be lower than stop charging."
             color: Ui.Theme.danger
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeCaption
         }
 
@@ -218,12 +217,11 @@ Column {
             onClicked: pane.controller.updateNotifyWhenFull(!checked)
         }
 
-        Text {
+        Ui.ThemeText {
             Layout.fillWidth: true
             visible: !pane.controller.alertDraftValid
             text: "Critical percentage cannot exceed the low-battery percentage."
             color: Ui.Theme.danger
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeCaption
         }
 

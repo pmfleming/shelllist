@@ -87,22 +87,20 @@ Ui.ResultRow {
                     smooth: true
                     mipmap: true
                 }
-                Text {
+                Ui.ThemeText {
                     anchors.verticalCenter: parent.verticalCenter
                     text: row.percentage(row.weather.precipitation_probability)
                     color: Ui.Theme.mutedText
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
                 }
             }
         }
 
-        Text {
+        Ui.ThemeText {
             visible: !row.hasWeather
             anchors.centerIn: parent
             text: "—"
             color: Ui.Theme.subtleText
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: row.scaled(Ui.Theme.fontSizeHeading)
         }
 
@@ -113,24 +111,21 @@ Ui.ResultRow {
             width: row.scaled(54)
             spacing: 1
 
-            Text {
+            Ui.ThemeText {
                 id: currentTemperature
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 text: row.temperature(row.weather.temperature_c)
-                color: Ui.Theme.text
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: row.scaled(Ui.Theme.fontSizeHeading)
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
-            Text {
+            Ui.ThemeText {
                 id: temperatureRange
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 text: row.temperature(row.weather.high_c) + " "
                     + row.temperature(row.weather.low_c)
                 color: Ui.Theme.mutedText
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
             }
         }
@@ -141,21 +136,18 @@ Ui.ResultRow {
         Layout.alignment: Qt.AlignVCenter
         spacing: 1
 
-        Text {
+        Ui.ThemeText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             text: row.localTime()
-            color: Ui.Theme.text
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: row.scaled(Ui.Theme.fontSizeHeading)
             font.weight: Ui.Theme.fontWeightDemiBold
         }
-        Text {
+        Ui.ThemeText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             text: row.city.abbreviation || Visuals.utcOffset(row.city.utc_offset_seconds)
             color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
         }
     }

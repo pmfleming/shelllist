@@ -47,29 +47,25 @@ ColumnLayout {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 2
-                    Text {
+                    Ui.ThemeText {
                         Layout.fillWidth: true
                         text: instanceRow.instanceTitle
-                        color: Ui.Theme.text
                         elide: Text.ElideRight
-                        font.family: Ui.Theme.fontFamily
                         font.pixelSize: Ui.Theme.fontSizeLabel
                     }
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 8
-                        Text {
+                        Ui.ThemeText {
                             Layout.fillWidth: true
                             text: "Workspace " + instanceRow.workspaceLabel
                             color: instanceRow.modelData.focused ? Ui.Theme.active : Ui.Theme.mutedText
                             elide: Text.ElideRight
-                            font.family: Ui.Theme.fontFamily
                             font.pixelSize: Ui.Theme.fontSizeCaption
                         }
-                        Text {
+                        Ui.ThemeText {
                             text: Presentation.usageText(instanceRow.modelData)
                             color: Ui.Theme.mutedText
-                            font.family: Ui.Theme.fontFamily
                             font.pixelSize: Ui.Theme.fontSizeCaption
                         }
                     }

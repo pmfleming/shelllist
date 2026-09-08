@@ -58,21 +58,18 @@ Ui.ChooserSurface {
                 onClicked: content.controller.screenshotRequested()
             }
 
-            Text {
+            Ui.ThemeText {
                 Layout.fillWidth: true
                 text: "Battery & Power"
-                color: Ui.Theme.text
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeTitle
                 font.weight: Ui.Theme.fontWeightBold
             }
 
-            Text {
+            Ui.ThemeText {
                 text: content.battery.available
                     ? Math.round(Number(content.battery.percentage) || 0) + "%" : "Unavailable"
                 color: content.battery.critical ? Ui.Theme.danger
                     : (content.battery.warning ? Ui.Theme.warning : Ui.Theme.accent)
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeDisplay
                 font.weight: Ui.Theme.fontWeightBold
             }
@@ -86,14 +83,13 @@ Ui.ChooserSurface {
             color: Ui.Theme.dangerBackground
             border.color: Ui.Theme.withAlpha(Ui.Theme.danger, 0.45)
 
-            Text {
+            Ui.ThemeText {
                 id: errorText
                 anchors.fill: parent
                 anchors.margins: 10
                 text: content.errorMessage
                 color: Ui.Theme.danger
                 wrapMode: Text.Wrap
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeSmall
             }
         }

@@ -41,14 +41,11 @@ Row {
                 source: "assets/weather/" + visualMetric.modelData.icon + ".svg"
                 fillMode: Image.PreserveAspectFit
             }
-            Text {
+            Ui.ThemeText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 12
                 text: visualMetric.modelData.value
-                color: Ui.Theme.text
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeBody
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
         }

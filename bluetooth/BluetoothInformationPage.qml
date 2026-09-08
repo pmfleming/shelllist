@@ -65,12 +65,11 @@ Ui.DetailFlickable {
         height: visible ? Math.max(110, servicesText.implicitHeight + 72) : 0
         title: "Services"
 
-        Text {
+        Ui.ThemeText {
             id: servicesText
             anchors.fill: parent
             text: (page.controller.selectedDevice.services || []).map(function (service) { return service.label; }).filter(function (label, index, values) { return values.indexOf(label) === index; }).join(" · ")
             color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeSmall
             wrapMode: Text.WordWrap
         }

@@ -112,13 +112,12 @@ Ui.DetailFlickable {
             interactive: !page.controller.actionInFlight && !!soundCard.caps.can_set_noise_control
             onSelected: function (mode) { page.controller.setNoiseControl(mode); }
         }
-        Text {
+        Ui.ThemeText {
             Layout.fillWidth: true
             text: soundCard.caps.can_set_noise_control ? "Only modes currently allowed by the earbuds can be selected."
                 : ((soundCard.caps.unsupported_reasons || {}).set_noise_control || "Fast Pair account-key provisioning is required.")
             wrapMode: Text.WordWrap
             color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeSmall
         }
     }

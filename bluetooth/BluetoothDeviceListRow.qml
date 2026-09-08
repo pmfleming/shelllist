@@ -16,7 +16,7 @@ Ui.ResultRow {
     accessibleName: resultData.title + ". " + resultData.subtitle
     readonly property color signalColor: !hasSignal ? Ui.Theme.mutedText : (signalStrength >= 67 ? Ui.Theme.active : (signalStrength >= 34 ? Ui.Theme.warning : Ui.Theme.danger))
 
-    Text {
+    Ui.ThemeText {
         Layout.preferredWidth: row.scaled(44)
         Layout.fillHeight: true
         verticalAlignment: Text.AlignVCenter
@@ -24,7 +24,6 @@ Ui.ResultRow {
         text: row.hasSignal ? row.signalStrength + "%" : "—"
         color: row.signalColor
         opacity: row.signalLive ? 1 : 0.58
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Math.max(10, row.scaled(Ui.Theme.fontSizeCaption))
         font.weight: Font.Medium
     }

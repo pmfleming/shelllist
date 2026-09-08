@@ -55,23 +55,21 @@ Ui.PromptDialog {
         return "Provide the value requested by " + deviceName;
     }
 
-    Text {
+    Ui.ThemeText {
         visible: !prompt.inputRequired && (prompt.request.value || "").length > 0
         Layout.fillWidth: true
         text: prompt.request.value || ""
         color: Ui.Theme.accent
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: 34
         font.letterSpacing: 5
         font.weight: Ui.Theme.fontWeightBold
         horizontalAlignment: Text.AlignHCenter
     }
-    Text {
+    Ui.ThemeText {
         visible: prompt.kind === "display-passkey" && Number(prompt.request.entered || 0) > 0
         Layout.fillWidth: true
         text: Number(prompt.request.entered || 0) + " of 6 digits entered"
         color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
         horizontalAlignment: Text.AlignHCenter
     }

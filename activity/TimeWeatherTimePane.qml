@@ -45,44 +45,36 @@ Ui.DetailFlickable {
             Row {
                 width: parent.width
                 height: 28
-                Text {
+                Ui.ThemeText {
                     width: parent.width - homeLabel.width
                     text: String(pane.city.label || "Location").toUpperCase()
                     color: Ui.Theme.mutedText
                     elide: Text.ElideRight
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeLabel
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
-                Text {
+                Ui.ThemeText {
                     id: homeLabel
                     visible: !!pane.city.home
                     text: "⌂  HOME"
                     color: Ui.Theme.accent
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeCaption
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
             }
 
-            Text {
+            Ui.ThemeText {
                 text: Visuals.localTime(pane.now.getTime(), pane.offsetSeconds)
-                color: Ui.Theme.text
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: 64
-                font.weight: Ui.Theme.fontWeightRegular
             }
-            Text {
+            Ui.ThemeText {
                 text: Visuals.localDate(pane.now.getTime(), pane.offsetSeconds)
                 color: Ui.Theme.mutedText
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeBody
             }
-            Text {
+            Ui.ThemeText {
                 text: (pane.city.abbreviation ? pane.city.abbreviation + "  ·  " : "")
                     + Visuals.utcOffset(pane.offsetSeconds)
                 color: Ui.Theme.accent
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeSmall
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
@@ -125,25 +117,22 @@ Ui.DetailFlickable {
                             + heroTimeMetric.modelData.value + ", "
                             + heroTimeMetric.modelData.detail
                     }
-                    Text {
+                    Ui.ThemeText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: heroTimeMetric.modelData.label
                         color: Ui.Theme.mutedText
-                        font.family: Ui.Theme.fontFamily
                         font.pixelSize: Ui.Theme.fontSizeCaption
                     }
-                    Text {
+                    Ui.ThemeText {
                         width: parent.width - Ui.Theme.spacingSm
                         anchors.horizontalCenter: parent.horizontalCenter
                         horizontalAlignment: Text.AlignHCenter
                         text: heroTimeMetric.modelData.value
-                        color: Ui.Theme.text
                         elide: Text.ElideRight
-                        font.family: Ui.Theme.fontFamily
                         font.pixelSize: Ui.Theme.fontSizeSmall
                         font.weight: Ui.Theme.fontWeightDemiBold
                     }
-                    Text {
+                    Ui.ThemeText {
                         visible: String(heroTimeMetric.modelData.detail || "").length > 0
                         width: parent.width - Ui.Theme.spacingSm
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -151,7 +140,6 @@ Ui.DetailFlickable {
                         text: heroTimeMetric.modelData.detail || ""
                         color: Ui.Theme.subtleText
                         elide: Text.ElideRight
-                        font.family: Ui.Theme.fontFamily
                         font.pixelSize: 9
                     }
                 }
@@ -166,13 +154,11 @@ Ui.DetailFlickable {
         color: Ui.Theme.surface
         border.color: Ui.Theme.border
 
-        Text {
+        Ui.ThemeText {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.margins: Ui.Theme.spacingMd
             text: "TODAY'S SUN POSITION IN " + String(pane.city.label || "LOCATION").toUpperCase()
-            color: Ui.Theme.text
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeLabel
             font.weight: Ui.Theme.fontWeightDemiBold
         }
@@ -248,19 +234,15 @@ Ui.DetailFlickable {
                         font.family: Ui.Theme.iconFontFamily
                         font.pixelSize: Ui.Theme.iconSizeLarge
                     }
-                    Text {
+                    Ui.ThemeText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: solarValue.modelData.label
                         color: Ui.Theme.mutedText
-                        font.family: Ui.Theme.fontFamily
                         font.pixelSize: Ui.Theme.fontSizeCaption
                     }
-                    Text {
+                    Ui.ThemeText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: solarValue.modelData.value
-                        color: Ui.Theme.text
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: Ui.Theme.fontSizeBody
                         font.weight: Ui.Theme.fontWeightDemiBold
                     }
                 }
@@ -276,36 +258,31 @@ Ui.DetailFlickable {
         color: Ui.Theme.surface
         border.color: Ui.Theme.border
 
-        Text {
+        Ui.ThemeText {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.margins: Ui.Theme.spacingMd
             text: "TIMEZONE"
             color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeCaption
             font.weight: Ui.Theme.fontWeightDemiBold
         }
-        Text {
+        Ui.ThemeText {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.leftMargin: Ui.Theme.spacingMd
             anchors.topMargin: 36
             text: pane.city.timezone || "Timezone unavailable"
-            color: Ui.Theme.text
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeHeading
             font.weight: Ui.Theme.fontWeightDemiBold
         }
-        Text {
+        Ui.ThemeText {
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.rightMargin: Ui.Theme.spacingMd
             anchors.topMargin: 37
             text: Visuals.utcOffset(pane.offsetSeconds)
             color: Ui.Theme.accent
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
             font.weight: Ui.Theme.fontWeightDemiBold
         }
 

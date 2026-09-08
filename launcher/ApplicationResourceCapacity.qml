@@ -22,7 +22,7 @@ Rectangle {
     color: Ui.Theme.mix(Ui.Theme.surfaceRaised, accentColor, Ui.Theme.dark ? 0.12 : 0.07)
     border.width: 0
 
-    Text {
+    Ui.ThemeText {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
@@ -32,12 +32,11 @@ Rectangle {
         text: capacity.label
         color: Ui.Theme.mutedText
         elide: Text.ElideRight
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
         font.weight: Ui.Theme.fontWeightDemiBold
     }
 
-    Text {
+    Ui.ThemeText {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
@@ -47,12 +46,11 @@ Rectangle {
         text: capacity.available ? capacity.valueText : ""
         color: capacity.accentColor
         elide: Text.ElideRight
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeHeading
         font.weight: Ui.Theme.fontWeightBold
     }
 
-    Text {
+    Ui.ThemeText {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
@@ -62,7 +60,6 @@ Rectangle {
         text: capacity.available ? capacity.detailText : "No measurements"
         color: Ui.Theme.subtleText
         elide: Text.ElideRight
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 

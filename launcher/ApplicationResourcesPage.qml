@@ -19,14 +19,13 @@ Ui.DetailFlickable {
         uiScale: page.uiScale
     }
 
-    Text {
+    Ui.ThemeText {
         visible: !page.application.running
             && (page.controller.historyInFlight || page.controller.resourceHistory.length > 0)
         width: parent.width
         text: "Application is not running · showing retained measurements"
         color: Ui.Theme.mutedText
         wrapMode: Text.Wrap
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 

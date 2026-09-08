@@ -94,20 +94,15 @@ ModalFrame {
                     anchors.rightMargin: Theme.spacingMd
                     spacing: Theme.spacingMd
 
-                    Text {
+                    ThemeText {
                         Layout.preferredWidth: 126
                         text: shortcutRow.modelData.keys || ""
                         color: Theme.accent
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeBody
                         font.weight: Theme.fontWeightDemiBold
                     }
-                    Text {
+                    ThemeText {
                         Layout.fillWidth: true
                         text: shortcutRow.modelData.action || ""
-                        color: Theme.text
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeBody
                         elide: Text.ElideRight
                     }
                 }

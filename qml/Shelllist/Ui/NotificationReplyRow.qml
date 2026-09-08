@@ -47,13 +47,12 @@ Column {
             onClicked: reply.send()
         }
     }
-    Text {
+    ThemeText {
         width: parent.width
         visible: text.length > 0
         text: reply.errorText || (!reply.canReply ? "No longer active · draft retained" : "")
         color: Theme.danger
         wrapMode: Text.Wrap
-        font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeCaption
     }
 }

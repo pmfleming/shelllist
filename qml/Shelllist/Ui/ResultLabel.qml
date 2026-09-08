@@ -21,13 +21,12 @@ ColumnLayout {
     Layout.fillHeight: true
     spacing: Math.max(1, Math.round(2 * uiScale))
 
-    Text {
+    ThemeText {
         Layout.fillWidth: true
         Layout.fillHeight: true
         verticalAlignment: label.singleLine ? Text.AlignVCenter : Text.AlignBottom
         text: label.title
         color: label.titleColor
-        font.family: Theme.fontFamily
         font.pixelSize: label.titlePixelSize
         font.weight: label.titleWeight
         elide: Text.ElideRight
@@ -47,13 +46,12 @@ ColumnLayout {
             color: label.statusIndicatorColor
         }
 
-        Text {
+        ThemeText {
             Layout.fillWidth: true
             Layout.fillHeight: true
             verticalAlignment: Text.AlignTop
             text: label.subtitle
             color: label.subtitleColor
-            font.family: Theme.fontFamily
             font.pixelSize: label.subtitlePixelSize
             font.weight: label.subtitleWeight
             elide: Text.ElideRight

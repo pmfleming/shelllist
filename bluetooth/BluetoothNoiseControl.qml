@@ -30,19 +30,16 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Ui.Theme.spacingXs
 
-            Text {
+            Ui.ThemeText {
                 text: "Sound isolation"
                 color: Ui.Theme.mutedText
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeSmall
                 font.weight: Ui.Theme.fontWeightMedium
                 Accessible.ignored: true
             }
 
-            Text {
+            Ui.ThemeText {
                 text: control.activeMode.label
-                color: Ui.Theme.text
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeTitle
                 font.weight: Ui.Theme.fontWeightDemiBold
                 Accessible.ignored: true

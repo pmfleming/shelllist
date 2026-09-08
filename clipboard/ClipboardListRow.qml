@@ -31,7 +31,7 @@ Ui.ResultRow {
         singleLine: true
     }
 
-    Text {
+    Ui.ThemeText {
         visible: row.entry.favorite
         Layout.preferredWidth: row.scaled(62)
         Layout.fillHeight: true
@@ -39,7 +39,6 @@ Ui.ResultRow {
         horizontalAlignment: Text.AlignRight
         text: "Pinned"
         color: Ui.Theme.accent
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
         font.weight: Ui.Theme.fontWeightDemiBold
     }
@@ -54,12 +53,11 @@ Ui.ResultRow {
         border.width: 1
         border.color: row.bulkSelected ? Ui.Theme.accent : Ui.Theme.strongBorder
 
-        Text {
+        Ui.ThemeText {
             anchors.centerIn: parent
             text: "✓"
             visible: row.bulkSelected
             color: Ui.Theme.accentText
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Math.max(11, row.scaled(Ui.Theme.fontSizeBody))
             font.weight: Ui.Theme.fontWeightDemiBold
         }

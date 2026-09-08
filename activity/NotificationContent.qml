@@ -62,7 +62,7 @@ Ui.ChooserSurface {
                 toolTip: accessibleName
                 onClicked: content.controller.goBack()
             }
-            Text {
+            Ui.ThemeText {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - backButton.width - closeButton.width
                     - parent.spacing * (backButton.visible ? 2 : 1)
@@ -70,7 +70,6 @@ Ui.ChooserSurface {
                     + (content.controller.notificationState.notifications.dnd ? "on" : "off")
                 elide: Text.ElideRight
                 color: Ui.Theme.mutedText
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeSmall
             }
             Ui.FlatIconButton {

@@ -23,26 +23,24 @@ Rectangle {
     onHeightChanged: repaintRequested()
     onLineColorChanged: repaintRequested()
 
-    Text {
+    ThemeText {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: 10
         anchors.topMargin: 7
         text: frame.label
         color: Theme.mutedText
-        font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeCaption
         font.weight: Theme.fontWeightDemiBold
     }
 
-    Text {
+    ThemeText {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.rightMargin: 10
         anchors.topMargin: 7
         text: frame.valueText
         color: frame.lineColor
-        font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeCaption
         font.weight: Theme.fontWeightDemiBold
     }

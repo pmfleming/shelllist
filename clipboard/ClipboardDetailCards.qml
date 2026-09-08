@@ -97,24 +97,21 @@ Ui.DetailFlickable {
             color: Ui.Theme.border
         }
 
-        Text {
+        Ui.ThemeText {
             Layout.fillWidth: true
             text: "Files"
             color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
         }
 
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            Text {
+            Ui.ThemeText {
                 anchors.fill: parent
                 visible: cards.files.length === 0
                 text: "No associated files"
                 color: Ui.Theme.mutedText
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeCaption
                 verticalAlignment: Text.AlignVCenter
             }
@@ -136,18 +133,15 @@ Ui.DetailFlickable {
                     height: 34
                     spacing: Ui.Theme.spacingMd
 
-                    Text {
+                    Ui.ThemeText {
                         Layout.fillWidth: true
                         text: fileRow.modelData.display_name
                         color: fileRow.modelData.exists ? Ui.Theme.text : Ui.Theme.danger
-                        font.family: Ui.Theme.fontFamily
-                        font.pixelSize: Ui.Theme.fontSizeBody
                         elide: Text.ElideMiddle
                     }
-                    Text {
+                    Ui.ThemeText {
                         text: fileRow.modelData.operation === "cut" ? "Move" : "Copy"
                         color: Ui.Theme.mutedText
-                        font.family: Ui.Theme.fontFamily
                         font.pixelSize: Ui.Theme.fontSizeCaption
                     }
                 }

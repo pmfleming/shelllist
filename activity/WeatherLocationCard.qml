@@ -27,21 +27,19 @@ Rectangle {
     border.color: activeFocus || locationCard.selectedId === modelData.id
         ? Ui.Theme.accent : Ui.Theme.border
 
-    Text {
+    Ui.ThemeText {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: 10
         anchors.topMargin: 7
         width: parent.width - 68
         text: locationCard.modelData.location || "—"
-        color: Ui.Theme.text
         elide: Text.ElideRight
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeSmall
         font.weight: Ui.Theme.fontWeightDemiBold
     }
 
-    Text {
+    Ui.ThemeText {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.rightMargin: 9
@@ -50,7 +48,6 @@ Rectangle {
             + Visuals.weatherTime(locationCard.now.getTime(), locationCard.modelData)
         color: locationCard.modelData.home
             ? Ui.Theme.accent : Ui.Theme.subtleText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 
@@ -66,16 +63,13 @@ Rectangle {
         description: locationCard.modelData.condition || ""
     }
 
-    Text {
+    Ui.ThemeText {
         anchors.left: parent.left
         anchors.leftMargin: 68
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: 12
         text: Visuals.numberLabel(locationCard.modelData.temperature_c, "°")
-        color: Ui.Theme.text
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: 29
-        font.weight: Ui.Theme.fontWeightRegular
     }
 
     Column {
@@ -84,12 +78,11 @@ Rectangle {
         anchors.rightMargin: 9
         anchors.bottomMargin: 8
         spacing: 1
-        Text {
+        Ui.ThemeText {
             anchors.right: parent.right
             text: Visuals.numberLabel(locationCard.modelData.high_c, "°")
                 + "  " + Visuals.numberLabel(locationCard.modelData.low_c, "°")
             color: Ui.Theme.mutedText
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeCaption
         }
         Row {
@@ -101,11 +94,10 @@ Rectangle {
                 source: "assets/weather/raindrop.svg"
                 fillMode: Image.PreserveAspectFit
             }
-            Text {
+            Ui.ThemeText {
                 text: Visuals.numberLabel(
                     locationCard.modelData.precipitation_probability, "%")
                 color: Ui.Theme.accent
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeCaption
             }
         }

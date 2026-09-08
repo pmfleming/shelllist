@@ -38,15 +38,13 @@ Column {
                     pane.controller.selectedDate.getMonth(),
                     pane.controller.selectedDate.getDate() - 1))
             }
-            Text {
+            Ui.ThemeText {
                 width: parent.width - previousButton.width - nextWidth.width
                     - todayButton.width - parent.spacing * 3
                 anchors.verticalCenter: parent.verticalCenter
                 text: Qt.formatDate(pane.controller.selectedDate, "dddd, d MMMM yyyy")
-                color: Ui.Theme.text
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeHeading
                 font.weight: Ui.Theme.fontWeightDemiBold
             }

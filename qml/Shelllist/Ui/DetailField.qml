@@ -12,18 +12,15 @@ Column {
     width: 245
     spacing: Theme.spacingXs
 
-    Text {
+    ThemeText {
         text: field.label
         color: Theme.mutedText
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeBody
     }
 
-    Text {
+    ThemeText {
         width: field.valueWidth
         text: field.value
         color: field.valueColor
-        font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeLabel
         font.weight: field.valueBold ? Theme.fontWeightBold : Theme.fontWeightRegular
         elide: Text.ElideRight

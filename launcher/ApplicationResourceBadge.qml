@@ -16,12 +16,11 @@ Rectangle {
     border.color: Ui.Theme.withAlpha(toneColor, 0.42)
     border.width: 1
 
-    Text {
+    Ui.ThemeText {
         id: label
         anchors.centerIn: parent
         text: badge.text
         color: badge.toneColor
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
         font.weight: Ui.Theme.fontWeightDemiBold
     }

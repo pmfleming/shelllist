@@ -1,9 +1,7 @@
 import QtQuick
 
-Text {
+ThemeText {
     color: Theme.mutedText
-    font.family: Theme.fontFamily
-    font.pixelSize: Theme.fontSizeBody
     elide: Text.ElideRight
     verticalAlignment: Text.AlignVCenter
 }

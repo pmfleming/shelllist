@@ -41,23 +41,20 @@ Rectangle {
             width: parent.width - 2 * frame.cardPadding
             spacing: frame.bodySpacing
 
-            Text {
+            ThemeText {
                 width: parent.width
                 visible: frame.title.length > 0
                 text: frame.title
-                color: Theme.text
-                font.family: Theme.fontFamily
                 font.pixelSize: frame.compact ? Theme.fontSizeHeading : Theme.fontSizeDisplay
                 font.weight: Theme.fontWeightBold
                 elide: Text.ElideRight
             }
 
-            Text {
+            ThemeText {
                 width: parent.width
                 visible: frame.detail.length > 0
                 text: frame.detail
                 color: Theme.mutedText
-                font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeLabel
                 wrapMode: Text.Wrap
                 maximumLineCount: frame.compact ? 3 : 5

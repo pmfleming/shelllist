@@ -9,14 +9,12 @@ Ui.DetailFlickable {
     required property real uiScale
     required property int actionHeight
 
-    Text {
+    Ui.ThemeText {
         visible: page.application.comment && page.application.comment.length > 0
         width: parent.width
         text: page.application.comment || ""
         color: Ui.Theme.mutedText
         wrapMode: Text.Wrap
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeBody
     }
 
     ApplicationInstanceList {

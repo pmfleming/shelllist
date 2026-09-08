@@ -37,22 +37,20 @@ Ui.ChartFrame {
     onHoverPositionChanged: chart.requestPaint()
     onRepaintRequested: chart.requestPaint()
 
-    Text {
+    Ui.ThemeText {
         id: maximumLabel
         anchors.left: parent.left
         anchors.top: parent.top
         text: graph.maximumText
         color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 
-    Text {
+    Ui.ThemeText {
         anchors.left: parent.left
         y: chart.y + chart.height - implicitHeight
         text: "0"
         color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 
@@ -169,7 +167,7 @@ Ui.ChartFrame {
         }
     }
 
-    Text {
+    Ui.ThemeText {
         objectName: "chargeLimitLabel"
         visible: !graph.energy && graph.forecast.limit !== null
         anchors.right: chart.right
@@ -177,21 +175,19 @@ Ui.ChartFrame {
             * (chart.height - 4) - implicitHeight - 2)
         text: graph.forecast.limit + "% limit"
         color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 
-    Text {
+    Ui.ThemeText {
         anchors.centerIn: chart
         visible: graph.energy ? graph.energySeries.bars.length === 0 : graph.series.segments.length === 0
         text: graph.energy ? "No observed discharge energy"
             : (graph.currentPercentage >= 0 ? "Collecting charge history" : "No charge samples")
         color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 
-    Text {
+    Ui.ThemeText {
         visible: graph.showTimeAxis
         anchors.left: chart.left
         anchors.bottom: parent.bottom
@@ -200,28 +196,25 @@ Ui.ChartFrame {
         text: graph.series.activeDurationMs > 0
             ? "−" + Presentation.duration(graph.series.activeDurationMs / 1000) + " observed" : ""
         color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 
-    Text {
+    Ui.ThemeText {
         objectName: "historyNowLabel"
         visible: graph.showTimeAxis
         x: chart.x + 2 + graph.historyFraction * (chart.width - 4) - implicitWidth
         anchors.bottom: parent.bottom
         text: "Now"
         color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 
-    Text {
+    Ui.ThemeText {
         visible: graph.showTimeAxis && (1 - graph.historyFraction) * chart.width > implicitWidth + 8
         anchors.right: chart.right
         anchors.bottom: parent.bottom
         text: "Estimated"
         color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 }

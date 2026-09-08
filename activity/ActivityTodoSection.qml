@@ -14,10 +14,8 @@ Column {
 
     function focusInput(): void { todoInput.forceActiveFocus(); }
 
-    Text {
+    Ui.ThemeText {
         text: "Todos"
-        color: Ui.Theme.text
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeHeading
         font.weight: Ui.Theme.fontWeightDemiBold
     }
@@ -45,14 +43,12 @@ Column {
                         text = "";
                 }
             }
-            Text {
+            Ui.ThemeText {
                 visible: todoInput.text.length === 0 && !todoInput.activeFocus
                 anchors.fill: parent
                 anchors.margins: 9
                 text: "Add for selected day"
                 color: Ui.Theme.mutedText
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeBody
             }
         }
         ActivityHeaderButton {
@@ -79,7 +75,7 @@ Column {
             radius: Ui.Theme.controlRadius
             color: Ui.Theme.surfaceRaised
             border.color: Ui.Theme.border
-            Text {
+            Ui.ThemeText {
                 id: todoTitle
                 objectName: "todoToggle"
                 activeFocusOnTab: true
@@ -100,8 +96,6 @@ Column {
                 color: activeFocus ? Ui.Theme.accent : todoRow.modelData.completed ? Ui.Theme.mutedText : Ui.Theme.text
                 font.strikeout: todoRow.modelData.completed
                 elide: Text.ElideRight
-                font.family: Ui.Theme.fontFamily
-                font.pixelSize: Ui.Theme.fontSizeBody
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor

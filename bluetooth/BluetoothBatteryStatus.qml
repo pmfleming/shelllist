@@ -141,14 +141,12 @@ Item {
                     }
                 }
 
-                Text {
+                Ui.ThemeText {
                     visible: indicator.batteryAvailable
                     x: Math.round(Ui.Theme.spacingSm / 2)
                     y: ring.y + ring.height + Ui.Theme.spacingSm
                     width: parent.width - Ui.Theme.spacingSm
                     text: indicator.percentage + "%"
-                    color: Ui.Theme.text
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeHeading
                     font.weight: Ui.Theme.fontWeightDemiBold
                     horizontalAlignment: Text.AlignHCenter

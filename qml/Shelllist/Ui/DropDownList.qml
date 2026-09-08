@@ -62,13 +62,11 @@ Controls.ComboBox {
             selected(nextValue);
     }
 
-    contentItem: Text {
+    contentItem: ThemeText {
         leftPadding: 0
         rightPadding: 0
         text: control.optionLabel(control.currentIndex)
         color: control.currentIndex >= 0 ? Theme.inputText : Theme.subtleText
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeBody
         font.weight: Theme.fontWeightMedium
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight

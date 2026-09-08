@@ -27,12 +27,9 @@ RowLayout {
         onEdited: row.edited(pressed)
         onPressedChanged: if (!pressed) row.editingFinished()
     }
-    Text {
+    ThemeText {
         Layout.preferredWidth: 76
         text: row.valueText
-        color: Theme.text
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeBody
         horizontalAlignment: Text.AlignRight
     }
 }

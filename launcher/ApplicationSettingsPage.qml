@@ -25,13 +25,11 @@ Ui.DetailFlickable {
         };
     })
 
-    Text {
+    Ui.ThemeText {
         width: parent.width
         text: "Choose the application's category. Categories map directly to the first five workspaces, so this also sets where new windows launch."
         color: Ui.Theme.mutedText
         wrapMode: Text.Wrap
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeBody
     }
 
     Ui.DetailColumnCard {
@@ -51,19 +49,18 @@ Ui.DetailFlickable {
             }
         }
 
-        Text {
+        Ui.ThemeText {
             Layout.fillWidth: true
             text: page.selectedCategory
                 ? page.selectedCategory.description
                 : "Choose the category used to place new windows."
             color: Ui.Theme.subtleText
             elide: Text.ElideRight
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeCaption
         }
     }
 
-    Text {
+    Ui.ThemeText {
         width: parent.width
         text: page.application.default_workspace_id
             ? "New windows launch on workspace "
@@ -71,7 +68,6 @@ Ui.DetailFlickable {
             : "No default workspace is set yet. Select a category to configure one."
         color: Ui.Theme.subtleText
         wrapMode: Text.Wrap
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 }

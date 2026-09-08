@@ -21,30 +21,28 @@ Rectangle {
         GradientStop { position: 1; color: hero.heroColors[1] }
     }
 
-    Text {
+    Ui.ThemeText {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: Ui.Theme.spacingLg
         anchors.topMargin: Ui.Theme.spacingMd
         text: String(hero.weather.location || "—").toUpperCase()
         color: Ui.Theme.weatherHeroText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeLabel
         font.weight: Ui.Theme.fontWeightDemiBold
     }
 
-    Text {
+    Ui.ThemeText {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: Ui.Theme.spacingLg
         anchors.topMargin: 39
         text: Visuals.weatherTime(hero.now.getTime(), hero.weather)
         color: Ui.Theme.weatherHeroSecondaryText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeHeading
     }
 
-    Text {
+    Ui.ThemeText {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.rightMargin: Ui.Theme.spacingMd
@@ -52,7 +50,6 @@ Rectangle {
         text: Number(hero.weather.updated_unix_ms || 0) > 0
             ? "↻ " + Visuals.weatherTime(hero.weather.updated_unix_ms, hero.weather) : ""
         color: Ui.Theme.weatherHeroMutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 
@@ -73,21 +70,17 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 0
 
-        Text {
+        Ui.ThemeText {
             anchors.right: parent.right
             text: Visuals.numberLabel(hero.weather.temperature_c, "°")
             color: Ui.Theme.weatherHeroTemperature
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: 66
-            font.weight: Ui.Theme.fontWeightRegular
         }
-        Text {
+        Ui.ThemeText {
             anchors.right: parent.right
             text: Visuals.numberLabel(hero.weather.high_c, "°") + "  "
                 + Visuals.numberLabel(hero.weather.low_c, "°")
             color: Ui.Theme.weatherHeroSecondaryText
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
         }
     }
 
@@ -118,11 +111,10 @@ Rectangle {
                     source: "assets/weather/" + heroMetric.modelData.icon + ".svg"
                     fillMode: Image.PreserveAspectFit
                 }
-                Text {
+                Ui.ThemeText {
                     anchors.verticalCenter: parent.verticalCenter
                     text: heroMetric.modelData.value
                     color: Ui.Theme.weatherHeroMetricText
-                    font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeSmall
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }

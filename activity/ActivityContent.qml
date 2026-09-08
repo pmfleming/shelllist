@@ -37,16 +37,14 @@ Ui.ChooserSurface {
                 onClicked: content.controller.screenshotRequested()
             }
 
-            Text {
+            Ui.ThemeText {
                 width: parent.width - activityIcon.width - headerActions.width
                     - parent.spacing * 2
                 anchors.verticalCenter: parent.verticalCenter
                 text: content.controller.detailsOpen
                     ? "Activity  /  " + content.sectionTitle(content.controller.detailSection)
                     : "Activity"
-                color: Ui.Theme.text
                 elide: Text.ElideRight
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeTitle
                 font.weight: Ui.Theme.fontWeightBold
             }
@@ -77,14 +75,13 @@ Ui.ChooserSurface {
             height: visible ? errorText.implicitHeight + 18 : 0
             radius: Ui.Theme.cardRadius
             color: Ui.Theme.dangerBackground
-            Text {
+            Ui.ThemeText {
                 id: errorText
                 anchors.fill: parent
                 anchors.margins: 9
                 text: content.controller.lastError
                 color: Ui.Theme.danger
                 wrapMode: Text.Wrap
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeSmall
             }
         }

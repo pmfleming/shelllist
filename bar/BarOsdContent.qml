@@ -98,12 +98,10 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Ui.Theme.spacingSm
 
-            Text {
+            Ui.ThemeText {
                 width: parent.width
                 text: surface.controller.osd.label
-                color: Ui.Theme.text
                 elide: Text.ElideRight
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeLabel
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
@@ -159,13 +157,11 @@ Rectangle {
             border.width: 1
             border.color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.40)
 
-            Text {
+            Ui.ThemeText {
                 id: valueLabel
 
                 anchors.centerIn: parent
                 text: surface.controller.osd.valueLabel
-                color: Ui.Theme.text
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeLabel
                 font.weight: Ui.Theme.fontWeightDemiBold
                 onTextChanged: if (!Ui.Theme.noAnimations) valuePulse.restart()

@@ -21,14 +21,13 @@ Rectangle {
     color: Ui.Theme.surface
     border.color: Ui.Theme.border
 
-    Text {
+    Ui.ThemeText {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: Ui.Theme.spacingMd
         anchors.topMargin: 8
         text: "12H"
         color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeCaption
         font.weight: Ui.Theme.fontWeightDemiBold
     }
@@ -99,42 +98,37 @@ Rectangle {
                 daytime: hourPoint.modelData.is_day !== false
                 description: hourPoint.modelData.condition || ""
             }
-            Text {
+            Ui.ThemeText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: hourlyCard.hourY(hourPoint.modelData.temperature_c) - 20
                 text: Visuals.numberLabel(hourPoint.modelData.temperature_c, "°")
-                color: Ui.Theme.text
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeCaption
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
-            Text {
+            Ui.ThemeText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: 184
                 text: Number(hourPoint.modelData.precipitation_probability || 0) > 0
                     ? Visuals.numberLabel(hourPoint.modelData.precipitation_probability, "%") : ""
                 color: Ui.Theme.accent
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: 9
             }
-            Text {
+            Ui.ThemeText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 7
                 text: Visuals.weatherTime(hourPoint.modelData.time_unix_ms, hourlyCard.weather)
                 color: Ui.Theme.subtleText
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeCaption
             }
         }
     }
 
-    Text {
+    Ui.ThemeText {
         visible: hourlyCard.points.length < 2
         anchors.centerIn: parent
         text: "—"
         color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeDisplay
     }
 }

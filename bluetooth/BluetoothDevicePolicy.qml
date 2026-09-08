@@ -24,12 +24,11 @@ ColumnLayout {
     }))
 
     spacing: Ui.Theme.spacingSm
-    Text {
+    Ui.ThemeText {
         Layout.fillWidth: true
         text: "Effective device settings. Changes override defaults; Reset restores inheritance."
         wrapMode: Text.WordWrap
         color: Ui.Theme.mutedText
-        font.family: Ui.Theme.fontFamily
         font.pixelSize: Ui.Theme.fontSizeSmall
     }
     Ui.ActionToggleList {

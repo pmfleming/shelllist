@@ -15,14 +15,12 @@ Row {
     height: 30
     spacing: Theme.spacingSm
 
-    Text {
+    ThemeText {
         width: parent.width - countBadge.width - clearButton.width - expandButton.width
             - parent.spacing * 3
         anchors.verticalCenter: parent.verticalCenter
         text: header.appName
-        color: Theme.text
         elide: Text.ElideRight
-        font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeLabel
         font.weight: Theme.fontWeightDemiBold
     }
@@ -33,11 +31,9 @@ Row {
         radius: 11
         anchors.verticalCenter: parent.verticalCenter
         color: Theme.selected
-        Text {
+        ThemeText {
             anchors.centerIn: parent
             text: header.count > 99 ? "99+" : String(header.count)
-            color: Theme.text
-            font.family: Theme.fontFamily
             font.pixelSize: header.count > 99 ? 9 : Theme.fontSizeCaption
             font.weight: Theme.fontWeightDemiBold
         }

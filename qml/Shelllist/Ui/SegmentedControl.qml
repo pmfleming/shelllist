@@ -113,13 +113,12 @@ Rectangle {
                     : (!selected && segmentMouse.containsMouse ? Theme.hover : "transparent")
                 opacity: control.optionEnabled(index) ? 1.0 : Theme.disabledOpacity
 
-                Text {
+                ThemeText {
                     anchors.fill: parent
                     leftPadding: 6
                     rightPadding: 6
                     text: segment.modelData.label || segment.modelData.value || ""
                     color: segment.selected ? Theme.accentText : Theme.mix(Theme.mutedText, Theme.text, 0.28)
-                    font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeSmall
                     font.weight: segment.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
                     horizontalAlignment: Text.AlignHCenter

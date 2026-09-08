@@ -57,17 +57,16 @@ Rectangle {
                 checked: pane.controller.tab === "history"
                 onTriggered: pane.controller.tab = "history"
             }
-            Text {
+            Ui.ThemeText {
                 height: 34
                 verticalAlignment: Text.AlignVCenter
                 text: pane.controller.tab === "history"
                     ? pane.notificationState.history.length + " loaded" : ""
                 color: Ui.Theme.mutedText
-                font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeCaption
             }
         }
-        Text {
+        Ui.ThemeText {
             visible: pane.notificationState.draftCount > 0
             width: parent.width
             text: pane.notificationState.draftCount
@@ -75,17 +74,15 @@ Rectangle {
                 + " · retained when closed"
             color: Ui.Theme.mutedText
             wrapMode: Text.Wrap
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeCaption
         }
-        Text {
+        Ui.ThemeText {
             visible: text.length > 0
             width: parent.width
             text: pane.notificationState.lastError || (pane.controller.tab === "history"
                 ? pane.notificationState.historyError : "")
             color: Ui.Theme.danger
             wrapMode: Text.Wrap
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeSmall
         }
     }
@@ -113,7 +110,7 @@ Rectangle {
         Keys.onLeftPressed: pane.controller.expandSelected(false)
         Keys.onReturnPressed: pane.controller.expandSelected(true)
 
-        Text {
+        Ui.ThemeText {
             anchors.centerIn: parent
             width: parent.width - 20
             visible: pane.controller.visibleGroups.length === 0
@@ -134,7 +131,6 @@ Rectangle {
             color: Ui.Theme.mutedText
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeSmall
         }
     }

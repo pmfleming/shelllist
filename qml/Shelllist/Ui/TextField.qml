@@ -75,7 +75,7 @@ Rectangle {
         onAccepted: field.accepted()
         Keys.onPressed: function (event) { field.keyPressed(event); }
 
-        Text {
+        ThemeText {
             anchors.fill: parent
             leftPadding: input.leftPadding
             rightPadding: input.rightPadding
@@ -83,7 +83,6 @@ Rectangle {
             visible: input.text.length === 0
             text: field.placeholder
             color: Theme.subtleText
-            font.family: Theme.fontFamily
             font.pixelSize: field.fontPixelSize
         }
     }

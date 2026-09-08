@@ -105,13 +105,11 @@ ModalFrame {
             }
         }
 
-        Text {
+        ThemeText {
             visible: dialog.instruction.length > 0
             Layout.fillWidth: true
             text: dialog.instruction
             color: Theme.subtleText
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeBody
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
         }

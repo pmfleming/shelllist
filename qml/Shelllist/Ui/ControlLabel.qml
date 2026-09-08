@@ -21,13 +21,11 @@ Row {
         font.family: Theme.iconFontFamily
         font.pixelSize: controlLabel.iconSize
     }
-    Text {
+    ThemeText {
         anchors.verticalCenter: parent.verticalCenter
         text: UiText.highlightHotkey(controlLabel.label, controlLabel.hotkey)
         textFormat: Text.RichText
         color: controlLabel.labelColor
-        font.family: Theme.fontFamily
-        font.pixelSize: Theme.fontSizeBody
         font.weight: controlLabel.labelWeight
     }
 }
