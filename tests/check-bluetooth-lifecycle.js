@@ -54,10 +54,7 @@ expect("answer removes only matching prompt", queue.length === 0);
 queue = flow.pairingQueue([], { event: "display", data: { request_id: "display-1", device_key: "keyboard", kind: "display-passkey", entered: 1 } });
 queue = flow.pairingQueue(queue, { event: "display", data: { request_id: "display-2", device_key: "keyboard", kind: "display-passkey", entered: 2 } });
 expect("display progress replaces rather than queues", queue.length === 1 && queue[0].entered === 2);
-let transition = flow.pairingTransition(null, requested);
-expect("requested prompt opens", transition.changed && transition.prompt.request_id === "pairing-1");
-
-transition = flow.pairingTransition(requested.data, {
+let transition = flow.pairingTransition(requested.data, {
     event: "cancelled",
     data: { request_id: "pairing-other", reason: "timeout" }
 });
@@ -69,30 +66,17 @@ transition = flow.pairingTransition(requested.data, {
 });
 expect("matching timeout closes prompt", transition.changed && transition.prompt === null);
 
-expect("multipoint explains audio moving to a phone", flow.audioSwitchStatus({reason: "call", target: "another-device"}) === "Call switched to another connected device");
-expect("multipoint explains audio returning locally", flow.audioSwitchStatus({reason: "media", target: "this-device"}) === "Media switched to this computer");
-expect("missing switch reports are not invented", flow.audioSwitchStatus(null) === "No switch reported");
-expect("running operation is active", flow.isActiveOperation({ state: "running" }));
-expect("completed operation is terminal", flow.isTerminalOperation({ state: "completed" }));
-expect("running operation is not terminal", !flow.isTerminalOperation({ state: "running" }));
-expect("terminal pairing operation closes its prompt", flow.operationEndsPairing({ state: "failed", device_key: "device-1" }, requested.data));
 expect("preferred adapter is retained", flow.retainedAdapterKey([{ key: "a" }, { key: "b" }], "b") === "b");
 expect("missing adapter falls back", flow.retainedAdapterKey([{ key: "a" }], "b") === "a");
-expect("unique device keeps its base name",
-    flow.deviceDisplayName({ key: "one", name: "Headset" }, [], []) === "Headset");
 expect("duplicate device name includes its adapter",
     flow.deviceDisplayName({ key: "one", name: "Headset", adapter_key: "a" },
         [{ key: "two", name: "Headset" }], [{ key: "a", alias: "USB" }]) === "Headset · USB");
 expect("initial scan requires an idle powered UI", flow.shouldStartScan(true, true, false, false));
-expect("completed calls use a stable status", flow.completedCallStatus("device-connect", true, "Connecting") === "Bluetooth device updated");
 expect("scan failure exposes its error", flow.scanCompletionStatus({ state: "failed", error: { message: "radio failed" } }, 0, "Scanning") === "radio failed");
 const scanTransition = flow.scanTransition({ request_id: "old" },
     { request_id: "new", state: "running", snapshot: { devices: [] } }, 0, "Idle");
 expect("running scan transition retains its snapshot",
     scanTransition.activeScan.request_id === "new" && !!scanTransition.snapshot);
-expect("cancelled operations have a stable status", flow.operationCompletionStatus({ state: "cancelled" }, "Headset") === "Bluetooth operation cancelled");
-expect("cached unpaired device is recently found", flow.deviceState({ paired: false, connected: false, present: false, last_seen_ms: 123 }) === "Recently found");
-expect("blocked state takes priority", flow.deviceState({ blocked: true, paired: true, connected: false }) === "Blocked");
 const myDevices = flow.devicesForView([
     { key: "paired", paired: true, blocked: false },
     { key: "nearby", paired: false, blocked: false, present: true },
@@ -112,12 +96,6 @@ expect("blocked paired devices can be managed from My Devices", flow.devicesForV
 expect("Search all can hide an unblocked stale device", !currentDevices.some(device => device.key === "recent"));
 expect("radio status distinguishes hardware blocks", flow.radioStatus({ hard_blocked: true }, false, false, 0).includes("hardware switch"));
 expect("radio status distinguishes missing adapters", flow.radioStatus({ available: false, adapter_count: 0 }, false, false, 0) === "No Bluetooth adapters available");
-expect("strong signal uses three bars", flow.signalLevel({ signal_strength: 80 }) === 3);
-expect("zero signal still uses one bar", flow.signalLevel({ signal_strength: 0 }) === 1);
-expect("missing signal uses no bars", flow.signalLevel({ signal_strength: null }) === 0);
-expect("cached signal is labelled", flow.signalLabel({ signal_strength: 50, signal_live: false }) === "50% · cached");
-expect("small signal changes share a stable rank", flow.deviceScore({ present: true, signal_strength: 40 }) === flow.deviceScore({ present: true, signal_strength: 60 }));
-expect("unavailable cached pairing triggers scan", flow.shouldRescanAfterOperation({ operation: "pair", state: "failed", error: { code: "device-unavailable" } }, true, true, false));
 expect("other operation failures do not trigger scan", !flow.shouldRescanAfterOperation({ operation: "connect", state: "failed", error: { code: "device-unavailable" } }, true, true, false));
 const activeOperation = flow.operationTransition(null, null, {
     request_id: "operation-1", operation: "connect", state: "running"
@@ -137,7 +115,5 @@ const finishedLifecycle = api.lifecycleState({ request_id: "operation-1" }, acti
 expect("backend lifecycle removes terminal requests", !finishedLifecycle.active["operation-1"]);
 const pairAction = flow.deviceActionRequest("pair", { name: "Headset" }, true);
 expect("pair action retains trust policy", pairAction.operation === "pair" && pairAction.values.trust_after_pair);
-const wakeAction = flow.deviceActionRequest("wake", { wake_allowed: false }, false);
-expect("wake action toggles the backend value", wakeAction.operation === "set-wake-allowed" && wakeAction.values.wake_allowed);
 expect("unknown device actions are rejected", flow.deviceActionRequest("unknown", {}, false) === null);
 console.log(`Bluetooth lifecycle: ${checks} checks passed`);

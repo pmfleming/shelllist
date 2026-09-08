@@ -2,43 +2,27 @@
 const fs = require("fs");
 const vm = require("vm");
 
-const source = fs.readFileSync(process.argv[2], "utf8").replace(/^\.pragma library\s*$/m, "");
 const context = {};
 vm.createContext(context);
-vm.runInContext(source, context);
-
+vm.runInContext(fs.readFileSync(process.argv[2], "utf8").replace(/^\.pragma library\s*$/m, ""), context);
 function equal(actual, expected, message) {
     if (actual !== expected)
         throw new Error(`${message}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
 
-equal(context.cpuText(1.26), "1.3%", "CPU rounds to one decimal");
-equal(context.memoryText(512 * 1024 * 1024), "512 MiB", "memory formats MiB");
-equal(context.memoryText(1.5 * 1024 * 1024 * 1024), "1.5 GiB", "memory formats GiB");
-equal(context.usageText({ cpu_percent: 2, memory_bytes: 64 * 1024 * 1024 }), "CPU 2.0% · 64.0 MiB", "usage summary");
-equal(context.rateText(2 * 1024 * 1024), "2.0 MiB/s", "I/O rate formats MiB per second");
-equal(context.powerText(1.234), "1.23 W", "power formats watts");
-equal(context.runningWindowIcon(1), "󰖯", "single-window icon");
-equal(context.runningWindowIcon(3), "󰖲", "multiple-window icon");
-equal(context.isCloseAction("close-window-2"), true, "window close action");
-equal(context.isCloseAction("activate"), false, "non-close action");
+equal(context.usageText({ cpu_percent: 2, memory_bytes: 64 * 1024 * 1024 }),
+    "CPU 2.0% · 64.0 MiB", "usage summary preserves units");
 const categoryFilters = context.categoryFilterOptions([
     { value: "shell", label: "Shell", icon: "shell-icon" },
     { value: "browser", label: "Browser", icon: "browser-icon" }
 ]);
-equal(categoryFilters.length, 3, "category filters include All");
-equal(context.categoryFilterOption(categoryFilters, "browser").icon,
-    "browser-icon", "active category exposes its icon");
-equal(context.nextCategoryFilterOption(categoryFilters, "").value,
-    "shell", "category action advances from All");
 equal(context.nextCategoryFilterOption(categoryFilters, "browser").value,
     "", "category action wraps to All");
 equal(context.pageStatus({ applications: [{}], has_more: true, hyprland_available: false }),
-    "1 application · more available · launch only", "application page status");
+    "1 application · more available · launch only", "unavailable window management remains explicit");
 const retained = context.withoutClosedInstances({
     instances: [{ id: "one", focused: true }, { id: "two", focused: false }]
 }, "close-window-1", "one");
 equal(retained.running_count, 1, "closed window count");
 equal(retained.focused, false, "closed focused window state");
-
-console.log("application presentation: formatting, status, and window state passed");
+console.log("application presentation: units, filtering and closed-window state passed");

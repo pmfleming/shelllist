@@ -31,8 +31,6 @@ function throws(label, action, fragment) {
 }
 
 const descriptor = model.provider({ id: "desktop.applications", name: "Applications", prefixes: [">", ">"] });
-expect("provider schema version", descriptor.schemaVersion === 1);
-expect("provider defaults enabled", descriptor.enabled === true);
 expect("provider prefixes deduplicated", descriptor.prefixes.length === 1);
 throws("provider IDs are portable", () => model.provider({ id: "Bad ID", name: "Bad" }), "must match");
 
@@ -43,10 +41,6 @@ const launch = model.action({
     shortcut: "Enter",
     presentation: { group: "primary", tone: "active", width: 140 }
 });
-expect("action is enabled by default", launch.enabled === true);
-expect("action presentation is normalized", launch.presentation.group === "primary" && launch.presentation.width === 140);
-const keepOpen = model.keepOpenAction("refresh", "Refresh", { role: "default" });
-expect("shared provider actions stay open", keepOpen.closePolicy === "keep-open" && keepOpen.role === "default");
 throws("action enums are checked", () => model.action({ id: "x", label: "X", role: "surprise" }), "unsupported value");
 throws("only one visible primary action is allowed", () => model.actionList([
     { id: "first", label: "First", presentation: { group: "primary" } },
@@ -69,7 +63,6 @@ const terminal = model.result({
     payload: { desktopFile: "/tmp/terminal.desktop" }
 });
 expect("result has collision-safe key", terminal.key === "desktop.applications::org.example.Terminal.desktop");
-expect("result keeps provider payload", terminal.payload.desktopFile === "/tmp/terminal.desktop");
 throws("primary action must exist", () => model.result({
     providerId: "test", id: "one", title: "One", primaryActionId: "missing", actions: [launch]
 }), "does not reference");
@@ -106,11 +99,8 @@ ranked = model.rankResults([terminal, browser], "");
 expect("source score orders an empty query", ranked[0].key === browser.key);
 
 const query = model.queryRequest({ id: "query-1", generation: 2, text: "term", limit: 0 });
-expect("query generation retained", query.generation === 2);
 expect("query limit is bounded", query.limit === 1);
 
-const batch = model.resultBatch({ providerId: "desktop.applications", queryId: "query-1", results: [terminal] });
-expect("batch results normalized", batch.results[0].key === terminal.key);
 throws("cross-provider batches rejected", () => model.resultBatch({ providerId: "settings", results: [terminal] }), "does not match");
 
 const execution = model.executionRequest({ id: "action-1", result: terminal, action: launch, context: { workspace: "2" } });

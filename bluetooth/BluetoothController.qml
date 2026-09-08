@@ -303,6 +303,13 @@ Ui.ProviderChooserController {
         status = "Updating default Bluetooth audio route…";
         return backend.setAudioDefault(selectedDevice.key, endpoint.key);
     }
+    function setFastPairControlsEnabled(enabled) {
+        if (!hasSelection || actionInFlight) return false;
+        const features = selectedDevice.fast_pair || ({});
+        if (features.account_key_available)
+            return updateDevicePolicy({ fast_pair_controls_enabled: !!enabled });
+        return !!enabled && provisionFastPair();
+    }
     function provisionFastPair() {
         if (!hasSelection || actionInFlight) return false;
         const caps = selectedDevice.capabilities || ({});
@@ -372,7 +379,8 @@ Ui.ProviderChooserController {
         if (actionId === "reset-policy") {
             status = "Saving device policy…";
             return backend.updateDevicePolicy(device.key, { reconnect_on_resume: null, trust_after_pair: null,
-                power_on_connect: null, wait_for_services: null, audio_route_on_connect: null, preferred_audio_profile_key: null });
+                power_on_connect: null, wait_for_services: null, fast_pair_controls_enabled: null,
+                audio_route_on_connect: null, preferred_audio_profile_key: null });
         }
         const request = BluetoothFlow.deviceActionRequest(actionId, device, trustAfterPair);
         if (!request) return false;

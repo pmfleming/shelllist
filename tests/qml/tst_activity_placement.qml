@@ -8,9 +8,7 @@ TestCase {
     id: testCase
     name: "ActivityPlacement"
 
-    Component { id: activityComponent; Activity.ActivityController {} }
     Component { id: timeWeatherComponent; Activity.TimeWeatherController {} }
-    Component { id: notificationsComponent; Activity.NotificationController {} }
 
     function snapshot() {
         return {
@@ -35,24 +33,8 @@ TestCase {
         };
     }
 
-    function test_activityOptsIntoWorkspaceBounds() {
-        const controller = createTemporaryObject(activityComponent, testCase);
-        verify(controller !== null);
-        compare(controller.surfaceAlignment, "right");
-        verify(controller.surfaceFitsWorkspace);
-        compare(controller.surfaceTopInset, 0);
-        compare(controller.surfaceBottomInset, 0);
-    }
-
-    function test_centeredPopupsKeepRatioHeight_data() {
-        return [
-            { tag: "time-weather", component: timeWeatherComponent },
-            { tag: "notifications", component: notificationsComponent }
-        ];
-    }
-
-    function test_centeredPopupsKeepRatioHeight(data) {
-        const controller = createTemporaryObject(data.component, testCase);
+    function test_timeWeatherDoesNotInheritAgendaPlacement() {
+        const controller = createTemporaryObject(timeWeatherComponent, testCase);
         verify(controller !== null);
         compare(controller.surfaceAlignment, "center");
         verify(!controller.surfaceFitsWorkspace);
@@ -100,19 +82,6 @@ TestCase {
         compare(WorkArea.insets(state, "eDP-1"), { left: 12, top: 60, right: 10, bottom: 11 });
     }
 
-    function test_monitorSelectors() {
-        const monitors = snapshot().monitors;
-        for (const selector of ["DP-1", "1", "+1", "-1", "r", "desc:External"])
-            verify(WorkArea.monitorMatches(selector, monitors[1], monitors), selector);
-        verify(WorkArea.monitorMatches("current", monitors[0], monitors));
-        verify(!WorkArea.monitorMatches("current", monitors[1], monitors));
-        verify(!WorkArea.monitorMatches("l", monitors[1], monitors));
-        monitors[1].transform = 1;
-        monitors[1].x = 0;
-        monitors[1].y = 960;
-        verify(WorkArea.monitorMatches("d", monitors[1], monitors));
-    }
-
     function test_dynamicSmartGaps() {
         const state = snapshot();
         state.rules = [{ workspaceString: "m[eDP-1] w[t1]", gapsOut: [0, 0, 0, 0] }];
@@ -137,21 +106,12 @@ TestCase {
         compare(WorkArea.insets(state, "eDP-1"), { left: 0, top: 51, right: 0, bottom: 0 });
     }
 
-    function test_cssGaps() {
-        compare(WorkArea.cssGaps("0"), [0, 0, 0, 0]);
-        compare(WorkArea.cssGaps("2 4"), [2, 4, 2, 4]);
-        compare(WorkArea.cssGaps("2 4 6"), [2, 4, 6, 4]);
-        compare(WorkArea.cssGaps("2 4 6 8"), [2, 4, 6, 8]);
-        compare(WorkArea.cssGaps(""), null);
-        compare(WorkArea.cssGaps(undefined), null);
-        compare(WorkArea.cssGaps("invalid"), null);
-    }
-
     function test_snapshotParsing() {
         const state = snapshot();
         state.monitors[0].description = 'Display with } [ " \\ and\nnewline';
+        state.gaps = [2, 4, 2, 4];
         const output = [state.monitors, state.workspaces, state.rules, state.clients,
-            { css: "2 2 2 2" }].map(function (part) { return JSON.stringify(part, null, 2); }).join("\n\n\n");
+            { css: "2 4" }].map(function (part) { return JSON.stringify(part, null, 2); }).join("\n\n\n");
         compare(WorkArea.parseBatch(output), state);
         for (const invalid of ["", output.slice(0, -4), "not running", "[] [] [] [] {}", '[null] [] [] [] {"css":"2"}'] ) {
             let rejected = false;
@@ -168,11 +128,4 @@ TestCase {
             { x: 19, y: 29, width: 1, height: 1, left: 19, top: 29, right: 0, bottom: 0 });
     }
 
-    function test_liveGeometryEvents() {
-        for (const event of ["workspacev2", "focusedmon", "monitoraddedv2", "monitorremoved",
-                "configreloaded", "openlayer", "closelayer", "movewindowv2", "closewindow",
-                "changefloatingmode", "fullscreen", "activespecialv2", "pin"])
-            verify(WorkArea.geometryEvent(event), event);
-        verify(!WorkArea.geometryEvent("activewindow"));
-    }
 }

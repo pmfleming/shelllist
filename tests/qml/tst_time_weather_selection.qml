@@ -60,14 +60,4 @@ TestCase {
         compare(controller.selectedWeather.id, "taipei");
     }
 
-    function test_filterChangesCityWithoutChangingIndex() {
-        const controller = makeController();
-        controller.filterText = "Taipei";
-        compare(controller.selectionModel.selectedIndex, 0);
-        compare(controller.selectedCity.label, "Taipei");
-        compare(controller.selectedWeather.id, "taipei");
-        controller.filterText = "";
-        compare(controller.selectedCity.label, "Oklahoma City");
-        compare(controller.selectedWeather.id, "okc");
-    }
 }

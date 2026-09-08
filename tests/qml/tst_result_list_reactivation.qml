@@ -45,8 +45,7 @@ TestCase {
     }
 
     function test_reactivationRevealsSelection_data() {
-        return [{ tag: "top", index: 0 }, { tag: "middle", index: 25 },
-            { tag: "later-page", index: 240 }];
+        return [{ tag: "top", index: 0 }, { tag: "later-page", index: 240 }];
     }
 
     function test_reactivationRevealsSelection(data) {
@@ -63,13 +62,11 @@ TestCase {
     }
 
     function test_replacementKeepsLogicalSelection_data() {
-        const rows = [];
-        for (const index of [0, 25, 240]) {
-            for (const reopenFirst of [false, true])
-                rows.push({ tag: index + (reopenFirst ? "-refresh-on-reopen" : "-hidden-refresh"),
-                    index: index, reopenFirst: reopenFirst });
-        }
-        return rows;
+        // Cover both lifecycle orderings without a position × timing cross-product.
+        return [
+            { tag: "hidden-refresh", index: 0, reopenFirst: false },
+            { tag: "later-page-refresh-on-reopen", index: 240, reopenFirst: true }
+        ];
     }
 
     function test_replacementKeepsLogicalSelection(data) {

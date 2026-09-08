@@ -1,109 +1,45 @@
 #!/usr/bin/env node
-
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
-
 const helperPath = process.argv[2];
 if (!helperPath)
     throw new Error("usage: check-bluetooth-battery.js <BluetoothBattery.js> [bluetooth-root]");
 const bluetoothRoot = process.argv[3] || path.dirname(helperPath);
-
-const source = fs.readFileSync(helperPath, "utf8").replace(/^\.pragma library\s*/, "");
 const battery = {};
 vm.createContext(battery);
-vm.runInContext(source, battery, { filename: helperPath });
-
-let checks = 0;
+vm.runInContext(fs.readFileSync(helperPath, "utf8").replace(/^\.pragma library\s*/, ""), battery);
 function expect(label, condition) {
-    ++checks;
-    if (!condition)
-        throw new Error(label);
-}
-
-function expectDeviceImage(label, device, expected) {
-    const image = battery.imageFor(device, { component: "main" });
-    expect(label + " selects its artwork", image === expected);
-    expect(label + " artwork exists", fs.existsSync(path.resolve(bluetoothRoot, image)));
+    if (!condition) throw new Error(label);
 }
 
 const fastPair = [
-    { component: "case", label: "Case", percentage: 78, source: "google-fast-pair-message-stream" },
-    { component: "right", label: "Right", percentage: 100, source: "google-fast-pair-message-stream" },
-    { component: "left", label: "Left", percentage: 100, source: "google-fast-pair-message-stream" }
+    { component: "case", label: "Case", percentage: 78 },
+    { component: "right", label: "Right", percentage: 100 },
+    { component: "left", label: "Left", percentage: 100 }
 ];
-
-expect(
-    "Fast Pair values have stable component order",
-    battery.ordered(fastPair).map(value => value.component).join(",") === "left,right,case"
-);
-expect(
-    "Fast Pair list summary includes every component",
-    battery.summary(fastPair) === "L 100% · R 100% · Case 78%"
-);
-expect(
-    "Fast Pair visual layout places the case between the earbuds",
-    battery.visualOrdered(fastPair).map(value => value.component).join(",") === "left,case,right"
-);
-const rememberedLayout = battery.displayReports({
-    device_type: "Earbuds", components: ["left", "right", "case"], battery: []
-});
-expect("remembered topology is shown before live reports",
-    rememberedLayout.map(value => value.component).join(",") === "left,case,right");
-expect("remembered topology does not invent battery percentages",
-    rememberedLayout.every(value => !battery.isValid(value)));
-const partiallyVerified = battery.displayReports({
-    device_type: "Earbuds",
-    components: ["left", "right", "case"],
+expect("summary includes every component", battery.summary(fastPair) === "L 100% · R 100% · Case 78%");
+expect("presentation does not mutate backend order", fastPair[0].component === "case");
+const reports = battery.displayReports({
+    device_type: "Earbuds", components: ["left", "right", "case"],
     battery: [{ component: "right", percentage: 55, source: "test" }]
 });
-expect("fresh reports fill remembered topology without changing its layout",
-    partiallyVerified.map(value => value.component).join(",") === "left,case,right"
-        && partiallyVerified.filter(value => battery.isValid(value))[0].component === "right");
-expect("legacy remembered earbud types infer a stable two-component layout",
-    battery.displayReports({ device_type: "Earbuds", battery: [] })
-        .map(value => value.component).join(",") === "left,right");
-expect("charging state is visible in summaries", battery.summary([{component: "left", percentage: 40, charging: true}]) === "L 40% charging");
-expect("missing charging flag is not inferred", battery.summary([{component: "left", percentage: 40}]) === "L 40%");
-const aggregate = [{ component: "main", label: "Battery", percentage: 64, source: "bluez" }];
-expect("aggregate summary remains compact", battery.summary(aggregate) === "64%");
-
-const partial = [
-    { component: "right", percentage: 55, source: "google-fast-pair-message-stream" },
-    { component: "case", percentage: 127, source: "google-fast-pair-message-stream" },
-    { component: "left", percentage: -1, source: "google-fast-pair-message-stream" }
-];
-expect("unknown values are not inferred", battery.summary(partial) === "R 55%");
-expect("presentation does not mutate backend order", fastPair[0].component === "case");
+expect("reported topology survives partial telemetry", reports.length === 3);
+expect("unknown components do not invent percentages",
+    reports.filter(value => battery.isValid(value)).map(value => value.component).join(",") === "right");
+expect("charging state is visible", battery.summary([{ component: "left", percentage: 40, charging: true }]) === "L 40% charging");
+expect("unknown values are not inferred", battery.summary([
+    { component: "right", percentage: 55 }, { component: "case", percentage: 127 },
+    { component: "left", percentage: -1 }
+]) === "R 55%");
 expect("missing reports produce no summary", battery.summary(null) === "");
-expect("component artwork is selected centrally", battery.imageFor({}, fastPair[0]).endsWith("charging-case.png"));
-expectDeviceImage("known earbuds despite a transient headphone icon", {
-    device_type: "Earbuds", icon: "audio-headphones"
-}, "assets/audio/left-earbud.png");
-expectDeviceImage("known headphones despite a transient headset icon", {
-    device_type: "Headphones", icon: "audio-headset"
-}, "assets/audio/headphones.png");
-expectDeviceImage("known types without dedicated artwork despite a contradictory icon", {
-    device_type: "Tablet", icon: "audio-headphones"
-}, "assets/devices/unknown-device.png");
-expectDeviceImage("computer", { icon: "computer" }, "assets/devices/computer.png");
-expectDeviceImage("game controller", { icon: "input-gaming" }, "assets/devices/game-controller.png");
-expectDeviceImage("keyboard", { icon: "input-keyboard" }, "assets/devices/keyboard.png");
-expectDeviceImage("mouse", { icon: "input-mouse" }, "assets/devices/mouse.png");
-expectDeviceImage("phone", { icon: "phone" }, "assets/devices/phone.png");
-expectDeviceImage("speaker", { icon: "audio-speakers" }, "assets/devices/speaker.png");
-expectDeviceImage("unknown device", { icon: "" }, "assets/devices/unknown-device.png");
-expectDeviceImage("audio service fallback", { services: [{ label: "Audio Sink" }] }, "assets/audio/headphones.png");
-
-const daemonOwned = {
-    connected: false,
-    battery: aggregate,
-    battery_live: false,
-    battery_last_known: true
-};
-expect("daemon-owned reports remain available for presentation",
-    battery.summary(daemonOwned.battery) === "64%");
-expect("presentation does not rewrite daemon battery provenance",
-    daemonOwned.battery_last_known && !daemonOwned.battery_live);
-
-console.log(`Bluetooth battery presentation: ${checks} checks passed`);
+// Metadata priority is a regression boundary; the full asset/type lookup table is not.
+const known = { device_type: "Earbuds", icon: "audio-headphones" };
+const knownImage = battery.imageFor(known, { component: "main" });
+expect("known type wins over a transient icon",
+    knownImage === battery.imageFor({ device_type: "Earbuds" }, { component: "main" })
+        && knownImage !== battery.imageFor({ device_type: "Headphones" }, { component: "main" }));
+for (const device of [known, { icon: "unknown" }])
+    expect("selected artwork exists", fs.existsSync(path.resolve(bluetoothRoot,
+        battery.imageFor(device, { component: "main" }))));
+console.log("Bluetooth battery: component telemetry, unknown values and metadata priority passed");

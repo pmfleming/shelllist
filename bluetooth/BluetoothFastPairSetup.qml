@@ -12,9 +12,8 @@ Ui.ToggleRow {
 
     title: "Fast Pair controls"
     showSubtitle: false
-    checked: !!features.account_key_available
-    // Provisioning stores a credential; there is no disable operation in bt-api.
-    interactive: !controller.actionInFlight && !checked
-        && (canPairWithMetadata || !!caps.can_provision_fast_pair)
-    onClicked: if (interactive) controller.provisionFastPair()
+    checked: !!features.account_key_available && (device.policy || {}).fast_pair_controls_enabled !== false
+    interactive: !controller.actionInFlight
+        && (!!features.account_key_available || canPairWithMetadata || !!caps.can_provision_fast_pair)
+    onClicked: if (interactive) controller.setFastPairControlsEnabled(!checked)
 }

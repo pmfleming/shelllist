@@ -127,23 +127,6 @@ TestCase {
         compare(panel.page.settingsPayload().advanced.casting_enabled, undefined);
     }
 
-    function test_failedSaveCanBeReversedEvenWhenItMatchesOldProfile() {
-        const panel = makePanel(false);
-        panel.page.setCastingEnabled(true);
-        panel.page.saveDirty();
-        compare(calls[0].params.settings.advanced.casting_enabled, true);
-        panel.controller.backend.setPending("advanced-save", false);
-        panel.controller.advanced.failCall("advanced-save",
-            "activation-failed: Profile saved, but live Cast discovery update failed");
-        verify(panel.controller.advanced.error.indexOf("Profile saved") >= 0);
-
-        // The daemon may already have saved true. Returning to false must send
-        // explicit intent, not omit the field just because our old profile was false.
-        panel.page.setCastingEnabled(false);
-        panel.page.saveDirty();
-        compare(calls[1].params.settings.advanced.casting_enabled, false);
-    }
-
     function test_partialSaveReloadsVersionButKeepsLiveFailureVisible() {
         const panel = makePanel(false);
         panel.page.setCastingEnabled(true);

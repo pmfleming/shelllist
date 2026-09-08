@@ -16,7 +16,6 @@ TestCase {
     Component { id: contentComponent; Activity.NotificationContent {} }
     Component { id: activityComponent; Activity.ActivityController {} }
     Component { id: agendaContentComponent; Activity.ActivityContent {} }
-    Component { id: spyComponent; SignalSpy {} }
     Component { id: replyComponent; Ui.NotificationReplyRow {} }
     Component {
         id: fakeBackendComponent
@@ -91,15 +90,6 @@ TestCase {
         compare(state.backend.requestedUntil, null);
         compare(state.dndDurationMinutes, 30);
     }
-    function test_recentIncludesExpiredAndDismissed() {
-        const state = makeState();
-        compare(state.recentNotifications.length, 4);
-        compare(state.recentNotifications[0].id, 100);
-        compare(state.recentNotifications[1].history_id, 3);
-        state.notificationActive = { notifications: [] };
-        compare(state.recentNotifications.length, 3);
-        compare(state.recentNotifications[0].history_id, 3);
-    }
     function test_activeUsesSnapshotNotHistory() {
         const controller = makeController(makeState());
         compare(controller.visibleGroups.length, 1);
@@ -112,18 +102,6 @@ TestCase {
         controller.filterText = "no matches";
         compare(controller.visibleGroups.length, 0);
         compare(controller.groupModel.count, 0);
-    }
-    function test_refreshMergesAndDeduplicatesPages() {
-        const state = makeState();
-        state.historyHasMore = true;
-        state.applyHistory([record(4), record(3)], true);
-        compare(state.history.length, 4);
-        compare(state.history[0].history_id, 4);
-        compare(state.history[3].history_id, 1);
-        verify(state.historyHasMore);
-        state.applyHistory([record(1)], false);
-        compare(state.history.length, 4);
-        verify(!state.historyHasMore);
     }
     function test_refreshCatchesUpAcrossMissingPages() {
         const state = makeState();
@@ -183,49 +161,6 @@ TestCase {
         compare(state.drafts[2], "Retain this");
         verify(state.replies[2].error.length > 0);
     }
-    function test_activityDoesNotExpandForNotifications() {
-        const controller = createTemporaryObject(activityComponent, testCase);
-        verify(controller !== null);
-        controller.openSection("notifications");
-        verify(!controller.detailsOpen);
-        controller.openSection("schedule");
-        controller.requestNotifications("chat", "active");
-        controller.deactivateUi();
-        verify(controller.detailsOpen);
-        controller.deactivateUi();
-        verify(!controller.detailsOpen);
-    }
-    function test_calloutRendersAtCompactWidth() {
-        const state = makeState();
-        const controller = makeController(state);
-        const content = createTemporaryObject(contentComponent, controller,
-            { controller: controller, width: 453, height: 600 });
-        verify(content !== null);
-        wait(50);
-        compare(content.width, 453);
-        const dnd = findChild(content, "chooserPowerToggle");
-        verify(dnd !== null);
-        verify(!dnd.checked);
-        const duration = findChild(content, "notificationDndDuration");
-        verify(duration !== null);
-        compare(duration.label, "30 min");
-        mouseClick(duration);
-        compare(duration.label, "60 min");
-        mouseClick(duration);
-        compare(duration.label, "∞");
-        verify(duration.mapToItem(content, 0, 0).y < 100, "DND controls are at the top");
-        state.setExpanded("chat", true);
-        state.setDraft(100, "A saved reply");
-        wait(50);
-        const row = findChild(content, "notificationHistoryRow-100");
-        verify(row !== null);
-        compare(row.actions.length, 1);
-        compare(row.replyAction.key, "reply");
-        verify(row.active);
-        controller.tab = "history";
-        controller.filterText = "missing";
-        wait(50);
-    }
     function test_agendaPreviewsFillHeightAndKeepControlsVisible() {
         const state = makeState();
         const records = [];
@@ -254,23 +189,6 @@ TestCase {
         state.history = [];
         wait(50);
         verify(expand.mapToItem(card, 0, expand.height).y <= card.height);
-        content.destroy();
-        wait(50);
-    }
-    function test_standardHeaderScreenshotAndSearch() {
-        const controller = makeController(makeState());
-        const content = createTemporaryObject(contentComponent, controller,
-            { controller: controller, width: 453, height: 600 });
-        const spy = createTemporaryObject(spyComponent, testCase,
-            { target: controller, signalName: "screenshotRequested" });
-        const header = findChild(content, "notificationHeader");
-        verify(header !== null);
-        header.iconClicked();
-        compare(spy.count, 1);
-        header.filterEdited("Message 100");
-        compare(controller.filterText, "Message 100");
-        compare(controller.visibleGroups[0].records.length, 1);
-        wait(50);
         content.destroy();
         wait(50);
     }

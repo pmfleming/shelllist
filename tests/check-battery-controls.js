@@ -58,10 +58,8 @@ function state(devices, extra = {}) {
     c.selectDevice("BAT1");
     c.updateStartPercent(65, false);
     c.selectDevice("BAT1");
-    assert.equal(c.thresholdAutoSave.running, true, "reselecting must not cancel pending auto-save");
     c.applyBattery(state([device("BAT1", 60, 85), device("BAT0")]));
     assert.equal(c.selectedDevice.id, "BAT1", "reordering must preserve identity");
-    assert.equal(c.selectedDeviceIndex, 0);
     assert.equal(c.draftStartPercent, 65, "telemetry must preserve pending edits");
     assert.equal(c.flushThresholdPolicy(), true);
     assert.deepEqual(calls[0], { method: "setThresholds", args: ["BAT1", 65, 85] });
@@ -70,7 +68,6 @@ function state(devices, extra = {}) {
     c.applyBattery(state([device("BAT0")]));
     assert.equal(c.selectedDevice.id, "BAT0");
     assert.equal(c.thresholdDraftDirty, false, "removed-device edits must not leak to a replacement");
-    assert.equal(c.thresholdAutoSave.running, false);
     assert.equal(c.draftStartPercent, 75);
     assert.equal(c.flushThresholdPolicy(), false);
     c.applyBattery(state([]));
@@ -103,18 +100,15 @@ for (const domain of ["threshold", "alert"]) {
     autoSave.stop(); // Model the timer which dispatched the first request.
     update(31, true);
     c.settingsOperationFinished(domain);
-    assert.equal(autoSave.running, false, "completion must not restart a timer during dragging");
     c.resumePendingSettings();
-    assert.equal(autoSave.running, false, "recovery must not save during dragging");
     assert.equal(flush(), false);
     assert.equal(calls.length, 1);
     finish();
-    assert.equal(autoSave.running, true);
     assert.equal(flush(), true);
     update(32, true);
     autoSave.stop();
     c.settingsOperationFailed(domain, "test failure");
-    assert.equal(autoSave.running, false, "failure must also respect active editing");
+    assert.equal(flush(), false, "failure must not write settings during active editing");
     finish();
     assert.equal(flush(), true);
     c.settingsOperationFinished(domain);

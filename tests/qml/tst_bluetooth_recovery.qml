@@ -172,7 +172,7 @@ TestCase {
         compare(calls[0].method, "bluetooth.device.policy.update");
         compare(calls[0].params.key, "buds");
         for (const field of ["reconnect_on_resume", "trust_after_pair", "power_on_connect",
-            "wait_for_services", "audio_route_on_connect", "preferred_audio_profile_key"])
+            "wait_for_services", "fast_pair_controls_enabled", "audio_route_on_connect", "preferred_audio_profile_key"])
             compare(calls[0].params[field], null);
         verify(!controller.triggerDetailAction("reset-policy"));
         compare(calls.length, 1);
@@ -215,9 +215,50 @@ TestCase {
         });
         controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [device]});
         verify(toggle.checked); // Remains enabled even while authentication is unavailable.
-        verify(!toggle.interactive); // No destructive credential removal masquerading as an off switch.
+        verify(toggle.interactive);
         toggle.clicked();
-        compare(calls.length, 1);
+        compare(calls.length, 2);
+        compare(calls[1].method, "bluetooth.device.policy.update");
+        compare(calls[1].params.key, "buds");
+        compare(calls[1].params.fast_pair_controls_enabled, false);
+        verify(toggle.checked); // Do not optimistically display a successful save.
+        verify(!toggle.interactive);
+
+        findChild(controller, "bluetoothBackend").pending = ({});
+        const disabled = Object.assign({}, device, {connected: false,
+            policy: Object.assign({}, device.policy, {fast_pair_controls_enabled: false})});
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [disabled]});
+        verify(!toggle.checked);
+        verify(toggle.interactive); // Stored credentials can be re-enabled while disconnected.
+        verify(controller.selectedDevice.fast_pair.account_key_available);
+        toggle.clicked();
+        compare(calls.length, 3);
+        compare(calls[2].method, "bluetooth.device.policy.update");
+        compare(calls[2].params.fast_pair_controls_enabled, true);
+        compare(calls[2].params.operation, undefined); // No re-pairing or provisioning.
+        verify(!toggle.checked);
+        verify(!toggle.interactive);
+        findChild(controller, "bluetoothBackend").pending = ({});
+        const enabled = Object.assign({}, disabled, {
+            policy: Object.assign({}, disabled.policy, {fast_pair_controls_enabled: true})});
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [enabled]});
+        verify(toggle.checked);
+        verify(toggle.interactive);
+    }
+    function test_fastPairToggleKeepsStateOnSaveFailure() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const device = Object.assign({}, controller.selectedDevice, {
+            fast_pair: {account_key_available: true, authenticated_controls: true}});
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [device]});
+        const toggle = createTemporaryObject(fastPairToggleComponent, panel, {controller: controller});
+        toggle.clicked();
+        verify(!toggle.interactive);
+        findChild(controller, "bluetoothBackend").acceptSharedResponse("device-policy",
+            {protocol: "bt-api", version: 1, ok: false, error: {code: "save-failed", message: "Could not save"}}, "");
+        verify(toggle.checked);
+        verify(toggle.interactive);
+        compare(controller.status, "Could not save");
     }
     function test_fastPairToggleRespectsProvisioningAvailability() {
         const panel = makePanel();

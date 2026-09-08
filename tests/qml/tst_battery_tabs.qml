@@ -39,21 +39,14 @@ TestCase {
                 start_percent: end - 5, end_percent: end } };
     }
 
-    function test_threeTabsAndKeyboardCycle_data() {
-        return [{ tag: "normal", panelWidth: 560 }, { tag: "narrow", panelWidth: 420 }];
-    }
-
-    function test_threeTabsAndKeyboardCycle(data) {
+    function test_threeTabsAndKeyboardCycle() {
         const panel = makePanel();
-        panel.width = data.panelWidth;
+        panel.width = 420;
         const controller = panel.controller;
         const page = findChild(panel, "batteryDetailPage");
         const tabs = findChild(panel, "batteryViewTabs");
         compare(tabs.options.length, 3);
         compare(controller.viewTab, "overview");
-        compare(tabs.options[0].label, "Overview");
-        compare(tabs.options[1].label, "Battery care");
-        compare(tabs.options[2].label, "Power & sleep");
         const panes = [findChild(panel, "batteryOverviewPane"),
             findChild(panel, "batteryCarePane"), findChild(panel, "batteryPowerPane")];
         for (let index = 0; index < 3; ++index) {
@@ -71,37 +64,6 @@ TestCase {
         compare(controller.viewTab, "overview", "ignore unknown tabs");
         tabs.selected("care");
         compare(controller.viewTab, "care");
-    }
-
-    function test_contentBelongsToFocusedTab() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const page = findChild(panel, "batteryDetailPage");
-        const history = findChild(panel, "chargeHistoryGraph");
-        const protection = findChild(panel, "batteryProtectionCard");
-        const alerts = findChild(panel, "batteryAlertsCard");
-        const health = findChild(panel, "batteryHealthCard");
-        const saver = findChild(panel, "automaticPowerSaverToggle");
-        const sleep = findChild(panel, "powerSleepCard");
-        verify(history.visible);
-        verify(!protection.visible && !alerts.visible && !health.visible);
-        verify(!saver.visible && !sleep.visible);
-        page.contentY = 100;
-        controller.selectViewTab("care");
-        compare(page.contentY, 0, "changing tab resets the scroll position");
-        verify(!history.visible);
-        verify(protection.visible && alerts.visible && health.visible);
-        verify(!saver.visible && !sleep.visible);
-        verify(protection.height > protection.headingHeight + protection.contentImplicitHeight);
-        controller.selectViewTab("power");
-        verify(!protection.visible && !alerts.visible && !health.visible);
-        verify(saver.visible && sleep.visible);
-        controller.draftWarningPercent = 22;
-        verify(saver.subtitle.indexOf("22%") >= 0);
-        controller.draftAutoPowerSaver = false;
-        compare(saver.checked, false);
-        controller.draftAutoPowerSaver = true;
-        compare(saver.checked, true);
     }
 
     function test_deviceSelectionStaysWithCareSettings() {

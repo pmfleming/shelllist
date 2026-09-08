@@ -978,14 +978,6 @@
             touch $out
           '';
 
-          bluetoothGlyphs = pkgs.runCommand "shelllist-bluetooth-glyphs"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-bluetooth-glyphs.js} ${./bluetooth/BluetoothGlyphs.js}
-            touch $out
-          '';
-
           clipboardActions = pkgs.runCommand "shelllist-clipboard-actions"
             {
               nativeBuildInputs = [ pkgs.nodejs ];

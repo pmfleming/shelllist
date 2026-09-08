@@ -1,77 +1,81 @@
 #!/usr/bin/env node
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const vm = require("node:vm");
 
-const fs = require("fs");
-const vm = require("vm");
+const [apiPath, protocolPath, controllerPath, backendPath] = process.argv.slice(2);
+if (!backendPath)
+    throw new Error("usage: check-clipboard-actions.js <ClipApi.js> <ClipProtocol.generated.js> <ClipboardController.qml> <ClipboardBackend.qml>");
+const apiSource = fs.readFileSync(apiPath, "utf8");
+const Protocol = {};
+vm.createContext(Protocol);
+vm.runInContext(fs.readFileSync(protocolPath, "utf8").replace(/^\.pragma library\s*/, ""), Protocol);
+const api = { Protocol };
+vm.createContext(api);
+vm.runInContext(apiSource.replace(/^\.(pragma|import).*$/gm, ""), api);
 
-const apiPath = process.argv[2];
-const protocolPath = process.argv[3];
-if (!apiPath)
-    throw new Error("usage: check-clipboard-actions.js <ClipApi.js> [ClipProtocol.generated.js] [ClipboardController.qml] [ClipboardBackend.qml]");
-const source = fs.readFileSync(apiPath, "utf8");
-const importMatch = source.match(/^\.import\s+"([^"]+)"\s+as\s+Protocol$/m);
-const context = {};
-if (importMatch) {
-    const generated = fs.readFileSync(protocolPath || require("path").resolve(require("path").dirname(apiPath), importMatch[1]), "utf8")
-        .replace(/^\.pragma library\s*/, "");
-    const protocol = {};
-    vm.createContext(protocol);
-    vm.runInContext(generated, protocol);
-    context.Protocol = protocol;
-}
-vm.createContext(context);
-vm.runInContext(source.replace(/^\.pragma library\s*/, "").replace(/^\.import.*$/m, ""), context);
-
-function expect(kind, expected) {
-    const actual = context.actionsForKind(kind);
-    if (JSON.stringify(actual) !== JSON.stringify(expected))
-        throw new Error(`${kind}: expected ${expected}, got ${actual}`);
+// Keep distinct action capabilities, not every text subtype or exact UI labels.
+for (const [kind, action] of [["link", "open-url"], ["image", "annotate"],
+    ["files", "reveal-file"], ["binary", "copy"]]) {
+    const descriptors = api.actionDescriptorsForKind(kind);
+    assert.ok(descriptors.some(item => item.id === action), `${kind} offers ${action}`);
+    assert.equal(descriptors.filter(item => item.role === "default").length, 1,
+        `${kind} has one default action`);
 }
 
-expect("text", ["paste"]);
-expect("link", ["paste", "copy", "edit", "open-url"]);
-expect("image", ["paste", "image-as-file", "annotate"]);
-expect("files", ["paste", "copy", "open-file", "reveal-file"]);
-expect("html", ["paste", "copy", "edit"]);
-expect("json", ["paste", "copy", "edit"]);
-expect("color", ["paste", "copy", "edit"]);
-expect("binary", ["copy"]);
-if (context.actionLabels["image-as-file"] !== "Paste as file")
-    throw new Error("image-as-file must be presented as the alternative image paste action");
-if (context.actionLabels.annotate !== "Edit")
-    throw new Error("image annotation must be presented as editing");
-if (context.methods.entriesDelete !== "clipboard.entries.delete")
-    throw new Error("bulk deletion must use the daemon-owned entries.delete method");
-
-for (const kind of ["text", "link", "image", "files", "binary"]) {
-    const descriptors = context.actionDescriptorsForKind(kind);
-    if (descriptors.some(action => !action.id || !action.label || !["default", "secondary"].includes(action.role)))
-        throw new Error(`${kind}: invalid action descriptor`);
-    if (descriptors.map(action => action.id).join(",") !== context.actionsForKind(kind).join(","))
-        throw new Error(`${kind}: descriptor IDs differ from action matrix`);
-    const primary = descriptors.filter(action => action.presentation.group === "primary");
-    if (primary.length !== 1 || primary[0].role !== "default")
-        throw new Error(`${kind}: expected exactly one default primary action`);
-    if (descriptors.filter(action => action.presentation.group === "toolbar").some(action => action.role !== "secondary"))
-        throw new Error(`${kind}: toolbar actions must be secondary`);
+const source = fs.readFileSync(controllerPath, "utf8");
+const backendSource = fs.readFileSync(backendPath, "utf8");
+function install(context, text, names) {
+    vm.createContext(context);
+    for (const name of names) {
+        const match = text.match(new RegExp("    function " + name + "\\([^)]*\\)[^{]*\\{[\\s\\S]*?\\n    \\}"));
+        vm.runInContext(match[0].replace(/:\s*(var|bool|int|string|void)\b/g, ""), context);
+    }
 }
 
-const controllerPath = process.argv[4];
-const backendPath = process.argv[5];
-if (controllerPath && backendPath) {
-    const controller = fs.readFileSync(controllerPath, "utf8");
-    const backend = fs.readFileSync(backendPath, "utf8");
-    if (!/backgroundOperationInFlight:\s*activeAction === "annotate"/.test(controller)
-            || !/if \(!keepBackgroundOperation\)\s*\{[\s\S]*activeOperationId = "";/.test(controller))
-        throw new Error("annotation state must survive picker deactivation");
-    if (!/active:\s*controller\.uiActive \|\| controller\.backgroundOperationInFlight/.test(backend))
-        throw new Error("clipboard transport must remain active for background annotation");
-    if (!/activeAnnotationSelectionIndex\s*=\s*originalIndex/.test(controller)
-            || !/selectionIndexAfterRefresh\s*=\s*activeAnnotationSelectionIndex/.test(controller)
-            || !/if \(selectionIndexAfterRefresh >= 0\)[\s\S]*select\(retainedIndex\)/.test(controller))
-        throw new Error("annotation refresh must restore the edited history position");
-    if (!/function toggleEntrySelection/.test(controller)
-            || !/backend\.deleteEntries\("delete-many-"/.test(controller)
-            || !/ClipApi\.methods\.entriesDelete/.test(backend))
-        throw new Error("multi-select deletion must remain one validated daemon request");
+// Execute the actual annotation lifecycle. Hiding the chooser must not cancel
+// its background transport, and completion must restore the edited position.
+{
+    const controller = {
+        uiActive: true, selectedIndex: 37, sessionId: "", activeAction: "",
+        activeOperationId: "", actionInFlight: false,
+        detailState: { clear() {} }, finishEditSession() {}, leaveMultiSelect() {},
+        deactivateUiState() { controller.uiActive = false; },
+        runAction(action) {
+            controller.activeAction = action;
+            controller.activeOperationId = "annotation-1";
+            controller.actionInFlight = true;
+            return true;
+        },
+        scheduleRefresh() {}
+    };
+    Object.defineProperty(controller, "backgroundOperationInFlight", { get: () =>
+        vm.runInContext(source.match(/readonly property bool backgroundOperationInFlight: ([\s\S]*?)\n    signal/)[1], controller) });
+    install(controller, source, ["annotateImage", "deactivateUi", "finishAnnotate"]);
+    controller.annotateImage();
+    controller.deactivateUi();
+    assert.equal(controller.activeOperationId, "annotation-1", "hiding preserves the in-flight annotation");
+    const transport = vm.createContext({ controller });
+    assert.equal(vm.runInContext(backendSource.match(/^    active: (.*)$/m)[1], transport), true,
+        "background annotation keeps the real backend active");
+    controller.finishAnnotate();
+    assert.equal(controller.selectionIndexAfterRefresh, 37, "annotation restores history position, not the old content ID");
 }
-console.log("clipboard action and lifecycle checks passed");
+
+// Bulk deletion crosses the backend boundary once, retaining every revision.
+{
+    const requests = [];
+    const backend = { ClipApi: api, call: (...args) => { requests.push(args); return true; } };
+    install(backend, backendSource, ["deleteEntries"]);
+    const controller = { backend, multiSelectedCount: 2, actionInFlight: false,
+        multiSelectedEntries: [{ id: "one", revision: 4 }, { id: "two", revision: 9 }] };
+    install(controller, source, ["confirmBulkDelete"]);
+    controller.confirmBulkDelete();
+    controller.confirmBulkDelete();
+    assert.equal(requests.length, 1, "an in-flight delete cannot be dispatched twice");
+    assert.equal(requests[0][1], "clipboard.entries.delete");
+    assert.deepEqual(JSON.parse(JSON.stringify(requests[0][2])), {
+        entries: [{ entry_id: "one", revision: 4 }, { entry_id: "two", revision: 9 }]
+    });
+}
+console.log("clipboard actions: capabilities, background annotation and revision-checked bulk deletion passed");

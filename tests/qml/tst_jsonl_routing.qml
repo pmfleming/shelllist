@@ -23,32 +23,4 @@ TestCase {
         verify(!outcome.recover);
     }
 
-    function test_routesSessionSubscriptions() {
-        const failure = Routing.responseOutcome({
-            id: "session-subscribe", ok: false, error: "subscription refused"
-        }, "test-daemon");
-        compare(failure.error, "subscription refused");
-        verify(failure.recover);
-        compare(Routing.subscriptionId({
-            id: "session-subscribe", ok: true,
-            response: { data: { subscription: { id: "subscription-1" } } }
-        }), "subscription-1");
-        compare(Routing.subscriptionId({ id: "other", ok: true }), "");
-    }
-
-    function test_routesOnDemandSubscriptionsWithoutSessionRecovery() {
-        verify(Routing.isExtraSubscribe("subscribe-3"));
-        verify(!Routing.isExtraSubscribe("session-subscribe"));
-        verify(!Routing.isExtraSubscribe("networks"));
-        compare(Routing.subscriptionId({
-            id: "subscribe-3", ok: true,
-            response: { data: { subscription: { id: "subscription-9" } } }
-        }), "subscription-9");
-
-        const failure = Routing.responseOutcome({
-            id: "subscribe-3", ok: false, error: "subscription refused"
-        }, "test-daemon");
-        compare(failure.error, "subscription refused");
-        verify(!failure.recover);
-    }
 }

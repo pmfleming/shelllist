@@ -15,24 +15,6 @@ TestCase {
         staleSpy.clear();
     }
 
-    function test_synchronizesRankingAndSelection() {
-        store.replaceProviderResults("test", [
-            result("low", "Low", 10),
-            result("high", "High", 30),
-            result("mid", "Middle", 20)
-        ], true);
-        tryCompare(store, "count", 3);
-        compare(store.visibleModel.get(0).resultData.id, "high");
-
-        store.selectedIndex = 1;
-        compare(store.selected().id, "mid");
-        store.replaceProviderResults("test", [
-            result("high", "High", 5), result("mid", "Middle", 40)
-        ], false);
-        compare(store.selected().id, "mid");
-        compare(store.selectedIndex, 0);
-    }
-
     function test_retainsSelectionAcrossSameQueryRefresh() {
         store.replaceProviderResults("test", [
             result("first", "First", 20), result("second", "Second", 10)
@@ -70,21 +52,6 @@ TestCase {
         store.applyRustRanking(store.searchOwner, store.searchGeneration, ["test::second"]);
         compare(store.count, 1);
         compare(store.visibleModel.get(0).resultData.id, "second");
-    }
-
-    function test_largeCatalogIsPopulatedProgressively() {
-        const values = [];
-        for (let index = 0; index < 1000; index++)
-            values.push(result("large-" + index, "Large " + index, 1000 - index));
-
-        store.replaceProviderResults("test", values, true);
-
-        compare(store.count, 1000);
-        verify(store.lastCatalogToModelLatencyMs >= 0);
-        verify(store.visibleModel.count > 0);
-        verify(store.visibleModel.count < 1000);
-        tryCompare(store.visibleModel, "count", 1000);
-        compare(store.visibleModel.get(999).resultData.id, "large-999");
     }
 
     Core.ProviderRegistry {

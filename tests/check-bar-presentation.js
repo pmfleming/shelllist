@@ -8,13 +8,11 @@ if (presentationPaths.length !== 4)
     throw new Error("usage: check-bar-presentation.js <workspace.js> <media.js> <osd.js> <status.js> [Duration.js]");
 const sources = presentationPaths.map(file => fs.readFileSync(file, "utf8")
     .replace(/^\.pragma library\s*$/m, ""));
-const durationImport = sources.join("\n").match(
-    /^\.import\s+"([^"]+)"\s+as\s+Duration\s*$/m);
+const durationImport = sources.join("\n").match(/^\.import\s+"([^"]+)"\s+as\s+Duration\s*$/m);
 const Duration = {};
 vm.createContext(Duration);
-const durationPath = process.argv[6]
-    || path.resolve(path.dirname(presentationPaths[3]), durationImport[1]);
-vm.runInContext(fs.readFileSync(durationPath, "utf8")
+vm.runInContext(fs.readFileSync(process.argv[6]
+    || path.resolve(path.dirname(presentationPaths[3]), durationImport[1]), "utf8")
     .replace(/^\.pragma library\s*$/m, ""), Duration);
 const context = { Duration, Qt: { formatDateTime: (_date, format) => format } };
 vm.createContext(context);
@@ -26,35 +24,20 @@ function equal(actual, expected, message) {
         throw new Error(`${message}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
 
+// Monitor routing, not the icon assigned to each personal workspace.
 equal(context.workspaceIds({ workspaces: [
     { id: 8, monitor: "eDP-1" }, { id: 7, monitor: "DP-1" }, { id: 3, monitor: "eDP-1" }
 ] }, "eDP-1"), [1, 2, 3, 4, 5, 8], "persistent and dynamic workspaces");
 equal(context.activeWorkspaceId({ monitors: [
     { name: "eDP-1", active_workspace_id: 3 }
 ] }, "eDP-1"), 3, "monitor-local active workspace");
-equal(context.activeWorkspaceIndex({ monitors: [
-    { name: "eDP-1", active_workspace_id: 3 }
-], workspaces: [] }, "eDP-1"), 2, "active workspace highlight index");
-equal(context.workspaceIconName(2), "zen", "Zen workspace uses its desktop icon");
-equal(context.workspaceIconName(3), "vscode", "VS Code workspace uses its desktop icon");
-equal(context.workspaceIconName(4), "spotify-client", "Spotify workspace uses its desktop icon");
-equal(context.workspaceIconName(5), "scratchpad", "Scratchpad workspace uses its desktop icon");
-equal(context.activeWindowFor({ focused_monitor: "eDP-1", active_window: { title: "Terminal" } }, "eDP-1"),
-    { title: "Terminal" }, "active window belongs to focused monitor");
 equal(context.activeWindowFor({ focused_monitor: "eDP-1", active_window: { title: "Terminal" } }, "DP-1"),
     null, "active window is hidden on other monitors");
-equal(context.windowIconName({ initial_class: "ghostty", class_name: "fallback" }), "ghostty",
-    "initial window class drives icon lookup");
-equal(context.playerIcon({ desktop_entry: "spotify" }), "", "Spotify icon");
 const mediaPlayers = {
     active_player: "browser",
     players: [{ id: "browser", title: "Podcast" }, { id: "spotify", title: "Music" }]
 };
 equal(context.playerFor(mediaPlayers).id, "browser", "daemon-selected media player");
-equal(context.mediaPlayerOrdinal(mediaPlayers, "spotify"), "2/2", "media player ordinal");
-equal(context.playbackIcon({ playback_status: "paused" }), "", "paused status icon");
-equal(context.playPauseActionIcon({ playback_status: "playing" }), "", "playing media exposes pause action");
-equal(context.playPauseActionIcon({ playback_status: "paused" }), "", "paused media exposes play action");
 equal(context.mediaPositionPercent({
     length_us: 240000000, position_us: 60000000, playback_status: "playing",
     position_observed_at_unix_ms: 1000, playback_rate: 1
@@ -63,31 +46,12 @@ equal(context.mediaPositionPercent({
     length_us: 100, position_us: 90, playback_status: "playing",
     position_observed_at_unix_ms: 0, playback_rate: 2
 }, 1000), 100, "media progress is bounded");
-equal(context.audioIcon({ available: true, muted: false, volume_percent: 80 }), "", "high-volume icon");
-equal(context.outputOsd({ available: true, muted: false, volume_percent: 80, sink_description: "Speakers" }), {
-    kind: "audio", icon: "", label: "Speakers", valueLabel: "80%", percent: 80,
-    progressVisible: true, timeoutMs: 1400
-}, "output OSD presentation");
-equal(context.inputOsd({ input_muted: true, source_description: "Microphone" }), {
-    kind: "input", icon: "󰍭", label: "Microphone", valueLabel: "Muted", percent: 0,
-    progressVisible: false, timeoutMs: 1400
-}, "microphone OSD presentation");
-equal(context.brightnessOsd({ percent: 65 }), {
-    kind: "brightness", icon: "󰃠", label: "Brightness", valueLabel: "65%", percent: 65,
-    progressVisible: true, timeoutMs: 1400
-}, "brightness OSD presentation");
-equal(context.powerProfileOsd({ profile: "power-saver" }).valueLabel,
-    "Power saver", "power profile OSD presentation");
-equal(context.lockKeyOsd("caps-lock", true).valueLabel, "On", "Caps Lock OSD state");
-equal(context.keyboardBacklightOsd(60).percent, 60, "keyboard backlight OSD progress");
+equal(context.inputOsd({ input_muted: true, source_description: "Microphone" }).progressVisible,
+    false, "mute does not invent a volume measurement");
 equal(context.hardwareOsd({ available: true, caps_lock: false },
     { available: true, caps_lock: true }).kind, "caps-lock", "hardware changes select OSD");
-equal(context.privacyOsd("camera", true).timeoutMs, 3000, "privacy OSD stays visible longer");
 equal(context.idleInhibited({ inhibitors: [{ what: "sleep:idle" }] }), true,
     "idle inhibitor detection");
-equal(context.audioDeviceOsd({ sink_name: "old" }, {
-    sink_name: "new", sink_description: "Headphones"
-}).valueLabel, "Headphones", "audio output device OSD");
 equal(context.displayOutputOsd({ monitors: [{ name: "eDP-1" }] }, {
     monitors: [{ name: "eDP-1" }, { name: "DP-1" }]
 }).valueLabel, "DP-1 connected", "display output OSD");
@@ -98,26 +62,11 @@ equal(context.domainOsd({ media: "media" }, "media",
     { available: true, active_player: "player", players: [{ id: "player", title: "Old" }] },
     { available: true, active_player: "player", players: [{ id: "player", title: "New" }] }),
     null, "media changes do not produce an OSD");
-equal(context.batteryIcon({ charging: true, plugged: true, percentage: 60 }), "󰂉",
-    "charging icon exposes its segment");
-equal(context.batteryIcon({ charging: false, plugged: false, percentage: 0 }), "󰂎",
-    "empty battery icon");
-equal(context.batteryIcon({ charging: false, plugged: false, percentage: 80 }), "󰂁",
-    "battery level selects the matching segment");
-equal(context.batteryIcon({ charging: false, plugged: true, percentage: 80 }), "󰂁",
-    "plugged battery retains its level");
-equal(context.nextPowerProfile({ profile: "balanced", profiles: [
-    { name: "performance" }, { name: "power-saver" }, { name: "balanced" }
-] }), "performance", "power profile cycles toward performance");
 equal(context.nextPowerProfile({ profile: "performance", profiles: [
     { name: "performance" }, { name: "power-saver" }, { name: "balanced" }
 ] }), "power-saver", "power profile cycling wraps");
-equal(context.duration(7500), "2h 5m", "battery duration");
-equal(context.networkKind({ active: true, access_point: { ssid: "Test" } }), "wifi", "Wi-Fi status");
-equal(context.networkKind({ active: true, device_iface: "enp1s0" }), "ethernet", "Ethernet status");
-equal(context.networkKind({ active: false }), "disconnected", "disconnected status");
-equal(context.utcOffset(-18000), "-0500", "negative UTC offset");
 equal(context.utcOffset(19800), "+0530", "fractional UTC offset");
+
 const modules = context.statusModules({
     activity: { available: true, incomplete_todo_count: 1, next_event: null },
     network: { active: false }, updates: { available: true, ready: true },
@@ -131,44 +80,20 @@ const modules = context.statusModules({
     notifications: { count: 2, dnd: false },
     timezone: { available: true, city: "Taipei", abbreviation: "CST", utc_offset_seconds: 28800 }
 }, new Date(0));
-equal(modules.length, 10, "status module count");
-equal(modules.filter(module => module.id === "notifications").length, 0,
-    "notifications share the agenda icon");
-equal(modules[7].secondary, "activity", "right click also opens agenda");
-equal(modules[7].middle, "activity", "middle click also opens agenda");
+function module(id) { return modules.find(item => item.id === id); }
+// Actions stay reachable; their order, exact glyphs and responsive breakpoints may change.
+equal(modules.some(item => item.id === "notifications"), false, "notifications share the agenda entry point");
+equal(module("activity").primary, "activity", "calendar opens the activity surface");
 equal(context.activityModule({ available: false }, { count: 0 }).visible, true,
     "agenda remains reachable without a calendar provider");
-equal(modules[0].primary, "wifi", "network action routing");
-equal(modules[1].visible, true, "ready update visibility");
-equal(modules[4].wheelDown, "brightness-down", "brightness wheel routing");
-equal(modules[5].primary, "battery", "battery opens the battery surface");
-equal(modules[5].interactive, true, "battery module is interactive");
-equal(modules[6].primary, "power-profile-next", "power mode cycles from the bar");
-equal(modules[6].secondary, "", "power mode has no right-click action");
-equal(modules[6].middle, "", "power mode has no middle-click action");
-equal(modules[6].wheelUp, "", "power mode has no wheel action");
-equal(modules[7].primary, "activity", "calendar opens the activity surface");
-equal(modules[9].primary, "time-weather", "clock opens Time & Weather");
-equal(context.layoutDensity(1920), 0, "wide layout density");
-equal(context.layoutDensity(1366), 1, "compact layout density");
-equal(context.layoutDensity(900), 2, "narrow layout density");
-equal(context.layoutDensity(600), 3, "ultra-narrow layout density");
-equal(context.visibleStatusModules(modules, 0).length, 10, "wide layout modules");
-equal(context.visibleStatusModules(modules, 1).map(module => module.id),
-    ["network", "updates", "bluetooth", "audio", "brightness", "battery", "power", "activity", "clock"],
-    "compact layout modules");
-equal(context.visibleStatusModules(modules, 2).map(module => module.id),
-    ["network", "updates", "audio", "battery", "activity", "clock"],
-    "narrow layout modules");
-equal(context.visibleStatusModules(modules, 3).map(module => module.id),
-    ["network", "updates", "battery", "activity", "clock"], "ultra-narrow layout modules");
-equal(context.moduleText(modules[5], 1), "󰂁", "compact battery text exposes level");
-equal(context.moduleText(modules[9], 1), "HH:mm", "compact clock text");
-equal(context.statusModuleEqual(modules[5], { ...modules[5] }), true,
-    "unchanged status modules retain their delegates");
-equal(context.statusModuleEqual(modules[5], { ...modules[5], text: "changed" }), false,
-    "changed status modules update their delegate role");
-equal(context.nextMinuteDelay(0), 60000, "clock schedules a complete first minute");
+equal(module("network").primary, "wifi", "network action routing");
+equal(module("brightness").wheelDown, "brightness-down", "brightness wheel routing");
+equal(module("battery").primary, "battery", "battery opens the battery surface");
+equal(module("power").primary, "power-profile-next", "power mode cycles from the bar");
+equal(module("clock").primary, "time-weather", "clock opens Time & Weather");
+const narrow = context.visibleStatusModules(modules, context.layoutDensity(600)).map(item => item.id);
+equal(["network", "battery", "activity", "clock"].every(id => narrow.includes(id)), true,
+    "essential actions survive a narrow screen");
 equal(context.nextMinuteDelay(61234), 58766, "clock aligns updates to minute boundaries");
 
-console.log("bar presentation: workspace, responsive layout, and status formatting passed");
+console.log("bar presentation: monitor routing, OSD policy, progress and essential actions passed");

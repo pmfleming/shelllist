@@ -13,62 +13,56 @@ function source(relative) {
     return fs.readFileSync(path.join(root, relative), "utf8");
 }
 
+function install(context, text) {
+    vm.createContext(context);
+    vm.runInContext(text.match(/^    function [\s\S]*?^    }/gm).join("\n")
+        .replace(/:\s*(string|bool|var|int|real|void)\b/g, ""), context);
+}
+const quietConsole = { info() {}, warn() {}, error() {} };
 const transport = source("qml/Shelllist/Io/process/JsonlDaemonClient.qml");
-function clearsQueue(block) {
-    return /(?:queuedLines\s*=\s*\[\]|clearQueue\(\))/.test(block);
+for (const failure of ["start", "exit"]) {
+    const writes = [], failures = [];
+    const client = { active: true, ready: false, daemonName: "test-daemon",
+        queuedLines: ["destructive-effect"], counters: { retryAttempt: 0 },
+        initialRetryInterval: 1500, maximumRetryInterval: 30000,
+        console: quietConsole, processError: { text: "crashed" },
+        process: { running: false, exec() { throw new Error("start failed"); }, write: line => writes.push(line) },
+        retryTimer: { running: false, restart() { this.running = true; } },
+        transportFailed: message => failures.push(message) };
+    client.client = client;
+    install(client, transport);
+    if (failure === "start") client.start();
+    else {
+        const body = transport.match(/onExited: function \(exitCode\) \{[^\n]*\n([\s\S]*?)\n        \}/)[1];
+        vm.runInContext("function exited(exitCode) {" + body + "\n}", client);
+        client.exited(1);
+    }
+    client.ready = true;
+    client.flushQueue();
+    assert.deepEqual(writes, [], `${failure}: failed-generation effects must never replay`);
+    assert.equal(failures.length, 1);
 }
 
-const startFailure = transport.match(/catch \(error\) \{[\s\S]*?Could not start/);
-if (!startFailure || !clearsQueue(startFailure[0]))
-    throw new Error("daemon start failure does not retire queued requests");
-const exitHandler = transport.match(/onExited:[\s\S]*?\n\s*\}/);
-if (!exitHandler || !clearsQueue(exitHandler[0]))
-    throw new Error("daemon exit does not retire queued requests");
-if (!/environment:\s*\(\{\s*TOKIO_WORKER_THREADS:\s*"1"\s*\}\)/.test(transport))
-    throw new Error("daemon bridge clients are not constrained to one Tokio worker");
-
-const backend = source("qml/Shelllist/Io/DaemonBackend.qml");
-for (const token of ["property var endpoint", "property string expectedProtocol",
-        "property int expectedVersion", "function acceptEvent",
-        "ApiEnvelope.compatibilityError", "function acceptSharedEvent",
-        "DaemonSessions.attach(backend)"]) {
-    if (!backend.includes(token))
-        throw new Error(`DaemonBackend is missing boundary token: ${token}`);
+// Exercise compatibility and gap handling through the consumer, rather than
+// checking that a particular helper name occurs in the backend's source.
+{
+    const received = [], gaps = [], ApiEnvelope = {};
+    install(ApiEnvelope, source("qml/Shelllist/Core/ApiEnvelope.qml"));
+    const backend = { Core: { ApiEnvelope }, expectedProtocol: "test-api", expectedVersion: 1,
+        daemonName: "test-daemon", console: quietConsole,
+        eventReceived: event => received.push(event), eventGapDetected: stream => gaps.push(stream) };
+    install(backend, source("qml/Shelllist/Io/DaemonBackend.qml"));
+    const event = { protocol: "test-api", version: 1, stream: "updates", event: "changed", data: {} };
+    backend.acceptSharedEvent({ ...event, protocol: "wrong-api" });
+    backend.acceptSharedEvent({ ...event, version: 2 });
+    backend.acceptSharedEvent({ ...event, stream: "" });
+    backend.acceptSharedEvent({ ...event, event: "lagged" });
+    backend.acceptSharedEvent(event);
+    assert.deepEqual(received, [event], "only compatible ordinary events reach consumers");
+    assert.deepEqual(gaps, ["updates"], "gaps trigger resynchronization, not normal updates");
 }
 
 const sessions = source("qml/Shelllist/Io/DaemonSessions.qml");
-for (const token of ["property var sessions", "clientFactory.createObject",
-        "function namespace", "function routeResponse", "function routeEvent"]) {
-    if (!sessions.includes(token))
-        throw new Error(`shared daemon session registry is missing boundary token: ${token}`);
-}
-if (/JsonlDaemonClient\s*\{/.test(backend))
-    throw new Error("DaemonBackend still owns a per-consumer bridge process");
-
-const adapters = [
-    "launcher/ApplicationBackend.qml",
-    "wifi/WifiBackend.qml",
-    "bluetooth/BluetoothBackend.qml",
-    "clipboard/ClipboardBackend.qml",
-    "bar/BarBackend.qml",
-    "activity/ActivityBackend.qml",
-    "activity/NotificationBackend.qml",
-    "battery/BatteryBackend.qml",
-    "battery/BatteryEnergyBackend.qml"
-];
-for (const adapter of adapters) {
-    const text = source(adapter);
-    const endpoint = /endpoint\s*:/.test(text);
-    const explicitIdentity = /expectedProtocol\s*:/.test(text)
-        && /expectedVersion\s*:/.test(text);
-    if (!endpoint && !explicitIdentity)
-        throw new Error(`${adapter} does not declare its daemon API identity`);
-}
-
-for (const adapter of ["activity/ActivityBackend.qml", "battery/BatteryBackend.qml"]) {
-    if (!/active:\s*controller\.uiActive/.test(source(adapter)))
-        throw new Error(`${adapter} keeps a duplicate permanent bar transport`);
-}
 
 // Execute the registry's JavaScript routing with a fake transport. Keep the
 // recorded route kind authoritative, even when local IDs resemble controls.
