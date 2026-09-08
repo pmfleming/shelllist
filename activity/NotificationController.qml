@@ -1,5 +1,6 @@
 import QtQuick
 import Shelllist.Ui as Ui
+import Shelllist.Io as Io
 
 Ui.ChooserController {
     id: controller
@@ -14,6 +15,8 @@ Ui.ChooserController {
     property string pendingGroupKey: ""
     property string selectedGroupKey: ""
     property double nowMs: Date.now()
+    property string screenshotStatus: ""
+    readonly property bool screenshotInFlight: screenshotCapture.inFlight
     readonly property alias groupModel: groups
     readonly property var visibleGroups: Ui.NotificationPresentation.groupRecords(
         Ui.NotificationPresentation.filterRecords(tab === "active"
@@ -51,6 +54,9 @@ Ui.ChooserController {
             closeWindowRequested();
     }
     function dismissNavigation(): bool { goBack(); return true; }
+    function captureScreenshot(x: real, y: real, width: real, height: real): bool {
+        return screenshotCapture.captureRegion(x, y, width, height);
+    }
     function refresh(): void {
         notificationState.backend.snapshot();
         notificationState.reloadHistory();
@@ -97,6 +103,22 @@ Ui.ChooserController {
         deactivateUiState();
         returnSurface = "";
         // Deliberately retain search, scroll, expansion and reply drafts.
+    }
+
+    Io.ClipboardScreenshotCapture {
+        id: screenshotCapture
+        active: controller.uiActive
+        startMessage: "Capturing Notifications panel…"
+        onStatusChanged: function (message) {
+            controller.screenshotStatus = message;
+            if (!inFlight)
+                screenshotStatusTimer.restart();
+        }
+    }
+    Timer {
+        id: screenshotStatusTimer
+        interval: 2500
+        onTriggered: controller.screenshotStatus = ""
     }
 
     onVisibleGroupsChanged: rebuildGroups()

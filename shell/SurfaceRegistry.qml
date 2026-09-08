@@ -39,7 +39,7 @@ Item {
         id: sharedNotifications
         uiActive: (registry.activityController !== null && registry.activityController.uiActive)
             || (registry.notificationController !== null && registry.notificationController.uiActive)
-        historyEnabled: registry.notificationController !== null && registry.notificationController.uiActive
+        historyEnabled: uiActive
     }
 
     readonly property SurfaceBundle currentBundle: bundleFor(currentId)

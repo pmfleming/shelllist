@@ -3,6 +3,7 @@ internal ActivityAgendaPane ActivityAgendaPane.qml
 internal ActivityGlancePane ActivityGlancePane.qml
 internal ActivityHeaderButton ActivityHeaderButton.qml
 internal ActivityNotificationsPane ActivityNotificationsPane.qml
+internal NotificationDndDuration NotificationDndDuration.qml
 internal ActivitySchedulePane ActivitySchedulePane.qml
 internal ActivityWeatherPane ActivityWeatherPane.qml
 internal WeatherIcon WeatherIcon.qml

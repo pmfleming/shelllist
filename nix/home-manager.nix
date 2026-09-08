@@ -16,6 +16,12 @@ in
       description = "Shelllist package to install and run.";
     };
 
+    notificationsShortcut = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = "SUPER SHIFT, N";
+      description = "Hyprland modifiers and key for opening Notifications directly. Set null to disable.";
+    };
+
     systemd = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -45,6 +51,10 @@ in
 
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
+
+    wayland.windowManager.hyprland.settings.bind = lib.mkIf
+      (config.wayland.windowManager.hyprland.enable && cfg.notificationsShortcut != null)
+      [ "${cfg.notificationsShortcut}, exec, ${cfg.package}/bin/shelllist notifications open" ];
 
     systemd.user.services = lib.mkIf cfg.systemd.enable {
       shelllist = {

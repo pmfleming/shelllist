@@ -15,12 +15,23 @@ TestCase {
     Component { id: controllerComponent; Activity.NotificationController {} }
     Component { id: contentComponent; Activity.NotificationContent {} }
     Component { id: activityComponent; Activity.ActivityController {} }
+    Component { id: agendaContentComponent; Activity.ActivityContent {} }
+    Component { id: spyComponent; SignalSpy {} }
     Component { id: replyComponent; Ui.NotificationReplyRow {} }
     Component {
         id: fakeBackendComponent
         Activity.NotificationBackend {
             property var requestedCursor: null
             property bool requestedRefresh: false
+            property bool requestedDnd: false
+            property var requestedUntil: null
+            property int dndCalls: 0
+            function setDnd(enabled: bool, until: var): bool {
+                requestedDnd = enabled;
+                requestedUntil = until;
+                dndCalls++;
+                return true;
+            }
             active: false
             function loadHistory(cursor: var, refresh: bool): bool {
                 requestedCursor = cursor;
@@ -54,6 +65,40 @@ TestCase {
         verify(controller !== null);
         controller.rebuildGroups();
         return controller;
+    }
+    function test_dndToggleAndDurationCycle() {
+        const state = makeState();
+        state.backend = createTemporaryObject(fakeBackendComponent, state, { store: state });
+        compare(state.dndDurationMinutes, 30);
+        state.cycleDndDuration();
+        compare(state.dndDurationMinutes, 60);
+        compare(state.backend.dndCalls, 0);
+        const now = Date.now();
+        verify(state.setDndEnabled(true));
+        verify(state.backend.requestedDnd);
+        verify(state.backend.requestedUntil >= now + 3600000);
+        verify(!state.notifications.dnd, "daemon owns acknowledged DND state");
+        state.notifications = { available: true, dnd: true };
+        state.cycleDndDuration();
+        compare(state.dndDurationMinutes, 0);
+        verify(state.backend.requestedDnd);
+        compare(state.backend.requestedUntil, null);
+        state.cycleDndDuration();
+        compare(state.dndDurationMinutes, 30);
+        verify(state.backend.requestedUntil >= now + 1800000);
+        state.setDndEnabled(false);
+        verify(!state.backend.requestedDnd);
+        compare(state.backend.requestedUntil, null);
+        compare(state.dndDurationMinutes, 30);
+    }
+    function test_recentIncludesExpiredAndDismissed() {
+        const state = makeState();
+        compare(state.recentNotifications.length, 4);
+        compare(state.recentNotifications[0].id, 100);
+        compare(state.recentNotifications[1].history_id, 3);
+        state.notificationActive = { notifications: [] };
+        compare(state.recentNotifications.length, 3);
+        compare(state.recentNotifications[0].history_id, 3);
     }
     function test_activeUsesSnapshotNotHistory() {
         const controller = makeController(makeState());
@@ -158,9 +203,17 @@ TestCase {
         verify(content !== null);
         wait(50);
         compare(content.width, 453);
-        const dnd = findChild(content, "notificationDnd");
-        compare(dnd.currentIndex, 1);
-        compare(dnd.optionLabel(dnd.currentIndex), "DND off");
+        const dnd = findChild(content, "chooserPowerToggle");
+        verify(dnd !== null);
+        verify(!dnd.checked);
+        const duration = findChild(content, "notificationDndDuration");
+        verify(duration !== null);
+        compare(duration.label, "30 min");
+        mouseClick(duration);
+        compare(duration.label, "60 min");
+        mouseClick(duration);
+        compare(duration.label, "∞");
+        verify(duration.mapToItem(content, 0, 0).y < 100, "DND controls are at the top");
         state.setExpanded("chat", true);
         state.setDraft(100, "A saved reply");
         wait(50);
@@ -171,6 +224,54 @@ TestCase {
         verify(row.active);
         controller.tab = "history";
         controller.filterText = "missing";
+        wait(50);
+    }
+    function test_agendaPreviewsFillHeightAndKeepControlsVisible() {
+        const state = makeState();
+        const records = [];
+        for (let id = 20; id > 0; --id) records.push(record(id));
+        state.history = records;
+        const controller = createTemporaryObject(activityComponent, state, {
+            notificationState: state, rangeQueriesEnabled: false, width: 520, height: 1100
+        });
+        const content = createTemporaryObject(agendaContentComponent, controller, {
+            controller: controller, width: 520, height: 1100
+        });
+        verify(content !== null);
+        wait(50);
+        const card = findChild(content, "agendaNotificationCard");
+        const expand = findChild(content, "agendaNotificationsExpand");
+        verify(card.previewGroups.length > 3);
+        compare(card.previewGroups[0].records[0].id, 100);
+        compare(card.previewGroups[1].records[0].history_id, 20);
+        verify(expand.mapToItem(card, 0, expand.height).y <= card.height);
+        const largerCount = card.previewGroups.length;
+        controller.height = 700;
+        wait(50);
+        verify(card.previewGroups.length < largerCount);
+        verify(expand.mapToItem(card, 0, expand.height).y <= card.height);
+        state.notificationActive = { notifications: [] };
+        state.history = [];
+        wait(50);
+        verify(expand.mapToItem(card, 0, expand.height).y <= card.height);
+        content.destroy();
+        wait(50);
+    }
+    function test_standardHeaderScreenshotAndSearch() {
+        const controller = makeController(makeState());
+        const content = createTemporaryObject(contentComponent, controller,
+            { controller: controller, width: 453, height: 600 });
+        const spy = createTemporaryObject(spyComponent, testCase,
+            { target: controller, signalName: "screenshotRequested" });
+        const header = findChild(content, "notificationHeader");
+        verify(header !== null);
+        header.iconClicked();
+        compare(spy.count, 1);
+        header.filterEdited("Message 100");
+        compare(controller.filterText, "Message 100");
+        compare(controller.visibleGroups[0].records.length, 1);
+        wait(50);
+        content.destroy();
         wait(50);
     }
     function test_liveUpdateRetainsReplyDelegateAndFocus() {

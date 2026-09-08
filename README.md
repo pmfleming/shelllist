@@ -194,6 +194,8 @@ Suggested Hyprland bindings:
 ```ini
 bind = SUPER, SPACE, global, shelllist:applications
 bind = SUPER, N, global, shelllist:wifi
+bind = SUPER SHIFT, N, exec, shelllist notifications open
+bind = SUPER, A, global, shelllist:activity
 bind = SUPER, B, global, shelllist:bluetooth
 bind = SUPER, V, global, shelllist:clipboard
 bind = SUPER, P, global, shelllist:battery

@@ -48,4 +48,19 @@ equal(context.groupRecords([{ app_name: "__proto__" }, { app_name: "constructor"
 equal(context.relativeTime(60000, 120000), "1m ago", "relative preview time");
 equal(context.relativeTime(0, 120000), "", "missing time is not an epoch date");
 
+const recent = context.recentRecords([
+    { id: 2, created_unix_ms: 200, summary: "live" }
+], [
+    { history_id: 3, notification: { id: 3, created_unix_ms: 300 } },
+    { history_id: 2, notification: { id: 2, created_unix_ms: 200 } },
+    { history_id: 1, notification: { id: 2, created_unix_ms: 100 } }
+]);
+equal(recent.length, 3, "recent previews deduplicate active/history overlap, not reused IDs");
+equal(recent[0].history_id, 3, "expired recent notification precedes older active record");
+equal(recent[1].summary, "live", "active snapshot wins over its history copy");
+equal(recent[2].history_id, 1, "old history remains available");
+equal(context.previewCapacity(500, 8, 12), 6, "tall agenda fits more than three previews");
+equal(context.previewCapacity(170, 8, 12), 0, "short agenda reserves controls");
+equal(context.previewCapacity(20, 8, 12), 0, "capacity never becomes negative");
+
 console.log("notification presentation checks passed");

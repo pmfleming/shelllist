@@ -6,7 +6,10 @@ Item {
     id: notificationState
 
     property bool uiActive: false
-    property bool historyEnabled: false
+    property bool historyEnabled: uiActive
+    // The duration selection is shared by the agenda and notification pane.
+    // Zero means indefinite; enabled/disabled is a separate daemon-owned state.
+    property int dndDurationMinutes: 30
     property var notifications: ({ available: false, count: 0, dnd: false })
     property var notificationActive: ({ available: false, notifications: [] })
     property var history: []
@@ -22,6 +25,8 @@ Item {
     readonly property var activeNotifications: notificationActive.notifications || []
     readonly property var activeGroups: Ui.NotificationPresentation.groupRecords(
         Ui.NotificationPresentation.newestFirst(activeNotifications))
+    readonly property var recentNotifications: Ui.NotificationPresentation.recentRecords(
+        activeNotifications, history)
     readonly property int draftCount: Object.keys(drafts).filter(function (key) {
         return String(notificationState.drafts[key] || "").length > 0;
     }).length
@@ -121,8 +126,15 @@ Item {
         historyLoading = false;
         historyError = message;
     }
-    function setDndForMinutes(minutes: int): bool {
-        return backend.setDnd(minutes > 0, minutes > 0 ? Date.now() + minutes * 60000 : null);
+    function setDndEnabled(enabled: bool): bool {
+        return backend.setDnd(enabled, enabled && dndDurationMinutes > 0
+            ? Date.now() + dndDurationMinutes * 60000 : null);
+    }
+    function cycleDndDuration(): void {
+        dndDurationMinutes = dndDurationMinutes === 30 ? 60
+            : dndDurationMinutes === 60 ? 0 : 30;
+        if (notifications.dnd)
+            setDndEnabled(true);
     }
     function dismissNotification(id: int): bool { return backend.dismiss(id); }
     function clearNotifications(): bool { return backend.clear(); }

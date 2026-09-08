@@ -16,6 +16,9 @@ RowLayout {
     property string refreshIcon: "󰑐"
     property bool focusOnCompleted: false
     property bool iconActionEnabled: false
+    property string iconAccessibleName: ""
+    property string powerAccessibleName: "Power"
+    property Component powerAccessory: null
     property string searchActionIcon: ""
     property string searchActionToolTip: ""
     property bool searchActionEnabled: true
@@ -54,6 +57,9 @@ RowLayout {
         icon: header.signalIcon ? "" : header.icon
         iconColor: header.powered ? Theme.accent : Theme.mutedText
         iconSize: Math.max(Theme.iconSize, header.scaled(Theme.iconSizeLarge))
+        Accessible.role: Accessible.Button
+        Accessible.name: header.iconAccessibleName
+        Accessible.onPressAction: if (header.iconActionEnabled) header.iconClicked()
         clickable: header.iconActionEnabled
         onClicked: header.iconClicked()
 
@@ -101,12 +107,25 @@ RowLayout {
     }
 
     ToggleSwitch {
+        objectName: "chooserPowerToggle"
+        Accessible.role: Accessible.CheckBox
+        Accessible.name: header.powerAccessibleName
+        Accessible.checked: checked
+        Accessible.onToggleAction: toggle()
         Layout.preferredWidth: header.scaled(56)
         Layout.preferredHeight: header.scaled(Theme.controlHeight)
         Layout.alignment: Qt.AlignVCenter
         checked: header.powered
         enabled: header.powerEnabled
         onToggled: header.powerRequested()
+    }
+
+    Loader {
+        visible: sourceComponent !== null
+        sourceComponent: header.powerAccessory
+        Layout.preferredWidth: item ? item.implicitWidth : 0
+        Layout.preferredHeight: header.scaled(Theme.controlHeight)
+        Layout.alignment: Qt.AlignVCenter
     }
 
     RefreshTile {

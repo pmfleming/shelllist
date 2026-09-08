@@ -14,6 +14,8 @@ Rectangle {
     color: Ui.Theme.surface
     border.color: Ui.Theme.border
 
+    function focusList(): void { list.forceActiveFocus(); }
+
     function revealGroup(key: string): void {
         const index = controller.visibleGroups.findIndex(function (group) { return group.key === key; });
         if (index >= 0) {
@@ -33,24 +35,6 @@ Rectangle {
         Flow {
             width: parent.width
             spacing: Ui.Theme.spacingSm
-            Ui.DropDownList {
-                width: Math.min(180, parent.width)
-                height: 36
-                objectName: "notificationDnd"
-                value: pane.notificationState.notifications.dnd ? "-1" : "0"
-                options: [
-                    { value: "-1", label: Ui.NotificationPresentation.dndLabel(
-                        pane.notificationState.notifications, pane.controller.nowMs) },
-                    { value: "0", label: "DND off" },
-                    { value: "30", label: "Pause for 30 min" },
-                    { value: "60", label: "Pause for 1 hour" },
-                    { value: "120", label: "Pause for 2 hours" },
-                    { value: "480", label: "Pause for 8 hours" }
-                ]
-                onSelected: function (minutes) {
-                    if (Number(minutes) >= 0) pane.notificationState.setDndForMinutes(Number(minutes));
-                }
-            }
             Ui.ActionButton {
                 width: Math.min(164, parent.width)
                 height: 36
@@ -81,21 +65,6 @@ Rectangle {
                 color: Ui.Theme.mutedText
                 font.family: Ui.Theme.fontFamily
                 font.pixelSize: Ui.Theme.fontSizeCaption
-            }
-        }
-        Ui.TextField {
-            id: search
-            width: parent.width
-            height: 36
-            placeholder: pane.controller.tab === "history"
-                ? "Search loaded history…" : "Search app, title or message…"
-            text: pane.controller.filterText
-            onEdited: function (value) { pane.controller.filterText = value; }
-            onKeyPressed: function (event) {
-                if (event.key === Qt.Key_Down) {
-                    list.forceActiveFocus();
-                    event.accepted = true;
-                }
             }
         }
         Text {
@@ -177,13 +146,6 @@ Rectangle {
         anchors.margins: Ui.Theme.spacingMd
         spacing: Ui.Theme.spacingSm
         Ui.ActionButton {
-            width: 88
-            height: 34
-            label: "Refresh"
-            enabled: !pane.notificationState.historyLoading
-            onClicked: pane.controller.refresh()
-        }
-        Ui.ActionButton {
             visible: pane.controller.tab === "history" && pane.notificationState.historyHasMore
             width: Math.min(190, parent.width)
             height: 34
@@ -194,7 +156,6 @@ Rectangle {
     }
     Connections {
         target: pane.controller
-        function onFocusSearchRequested(): void { search.focusInput(false); }
         function onRevealGroupRequested(key: string): void {
             Qt.callLater(function () { pane.revealGroup(key); });
         }

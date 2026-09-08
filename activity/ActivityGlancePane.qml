@@ -423,12 +423,19 @@ Column {
 
     Rectangle {
         id: notificationCard
+        objectName: "agendaNotificationCard"
 
-        readonly property int previewLimit: Math.max(0, Math.min(3, Math.floor(
-            (height - 28 - 34 - Ui.Theme.spacingMd * 2 - Ui.Theme.spacingSm * 2)
-                / (48 + Ui.Theme.spacingSm))))
-        readonly property var previewGroups: pane.controller.activeNotificationGroups.slice(
-            0, previewLimit)
+        readonly property int previewLimit: Ui.NotificationPresentation.previewCapacity(
+            height, Ui.Theme.spacingSm, Ui.Theme.spacingMd)
+        readonly property var previewGroups: pane.controller.notificationState.recentNotifications.slice(
+            0, previewLimit).map(function (record) {
+                return {
+                    key: Ui.NotificationPresentation.groupKey(record),
+                    appName: Ui.NotificationPresentation.notificationFor(record).app_name || "Notifications",
+                    records: [record],
+                    tab: record.history_id !== undefined ? "history" : "active"
+                };
+            })
 
         width: parent.width
         height: Math.max(170, pane.height - y)
@@ -468,6 +475,7 @@ Column {
                 model: notificationCard.previewGroups
                 delegate: Rectangle {
                     id: notificationPreview
+                    objectName: "agendaNotificationPreview"
                     required property var modelData
                     readonly property var notification: pane.notificationForGroup(modelData)
 
@@ -482,7 +490,7 @@ Column {
                     Accessible.name: "Open " + modelData.appName + " notifications: "
                         + String(notification.summary || "")
                     function openGroup(): void {
-                        pane.controller.requestNotifications(modelData.key, "active");
+                        pane.controller.requestNotifications(modelData.key, modelData.tab);
                     }
                     Accessible.onPressAction: openGroup()
                     Keys.onReturnPressed: openGroup()
@@ -511,24 +519,6 @@ Column {
                                 source: pane.notificationIconSource(notificationPreview.modelData)
                                 fillMode: Image.PreserveAspectFit
                                 asynchronous: true
-                            }
-                            Rectangle {
-                                visible: notificationPreview.modelData.records.length > 1
-                                width: 16
-                                height: 16
-                                radius: 8
-                                anchors.right: parent.right
-                                anchors.bottom: parent.bottom
-                                color: Ui.Theme.accent
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: notificationPreview.modelData.records.length > 9
-                                        ? "9+" : String(notificationPreview.modelData.records.length)
-                                    color: Ui.Theme.accentText
-                                    font.family: Ui.Theme.fontFamily
-                                    font.pixelSize: 8
-                                    font.weight: Ui.Theme.fontWeightBold
-                                }
                             }
                         }
 
@@ -566,47 +556,53 @@ Column {
             Item {
                 visible: notificationCard.previewGroups.length === 0
                 width: parent.width
-                height: visible ? 48 : 0
+                height: visible ? Math.max(0, Math.min(48,
+                    parent.height - y - 68 - parent.spacing * 2)) : 0
+                clip: true
                 Text {
                     anchors.centerIn: parent
-                    text: pane.controller.notifications.available
-                        ? "No active notifications" : "Notifications unavailable"
+                    text: pane.controller.notificationState.historyLoading ? "Loading notifications…"
+                        : pane.controller.notificationState.historyError ? "Could not load recent notifications"
+                        : pane.controller.notifications.available ? "No recent notifications"
+                        : "Notifications unavailable"
                     color: Ui.Theme.mutedText
                     font.family: Ui.Theme.fontFamily
                     font.pixelSize: Ui.Theme.fontSizeSmall
                 }
             }
 
-            Flow {
+            Row {
                 width: parent.width
+                height: 34
                 spacing: Ui.Theme.spacingSm
-                Ui.DropDownList {
-                    width: Math.min(180, parent.width)
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "DND"
+                    color: Ui.Theme.mutedText
+                    font.family: Ui.Theme.fontFamily
+                    font.pixelSize: Ui.Theme.fontSizeSmall
+                }
+                Ui.ToggleSwitch {
+                    objectName: "agendaDnd"
                     height: 34
-                    value: pane.controller.notifications.dnd ? "-1" : "0"
-                    options: [
-                        { value: "-1", label: pane.controller.notifications.dnd_until_unix_ms
-                            ? "Paused until " + Qt.formatTime(new Date(Number(
-                                pane.controller.notifications.dnd_until_unix_ms)), "HH:mm")
-                            : "DND on" },
-                        { value: "0", label: "DND off" },
-                        { value: "30", label: "Pause for 30 min" },
-                        { value: "60", label: "Pause for 1 hour" }
-                    ]
-                    onSelected: function (minutes) {
-                        if (Number(minutes) >= 0)
-                            pane.controller.notificationState.setDndForMinutes(Number(minutes));
+                    checked: pane.controller.notifications.dnd
+                    enabled: pane.controller.notifications.available
+                    Accessible.role: Accessible.CheckBox
+                    Accessible.name: "Do not disturb"
+                    Accessible.checked: checked
+                    Accessible.onToggleAction: toggle()
+                    onToggled: function (checked) {
+                        pane.controller.notificationState.setDndEnabled(checked);
                     }
                 }
-                ActivityHeaderButton {
-                    label: notificationCard.previewGroups.length === 0 ? "View history"
-                        : pane.controller.activeNotificationGroups.length > notificationCard.previewGroups.length
-                            ? String(pane.controller.activeNotificationGroups.length
-                                - notificationCard.previewGroups.length) + " more apps"
-                            : "View all"
-                    onTriggered: pane.controller.requestNotifications("",
-                        notificationCard.previewGroups.length === 0 ? "history" : "active")
+                NotificationDndDuration {
+                    notificationState: pane.controller.notificationState
                 }
+            }
+            ActivityHeaderButton {
+                objectName: "agendaNotificationsExpand"
+                label: "View all notifications ↗"
+                onTriggered: pane.controller.requestNotifications("", "history")
             }
         }
 

@@ -197,24 +197,19 @@ function nextEventTime(next) {
     return next.all_day ? "All day"
         : Qt.formatDateTime(new Date(next.start_unix_ms), "ddd HH:mm");
 }
-function activityModule(activity) {
+function activityModule(activity, notifications) {
+    const count = (notifications && notifications.count) || 0;
+    const dnd = !!(notifications && notifications.dnd);
     const next = activity && activity.next_event;
     const nextTitle = next ? (next.title || "Untitled event") : "No upcoming events";
     const nextTime = nextEventTime(next);
-    return statusModule("activity", next ? "󰃭 " + nextTime : "󰃭", nextTitle + (nextTime ? "\n" + nextTime : "")
-        + "\nTodos: " + ((activity && activity.incomplete_todo_count) || 0), {
-        compactText: "󰃭", visible: !!(activity && activity.available), maxDensity: 2,
-        tone: next ? "accent" : "text", primary: "activity"
-    });
-}
-function notificationModule(notifications) {
-    const count = (notifications && notifications.count) || 0;
-    const dnd = !!(notifications && notifications.dnd);
-    return statusModule("notifications", " " + count, "Notifications: " + count
-        + "\nLeft click: open Activity\nRight click: toggle do not disturb"
-        + (dnd ? "\nDo not disturb is on" : ""), {
-        compactText: "", maxDensity: 2, tone: dnd ? "muted" : "text",
-        primary: "notifications", secondary: "notifications-dnd"
+    return statusModule("activity", "󰃭", "Agenda · Notifications: " + count
+        + "\n" + nextTitle + (nextTime ? "\n" + nextTime : "")
+        + "\nTodos: " + ((activity && activity.incomplete_todo_count) || 0)
+        + (dnd ? "\nDo not disturb is on" : "") + "\nClick: open agenda", {
+        compactText: "󰃭", maxDensity: 3,
+        tone: dnd ? "muted" : count > 0 || next ? "accent" : "text",
+        primary: "activity", secondary: "activity", middle: "activity"
     });
 }
 function timezoneModule(timezone) {
@@ -238,8 +233,7 @@ function statusModules(state, now) {
         networkModule(state.network), updateModule(state.updates),
         bluetoothModule(state.bluetooth), audioModule(state.audio),
         brightnessModule(state.brightness), batteryModule(state.battery),
-        powerModule(state.powerProfile), activityModule(state.activity),
-        notificationModule(state.notifications),
+        powerModule(state.powerProfile), activityModule(state.activity, state.notifications),
         timezoneModule(state.timezone), clockModule(now, state.timezone)
     ];
 }

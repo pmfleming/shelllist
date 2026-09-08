@@ -131,7 +131,13 @@ const modules = context.statusModules({
     notifications: { count: 2, dnd: false },
     timezone: { available: true, city: "Taipei", abbreviation: "CST", utc_offset_seconds: 28800 }
 }, new Date(0));
-equal(modules.length, 11, "status module count");
+equal(modules.length, 10, "status module count");
+equal(modules.filter(module => module.id === "notifications").length, 0,
+    "notifications share the agenda icon");
+equal(modules[7].secondary, "activity", "right click also opens agenda");
+equal(modules[7].middle, "activity", "middle click also opens agenda");
+equal(context.activityModule({ available: false }, { count: 0 }).visible, true,
+    "agenda remains reachable without a calendar provider");
 equal(modules[0].primary, "wifi", "network action routing");
 equal(modules[1].visible, true, "ready update visibility");
 equal(modules[4].wheelDown, "brightness-down", "brightness wheel routing");
@@ -142,22 +148,22 @@ equal(modules[6].secondary, "", "power mode has no right-click action");
 equal(modules[6].middle, "", "power mode has no middle-click action");
 equal(modules[6].wheelUp, "", "power mode has no wheel action");
 equal(modules[7].primary, "activity", "calendar opens the activity surface");
-equal(modules[10].primary, "time-weather", "clock opens Time & Weather");
+equal(modules[9].primary, "time-weather", "clock opens Time & Weather");
 equal(context.layoutDensity(1920), 0, "wide layout density");
 equal(context.layoutDensity(1366), 1, "compact layout density");
 equal(context.layoutDensity(900), 2, "narrow layout density");
 equal(context.layoutDensity(600), 3, "ultra-narrow layout density");
-equal(context.visibleStatusModules(modules, 0).length, 11, "wide layout modules");
+equal(context.visibleStatusModules(modules, 0).length, 10, "wide layout modules");
 equal(context.visibleStatusModules(modules, 1).map(module => module.id),
-    ["network", "updates", "bluetooth", "audio", "brightness", "battery", "power", "activity", "notifications", "clock"],
+    ["network", "updates", "bluetooth", "audio", "brightness", "battery", "power", "activity", "clock"],
     "compact layout modules");
 equal(context.visibleStatusModules(modules, 2).map(module => module.id),
-    ["network", "updates", "audio", "battery", "activity", "notifications", "clock"],
+    ["network", "updates", "audio", "battery", "activity", "clock"],
     "narrow layout modules");
 equal(context.visibleStatusModules(modules, 3).map(module => module.id),
-    ["network", "updates", "battery", "clock"], "ultra-narrow layout modules");
+    ["network", "updates", "battery", "activity", "clock"], "ultra-narrow layout modules");
 equal(context.moduleText(modules[5], 1), "󰂁", "compact battery text exposes level");
-equal(context.moduleText(modules[10], 1), "HH:mm", "compact clock text");
+equal(context.moduleText(modules[9], 1), "HH:mm", "compact clock text");
 equal(context.statusModuleEqual(modules[5], { ...modules[5] }), true,
     "unchanged status modules retain their delegates");
 equal(context.statusModuleEqual(modules[5], { ...modules[5], text: "changed" }), false,

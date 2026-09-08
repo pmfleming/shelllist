@@ -41,6 +41,26 @@ function newestFirst(records) {
     });
 }
 
+// Keep expired/dismissed records in the agenda, without duplicating records
+// also present in the active snapshot. IDs alone can be reused after restart.
+function recentRecords(active, history) {
+    const activeKeys = Object.create(null);
+    (active || []).forEach(function (record) {
+        const n = notificationFor(record);
+        activeKeys[n.id + ":" + n.created_unix_ms] = true;
+    });
+    return newestFirst((active || []).concat((history || []).filter(function (record) {
+        const n = notificationFor(record);
+        return !activeKeys[n.id + ":" + n.created_unix_ms];
+    })));
+}
+
+function previewCapacity(height, spacing, margin) {
+    // Header, DND row, view-all row and their gaps; each preview is 48px.
+    return Math.max(0, Math.floor((height - margin * 2 - 28 - 34 - 34
+        - spacing * 2) / (48 + spacing)));
+}
+
 function mergeHistory(existing, incoming) {
     const byId = Object.create(null);
     (existing || []).concat(incoming || []).forEach(function (record) {
