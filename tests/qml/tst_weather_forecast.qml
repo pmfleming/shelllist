@@ -1,6 +1,6 @@
 import QtQuick
 import QtTest
-import "../../activity/WeatherVisuals.js" as Visuals
+import "../../qml/Shelllist/Activity/WeatherVisuals.js" as Visuals
 
 TestCase {
     id: testCase
