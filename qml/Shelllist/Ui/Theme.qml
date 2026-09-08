@@ -38,6 +38,15 @@ Item {
     readonly property color controlBackground: surfaceRaised
     readonly property color controlBorder: mix(border, text, 0.16)
 
+    // Resource series remain distinguishable independently of the interactive accent.
+    readonly property color resourceCpu: envColor("SHELLLIST_RESOURCE_CPU", dark ? "#60a5fa" : "#2563eb")
+    readonly property color resourceMemory: envColor("SHELLLIST_RESOURCE_MEMORY", dark ? "#4ade80" : "#15803d")
+    readonly property color resourceGpu: envColor("SHELLLIST_RESOURCE_GPU", dark ? "#fbbf24" : "#b45309")
+    readonly property color resourceDisk: envColor("SHELLLIST_RESOURCE_DISK", dark ? "#38bdf8" : "#0369a1")
+    readonly property color resourceNetworkReceive: envColor("SHELLLIST_RESOURCE_NETWORK_RECEIVE", dark ? "#c084fc" : "#7e22ce")
+    readonly property color resourceNetworkTransmit: envColor("SHELLLIST_RESOURCE_NETWORK_TRANSMIT", dark ? "#22d3ee" : "#0e7490")
+    readonly property color resourcePower: envColor("SHELLLIST_RESOURCE_POWER", dark ? "#fb7185" : "#be123c")
+
     // Forecast artwork has a dark backdrop independently of the desktop palette.
     readonly property color weatherHeroText: "#f4f7fb"
     readonly property color weatherHeroSecondaryText: "#d6dfec"

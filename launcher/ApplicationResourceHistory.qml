@@ -28,30 +28,29 @@ ColumnLayout {
     readonly property real energyFraction: Math.max(0, Math.min(1,
         Number(current.attributed_fraction || 0)))
 
-    // Data colours are intentionally independent from the interactive UI accent.
-    readonly property color cpuColor: Ui.Theme.dark ? "#60a5fa" : "#2563eb"
-    readonly property color memoryColor: Ui.Theme.dark ? "#4ade80" : "#15803d"
-    readonly property color gpuColor: Ui.Theme.dark ? "#fbbf24" : "#b45309"
-    readonly property color diskColor: Ui.Theme.dark ? "#38bdf8" : "#0369a1"
-    readonly property color networkReceiveColor: Ui.Theme.dark ? "#c084fc" : "#7e22ce"
-    readonly property color networkTransmitColor: Ui.Theme.dark ? "#22d3ee" : "#0e7490"
-    readonly property color powerColor: Ui.Theme.dark ? "#fb7185" : "#be123c"
+    readonly property color cpuColor: Ui.Theme.resourceCpu
+    readonly property color memoryColor: Ui.Theme.resourceMemory
+    readonly property color gpuColor: Ui.Theme.resourceGpu
+    readonly property color diskColor: Ui.Theme.resourceDisk
+    readonly property color networkReceiveColor: Ui.Theme.resourceNetworkReceive
+    readonly property color networkTransmitColor: Ui.Theme.resourceNetworkTransmit
+    readonly property color powerColor: Ui.Theme.resourcePower
 
-    function currentHas(metric) {
+    function currentHas(metric: string): bool {
         return application.running ? Resources.currentMetricAvailable(application, metric)
             : Resources.historicalMetricAvailable(latestPoint, metric);
     }
-    function historyHas(metric) {
+    function historyHas(metric: string): bool {
         return points.some(function (point) {
             return Resources.historicalMetricAvailable(point, metric);
         });
     }
-    function currentPower() {
+    function currentPower(): var {
         return application.running
             ? application.estimated_app_power_watts || application.power_watts
             : latestPoint.average_power_watts;
     }
-    function average(metric) {
+    function average(metric: string): real {
         const values = points.filter(function (point) {
             return Resources.historicalMetricAvailable(point, metric);
         }).map(function (point) { return Number(point[metric]); })
@@ -60,7 +59,7 @@ ColumnLayout {
             return sum + value;
         }, 0) / values.length : 0;
     }
-    function peak(metric, nested) {
+    function peak(metric: string, nested: bool): real {
         return points.reduce(function (maximum, point) {
             const availabilityMetric = metric === "estimated_app_power_watts" ? "average_power_watts" : metric;
             if (!Resources.historicalMetricAvailable(point, availabilityMetric))
@@ -70,22 +69,24 @@ ColumnLayout {
             return isFinite(value) ? Math.max(maximum, value) : maximum;
         }, 0);
     }
-    function formatted(value, kind) {
+    function formatted(value: var, kind: string): string {
         if (kind === "bytes") return Resources.bytes(value);
         if (kind === "rate") return Resources.rate(value);
         if (kind === "power") return Resources.power(value);
         return Resources.percent(value);
     }
-    function reference(metric, peakMetric, kind) {
+    function reference(metric: string, peakMetric: string, kind: string): string {
         return "avg " + formatted(average(metric), kind) + " · peak "
             + formatted(peak(peakMetric || metric, !!peakMetric), kind);
     }
-    function graphSeries(metric, peakMetric, label, color, kind, direction) {
+    function graphSeries(metric: string, peakMetric: string, label: string, color: color,
+            kind: string, direction: int): var {
         return { metric: metric, peakMetric: peakMetric || "", label: label,
             color: color, kind: kind, direction: direction || 0 };
     }
-    function lane(label, valueText, secondaryText, referenceText, color, maximum,
-            unavailable, chartStyle, series) {
+    function lane(label: string, valueText: string, secondaryText: string,
+            referenceText: string, color: color, maximum: real, unavailable: bool,
+            chartStyle: string, series: var): var {
         return { label: label, valueText: valueText, secondaryText: secondaryText,
             referenceText: referenceText, color: color, maximum: maximum,
             currentUnavailable: unavailable,
