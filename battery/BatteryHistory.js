@@ -4,129 +4,135 @@ function nonnegative(value) {
     return typeof value === "number" && isFinite(value) && value >= 0;
 }
 
-// Wall-clock timestamps are labels only. The daemon has already removed
-// unobserved time and explicitly marks where interpolation is unsafe.
+function observedPoint(point) {
+    return nonnegative(point.active_time_ms)
+        && nonnegative(point.timestamp_ms) && point.timestamp_ms > 0;
+}
+
+function activeTimeline(samples) {
+    const timed = samples.filter(observedPoint);
+    const first = timed.reduce(function (value, point) { return Math.min(value, point.active_time_ms); }, Infinity);
+    const last = timed.reduce(function (value, point) { return Math.max(value, point.active_time_ms); }, 0);
+    return { first: first, duration: timed.length ? last - first : 0, available: timed.length > 0 };
+}
+
+function metricAvailable(point, metric, positiveOnly) {
+    const value = point[metric];
+    if (!observedPoint(point) || !nonnegative(value)) return false;
+    if (positiveOnly && value <= 0) return false;
+    if (metric === "percentage" && value > 100) return false;
+    return metric !== "time_to_full_seconds" || (point.charging === true && value > 0);
+}
+
+function continuousAfter(previous, point) {
+    return previous !== null && point.continuous === true
+        && point.active_time_ms > previous.active_time_ms
+        && point.timestamp_ms > previous.timestamp_ms;
+}
+
+// Use observed active time, not wall-clock gaps, to place samples on the chart.
 function series(points, metric, minimumMaximum, positiveOnly) {
     const samples = Array.isArray(points) ? points : [];
-    const timed = samples.filter(function (point) {
-        return nonnegative(point.active_time_ms)
-            && nonnegative(point.timestamp_ms) && point.timestamp_ms > 0;
-    });
-    const first = timed.reduce(function (value, point) {
-        return Math.min(value, point.active_time_ms);
-    }, Infinity);
-    const last = timed.reduce(function (value, point) {
-        return Math.max(value, point.active_time_ms);
-    }, 0);
-    const duration = timed.length > 0 ? last - first : 0;
+    const timeline = activeTimeline(samples);
     let maximum = Math.max(1, minimumMaximum || 0);
     const segments = [];
-    let segment = null;
-    let previous = null;
+    let segment = null, previous = null;
     samples.forEach(function (point) {
-        const value = point[metric];
-        const valid = nonnegative(point.active_time_ms)
-            && nonnegative(point.timestamp_ms) && point.timestamp_ms > 0
-            && nonnegative(value) && (!positiveOnly || value > 0)
-            && (metric !== "percentage" || value <= 100)
-            && (metric !== "time_to_full_seconds" || (point.charging === true && value > 0));
-        if (!valid) {
+        if (!metricAvailable(point, metric, positiveOnly)) {
             segment = null;
             previous = null;
             return;
         }
-        if (!segment || point.continuous !== true
-                || point.active_time_ms <= previous.active_time_ms
-                || point.timestamp_ms <= previous.timestamp_ms) {
+        if (!segment || !continuousAfter(previous, point)) {
             segment = [];
             segments.push(segment);
         }
         segment.push({
-            x: duration > 0 ? (point.active_time_ms - first) / duration : 0.5,
-            value: value,
-            timestamp_ms: point.timestamp_ms
+            x: timeline.duration > 0 ? (point.active_time_ms - timeline.first) / timeline.duration : 0.5,
+            value: point[metric], timestamp_ms: point.timestamp_ms
         });
-        maximum = Math.max(maximum, value);
+        maximum = Math.max(maximum, point[metric]);
         previous = point;
     });
-    return { segments: segments, maximum: maximum, activeDurationMs: duration,
-        hasActiveTimeline: timed.length > 0 };
+    return { segments: segments, maximum: maximum, activeDurationMs: timeline.duration,
+        hasActiveTimeline: timeline.available };
 }
 
-// Integrate sampled discharge power over observed time only. Never count
-// charging power as consumption, or bridge sleep/restart/mode transitions.
-// Fixed active-time buckets keep bar heights comparable (Wh per interval).
+function discharging(point) {
+    return point.mode === "discharging"
+        || (!point.mode && point.charging === false && point.plugged === false);
+}
+
+function energyInterval(previous, point) {
+    if (!previous || !observedPoint(previous) || !observedPoint(point)) return false;
+    return continuousAfter(previous, point) && discharging(previous) && discharging(point)
+        && nonnegative(previous.power_watts) && nonnegative(point.power_watts);
+}
+
+function accumulateEnergy(buckets, previous, point, timeline, intervalMs) {
+    const start = previous.active_time_ms - timeline.first;
+    const end = point.active_time_ms - timeline.first;
+    const powerChange = point.power_watts - previous.power_watts;
+    for (let offset = start; offset < end;) {
+        const index = Math.floor(offset / intervalMs);
+        const stop = Math.min(end, (index + 1) * intervalMs);
+        const startPower = previous.power_watts + powerChange * (offset - start) / (end - start);
+        const endPower = previous.power_watts + powerChange * (stop - start) / (end - start);
+        const bucket = buckets[index] || {
+            x0: index * intervalMs / timeline.duration,
+            x1: Math.min(timeline.duration, (index + 1) * intervalMs) / timeline.duration,
+            value: 0, observedMs: 0
+        };
+        bucket.value += (startPower + endPower) / 2 * (stop - offset) / 3600000;
+        bucket.observedMs += stop - offset;
+        buckets[index] = bucket;
+        offset = stop;
+    }
+}
+
+// Integrate discharge only; never bridge sleep, restarts, or charging transitions.
 function energySeries(points) {
     const samples = Array.isArray(points) ? points : [];
-    const timeline = series(samples, "percentage", 100, false);
-    const timed = samples.filter(function (point) {
-        return nonnegative(point.active_time_ms) && nonnegative(point.timestamp_ms)
-            && point.timestamp_ms > 0;
-    });
-    const first = timed.reduce(function (value, point) {
-        return Math.min(value, point.active_time_ms);
-    }, Infinity);
-    const duration = timeline.activeDurationMs;
-    const intervalMs = Math.max(900000, Math.ceil(duration / 48 / 900000) * 900000);
+    const timeline = activeTimeline(samples);
+    const intervalMs = Math.max(900000, Math.ceil(timeline.duration / 48 / 900000) * 900000);
     const buckets = {};
-    function discharging(point) {
-        return point.mode === "discharging"
-            || (!point.mode && point.charging === false && point.plugged === false);
-    }
     samples.forEach(function (point, index) {
         const previous = samples[index - 1];
-        if (!previous || point.continuous !== true || !discharging(point)
-                || !discharging(previous) || !nonnegative(point.power_watts)
-                || !nonnegative(previous.power_watts)
-                || !nonnegative(previous.active_time_ms) || !nonnegative(point.active_time_ms)
-                || !nonnegative(previous.timestamp_ms) || previous.timestamp_ms <= 0
-                || !nonnegative(point.timestamp_ms) || point.timestamp_ms <= previous.timestamp_ms
-                || point.active_time_ms <= previous.active_time_ms)
-            return;
-        const start = previous.active_time_ms - first;
-        const end = point.active_time_ms - first;
-        for (let offset = start; offset < end;) {
-            const bucketIndex = Math.floor(offset / intervalMs);
-            const stop = Math.min(end, (bucketIndex + 1) * intervalMs);
-            const startPower = previous.power_watts + (point.power_watts - previous.power_watts)
-                * (offset - start) / (end - start);
-            const endPower = previous.power_watts + (point.power_watts - previous.power_watts)
-                * (stop - start) / (end - start);
-            const bucket = buckets[bucketIndex] || {
-                x0: bucketIndex * intervalMs / duration,
-                x1: Math.min(duration, (bucketIndex + 1) * intervalMs) / duration,
-                value: 0, observedMs: 0
-            };
-            bucket.value += (startPower + endPower) / 2 * (stop - offset) / 3600000;
-            bucket.observedMs += stop - offset;
-            buckets[bucketIndex] = bucket;
-            offset = stop;
-        }
+        if (energyInterval(previous, point))
+            accumulateEnergy(buckets, previous, point, timeline, intervalMs);
     });
     const bars = Object.keys(buckets).map(function (key) { return buckets[key]; });
     return { bars: bars, maximum: Math.max(0.1, ...bars.map(function (bar) { return bar.value; })),
         totalWh: bars.reduce(function (total, bar) { return total + bar.value; }, 0),
-        intervalMs: intervalMs, activeDurationMs: duration };
+        intervalMs: intervalMs, activeDurationMs: timeline.duration };
+}
+
+function chargeLimit(protection) {
+    return protection.enabled === true && !protection.charge_once_active
+        && nonnegative(protection.end_percent) && protection.end_percent > 0
+        && protection.end_percent < 100 ? protection.end_percent : null;
+}
+
+function validCharge(battery, target) {
+    return battery.available === true && battery.charging === true
+        && nonnegative(battery.percentage) && battery.percentage < target;
+}
+
+function remainingChargeSeconds(battery, target) {
+    const seconds = battery.time_to_full_seconds;
+    if (!validCharge(battery, target) || !nonnegative(seconds) || seconds <= 0 || seconds > 86400)
+        return 0;
+    // This capped-target ETA remains an approximation of the full-charge estimate.
+    return seconds * (target - battery.percentage) / (100 - battery.percentage);
 }
 
 function chargeForecast(battery) {
     battery = battery || {};
-    const protection = battery.protection || {};
-    const limit = protection.enabled === true && !protection.charge_once_active
-        && nonnegative(protection.end_percent) && protection.end_percent > 0
-        && protection.end_percent < 100 ? protection.end_percent : null;
+    const limit = chargeLimit(battery.protection || {});
     const target = limit === null ? 100 : limit;
-    const percentage = battery.percentage;
-    const validCharge = battery.available === true && battery.charging === true
-        && nonnegative(percentage) && percentage < target;
-    const fullSeconds = battery.time_to_full_seconds;
-    // Refuse obviously unstable estimates rather than stretching the entire
-    // history around them. A capped-target ETA is an explicitly approximate
-    // fraction of the daemon's full-charge estimate (not a charging model).
-    const seconds = validCharge && nonnegative(fullSeconds) && fullSeconds > 0
-        && fullSeconds <= 86400 ? fullSeconds * (target - percentage) / (100 - percentage) : 0;
-    return { limit: limit, target: target, percentage: percentage,
-        seconds: seconds, estimating: validCharge && seconds === 0 };
+    const seconds = remainingChargeSeconds(battery, target);
+    return { limit: limit, target: target, percentage: battery.percentage,
+        seconds: seconds, estimating: validCharge(battery, target) && seconds === 0 };
 }
 
 function nearestSample(points, x) {
