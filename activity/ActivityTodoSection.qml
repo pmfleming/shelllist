@@ -80,13 +80,24 @@ Column {
             color: Ui.Theme.surfaceRaised
             border.color: Ui.Theme.border
             Text {
+                id: todoTitle
+                objectName: "todoToggle"
+                activeFocusOnTab: true
+                Accessible.role: Accessible.CheckBox
+                Accessible.name: String(todoRow.modelData.title || qsTr("Todo"))
+                Accessible.checked: !!todoRow.modelData.completed
+                Accessible.onToggleAction: toggleTodo()
+                Keys.onReturnPressed: toggleTodo()
+                Keys.onEnterPressed: toggleTodo()
+                Keys.onSpacePressed: toggleTodo()
+                function toggleTodo(): void { section.controller.toggleTodo(todoRow.modelData); }
                 anchors.left: parent.left
                 anchors.leftMargin: 10
                 anchors.right: deleteTodo.left
                 anchors.rightMargin: 6
                 anchors.verticalCenter: parent.verticalCenter
                 text: (todoRow.modelData.completed ? "✓  " : "○  ") + todoRow.modelData.title
-                color: todoRow.modelData.completed ? Ui.Theme.mutedText : Ui.Theme.text
+                color: activeFocus ? Ui.Theme.accent : todoRow.modelData.completed ? Ui.Theme.mutedText : Ui.Theme.text
                 font.strikeout: todoRow.modelData.completed
                 elide: Text.ElideRight
                 font.family: Ui.Theme.fontFamily
@@ -94,22 +105,31 @@ Column {
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: section.controller.toggleTodo(todoRow.modelData)
+                    onClicked: todoTitle.toggleTodo()
                 }
             }
             Text {
                 id: deleteTodo
+                objectName: "todoDelete"
+                activeFocusOnTab: true
+                Accessible.role: Accessible.Button
+                Accessible.name: qsTr("Delete %1").arg(todoRow.modelData.title || qsTr("todo"))
+                Accessible.onPressAction: removeTodo()
+                Keys.onReturnPressed: removeTodo()
+                Keys.onEnterPressed: removeTodo()
+                Keys.onSpacePressed: removeTodo()
+                function removeTodo(): void { section.controller.deleteTodo(todoRow.modelData); }
                 anchors.right: parent.right
                 anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
                 text: "×"
-                color: Ui.Theme.danger
+                color: activeFocus ? Ui.Theme.accent : Ui.Theme.danger
                 font.pixelSize: 18
                 MouseArea {
                     anchors.fill: parent
                     anchors.margins: -8
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: section.controller.deleteTodo(todoRow.modelData)
+                    onClicked: deleteTodo.removeTodo()
                 }
             }
         }

@@ -123,7 +123,7 @@ RowLayout {
     Loader {
         visible: sourceComponent !== null
         sourceComponent: header.powerAccessory
-        Layout.preferredWidth: item ? item.implicitWidth : 0
+        Layout.preferredWidth: (item as Item)?.implicitWidth ?? 0
         Layout.preferredHeight: header.scaled(Theme.controlHeight)
         Layout.alignment: Qt.AlignVCenter
     }
