@@ -52,12 +52,4 @@ ColumnLayout {
         interactive: !section.controller.actionInFlight
         onSelected: function (key) { section.controller.updateDevicePolicy({ preferred_audio_profile_key: key || null }); }
     }
-    Ui.ActionButton {
-        Layout.fillWidth: true
-        Layout.preferredHeight: Ui.Theme.compactControlHeight
-        label: "Reset device policy to defaults"
-        enabled: !section.controller.actionInFlight
-        onClicked: section.controller.updateDevicePolicy({ reconnect_on_resume: null, trust_after_pair: null,
-            power_on_connect: null, wait_for_services: null, audio_route_on_connect: null, preferred_audio_profile_key: null })
-    }
 }

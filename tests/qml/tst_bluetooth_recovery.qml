@@ -131,6 +131,25 @@ TestCase {
         compare(calls[0].params.key, "buds");
         compare(calls[0].params.reconnect_on_resume, null);
     }
+    function test_policyResetToolbarAction() {
+        const controller = makePanel().controller;
+        const toolbar = controller.detailActions.filter(function (action) {
+            return action.presentation.group === "toolbar";
+        });
+        compare(toolbar.map(function (action) { return action.id; }), ["reset-policy", "forget"]);
+        compare(toolbar[0].label, "Reset");
+        verify(toolbar[0].icon.length > 0);
+        compare(toolbar[0].presentation, toolbar[1].presentation);
+        verify(controller.triggerDetailAction("reset-policy"));
+        compare(calls.length, 1);
+        compare(calls[0].method, "bluetooth.device.policy.update");
+        compare(calls[0].params.key, "buds");
+        for (const field of ["reconnect_on_resume", "trust_after_pair", "power_on_connect",
+            "wait_for_services", "audio_route_on_connect", "preferred_audio_profile_key"])
+            compare(calls[0].params[field], null);
+        verify(!controller.triggerDetailAction("reset-policy"));
+        compare(calls.length, 1);
+    }
     function test_noiseControlRejectsUnavailableModes() {
         const controller = makePanel().controller;
         verify(!controller.setNoiseControl("transparent"));

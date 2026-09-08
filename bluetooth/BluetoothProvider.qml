@@ -48,6 +48,10 @@ Core.Provider {
                 icon: "󰂲", shortcut: "D", role: "destructive", visible: !!device.connected,
                 enabled: actionEnabled(caps.can_disconnect, device), presentation: primaryPresentation("danger")
             }),
+            Core.Model.keepOpenAction("reset-policy", "Reset", {
+                icon: "󰑓", enabled: actionEnabled(true, device),
+                presentation: { group: "toolbar", tone: "normal", width: 92 }
+            }),
             Core.Model.keepOpenAction("forget", "Forget", {
                 icon: "󰆴", shortcut: "F", role: "destructive", enabled: actionEnabled(caps.can_remove, device),
                 confirmation: { required: true, title: "Forget " + (device.name || "Bluetooth device") + "?",

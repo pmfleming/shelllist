@@ -369,6 +369,11 @@ Ui.ProviderChooserController {
     }
     function executeDeviceAction(actionId, device) {
         if (deviceBusy(device.key) || backend.requestRunning) return false;
+        if (actionId === "reset-policy") {
+            status = "Saving device policy…";
+            return backend.updateDevicePolicy(device.key, { reconnect_on_resume: null, trust_after_pair: null,
+                power_on_connect: null, wait_for_services: null, audio_route_on_connect: null, preferred_audio_profile_key: null });
+        }
         const request = BluetoothFlow.deviceActionRequest(actionId, device, trustAfterPair);
         if (!request) return false;
         if (request.status) status = request.status;
