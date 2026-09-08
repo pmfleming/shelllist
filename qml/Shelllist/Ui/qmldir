@@ -40,6 +40,7 @@ GlyphLabel 1.0 GlyphLabel.qml
 GroupCountBadge 1.0 GroupCountBadge.qml
 IconTile 1.0 IconTile.qml
 LabeledValueSlider 1.0 LabeledValueSlider.qml
+PercentageSlider 1.0 PercentageSlider.qml
 LiveClock 1.0 LiveClock.qml
 ModalFrame 1.0 ModalFrame.qml
 NavigationHelpDialog 1.0 NavigationHelpDialog.qml
@@ -57,6 +58,7 @@ ResultNavigation 1.0 ResultNavigation.qml
 ResultRow 1.0 ResultRow.qml
 RemovalAnimation 1.0 RemovalAnimation.qml
 SectionLabel 1.0 SectionLabel.qml
+SaveStatusLabel 1.0 SaveStatusLabel.qml
 ScrollableListView 1.0 list/ScrollableListView.qml
 SegmentedControl 1.0 SegmentedControl.qml
 ShelllistGlobalShortcut 1.0 ShelllistGlobalShortcut.qml

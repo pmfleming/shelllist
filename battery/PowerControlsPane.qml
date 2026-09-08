@@ -54,14 +54,12 @@ Column {
             onClicked: pane.controller.updateAutoPowerSaver(!checked)
         }
 
-        Ui.FieldLabel {
+        Ui.SaveStatusLabel {
             Layout.fillWidth: true
             text: pane.controller.alertSaveStatus
-            color: !pane.controller.alertDraftValid
-                    || pane.controller.alertSaveError.length > 0
-                ? Ui.Theme.danger
-                : (pane.controller.alertOperationActive
-                    ? Ui.Theme.active : Ui.Theme.mutedText)
+            valid: pane.controller.alertDraftValid
+            error: pane.controller.alertSaveError
+            saving: pane.controller.alertOperationActive
         }
 
         Ui.FieldLabel {

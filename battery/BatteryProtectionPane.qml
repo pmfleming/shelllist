@@ -12,6 +12,8 @@ Column {
     required property var battery
     required property var device
     required property var protection
+    readonly property bool thresholdsEditable: controller.protectionSupported
+        && !controller.batteryOperationActive && !controller.actionInFlight
 
     width: parent.width
     spacing: Ui.Theme.verticalSpacing(Ui.Theme.spacingMd, Ui.Theme.densityScale(height, 0))
@@ -56,40 +58,28 @@ Column {
             title: "Protect battery longevity"
             subtitle: "Keep charging within the configured threshold range"
             checked: pane.controller.draftProtectionEnabled
-            interactive: pane.controller.protectionSupported
-                && !pane.controller.batteryOperationActive
-                && !pane.controller.actionInFlight
+            interactive: pane.thresholdsEditable
             onClicked: pane.controller.setProtection(!checked)
         }
 
-        Ui.LabeledValueSlider {
+        Ui.PercentageSlider {
             Layout.fillWidth: true
-            label: "Resume charging"
-            from: 0
+            label: qsTr("Resume charging")
             to: 99
-            stepSize: 1
             value: pane.controller.draftStartPercent
-            valueText: Math.round(value) + "%"
-            enabled: pane.controller.protectionSupported
-                && !pane.controller.batteryOperationActive
-                && !pane.controller.actionInFlight
+            enabled: pane.thresholdsEditable
             onEdited: function (dragging) {
                 pane.controller.updateStartPercent(Math.round(value), dragging);
             }
             onEditingFinished: pane.controller.finishThresholdEditing()
         }
 
-        Ui.LabeledValueSlider {
+        Ui.PercentageSlider {
             Layout.fillWidth: true
-            label: "Stop charging"
+            label: qsTr("Stop charging")
             from: 1
-            to: 100
-            stepSize: 1
             value: pane.controller.draftEndPercent
-            valueText: Math.round(value) + "%"
-            enabled: pane.controller.protectionSupported
-                && !pane.controller.batteryOperationActive
-                && !pane.controller.actionInFlight
+            enabled: pane.thresholdsEditable
             onEdited: function (dragging) {
                 pane.controller.updateEndPercent(Math.round(value), dragging);
             }
@@ -104,15 +94,13 @@ Column {
             font.pixelSize: Ui.Theme.fontSizeCaption
         }
 
-        Ui.FieldLabel {
+        Ui.SaveStatusLabel {
             Layout.fillWidth: true
             visible: pane.controller.protectionSupported
             text: pane.controller.thresholdSaveStatus
-            color: !pane.controller.thresholdDraftValid
-                    || pane.controller.thresholdSaveError.length > 0
-                ? Ui.Theme.danger
-                : (pane.controller.thresholdOperationActive
-                    ? Ui.Theme.active : Ui.Theme.mutedText)
+            valid: pane.controller.thresholdDraftValid
+            error: pane.controller.thresholdSaveError
+            saving: pane.controller.thresholdOperationActive
         }
 
         Ui.ActionButton {
@@ -177,14 +165,10 @@ Column {
         height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
         title: "Battery alerts"
 
-        Ui.LabeledValueSlider {
+        Ui.PercentageSlider {
             Layout.fillWidth: true
-            label: "Low battery"
-            from: 0
-            to: 100
-            stepSize: 1
+            label: qsTr("Low battery")
             value: pane.controller.draftWarningPercent
-            valueText: Math.round(value) + "%"
             enabled: !pane.controller.actionInFlight
             onEdited: function (dragging) {
                 pane.controller.updateWarningPercent(Math.round(value), dragging);
@@ -192,14 +176,10 @@ Column {
             onEditingFinished: pane.controller.finishAlertEditing()
         }
 
-        Ui.LabeledValueSlider {
+        Ui.PercentageSlider {
             Layout.fillWidth: true
-            label: "Critical battery"
-            from: 0
-            to: 100
-            stepSize: 1
+            label: qsTr("Critical battery")
             value: pane.controller.draftCriticalPercent
-            valueText: Math.round(value) + "%"
             enabled: !pane.controller.actionInFlight
             onEdited: function (dragging) {
                 pane.controller.updateCriticalPercent(Math.round(value), dragging);
@@ -225,14 +205,12 @@ Column {
             font.pixelSize: Ui.Theme.fontSizeCaption
         }
 
-        Ui.FieldLabel {
+        Ui.SaveStatusLabel {
             Layout.fillWidth: true
             text: pane.controller.alertSaveStatus
-            color: !pane.controller.alertDraftValid
-                    || pane.controller.alertSaveError.length > 0
-                ? Ui.Theme.danger
-                : (pane.controller.alertOperationActive
-                    ? Ui.Theme.active : Ui.Theme.mutedText)
+            valid: pane.controller.alertDraftValid
+            error: pane.controller.alertSaveError
+            saving: pane.controller.alertOperationActive
         }
     }
 }

@@ -23,9 +23,12 @@ RowLayout {
     }
     ValueSlider {
         id: slider
+        objectName: "labeledValueSliderInput"
         Layout.fillWidth: true
+        Accessible.name: row.label
+        Accessible.description: row.valueText
         onEdited: row.edited(pressed)
-        onPressedChanged: if (!pressed) row.editingFinished()
+        onEditingFinished: row.editingFinished()
     }
     ThemeText {
         Layout.preferredWidth: 76
