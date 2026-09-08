@@ -37,24 +37,24 @@ function enumValue(value, allowed, fallback, path) {
 function stringList(values) {
     if (!Array.isArray(values))
         return [];
-    const seen = [];
+    const seen = new Set();
     const result = [];
     values.forEach(function (value) {
         const text = stringValue(value, "").trim();
-        if (text.length > 0 && seen.indexOf(text) < 0) {
-            seen.push(text);
+        if (text.length > 0 && !seen.has(text)) {
+            seen.add(text);
             result.push(text);
         }
     });
     return result;
 }
 function ensureUnique(items, field, path) {
-    const seen = [];
+    const seen = new Set();
     items.forEach(function (item) {
         const value = item[field];
-        if (seen.indexOf(value) >= 0)
+        if (seen.has(value))
             fail(path, "duplicate " + field + " " + JSON.stringify(value));
-        seen.push(value);
+        seen.add(value);
     });
 }
 
@@ -170,13 +170,15 @@ function exactMatchBonus(title, normalizedQuery) {
 }
 function matchScore(item, query) {
     const normalizedQuery = normalizeSearchText(query).trim();
+    return scoreWithQuery(item, normalizedQuery, searchWords(normalizedQuery));
+}
+function scoreWithQuery(item, normalizedQuery, tokens) {
     if (normalizedQuery.length === 0)
         return 0;
     const title = normalizeSearchText(item.title);
     const subtitle = normalizeSearchText(item.subtitle);
     const keywords = normalizeSearchText((item.keywords || []).join(" "));
     const searchable = title + " " + subtitle + " " + keywords;
-    const tokens = searchWords(normalizedQuery);
     let score = exactMatchBonus(title, normalizedQuery);
     for (let index = 0; index < tokens.length; index++) {
         const tokenScore = tokenMatchScore(title, subtitle, searchable, tokens[index]);
@@ -186,16 +188,23 @@ function matchScore(item, query) {
     }
     return score;
 }
+function compareResults(left, right) {
+    return right.score - left.score
+        || right.providerPriority - left.providerPriority
+        || left.title.localeCompare(right.title)
+        || left.key.localeCompare(right.key);
+}
 function compareRanked(left, right) {
-    return right.matchScore - left.matchScore
-        || right.item.score - left.item.score
-        || right.item.providerPriority - left.item.providerPriority
-        || left.item.title.localeCompare(right.item.title)
-        || left.item.key.localeCompare(right.item.key);
+    return right.matchScore - left.matchScore || compareResults(left.item, right.item);
 }
 function rankResults(values, query) {
-    return (Array.isArray(values) ? values : []).map(function (item) {
-        return { item: item, matchScore: matchScore(item, query) };
+    const items = Array.isArray(values) ? values : [];
+    const normalizedQuery = normalizeSearchText(query).trim();
+    if (normalizedQuery.length === 0)
+        return items.slice().sort(compareResults);
+    const tokens = searchWords(normalizedQuery);
+    return items.map(function (item) {
+        return { item: item, matchScore: scoreWithQuery(item, normalizedQuery, tokens) };
     }).filter(function (ranked) {
         return ranked.matchScore >= 0;
     }).sort(compareRanked).map(function (ranked) {
