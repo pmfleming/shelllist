@@ -24,13 +24,8 @@ Rectangle {
     property bool trailingActionEnabled: true
     property int trailingActionIconSize: Theme.iconSize
     readonly property int embeddedActionWidth: Math.max(0, height - 2 * Theme.spacingXs)
-    readonly property int embeddedActionCount: (showPasswordButton ? 1 : 0)
-        + (trailingActionIcon.length > 0 ? 1 : 0)
-    readonly property int effectiveRightPadding: embeddedActionCount > 0
-        ? Math.max(rightPadding, Theme.spacingXs
-            + embeddedActionCount * embeddedActionWidth
-            + (embeddedActionCount - 1) * Theme.spacingXs)
-        : rightPadding
+    readonly property int embeddedActionCount: (showPasswordButton ? 1 : 0) + (trailingActionIcon.length > 0 ? 1 : 0)
+    readonly property int effectiveRightPadding: embeddedActionCount > 0 ? Math.max(rightPadding, Theme.spacingXs + embeddedActionCount * embeddedActionWidth + (embeddedActionCount - 1) * Theme.spacingXs) : rightPadding
 
     signal edited(string value)
     signal editingFinished
@@ -38,8 +33,10 @@ Rectangle {
     signal keyPressed(var event)
     signal trailingActionRequested
 
-    onPasswordChanged: if (!password) passwordRevealed = false
-    onVisibleChanged: if (!visible) passwordRevealed = false
+    onPasswordChanged: if (!password)
+        passwordRevealed = false
+    onVisibleChanged: if (!visible)
+        passwordRevealed = false
 
     implicitHeight: Theme.compactControlHeight
     radius: Theme.controlRadius
@@ -62,8 +59,7 @@ Rectangle {
         readOnly: field.readOnly
         inputMethodHints: field.inputMethodHints
         maximumLength: field.maximumLength
-        echoMode: field.password && !field.passwordRevealed
-            ? TextInput.Password : TextInput.Normal
+        echoMode: field.password && !field.passwordRevealed ? TextInput.Password : TextInput.Normal
         color: Theme.inputText
         selectionColor: Theme.accent
         selectedTextColor: Theme.accentText
@@ -73,7 +69,9 @@ Rectangle {
         onTextEdited: field.edited(text)
         onEditingFinished: field.editingFinished()
         onAccepted: field.accepted()
-        Keys.onPressed: function (event) { field.keyPressed(event); }
+        Keys.onPressed: function (event) {
+            field.keyPressed(event);
+        }
 
         ThemeText {
             anchors.fill: parent
@@ -104,7 +102,9 @@ Rectangle {
         Accessible.name: field.passwordRevealed ? "Hide password" : "Show password"
         Accessible.onPressAction: field.passwordRevealed = !field.passwordRevealed
 
-        HoverHandler { id: passwordButtonHover }
+        HoverHandler {
+            id: passwordButtonHover
+        }
         Controls.ToolTip.visible: passwordButtonHover.hovered
         Controls.ToolTip.text: field.passwordRevealed ? "Hide password" : "Show password"
         Controls.ToolTip.delay: 450
@@ -128,9 +128,12 @@ Rectangle {
 
         Accessible.role: Accessible.Button
         Accessible.name: field.trailingActionToolTip
-        Accessible.onPressAction: if (field.trailingActionEnabled) field.trailingActionRequested()
+        Accessible.onPressAction: if (field.trailingActionEnabled)
+            field.trailingActionRequested()
 
-        HoverHandler { id: trailingActionHover }
+        HoverHandler {
+            id: trailingActionHover
+        }
         Controls.ToolTip.visible: trailingActionHover.hovered && field.trailingActionToolTip.length > 0
         Controls.ToolTip.text: field.trailingActionToolTip
         Controls.ToolTip.delay: 450

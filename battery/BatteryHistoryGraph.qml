@@ -10,7 +10,10 @@ Ui.ChartFrame {
 
     required property var points
     property bool energy: false
-    property var forecast: ({ limit: null, seconds: 0 })
+    property var forecast: ({
+            limit: null,
+            seconds: 0
+        })
     property real currentPercentage: -1
     property real historyFraction: 1
     property real axisWidth: 48
@@ -73,8 +76,12 @@ Ui.ChartFrame {
             const plotWidth = Math.max(0, width - 2 * inset);
             const plotHeight = Math.max(0, height - 2 * inset);
             const nowX = inset + graph.historyFraction * plotWidth;
-            function y(value) { return inset + (1 - value / graph.maximum) * plotHeight; }
-            function x(value) { return inset + value * graph.historyFraction * plotWidth; }
+            function y(value) {
+                return inset + (1 - value / graph.maximum) * plotHeight;
+            }
+            function x(value) {
+                return inset + value * graph.historyFraction * plotWidth;
+            }
             function dashed(x0, y0, x1, y1, dash, gap) {
                 const length = Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
                 context.beginPath();
@@ -112,8 +119,7 @@ Ui.ChartFrame {
                     const left = x(bar.x0);
                     const barWidth = x(bar.x1) - left;
                     const gap = Math.min(2, barWidth * 0.2);
-                    context.fillRect(left + gap / 2, y(bar.value), Math.max(0, barWidth - gap),
-                        plotHeight * bar.value / graph.maximum);
+                    context.fillRect(left + gap / 2, y(bar.value), Math.max(0, barWidth - gap), plotHeight * bar.value / graph.maximum);
                 });
             } else {
                 graph.series.segments.forEach(function (segment) {
@@ -151,8 +157,7 @@ Ui.ChartFrame {
             context.stroke();
             if (graph.hoverPosition >= 0) {
                 context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.text, 0.6);
-                dashed(inset + graph.hoverPosition * plotWidth, inset,
-                    inset + graph.hoverPosition * plotWidth, inset + plotHeight, 2, 3);
+                dashed(inset + graph.hoverPosition * plotWidth, inset, inset + graph.hoverPosition * plotWidth, inset + plotHeight, 2, 3);
             }
         }
 
@@ -171,8 +176,7 @@ Ui.ChartFrame {
         objectName: "chargeLimitLabel"
         visible: !graph.energy && graph.forecast.limit !== null
         anchors.right: chart.right
-        y: Math.max(0, chart.y + 2 + (1 - Number(graph.forecast.limit) / 100)
-            * (chart.height - 4) - implicitHeight - 2)
+        y: Math.max(0, chart.y + 2 + (1 - Number(graph.forecast.limit) / 100) * (chart.height - 4) - implicitHeight - 2)
         text: graph.forecast.limit + "% limit"
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeCaption
@@ -181,8 +185,7 @@ Ui.ChartFrame {
     Ui.ThemeText {
         anchors.centerIn: chart
         visible: graph.energy ? graph.energySeries.bars.length === 0 : graph.series.segments.length === 0
-        text: graph.energy ? "No observed discharge energy"
-            : (graph.currentPercentage >= 0 ? "Collecting charge history" : "No charge samples")
+        text: graph.energy ? "No observed discharge energy" : (graph.currentPercentage >= 0 ? "Collecting charge history" : "No charge samples")
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
@@ -193,8 +196,7 @@ Ui.ChartFrame {
         anchors.bottom: parent.bottom
         width: Math.max(0, graph.historyFraction * chart.width - 40)
         elide: Text.ElideRight
-        text: graph.series.activeDurationMs > 0
-            ? "−" + Presentation.duration(graph.series.activeDurationMs / 1000) + " observed" : ""
+        text: graph.series.activeDurationMs > 0 ? "−" + Presentation.duration(graph.series.activeDurationMs / 1000) + " observed" : ""
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeCaption
     }

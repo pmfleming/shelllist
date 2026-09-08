@@ -12,11 +12,7 @@ Ui.ResultRow {
     readonly property var weather: city.weather || ({})
     readonly property bool hasWeather: !!city.has_weather && !!weather.available
 
-    accessibleName: city.label + ". "
-        + (hasWeather ? weather.condition + ", " + temperature(weather.temperature_c)
-            + ", " + percentage(weather.precipitation_probability) + " chance of rain"
-            : "No weather")
-        + ". " + localTime()
+    accessibleName: city.label + ". " + (hasWeather ? weather.condition + ", " + temperature(weather.temperature_c) + ", " + percentage(weather.precipitation_probability) + " chance of rain" : "No weather") + ". " + localTime()
 
     function temperature(value: var): string {
         const number = Number(value);
@@ -42,8 +38,7 @@ Ui.ResultRow {
         Layout.fillWidth: true
         title: row.city.label || "Location"
         subtitle: row.city.timezone || "Timezone unavailable"
-        titleWeight: row.city.home ? Ui.Theme.fontWeightDemiBold
-            : Ui.Theme.fontWeightRegular
+        titleWeight: row.city.home ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
         uiScale: row.uiScale
     }
 
@@ -123,8 +118,7 @@ Ui.ResultRow {
                 id: temperatureRange
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text: row.temperature(row.weather.high_c) + " "
-                    + row.temperature(row.weather.low_c)
+                text: row.temperature(row.weather.high_c) + " " + row.temperature(row.weather.low_c)
                 color: Ui.Theme.mutedText
                 font.pixelSize: Math.max(9, row.scaled(Ui.Theme.fontSizeCaption))
             }

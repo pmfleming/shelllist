@@ -16,12 +16,16 @@ var streams = {
     scan: Protocol.streams["bluetooth.scan"]
 };
 
-var subscribedStreams = Object.keys(streams).map(function (name) { return streams[name]; });
+var subscribedStreams = Object.keys(streams).map(function (name) {
+    return streams[name];
+});
 
 var responseKeys = ["scan", "audio_devices", "operation", "requests"];
 
 function responseKind(data) {
-    return responseKeys.find(function (key) { return !!data[key]; }) || "";
+    return responseKeys.find(function (key) {
+        return !!data[key];
+    }) || "";
 }
 
 function copyWithout(values, key) {
@@ -39,9 +43,15 @@ function copyWith(values, key, value) {
 function lifecycleState(item, activeItems, finishedItems, state, terminalStates) {
     const id = item.request_id;
     if (!id)
-        return { active: activeItems, finished: finishedItems };
+        return {
+            active: activeItems,
+            finished: finishedItems
+        };
     if (!terminalStates.includes(state))
-        return { active: copyWith(activeItems, id, item), finished: finishedItems };
+        return {
+            active: copyWith(activeItems, id, item),
+            finished: finishedItems
+        };
     return {
         active: copyWithout(activeItems, id),
         finished: activeItems[id] ? finishedItems : copyWith(finishedItems, id, true)

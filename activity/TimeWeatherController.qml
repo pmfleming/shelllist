@@ -12,9 +12,7 @@ ActivityController {
     readonly property var cities: combinedCities()
     readonly property var filteredCities: filterCities(cities, filterText)
     readonly property alias cityModel: cityListModel
-    readonly property var selectedCity: filteredCities.length > 0
-        ? filteredCities[Math.max(0, Math.min(citySelection.selectedIndex,
-            filteredCities.length - 1))] : ({})
+    readonly property var selectedCity: filteredCities.length > 0 ? filteredCities[Math.max(0, Math.min(citySelection.selectedIndex, filteredCities.length - 1))] : ({})
 
     hasSelection: filteredCities.length > 0
     selectionModel: citySelection
@@ -45,12 +43,13 @@ ActivityController {
     }
 
     function firstPresent(values: var, fallback: var): var {
-        const value = values.find(function (candidate) { return !!candidate; });
+        const value = values.find(function (candidate) {
+            return !!candidate;
+        });
         return value || fallback;
     }
 
-    function cityRecord(id: string, label: string, city: string, timezoneName: string,
-            abbreviation: string, utcOffset: real, regionIds: var): var {
+    function cityRecord(id: string, label: string, city: string, timezoneName: string, abbreviation: string, utcOffset: real, regionIds: var): var {
         return {
             id: id,
             label: label,
@@ -70,14 +69,7 @@ ActivityController {
 
     function weatherCity(weather: var, index: int, clock: var): var {
         const timezoneName = String(firstPresent([weather.timezone], ""));
-        const city = cityRecord(
-            "weather:" + String(firstPresent([weather.id], index)),
-            String(firstPresent([weather.location, clock.label, clock.city], "Location")),
-            String(firstPresent([clock.city, weather.location], "Location")),
-            timezoneName,
-            String(firstPresent([clock.abbreviation], "")),
-            offset(weather.utc_offset_seconds, clock.utc_offset_seconds),
-            firstPresent([weather.timezone_region_ids, clock.timezone_region_ids], []));
+        const city = cityRecord("weather:" + String(firstPresent([weather.id], index)), String(firstPresent([weather.location, clock.label, clock.city], "Location")), String(firstPresent([clock.city, weather.location], "Location")), timezoneName, String(firstPresent([clock.abbreviation], "")), offset(weather.utc_offset_seconds, clock.utc_offset_seconds), firstPresent([weather.timezone_region_ids, clock.timezone_region_ids], []));
         const latitude = Number(weather.latitude);
         const longitude = Number(weather.longitude);
         city.has_coordinates = Number.isFinite(latitude) && Number.isFinite(longitude);
@@ -91,32 +83,17 @@ ActivityController {
 
     function localCity(timezoneName: string, clock: var): var {
         const local = controller.timezone;
-        const city = cityRecord(
-            "local:" + timezoneName,
-            String(firstPresent([local.city, clock.label, clock.city], timezoneName)),
-            String(firstPresent([local.city, clock.city], timezoneName)),
-            timezoneName,
-            String(firstPresent([local.abbreviation, clock.abbreviation], "")),
-            Number(firstPresent([local.utc_offset_seconds], 0)),
-            firstPresent([local.timezone_region_ids, clock.timezone_region_ids], []));
+        const city = cityRecord("local:" + timezoneName, String(firstPresent([local.city, clock.label, clock.city], timezoneName)), String(firstPresent([local.city, clock.city], timezoneName)), timezoneName, String(firstPresent([local.abbreviation, clock.abbreviation], "")), Number(firstPresent([local.utc_offset_seconds], 0)), firstPresent([local.timezone_region_ids, clock.timezone_region_ids], []));
         city.home = true;
         return city;
     }
 
     function clockCity(clock: var, index: int): var {
         const timezoneName = String(firstPresent([clock.timezone], ""));
-        return cityRecord(
-            "clock:" + timezoneName + ":" + index,
-            String(firstPresent([clock.label, clock.city, timezoneName], "Location")),
-            String(firstPresent([clock.city, clock.label, timezoneName], "Location")),
-            timezoneName,
-            String(firstPresent([clock.abbreviation], "")),
-            Number(firstPresent([clock.utc_offset_seconds], 0)),
-            firstPresent([clock.timezone_region_ids], []));
+        return cityRecord("clock:" + timezoneName + ":" + index, String(firstPresent([clock.label, clock.city, timezoneName], "Location")), String(firstPresent([clock.city, clock.label, timezoneName], "Location")), timezoneName, String(firstPresent([clock.abbreviation], "")), Number(firstPresent([clock.utc_offset_seconds], 0)), firstPresent([clock.timezone_region_ids], []));
     }
 
-    function appendWeatherCities(values: var, weatherValues: var,
-            clockIndex: var, represented: var): void {
+    function appendWeatherCities(values: var, weatherValues: var, clockIndex: var, represented: var): void {
         weatherValues.forEach(function (weather, index) {
             const timezoneName = String(weather.timezone || "");
             values.push(weatherCity(weather, index, clockIndex[timezoneName] || ({})));
@@ -129,9 +106,10 @@ ActivityController {
 
     function appendLocalCity(values: var, clockIndex: var, represented: var): void {
         const timezoneName = String(controller.timezone.timezone || "");
-        const alreadyHome = values.some(function (city) { return city.home; });
-        if (!controller.timezone.available || timezoneName.length === 0
-                || represented[timezoneName] || alreadyHome)
+        const alreadyHome = values.some(function (city) {
+            return city.home;
+        });
+        if (!controller.timezone.available || timezoneName.length === 0 || represented[timezoneName] || alreadyHome)
             return;
         values.push(localCity(timezoneName, clockIndex[timezoneName] || ({})));
         represented[timezoneName] = true;
@@ -170,9 +148,7 @@ ActivityController {
         if (needle.length === 0)
             return values;
         return values.filter(function (city) {
-            return [city.label, city.city, city.timezone, city.abbreviation,
-                city.weather ? city.weather.condition : ""].join(" ")
-                .toLowerCase().indexOf(needle) >= 0;
+            return [city.label, city.city, city.timezone, city.abbreviation, city.weather ? city.weather.condition : ""].join(" ").toLowerCase().indexOf(needle) >= 0;
         });
     }
 
@@ -180,14 +156,16 @@ ActivityController {
         const selectedId = selectedCity.id || "";
         cityListModel.clear();
         filteredCities.forEach(function (city) {
-            cityListModel.append({ resultData: { payload: city } });
+            cityListModel.append({
+                resultData: {
+                    payload: city
+                }
+            });
         });
         const retained = filteredCities.findIndex(function (city) {
             return city.id === selectedId;
         });
-        citySelection.selectedIndex = retained >= 0 ? retained
-            : Math.max(0, Math.min(citySelection.selectedIndex,
-                filteredCities.length - 1));
+        citySelection.selectedIndex = retained >= 0 ? retained : Math.max(0, Math.min(citySelection.selectedIndex, filteredCities.length - 1));
     }
 
     function setDetailsTab(tab: string): void {
@@ -231,10 +209,11 @@ ActivityController {
         property string queryText: ""
 
         function move(delta: int): void {
-            selectedIndex = Math.max(0, Math.min(selectedIndex + delta,
-                controller.filteredCities.length - 1));
+            selectedIndex = Math.max(0, Math.min(selectedIndex + delta, controller.filteredCities.length - 1));
         }
-        function selectFirst(): void { selectedIndex = 0; }
+        function selectFirst(): void {
+            selectedIndex = 0;
+        }
 
         onQueryTextChanged: {
             if (controller.filterText !== queryText)

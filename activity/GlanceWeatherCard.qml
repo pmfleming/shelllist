@@ -117,9 +117,7 @@ Rectangle {
                             fillMode: Image.PreserveAspectFit
                         }
                         Ui.ThemeText {
-                            text: card.weather.available
-                                ? Math.round(Number(
-                                    card.weather.precipitation_probability)) + "%" : "—"
+                            text: card.weather.available ? Math.round(Number(card.weather.precipitation_probability)) + "%" : "—"
                             color: Ui.Theme.mutedText
                             font.pixelSize: Ui.Theme.fontSizeCaption
                         }
@@ -143,9 +141,7 @@ Rectangle {
                     Ui.ThemeText {
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
-                        text: card.weather.available
-                            ? Math.round(Number(card.weather.high_c)) + "°  "
-                                + Math.round(Number(card.weather.low_c)) + "°" : "—"
+                        text: card.weather.available ? Math.round(Number(card.weather.high_c)) + "°  " + Math.round(Number(card.weather.low_c)) + "°" : "—"
                         color: Ui.Theme.mutedText
                         font.pixelSize: Ui.Theme.fontSizeCaption
                     }
@@ -168,9 +164,7 @@ Rectangle {
                         }
                         Ui.ThemeText {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "Feels " + (card.weather.available
-                                ? Math.round(Number(
-                                    card.weather.apparent_temperature_c)) + "°" : "—")
+                            text: "Feels " + (card.weather.available ? Math.round(Number(card.weather.apparent_temperature_c)) + "°" : "—")
                             color: Ui.Theme.mutedText
                             font.pixelSize: Ui.Theme.fontSizeCaption
                         }
@@ -185,15 +179,12 @@ Rectangle {
                         }
                         Ui.ThemeText {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: card.weather.available
-                                ? Math.round(Number(card.weather.wind_speed_kmh))
-                                    + " km/h" : "—"
+                            text: card.weather.available ? Math.round(Number(card.weather.wind_speed_kmh)) + " km/h" : "—"
                             color: Ui.Theme.mutedText
                             font.pixelSize: Ui.Theme.fontSizeCaption
                         }
                     }
                 }
-
             }
         }
     }

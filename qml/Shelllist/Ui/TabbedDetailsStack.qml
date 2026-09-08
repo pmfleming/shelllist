@@ -25,6 +25,8 @@ Item {
         height: stack.footerHeight
         selectedValue: stack.selectedValue
         tabs: stack.tabs
-        onSelected: function (value) { stack.selected(value); }
+        onSelected: function (value) {
+            stack.selected(value);
+        }
     }
 }

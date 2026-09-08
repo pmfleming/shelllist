@@ -17,17 +17,25 @@ Item {
     property string status: unavailableMessage
     readonly property string unavailableMessage: "Wi-Fi QR sharing is not available for this network."
 
-    function canShareSelected() { return available && payload.length > 0; }
+    function canShareSelected() {
+        return available && payload.length > 0;
+    }
     function reset() {
         profilePath = "";
         setAvailability(false, "", unavailableMessage);
     }
-    function cached(path) { return path.length > 0 ? (availabilityCache[path] || null) : null; }
+    function cached(path) {
+        return path.length > 0 ? (availabilityCache[path] || null) : null;
+    }
     function cache(path, isAvailable, qrPayload, message) {
         if (path.length === 0)
             return;
         const updated = Object.assign({}, availabilityCache);
-        updated[path] = { available: isAvailable, payload: qrPayload, message: message };
+        updated[path] = {
+            available: isAvailable,
+            payload: qrPayload,
+            message: message
+        };
         availabilityCache = updated;
     }
     function invalidate() {
@@ -38,11 +46,7 @@ Item {
     function refresh() {
         if (!controller.hasSelection)
             return reset();
-        const result = Flow.shareAvailability(
-            controller.detailAp,
-            controller.profileFor(controller.detailAp),
-            "Wi-Fi QR sharing requires an open network or a saved profile with a readable password."
-        );
+        const result = Flow.shareAvailability(controller.detailAp, controller.profileFor(controller.detailAp), "Wi-Fi QR sharing requires an open network or a saved profile with a readable password.");
         if (result.state !== "check") {
             profilePath = "";
             return setAvailability(result.available, result.payload, result.message);
@@ -62,8 +66,7 @@ Item {
     function copySelected() {
         if (!canShareSelected())
             return controller.status = status;
-        controller.copyText(payload,
-            "Wi-Fi QR payload for " + Presentation.networkName(controller.detailAp) + " copied to clipboard");
+        controller.copyText(payload, "Wi-Fi QR payload for " + Presentation.networkName(controller.detailAp) + " copied to clipboard");
     }
     function setAvailability(isAvailable, qrPayload, message) {
         available = isAvailable;
@@ -98,11 +101,7 @@ Item {
         const requestedGeneration = requestGeneration;
         requestPath = "";
         try {
-            applyResult(
-                Flow.shareCheckAvailability(Api.apiData(response, "result"), unavailableMessage),
-                requestedPath,
-                requestedGeneration
-            );
+            applyResult(Flow.shareCheckAvailability(Api.apiData(response, "result"), unavailableMessage), requestedPath, requestedGeneration);
         } catch (error) {
             applyFailure(requestedPath, requestedGeneration, "Could not check Wi-Fi QR sharing: " + (errorText || error));
         }

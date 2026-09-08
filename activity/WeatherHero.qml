@@ -8,8 +8,7 @@ Rectangle {
     id: hero
     required property var weather
     required property date now
-    readonly property var heroColors: Visuals.heroColors(
-        Visuals.conditionCode(weather.condition_code), weather.is_day !== false)
+    readonly property var heroColors: Visuals.heroColors(Visuals.conditionCode(weather.condition_code), weather.is_day !== false)
     width: parent.width
     height: 192
     radius: Ui.Theme.panelRadius
@@ -17,8 +16,14 @@ Rectangle {
 
     gradient: Gradient {
         orientation: Gradient.Horizontal
-        GradientStop { position: 0; color: hero.heroColors[0] }
-        GradientStop { position: 1; color: hero.heroColors[1] }
+        GradientStop {
+            position: 0
+            color: hero.heroColors[0]
+        }
+        GradientStop {
+            position: 1
+            color: hero.heroColors[1]
+        }
     }
 
     Ui.ThemeText {
@@ -47,8 +52,7 @@ Rectangle {
         anchors.top: parent.top
         anchors.rightMargin: Ui.Theme.spacingMd
         anchors.topMargin: Ui.Theme.spacingSm
-        text: Number(hero.weather.updated_unix_ms || 0) > 0
-            ? "↻ " + Visuals.weatherTime(hero.weather.updated_unix_ms, hero.weather) : ""
+        text: Number(hero.weather.updated_unix_ms || 0) > 0 ? "↻ " + Visuals.weatherTime(hero.weather.updated_unix_ms, hero.weather) : ""
         color: Ui.Theme.weatherHeroMutedText
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
@@ -78,8 +82,7 @@ Rectangle {
         }
         Ui.ThemeText {
             anchors.right: parent.right
-            text: Visuals.numberLabel(hero.weather.high_c, "°") + "  "
-                + Visuals.numberLabel(hero.weather.low_c, "°")
+            text: Visuals.numberLabel(hero.weather.high_c, "°") + "  " + Visuals.numberLabel(hero.weather.low_c, "°")
             color: Ui.Theme.weatherHeroSecondaryText
         }
     }
@@ -93,13 +96,18 @@ Rectangle {
 
         Repeater {
             model: [
-                { icon: "thermometer", value: Visuals.numberLabel(
-                    hero.weather.apparent_temperature_c, "°") },
-                { icon: "raindrop", value: Visuals.numberLabel(
-                    hero.weather.precipitation_probability, "%") },
-                { icon: "wind", value: Visuals.windCompass(
-                    hero.weather.wind_direction_degrees) + "  "
-                    + Visuals.numberLabel(hero.weather.wind_speed_kmh, " km/h") }
+                {
+                    icon: "thermometer",
+                    value: Visuals.numberLabel(hero.weather.apparent_temperature_c, "°")
+                },
+                {
+                    icon: "raindrop",
+                    value: Visuals.numberLabel(hero.weather.precipitation_probability, "%")
+                },
+                {
+                    icon: "wind",
+                    value: Visuals.windCompass(hero.weather.wind_direction_degrees) + "  " + Visuals.numberLabel(hero.weather.wind_speed_kmh, " km/h")
+                }
             ]
             delegate: Row {
                 id: heroMetric

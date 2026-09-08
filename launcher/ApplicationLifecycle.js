@@ -20,8 +20,7 @@ function requestKind(id) {
 }
 
 function historyRequestCovered(targetId, currentTargetId, inFlight, forceRefresh, range, currentRange) {
-    return targetId === currentTargetId && range === currentRange
-        && (inFlight || forceRefresh !== true);
+    return targetId === currentTargetId && range === currentRange && (inFlight || forceRefresh !== true);
 }
 
 function mergeResourceHistory(existing, incoming, sinceMs, untilMs) {
@@ -46,8 +45,7 @@ function mergeResourceHistory(existing, incoming, sinceMs, untilMs) {
 function expectedRevision(value) {
     if (typeof value !== "number")
         return null;
-    return isFinite(value) && value >= 0 && Math.floor(value) === value
-        && value <= 9007199254740991 ? value : null;
+    return isFinite(value) && value >= 0 && Math.floor(value) === value && value <= 9007199254740991 ? value : null;
 }
 
 function expectedOperationAction(actionId) {
@@ -64,8 +62,7 @@ function expectedOperationAction(actionId) {
 function operationMatches(activeRequest, activeTargetId, operation) {
     if (!activeRequest || !operation)
         return false;
-    return operation.target_id === activeTargetId
-        && operation.action === expectedOperationAction(activeRequest.actionId);
+    return operation.target_id === activeTargetId && operation.action === expectedOperationAction(activeRequest.actionId);
 }
 
 function acceptedOperationMatches(activeRequest, responseId) {
@@ -75,9 +72,7 @@ function acceptedOperationMatches(activeRequest, responseId) {
 function currentOperationMatches(activeRequest, activeTargetId, activeOperationId, operation) {
     if (!activeRequest)
         return false;
-    return activeOperationId
-        ? operation.id === activeOperationId
-        : operationMatches(activeRequest, activeTargetId, operation);
+    return activeOperationId ? operation.id === activeOperationId : operationMatches(activeRequest, activeTargetId, operation);
 }
 
 function operationTransition(activeRequest, activeTargetId, activeOperationId, responseId, operation) {
@@ -87,7 +82,12 @@ function operationTransition(activeRequest, activeTargetId, activeOperationId, r
     if (status === "accepted") {
         if (!acceptedOperationMatches(activeRequest, responseId))
             return null;
-        return { stage: "active", accepted: true, status: status, operationId: operation.id };
+        return {
+            stage: "active",
+            accepted: true,
+            status: status,
+            operationId: operation.id
+        };
     }
     if (!currentOperationMatches(activeRequest, activeTargetId, activeOperationId, operation))
         return null;

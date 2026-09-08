@@ -11,42 +11,72 @@ Core.Provider {
     icon: "󰀻"
     priority: 100
     prefixes: ["app:"]
-    capabilities: ({ query: true, actions: true, preview: true, subscriptions: true })
+    capabilities: ({
+            query: true,
+            actions: true,
+            preview: true,
+            subscriptions: true
+        })
 
     function action(id: string, label: string, options: var): var {
         return Core.Model.action(Object.assign({
-            id: id, label: label, closePolicy: "close",
-            presentation: { group: "overflow", tone: "normal", width: 120 }
+            id: id,
+            label: label,
+            closePolicy: "close",
+            presentation: {
+                group: "overflow",
+                tone: "normal",
+                width: 120
+            }
         }, options || ({})));
     }
 
     function primaryActions(application: var, busy: bool): var {
         const running = !!application.running;
         const actions = [action("activate", running ? "Focus" : "Launch", {
-            icon: running ? "󰖯" : "󰐕", shortcut: "Enter", role: "default", enabled: !busy,
-            presentation: { group: "primary", tone: "active", width: 128 },
-            metadata: { toolTip: running
-                ? "Focus the first running instance"
-                : (application.default_workspace_id
-                    ? "Launch on workspace " + application.default_workspace_id
-                    : "Launch on the current workspace") }
-        })];
+                icon: running ? "󰖯" : "󰐕",
+                shortcut: "Enter",
+                role: "default",
+                enabled: !busy,
+                presentation: {
+                    group: "primary",
+                    tone: "active",
+                    width: 128
+                },
+                metadata: {
+                    toolTip: running ? "Focus the first running instance" : (application.default_workspace_id ? "Launch on workspace " + application.default_workspace_id : "Launch on the current workspace")
+                }
+            })];
         if (application.kind === "desktop-application")
             actions.push(action("launch", "New tile", {
-                icon: "󰖲", shortcut: "Shift+Enter", enabled: !busy,
-                presentation: { group: "toolbar", tone: "normal", width: 120 },
-                metadata: { toolTip: application.default_workspace_id
-                    ? "Launch another instance on workspace " + application.default_workspace_id
-                    : "Launch another instance in a new tile on the current workspace" }
+                icon: "󰖲",
+                shortcut: "Shift+Enter",
+                enabled: !busy,
+                presentation: {
+                    group: "toolbar",
+                    tone: "normal",
+                    width: 120
+                },
+                metadata: {
+                    toolTip: application.default_workspace_id ? "Launch another instance on workspace " + application.default_workspace_id : "Launch another instance in a new tile on the current workspace"
+                }
             }));
         return actions;
     }
 
     function closeAction(application: var, busy: bool): var {
         return action("close", "Close", {
-            icon: "󰅖", role: "destructive", enabled: !!application.running && !busy,
-            presentation: { group: "toolbar", tone: "normal", width: 104 },
-            metadata: { toolTip: "Close all running instances" }
+            icon: "󰅖",
+            role: "destructive",
+            enabled: !!application.running && !busy,
+            presentation: {
+                group: "toolbar",
+                tone: "normal",
+                width: 104
+            },
+            metadata: {
+                toolTip: "Close all running instances"
+            }
         });
     }
 
@@ -54,14 +84,30 @@ Core.Provider {
         const actions = [];
         (application.instances || []).forEach(function (window, index) {
             actions.push(action("focus-window-" + index, window.title || "Window", {
-                icon: "󰖲", enabled: !busy,
-                presentation: { group: "overflow", tone: window.focused ? "active" : "normal", width: 0 },
-                metadata: { operation: "focus-window", windowId: window.id }
+                icon: "󰖲",
+                enabled: !busy,
+                presentation: {
+                    group: "overflow",
+                    tone: window.focused ? "active" : "normal",
+                    width: 0
+                },
+                metadata: {
+                    operation: "focus-window",
+                    windowId: window.id
+                }
             }));
             actions.push(action("close-window-" + index, "Close " + (window.title || "window"), {
-                icon: "󰅖", enabled: !busy,
-                presentation: { group: "overflow", tone: "danger", width: 0 },
-                metadata: { operation: "close-window", windowId: window.id }
+                icon: "󰅖",
+                enabled: !busy,
+                presentation: {
+                    group: "overflow",
+                    tone: "danger",
+                    width: 0
+                },
+                metadata: {
+                    operation: "close-window",
+                    windowId: window.id
+                }
             }));
         });
         return actions;
@@ -70,9 +116,17 @@ Core.Provider {
     function desktopActions(application: var, busy: bool): var {
         return (application.desktop_actions || []).map(function (desktopAction, index) {
             return action("desktop-action-" + index, desktopAction.name || "Application action", {
-                icon: desktopAction.icon || "󰐕", enabled: !busy,
-                presentation: { group: "overflow", tone: "normal", width: 0 },
-                metadata: { operation: "desktop-action", desktopActionId: desktopAction.id }
+                icon: desktopAction.icon || "󰐕",
+                enabled: !busy,
+                presentation: {
+                    group: "overflow",
+                    tone: "normal",
+                    width: 0
+                },
+                metadata: {
+                    operation: "desktop-action",
+                    desktopActionId: desktopAction.id
+                }
             });
         });
     }
@@ -81,10 +135,8 @@ Core.Provider {
         if (!application)
             return [];
         const busy = controller.actionInFlight || controller.settingsInFlight;
-        const runtimeActions = application.kind === "desktop-shortcut"
-            ? [] : [closeAction(application, busy)].concat(windowActions(application, busy));
-        return primaryActions(application, busy)
-            .concat(runtimeActions, desktopActions(application, busy));
+        const runtimeActions = application.kind === "desktop-shortcut" ? [] : [closeAction(application, busy)].concat(windowActions(application, busy));
+        return primaryActions(application, busy).concat(runtimeActions, desktopActions(application, busy));
     }
 
     function subtitleFor(application: var): string {
@@ -92,8 +144,7 @@ Core.Provider {
     }
 
     function keywordsFor(application: var): var {
-        const keywords = [application.id, application.generic_name, application.comment,
-            application.startup_class].concat(application.keywords || [], application.categories || []);
+        const keywords = [application.id, application.generic_name, application.comment, application.startup_class].concat(application.keywords || [], application.categories || []);
         (application.instances || []).forEach(function (window) {
             keywords.push(window.title, window.class);
         });
@@ -108,24 +159,46 @@ Core.Provider {
 
     function resultForApplication(application: var): var {
         return Core.Model.result({
-            providerId: providerId, providerPriority: priority, id: application.id,
-            title: application.name, subtitle: subtitleFor(application),
-            icon: application.icon || "application-x-executable", score: application.score || 0,
-            keywords: keywordsFor(application), badges: badgesFor(application),
-            primaryActionId: "activate", actions: [], preview: { kind: "application", available: true },
-            state: { active: !!application.focused,
-                busy: controller.actionInFlight && controller.activeTargetId === application.id },
+            providerId: providerId,
+            providerPriority: priority,
+            id: application.id,
+            title: application.name,
+            subtitle: subtitleFor(application),
+            icon: application.icon || "application-x-executable",
+            score: application.score || 0,
+            keywords: keywordsFor(application),
+            badges: badgesFor(application),
+            primaryActionId: "activate",
+            actions: [],
+            preview: {
+                kind: "application",
+                available: true
+            },
+            state: {
+                active: !!application.focused,
+                busy: controller.actionInFlight && controller.activeTargetId === application.id
+            },
             payload: application
         });
     }
 
     function resultsForApplications(applications: var): var {
-        return (applications || []).map(function (application) { return provider.resultForApplication(application); });
+        return (applications || []).map(function (application) {
+            return provider.resultForApplication(application);
+        });
     }
-    function query(request: var): void { controller.requestApplications(request.id, request.text, request.generation, request.limit); }
-    function cancel(requestId: string): void { controller.cancelQuery(requestId); }
-    function actionsFor(result: var): var { return result && result.payload ? actionsForApplication(result.payload) : []; }
-    function primaryActionIdFor(result: var): string { return "activate"; }
+    function query(request: var): void {
+        controller.requestApplications(request.id, request.text, request.generation, request.limit);
+    }
+    function cancel(requestId: string): void {
+        controller.cancelQuery(requestId);
+    }
+    function actionsFor(result: var): var {
+        return result && result.payload ? actionsForApplication(result.payload) : [];
+    }
+    function primaryActionIdFor(result: var): string {
+        return "activate";
+    }
 
     function operationFor(actionId: string): string {
         if (actionId.indexOf("focus-window-") === 0)

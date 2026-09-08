@@ -17,7 +17,9 @@ Ui.DetailFlickable {
         locations: pane.controller.weatherLocations
         selectedId: pane.weather.id || ""
         now: pane.now
-        onSelected: function (locationId) { pane.controller.selectWeatherLocation(locationId); }
+        onSelected: function (locationId) {
+            pane.controller.selectWeatherLocation(locationId);
+        }
     }
 
     WeatherHero {

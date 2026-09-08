@@ -27,9 +27,14 @@ Item {
         stdinEnabled: true
         stdout: SplitParser {
             splitMarker: "\n"
-            onRead: function (line) { bridge.lineReceived(line); }
+            onRead: function (line) {
+                bridge.lineReceived(line);
+            }
         }
-        stderr: StdioCollector { id: processError; waitForEnd: true }
+        stderr: StdioCollector {
+            id: processError
+            waitForEnd: true
+        }
         onStarted: {
             bridge.ready = true;
             bridge.processReady();

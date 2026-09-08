@@ -5,7 +5,8 @@ Text {
 
     property bool pulseEnabled: !Theme.noAnimations
 
-    onTextChanged: if (pulseEnabled) pulse.restart()
+    onTextChanged: if (pulseEnabled)
+        pulse.restart()
 
     SequentialAnimation {
         id: pulse

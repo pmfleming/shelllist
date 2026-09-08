@@ -12,7 +12,9 @@ var streams = {
     session: Protocol.streams["clipboard.session"]
 };
 
-var subscribedStreams = Object.keys(streams).map(function (name) { return streams[name]; });
+var subscribedStreams = Object.keys(streams).map(function (name) {
+    return streams[name];
+});
 
 var methods = {
     sessionBegin: Protocol.methods["clipboard.session.begin"],
@@ -53,9 +55,14 @@ function actionsForKind(kind) {
 }
 
 var actionLabels = {
-    paste: "Paste", copy: "Copy", edit: "Edit", "open-url": "Open URL",
-    "image-as-file": "Paste as file", annotate: "Edit",
-    "open-file": "Open file", "reveal-file": "Reveal file"
+    paste: "Paste",
+    copy: "Copy",
+    edit: "Edit",
+    "open-url": "Open URL",
+    "image-as-file": "Paste as file",
+    annotate: "Edit",
+    "open-file": "Open file",
+    "reveal-file": "Reveal file"
 };
 
 function actionDescriptorsForKind(kind) {
@@ -66,7 +73,9 @@ function actionDescriptorsForKind(kind) {
             id: actionId,
             label: actionLabels[actionId],
             role: primary ? "default" : "secondary",
-            presentation: { group: primary ? "primary" : "toolbar" }
+            presentation: {
+                group: primary ? "primary" : "toolbar"
+            }
         };
     });
 }

@@ -12,9 +12,9 @@ Ui.ResultRow {
     trailingActionWidth: scaled(40)
     primaryEnabled: !controller.multiSelectMode
     detailsActionVisible: !controller.multiSelectMode
-    pickHandler: controller.multiSelectMode
-        ? function (rowIndex) { controller.toggleEntrySelection(rowIndex); }
-        : null
+    pickHandler: controller.multiSelectMode ? function (rowIndex) {
+        controller.toggleEntrySelection(rowIndex);
+    } : null
 
     Ui.GlyphLabel {
         Layout.preferredWidth: row.scaled(30)
@@ -68,9 +68,7 @@ Ui.ResultRow {
         z: 2
         Layout.preferredWidth: row.scaled(30)
         Layout.preferredHeight: row.scaled(30)
-        enabled: !row.controller.actionInFlight
-            && !row.controller.screenshotInFlight
-            && !row.controller.wipeChallenge
+        enabled: !row.controller.actionInFlight && !row.controller.screenshotInFlight && !row.controller.wipeChallenge
         accessibleName: qsTr("Delete clipboard entry")
         toolTip: qsTr("Delete this clipboard entry")
         onClicked: {

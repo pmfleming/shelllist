@@ -11,14 +11,28 @@ TestCase {
 
     Component {
         id: sliderFactory
-        Ui.PercentageSlider { width: 480; label: "Low battery"; value: 20 }
+        Ui.PercentageSlider {
+            width: 480
+            label: "Low battery"
+            value: 20
+        }
     }
     Component {
         id: statusFactory
-        Ui.SaveStatusLabel { valid: true; error: ""; saving: false }
+        Ui.SaveStatusLabel {
+            valid: true
+            error: ""
+            saving: false
+        }
     }
-    SignalSpy { id: edited; signalName: "edited" }
-    SignalSpy { id: finished; signalName: "editingFinished" }
+    SignalSpy {
+        id: edited
+        signalName: "edited"
+    }
+    SignalSpy {
+        id: finished
+        signalName: "editingFinished"
+    }
 
     function test_percentageKeyboardAndAccessibleLabel(): void {
         const slider = createTemporaryObject(sliderFactory, this);

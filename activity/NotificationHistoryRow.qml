@@ -79,12 +79,7 @@ Rectangle {
 
             Column {
                 id: titleColumn
-                width: parent.width - iconSlot.width - expandButton.width
-                    - snoozeButton.width - dismissButton.width
-                    - parent.spacing * ((iconSlot.visible ? 1 : 0)
-                        + (expandButton.visible ? 1 : 0)
-                        + (snoozeButton.visible ? 1 : 0)
-                        + (dismissButton.visible ? 1 : 0))
+                width: parent.width - iconSlot.width - expandButton.width - snoozeButton.width - dismissButton.width - parent.spacing * ((iconSlot.visible ? 1 : 0) + (expandButton.visible ? 1 : 0) + (snoozeButton.visible ? 1 : 0) + (dismissButton.visible ? 1 : 0))
                 spacing: 2
                 Ui.ThemeText {
                     width: parent.width
@@ -94,10 +89,7 @@ Rectangle {
                 }
                 Ui.ThemeText {
                     width: parent.width
-                    text: (row.groupedContext ? "" : (row.notification.app_name || "") + "  ")
-                        + Qt.formatDateTime(new Date(Number(
-                            row.notification.created_unix_ms || 0)), "d MMM HH:mm")
-                        + (row.active ? "" : " · History")
+                    text: (row.groupedContext ? "" : (row.notification.app_name || "") + "  ") + Qt.formatDateTime(new Date(Number(row.notification.created_unix_ms || 0)), "d MMM HH:mm") + (row.active ? "" : " · History")
                     color: Ui.Theme.mutedText
                     elide: Text.ElideRight
                     font.pixelSize: Ui.Theme.fontSizeCaption
@@ -175,14 +167,15 @@ Rectangle {
         }
         Ui.NotificationReplyRow {
             id: replyRow
-            visible: row.replyOpen || row.draft.length > 0 || row.replyStatus.pending === true
-                || String(row.replyStatus.error || "").length > 0
+            visible: row.replyOpen || row.draft.length > 0 || row.replyStatus.pending === true || String(row.replyStatus.error || "").length > 0
             notificationId: Number(row.notification.id)
             draftText: row.draft
             sending: row.replyStatus.pending === true
             canReply: row.active && row.replyAction !== null
             errorText: row.replyStatus.error || ""
-            onDraftEdited: function (text) { row.notificationState.setDraft(notificationId, text); }
+            onDraftEdited: function (text) {
+                row.notificationState.setDraft(notificationId, text);
+            }
             submitReply: function (id, text) {
                 return row.notificationState.replyNotification(id, text);
             }

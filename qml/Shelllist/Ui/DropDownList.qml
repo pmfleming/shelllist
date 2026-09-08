@@ -41,8 +41,12 @@ Controls.ComboBox {
             return placeholder;
         return optionText(options[index]) || placeholder;
     }
-    function optionText(option) { return option.label || option.value || ""; }
-    function delegateTextColor(highlighted) { return highlighted ? Theme.accentText : Theme.text; }
+    function optionText(option) {
+        return option.label || option.value || "";
+    }
+    function delegateTextColor(highlighted) {
+        return highlighted ? Theme.accentText : Theme.text;
+    }
     function delegateWeight(selected) {
         return selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular;
     }
@@ -92,22 +96,20 @@ Controls.ComboBox {
 
     background: Rectangle {
         radius: Theme.controlRadius
-        color: control.pressed ? Theme.pressed
-            : (control.hovered ? Theme.hover : Theme.input)
+        color: control.pressed ? Theme.pressed : (control.hovered ? Theme.hover : Theme.input)
         border.width: 1
         border.color: control.activeFocus || control.popup.visible ? Theme.strongBorder : Theme.border
     }
 
-    delegate: DropDownOptionDelegate { owner: control }
+    delegate: DropDownOptionDelegate {
+        owner: control
+    }
 
     popup: Controls.Popup {
         y: control.height + Theme.spacingXs
         width: control.width
         padding: Theme.spacingXs
-        height: Math.min(
-            control.options.length * Theme.compactControlHeight + topPadding + bottomPadding,
-            Theme.compactControlHeight * 6 + topPadding + bottomPadding
-        )
+        height: Math.min(control.options.length * Theme.compactControlHeight + topPadding + bottomPadding, Theme.compactControlHeight * 6 + topPadding + bottomPadding)
 
         contentItem: ScrollableListView {
             clip: true

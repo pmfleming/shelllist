@@ -17,6 +17,8 @@ ActionButton {
 
     Behavior on color {
         enabled: !Theme.noAnimations
-        ColorAnimation { duration: Theme.animationFast }
+        ColorAnimation {
+            duration: Theme.animationFast
+        }
     }
 }

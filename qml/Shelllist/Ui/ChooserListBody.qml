@@ -22,9 +22,15 @@ Item {
     readonly property real delegateHeight: listFrame.delegateHeight
     readonly property bool listFocused: listFrame.listFocused
 
-    function focusTop(): void { listFrame.focusTop(); }
-    function pick(rowIndex: int): void { listFrame.pick(rowIndex); }
-    function toggleDetails(rowIndex: int): void { listFrame.toggleDetails(rowIndex); }
+    function focusTop(): void {
+        listFrame.focusTop();
+    }
+    function pick(rowIndex: int): void {
+        listFrame.pick(rowIndex);
+    }
+    function toggleDetails(rowIndex: int): void {
+        listFrame.toggleDetails(rowIndex);
+    }
 
     ColumnLayout {
         anchors.fill: parent

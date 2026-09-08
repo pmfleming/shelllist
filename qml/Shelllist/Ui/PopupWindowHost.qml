@@ -42,24 +42,16 @@ Item {
     readonly property string launchMode: (Quickshell.env(modeEnvironment) || defaultLaunchMode).toLowerCase()
     readonly property bool popoverMode: launchMode === "popover"
     readonly property bool floatingMode: !popoverMode
-    readonly property bool popoverWindowVisible: popoverMode && popoverVisible
-        && (!workspaceClient.active || workspaceClient.ready)
+    readonly property bool popoverWindowVisible: popoverMode && popoverVisible && (!workspaceClient.active || workspaceClient.ready)
     readonly property bool uiActive: floatingMode || (popoverMode && popoverVisible)
     readonly property bool noAnimations: Theme.noAnimations
-    readonly property var placementScreen: floatingMode
-        ? (floatingWindow && floatingWindow.screen ? floatingWindow.screen : null)
-        : (popoverAnchor && popoverAnchor.screen ? popoverAnchor.screen : null)
-    readonly property var workspaceArea: fitToWorkspace && Theme.hyprland
-        ? WorkArea.rectangle(screenGeometry(), workspaceClient.insets) : null
+    readonly property var placementScreen: floatingMode ? (floatingWindow && floatingWindow.screen ? floatingWindow.screen : null) : (popoverAnchor && popoverAnchor.screen ? popoverAnchor.screen : null)
+    readonly property var workspaceArea: fitToWorkspace && Theme.hyprland ? WorkArea.rectangle(screenGeometry(), workspaceClient.insets) : null
     readonly property real availableWindowWidth: workspaceArea ? workspaceArea.width : screenGeometry().width
-    readonly property real renderSurfaceWidth: workspaceArea
-        ? Math.min(surfaceWindowWidth, workspaceArea.width) : surfaceWindowWidth
+    readonly property real renderSurfaceWidth: workspaceArea ? Math.min(surfaceWindowWidth, workspaceArea.width) : surfaceWindowWidth
     readonly property real renderContentWidth: Math.min(currentWindowWidth, renderSurfaceWidth)
     readonly property bool workspaceRightAnchored: workspaceArea !== null && contentAlignment === "right"
-    readonly property int currentWindowHeight: workspaceArea ? workspaceArea.height
-        : windowTopInset > 0 || windowBottomInset > 0
-            ? Math.max(1, Math.round(screenGeometry().height - windowTopInset - windowBottomInset))
-            : Math.round(screenGeometry().height * windowHeightRatio)
+    readonly property int currentWindowHeight: workspaceArea ? workspaceArea.height : windowTopInset > 0 || windowBottomInset > 0 ? Math.max(1, Math.round(screenGeometry().height - windowTopInset - windowBottomInset)) : Math.round(screenGeometry().height * windowHeightRatio)
     readonly property real placementX: targetWindowX()
     readonly property real placementY: targetWindowY()
 
@@ -71,7 +63,9 @@ Item {
         if (Theme.hyprland) {
             const monitor = Hyprland.focusedMonitor;
             if (monitor) {
-                const matched = Quickshell.screens.find(function (screen) { return screen.name === monitor.name; });
+                const matched = Quickshell.screens.find(function (screen) {
+                    return screen.name === monitor.name;
+                });
                 if (matched)
                     return matched;
             }
@@ -112,20 +106,22 @@ Item {
             return workspaceArea.left + Math.round((workspaceArea.width - renderSurfaceWidth) / 2);
         }
         if (contentAlignment === "right")
-            return Math.max(Theme.contentMargin,
-                Math.round(screenGeometry().width - renderSurfaceWidth - Theme.contentMargin));
+            return Math.max(Theme.contentMargin, Math.round(screenGeometry().width - renderSurfaceWidth - Theme.contentMargin));
         if (contentAlignment === "left")
             return Theme.contentMargin;
         return Math.round((screenGeometry().width - renderSurfaceWidth) / 2);
     }
     function targetLayerMarginY() {
-        if (workspaceArea) return workspaceArea.top;
-        return windowTopInset > 0 || windowBottomInset > 0
-            ? windowTopInset
-            : Math.round((screenGeometry().height - currentWindowHeight) / 2);
+        if (workspaceArea)
+            return workspaceArea.top;
+        return windowTopInset > 0 || windowBottomInset > 0 ? windowTopInset : Math.round((screenGeometry().height - currentWindowHeight) / 2);
     }
-    function targetWindowX() { return screenGeometry().x + targetLayerMarginX(); }
-    function targetWindowY() { return screenGeometry().y + targetLayerMarginY(); }
+    function targetWindowX() {
+        return screenGeometry().x + targetLayerMarginX();
+    }
+    function targetWindowY() {
+        return screenGeometry().y + targetLayerMarginY();
+    }
     function contentOffsetX() {
         if (contentAlignment === "right")
             return Math.round(renderSurfaceWidth - renderContentWidth);
@@ -133,7 +129,9 @@ Item {
             return 0;
         return Math.round((renderSurfaceWidth - renderContentWidth) / 2);
     }
-    function targetContentWindowX() { return targetWindowX() + contentOffsetX(); }
+    function targetContentWindowX() {
+        return targetWindowX() + contentOffsetX();
+    }
 
     function requestWindowPlacement() {
         if (!floatingMode || !Theme.hyprland)
@@ -142,8 +140,7 @@ Item {
     }
 
     function setWindowProperty(selector, legacyName, legacyValue, luaName, luaValue) {
-        Hyprland.dispatch(HyprlandDispatch.windowProperty(Hyprland.usingLua, selector,
-            legacyName, legacyValue, luaName, luaValue));
+        Hyprland.dispatch(HyprlandDispatch.windowProperty(Hyprland.usingLua, selector, legacyName, legacyValue, luaName, luaValue));
     }
     function focusWindow(selector) {
         Hyprland.dispatch(HyprlandDispatch.focusWindow(Hyprland.usingLua, selector));
@@ -152,8 +149,7 @@ Item {
         Hyprland.dispatch(HyprlandDispatch.floatWindow(Hyprland.usingLua, selector));
     }
     function moveWindow(selector) {
-        Hyprland.dispatch(HyprlandDispatch.moveWindow(Hyprland.usingLua, selector,
-            targetWindowX(), targetWindowY()));
+        Hyprland.dispatch(HyprlandDispatch.moveWindow(Hyprland.usingLua, selector, targetWindowX(), targetWindowY()));
     }
 
     function popoverAnimationRuleReady(desiredState) {
@@ -163,9 +159,7 @@ Item {
         const desiredState = noAnimations ? 1 : 0;
         if (!popoverAnimationRuleReady(desiredState))
             return;
-        layerRuleClient.apply(noAnimations
-            ? "animation 0 " + layerNamespace
-            : "animation unset " + layerNamespace);
+        layerRuleClient.apply(noAnimations ? "animation 0 " + layerNamespace : "animation unset " + layerNamespace);
         popoverNoAnimRuleState = desiredState;
     }
     function applyCompositorWindowRules() {
@@ -204,8 +198,7 @@ Item {
             return;
         firstFramePending = false;
         firstFrameAtMs = Date.now();
-        lastOpenToFirstFrameMs = Math.max(0,
-            firstFrameAtMs - openRequestedAtMs);
+        lastOpenToFirstFrameMs = Math.max(0, firstFrameAtMs - openRequestedAtMs);
     }
     function hidePopover() {
         if (!popoverMode)
@@ -213,10 +206,18 @@ Item {
         popoverVisible = false;
         uiDeactivated();
     }
-    function togglePopover() { popoverVisible ? hidePopover() : showPopover(); }
-    function show() { showPopover(); }
-    function hide() { hidePopover(); }
-    function toggle() { togglePopover(); }
+    function togglePopover() {
+        popoverVisible ? hidePopover() : showPopover();
+    }
+    function show() {
+        showPopover();
+    }
+    function hide() {
+        hidePopover();
+    }
+    function toggle() {
+        togglePopover();
+    }
 
     Timer {
         id: floatingPlacementTimer
@@ -232,8 +233,10 @@ Item {
     }
 
     // Geometry updates should move a floating preview without stealing focus.
-    onPlacementXChanged: if (floatingMode) floatingMoveTimer.restart()
-    onPlacementYChanged: if (floatingMode) floatingMoveTimer.restart()
+    onPlacementXChanged: if (floatingMode)
+        floatingMoveTimer.restart()
+    onPlacementYChanged: if (floatingMode)
+        floatingMoveTimer.restart()
     Timer {
         id: floatingMoveTimer
         interval: 0
@@ -242,12 +245,15 @@ Item {
     }
 
     onNoAnimationsChanged: syncPopoverAnimationRule()
-    Component.onCompleted: if (floatingMode) Qt.callLater(function () {
-        host.uiActivated(host.shelllistWorkspaceId());
-        host.focusSearchRequested();
-    })
+    Component.onCompleted: if (floatingMode)
+        Qt.callLater(function () {
+            host.uiActivated(host.shelllistWorkspaceId());
+            host.focusSearchRequested();
+        })
 
-    Io.HyprlandLayerRuleClient { id: layerRuleClient }
+    Io.HyprlandLayerRuleClient {
+        id: layerRuleClient
+    }
     Io.HyprlandWorkAreaClient {
         id: workspaceClient
         active: host.fitToWorkspace && Theme.hyprland && host.uiActive
@@ -256,20 +262,36 @@ Item {
     Connections {
         target: host.placementScreen
         ignoreUnknownSignals: true
-        function onWidthChanged(): void { workspaceClient.scheduleRefresh(); }
-        function onHeightChanged(): void { workspaceClient.scheduleRefresh(); }
-        function onDevicePixelRatioChanged(): void { workspaceClient.scheduleRefresh(); }
+        function onWidthChanged(): void {
+            workspaceClient.scheduleRefresh();
+        }
+        function onHeightChanged(): void {
+            workspaceClient.scheduleRefresh();
+        }
+        function onDevicePixelRatioChanged(): void {
+            workspaceClient.scheduleRefresh();
+        }
     }
 
     IpcHandler {
         enabled: host.popoverMode && host.ipcEnabled
         target: host.ipcTarget
         readonly property bool visible: host.popoverVisible
-        function ping(): string { return "pong"; }
-        function status(): string { return host.popoverVisible ? "visible" : "hidden"; }
-        function open(): void { host.showPopover(); }
-        function hide(): void { host.hidePopover(); }
-        function toggle(): void { host.togglePopover(); }
+        function ping(): string {
+            return "pong";
+        }
+        function status(): string {
+            return host.popoverVisible ? "visible" : "hidden";
+        }
+        function open(): void {
+            host.showPopover();
+        }
+        function hide(): void {
+            host.hidePopover();
+        }
+        function toggle(): void {
+            host.togglePopover();
+        }
     }
 
     Loader {
@@ -290,7 +312,9 @@ Item {
         implicitWidth: host.renderSurfaceWidth
         implicitHeight: host.currentWindowHeight
         color: "transparent"
-        mask: Region { item: popoverVisualSurface }
+        mask: Region {
+            item: popoverVisualSurface
+        }
         exclusionMode: ExclusionMode.Ignore
         aboveWindows: true
         focusable: true
@@ -308,7 +332,8 @@ Item {
             right: host.workspaceRightAnchored ? host.workspaceArea.right : 0
             left: host.workspaceRightAnchored ? 0 : host.targetLayerMarginX()
         }
-        onVisibleChanged: if (visible) host.focusSearchRequested()
+        onVisibleChanged: if (visible)
+            host.focusSearchRequested()
 
         VisualSurface {
             id: popoverVisualSurface
@@ -328,7 +353,9 @@ Item {
         target: popoverAnchor["_backingWindow"]
         // qmllint enable missing-property
         ignoreUnknownSignals: true
-        function onFrameSwapped(): void { host.recordFirstFrame(); }
+        function onFrameSwapped(): void {
+            host.recordFirstFrame();
+        }
     }
 
     FloatingWindow {
@@ -338,7 +365,9 @@ Item {
         implicitHeight: host.currentWindowHeight
         title: host.windowTitle
         color: "transparent"
-        mask: Region { item: floatingVisualSurface }
+        mask: Region {
+            item: floatingVisualSurface
+        }
         onWindowConnected: host.requestWindowPlacement()
         onVisibleChanged: if (visible) {
             Qt.callLater(host.requestWindowPlacement);
@@ -359,6 +388,7 @@ Item {
     HyprlandFocusGrab {
         active: Theme.hyprland && host.popoverWindowVisible
         windows: [popoverAnchor]
-        onCleared: if (!host.retainOnFocusLoss) host.hidePopover()
+        onCleared: if (!host.retainOnFocusLoss)
+            host.hidePopover()
     }
 }

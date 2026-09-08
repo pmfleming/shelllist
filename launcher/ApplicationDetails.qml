@@ -24,26 +24,52 @@ Ui.ActionDetailsPane {
     subtitle: selected.subtitle || ""
     actions: controller.detailActions || []
     actionWidth: 128
-    onActionTriggered: function (actionId) { controller.triggerDetailAction(actionId); }
+    onActionTriggered: function (actionId) {
+        controller.triggerDetailAction(actionId);
+    }
 
     Ui.TabbedDetailsStack {
         anchors.fill: parent
         footerHeight: pane.footerHeight
         sectionSpacing: pane.sectionSpacing
         selectedValue: pane.controller.detailsTab
-        tabs: pane.application.kind === "desktop-shortcut"
-            ? [{ value: "application", icon: "󰀻", label: "Shortcut" }]
-            : pane.application.kind === "desktop-application"
-                ? [
-                    { value: "application", icon: "󰀻", label: "Application" },
-                    { value: "resources", icon: "󰄪", label: "Resources" },
-                    { value: "settings", icon: "󰒓", label: "Settings" }
-                ]
-                : [
-                    { value: "application", icon: "󰀻", label: "Window" },
-                    { value: "resources", icon: "󰄪", label: "Resources" }
-                ]
-        onSelected: function (value) { pane.controller.selectDetailsTab(value); }
+        tabs: pane.application.kind === "desktop-shortcut" ? [
+            {
+                value: "application",
+                icon: "󰀻",
+                label: "Shortcut"
+            }
+        ] : pane.application.kind === "desktop-application" ? [
+            {
+                value: "application",
+                icon: "󰀻",
+                label: "Application"
+            },
+            {
+                value: "resources",
+                icon: "󰄪",
+                label: "Resources"
+            },
+            {
+                value: "settings",
+                icon: "󰒓",
+                label: "Settings"
+            }
+        ] : [
+            {
+                value: "application",
+                icon: "󰀻",
+                label: "Window"
+            },
+            {
+                value: "resources",
+                icon: "󰄪",
+                label: "Resources"
+            }
+        ]
+        onSelected: function (value) {
+            pane.controller.selectDetailsTab(value);
+        }
 
         Loader {
             anchors.fill: parent

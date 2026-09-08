@@ -13,25 +13,38 @@ TestCase {
         Launcher.ApplicationResourceHistory {
             width: 800
             uiScale: 1
-            application: ({ running: false })
-            controller: Launcher.ApplicationController { }
+            application: ({
+                    running: false
+                })
+            controller: Launcher.ApplicationController {}
         }
     }
 
-    function init(): void { savedEnvironment = TestShell.Quickshell.environment; }
-    function cleanup(): void { TestShell.Quickshell.environment = savedEnvironment; }
+    function init(): void {
+        savedEnvironment = TestShell.Quickshell.environment;
+    }
+    function cleanup(): void {
+        TestShell.Quickshell.environment = savedEnvironment;
+    }
 
     function test_lightDarkAndOverride(): void {
         const history = createTemporaryObject(historyFactory, this);
-        TestShell.Quickshell.environment = { SHELLLIST_BG: "#ffffff" };
+        TestShell.Quickshell.environment = {
+            SHELLLIST_BG: "#ffffff"
+        };
         compare(Ui.Theme.dark, false);
         compare(String(history.cpuColor), "#2563eb");
         compare(String(history.powerColor), "#be123c");
-        TestShell.Quickshell.environment = { SHELLLIST_BG: "#000000" };
+        TestShell.Quickshell.environment = {
+            SHELLLIST_BG: "#000000"
+        };
         compare(Ui.Theme.dark, true);
         compare(String(history.cpuColor), "#60a5fa");
         compare(String(history.powerColor), "#fb7185");
-        TestShell.Quickshell.environment = { SHELLLIST_BG: "#000000", SHELLLIST_RESOURCE_CPU: "#123456" };
+        TestShell.Quickshell.environment = {
+            SHELLLIST_BG: "#000000",
+            SHELLLIST_RESOURCE_CPU: "#123456"
+        };
         compare(String(history.cpuColor), "#123456");
         compare(String(history.networkReceiveColor), String(Ui.Theme.resourceNetworkReceive));
     }
@@ -39,9 +52,27 @@ TestCase {
     function test_typedHistoryHelpersRespectAvailability(): void {
         const history = createTemporaryObject(historyFactory, this);
         history.controller.resourceHistory = [
-            { cpu_percent_of_machine: 10, availability: { cpu: true }, peaks: { cpu_percent_of_machine: 40 } },
-            { cpu_percent_of_machine: 20, availability: { cpu: true } },
-            { cpu_percent_of_machine: 100, availability: { cpu: false } }
+            {
+                cpu_percent_of_machine: 10,
+                availability: {
+                    cpu: true
+                },
+                peaks: {
+                    cpu_percent_of_machine: 40
+                }
+            },
+            {
+                cpu_percent_of_machine: 20,
+                availability: {
+                    cpu: true
+                }
+            },
+            {
+                cpu_percent_of_machine: 100,
+                availability: {
+                    cpu: false
+                }
+            }
         ];
         compare(history.average("cpu_percent_of_machine"), 15);
         compare(history.peak("cpu_percent_of_machine", false), 20);

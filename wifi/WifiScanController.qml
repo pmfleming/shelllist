@@ -11,7 +11,9 @@ Item {
     property string requestId: ""
     readonly property bool running: backend.listRunning || backend.scanRunning
 
-    function activate() { warmCache(); }
+    function activate() {
+        warmCache();
+    }
     function warmCache() {
         if (!controller.uiActive || !controller.powered)
             return;
@@ -23,7 +25,8 @@ Item {
         pendingRefresh = false;
         if (requestId.length > 0 && !backend.cancel(requestId))
             console.warn("shelllist wifi scan cancellation failed request_id=" + requestId);
-        requestId = ""; snapshotSeen = false;
+        requestId = "";
+        snapshotSeen = false;
     }
     function cancelForPowerOff() {
         pendingRefresh = false;
@@ -41,7 +44,10 @@ Item {
             console.warn("shelllist wifi scan discarded reason=transport-failure request_id=" + lostRequestId);
     }
     function refresh() {
-        if (!controller.uiActive) { pendingRefresh = false; return; }
+        if (!controller.uiActive) {
+            pendingRefresh = false;
+            return;
+        }
         if (!controller.powered) {
             pendingRefresh = false;
             controller.status = "Wi-Fi is off";
@@ -52,7 +58,11 @@ Item {
             controller.setBackgroundStatus("Connection in progress; delaying Wi-Fi scan refresh…");
             return;
         }
-        if (running) { pendingRefresh = true; controller.status = "Refresh already running; queued another refresh…"; return; }
+        if (running) {
+            pendingRefresh = true;
+            controller.status = "Refresh already running; queued another refresh…";
+            return;
+        }
         pendingRefresh = false;
         controller.setBackgroundStatus("Loading cached Wi-Fi networks…");
         snapshotSeen = false;
@@ -66,10 +76,12 @@ Item {
         }
     }
     function maybeRefresh() {
-        if (controller.uiActive && controller.powered && pendingRefresh && !controller.connection.running && !running) Qt.callLater(refresh);
+        if (controller.uiActive && controller.powered && pendingRefresh && !controller.connection.running && !running)
+            Qt.callLater(refresh);
     }
     function handleWatchdog() {
-        if (!controller.uiActive || requestId.length === 0) return;
+        if (!controller.uiActive || requestId.length === 0)
+            return;
         if (!backend.cancel(requestId))
             console.warn("shelllist wifi scan watchdog cancellation failed request_id=" + requestId);
         requestId = "";
@@ -81,7 +93,8 @@ Item {
             controller.status = "Wi-Fi scan events timed out; loading current NetworkManager results…";
             if (!backend.listRunning && !backend.loadCurrentNetworks())
                 console.warn("shelllist wifi live network load rejected after scan watchdog");
-        } else controller.setBackgroundStatus("Wi-Fi scan finished without a completion event; refresh manually to retry.");
+        } else
+            controller.setBackgroundStatus("Wi-Fi scan finished without a completion event; refresh manually to retry.");
     }
     function applyEvent(event) {
         if (event.event === "snapshot") {
@@ -91,11 +104,20 @@ Item {
         controller.setBackgroundStatus(Api.scanEventStatus(event, controller.status));
     }
     function handleStream(event) {
-        if (!controller.uiActive || !Api.requestMatches(event, requestId)) return;
+        if (!controller.uiActive || !Api.requestMatches(event, requestId))
+            return;
         applyEvent(event);
-        if (Api.isTerminalEvent(event)) { requestId = ""; maybeRefresh(); }
+        if (Api.isTerminalEvent(event)) {
+            requestId = "";
+            maybeRefresh();
+        }
     }
 
     onRequestIdChanged: requestId.length > 0 ? watchdogTimer.restart() : watchdogTimer.stop()
-    Timer { id: watchdogTimer; interval: 25000; repeat: false; onTriggered: scan.handleWatchdog() }
+    Timer {
+        id: watchdogTimer
+        interval: 25000
+        repeat: false
+        onTriggered: scan.handleWatchdog()
+    }
 }

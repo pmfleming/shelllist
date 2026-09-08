@@ -9,11 +9,7 @@ Ui.ChooserListPane {
     required property BluetoothController controller
     chooserController: controller
     resultModel: controller.filteredResultsModel
-    emptyText: controller.radio.hard_blocked ? "Bluetooth is hardware-disabled"
-        : (controller.radio.soft_blocked ? "Bluetooth is blocked"
-        : (!controller.radio.available || Number(controller.radio.adapter_count || 0) === 0 ? "No Bluetooth adapters"
-        : (!controller.radio.powered ? "Bluetooth is off"
-        : (controller.searchAllDevices ? "No Bluetooth devices found" : "No devices in My Devices"))))
+    emptyText: controller.radio.hard_blocked ? "Bluetooth is hardware-disabled" : (controller.radio.soft_blocked ? "Bluetooth is blocked" : (!controller.radio.available || Number(controller.radio.adapter_count || 0) === 0 ? "No Bluetooth adapters" : (!controller.radio.powered ? "Bluetooth is off" : (controller.searchAllDevices ? "No Bluetooth devices found" : "No devices in My Devices"))))
     placeholder: controller.searchAllDevices ? "Search All Devices" : "Search My Devices"
     icon: "󰂯"
     powered: controller.powered
@@ -28,11 +24,15 @@ Ui.ChooserListPane {
     filterText: controller.filterText
     status: controller.status
     listInset: Math.round(12 * densityScale)
-    refreshHandler: function () { controller.refreshList(); }
+    refreshHandler: function () {
+        controller.refreshList();
+    }
     onIconClicked: controller.screenshotRequested()
     onSearchActionRequested: controller.toggleSearchScope()
 
     rowDelegate: Component {
-        BluetoothDeviceListRow { listPane: pane }
+        BluetoothDeviceListRow {
+            listPane: pane
+        }
     }
 }

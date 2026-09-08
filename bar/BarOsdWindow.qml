@@ -18,8 +18,7 @@ BarOverlayWindow {
     }
     margins { // qmllint disable unresolved-type unqualified
         bottom: 86
-        left: Math.max(0, Math.round(((window.screen ? window.screen.width : 376)
-            - window.implicitWidth) / 2))
+        left: Math.max(0, Math.round(((window.screen ? window.screen.width : 376) - window.implicitWidth) / 2))
     }
 
     BarOsdContent {

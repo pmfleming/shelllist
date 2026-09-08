@@ -23,8 +23,7 @@ RowLayout {
 
     Repeater {
         model: (toolbar.actions || []).filter(function (action) {
-            return action.visible !== false
-                && ((action.presentation || {}).group || "toolbar") === toolbar.group;
+            return action.visible !== false && ((action.presentation || {}).group || "toolbar") === toolbar.group;
         })
 
         delegate: ActionButton {

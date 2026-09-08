@@ -67,8 +67,12 @@ Item {
 
                     Connections {
                         target: indicator
-                        function onPercentageChanged() { ring.requestPaint(); }
-                        function onStatusColorChanged() { ring.requestPaint(); }
+                        function onPercentageChanged() {
+                            ring.requestPaint();
+                        }
+                        function onStatusColorChanged() {
+                            ring.requestPaint();
+                        }
                     }
 
                     onPaint: {
@@ -113,9 +117,7 @@ Item {
                 Text {
                     anchors.centerIn: ring
                     visible: indicator.imageSource.length === 0
-                    text: indicator.modelData.component === "main"
-                        ? BluetoothGlyphs.forDevice(root.device)
-                        : BluetoothGlyphs.forBattery(indicator.modelData)
+                    text: indicator.modelData.component === "main" ? BluetoothGlyphs.forDevice(root.device) : BluetoothGlyphs.forBattery(indicator.modelData)
                     color: Ui.Theme.mutedText
                     font.family: Ui.Theme.iconFontFamily
                     font.pixelSize: Math.round(indicator.ringSize * 0.38)

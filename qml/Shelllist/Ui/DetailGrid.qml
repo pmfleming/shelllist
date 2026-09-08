@@ -18,11 +18,7 @@ Grid {
     height: parent ? parent.height : implicitHeight
     columns: 2
     columnSpacing: Math.max(24, Math.min(48, width * 0.08))
-    rowSpacing: rowCount > 1
-        ? Math.max(Theme.minimumVerticalSpacing, Math.min(
-            Theme.verticalSpacing(Theme.spacingMd, densityScale),
-            (height - rowCount * fieldHeight) / (rowCount - 1)))
-        : 0
+    rowSpacing: rowCount > 1 ? Math.max(Theme.minimumVerticalSpacing, Math.min(Theme.verticalSpacing(Theme.spacingMd, densityScale), (height - rowCount * fieldHeight) / (rowCount - 1))) : 0
 
     Repeater {
         id: fieldRepeater

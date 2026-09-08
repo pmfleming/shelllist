@@ -33,15 +33,10 @@ Ui.DetailFlickable {
     }
 
     Ui.CenteredMessage {
-        visible: (page.application.instances || []).length === 0
-            && (page.application.desktop_actions || []).length === 0
+        visible: (page.application.instances || []).length === 0 && (page.application.desktop_actions || []).length === 0
         width: parent.width
         height: 120
-        text: page.application.kind === "desktop-shortcut"
-            ? "This shortcut opens content in another application"
-            : page.application.kind === "desktop-application"
-                ? "No additional actions"
-                : "Window is no longer available"
+        text: page.application.kind === "desktop-shortcut" ? "This shortcut opens content in another application" : page.application.kind === "desktop-application" ? "No additional actions" : "Window is no longer available"
         font.pixelSize: Ui.Theme.fontSizeBody
     }
 }

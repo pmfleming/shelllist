@@ -31,9 +31,7 @@ Item {
         anchors.fill: parent
         radius: root.radius
         color: root.stateColor
-        opacity: root.showStateBackground
-            ? (root.pressed ? root.pressedOpacity : (root.hovered ? root.hoverOpacity : 0))
-            : 0
+        opacity: root.showStateBackground ? (root.pressed ? root.pressedOpacity : (root.hovered ? root.hoverOpacity : 0)) : 0
 
         Behavior on opacity {
             enabled: !Theme.noAnimations
@@ -105,8 +103,12 @@ Item {
                 rippleAnimation.start();
             }
         }
-        onClicked: function (mouse) { root.clicked(mouse); }
-        onDoubleClicked: function (mouse) { root.doubleClicked(mouse); }
+        onClicked: function (mouse) {
+            root.clicked(mouse);
+        }
+        onDoubleClicked: function (mouse) {
+            root.doubleClicked(mouse);
+        }
         onWheel: function (event) {
             root.wheel(event);
             event.accepted = root.consumeWheel;

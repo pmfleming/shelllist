@@ -16,8 +16,7 @@ Ui.DetailFlickable {
     readonly property double sunset: Number(weather.sunset_unix_ms || 0)
     readonly property bool hasSunTimes: sunrise > 0 && sunset > sunrise
     readonly property double solarNoon: hasSunTimes ? sunrise + (sunset - sunrise) / 2 : 0
-    readonly property real sunProgress: hasSunTimes
-        ? Math.max(0, Math.min(1, (now.getTime() - sunrise) / (sunset - sunrise))) : 0
+    readonly property real sunProgress: hasSunTimes ? Math.max(0, Math.min(1, (now.getTime() - sunrise) / (sunset - sunrise))) : 0
     readonly property var moon: Visuals.moonPhase(now.getTime())
 
     function time(value: var): string {
@@ -33,8 +32,14 @@ Ui.DetailFlickable {
         radius: Ui.Theme.panelRadius
         border.color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.30)
         gradient: Gradient {
-            GradientStop { position: 0; color: Ui.Theme.mix(Ui.Theme.surface, Ui.Theme.accent, 0.27) }
-            GradientStop { position: 1; color: Ui.Theme.surfaceRaised }
+            GradientStop {
+                position: 0
+                color: Ui.Theme.mix(Ui.Theme.surface, Ui.Theme.accent, 0.27)
+            }
+            GradientStop {
+                position: 1
+                color: Ui.Theme.surfaceRaised
+            }
         }
 
         Column {
@@ -72,8 +77,7 @@ Ui.DetailFlickable {
                 color: Ui.Theme.mutedText
             }
             Ui.ThemeText {
-                text: (pane.city.abbreviation ? pane.city.abbreviation + "  ·  " : "")
-                    + Visuals.utcOffset(pane.offsetSeconds)
+                text: (pane.city.abbreviation ? pane.city.abbreviation + "  ·  " : "") + Visuals.utcOffset(pane.offsetSeconds)
                 color: Ui.Theme.accent
                 font.pixelSize: Ui.Theme.fontSizeSmall
                 font.weight: Ui.Theme.fontWeightDemiBold
@@ -91,14 +95,22 @@ Ui.DetailFlickable {
 
             Repeater {
                 model: [
-                    { daylight: true, label: "Day length", value: pane.hasSunTimes
-                        ? Visuals.duration((pane.sunset - pane.sunrise) / 1000) : "—",
+                    {
+                        daylight: true,
+                        label: "Day length",
+                        value: pane.hasSunTimes ? Visuals.duration((pane.sunset - pane.sunrise) / 1000) : "—",
                         fraction: Visuals.daylightFraction(pane.sunrise, pane.sunset),
                         available: pane.hasSunTimes,
-                        detail: pane.hasSunTimes ? "of 24 hours" : "Sun times unavailable" },
-                    { daylight: false, label: "Moon", value: pane.moon.name,
-                        fraction: pane.moon.fraction, available: true,
-                        detail: pane.moon.illumination + "% illuminated" }
+                        detail: pane.hasSunTimes ? "of 24 hours" : "Sun times unavailable"
+                    },
+                    {
+                        daylight: false,
+                        label: "Moon",
+                        value: pane.moon.name,
+                        fraction: pane.moon.fraction,
+                        available: true,
+                        detail: pane.moon.illumination + "% illuminated"
+                    }
                 ]
                 delegate: Column {
                     id: heroTimeMetric
@@ -113,9 +125,7 @@ Ui.DetailFlickable {
                         daylight: heroTimeMetric.modelData.daylight
                         fraction: heroTimeMetric.modelData.fraction
                         dataAvailable: heroTimeMetric.modelData.available
-                        description: heroTimeMetric.modelData.label + ": "
-                            + heroTimeMetric.modelData.value + ", "
-                            + heroTimeMetric.modelData.detail
+                        description: heroTimeMetric.modelData.label + ": " + heroTimeMetric.modelData.value + ", " + heroTimeMetric.modelData.detail
                     }
                     Ui.ThemeText {
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -218,9 +228,21 @@ Ui.DetailFlickable {
 
             Repeater {
                 model: [
-                    { label: "Rise", value: pane.time(pane.sunrise), icon: "󰖜" },
-                    { label: "Solar noon", value: pane.time(pane.solarNoon), icon: "󰖙" },
-                    { label: "Set", value: pane.time(pane.sunset), icon: "󰖛" }
+                    {
+                        label: "Rise",
+                        value: pane.time(pane.sunrise),
+                        icon: "󰖜"
+                    },
+                    {
+                        label: "Solar noon",
+                        value: pane.time(pane.solarNoon),
+                        icon: "󰖙"
+                    },
+                    {
+                        label: "Set",
+                        value: pane.time(pane.sunset),
+                        icon: "󰖛"
+                    }
                 ]
                 delegate: Column {
                     id: solarValue
@@ -252,8 +274,7 @@ Ui.DetailFlickable {
 
     Rectangle {
         width: parent.width
-        height: Math.round(116 + Math.max(0,
-            width - Ui.Theme.spacingMd * 2) / 1.94)
+        height: Math.round(116 + Math.max(0, width - Ui.Theme.spacingMd * 2) / 1.94)
         radius: Ui.Theme.panelRadius
         color: Ui.Theme.surface
         border.color: Ui.Theme.border

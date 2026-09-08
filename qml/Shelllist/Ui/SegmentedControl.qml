@@ -13,9 +13,7 @@ Rectangle {
     signal selected(string value)
 
     readonly property int contentPadding: 3
-    readonly property real segmentWidth: options.length > 0
-        ? (width - 2 * contentPadding) / options.length
-        : 0
+    readonly property real segmentWidth: options.length > 0 ? (width - 2 * contentPadding) / options.length : 0
     readonly property int currentIndex: {
         for (let index = 0; index < options.length; ++index)
             if (options[index].value === value)
@@ -32,7 +30,9 @@ Rectangle {
     clip: true
     activeFocusOnTab: interactive
 
-    function optionEnabled(index) { return Navigation.optionEnabled(options, index); }
+    function optionEnabled(index) {
+        return Navigation.optionEnabled(options, index);
+    }
 
     function choose(index) {
         if (!interactive || !optionEnabled(index))
@@ -109,8 +109,7 @@ Rectangle {
                 width: control.segmentWidth
                 height: parent.height
                 radius: Math.min(Theme.controlRadius, height / 2)
-                color: !selected && segmentMouse.pressed ? Theme.pressed
-                    : (!selected && segmentMouse.containsMouse ? Theme.hover : "transparent")
+                color: !selected && segmentMouse.pressed ? Theme.pressed : (!selected && segmentMouse.containsMouse ? Theme.hover : "transparent")
                 opacity: control.optionEnabled(index) ? 1.0 : Theme.disabledOpacity
 
                 ThemeText {

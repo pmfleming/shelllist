@@ -28,8 +28,7 @@ Io.DaemonBackend {
         });
     }
 
-    function setProtection(batteryId: string, enabled: bool, startPercent: int,
-            endPercent: int): bool {
+    function setProtection(batteryId: string, enabled: bool, startPercent: int, endPercent: int): bool {
         return callSequenced("battery-protection", BatteryApi.methods.setProtection, {
             battery_id: batteryId,
             enabled: enabled,
@@ -83,15 +82,17 @@ Io.DaemonBackend {
     }
 
     function powerSleepAction(action: string): bool {
-        const methods = { lock: BatteryApi.methods.lock, suspend: BatteryApi.methods.suspend,
-            hibernate: BatteryApi.methods.hibernate };
+        const methods = {
+            lock: BatteryApi.methods.lock,
+            suspend: BatteryApi.methods.suspend,
+            hibernate: BatteryApi.methods.hibernate
+        };
         if (!["lock", "suspend", "hibernate"].includes(action))
             return false;
         return callSequenced("power-sleep-" + action, methods[action], {});
     }
 
-    function setAlertPolicy(warningPercent: int, criticalPercent: int,
-            notifyWhenFull: bool, autoPowerSaver: bool): bool {
+    function setAlertPolicy(warningPercent: int, criticalPercent: int, notifyWhenFull: bool, autoPowerSaver: bool): bool {
         return callSequenced("battery-alerts", BatteryApi.methods.setAlertPolicy, {
             warning_percent: warningPercent,
             critical_percent: criticalPercent,
@@ -113,11 +114,11 @@ Io.DaemonBackend {
     function applyData(data: var): void {
         const values = Object.assign({}, data.snapshot || ({}), data);
         const handlers = ({
-            battery: controller.applyBattery,
-            power_profile: controller.applyPowerProfile,
-            power_sleep: controller.applyPowerSleep,
-            history: controller.applyBatteryHistory
-        });
+                battery: controller.applyBattery,
+                power_profile: controller.applyPowerProfile,
+                power_sleep: controller.applyPowerSleep,
+                history: controller.applyBatteryHistory
+            });
         Object.keys(handlers).forEach(function (key) {
             if (values[key])
                 handlers[key](values[key]);
@@ -143,8 +144,7 @@ Io.DaemonBackend {
     }
     function finish(id: string, envelope: var, transportError: string): void {
         const background = isBackgroundRequest(id);
-        const error = responseError(envelope, transportError,
-            background ? "Battery refresh failed" : "Battery operation failed");
+        const error = responseError(envelope, transportError, background ? "Battery refresh failed" : "Battery operation failed");
         if (error.length > 0) {
             rejectRequest(id, background, error);
             return;
@@ -157,7 +157,9 @@ Io.DaemonBackend {
         finish(id, envelope, transportError);
     }
     onEventGapDetected: controller.refreshAll()
-    onEventReceived: function (event) { controller.handleEvent(event); }
+    onEventReceived: function (event) {
+        controller.handleEvent(event);
+    }
     onSendFailed: function (id, message) {
         if (isBackgroundRequest(id))
             controller.refreshFailed(id, message);
@@ -169,7 +171,9 @@ Io.DaemonBackend {
                 controller.operationFailed(id, message);
         }
     }
-    onTransportFailed: function (message) { controller.transportFailed(message); }
+    onTransportFailed: function (message) {
+        controller.transportFailed(message);
+    }
     onTransportReady: {
         snapshot();
         controller.resumePendingSettings();

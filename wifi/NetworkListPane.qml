@@ -11,9 +11,7 @@ ChooserListPane {
     required property WifiController controller
     chooserController: controller
     resultModel: controller.powered ? controller.filteredResultsModel : null
-    emptyText: controller.powered ? "No Wi-Fi networks"
-        : (!controller.radios.wireless_available ? "No Wi-Fi adapter"
-        : (!controller.radios.wireless_hardware_enabled ? "Wi-Fi is hardware blocked" : "Wi-Fi is off"))
+    emptyText: controller.powered ? "No Wi-Fi networks" : (!controller.radios.wireless_available ? "No Wi-Fi adapter" : (!controller.radios.wireless_hardware_enabled ? "Wi-Fi is hardware blocked" : "Wi-Fi is off"))
     placeholder: "Search networks…"
     signalIcon: true
     powered: controller.powered
@@ -39,8 +37,7 @@ ChooserListPane {
             name: networkRow.result.title
             connecting: pane.controller.connection.isConnecting(networkRow.result.payload)
             progressTick: pane.controller.connection.progressTick
-            captivePortal: networkRow.active
-                && Presentation.connectivityRequiresSignIn(Presentation.activeConnectivity(pane.controller))
+            captivePortal: networkRow.active && Presentation.connectivityRequiresSignIn(Presentation.activeConnectivity(pane.controller))
             networkTypeIcon: WifiIcons.forNetwork(networkRow.network, networkRow.captivePortal)
         }
     }

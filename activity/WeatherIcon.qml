@@ -6,8 +6,7 @@ Image {
     property bool daytime: true
     property string description: ""
 
-    source: Qt.resolvedUrl("assets/weather/"
-        + Visuals.iconName(conditionCode, daytime) + ".svg")
+    source: Qt.resolvedUrl("assets/weather/" + Visuals.iconName(conditionCode, daytime) + ".svg")
     fillMode: Image.PreserveAspectFit
     smooth: true
     mipmap: true

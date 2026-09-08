@@ -11,14 +11,11 @@ Item {
     required property string screenName
     required property int layoutDensity
     property int maximumWidth: layoutDensity === 0 ? 260 : 160
-    readonly property var activeWindow: Presentation.activeWindowFor(
-        controller.workspaces, screenName)
-    readonly property string sourceTitle: activeWindow
-        ? (activeWindow.title || activeWindow.class_name || "Desktop") : ""
+    readonly property var activeWindow: Presentation.activeWindowFor(controller.workspaces, screenName)
+    readonly property string sourceTitle: activeWindow ? (activeWindow.title || activeWindow.class_name || "Desktop") : ""
 
     visible: activeWindow !== null && layoutDensity <= 1
-    implicitWidth: visible ? Math.min(maximumWidth,
-        iconFrame.width + titleMetrics.advanceWidth + stateGlyph.implicitWidth + 34) : 0
+    implicitWidth: visible ? Math.min(maximumWidth, iconFrame.width + titleMetrics.advanceWidth + stateGlyph.implicitWidth + 34) : 0
     implicitHeight: 37
 
     Rectangle {
@@ -44,8 +41,7 @@ Item {
             anchors.centerIn: parent
             width: 18
             height: 18
-            source: Quickshell.iconPath(Presentation.windowIconName(root.activeWindow),
-                "application-x-executable")
+            source: Quickshell.iconPath(Presentation.windowIconName(root.activeWindow), "application-x-executable")
         }
     }
 
@@ -77,8 +73,7 @@ Item {
         anchors.right: parent.right
         anchors.rightMargin: 10
         anchors.verticalCenter: parent.verticalCenter
-        glyph: root.activeWindow && root.activeWindow.fullscreen ? "󰊓"
-            : (root.activeWindow && root.activeWindow.floating ? "󰉈" : "")
+        glyph: root.activeWindow && root.activeWindow.fullscreen ? "󰊓" : (root.activeWindow && root.activeWindow.floating ? "󰉈" : "")
         color: Ui.Theme.accent
         font.pixelSize: Ui.Theme.fontSizeSmall
     }
@@ -90,7 +85,6 @@ Item {
         showStateBackground: true
         onClicked: root.controller.openSurface("applications")
     }
-
 
     Behavior on width {
         enabled: !Ui.Theme.noAnimations

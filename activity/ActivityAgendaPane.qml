@@ -11,8 +11,7 @@ Rectangle {
     function eventTime(event: var): string {
         if (event.all_day)
             return "All day";
-        return Qt.formatTime(new Date(event.start_unix_ms), "HH:mm") + "–"
-            + Qt.formatTime(new Date(event.end_unix_ms), "HH:mm");
+        return Qt.formatTime(new Date(event.start_unix_ms), "HH:mm") + "–" + Qt.formatTime(new Date(event.end_unix_ms), "HH:mm");
     }
 
     height: parent.height
@@ -73,8 +72,7 @@ Rectangle {
                     }
                     Ui.ThemeText {
                         width: parent.width
-                        text: pane.eventTime(eventRow.modelData) + "  ·  "
-                            + (eventRow.modelData.calendar_name || "Calendar")
+                        text: pane.eventTime(eventRow.modelData) + "  ·  " + (eventRow.modelData.calendar_name || "Calendar")
                         color: Ui.Theme.mutedText
                         elide: Text.ElideRight
                         font.pixelSize: Ui.Theme.fontSizeSmall

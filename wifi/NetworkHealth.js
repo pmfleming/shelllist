@@ -13,9 +13,13 @@ var SUBJECT_LABEL = {
 // Reason categories that describe a user's own action or an ordinary step.
 var QUIET_CATEGORIES = ["none", "user-requested", "lifecycle"];
 
-function health(event) { return (event && event.health) || {}; }
+function health(event) {
+    return (event && event.health) || {};
+}
 
-function reason(event) { return health(event).reason || {}; }
+function reason(event) {
+    return health(event).reason || {};
+}
 
 function isQuiet(event) {
     const detail = health(event);
@@ -38,17 +42,13 @@ function isFailure(event) {
         return false;
     if (isQuiet(event))
         return false;
-    return detail.state_name === "failed" || detail.state_name === "deactivated"
-        || detail.state_name === "disconnected" || detail.state_name === "unavailable"
-        || detail.state_name === "unmanaged";
+    return detail.state_name === "failed" || detail.state_name === "deactivated" || detail.state_name === "disconnected" || detail.state_name === "unavailable" || detail.state_name === "unmanaged";
 }
 
 function notificationKey(event) {
     const detail = health(event);
-    const connection = detail.device_path || detail.active_connection_path
-        || detail.profile_path || detail.uuid || identity(event);
-    return connection + "|" + (detail.state_name || "unknown")
-        + "|" + (reason(event).name || "unknown");
+    const connection = detail.device_path || detail.active_connection_path || detail.profile_path || detail.uuid || identity(event);
+    return connection + "|" + (detail.state_name || "unknown") + "|" + (reason(event).name || "unknown");
 }
 
 function isDuplicateNotification(event, lastKey, lastAtMs, nowMs, windowMs) {
@@ -97,14 +97,5 @@ function message(event) {
 // carry one.
 function logLine(event) {
     const detail = health(event);
-    return "subject=" + (detail.subject || "unknown")
-        + " state=" + (detail.state_name || "unknown")
-        + " reason=" + (reason(event).name || "unknown")
-        + " category=" + (reason(event).category || "unknown")
-        + " unexpected=" + !!detail.unexpected
-        + " kind=" + (detail.transition_kind || "legacy")
-        + " notify=" + (detail.notification_recommended === true)
-        + " severity=" + (detail.severity || "unknown")
-        + " id=" + (detail.id || "")
-        + " iface=" + (detail.device_iface || "");
+    return "subject=" + (detail.subject || "unknown") + " state=" + (detail.state_name || "unknown") + " reason=" + (reason(event).name || "unknown") + " category=" + (reason(event).category || "unknown") + " unexpected=" + !!detail.unexpected + " kind=" + (detail.transition_kind || "legacy") + " notify=" + (detail.notification_recommended === true) + " severity=" + (detail.severity || "unknown") + " id=" + (detail.id || "") + " iface=" + (detail.device_iface || "");
 }

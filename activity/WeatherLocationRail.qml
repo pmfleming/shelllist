@@ -15,10 +15,10 @@ Rectangle {
             return location.id === locationRail.selectedId;
         });
         const card = index >= 0 ? locationRepeater.itemAt(index) : null;
-        if (!card) return;
+        if (!card)
+            return;
         const target = card.x + card.width / 2 - locationFlick.width / 2;
-        locationFlick.contentX = Math.max(0,
-            Math.min(target, Math.max(0, locationFlick.contentWidth - locationFlick.width)));
+        locationFlick.contentX = Math.max(0, Math.min(target, Math.max(0, locationFlick.contentWidth - locationFlick.width)));
     }
     onSelectedIdChanged: Qt.callLater(revealSelectedLocation)
     onLocationsChanged: Qt.callLater(revealSelectedLocation)
@@ -59,12 +59,13 @@ Rectangle {
                 model: locationRail.locations
 
                 delegate: WeatherLocationCard {
-                    width: Math.min(220, Math.max(174,
-                        (locationRail.width - Ui.Theme.spacingSm * 4) / 3))
+                    width: Math.min(220, Math.max(174, (locationRail.width - Ui.Theme.spacingSm * 4) / 3))
                     height: locationRow.height
                     selectedId: locationRail.selectedId
                     now: locationRail.now
-                    onSelected: function (locationId) { locationRail.selected(locationId); }
+                    onSelected: function (locationId) {
+                        locationRail.selected(locationId);
+                    }
                 }
             }
         }

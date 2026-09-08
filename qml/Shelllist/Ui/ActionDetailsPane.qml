@@ -32,7 +32,9 @@ DetailsPane {
         width: parent.width
         uiScale: pane.uiScale
         sectionSpacing: pane.sectionSpacing
-        onActionTriggered: function (actionId) { pane.actionTriggered(actionId); }
+        onActionTriggered: function (actionId) {
+            pane.actionTriggered(actionId);
+        }
     }
 
     Item {

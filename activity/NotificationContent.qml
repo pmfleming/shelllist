@@ -6,8 +6,7 @@ import Shelllist.Ui as Ui
 Ui.ChooserSurface {
     id: content
     required property NotificationController controller
-    readonly property real uiScale: Ui.Theme.densityScale(height,
-        controller.contentVerticalMargin)
+    readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
 
     Column {
         anchors.fill: parent
@@ -24,8 +23,7 @@ Ui.ChooserSurface {
             iconActionEnabled: !content.controller.screenshotInFlight
             iconAccessibleName: "Copy Notifications panel screenshot"
             filterText: content.controller.filterText
-            placeholder: content.controller.tab === "history"
-                ? "Search loaded history…" : "Search notifications…"
+            placeholder: content.controller.tab === "history" ? "Search loaded history…" : "Search notifications…"
             powered: content.controller.notificationState.notifications.dnd
             powerEnabled: content.controller.notificationState.notifications.available
             powerAccessibleName: "Do not disturb"
@@ -37,7 +35,9 @@ Ui.ChooserSurface {
             refreshing: content.controller.notificationState.historyLoading
             refreshEnabled: !refreshing && !content.controller.screenshotInFlight
             onIconClicked: content.controller.screenshotRequested()
-            onFilterEdited: function (text) { content.controller.filterText = text; }
+            onFilterEdited: function (text) {
+                content.controller.filterText = text;
+            }
             onPowerRequested: content.controller.notificationState.setDndEnabled(!powered)
             onRefreshRequested: content.controller.refresh()
             onKeyPressed: function (event) {
@@ -64,10 +64,8 @@ Ui.ChooserSurface {
             }
             Ui.ThemeText {
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - backButton.width - closeButton.width
-                    - parent.spacing * (backButton.visible ? 2 : 1)
-                text: content.controller.screenshotStatus || "Notifications · DND "
-                    + (content.controller.notificationState.notifications.dnd ? "on" : "off")
+                width: parent.width - backButton.width - closeButton.width - parent.spacing * (backButton.visible ? 2 : 1)
+                text: content.controller.screenshotStatus || "Notifications · DND " + (content.controller.notificationState.notifications.dnd ? "on" : "off")
                 elide: Text.ElideRight
                 color: Ui.Theme.mutedText
                 font.pixelSize: Ui.Theme.fontSizeSmall
@@ -92,7 +90,9 @@ Ui.ChooserSurface {
 
     Connections {
         target: content.controller
-        function onFocusSearchRequested(): void { header.focusSearch(); }
+        function onFocusSearchRequested(): void {
+            header.focusSearch();
+        }
     }
     // No printable single-key shortcuts: replies and search own their typing.
     Shortcut {

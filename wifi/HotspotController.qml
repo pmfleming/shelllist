@@ -18,10 +18,8 @@ Item {
 
     readonly property bool active: !!(status && status.active)
     readonly property bool supported: !!(capabilities && capabilities.supported)
-    readonly property string unsupportedReason: capabilities && capabilities.unsupported_reason
-        ? capabilities.unsupported_reason : ""
-    readonly property string unavailableMessage: capabilities && !capabilities.supported
-        ? (capabilities.message || "A hotspot cannot be started") : ""
+    readonly property string unsupportedReason: capabilities && capabilities.unsupported_reason ? capabilities.unsupported_reason : ""
+    readonly property string unavailableMessage: capabilities && !capabilities.supported ? (capabilities.message || "A hotspot cannot be started") : ""
     readonly property bool starting: requestId.length > 0 || backend.isPending("hotspot-start")
     readonly property bool busy: starting || backend.isPending("hotspot-stop")
 
@@ -60,7 +58,9 @@ Item {
         qrPayload = "";
     }
 
-    function applyCapabilities(value) { capabilities = value || null; }
+    function applyCapabilities(value) {
+        capabilities = value || null;
+    }
     function applyStatus(value) {
         status = value || null;
         if (!active)

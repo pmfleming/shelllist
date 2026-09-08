@@ -12,73 +12,118 @@ Core.Provider {
     icon: "󰖩"
     priority: 100
     prefixes: ["wifi:"]
-    capabilities: ({ query: false, actions: true, preview: true, subscriptions: true })
+    capabilities: ({
+            query: false,
+            actions: true,
+            preview: true,
+            subscriptions: true
+        })
 
     function connectingTo(ap) {
         return controller.connection.isConnecting(ap);
     }
     function primaryActions(ap, connecting) {
-        return [
-            Core.Model.keepOpenAction("connect", "Connect", {
-                icon: "󰖩", shortcut: "C", role: "default",
+        return [Core.Model.keepOpenAction("connect", "Connect", {
+                icon: "󰖩",
+                shortcut: "C",
+                role: "default",
                 enabled: controller.actions.canConnect(ap),
                 visible: !controller.isActive(ap) && !connecting,
-                presentation: { group: "primary", tone: "active", width: 152 }
-            }),
-            Core.Model.keepOpenAction("cancel-connect", "Cancel", {
-                icon: "󰜺", shortcut: "C", role: "destructive",
+                presentation: {
+                    group: "primary",
+                    tone: "active",
+                    width: 152
+                }
+            }), Core.Model.keepOpenAction("cancel-connect", "Cancel", {
+                icon: "󰜺",
+                shortcut: "C",
+                role: "destructive",
                 enabled: controller.connection.requestId.length > 0,
                 visible: connecting,
-                presentation: { group: "primary", tone: "danger", width: 152 }
-            }),
-            Core.Model.keepOpenAction("disconnect", "Disconnect", {
-                icon: "󰤭", shortcut: "D", role: "destructive",
+                presentation: {
+                    group: "primary",
+                    tone: "danger",
+                    width: 152
+                }
+            }), Core.Model.keepOpenAction("disconnect", "Disconnect", {
+                icon: "󰤭",
+                shortcut: "D",
+                role: "destructive",
                 enabled: controller.actions.canDisconnect(ap),
                 visible: controller.isActive(ap) && !connecting,
-                presentation: { group: "primary", tone: "danger", width: 152 }
-            })
-        ];
+                presentation: {
+                    group: "primary",
+                    tone: "danger",
+                    width: 152
+                }
+            })];
     }
     function toolbarActions(ap) {
-        return [
-            Core.Model.keepOpenAction("forget", "Forget", {
-                icon: "󰆴", shortcut: "F", role: "destructive",
+        return [Core.Model.keepOpenAction("forget", "Forget", {
+                icon: "󰆴",
+                shortcut: "F",
+                role: "destructive",
                 enabled: controller.actions.canForget(ap),
-                confirmation: { required: true, title: "Forget network" },
-                presentation: { group: "toolbar", tone: "normal", width: 92 }
-            }),
-            Core.Model.keepOpenAction("portal", "Sign in", {
-                icon: "󰏌", shortcut: "I",
-                presentation: { group: "toolbar", tone: "normal", width: 100 }
-            }),
-            Core.Model.keepOpenAction("share", "Share", {
-                icon: "󰒖", shortcut: "S",
+                confirmation: {
+                    required: true,
+                    title: "Forget network"
+                },
+                presentation: {
+                    group: "toolbar",
+                    tone: "normal",
+                    width: 92
+                }
+            }), Core.Model.keepOpenAction("portal", "Sign in", {
+                icon: "󰏌",
+                shortcut: "I",
+                presentation: {
+                    group: "toolbar",
+                    tone: "normal",
+                    width: 100
+                }
+            }), Core.Model.keepOpenAction("share", "Share", {
+                icon: "󰒖",
+                shortcut: "S",
                 enabled: controller.actions.canShare(ap),
-                presentation: { group: "toolbar", tone: "normal", width: 92 }
-            })
-        ];
+                presentation: {
+                    group: "toolbar",
+                    tone: "normal",
+                    width: 92
+                }
+            })];
     }
     function settingsActions(ap) {
-        return [
-            Core.Model.keepOpenAction("autoconnect", "Auto-connect", {
-                shortcut: "A", kind: "toggle",
+        return [Core.Model.keepOpenAction("autoconnect", "Auto-connect", {
+                shortcut: "A",
+                kind: "toggle",
                 enabled: controller.actions.canProfileAction(ap, "can_toggle_autoconnect"),
-                state: { checked: controller.actions.autoconnectEnabled(ap) },
-                presentation: { group: "settings" }
-            }),
-            Core.Model.keepOpenAction("randomized-mac", "Randomize MAC address", {
-                shortcut: "R", kind: "toggle",
+                state: {
+                    checked: controller.actions.autoconnectEnabled(ap)
+                },
+                presentation: {
+                    group: "settings"
+                }
+            }), Core.Model.keepOpenAction("randomized-mac", "Randomize MAC address", {
+                shortcut: "R",
+                kind: "toggle",
                 enabled: controller.actions.canProfileAction(ap, "can_set_mac_randomization"),
-                state: { checked: controller.actions.randomizedMacEnabled(ap) },
-                presentation: { group: "settings" }
-            }),
-            Core.Model.keepOpenAction("send-hostname", "Send device name", {
-                shortcut: "N", kind: "toggle",
+                state: {
+                    checked: controller.actions.randomizedMacEnabled(ap)
+                },
+                presentation: {
+                    group: "settings"
+                }
+            }), Core.Model.keepOpenAction("send-hostname", "Send device name", {
+                shortcut: "N",
+                kind: "toggle",
                 enabled: controller.actions.canProfileAction(ap, "can_set_send_hostname"),
-                state: { checked: controller.actions.sendHostnameEnabled(ap) },
-                presentation: { group: "settings" }
-            })
-        ];
+                state: {
+                    checked: controller.actions.sendHostnameEnabled(ap)
+                },
+                presentation: {
+                    group: "settings"
+                }
+            })];
     }
     function actionsForNetwork(ap) {
         return ap ? primaryActions(ap, connectingTo(ap)).concat(toolbarActions(ap), settingsActions(ap)) : [];
@@ -106,14 +151,22 @@ Core.Provider {
             primaryActionId: primaryActionId(network),
             // Actions depend on live controller state and are supplied by actionsFor().
             actions: [],
-            preview: { kind: "wifi-network", available: true },
-            state: { active: !!network.active, busy: controller.connection.isConnecting(network) },
+            preview: {
+                kind: "wifi-network",
+                available: true
+            },
+            state: {
+                active: !!network.active,
+                busy: controller.connection.isConnecting(network)
+            },
             payload: network
         });
     }
 
     function resultsForNetworks(networks) {
-        return (networks || []).map(function (network) { return wifiProvider.resultForNetwork(network); });
+        return (networks || []).map(function (network) {
+            return wifiProvider.resultForNetwork(network);
+        });
     }
 
     function actionsFor(result) {
@@ -125,7 +178,8 @@ Core.Provider {
     }
 
     function execute(request) {
-        return executePayload(request,
-            function (id, payload) { return controller.actions.execute(id, payload); });
+        return executePayload(request, function (id, payload) {
+            return controller.actions.execute(id, payload);
+        });
     }
 }

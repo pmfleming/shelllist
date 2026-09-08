@@ -10,13 +10,17 @@ Column {
     required property real uiScale
     required property date now
 
-    function focusTodoInput(): void { todos.focusInput(); }
+    function focusTodoInput(): void {
+        todos.focusInput();
+    }
 
     spacing: Ui.Theme.spacingMd
 
     Connections {
         target: pane.controller
-        function onFocusTodoInputRequested() { pane.focusTodoInput(); }
+        function onFocusTodoInputRequested() {
+            pane.focusTodoInput();
+        }
     }
 
     Rectangle {
@@ -33,14 +37,10 @@ Column {
             ActivityHeaderButton {
                 id: previousButton
                 label: "‹"
-                onTriggered: pane.controller.selectDate(new Date(
-                    pane.controller.selectedDate.getFullYear(),
-                    pane.controller.selectedDate.getMonth(),
-                    pane.controller.selectedDate.getDate() - 1))
+                onTriggered: pane.controller.selectDate(new Date(pane.controller.selectedDate.getFullYear(), pane.controller.selectedDate.getMonth(), pane.controller.selectedDate.getDate() - 1))
             }
             Ui.ThemeText {
-                width: parent.width - previousButton.width - nextWidth.width
-                    - todayButton.width - parent.spacing * 3
+                width: parent.width - previousButton.width - nextWidth.width - todayButton.width - parent.spacing * 3
                 anchors.verticalCenter: parent.verticalCenter
                 text: Qt.formatDate(pane.controller.selectedDate, "dddd, d MMMM yyyy")
                 horizontalAlignment: Text.AlignHCenter
@@ -51,10 +51,7 @@ Column {
             ActivityHeaderButton {
                 id: nextWidth
                 label: "›"
-                onTriggered: pane.controller.selectDate(new Date(
-                    pane.controller.selectedDate.getFullYear(),
-                    pane.controller.selectedDate.getMonth(),
-                    pane.controller.selectedDate.getDate() + 1))
+                onTriggered: pane.controller.selectDate(new Date(pane.controller.selectedDate.getFullYear(), pane.controller.selectedDate.getMonth(), pane.controller.selectedDate.getDate() + 1))
             }
             ActivityHeaderButton {
                 id: todayButton

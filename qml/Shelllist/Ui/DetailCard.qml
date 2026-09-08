@@ -9,9 +9,7 @@ Rectangle {
     property real contentPadding: Math.max(Theme.spacingMd, Math.min(Theme.spacingLg, height * 0.06))
     readonly property real verticalDensity: Math.max(Theme.densityMinimum, Math.min(1, height / 260))
     property real verticalContentPadding: Theme.verticalSpacing(Theme.spacingMd, verticalDensity)
-    property real headingSpacing: title.length > 0
-        ? Theme.verticalSpacing(Theme.spacingMd, verticalDensity)
-        : 0
+    property real headingSpacing: title.length > 0 ? Theme.verticalSpacing(Theme.spacingMd, verticalDensity) : 0
     default property alias content: contentSlot.data
 
     width: parent ? parent.width : 0

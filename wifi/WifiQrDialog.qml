@@ -48,7 +48,11 @@ ModalFrame {
         spacing: Theme.spacingXs
         visible: dialog.qr.password.length > 0
 
-        FieldLabel { width: parent.width; height: 16; text: qsTr("Wi-Fi password") }
+        FieldLabel {
+            width: parent.width
+            height: 16
+            text: qsTr("Wi-Fi password")
+        }
         TextField {
             width: parent.width
             height: Theme.controlHeight
@@ -61,17 +65,30 @@ ModalFrame {
         width: parent.width
         height: Theme.controlHeight
         fillActions: true
-        actions: [{
-            id: "copy", label: "Copy payload"
-        }, {
-            id: "scan", label: "Scan another code"
-        }, {
-            id: "close", label: "Close", presentation: { tone: "accent" }
-        }]
+        actions: [
+            {
+                id: "copy",
+                label: "Copy payload"
+            },
+            {
+                id: "scan",
+                label: "Scan another code"
+            },
+            {
+                id: "close",
+                label: "Close",
+                presentation: {
+                    tone: "accent"
+                }
+            }
+        ]
         onTriggered: function (actionId) {
-            if (actionId === "copy") dialog.qr.copyPayload();
-            else if (actionId === "scan") dialog.qr.launchScanner(false);
-            else dialog.closed();
+            if (actionId === "copy")
+                dialog.qr.copyPayload();
+            else if (actionId === "scan")
+                dialog.qr.launchScanner(false);
+            else
+                dialog.closed();
         }
     }
 }

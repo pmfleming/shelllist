@@ -14,10 +14,14 @@ Rectangle {
     color: Ui.Theme.surface
     border.color: Ui.Theme.border
 
-    function focusList(): void { list.forceActiveFocus(); }
+    function focusList(): void {
+        list.forceActiveFocus();
+    }
 
     function revealGroup(key: string): void {
-        const index = controller.visibleGroups.findIndex(function (group) { return group.key === key; });
+        const index = controller.visibleGroups.findIndex(function (group) {
+            return group.key === key;
+        });
         if (index >= 0) {
             list.currentIndex = index;
             list.positionViewAtIndex(index, ListView.Contain);
@@ -60,8 +64,7 @@ Rectangle {
             Ui.ThemeText {
                 height: 34
                 verticalAlignment: Text.AlignVCenter
-                text: pane.controller.tab === "history"
-                    ? pane.notificationState.history.length + " loaded" : ""
+                text: pane.controller.tab === "history" ? pane.notificationState.history.length + " loaded" : ""
                 color: Ui.Theme.mutedText
                 font.pixelSize: Ui.Theme.fontSizeCaption
             }
@@ -69,9 +72,7 @@ Rectangle {
         Ui.ThemeText {
             visible: pane.notificationState.draftCount > 0
             width: parent.width
-            text: pane.notificationState.draftCount
-                + (pane.notificationState.draftCount === 1 ? " unsent draft" : " unsent drafts")
-                + " · retained when closed"
+            text: pane.notificationState.draftCount + (pane.notificationState.draftCount === 1 ? " unsent draft" : " unsent drafts") + " · retained when closed"
             color: Ui.Theme.mutedText
             wrapMode: Text.Wrap
             font.pixelSize: Ui.Theme.fontSizeCaption
@@ -79,8 +80,7 @@ Rectangle {
         Ui.ThemeText {
             visible: text.length > 0
             width: parent.width
-            text: pane.notificationState.lastError || (pane.controller.tab === "history"
-                ? pane.notificationState.historyError : "")
+            text: pane.notificationState.lastError || (pane.controller.tab === "history" ? pane.notificationState.historyError : "")
             color: Ui.Theme.danger
             wrapMode: Text.Wrap
             font.pixelSize: Ui.Theme.fontSizeSmall
@@ -115,8 +115,7 @@ Rectangle {
             width: parent.width - 20
             visible: pane.controller.visibleGroups.length === 0
             text: {
-                if (pane.controller.tab === "history" && (pane.notificationState.historyLoading
-                        || (!pane.notificationState.historyLoaded && !pane.notificationState.historyError)))
+                if (pane.controller.tab === "history" && (pane.notificationState.historyLoading || (!pane.notificationState.historyLoaded && !pane.notificationState.historyError)))
                     return "Loading history…";
                 if (pane.controller.tab === "history" && pane.notificationState.historyError)
                     return "Could not load history. Use Refresh to retry.";
@@ -124,9 +123,7 @@ Rectangle {
                     return "No matching notifications";
                 if (pane.controller.tab === "history")
                     return "No notification history";
-                return pane.notificationState.notifications.available
-                    ? "No active notifications · History is still available"
-                    : "Notifications unavailable";
+                return pane.notificationState.notifications.available ? "No active notifications · History is still available" : "Notifications unavailable";
             }
             color: Ui.Theme.mutedText
             horizontalAlignment: Text.AlignHCenter
@@ -153,7 +150,9 @@ Rectangle {
     Connections {
         target: pane.controller
         function onRevealGroupRequested(key: string): void {
-            Qt.callLater(function () { pane.revealGroup(key); });
+            Qt.callLater(function () {
+                pane.revealGroup(key);
+            });
         }
         function onGroupsAboutToChange(): void {
             const index = list.indexAt(1, list.contentY + 1);
@@ -164,15 +163,18 @@ Rectangle {
         function onGroupsUpdated(): void {
             const key = pane.scrollAnchorKey;
             const offset = pane.scrollAnchorOffset;
-            if (!key) return;
+            if (!key)
+                return;
             Qt.callLater(function () {
                 const index = pane.controller.visibleGroups.findIndex(function (group) {
                     return group.key === key;
                 });
-                if (index < 0) return;
+                if (index < 0)
+                    return;
                 list.positionViewAtIndex(index, ListView.Beginning);
                 const item = list.itemAtIndex(index);
-                if (item) list.contentY = item.y + offset;
+                if (item)
+                    list.contentY = item.y + offset;
                 list.returnToBounds();
             });
         }

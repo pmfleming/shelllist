@@ -12,12 +12,10 @@ ChooserSurface {
     property var helpEntries: []
     property bool navigationEnabled: !chooserController.navigationHelpOpen
     property bool refreshEnabled: navigationEnabled && !chooserController.actionInFlight
-    property bool detailsTabEnabled: navigationEnabled
-        && chooserController.detailsOpen && chooserController.hasSelection
+    property bool detailsTabEnabled: navigationEnabled && chooserController.detailsOpen && chooserController.hasSelection
     property bool refreshAutoRepeat: true
     property bool helpEnabled: chooserController.uiActive
-    readonly property real uiScale: Theme.densityScale(height,
-        chooserController.contentVerticalMargin)
+    readonly property real uiScale: Theme.densityScale(height, chooserController.contentVerticalMargin)
     readonly property var listItem: chooser.listItem
     readonly property var detailsItem: chooser.detailsItem
 

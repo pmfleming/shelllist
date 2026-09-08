@@ -26,9 +26,7 @@ Rectangle {
             return "file://" + candidate;
         if (candidate.startsWith("file://"))
             return candidate;
-        return candidate.length > 0
-            ? Quickshell.iconPath(candidate, "dialog-information")
-            : Quickshell.iconPath("dialog-information", "application-x-executable");
+        return candidate.length > 0 ? Quickshell.iconPath(candidate, "dialog-information") : Quickshell.iconPath("dialog-information", "application-x-executable");
     }
 
     width: 390
@@ -36,8 +34,7 @@ Rectangle {
     radius: Ui.Theme.panelRadius
     color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.98)
     border.width: 1
-    border.color: urgency >= 2 ? Ui.Theme.danger
-        : (urgency === 1 ? Ui.Theme.withAlpha(Ui.Theme.accent, 0.58) : Ui.Theme.border)
+    border.color: urgency >= 2 ? Ui.Theme.danger : (urgency === 1 ? Ui.Theme.withAlpha(Ui.Theme.accent, 0.58) : Ui.Theme.border)
 
     Ui.Elevation {
         anchors.fill: parent
@@ -83,8 +80,7 @@ Rectangle {
 
             Column {
                 id: headingColumn
-                width: parent.width - 40 - breakoutButton.width - snoozeButton.width
-                    - dismissButton.width - parent.spacing * (card.breakoutVisible ? 4 : 3)
+                width: parent.width - 40 - breakoutButton.width - snoozeButton.width - dismissButton.width - parent.spacing * (card.breakoutVisible ? 4 : 3)
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
                 Ui.ThemeText {
@@ -159,13 +155,13 @@ Rectangle {
             controlHeight: 36
             buttonWidth: 68
             readonly property var replyState: card.controller.notificationState
-            readonly property var status: replyState
-                ? replyState.replies[notificationId] || ({}) : ({})
+            readonly property var status: replyState ? replyState.replies[notificationId] || ({}) : ({})
             draftText: replyState ? String(replyState.drafts[notificationId] || "") : ""
             sending: status.pending === true
             errorText: status.error || ""
             onDraftEdited: function (text) {
-                if (replyState) replyState.setDraft(notificationId, text);
+                if (replyState)
+                    replyState.setDraft(notificationId, text);
             }
             submitReply: function (id, text) {
                 return card.controller.replyNotification(id, text);

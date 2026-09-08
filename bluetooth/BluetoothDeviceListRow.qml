@@ -40,8 +40,7 @@ Ui.ResultRow {
         Layout.preferredWidth: row.scaled(28)
         Layout.fillHeight: true
         glyph: row.resultData.icon || "󰂯"
-        color: row.device.blocked ? Ui.Theme.danger
-            : (row.device.connected ? Ui.Theme.active : Ui.Theme.mutedText)
+        color: row.device.blocked ? Ui.Theme.danger : (row.device.connected ? Ui.Theme.active : Ui.Theme.mutedText)
         font.pixelSize: Math.max(Ui.Theme.iconSize, row.scaled(Ui.Theme.fontSizeTitle))
     }
 

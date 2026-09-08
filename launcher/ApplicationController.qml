@@ -6,7 +6,10 @@ import "ApplicationLifecycle.js" as Lifecycle
 Ui.ProviderChooserController {
     id: controller
 
-    provider: ApplicationProvider { id: applicationProvider; controller: controller }
+    provider: ApplicationProvider {
+        id: applicationProvider
+        controller: controller
+    }
     // Keep the complete catalog local; Shelllist's Rust matcher ranks each edit.
     filterRefreshDelay: 0
     scheduledRefreshDelay: 120
@@ -14,7 +17,9 @@ Ui.ProviderChooserController {
     sharedScreenshotEnabled: true
     sharedScreenshotBlocked: operationBlocked
     sharedScreenshotStartMessage: "Capturing Applications window…"
-    onSharedScreenshotStatusChanged: function (message) { status = message; }
+    onSharedScreenshotStatusChanged: function (message) {
+        status = message;
+    }
 
     property string status: "Loading applications…"
     readonly property int applicationSearchLimit: 1000
@@ -41,7 +46,9 @@ Ui.ProviderChooserController {
     readonly property bool historyInFlight: activeHistoryRequestId.length > 0
     readonly property bool settingsInFlight: activeSettingsRequestId.length > 0
     readonly property var selectedApplication: selectedResult ? selectedResult.payload : null
-    readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) { return key.indexOf("query-") === 0; })
+    readonly property bool refreshInFlight: Object.keys(backend.pending).some(function (key) {
+        return key.indexOf("query-") === 0;
+    })
     readonly property bool screenshotInFlight: sharedScreenshotInFlight
     readonly property bool operationBlocked: actionInFlight || screenshotInFlight || settingsInFlight
     readonly property bool resourcesVisible: uiActive && detailsOpen && detailsTab === "resources"
@@ -60,7 +67,9 @@ Ui.ProviderChooserController {
         clearActiveAction();
         status = "Application launch status timed out; refreshed current state";
         forceRefresh = false;
-        beginProviderQuery({ workspaceId: currentWorkspaceId }, applicationSearchLimit);
+        beginProviderQuery({
+            workspaceId: currentWorkspaceId
+        }, applicationSearchLimit);
     }
     function clearResourceHistory(): void {
         resourceHistory = [];
@@ -95,7 +104,9 @@ Ui.ProviderChooserController {
     function refresh(explicitRefresh: var): void {
         forceRefresh = explicitRefresh === true;
         status = forceRefresh ? "Refreshing applications…" : "Loading applications…";
-        beginProviderQuery({ workspaceId: currentWorkspaceId }, applicationSearchLimit);
+        beginProviderQuery({
+            workspaceId: currentWorkspaceId
+        }, applicationSearchLimit);
     }
     function selectCategory(value: string): void {
         if (categoryFilter === value)
@@ -107,8 +118,7 @@ Ui.ProviderChooserController {
     function availableDetailsTabs(): var {
         if (!selectedApplication || selectedApplication.kind === "desktop-shortcut")
             return ["application"];
-        return selectedApplication.kind === "desktop-application"
-            ? ["application", "resources", "settings"] : ["application", "resources"];
+        return selectedApplication.kind === "desktop-application" ? ["application", "resources", "settings"] : ["application", "resources"];
     }
     function selectDetailsTab(value: string): void {
         if (availableDetailsTabs().includes(value))
@@ -143,7 +153,9 @@ Ui.ProviderChooserController {
         if (!resourcesVisible || operationBlocked || refreshInFlight)
             return;
         forceRefresh = false;
-        beginProviderQuery({ workspaceId: currentWorkspaceId }, applicationSearchLimit);
+        beginProviderQuery({
+            workspaceId: currentWorkspaceId
+        }, applicationSearchLimit);
     }
     function requestApplications(id: string, text: string, generation: int, limit: int): void {
         const refreshCatalog = forceRefresh;
@@ -151,8 +163,11 @@ Ui.ProviderChooserController {
         backend.query(id, "", categoryFilter, generation, limit, refreshCatalog);
     }
     function resourceHistorySinceMs(): double {
-        const durations = { "30m": 30 * 60 * 1000, "2h": 2 * 60 * 60 * 1000,
-            "24h": 24 * 60 * 60 * 1000 };
+        const durations = {
+            "30m": 30 * 60 * 1000,
+            "2h": 2 * 60 * 60 * 1000,
+            "24h": 24 * 60 * 60 * 1000
+        };
         return Date.now() - (durations[historyRange] || durations["30m"]);
     }
     function selectHistoryRange(value: string): void {
@@ -166,9 +181,7 @@ Ui.ProviderChooserController {
     }
     function requestResourceHistory(forceRefresh: var): void {
         const targetId = resourcesVisible && selectedResult ? selectedResult.id : "";
-        if (!targetId || Lifecycle.historyRequestCovered(
-                targetId, historyTargetId, historyInFlight, forceRefresh,
-                historyRange, historyRequestRange))
+        if (!targetId || Lifecycle.historyRequestCovered(targetId, historyTargetId, historyInFlight, forceRefresh, historyRange, historyRequestRange))
             return;
         if (targetId !== historyTargetId || historyRange !== historyRequestRange) {
             const previousRequestId = activeHistoryRequestId;
@@ -180,8 +193,7 @@ Ui.ProviderChooserController {
         historyRequestRange = historyRange;
         historyWindowStartMs = resourceHistorySinceMs();
         historyWindowEndMs = Date.now();
-        resourceHistory = Lifecycle.mergeResourceHistory(resourceHistory, [],
-            historyWindowStartMs, historyWindowEndMs);
+        resourceHistory = Lifecycle.mergeResourceHistory(resourceHistory, [], historyWindowStartMs, historyWindowEndMs);
         pendingResourceHistory = [];
         pendingHistoryCursor = historyCursor;
         activeHistoryRequestId = nextHistoryRequestId();
@@ -198,20 +210,20 @@ Ui.ProviderChooserController {
         pendingHistoryCursor = history.next_cursor || pendingHistoryCursor;
         if (history.has_more) {
             activeHistoryRequestId = nextHistoryRequestId();
-            backend.history(activeHistoryRequestId, historyTargetId,
-                historyWindowStartMs, pendingHistoryCursor, 1000);
+            backend.history(activeHistoryRequestId, historyTargetId, historyWindowStartMs, pendingHistoryCursor, 1000);
             return;
         }
         activeHistoryRequestId = "";
         historyWindowStartMs = resourceHistorySinceMs();
         historyWindowEndMs = Date.now();
-        resourceHistory = Lifecycle.mergeResourceHistory(resourceHistory, pendingResourceHistory,
-            historyWindowStartMs, historyWindowEndMs);
+        resourceHistory = Lifecycle.mergeResourceHistory(resourceHistory, pendingResourceHistory, historyWindowStartMs, historyWindowEndMs);
         historyCursor = pendingHistoryCursor;
         pendingResourceHistory = [];
         pendingHistoryCursor = "";
     }
-    function cancelQuery(requestId: string): void { backend.cancelRequest(requestId); }
+    function cancelQuery(requestId: string): void {
+        backend.cancelRequest(requestId);
+    }
     function applyRevision(id: string, revision: var): void {
         if (id !== revisionRequestId)
             return;
@@ -225,8 +237,7 @@ Ui.ProviderChooserController {
     function applyApplications(id: string, page: var): void {
         catalogRevision = Number(page.revision);
         applyProviderQuery(id, applicationProvider.resultsForApplications(page.applications || []));
-        if (detailsOpen && detailsTab === "resources"
-                && selectedResult && selectedResult.id !== historyTargetId)
+        if (detailsOpen && detailsTab === "resources" && selectedResult && selectedResult.id !== historyTargetId)
             requestResourceHistory();
         status = Presentation.pageStatus(page);
     }
@@ -245,25 +256,21 @@ Ui.ProviderChooserController {
     }
     function applyActiveOperation(transition: var, operation: var): void {
         activeOperationId = transition.operationId;
-        status = operation.message || (transition.accepted
-            ? "Application action accepted…" : activeRequest.action.label + "…");
+        status = operation.message || (transition.accepted ? "Application action accepted…" : activeRequest.action.label + "…");
     }
     function applyCompletedOperation(transition: var, operation: var): void {
         const completedRequest = activeRequest;
         const action = completedRequest.actionId;
-        const disposition = Lifecycle.completionDisposition(
-            transition.status, Presentation.isCloseAction(action));
+        const disposition = Lifecycle.completionDisposition(transition.status, Presentation.isCloseAction(action));
         if (disposition.removeInstances)
             removeClosedInstances(completedRequest, action);
         clearActiveAction();
-        status = operation.message || (disposition.completed
-            ? "Application action completed" : "Application action " + transition.status);
+        status = operation.message || (disposition.completed ? "Application action completed" : "Application action " + transition.status);
         if (disposition.closeSurface)
             closeWindowRequested();
     }
     function applyOperation(id: string, operation: var): void {
-        const transition = Lifecycle.operationTransition(activeRequest, activeTargetId,
-            activeOperationId, id, operation);
+        const transition = Lifecycle.operationTransition(activeRequest, activeTargetId, activeOperationId, id, operation);
         if (!transition)
             return;
         if (transition.stage === "active")
@@ -277,8 +284,7 @@ Ui.ProviderChooserController {
         const next = filteredResults.map(function (result) {
             if (result.id !== targetId)
                 return result;
-            return applicationProvider.resultForApplication(
-                Presentation.withoutClosedInstances(result.payload, action, windowId));
+            return applicationProvider.resultForApplication(Presentation.withoutClosedInstances(result.payload, action, windowId));
         });
         replaceProviderResults(next, false);
     }
@@ -317,13 +323,14 @@ Ui.ProviderChooserController {
         clearProviderResults();
         status = message;
     }
-    function canActOnSelection(): bool { return !!selectedResult && !operationBlocked; }
+    function canActOnSelection(): bool {
+        return !!selectedResult && !operationBlocked;
+    }
     function primarySelected(): bool {
         return canActOnSelection() && executeSelected("activate");
     }
     function launchSelected(): bool {
-        return canActOnSelection() && selectedApplication.kind === "desktop-application"
-            && executeSelected("launch");
+        return canActOnSelection() && selectedApplication.kind === "desktop-application" && executeSelected("launch");
     }
     function triggerDetailAction(actionId: string): bool {
         return canActOnSelection() && executeSelected(actionId);
@@ -335,7 +342,8 @@ Ui.ProviderChooserController {
         else
             clearResourceHistory();
     }
-    onDetailsTabChanged: if (detailsTab === "resources") requestResourceHistory()
+    onDetailsTabChanged: if (detailsTab === "resources")
+        requestResourceHistory()
     onSelectedResultChanged: {
         if (!availableDetailsTabs().includes(detailsTab))
             detailsTab = "application";
@@ -364,5 +372,8 @@ Ui.ProviderChooserController {
         onTriggered: controller.requestResourceHistory(true)
     }
 
-    ApplicationBackend { id: backend; controller: controller }
+    ApplicationBackend {
+        id: backend
+        controller: controller
+    }
 }

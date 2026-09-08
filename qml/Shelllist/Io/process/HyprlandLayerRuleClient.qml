@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Io
+
 Item {
     id: client
     property string pendingRule: ""
@@ -19,6 +20,8 @@ Item {
     }
     Process {
         id: process
-        onExited: function (exitCode) { client.applyPending(); } // qmllint disable signal-handler-parameters
+        onExited: function (exitCode) {
+            client.applyPending();
+        } // qmllint disable signal-handler-parameters
     }
 }

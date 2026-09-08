@@ -29,14 +29,7 @@ Item {
     }
 
     function launch(portalContext) {
-        console.info("shelllist portal trigger=" + portalContext.trigger
-            + " ssid=" + portalContext.ssid
-            + " identity=" + portalContext.identity
-            + " connectivity=" + portalContext.connectivity
-            + " check_uri=" + (portalContext.checkUri.length > 0 ? portalContext.checkUri : "none")
-            + " primary=" + (portalContext.primaryConnection.length > 0 ? portalContext.primaryConnection : "unknown")
-            + " request_id=" + portalContext.requestId
-            + " workspace=" + portalContext.workspaceId);
+        console.info("shelllist portal trigger=" + portalContext.trigger + " ssid=" + portalContext.ssid + " identity=" + portalContext.identity + " connectivity=" + portalContext.connectivity + " check_uri=" + (portalContext.checkUri.length > 0 ? portalContext.checkUri : "none") + " primary=" + (portalContext.primaryConnection.length > 0 ? portalContext.primaryConnection : "unknown") + " request_id=" + portalContext.requestId + " workspace=" + portalContext.workspaceId);
         controller.status = "Opening captive portal page…";
         backend.openPortal(portalContext);
     }

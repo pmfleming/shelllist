@@ -24,8 +24,7 @@ Rectangle {
     function timeLabel(index) {
         if (index === 4)
             return "Now";
-        const timestamp = rangeStartMilliseconds
-            + (rangeEndMilliseconds - rangeStartMilliseconds) * index / 4;
+        const timestamp = rangeStartMilliseconds + (rangeEndMilliseconds - rangeStartMilliseconds) * index / 4;
         if (!isFinite(timestamp) || timestamp <= 0)
             return "--:--";
         return Qt.formatTime(new Date(timestamp), "HH:mm");
@@ -91,8 +90,7 @@ Rectangle {
                     anchors.top: parent.top
                     anchors.topMargin: 39
                     width: chart.plotLeft - 22
-                    text: lane.modelData.currentUnavailable ? "No measurements"
-                        : lane.modelData.secondaryText || lane.modelData.referenceText || ""
+                    text: lane.modelData.currentUnavailable ? "No measurements" : lane.modelData.secondaryText || lane.modelData.referenceText || ""
                     color: Ui.Theme.subtleText
                     elide: Text.ElideRight
                     font.pixelSize: Ui.Theme.fontSizeCaption
@@ -111,8 +109,7 @@ Rectangle {
                     antialiasing: true
 
                     function xFor(timestamp) {
-                        return (timestamp - chart.rangeStartMilliseconds)
-                            / Math.max(1, chart.rangeEndMilliseconds - chart.rangeStartMilliseconds) * width;
+                        return (timestamp - chart.rangeStartMilliseconds) / Math.max(1, chart.rangeEndMilliseconds - chart.rangeStartMilliseconds) * width;
                     }
                     function maximumFor(descriptors) {
                         const configured = Number(lane.modelData.maximum || 0);
@@ -124,8 +121,7 @@ Rectangle {
                                     return next;
                                 const average = Number(point[descriptor.metric]);
                                 const peak = Number((point.peaks || ({}))[descriptor.peakMetric || ""]);
-                                return Math.max(next, isFinite(average) ? average : 0,
-                                    isFinite(peak) ? peak : 0);
+                                return Math.max(next, isFinite(average) ? average : 0, isFinite(peak) ? peak : 0);
                             }, current);
                         }, 0);
                         return Math.max(1, largest * 1.15);
@@ -134,11 +130,8 @@ Rectangle {
                         const fraction = Math.min(1, Math.max(0, value) / maximum);
                         if (lane.modelData.chartStyle === "paired") {
                             const centre = height / 2;
-                            const direction = Number((lane.modelData.series[descriptorIndex] || ({})).direction
-                                || (descriptorIndex === 0 ? 1 : -1));
-                            return direction > 0
-                                ? centre - fraction * Math.max(1, centre - 3)
-                                : centre + fraction * Math.max(1, centre - 3);
+                            const direction = Number((lane.modelData.series[descriptorIndex] || ({})).direction || (descriptorIndex === 0 ? 1 : -1));
+                            return direction > 0 ? centre - fraction * Math.max(1, centre - 3) : centre + fraction * Math.max(1, centre - 3);
                         }
                         return height - 3 - fraction * Math.max(1, height - 6);
                     }
@@ -149,19 +142,17 @@ Rectangle {
                         chart.points.forEach(function (point, pointIndex) {
                             const timestamp = chart.timestamps[pointIndex];
                             const value = Number(point[descriptor.metric]);
-                            const valid = Resources.historicalMetricAvailable(point, descriptor.metric)
-                                && isFinite(value) && value >= 0
-                                && timestamp >= chart.rangeStartMilliseconds
-                                && timestamp <= chart.rangeEndMilliseconds;
-                            if (!valid || (previousTimestamp > 0
-                                    && timestamp - previousTimestamp > chart.maximumGapMilliseconds)) {
+                            const valid = Resources.historicalMetricAvailable(point, descriptor.metric) && isFinite(value) && value >= 0 && timestamp >= chart.rangeStartMilliseconds && timestamp <= chart.rangeEndMilliseconds;
+                            if (!valid || (previousTimestamp > 0 && timestamp - previousTimestamp > chart.maximumGapMilliseconds)) {
                                 if (segment.length > 0)
                                     segments.push(segment);
                                 segment = [];
                             }
                             if (valid)
-                                segment.push({ x: xFor(timestamp),
-                                    y: yFor(value, descriptorIndex, maximum) });
+                                segment.push({
+                                    x: xFor(timestamp),
+                                    y: yFor(value, descriptorIndex, maximum)
+                                });
                             previousTimestamp = valid ? timestamp : 0;
                         });
                         if (segment.length > 0)
@@ -228,8 +219,12 @@ Rectangle {
                         const average = values.length > 0 ? values.reduce(function (sum, value) {
                             return sum + value;
                         }, 0) / values.length : 0;
-                        return { average: average, peak: Math.max(peak,
-                            values.reduce(function (largest, value) { return Math.max(largest, value); }, 0)) };
+                        return {
+                            average: average,
+                            peak: Math.max(peak, values.reduce(function (largest, value) {
+                                return Math.max(largest, value);
+                            }, 0))
+                        };
                     }
                     function drawReferences(context, descriptor, descriptorIndex, maximum) {
                         const values = descriptorValues(descriptor);
@@ -254,14 +249,15 @@ Rectangle {
                             if (points.length > 1) {
                                 context.beginPath();
                                 context.moveTo(points[0].x, baseline);
-                                points.forEach(function (point) { context.lineTo(point.x, point.y); });
+                                points.forEach(function (point) {
+                                    context.lineTo(point.x, point.y);
+                                });
                                 context.lineTo(points[points.length - 1].x, baseline);
                                 context.closePath();
                                 if (lane.modelData.chartStyle === "paired") {
                                     context.fillStyle = Ui.Theme.withAlpha(descriptor.color, 0.12);
                                 } else {
-                                    const fill = context.createLinearGradient(0, height * 0.2,
-                                        0, baseline);
+                                    const fill = context.createLinearGradient(0, height * 0.2, 0, baseline);
                                     fill.addColorStop(0, Ui.Theme.withAlpha(descriptor.color, 0.2));
                                     fill.addColorStop(1, Ui.Theme.withAlpha(descriptor.color, 0.025));
                                     context.fillStyle = fill;
@@ -294,9 +290,15 @@ Rectangle {
 
                     Connections {
                         target: chart
-                        function onPointsChanged() { plot.requestPaint(); }
-                        function onRangeStartMillisecondsChanged() { plot.requestPaint(); }
-                        function onRangeEndMillisecondsChanged() { plot.requestPaint(); }
+                        function onPointsChanged() {
+                            plot.requestPaint();
+                        }
+                        function onRangeStartMillisecondsChanged() {
+                            plot.requestPaint();
+                        }
+                        function onRangeEndMillisecondsChanged() {
+                            plot.requestPaint();
+                        }
                     }
 
                     onPaint: {
@@ -331,13 +333,11 @@ Rectangle {
             model: 5
             delegate: Ui.ThemeText {
                 required property int index
-                x: index === 0 ? 0 : index === 4 ? parent.width - width
-                    : parent.width * index / 4 - width / 2
+                x: index === 0 ? 0 : index === 4 ? parent.width - width : parent.width * index / 4 - width / 2
                 width: 48
                 text: chart.timeLabel(index)
                 color: index === 4 ? Ui.Theme.mutedText : Ui.Theme.subtleText
-                horizontalAlignment: index === 0 ? Text.AlignLeft
-                    : index === 4 ? Text.AlignRight : Text.AlignHCenter
+                horizontalAlignment: index === 0 ? Text.AlignLeft : index === 4 ? Text.AlignRight : Text.AlignHCenter
                 font.pixelSize: Ui.Theme.fontSizeCaption
                 font.weight: index === 4 ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
             }

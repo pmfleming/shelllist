@@ -28,27 +28,40 @@ Item {
     }
     function openSettings(nextSection) {
         const savedProfile = controller.profileFor(controller.detailAp);
-        if (!savedProfile) { controller.status = "Connect to this network before editing saved settings."; return; }
+        if (!savedProfile) {
+            controller.status = "Connect to this network before editing saved settings.";
+            return;
+        }
         controller.detailsOpen = true;
         const targetSection = nextSection === "hardware" ? "hardware" : "security";
         const animateSection = open && targetSection !== section;
         section = targetSection;
         sectionTransitionRequested(targetSection, animateSection);
-        if (open && profilePath === (savedProfile.path || "")) return;
-        open = true; reset(); profilePath = savedProfile.path || "";
-        if (!backend.loadAdvancedProfile(profilePath)) error = "Saved profile details are already loading.";
+        if (open && profilePath === (savedProfile.path || ""))
+            return;
+        open = true;
+        reset();
+        profilePath = savedProfile.path || "";
+        if (!backend.loadAdvancedProfile(profilePath))
+            error = "Saved profile details are already loading.";
     }
     function closeSettings() {
-        if (open) controller.advancedSectionLeaving(section);
-        open = false; reset();
+        if (open)
+            controller.advancedSectionLeaving(section);
+        open = false;
+        reset();
     }
     function selectSection(nextSection) {
-        if (open && nextSection !== section) controller.advancedSectionLeaving(section);
+        if (open && nextSection !== section)
+            controller.advancedSectionLeaving(section);
         openSettings(nextSection);
     }
     function applyProfile(value) {
-        if (!open || (value.path || "") !== profilePath) return;
-        profile = value; error = reloadError; reloadError = "";
+        if (!open || (value.path || "") !== profilePath)
+            return;
+        profile = value;
+        error = reloadError;
+        reloadError = "";
         if (controller.isActive(controller.detailAp))
             controller.loadBandStatus(profilePath);
     }
@@ -59,36 +72,50 @@ Item {
         const version = (profile && profile.version) || "";
         if (version.length === 0)
             return settings;
-        return Object.assign({}, settings, { expected_version: version });
+        return Object.assign({}, settings, {
+            expected_version: version
+        });
     }
     function save(settings, origin) {
-        if (!open || profilePath.length === 0 || saving) return false;
-        error = ""; saveOrigin = origin || section;
-        if (backend.saveAdvancedProfile(profilePath, versionedSettings(settings))) return true;
-        saveOrigin = ""; error = "Advanced profile settings are already being saved."; return false;
+        if (!open || profilePath.length === 0 || saving)
+            return false;
+        error = "";
+        saveOrigin = origin || section;
+        if (backend.saveAdvancedProfile(profilePath, versionedSettings(settings)))
+            return true;
+        saveOrigin = "";
+        error = "Advanced profile settings are already being saved.";
+        return false;
     }
     function applySave(result) {
         const origin = saveOrigin;
-        saveOrigin = ""; controller.status = result.message || "Saved advanced Wi-Fi settings"; secret = "";
-        if (open && profilePath.length > 0 && section === origin) backend.loadAdvancedProfile(profilePath);
+        saveOrigin = "";
+        controller.status = result.message || "Saved advanced Wi-Fi settings";
+        secret = "";
+        if (open && profilePath.length > 0 && section === origin)
+            backend.loadAdvancedProfile(profilePath);
     }
     function revealSecret() {
-        if (!open || profilePath.length === 0 || secretLoading) return;
-        error = ""; backend.revealAdvancedSecret(profilePath);
+        if (!open || profilePath.length === 0 || secretLoading)
+            return;
+        error = "";
+        backend.revealAdvancedSecret(profilePath);
     }
     function applySecret(result) {
-        if (!open || (result.path || "") !== profilePath) return;
+        if (!open || (result.path || "") !== profilePath)
+            return;
         secret = result.available ? (result.password || "") : "";
         error = result.available ? "" : "The saved Wi-Fi password is not readable.";
     }
-    function handlesCall(id) { return id === "advanced-load" || id === "advanced-save" || id === "advanced-secret"; }
+    function handlesCall(id) {
+        return id === "advanced-load" || id === "advanced-save" || id === "advanced-secret";
+    }
     function failCall(id, message, details) {
-        if (!handlesCall(id)) return false;
+        if (!handlesCall(id))
+            return false;
         // A conflict means somebody else changed the profile; reloading is the
         // fix, so say that rather than repeating the daemon's wording.
-        error = id === "advanced-save" && message.indexOf("conflict:") >= 0
-            ? "These settings changed elsewhere. Reloading the saved profile…"
-            : message;
+        error = id === "advanced-save" && message.indexOf("conflict:") >= 0 ? "These settings changed elsewhere. Reloading the saved profile…" : message;
         if (id === "advanced-save") {
             saveOrigin = "";
             const partiallySaved = details && details.profile_saved === true;
@@ -103,6 +130,7 @@ Item {
     }
     function selectionChanged() {
         const savedProfile = controller.profileFor(controller.detailAp);
-        if (open && (!savedProfile || (savedProfile.path || "") !== profilePath)) closeSettings();
+        if (open && (!savedProfile || (savedProfile.path || "") !== profilePath))
+            closeSettings();
     }
 }

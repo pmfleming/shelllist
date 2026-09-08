@@ -14,30 +14,61 @@ Ui.ActionDetailsPane {
     readonly property bool image: entry.kind === "image"
     readonly property bool link: entry.kind === "link"
     readonly property bool binary: entry.kind === "binary"
-    readonly property var primaryActions: [{
-        id: binary ? "copy" : "paste",
-        label: binary ? "Copy" : "Paste",
-        icon: binary ? "󰆏" : "󰆒",
-        shortcut: "Enter",
-        enabled: !!entry.id && !controller.actionInFlight,
-        presentation: { group: "primary", tone: "active", width: 112 }
-    }]
-    readonly property var secondaryActions: [{
-        id: "copy", label: "Copy", icon: "󰆏", shortcut: "Ctrl+↵",
-        visible: !binary,
-        enabled: !!entry.id && !controller.actionInFlight,
-        presentation: { group: "toolbar", tone: "normal", width: 92 }
-    }, {
-        id: "paste-as-file", label: "Paste as file", icon: "󰈔", shortcut: "Shift+↵",
-        visible: image,
-        enabled: !controller.actionInFlight,
-        presentation: { group: "toolbar", tone: "normal", width: 120 }
-    }, {
-        id: "edit", label: link ? "Open" : "Edit", icon: link ? "󰌷" : "󰏫", shortcut: "",
-        visible: image || link,
-        enabled: !controller.actionInFlight,
-        presentation: { group: "toolbar", tone: "normal", width: 92 }
-    }]
+    readonly property var primaryActions: [
+        {
+            id: binary ? "copy" : "paste",
+            label: binary ? "Copy" : "Paste",
+            icon: binary ? "󰆏" : "󰆒",
+            shortcut: "Enter",
+            enabled: !!entry.id && !controller.actionInFlight,
+            presentation: {
+                group: "primary",
+                tone: "active",
+                width: 112
+            }
+        }
+    ]
+    readonly property var secondaryActions: [
+        {
+            id: "copy",
+            label: "Copy",
+            icon: "󰆏",
+            shortcut: "Ctrl+↵",
+            visible: !binary,
+            enabled: !!entry.id && !controller.actionInFlight,
+            presentation: {
+                group: "toolbar",
+                tone: "normal",
+                width: 92
+            }
+        },
+        {
+            id: "paste-as-file",
+            label: "Paste as file",
+            icon: "󰈔",
+            shortcut: "Shift+↵",
+            visible: image,
+            enabled: !controller.actionInFlight,
+            presentation: {
+                group: "toolbar",
+                tone: "normal",
+                width: 120
+            }
+        },
+        {
+            id: "edit",
+            label: link ? "Open" : "Edit",
+            icon: link ? "󰌷" : "󰏫",
+            shortcut: "",
+            visible: image || link,
+            enabled: !controller.actionInFlight,
+            presentation: {
+                group: "toolbar",
+                tone: "normal",
+                width: 92
+            }
+        }
+    ]
 
     function triggerAction(actionId) {
         if (actionId === "paste") {
@@ -65,7 +96,9 @@ Ui.ActionDetailsPane {
     subtitle: selected.subtitle || ""
     actions: primaryActions.concat(secondaryActions)
     actionWidth: 112
-    onActionTriggered: function (actionId) { triggerAction(actionId); }
+    onActionTriggered: function (actionId) {
+        triggerAction(actionId);
+    }
 
     Item {
         anchors.fill: parent
@@ -85,9 +118,7 @@ Ui.ActionDetailsPane {
 
         ClipboardDetailCards {
             anchors.fill: parent
-            visible: !pane.detailState.loading
-                && pane.detailState.error.length === 0
-                && !!pane.detailState.value
+            visible: !pane.detailState.loading && pane.detailState.error.length === 0 && !!pane.detailState.value
             controller: pane.controller
         }
     }

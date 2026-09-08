@@ -14,7 +14,9 @@ Rectangle {
     onPointsChanged: hourlyChart.requestPaint()
     onMinimumChanged: hourlyChart.requestPaint()
     onMaximumChanged: hourlyChart.requestPaint()
-    function hourY(value: var): real { return Visuals.temperatureY(value, minimum, maximum); }
+    function hourY(value: var): real {
+        return Visuals.temperatureY(value, minimum, maximum);
+    }
     width: parent.width
     height: 232
     radius: Ui.Theme.panelRadius
@@ -51,8 +53,7 @@ Rectangle {
             for (let index = 0; index < points.length; ++index) {
                 const probability = Number(points[index].precipitation_probability || 0);
                 const barHeight = probability / 100 * 28;
-                context.fillRect(index * slot + slot * 0.31, 183 - barHeight,
-                    slot * 0.38, barHeight);
+                context.fillRect(index * slot + slot * 0.31, 183 - barHeight, slot * 0.38, barHeight);
             }
 
             context.beginPath();
@@ -108,8 +109,7 @@ Rectangle {
             Ui.ThemeText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: 184
-                text: Number(hourPoint.modelData.precipitation_probability || 0) > 0
-                    ? Visuals.numberLabel(hourPoint.modelData.precipitation_probability, "%") : ""
+                text: Number(hourPoint.modelData.precipitation_probability || 0) > 0 ? Visuals.numberLabel(hourPoint.modelData.precipitation_probability, "%") : ""
                 color: Ui.Theme.accent
                 font.pixelSize: 9
             }

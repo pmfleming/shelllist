@@ -7,9 +7,13 @@ QtObject {
     property var environment: ({})
     property QtObject stdout
     property QtObject stderr
-    signal started()
+    signal started
     signal exited(int exitCode)
 
-    function exec(command) { throw new Error("Process execution disabled in tests"); }
-    function write(data) { throw new Error("Process writes disabled in tests"); }
+    function exec(command) {
+        throw new Error("Process execution disabled in tests");
+    }
+    function write(data) {
+        throw new Error("Process writes disabled in tests");
+    }
 }

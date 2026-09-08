@@ -13,7 +13,9 @@ function notificationActions(notification) {
 }
 
 function standardActions(notification) {
-    return notificationActions(notification).filter(function (action) { return !isReplyAction(action); });
+    return notificationActions(notification).filter(function (action) {
+        return !isReplyAction(action);
+    });
 }
 
 function replyAction(notification) {
@@ -23,8 +25,7 @@ function replyAction(notification) {
 function groupKey(record) {
     const notification = notificationFor(record);
     const hints = notification.hints || ({});
-    return String(notification.group_key || hints.desktop_entry
-        || notification.app_name || "unknown");
+    return String(notification.group_key || hints.desktop_entry || notification.app_name || "unknown");
 }
 
 function groupRecords(records) {
@@ -51,9 +52,7 @@ function groupRecords(records) {
 
 function newestFirst(records) {
     return (records || []).slice().sort(function (left, right) {
-        return Number(notificationFor(right).created_unix_ms || 0)
-            - Number(notificationFor(left).created_unix_ms || 0)
-            || Number(notificationFor(right).id || 0) - Number(notificationFor(left).id || 0);
+        return Number(notificationFor(right).created_unix_ms || 0) - Number(notificationFor(left).created_unix_ms || 0) || Number(notificationFor(right).id || 0) - Number(notificationFor(left).id || 0);
     });
 }
 
@@ -73,8 +72,7 @@ function recentRecords(active, history) {
 
 function previewCapacity(height, spacing, margin) {
     // Header, DND row, view-all row and their gaps; each preview is 48px.
-    return Math.max(0, Math.floor((height - margin * 2 - 28 - 34 - 34
-        - spacing * 2) / (48 + spacing)));
+    return Math.max(0, Math.floor((height - margin * 2 - 28 - 34 - 34 - spacing * 2) / (48 + spacing)));
 }
 
 function mergeHistory(existing, incoming) {
@@ -82,8 +80,11 @@ function mergeHistory(existing, incoming) {
     (existing || []).concat(incoming || []).forEach(function (record) {
         byId[record.history_id] = record;
     });
-    return Object.keys(byId).map(function (id) { return byId[id]; })
-        .sort(function (left, right) { return Number(right.history_id) - Number(left.history_id); });
+    return Object.keys(byId).map(function (id) {
+        return byId[id];
+    }).sort(function (left, right) {
+        return Number(right.history_id) - Number(left.history_id);
+    });
 }
 
 // Reconcile QML ListModels without resetting existing delegates and their focus.
@@ -91,10 +92,16 @@ function syncKeyedModel(model, rows) {
     for (let i = 0; i < rows.length; ++i) {
         // Store JSON as a scalar role: ListModel otherwise converts nested action
         // arrays into QQmlListModels, breaking Array.isArray/filter in delegates.
-        const row = { key: rows[i].key, payload: JSON.stringify(rows[i].payload) };
+        const row = {
+            key: rows[i].key,
+            payload: JSON.stringify(rows[i].payload)
+        };
         let found = -1;
         for (let j = i; j < model.count; ++j) {
-            if (model.get(j).key === row.key) { found = j; break; }
+            if (model.get(j).key === row.key) {
+                found = j;
+                break;
+            }
         }
         if (found < 0)
             model.insert(i, row);

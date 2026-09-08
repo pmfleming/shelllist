@@ -49,12 +49,23 @@ function isCloseAction(actionId) {
 }
 
 function categoryFilterOptions(categories) {
-    return [{ value: "", label: "All", icon: "󰀻" }].concat(categories || []);
+    return [
+        {
+            value: "",
+            label: "All",
+            icon: "󰀻"
+        }
+    ].concat(categories || []);
 }
 
 function categoryFilterOption(options, value) {
-    return (options || []).find(function (option) { return option.value === value; })
-        || (options || [])[0] || ({ value: "", label: "All", icon: "󰀻" });
+    return (options || []).find(function (option) {
+        return option.value === value;
+    }) || (options || [])[0] || ({
+            value: "",
+            label: "All",
+            icon: "󰀻"
+        });
 }
 
 function nextCategoryFilterOption(options, value) {
@@ -84,6 +95,8 @@ function withoutClosedInstances(application, actionId, windowId) {
     payload.instances = instances;
     payload.running_count = instances.length;
     payload.running = instances.length > 0;
-    payload.focused = instances.some(function (instance) { return instance.focused; });
+    payload.focused = instances.some(function (instance) {
+        return instance.focused;
+    });
     return payload;
 }

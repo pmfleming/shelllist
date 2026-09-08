@@ -6,8 +6,7 @@ Rectangle {
 
     property string text: ""
     property string tone: "normal"
-    readonly property color toneColor: tone === "warning" ? Ui.Theme.warning
-        : tone === "accent" ? Ui.Theme.accent : Ui.Theme.mutedText
+    readonly property color toneColor: tone === "warning" ? Ui.Theme.warning : tone === "accent" ? Ui.Theme.accent : Ui.Theme.mutedText
 
     width: label.implicitWidth + 16
     height: 25

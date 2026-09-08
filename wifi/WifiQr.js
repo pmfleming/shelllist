@@ -20,6 +20,8 @@ function payloadField(qrPayload, requestedKey) {
         }
     }
     const prefix = requestedKey + ":";
-    const match = fields.find(function (item) { return item.indexOf(prefix) === 0; });
+    const match = fields.find(function (item) {
+        return item.indexOf(prefix) === 0;
+    });
     return match ? match.slice(prefix.length) : "";
 }

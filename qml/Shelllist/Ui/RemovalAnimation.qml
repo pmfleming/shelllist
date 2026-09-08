@@ -24,6 +24,7 @@ SequentialAnimation {
         }
     }
     ScriptAction {
-        script: if (removal.finishRemoval) removal.finishRemoval()
+        script: if (removal.finishRemoval)
+            removal.finishRemoval()
     }
 }

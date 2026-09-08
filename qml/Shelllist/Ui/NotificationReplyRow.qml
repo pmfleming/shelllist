@@ -35,7 +35,9 @@ Column {
             maximumLength: 4096
             text: reply.draftText
             readOnly: reply.sending
-            onEdited: function (value) { reply.draftEdited(value); }
+            onEdited: function (value) {
+                reply.draftEdited(value);
+            }
             onAccepted: reply.send()
         }
         ActionButton {

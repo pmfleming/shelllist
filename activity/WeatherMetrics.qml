@@ -13,15 +13,22 @@ Row {
 
     Repeater {
         model: [
-            { icon: "humidity", value: Visuals.numberLabel(
-                visualMetrics.weather.humidity_percent, "%") },
-            { icon: "wind", value: Visuals.windCompass(
-                visualMetrics.weather.wind_direction_degrees) + "  "
-                + Visuals.numberLabel(visualMetrics.weather.wind_gust_kmh, " km/h") },
-            { icon: "sunrise", value: Visuals.weatherTime(
-                visualMetrics.weather.sunrise_unix_ms, visualMetrics.weather) },
-            { icon: "sunset", value: Visuals.weatherTime(
-                visualMetrics.weather.sunset_unix_ms, visualMetrics.weather) }
+            {
+                icon: "humidity",
+                value: Visuals.numberLabel(visualMetrics.weather.humidity_percent, "%")
+            },
+            {
+                icon: "wind",
+                value: Visuals.windCompass(visualMetrics.weather.wind_direction_degrees) + "  " + Visuals.numberLabel(visualMetrics.weather.wind_gust_kmh, " km/h")
+            },
+            {
+                icon: "sunrise",
+                value: Visuals.weatherTime(visualMetrics.weather.sunrise_unix_ms, visualMetrics.weather)
+            },
+            {
+                icon: "sunset",
+                value: Visuals.weatherTime(visualMetrics.weather.sunset_unix_ms, visualMetrics.weather)
+            }
         ]
         delegate: Rectangle {
             id: visualMetric

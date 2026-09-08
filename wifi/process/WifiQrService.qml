@@ -77,7 +77,8 @@ Item {
 
     function finishRendering(exitCode) {
         if (!open) {
-            if (outputPath.length > 0) cleaner.exec(["rm", "-f", outputPath]);
+            if (outputPath.length > 0)
+                cleaner.exec(["rm", "-f", outputPath]);
         } else if (exitCode === 0) {
             imageSource = "file://" + outputPath;
         } else {
@@ -107,21 +108,36 @@ Item {
     Process {
         id: renderer
         stdinEnabled: true
-        stderr: StdioCollector { id: renderError; waitForEnd: true }
+        stderr: StdioCollector {
+            id: renderError
+            waitForEnd: true
+        }
         onStarted: {
             // Keep secret-bearing QR payloads off argv and process listings.
             renderer.write(qr.payload);
             renderer.stdinEnabled = false;
         }
-        onExited: function (exitCode) { qr.finishRendering(exitCode); } // qmllint disable signal-handler-parameters
+        onExited: function (exitCode) {
+            qr.finishRendering(exitCode);
+        } // qmllint disable signal-handler-parameters
     }
 
-    Process { id: cleaner }
+    Process {
+        id: cleaner
+    }
 
     Process {
         id: scanner
-        stdout: StdioCollector { id: scannedOutput; waitForEnd: true }
-        stderr: StdioCollector { id: scannerError; waitForEnd: true }
-        onExited: function (exitCode) { qr.finishScanning(exitCode); } // qmllint disable signal-handler-parameters
+        stdout: StdioCollector {
+            id: scannedOutput
+            waitForEnd: true
+        }
+        stderr: StdioCollector {
+            id: scannerError
+            waitForEnd: true
+        }
+        onExited: function (exitCode) {
+            qr.finishScanning(exitCode);
+        } // qmllint disable signal-handler-parameters
     }
 }

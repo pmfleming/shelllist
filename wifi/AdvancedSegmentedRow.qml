@@ -25,6 +25,8 @@ RowLayout {
         id: control
         Layout.fillWidth: true
         Layout.fillHeight: true
-        onSelected: function (value) { row.selected(value); }
+        onSelected: function (value) {
+            row.selected(value);
+        }
     }
 }

@@ -26,7 +26,9 @@ ChooserController {
     selectionModel: results
     detailActions: providers.actionsFor(selectedResult)
 
-    function beginProviderQuery(context: var, limit: int): var { return results.beginQuery(filterText, context || ({}), [provider.providerId], limit); }
+    function beginProviderQuery(context: var, limit: int): var {
+        return results.beginQuery(filterText, context || ({}), [provider.providerId], limit);
+    }
 
     function applyProviderQuery(id: string, values: var): bool {
         return results.applyNormalizedBatch({
@@ -39,20 +41,24 @@ ChooserController {
     }
 
     function replaceProviderResults(values: var, resetSelection: bool): void {
-        results.replaceNormalizedProviderResults(provider.providerId,
-            values || [], resetSelection);
+        results.replaceNormalizedProviderResults(provider.providerId, values || [], resetSelection);
     }
 
-    function clearProviderResults(): void { results.clear(); }
-    function isActiveQuery(id: string): bool { return id === results.activeQueryId; }
+    function clearProviderResults(): void {
+        results.clear();
+    }
+    function isActiveQuery(id: string): bool {
+        return id === results.activeQueryId;
+    }
 
     function executeSelected(actionId: string): bool {
-        return !!selectedResult && providers.execute(selectedResult, actionId, { workspaceId: currentWorkspaceId });
+        return !!selectedResult && providers.execute(selectedResult, actionId, {
+            workspaceId: currentWorkspaceId
+        });
     }
 
     function captureScreenshot(x: real, y: real, width: real, height: real): bool {
-        return sharedScreenshotEnabled
-            && sharedScreenshotCapture.captureRegion(x, y, width, height);
+        return sharedScreenshotEnabled && sharedScreenshotCapture.captureRegion(x, y, width, height);
     }
 
     function scheduleRefresh(): void {
@@ -66,13 +72,17 @@ ChooserController {
         if (uiActive && filterRefreshDelay > 0)
             filterRefreshTimer.restart();
     }
-    onSelectedResultChanged: if (closeDetailsWithoutSelection && !hasSelection) detailsOpen = false
+    onSelectedResultChanged: if (closeDetailsWithoutSelection && !hasSelection)
+        detailsOpen = false
 
     Core.ProviderRegistry {
         id: providers
         providers: [controller.provider]
     }
-    Core.ResultStore { id: results; registry: providers }
+    Core.ResultStore {
+        id: results
+        registry: providers
+    }
 
     Io.ClipboardScreenshotCapture {
         id: sharedScreenshotCapture
@@ -90,12 +100,14 @@ ChooserController {
         id: filterRefreshTimer
         interval: controller.filterRefreshDelay
         repeat: false
-        onTriggered: if (controller.uiActive) controller.refresh()
+        onTriggered: if (controller.uiActive)
+            controller.refresh()
     }
     Timer {
         id: scheduledRefreshTimer
         interval: controller.scheduledRefreshDelay
         repeat: false
-        onTriggered: if (controller.uiActive) controller.refresh()
+        onTriggered: if (controller.uiActive)
+            controller.refresh()
     }
 }

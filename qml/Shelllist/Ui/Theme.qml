@@ -149,8 +149,7 @@ Item {
     }
 
     function densityScale(availableHeight, verticalMargin) {
-        return Math.max(densityMinimum, Math.min(densityMaximum,
-            (availableHeight - 2 * verticalMargin) / densityReferenceHeight));
+        return Math.max(densityMinimum, Math.min(densityMaximum, (availableHeight - 2 * verticalMargin) / densityReferenceHeight));
     }
 
     function verticalSpacing(preferred, density) {
@@ -158,22 +157,26 @@ Item {
             return preferred;
         const boundedDensity = Math.max(densityMinimum, Math.min(1, density));
         const compression = (boundedDensity - densityMinimum) / (1 - densityMinimum);
-        return Math.round(minimumVerticalSpacing
-            + (preferred - minimumVerticalSpacing) * compression);
+        return Math.round(minimumVerticalSpacing + (preferred - minimumVerticalSpacing) * compression);
     }
 
     function listDelegateHeight(availableHeight) {
-        return Math.max(listRowMinHeight, Math.min(listRowMaxHeight,
-            availableHeight / listVisibleRowTarget));
+        return Math.max(listRowMinHeight, Math.min(listRowMaxHeight, availableHeight / listVisibleRowTarget));
     }
 
-    function luminance(color) { return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b; }
-    function withAlpha(color, alphaValue) { return Qt.rgba(color.r, color.g, color.b, alphaValue); }
+    function luminance(color) {
+        return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+    }
+    function withAlpha(color, alphaValue) {
+        return Qt.rgba(color.r, color.g, color.b, alphaValue);
+    }
     function mix(left, right, amount) {
         const t = Math.max(0, Math.min(1, amount));
         return Qt.rgba(left.r * (1 - t) + right.r * t, left.g * (1 - t) + right.g * t, left.b * (1 - t) + right.b * t, left.a * (1 - t) + right.a * t);
     }
-    function readableOn(color) { return luminance(color) > 0.58 ? "#111827" : "#f8fafc"; }
+    function readableOn(color) {
+        return luminance(color) > 0.58 ? "#111827" : "#f8fafc";
+    }
 
     SystemPalette {
         id: systemPalette

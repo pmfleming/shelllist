@@ -10,10 +10,21 @@ TestCase {
 
     function result(enabled) {
         return Core.Model.result({
-            providerId: "test", id: "result", title: "Result",
+            providerId: "test",
+            id: "result",
+            title: "Result",
             primaryActionId: "open",
-            actions: [{ id: "open", label: "Open", role: "default", enabled: enabled }],
-            payload: { key: "payload" }
+            actions: [
+                {
+                    id: "open",
+                    label: "Open",
+                    role: "default",
+                    enabled: enabled
+                }
+            ],
+            payload: {
+                key: "payload"
+            }
         });
     }
 
@@ -24,7 +35,9 @@ TestCase {
     }
 
     function test_dispatchesDefaultAction() {
-        verify(registry.execute(result(true), "", { workspaceId: "4" }));
+        verify(registry.execute(result(true), "", {
+            workspaceId: "4"
+        }));
         compare(dispatchedSpy.count, 1);
         verify(dispatchedRequest !== null);
         compare(dispatchedRequest.actionId, "open");
@@ -55,6 +68,14 @@ TestCase {
         }
     }
 
-    SignalSpy { id: rejectedSpy; target: registry; signalName: "actionRejected" }
-    SignalSpy { id: dispatchedSpy; target: registry; signalName: "actionDispatched" }
+    SignalSpy {
+        id: rejectedSpy
+        target: registry
+        signalName: "actionRejected"
+    }
+    SignalSpy {
+        id: dispatchedSpy
+        target: registry
+        signalName: "actionDispatched"
+    }
 }

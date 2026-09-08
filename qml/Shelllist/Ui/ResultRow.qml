@@ -31,8 +31,11 @@ Rectangle {
         else
             listPane.pick(rowIndex);
     }
-    onPrimaryRequested: if (primaryEnabled) listPane.chooserController.primarySelected()
-    onDetailsToggled: function (rowIndex) { listPane.toggleDetails(rowIndex); }
+    onPrimaryRequested: if (primaryEnabled)
+        listPane.chooserController.primarySelected()
+    onDetailsToggled: function (rowIndex) {
+        listPane.toggleDetails(rowIndex);
+    }
 
     function scaled(value) {
         return Math.round(value * uiScale);
@@ -41,8 +44,7 @@ Rectangle {
     width: ListView.view.width
     height: rowHeight
     radius: selected ? Theme.cardRadius : 0
-    color: selected ? Theme.selected
-        : (pointerPressed ? Theme.pressed : (pointerHovered ? Theme.hover : "transparent"))
+    color: selected ? Theme.selected : (pointerPressed ? Theme.pressed : (pointerHovered ? Theme.hover : "transparent"))
     border.color: selected && selectionFocused ? Theme.strongBorder : "transparent"
     border.width: selected && selectionFocused ? 1 : 0
     Accessible.role: Accessible.ListItem
@@ -50,9 +52,18 @@ Rectangle {
     Accessible.selected: selected
     Accessible.onPressAction: row.picked(row.index)
 
-    Keys.onReturnPressed: function (event) { row.primaryRequested(); event.accepted = true; }
-    Keys.onEnterPressed: function (event) { row.primaryRequested(); event.accepted = true; }
-    Keys.onSpacePressed: function (event) { row.picked(row.index); event.accepted = true; }
+    Keys.onReturnPressed: function (event) {
+        row.primaryRequested();
+        event.accepted = true;
+    }
+    Keys.onEnterPressed: function (event) {
+        row.primaryRequested();
+        event.accepted = true;
+    }
+    Keys.onSpacePressed: function (event) {
+        row.picked(row.index);
+        event.accepted = true;
+    }
     Keys.onLeftPressed: function (event) {
         row.listPane.chooserController.closeDetails();
         event.accepted = true;
@@ -95,9 +106,7 @@ Rectangle {
         icon: row.selected && row.detailsOpen ? "󰅁" : "󰅂"
         iconSize: Math.max(Theme.iconSizeSmall, row.scaled(Theme.iconSize))
         flatIconColor: row.selected ? Theme.accent : Theme.mutedText
-        highlightedBackgroundColor: row.selected
-            ? Theme.mix(Theme.selected, Theme.accent, 0.36)
-            : Theme.selected
+        highlightedBackgroundColor: row.selected ? Theme.mix(Theme.selected, Theme.accent, 0.36) : Theme.selected
         highlightedIconColor: Theme.accent
         accessibleName: row.selected && row.detailsOpen ? "Collapse details" : "Expand details"
         toolTip: row.selected && row.detailsOpen ? "Collapse details" : "Expand details"

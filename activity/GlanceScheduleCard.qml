@@ -12,7 +12,8 @@ Rectangle {
     readonly property string todayKey: controller.dateKey(now)
 
     function eventTime(event: var): string {
-        if (!event) return qsTr("No upcoming events");
+        if (!event)
+            return qsTr("No upcoming events");
         return event.all_day ? qsTr("All day") : Qt.formatTime(new Date(event.start_unix_ms), "HH:mm");
     }
     width: parent.width
@@ -30,8 +31,7 @@ Rectangle {
             height: 24
             Ui.ThemeText {
                 width: parent.width - scheduleExpand.width
-                text: "Calendar · Agenda · Todo    "
-                    + String(card.controller.activity.incomplete_todo_count || 0)
+                text: "Calendar · Agenda · Todo    " + String(card.controller.activity.incomplete_todo_count || 0)
                 font.pixelSize: Ui.Theme.fontSizeLabel
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
@@ -63,8 +63,7 @@ Rectangle {
         }
         Grid {
             width: parent.width
-            height: Math.min(150, parent.parent.height - y - nextEvent.height
-                - parent.spacing)
+            height: Math.min(150, parent.parent.height - y - nextEvent.height - parent.spacing)
             columns: 7
             rows: 6
             Repeater {
@@ -72,12 +71,9 @@ Rectangle {
                 delegate: Rectangle {
                     id: dayCell
                     required property int index
-                    readonly property date value: new Date(card.firstDay.getFullYear(), card.firstDay.getMonth(),
-                        index - card.firstDayOffset + 1)
-                    readonly property bool inMonth: value.getMonth()
-                        === card.controller.viewDate.getMonth()
-                    readonly property bool today: card.controller.dateKey(value)
-                        === card.todayKey
+                    readonly property date value: new Date(card.firstDay.getFullYear(), card.firstDay.getMonth(), index - card.firstDayOffset + 1)
+                    readonly property bool inMonth: value.getMonth() === card.controller.viewDate.getMonth()
+                    readonly property bool today: card.controller.dateKey(value) === card.todayKey
                     width: parent.width / 7
                     height: parent.height / 6
                     radius: Ui.Theme.controlRadius
@@ -85,11 +81,9 @@ Rectangle {
                     Ui.ThemeText {
                         anchors.centerIn: parent
                         text: dayCell.value.getDate()
-                        color: dayCell.today ? Ui.Theme.accentText
-                            : dayCell.inMonth ? Ui.Theme.text : Ui.Theme.subtleText
+                        color: dayCell.today ? Ui.Theme.accentText : dayCell.inMonth ? Ui.Theme.text : Ui.Theme.subtleText
                         font.pixelSize: Ui.Theme.fontSizeCaption
-                        font.weight: dayCell.today
-                            ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
+                        font.weight: dayCell.today ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
                     }
                     Rectangle {
                         visible: card.controller.hasActivity(dayCell.value) && !dayCell.today
@@ -125,16 +119,13 @@ Rectangle {
                 spacing: 2
                 Ui.ThemeText {
                     width: parent.width
-                    text: String(card.controller.activity.event_count || 0)
-                        + " upcoming calendar items"
+                    text: String(card.controller.activity.event_count || 0) + " upcoming calendar items"
                     elide: Text.ElideRight
                     font.pixelSize: Ui.Theme.fontSizeSmall
                     font.weight: Ui.Theme.fontWeightDemiBold
                 }
                 Ui.ThemeText {
-                    text: "Next " + card.eventTime(card.controller.activity.next_event)
-                        + "  ·  " + String(card.controller.activity.incomplete_todo_count || 0)
-                        + " open todos"
+                    text: "Next " + card.eventTime(card.controller.activity.next_event) + "  ·  " + String(card.controller.activity.incomplete_todo_count || 0) + " open todos"
                     color: Ui.Theme.mutedText
                     font.pixelSize: Ui.Theme.fontSizeCaption
                 }

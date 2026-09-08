@@ -79,7 +79,9 @@ Item {
 
     Connections {
         target: Quickshell
-        function onScreensChanged(): void { root.observeScreens(); }
+        function onScreensChanged(): void {
+            root.observeScreens();
+        }
     }
 
     Timer {
@@ -88,8 +90,7 @@ Item {
         running: root.barsEnabled
         onTriggered: {
             const current = Date.now();
-            if (Recovery.heartbeatIndicatesResume(root.lastHeartbeatMs, current,
-                    interval, 6000))
+            if (Recovery.heartbeatIndicatesResume(root.lastHeartbeatMs, current, interval, 6000))
                 root.scheduleRecovery("session-resumed");
             root.observeScreens();
             root.lastHeartbeatMs = current;

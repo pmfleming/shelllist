@@ -22,33 +22,58 @@ Io.DaemonBackend {
         requests = next;
         return call(id, method, params);
     }
-    function snapshot(): void { request("snapshot", Api.methods.snapshot, {}, {}); }
+    function snapshot(): void {
+        request("snapshot", Api.methods.snapshot, {}, {});
+    }
     function loadHistory(cursor: var, refresh: bool): bool {
-        return request("history", Api.methods.notificationsList,
-            { before_history_id: cursor, limit: 50 }, { history: true, refresh: refresh });
+        return request("history", Api.methods.notificationsList, {
+            before_history_id: cursor,
+            limit: 50
+        }, {
+            history: true,
+            refresh: refresh
+        });
     }
     function setDnd(enabled: bool, until: var): bool {
-        return request("dnd", Api.methods.notificationsSetDnd,
-            { enabled: enabled, until_unix_ms: until }, {});
+        return request("dnd", Api.methods.notificationsSetDnd, {
+            enabled: enabled,
+            until_unix_ms: until
+        }, {});
     }
     function dismiss(id: int): bool {
-        return request("dismiss", Api.methods.notificationsDismiss, { id: id }, {});
+        return request("dismiss", Api.methods.notificationsDismiss, {
+            id: id
+        }, {});
     }
-    function clear(): bool { return request("clear", Api.methods.notificationsClear, {}, {}); }
+    function clear(): bool {
+        return request("clear", Api.methods.notificationsClear, {}, {});
+    }
     function clearGroup(key: string): bool {
-        return request("clear-group", Api.methods.notificationsClearGroup, { group_key: key }, {});
+        return request("clear-group", Api.methods.notificationsClearGroup, {
+            group_key: key
+        }, {});
     }
     function snooze(id: int, until: double): bool {
-        return request("snooze", Api.methods.notificationsSnooze,
-            { id: id, until_unix_ms: until }, {});
+        return request("snooze", Api.methods.notificationsSnooze, {
+            id: id,
+            until_unix_ms: until
+        }, {});
     }
     function invoke(id: int, key: string): bool {
-        return request("action", Api.methods.notificationsInvokeAction,
-            { id: id, action_key: key, activation_token: null }, {});
+        return request("action", Api.methods.notificationsInvokeAction, {
+            id: id,
+            action_key: key,
+            activation_token: null
+        }, {});
     }
     function reply(id: int, text: string): bool {
-        return request("reply", Api.methods.notificationsReply, { id: id, text: text },
-            { replyId: id, text: text });
+        return request("reply", Api.methods.notificationsReply, {
+            id: id,
+            text: text
+        }, {
+            replyId: id,
+            text: text
+        });
     }
     function finish(id: string, data: var, error: string): void {
         const context = requests[id];
@@ -75,19 +100,27 @@ Io.DaemonBackend {
     }
 
     onResponseReceived: function (id, envelope, transportError) {
-        finish(id, envelope && envelope.data ? envelope.data : ({}), responseError(envelope, transportError,
-            "Notification operation failed"));
+        finish(id, envelope && envelope.data ? envelope.data : ({}), responseError(envelope, transportError, "Notification operation failed"));
     }
-    onSendFailed: function (id, message) { finish(id, {}, message); }
+    onSendFailed: function (id, message) {
+        finish(id, {}, message);
+    }
     onTransportFailed: function (message, lostRequestIds) {
-        lostRequestIds.forEach(function (id) { backend.finish(id, {}, message); });
+        lostRequestIds.forEach(function (id) {
+            backend.finish(id, {}, message);
+        });
     }
-    onTransportReady: if (store.uiActive) snapshot()
-    onEventGapDetected: { snapshot(); store.scheduleHistory(); }
+    onTransportReady: if (store.uiActive)
+        snapshot()
+    onEventGapDetected: {
+        snapshot();
+        store.scheduleHistory();
+    }
     Connections {
         target: backend.store
         function onUiActiveChanged(): void {
-            if (backend.store.uiActive && backend.ready) backend.snapshot();
+            if (backend.store.uiActive && backend.ready)
+                backend.snapshot();
         }
     }
     onEventReceived: function (event) {

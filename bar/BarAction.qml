@@ -50,7 +50,9 @@ Item {
 
         Behavior on color {
             enabled: !Ui.Theme.noAnimations
-            ColorAnimation { duration: Ui.Theme.animationFast }
+            ColorAnimation {
+                duration: Ui.Theme.animationFast
+            }
         }
     }
 
@@ -70,7 +72,9 @@ Item {
 
         Behavior on color {
             enabled: !Ui.Theme.noAnimations
-            ColorAnimation { duration: Ui.Theme.animationFast }
+            ColorAnimation {
+                duration: Ui.Theme.animationFast
+            }
         }
     }
 
@@ -84,8 +88,11 @@ Item {
         interactive: root.interactive
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         consumeWheel: true
-        onClicked: function (mouse) { root.routeClick(mouse.button); }
-        onWheel: function (event) { root.routeWheel(event.angleDelta.y); }
+        onClicked: function (mouse) {
+            root.routeClick(mouse.button);
+        }
+        onWheel: function (event) {
+            root.routeWheel(event.angleDelta.y);
+        }
     }
-
 }

@@ -16,16 +16,23 @@ Rectangle {
     implicitWidth: Theme.controlHeight
     implicitHeight: Theme.controlHeight
     radius: Theme.controlRadius
-    color: !clickable ? backgroundColor
-        : (area.pressed ? Theme.mix(backgroundColor, iconColor, 0.14)
-        : (area.containsMouse ? Theme.mix(backgroundColor, iconColor, 0.08) : backgroundColor))
+    color: !clickable ? backgroundColor : (area.pressed ? Theme.mix(backgroundColor, iconColor, 0.14) : (area.containsMouse ? Theme.mix(backgroundColor, iconColor, 0.08) : backgroundColor))
     border.color: activeFocus ? Theme.strongBorder : borderColor
     opacity: enabled ? 1.0 : Theme.disabledOpacity
     activeFocusOnTab: clickable && enabled
 
-    Keys.onReturnPressed: function (event) { tile.clicked(); event.accepted = true; }
-    Keys.onEnterPressed: function (event) { tile.clicked(); event.accepted = true; }
-    Keys.onSpacePressed: function (event) { tile.clicked(); event.accepted = true; }
+    Keys.onReturnPressed: function (event) {
+        tile.clicked();
+        event.accepted = true;
+    }
+    Keys.onEnterPressed: function (event) {
+        tile.clicked();
+        event.accepted = true;
+    }
+    Keys.onSpacePressed: function (event) {
+        tile.clicked();
+        event.accepted = true;
+    }
 
     Text {
         anchors.centerIn: parent

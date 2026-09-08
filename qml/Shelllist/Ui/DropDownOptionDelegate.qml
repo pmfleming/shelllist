@@ -28,7 +28,6 @@ Controls.AbstractButton {
 
     background: Rectangle {
         radius: Theme.controlRadius
-        color: option.owner.delegateBackground(
-            option.highlighted, option.selected, option.hovered)
+        color: option.owner.delegateBackground(option.highlighted, option.selected, option.hovered)
     }
 }

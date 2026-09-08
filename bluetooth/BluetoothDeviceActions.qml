@@ -53,7 +53,9 @@ ColumnLayout {
             renameDirty = false;
     }
 
-    Component.onCompleted: Qt.callLater(function () { section.syncDeviceName(true); })
+    Component.onCompleted: Qt.callLater(function () {
+        section.syncDeviceName(true);
+    })
     Component.onDestruction: section.saveRename()
 
     Timer {
@@ -65,7 +67,9 @@ ColumnLayout {
 
     Connections {
         target: section.controller
-        function onSelectedResultChanged() { section.syncDeviceName(false); }
+        function onSelectedResultChanged() {
+            section.syncDeviceName(false);
+        }
         function onActionInFlightChanged() {
             if (!section.controller.actionInFlight && section.renameDirty)
                 renameAutoSaveTimer.restart();
@@ -83,9 +87,7 @@ ColumnLayout {
 
         Ui.ThemeText {
             Layout.maximumWidth: Math.round(section.width * 0.55)
-            text: section.controller.selectedDevice.remote_name
-                ? "Original: " + section.controller.selectedDevice.remote_name
-                : "Original name unavailable"
+            text: section.controller.selectedDevice.remote_name ? "Original: " + section.controller.selectedDevice.remote_name : "Original name unavailable"
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.fontSizeCaption
             horizontalAlignment: Text.AlignRight
@@ -104,8 +106,7 @@ ColumnLayout {
             text: ""
             maximumLength: 248
             inputValid: section.renameValid
-            readOnly: section.controller.actionInFlight
-                || !(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_rename)
+            readOnly: section.controller.actionInFlight || !(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_rename)
             onEdited: section.queueRename()
             onEditingFinished: section.saveRename()
             onAccepted: section.saveRename()
@@ -115,9 +116,7 @@ ColumnLayout {
             Layout.preferredWidth: 84
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             label: "Reset"
-            enabled: !section.controller.actionInFlight
-                && !!section.controller.selectedDevice.remote_name
-                && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
+            enabled: !section.controller.actionInFlight && !!section.controller.selectedDevice.remote_name && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
             onClicked: section.controller.resetSelectedName()
         }
     }
@@ -127,6 +126,8 @@ ColumnLayout {
         actions: section.controller.detailActions.filter(function (action) {
             return action.visible !== false && (action.presentation || {}).group === "settings";
         })
-        onTriggered: function (actionId) { section.controller.triggerDetailAction(actionId); }
+        onTriggered: function (actionId) {
+            section.controller.triggerDetailAction(actionId);
+        }
     }
 }

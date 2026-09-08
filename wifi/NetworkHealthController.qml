@@ -16,7 +16,9 @@ Item {
 
     readonly property string lastFailureMessage: lastFailure ? Health.message(lastFailure) : ""
 
-    function clearFailure() { lastFailure = null; }
+    function clearFailure() {
+        lastFailure = null;
+    }
 
     function handleEvent(event) {
         if (event.event === "subscribed")
@@ -32,8 +34,7 @@ Item {
             return;
         const key = Health.notificationKey(event);
         const now = Date.now();
-        if (Health.isDuplicateNotification(
-                event, lastNotificationKey, lastNotificationAtMs, now, notificationDeduplicationMs))
+        if (Health.isDuplicateNotification(event, lastNotificationKey, lastNotificationAtMs, now, notificationDeduplicationMs))
             return;
         lastNotificationKey = key;
         lastNotificationAtMs = now;

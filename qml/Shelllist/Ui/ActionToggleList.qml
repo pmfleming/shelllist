@@ -23,17 +23,13 @@ ColumnLayout {
             required property var modelData
 
             Layout.fillWidth: true
-            Layout.preferredHeight: list.distributeRows
-                ? Math.max(30, (list.height - list.spacing * Math.max(0, actionRepeater.count - 1))
-                    / Math.max(1, actionRepeater.count))
-                : list.rowHeight
+            Layout.preferredHeight: list.distributeRows ? Math.max(30, (list.height - list.spacing * Math.max(0, actionRepeater.count - 1)) / Math.max(1, actionRepeater.count)) : list.rowHeight
             title: modelData.label || ""
             hotkey: modelData.shortcut || ""
             checked: !!(modelData.state && modelData.state.checked)
             tone: (modelData.presentation || {}).tone || "normal"
             interactive: modelData.enabled !== false
-            subtitle: modelData.subtitle || (list.showDisabledReason && modelData.enabled === false
-                ? ((modelData.metadata || {}).disabledReason || "Unavailable") : "")
+            subtitle: modelData.subtitle || (list.showDisabledReason && modelData.enabled === false ? ((modelData.metadata || {}).disabledReason || "Unavailable") : "")
             showSubtitle: subtitle.length > 0
             onClicked: list.triggered(modelData.id)
         }

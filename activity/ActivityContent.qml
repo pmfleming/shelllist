@@ -8,8 +8,7 @@ Ui.ChooserSurface {
 
     required property ActivityController controller
     readonly property alias now: liveClock.now
-    readonly property real uiScale: Ui.Theme.densityScale(height,
-        controller.contentVerticalMargin)
+    readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
 
     Column {
         anchors.fill: parent
@@ -31,19 +30,14 @@ Ui.ChooserSurface {
                 flatIconColor: Ui.Theme.accent
                 enabled: !content.controller.screenshotInFlight
                 accessibleName: "Copy Activity panel screenshot"
-                toolTip: content.controller.screenshotStatus.length > 0
-                    ? content.controller.screenshotStatus
-                    : "Activity · click to copy a screenshot"
+                toolTip: content.controller.screenshotStatus.length > 0 ? content.controller.screenshotStatus : "Activity · click to copy a screenshot"
                 onClicked: content.controller.screenshotRequested()
             }
 
             Ui.ThemeText {
-                width: parent.width - activityIcon.width - headerActions.width
-                    - parent.spacing * 2
+                width: parent.width - activityIcon.width - headerActions.width - parent.spacing * 2
                 anchors.verticalCenter: parent.verticalCenter
-                text: content.controller.detailsOpen
-                    ? "Activity  /  " + content.sectionTitle(content.controller.detailSection)
-                    : "Activity"
+                text: content.controller.detailsOpen ? "Activity  /  " + content.sectionTitle(content.controller.detailSection) : "Activity"
                 elide: Text.ElideRight
                 font.pixelSize: Ui.Theme.fontSizeTitle
                 font.weight: Ui.Theme.fontWeightBold
@@ -137,21 +131,13 @@ Ui.ChooserSurface {
     }
     Shortcut {
         sequence: "Left"
-        enabled: content.controller.uiActive && content.controller.detailsOpen
-            && content.controller.detailSection === "schedule"
-        onActivated: content.controller.selectDate(new Date(
-            content.controller.selectedDate.getFullYear(),
-            content.controller.selectedDate.getMonth(),
-            content.controller.selectedDate.getDate() - 1))
+        enabled: content.controller.uiActive && content.controller.detailsOpen && content.controller.detailSection === "schedule"
+        onActivated: content.controller.selectDate(new Date(content.controller.selectedDate.getFullYear(), content.controller.selectedDate.getMonth(), content.controller.selectedDate.getDate() - 1))
     }
     Shortcut {
         sequence: "Right"
-        enabled: content.controller.uiActive && content.controller.detailsOpen
-            && content.controller.detailSection === "schedule"
-        onActivated: content.controller.selectDate(new Date(
-            content.controller.selectedDate.getFullYear(),
-            content.controller.selectedDate.getMonth(),
-            content.controller.selectedDate.getDate() + 1))
+        enabled: content.controller.uiActive && content.controller.detailsOpen && content.controller.detailSection === "schedule"
+        onActivated: content.controller.selectDate(new Date(content.controller.selectedDate.getFullYear(), content.controller.selectedDate.getMonth(), content.controller.selectedDate.getDate() + 1))
     }
     Shortcut {
         sequence: "PageUp"

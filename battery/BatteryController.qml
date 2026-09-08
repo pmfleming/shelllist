@@ -8,23 +8,59 @@ import "BatteryPresentation.js" as Presentation
 Ui.ChooserController {
     id: controller
 
-    property var battery: ({ available: false, percentage: 0, devices: [],
-        policy: ({ warning_percent: 25, critical_percent: 12, notify_when_full: true,
-            auto_power_saver: true }),
-        protection: ({ supported: false, managed: false, enabled: false,
-            desired_enabled: false, desired_start_percent: 75,
-            desired_end_percent: 80, charge_once_active: false }) })
-    property var powerProfile: ({ available: false, profile: "", profiles: [],
-        performance_degraded: "", battery_aware: null, actions: [], active_holds: [] })
-    property var powerSleep: ({ available: false, can_suspend: "no", can_hibernate: "no",
-        preparing_for_sleep: false, lock_before_sleep: true, inhibitors: [] })
+    property var battery: ({
+            available: false,
+            percentage: 0,
+            devices: [],
+            policy: ({
+                    warning_percent: 25,
+                    critical_percent: 12,
+                    notify_when_full: true,
+                    auto_power_saver: true
+                }),
+            protection: ({
+                    supported: false,
+                    managed: false,
+                    enabled: false,
+                    desired_enabled: false,
+                    desired_start_percent: 75,
+                    desired_end_percent: 80,
+                    charge_once_active: false
+                })
+        })
+    property var powerProfile: ({
+            available: false,
+            profile: "",
+            profiles: [],
+            performance_degraded: "",
+            battery_aware: null,
+            actions: [],
+            active_holds: []
+        })
+    property var powerSleep: ({
+            available: false,
+            can_suspend: "no",
+            can_hibernate: "no",
+            preparing_for_sleep: false,
+            lock_before_sleep: true,
+            inhibitors: []
+        })
     property string lastError: ""
     property string refreshError: ""
     property string screenshotStatus: ""
     readonly property var viewTabs: [
-        { value: "overview", label: "Overview" },
-        { value: "care", label: "Battery care" },
-        { value: "power", label: "Power & sleep" }
+        {
+            value: "overview",
+            label: "Overview"
+        },
+        {
+            value: "care",
+            label: "Battery care"
+        },
+        {
+            value: "power",
+            label: "Power & sleep"
+        }
     ]
     property string viewTab: "overview"
     property int selectedDeviceIndex: 0
@@ -50,11 +86,21 @@ Ui.ChooserController {
     property int alertSentRevision: 0
     property string thresholdSaveError: ""
     property string alertSaveError: ""
-    property var batteryHistory: ({ points: [], last_charge_timestamp_ms: 0,
-        latest_timestamp_ms: 0, retention_days: 7 })
+    property var batteryHistory: ({
+            points: [],
+            last_charge_timestamp_ms: 0,
+            latest_timestamp_ms: 0,
+            retention_days: 7
+        })
     property string energyPeriod: "last-charge"
-    property var energyLastCharge: ({ applications: [], total_energy_mwh: 0 })
-    property var energyWeek: ({ applications: [], total_energy_mwh: 0 })
+    property var energyLastCharge: ({
+            applications: [],
+            total_energy_mwh: 0
+        })
+    property var energyWeek: ({
+            applications: [],
+            total_energy_mwh: 0
+        })
     property double energyLastChargeUpdatedMs: 0
     property double energyWeekUpdatedMs: 0
     property string energyError: ""
@@ -67,57 +113,52 @@ Ui.ChooserController {
     navigationPrimaryEnabled: false
     readonly property BatteryBackend backend: batteryBackend
     readonly property BatteryEnergyBackend energyBackend: batteryEnergyBackend
-    readonly property var energyOverview: energyPeriod === "week"
-        ? energyWeek : energyLastCharge
+    readonly property var energyOverview: energyPeriod === "week" ? energyWeek : energyLastCharge
     readonly property bool energyLoading: energyRequestsInFlight > 0
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
     readonly property var primaryDevice: selectedDevice
-    readonly property var batteryOperation: battery.operation || ({ kind: "" })
-    readonly property bool operationForSelected: !!selectedDevice
-        && batteryOperation.battery_id === selectedDevice.id
-    readonly property bool chargingInhibited: operationForSelected
-        && batteryOperation.kind === "inhibit"
-    readonly property bool calibrating: operationForSelected
-        && batteryOperation.kind === "calibration"
+    readonly property var batteryOperation: battery.operation || ({
+            kind: ""
+        })
+    readonly property bool operationForSelected: !!selectedDevice && batteryOperation.battery_id === selectedDevice.id
+    readonly property bool chargingInhibited: operationForSelected && batteryOperation.kind === "inhibit"
+    readonly property bool calibrating: operationForSelected && batteryOperation.kind === "calibration"
     readonly property bool batteryOperationActive: Flow.operationActive(battery)
     readonly property bool protectionSupported: !!selectedDevice && !!protection.supported
-    readonly property bool inhibitionSupported: !!selectedDevice
-        && (protection.available_behaviours || []).indexOf("inhibit-charge") >= 0
-    readonly property bool calibrationSupported: protectionSupported
-        && (protection.available_behaviours || []).indexOf("force-discharge") >= 0
+    readonly property bool inhibitionSupported: !!selectedDevice && (protection.available_behaviours || []).indexOf("inhibit-charge") >= 0
+    readonly property bool calibrationSupported: protectionSupported && (protection.available_behaviours || []).indexOf("force-discharge") >= 0
     readonly property var profileOptions: (powerProfile.profiles || []).map(function (profile) {
-        const labels = { "power-saver": "Power saver", "balanced": "Balanced",
-            "performance": "Performance" };
-        return { value: profile.name, label: labels[profile.name] || profile.name };
+        const labels = {
+            "power-saver": "Power saver",
+            "balanced": "Balanced",
+            "performance": "Performance"
+        };
+        return {
+            value: profile.name,
+            label: labels[profile.name] || profile.name
+        };
     })
-    readonly property bool thresholdDraftValid: Presentation.thresholdRangeValid(
-        draftStartPercent, draftEndPercent)
-    readonly property bool alertDraftValid: Presentation.alertRangeValid(
-        draftWarningPercent, draftCriticalPercent)
-    readonly property bool settingsOperationActive: thresholdOperationActive
-        || alertOperationActive
-    readonly property string thresholdSaveStatus: !thresholdDraftValid
-        ? "Choose a valid range"
-        : (thresholdOperationActive ? "Applying automatically…"
-            : (thresholdSaveError.length > 0 ? "Automatic apply failed"
-                : (thresholdDraftDirty ? "Waiting to apply…" : "Applied automatically")))
-    readonly property string alertSaveStatus: !alertDraftValid
-        ? "Choose a valid alert range"
-        : (alertOperationActive ? "Applying automatically…"
-            : (alertSaveError.length > 0 ? "Automatic apply failed"
-                : (alertDraftDirty ? "Waiting to apply…" : "Applied automatically")))
+    readonly property bool thresholdDraftValid: Presentation.thresholdRangeValid(draftStartPercent, draftEndPercent)
+    readonly property bool alertDraftValid: Presentation.alertRangeValid(draftWarningPercent, draftCriticalPercent)
+    readonly property bool settingsOperationActive: thresholdOperationActive || alertOperationActive
+    readonly property string thresholdSaveStatus: !thresholdDraftValid ? "Choose a valid range" : (thresholdOperationActive ? "Applying automatically…" : (thresholdSaveError.length > 0 ? "Automatic apply failed" : (thresholdDraftDirty ? "Waiting to apply…" : "Applied automatically")))
+    readonly property string alertSaveStatus: !alertDraftValid ? "Choose a valid alert range" : (alertOperationActive ? "Applying automatically…" : (alertSaveError.length > 0 ? "Automatic apply failed" : (alertDraftDirty ? "Waiting to apply…" : "Applied automatically")))
 
     function valueOr(value: var, fallback: var): var {
         return value === null || value === undefined ? fallback : value;
     }
 
     function selectViewTab(tab: string): void {
-        if (viewTabs.some(function (option) { return option.value === tab; }))
+        if (viewTabs.some(function (option) {
+            return option.value === tab;
+        }))
             viewTab = tab;
     }
 
     function cycleViewTab(): bool {
-        const index = viewTabs.findIndex(function (option) { return option.value === viewTab; });
+        const index = viewTabs.findIndex(function (option) {
+            return option.value === viewTab;
+        });
         viewTab = viewTabs[(index + 1) % viewTabs.length].value;
         return true;
     }
@@ -141,7 +182,11 @@ Ui.ChooserController {
     }
 
     function applyBattery(value: var): void {
-        const nextBattery = value || ({ available: false, percentage: 0, devices: [] });
+        const nextBattery = value || ({
+                available: false,
+                percentage: 0,
+                devices: []
+            });
         const changes = Flow.historyChanges(nextBattery, batteryHistory);
         battery = nextBattery;
         if (uiActive && changes.history)
@@ -168,25 +213,37 @@ Ui.ChooserController {
 
     function applyBatteryHistory(value: var): void {
         const previousCharge = Number(batteryHistory.last_charge_timestamp_ms || 0);
-        batteryHistory = value || ({ points: [], last_charge_timestamp_ms: 0,
-            latest_timestamp_ms: 0, retention_days: 7 });
+        batteryHistory = value || ({
+                points: [],
+                last_charge_timestamp_ms: 0,
+                latest_timestamp_ms: 0,
+                retention_days: 7
+            });
         if (uiActive && Number(batteryHistory.last_charge_timestamp_ms || 0) !== previousCharge)
             requestEnergyPeriod("last-charge", true);
     }
 
     function applyPowerProfile(value: var): void {
-        powerProfile = value || ({ available: false, profile: "", profiles: [] });
+        powerProfile = value || ({
+                available: false,
+                profile: "",
+                profiles: []
+            });
     }
 
     function applyPowerSleep(value: var): void {
-        powerSleep = value || ({ available: false, inhibitors: [] });
+        powerSleep = value || ({
+                available: false,
+                inhibitors: []
+            });
     }
 
     function selectDevice(batteryId: string): void {
         const devices = battery.devices || [];
-        const index = devices.findIndex(function (device) { return device.id === batteryId; });
-        if (index < 0 || actionInFlight || settingsOperationActive
-                || (selectedDevice && selectedDevice.id === batteryId))
+        const index = devices.findIndex(function (device) {
+            return device.id === batteryId;
+        });
+        if (index < 0 || actionInFlight || settingsOperationActive || (selectedDevice && selectedDevice.id === batteryId))
             return;
         thresholdAutoSave.stop();
         selectedDeviceIndex = index;
@@ -196,10 +253,10 @@ Ui.ChooserController {
 
     function applyDomainEvent(kind: string, data: var): void {
         const handlers = ({
-            battery: applyBattery,
-            powerProfile: applyPowerProfile,
-            powerSleep: applyPowerSleep
-        });
+                battery: applyBattery,
+                powerProfile: applyPowerProfile,
+                powerSleep: applyPowerSleep
+            });
         if (handlers[kind])
             handlers[kind](data);
     }
@@ -393,19 +450,14 @@ Ui.ChooserController {
     }
 
     function flushThresholdPolicy(): bool {
-        if (thresholdEditing || thresholdOperationActive || actionInFlight || batteryOperationActive
-                || !protectionSupported || !thresholdDraftValid || !thresholdDraftDirty
-                || !selectedDevice)
+        if (thresholdEditing || thresholdOperationActive || actionInFlight || batteryOperationActive || !protectionSupported || !thresholdDraftValid || !thresholdDraftDirty || !selectedDevice)
             return false;
         thresholdSentRevision = thresholdRevision;
         protectionSentRevision = protectionRevision;
         thresholdOperationActive = true;
         thresholdSaveError = "";
         lastError = "";
-        const started = protectionRevision !== protectionAcknowledgedRevision
-            ? backend.setProtection(selectedDevice.id, draftProtectionEnabled,
-                draftStartPercent, draftEndPercent)
-            : backend.setThresholds(selectedDevice.id, draftStartPercent, draftEndPercent);
+        const started = protectionRevision !== protectionAcknowledgedRevision ? backend.setProtection(selectedDevice.id, draftProtectionEnabled, draftStartPercent, draftEndPercent) : backend.setThresholds(selectedDevice.id, draftStartPercent, draftEndPercent);
         if (started)
             return true;
         thresholdOperationActive = false;
@@ -415,26 +467,21 @@ Ui.ChooserController {
     }
 
     function chargeOnce(): bool {
-        if (actionInFlight || thresholdOperationActive || batteryOperationActive
-                || !protectionSupported || !battery.plugged || !selectedDevice)
+        if (actionInFlight || thresholdOperationActive || batteryOperationActive || !protectionSupported || !battery.plugged || !selectedDevice)
             return false;
         return startOperation(backend.chargeOnce(selectedDevice.id));
     }
 
     function setChargingInhibited(enabled: bool): bool {
-        if (actionInFlight || thresholdOperationActive || !inhibitionSupported || !selectedDevice
-                || (batteryOperationActive && !chargingInhibited))
+        if (actionInFlight || thresholdOperationActive || !inhibitionSupported || !selectedDevice || (batteryOperationActive && !chargingInhibited))
             return false;
         return startOperation(backend.setChargingInhibited(selectedDevice.id, enabled));
     }
 
     function toggleCalibration(): bool {
-        if (actionInFlight || thresholdOperationActive || !calibrationSupported || !selectedDevice
-                || (!calibrating && (!battery.plugged || batteryOperationActive)))
+        if (actionInFlight || thresholdOperationActive || !calibrationSupported || !selectedDevice || (!calibrating && (!battery.plugged || batteryOperationActive)))
             return false;
-        return startOperation(calibrating
-            ? backend.cancelCalibration(selectedDevice.id)
-            : backend.startCalibration(selectedDevice.id));
+        return startOperation(calibrating ? backend.cancelCalibration(selectedDevice.id) : backend.startCalibration(selectedDevice.id));
     }
 
     function flushAlertPolicy(): bool {
@@ -444,8 +491,7 @@ Ui.ChooserController {
         alertOperationActive = true;
         alertSaveError = "";
         lastError = "";
-        if (backend.setAlertPolicy(draftWarningPercent, draftCriticalPercent,
-                draftNotifyWhenFull, draftAutoPowerSaver))
+        if (backend.setAlertPolicy(draftWarningPercent, draftCriticalPercent, draftNotifyWhenFull, draftAutoPowerSaver))
             return true;
         alertOperationActive = false;
         alertSaveError = "Unable to send the battery alert policy";
@@ -454,36 +500,33 @@ Ui.ChooserController {
     }
 
     function setPowerProfile(profile: string): bool {
-        if (actionInFlight || !powerProfile.available
-                || !profileOptions.some(function (option) { return option.value === profile; }))
+        if (actionInFlight || !powerProfile.available || !profileOptions.some(function (option) {
+            return option.value === profile;
+        }))
             return false;
         return startOperation(backend.setPowerProfile(profile));
     }
 
     function setBatteryAware(enabled: bool): bool {
-        if (actionInFlight || !powerProfile.available || powerProfile.battery_aware === null
-                || powerProfile.battery_aware === undefined)
+        if (actionInFlight || !powerProfile.available || powerProfile.battery_aware === null || powerProfile.battery_aware === undefined)
             return false;
         return startOperation(backend.setBatteryAware(enabled));
     }
 
     function setPowerActionEnabled(action: string, enabled: bool): bool {
-        if (actionInFlight || !powerProfile.available
-                || !(powerProfile.actions || []).some(function (item) { return item.name === action; }))
+        if (actionInFlight || !powerProfile.available || !(powerProfile.actions || []).some(function (item) {
+            return item.name === action;
+        }))
             return false;
         return startOperation(backend.setPowerActionEnabled(action, enabled));
     }
 
     function powerSleepAction(action: string): bool {
-        if (actionInFlight || !powerSleep.available
-                || ["lock", "suspend", "hibernate"].indexOf(action) < 0
-                || (action !== "lock" && powerSleep.preparing_for_sleep))
+        if (actionInFlight || !powerSleep.available || ["lock", "suspend", "hibernate"].indexOf(action) < 0 || (action !== "lock" && powerSleep.preparing_for_sleep))
             return false;
-        if (action === "suspend" && !Presentation.sleepCapabilityAvailable(
-                powerSleep.can_suspend))
+        if (action === "suspend" && !Presentation.sleepCapabilityAvailable(powerSleep.can_suspend))
             return false;
-        if (action === "hibernate" && !Presentation.sleepCapabilityAvailable(
-                powerSleep.can_hibernate))
+        if (action === "hibernate" && !Presentation.sleepCapabilityAvailable(powerSleep.can_hibernate))
             return false;
         return startOperation(backend.powerSleepAction(action));
     }
@@ -499,8 +542,7 @@ Ui.ChooserController {
         if (!uiActive || energyRequestsInFlight > 0)
             return;
         const updated = period === "week" ? energyWeekUpdatedMs : energyLastChargeUpdatedMs;
-        const request = Flow.energyRequest(period, forceRefresh, Date.now(), updated,
-            Number(batteryHistory.last_charge_timestamp_ms || 0));
+        const request = Flow.energyRequest(period, forceRefresh, Date.now(), updated, Number(batteryHistory.last_charge_timestamp_ms || 0));
         if (!request)
             return;
         energyError = "";
@@ -509,7 +551,10 @@ Ui.ChooserController {
     }
 
     function storeEnergyOverview(period: string, overview: var): void {
-        const value = overview || ({ applications: [], total_energy_mwh: 0 });
+        const value = overview || ({
+                applications: [],
+                total_energy_mwh: 0
+            });
         if (period === "last-charge") {
             energyLastCharge = value;
             energyLastChargeUpdatedMs = Date.now();
@@ -521,8 +566,7 @@ Ui.ChooserController {
     function applyEnergyOverview(id: string, overview: var): void {
         energyRequestsInFlight = 0;
         energyError = "";
-        const returnedPeriod = id.indexOf("battery-energy-last-charge-") === 0
-            ? "last-charge" : "week";
+        const returnedPeriod = id.indexOf("battery-energy-last-charge-") === 0 ? "last-charge" : "week";
         storeEnergyOverview(returnedPeriod, overview);
         if (returnedPeriod !== energyPeriod)
             requestEnergyPeriod(energyPeriod, false);
@@ -599,6 +643,12 @@ Ui.ChooserController {
         onTriggered: controller.requestEnergyPeriod(controller.energyPeriod, true)
     }
 
-    BatteryBackend { id: batteryBackend; controller: controller }
-    BatteryEnergyBackend { id: batteryEnergyBackend; controller: controller }
+    BatteryBackend {
+        id: batteryBackend
+        controller: controller
+    }
+    BatteryEnergyBackend {
+        id: batteryEnergyBackend
+        controller: controller
+    }
 }

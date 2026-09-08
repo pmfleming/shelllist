@@ -18,7 +18,9 @@ Item {
     }
 
     function descriptors(): var {
-        return Array.prototype.map.call(providers, function (item) { return item.descriptor(); });
+        return Array.prototype.map.call(providers, function (item) {
+            return item.descriptor();
+        });
     }
 
     function validate(): bool {
@@ -71,9 +73,9 @@ Item {
             return null;
         const actions = actionsFor(result);
         const requested = itemProvider.primaryActionIdFor(result);
-        return Model.actionById(actions, requested)
-            || actions.find(function (item) { return item.role === "default" && item.visible; })
-            || null;
+        return Model.actionById(actions, requested) || actions.find(function (item) {
+            return item.role === "default" && item.visible;
+        }) || null;
     }
 
     function executionProvider(result: var, actionId: string): var {
@@ -116,7 +118,12 @@ Item {
     }
 
     function reject(code: string, message: string, resultKey: string, actionId: string): bool {
-        actionRejected({ code: code, message: message, resultKey: resultKey || "", actionId: actionId || "" });
+        actionRejected({
+            code: code,
+            message: message,
+            resultKey: resultKey || "",
+            actionId: actionId || ""
+        });
         return false;
     }
 

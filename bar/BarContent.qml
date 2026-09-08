@@ -11,30 +11,35 @@ Item {
     required property string screenName
     property date now
     readonly property int layoutDensity: Presentation.layoutDensity(width)
-    readonly property real leftExtent: activeWindowChip.visible
-        ? activeWindowChip.x + activeWindowChip.width : workspaceCluster.width
-    readonly property real centerClearance: Math.max(0, 2 * Math.min(
-        width / 2 - leftExtent - 8,
-        width / 2 - statusCluster.width - 8))
+    readonly property real leftExtent: activeWindowChip.visible ? activeWindowChip.x + activeWindowChip.width : workspaceCluster.width
+    readonly property real centerClearance: Math.max(0, 2 * Math.min(width / 2 - leftExtent - 8, width / 2 - statusCluster.width - 8))
     readonly property var toneColors: ({
-        text: Ui.Theme.text, muted: Ui.Theme.mutedText, accent: Ui.Theme.accent,
-        success: Ui.Theme.active, danger: Ui.Theme.danger, warning: Ui.Theme.warning
-    })
-    readonly property var statusDescriptors: Presentation.visibleStatusModules(
-        controller.statusModules(now), layoutDensity)
+            text: Ui.Theme.text,
+            muted: Ui.Theme.mutedText,
+            accent: Ui.Theme.accent,
+            success: Ui.Theme.active,
+            danger: Ui.Theme.danger,
+            warning: Ui.Theme.warning
+        })
+    readonly property var statusDescriptors: Presentation.visibleStatusModules(controller.statusModules(now), layoutDensity)
 
-    function moduleColor(tone: string): color { return toneColors[tone] || Ui.Theme.text; }
-    function neutralTone(tone: string): bool { return ["text", "muted"].includes(tone); }
+    function moduleColor(tone: string): color {
+        return toneColors[tone] || Ui.Theme.text;
+    }
+    function neutralTone(tone: string): bool {
+        return ["text", "muted"].includes(tone);
+    }
     function moduleBackground(tone: string): color {
         const foreground = moduleColor(tone);
-        const base = Ui.Theme.mix(Ui.Theme.surfaceRaised, foreground,
-            neutralTone(tone) ? 0.02 : 0.08);
+        const base = Ui.Theme.mix(Ui.Theme.surfaceRaised, foreground, neutralTone(tone) ? 0.02 : 0.08);
         return Ui.Theme.withAlpha(base, 0.62);
     }
     function rebuildStatusModel(): void {
         statusModel.clear();
         for (let index = 0; index < statusDescriptors.length; index++)
-            statusModel.append({ descriptor: statusDescriptors[index] });
+            statusModel.append({
+                descriptor: statusDescriptors[index]
+            });
     }
     function syncStatusModel(): void {
         if (statusModel.count !== statusDescriptors.length) {
@@ -66,9 +71,18 @@ Item {
         color: Ui.Theme.withAlpha(Ui.Theme.window, 0.80)
         gradient: Gradient {
             orientation: Gradient.Horizontal
-            GradientStop { position: 0; color: Ui.Theme.withAlpha(Ui.Theme.window, 0.88) }
-            GradientStop { position: 0.5; color: Ui.Theme.withAlpha(Ui.Theme.surface, 0.76) }
-            GradientStop { position: 1; color: Ui.Theme.withAlpha(Ui.Theme.window, 0.88) }
+            GradientStop {
+                position: 0
+                color: Ui.Theme.withAlpha(Ui.Theme.window, 0.88)
+            }
+            GradientStop {
+                position: 0.5
+                color: Ui.Theme.withAlpha(Ui.Theme.surface, 0.76)
+            }
+            GradientStop {
+                position: 1
+                color: Ui.Theme.withAlpha(Ui.Theme.window, 0.88)
+            }
         }
 
         Rectangle {
@@ -147,12 +161,10 @@ Item {
 
                 height: parent.height
                 text: Presentation.moduleText(descriptor, root.layoutDensity)
-                horizontalPadding: root.layoutDensity === 0 ? 10
-                    : root.layoutDensity === 1 ? 7 : 5
+                horizontalPadding: root.layoutDensity === 0 ? 10 : root.layoutDensity === 1 ? 7 : 5
                 foreground: root.moduleColor(descriptor.tone)
                 backgroundColor: root.moduleBackground(descriptor.tone)
-                borderColor: Ui.Theme.withAlpha(root.moduleColor(descriptor.tone),
-                    root.neutralTone(descriptor.tone) ? 0.16 : 0.34)
+                borderColor: Ui.Theme.withAlpha(root.moduleColor(descriptor.tone), root.neutralTone(descriptor.tone) ? 0.16 : 0.34)
                 fontWeight: descriptor.weight
                 interactive: descriptor.interactive
                 onPrimaryTriggered: root.controller.triggerModuleAction(descriptor.primary)

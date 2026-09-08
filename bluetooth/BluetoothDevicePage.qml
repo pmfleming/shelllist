@@ -21,8 +21,7 @@ Ui.DetailFlickable {
 
     Item {
         width: parent.width
-        height: noiseControl.visible
-            ? noiseControl.y + noiseControl.implicitHeight : batteryStatus.implicitHeight
+        height: noiseControl.visible ? noiseControl.y + noiseControl.implicitHeight : batteryStatus.implicitHeight
 
         BluetoothBatteryStatus {
             id: batteryStatus
@@ -54,14 +53,21 @@ Ui.DetailFlickable {
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             options: page.controller.selectedAudioProfiles.map(function (profile) {
-                return { value: profile.key, label: profile.label, enabled: profile.available !== false };
+                return {
+                    value: profile.key,
+                    label: profile.label,
+                    enabled: profile.available !== false
+                };
             })
             value: page.controller.selectedAudio.active_profile_key || ""
             placeholder: page.hasAudioProfiles ? "Select audio profile" : "No audio profiles available"
             interactive: !page.controller.actionInFlight && page.hasAudioProfiles
             onSelected: function (value) {
-                const profile = page.controller.selectedAudioProfiles.find(function (entry) { return entry.key === value; });
-                if (profile) page.controller.setAudioProfile(profile);
+                const profile = page.controller.selectedAudioProfiles.find(function (entry) {
+                    return entry.key === value;
+                });
+                if (profile)
+                    page.controller.setAudioProfile(profile);
             }
         }
 
@@ -87,10 +93,22 @@ Ui.DetailFlickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
             entries: [
-                { label: "Active codec", value: page.controller.activeAudioProfile.codec || page.controller.activeAudioProfile.label || "Unavailable" },
-                { label: "Available profiles", value: String(page.controller.selectedAudioProfiles.length) },
-                { label: "Output", value: page.routeLabel(page.controller.selectedSink, page.controller.selectedAudio.sink !== null && page.controller.selectedAudio.sink !== undefined) },
-                { label: "Input", value: page.routeLabel(page.controller.selectedSource, page.controller.selectedAudio.source !== null && page.controller.selectedAudio.source !== undefined) }
+                {
+                    label: "Active codec",
+                    value: page.controller.activeAudioProfile.codec || page.controller.activeAudioProfile.label || "Unavailable"
+                },
+                {
+                    label: "Available profiles",
+                    value: String(page.controller.selectedAudioProfiles.length)
+                },
+                {
+                    label: "Output",
+                    value: page.routeLabel(page.controller.selectedSink, page.controller.selectedAudio.sink !== null && page.controller.selectedAudio.sink !== undefined)
+                },
+                {
+                    label: "Input",
+                    value: page.routeLabel(page.controller.selectedSource, page.controller.selectedAudio.source !== null && page.controller.selectedAudio.source !== undefined)
+                }
             ]
         }
     }
@@ -106,16 +124,21 @@ Ui.DetailFlickable {
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             options: NoiseControl.availableModes(soundCard.control).map(function (mode) {
-                return { value: mode.value, label: mode.label, enabled: (soundCard.control.settable_modes || []).includes(mode.value) };
+                return {
+                    value: mode.value,
+                    label: mode.label,
+                    enabled: (soundCard.control.settable_modes || []).includes(mode.value)
+                };
             })
             value: soundCard.control.active_mode || ""
             interactive: !page.controller.actionInFlight && !!soundCard.caps.can_set_noise_control
-            onSelected: function (mode) { page.controller.setNoiseControl(mode); }
+            onSelected: function (mode) {
+                page.controller.setNoiseControl(mode);
+            }
         }
         Ui.ThemeText {
             Layout.fillWidth: true
-            text: soundCard.caps.can_set_noise_control ? "Only modes currently allowed by the earbuds can be selected."
-                : ((soundCard.caps.unsupported_reasons || {}).set_noise_control || "Fast Pair account-key provisioning is required.")
+            text: soundCard.caps.can_set_noise_control ? "Only modes currently allowed by the earbuds can be selected." : ((soundCard.caps.unsupported_reasons || {}).set_noise_control || "Fast Pair account-key provisioning is required.")
             wrapMode: Text.WordWrap
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.fontSizeSmall

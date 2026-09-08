@@ -89,8 +89,7 @@ QtObject {
             const route = session.routes[id];
             // Keep pending subscription replies routable so their daemon-issued
             // IDs can be cancelled even after the consumer has disappeared.
-            if (route.consumerId === consumerId
-                    && route.kind !== "base-subscription" && route.kind !== "subscription")
+            if (route.consumerId === consumerId && route.kind !== "base-subscription" && route.kind !== "subscription")
                 delete session.routes[id];
         });
         updateSession(session);
@@ -129,7 +128,11 @@ QtObject {
         if (!session)
             throw new Error("Shared daemon session is unavailable");
         const id = namespace(consumerId, localId);
-        session.routes[id] = { consumerId: consumerId, localId: localId, kind: "call" };
+        session.routes[id] = {
+            consumerId: consumerId,
+            localId: localId,
+            kind: "call"
+        };
         session.client.call(id, method, params);
     }
 
@@ -140,7 +143,11 @@ QtObject {
         delete session.subscriptionOwners[requestId];
         const localId = cancellationId || ("cancel-" + requestId);
         const id = namespace(consumerId, localId);
-        session.routes[id] = { consumerId: consumerId, localId: localId, kind: "control" };
+        session.routes[id] = {
+            consumerId: consumerId,
+            localId: localId,
+            kind: "control"
+        };
         session.client.cancel(id, requestId);
     }
 
@@ -148,8 +155,7 @@ QtObject {
         const session = sessions[daemonName];
         if (!session)
             throw new Error("Shared daemon session is unavailable");
-        const transportLocalId = base
-            ? localId + "::" + (++session.subscriptionSequence) : localId;
+        const transportLocalId = base ? localId + "::" + (++session.subscriptionSequence) : localId;
         const id = namespace(consumerId, transportLocalId);
         session.routes[id] = {
             consumerId: consumerId,

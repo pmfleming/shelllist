@@ -1,22 +1,59 @@
 .pragma library
 
-const componentOrder = ({ left: 0, right: 1, case: 2, main: 3 });
-const visualComponentOrder = ({ left: 0, case: 1, right: 2, main: 3 });
+const componentOrder = ({
+        left: 0,
+        right: 1,
+        case: 2,
+        main: 3
+    });
+const visualComponentOrder = ({
+        left: 0,
+        case: 1,
+        right: 2,
+        main: 3
+    });
 const componentImages = ({
-    left: "assets/audio/left-earbud.png",
-    right: "assets/audio/right-earbud.png",
-    case: "assets/audio/charging-case.png"
-});
+        left: "assets/audio/left-earbud.png",
+        right: "assets/audio/right-earbud.png",
+        case: "assets/audio/charging-case.png"
+    });
 const deviceImageRules = [
-    { terms: ["earbuds"], image: "assets/audio/left-earbud.png" },
-    { terms: ["headphones"], image: "assets/audio/headphones.png" },
-    { terms: ["headset"], image: "assets/audio/headset.png" },
-    { terms: ["speaker", "audio-card"], image: "assets/devices/speaker.png" },
-    { terms: ["keyboard"], image: "assets/devices/keyboard.png" },
-    { terms: ["mouse"], image: "assets/devices/mouse.png" },
-    { terms: ["gaming", "gamepad", "joystick"], image: "assets/devices/game-controller.png" },
-    { terms: ["phone"], image: "assets/devices/phone.png" },
-    { terms: ["computer", "laptop"], image: "assets/devices/computer.png" }
+    {
+        terms: ["earbuds"],
+        image: "assets/audio/left-earbud.png"
+    },
+    {
+        terms: ["headphones"],
+        image: "assets/audio/headphones.png"
+    },
+    {
+        terms: ["headset"],
+        image: "assets/audio/headset.png"
+    },
+    {
+        terms: ["speaker", "audio-card"],
+        image: "assets/devices/speaker.png"
+    },
+    {
+        terms: ["keyboard"],
+        image: "assets/devices/keyboard.png"
+    },
+    {
+        terms: ["mouse"],
+        image: "assets/devices/mouse.png"
+    },
+    {
+        terms: ["gaming", "gamepad", "joystick"],
+        image: "assets/devices/game-controller.png"
+    },
+    {
+        terms: ["phone"],
+        image: "assets/devices/phone.png"
+    },
+    {
+        terms: ["computer", "laptop"],
+        image: "assets/devices/computer.png"
+    }
 ];
 const unknownDeviceImage = "assets/devices/unknown-device.png";
 
@@ -25,11 +62,7 @@ function componentName(report) {
 }
 
 function isValid(report) {
-    return !!report
-        && typeof report.percentage === "number"
-        && isFinite(report.percentage)
-        && report.percentage >= 0
-        && report.percentage <= 100;
+    return !!report && typeof report.percentage === "number" && isFinite(report.percentage) && report.percentage >= 0 && report.percentage <= 100;
 }
 
 function orderValue(report) {
@@ -38,14 +71,17 @@ function orderValue(report) {
 }
 
 function ordered(reports) {
-    return (reports || [])
-        .filter(isValid)
-        .map(function (report, index) { return { report: report, index: index }; })
-        .sort(function (left, right) {
-            const componentDifference = orderValue(left.report) - orderValue(right.report);
-            return componentDifference !== 0 ? componentDifference : left.index - right.index;
-        })
-        .map(function (entry) { return entry.report; });
+    return (reports || []).filter(isValid).map(function (report, index) {
+        return {
+            report: report,
+            index: index
+        };
+    }).sort(function (left, right) {
+        const componentDifference = orderValue(left.report) - orderValue(right.report);
+        return componentDifference !== 0 ? componentDifference : left.index - right.index;
+    }).map(function (entry) {
+        return entry.report;
+    });
 }
 
 function visuallySorted(reports) {
@@ -80,7 +116,13 @@ function displayReports(device) {
     const current = ordered((device && device.battery) || []);
     const components = rememberedComponents(device);
     if (components.length === 0)
-        return current.length > 0 ? visualOrdered(current) : [{ component: "main", percentage: -1, source: "" }];
+        return current.length > 0 ? visualOrdered(current) : [
+            {
+                component: "main",
+                percentage: -1,
+                source: ""
+            }
+        ];
     const byComponent = ({});
     current.forEach(function (report) {
         const component = componentName(report);
@@ -110,7 +152,9 @@ function serviceText(device) {
 
 function matchingDeviceImage(text) {
     const match = deviceImageRules.find(function (rule) {
-        return rule.terms.some(function (term) { return text.indexOf(term) >= 0; });
+        return rule.terms.some(function (term) {
+            return text.indexOf(term) >= 0;
+        });
     });
     return match ? match.image : "";
 }
@@ -120,8 +164,7 @@ function serviceImage(device) {
     const headset = services.indexOf("handsfree") >= 0 || services.indexOf("headset") >= 0;
     if (headset)
         return "assets/audio/headset.png";
-    return services.indexOf("audio sink") >= 0
-        ? "assets/audio/headphones.png" : unknownDeviceImage;
+    return services.indexOf("audio sink") >= 0 ? "assets/audio/headphones.png" : unknownDeviceImage;
 }
 
 function deviceImage(device) {
@@ -155,7 +198,6 @@ function compactLabel(report) {
 function summary(reports) {
     return ordered(reports).map(function (report) {
         const label = compactLabel(report);
-        return (label.length > 0 ? label + " " : "") + report.percentage + "%"
-            + (report.charging === true ? " charging" : "");
+        return (label.length > 0 ? label + " " : "") + report.percentage + "%" + (report.charging === true ? " charging" : "");
     }).join(" · ");
 }

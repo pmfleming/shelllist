@@ -10,8 +10,15 @@ Item {
     // The duration selection is shared by the agenda and notification pane.
     // Zero means indefinite; enabled/disabled is a separate daemon-owned state.
     property int dndDurationMinutes: 30
-    property var notifications: ({ available: false, count: 0, dnd: false })
-    property var notificationActive: ({ available: false, notifications: [] })
+    property var notifications: ({
+            available: false,
+            count: 0,
+            dnd: false
+        })
+    property var notificationActive: ({
+            available: false,
+            notifications: []
+        })
     property var history: []
     property bool historyLoading: false
     property bool historyHasMore: false
@@ -23,10 +30,8 @@ Item {
     property var replies: ({})
     property var expandedGroups: ({})
     readonly property var activeNotifications: notificationActive.notifications || []
-    readonly property var activeGroups: Ui.NotificationPresentation.groupRecords(
-        Ui.NotificationPresentation.newestFirst(activeNotifications))
-    readonly property var recentNotifications: Ui.NotificationPresentation.recentRecords(
-        activeNotifications, history)
+    readonly property var activeGroups: Ui.NotificationPresentation.groupRecords(Ui.NotificationPresentation.newestFirst(activeNotifications))
+    readonly property var recentNotifications: Ui.NotificationPresentation.recentRecords(activeNotifications, history)
     readonly property int draftCount: Object.keys(drafts).filter(function (key) {
         return String(notificationState.drafts[key] || "").length > 0;
     }).length
@@ -39,7 +44,9 @@ Item {
             notificationActive = snapshot.notification_active;
     }
     function isActive(id: int): bool {
-        return activeNotifications.some(function (notification) { return notification.id === id; });
+        return activeNotifications.some(function (notification) {
+            return notification.id === id;
+        });
     }
     function isGroupActive(key: string): bool {
         return activeNotifications.some(function (notification) {
@@ -61,7 +68,10 @@ Item {
     }
     function setReplyState(id: int, pending: bool, error: string): void {
         const next = Object.assign({}, replies);
-        next[id] = { pending: pending, error: error };
+        next[id] = {
+            pending: pending,
+            error: error
+        };
         replies = next;
     }
     function finishReply(id: int, sentText: string, error: string): void {
@@ -107,7 +117,9 @@ Item {
         const values = Array.isArray(records) ? records : [];
         const hadHistory = history.length > 0;
         const overlap = values.some(function (record) {
-            return notificationState.history.some(function (old) { return old.history_id === record.history_id; });
+            return notificationState.history.some(function (old) {
+                return old.history_id === record.history_id;
+            });
         });
         history = Ui.NotificationPresentation.mergeHistory(history, values);
         if (!refresh || !hadHistory)
@@ -127,31 +139,42 @@ Item {
         historyError = message;
     }
     function setDndEnabled(enabled: bool): bool {
-        return backend.setDnd(enabled, enabled && dndDurationMinutes > 0
-            ? Date.now() + dndDurationMinutes * 60000 : null);
+        return backend.setDnd(enabled, enabled && dndDurationMinutes > 0 ? Date.now() + dndDurationMinutes * 60000 : null);
     }
     function cycleDndDuration(): void {
-        dndDurationMinutes = dndDurationMinutes === 30 ? 60
-            : dndDurationMinutes === 60 ? 0 : 30;
+        dndDurationMinutes = dndDurationMinutes === 30 ? 60 : dndDurationMinutes === 60 ? 0 : 30;
         if (notifications.dnd)
             setDndEnabled(true);
     }
-    function dismissNotification(id: int): bool { return backend.dismiss(id); }
-    function clearNotifications(): bool { return backend.clear(); }
-    function clearNotificationGroup(key: string): bool { return backend.clearGroup(key); }
+    function dismissNotification(id: int): bool {
+        return backend.dismiss(id);
+    }
+    function clearNotifications(): bool {
+        return backend.clear();
+    }
+    function clearNotificationGroup(key: string): bool {
+        return backend.clearGroup(key);
+    }
     function snoozeNotification(id: int, minutes: int): bool {
         return backend.snooze(id, Date.now() + minutes * 60000);
     }
-    function invokeNotificationAction(id: int, key: string): bool { return backend.invoke(id, key); }
+    function invokeNotificationAction(id: int, key: string): bool {
+        return backend.invoke(id, key);
+    }
 
     onNotificationsChanged: scheduleHistory()
     onNotificationActiveChanged: scheduleHistory()
-    onHistoryEnabledChanged: if (historyEnabled) scheduleHistory()
+    onHistoryEnabledChanged: if (historyEnabled)
+        scheduleHistory()
 
     Timer {
         id: historyDebounce
         interval: 120
-        onTriggered: if (notificationState.historyEnabled) notificationState.reloadHistory()
+        onTriggered: if (notificationState.historyEnabled)
+            notificationState.reloadHistory()
     }
-    NotificationBackend { id: notificationBackend; store: notificationState }
+    NotificationBackend {
+        id: notificationBackend
+        store: notificationState
+    }
 }

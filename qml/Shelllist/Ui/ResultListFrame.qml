@@ -16,13 +16,14 @@ Rectangle {
 
     signal keyPressed(var event)
 
-    function focusList() { list.forceActiveFocus(); }
+    function focusList() {
+        list.forceActiveFocus();
+    }
     function revealSelection() {
         // ListView tracks the old delegate through inserts/moves/removals, even
         // when the controller's index has not changed. Reconcile from the
         // logical selection after model changes, never from that delegate.
-        const index = frame.selectedIndex >= 0 && frame.selectedIndex < list.count
-            ? frame.selectedIndex : -1;
+        const index = frame.selectedIndex >= 0 && frame.selectedIndex < list.count ? frame.selectedIndex : -1;
         list.currentIndex = index;
         if (index >= 0)
             list.positionViewAtIndex(index, ListView.Contain);
@@ -74,7 +75,8 @@ Rectangle {
         }
     }
 
-    Component.onCompleted: if (controller.uiActive) Qt.callLater(revealSelection)
+    Component.onCompleted: if (controller.uiActive)
+        Qt.callLater(revealSelection)
 
     Rectangle {
         anchors.left: parent.left
@@ -85,13 +87,21 @@ Rectangle {
         opacity: list.count > 0 && !list.atYBeginning ? 1 : 0
         gradient: Gradient {
             orientation: Gradient.Vertical
-            GradientStop { position: 0; color: Theme.surface }
-            GradientStop { position: 1; color: Theme.withAlpha(Theme.surface, 0) }
+            GradientStop {
+                position: 0
+                color: Theme.surface
+            }
+            GradientStop {
+                position: 1
+                color: Theme.withAlpha(Theme.surface, 0)
+            }
         }
 
         Behavior on opacity {
             enabled: !Theme.noAnimations
-            NumberAnimation { duration: Theme.animationFast }
+            NumberAnimation {
+                duration: Theme.animationFast
+            }
         }
     }
 
@@ -104,13 +114,21 @@ Rectangle {
         opacity: list.count > 0 && !list.atYEnd ? 1 : 0
         gradient: Gradient {
             orientation: Gradient.Vertical
-            GradientStop { position: 0; color: Theme.withAlpha(Theme.surface, 0) }
-            GradientStop { position: 1; color: Theme.surface }
+            GradientStop {
+                position: 0
+                color: Theme.withAlpha(Theme.surface, 0)
+            }
+            GradientStop {
+                position: 1
+                color: Theme.surface
+            }
         }
 
         Behavior on opacity {
             enabled: !Theme.noAnimations
-            NumberAnimation { duration: Theme.animationFast }
+            NumberAnimation {
+                duration: Theme.animationFast
+            }
         }
     }
 

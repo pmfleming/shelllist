@@ -14,9 +14,13 @@ Column {
     GlanceWeatherCard {
         width: pane.width
         height: Math.max(88, Math.min(96, pane.height * 0.11))
-        weather: pane.controller.activity.weather || ({ available: false })
+        weather: pane.controller.activity.weather || ({
+                available: false
+            })
         now: pane.now
-        onRequested: function (section) { pane.controller.requestTimeWeather(section); }
+        onRequested: function (section) {
+            pane.controller.requestTimeWeather(section);
+        }
     }
 
     GlanceScheduleCard {

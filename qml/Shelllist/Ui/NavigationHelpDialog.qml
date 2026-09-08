@@ -13,13 +13,34 @@ ModalFrame {
     property var entries: []
 
     readonly property var standardEntries: [
-        { keys: "↑ / ↓", action: "Move selection" },
-        { keys: "J / K", action: "Move selection while the list is focused" },
-        { keys: "Enter", action: "Run the primary action" },
-        { keys: "→ / ←", action: "Open / close details" },
-        { keys: "Ctrl+Alt+← / →", action: "Switch Shelllist surface" },
-        { keys: "Esc", action: "Close the current layer, then the chooser" },
-        { keys: "? / F1", action: "Show / hide this shortcut guide" }
+        {
+            keys: "↑ / ↓",
+            action: "Move selection"
+        },
+        {
+            keys: "J / K",
+            action: "Move selection while the list is focused"
+        },
+        {
+            keys: "Enter",
+            action: "Run the primary action"
+        },
+        {
+            keys: "→ / ←",
+            action: "Open / close details"
+        },
+        {
+            keys: "Ctrl+Alt+← / →",
+            action: "Switch Shelllist surface"
+        },
+        {
+            keys: "Esc",
+            action: "Close the current layer, then the chooser"
+        },
+        {
+            keys: "? / F1",
+            action: "Show / hide this shortcut guide"
+        }
     ]
     readonly property var detailEntries: detailActionEntries()
     readonly property var allEntries: standardEntries.concat(entries || [], detailEntries)
@@ -32,8 +53,7 @@ ModalFrame {
 
     function visibleDetailAction(action: var): bool {
         const shortcut = String(action.shortcut || "").toLowerCase();
-        return shortcut.length > 0 && shortcut.indexOf("enter") < 0
-            && action.visible !== false;
+        return shortcut.length > 0 && shortcut.indexOf("enter") < 0 && action.visible !== false;
     }
     function detailActionEntry(action: var): var {
         return {
@@ -42,9 +62,7 @@ ModalFrame {
         };
     }
     function detailActionEntries(): var {
-        return controller.detailsOpen
-            ? (controller.detailActions || []).filter(visibleDetailAction).map(detailActionEntry)
-            : [];
+        return controller.detailsOpen ? (controller.detailActions || []).filter(visibleDetailAction).map(detailActionEntry) : [];
     }
 
     Shortcut {
@@ -85,8 +103,7 @@ ModalFrame {
                 width: ListView.view.width
                 height: Theme.compactControlHeight
                 radius: Theme.controlRadius
-                color: index % 2 === 0
-                    ? Theme.withAlpha(Theme.surfaceRaised, 0.72) : "transparent"
+                color: index % 2 === 0 ? Theme.withAlpha(Theme.surfaceRaised, 0.72) : "transparent"
 
                 RowLayout {
                     anchors.fill: parent

@@ -13,11 +13,9 @@ ActionDetailsPane {
     readonly property int detailControlHeight: Math.max(36, Math.round(42 * uiScale))
     readonly property int footerHeight: detailControlHeight
     readonly property string connectionLabel: Presentation.connectionStateLabel(controller, ap)
-    readonly property bool signInRequired: Presentation.connectivityRequiresSignIn(
-        Presentation.activeConnectivity(controller))
+    readonly property bool signInRequired: Presentation.connectivityRequiresSignIn(Presentation.activeConnectivity(controller))
     readonly property color connectionColor: signInRequired ? Theme.warning : Theme.active
-    readonly property real cardBudget: Math.max(420,
-        bodyHeight - footerHeight - 3 * sectionSpacing - 2)
+    readonly property real cardBudget: Math.max(420, bodyHeight - footerHeight - 3 * sectionSpacing - 2)
     readonly property real connectionCardHeight: Math.max(220, Math.round(cardBudget * 0.44))
     readonly property real networkCardHeight: Math.max(130, Math.round(cardBudget * 0.255))
     readonly property real profileCardHeight: Math.max(150, cardBudget - connectionCardHeight - networkCardHeight)
@@ -44,13 +42,14 @@ ActionDetailsPane {
     subtitleWeight: Theme.fontWeightMedium
     actions: controller.detailActions
     actionWidth: 156
-    onActionTriggered: function (actionId) { controller.triggerDetailAction(actionId); }
+    onActionTriggered: function (actionId) {
+        controller.triggerDetailAction(actionId);
+    }
 
     Item {
         id: tabViewport
 
-        property real advancedTransitionProgress: pane.controller.advanced.open
-            && advancedLoader.status === Loader.Ready ? 1 : 0
+        property real advancedTransitionProgress: pane.controller.advanced.open && advancedLoader.status === Loader.Ready ? 1 : 0
 
         width: parent.width
         height: Math.max(0, parent.height - pane.footerHeight - pane.sectionSpacing)
@@ -65,8 +64,7 @@ ActionDetailsPane {
         }
 
         NetworkDetailCards {
-            enabled: !pane.controller.advanced.open
-                || advancedLoader.status !== Loader.Ready
+            enabled: !pane.controller.advanced.open || advancedLoader.status !== Loader.Ready
             width: parent.width
             height: parent.height
             x: -width * tabViewport.advancedTransitionProgress
@@ -81,8 +79,7 @@ ActionDetailsPane {
         Loader {
             id: advancedLoader
 
-            active: pane.controller.advanced.open
-                || tabViewport.advancedTransitionProgress > 0
+            active: pane.controller.advanced.open || tabViewport.advancedTransitionProgress > 0
             asynchronous: true
             enabled: pane.controller.advanced.open
             width: parent.width
@@ -98,8 +95,7 @@ ActionDetailsPane {
 
         PulsingLabel {
             anchors.centerIn: parent
-            visible: pane.controller.advanced.open
-                && advancedLoader.status === Loader.Loading
+            visible: pane.controller.advanced.open && advancedLoader.status === Loader.Loading
             text: qsTr("Loading advanced settings…")
             color: Theme.mutedText
             font.family: Theme.fontFamily
@@ -113,10 +109,26 @@ ActionDetailsPane {
         height: pane.footerHeight
         selectedValue: pane.controller.detailsTab
         tabs: [
-            { value: "network", icon: "󰋜", label: "Network Details" },
-            { value: "security", icon: "󰌾", label: "Security & Privacy", enabled: !!pane.controller.profileFor(pane.ap) },
-            { value: "hardware", icon: "󰍹", label: "IP & DNS", enabled: !!pane.controller.profileFor(pane.ap) }
+            {
+                value: "network",
+                icon: "󰋜",
+                label: "Network Details"
+            },
+            {
+                value: "security",
+                icon: "󰌾",
+                label: "Security & Privacy",
+                enabled: !!pane.controller.profileFor(pane.ap)
+            },
+            {
+                value: "hardware",
+                icon: "󰍹",
+                label: "IP & DNS",
+                enabled: !!pane.controller.profileFor(pane.ap)
+            }
         ]
-        onSelected: function (value) { pane.controller.selectDetailsTab(value); }
+        onSelected: function (value) {
+            pane.controller.selectDetailsTab(value);
+        }
     }
 }

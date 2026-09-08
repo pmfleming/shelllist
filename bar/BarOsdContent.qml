@@ -2,9 +2,8 @@ import QtQuick
 import Shelllist.Ui as Ui
 
 Rectangle {
-    required property BarController controller
-
     id: surface
+    required property BarController controller
 
     anchors.left: parent.left
     anchors.right: parent.right
@@ -132,8 +131,7 @@ Rectangle {
 
                 Rectangle {
                     objectName: "osdProgressThumb"
-                    x: Math.max(0, Math.min(track.width - width,
-                        progressFill.width - width / 2))
+                    x: Math.max(0, Math.min(track.width - width, progressFill.width - width / 2))
                     anchors.verticalCenter: parent.verticalCenter
                     width: 18
                     height: 18
@@ -164,7 +162,8 @@ Rectangle {
                 text: surface.controller.osd.valueLabel
                 font.pixelSize: Ui.Theme.fontSizeLabel
                 font.weight: Ui.Theme.fontWeightDemiBold
-                onTextChanged: if (!Ui.Theme.noAnimations) valuePulse.restart()
+                onTextChanged: if (!Ui.Theme.noAnimations)
+                    valuePulse.restart()
             }
 
             SequentialAnimation {

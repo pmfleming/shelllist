@@ -18,9 +18,7 @@ Ui.DetailFlickable {
     readonly property int dataCardHeight: Math.max(250, availableCardHeight - previewCardHeight)
 
     Ui.DetailCard {
-        title: cards.entry.kind
-            ? cards.entry.kind.charAt(0).toUpperCase() + cards.entry.kind.slice(1)
-            : "Clipboard item"
+        title: cards.entry.kind ? cards.entry.kind.charAt(0).toUpperCase() + cards.entry.kind.slice(1) : "Clipboard item"
         height: cards.previewCardHeight
 
         Image {
@@ -36,8 +34,7 @@ Ui.DetailFlickable {
         TextEdit {
             visible: !cards.detailState.thumbnail && cards.detailState.value && cards.detailState.value.text !== null
             anchors.fill: parent
-            text: cards.detailState.editing ? cards.detailState.editDraft
-                : (cards.detailState.value ? (cards.detailState.value.text || "") : "")
+            text: cards.detailState.editing ? cards.detailState.editDraft : (cards.detailState.value ? (cards.detailState.value.text || "") : "")
             color: Ui.Theme.text
             selectionColor: Ui.Theme.selected
             selectedTextColor: Ui.Theme.text
@@ -45,7 +42,8 @@ Ui.DetailFlickable {
             font.pixelSize: Ui.Theme.fontSizeBody
             readOnly: !cards.detailState.editing || cards.detailState.saveInFlight
             selectByMouse: true
-            onActiveFocusChanged: if (cards.directTextEdit) cards.detailState.setEditorFocused(activeFocus)
+            onActiveFocusChanged: if (cards.directTextEdit)
+                cards.detailState.setEditorFocused(activeFocus)
             onTextChanged: if (cards.detailState.editing && activeFocus) {
                 if (cards.directTextEdit)
                     cards.detailState.updateEditDraft(text);
@@ -56,8 +54,7 @@ Ui.DetailFlickable {
         }
         Ui.CenteredMessage {
             anchors.fill: parent
-            visible: !cards.detailState.thumbnail
-                && (!cards.detailState.value || cards.detailState.value.text === null)
+            visible: !cards.detailState.thumbnail && (!cards.detailState.value || cards.detailState.value.text === null)
             text: qsTr("Binary preview is unavailable")
             font.pixelSize: Ui.Theme.fontSizeBody
         }
@@ -73,21 +70,24 @@ Ui.DetailFlickable {
 
             Ui.DetailGrid {
                 anchors.fill: parent
-                entries: [{
-                    label: "Type",
-                    value: cards.entry.kind || "—"
-                }, {
-                    label: "MIME",
-                    value: cards.entry.mime || "—"
-                }, {
-                    label: "Size",
-                    value: Ui.Format.bytes(cards.entry.byte_size)
-                }, {
-                    label: "Dimensions",
-                    value: cards.imageFacts
-                        ? cards.imageFacts.width + " × " + cards.imageFacts.height
-                        : "—"
-                }]
+                entries: [
+                    {
+                        label: "Type",
+                        value: cards.entry.kind || "—"
+                    },
+                    {
+                        label: "MIME",
+                        value: cards.entry.mime || "—"
+                    },
+                    {
+                        label: "Size",
+                        value: Ui.Format.bytes(cards.entry.byte_size)
+                    },
+                    {
+                        label: "Dimensions",
+                        value: cards.imageFacts ? cards.imageFacts.width + " × " + cards.imageFacts.height : "—"
+                    }
+                ]
             }
         }
 

@@ -11,9 +11,12 @@ Item {
     height: 0
     visible: false
 
-    function refresh(): void { now = new Date(); }
+    function refresh(): void {
+        now = new Date();
+    }
 
-    onActiveChanged: if (active) refresh()
+    onActiveChanged: if (active)
+        refresh()
     Component.onCompleted: refresh()
 
     Timer {

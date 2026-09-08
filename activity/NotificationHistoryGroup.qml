@@ -19,19 +19,23 @@ Rectangle {
     radius: Ui.Theme.cardRadius
     color: expanded && multiple ? Ui.Theme.withAlpha(Ui.Theme.surface, 0.72) : "transparent"
     border.width: 1
-    border.color: controller.selectedGroupKey === group.key
-        ? Ui.Theme.accent : expanded && multiple ? Ui.Theme.border : "transparent"
+    border.color: controller.selectedGroupKey === group.key ? Ui.Theme.accent : expanded && multiple ? Ui.Theme.border : "transparent"
 
     function rebuildRecords(): void {
         Ui.NotificationPresentation.syncKeyedModel(recordsModel, visibleRecords.map(function (record) {
             const notification = Ui.NotificationPresentation.notificationFor(record);
-            return { key: record.history_id !== undefined ? "history:" + record.history_id
-                : "active:" + notification.id, payload: record };
+            return {
+                key: record.history_id !== undefined ? "history:" + record.history_id : "active:" + notification.id,
+                payload: record
+            };
         }));
     }
     onVisibleRecordsChanged: rebuildRecords()
     Component.onCompleted: rebuildRecords()
-    ListModel { id: recordsModel; dynamicRoles: true }
+    ListModel {
+        id: recordsModel
+        dynamicRoles: true
+    }
 
     Behavior on implicitHeight {
         enabled: !Ui.Theme.noAnimations

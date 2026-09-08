@@ -22,14 +22,8 @@ Column {
 
         Ui.FieldLabel {
             Layout.fillWidth: true
-            text: pane.controller.powerProfile.available
-                ? "Driver: " + (pane.controller.powerProfile.driver || "unknown")
-                    + (pane.controller.powerProfile.version
-                        ? " · power-profiles-daemon "
-                            + pane.controller.powerProfile.version : "")
-                : "power-profiles-daemon is unavailable"
-            color: pane.controller.powerProfile.available
-                ? Ui.Theme.mutedText : Ui.Theme.warning
+            text: pane.controller.powerProfile.available ? "Driver: " + (pane.controller.powerProfile.driver || "unknown") + (pane.controller.powerProfile.version ? " · power-profiles-daemon " + pane.controller.powerProfile.version : "") : "power-profiles-daemon is unavailable"
+            color: pane.controller.powerProfile.available ? Ui.Theme.mutedText : Ui.Theme.warning
         }
 
         Ui.SegmentedControl {
@@ -37,9 +31,10 @@ Column {
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             options: pane.controller.profileOptions
             value: pane.controller.powerProfile.profile || ""
-            interactive: pane.controller.powerProfile.available
-                && !pane.controller.actionInFlight
-            onSelected: function (value) { pane.controller.setPowerProfile(value); }
+            interactive: pane.controller.powerProfile.available && !pane.controller.actionInFlight
+            onSelected: function (value) {
+                pane.controller.setPowerProfile(value);
+            }
         }
 
         Ui.ToggleRow {
@@ -47,8 +42,7 @@ Column {
             Layout.fillWidth: true
             Layout.preferredHeight: 42
             title: qsTr("Automatic power saver")
-            subtitle: "Hold power saver below " + pane.controller.draftWarningPercent
-                + "% · threshold in Battery care"
+            subtitle: "Hold power saver below " + pane.controller.draftWarningPercent + "% · threshold in Battery care"
             checked: pane.controller.draftAutoPowerSaver
             interactive: !pane.controller.actionInFlight
             onClicked: pane.controller.updateAutoPowerSaver(!checked)
@@ -65,8 +59,7 @@ Column {
         Ui.FieldLabel {
             Layout.fillWidth: true
             visible: !!pane.controller.powerProfile.performance_degraded
-            text: "Performance is limited: "
-                + pane.controller.powerProfile.performance_degraded
+            text: "Performance is limited: " + pane.controller.powerProfile.performance_degraded
             color: Ui.Theme.warning
         }
 
@@ -85,13 +78,11 @@ Column {
         Ui.ToggleRow {
             Layout.fillWidth: true
             Layout.preferredHeight: 42
-            visible: pane.controller.powerProfile.battery_aware !== null
-                && pane.controller.powerProfile.battery_aware !== undefined
+            visible: pane.controller.powerProfile.battery_aware !== null && pane.controller.powerProfile.battery_aware !== undefined
             title: qsTr("Battery-aware profiles")
             subtitle: "Let the daemon adapt profiles to battery state"
             checked: !!pane.controller.powerProfile.battery_aware
-            interactive: pane.controller.powerProfile.available
-                && !pane.controller.actionInFlight
+            interactive: pane.controller.powerProfile.available && !pane.controller.actionInFlight
             onClicked: pane.controller.setBatteryAware(!checked)
         }
 
@@ -105,10 +96,8 @@ Column {
                 title: Presentation.actionName(modelData.name)
                 subtitle: modelData.description || "Power-saving action"
                 checked: !!modelData.enabled
-                interactive: pane.controller.powerProfile.available
-                    && !pane.controller.actionInFlight
-                onClicked: pane.controller.setPowerActionEnabled(
-                    modelData.name, !checked)
+                interactive: pane.controller.powerProfile.available && !pane.controller.actionInFlight
+                onClicked: pane.controller.setPowerActionEnabled(modelData.name, !checked)
             }
         }
     }
@@ -120,13 +109,8 @@ Column {
 
         Ui.FieldLabel {
             Layout.fillWidth: true
-            text: pane.controller.powerSleep.available
-                ? (pane.controller.powerSleep.preparing_for_sleep
-                    ? "Preparing the session for sleep"
-                    : "Requests a session lock through logind before sleeping")
-                : "systemd-logind sleep controls are unavailable"
-            color: pane.controller.powerSleep.available
-                ? Ui.Theme.mutedText : Ui.Theme.warning
+            text: pane.controller.powerSleep.available ? (pane.controller.powerSleep.preparing_for_sleep ? "Preparing the session for sleep" : "Requests a session lock through logind before sleeping") : "systemd-logind sleep controls are unavailable"
+            color: pane.controller.powerSleep.available ? Ui.Theme.mutedText : Ui.Theme.warning
         }
 
         RowLayout {
@@ -136,28 +120,21 @@ Column {
             Ui.ActionButton {
                 Layout.fillWidth: true
                 label: "Lock"
-                enabled: pane.controller.powerSleep.available
-                    && !pane.controller.actionInFlight
+                enabled: pane.controller.powerSleep.available && !pane.controller.actionInFlight
                 onClicked: pane.controller.powerSleepAction("lock")
             }
 
             Ui.ActionButton {
                 Layout.fillWidth: true
                 label: "Suspend"
-                enabled: pane.controller.powerSleep.available
-                    && Presentation.sleepCapabilityAvailable(pane.controller.powerSleep.can_suspend)
-                    && !pane.controller.powerSleep.preparing_for_sleep
-                    && !pane.controller.actionInFlight
+                enabled: pane.controller.powerSleep.available && Presentation.sleepCapabilityAvailable(pane.controller.powerSleep.can_suspend) && !pane.controller.powerSleep.preparing_for_sleep && !pane.controller.actionInFlight
                 onClicked: pane.controller.powerSleepAction("suspend")
             }
 
             Ui.ActionButton {
                 Layout.fillWidth: true
                 label: "Hibernate"
-                enabled: pane.controller.powerSleep.available
-                    && Presentation.sleepCapabilityAvailable(pane.controller.powerSleep.can_hibernate)
-                    && !pane.controller.powerSleep.preparing_for_sleep
-                    && !pane.controller.actionInFlight
+                enabled: pane.controller.powerSleep.available && Presentation.sleepCapabilityAvailable(pane.controller.powerSleep.can_hibernate) && !pane.controller.powerSleep.preparing_for_sleep && !pane.controller.actionInFlight
                 onClicked: pane.controller.powerSleepAction("hibernate")
             }
         }
@@ -174,5 +151,4 @@ Column {
             }
         }
     }
-
 }

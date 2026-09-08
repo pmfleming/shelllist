@@ -47,22 +47,8 @@ var streams = {
     wifi_secret: Protocol.streams["wifi.secret"]
 };
 
-var subscribedStreams = [
-    streams.wifi_status,
-    streams.network_connectivity,
-    streams.network_health,
-    streams.wifi_networks,
-    streams.wifi_scan,
-    streams.wifi_connect,
-    streams.wifi_band,
-    streams.wifi_secret
-];
+var subscribedStreams = [streams.wifi_status, streams.network_connectivity, streams.network_health, streams.wifi_networks, streams.wifi_scan, streams.wifi_connect, streams.wifi_band, streams.wifi_secret];
 
 // Streams tied to an operation the shell starts on demand. Subscribing to
 // them by default would make the daemon compute payloads nobody is reading.
-var onDemandStreams = [
-    streams.network_inventory,
-    streams.network_statistics,
-    streams.hotspot,
-    streams.vpn
-];
+var onDemandStreams = [streams.network_inventory, streams.network_statistics, streams.hotspot, streams.vpn];

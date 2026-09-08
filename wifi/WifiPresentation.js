@@ -1,20 +1,37 @@
 .pragma library
 
-function networkName(network) { return network && network.ssid ? network.ssid : "<hidden>"; }
-function securityLabel(security) { return security === "--" ? "Open" : (security || "Unknown"); }
-function subnetLabel(ip4) { return ip4 && ip4.prefix !== null && ip4.prefix !== undefined ? "/" + ip4.prefix : "—"; }
-function dnsLabel(ip4) { return ip4 && ip4.dns && ip4.dns.length > 0 ? ip4.dns.join(", ") : "—"; }
-function hasNumber(value) { return value !== null && value !== undefined && !isNaN(value); }
-function valueOr(source, key, fallback) { return source && source[key] !== undefined && source[key] !== null ? source[key] : fallback; }
-function privacyFor(profile) { return profile && profile.privacy ? profile.privacy : ({}); }
+function networkName(network) {
+    return network && network.ssid ? network.ssid : "<hidden>";
+}
+function securityLabel(security) {
+    return security === "--" ? "Open" : (security || "Unknown");
+}
+function subnetLabel(ip4) {
+    return ip4 && ip4.prefix !== null && ip4.prefix !== undefined ? "/" + ip4.prefix : "—";
+}
+function dnsLabel(ip4) {
+    return ip4 && ip4.dns && ip4.dns.length > 0 ? ip4.dns.join(", ") : "—";
+}
+function hasNumber(value) {
+    return value !== null && value !== undefined && !isNaN(value);
+}
+function valueOr(source, key, fallback) {
+    return source && source[key] !== undefined && source[key] !== null ? source[key] : fallback;
+}
+function privacyFor(profile) {
+    return profile && profile.privacy ? profile.privacy : ({});
+}
 function leaseDurationLabel(seconds) {
     const total = Math.max(0, Number(seconds) || 0);
-    if (total === 0) return "—";
+    if (total === 0)
+        return "—";
     const days = Math.floor(total / 86400);
     const hours = Math.floor((total % 86400) / 3600);
     const minutes = Math.floor((total % 3600) / 60);
-    if (days > 0) return days + "d" + (hours > 0 ? " " + hours + "h" : "");
-    if (hours > 0) return hours + "h" + (minutes > 0 ? " " + minutes + "m" : "");
+    if (days > 0)
+        return days + "d" + (hours > 0 ? " " + hours + "h" : "");
+    if (hours > 0)
+        return hours + "h" + (minutes > 0 ? " " + minutes + "m" : "");
     return Math.max(1, minutes) + "m";
 }
 function leaseExpiryLabel(milliseconds) {
@@ -44,12 +61,19 @@ function detailConnectionStatus(controller) {
 }
 function networkUsageLabel(activeStatus) {
     const metered = activeStatus && activeStatus.metered ? activeStatus.metered : null;
-    const labels = { yes: "Metered", no: "Unmetered", "guess-yes": "Probably metered", "guess-no": "Probably unmetered" };
+    const labels = {
+        yes: "Metered",
+        no: "Unmetered",
+        "guess-yes": "Probably metered",
+        "guess-no": "Probably unmetered"
+    };
     return metered ? (labels[metered.state] || "Unknown") : "—";
 }
 function relativeAgeLabel(seconds) {
-    if (seconds < 5) return "just now";
-    if (seconds < 60) return seconds + "s ago";
+    if (seconds < 5)
+        return "just now";
+    if (seconds < 60)
+        return seconds + "s ago";
     const minutes = Math.round(seconds / 60);
     return minutes < 60 ? minutes + "m ago" : Math.round(minutes / 60) + "h ago";
 }
@@ -65,10 +89,14 @@ function connectionStateLabel(controller, ap) {
     if (!controller.isActive(ap) || !controller.activeStatus)
         return "";
     const connectivity = activeConnectivity(controller);
-    if (connectivityRequiresSignIn(connectivity)) return "Sign in required";
-    if (!connectivity || connectivity.state === "unknown") return "Checking internet access…";
-    if (connectivity.state === "none") return "No internet access";
-    if (connectivity.state === "limited") return "Limited connectivity";
+    if (connectivityRequiresSignIn(connectivity))
+        return "Sign in required";
+    if (!connectivity || connectivity.state === "unknown")
+        return "Checking internet access…";
+    if (connectivity.state === "none")
+        return "No internet access";
+    if (connectivity.state === "limited")
+        return "Limited connectivity";
     return connectivity.full || connectivity.state === "full" ? "Connected" : "Checking internet access…";
 }
 function lastSeenLabel(ap) {
@@ -78,27 +106,64 @@ function lastSeenLabel(ap) {
         return "Last seen: scan result available";
     return "Last seen: " + relativeAgeLabel(Math.max(0, Math.round(ap.last_seen_age_ms / 1000)));
 }
-function statusValue(status, value) { return status ? value : "—"; }
+function statusValue(status, value) {
+    return status ? value : "—";
+}
 function formatMbps(value) {
-    if (!hasNumber(value)) return "—";
+    if (!hasNumber(value))
+        return "—";
     const rounded = Math.round(value * 10) / 10;
     return (Math.abs(rounded - Math.round(rounded)) < 0.01 ? Math.round(rounded) : rounded) + " Mbps";
 }
-function wirelessBitrate(status, wireless, field) { return status && wireless ? formatMbps(wireless[field]) : "—"; }
-function hasDirectionalBitrate(wireless) { return !!wireless && (hasNumber(wireless.tx_bitrate_mbps) || hasNumber(wireless.rx_bitrate_mbps)); }
+function wirelessBitrate(status, wireless, field) {
+    return status && wireless ? formatMbps(wireless[field]) : "—";
+}
+function hasDirectionalBitrate(wireless) {
+    return !!wireless && (hasNumber(wireless.tx_bitrate_mbps) || hasNumber(wireless.rx_bitrate_mbps));
+}
 function connectionDetailRows(controller, ap, accentColor) {
     const status = detailConnectionStatus(controller);
     const ip4 = valueOr(status, "ip4", null);
     return [
-        { label: "Signal strength", value: valueOr(ap, "strength", 0) + "%", valueColor: accentColor, valueBold: true },
-        { label: "IP address", value: valueOr(ip4, "address", "—") },
-        { label: "Frequency", value: frequencyLabel(ap) },
-        { label: "Gateway", value: valueOr(ip4, "gateway", "—") },
-        { label: "Band", value: bandLabel(ap) },
-        { label: "Security", value: securityLabel(valueOr(ap, "security", "")) },
-        { label: "Subnet", value: statusValue(status, subnetLabel(ip4)) },
-        { label: "Network usage", value: statusValue(status, networkUsageLabel(status)) },
-        { label: "DNS", value: statusValue(status, dnsLabel(ip4)), valueWidth: 220 }
+        {
+            label: "Signal strength",
+            value: valueOr(ap, "strength", 0) + "%",
+            valueColor: accentColor,
+            valueBold: true
+        },
+        {
+            label: "IP address",
+            value: valueOr(ip4, "address", "—")
+        },
+        {
+            label: "Frequency",
+            value: frequencyLabel(ap)
+        },
+        {
+            label: "Gateway",
+            value: valueOr(ip4, "gateway", "—")
+        },
+        {
+            label: "Band",
+            value: bandLabel(ap)
+        },
+        {
+            label: "Security",
+            value: securityLabel(valueOr(ap, "security", ""))
+        },
+        {
+            label: "Subnet",
+            value: statusValue(status, subnetLabel(ip4))
+        },
+        {
+            label: "Network usage",
+            value: statusValue(status, networkUsageLabel(status))
+        },
+        {
+            label: "DNS",
+            value: statusValue(status, dnsLabel(ip4)),
+            valueWidth: 220
+        }
     ];
 }
 function networkDetailRows(controller, ap) {
@@ -106,10 +171,25 @@ function networkDetailRows(controller, ap) {
     const wireless = valueOr(status, "wireless", null);
     const directional = hasDirectionalBitrate(wireless);
     return [
-        { label: "Type", value: wifiType(ap) },
-        { label: directional ? "Transmit link speed" : "Link speed", value: wirelessBitrate(status, wireless, directional ? "tx_bitrate_mbps" : "bitrate_mbps") },
-        { label: "BSSID", value: valueOr(ap, "bssid", "—") },
-        { label: "Receive link speed", value: wirelessBitrate(status, wireless, "rx_bitrate_mbps") },
-        { label: "Device MAC", value: valueOr(wireless, "mac_address", "—") }
+        {
+            label: "Type",
+            value: wifiType(ap)
+        },
+        {
+            label: directional ? "Transmit link speed" : "Link speed",
+            value: wirelessBitrate(status, wireless, directional ? "tx_bitrate_mbps" : "bitrate_mbps")
+        },
+        {
+            label: "BSSID",
+            value: valueOr(ap, "bssid", "—")
+        },
+        {
+            label: "Receive link speed",
+            value: wirelessBitrate(status, wireless, "rx_bitrate_mbps")
+        },
+        {
+            label: "Device MAC",
+            value: valueOr(wireless, "mac_address", "—")
+        }
     ];
 }

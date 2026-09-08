@@ -21,11 +21,9 @@ Rectangle {
     Keys.onSpacePressed: selected(modelData.id)
 
     radius: Ui.Theme.controlRadius
-    color: locationCard.selectedId === modelData.id
-        ? Ui.Theme.selected : Ui.Theme.surfaceRaised
+    color: locationCard.selectedId === modelData.id ? Ui.Theme.selected : Ui.Theme.surfaceRaised
     border.width: locationCard.selectedId === modelData.id ? 2 : 1
-    border.color: activeFocus || locationCard.selectedId === modelData.id
-        ? Ui.Theme.accent : Ui.Theme.border
+    border.color: activeFocus || locationCard.selectedId === modelData.id ? Ui.Theme.accent : Ui.Theme.border
 
     Ui.ThemeText {
         anchors.left: parent.left
@@ -44,10 +42,8 @@ Rectangle {
         anchors.top: parent.top
         anchors.rightMargin: 9
         anchors.topMargin: 7
-        text: (locationCard.modelData.home ? "⌂  " : "")
-            + Visuals.weatherTime(locationCard.now.getTime(), locationCard.modelData)
-        color: locationCard.modelData.home
-            ? Ui.Theme.accent : Ui.Theme.subtleText
+        text: (locationCard.modelData.home ? "⌂  " : "") + Visuals.weatherTime(locationCard.now.getTime(), locationCard.modelData)
+        color: locationCard.modelData.home ? Ui.Theme.accent : Ui.Theme.subtleText
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 
@@ -80,8 +76,7 @@ Rectangle {
         spacing: 1
         Ui.ThemeText {
             anchors.right: parent.right
-            text: Visuals.numberLabel(locationCard.modelData.high_c, "°")
-                + "  " + Visuals.numberLabel(locationCard.modelData.low_c, "°")
+            text: Visuals.numberLabel(locationCard.modelData.high_c, "°") + "  " + Visuals.numberLabel(locationCard.modelData.low_c, "°")
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.fontSizeCaption
         }
@@ -95,8 +90,7 @@ Rectangle {
                 fillMode: Image.PreserveAspectFit
             }
             Ui.ThemeText {
-                text: Visuals.numberLabel(
-                    locationCard.modelData.precipitation_probability, "%")
+                text: Visuals.numberLabel(locationCard.modelData.precipitation_probability, "%")
                 color: Ui.Theme.accent
                 font.pixelSize: Ui.Theme.fontSizeCaption
             }

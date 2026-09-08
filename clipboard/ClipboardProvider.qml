@@ -11,12 +11,23 @@ Core.Provider {
     icon: "󰅇"
     priority: 100
     prefixes: ["clipboard:", "clip:"]
-    capabilities: ({ query: true, actions: true, preview: true, subscriptions: true })
+    capabilities: ({
+            query: true,
+            actions: true,
+            preview: true,
+            subscriptions: true
+        })
 
     function iconFor(kind) {
         const icons = {
-            text: "󰦨", link: "󰌷", image: "󰋩", files: "󰉋",
-            html: "󰌝", json: "󰘦", color: "󰏘", binary: "󰞷"
+            text: "󰦨",
+            link: "󰌷",
+            image: "󰋩",
+            files: "󰉋",
+            html: "󰌝",
+            json: "󰘦",
+            color: "󰏘",
+            binary: "󰞷"
         };
         return icons[kind] || icons.binary;
     }
@@ -25,22 +36,34 @@ Core.Provider {
         return value.charAt(0).toUpperCase() + value.slice(1);
     }
     function badgesFor(entry) {
-        if (entry.current) return ["current"];
+        if (entry.current)
+            return ["current"];
         return entry.favorite ? ["favorite"] : [];
     }
     function resultForEntry(entry, historyScore) {
         const kind = entry.kind || "binary";
         const preview = entry.preview || labelFor(kind) + " clipboard entry";
         return Core.Model.result({
-            providerId: providerId, providerPriority: priority, id: entry.id,
+            providerId: providerId,
+            providerPriority: priority,
+            id: entry.id,
             title: preview,
             subtitle: labelFor(kind) + " · " + (entry.mime || "unknown") + " · " + entry.byte_size + " bytes",
-            icon: iconFor(kind), score: historyScore,
-            keywords: [preview, entry.mime || "", kind], badges: badgesFor(entry),
+            icon: iconFor(kind),
+            score: historyScore,
+            keywords: [preview, entry.mime || "", kind],
+            badges: badgesFor(entry),
             primaryActionId: kind === "binary" ? "copy" : "paste",
             actions: ClipApi.actionDescriptorsForKind(kind),
-            preview: { kind: "clipboard-entry", available: true },
-            state: { active: false, busy: false }, payload: entry
+            preview: {
+                kind: "clipboard-entry",
+                available: true
+            },
+            state: {
+                active: false,
+                busy: false
+            },
+            payload: entry
         });
     }
     function resultsForEntries(entries) {
@@ -52,5 +75,7 @@ Core.Provider {
     function query(request) {
         controller.requestHistory(request.id, request.text, request.generation, request.limit);
     }
-    function cancel(requestId) { controller.cancelQuery(requestId); }
+    function cancel(requestId) {
+        controller.cancelQuery(requestId);
+    }
 }

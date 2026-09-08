@@ -10,36 +10,48 @@ Ui.ProviderChooserSurface {
     chooserController: controller
     surfaceName: "Clipboard"
     readonly property var selectedEntry: content.controller.selectedEntry || ({})
-    readonly property bool actionsEnabled: content.controller.uiActive
-        && content.controller.hasSelection && !content.controller.multiSelectMode
-        && !content.controller.deleteMenuOpen
-        && !content.controller.actionInFlight && !content.controller.wipeChallenge
-        && !content.controller.navigationHelpOpen
+    readonly property bool actionsEnabled: content.controller.uiActive && content.controller.hasSelection && !content.controller.multiSelectMode && !content.controller.deleteMenuOpen && !content.controller.actionInFlight && !content.controller.wipeChallenge && !content.controller.navigationHelpOpen
     detailsTabEnabled: false
-    helpEnabled: content.controller.uiActive && !content.controller.multiSelectMode
-        && !content.controller.deleteMenuOpen && !content.controller.detailState.editorFocused
-        && !content.controller.deleteConfirmationOpen
-        && !content.controller.bulkDeleteConfirmationOpen && !content.controller.wipeChallenge
+    helpEnabled: content.controller.uiActive && !content.controller.multiSelectMode && !content.controller.deleteMenuOpen && !content.controller.detailState.editorFocused && !content.controller.deleteConfirmationOpen && !content.controller.bulkDeleteConfirmationOpen && !content.controller.wipeChallenge
     helpEntries: [
-        { keys: "Ctrl+Enter", action: "Copy without pasting" },
-        { keys: "Shift+Enter", action: "Paste an image as a file" },
-        { keys: "Delete", action: "Delete the selected entry" },
-        { keys: "Ctrl+A", action: "Select all in multi-select mode" },
-        { keys: "F5", action: "Refresh clipboard history" }
+        {
+            keys: "Ctrl+Enter",
+            action: "Copy without pasting"
+        },
+        {
+            keys: "Shift+Enter",
+            action: "Paste an image as a file"
+        },
+        {
+            keys: "Delete",
+            action: "Delete the selected entry"
+        },
+        {
+            keys: "Ctrl+A",
+            action: "Select all in multi-select mode"
+        },
+        {
+            keys: "F5",
+            action: "Refresh clipboard history"
+        }
     ]
     onRefreshRequested: content.controller.refresh()
 
     listComponent: Component {
-        ClipboardListPane { controller: content.controller }
+        ClipboardListPane {
+            controller: content.controller
+        }
     }
     detailsComponent: Component {
-        ClipboardDetails { controller: content.controller; uiScale: content.uiScale }
+        ClipboardDetails {
+            controller: content.controller
+            uiScale: content.uiScale
+        }
     }
 
     Shortcut {
         sequence: "Return"
-        enabled: content.actionsEnabled && content.selectedEntry.kind !== "binary"
-            && !content.controller.detailState.editorFocused
+        enabled: content.actionsEnabled && content.selectedEntry.kind !== "binary" && !content.controller.detailState.editorFocused
         onActivated: content.controller.pasteSelected()
     }
     Shortcut {
@@ -54,10 +66,7 @@ Ui.ProviderChooserSurface {
     }
     Shortcut {
         sequence: "Delete"
-        enabled: content.controller.uiActive && !content.controller.actionInFlight
-            && !content.controller.deleteMenuOpen
-            && (content.controller.multiSelectMode
-                ? content.controller.multiSelectedCount > 0 : content.controller.hasSelection)
+        enabled: content.controller.uiActive && !content.controller.actionInFlight && !content.controller.deleteMenuOpen && (content.controller.multiSelectMode ? content.controller.multiSelectedCount > 0 : content.controller.hasSelection)
         onActivated: {
             if (content.controller.multiSelectMode)
                 content.controller.requestBulkDelete();
@@ -67,14 +76,15 @@ Ui.ProviderChooserSurface {
     }
     Shortcut {
         sequence: "Ctrl+A"
-        enabled: content.controller.uiActive && content.controller.multiSelectMode
-            && !content.controller.actionInFlight
+        enabled: content.controller.uiActive && content.controller.multiSelectMode && !content.controller.actionInFlight
         onActivated: content.controller.selectAllVisible()
     }
 
     Connections {
         target: content.controller
-        function onHideRequested() { content.controller.closeWindowRequested(); }
+        function onHideRequested() {
+            content.controller.closeWindowRequested();
+        }
     }
 
     Ui.PromptDialog {
@@ -89,22 +99,32 @@ Ui.ProviderChooserSurface {
 
         Ui.ActionToggleList {
             width: parent.width
-            actions: [{
-                id: "current", label: "Delete current item",
-                subtitle: content.controller.selectedEntry
-                    ? content.controller.selectedEntry.preview : "No item selected",
-                enabled: content.controller.hasSelection,
-                presentation: { tone: "danger" }
-            }, {
-                id: "multiple", label: "Select multiple…",
-                subtitle: "Choose individual entries, then delete them together",
-                enabled: content.controller.filteredResults.length > 0
-            }, {
-                id: "all", label: "Delete all history…",
-                subtitle: "Remove regular entries, favorites, and generated previews",
-                enabled: true,
-                presentation: { tone: "danger" }
-            }]
+            actions: [
+                {
+                    id: "current",
+                    label: "Delete current item",
+                    subtitle: content.controller.selectedEntry ? content.controller.selectedEntry.preview : "No item selected",
+                    enabled: content.controller.hasSelection,
+                    presentation: {
+                        tone: "danger"
+                    }
+                },
+                {
+                    id: "multiple",
+                    label: "Select multiple…",
+                    subtitle: "Choose individual entries, then delete them together",
+                    enabled: content.controller.filteredResults.length > 0
+                },
+                {
+                    id: "all",
+                    label: "Delete all history…",
+                    subtitle: "Remove regular entries, favorites, and generated previews",
+                    enabled: true,
+                    presentation: {
+                        tone: "danger"
+                    }
+                }
+            ]
             onTriggered: function (actionId) {
                 if (actionId === "current")
                     content.controller.requestDeleteCurrent();

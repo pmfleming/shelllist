@@ -14,16 +14,51 @@ Item {
     id: registry
 
     readonly property var descriptors: [
-        { id: "applications", name: "Applications", icon: "󰀻" },
-        { id: "wifi", name: "Wi-Fi", icon: "󰖩" },
-        { id: "bluetooth", name: "Bluetooth", icon: "󰂯" },
-        { id: "clipboard", name: "Clipboard", icon: "󰅇" },
-        { id: "battery", name: "Battery", icon: "󰂂" },
-        { id: "activity", name: "Activity", icon: "󰃭" },
-        { id: "notifications", name: "Notifications", icon: "" },
-        { id: "time-weather", name: "Time & Weather", icon: "󰅐" }
+        {
+            id: "applications",
+            name: "Applications",
+            icon: "󰀻"
+        },
+        {
+            id: "wifi",
+            name: "Wi-Fi",
+            icon: "󰖩"
+        },
+        {
+            id: "bluetooth",
+            name: "Bluetooth",
+            icon: "󰂯"
+        },
+        {
+            id: "clipboard",
+            name: "Clipboard",
+            icon: "󰅇"
+        },
+        {
+            id: "battery",
+            name: "Battery",
+            icon: "󰂂"
+        },
+        {
+            id: "activity",
+            name: "Activity",
+            icon: "󰃭"
+        },
+        {
+            id: "notifications",
+            name: "Notifications",
+            icon: ""
+        },
+        {
+            id: "time-weather",
+            name: "Time & Weather",
+            icon: "󰅐"
+        }
     ]
-    property var loadedSurfaces: ({ wifi: true, bluetooth: true })
+    property var loadedSurfaces: ({
+            wifi: true,
+            bluetooth: true
+        })
     property var openedSurfaces: ({})
     property string currentId: "applications"
     property string pendingActivitySection: ""
@@ -37,14 +72,12 @@ Item {
 
     Activity.NotificationState {
         id: sharedNotifications
-        uiActive: (registry.activityController !== null && registry.activityController.uiActive)
-            || (registry.notificationController !== null && registry.notificationController.uiActive)
+        uiActive: (registry.activityController !== null && registry.activityController.uiActive) || (registry.notificationController !== null && registry.notificationController.uiActive)
         historyEnabled: uiActive
     }
 
     readonly property SurfaceBundle currentBundle: bundleFor(currentId)
-    readonly property Ui.ChooserController currentController: currentBundle
-        ? currentBundle.controller : null
+    readonly property Ui.ChooserController currentController: currentBundle ? currentBundle.controller : null
     readonly property var wifiController: {
         const bundle = bundleFor("wifi");
         return bundle ? bundle.controller : null;
@@ -62,7 +95,9 @@ Item {
     signal surfaceReady(string surfaceId)
 
     function descriptorFor(surfaceId: string): var {
-        return descriptors.find(function (descriptor) { return descriptor.id === surfaceId; }) || null;
+        return descriptors.find(function (descriptor) {
+            return descriptor.id === surfaceId;
+        }) || null;
     }
 
     function validSurfaceId(surfaceId: string): string {
@@ -96,15 +131,15 @@ Item {
 
     function bundleFor(surfaceId: string): SurfaceBundle {
         const bundles = ({
-            applications: applicationBundle.item,
-            wifi: wifiBundle.item,
-            bluetooth: bluetoothBundle.item,
-            clipboard: clipboardBundle.item,
-            battery: batteryBundle.item,
-            activity: activityBundle.item,
-            notifications: notificationBundle.item,
-            "time-weather": timeWeatherBundle.item
-        });
+                applications: applicationBundle.item,
+                wifi: wifiBundle.item,
+                bluetooth: bluetoothBundle.item,
+                clipboard: clipboardBundle.item,
+                battery: batteryBundle.item,
+                activity: activityBundle.item,
+                notifications: notificationBundle.item,
+                "time-weather": timeWeatherBundle.item
+            });
         return bundles[surfaceId] || null;
     }
 
@@ -163,7 +198,11 @@ Item {
     }
 
     function openNotifications(groupKey: string, tab: string, origin: string): void {
-        pendingNotificationRequest = { key: groupKey || "", tab: tab || "active", origin: origin || "" };
+        pendingNotificationRequest = {
+            key: groupKey || "",
+            tab: tab || "active",
+            origin: origin || ""
+        };
         ensureLoaded("notifications");
         applyPendingNotifications();
         surfaceRequested("notifications");
@@ -209,9 +248,13 @@ Item {
                 icon: "󰀻"
                 controller: applicationController
                 content: Component {
-                    Launcher.ApplicationContent { controller: applicationController }
+                    Launcher.ApplicationContent {
+                        controller: applicationController
+                    }
                 }
-                Launcher.ApplicationController { id: applicationController }
+                Launcher.ApplicationController {
+                    id: applicationController
+                }
             }
         }
     }
@@ -228,9 +271,13 @@ Item {
                 icon: "󰖩"
                 controller: wifiController
                 content: Component {
-                    Wifi.WifiContent { controller: wifiController }
+                    Wifi.WifiContent {
+                        controller: wifiController
+                    }
                 }
-                Wifi.WifiPromptController { id: wifiPromptController }
+                Wifi.WifiPromptController {
+                    id: wifiPromptController
+                }
                 Wifi.WifiController {
                     id: wifiController
                     prompt: wifiPromptController
@@ -252,7 +299,9 @@ Item {
                 icon: "󰂯"
                 controller: bluetoothController
                 content: Component {
-                    Bluetooth.BluetoothContent { controller: bluetoothController }
+                    Bluetooth.BluetoothContent {
+                        controller: bluetoothController
+                    }
                 }
                 Bluetooth.BluetoothController {
                     id: bluetoothController
@@ -274,9 +323,13 @@ Item {
                 icon: "󰂂"
                 controller: batteryController
                 content: Component {
-                    Battery.BatteryContent { controller: batteryController }
+                    Battery.BatteryContent {
+                        controller: batteryController
+                    }
                 }
-                Battery.BatteryController { id: batteryController }
+                Battery.BatteryController {
+                    id: batteryController
+                }
             }
         }
     }
@@ -293,12 +346,16 @@ Item {
                 icon: "󰃭"
                 controller: activityController
                 content: Component {
-                    Activity.ActivityContent { controller: activityController }
+                    Activity.ActivityContent {
+                        controller: activityController
+                    }
                 }
                 Activity.ActivityController {
                     id: activityController
                     notificationState: registry.notificationState
-                    onTimeWeatherRequested: function (tab) { registry.openTimeWeather(tab); }
+                    onTimeWeatherRequested: function (tab) {
+                        registry.openTimeWeather(tab);
+                    }
                     onNotificationsRequested: function (groupKey, tab) {
                         registry.openNotifications(groupKey, tab, "activity");
                     }
@@ -319,7 +376,9 @@ Item {
                 icon: ""
                 controller: notificationController
                 content: Component {
-                    Activity.NotificationContent { controller: notificationController }
+                    Activity.NotificationContent {
+                        controller: notificationController
+                    }
                 }
                 Activity.NotificationController {
                     id: notificationController
@@ -342,9 +401,13 @@ Item {
                 icon: "󰅐"
                 controller: timeWeatherController
                 content: Component {
-                    Activity.TimeWeatherContent { controller: timeWeatherController }
+                    Activity.TimeWeatherContent {
+                        controller: timeWeatherController
+                    }
                 }
-                Activity.TimeWeatherController { id: timeWeatherController }
+                Activity.TimeWeatherController {
+                    id: timeWeatherController
+                }
             }
         }
     }
@@ -361,9 +424,13 @@ Item {
                 icon: "󰅇"
                 controller: clipboardController
                 content: Component {
-                    Clipboard.ClipboardContent { controller: clipboardController }
+                    Clipboard.ClipboardContent {
+                        controller: clipboardController
+                    }
                 }
-                Clipboard.ClipboardController { id: clipboardController }
+                Clipboard.ClipboardController {
+                    id: clipboardController
+                }
             }
         }
     }

@@ -9,23 +9,52 @@ TestCase {
     width: 400
     height: 200
 
-    Component { id: actionFactory; Ui.NotificationActionList { width: 240; actions: [] } }
-    Component { id: badgeFactory; Ui.GroupCountBadge { count: 1 } }
-    SignalSpy { id: triggered; signalName: "triggered" }
+    Component {
+        id: actionFactory
+        Ui.NotificationActionList {
+            width: 240
+            actions: []
+        }
+    }
+    Component {
+        id: badgeFactory
+        Ui.GroupCountBadge {
+            count: 1
+        }
+    }
+    SignalSpy {
+        id: triggered
+        signalName: "triggered"
+    }
 
     function test_actionClassification(): void {
-        const open = { key: "open", label: "Open" };
-        const reply = { key: "inline-REPLY", label: "Reply" };
-        const notification = { actions: [open, reply] };
+        const open = {
+            key: "open",
+            label: "Open"
+        };
+        const reply = {
+            key: "inline-REPLY",
+            label: "Reply"
+        };
+        const notification = {
+            actions: [open, reply]
+        };
         compare(Ui.NotificationPresentation.standardActions(notification), [open]);
         verify(Ui.NotificationPresentation.replyAction(notification) === reply);
         compare(Ui.NotificationPresentation.standardActions({}), []);
-        compare(Ui.NotificationPresentation.replyAction({ actions: {} }), null);
+        compare(Ui.NotificationPresentation.replyAction({
+            actions: {}
+        }), null);
     }
 
     function test_keyboardActivationAndNarrowLayout(): void {
         const list = createTemporaryObject(actionFactory, this, {
-            actions: [{ key: "open", label: "A very long notification action label" }]
+            actions: [
+                {
+                    key: "open",
+                    label: "A very long notification action label"
+                }
+            ]
         });
         const button = findChild(list, "notificationAction-open");
         verify(button !== null);

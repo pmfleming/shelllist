@@ -12,7 +12,10 @@ Item {
     property bool automaticSubscribe: true
     required property bool recoverProtocolErrors
     property var queuedLines: []
-    property var counters: ({ sequence: 0, retryAttempt: 0 })
+    property var counters: ({
+            sequence: 0,
+            retryAttempt: 0
+        })
     property string subscriptionId: ""
     property int initialRetryInterval: 1500
     property int maximumRetryInterval: 30000
@@ -41,7 +44,9 @@ Item {
         }
     }
 
-    function clearQueue() { queuedLines = []; }
+    function clearQueue() {
+        queuedLines = [];
+    }
 
     function stop() {
         retryTimer.stop();
@@ -52,7 +57,10 @@ Item {
             try {
                 if (automaticSubscribe && subscriptionId.length > 0)
                     cancel("cancel-subscription-" + (++counters.sequence), subscriptionId);
-                send({ id: "shutdown-" + (++counters.sequence), op: "shutdown" });
+                send({
+                    id: "shutdown-" + (++counters.sequence),
+                    op: "shutdown"
+                });
             } catch (error) {
                 console.error("shelllist transport shutdown failed daemon=" + daemonName + " error=" + error);
             }
@@ -61,13 +69,24 @@ Item {
         process.stdinEnabled = false;
     }
 
-    function call(id, method, params) { send({ id: id, op: "call", method: method, params: params || ({}) }); }
+    function call(id, method, params) {
+        send({
+            id: id,
+            op: "call",
+            method: method,
+            params: params || ({})
+        });
+    }
     function cancel(idOrRequestId, optionalRequestId) {
         const requestId = optionalRequestId || idOrRequestId;
         if (!requestId)
             return;
         const id = optionalRequestId ? idOrRequestId : "cancel-" + (++counters.sequence);
-        send({ id: id, op: "cancel", request_id: requestId });
+        send({
+            id: id,
+            op: "cancel",
+            request_id: requestId
+        });
     }
 
     function send(message) {
@@ -87,27 +106,38 @@ Item {
             process.write(lines[index] + "\n");
     }
 
-    function subscribe() { send({ id: "session-subscribe", op: "subscribe", streams: streams }); }
+    function subscribe() {
+        send({
+            id: "session-subscribe",
+            op: "subscribe",
+            streams: streams
+        });
+    }
 
     // Adds a subscription beyond the session's default streams, for a view that
     // only wants a stream while it is open. The daemon computes those payloads
     // only while somebody is subscribed, so dropping it again matters.
     function subscribeExtra(id, extraStreams) {
-        send({ id: id, op: "subscribe", streams: extraStreams });
+        send({
+            id: id,
+            op: "subscribe",
+            streams: extraStreams
+        });
     }
 
     function rememberSubscription(message) {
         if (message.id === "session-subscribe" && message.ok)
             subscriptionId = Routing.subscriptionId(message);
     }
-    function markHealthy() { counters.retryAttempt = 0; }
+    function markHealthy() {
+        counters.retryAttempt = 0;
+    }
     function scheduleRetry() {
         if (!active)
             return;
         retryTimer.interval = Math.min(maximumRetryInterval, initialRetryInterval * Math.pow(2, counters.retryAttempt));
         counters.retryAttempt = Math.min(counters.retryAttempt + 1, 30);
-        console.warn("shelllist transport retry scheduled daemon=" + daemonName + " delay_ms=" + retryTimer.interval
-            + " attempt=" + counters.retryAttempt);
+        console.warn("shelllist transport retry scheduled daemon=" + daemonName + " delay_ms=" + retryTimer.interval + " attempt=" + counters.retryAttempt);
         retryTimer.restart();
     }
     function handleResponse(message) {
@@ -179,10 +209,20 @@ Item {
         // logical CPU for each lightweight JSONL-to-D-Bus bridge process. QML's
         // object literal reaches Process's QVariantHash correctly at runtime.
         // qmllint disable incompatible-type
-        environment: ({ TOKIO_WORKER_THREADS: "1" })
+        environment: ({
+                TOKIO_WORKER_THREADS: "1"
+            })
         // qmllint enable incompatible-type
-        stdout: SplitParser { splitMarker: "\n"; onRead: function (line) { client.handleLine(line); } }
-        stderr: StdioCollector { id: processError; waitForEnd: true }
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: function (line) {
+                client.handleLine(line);
+            }
+        }
+        stderr: StdioCollector {
+            id: processError
+            waitForEnd: true
+        }
         onStarted: {
             console.info("shelllist transport started daemon=" + client.daemonName);
             client.ready = true;
@@ -209,5 +249,9 @@ Item {
         }
     }
 
-    Timer { id: retryTimer; interval: client.initialRetryInterval; onTriggered: client.start() }
+    Timer {
+        id: retryTimer
+        interval: client.initialRetryInterval
+        onTriggered: client.start()
+    }
 }

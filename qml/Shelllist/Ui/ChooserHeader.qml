@@ -59,7 +59,8 @@ RowLayout {
         iconSize: Math.max(Theme.iconSize, header.scaled(Theme.iconSizeLarge))
         Accessible.role: Accessible.Button
         Accessible.name: header.iconAccessibleName
-        Accessible.onPressAction: if (header.iconActionEnabled) header.iconClicked()
+        Accessible.onPressAction: if (header.iconActionEnabled)
+            header.iconClicked()
         clickable: header.iconActionEnabled
         onClicked: header.iconClicked()
 

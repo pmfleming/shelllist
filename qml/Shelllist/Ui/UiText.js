@@ -21,7 +21,5 @@ function highlightHotkey(text, hotkey) {
     const index = hotkeyStartIndex(labelText.toLowerCase(), keyText.charAt(0).toLowerCase());
     if (index < 0)
         return escapeHtml(labelText);
-    return escapeHtml(labelText.slice(0, index))
-        + "<u><b>" + escapeHtml(labelText.charAt(index)) + "</b></u>"
-        + escapeHtml(labelText.slice(index + 1));
+    return escapeHtml(labelText.slice(0, index)) + "<u><b>" + escapeHtml(labelText.charAt(index)) + "</b></u>" + escapeHtml(labelText.slice(index + 1));
 }

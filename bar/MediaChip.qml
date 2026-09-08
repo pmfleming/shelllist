@@ -9,27 +9,20 @@ Item {
     required property int layoutDensity
     property double nowMs: 0
     readonly property var player: controller.activePlayer
-    readonly property string title: player
-        ? (player.title || player.identity || "Unknown track") : ""
-    readonly property int playerCount: controller.media && Array.isArray(controller.media.players)
-        ? controller.media.players.length : 0
-    readonly property string playerOrdinal: Presentation.mediaPlayerOrdinal(
-        controller.media, controller.activePlayerId)
-    readonly property string trackLabel: player && player.artist && layoutDensity === 0
-        ? title + " — " + player.artist : title
-    readonly property string labelText: playerCount > 1
-        ? playerOrdinal + " · " + trackLabel : trackLabel
+    readonly property string title: player ? (player.title || player.identity || "Unknown track") : ""
+    readonly property int playerCount: controller.media && Array.isArray(controller.media.players) ? controller.media.players.length : 0
+    readonly property string playerOrdinal: Presentation.mediaPlayerOrdinal(controller.media, controller.activePlayerId)
+    readonly property string trackLabel: player && player.artist && layoutDensity === 0 ? title + " — " + player.artist : title
+    readonly property string labelText: playerCount > 1 ? playerOrdinal + " · " + trackLabel : trackLabel
     readonly property real progress: Presentation.mediaPositionPercent(player, nowMs)
 
-    implicitWidth: Math.min(420, artFrame.width + titleLabel.implicitWidth
-        + mediaControls.implicitWidth + 34)
+    implicitWidth: Math.min(420, artFrame.width + titleLabel.implicitWidth + mediaControls.implicitWidth + 34)
     implicitHeight: 37
 
     Rectangle {
         anchors.fill: parent
         radius: 0
-        color: Ui.Theme.withAlpha(Ui.Theme.mix(Ui.Theme.surfaceRaised,
-            Ui.Theme.accent, 0.08), 0.72)
+        color: Ui.Theme.withAlpha(Ui.Theme.mix(Ui.Theme.surfaceRaised, Ui.Theme.accent, 0.08), 0.72)
         border.width: 1
         border.color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.42)
     }
@@ -59,7 +52,9 @@ Item {
 
             Behavior on opacity {
                 enabled: !Ui.Theme.noAnimations
-                NumberAnimation { duration: Ui.Theme.animationNormal }
+                NumberAnimation {
+                    duration: Ui.Theme.animationNormal
+                }
             }
         }
 
@@ -145,8 +140,7 @@ Item {
             highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
             highlightedIconColor: Ui.Theme.accent
             pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
-            enabled: !!root.player && (!!root.player.can_control
-                || !!root.player.can_play || !!root.player.can_pause)
+            enabled: !!root.player && (!!root.player.can_control || !!root.player.can_play || !!root.player.can_pause)
             onClicked: root.controller.mediaOperation("play-pause")
         }
 
@@ -207,14 +201,12 @@ Item {
         onClicked: root.controller.mediaOperation("play-pause")
     }
 
-
     Component.onCompleted: nowMs = Date.now()
 
     Timer {
         interval: 500
         repeat: true
-        running: root.visible && root.player
-            && String(root.player.playback_status || "").toLowerCase() === "playing"
+        running: root.visible && root.player && String(root.player.playback_status || "").toLowerCase() === "playing"
         onTriggered: root.nowMs = Date.now()
     }
 }

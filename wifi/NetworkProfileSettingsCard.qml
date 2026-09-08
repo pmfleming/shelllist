@@ -19,6 +19,8 @@ DetailCard {
         actions: card.controller.detailActions.filter(function (action) {
             return action.presentation.group === "settings" && action.visible;
         })
-        onTriggered: function (actionId) { card.controller.triggerDetailAction(actionId); }
+        onTriggered: function (actionId) {
+            card.controller.triggerDetailAction(actionId);
+        }
     }
 }

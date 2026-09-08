@@ -22,14 +22,38 @@ AdvancedSettingsFlickable {
             height: 245
             title: "Device"
             entries: [
-                { label: "BSSID", value: securityFlick.settings.ap.bssid || "—" },
-                { label: "Device MAC", value: ((securityFlick.settings.status.wireless || {}).mac_address || "—") },
-                { label: "Profile path", value: securityFlick.settings.profile.path || "—" },
-                { label: "Interface", value: securityFlick.settings.ap.device_iface || securityFlick.settings.status.device_iface || "—" },
-                { label: "Mode", value: securityFlick.settings.ap.mode ? "Wi-Fi " + securityFlick.settings.ap.mode : "Infrastructure" },
-                { label: "Band / frequency", value: (securityFlick.settings.ap.band || "—") + " / " + (securityFlick.settings.ap.frequency || "—") + " MHz" },
-                { label: "Channel", value: securityFlick.settings.ap.channel === undefined ? "—" : String(securityFlick.settings.ap.channel) },
-                { label: "Maximum bitrate", value: securityFlick.settings.ap.max_bitrate_mbps ? securityFlick.settings.ap.max_bitrate_mbps + " Mbps" : "—" }
+                {
+                    label: "BSSID",
+                    value: securityFlick.settings.ap.bssid || "—"
+                },
+                {
+                    label: "Device MAC",
+                    value: ((securityFlick.settings.status.wireless || {}).mac_address || "—")
+                },
+                {
+                    label: "Profile path",
+                    value: securityFlick.settings.profile.path || "—"
+                },
+                {
+                    label: "Interface",
+                    value: securityFlick.settings.ap.device_iface || securityFlick.settings.status.device_iface || "—"
+                },
+                {
+                    label: "Mode",
+                    value: securityFlick.settings.ap.mode ? "Wi-Fi " + securityFlick.settings.ap.mode : "Infrastructure"
+                },
+                {
+                    label: "Band / frequency",
+                    value: (securityFlick.settings.ap.band || "—") + " / " + (securityFlick.settings.ap.frequency || "—") + " MHz"
+                },
+                {
+                    label: "Channel",
+                    value: securityFlick.settings.ap.channel === undefined ? "—" : String(securityFlick.settings.ap.channel)
+                },
+                {
+                    label: "Maximum bitrate",
+                    value: securityFlick.settings.ap.max_bitrate_mbps ? securityFlick.settings.ap.max_bitrate_mbps + " Mbps" : "—"
+                }
             ]
         }
 
@@ -49,15 +73,29 @@ AdvancedSettingsFlickable {
                     label: "Wi-Fi band"
                     value: securityFlick.settings.bandStatus.selected || "auto"
                     options: [
-                        { value: "auto", label: "Auto" },
-                        { value: "2.4", label: "2.4 GHz",
-                            enabled: (securityFlick.settings.bandStatus.available || []).indexOf("2.4") >= 0 },
-                        { value: "5", label: "5 GHz",
-                            enabled: (securityFlick.settings.bandStatus.available || []).indexOf("5") >= 0 },
-                        { value: "6", label: "6 GHz",
-                            enabled: (securityFlick.settings.bandStatus.available || []).indexOf("6") >= 0 }
+                        {
+                            value: "auto",
+                            label: "Auto"
+                        },
+                        {
+                            value: "2.4",
+                            label: "2.4 GHz",
+                            enabled: (securityFlick.settings.bandStatus.available || []).indexOf("2.4") >= 0
+                        },
+                        {
+                            value: "5",
+                            label: "5 GHz",
+                            enabled: (securityFlick.settings.bandStatus.available || []).indexOf("5") >= 0
+                        },
+                        {
+                            value: "6",
+                            label: "6 GHz",
+                            enabled: (securityFlick.settings.bandStatus.available || []).indexOf("6") >= 0
+                        }
                     ]
-                    onSelected: function (value) { securityFlick.settings.setBand(value); }
+                    onSelected: function (value) {
+                        securityFlick.settings.setBand(value);
+                    }
                 }
 
                 AdvancedSegmentedRow {
@@ -65,12 +103,26 @@ AdvancedSettingsFlickable {
                     label: "Address policy"
                     value: securityFlick.settings.macPolicy
                     options: [
-                        { value: "default", label: "Default" },
-                        { value: "stable", label: "Stable" },
-                        { value: "random", label: "Random" },
-                        { value: "permanent", label: "Permanent" }
+                        {
+                            value: "default",
+                            label: "Default"
+                        },
+                        {
+                            value: "stable",
+                            label: "Stable"
+                        },
+                        {
+                            value: "random",
+                            label: "Random"
+                        },
+                        {
+                            value: "permanent",
+                            label: "Permanent"
+                        }
                     ]
-                    onSelected: function (value) { securityFlick.settings.setMacPolicy(value); }
+                    onSelected: function (value) {
+                        securityFlick.settings.setMacPolicy(value);
+                    }
                 }
 
                 ToggleRow {
@@ -78,8 +130,7 @@ AdvancedSettingsFlickable {
                     height: 40
                     title: qsTr("Cast discovery")
                     checked: securityFlick.settings.castingEnabled
-                    enabled: !!securityFlick.settings.profile.path
-                        && !securityFlick.settings.controller.actionInFlight
+                    enabled: !!securityFlick.settings.profile.path && !securityFlick.settings.controller.actionInFlight
                     onClicked: securityFlick.settings.setCastingEnabled(!checked)
                 }
 
@@ -87,10 +138,22 @@ AdvancedSettingsFlickable {
                     width: parent.width
                     height: 90
                     entries: [
-                        { label: "DHCP server", value: securityFlick.settings.dhcpLease.server_identifier || "—" },
-                        { label: "Lease duration", value: Presentation.leaseDurationLabel(securityFlick.settings.dhcpLease.lease_time_seconds) },
-                        { label: "Lease domain", value: securityFlick.settings.dhcpLease.domain_name || "—" },
-                        { label: "Lease expires", value: Presentation.leaseExpiryLabel(securityFlick.settings.dhcpLease.expires_at_ms) }
+                        {
+                            label: "DHCP server",
+                            value: securityFlick.settings.dhcpLease.server_identifier || "—"
+                        },
+                        {
+                            label: "Lease duration",
+                            value: Presentation.leaseDurationLabel(securityFlick.settings.dhcpLease.lease_time_seconds)
+                        },
+                        {
+                            label: "Lease domain",
+                            value: securityFlick.settings.dhcpLease.domain_name || "—"
+                        },
+                        {
+                            label: "Lease expires",
+                            value: Presentation.leaseExpiryLabel(securityFlick.settings.dhcpLease.expires_at_ms)
+                        }
                     ]
                 }
 
@@ -99,7 +162,11 @@ AdvancedSettingsFlickable {
                     height: 58
                     spacing: 5
 
-                    FieldLabel { width: parent.width; height: 13; text: qsTr("Network password") }
+                    FieldLabel {
+                        width: parent.width
+                        height: 13
+                        text: qsTr("Network password")
+                    }
 
                     TextField {
                         width: securityControls.width
@@ -108,15 +175,10 @@ AdvancedSettingsFlickable {
                         password: !securityFlick.settings.passwordRevealed
                         showPasswordButton: false
                         text: securityFlick.settings.passwordValue
-                        placeholder: securityFlick.settings.personalSecurity
-                            ? "Saved password" : "Unavailable for this security type"
-                        trailingActionIcon: securityFlick.settings.personalSecurity
-                            ? (securityFlick.settings.passwordRevealed ? "󰈉" : "󰈈") : ""
-                        trailingActionToolTip: securityFlick.settings.controller.advanced.secretLoading
-                            ? "Loading password" : (securityFlick.settings.passwordRevealed
-                                ? "Hide password" : "Show password")
-                        trailingActionEnabled: securityFlick.settings.personalSecurity
-                            && !securityFlick.settings.controller.advanced.secretLoading
+                        placeholder: securityFlick.settings.personalSecurity ? "Saved password" : "Unavailable for this security type"
+                        trailingActionIcon: securityFlick.settings.personalSecurity ? (securityFlick.settings.passwordRevealed ? "󰈉" : "󰈈") : ""
+                        trailingActionToolTip: securityFlick.settings.controller.advanced.secretLoading ? "Loading password" : (securityFlick.settings.passwordRevealed ? "Hide password" : "Show password")
+                        trailingActionEnabled: securityFlick.settings.personalSecurity && !securityFlick.settings.controller.advanced.secretLoading
                         onEdited: function (value) {
                             securityFlick.settings.passwordValue = value;
                             securityFlick.settings.passwordDirty = true;
@@ -130,9 +192,7 @@ AdvancedSettingsFlickable {
                         }
                     }
                 }
-
             }
         }
     }
 }
-

@@ -1,8 +1,12 @@
 .pragma library
 .import "NmApi.js" as NmApi
 
-function pick(source, key) { return key && source ? source[key] : source; }
-function isApiEnvelope(response) { return response && response.protocol === NmApi.protocol; }
+function pick(source, key) {
+    return key && source ? source[key] : source;
+}
+function isApiEnvelope(response) {
+    return response && response.protocol === NmApi.protocol;
+}
 function apiPayload(response) {
     if (!isApiEnvelope(response))
         throw new Error("Expected nm-api response envelope");
@@ -16,7 +20,11 @@ function apiErrorMessage(response) {
 }
 function apiErrorResult(response) {
     const error = response.error || {};
-    return { status: "error", reason: error.code || "unknown", message: error.message || "nm-api request failed" };
+    return {
+        status: "error",
+        reason: error.code || "unknown",
+        message: error.message || "nm-api request failed"
+    };
 }
 function apiData(response, key) {
     const data = apiPayload(response);
@@ -37,7 +45,19 @@ function scanEventStatus(event, fallback) {
     };
     return messages[event.event] || event.message || fallback;
 }
-function isTerminalEvent(event) { return event.event === "complete" || event.event === "failed" || event.event === "cancelled"; }
-function requestMatches(event, requestId) { return !!event.request_id && event.request_id === requestId; }
-function connectEventResult(event) { return event.result || ({ status: "error", reason: event.reason || "unknown", message: event.message || "Connection failed" }); }
-function connectEventState(event) { return event.event === "succeeded" ? "succeeded" : (event.event === "failed" || event.event === "cancelled" ? "failed" : "progress"); }
+function isTerminalEvent(event) {
+    return event.event === "complete" || event.event === "failed" || event.event === "cancelled";
+}
+function requestMatches(event, requestId) {
+    return !!event.request_id && event.request_id === requestId;
+}
+function connectEventResult(event) {
+    return event.result || ({
+            status: "error",
+            reason: event.reason || "unknown",
+            message: event.message || "Connection failed"
+        });
+}
+function connectEventState(event) {
+    return event.event === "succeeded" ? "succeeded" : (event.event === "failed" || event.event === "cancelled" ? "failed" : "progress");
+}

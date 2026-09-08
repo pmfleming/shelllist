@@ -39,7 +39,9 @@ var streams = {
     timezone: Protocol.streams["timezone.changed"]
 };
 
-var subscribedStreams = Object.keys(streams).map(function (name) { return streams[name]; });
+var subscribedStreams = Object.keys(streams).map(function (name) {
+    return streams[name];
+});
 
 var propertyByStream = {};
 propertyByStream[streams.activity] = "activity";

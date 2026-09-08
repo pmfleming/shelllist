@@ -28,8 +28,7 @@ Flow {
             required property var modelData
             readonly property string fullLabel: String(modelData.label || qsTr("Action"))
             objectName: "notificationAction-" + modelData.key
-            width: Math.max(0, Math.min(list.width, Math.max(list.minimumButtonWidth,
-                Math.min(list.maximumButtonWidth, fullLabel.length * list.characterWidth + list.horizontalPadding))))
+            width: Math.max(0, Math.min(list.width, Math.max(list.minimumButtonWidth, Math.min(list.maximumButtonWidth, fullLabel.length * list.characterWidth + list.horizontalPadding))))
             height: list.controlHeight
             label: actionFont.elidedText(fullLabel, Qt.ElideRight, Math.max(0, width - 20))
             accessibleName: fullLabel

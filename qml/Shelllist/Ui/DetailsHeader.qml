@@ -77,7 +77,9 @@ Column {
             actions: header.actions
             group: "primary"
             controlHeight: header.controlHeight
-            onTriggered: function (actionId) { header.actionTriggered(actionId); }
+            onTriggered: function (actionId) {
+                header.actionTriggered(actionId);
+            }
         }
     }
 
@@ -89,6 +91,8 @@ Column {
         group: "toolbar"
         alignRight: true
         controlHeight: header.controlHeight
-        onTriggered: function (actionId) { header.actionTriggered(actionId); }
+        onTriggered: function (actionId) {
+            header.actionTriggered(actionId);
+        }
     }
 }

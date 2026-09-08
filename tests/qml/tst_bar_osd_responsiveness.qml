@@ -31,11 +31,15 @@ TestCase {
 
     function init() {
         // Exercise the normal animated theme, not the headless no-motion default.
-        Quickshell.environment = { SHELLLIST_NO_ANIMATIONS: "0" };
+        Quickshell.environment = {
+            SHELLLIST_NO_ANIMATIONS: "0"
+        };
         compare(Ui.Theme.noAnimations, false);
     }
 
-    function cleanup() { Quickshell.environment = ({}); }
+    function cleanup() {
+        Quickshell.environment = ({});
+    }
 
     function makePanel() {
         const panel = createTemporaryObject(osdComponent, testCase);
@@ -45,7 +49,9 @@ TestCase {
         const component = Qt.createComponent("../../qml/Shelllist/Bar/BarOsdContent.qml");
         compare(component.status, Component.Ready, component.errorString());
         panel.surface = createTemporaryObject(component, panel, {
-            controller: panel.controller, width: panel.width, height: panel.height
+            controller: panel.controller,
+            width: panel.width,
+            height: panel.height
         });
         verify(panel.surface !== null);
         verify(waitForRendering(panel));
@@ -58,22 +64,28 @@ TestCase {
         const thumb = findChild(panel, "osdProgressThumb");
         verify(fill !== null && thumb !== null);
         for (const percent of [20, 80, 35, 90, 0, 100, 50]) {
-            panel.controller.showBrightnessOsd({ available: true, percent: percent });
+            panel.controller.showBrightnessOsd({
+                available: true,
+                percent: percent
+            });
             compare(panel.surface.opacity, 1, "first feedback must not fade in");
-            fuzzyCompare(fill.width, fill.parent.width * percent / 100, 0.01,
-                "progress must not wait for an animation or chase key repeats");
-            fuzzyCompare(thumb.x, Math.max(0, Math.min(fill.parent.width - thumb.width,
-                fill.width - thumb.width / 2)), 0.01,
-                "thumb and fill must agree in the same frame");
+            fuzzyCompare(fill.width, fill.parent.width * percent / 100, 0.01, "progress must not wait for an animation or chase key repeats");
+            fuzzyCompare(thumb.x, Math.max(0, Math.min(fill.parent.width - thumb.width, fill.width - thumb.width / 2)), 0.01, "thumb and fill must agree in the same frame");
         }
     }
 
     function test_reopeningDuringDismissalIsImmediate() {
         const panel = makePanel();
-        panel.controller.showBrightnessOsd({ available: true, percent: 20 });
+        panel.controller.showBrightnessOsd({
+            available: true,
+            percent: 20
+        });
         panel.controller.osdVisible = false;
         wait(30);
-        panel.controller.showBrightnessOsd({ available: true, percent: 80 });
+        panel.controller.showBrightnessOsd({
+            available: true,
+            percent: 80
+        });
         compare(panel.surface.opacity, 1);
         const fill = findChild(panel, "osdProgressFill");
         fuzzyCompare(fill.width, fill.parent.width * 0.8, 0.01);

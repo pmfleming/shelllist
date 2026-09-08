@@ -11,8 +11,7 @@ Item {
     property int rankDebounceMs: 35
     // Loader.item is dynamically resolved as the process-boundary adapter.
     // qmllint disable missing-property
-    readonly property bool ready: processLoader.item
-        ? !!processLoader.item["ready"] : false
+    readonly property bool ready: processLoader.item ? !!processLoader.item["ready"] : false
     // qmllint enable missing-property
 
     signal ranked(string owner, int generation, var keys)
@@ -48,12 +47,20 @@ Item {
         next[owner] = compactItems(items);
         catalogs = next;
         if (ready)
-            writeMessage({ type: "catalog", owner: owner, items: next[owner] });
+            writeMessage({
+                type: "catalog",
+                owner: owner,
+                items: next[owner]
+            });
     }
 
     function sendCatalogs(): void {
         Object.keys(catalogs).forEach(function (owner) {
-            writeMessage({ type: "catalog", owner: owner, items: catalogs[owner] });
+            writeMessage({
+                type: "catalog",
+                owner: owner,
+                items: catalogs[owner]
+            });
         });
     }
 
@@ -105,8 +112,7 @@ Item {
                 console.warn("shelllist fuzzy search rejected a request: " + response.error);
                 return;
             }
-            ranked(response.owner || "", Number(response.generation) || 0,
-                response.keys || []);
+            ranked(response.owner || "", Number(response.generation) || 0, response.keys || []);
         } catch (error) {
             console.warn("shelllist fuzzy search returned invalid JSON: " + error);
         }
@@ -127,7 +133,9 @@ Item {
             if (!rankDebounce.running)
                 service.flush();
         }
-        function onLineReceived(line: string): void { service.handleLine(line); }
+        function onLineReceived(line: string): void {
+            service.handleLine(line);
+        }
         function onStopped(error: string): void {
             if (error.length > 0)
                 console.warn("shelllist fuzzy search stopped: " + error);
@@ -140,7 +148,8 @@ Item {
         id: rankDebounce
         interval: service.rankDebounceMs
         repeat: false
-        onTriggered: if (service.ready) service.flush()
+        onTriggered: if (service.ready)
+            service.flush()
     }
 
     Timer {

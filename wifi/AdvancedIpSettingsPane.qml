@@ -31,10 +31,18 @@ AdvancedSettingsFlickable {
                     label: "Address family"
                     value: hardwareFlick.settings.ipFamily
                     options: [
-                        { value: "ipv4", label: "IPv4" },
-                        { value: "ipv6", label: "IPv6" }
+                        {
+                            value: "ipv4",
+                            label: "IPv4"
+                        },
+                        {
+                            value: "ipv6",
+                            label: "IPv6"
+                        }
                     ]
-                    onSelected: function (value) { hardwareFlick.settings.ipFamily = value; }
+                    onSelected: function (value) {
+                        hardwareFlick.settings.ipFamily = value;
+                    }
                 }
 
                 ToggleRow {
@@ -72,62 +80,90 @@ AdvancedSettingsFlickable {
                     columnSpacing: 12
                     rowSpacing: 8
 
-                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: qsTr("IP address") }
+                    FieldLabel {
+                        Layout.preferredWidth: 150
+                        Layout.preferredHeight: 38
+                        text: qsTr("IP address")
+                    }
                     NetworkInput.IpAddressField {
                         Layout.fillWidth: true
                         family: hardwareFlick.settings.ipFamily
                         allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
                         readOnly: hardwareFlick.settings.currentMethod !== "manual"
                         text: hardwareFlick.settings.displayedAddress
-                        onEdited: function (value) { hardwareFlick.settings.currentIp.address = value; }
+                        onEdited: function (value) {
+                            hardwareFlick.settings.currentIp.address = value;
+                        }
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
 
-                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: qsTr("Prefix length") }
+                    FieldLabel {
+                        Layout.preferredWidth: 150
+                        Layout.preferredHeight: 38
+                        text: qsTr("Prefix length")
+                    }
                     NetworkInput.PrefixLengthField {
                         Layout.fillWidth: true
                         family: hardwareFlick.settings.ipFamily
                         allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
                         readOnly: hardwareFlick.settings.currentMethod !== "manual"
                         text: hardwareFlick.settings.displayedPrefix
-                        onEdited: function (value) { hardwareFlick.settings.currentIp.prefix = value; }
+                        onEdited: function (value) {
+                            hardwareFlick.settings.currentIp.prefix = value;
+                        }
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
 
-                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: "Gateway" }
+                    FieldLabel {
+                        Layout.preferredWidth: 150
+                        Layout.preferredHeight: 38
+                        text: "Gateway"
+                    }
                     NetworkInput.IpAddressField {
                         Layout.fillWidth: true
                         family: hardwareFlick.settings.ipFamily
                         readOnly: hardwareFlick.settings.currentMethod !== "manual"
                         text: hardwareFlick.settings.displayedGateway
-                        onEdited: function (value) { hardwareFlick.settings.currentIp.gateway = value; }
+                        onEdited: function (value) {
+                            hardwareFlick.settings.currentIp.gateway = value;
+                        }
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
 
-                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: qsTr("DNS servers") }
+                    FieldLabel {
+                        Layout.preferredWidth: 150
+                        Layout.preferredHeight: 38
+                        text: qsTr("DNS servers")
+                    }
                     NetworkInput.IpAddressField {
                         Layout.fillWidth: true
                         family: hardwareFlick.settings.ipFamily
                         multiple: true
                         readOnly: !hardwareFlick.settings.currentFamilyEnabled || hardwareFlick.settings.currentAutoDns
                         text: hardwareFlick.settings.displayedDns
-                        onEdited: function (value) { hardwareFlick.settings.currentIp.dns = value; }
+                        onEdited: function (value) {
+                            hardwareFlick.settings.currentIp.dns = value;
+                        }
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
 
-                    FieldLabel { Layout.preferredWidth: 150; Layout.preferredHeight: 38; text: qsTr("DNS search domains") }
+                    FieldLabel {
+                        Layout.preferredWidth: 150
+                        Layout.preferredHeight: 38
+                        text: qsTr("DNS search domains")
+                    }
                     TextField {
                         Layout.fillWidth: true
                         readOnly: !hardwareFlick.settings.currentFamilyEnabled
                         text: hardwareFlick.settings.currentIp.search
                         placeholder: "Optional, comma-separated"
-                        onEdited: function (value) { hardwareFlick.settings.currentIp.search = value; }
+                        onEdited: function (value) {
+                            hardwareFlick.settings.currentIp.search = value;
+                        }
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
                 }
             }
         }
-
     }
 }
-

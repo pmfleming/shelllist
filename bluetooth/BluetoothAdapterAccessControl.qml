@@ -20,14 +20,12 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: 38
         title: control.discoverable ? "Discoverable" : "Incoming pairing"
-        subtitle: control.discoverable
-            ? "Allow nearby devices to find this computer"
-            : "Allow new devices to request pairing"
+        subtitle: control.discoverable ? "Allow nearby devices to find this computer" : "Allow new devices to request pairing"
         checked: !!control.adapter[control.mode]
-        interactive: !!control.adapter.key && !control.controller.globalRequestInFlight
-            && (!control.discoverable || control.adapter.powered)
-        onClicked: control.controller.adapterOperation("set-" + control.mode,
-            ({ [control.mode]: !control.adapter[control.mode] }))
+        interactive: !!control.adapter.key && !control.controller.globalRequestInFlight && (!control.discoverable || control.adapter.powered)
+        onClicked: control.controller.adapterOperation("set-" + control.mode, ({
+                [control.mode]: !control.adapter[control.mode]
+            }))
     }
 
     Ui.LabeledValueSlider {
@@ -39,7 +37,9 @@ ColumnLayout {
         stepSize: 30
         valueText: Ui.Format.duration(value)
         enabled: !control.controller.globalRequestInFlight && !!control.adapter.key
-        onEdited: function (dragging) { control.edited(dragging); }
+        onEdited: function (dragging) {
+            control.edited(dragging);
+        }
         onEditingFinished: control.editingFinished()
     }
 }

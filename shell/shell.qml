@@ -12,11 +12,13 @@ ShellRoot {
     readonly property Ui.ChooserController activeController: surfaces.currentController
     property double surfaceRequestStartedAtMs: 0
     property var lastSurfaceContentMetric: ({
-        surface: "", latency_ms: -1, warm: false, recorded_at_ms: 0
-    })
+            surface: "",
+            latency_ms: -1,
+            warm: false,
+            recorded_at_ms: 0
+        })
 
-    function recordSurfaceContent(surfaceId: string, latencyMs: double,
-            warm: bool): void {
+    function recordSurfaceContent(surfaceId: string, latencyMs: double, warm: bool): void {
         lastSurfaceContentMetric = {
             surface: surfaceId,
             latency_ms: latencyMs,
@@ -63,8 +65,7 @@ ShellRoot {
         const requested = surfaces.validSurfaceId(surfaceId);
         if (requested.length === 0)
             return false;
-        if (windowHost.popoverMode && windowHost.popoverVisible
-                && surfaces.currentId === requested) {
+        if (windowHost.popoverMode && windowHost.popoverVisible && surfaces.currentId === requested) {
             windowHost.hide();
             return true;
         }
@@ -72,10 +73,11 @@ ShellRoot {
     }
 
     function cycleSurface(direction: int): void {
-        if (!windowHost.uiActive || !activeController || activeController.navigationBlocked
-                || activeController.navigationHelpOpen)
+        if (!windowHost.uiActive || !activeController || activeController.navigationBlocked || activeController.navigationHelpOpen)
             return;
-        const ids = surfaces.descriptors.map(function (descriptor) { return descriptor.id; });
+        const ids = surfaces.descriptors.map(function (descriptor) {
+            return descriptor.id;
+        });
         const currentIndex = Math.max(0, ids.indexOf(surfaces.currentId));
         const nextIndex = (currentIndex + direction + ids.length) % ids.length;
         openSurface(ids[nextIndex]);
@@ -83,10 +85,11 @@ ShellRoot {
 
     SurfaceRegistry {
         id: surfaces
-        onSurfaceRequested: function (surfaceId) { shell.openSurface(surfaceId); }
+        onSurfaceRequested: function (surfaceId) {
+            shell.openSurface(surfaceId);
+        }
         onSurfaceReady: function (surfaceId) {
-            if (surfaceId !== surfaces.currentId || !windowHost.uiActive
-                    || !surfaces.currentController)
+            if (surfaceId !== surfaces.currentId || !windowHost.uiActive || !surfaces.currentController)
                 return;
             if (!surfaces.currentController.uiActive)
                 surfaces.currentController.activateUi(windowHost.shelllistWorkspaceId());
@@ -108,20 +111,13 @@ ShellRoot {
         id: windowHost
 
         content: shellContentComponent
-        surfaceWindowWidth: shell.activeController
-            ? shell.activeController.surfaceWindowWidth : Ui.Theme.popupOpenWidth
-        currentWindowWidth: shell.activeController
-            ? shell.activeController.currentWindowWidth : Ui.Theme.popupClosedWidth
-        windowHeightRatio: shell.activeController
-            ? shell.activeController.surfaceHeightRatio : Ui.Theme.popupHeightRatio
-        windowTopInset: shell.activeController
-            ? shell.activeController.surfaceTopInset : 0
-        windowBottomInset: shell.activeController
-            ? shell.activeController.surfaceBottomInset : 0
-        fitToWorkspace: shell.activeController
-            ? shell.activeController.surfaceFitsWorkspace : false
-        contentAlignment: shell.activeController
-            ? shell.activeController.surfaceAlignment : "center"
+        surfaceWindowWidth: shell.activeController ? shell.activeController.surfaceWindowWidth : Ui.Theme.popupOpenWidth
+        currentWindowWidth: shell.activeController ? shell.activeController.currentWindowWidth : Ui.Theme.popupClosedWidth
+        windowHeightRatio: shell.activeController ? shell.activeController.surfaceHeightRatio : Ui.Theme.popupHeightRatio
+        windowTopInset: shell.activeController ? shell.activeController.surfaceTopInset : 0
+        windowBottomInset: shell.activeController ? shell.activeController.surfaceBottomInset : 0
+        fitToWorkspace: shell.activeController ? shell.activeController.surfaceFitsWorkspace : false
+        contentAlignment: shell.activeController ? shell.activeController.surfaceAlignment : "center"
         modeEnvironment: "SHELLLIST_MODE"
         ipcTarget: "shelllist-window"
         ipcEnabled: false
@@ -131,15 +127,16 @@ ShellRoot {
         windowTitle: "Shelllist"
         layerNamespace: "shelllist"
         retainContentLoaded: true
-        retainOnFocusLoss: shell.activeController
-            ? shell.activeController.navigationBlocked : false
+        retainOnFocusLoss: shell.activeController ? shell.activeController.navigationBlocked : false
 
         onUiActivated: function (workspaceId) {
             if (shell.activeController)
                 shell.activeController.activateUi(workspaceId);
         }
-        onUiDeactivated: if (shell.activeController) shell.activeController.deactivateUi()
-        onFocusSearchRequested: if (shell.activeController) shell.activeController.focusSearchRequested()
+        onUiDeactivated: if (shell.activeController)
+            shell.activeController.deactivateUi()
+        onFocusSearchRequested: if (shell.activeController)
+            shell.activeController.focusSearchRequested()
     }
 
     Component {
@@ -164,15 +161,16 @@ ShellRoot {
         target: shell.activeController
         ignoreUnknownSignals: true
 
-        function onCloseWindowRequested() { windowHost.closeRequested(); }
+        function onCloseWindowRequested() {
+            windowHost.closeRequested();
+        }
         function onScreenshotRequested() {
             const controller = shell.activeController;
             if (!controller)
                 return;
             const width = Math.round(windowHost.renderContentWidth);
             const x = Math.round(windowHost.targetContentWindowX());
-            controller.captureScreenshot(x, windowHost.targetWindowY(), width,
-                windowHost.currentWindowHeight);
+            controller.captureScreenshot(x, windowHost.targetWindowY(), width, windowHost.currentWindowHeight);
         }
     }
 
@@ -180,14 +178,18 @@ ShellRoot {
         enabled: windowHost.popoverMode
         target: "shelllist"
 
-        function ping(): string { return "pong"; }
+        function ping(): string {
+            return "pong";
+        }
         function open(surfaceId: string): string {
             return shell.openSurface(surfaceId) ? "ok" : "unknown-surface";
         }
         function toggle(surfaceId: string): string {
             return shell.toggleSurface(surfaceId) ? "ok" : "unknown-surface";
         }
-        function hide(): void { windowHost.hide(); }
+        function hide(): void {
+            windowHost.hide();
+        }
         function quit(): void {
             if (shell.activeController)
                 shell.activeController.deactivateUi();
@@ -215,7 +217,9 @@ ShellRoot {
             });
             return result;
         }
-        function listSurfaces(): string { return surfaces.listJson(); }
+        function listSurfaces(): string {
+            return surfaces.listJson();
+        }
     }
 
     Ui.ShelllistGlobalShortcut {

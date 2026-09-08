@@ -14,9 +14,7 @@ Ui.DetailFlickable {
         const category = Preferences.categories.find(function (entry) {
             return entry.value === page.application.category;
         });
-        return category
-            && String(page.application.default_workspace_id || "") === category.workspace
-            ? category : null;
+        return category && String(page.application.default_workspace_id || "") === category.workspace ? category : null;
     }
     readonly property var categoryOptions: Preferences.categories.map(function (category) {
         return {
@@ -51,9 +49,7 @@ Ui.DetailFlickable {
 
         Ui.ThemeText {
             Layout.fillWidth: true
-            text: page.selectedCategory
-                ? page.selectedCategory.description
-                : "Choose the category used to place new windows."
+            text: page.selectedCategory ? page.selectedCategory.description : "Choose the category used to place new windows."
             color: Ui.Theme.subtleText
             elide: Text.ElideRight
             font.pixelSize: Ui.Theme.fontSizeCaption
@@ -62,10 +58,7 @@ Ui.DetailFlickable {
 
     Ui.ThemeText {
         width: parent.width
-        text: page.application.default_workspace_id
-            ? "New windows launch on workspace "
-                + page.application.default_workspace_id + ". Existing windows are not moved."
-            : "No default workspace is set yet. Select a category to configure one."
+        text: page.application.default_workspace_id ? "New windows launch on workspace " + page.application.default_workspace_id + ". Existing windows are not moved." : "No default workspace is set yet. Select a category to configure one."
         color: Ui.Theme.subtleText
         wrapMode: Text.Wrap
         font.pixelSize: Ui.Theme.fontSizeCaption

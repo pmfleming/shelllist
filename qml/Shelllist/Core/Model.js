@@ -8,9 +8,15 @@ var closePolicies = ["provider-default", "close", "keep-open"];
 var presentationGroups = ["primary", "toolbar", "settings", "overflow"];
 var tones = ["normal", "active", "danger", "warning"];
 
-function fail(path, message) { throw new Error(path + ": " + message); }
-function objectOrEmpty(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : ({}); }
-function stringValue(value, fallback) { return value === undefined || value === null ? fallback : String(value); }
+function fail(path, message) {
+    throw new Error(path + ": " + message);
+}
+function objectOrEmpty(value) {
+    return value && typeof value === "object" && !Array.isArray(value) ? value : ({});
+}
+function stringValue(value, fallback) {
+    return value === undefined || value === null ? fallback : String(value);
+}
 function nonEmptyString(value, path) {
     const result = stringValue(value, "").trim();
     if (result.length === 0)
@@ -27,7 +33,9 @@ function finiteNumber(value, fallback) {
     const result = Number(value);
     return Number.isFinite(result) ? result : fallback;
 }
-function booleanValue(value, fallback) { return value === undefined || value === null ? fallback : !!value; }
+function booleanValue(value, fallback) {
+    return value === undefined || value === null ? fallback : !!value;
+}
 function enumValue(value, allowed, fallback, path) {
     const result = stringValue(value, fallback);
     if (allowed.indexOf(result) < 0)
@@ -68,7 +76,12 @@ function provider(input) {
         priority: finiteNumber(source.priority, 0),
         enabled: booleanValue(source.enabled, true),
         prefixes: stringList(source.prefixes),
-        capabilities: Object.assign({ query: true, actions: true, preview: false, subscriptions: false }, objectOrEmpty(source.capabilities)),
+        capabilities: Object.assign({
+            query: true,
+            actions: true,
+            preview: false,
+            subscriptions: false
+        }, objectOrEmpty(source.capabilities)),
         metadata: objectOrEmpty(source.metadata)
     };
 }
@@ -78,29 +91,39 @@ function action(input) {
     const presentationSource = objectOrEmpty(source.presentation), stateSource = objectOrEmpty(source.state), confirmationSource = objectOrEmpty(source.confirmation);
     const role = enumValue(source.role, actionRoles, "secondary", "action.role"), kind = enumValue(source.kind, actionKinds, "command", "action.kind");
     const presentation = {
-        group: enumValue(presentationSource.group, presentationGroups, role === "default" ? "primary" : "overflow", "action.presentation.group"), tone: enumValue(presentationSource.tone, tones, role === "destructive" ? "danger" : "normal", "action.presentation.tone"),
+        group: enumValue(presentationSource.group, presentationGroups, role === "default" ? "primary" : "overflow", "action.presentation.group"),
+        tone: enumValue(presentationSource.tone, tones, role === "destructive" ? "danger" : "normal", "action.presentation.tone"),
         width: Math.max(0, finiteNumber(presentationSource.width, 0))
     };
     return {
-        schemaVersion: schemaVersion, id: identifier(source.id, "action.id"),
+        schemaVersion: schemaVersion,
+        id: identifier(source.id, "action.id"),
         label: nonEmptyString(source.label, "action.label"),
-        icon: stringValue(source.icon, ""), shortcut: stringValue(source.shortcut, ""),
-        role: role, kind: kind,
-        enabled: booleanValue(source.enabled, true), visible: booleanValue(source.visible, true),
+        icon: stringValue(source.icon, ""),
+        shortcut: stringValue(source.shortcut, ""),
+        role: role,
+        kind: kind,
+        enabled: booleanValue(source.enabled, true),
+        visible: booleanValue(source.visible, true),
         closePolicy: enumValue(source.closePolicy, closePolicies, "provider-default", "action.closePolicy"),
         confirmation: {
             required: booleanValue(confirmationSource.required, false),
             title: stringValue(confirmationSource.title, ""),
             message: stringValue(confirmationSource.message, "")
         },
-        state: { checked: booleanValue(stateSource.checked, false) },
-        presentation: presentation, metadata: objectOrEmpty(source.metadata)
+        state: {
+            checked: booleanValue(stateSource.checked, false)
+        },
+        presentation: presentation,
+        metadata: objectOrEmpty(source.metadata)
     };
 }
 
 function keepOpenAction(id, label, options) {
     return action(Object.assign({}, objectOrEmpty(options), {
-        id: id, label: label, closePolicy: "keep-open"
+        id: id,
+        label: label,
+        closePolicy: "keep-open"
     }));
 }
 
@@ -115,7 +138,9 @@ function actionList(values) {
     return result;
 }
 
-function resultKey(providerId, resultId) { return providerId + "::" + encodeURIComponent(resultId); }
+function resultKey(providerId, resultId) {
+    return providerId + "::" + encodeURIComponent(resultId);
+}
 
 function result(input) {
     const source = objectOrEmpty(input);
@@ -123,21 +148,32 @@ function result(input) {
     const id = nonEmptyString(source.id, "result.id");
     const actions = actionList(source.actions);
     const primaryActionId = stringValue(source.primaryActionId, "");
-    const primaryAction = actions.find(function (item) { return item.id === primaryActionId; });
+    const primaryAction = actions.find(function (item) {
+        return item.id === primaryActionId;
+    });
     if (primaryActionId.length > 0 && actions.length > 0 && !primaryAction)
         fail("result.primaryActionId", "does not reference an action");
     if (primaryAction && primaryAction.presentation.group !== "primary")
         fail("result.primaryActionId", "must reference a primary presentation action");
     return {
-        schemaVersion: schemaVersion, providerId: providerId,
+        schemaVersion: schemaVersion,
+        providerId: providerId,
         providerPriority: finiteNumber(source.providerPriority, 0),
-        id: id, key: resultKey(providerId, id),
-        title: nonEmptyString(source.title, "result.title"), subtitle: stringValue(source.subtitle, ""),
-        icon: stringValue(source.icon, ""), score: finiteNumber(source.score, 0),
-        keywords: stringList(source.keywords), badges: stringList(source.badges),
-        primaryActionId: primaryActionId, actions: actions,
-        preview: Object.assign({ kind: "none" }, objectOrEmpty(source.preview)),
-        state: objectOrEmpty(source.state), payload: source.payload === undefined ? null : source.payload,
+        id: id,
+        key: resultKey(providerId, id),
+        title: nonEmptyString(source.title, "result.title"),
+        subtitle: stringValue(source.subtitle, ""),
+        icon: stringValue(source.icon, ""),
+        score: finiteNumber(source.score, 0),
+        keywords: stringList(source.keywords),
+        badges: stringList(source.badges),
+        primaryActionId: primaryActionId,
+        actions: actions,
+        preview: Object.assign({
+            kind: "none"
+        }, objectOrEmpty(source.preview)),
+        state: objectOrEmpty(source.state),
+        payload: source.payload === undefined ? null : source.payload,
         metadata: objectOrEmpty(source.metadata)
     };
 }
@@ -152,20 +188,32 @@ function normalizeSearchText(value) {
     const text = stringValue(value, "").toLowerCase();
     return typeof text.normalize === "function" ? text.normalize("NFKD").replace(/[\u0300-\u036f]/g, "") : text;
 }
-function searchWords(value) { return normalizeSearchText(value).trim().split(/\s+/).filter(function (word) { return word.length > 0; }); }
+function searchWords(value) {
+    return normalizeSearchText(value).trim().split(/\s+/).filter(function (word) {
+        return word.length > 0;
+    });
+}
 function wordStartsWith(text, token) {
-    return text.split(/[^a-z0-9]+/).some(function (word) { return word.indexOf(token) === 0; });
+    return text.split(/[^a-z0-9]+/).some(function (word) {
+        return word.indexOf(token) === 0;
+    });
 }
 function tokenMatchScore(title, subtitle, searchable, token) {
-    if (searchable.indexOf(token) < 0) return -1;
-    if (title === token) return 1200;
-    if (title.indexOf(token) === 0) return 700;
-    if (wordStartsWith(title, token)) return 450;
-    if (title.indexOf(token) >= 0) return 300;
+    if (searchable.indexOf(token) < 0)
+        return -1;
+    if (title === token)
+        return 1200;
+    if (title.indexOf(token) === 0)
+        return 700;
+    if (wordStartsWith(title, token))
+        return 450;
+    if (title.indexOf(token) >= 0)
+        return 300;
     return wordStartsWith(subtitle, token) ? 180 : 100;
 }
 function exactMatchBonus(title, normalizedQuery) {
-    if (title === normalizedQuery) return 1600;
+    if (title === normalizedQuery)
+        return 1600;
     return title.indexOf(normalizedQuery) === 0 ? 900 : 0;
 }
 function matchScore(item, query) {
@@ -189,10 +237,7 @@ function scoreWithQuery(item, normalizedQuery, tokens) {
     return score;
 }
 function compareResults(left, right) {
-    return right.score - left.score
-        || right.providerPriority - left.providerPriority
-        || left.title.localeCompare(right.title)
-        || left.key.localeCompare(right.key);
+    return right.score - left.score || right.providerPriority - left.providerPriority || left.title.localeCompare(right.title) || left.key.localeCompare(right.key);
 }
 function compareRanked(left, right) {
     return right.matchScore - left.matchScore || compareResults(left.item, right.item);
@@ -204,7 +249,10 @@ function rankResults(values, query) {
         return items.slice().sort(compareResults);
     const tokens = searchWords(normalizedQuery);
     return items.map(function (item) {
-        return { item: item, matchScore: scoreWithQuery(item, normalizedQuery, tokens) };
+        return {
+            item: item,
+            matchScore: scoreWithQuery(item, normalizedQuery, tokens)
+        };
     }).filter(function (ranked) {
         return ranked.matchScore >= 0;
     }).sort(compareRanked).map(function (ranked) {
@@ -214,10 +262,14 @@ function rankResults(values, query) {
 function indexByKey(values, key) {
     if (!key)
         return -1;
-    return (Array.isArray(values) ? values : []).findIndex(function (item) { return item.key === key; });
+    return (Array.isArray(values) ? values : []).findIndex(function (item) {
+        return item.key === key;
+    });
 }
 function actionById(actions, id) {
-    return (Array.isArray(actions) ? actions : []).find(function (item) { return item.id === id; }) || null;
+    return (Array.isArray(actions) ? actions : []).find(function (item) {
+        return item.id === id;
+    }) || null;
 }
 
 function queryRequest(input) {

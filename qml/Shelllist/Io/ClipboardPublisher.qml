@@ -14,7 +14,9 @@ Item {
             return false;
         inFlight = true;
         successMessage = message || "Copied to the clipboard";
-        if (!backend.call("publish-text", ClipApi.methods.selectionPublishText, { text: text })) {
+        if (!backend.call("publish-text", ClipApi.methods.selectionPublishText, {
+            text: text
+        })) {
             inFlight = false;
             return false;
         }
@@ -22,8 +24,7 @@ Item {
     }
 
     function complete(envelope: var, transportError: string): void {
-        const error = backend.responseError(envelope, transportError,
-            "Clipboard publication failed");
+        const error = backend.responseError(envelope, transportError, "Clipboard publication failed");
         inFlight = false;
         if (error.length > 0) {
             finished(false, error);

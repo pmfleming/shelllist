@@ -11,15 +11,15 @@ Item {
     property bool retainLoaded: false
     property bool loadedOnce: false
 
-    x: horizontalAlignment === "right" ? Math.round(surfaceWidth - contentWidth)
-        : horizontalAlignment === "left" ? 0
-        : Math.round((surfaceWidth - contentWidth) / 2)
+    x: horizontalAlignment === "right" ? Math.round(surfaceWidth - contentWidth) : horizontalAlignment === "left" ? 0 : Math.round((surfaceWidth - contentWidth) / 2)
     width: contentWidth
     height: parent ? parent.height : 0
     clip: true
 
-    onLoadWhenChanged: if (loadWhen) loadedOnce = true
-    Component.onCompleted: if (loadWhen) loadedOnce = true
+    onLoadWhenChanged: if (loadWhen)
+        loadedOnce = true
+    Component.onCompleted: if (loadWhen)
+        loadedOnce = true
 
     Loader {
         anchors.fill: parent

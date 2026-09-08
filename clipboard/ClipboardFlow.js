@@ -6,15 +6,24 @@ function operationRunning(operation) {
 
 function rememberTerminal(operation, handled, limit) {
     if (!operation || !operation.id || operationRunning(operation))
-        return { duplicate: false, handled: handled };
+        return {
+            duplicate: false,
+            handled: handled
+        };
     if (handled[operation.id])
-        return { duplicate: true, handled: handled };
+        return {
+            duplicate: true,
+            handled: handled
+        };
     const next = Object.assign({}, handled);
     next[operation.id] = true;
     const ids = Object.keys(next);
     if (ids.length > limit)
         delete next[ids[0]];
-    return { duplicate: false, handled: next };
+    return {
+        duplicate: false,
+        handled: next
+    };
 }
 
 function detailedEntry(selected, details, replacedSourceIds) {

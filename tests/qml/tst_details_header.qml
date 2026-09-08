@@ -11,7 +11,9 @@ TestCase {
             width: 700
             height: 350
             uiScale: 1
-            chooserController: Ui.ChooserController { hasSelection: true }
+            chooserController: Ui.ChooserController {
+                hasSelection: true
+            }
         }
     }
 

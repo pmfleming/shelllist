@@ -74,16 +74,24 @@ ModalFrame {
         width: parent.width
         height: Theme.controlHeight
         fillActions: true
-        actions: [{
-            id: "cancel", label: "Cancel"
-        }, {
-            id: "accept",
-            label: dialog.prompt.credentialMode === "daemon-secret" ? "Provide" : "Connect",
-            presentation: { tone: "accent" }
-        }]
+        actions: [
+            {
+                id: "cancel",
+                label: "Cancel"
+            },
+            {
+                id: "accept",
+                label: dialog.prompt.credentialMode === "daemon-secret" ? "Provide" : "Connect",
+                presentation: {
+                    tone: "accent"
+                }
+            }
+        ]
         onTriggered: function (actionId) {
-            if (actionId === "cancel") dialog.cancelled();
-            else dialog.accepted(dialog.prompt.credentialValues);
+            if (actionId === "cancel")
+                dialog.cancelled();
+            else
+                dialog.accepted(dialog.prompt.credentialValues);
         }
     }
 }

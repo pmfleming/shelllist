@@ -19,11 +19,20 @@ Column {
         height: 142
         title: qsTr("Current status")
         entries: [
-            { label: "State", value: Presentation.stateLabel(pane.battery),
+            {
+                label: "State",
+                value: Presentation.stateLabel(pane.battery),
                 valueColor: pane.battery.plugged ? Ui.Theme.active : Ui.Theme.text,
-                valueBold: true },
-            { label: "Time", value: Presentation.timeLabel(pane.battery) },
-            { label: "Power", value: Number(pane.battery.power_watts || 0).toFixed(1) + " W" }
+                valueBold: true
+            },
+            {
+                label: "Time",
+                value: Presentation.timeLabel(pane.battery)
+            },
+            {
+                label: "Power",
+                value: Number(pane.battery.power_watts || 0).toFixed(1) + " W"
+            }
         ]
     }
 
@@ -33,16 +42,21 @@ Column {
     }
 
     Ui.DetailColumnCard {
-        height: 152 + Math.min(8,
-            (pane.controller.energyOverview.applications || []).length) * 42
+        height: 152 + Math.min(8, (pane.controller.energyOverview.applications || []).length) * 42
         title: qsTr("Application energy")
 
         Ui.SegmentedControl {
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             options: [
-                { value: "last-charge", label: "Since last charge" },
-                { value: "week", label: "Last 7 days" }
+                {
+                    value: "last-charge",
+                    label: "Since last charge"
+                },
+                {
+                    value: "week",
+                    label: "Last 7 days"
+                }
             ]
             value: pane.controller.energyPeriod
             onSelected: function (value) {
@@ -52,17 +66,8 @@ Column {
 
         Ui.FieldLabel {
             Layout.fillWidth: true
-            text: pane.controller.energyLoading
-                ? "Updating estimated energy…"
-                : (pane.controller.energyError.length > 0
-                    ? pane.controller.energyError
-                    : Presentation.energy(
-                        pane.controller.energyOverview.total_energy_mwh)
-                        + " attributed · "
-                        + (pane.controller.energyOverview.energy_confidence
-                            || "low") + " confidence")
-            color: pane.controller.energyError.length > 0
-                ? Ui.Theme.warning : Ui.Theme.mutedText
+            text: pane.controller.energyLoading ? "Updating estimated energy…" : (pane.controller.energyError.length > 0 ? pane.controller.energyError : Presentation.energy(pane.controller.energyOverview.total_energy_mwh) + " attributed · " + (pane.controller.energyOverview.energy_confidence || "low") + " confidence")
+            color: pane.controller.energyError.length > 0 ? Ui.Theme.warning : Ui.Theme.mutedText
         }
 
         Repeater {
@@ -85,9 +90,7 @@ Column {
                         Image {
                             id: appIcon
                             anchors.fill: parent
-                            source: Quickshell.iconPath(
-                                energyRow.modelData.icon || "application-x-executable",
-                                "application-x-executable")
+                            source: Quickshell.iconPath(energyRow.modelData.icon || "application-x-executable", "application-x-executable")
                             sourceSize.width: width
                             sourceSize.height: height
                             fillMode: Image.PreserveAspectFit
@@ -112,8 +115,7 @@ Column {
 
                         Ui.ThemeText {
                             Layout.fillWidth: true
-                            text: energyRow.modelData.name
-                                || energyRow.modelData.target_id
+                            text: energyRow.modelData.name || energyRow.modelData.target_id
                             elide: Text.ElideRight
                             font.pixelSize: Ui.Theme.fontSizeSmall
                         }
@@ -125,8 +127,7 @@ Column {
                             color: Ui.Theme.border
 
                             Rectangle {
-                                width: parent.width * Math.max(0, Math.min(1,
-                                    Number(energyRow.modelData.share) || 0))
+                                width: parent.width * Math.max(0, Math.min(1, Number(energyRow.modelData.share) || 0))
                                 height: parent.height
                                 radius: parent.radius
                                 color: Ui.Theme.accent
@@ -146,9 +147,7 @@ Column {
 
         Ui.FieldLabel {
             Layout.fillWidth: true
-            visible: !pane.controller.energyLoading
-                && pane.controller.energyError.length === 0
-                && (pane.controller.energyOverview.applications || []).length === 0
+            visible: !pane.controller.energyLoading && pane.controller.energyError.length === 0 && (pane.controller.energyOverview.applications || []).length === 0
             text: qsTr("No attributable application energy in this period")
             color: Ui.Theme.mutedText
         }

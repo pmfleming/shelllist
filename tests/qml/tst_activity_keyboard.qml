@@ -32,7 +32,11 @@ TestCase {
         id: headerComponent
         Ui.ChooserHeader {
             uiScale: 1
-            powerAccessory: Component { Item { implicitWidth: 27 } }
+            powerAccessory: Component {
+                Item {
+                    implicitWidth: 27
+                }
+            }
         }
     }
 
@@ -49,7 +53,9 @@ TestCase {
 
     Component {
         id: textComponent
-        Ui.ThemeText { text: "Weather" }
+        Ui.ThemeText {
+            text: "Weather"
+        }
     }
 
     function test_sharedActionAreaAndTypography(): void {
@@ -70,21 +76,35 @@ TestCase {
     }
 
     function test_accessoryLoaderAcceptsVisualItems(): void {
-        const header = createTemporaryObject(headerComponent, testCase, { width: 480 });
+        const header = createTemporaryObject(headerComponent, testCase, {
+            width: 480
+        });
         verify(header !== null);
         wait(10);
     }
 
     function test_todoActionsSupportKeyboard(): void {
         const controller = createTemporaryObject(controllerComponent, testCase);
-        controller.todos = [{ id: "one", title: "Review quality", completed: false,
-            due_date: controller.selectedDateKey }];
+        controller.todos = [
+            {
+                id: "one",
+                title: "Review quality",
+                completed: false,
+                due_date: controller.selectedDateKey
+            }
+        ];
         const component = Qt.createComponent("../../qml/Shelllist/Activity/ActivityTodoSection.qml");
         compare(component.status, Component.Ready, component.errorString());
-        const section = createTemporaryObject(component, testCase, { controller: controller, uiScale: 1 });
+        const section = createTemporaryObject(component, testCase, {
+            controller: controller,
+            uiScale: 1
+        });
         verify(section !== null);
         let toggle = null;
-        tryVerify(function () { toggle = findChild(section, "todoToggle"); return toggle !== null; });
+        tryVerify(function () {
+            toggle = findChild(section, "todoToggle");
+            return toggle !== null;
+        });
         toggle.forceActiveFocus();
         tryCompare(toggle, "activeFocus", true);
         keyClick(Qt.Key_Space);

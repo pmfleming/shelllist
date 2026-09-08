@@ -38,7 +38,9 @@ Item {
     signal transportReady
     signal sendFailed(string id, string message)
 
-    function isPending(id: string): bool { return !!pending[id]; }
+    function isPending(id: string): bool {
+        return !!pending[id];
+    }
 
     function nextRequestId(prefix: string): string {
         requestSequence += 1;
@@ -49,10 +51,8 @@ Item {
         return call(nextRequestId(prefix), method, params || ({}));
     }
 
-    function responseError(envelope: var, transportError: string,
-            fallbackMessage: string): string {
-        return Core.ApiEnvelope.responseError(envelope, transportError,
-            expectedProtocol, expectedVersion, daemonName, fallbackMessage);
+    function responseError(envelope: var, transportError: string, fallbackMessage: string): string {
+        return Core.ApiEnvelope.responseError(envelope, transportError, expectedProtocol, expectedVersion, daemonName, fallbackMessage);
     }
 
     function routeEvent(event: var, handlers: var): bool {
@@ -94,8 +94,7 @@ Item {
         if (!requestId)
             return false;
         try {
-            DaemonSessions.cancel(daemonName, sharedConsumerId, requestId,
-                cancellationId || ("cancel-" + requestId));
+            DaemonSessions.cancel(daemonName, sharedConsumerId, requestId, cancellationId || ("cancel-" + requestId));
             return true;
         } catch (error) {
             const message = "Could not cancel " + daemonName + " request " + requestId + ": " + error;
@@ -106,8 +105,7 @@ Item {
     }
 
     function isTransportControl(id: string): bool {
-        return id === "session-subscribe" || id.startsWith("cancel-") || id.startsWith("shutdown-")
-            || id.startsWith("subscribe-");
+        return id === "session-subscribe" || id.startsWith("cancel-") || id.startsWith("shutdown-") || id.startsWith("subscribe-");
     }
 
     /// Subscribes to extra streams for as long as a view needs them. Returns
@@ -198,26 +196,22 @@ Item {
     }
 
     function eventEnvelopeError(event: var): string {
-        const compatibility = Core.ApiEnvelope.compatibilityError(event,
-            expectedProtocol, expectedVersion, daemonName);
+        const compatibility = Core.ApiEnvelope.compatibilityError(event, expectedProtocol, expectedVersion, daemonName);
         if (compatibility.length > 0)
             return compatibility;
-        if (typeof event.stream !== "string" || event.stream.length === 0
-                || typeof event.event !== "string" || event.event.length === 0)
+        if (typeof event.stream !== "string" || event.stream.length === 0 || typeof event.event !== "string" || event.event.length === 0)
             return daemonName + " returned a malformed event";
         return "";
     }
 
     function isEventGap(event: var): bool {
-        return event.event === "lagged"
-            || !!(event.data && event.data.resync_required);
+        return event.event === "lagged" || !!(event.data && event.data.resync_required);
     }
 
     function acceptEvent(event: var): void {
         const error = eventEnvelopeError(event);
         if (error.length > 0) {
-            console.warn("shelllist " + daemonName
-                + " event rejected error=" + error);
+            console.warn("shelllist " + daemonName + " event rejected error=" + error);
             return;
         }
         if (isEventGap(event)) {
@@ -242,8 +236,7 @@ Item {
     function updateSharedSession(): void {
         if (!sharedConsumerId)
             return;
-        DaemonSessions.update(daemonName, sharedConsumerId, active, streams,
-            recoverProtocolErrors);
+        DaemonSessions.update(daemonName, sharedConsumerId, active, streams, recoverProtocolErrors);
     }
 
     Component.onCompleted: {
@@ -258,5 +251,6 @@ Item {
     onActiveChanged: updateSharedSession()
     onStreamsChanged: updateSharedSession()
     onRecoverProtocolErrorsChanged: updateSharedSession()
-    onReadyChanged: if (ready) transportReady()
+    onReadyChanged: if (ready)
+        transportReady()
 }

@@ -10,19 +10,19 @@ Io.DaemonBackend {
     active: controller.uiActive
 
     function overview(period: string, sinceMs: double): bool {
-        return callSequenced("battery-energy-" + period,
-            Launcher.AppApi.methods.energyOverview, { since_ms: sinceMs, limit: 12 });
+        return callSequenced("battery-energy-" + period, Launcher.AppApi.methods.energyOverview, {
+            since_ms: sinceMs,
+            limit: 12
+        });
     }
 
     onResponseReceived: function (id, envelope, transportError) {
-        const error = responseError(envelope, transportError,
-            "Application energy history is unavailable");
+        const error = responseError(envelope, transportError, "Application energy history is unavailable");
         if (error.length > 0) {
             controller.energyOverviewFailed(id, error);
             return;
         }
-        controller.applyEnergyOverview(id,
-            (envelope.data || ({})).energy_overview || ({}));
+        controller.applyEnergyOverview(id, (envelope.data || ({})).energy_overview || ({}));
     }
     onSendFailed: function (id, message) {
         controller.energyOverviewFailed(id, message);
@@ -30,5 +30,6 @@ Io.DaemonBackend {
     onTransportFailed: function (message) {
         controller.energyTransportFailed(message);
     }
-    onActiveChanged: if (!active) pending = ({})
+    onActiveChanged: if (!active)
+        pending = ({})
 }

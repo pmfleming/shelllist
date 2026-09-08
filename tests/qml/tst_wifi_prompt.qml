@@ -18,15 +18,24 @@ TestCase {
         fakeController = {
             status: "",
             connection: {
-                beginAny: function () { return true; },
+                beginAny: function () {
+                    return true;
+                },
                 provideSecrets: function (id, values, save) {
-                    capturedSecrets = { id: id, values: values, save: save };
+                    capturedSecrets = {
+                        id: id,
+                        values: values,
+                        save: save
+                    };
                     return true;
                 },
                 runTarget: function (target, name, password, identity, enterprise, wepKeyType) {
                     capturedConnect = {
-                        target: target, name: name, password: password,
-                        enterprise: enterprise, wepKeyType: wepKeyType
+                        target: target,
+                        name: name,
+                        password: password,
+                        enterprise: enterprise,
+                        wepKeyType: wepKeyType
                     };
                     return true;
                 }
@@ -34,7 +43,10 @@ TestCase {
         };
     }
 
-    function cleanupTestCase() { if (prompt) prompt.destroy(); }
+    function cleanupTestCase() {
+        if (prompt)
+            prompt.destroy();
+    }
     function init() {
         capturedSecrets = null;
         capturedConnect = null;
@@ -42,12 +54,45 @@ TestCase {
     }
 
     function test_mergesIncrementalAndDivergedNetworkChanges() {
-        const current = [{ key: "keep", strength: 10 }, { key: "change", strength: 20 },
-            { key: "remove", strength: 30 }];
+        const current = [
+            {
+                key: "keep",
+                strength: 10
+            },
+            {
+                key: "change",
+                strength: 20
+            },
+            {
+                key: "remove",
+                strength: 30
+            }
+        ];
         const merged = Flow.mergeNetworkChanges(current, {
-            removed: [{ key: "remove" }],
-            changed: [{ key: "change", strength: 80 }, { key: "missing", strength: 60 }],
-            added: [{ key: "add", strength: 40 }, { ssid: "Hidden" }]
+            removed: [
+                {
+                    key: "remove"
+                }
+            ],
+            changed: [
+                {
+                    key: "change",
+                    strength: 80
+                },
+                {
+                    key: "missing",
+                    strength: 60
+                }
+            ],
+            added: [
+                {
+                    key: "add",
+                    strength: 40
+                },
+                {
+                    ssid: "Hidden"
+                }
+            ]
         });
 
         compare(merged.length, 5);
@@ -81,31 +126,42 @@ TestCase {
     function test_validatesHiddenAndEnterpriseSchema() {
         prompt.openHiddenNetworkPrompt();
         verify(!prompt.submitCredentials(fakeController, {
-            ssid: "Hidden Cafe", security: "automatic", password: ""
+            ssid: "Hidden Cafe",
+            security: "automatic",
+            password: ""
         }));
         verify(prompt.credentialOpen);
         verify(capturedConnect === null);
 
         verify(prompt.submitCredentials(fakeController, {
-            ssid: "Hidden Cafe", security: "wep-phrase", password: "passphrase",
-            "enterprise.eap": "peap", "enterprise.identity": "",
+            ssid: "Hidden Cafe",
+            security: "wep-phrase",
+            password: "passphrase",
+            "enterprise.eap": "peap",
+            "enterprise.identity": "",
             "enterprise.phase2_auth": "mschapv2"
         }));
         compare(capturedConnect.target.key_mgmt, "wep");
         compare(capturedConnect.wepKeyType, "phrase");
 
         prompt.openEnterpriseIdentityPrompt({
-            ssid: "Corp", key: "network-key",
+            ssid: "Corp",
+            key: "network-key",
             connect_prompt: {
                 required_fields: ["enterprise.eap", "enterprise.identity"],
                 optional_fields: ["password", "enterprise.domain_suffix_match"],
-                enterprise_defaults: { eap: ["ttls"], phase2_auth: "pap" }
+                enterprise_defaults: {
+                    eap: ["ttls"],
+                    phase2_auth: "pap"
+                }
             }
         });
         compare(prompt.credentialValues["enterprise.eap"], "ttls");
         verify(prompt.submitCredentials(fakeController, {
-            "enterprise.eap": "ttls", "enterprise.identity": "person@example.test",
-            "enterprise.domain_suffix_match": "example.test", password: "secret"
+            "enterprise.eap": "ttls",
+            "enterprise.identity": "person@example.test",
+            "enterprise.domain_suffix_match": "example.test",
+            password: "secret"
         }));
         compare(capturedConnect.enterprise.eap[0], "ttls");
         compare(capturedConnect.enterprise.identity, "person@example.test");

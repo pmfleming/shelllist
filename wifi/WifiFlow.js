@@ -13,7 +13,9 @@ function mergeNetworkChanges(currentNetworks, event) {
             return candidate.key === network.key;
         }) || network;
     });
-    const retainedKeys = retained.map(function (network) { return network.key; });
+    const retainedKeys = retained.map(function (network) {
+        return network.key;
+    });
     const additions = [];
     replacements.forEach(function (network) {
         if (!network.key || !retainedKeys.includes(network.key)) {
@@ -26,7 +28,9 @@ function mergeNetworkChanges(currentNetworks, event) {
 }
 
 function powerStatus(activeStatus, radios, enabled) {
-    const nextRadios = Object.assign({}, radios, { wireless_enabled: enabled });
+    const nextRadios = Object.assign({}, radios, {
+        wireless_enabled: enabled
+    });
     const current = activeStatus || ({});
     return Object.assign({}, current, {
         enabled: enabled,
@@ -37,27 +41,45 @@ function powerStatus(activeStatus, radios, enabled) {
 
 function bandTransition(event, requestId) {
     if (event.event === "subscribed" || (requestId && event.request_id !== requestId))
-        return { stage: "ignored" };
+        return {
+            stage: "ignored"
+        };
     if (["started", "progress"].includes(event.event))
-        return { stage: "running", message: event.message || "Applying Wi-Fi band selection…" };
+        return {
+            stage: "running",
+            message: event.message || "Applying Wi-Fi band selection…"
+        };
     if (event.event !== "succeeded")
-        return { stage: "failed", message: event.message
-            || (event.event === "cancelled" ? "Wi-Fi band change cancelled" : "Wi-Fi band change failed") };
+        return {
+            stage: "failed",
+            message: event.message || (event.event === "cancelled" ? "Wi-Fi band change cancelled" : "Wi-Fi band change failed")
+        };
     const result = event.result || ({});
-    return { stage: "completed", band: result.band || ({}),
-        message: result.message || "Wi-Fi band selection updated" };
+    return {
+        stage: "completed",
+        band: result.band || ({}),
+        message: result.message || "Wi-Fi band selection updated"
+    };
 }
 
 function secretTransition(event, mode, requestId) {
     if (event.event === "requested")
-        return { stage: "requested" };
+        return {
+            stage: "requested"
+        };
     if (event.event === "cancelled" && mode === "daemon-secret" && requestId === event.request_id)
-        return { stage: "cancelled", message: "NetworkManager cancelled the Wi-Fi secret request." };
+        return {
+            stage: "cancelled",
+            message: "NetworkManager cancelled the Wi-Fi secret request."
+        };
     if (event.event !== "persistence")
-        return { stage: "ignored" };
-    return { stage: "persistence", message: event.status === "stored"
-        ? "Wi-Fi secret saved to the keyring."
-        : "Wi-Fi secret was accepted but could not be saved: " + event.status };
+        return {
+            stage: "ignored"
+        };
+    return {
+        stage: "persistence",
+        message: event.status === "stored" ? "Wi-Fi secret saved to the keyring." : "Wi-Fi secret was accepted but could not be saved: " + event.status
+    };
 }
 
 function profileForAccessPoint(ap) {
@@ -65,20 +87,37 @@ function profileForAccessPoint(ap) {
         return null;
     return ap.primary_profile || (ap.profiles && ap.profiles.length > 0 ? ap.profiles[0] : null);
 }
-function shareHint(ap) { return ap && ap.share ? ap.share : ({}); }
+function shareHint(ap) {
+    return ap && ap.share ? ap.share : ({});
+}
 function canShareQr(ap) {
     const share = shareHint(ap);
     return !!share.shareable && !!share.qr_payload;
 }
-function wifiQrPayload(ap) { return canShareQr(ap) ? (shareHint(ap).qr_payload || "") : ""; }
+function wifiQrPayload(ap) {
+    return canShareQr(ap) ? (shareHint(ap).qr_payload || "") : "";
+}
 function shareAvailability(ap, profile, fallbackMessage) {
     const share = shareHint(ap);
     if (canShareQr(ap))
-        return { state: "ready", available: true, payload: wifiQrPayload(ap), message: "Wi-Fi QR payload is ready." };
+        return {
+            state: "ready",
+            available: true,
+            payload: wifiQrPayload(ap),
+            message: "Wi-Fi QR payload is ready."
+        };
     const profilePath = share.profile_path || (profile && profile.path) || "";
     if (!share.requires_profile_secret_check || profilePath.length === 0)
-        return { state: "unavailable", available: false, payload: "", message: share.reason || fallbackMessage };
-    return { state: "check", profilePath: profilePath };
+        return {
+            state: "unavailable",
+            available: false,
+            payload: "",
+            message: share.reason || fallbackMessage
+        };
+    return {
+        state: "check",
+        profilePath: profilePath
+    };
 }
 function shareCheckAvailability(result, fallbackMessage) {
     const available = !!result.shareable && !!result.qr_payload;
@@ -90,18 +129,26 @@ function shareCheckAvailability(result, fallbackMessage) {
     };
 }
 
-function isWrongPasswordReason(reason) { return reason === "wrong-password"; }
-function isSecretFailureReason(reason) { return isWrongPasswordReason(reason) || reason === "password-unavailable" || reason === "secret-required"; }
+function isWrongPasswordReason(reason) {
+    return reason === "wrong-password";
+}
+function isSecretFailureReason(reason) {
+    return isWrongPasswordReason(reason) || reason === "password-unavailable" || reason === "secret-required";
+}
 
 function portalNetworkIdentity(ap, result) {
     const profile = profileForAccessPoint(ap);
     return (ap && ap.key) || (profile && profile.path) || Presentation.valueOr(result, "ssid", Presentation.networkName(ap));
 }
-function confirmedPortalResult(result) { return !!(result && result.suggest_open_portal); }
+function confirmedPortalResult(result) {
+    return !!(result && result.suggest_open_portal);
+}
 function portalConnectivity(result, currentConnectivity, activeStatus) {
     return Presentation.valueOr(result, "connectivity", currentConnectivity || Presentation.valueOr(activeStatus, "connectivity", ({})));
 }
-function portalEpisode(automatic, identity, requestId) { return automatic ? identity + "::" + requestId : ""; }
+function portalEpisode(automatic, identity, requestId) {
+    return automatic ? identity + "::" + requestId : "";
+}
 // NetworkManager's connectivity-check URI, when the daemon reported one.
 function portalCheckUri(connectivity) {
     return (connectivity && connectivity.check_uri) || "";

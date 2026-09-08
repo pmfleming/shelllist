@@ -10,10 +10,8 @@ Item {
     required property BarController controller
     required property string screenName
     required property int layoutDensity
-    readonly property var workspaceIds: Presentation.workspaceIds(
-        controller.workspaces, screenName)
-    readonly property int activeWorkspaceIndex: Presentation.activeWorkspaceIndex(
-        controller.workspaces, screenName)
+    readonly property var workspaceIds: Presentation.workspaceIds(controller.workspaces, screenName)
+    readonly property int activeWorkspaceIndex: Presentation.activeWorkspaceIndex(controller.workspaces, screenName)
     readonly property int workspaceButtonWidth: layoutDensity >= 2 ? 23 : 27
 
     implicitWidth: workspaceRow.implicitWidth
@@ -31,8 +29,7 @@ Item {
     }
 
     Rectangle {
-        x: workspaceRow.leftPadding + Math.max(0, root.activeWorkspaceIndex)
-            * (root.workspaceButtonWidth + workspaceRow.spacing)
+        x: workspaceRow.leftPadding + Math.max(0, root.activeWorkspaceIndex) * (root.workspaceButtonWidth + workspaceRow.spacing)
         anchors.verticalCenter: parent.verticalCenter
         width: root.activeWorkspaceIndex >= 0 ? root.workspaceButtonWidth : 0
         height: root.layoutDensity >= 2 ? 27 : 31
@@ -58,7 +55,9 @@ Item {
         }
         Behavior on opacity {
             enabled: !Ui.Theme.noAnimations
-            NumberAnimation { duration: Ui.Theme.animationFast }
+            NumberAnimation {
+                duration: Ui.Theme.animationFast
+            }
         }
     }
 

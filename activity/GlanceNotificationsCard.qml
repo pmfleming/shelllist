@@ -17,23 +17,23 @@ Rectangle {
         const notification = notificationForGroup(group);
         const hints = notification.hints || ({});
         const candidate = String(hints.image_path || notification.app_icon || "");
-        if (candidate.startsWith("/")) return "file://" + candidate;
-        if (candidate.startsWith("file://")) return candidate;
+        if (candidate.startsWith("/"))
+            return "file://" + candidate;
+        if (candidate.startsWith("file://"))
+            return candidate;
         return Quickshell.iconPath(candidate || "dialog-information", "dialog-information");
     }
     objectName: "agendaNotificationCard"
 
-    readonly property int previewLimit: Ui.NotificationPresentation.previewCapacity(
-        height, Ui.Theme.spacingSm, Ui.Theme.spacingMd)
-    readonly property var previewGroups: notificationCard.controller.notificationState.recentNotifications.slice(
-        0, previewLimit).map(function (record) {
-            return {
-                key: Ui.NotificationPresentation.groupKey(record),
-                appName: Ui.NotificationPresentation.notificationFor(record).app_name || "Notifications",
-                records: [record],
-                tab: record.history_id !== undefined ? "history" : "active"
-            };
-        })
+    readonly property int previewLimit: Ui.NotificationPresentation.previewCapacity(height, Ui.Theme.spacingSm, Ui.Theme.spacingMd)
+    readonly property var previewGroups: notificationCard.controller.notificationState.recentNotifications.slice(0, previewLimit).map(function (record) {
+        return {
+            key: Ui.NotificationPresentation.groupKey(record),
+            appName: Ui.NotificationPresentation.notificationFor(record).app_name || "Notifications",
+            records: [record],
+            tab: record.history_id !== undefined ? "history" : "active"
+        };
+    })
 
     width: parent.width
     radius: Ui.Theme.panelRadius
@@ -51,8 +51,7 @@ Rectangle {
             height: 28
             Ui.ThemeText {
                 width: parent.width - notificationExpand.width
-                text: "Notifications    "
-                    + String(notificationCard.controller.notifications.count || 0)
+                text: "Notifications    " + String(notificationCard.controller.notifications.count || 0)
                 font.pixelSize: Ui.Theme.fontSizeLabel
                 font.weight: Ui.Theme.fontWeightDemiBold
             }
@@ -76,13 +75,11 @@ Rectangle {
                 width: parent.width
                 height: 48
                 radius: Ui.Theme.controlRadius
-                color: previewMouse.containsMouse || activeFocus
-                    ? Ui.Theme.selected : Ui.Theme.surfaceRaised
+                color: previewMouse.containsMouse || activeFocus ? Ui.Theme.selected : Ui.Theme.surfaceRaised
                 border.color: activeFocus ? Ui.Theme.accent : Ui.Theme.border
                 activeFocusOnTab: true
                 Accessible.role: Accessible.Button
-                Accessible.name: "Open " + modelData.appName + " notifications: "
-                    + String(notification.summary || "")
+                Accessible.name: "Open " + modelData.appName + " notifications: " + String(notification.summary || "")
                 function openGroup(): void {
                     notificationCard.controller.requestNotifications(modelData.key, modelData.tab);
                 }
@@ -122,19 +119,14 @@ Rectangle {
                         spacing: 1
                         Ui.ThemeText {
                             width: parent.width
-                            text: notificationPreview.notification.summary
-                                || notificationPreview.modelData.appName
+                            text: notificationPreview.notification.summary || notificationPreview.modelData.appName
                             elide: Text.ElideRight
                             font.pixelSize: Ui.Theme.fontSizeSmall
                             font.weight: Ui.Theme.fontWeightDemiBold
                         }
                         Ui.ThemeText {
                             width: parent.width
-                            text: notificationPreview.modelData.appName
-                                + (notificationPreview.notification.created_unix_ms
-                                    ? " · " + Ui.NotificationPresentation.relativeTime(
-                                        notificationPreview.notification.created_unix_ms,
-                                        notificationCard.now.getTime()) : "")
+                            text: notificationPreview.modelData.appName + (notificationPreview.notification.created_unix_ms ? " · " + Ui.NotificationPresentation.relativeTime(notificationPreview.notification.created_unix_ms, notificationCard.now.getTime()) : "")
                             color: Ui.Theme.mutedText
                             elide: Text.ElideRight
                             font.pixelSize: Ui.Theme.fontSizeCaption
@@ -147,15 +139,11 @@ Rectangle {
         Item {
             visible: notificationCard.previewGroups.length === 0
             width: parent.width
-            height: visible ? Math.max(0, Math.min(48,
-                parent.height - y - 68 - parent.spacing * 2)) : 0
+            height: visible ? Math.max(0, Math.min(48, parent.height - y - 68 - parent.spacing * 2)) : 0
             clip: true
             Ui.ThemeText {
                 anchors.centerIn: parent
-                text: notificationCard.controller.notificationState.historyLoading ? "Loading notifications…"
-                    : notificationCard.controller.notificationState.historyError ? "Could not load recent notifications"
-                    : notificationCard.controller.notifications.available ? "No recent notifications"
-                    : "Notifications unavailable"
+                text: notificationCard.controller.notificationState.historyLoading ? "Loading notifications…" : notificationCard.controller.notificationState.historyError ? "Could not load recent notifications" : notificationCard.controller.notifications.available ? "No recent notifications" : "Notifications unavailable"
                 color: Ui.Theme.mutedText
                 font.pixelSize: Ui.Theme.fontSizeSmall
             }

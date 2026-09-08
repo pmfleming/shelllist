@@ -8,9 +8,7 @@ ColumnLayout {
 
     required property ChooserController chooserController
     required property Component rowDelegate
-    property real densityScale: Theme.densityScale(
-        height + 2 * chooserController.contentVerticalMargin,
-        chooserController.contentVerticalMargin)
+    property real densityScale: Theme.densityScale(height + 2 * chooserController.contentVerticalMargin, chooserController.contentVerticalMargin)
     property var resultModel: null
     property string emptyText: ""
     property string placeholder: "Search…"
@@ -34,8 +32,7 @@ ColumnLayout {
     property int bodySpacing: Theme.verticalSpacing(Theme.spacingSm, densityScale)
     readonly property real delegateHeight: body.delegateHeight
     readonly property bool listFocused: body.listFocused
-    readonly property int selectedIndex: chooserController.selectionModel
-        ? chooserController.selectionModel.selectedIndex : 0
+    readonly property int selectedIndex: chooserController.selectionModel ? chooserController.selectionModel.selectedIndex : 0
 
     signal iconClicked
     signal searchActionRequested
@@ -56,10 +53,18 @@ ColumnLayout {
     Layout.fillHeight: true
     spacing: Theme.verticalSpacing(Theme.spacingMd, densityScale)
 
-    function focusSearch(): void { header.focusSearch(); }
-    function focusTop(): void { body.focusTop(); }
-    function pick(rowIndex: int): void { body.pick(rowIndex); }
-    function toggleDetails(rowIndex: int): void { body.toggleDetails(rowIndex); }
+    function focusSearch(): void {
+        header.focusSearch();
+    }
+    function focusTop(): void {
+        body.focusTop();
+    }
+    function pick(rowIndex: int): void {
+        body.pick(rowIndex);
+    }
+    function toggleDetails(rowIndex: int): void {
+        body.toggleDetails(rowIndex);
+    }
 
     ChooserHeader {
         id: header
@@ -78,8 +83,12 @@ ColumnLayout {
         searchActionIcon: pane.searchActionIcon
         searchActionToolTip: pane.searchActionToolTip
         searchActionEnabled: pane.searchActionEnabled
-        onFilterEdited: function (text) { pane.applyFilter(text); }
-        onKeyPressed: function (event) { pane.chooserController.navigation.handleSearchKey(event); }
+        onFilterEdited: function (text) {
+            pane.applyFilter(text);
+        }
+        onKeyPressed: function (event) {
+            pane.chooserController.navigation.handleSearchKey(event);
+        }
         onIconClicked: pane.iconClicked()
         onSearchActionRequested: pane.searchActionRequested()
         onPowerRequested: pane.chooserController.setPower()

@@ -83,8 +83,7 @@ Rectangle {
                 return;
             let left = 0;
             capacity.segments.forEach(function (segment) {
-                const segmentWidth = Math.max(0, Number(segment.value || 0))
-                    / capacity.maximum * width;
+                const segmentWidth = Math.max(0, Number(segment.value || 0)) / capacity.maximum * width;
                 context.fillStyle = segment.color;
                 context.fillRect(left, 0, Math.min(width - left, segmentWidth), height);
                 left += segmentWidth;

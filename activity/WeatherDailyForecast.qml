@@ -109,14 +109,9 @@ Rectangle {
                         border.color: Ui.Theme.border
                     }
                     Rectangle {
-                        readonly property real span: Math.max(1,
-                            forecast.maximum - forecast.minimum)
-                        x: (Number(dayRow.modelData.low_c || 0) - forecast.minimum)
-                            / span * parent.width
-                        width: Math.max(8,
-                            (Number(dayRow.modelData.high_c || 0)
-                                - Number(dayRow.modelData.low_c || 0))
-                            / span * parent.width)
+                        readonly property real span: Math.max(1, forecast.maximum - forecast.minimum)
+                        x: (Number(dayRow.modelData.low_c || 0) - forecast.minimum) / span * parent.width
+                        width: Math.max(8, (Number(dayRow.modelData.high_c || 0) - Number(dayRow.modelData.low_c || 0)) / span * parent.width)
                         height: parent.height
                         radius: height / 2
                         color: Ui.Theme.accent

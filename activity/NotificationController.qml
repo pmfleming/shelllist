@@ -18,10 +18,7 @@ Ui.ChooserController {
     property string screenshotStatus: ""
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
     readonly property alias groupModel: groups
-    readonly property var visibleGroups: Ui.NotificationPresentation.groupRecords(
-        Ui.NotificationPresentation.filterRecords(tab === "active"
-            ? Ui.NotificationPresentation.newestFirst(notificationState.activeNotifications)
-            : notificationState.history, filterText))
+    readonly property var visibleGroups: Ui.NotificationPresentation.groupRecords(Ui.NotificationPresentation.filterRecords(tab === "active" ? Ui.NotificationPresentation.newestFirst(notificationState.activeNotifications) : notificationState.history, filterText))
 
     navigationPrimaryEnabled: false
     closedWidthFraction: 0.4
@@ -53,7 +50,10 @@ Ui.ChooserController {
         else
             closeWindowRequested();
     }
-    function dismissNavigation(): bool { goBack(); return true; }
+    function dismissNavigation(): bool {
+        goBack();
+        return true;
+    }
     function captureScreenshot(x: real, y: real, width: real, height: real): bool {
         return screenshotCapture.captureRegion(x, y, width, height);
     }
@@ -64,9 +64,14 @@ Ui.ChooserController {
     function rebuildGroups(): void {
         groupsAboutToChange();
         Ui.NotificationPresentation.syncKeyedModel(groups, visibleGroups.map(function (group) {
-            return { key: group.key, payload: group };
+            return {
+                key: group.key,
+                payload: group
+            };
         }));
-        if (!visibleGroups.some(function (group) { return group.key === controller.selectedGroupKey; }))
+        if (!visibleGroups.some(function (group) {
+            return group.key === controller.selectedGroupKey;
+        }))
             selectedGroupKey = visibleGroups.length ? visibleGroups[0].key : "";
         groupsUpdated();
         revealPendingGroup();
@@ -122,7 +127,10 @@ Ui.ChooserController {
     }
 
     onVisibleGroupsChanged: rebuildGroups()
-    ListModel { id: groups; dynamicRoles: true }
+    ListModel {
+        id: groups
+        dynamicRoles: true
+    }
     Timer {
         interval: 30000
         repeat: true

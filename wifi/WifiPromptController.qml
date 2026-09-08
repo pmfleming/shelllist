@@ -25,9 +25,13 @@ Item {
     property var credentialNetwork: null
 
     readonly property var submitHandlerByMode: ({
-        "confirm-forget": function (controller, value) { root.submitForget(controller, value); },
-        "network-password": function (controller, value) { root.submitNetworkPassword(controller, value); }
-    })
+            "confirm-forget": function (controller, value) {
+                root.submitForget(controller, value);
+            },
+            "network-password": function (controller, value) {
+                root.submitNetworkPassword(controller, value);
+            }
+        })
 
     function openPrompt(nextMode, nextTitle, nextDetail, nextPassword, nextNetwork) {
         network = nextNetwork || null;
@@ -46,8 +50,7 @@ Item {
     }
 
     function openPasswordPrompt(ap, detailOverride) {
-        openPrompt("network-password", "Password for " + Presentation.networkName(ap),
-            detailOverride || promptMessage(ap, "Enter the Wi-Fi password, then press Enter."), true, ap);
+        openPrompt("network-password", "Password for " + Presentation.networkName(ap), detailOverride || promptMessage(ap, "Enter the Wi-Fi password, then press Enter."), true, ap);
     }
 
     function openCredentials(nextMode, nextTitle, nextDetail, fields, nextNetwork) {
@@ -61,13 +64,11 @@ Item {
     }
 
     function openHiddenNetworkPrompt() {
-        openCredentials("hidden", "Connect hidden network",
-            "Choose security explicitly. Optional enterprise fields may be left blank.", Policy.hiddenFields(), null);
+        openCredentials("hidden", "Connect hidden network", "Choose security explicitly. Optional enterprise fields may be left blank.", Policy.hiddenFields(), null);
     }
 
     function openEnterpriseIdentityPrompt(ap) {
-        openCredentials("enterprise", "Enterprise credentials for " + Presentation.networkName(ap),
-            promptMessage(ap, "Enter the fields required by this enterprise network."), Policy.enterpriseFields(ap), ap);
+        openCredentials("enterprise", "Enterprise credentials for " + Presentation.networkName(ap), promptMessage(ap, "Enter the fields required by this enterprise network."), Policy.enterpriseFields(ap), ap);
     }
 
     function openForgetPrompt(ap, active, profiles) {
@@ -98,14 +99,16 @@ Item {
     }
 
     function submitNetworkPassword(controller, value) {
-        if (!controller.connection.beginAny()) return;
+        if (!controller.connection.beginAny())
+            return;
         if (value.length === 0) {
             controller.status = "Enter a password for this network.";
             return;
         }
         const ap = network;
         cancel();
-        if (ap) controller.connection.runTarget(ap, Presentation.networkName(ap), value);
+        if (ap)
+            controller.connection.runTarget(ap, Presentation.networkName(ap), value);
     }
 
     function submitCredentials(controller, values) {
@@ -114,7 +117,8 @@ Item {
             controller.status = validationError;
             return false;
         }
-        if (!controller.connection.beginAny()) return false;
+        if (!controller.connection.beginAny())
+            return false;
 
         const nextMode = credentialMode;
         const ap = credentialNetwork;
@@ -126,8 +130,7 @@ Item {
 
         const request = Policy.connectionRequest(nextMode, ap, values);
         const name = nextMode === "hidden" ? String(values.ssid || "") : Presentation.networkName(ap);
-        return controller.connection.runTarget(request.target, name, request.password, null,
-            request.enterprise, request.wepKeyType);
+        return controller.connection.runTarget(request.target, name, request.password, null, request.enterprise, request.wepKeyType);
     }
 
     function submitForget(controller, value) {
@@ -137,11 +140,13 @@ Item {
         }
         const ap = network;
         cancel();
-        if (ap) controller.actions.executeForget(ap);
+        if (ap)
+            controller.actions.executeForget(ap);
     }
 
     function submit(controller) {
         const handler = submitHandlerByMode[mode];
-        if (handler) handler(controller, text);
+        if (handler)
+            handler(controller, text);
     }
 }

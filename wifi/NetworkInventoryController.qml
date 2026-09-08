@@ -43,11 +43,15 @@ Item {
     }
 
     function devicesOfType(typeName) {
-        return devices.filter(function (device) { return device.type_name === typeName; });
+        return devices.filter(function (device) {
+            return device.type_name === typeName;
+        });
     }
 
     function connectionsOfType(typeName) {
-        return connections.filter(function (profile) { return profile.type_name === typeName; });
+        return connections.filter(function (profile) {
+            return profile.type_name === typeName;
+        });
     }
 
     function activate(profile, device) {
@@ -55,7 +59,11 @@ Item {
             controller.status = "Could not activate the connection: no profile selected.";
             return false;
         }
-        const request = profile.uuid ? { uuid: profile.uuid } : { path: profile.path };
+        const request = profile.uuid ? {
+            uuid: profile.uuid
+        } : {
+            path: profile.path
+        };
         if (device)
             request.device = device;
         return backend.activateProfile(request);
@@ -66,7 +74,9 @@ Item {
             controller.status = "Could not deactivate the connection: nothing is active.";
             return false;
         }
-        return backend.deactivateConnection({ path: activeConnection.path });
+        return backend.deactivateConnection({
+            path: activeConnection.path
+        });
     }
 
     function applyInventory(value) {
@@ -75,7 +85,9 @@ Item {
         connections = snapshot.connections || [];
         activeConnections = snapshot.active_connections || [];
     }
-    function applyNetworkState(value) { networkState = value || null; }
+    function applyNetworkState(value) {
+        networkState = value || null;
+    }
     function applyActivation(result) {
         controller.status = (result && result.message) || "Activating the connection…";
         refresh();

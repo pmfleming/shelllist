@@ -17,12 +17,14 @@ Item {
         delete result[key];
         return result;
     }
-    function reset(): void { activeOperations = ({}); errorsByDevice = ({}); }
+    function reset(): void {
+        activeOperations = ({});
+        errorsByDevice = ({});
+    }
     function restore(operations: var): void {
         const next = ({});
         (operations || []).forEach(function (operation) {
-            if (operation && operation.request_id
-                    && BluetoothFlow.isActiveOperation(operation))
+            if (operation && operation.request_id && BluetoothFlow.isActiveOperation(operation))
                 next[operation.request_id] = operation;
         });
         activeOperations = next;
@@ -39,7 +41,9 @@ Item {
         }
         return null;
     }
-    function errorForDevice(deviceKey: string): var { return deviceKey ? (errorsByDevice[deviceKey] || null) : null; }
+    function errorForDevice(deviceKey: string): var {
+        return deviceKey ? (errorsByDevice[deviceKey] || null) : null;
+    }
     function accept(operation: var): void {
         if (!operation || !operation.request_id)
             return;
@@ -56,10 +60,9 @@ Item {
     }
     function applyCompleted(operation: var): void {
         activeOperations = copyWithout(activeOperations, operation.request_id);
-        errorsByDevice = operation.state === "failed"
-            ? copyWith(errorsByDevice, operation.device_key,
-                operation.error || ({ message: "Bluetooth operation failed" }))
-            : copyWithout(errorsByDevice, operation.device_key);
+        errorsByDevice = operation.state === "failed" ? copyWith(errorsByDevice, operation.device_key, operation.error || ({
+                message: "Bluetooth operation failed"
+            })) : copyWithout(errorsByDevice, operation.device_key);
         if (operation.snapshot)
             controller.applySnapshot(operation.snapshot);
         else
@@ -69,13 +72,10 @@ Item {
         controller.closePairingForDevice(operation.device_key);
     }
     function resumeScan(operation: var, device: var): void {
-        if (!BluetoothFlow.shouldRescanAfterOperation(operation,
-                controller.uiActive && controller.searchAllDevices,
-                controller.powered, controller.scanning))
+        if (!BluetoothFlow.shouldRescanAfterOperation(operation, controller.uiActive && controller.searchAllDevices, controller.powered, controller.scanning))
             return;
         controller.scanRequested = true;
-        backend.setScanning(true,
-            operation.adapter_key || device.adapter_key || controller.selectedAdapter.key);
+        backend.setScanning(true, operation.adapter_key || device.adapter_key || controller.selectedAdapter.key);
     }
     function handle(operation: var): void {
         if (!operation || !operation.request_id)

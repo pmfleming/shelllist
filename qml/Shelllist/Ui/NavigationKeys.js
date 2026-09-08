@@ -10,4 +10,6 @@ function listDirection(text, modifiers, noModifier, shiftModifier) {
 }
 
 if (typeof module !== "undefined")
-    module.exports = { listDirection: listDirection };
+    module.exports = {
+        listDirection: listDirection
+    };

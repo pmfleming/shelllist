@@ -18,9 +18,18 @@ Rectangle {
     opacity: enabled ? 1.0 : Theme.disabledOpacity
     activeFocusOnTab: enabled
 
-    Keys.onReturnPressed: function (event) { control.toggle(); event.accepted = true; }
-    Keys.onEnterPressed: function (event) { control.toggle(); event.accepted = true; }
-    Keys.onSpacePressed: function (event) { control.toggle(); event.accepted = true; }
+    Keys.onReturnPressed: function (event) {
+        control.toggle();
+        event.accepted = true;
+    }
+    Keys.onEnterPressed: function (event) {
+        control.toggle();
+        event.accepted = true;
+    }
+    Keys.onSpacePressed: function (event) {
+        control.toggle();
+        event.accepted = true;
+    }
 
     function toggle() {
         if (enabled)
@@ -38,5 +47,9 @@ Rectangle {
         uncheckedColor: control.uncheckedColor
     }
 
-    ControlPointerArea { id: area; focusTarget: control; onClicked: control.toggle() }
+    ControlPointerArea {
+        id: area
+        focusTarget: control
+        onClicked: control.toggle()
+    }
 }

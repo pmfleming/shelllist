@@ -13,8 +13,7 @@ Item {
     property string connectingUuid: ""
 
     readonly property bool connecting: requestId.length > 0
-    readonly property bool busy: connecting || backend.isPending("vpn-connect")
-        || backend.isPending("vpn-disconnect")
+    readonly property bool busy: connecting || backend.isPending("vpn-connect") || backend.isPending("vpn-disconnect")
 
     function refresh() {
         backend.loadVpnProfiles();
@@ -29,7 +28,9 @@ Item {
         return null;
     }
 
-    function isActive(uuid) { return !!activeFor(uuid); }
+    function isActive(uuid) {
+        return !!activeFor(uuid);
+    }
 
     function connect(profile) {
         if (!profile || !profile.uuid) {
@@ -41,12 +42,16 @@ Item {
             return false;
         }
         connectingUuid = profile.uuid;
-        return backend.connectVpn({ uuid: profile.uuid });
+        return backend.connectVpn({
+            uuid: profile.uuid
+        });
     }
 
     function disconnect(profile) {
         const uuid = profile && profile.uuid ? profile.uuid : "";
-        return backend.disconnectVpn(uuid.length > 0 ? { uuid: uuid } : ({}));
+        return backend.disconnectVpn(uuid.length > 0 ? {
+            uuid: uuid
+        } : ({}));
     }
 
     function cancel() {
@@ -58,8 +63,12 @@ Item {
         return cancelled;
     }
 
-    function applyProfiles(value) { profiles = value || []; }
-    function applyStatus(value) { active = (value && value.active) || []; }
+    function applyProfiles(value) {
+        profiles = value || [];
+    }
+    function applyStatus(value) {
+        active = (value && value.active) || [];
+    }
     function applyConnectStart(result) {
         requestId = (result && result.request_id) || "";
         controller.status = (result && result.message) || "Connecting to the VPN…";
@@ -80,9 +89,7 @@ Item {
             return;
         requestId = "";
         connectingUuid = "";
-        controller.status = event.event === "succeeded"
-            ? ((event.result && event.result.message) || "VPN connected")
-            : failureMessage(event);
+        controller.status = event.event === "succeeded" ? ((event.result && event.result.message) || "VPN connected") : failureMessage(event);
         refresh();
     }
 

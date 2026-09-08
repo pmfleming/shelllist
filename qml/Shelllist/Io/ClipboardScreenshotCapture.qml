@@ -41,8 +41,7 @@ Item {
     }
 
     function finish(envelope: var, transportError: string): void {
-        const error = client.responseError(envelope, transportError,
-            "Screenshot capture failed");
+        const error = client.responseError(envelope, transportError, "Screenshot capture failed");
         if (error) {
             reject(error);
             return;
@@ -58,7 +57,8 @@ Item {
         statusChanged(message);
     }
 
-    onActiveChanged: if (!active) inFlight = false
+    onActiveChanged: if (!active)
+        inFlight = false
 
     DaemonBackend {
         id: client

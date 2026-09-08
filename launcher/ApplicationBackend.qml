@@ -3,12 +3,16 @@ import "AppApi.js" as AppApi
 
 Io.DaemonBackend {
     required property ApplicationController controller
-    endpoint: ({ daemonName: "app-daemon", protocol: AppApi.protocol, version: AppApi.version, subscribedStreams: AppApi.subscribedStreams })
+    endpoint: ({
+            daemonName: "app-daemon",
+            protocol: AppApi.protocol,
+            version: AppApi.version,
+            subscribedStreams: AppApi.subscribedStreams
+        })
     active: controller.uiActive
 
     function finish(id: string, envelope: var, transportError: string): void {
-        const error = responseError(envelope, transportError,
-            "Application operation failed");
+        const error = responseError(envelope, transportError, "Application operation failed");
         if (error) {
             controller.handleFailure(id, error);
             return;
@@ -30,14 +34,16 @@ Io.DaemonBackend {
         return call(id, AppApi.methods.revision, {});
     }
 
-    function query(id: string, text: string, category: string,
-            generation: int, limit: int, forceRefresh: bool): bool {
-        return call(id, forceRefresh ? AppApi.methods.refresh : AppApi.methods.query,
-            { query: text, category: category, generation: generation, limit: limit });
+    function query(id: string, text: string, category: string, generation: int, limit: int, forceRefresh: bool): bool {
+        return call(id, forceRefresh ? AppApi.methods.refresh : AppApi.methods.query, {
+            query: text,
+            category: category,
+            generation: generation,
+            limit: limit
+        });
     }
 
-    function history(id: string, targetId: string, sinceMs: double,
-            cursor: var, limit: int): bool {
+    function history(id: string, targetId: string, sinceMs: double, cursor: var, limit: int): bool {
         return call(id, AppApi.methods.history, {
             target_id: targetId,
             since_ms: sinceMs,
@@ -74,10 +80,13 @@ Io.DaemonBackend {
                 controller.applyOperation("", operation);
             return;
         }
-        if (event.stream === AppApi.streams.applications
-                || event.stream === AppApi.streams.windows)
+        if (event.stream === AppApi.streams.applications || event.stream === AppApi.streams.windows)
             controller.scheduleRefresh();
     }
-    onSendFailed: function (id, message) { controller.handleFailure(id, message); }
-    onTransportFailed: function (message) { controller.handleTransportFailure(message); }
+    onSendFailed: function (id, message) {
+        controller.handleFailure(id, message);
+    }
+    onTransportFailed: function (message) {
+        controller.handleTransportFailure(message);
+    }
 }

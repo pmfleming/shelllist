@@ -8,8 +8,7 @@ Ui.DetailFlickable {
     required property var application
     required property real uiScale
     readonly property var historyPoints: controller.resourceHistory || []
-    readonly property var latestHistoryPoint: historyPoints.length > 0
-        ? historyPoints[historyPoints.length - 1] : null
+    readonly property var latestHistoryPoint: historyPoints.length > 0 ? historyPoints[historyPoints.length - 1] : null
 
     ApplicationResourceMetadata {
         visible: page.application.running || page.latestHistoryPoint !== null
@@ -20,8 +19,7 @@ Ui.DetailFlickable {
     }
 
     Ui.ThemeText {
-        visible: !page.application.running
-            && (page.controller.historyInFlight || page.controller.resourceHistory.length > 0)
+        visible: !page.application.running && (page.controller.historyInFlight || page.controller.resourceHistory.length > 0)
         width: parent.width
         text: qsTr("Application is not running · showing retained measurements")
         color: Ui.Theme.mutedText

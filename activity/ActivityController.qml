@@ -7,19 +7,35 @@ import "ActivityFlow.js" as Flow
 Ui.ChooserController {
     id: controller
 
-    property var activity: ({ available: false, syncing: false, event_count: 0,
-        incomplete_todo_count: 0, next_event: null, sources: [], world_clocks: [],
-        weather_locations: [],
-        weather: { available: false, id: "", location: "Local",
-            error: "Weather is not configured" } })
+    property var activity: ({
+            available: false,
+            syncing: false,
+            event_count: 0,
+            incomplete_todo_count: 0,
+            next_event: null,
+            sources: [],
+            world_clocks: [],
+            weather_locations: [],
+            weather: {
+                available: false,
+                id: "",
+                location: "Local",
+                error: "Weather is not configured"
+            }
+        })
     property NotificationState notificationState: NotificationState {
         uiActive: controller.uiActive
     }
     readonly property var notifications: notificationState.notifications
     readonly property var activeNotificationGroups: notificationState.activeGroups
     property bool preserveNavigationOnDeactivate: false
-    property var timezone: ({ available: false, timezone: "", city: "",
-        abbreviation: "", utc_offset_seconds: 0 })
+    property var timezone: ({
+            available: false,
+            timezone: "",
+            city: "",
+            abbreviation: "",
+            utc_offset_seconds: 0
+        })
     property bool rangeQueriesEnabled: true
     property var events: []
     property var todos: []
@@ -57,15 +73,18 @@ Ui.ChooserController {
     })
     readonly property var weatherLocations: {
         const locations = activity.weather_locations || [];
-        return locations.length > 0 ? locations
-            : activity.weather ? [activity.weather] : [];
+        return locations.length > 0 ? locations : activity.weather ? [activity.weather] : [];
     }
     readonly property var selectedWeather: {
         const requested = weatherLocations.find(function (weather) {
             return weather.id === weatherLocationId;
         });
-        return requested || weatherLocations.find(function (weather) { return weather.home; })
-            || weatherLocations[0] || ({ available: false, location: "Local" });
+        return requested || weatherLocations.find(function (weather) {
+            return weather.home;
+        }) || weatherLocations[0] || ({
+                available: false,
+                location: "Local"
+            });
     }
 
     signal focusTodoInputRequested
@@ -77,8 +96,12 @@ Ui.ChooserController {
         notificationsRequested(groupKey, tab);
     }
 
-    function dateKey(value: date): string { return Flow.dateKey(value); }
-    function startOfDay(value: date): date { return Flow.startOfDay(value); }
+    function dateKey(value: date): string {
+        return Flow.dateKey(value);
+    }
+    function startOfDay(value: date): date {
+        return Flow.startOfDay(value);
+    }
     function eventOverlapsDate(event: var, value: date): bool {
         return Flow.eventOverlapsDate(event, value);
     }
@@ -86,7 +109,10 @@ Ui.ChooserController {
     function monthRange(): var {
         const from = new Date(viewDate.getFullYear(), viewDate.getMonth(), -6);
         const to = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 8);
-        return { from: from, to: to };
+        return {
+            from: from,
+            to: to
+        };
     }
 
     function applySnapshot(snapshot: var): void {
@@ -136,8 +162,7 @@ Ui.ChooserController {
 
     function selectDate(value: date): void {
         selectedDate = startOfDay(value);
-        if (selectedDate.getMonth() !== viewDate.getMonth()
-                || selectedDate.getFullYear() !== viewDate.getFullYear()) {
+        if (selectedDate.getMonth() !== viewDate.getMonth() || selectedDate.getFullYear() !== viewDate.getFullYear()) {
             viewDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
             scheduleRangeQuery();
         }
@@ -147,8 +172,7 @@ Ui.ChooserController {
         const target = new Date(viewDate.getFullYear(), viewDate.getMonth() + delta, 1);
         const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
         viewDate = target;
-        selectedDate = new Date(target.getFullYear(), target.getMonth(),
-            Math.min(selectedDate.getDate(), lastDay));
+        selectedDate = new Date(target.getFullYear(), target.getMonth(), Math.min(selectedDate.getDate(), lastDay));
         scheduleRangeQuery();
     }
 
@@ -166,10 +190,16 @@ Ui.ChooserController {
     function createTodo(title: string): bool {
         return backend.createTodo(title, selectedDateKey);
     }
-    function toggleTodo(todo: var): bool { return backend.completeTodo(todo.id, !todo.completed); }
-    function deleteTodo(todo: var): bool { return backend.deleteTodo(todo.id); }
+    function toggleTodo(todo: var): bool {
+        return backend.completeTodo(todo.id, !todo.completed);
+    }
+    function deleteTodo(todo: var): bool {
+        return backend.deleteTodo(todo.id);
+    }
     function selectWeatherLocation(locationId: string): void {
-        if (weatherLocations.some(function (weather) { return weather.id === locationId; }))
+        if (weatherLocations.some(function (weather) {
+            return weather.id === locationId;
+        }))
             weatherLocationId = locationId;
     }
     function cycleWeatherLocation(delta: int): void {
@@ -179,8 +209,7 @@ Ui.ChooserController {
         const current = weatherLocations.findIndex(function (weather) {
             return weather.id === selectedId;
         });
-        const next = (Math.max(0, current) + delta + weatherLocations.length)
-            % weatherLocations.length;
+        const next = (Math.max(0, current) + delta + weatherLocations.length) % weatherLocations.length;
         weatherLocationId = weatherLocations[next].id;
     }
 
@@ -198,11 +227,15 @@ Ui.ChooserController {
         detailSection = section;
         detailsOpen = true;
     }
-    function closeSection(): void { detailsOpen = false; }
+    function closeSection(): void {
+        detailsOpen = false;
+    }
     function captureScreenshot(x: real, y: real, width: real, height: real): bool {
         return screenshotCapture.captureRegion(x, y, width, height);
     }
-    function refresh(): void { backend.refresh(); }
+    function refresh(): void {
+        backend.refresh();
+    }
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
         scheduleRangeQuery();
@@ -226,7 +259,10 @@ Ui.ChooserController {
         onTriggered: controller.queryVisibleRange()
     }
 
-    ActivityBackend { id: activityBackend; controller: controller }
+    ActivityBackend {
+        id: activityBackend
+        controller: controller
+    }
 
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture

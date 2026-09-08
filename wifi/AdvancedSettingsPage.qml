@@ -33,25 +33,12 @@ Item {
     readonly property var ap: controller.detailAp
     readonly property var status: controller.activeStatus || ({})
     readonly property var bandStatus: controller.bandStatus || ({})
-    readonly property var dhcpLease: controller.isActive(ap)
-        ? (((status.ip4 || {}).dhcp_lease) || ({}))
-        : ({})
-    readonly property var currentActiveIp: controller.isActive(ap)
-        ? (status[ipFamily === "ipv4" ? "ip4" : "ip6"] || ({}))
-        : ({})
-    readonly property string displayedAddress: currentMethod === "auto" && currentActiveIp.address
-        ? String(currentActiveIp.address)
-        : currentIp.address
-    readonly property string displayedPrefix: currentMethod === "auto"
-            && currentActiveIp.prefix !== undefined && currentActiveIp.prefix !== null
-        ? String(currentActiveIp.prefix)
-        : currentIp.prefix
-    readonly property string displayedGateway: currentMethod === "auto" && currentActiveIp.gateway
-        ? String(currentActiveIp.gateway)
-        : currentIp.gateway
-    readonly property string displayedDns: currentAutoDns && currentActiveIp.dns && currentActiveIp.dns.length > 0
-        ? currentActiveIp.dns.join(", ")
-        : currentIp.dns
+    readonly property var dhcpLease: controller.isActive(ap) ? (((status.ip4 || {}).dhcp_lease) || ({})) : ({})
+    readonly property var currentActiveIp: controller.isActive(ap) ? (status[ipFamily === "ipv4" ? "ip4" : "ip6"] || ({})) : ({})
+    readonly property string displayedAddress: currentMethod === "auto" && currentActiveIp.address ? String(currentActiveIp.address) : currentIp.address
+    readonly property string displayedPrefix: currentMethod === "auto" && currentActiveIp.prefix !== undefined && currentActiveIp.prefix !== null ? String(currentActiveIp.prefix) : currentIp.prefix
+    readonly property string displayedGateway: currentMethod === "auto" && currentActiveIp.gateway ? String(currentActiveIp.gateway) : currentIp.gateway
+    readonly property string displayedDns: currentAutoDns && currentActiveIp.dns && currentActiveIp.dns.length > 0 ? currentActiveIp.dns.join(", ") : currentIp.dns
 
     clip: true
     focus: visible && controller.advanced.open
@@ -129,7 +116,9 @@ Item {
         autoSaveTimer.restart();
     }
 
-    function hardwareSettingsReady(): bool { return ipv4State.ready() && ipv6State.ready(); }
+    function hardwareSettingsReady(): bool {
+        return ipv4State.ready() && ipv6State.ready();
+    }
 
     function saveOrigin(): string {
         if (securityDirty === hardwareDirty)
@@ -146,7 +135,9 @@ Item {
             send_hostname: sendHostname,
             // Explicit intent must survive failed/partial saves, including a
             // toggle back to the old value. Unrelated edits preserve mDNS policy.
-            advanced: castingDirty ? ({ casting_enabled: castingEnabled }) : ({}),
+            advanced: castingDirty ? ({
+                    casting_enabled: castingEnabled
+                }) : ({}),
             ipv4: ipv4State.payload(profile.ipv4),
             ipv6: ipv6State.payload(profile.ipv6),
             password: passwordDirty && passwordValue.length > 0 ? passwordValue : null
@@ -196,8 +187,16 @@ Item {
         queueHardwareSave();
     }
 
-    IpSettingsState { id: ipv4State; family: "ipv4"; fallbackPrefix: 24 }
-    IpSettingsState { id: ipv6State; family: "ipv6"; fallbackPrefix: 64 }
+    IpSettingsState {
+        id: ipv4State
+        family: "ipv4"
+        fallbackPrefix: 24
+    }
+    IpSettingsState {
+        id: ipv6State
+        family: "ipv6"
+        fallbackPrefix: 64
+    }
 
     Component.onCompleted: syncProfile()
     onProfileChanged: {
@@ -251,12 +250,16 @@ Item {
 
     Component {
         id: securitySection
-        AdvancedSecurityPane { settings: page }
+        AdvancedSecurityPane {
+            settings: page
+        }
     }
 
     Component {
         id: ipSection
-        AdvancedIpSettingsPane { settings: page }
+        AdvancedIpSettingsPane {
+            settings: page
+        }
     }
 
     Rectangle {

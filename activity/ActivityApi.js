@@ -29,5 +29,4 @@ var streams = {
     timezone: Protocol.streams["timezone.changed"]
 };
 
-var subscribedStreams = [streams.activity, streams.notifications,
-    streams.notificationActive, streams.timezone];
+var subscribedStreams = [streams.activity, streams.notifications, streams.notificationActive, streams.timezone];

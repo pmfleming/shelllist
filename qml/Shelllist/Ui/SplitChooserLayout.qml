@@ -12,8 +12,14 @@ RowLayout {
     readonly property real verticalDensity: Theme.densityScale(height, controller.contentVerticalMargin)
     readonly property int verticalMargin: Theme.verticalSpacing(controller.contentVerticalMargin, verticalDensity)
 
-    function focusSearch() { if (listItem) listItem.focusSearch(); }
-    function focusTop() { if (listItem) listItem.focusTop(); }
+    function focusSearch() {
+        if (listItem)
+            listItem.focusSearch();
+    }
+    function focusTop() {
+        if (listItem)
+            listItem.focusTop();
+    }
 
     anchors.fill: parent
     anchors.leftMargin: controller.contentMargin
@@ -24,8 +30,12 @@ RowLayout {
 
     Connections {
         target: layout.controller
-        function onFocusSearchRequested() { Qt.callLater(layout.focusSearch); }
-        function onFocusListTopRequested() { Qt.callLater(layout.focusTop); }
+        function onFocusSearchRequested() {
+            Qt.callLater(layout.focusSearch);
+        }
+        function onFocusListTopRequested() {
+            Qt.callLater(layout.focusTop);
+        }
     }
 
     Loader {

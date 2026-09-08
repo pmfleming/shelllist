@@ -12,8 +12,7 @@ Column {
     required property var battery
     required property var device
     required property var protection
-    readonly property bool thresholdsEditable: controller.protectionSupported
-        && !controller.batteryOperationActive && !controller.actionInFlight
+    readonly property bool thresholdsEditable: controller.protectionSupported && !controller.batteryOperationActive && !controller.actionInFlight
 
     width: parent.width
     spacing: Ui.Theme.verticalSpacing(Ui.Theme.spacingMd, Ui.Theme.densityScale(height, 0))
@@ -32,22 +31,13 @@ Column {
 
         Ui.FieldLabel {
             Layout.fillWidth: true
-            text: !pane.controller.protectionSupported
-                ? "Charge thresholds are not exposed by this battery"
-                : (pane.protection.managed
-                    ? "Managed by bar-daemon · observed "
-                        + Presentation.protectionRange(pane.protection)
-                    : "Observed " + Presentation.protectionRange(pane.protection)
-                        + " · not managed yet")
-            color: pane.controller.protectionSupported
-                ? Ui.Theme.mutedText : Ui.Theme.warning
+            text: !pane.controller.protectionSupported ? "Charge thresholds are not exposed by this battery" : (pane.protection.managed ? "Managed by bar-daemon · observed " + Presentation.protectionRange(pane.protection) : "Observed " + Presentation.protectionRange(pane.protection) + " · not managed yet")
+            color: pane.controller.protectionSupported ? Ui.Theme.mutedText : Ui.Theme.warning
         }
 
         Ui.FieldLabel {
             Layout.fillWidth: true
-            visible: pane.controller.protectionSupported
-                && !!pane.protection.managed
-                && !pane.protection.thresholds_verified
+            visible: pane.controller.protectionSupported && !!pane.protection.managed && !pane.protection.thresholds_verified
             text: qsTr("The firmware accepted the range but reported a different value.")
             color: Ui.Theme.warning
         }
@@ -105,15 +95,9 @@ Column {
 
         Ui.ActionButton {
             Layout.fillWidth: true
-            label: pane.protection.charge_once_active
-                ? "Charging to 100%" : "Charge to 100% once"
+            label: pane.protection.charge_once_active ? "Charging to 100%" : "Charge to 100% once"
             tone: pane.protection.charge_once_active ? "active" : "normal"
-            enabled: !!pane.battery.plugged
-                && !pane.protection.charge_once_active
-                && !pane.controller.batteryOperationActive
-                && !pane.controller.thresholdOperationActive
-                && pane.controller.protectionSupported
-                && !pane.controller.actionInFlight
+            enabled: !!pane.battery.plugged && !pane.protection.charge_once_active && !pane.controller.batteryOperationActive && !pane.controller.thresholdOperationActive && pane.controller.protectionSupported && !pane.controller.actionInFlight
             onClicked: pane.controller.chargeOnce()
         }
 
@@ -130,29 +114,17 @@ Column {
 
             Ui.ActionButton {
                 Layout.fillWidth: true
-                label: pane.controller.chargingInhibited
-                    ? "Resume charging" : "Pause charging"
+                label: pane.controller.chargingInhibited ? "Resume charging" : "Pause charging"
                 tone: pane.controller.chargingInhibited ? "active" : "normal"
-                enabled: pane.controller.inhibitionSupported
-                    && (!pane.controller.batteryOperationActive
-                        || pane.controller.chargingInhibited)
-                    && !pane.controller.thresholdOperationActive
-                    && !pane.controller.actionInFlight
-                onClicked: pane.controller.setChargingInhibited(
-                    !pane.controller.chargingInhibited)
+                enabled: pane.controller.inhibitionSupported && (!pane.controller.batteryOperationActive || pane.controller.chargingInhibited) && !pane.controller.thresholdOperationActive && !pane.controller.actionInFlight
+                onClicked: pane.controller.setChargingInhibited(!pane.controller.chargingInhibited)
             }
 
             Ui.ActionButton {
                 Layout.fillWidth: true
-                label: pane.controller.calibrating
-                    ? "Cancel calibration" : "Calibrate battery"
+                label: pane.controller.calibrating ? "Cancel calibration" : "Calibrate battery"
                 tone: pane.controller.calibrating ? "active" : "normal"
-                enabled: pane.controller.calibrationSupported
-                    && (pane.controller.calibrating || !!pane.battery.plugged)
-                    && (!pane.controller.batteryOperationActive
-                        || pane.controller.calibrating)
-                    && !pane.controller.thresholdOperationActive
-                    && !pane.controller.actionInFlight
+                enabled: pane.controller.calibrationSupported && (pane.controller.calibrating || !!pane.battery.plugged) && (!pane.controller.batteryOperationActive || pane.controller.calibrating) && !pane.controller.thresholdOperationActive && !pane.controller.actionInFlight
                 onClicked: pane.controller.toggleCalibration()
             }
         }

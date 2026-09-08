@@ -10,28 +10,39 @@ Ui.ProviderChooserSurface {
     chooserController: controller
     surfaceName: "Applications"
     refreshEnabled: !content.controller.operationBlocked && navigationEnabled
-    detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection
-        && refreshEnabled
+    detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection && refreshEnabled
     helpEntries: [
-        { keys: "Shift+Enter", action: "Launch a new application instance" },
-        { keys: "F5", action: "Refresh applications and windows" },
-        { keys: "Ctrl+Tab", action: "Cycle detail tabs" }
+        {
+            keys: "Shift+Enter",
+            action: "Launch a new application instance"
+        },
+        {
+            keys: "F5",
+            action: "Refresh applications and windows"
+        },
+        {
+            keys: "Ctrl+Tab",
+            action: "Cycle detail tabs"
+        }
     ]
     onRefreshRequested: content.controller.refresh(true)
     onDetailsTabRequested: content.controller.cycleDetailsTab()
 
     listComponent: Component {
-        ApplicationListPane { controller: content.controller }
+        ApplicationListPane {
+            controller: content.controller
+        }
     }
     detailsComponent: Component {
-        ApplicationDetails { controller: content.controller; uiScale: content.uiScale }
+        ApplicationDetails {
+            controller: content.controller
+            uiScale: content.uiScale
+        }
     }
 
     Shortcut {
         sequence: "Shift+Return"
-        enabled: content.controller.uiActive && content.controller.hasSelection
-            && !content.controller.operationBlocked && content.navigationEnabled
-            && (content.controller.selectedApplication || ({})).kind === "desktop-application"
+        enabled: content.controller.uiActive && content.controller.hasSelection && !content.controller.operationBlocked && content.navigationEnabled && (content.controller.selectedApplication || ({})).kind === "desktop-application"
         onActivated: content.controller.launchSelected()
     }
 }

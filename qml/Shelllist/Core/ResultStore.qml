@@ -30,11 +30,7 @@ Item {
     // Fuzzy work belongs to the Rust matcher. While a request is pending, keep
     // the previous keyed model (or the unfiltered baseline for the first edit)
     // instead of ranking the same catalog synchronously on the UI thread.
-    readonly property var visibleResults: fuzzyQuery
-        ? appliedSearchGeneration === searchGeneration
-            ? rustRankedResults
-            : rustRankedResults.length > 0 ? rustRankedResults : baselineResults
-        : baselineResults
+    readonly property var visibleResults: fuzzyQuery ? appliedSearchGeneration === searchGeneration ? rustRankedResults : rustRankedResults.length > 0 ? rustRankedResults : baselineResults : baselineResults
     readonly property var visibleModel: visibleListModel
     readonly property int count: visibleResults.length
 
@@ -64,13 +60,17 @@ Item {
             return;
         const previous = selected();
         const byKey = ({});
-        sourceResults.forEach(function (item) { byKey[item.key] = item; });
-        rustRankedResults = (keys || []).map(function (key) { return byKey[key]; })
-            .filter(function (item) { return !!item; });
+        sourceResults.forEach(function (item) {
+            byKey[item.key] = item;
+        });
+        rustRankedResults = (keys || []).map(function (key) {
+            return byKey[key];
+        }).filter(function (item) {
+            return !!item;
+        });
         appliedSearchGeneration = generation;
         if (searchRankRequestedAtMs > 0) {
-            lastSearchRankLatencyMs = Math.max(0,
-                Date.now() - searchRankRequestedAtMs);
+            lastSearchRankLatencyMs = Math.max(0, Date.now() - searchRankRequestedAtMs);
             searchRankRequestedAtMs = 0;
         }
         if (previous) {
@@ -83,8 +83,12 @@ Item {
         return count <= 0 ? 0 : Math.max(0, Math.min(index, count - 1));
     }
 
-    function move(delta: int): void { selectedIndex = clampIndex(selectedIndex + delta); }
-    function selectFirst(): void { selectedIndex = 0; }
+    function move(delta: int): void {
+        selectedIndex = clampIndex(selectedIndex + delta);
+    }
+    function selectFirst(): void {
+        selectedIndex = 0;
+    }
 
     function beginQuery(text: string, context: var, providerIds: var, limit: int): var {
         if (activeQueryId.length > 0)
@@ -116,7 +120,9 @@ Item {
             throw new Error("results: unknown provider " + JSON.stringify(providerId));
         const previous = selected();
         const normalized = Array.isArray(values) ? values : [];
-        const retained = sourceResults.filter(function (item) { return item.providerId !== providerId; });
+        const retained = sourceResults.filter(function (item) {
+            return item.providerId !== providerId;
+        });
         catalogUpdateStartedAtMs = Date.now();
         sourceResults = retained.concat(normalized);
         if (resetSelection || !previous) {
@@ -155,11 +161,17 @@ Item {
             return true;
         }
         const byKey = ({});
-        sourceResults.filter(function (item) { return item.providerId === providerId; })
-            .forEach(function (item) { byKey[item.key] = item; });
-        (batch.results || []).forEach(function (item) { byKey[item.key] = item; });
-        replaceNormalizedProviderResults(providerId,
-            Object.keys(byKey).map(function (key) { return byKey[key]; }), false);
+        sourceResults.filter(function (item) {
+            return item.providerId === providerId;
+        }).forEach(function (item) {
+            byKey[item.key] = item;
+        });
+        (batch.results || []).forEach(function (item) {
+            byKey[item.key] = item;
+        });
+        replaceNormalizedProviderResults(providerId, Object.keys(byKey).map(function (key) {
+            return byKey[key];
+        }), false);
         return true;
     }
 
@@ -176,8 +188,7 @@ Item {
     function recordCatalogToModelLatency(): void {
         if (catalogUpdateStartedAtMs <= 0)
             return;
-        lastCatalogToModelLatencyMs = Math.max(0,
-            Date.now() - catalogUpdateStartedAtMs);
+        lastCatalogToModelLatencyMs = Math.max(0, Date.now() - catalogUpdateStartedAtMs);
         catalogUpdateStartedAtMs = 0;
     }
 
@@ -188,7 +199,10 @@ Item {
         visibleListModel.clear();
         for (let index = 0; index < visibleResults.length; index++) {
             const result = visibleResults[index];
-            visibleListModel.append({ resultKey: result.key, resultData: result });
+            visibleListModel.append({
+                resultKey: result.key,
+                resultData: result
+            });
         }
         recordCatalogToModelLatency();
     }
@@ -196,11 +210,13 @@ Item {
     function continueProgressiveModelRebuild(generation: int): void {
         if (generation !== modelSyncGeneration)
             return;
-        const end = Math.min(pendingModelIndex + modelRebuildChunkSize,
-            pendingModelResults.length);
+        const end = Math.min(pendingModelIndex + modelRebuildChunkSize, pendingModelResults.length);
         while (pendingModelIndex < end) {
             const result = pendingModelResults[pendingModelIndex];
-            visibleListModel.append({ resultKey: result.key, resultData: result });
+            visibleListModel.append({
+                resultKey: result.key,
+                resultData: result
+            });
             pendingModelIndex += 1;
         }
         recordCatalogToModelLatency();
@@ -270,8 +286,10 @@ Item {
             const desired = visibleResults[desiredIndex];
             const found = indexes[desired.key];
             if (found === undefined) {
-                visibleListModel.insert(desiredIndex,
-                    { resultKey: desired.key, resultData: desired });
+                visibleListModel.insert(desiredIndex, {
+                    resultKey: desired.key,
+                    resultData: desired
+                });
                 keys.splice(desiredIndex, 0, desired.key);
                 refreshIndexes(keys, indexes, desiredIndex, keys.length - 1);
                 continue;

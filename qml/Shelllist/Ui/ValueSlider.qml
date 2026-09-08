@@ -8,7 +8,8 @@ Controls.Slider {
     signal editingFinished
 
     function moveToBoundary(boundary: real): void {
-        if (!enabled || value === boundary) return;
+        if (!enabled || value === boundary)
+            return;
         value = boundary;
         edited(value);
         editingFinished();
@@ -19,7 +20,8 @@ Controls.Slider {
     snapMode: Controls.Slider.SnapAlways
     activeFocusOnTab: enabled
     onMoved: edited(value)
-    onPressedChanged: if (!pressed) editingFinished()
+    onPressedChanged: if (!pressed)
+        editingFinished()
     Keys.onPressed: function (event) {
         if (event.key === Qt.Key_Home || event.key === Qt.Key_End) {
             moveToBoundary(event.key === Qt.Key_Home ? from : to);

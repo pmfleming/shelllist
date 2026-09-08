@@ -12,8 +12,7 @@ Item {
     required property int workspaceId
     property bool compact: false
     readonly property var workspace: Presentation.workspaceFor(controller.workspaces, workspaceId)
-    readonly property bool active: Presentation.activeWorkspaceId(controller.workspaces,
-        screenName) === workspaceId
+    readonly property bool active: Presentation.activeWorkspaceId(controller.workspaces, screenName) === workspaceId
     readonly property bool occupied: !!workspace && Number(workspace.windows || 0) > 0
     readonly property string iconName: Presentation.workspaceIconName(workspaceId)
 
@@ -25,21 +24,22 @@ Item {
         width: button.compact ? 23 : 27
         height: width
         radius: 0
-        color: button.active ? "transparent"
-            : (button.workspaceId === 1
-                ? Ui.Theme.withAlpha(Ui.Theme.window, 0.58)
-                : Ui.Theme.withAlpha(Ui.Theme.input, button.occupied ? 0.72 : 0.42))
+        color: button.active ? "transparent" : (button.workspaceId === 1 ? Ui.Theme.withAlpha(Ui.Theme.window, 0.58) : Ui.Theme.withAlpha(Ui.Theme.input, button.occupied ? 0.72 : 0.42))
         opacity: button.active ? 1 : (button.occupied ? 0.82 : 0.48)
         border.width: button.workspace && button.workspace.urgent ? 2 : 0
         border.color: Ui.Theme.danger
 
         Behavior on color {
             enabled: !Ui.Theme.noAnimations
-            ColorAnimation { duration: Ui.Theme.animationFast }
+            ColorAnimation {
+                duration: Ui.Theme.animationFast
+            }
         }
         Behavior on opacity {
             enabled: !Ui.Theme.noAnimations
-            NumberAnimation { duration: Ui.Theme.animationFast }
+            NumberAnimation {
+                duration: Ui.Theme.animationFast
+            }
         }
 
         IconImage {
@@ -69,7 +69,9 @@ Item {
 
             Behavior on color {
                 enabled: !Ui.Theme.noAnimations
-                ColorAnimation { duration: Ui.Theme.animationFast }
+                ColorAnimation {
+                    duration: Ui.Theme.animationFast
+                }
             }
         }
     }
@@ -83,5 +85,4 @@ Item {
         pressedOpacity: 0.16
         onClicked: button.controller.focusWorkspace(button.workspaceId)
     }
-
 }

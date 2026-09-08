@@ -9,8 +9,7 @@ Ui.ActionDetailsPane {
     required property TimeWeatherController controller
     required property date now
     readonly property var city: controller.selectedCity
-    readonly property int footerHeight: Math.max(36,
-        Math.round(Ui.Theme.controlHeight * uiScale))
+    readonly property int footerHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
 
     chooserController: controller
     emptyText: "Select a city"
@@ -27,10 +26,20 @@ Ui.ActionDetailsPane {
         sectionSpacing: pane.sectionSpacing
         selectedValue: pane.controller.detailsTab
         tabs: [
-            { value: "time", icon: "󰥔", label: "Time" },
-            { value: "weather", icon: "󰖐", label: "Weather" }
+            {
+                value: "time",
+                icon: "󰥔",
+                label: "Time"
+            },
+            {
+                value: "weather",
+                icon: "󰖐",
+                label: "Weather"
+            }
         ]
-        onSelected: function (value) { pane.controller.setDetailsTab(value); }
+        onSelected: function (value) {
+            pane.controller.setDetailsTab(value);
+        }
 
         Loader {
             anchors.fill: parent
@@ -48,8 +57,7 @@ Ui.ActionDetailsPane {
             anchors.fill: parent
             active: pane.controller.detailsTab === "weather"
             asynchronous: true
-            sourceComponent: pane.city.has_weather
-                ? weatherComponent : noWeatherComponent
+            sourceComponent: pane.city.has_weather ? weatherComponent : noWeatherComponent
         }
     }
 
@@ -65,8 +73,7 @@ Ui.ActionDetailsPane {
     Component {
         id: noWeatherComponent
         Ui.CenteredMessage {
-            text: "Weather is not configured for "
-                + String(pane.city.label || "this city")
+            text: "Weather is not configured for " + String(pane.city.label || "this city")
         }
     }
 }

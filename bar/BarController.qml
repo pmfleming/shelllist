@@ -10,32 +10,89 @@ Item {
     id: controller
 
     required property var surfaceRegistry
-    property var activity: ({ available: false, syncing: false, event_count: 0,
-        incomplete_todo_count: 0, next_event: null, sources: [], world_clocks: [] })
-    property var workspaces: ({ available: false, monitors: [], workspaces: [] })
-    property var media: ({ available: false, active_player: "", players: [] })
+    property var activity: ({
+            available: false,
+            syncing: false,
+            event_count: 0,
+            incomplete_todo_count: 0,
+            next_event: null,
+            sources: [],
+            world_clocks: []
+        })
+    property var workspaces: ({
+            available: false,
+            monitors: [],
+            workspaces: []
+        })
+    property var media: ({
+            available: false,
+            active_player: "",
+            players: []
+        })
     property var audio: ({
-        available: false,
-        volume_percent: 0,
-        muted: false,
-        input_available: false,
-        input_muted: false
-    })
-    property var brightness: ({ available: false, percent: 0 })
-    property var battery: ({ available: false, percentage: 0 })
-    property var powerProfile: ({ available: false, profile: "", profiles: [] })
-    property var powerSleep: ({ available: false, inhibitors: [] })
-    property var osdHardware: ({ available: false, caps_lock: false, num_lock: false,
-        keyboard_backlight_percent: null, microphone_privacy: false, camera_privacy: false })
-    property var notifications: ({ available: false, count: 0, dnd: false })
-    property var notificationActive: ({ available: false, revision: 0, notifications: [] })
-    property var updates: ({ available: false, ready: false, lanes: [] })
-    property var timezone: ({ available: false, timezone: "", city: "", abbreviation: "", utc_offset_seconds: 0 })
+            available: false,
+            volume_percent: 0,
+            muted: false,
+            input_available: false,
+            input_muted: false
+        })
+    property var brightness: ({
+            available: false,
+            percent: 0
+        })
+    property var battery: ({
+            available: false,
+            percentage: 0
+        })
+    property var powerProfile: ({
+            available: false,
+            profile: "",
+            profiles: []
+        })
+    property var powerSleep: ({
+            available: false,
+            inhibitors: []
+        })
+    property var osdHardware: ({
+            available: false,
+            caps_lock: false,
+            num_lock: false,
+            keyboard_backlight_percent: null,
+            microphone_privacy: false,
+            camera_privacy: false
+        })
+    property var notifications: ({
+            available: false,
+            count: 0,
+            dnd: false
+        })
+    property var notificationActive: ({
+            available: false,
+            revision: 0,
+            notifications: []
+        })
+    property var updates: ({
+            available: false,
+            ready: false,
+            lanes: []
+        })
+    property var timezone: ({
+            available: false,
+            timezone: "",
+            city: "",
+            abbreviation: "",
+            utc_offset_seconds: 0
+        })
     property bool osdVisible: false
     property var osd: ({
-        kind: "", icon: "", label: "", valueLabel: "", percent: 0,
-        progressVisible: false, timeoutMs: 1400
-    })
+            kind: "",
+            icon: "",
+            label: "",
+            valueLabel: "",
+            percent: 0,
+            progressVisible: false,
+            timeoutMs: 1400
+        })
 
     readonly property var wifiController: surfaceRegistry ? surfaceRegistry.wifiController : null
     readonly property var bluetoothController: surfaceRegistry ? surfaceRegistry.bluetoothController : null
@@ -51,7 +108,10 @@ Item {
         });
     }
 
-    function applySnapshot(snapshot: var): void { if (snapshot) applyPayload(snapshot); }
+    function applySnapshot(snapshot: var): void {
+        if (snapshot)
+            applyPayload(snapshot);
+    }
     function applyResponse(data: var): void {
         if (data.snapshot)
             applySnapshot(data.snapshot);
@@ -80,8 +140,7 @@ Item {
     }
 
     function presentDomainOsd(stream: string, previous: var, value: var): void {
-        const nextOsd = OsdPresentation.domainOsd(
-            BarApi.streams, stream, previous, value);
+        const nextOsd = OsdPresentation.domainOsd(BarApi.streams, stream, previous, value);
         if (nextOsd)
             presentOsd(nextOsd);
     }
@@ -104,18 +163,30 @@ Item {
         openSurface("time-weather");
     }
 
-    function focusWorkspace(workspaceId: int): bool { return backend.focusWorkspace(workspaceId); }
-    function mediaOperation(operation: string): bool { return backend.mediaOperation(operation); }
+    function focusWorkspace(workspaceId: int): bool {
+        return backend.focusWorkspace(workspaceId);
+    }
+    function mediaOperation(operation: string): bool {
+        return backend.mediaOperation(operation);
+    }
     function cycleMediaPlayer(): bool {
         return (media.players || []).length > 1 && backend.mediaOperation("cycle");
     }
     function seekMedia(offsetSeconds: int): bool {
         return !!activePlayer && !!activePlayer.can_seek && backend.seekMedia(offsetSeconds);
     }
-    function adjustAudio(deltaPercent: int): bool { return backend.adjustAudio(deltaPercent); }
-    function toggleMuted(): bool { return backend.toggleMuted(); }
-    function toggleInputMuted(): bool { return backend.toggleInputMuted(); }
-    function adjustBrightness(deltaPercent: int): bool { return backend.adjustBrightness(deltaPercent); }
+    function adjustAudio(deltaPercent: int): bool {
+        return backend.adjustAudio(deltaPercent);
+    }
+    function toggleMuted(): bool {
+        return backend.toggleMuted();
+    }
+    function toggleInputMuted(): bool {
+        return backend.toggleInputMuted();
+    }
+    function adjustBrightness(deltaPercent: int): bool {
+        return backend.adjustBrightness(deltaPercent);
+    }
     function cyclePowerProfile(): bool {
         if (!powerProfile.available || backend.requestRunning)
             return false;
@@ -135,8 +206,10 @@ Item {
         return backend.invokeNotificationAction(notificationId, actionKey);
     }
     readonly property var notificationState: surfaceRegistry ? surfaceRegistry.notificationState : null
-    onNotificationsChanged: if (notificationState) notificationState.notifications = notifications
-    onNotificationActiveChanged: if (notificationState) notificationState.notificationActive = notificationActive
+    onNotificationsChanged: if (notificationState)
+        notificationState.notifications = notifications
+    onNotificationActiveChanged: if (notificationState)
+        notificationState.notificationActive = notificationActive
 
     function replyNotification(notificationId: int, text: string): bool {
         return notificationState ? notificationState.replyNotification(notificationId, text) : false;
@@ -144,23 +217,26 @@ Item {
     function visibleToastGroups(monitorName: string): var {
         if (notifications.dnd)
             return [];
-        const active = notificationActive && Array.isArray(notificationActive.notifications)
-            ? notificationActive.notifications : [];
+        const active = notificationActive && Array.isArray(notificationActive.notifications) ? notificationActive.notifications : [];
         const monitors = (workspaces.monitors || []).map(function (monitor) {
             return monitor.name;
         });
         const focused = workspaces.focused_monitor || "";
         const routed = active.filter(function (notification) {
-            return Ui.NotificationPresentation.notificationMonitor(
-                notification, focused, monitors) === monitorName;
+            return Ui.NotificationPresentation.notificationMonitor(notification, focused, monitors) === monitorName;
         }).reverse();
         return Ui.NotificationPresentation.groupRecords(routed).slice(0, 3);
     }
 
     function presentOsd(descriptor: var): void {
         const value = Object.assign({
-            kind: "", icon: "", label: "", valueLabel: "", percent: 0,
-            progressVisible: false, timeoutMs: 1400
+            kind: "",
+            icon: "",
+            label: "",
+            valueLabel: "",
+            percent: 0,
+            progressVisible: false,
+            timeoutMs: 1400
         }, descriptor);
         value.percent = OsdPresentation.clamp(value.percent, 0, 100);
         value.progressVisible = !!value.progressVisible;
@@ -184,31 +260,72 @@ Item {
 
     function statusModules(now: date): var {
         return StatusPresentation.statusModules({
-            activity: activity, network: networkStatus, bluetooth: bluetoothController,
-            updates: updates, audio: audio, brightness: brightness, battery: battery,
-            powerProfile: powerProfile, notifications: notifications, timezone: timezone
+            activity: activity,
+            network: networkStatus,
+            bluetooth: bluetoothController,
+            updates: updates,
+            audio: audio,
+            brightness: brightness,
+            battery: battery,
+            powerProfile: powerProfile,
+            notifications: notifications,
+            timezone: timezone
         }, now);
     }
     function triggerModuleAction(action: string): bool {
         const actions = ({
-            wifi: function () { openSurface("wifi"); },
-            portal: function () { Quickshell.execDetached(["shelllist-captive-portal", "--manual", "--fallback"]); },
-            updates: function () { Quickshell.execDetached(["ghostty", "-e", "bash", "-lc", "journalctl -u nixos-update-fast.service -u nixos-update-delayed.service -u delayed-nixos-update.service -n 100 --no-pager; read -r -p 'Press enter to close'"]); },
-            bluetooth: function () { openSurface("bluetooth"); },
-            "audio-mixer": function () { Quickshell.execDetached(["pavucontrol"]); },
-            "audio-mute": function () { backend.toggleMuted(); },
-            "audio-up": function () { backend.adjustAudio(5); },
-            "audio-down": function () { backend.adjustAudio(-5); },
-            "brightness-up": function () { backend.adjustBrightness(5); },
-            "brightness-down": function () { backend.adjustBrightness(-5); },
-            battery: function () { openSurface("battery"); },
-            "power-profile-next": function () { cyclePowerProfile(); },
-            activity: function () { openSurface("activity"); },
-            notifications: function () { openNotificationCenter(""); },
-            "notifications-dnd": function () { backend.toggleDnd(); },
-            "time-weather": function () { openTimeWeather("time"); },
-            timezone: function () { openTimeWeather("time"); }
-        });
+                wifi: function () {
+                    openSurface("wifi");
+                },
+                portal: function () {
+                    Quickshell.execDetached(["shelllist-captive-portal", "--manual", "--fallback"]);
+                },
+                updates: function () {
+                    Quickshell.execDetached(["ghostty", "-e", "bash", "-lc", "journalctl -u nixos-update-fast.service -u nixos-update-delayed.service -u delayed-nixos-update.service -n 100 --no-pager; read -r -p 'Press enter to close'"]);
+                },
+                bluetooth: function () {
+                    openSurface("bluetooth");
+                },
+                "audio-mixer": function () {
+                    Quickshell.execDetached(["pavucontrol"]);
+                },
+                "audio-mute": function () {
+                    backend.toggleMuted();
+                },
+                "audio-up": function () {
+                    backend.adjustAudio(5);
+                },
+                "audio-down": function () {
+                    backend.adjustAudio(-5);
+                },
+                "brightness-up": function () {
+                    backend.adjustBrightness(5);
+                },
+                "brightness-down": function () {
+                    backend.adjustBrightness(-5);
+                },
+                battery: function () {
+                    openSurface("battery");
+                },
+                "power-profile-next": function () {
+                    cyclePowerProfile();
+                },
+                activity: function () {
+                    openSurface("activity");
+                },
+                notifications: function () {
+                    openNotificationCenter("");
+                },
+                "notifications-dnd": function () {
+                    backend.toggleDnd();
+                },
+                "time-weather": function () {
+                    openTimeWeather("time");
+                },
+                timezone: function () {
+                    openTimeWeather("time");
+                }
+            });
         const handler = actions[action];
         if (!handler)
             return false;
@@ -223,5 +340,8 @@ Item {
         onTriggered: controller.osdVisible = false
     }
 
-    BarBackend { id: barBackend; controller: controller }
+    BarBackend {
+        id: barBackend
+        controller: controller
+    }
 }

@@ -12,7 +12,9 @@ Column {
     width: parent.width
     spacing: Ui.Theme.spacingSm
 
-    function focusInput(): void { todoInput.forceActiveFocus(); }
+    function focusInput(): void {
+        todoInput.forceActiveFocus();
+    }
 
     Ui.ThemeText {
         text: "Todos"
@@ -55,8 +57,7 @@ Column {
             id: addTodo
             label: "+"
             onTriggered: {
-                if (todoInput.text.trim().length > 0
-                        && section.controller.createTodo(todoInput.text))
+                if (todoInput.text.trim().length > 0 && section.controller.createTodo(todoInput.text))
                     todoInput.text = "";
             }
         }
@@ -86,7 +87,9 @@ Column {
                 Keys.onReturnPressed: toggleTodo()
                 Keys.onEnterPressed: toggleTodo()
                 Keys.onSpacePressed: toggleTodo()
-                function toggleTodo(): void { section.controller.toggleTodo(todoRow.modelData); }
+                function toggleTodo(): void {
+                    section.controller.toggleTodo(todoRow.modelData);
+                }
                 anchors.left: parent.left
                 anchors.leftMargin: 10
                 anchors.right: deleteTodo.left
@@ -112,7 +115,9 @@ Column {
                 Keys.onReturnPressed: removeTodo()
                 Keys.onEnterPressed: removeTodo()
                 Keys.onSpacePressed: removeTodo()
-                function removeTodo(): void { section.controller.deleteTodo(todoRow.modelData); }
+                function removeTodo(): void {
+                    section.controller.deleteTodo(todoRow.modelData);
+                }
                 anchors.right: parent.right
                 anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter

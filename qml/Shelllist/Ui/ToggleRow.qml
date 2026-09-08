@@ -26,11 +26,21 @@ Rectangle {
     Accessible.role: Accessible.CheckBox
     Accessible.name: subtitle.length > 0 ? title + ". " + subtitle : title
     Accessible.checked: checked
-    Accessible.onPressAction: if (enabled && interactive) row.clicked()
+    Accessible.onPressAction: if (enabled && interactive)
+        row.clicked()
 
-    Keys.onReturnPressed: function (event) { row.clicked(); event.accepted = true; }
-    Keys.onEnterPressed: function (event) { row.clicked(); event.accepted = true; }
-    Keys.onSpacePressed: function (event) { row.clicked(); event.accepted = true; }
+    Keys.onReturnPressed: function (event) {
+        row.clicked();
+        event.accepted = true;
+    }
+    Keys.onEnterPressed: function (event) {
+        row.clicked();
+        event.accepted = true;
+    }
+    Keys.onSpacePressed: function (event) {
+        row.clicked();
+        event.accepted = true;
+    }
 
     RowLayout {
         anchors.fill: parent
@@ -44,9 +54,7 @@ Rectangle {
             ThemeText {
                 text: UiText.highlightHotkey(row.title, row.hotkey)
                 textFormat: Text.RichText
-                color: row.tone === "danger" ? Theme.danger
-                    : (row.tone === "active" ? Theme.active
-                    : (row.tone === "warning" ? Theme.warning : Theme.text))
+                color: row.tone === "danger" ? Theme.danger : (row.tone === "active" ? Theme.active : (row.tone === "warning" ? Theme.warning : Theme.text))
                 font.pixelSize: Theme.fontSizeLabel
             }
 
@@ -64,11 +72,14 @@ Rectangle {
             Layout.preferredHeight: 24
             Layout.alignment: Qt.AlignVCenter
             checked: row.checked
-            checkedColor: row.tone === "danger" ? Theme.danger
-                : (row.tone === "active" ? Theme.active
-                : (row.tone === "warning" ? Theme.warning : Theme.accent))
+            checkedColor: row.tone === "danger" ? Theme.danger : (row.tone === "active" ? Theme.active : (row.tone === "warning" ? Theme.warning : Theme.accent))
         }
     }
 
-    ControlPointerArea { id: area; focusTarget: row; enabled: row.enabled && row.interactive; onClicked: row.clicked() }
+    ControlPointerArea {
+        id: area
+        focusTarget: row
+        enabled: row.enabled && row.interactive
+        onClicked: row.clicked()
+    }
 }

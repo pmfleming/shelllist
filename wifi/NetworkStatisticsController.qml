@@ -22,11 +22,11 @@ Item {
             controller.status = "Network statistics are already being watched.";
             return false;
         }
-        const selector = typeof device === "string"
-            ? device
-            : ((device && (device.path || device.interface)) || "");
+        const selector = typeof device === "string" ? device : ((device && (device.path || device.interface)) || "");
         const requested = requestedIntervalMs || 1000;
-        const params = { interval_ms: requested };
+        const params = {
+            interval_ms: requested
+        };
         if (selector.length > 0)
             params.device = selector;
         sample = null;
@@ -62,9 +62,7 @@ Item {
         }
         if (event.event !== "failed" && event.event !== "cancelled")
             return;
-        const message = event.message || (event.event === "failed"
-            ? "Network statistics stopped after an error"
-            : "Network statistics stopped");
+        const message = event.message || (event.event === "failed" ? "Network statistics stopped after an error" : "Network statistics stopped");
         if (event.event === "failed")
             error = message;
         clear();

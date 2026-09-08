@@ -10,17 +10,24 @@ Rectangle {
 
     signal clicked
 
-    color: selected ? Theme.selected
-        : (enabled && area.pressed ? Theme.pressed
-        : (enabled && area.containsMouse ? Theme.hover : "transparent"))
+    color: selected ? Theme.selected : (enabled && area.pressed ? Theme.pressed : (enabled && area.containsMouse ? Theme.hover : "transparent"))
     border.color: activeFocus ? Theme.strongBorder : "transparent"
     border.width: 1
     opacity: enabled ? 1.0 : Theme.disabledOpacity
     activeFocusOnTab: enabled
 
-    Keys.onReturnPressed: function (event) { tab.clicked(); event.accepted = true; }
-    Keys.onEnterPressed: function (event) { tab.clicked(); event.accepted = true; }
-    Keys.onSpacePressed: function (event) { tab.clicked(); event.accepted = true; }
+    Keys.onReturnPressed: function (event) {
+        tab.clicked();
+        event.accepted = true;
+    }
+    Keys.onEnterPressed: function (event) {
+        tab.clicked();
+        event.accepted = true;
+    }
+    Keys.onSpacePressed: function (event) {
+        tab.clicked();
+        event.accepted = true;
+    }
 
     Rectangle {
         anchors.top: parent.top
@@ -44,5 +51,9 @@ Rectangle {
         labelWeight: tab.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
     }
 
-    ControlPointerArea { id: area; focusTarget: tab; onClicked: tab.clicked() }
+    ControlPointerArea {
+        id: area
+        focusTarget: tab
+        onClicked: tab.clicked()
+    }
 }

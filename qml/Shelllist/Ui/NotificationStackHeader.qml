@@ -16,8 +16,7 @@ Row {
     spacing: Theme.spacingSm
 
     ThemeText {
-        width: parent.width - countBadge.width - clearButton.width - expandButton.width
-            - parent.spacing * 3
+        width: parent.width - countBadge.width - clearButton.width - expandButton.width - parent.spacing * 3
         anchors.verticalCenter: parent.verticalCenter
         text: header.appName
         elide: Text.ElideRight
@@ -54,8 +53,7 @@ Row {
         width: visible ? 28 : 0
         height: 28
         icon: header.expanded ? "󰅃" : "󰅀"
-        accessibleName: header.expanded
-            ? "Collapse notification stack" : "Expand notification stack"
+        accessibleName: header.expanded ? "Collapse notification stack" : "Expand notification stack"
         toolTip: accessibleName
         onClicked: header.expandedToggled()
     }

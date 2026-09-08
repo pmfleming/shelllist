@@ -11,15 +11,17 @@ Ui.PromptDialog {
     readonly property bool responseRequired: !!request.response_required
     readonly property bool inputRequired: kind === "pin-code" || kind === "passkey"
     readonly property bool valueValid: !inputRequired || (controller.pairingInput.length > 0 && (kind !== "passkey" || /^\d{1,6}$/.test(controller.pairingInput)))
-    readonly property var requestDevice: controller.allDevices.find(function (device) { return device.key === request.device_key; }) || ({})
+    readonly property var requestDevice: controller.allDevices.find(function (device) {
+        return device.key === request.device_key;
+    }) || ({})
     readonly property string deviceName: requestDevice.name || "Bluetooth device"
     readonly property var headings: ({
-        "confirmation": "Confirm pairing code",
-        "authorization": "Allow pairing?",
-        "service-authorization": "Allow Bluetooth service?",
-        "pin-code": "Enter PIN",
-        "passkey": "Enter passkey"
-    })
+            "confirmation": "Confirm pairing code",
+            "authorization": "Allow pairing?",
+            "service-authorization": "Allow Bluetooth service?",
+            "pin-code": "Enter PIN",
+            "passkey": "Enter passkey"
+        })
 
     visible: controller.pairingPromptOpen
     z: 100
@@ -39,7 +41,9 @@ Ui.PromptDialog {
     escapeEnabled: responseRequired
     enterEnabled: responseRequired && !controller.pairingResponsePending
     instruction: responseRequired ? "Enter confirm   •   Esc reject" : "Waiting for the remote device…"
-    onInputEdited: function (text) { controller.pairingInput = text; }
+    onInputEdited: function (text) {
+        controller.pairingInput = text;
+    }
     onAccepted: controller.respondPairing(true)
     onCancelled: controller.respondPairing(false)
 

@@ -14,7 +14,9 @@ BarOverlayWindow {
     visible: toastGroups.length > 0
     implicitWidth: 414
     implicitHeight: 640
-    mask: Region { item: toastColumn }
+    mask: Region {
+        item: toastColumn
+    }
     WlrLayershell.namespace: "shelllist-notifications"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand

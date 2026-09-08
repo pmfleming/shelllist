@@ -1,4 +1,5 @@
 import QtQuick
+
 PopupWindowHost {
     id: host
     required property ChooserController controller
@@ -13,16 +14,19 @@ PopupWindowHost {
     surfaceWindowWidth: controller.surfaceWindowWidth
     currentWindowWidth: controller.currentWindowWidth
     retainOnFocusLoss: controller.navigationBlocked
-    onUiActivated: function (workspaceId) { controller.activateUi(workspaceId); }
+    onUiActivated: function (workspaceId) {
+        controller.activateUi(workspaceId);
+    }
     onUiDeactivated: controller.deactivateUi()
     onFocusSearchRequested: controller.focusSearchRequested()
     Connections {
         target: host.controller
-        function onCloseWindowRequested() { host.closeRequested(); }
+        function onCloseWindowRequested() {
+            host.closeRequested();
+        }
         function onScreenshotRequested() {
             const width = Math.round(host.controller.currentWindowWidth);
-            const x = Math.round(host.targetWindowX()
-                + (host.controller.surfaceWindowWidth - width) / 2);
+            const x = Math.round(host.targetWindowX() + (host.controller.surfaceWindowWidth - width) / 2);
             host.controller.captureScreenshot(x, host.targetWindowY(), width, host.currentWindowHeight);
         }
     }

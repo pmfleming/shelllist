@@ -50,8 +50,7 @@ Canvas {
             if (dataAvailable) {
                 context.strokeStyle = String(sunColor);
                 context.beginPath();
-                context.arc(0, 0, radius, -Math.PI / 2,
-                    -Math.PI / 2 + Math.max(0, Math.min(1, fraction)) * 2 * Math.PI);
+                context.arc(0, 0, radius, -Math.PI / 2, -Math.PI / 2 + Math.max(0, Math.min(1, fraction)) * 2 * Math.PI);
                 context.stroke();
             }
 
@@ -65,10 +64,8 @@ Canvas {
             context.beginPath();
             for (let ray = 0; ray < 8; ++ray) {
                 const angle = ray * Math.PI / 4;
-                context.moveTo(Math.cos(angle) * radius * 0.39,
-                    Math.sin(angle) * radius * 0.39);
-                context.lineTo(Math.cos(angle) * radius * 0.54,
-                    Math.sin(angle) * radius * 0.54);
+                context.moveTo(Math.cos(angle) * radius * 0.39, Math.sin(angle) * radius * 0.39);
+                context.lineTo(Math.cos(angle) * radius * 0.54, Math.sin(angle) * radius * 0.54);
             }
             context.stroke();
         } else {

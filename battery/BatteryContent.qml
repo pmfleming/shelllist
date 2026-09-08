@@ -13,9 +13,7 @@ Ui.ChooserSurface {
     readonly property var policy: controller.policy
     readonly property var device: controller.primaryDevice || ({})
     readonly property string policyError: protection.error || ""
-    readonly property string errorMessage: controller.lastError.length > 0
-        ? controller.lastError : (controller.refreshError.length > 0
-            ? controller.refreshError : policyError)
+    readonly property string errorMessage: controller.lastError.length > 0 ? controller.lastError : (controller.refreshError.length > 0 ? controller.refreshError : policyError)
 
     Ui.ChooserShortcuts {
         controller: content.controller
@@ -28,7 +26,9 @@ Ui.ChooserSurface {
 
     Connections {
         target: content.controller
-        function onViewTabChanged(): void { detailPage.contentY = 0; }
+        function onViewTabChanged(): void {
+            detailPage.contentY = 0;
+        }
     }
 
     ColumnLayout {
@@ -48,13 +48,9 @@ Ui.ChooserSurface {
                 icon: "󰂂"
                 iconSize: Ui.Theme.iconSizeLarge
                 flatIconColor: Ui.Theme.accent
-                enabled: !content.controller.screenshotInFlight
-                    && !content.controller.actionInFlight
-                    && !content.controller.settingsOperationActive
+                enabled: !content.controller.screenshotInFlight && !content.controller.actionInFlight && !content.controller.settingsOperationActive
                 accessibleName: "Copy Battery & Power panel screenshot"
-                toolTip: content.controller.screenshotStatus.length > 0
-                    ? content.controller.screenshotStatus
-                    : "Battery & Power · click to copy a screenshot"
+                toolTip: content.controller.screenshotStatus.length > 0 ? content.controller.screenshotStatus : "Battery & Power · click to copy a screenshot"
                 onClicked: content.controller.screenshotRequested()
             }
 
@@ -66,10 +62,8 @@ Ui.ChooserSurface {
             }
 
             Ui.ThemeText {
-                text: content.battery.available
-                    ? Math.round(Number(content.battery.percentage) || 0) + "%" : "Unavailable"
-                color: content.battery.critical ? Ui.Theme.danger
-                    : (content.battery.warning ? Ui.Theme.warning : Ui.Theme.accent)
+                text: content.battery.available ? Math.round(Number(content.battery.percentage) || 0) + "%" : "Unavailable"
+                color: content.battery.critical ? Ui.Theme.danger : (content.battery.warning ? Ui.Theme.warning : Ui.Theme.accent)
                 font.pixelSize: Ui.Theme.fontSizeDisplay
                 font.weight: Ui.Theme.fontWeightBold
             }
@@ -101,7 +95,9 @@ Ui.ChooserSurface {
             options: content.controller.viewTabs
             value: content.controller.viewTab
             interactive: !content.controller.actionInFlight
-            onSelected: function (value) { content.controller.selectViewTab(value); }
+            onSelected: function (value) {
+                content.controller.selectViewTab(value);
+            }
         }
 
         Ui.DetailFlickable {

@@ -34,7 +34,8 @@ ModalFrame {
             promptInput.focusInput(true);
     }
 
-    onVisibleChanged: if (visible) Qt.callLater(focusInput)
+    onVisibleChanged: if (visible)
+        Qt.callLater(focusInput)
 
     Shortcut {
         sequence: "Escape"
@@ -70,8 +71,11 @@ ModalFrame {
             inputMethodHints: dialog.inputMethodHints
             horizontalAlignment: dialog.inputHorizontalAlignment
             fontPixelSize: Theme.fontSizeTitle
-            onEdited: function (text) { dialog.inputEdited(text); }
-            onAccepted: if (dialog.enterEnabled && dialog.acceptEnabled) dialog.accepted()
+            onEdited: function (text) {
+                dialog.inputEdited(text);
+            }
+            onAccepted: if (dialog.enterEnabled && dialog.acceptEnabled)
+                dialog.accepted()
         }
 
         ToggleRow {

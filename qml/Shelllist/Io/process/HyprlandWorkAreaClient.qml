@@ -18,7 +18,8 @@ Item {
     readonly property var insets: WorkArea.insets(snapshot, monitorName)
 
     function refresh(): void {
-        if (!active) return;
+        if (!active)
+            return;
         if (requestRunning || process.running) {
             refreshPending = true;
             return;
@@ -28,8 +29,7 @@ Item {
         requestRunning = true;
         reply = "";
         try {
-            process.exec(["hyprctl", "--batch", "-j",
-                "monitors; workspaces; workspacerules; clients; getoption general:gaps_out"]);
+            process.exec(["hyprctl", "--batch", "-j", "monitors; workspaces; workspacerules; clients; getoption general:gaps_out"]);
             watchdog.restart();
         } catch (error) {
             requestRunning = false;
@@ -39,7 +39,8 @@ Item {
     }
 
     function scheduleRefresh(): void {
-        if (active) debounce.restart();
+        if (active)
+            debounce.restart();
     }
 
     onActiveChanged: {
@@ -58,7 +59,8 @@ Item {
         target: Hyprland
         enabled: client.active
         function onRawEvent(event): void {
-            if (WorkArea.geometryEvent(event.name)) client.scheduleRefresh();
+            if (WorkArea.geometryEvent(event.name))
+                client.scheduleRefresh();
         }
     }
 
@@ -81,9 +83,12 @@ Item {
         onTriggered: {
             // Also retire failed starts: these need not emit Process.exited.
             client.requestRunning = false;
-            if (process.running) process.signal(9);
-            if (client.active && client.requestGeneration === client.generation) client.ready = true;
-            if (client.refreshPending) client.scheduleRefresh();
+            if (process.running)
+                process.signal(9);
+            if (client.active && client.requestGeneration === client.generation)
+                client.ready = true;
+            if (client.refreshPending)
+                client.scheduleRefresh();
         }
     }
     Process {
@@ -98,13 +103,16 @@ Item {
             if (current && exitCode === 0) {
                 try {
                     const next = WorkArea.parseBatch(client.reply);
-                    if (JSON.stringify(next) !== JSON.stringify(client.snapshot)) client.snapshot = next;
+                    if (JSON.stringify(next) !== JSON.stringify(client.snapshot))
+                        client.snapshot = next;
                 } catch (error) {
                     console.warn("Shelllist workspace geometry:", error);
                 }
             }
-            if (current) client.ready = true;
-            if (client.refreshPending) client.scheduleRefresh();
+            if (current)
+                client.ready = true;
+            if (client.refreshPending)
+                client.scheduleRefresh();
         }
     }
 }
