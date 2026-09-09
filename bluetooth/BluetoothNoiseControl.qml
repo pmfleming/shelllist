@@ -4,7 +4,7 @@ import QtQuick
 import Shelllist.Ui as Ui
 import "BluetoothNoiseControl.js" as NoiseControl
 
-Rectangle {
+Item {
     id: control
 
     required property BluetoothController controller
@@ -16,46 +16,48 @@ Rectangle {
     readonly property int iconExtent: Math.max(92, Math.round(referenceArtworkSize * 1.15))
 
     visible: advertised
-    implicitHeight: advertised ? iconExtent + 2 * Ui.Theme.spacingSm : 0
-    color: "transparent"
+    implicitHeight: advertised ? iconExtent + Ui.Theme.spacingXs + modeLabel.implicitHeight : 0
 
     Accessible.role: Accessible.StaticText
-    Accessible.name: "Sound isolation: " + activeMode.label
+    Accessible.name: activeMode.label
 
-    Row {
-        anchors.centerIn: parent
-        spacing: Ui.Theme.spacingMd
+    Image {
+        id: icon
+        objectName: "noiseControlIcon"
+        anchors.right: parent.right
+        width: control.iconExtent
+        height: control.iconExtent
+        source: control.activeMode.image
+        sourceSize.width: 256
+        sourceSize.height: 256
+        // Remove the shared transparent canvas padding so alignment follows the artwork.
+        sourceClipRect: Qt.rect(45.5, 40.5, 165, 165.5)
+        fillMode: Image.Stretch
+        smooth: true
+        mipmap: true
+        Accessible.ignored: true
+    }
 
-        Column {
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Ui.Theme.spacingXs
+    TextMetrics {
+        id: cancellationMetrics
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Ui.Theme.fontSizeSmall
+        font.weight: Ui.Theme.fontWeightDemiBold
+        text: qsTr("cancellation")
+    }
 
-            Ui.ThemeText {
-                text: qsTr("Sound isolation")
-                color: Ui.Theme.mutedText
-                font.pixelSize: Ui.Theme.fontSizeSmall
-                font.weight: Ui.Theme.fontWeightMedium
-                Accessible.ignored: true
-            }
-
-            Ui.ThemeText {
-                text: control.activeMode.label
-                font.pixelSize: Ui.Theme.fontSizeTitle
-                font.weight: Ui.Theme.fontWeightDemiBold
-                Accessible.ignored: true
-            }
-        }
-
-        Image {
-            width: control.iconExtent
-            height: control.iconExtent
-            source: control.activeMode.image
-            sourceSize.width: 256
-            sourceSize.height: 256
-            fillMode: Image.PreserveAspectFit
-            smooth: true
-            mipmap: true
-            Accessible.ignored: true
-        }
+    Ui.ThemeText {
+        id: modeLabel
+        objectName: "noiseControlLabel"
+        anchors.top: icon.bottom
+        anchors.topMargin: Ui.Theme.spacingXs
+        anchors.horizontalCenter: icon.horizontalCenter
+        width: icon.width
+        text: control.activeMode.value === "noise-cancelling" ? qsTr("Noise\ncancellation") : control.activeMode.label
+        // Use the same size for every mode, with no label overflow at the window edge.
+        font.pixelSize: Math.min(Ui.Theme.fontSizeSmall, Math.floor(Ui.Theme.fontSizeSmall * width / Math.max(1, cancellationMetrics.advanceWidth)))
+        font.weight: Ui.Theme.fontWeightDemiBold
+        horizontalAlignment: Text.AlignHCenter
+        Accessible.ignored: true
     }
 }

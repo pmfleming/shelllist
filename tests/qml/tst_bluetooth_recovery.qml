@@ -73,6 +73,46 @@ TestCase {
         verify(panel.controller.hasSelection);
         return panel;
     }
+    function test_noiseControlLayout() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const original = controller.selectedDevice;
+        let commonFontSize = 0;
+        for (const width of [320, 720]) {
+            panel.width = width;
+            for (const components of [["main"], ["left", "right"], ["left", "right", "case"]]) {
+                for (const mode of ["noise-cancelling", "off", "adaptive", "transparent"]) {
+                    const device = Object.assign({}, original, {
+                        battery_live: true,
+                        battery: components.map(function (component) { return {component: component, percentage: 100}; }),
+                        fast_pair: {noise_control: {available_modes: [mode], active_mode: mode}}
+                    });
+                    controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [device]});
+                    wait(0);
+                    const icon = findChild(panel.page, "noiseControlIcon");
+                    const label = findChild(panel.page, "noiseControlLabel");
+                    const percentage = findChild(panel.page, "batteryPercentage-" + components[0]);
+                    verify(icon !== null && label !== null && percentage !== null);
+                    tryCompare(icon, "status", Image.Ready);
+                    const iconBottom = icon.mapToItem(panel.page, icon.width, icon.height);
+                    const percentageBottom = percentage.mapToItem(panel.page, 0, percentage.height);
+                    fuzzyCompare(iconBottom.x, panel.page.width, 0.01);
+                    fuzzyCompare(iconBottom.y, percentageBottom.y, 0.01);
+                    fuzzyCompare(label.mapToItem(icon, label.width / 2, 0).x, icon.width / 2, 0.01);
+                    verify(label.mapToItem(icon, 0, 0).y > icon.height);
+                    verify(label.contentWidth <= icon.width * 1.5);
+                    compare(label.text, mode === "noise-cancelling" ? "Noise\ncancellation" : mode === "transparent" ? "Ambient" : mode === "off" ? "Off" : "Adaptive");
+                    if (commonFontSize)
+                        compare(label.font.pixelSize, commonFontSize);
+                    commonFontSize = label.font.pixelSize;
+                }
+            }
+        }
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters,
+            devices: [Object.assign({}, original, {fast_pair: null})]});
+        wait(0);
+        verify(!findChild(panel.page, "noiseControlIcon").visible);
+    }
     Component {
         id: detailsComponent
         Bt.BluetoothDeviceDetails { uiScale: 1 }

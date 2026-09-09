@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
-import "BluetoothNoiseControl.js" as NoiseControl
 
 Ui.DetailFlickable {
     id: page
@@ -21,12 +20,12 @@ Ui.DetailFlickable {
 
     Item {
         width: parent.width
-        height: noiseControl.visible ? noiseControl.y + noiseControl.implicitHeight : batteryStatus.implicitHeight
+        height: noiseControl.visible ? Math.max(batteryStatus.implicitHeight, noiseControl.y + noiseControl.implicitHeight) : batteryStatus.implicitHeight
 
         BluetoothBatteryStatus {
             id: batteryStatus
 
-            width: parent.width
+            width: parent.width - (noiseControl.visible ? noiseControl.iconExtent + Ui.Theme.spacingMd : 0)
             height: implicitHeight
             device: page.controller.selectedDevice
         }
@@ -34,10 +33,10 @@ Ui.DetailFlickable {
         BluetoothNoiseControl {
             id: noiseControl
 
-            width: parent.width
+            anchors.right: parent.right
+            width: iconExtent
             height: implicitHeight
-            // Account for the icon's top padding so exactly its top third overlaps.
-            y: batteryStatus.height - iconExtent / 3 - Ui.Theme.spacingSm
+            y: batteryStatus.percentageBottom - iconExtent
             controller: page.controller
             referenceArtworkSize: batteryStatus.artworkSize
         }
@@ -110,49 +109,6 @@ Ui.DetailFlickable {
                     value: page.routeLabel(page.controller.selectedSource, page.controller.selectedAudio.source !== null && page.controller.selectedAudio.source !== undefined)
                 }
             ]
-        }
-    }
-
-    Ui.DetailColumnCard {
-        id: soundCard
-        readonly property var control: (page.controller.selectedDevice.fast_pair || {}).noise_control || ({})
-        readonly property var caps: page.controller.selectedDevice.capabilities || ({})
-        visible: NoiseControl.isAdvertised(control)
-        height: visible ? 155 : 0
-        title: qsTr("Sound isolation control")
-        Ui.DropDownList {
-            Layout.fillWidth: true
-            Layout.preferredHeight: Ui.Theme.compactControlHeight
-            options: NoiseControl.availableModes(soundCard.control).map(function (mode) {
-                return {
-                    value: mode.value,
-                    label: mode.label,
-                    enabled: (soundCard.control.settable_modes || []).includes(mode.value)
-                };
-            })
-            value: soundCard.control.active_mode || ""
-            interactive: !page.controller.actionInFlight && !!soundCard.caps.can_set_noise_control
-            onSelected: function (mode) {
-                page.controller.setNoiseControl(mode);
-            }
-        }
-        Ui.ThemeText {
-            Layout.fillWidth: true
-            text: soundCard.caps.can_set_noise_control ? "Only modes currently allowed by the earbuds can be selected." : ((soundCard.caps.unsupported_reasons || {}).set_noise_control || "Fast Pair account-key provisioning is required.")
-            wrapMode: Text.WordWrap
-            color: Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.fontSizeSmall
-        }
-    }
-
-    Ui.DetailCard {
-        visible: !!page.controller.selectedDevice.fast_pair
-        height: visible ? fastPairSetup.implicitHeight + 64 : 0
-        title: qsTr("Fast Pair setup")
-        BluetoothFastPairSetup {
-            id: fastPairSetup
-            anchors.fill: parent
-            controller: page.controller
         }
     }
 

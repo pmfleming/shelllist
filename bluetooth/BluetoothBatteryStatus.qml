@@ -11,10 +11,21 @@ Item {
     required property var device
     readonly property var displayReports: BluetoothBattery.displayReports(device)
     readonly property int indicatorHeight: 166
-    readonly property int artworkSize: Math.round((displayReports.length === 1 ? 126 : 108) * 0.68)
+    readonly property int ringSize: displayReports.length === 1 ? 126 : 108
+    readonly property int artworkSize: Math.round(ringSize * 0.68)
+    readonly property real percentageY: 12 + ringSize + Ui.Theme.spacingSm
+    readonly property real percentageBottom: percentageY + Math.ceil(percentageMetrics.height)
 
     visible: true
     implicitHeight: indicatorHeight
+
+    TextMetrics {
+        id: percentageMetrics
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Ui.Theme.fontSizeHeading
+        font.weight: Ui.Theme.fontWeightDemiBold
+        text: "100%"
+    }
 
     function ringColor(percentage) {
         if (percentage <= 20)
@@ -47,7 +58,7 @@ Item {
                 Accessible.name: BluetoothBattery.compactLabel(modelData) + " " + percentage + "%" + (charging ? " charging" : "")
                 readonly property color statusColor: root.ringColor(percentage)
                 readonly property string imageSource: BluetoothBattery.imageFor(root.device, modelData)
-                readonly property int ringSize: root.displayReports.length === 1 ? 126 : 108
+                readonly property int ringSize: root.ringSize
 
                 width: indicators.itemWidth
                 height: indicators.height
@@ -146,9 +157,10 @@ Item {
                 }
 
                 Ui.ThemeText {
+                    objectName: "batteryPercentage-" + indicator.modelData.component
                     visible: indicator.batteryAvailable
                     x: Math.round(Ui.Theme.spacingSm / 2)
-                    y: ring.y + ring.height + Ui.Theme.spacingSm
+                    y: root.percentageY
                     width: parent.width - Ui.Theme.spacingSm
                     text: indicator.percentage + "%"
                     font.pixelSize: Ui.Theme.fontSizeHeading
