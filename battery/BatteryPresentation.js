@@ -52,6 +52,23 @@ function profileName(profile) {
     return labels[profile] || profile || "Unavailable";
 }
 
+function automationStatus(automation, available) {
+    if (!available)
+        return "Automatic switching unavailable · power profile service is offline";
+    const value = automation || ({});
+    const level = value.level === "critical" ? "Critical battery" : "Low battery";
+    switch (value.status) {
+    case "paused": return "Automatic switching paused · manual profile selected";
+    case "active": return level + " · requesting " + profileName(value.profile);
+    case "keep-current": return level + " · keep current profile";
+    case "blocked": return "Waiting for another application's profile request to finish";
+    case "unavailable": return "Automatic switching unavailable · battery or configured profile is unavailable";
+    case "error": return "Automatic switching failed · " + (value.error || "Unknown error");
+    case "waiting": return "Automatic switching ready · waiting for a battery level";
+    default: return "Automatic switching status unavailable";
+    }
+}
+
 function actionName(action) {
     return String(action || "").split("_").map(function (part) {
         return part.length > 0 ? part[0].toUpperCase() + part.slice(1) : part;

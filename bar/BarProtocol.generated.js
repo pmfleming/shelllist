@@ -26,6 +26,7 @@ var methods = ({
     "battery.cancelCalibration": "battery.cancelCalibration",
     "battery.setAlertPolicy": "battery.setAlertPolicy",
     "powerProfile.set": "powerProfile.set",
+    "powerProfile.resumeAutomatic": "powerProfile.resumeAutomatic",
     "powerProfile.setBatteryAware": "powerProfile.setBatteryAware",
     "powerProfile.setActionEnabled": "powerProfile.setActionEnabled",
     "powerSleep.lock": "powerSleep.lock",

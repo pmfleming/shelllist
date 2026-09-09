@@ -15,6 +15,7 @@ var methods = {
     cancelCalibration: Protocol.methods["battery.cancelCalibration"],
     setAlertPolicy: Protocol.methods["battery.setAlertPolicy"],
     setPowerProfile: Protocol.methods["powerProfile.set"],
+    resumeAutomaticProfiles: Protocol.methods["powerProfile.resumeAutomatic"],
     setBatteryAware: Protocol.methods["powerProfile.setBatteryAware"],
     setPowerActionEnabled: Protocol.methods["powerProfile.setActionEnabled"],
     lock: Protocol.methods["powerSleep.lock"],

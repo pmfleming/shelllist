@@ -131,33 +131,11 @@ Column {
     }
 
     Ui.DetailColumnCard {
-        objectName: "batteryAlertsCard"
+        objectName: "batteryChargeNotificationCard"
         verticalContentPadding: Ui.Theme.spacingMd
         headingSpacing: Ui.Theme.spacingMd
         height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
-        title: qsTr("Battery alerts")
-
-        Ui.PercentageSlider {
-            Layout.fillWidth: true
-            label: qsTr("Low battery")
-            value: pane.controller.draftWarningPercent
-            enabled: !pane.controller.actionInFlight
-            onEdited: function (dragging) {
-                pane.controller.updateWarningPercent(Math.round(value), dragging);
-            }
-            onEditingFinished: pane.controller.finishAlertEditing()
-        }
-
-        Ui.PercentageSlider {
-            Layout.fillWidth: true
-            label: qsTr("Critical battery")
-            value: pane.controller.draftCriticalPercent
-            enabled: !pane.controller.actionInFlight
-            onEdited: function (dragging) {
-                pane.controller.updateCriticalPercent(Math.round(value), dragging);
-            }
-            onEditingFinished: pane.controller.finishAlertEditing()
-        }
+        title: qsTr("Charge notification")
 
         Ui.ToggleRow {
             Layout.fillWidth: true
@@ -167,14 +145,6 @@ Column {
             checked: pane.controller.draftNotifyWhenFull
             interactive: !pane.controller.actionInFlight
             onClicked: pane.controller.updateNotifyWhenFull(!checked)
-        }
-
-        Ui.ThemeText {
-            Layout.fillWidth: true
-            visible: !pane.controller.alertDraftValid
-            text: qsTr("Critical percentage cannot exceed the low-battery percentage.")
-            color: Ui.Theme.danger
-            font.pixelSize: Ui.Theme.fontSizeCaption
         }
 
         Ui.SaveStatusLabel {

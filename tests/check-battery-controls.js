@@ -195,4 +195,38 @@ for (const extra of [
         assert.equal(backend.powerSleepAction(action), true);
     assert.deepEqual(calls.map(call => call[1]), ["lock", "suspend", "hibernate"]);
 }
-console.log("battery controls: selection, auto-save, operation guards and power dispatch passed");
+{
+    const { c, calls } = controller();
+    c.applyBattery(state([], { policy: { warning_percent: 35, critical_percent: 10,
+        auto_power_saver: false, notify_when_full: false } }));
+    assert.equal(c.draftWarningProfile, "keep-current", "legacy saver off migrates both levels");
+    assert.equal(c.draftCriticalProfile, "keep-current");
+    assert.equal(c.draftNotifyWarning, true);
+    assert.equal(c.draftNotifyCritical, true);
+    assert.equal(c.draftNotifyWhenFull, false);
+    c.applyPowerProfile({ available: true, profiles: [{ name: "balanced" }, { name: "power-saver" }],
+        battery_automation: { level: "low", status: "paused", profile: "power-saver" } });
+    c.updateLevelProfile("low", "balanced");
+    assert.equal(calls[0].method, "setAlertPolicy");
+    assert.deepEqual(JSON.parse(JSON.stringify(calls[0].args[0])), {
+        warning_percent: 35, critical_percent: 10, notify_when_full: false,
+        notify_warning: true, notify_critical: true, warning_profile: "balanced", critical_profile: "keep-current"
+    });
+    c.settingsOperationFinished("alert");
+    c.updateLevelNotification("low", false);
+    assert.equal(calls[1].args[0].warning_profile, "balanced", "notification switch does not disable its profile action");
+    c.settingsOperationFinished("alert");
+    c.updateLevelProfile("critical", "performance");
+    assert.equal(calls.length, 2, "unavailable profiles cannot be selected");
+    c.updateLevelProfile("critical", "power-saver");
+    c.settingsOperationFinished("alert");
+    assert.equal(c.draftWarningProfile, "balanced");
+    assert.equal(c.draftCriticalProfile, "power-saver");
+    assert.match(c.automationStatus, /paused/);
+    assert.equal(c.resumeAutomaticProfiles(), true);
+    assert.equal(calls.at(-1).method, "resumeAutomaticProfiles");
+    c.actionInFlight = false;
+    c.applyPowerProfile({ available: true, battery_automation: { status: "active" } });
+    assert.equal(c.resumeAutomaticProfiles(), false);
+}
+console.log("battery controls: selection, auto-save, independent level actions, resume and power dispatch passed");

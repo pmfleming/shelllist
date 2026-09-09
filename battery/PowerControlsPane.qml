@@ -37,25 +37,6 @@ Column {
             }
         }
 
-        Ui.ToggleRow {
-            objectName: "automaticPowerSaverToggle"
-            Layout.fillWidth: true
-            Layout.preferredHeight: 42
-            title: qsTr("Automatic power saver")
-            subtitle: "Hold power saver below " + pane.controller.draftWarningPercent + "% · threshold in Battery care"
-            checked: pane.controller.draftAutoPowerSaver
-            interactive: !pane.controller.actionInFlight
-            onClicked: pane.controller.updateAutoPowerSaver(!checked)
-        }
-
-        Ui.SaveStatusLabel {
-            Layout.fillWidth: true
-            text: pane.controller.alertSaveStatus
-            valid: pane.controller.alertDraftValid
-            error: pane.controller.alertSaveError
-            saving: pane.controller.alertOperationActive
-        }
-
         Ui.FieldLabel {
             Layout.fillWidth: true
             visible: !!pane.controller.powerProfile.performance_degraded
@@ -75,12 +56,26 @@ Column {
             }
         }
 
+    }
+
+    BatteryLevelsPane {
+        controller: pane.controller
+    }
+
+    Ui.DetailColumnCard {
+        objectName: "batteryHardwareTuningCard"
+        verticalContentPadding: Ui.Theme.spacingMd
+        headingSpacing: Ui.Theme.spacingMd
+        height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
+        title: qsTr("Hardware power tuning")
+        visible: (pane.controller.powerProfile.battery_aware !== null && pane.controller.powerProfile.battery_aware !== undefined) || (pane.controller.powerProfile.actions || []).length > 0
+
         Ui.ToggleRow {
             Layout.fillWidth: true
             Layout.preferredHeight: 42
             visible: pane.controller.powerProfile.battery_aware !== null && pane.controller.powerProfile.battery_aware !== undefined
-            title: qsTr("Battery-aware profiles")
-            subtitle: "Let the daemon adapt profiles to battery state"
+            title: qsTr("Adaptive hardware tuning")
+            subtitle: qsTr("Tune hardware for battery and charger state")
             checked: !!pane.controller.powerProfile.battery_aware
             interactive: pane.controller.powerProfile.available && !pane.controller.actionInFlight
             onClicked: pane.controller.setBatteryAware(!checked)
@@ -94,7 +89,7 @@ Column {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 42
                 title: Presentation.actionName(modelData.name)
-                subtitle: modelData.description || "Power-saving action"
+                subtitle: modelData.name === "trickle_charge" ? qsTr("Charging behaviour · not a charge limit") : (modelData.description || "Power-saving action")
                 checked: !!modelData.enabled
                 interactive: pane.controller.powerProfile.available && !pane.controller.actionInFlight
                 onClicked: pane.controller.setPowerActionEnabled(modelData.name, !checked)

@@ -16,7 +16,11 @@ Ui.ChooserController {
                     warning_percent: 25,
                     critical_percent: 12,
                     notify_when_full: true,
-                    auto_power_saver: true
+                    notify_warning: true,
+                    notify_critical: true,
+                    warning_profile: "power-saver",
+                    critical_profile: "power-saver",
+                    recovery_margin_percent: 3
                 }),
             protection: ({
                     supported: false,
@@ -51,14 +55,17 @@ Ui.ChooserController {
     readonly property var viewTabs: [
         {
             value: "overview",
+            icon: "󰋜",
             label: "Overview"
         },
         {
             value: "care",
+            icon: "󰂂",
             label: "Battery care"
         },
         {
             value: "power",
+            icon: "󰐥",
             label: "Power & sleep"
         }
     ]
@@ -70,7 +77,10 @@ Ui.ChooserController {
     property int draftWarningPercent: 25
     property int draftCriticalPercent: 12
     property bool draftNotifyWhenFull: true
-    property bool draftAutoPowerSaver: true
+    property bool draftNotifyWarning: true
+    property bool draftNotifyCritical: true
+    property string draftWarningProfile: "power-saver"
+    property string draftCriticalProfile: "power-saver"
     property bool thresholdDraftDirty: false
     property bool alertDraftDirty: false
     property bool thresholdEditing: false
@@ -138,11 +148,20 @@ Ui.ChooserController {
             label: labels[profile.name] || profile.name
         };
     })
+    readonly property var levelProfileOptions: [{ value: "keep-current", label: "Keep current" }].concat(["power-saver", "balanced", "performance"].map(function (name) {
+        return {
+            value: name,
+            label: Presentation.profileName(name),
+            enabled: powerProfile.available && profileOptions.some(function (option) { return option.value === name; })
+        };
+    }))
+    readonly property var batteryAutomation: powerProfile.battery_automation || ({})
+    readonly property string automationStatus: Presentation.automationStatus(batteryAutomation, powerProfile.available)
     readonly property bool thresholdDraftValid: Presentation.thresholdRangeValid(draftStartPercent, draftEndPercent)
     readonly property bool alertDraftValid: Presentation.alertRangeValid(draftWarningPercent, draftCriticalPercent)
     readonly property bool settingsOperationActive: thresholdOperationActive || alertOperationActive
     readonly property string thresholdSaveStatus: !thresholdDraftValid ? "Choose a valid range" : (thresholdOperationActive ? "Applying automatically…" : (thresholdSaveError.length > 0 ? "Automatic apply failed" : (thresholdDraftDirty ? "Waiting to apply…" : "Applied automatically")))
-    readonly property string alertSaveStatus: !alertDraftValid ? "Choose a valid alert range" : (alertOperationActive ? "Applying automatically…" : (alertSaveError.length > 0 ? "Automatic apply failed" : (alertDraftDirty ? "Waiting to apply…" : "Applied automatically")))
+    readonly property string alertSaveStatus: !alertDraftValid ? "Choose valid battery levels" : (alertOperationActive ? "Applying automatically…" : (alertSaveError.length > 0 ? "Automatic apply failed" : (alertDraftDirty ? "Waiting to apply…" : "Applied automatically")))
 
     function valueOr(value: var, fallback: var): var {
         return value === null || value === undefined ? fallback : value;
@@ -199,7 +218,11 @@ Ui.ChooserController {
             draftWarningPercent = Number(valueOr(policy.warning_percent, 25));
             draftCriticalPercent = Number(valueOr(policy.critical_percent, 12));
             draftNotifyWhenFull = valueOr(policy.notify_when_full, true);
-            draftAutoPowerSaver = valueOr(policy.auto_power_saver, true);
+            draftNotifyWarning = valueOr(policy.notify_warning, true);
+            draftNotifyCritical = valueOr(policy.notify_critical, true);
+            const legacyProfile = valueOr(policy.auto_power_saver, true) ? "power-saver" : "keep-current";
+            draftWarningProfile = valueOr(policy.warning_profile, legacyProfile);
+            draftCriticalProfile = valueOr(policy.critical_profile, legacyProfile);
         }
     }
 
@@ -435,8 +458,25 @@ Ui.ChooserController {
         markAlertChanged(true);
     }
 
-    function updateAutoPowerSaver(value: bool): void {
-        draftAutoPowerSaver = value;
+    function updateLevelNotification(level: string, value: bool): void {
+        if (level === "low")
+            draftNotifyWarning = value;
+        else if (level === "critical")
+            draftNotifyCritical = value;
+        else
+            return;
+        markAlertChanged(true);
+    }
+
+    function updateLevelProfile(level: string, value: string): void {
+        if (!levelProfileOptions.some(function (option) { return option.value === value && option.enabled !== false; }))
+            return;
+        if (level === "low")
+            draftWarningProfile = value;
+        else if (level === "critical")
+            draftCriticalProfile = value;
+        else
+            return;
         markAlertChanged(true);
     }
 
@@ -491,10 +531,18 @@ Ui.ChooserController {
         alertOperationActive = true;
         alertSaveError = "";
         lastError = "";
-        if (backend.setAlertPolicy(draftWarningPercent, draftCriticalPercent, draftNotifyWhenFull, draftAutoPowerSaver))
+        if (backend.setAlertPolicy({
+            warning_percent: draftWarningPercent,
+            critical_percent: draftCriticalPercent,
+            notify_when_full: draftNotifyWhenFull,
+            notify_warning: draftNotifyWarning,
+            notify_critical: draftNotifyCritical,
+            warning_profile: draftWarningProfile,
+            critical_profile: draftCriticalProfile
+        }))
             return true;
         alertOperationActive = false;
-        alertSaveError = "Unable to send the battery alert policy";
+        alertSaveError = "Unable to send battery levels & actions";
         lastError = alertSaveError;
         return false;
     }
@@ -505,6 +553,12 @@ Ui.ChooserController {
         }))
             return false;
         return startOperation(backend.setPowerProfile(profile));
+    }
+
+    function resumeAutomaticProfiles(): bool {
+        if (actionInFlight || !powerProfile.available || batteryAutomation.status !== "paused")
+            return false;
+        return startOperation(backend.resumeAutomaticProfiles());
     }
 
     function setBatteryAware(enabled: bool): bool {

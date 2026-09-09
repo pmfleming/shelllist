@@ -68,6 +68,10 @@ Io.DaemonBackend {
         });
     }
 
+    function resumeAutomaticProfiles(): bool {
+        return callSequenced("power-resume-automatic", BatteryApi.methods.resumeAutomaticProfiles, {});
+    }
+
     function setBatteryAware(enabled: bool): bool {
         return callSequenced("power-battery-aware", BatteryApi.methods.setBatteryAware, {
             enabled: enabled
@@ -92,13 +96,8 @@ Io.DaemonBackend {
         return callSequenced("power-sleep-" + action, methods[action], {});
     }
 
-    function setAlertPolicy(warningPercent: int, criticalPercent: int, notifyWhenFull: bool, autoPowerSaver: bool): bool {
-        return callSequenced("battery-alerts", BatteryApi.methods.setAlertPolicy, {
-            warning_percent: warningPercent,
-            critical_percent: criticalPercent,
-            notify_when_full: notifyWhenFull,
-            auto_power_saver: autoPowerSaver
-        });
+    function setAlertPolicy(policy: var): bool {
+        return callSequenced("battery-alerts", BatteryApi.methods.setAlertPolicy, policy);
     }
 
     function isBackgroundRequest(id: string): bool {
