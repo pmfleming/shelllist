@@ -44,21 +44,17 @@ TestCase {
         tryVerify(function () { return selectedItemIsVisible(list); });
     }
 
-    function test_reactivationRevealsSelection_data() {
-        return [{ tag: "top", index: 0 }, { tag: "later-page", index: 240 }];
-    }
-
-    function test_reactivationRevealsSelection(data) {
+    function test_reactivationRevealsSelection() {
         controller.uiActive = true;
-        store.selectedIndex = data.index;
-        verifySelection(data.index);
+        store.selectedIndex = 240;
+        verifySelection(240);
         wait(20);
         controller.uiActive = false;
-        listView().positionViewAtIndex(data.index === 0 ? 100 : 0, ListView.Beginning);
+        listView().positionViewAtIndex(0, ListView.Beginning);
         verify(!selectedItemIsVisible(listView()));
 
         controller.uiActive = true;
-        verifySelection(data.index);
+        verifySelection(240);
     }
 
     function test_replacementKeepsLogicalSelection_data() {

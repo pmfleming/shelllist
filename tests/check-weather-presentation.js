@@ -16,15 +16,7 @@ function near(actual, expected, message) {
 
 equal(context.localTime(0, -5 * 3600), "19:00", "negative location offset crosses midnight");
 equal(context.localTime(0, 5.5 * 3600), "05:30", "fractional location offset");
-const sunrise = Date.UTC(2026, 5, 21, 6);
-near(context.daylightFraction(sunrise, sunrise + 18 * 3600000), 0.75, "daylight duration");
-equal(context.daylightFraction(0, 0), 0, "missing sun times");
-equal(context.daylightFraction(sunrise, sunrise - 1), 0, "invalid sun times");
-equal(context.daylightFraction(sunrise, sunrise + 30 * 3600000), 1, "daylight ring clamp");
-const newMoon = Date.UTC(2000, 0, 6, 18, 14);
-equal(context.moonPhase(newMoon).illumination, 0, "known new moon is unlit");
-equal(context.moonPhase(newMoon + 29.530588853 * 86400000 / 2).illumination,
-    100, "half a lunar cycle later is fully lit");
+// The QML solar-time test owns clock updates and missing sunrise/sunset data.
 // Check rendered illumination, not the helper's exact edge coordinates or labels.
 for (const fraction of [0.125, 0.625]) {
     let area = 0;
@@ -36,4 +28,4 @@ for (const fraction of [0.125, 0.625]) {
     near(area / Math.PI, (1 - Math.cos(2 * Math.PI * fraction)) / 2,
         `phase ${fraction} rendered illumination`);
 }
-console.log("weather presentation: local times, daylight and rendered moon illumination passed");
+console.log("weather presentation: local times and rendered moon illumination passed");

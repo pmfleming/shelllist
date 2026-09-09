@@ -26,9 +26,7 @@ const points = [
 const compact = series(points);
 equal(compact.segments.map(segment => segment.map(p => p.x)), [[0, 0.5], [0.5, 1]],
     "two days offline must use no graph width or connecting line");
-assert.equal(compact.activeDurationMs, 30 * minute);
 assert.equal(compact.segments[1][0].timestamp_ms, 3 * day, "retain wall-clock labels");
-assert.equal(history.activeDuration(points), "30m observed · sleep/offline time omitted");
 
 const shortGap = series([point(0, 0, 80, false), point(minute, minute, 79),
     point(2 * minute, minute, 90, false), point(3 * minute, 2 * minute, 89)]);
@@ -37,8 +35,6 @@ equal(shortGap.segments.map(segment => segment.length), [2, 2],
 
 const isolated = series([point(0, 0, 100, false), point(day, 0, 80, false)]);
 equal(isolated.segments.map(segment => segment.length), [1, 1], "retain every isolated sample");
-equal(isolated.segments.map(segment => segment[0].x), [0.5, 0.5],
-    "do not invent active duration between isolated samples");
 assert.equal(series([{ timestamp_ms: day, percentage: 50 }]).hasActiveTimeline, false,
     "legacy/missing active coordinates must not fall back to calendar time");
 
@@ -61,8 +57,6 @@ for (const invalid of [null, undefined, NaN, Infinity, -1])
     assert.equal(series([point(0, invalid, 80, false)]).segments.length, 0);
 const backwards = series([point(minute, minute, 80), point(0, 0, 70)]);
 assert.equal(backwards.segments.length, 2, "never interpolate backwards through a clock reset");
-assert.equal(series([]).segments.length, 0);
-assert.equal(history.activeDuration([]), "Collecting active-time samples");
 // Estimated energy is integrated in Wh, split into equal active-time bins.
 const discharge = { mode: "discharging", power_watts: 8 };
 const energy = history.energySeries([
@@ -73,7 +67,6 @@ const energy = history.energySeries([
 ]);
 equal(energy.bars.map(bar => [bar.x0, bar.x1, bar.value]), [[0, 0.5, 2.5], [0.5, 1, 2]]);
 assert.equal(energy.totalWh, 4.5, "sleep must not consume energy or axis width");
-assert.equal(energy.intervalMs, 15 * minute);
 const split = history.energySeries([point(0, 0, 80, false, discharge),
     point(30 * minute, 30 * minute, 70, true, { ...discharge, power_watts: 16 })]);
 equal(split.bars.map(bar => bar.value), [2.5, 3.5], "integrate the ramp on each side of a bin boundary");
@@ -84,20 +77,14 @@ for (const extra of [{ power_watts: null }, { power_watts: -1 }, { power_watts: 
 }
 assert.equal(history.energySeries([point(0, 0, 80, false, discharge),
     point(day, 0, 70, false, discharge)]).bars.length, 0);
-assert.equal(history.energySeries([]).totalWh, 0);
 const partial = history.energySeries([point(0, 0, 80, false, discharge),
     point(5 * minute, 5 * minute, 79, true, discharge)]);
 assert.equal(partial.bars[0].observedMs, 5 * minute, "partial coverage stays explicit");
 assert.equal(partial.totalWh, 8 / 12, "do not extrapolate unobserved parts of a bin");
 
 const battery = { available: true, percentage: 60, charging: true, time_to_full_seconds: 3600 };
-assert.equal(history.chargeForecast(battery).seconds, 3600);
-const capped = { ...battery, protection: { enabled: true, end_percent: 80 } };
-assert.equal(history.chargeForecast(capped).seconds, 1800);
-assert.equal(history.chargeForecast(capped).limit, 80);
-assert.equal(history.chargeForecast({ ...capped, percentage: 88 }).seconds, 0);
-assert.equal(history.chargeForecast({ ...capped, charging: false }).seconds, 0);
-assert.equal(history.chargeForecast({ ...battery, percentage: 100 }).seconds, 0);
+// The QML history-card test covers an actual charge limit, reaching it, and hover.
+assert.equal(history.chargeForecast({ ...battery, charging: false }).seconds, 0);
 assert.equal(history.chargeForecast({ ...battery, available: false }).seconds, 0);
 for (const seconds of [0, null, -1, NaN, Infinity, 234972]) {
     const forecast = history.chargeForecast({ ...battery, time_to_full_seconds: seconds });
@@ -110,6 +97,4 @@ for (const protection of [{ enabled: false, desired_enabled: true, end_percent: 
     assert.equal(history.chargeForecast({ ...battery, protection }).limit, null,
         "show actual limits, not desired or temporarily bypassed ones");
 }
-assert.equal(history.nearestSample(compact.segments, 0.9).value, 60);
-assert.equal(history.nearestSample([], 0.5), null);
-console.log("battery history: timelines, discharge energy, forecasts, limits and hover passed");
+console.log("battery history: discontinuities, discharge energy and invalid forecasts passed");

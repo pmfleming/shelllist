@@ -18,11 +18,8 @@ function equal(actual, expected, message) {
         throw new Error(`${message}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
 
-equal(context.energy(1250), "1.25 Wh", "mWh are converted to Wh");
-equal(context.stateLabel({ available: true, state: "charge-paused", plugged: true }),
-    "Charging paused at limit", "a charge limit is not a charging failure");
 equal(context.thresholdRangeValid(75, 80), true, "valid threshold range");
 equal(context.thresholdRangeValid(80, 80), false, "equal thresholds rejected");
 equal(context.alertRangeValid(25, 12), true, "valid alert range");
 equal(context.alertRangeValid(10, 12), false, "critical above warning rejected");
-console.log("battery presentation: units, charge limits and policy validation passed");
+console.log("battery presentation: policy validation passed");

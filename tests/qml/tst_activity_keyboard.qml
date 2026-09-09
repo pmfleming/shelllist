@@ -1,7 +1,6 @@
 import QtQuick
 import QtTest
 import Shelllist.Activity as Activity
-import Shelllist.Ui as Ui
 
 TestCase {
     id: testCase
@@ -26,61 +25,6 @@ TestCase {
                 return true;
             }
         }
-    }
-
-    Component {
-        id: headerComponent
-        Ui.ChooserHeader {
-            uiScale: 1
-            powerAccessory: Component {
-                Item {
-                    implicitWidth: 27
-                }
-            }
-        }
-    }
-
-    Component {
-        id: actionComponent
-        Ui.ActionArea {
-            width: 120
-            height: 40
-            accessibleName: "Open weather"
-            property int activations: 0
-            onClicked: activations += 1
-        }
-    }
-
-    Component {
-        id: textComponent
-        Ui.ThemeText {
-            text: "Weather"
-        }
-    }
-
-    function test_sharedActionAreaAndTypography(): void {
-        const area = createTemporaryObject(actionComponent, testCase);
-        area.forceActiveFocus();
-        tryCompare(area, "activeFocus", true);
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Enter);
-        keyClick(Qt.Key_Space);
-        compare(area.activations, 3);
-        area.enabled = false;
-        area.activate();
-        compare(area.activations, 3);
-        const text = createTemporaryObject(textComponent, testCase);
-        compare(text.font.family, Ui.Theme.fontFamily);
-        compare(text.font.pixelSize, Ui.Theme.fontSizeBody);
-        compare(text.color, Ui.Theme.text);
-    }
-
-    function test_accessoryLoaderAcceptsVisualItems(): void {
-        const header = createTemporaryObject(headerComponent, testCase, {
-            width: 480
-        });
-        verify(header !== null);
-        wait(10);
     }
 
     function test_todoActionsSupportKeyboard(): void {

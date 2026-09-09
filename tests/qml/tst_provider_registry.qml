@@ -40,6 +40,8 @@ TestCase {
         }));
         compare(dispatchedSpy.count, 1);
         verify(dispatchedRequest !== null);
+        compare(dispatchedRequest.providerId, "test");
+        compare(dispatchedRequest.resultKey, result(true).key);
         compare(dispatchedRequest.actionId, "open");
         compare(dispatchedRequest.context.workspaceId, "4");
     }

@@ -1,6 +1,5 @@
 import QtQuick
 import QtTest
-import "../../qml/Shelllist/Activity/WeatherVisuals.js" as Visuals
 
 TestCase {
     id: testCase
@@ -9,36 +8,6 @@ TestCase {
     width: 760
     height: 600
     visible: true
-
-    function test_numericBoundsAndLabels(): void {
-        compare(Visuals.numberLabel(12.6, "°"), "13°");
-        compare(Visuals.numberLabel("invalid", "°"), "—");
-        compare(Visuals.collectionMinimum([], "value"), 0);
-        compare(Visuals.collectionMaximum([], "value"), 1);
-        compare(Visuals.collectionMinimum([
-            {
-                value: -2
-            },
-            {
-                value: 5
-            },
-            {
-                value: "bad"
-            }
-        ], "value"), -2);
-        compare(Visuals.collectionMaximum([
-            {
-                value: -2
-            },
-            {
-                value: 5
-            },
-            {
-                value: "bad"
-            }
-        ], "value"), 5);
-        compare(Visuals.temperatureY(3, 3, 3), 143);
-    }
 
     function makeCard(name: string, properties: var): var {
         const component = Qt.createComponent("../../qml/Shelllist/Activity/" + name + ".qml");

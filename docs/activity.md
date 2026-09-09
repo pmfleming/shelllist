@@ -89,8 +89,7 @@ The checked `bar-api` fixture validates `bar/BarApi.js` and `activity/ActivityAp
 
 ```sh
 node tests/check-notification-presentation.js qml/Shelllist/Ui/NotificationPresentation.js
-node tests/check-flow-policies.js activity/ActivityFlow.js \
-  battery/BatteryFlow.js clipboard/ClipboardFlow.js
+tests/run-qml-tests.sh
 tests/check-bar-api-contract.sh ../bar-daemon/target/debug/bar-daemon \
   contracts/bar-api-ui-contract.fixture.json bar/BarApi.js \
   activity/ActivityApi.js qml/Shelllist/Battery/BatteryApi.js

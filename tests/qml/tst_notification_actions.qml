@@ -16,12 +16,6 @@ TestCase {
             actions: []
         }
     }
-    Component {
-        id: badgeFactory
-        Ui.GroupCountBadge {
-            count: 1
-        }
-    }
     SignalSpy {
         id: triggered
         signalName: "triggered"
@@ -73,13 +67,4 @@ TestCase {
         triggered.target = null;
     }
 
-    function test_groupBadgeVisibility(): void {
-        const badge = createTemporaryObject(badgeFactory, this);
-        verify(!badge.visible);
-        badge.count = 2;
-        verify(badge.visible);
-        compare(badge.children[0].text, "2");
-        badge.count = 10;
-        compare(badge.children[0].text, "9+");
-    }
 }

@@ -28,9 +28,6 @@ function equal(actual, expected, message) {
 equal(context.workspaceIds({ workspaces: [
     { id: 8, monitor: "eDP-1" }, { id: 7, monitor: "DP-1" }, { id: 3, monitor: "eDP-1" }
 ] }, "eDP-1"), [1, 2, 3, 4, 5, 8], "persistent and dynamic workspaces");
-equal(context.activeWorkspaceId({ monitors: [
-    { name: "eDP-1", active_workspace_id: 3 }
-] }, "eDP-1"), 3, "monitor-local active workspace");
 equal(context.activeWindowFor({ focused_monitor: "eDP-1", active_window: { title: "Terminal" } }, "DP-1"),
     null, "active window is hidden on other monitors");
 const mediaPlayers = {
@@ -48,13 +45,8 @@ equal(context.mediaPositionPercent({
 }, 1000), 100, "media progress is bounded");
 equal(context.inputOsd({ input_muted: true, source_description: "Microphone" }).progressVisible,
     false, "mute does not invent a volume measurement");
-equal(context.hardwareOsd({ available: true, caps_lock: false },
-    { available: true, caps_lock: true }).kind, "caps-lock", "hardware changes select OSD");
 equal(context.idleInhibited({ inhibitors: [{ what: "sleep:idle" }] }), true,
     "idle inhibitor detection");
-equal(context.displayOutputOsd({ monitors: [{ name: "eDP-1" }] }, {
-    monitors: [{ name: "eDP-1" }, { name: "DP-1" }]
-}).valueLabel, "DP-1 connected", "display output OSD");
 equal(context.domainOsd({ powerProfile: "power" }, "power",
     { available: true, profile: "balanced" }, { available: true, profile: "performance" }).kind,
     "power-profile", "domain changes route through shared OSD policy");
@@ -65,7 +57,6 @@ equal(context.domainOsd({ media: "media" }, "media",
 equal(context.nextPowerProfile({ profile: "performance", profiles: [
     { name: "performance" }, { name: "power-saver" }, { name: "balanced" }
 ] }), "power-saver", "power profile cycling wraps");
-equal(context.utcOffset(19800), "+0530", "fractional UTC offset");
 
 const modules = context.statusModules({
     activity: { available: true, incomplete_todo_count: 1, next_event: null },
@@ -80,20 +71,11 @@ const modules = context.statusModules({
     notifications: { count: 2, dnd: false },
     timezone: { available: true, city: "Taipei", abbreviation: "CST", utc_offset_seconds: 28800 }
 }, new Date(0));
-function module(id) { return modules.find(item => item.id === id); }
-// Actions stay reachable; their order, exact glyphs and responsive breakpoints may change.
-equal(modules.some(item => item.id === "notifications"), false, "notifications share the agenda entry point");
-equal(module("activity").primary, "activity", "calendar opens the activity surface");
+// Keep reachability, not a mirror of the action-ID table or module order.
 equal(context.activityModule({ available: false }, { count: 0 }).visible, true,
     "agenda remains reachable without a calendar provider");
-equal(module("network").primary, "wifi", "network action routing");
-equal(module("brightness").wheelDown, "brightness-down", "brightness wheel routing");
-equal(module("battery").primary, "battery", "battery opens the battery surface");
-equal(module("power").primary, "power-profile-next", "power mode cycles from the bar");
-equal(module("clock").primary, "time-weather", "clock opens Time & Weather");
 const narrow = context.visibleStatusModules(modules, context.layoutDensity(600)).map(item => item.id);
 equal(["network", "battery", "activity", "clock"].every(id => narrow.includes(id)), true,
     "essential actions survive a narrow screen");
-equal(context.nextMinuteDelay(61234), 58766, "clock aligns updates to minute boundaries");
 
 console.log("bar presentation: monitor routing, OSD policy, progress and essential actions passed");

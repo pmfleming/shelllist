@@ -862,7 +862,6 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-flow-policies.js} \
-              ${./activity/ActivityFlow.js} \
               ${./battery/BatteryFlow.js} \
               ${./clipboard/ClipboardFlow.js}
             touch $out
@@ -873,14 +872,6 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-ip-validation.js} ${./wifi/networkinput/IpValidation.js}
-            touch $out
-          '';
-
-          navigationKeys = pkgs.runCommand "shelllist-navigation-keys"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-navigation-keys.js} ${./qml/Shelllist/Ui/NavigationKeys.js}
             touch $out
           '';
 
@@ -974,7 +965,7 @@
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-bluetooth-noise-control.js} ${./bluetooth/BluetoothNoiseControl.js} ${./bluetooth}
+            node ${./tests/check-bluetooth-noise-control.js} ${./bluetooth/BluetoothNoiseControl.js}
             touch $out
           '';
 

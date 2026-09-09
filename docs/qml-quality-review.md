@@ -78,8 +78,7 @@ shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml activity/*.qml \
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
 node tests/check-bar-presentation.js bar/Bar{Workspace,Media,Osd,Status}Presentation.js \
   qml/Shelllist/Core/Duration.js
-node tests/check-flow-policies.js activity/ActivityFlow.js \
-  battery/BatteryFlow.js clipboard/ClipboardFlow.js
+node tests/check-flow-policies.js battery/BatteryFlow.js clipboard/ClipboardFlow.js
 tests/run-qml-tests.sh
 tests/run-runtime-smoke.sh
 tests/run-performance-benchmarks.sh

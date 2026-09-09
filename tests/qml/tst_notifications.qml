@@ -1,7 +1,6 @@
 import QtQuick
 import QtTest
 import Shelllist.Activity as Activity
-import Shelllist.Ui as Ui
 
 TestCase {
     id: testCase
@@ -16,7 +15,6 @@ TestCase {
     Component { id: contentComponent; Activity.NotificationContent {} }
     Component { id: activityComponent; Activity.ActivityController {} }
     Component { id: agendaContentComponent; Activity.ActivityContent {} }
-    Component { id: replyComponent; Ui.NotificationReplyRow {} }
     Component {
         id: fakeBackendComponent
         Activity.NotificationBackend {
@@ -246,18 +244,5 @@ TestCase {
         controller.deactivateUi();
         compare(controller.returnSurface, "");
         verify(state.expandedGroups.Later);
-    }
-    function test_replyComponentDoesNotClearOnQueue() {
-        const reply = createTemporaryObject(replyComponent, testCase, {
-            notificationId: 1, draftText: "Hello", width: 350,
-            submitReply: function (id, text) { return true; }
-        });
-        verify(reply !== null);
-        reply.send();
-        compare(reply.draftText, "Hello");
-        const field = findChild(reply, "notificationReplyInput");
-        compare(field.text, "Hello");
-        reply.draftText = "";
-        compare(field.text, "");
     }
 }

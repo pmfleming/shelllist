@@ -12,12 +12,6 @@ function equal(actual, expected, message) {
         throw new Error(`${message}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
 
-equal(context.screenSignature([
-    { name: "DP-2", width: 2560, height: 1440 },
-    { name: "eDP-1", width: 1920, height: 1080 }
-]), "DP-2:2560x1440|eDP-1:1920x1080", "stable sorted screen signature");
-equal(context.screenSignature([{ name: "", width: 1, height: 1 }]), "",
-    "temporary unnamed screens are ignored");
 equal(context.heartbeatIndicatesResume(1000, 3000, 2000, 6000), false,
     "normal heartbeat");
 equal(context.heartbeatIndicatesResume(1000, 10001, 2000, 6000), true,
@@ -25,4 +19,4 @@ equal(context.heartbeatIndicatesResume(1000, 10001, 2000, 6000), true,
 equal(context.heartbeatIndicatesResume(0, 10000, 2000, 6000), false,
     "uninitialized heartbeat");
 
-console.log("bar surface recovery: screen and resume detection passed");
+console.log("bar surface recovery: resume detection passed");

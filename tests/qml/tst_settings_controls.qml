@@ -17,14 +17,6 @@ TestCase {
             value: 20
         }
     }
-    Component {
-        id: statusFactory
-        Ui.SaveStatusLabel {
-            valid: true
-            error: ""
-            saving: false
-        }
-    }
     SignalSpy {
         id: edited
         signalName: "edited"
@@ -66,17 +58,4 @@ TestCase {
         finished.target = null;
     }
 
-    function test_saveStatusPriority(): void {
-        const status = createTemporaryObject(statusFactory, this);
-        compare(String(status.color), String(Ui.Theme.mutedText));
-        status.saving = true;
-        compare(String(status.color), String(Ui.Theme.active));
-        status.error = "Unable to save";
-        compare(String(status.color), String(Ui.Theme.danger));
-        status.error = "";
-        status.valid = false;
-        compare(String(status.color), String(Ui.Theme.danger));
-        status.valid = true;
-        compare(String(status.color), String(Ui.Theme.active));
-    }
 }

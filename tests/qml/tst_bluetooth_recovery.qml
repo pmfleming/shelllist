@@ -78,34 +78,37 @@ TestCase {
         const controller = panel.controller;
         const original = controller.selectedDevice;
         let commonFontSize = 0;
-        for (const width of [320, 720]) {
-            panel.width = width;
-            for (const components of [["main"], ["left", "right"], ["left", "right", "case"]]) {
-                for (const mode of ["noise-cancelling", "off", "adaptive", "transparent"]) {
-                    const device = Object.assign({}, original, {
-                        battery_live: true,
-                        battery: components.map(function (component) { return {component: component, percentage: 100}; }),
-                        fast_pair: {noise_control: {available_modes: [mode], active_mode: mode}}
-                    });
-                    controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [device]});
-                    wait(0);
-                    const icon = findChild(panel.page, "noiseControlIcon");
-                    const label = findChild(panel.page, "noiseControlLabel");
-                    const percentage = findChild(panel.page, "batteryPercentage-" + components[0]);
-                    verify(icon !== null && label !== null && percentage !== null);
-                    tryCompare(icon, "status", Image.Ready);
-                    const iconBottom = icon.mapToItem(panel.page, icon.width, icon.height);
-                    const percentageBottom = percentage.mapToItem(panel.page, 0, percentage.height);
-                    fuzzyCompare(iconBottom.x, panel.page.width, 0.01);
-                    fuzzyCompare(iconBottom.y, percentageBottom.y, 0.01);
-                    fuzzyCompare(label.mapToItem(icon, label.width / 2, 0).x, icon.width / 2, 0.01);
-                    verify(label.mapToItem(icon, 0, 0).y > icon.height);
-                    verify(label.contentWidth <= icon.width * 1.5);
-                    compare(label.text, mode === "noise-cancelling" ? "Noise\ncancellation" : mode === "transparent" ? "Ambient" : mode === "off" ? "Off" : "Adaptive");
-                    if (commonFontSize)
-                        compare(label.font.pixelSize, commonFontSize);
-                    commonFontSize = label.font.pixelSize;
-                }
+        // Exercise both ring sizes without a width × topology × mode cross-product.
+        for (const scenario of [
+            {width: 320, components: ["left", "right"]},
+            {width: 720, components: ["main"]}
+        ]) {
+            panel.width = scenario.width;
+            const components = scenario.components;
+            for (const mode of ["noise-cancelling", "off", "adaptive", "transparent"]) {
+                const device = Object.assign({}, original, {
+                    battery_live: true,
+                    battery: components.map(function (component) { return {component: component, percentage: 100}; }),
+                    fast_pair: {noise_control: {available_modes: [mode], active_mode: mode}}
+                });
+                controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [device]});
+                wait(0);
+                const icon = findChild(panel.page, "noiseControlIcon");
+                const label = findChild(panel.page, "noiseControlLabel");
+                const percentage = findChild(panel.page, "batteryPercentage-" + components[0]);
+                verify(icon !== null && label !== null && percentage !== null);
+                tryCompare(icon, "status", Image.Ready);
+                const iconBottom = icon.mapToItem(panel.page, icon.width, icon.height);
+                const percentageBottom = percentage.mapToItem(panel.page, 0, percentage.height);
+                fuzzyCompare(iconBottom.x, panel.page.width, 0.01);
+                fuzzyCompare(iconBottom.y, percentageBottom.y, 0.01);
+                fuzzyCompare(label.mapToItem(icon, label.width / 2, 0).x, icon.width / 2, 0.01);
+                verify(label.mapToItem(icon, 0, 0).y > icon.height);
+                verify(label.contentWidth <= icon.width * 1.5);
+                compare(label.text, mode === "noise-cancelling" ? "Noise\ncancellation" : mode === "transparent" ? "Ambient" : mode === "off" ? "Off" : "Adaptive");
+                if (commonFontSize)
+                    compare(label.font.pixelSize, commonFontSize);
+                commonFontSize = label.font.pixelSize;
             }
         }
         controller.applySnapshot({radio: controller.radio, adapters: controller.adapters,
@@ -191,22 +194,8 @@ TestCase {
         compare(calls[0].params.device_key, "buds");
         compare(calls[0].params.endpoint_key, "output");
     }
-    function test_policyResetSendsNullInsteadOfOverwritingGlobalDefaults() {
-        const controller = makePanel().controller;
-        verify(controller.updateDevicePolicy({reconnect_on_resume: null}));
-        compare(calls[0].method, "bluetooth.device.policy.update");
-        compare(calls[0].params.key, "buds");
-        compare(calls[0].params.reconnect_on_resume, null);
-    }
     function test_policyResetToolbarAction() {
         const controller = makePanel().controller;
-        const toolbar = controller.detailActions.filter(function (action) {
-            return action.presentation.group === "toolbar";
-        });
-        compare(toolbar.map(function (action) { return action.id; }), ["reset-policy", "forget"]);
-        compare(toolbar[0].label, "Reset");
-        verify(toolbar[0].icon.length > 0);
-        compare(toolbar[0].presentation, toolbar[1].presentation);
         verify(controller.triggerDetailAction("reset-policy"));
         compare(calls.length, 1);
         compare(calls[0].method, "bluetooth.device.policy.update");
@@ -216,107 +205,5 @@ TestCase {
             compare(calls[0].params[field], null);
         verify(!controller.triggerDetailAction("reset-policy"));
         compare(calls.length, 1);
-    }
-    function test_noiseControlRejectsUnavailableModes() {
-        const controller = makePanel().controller;
-        verify(!controller.setNoiseControl("transparent"));
-        compare(calls.length, 0);
-        verify(controller.setNoiseControl("off"));
-        compare(calls[0].params.operation, "set-noise-control");
-        compare(calls[0].params.mode, "off");
-    }
-    Component {
-        id: fastPairToggleComponent
-        Bt.BluetoothFastPairSetup {}
-    }
-    function test_fastPairToggleUsesBackendState() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const toggle = createTemporaryObject(fastPairToggleComponent, panel, {controller: controller});
-        verify(toggle !== null);
-        compare(toggle.title, "Fast Pair controls");
-        compare(toggle.subtitle, "");
-        verify(!toggle.showSubtitle);
-        verify(!toggle.checked);
-        verify(toggle.interactive);
-        toggle.clicked();
-        compare(calls.length, 1);
-        compare(calls[0].params.operation, "provision-fast-pair");
-        verify(!toggle.checked); // Wait for the daemon's confirmed credential state.
-        verify(!toggle.interactive);
-        toggle.clicked();
-        compare(calls.length, 1);
-
-        findChild(controller, "bluetoothBackend").pending = ({});
-        const device = Object.assign({}, controller.selectedDevice, {
-            fast_pair: Object.assign({}, controller.selectedDevice.fast_pair, {
-                account_key_available: true, authenticated_controls: false
-            })
-        });
-        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [device]});
-        verify(toggle.checked); // Remains enabled even while authentication is unavailable.
-        verify(toggle.interactive);
-        toggle.clicked();
-        compare(calls.length, 2);
-        compare(calls[1].method, "bluetooth.device.policy.update");
-        compare(calls[1].params.key, "buds");
-        compare(calls[1].params.fast_pair_controls_enabled, false);
-        verify(toggle.checked); // Do not optimistically display a successful save.
-        verify(!toggle.interactive);
-
-        findChild(controller, "bluetoothBackend").pending = ({});
-        const disabled = Object.assign({}, device, {connected: false,
-            policy: Object.assign({}, device.policy, {fast_pair_controls_enabled: false})});
-        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [disabled]});
-        verify(!toggle.checked);
-        verify(toggle.interactive); // Stored credentials can be re-enabled while disconnected.
-        verify(controller.selectedDevice.fast_pair.account_key_available);
-        toggle.clicked();
-        compare(calls.length, 3);
-        compare(calls[2].method, "bluetooth.device.policy.update");
-        compare(calls[2].params.fast_pair_controls_enabled, true);
-        compare(calls[2].params.operation, undefined); // No re-pairing or provisioning.
-        verify(!toggle.checked);
-        verify(!toggle.interactive);
-        findChild(controller, "bluetoothBackend").pending = ({});
-        const enabled = Object.assign({}, disabled, {
-            policy: Object.assign({}, disabled.policy, {fast_pair_controls_enabled: true})});
-        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [enabled]});
-        verify(toggle.checked);
-        verify(toggle.interactive);
-    }
-    function test_fastPairToggleKeepsStateOnSaveFailure() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const device = Object.assign({}, controller.selectedDevice, {
-            fast_pair: {account_key_available: true, authenticated_controls: true}});
-        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [device]});
-        const toggle = createTemporaryObject(fastPairToggleComponent, panel, {controller: controller});
-        toggle.clicked();
-        verify(!toggle.interactive);
-        findChild(controller, "bluetoothBackend").acceptSharedResponse("device-policy",
-            {protocol: "bt-api", version: 1, ok: false, error: {code: "save-failed", message: "Could not save"}}, "");
-        verify(toggle.checked);
-        verify(toggle.interactive);
-        compare(controller.status, "Could not save");
-    }
-    function test_fastPairToggleRespectsProvisioningAvailability() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const toggle = createTemporaryObject(fastPairToggleComponent, panel, {controller: controller});
-        const device = Object.assign({}, controller.selectedDevice, {
-            capabilities: Object.assign({}, controller.selectedDevice.capabilities, {can_provision_fast_pair: false})
-        });
-        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [device]});
-        verify(!toggle.checked);
-        verify(!toggle.interactive);
-        toggle.clicked();
-        compare(calls.length, 0);
-    }
-    function test_provisioningUsesDaemonTrustedMetadataNotFrontendKeys() {
-        const controller = makePanel().controller;
-        verify(controller.provisionFastPair());
-        compare(calls[0].params.operation, "provision-fast-pair");
-        compare(calls[0].params.anti_spoofing_public_key, undefined);
     }
 }

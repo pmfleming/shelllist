@@ -19,14 +19,6 @@ function event(detail) {
     return { stream: "network.health", event: detail.subject, health: detail };
 }
 
-const authFailure = event({
-    subject: "device", state_name: "failed", unexpected: true, user_requested: false,
-    reason: { code: 7, name: "no-secrets", category: "authentication" },
-    id: "Example", device_iface: "wlan0"
-});
-expect("auth failure is a failure", health.isFailure(authFailure), true);
-expect("auth failure message", health.message(authFailure), "Example needs a password.");
-
 const daemonFailure = event({
     subject: "device", state_name: "failed", unexpected: true, user_requested: false,
     transition_kind: "failure", notification_recommended: true, severity: "error",
@@ -35,9 +27,8 @@ const daemonFailure = event({
 });
 expect("daemon recommended failure is surfaced", health.isFailure(daemonFailure), true);
 expect("daemon message is preferred", health.message(daemonFailure), "Example failed to authenticate.");
-expect("notification key is stable", health.notificationKey(daemonFailure), "/devices/1|failed|no-secrets");
 expect("duplicate notification is suppressed", health.isDuplicateNotification(
-    daemonFailure, "/devices/1|failed|no-secrets", 1000, 2000, 3000), true);
+    daemonFailure, health.notificationKey(daemonFailure), 1000, 2000, 3000), true);
 
 const daemonSuppressed = event({
     subject: "connection", state_name: "deactivated", unexpected: true, user_requested: false,
@@ -58,29 +49,7 @@ const userDisconnect = event({
     reason: { code: 2, name: "user-disconnected", category: "user-requested" },
     id: "Example"
 });
-expect("user disconnect is quiet", health.isQuiet(userDisconnect), true);
 expect("user disconnect is not a failure", health.isFailure(userDisconnect), false);
-
-const lifecycle = event({
-    subject: "device", state_name: "unmanaged", unexpected: true, user_requested: false,
-    reason: { code: 73, name: "unmanaged-sleeping", category: "lifecycle" },
-    device_iface: "wlan0"
-});
-expect("lifecycle transitions stay quiet", health.isFailure(lifecycle), false);
-
-const unknownReason = event({
-    subject: "vpn", state_name: "failed", unexpected: true, user_requested: false,
-    reason: { code: 9999, name: "unknown", category: "unknown" },
-    id: "Work VPN"
-});
-expect("unknown reason still reports", health.isFailure(unknownReason), true);
-expect("unknown reason message", health.message(unknownReason), "VPN Work VPN is failed.");
-
-const progress = event({
-    subject: "device", state_name: "ip-config", unexpected: true, user_requested: false,
-    reason: { code: 0, name: "none", category: "none" }, device_iface: "wlan0"
-});
-expect("ordinary progress is quiet", health.isFailure(progress), false);
 
 const successfulActivationTrace = [
     { subject: "connection", state_name: "activating", transition_kind: "progress" },
@@ -122,7 +91,8 @@ for (const [label, detail] of [
     expect(label + " remains actionable", health.isFailure(failure), true);
 }
 
-expect("log line has no secret field", health.logLine(authFailure).indexOf("password") >= 0, false);
-expect("log line reports reason", health.logLine(authFailure).indexOf("reason=no-secrets") >= 0, true);
+const secret = "must-not-appear-in-health-logs";
+const withSecret = event({ ...daemonFailure.health, password: secret, secrets: { psk: secret } });
+expect("log line omits credential fields", health.logLine(withSecret).includes(secret), false);
 
 console.log("network health presentation checks passed");

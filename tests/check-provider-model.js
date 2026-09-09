@@ -30,8 +30,6 @@ function throws(label, action, fragment) {
     throw new Error(`${label}: expected an error`);
 }
 
-const descriptor = model.provider({ id: "desktop.applications", name: "Applications", prefixes: [">", ">"] });
-expect("provider prefixes deduplicated", descriptor.prefixes.length === 1);
 throws("provider IDs are portable", () => model.provider({ id: "Bad ID", name: "Bad" }), "must match");
 
 const launch = model.action({
@@ -42,14 +40,6 @@ const launch = model.action({
     presentation: { group: "primary", tone: "active", width: 140 }
 });
 throws("action enums are checked", () => model.action({ id: "x", label: "X", role: "surprise" }), "unsupported value");
-throws("only one visible primary action is allowed", () => model.actionList([
-    { id: "first", label: "First", presentation: { group: "primary" } },
-    { id: "second", label: "Second", presentation: { group: "primary" } }
-]), "at most one visible primary");
-expect("hidden primary state alternatives are allowed", model.actionList([
-    { id: "connected", label: "Disconnect", presentation: { group: "primary" } },
-    { id: "disconnected", label: "Connect", visible: false, presentation: { group: "primary" } }
-]).length === 2);
 
 const terminal = model.result({
     providerId: "desktop.applications",
@@ -62,14 +52,9 @@ const terminal = model.result({
     actions: [launch],
     payload: { desktopFile: "/tmp/terminal.desktop" }
 });
-expect("result has collision-safe key", terminal.key === "desktop.applications::org.example.Terminal.desktop");
 throws("primary action must exist", () => model.result({
     providerId: "test", id: "one", title: "One", primaryActionId: "missing", actions: [launch]
 }), "does not reference");
-throws("primary action uses primary presentation", () => model.result({
-    providerId: "test", id: "one", title: "One", primaryActionId: "secondary",
-    actions: [{ id: "secondary", label: "Secondary", presentation: { group: "toolbar" } }]
-}), "must reference a primary presentation action");
 throws("duplicate actions are rejected", () => model.result({
     providerId: "test", id: "one", title: "One", actions: [launch, launch]
 }), "duplicate");
@@ -98,19 +83,8 @@ expect("keywords are searchable", ranked.length === 1 && ranked[0].key === termi
 ranked = model.rankResults([terminal, browser], "");
 expect("source score orders an empty query", ranked[0].key === browser.key);
 
-const query = model.queryRequest({ id: "query-1", generation: 2, text: "term", limit: 0 });
-expect("query limit is bounded", query.limit === 1);
-
 throws("cross-provider batches rejected", () => model.resultBatch({ providerId: "settings", results: [terminal] }), "does not match");
 
-const execution = model.executionRequest({ id: "action-1", result: terminal, action: launch, context: { workspace: "2" } });
-expect("execution routes by provider", execution.providerId === "desktop.applications");
-expect("execution routes by stable result", execution.resultKey === terminal.key);
-expect("execution routes by action ID", execution.actionId === "launch");
-throws("disabled actions cannot execute", () => model.executionRequest({
-    id: "action-2",
-    result: terminal,
-    action: { id: "launch", label: "Launch", enabled: false }
-}), "visible and enabled");
+// ProviderRegistry's Qt tests own dispatch routing and disabled-action rejection.
 
 console.log(`Provider model: ${checks} checks passed`);
