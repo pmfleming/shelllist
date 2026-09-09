@@ -110,6 +110,8 @@ TestCase {
         compare(findChild(panel, "batteryCriticalPoint").value, 10);
         verify(!findChild(panel, "batteryLowNotify").checked);
         verify(findChild(panel, "batteryCriticalNotify").checked);
+        compare(findChild(panel, "batteryLowNotify").subtitle, "");
+        compare(findChild(panel, "batteryCriticalNotify").subtitle, "");
         const profile = findChild(panel, "batteryLowProfile");
         compare(profile.value, "balanced");
         compare(profile.options.length, 4);
@@ -126,6 +128,17 @@ TestCase {
         controller.applyPowerProfile({ available: true, profiles: [],
             battery_automation: { level: "normal", status: "waiting", profile: "" } });
         verify(!findChild(panel, "batteryAutomationResume").visible);
+        verify(!findChild(panel, "batteryAutomationStatus").visible);
+        const saveStatus = findChild(panel, "batteryLevelsSaveStatus");
+        verify(!saveStatus.visible, "routine applied status stays hidden");
+        controller.alertOperationActive = true;
+        verify(saveStatus.visible, "saving feedback remains available");
+        controller.alertOperationActive = false;
+        controller.alertSaveError = "Unable to save";
+        verify(saveStatus.visible, "save errors remain visible");
+        controller.applyPowerProfile({ available: true, profiles: [],
+            battery_automation: { level: "low", status: "error", error: "Unable to switch profile" } });
+        verify(findChild(panel, "batteryAutomationStatus").visible);
     }
 
     function test_deviceSelectionStaysWithCareSettings() {

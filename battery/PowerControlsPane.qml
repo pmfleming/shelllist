@@ -22,8 +22,9 @@ Column {
 
         Ui.FieldLabel {
             Layout.fillWidth: true
-            text: pane.controller.powerProfile.available ? "Driver: " + (pane.controller.powerProfile.driver || "unknown") + (pane.controller.powerProfile.version ? " · power-profiles-daemon " + pane.controller.powerProfile.version : "") : "power-profiles-daemon is unavailable"
-            color: pane.controller.powerProfile.available ? Ui.Theme.mutedText : Ui.Theme.warning
+            visible: !pane.controller.powerProfile.available
+            text: qsTr("power-profiles-daemon is unavailable")
+            color: Ui.Theme.warning
         }
 
         Ui.SegmentedControl {

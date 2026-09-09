@@ -14,13 +14,6 @@ Ui.DetailColumnCard {
     height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
     title: qsTr("Battery levels & actions")
 
-    Ui.FieldLabel {
-        Layout.fillWidth: true
-        text: qsTr("While unplugged · critical settings take priority")
-        wrapMode: Text.Wrap
-        elide: Text.ElideNone
-    }
-
     Repeater {
         model: ["low", "critical"]
 
@@ -51,7 +44,6 @@ Ui.DetailColumnCard {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 42
                 title: qsTr("Notify")
-                subtitle: qsTr("Once when this battery level is reached")
                 checked: level.low ? pane.controller.draftNotifyWarning : pane.controller.draftNotifyCritical
                 interactive: !pane.controller.actionInFlight
                 onClicked: pane.controller.updateLevelNotification(level.modelData, !checked)
@@ -85,15 +77,10 @@ Ui.DetailColumnCard {
         wrapMode: Text.Wrap
     }
 
-    Ui.FieldLabel {
-        Layout.fillWidth: true
-        text: qsTr("Recovery margin: %1 percentage points. Plugging in releases our profile override.").arg(pane.controller.valueOr(pane.controller.policy.recovery_margin_percent, 3))
-        wrapMode: Text.Wrap
-        elide: Text.ElideNone
-    }
-
     Ui.SaveStatusLabel {
+        objectName: "batteryLevelsSaveStatus"
         Layout.fillWidth: true
+        visible: pane.controller.alertDraftDirty || pane.controller.alertOperationActive || pane.controller.alertSaveError.length > 0
         text: pane.controller.alertSaveStatus
         valid: pane.controller.alertDraftValid
         error: pane.controller.alertSaveError
@@ -103,6 +90,7 @@ Ui.DetailColumnCard {
     Ui.FieldLabel {
         objectName: "batteryAutomationStatus"
         Layout.fillWidth: true
+        visible: ["paused", "blocked", "unavailable", "error"].indexOf(pane.controller.batteryAutomation.status) >= 0
         text: pane.controller.automationStatus
         wrapMode: Text.Wrap
         elide: Text.ElideNone
