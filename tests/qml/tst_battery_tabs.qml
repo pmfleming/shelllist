@@ -25,6 +25,11 @@ TestCase {
         }
     }
 
+    Component {
+        id: profileSpyComponent
+        SignalSpy { signalName: "selected" }
+    }
+
     function makePanel() {
         const panel = createTemporaryObject(panelComponent, testCase);
         verify(panel !== null);
@@ -139,6 +144,67 @@ TestCase {
         controller.applyPowerProfile({ available: true, profiles: [],
             battery_automation: { level: "low", status: "error", error: "Unable to switch profile" } });
         verify(findChild(panel, "batteryAutomationStatus").visible);
+    }
+
+    function test_profileIconsAreCompactAccessibleAndKeyboardOperable() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.applyPowerProfile({ available: true, profile: "balanced",
+            profiles: [{ name: "power-saver" }, { name: "balanced" }, { name: "performance" }],
+            battery_automation: { status: "waiting" } });
+        controller.selectViewTab("power");
+        const selector = findChild(panel, "batteryLowProfile");
+        const mode = findChild(panel, "batteryPowerModeProfile");
+        const notify = findChild(panel, "batteryLowNotify");
+        for (const width of [420, 560]) {
+            panel.width = width;
+            verify(waitForRendering(panel));
+            verify(findChild(panel, "powerModeCard").height <= 80, "mode title and icons share one row");
+            verify(findChild(panel, "batteryLevelsCard").height < 280, "each level uses only two rows");
+            compare(notify.mapToItem(panel, 0, 0).y, selector.mapToItem(panel, 0, 0).y);
+            verify(notify.mapToItem(panel, notify.width, 0).x < selector.mapToItem(panel, 0, 0).x);
+            const card = findChild(panel, "batteryLevelsCard");
+            verify(selector.mapToItem(card, selector.width, 0).x <= card.width - card.contentPadding);
+            compare(mode.width, 3 * 36 + 2 * Ui.Theme.spacingXs);
+        }
+        controller.applyPowerProfile({ available: true, profile: "balanced",
+            profiles: [{ name: "power-saver" }, { name: "balanced" }],
+            battery_automation: { status: "waiting" } });
+        verify(waitForRendering(panel));
+        const keep = findChild(selector, "profileOption-keep-current");
+        const saver = findChild(selector, "profileOption-power-saver");
+        const balanced = findChild(selector, "profileOption-balanced");
+        const performance = findChild(selector, "profileOption-performance");
+        for (const button of [keep, saver, balanced, performance]) {
+            compare(button.label, "");
+            verify(button.icon.length > 0);
+            verify(button.toolTip.length > 0);
+            verify(button.Accessible.name.indexOf("Low battery power profile") >= 0);
+            compare(button.Accessible.role, Accessible.RadioButton);
+        }
+        verify(saver.Accessible.checked);
+        verify(!performance.enabled);
+        verify(saver.labelColor.toString() !== balanced.labelColor.toString());
+        verify(balanced.labelColor.toString() !== performance.labelColor.toString());
+        const spy = createTemporaryObject(profileSpyComponent, testCase, { target: selector });
+        mouseClick(balanced);
+        compare(spy.count, 1);
+        compare(controller.draftWarningProfile, "balanced");
+        verify(balanced.Accessible.checked);
+        balanced.forceActiveFocus();
+        keyClick(Qt.Key_Right);
+        compare(spy.count, 1, "keyboard skips unavailable Performance");
+        keyClick(Qt.Key_Left);
+        compare(controller.draftWarningProfile, "power-saver");
+        verify(saver.activeFocus);
+        keep.forceActiveFocus();
+        keyClick(Qt.Key_Space);
+        compare(controller.draftWarningProfile, "keep-current");
+        controller.actionInFlight = true;
+        const count = spy.count;
+        mouseClick(balanced);
+        selector.move(1);
+        compare(spy.count, count, "busy controls cannot dispatch profile changes");
     }
 
     function test_deviceSelectionStaysWithCareSettings() {

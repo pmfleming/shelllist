@@ -24,11 +24,11 @@ function controller() {
     const calls = [];
     const context = vm.createContext({
         Flow: library(flowPath), Presentation: library(presentationPath),
-        uiActive: false, actionInFlight: false,
+        uiActive: false, actionInFlight: false, sendSucceeds: true,
         thresholdAutoSave: timer(), alertAutoSave: timer(),
         batteryBackend: new Proxy({}, { get: (_, method) => (...args) => {
             calls.push({ method, args });
-            return true;
+            return context.sendSucceeds;
         } })
     });
     // Execute the actual controller methods and property expressions, with only
@@ -159,11 +159,15 @@ for (const extra of [
     c.powerSleep.preparing_for_sleep = true;
     assert.equal(c.powerSleepAction("suspend"), false);
     assert.equal(c.powerSleepAction("hibernate"), false);
-    assert.equal(c.powerSleepAction("lock"), true);
-    c.actionInFlight = false;
+    assert.equal(c.powerSleepAction("lock"), false);
     c.powerSleep.preparing_for_sleep = false;
+    assert.equal(c.powerSleepAction("lock"), true);
+    assert.equal(c.sleepStatus, "Locking…");
+    assert.equal(c.powerSleepAction("hibernate"), false, "pending lock prevents duplicate requests");
+    c.operationFinished("power-sleep-lock-1");
+    assert.equal(c.sleepStatus, "");
     assert.equal(c.powerSleepAction("hibernate"), true);
-    c.actionInFlight = false;
+    c.operationFinished("power-sleep-hibernate-2");
     c.powerSleep.available = false;
     assert.equal(c.powerSleepAction("lock"), false);
     assert.equal(calls.length, 2);
@@ -229,4 +233,39 @@ for (const extra of [
     c.applyPowerProfile({ available: true, battery_automation: { status: "active" } });
     assert.equal(c.resumeAutomaticProfiles(), false);
 }
-console.log("battery controls: selection, auto-save, independent level actions, resume and power dispatch passed");
+{
+    const { c, calls } = controller();
+    c.powerSleep = { available: true, can_suspend: "yes", can_hibernate: "na", inhibitors: [] };
+    assert.equal(c.powerSleepAction("suspend"), true);
+    assert.equal(c.actionInFlight, true);
+    assert.equal(c.sleepPendingAction, "suspend");
+    assert.equal(c.powerSleepAction("suspend"), false);
+    assert.equal(calls.length, 1);
+    c.powerSleep.preparing_for_sleep = true;
+    assert.equal(c.sleepStatus, "Preparing sleep…");
+    c.powerSleep.preparing_for_sleep = false;
+    c.operationFailed("power-sleep-suspend-1", "Screen lock was not confirmed");
+    assert.equal(c.actionInFlight, false);
+    assert.equal(c.sleepPendingAction, "");
+    assert.equal(c.sleepStatus, "Suspend failed");
+    assert.equal(c.sleepRetryAction, "suspend");
+    assert.equal(c.lastError, "", "sleep errors stay local, with complete details in the popover");
+    assert.equal(c.canPowerSleepAction(c.sleepRetryAction), true);
+    assert.equal(c.powerSleepAction(c.sleepRetryAction), true);
+    assert.equal(c.sleepError, "");
+    c.operationFinished("power-sleep-suspend-2");
+    assert.equal(c.sleepRetryAction, "");
+    assert.equal(c.sleepStatus, "");
+    c.sendSucceeds = false;
+    assert.equal(c.powerSleepAction("lock"), false);
+    assert.equal(c.actionInFlight, false, "synchronous rejection cannot leave the controls busy");
+    assert.equal(c.sleepStatus, "Lock failed");
+    c.sendSucceeds = true;
+    assert.equal(c.powerSleepAction("suspend"), true);
+    c.transportFailed("Transport closed");
+    assert.equal(c.sleepPendingAction, "");
+    assert.equal(c.actionInFlight, false);
+    assert.match(c.sleepError, /may already have been accepted/);
+    assert.equal(c.sleepRetryAction, "suspend");
+}
+console.log("battery controls: selection, auto-save, level actions, sleep progress, failure/retry and dispatch passed");

@@ -4,6 +4,9 @@ internal BatteryProtectionPane BatteryProtectionPane.qml
 internal BatterySummaryPane BatterySummaryPane.qml
 internal PowerControlsPane PowerControlsPane.qml
 internal BatteryLevelsPane BatteryLevelsPane.qml
+internal BatteryProfileSelector BatteryProfileSelector.qml
+internal BatterySleepPane BatterySleepPane.qml
+internal BatterySleepDetails BatterySleepDetails.qml
 BatteryBackend 1.0 BatteryBackend.qml
 BatteryContent 1.0 BatteryContent.qml
 BatteryController 1.0 BatteryController.qml

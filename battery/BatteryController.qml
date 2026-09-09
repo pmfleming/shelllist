@@ -49,6 +49,14 @@ Ui.ChooserController {
             lock_before_sleep: true,
             inhibitors: []
         })
+    property string sleepPendingAction: ""
+    property string sleepRetryAction: ""
+    property string sleepError: ""
+    property bool sleepDetailsOpen: false
+    readonly property bool sleepBusy: sleepPendingAction.length > 0 || !!powerSleep.preparing_for_sleep
+    readonly property var sleepBlockers: Presentation.sleepInhibitors(powerSleep, "block")
+    readonly property var sleepDelayHandlers: Presentation.sleepInhibitors(powerSleep, "delay")
+    readonly property string sleepStatus: Presentation.sleepStatus(powerSleep, sleepPendingAction, sleepRetryAction, sleepError)
     property string lastError: ""
     property string refreshError: ""
     property string screenshotStatus: ""
@@ -313,15 +321,26 @@ Ui.ChooserController {
             resumePendingSettings();
     }
 
-    function operationFinished(_id: string): void {
+    function operationFinished(id: string): void {
+        if (id.startsWith("power-sleep-")) {
+            sleepPendingAction = "";
+            sleepRetryAction = "";
+            sleepError = "";
+        }
         actionInFlight = false;
         lastError = currentSettingsError();
         resumePendingSettings();
     }
 
-    function operationFailed(_id: string, message: string): void {
+    function operationFailed(id: string, message: string): void {
         actionInFlight = false;
-        lastError = message;
+        if (id.startsWith("power-sleep-")) {
+            sleepPendingAction = "";
+            sleepError = message;
+            lastError = currentSettingsError();
+        } else {
+            lastError = message;
+        }
         resumePendingSettings();
     }
 
@@ -364,7 +383,13 @@ Ui.ChooserController {
         thresholdAutoSave.stop();
         alertAutoSave.stop();
         actionInFlight = false;
-        lastError = message;
+        if (sleepPendingAction.length > 0) {
+            sleepPendingAction = "";
+            sleepError = "Connection lost. The request may already have been accepted; check the session before retrying. " + message;
+            lastError = currentSettingsError();
+        } else {
+            lastError = message;
+        }
         if (thresholdOperationActive) {
             thresholdOperationActive = false;
             thresholdSaveError = message;
@@ -575,14 +600,29 @@ Ui.ChooserController {
         return startOperation(backend.setPowerActionEnabled(action, enabled));
     }
 
-    function powerSleepAction(action: string): bool {
-        if (actionInFlight || !powerSleep.available || ["lock", "suspend", "hibernate"].indexOf(action) < 0 || (action !== "lock" && powerSleep.preparing_for_sleep))
+    function canPowerSleepAction(action: string): bool {
+        if (actionInFlight || sleepBusy || !powerSleep.available || ["lock", "suspend", "hibernate"].indexOf(action) < 0)
             return false;
         if (action === "suspend" && !Presentation.sleepCapabilityAvailable(powerSleep.can_suspend))
             return false;
         if (action === "hibernate" && !Presentation.sleepCapabilityAvailable(powerSleep.can_hibernate))
             return false;
-        return startOperation(backend.powerSleepAction(action));
+        return true;
+    }
+
+    function powerSleepAction(action: string): bool {
+        if (!canPowerSleepAction(action))
+            return false;
+        // Set state before sending: transport rejection can be synchronous.
+        sleepPendingAction = action;
+        sleepRetryAction = action;
+        sleepError = "";
+        lastError = currentSettingsError();
+        actionInFlight = true;
+        if (backend.powerSleepAction(action))
+            return true;
+        operationFailed("power-sleep-" + action, sleepError || "Unable to send the request");
+        return false;
     }
 
     function selectEnergyPeriod(period: string): void {

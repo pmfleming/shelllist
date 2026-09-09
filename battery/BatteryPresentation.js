@@ -97,6 +97,58 @@ function sleepCapabilityAvailable(value) {
     return value === "yes" || value === "challenge";
 }
 
+function sleepInhibitors(state, mode) {
+    return ((state || {}).inhibitors || []).filter(function (item) {
+        const relevant = String(item.what || "").split(":").indexOf("sleep") >= 0;
+        return relevant && (mode === "block" ? ["block", "block-weak"].indexOf(item.mode) >= 0 : item.mode === mode);
+    });
+}
+
+function sleepHandlerName(who) {
+    const names = {
+        "networkmanager": "Network",
+        "modemmanager": "Mobile broadband",
+        "realtimekit": "Realtime scheduling",
+        "net.reactivated.fprint": "Fingerprint reader",
+        "fprintd": "Fingerprint reader",
+        "pipewire": "Audio"
+    };
+    return names[String(who || "").toLowerCase()] || who || "An application";
+}
+
+function sleepCapabilityDescription(state, action) {
+    if (!state || !state.available)
+        return "Sleep service unavailable";
+    if (action === "lock")
+        return "Lock the current session";
+    const capability = action === "suspend" ? state.can_suspend : state.can_hibernate;
+    switch (capability) {
+    case "yes": return "Available · locks before sleeping";
+    case "challenge": return "Authorisation required · locks before sleeping";
+    case "na": return "Not supported by the system";
+    case "no": return "Not permitted by system policy";
+    default: return "Capability unavailable";
+    }
+}
+
+function sleepActionName(action) {
+    return ({ lock: "Lock", suspend: "Suspend", hibernate: "Hibernate" })[action] || "Sleep";
+}
+
+function sleepStatus(state, pendingAction, retryAction, error) {
+    if (state && state.preparing_for_sleep)
+        return "Preparing sleep…";
+    if (pendingAction)
+        return "Locking…";
+    if (error)
+        return sleepActionName(retryAction) + " failed";
+    if (!state || !state.available)
+        return "Sleep controls unavailable";
+    if (sleepInhibitors(state, "block").length > 0)
+        return "Sleep blocked";
+    return "";
+}
+
 function inhibitorSummary(inhibitor) {
     if (!inhibitor)
         return "";

@@ -16,26 +16,38 @@ Column {
     Ui.DetailColumnCard {
         objectName: "powerModeCard"
         verticalContentPadding: Ui.Theme.spacingMd
-        headingSpacing: Ui.Theme.spacingMd
-        height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
-        title: qsTr("Power mode")
+        height: contentImplicitHeight + 2 * verticalContentPadding
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Ui.Theme.spacingMd
+
+            Ui.ThemeText {
+                Layout.fillWidth: true
+                text: qsTr("Power mode")
+                font.pixelSize: Ui.Theme.fontSizeHeading
+                font.weight: Ui.Theme.fontWeightBold
+            }
+
+            BatteryProfileSelector {
+                objectName: "batteryPowerModeProfile"
+                Layout.preferredWidth: implicitWidth
+                Layout.preferredHeight: implicitHeight
+                accessibleName: qsTr("Power mode")
+                options: pane.controller.profileOptions
+                value: pane.controller.powerProfile.profile || ""
+                interactive: pane.controller.powerProfile.available && !pane.controller.actionInFlight
+                onSelected: function (value) {
+                    pane.controller.setPowerProfile(value);
+                }
+            }
+        }
 
         Ui.FieldLabel {
             Layout.fillWidth: true
             visible: !pane.controller.powerProfile.available
             text: qsTr("power-profiles-daemon is unavailable")
             color: Ui.Theme.warning
-        }
-
-        Ui.SegmentedControl {
-            Layout.fillWidth: true
-            Layout.preferredHeight: Ui.Theme.compactControlHeight
-            options: pane.controller.profileOptions
-            value: pane.controller.powerProfile.profile || ""
-            interactive: pane.controller.powerProfile.available && !pane.controller.actionInFlight
-            onSelected: function (value) {
-                pane.controller.setPowerProfile(value);
-            }
         }
 
         Ui.FieldLabel {
@@ -98,53 +110,7 @@ Column {
         }
     }
 
-    Ui.DetailColumnCard {
-        objectName: "powerSleepCard"
-        height: 145 + (pane.controller.powerSleep.inhibitors || []).length * 30
-        title: qsTr("Lock & sleep")
-
-        Ui.FieldLabel {
-            Layout.fillWidth: true
-            text: pane.controller.powerSleep.available ? (pane.controller.powerSleep.preparing_for_sleep ? "Preparing the session for sleep" : "Requests a session lock through logind before sleeping") : "systemd-logind sleep controls are unavailable"
-            color: pane.controller.powerSleep.available ? Ui.Theme.mutedText : Ui.Theme.warning
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: Ui.Theme.spacingSm
-
-            Ui.ActionButton {
-                Layout.fillWidth: true
-                label: "Lock"
-                enabled: pane.controller.powerSleep.available && !pane.controller.actionInFlight
-                onClicked: pane.controller.powerSleepAction("lock")
-            }
-
-            Ui.ActionButton {
-                Layout.fillWidth: true
-                label: "Suspend"
-                enabled: pane.controller.powerSleep.available && Presentation.sleepCapabilityAvailable(pane.controller.powerSleep.can_suspend) && !pane.controller.powerSleep.preparing_for_sleep && !pane.controller.actionInFlight
-                onClicked: pane.controller.powerSleepAction("suspend")
-            }
-
-            Ui.ActionButton {
-                Layout.fillWidth: true
-                label: "Hibernate"
-                enabled: pane.controller.powerSleep.available && Presentation.sleepCapabilityAvailable(pane.controller.powerSleep.can_hibernate) && !pane.controller.powerSleep.preparing_for_sleep && !pane.controller.actionInFlight
-                onClicked: pane.controller.powerSleepAction("hibernate")
-            }
-        }
-
-        Repeater {
-            model: pane.controller.powerSleep.inhibitors || []
-
-            delegate: Ui.FieldLabel {
-                required property var modelData
-                Layout.fillWidth: true
-                Layout.preferredHeight: 24
-                text: Presentation.inhibitorSummary(modelData)
-                color: modelData.mode === "block" ? Ui.Theme.warning : Ui.Theme.mutedText
-            }
-        }
+    BatterySleepPane {
+        controller: pane.controller
     }
 }

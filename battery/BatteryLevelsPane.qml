@@ -39,30 +39,31 @@ Ui.DetailColumnCard {
                 onEditingFinished: pane.controller.finishAlertEditing()
             }
 
-            Ui.ToggleRow {
-                objectName: level.low ? "batteryLowNotify" : "batteryCriticalNotify"
+            RowLayout {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 42
-                title: qsTr("Notify")
-                checked: level.low ? pane.controller.draftNotifyWarning : pane.controller.draftNotifyCritical
-                interactive: !pane.controller.actionInFlight
-                onClicked: pane.controller.updateLevelNotification(level.modelData, !checked)
-            }
+                spacing: Ui.Theme.spacingLg
 
-            Ui.FieldLabel {
-                Layout.fillWidth: true
-                text: qsTr("Power profile")
-            }
+                Ui.ToggleRow {
+                    objectName: level.low ? "batteryLowNotify" : "batteryCriticalNotify"
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 36
+                    title: qsTr("Notify")
+                    checked: level.low ? pane.controller.draftNotifyWarning : pane.controller.draftNotifyCritical
+                    interactive: !pane.controller.actionInFlight
+                    onClicked: pane.controller.updateLevelNotification(level.modelData, !checked)
+                }
 
-            Ui.SegmentedControl {
-                objectName: level.low ? "batteryLowProfile" : "batteryCriticalProfile"
-                Layout.fillWidth: true
-                Layout.preferredHeight: Ui.Theme.compactControlHeight
-                options: pane.controller.levelProfileOptions
-                value: level.low ? pane.controller.draftWarningProfile : pane.controller.draftCriticalProfile
-                interactive: !pane.controller.actionInFlight
-                onSelected: function (value) {
-                    pane.controller.updateLevelProfile(level.modelData, value);
+                BatteryProfileSelector {
+                    objectName: level.low ? "batteryLowProfile" : "batteryCriticalProfile"
+                    Layout.preferredWidth: implicitWidth
+                    Layout.preferredHeight: implicitHeight
+                    accessibleName: level.low ? qsTr("Low battery power profile") : qsTr("Critical battery power profile")
+                    options: pane.controller.levelProfileOptions
+                    value: level.low ? pane.controller.draftWarningProfile : pane.controller.draftCriticalProfile
+                    interactive: !pane.controller.actionInFlight
+                    onSelected: function (value) {
+                        pane.controller.updateLevelProfile(level.modelData, value);
+                    }
                 }
             }
         }
