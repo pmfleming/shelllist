@@ -10,6 +10,8 @@ RowLayout {
     property alias to: slider.to
     property alias stepSize: slider.stepSize
     property string valueText: String(value)
+    property real labelWidth: 150
+    property real valueWidth: 76
     readonly property alias inputActiveFocus: slider.activeFocus
 
     signal edited(bool dragging)
@@ -18,7 +20,7 @@ RowLayout {
     spacing: Theme.spacingMd
 
     FieldLabel {
-        Layout.preferredWidth: 150
+        Layout.preferredWidth: row.labelWidth
         text: row.label
     }
     ValueSlider {
@@ -31,7 +33,7 @@ RowLayout {
         onEditingFinished: row.editingFinished()
     }
     ThemeText {
-        Layout.preferredWidth: 76
+        Layout.preferredWidth: row.valueWidth
         text: row.valueText
         horizontalAlignment: Text.AlignRight
     }

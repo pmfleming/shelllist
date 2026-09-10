@@ -113,14 +113,18 @@ TestCase {
         verify(!findChild(panel, "batteryChargeNotificationCard").visible);
         compare(findChild(panel, "batteryLowPoint").value, 35);
         compare(findChild(panel, "batteryCriticalPoint").value, 10);
-        verify(!findChild(panel, "batteryLowNotify").checked);
-        verify(findChild(panel, "batteryCriticalNotify").checked);
-        compare(findChild(panel, "batteryLowNotify").subtitle, "");
-        compare(findChild(panel, "batteryCriticalNotify").subtitle, "");
+        verify(!findChild(panel, "batteryLowNotify"));
+        verify(!findChild(panel, "batteryCriticalNotify"));
+        verify(!findChild(panel, "batteryLowEnabled").checked);
+        verify(findChild(panel, "batteryCriticalEnabled").checked);
+        findChild(panel, "batteryLowEnabled").toggle();
+        verify(controller.draftNotifyWarning);
+        compare(controller.draftWarningProfile, "balanced");
+        controller.settingsOperationFinished("alert");
         const profile = findChild(panel, "batteryLowProfile");
         compare(profile.value, "balanced");
-        compare(profile.options.length, 4);
-        verify(!profile.optionEnabled(3), "unavailable Performance cannot be selected");
+        compare(profile.options.length, 3);
+        verify(!profile.optionEnabled(2), "unavailable Performance cannot be selected");
         verify(findChild(panel, "batteryAutomationResume").visible);
         verify(findChild(panel, "batteryAutomationStatus").text.indexOf("paused") >= 0);
         panel.width = 420;
@@ -155,27 +159,33 @@ TestCase {
         controller.selectViewTab("power");
         const selector = findChild(panel, "batteryLowProfile");
         const mode = findChild(panel, "batteryPowerModeProfile");
-        const notify = findChild(panel, "batteryLowNotify");
+        const toggle = findChild(panel, "batteryLowEnabled");
+        const point = findChild(panel, "batteryLowPoint");
         for (const width of [420, 560]) {
             panel.width = width;
             verify(waitForRendering(panel));
             verify(findChild(panel, "powerModeCard").height <= 80, "mode title and icons share one row");
             verify(findChild(panel, "batteryLevelsCard").height < 280, "each level uses only two rows");
-            compare(notify.mapToItem(panel, 0, 0).y, selector.mapToItem(panel, 0, 0).y);
-            verify(notify.mapToItem(panel, notify.width, 0).x < selector.mapToItem(panel, 0, 0).x);
+            compare(toggle.mapToItem(panel, 0, toggle.height / 2).y, point.mapToItem(panel, 0, point.height / 2).y);
+            verify(point.mapToItem(panel, point.width, 0).x < toggle.mapToItem(panel, 0, 0).x);
+            verify(findChild(point, "labeledValueSliderInput").width >= 40);
             const card = findChild(panel, "batteryLevelsCard");
-            verify(selector.mapToItem(card, selector.width, 0).x <= card.width - card.contentPadding);
+            verify(selector.mapToItem(card, selector.width, 0).x <= card.width - card.contentPadding + 1,
+                "profile selector stays inside the card: " + selector.mapToItem(card, selector.width, 0).x + " <= " + (card.width - card.contentPadding));
             compare(mode.width, 3 * 36 + 2 * Ui.Theme.spacingXs);
         }
         controller.applyPowerProfile({ available: true, profile: "balanced",
             profiles: [{ name: "power-saver" }, { name: "balanced" }],
             battery_automation: { status: "waiting" } });
         verify(waitForRendering(panel));
-        const keep = findChild(selector, "profileOption-keep-current");
+        verify(!findChild(selector, "profileOption-keep-current"));
         const saver = findChild(selector, "profileOption-power-saver");
         const balanced = findChild(selector, "profileOption-balanced");
         const performance = findChild(selector, "profileOption-performance");
-        for (const button of [keep, saver, balanced, performance]) {
+        compare(saver.icon, "");
+        compare(balanced.icon, "");
+        compare(performance.icon, "");
+        for (const button of [saver, balanced, performance]) {
             compare(button.label, "");
             verify(button.icon.length > 0);
             verify(button.toolTip.length > 0);
@@ -197,9 +207,20 @@ TestCase {
         keyClick(Qt.Key_Left);
         compare(controller.draftWarningProfile, "power-saver");
         verify(saver.activeFocus);
-        keep.forceActiveFocus();
+        toggle.forceActiveFocus();
         keyClick(Qt.Key_Space);
         compare(controller.draftWarningProfile, "keep-current");
+        verify(!toggle.checked);
+        verify(!controller.draftNotifyWarning);
+        verify(controller.draftNotifyCritical);
+        verify(!point.enabled);
+        verify(!saver.enabled);
+        verify(findChild(panel, "batteryCriticalEnabled").checked);
+        keyClick(Qt.Key_Space);
+        compare(controller.draftWarningProfile, "power-saver");
+        verify(controller.draftNotifyWarning);
+        verify(point.enabled);
+        verify(saver.enabled);
         controller.actionInFlight = true;
         const count = spy.count;
         mouseClick(balanced);

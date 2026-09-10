@@ -24,34 +24,50 @@ Ui.DetailColumnCard {
             Layout.fillWidth: true
             spacing: Ui.Theme.spacingSm
 
-            Ui.PercentageSlider {
-                objectName: level.low ? "batteryLowPoint" : "batteryCriticalPoint"
+            readonly property bool active: low ? pane.controller.draftNotifyWarning : pane.controller.draftNotifyCritical
+
+            RowLayout {
                 Layout.fillWidth: true
-                label: level.low ? qsTr("Low battery") : qsTr("Critical battery")
-                value: level.low ? pane.controller.draftWarningPercent : pane.controller.draftCriticalPercent
-                enabled: !pane.controller.actionInFlight
-                onEdited: function (dragging) {
-                    if (level.low)
-                        pane.controller.updateWarningPercent(Math.round(value), dragging);
-                    else
-                        pane.controller.updateCriticalPercent(Math.round(value), dragging);
+                spacing: Ui.Theme.spacingSm
+
+                Ui.PercentageSlider {
+                    objectName: level.low ? "batteryLowPoint" : "batteryCriticalPoint"
+                    Layout.fillWidth: true
+                    label: level.low ? qsTr("Low battery") : qsTr("Critical battery")
+                    labelWidth: 120
+                    valueWidth: 40
+                    value: level.low ? pane.controller.draftWarningPercent : pane.controller.draftCriticalPercent
+                    enabled: level.active && !pane.controller.actionInFlight
+                    onEdited: function (dragging) {
+                        if (level.low)
+                            pane.controller.updateWarningPercent(Math.round(value), dragging);
+                        else
+                            pane.controller.updateCriticalPercent(Math.round(value), dragging);
+                    }
+                    onEditingFinished: pane.controller.finishAlertEditing()
                 }
-                onEditingFinished: pane.controller.finishAlertEditing()
+
+                Ui.ToggleSwitch {
+                    objectName: level.low ? "batteryLowEnabled" : "batteryCriticalEnabled"
+                    Layout.preferredWidth: 44
+                    Layout.preferredHeight: 36
+                    checked: level.active
+                    enabled: !pane.controller.actionInFlight
+                    Accessible.role: Accessible.CheckBox
+                    Accessible.name: level.low ? qsTr("Low battery") : qsTr("Critical battery")
+                    Accessible.description: qsTr("Enable the threshold notification and automatic power profile")
+                    Accessible.checkable: true
+                    Accessible.checked: checked
+                    onToggled: function (checked) {
+                        pane.controller.updateLevelEnabled(level.modelData, checked);
+                    }
+                }
             }
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: Ui.Theme.spacingLg
 
-                Ui.ToggleRow {
-                    objectName: level.low ? "batteryLowNotify" : "batteryCriticalNotify"
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 36
-                    title: qsTr("Notify")
-                    checked: level.low ? pane.controller.draftNotifyWarning : pane.controller.draftNotifyCritical
-                    interactive: !pane.controller.actionInFlight
-                    onClicked: pane.controller.updateLevelNotification(level.modelData, !checked)
-                }
+                Item { Layout.fillWidth: true }
 
                 BatteryProfileSelector {
                     objectName: level.low ? "batteryLowProfile" : "batteryCriticalProfile"
@@ -60,7 +76,7 @@ Ui.DetailColumnCard {
                     accessibleName: level.low ? qsTr("Low battery power profile") : qsTr("Critical battery power profile")
                     options: pane.controller.levelProfileOptions
                     value: level.low ? pane.controller.draftWarningProfile : pane.controller.draftCriticalProfile
-                    interactive: !pane.controller.actionInFlight
+                    interactive: level.active && !pane.controller.actionInFlight
                     onSelected: function (value) {
                         pane.controller.updateLevelProfile(level.modelData, value);
                     }

@@ -89,6 +89,8 @@ Ui.ChooserController {
     property bool draftNotifyCritical: true
     property string draftWarningProfile: "power-saver"
     property string draftCriticalProfile: "power-saver"
+    property string lastWarningProfile: "power-saver"
+    property string lastCriticalProfile: "power-saver"
     property bool thresholdDraftDirty: false
     property bool alertDraftDirty: false
     property bool thresholdEditing: false
@@ -156,13 +158,13 @@ Ui.ChooserController {
             label: labels[profile.name] || profile.name
         };
     })
-    readonly property var levelProfileOptions: [{ value: "keep-current", label: "Keep current" }].concat(["power-saver", "balanced", "performance"].map(function (name) {
+    readonly property var levelProfileOptions: ["power-saver", "balanced", "performance"].map(function (name) {
         return {
             value: name,
             label: Presentation.profileName(name),
             enabled: powerProfile.available && profileOptions.some(function (option) { return option.value === name; })
         };
-    }))
+    })
     readonly property var batteryAutomation: powerProfile.battery_automation || ({})
     readonly property string automationStatus: Presentation.automationStatus(batteryAutomation, powerProfile.available)
     readonly property bool thresholdDraftValid: Presentation.thresholdRangeValid(draftStartPercent, draftEndPercent)
@@ -493,8 +495,33 @@ Ui.ChooserController {
         markAlertChanged(true);
     }
 
+    function updateLevelEnabled(level: string, enabled: bool): void {
+        if (actionInFlight || (level !== "low" && level !== "critical"))
+            return;
+        const current = level === "low" ? draftWarningProfile : draftCriticalProfile;
+        if (current !== "keep-current") {
+            if (level === "low")
+                lastWarningProfile = current;
+            else
+                lastCriticalProfile = current;
+        }
+        const previous = level === "low" ? lastWarningProfile : lastCriticalProfile;
+        const option = levelProfileOptions.find(function (option) { return option.value === previous && option.enabled; })
+            || levelProfileOptions.find(function (option) { return option.enabled; });
+        // Notifications remain available even without a power-profile service.
+        const profile = enabled && option ? option.value : "keep-current";
+        if (level === "low") {
+            draftNotifyWarning = enabled;
+            draftWarningProfile = profile;
+        } else {
+            draftNotifyCritical = enabled;
+            draftCriticalProfile = profile;
+        }
+        markAlertChanged(true);
+    }
+
     function updateLevelProfile(level: string, value: string): void {
-        if (!levelProfileOptions.some(function (option) { return option.value === value && option.enabled !== false; }))
+        if (value !== "keep-current" && !levelProfileOptions.some(function (option) { return option.value === value && option.enabled !== false; }))
             return;
         if (level === "low")
             draftWarningProfile = value;

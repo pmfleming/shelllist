@@ -73,7 +73,7 @@ Item {
                 objectName: "profileOption-" + modelData.value
                 Layout.preferredWidth: selector.buttonSize
                 Layout.preferredHeight: selector.buttonSize
-                icon: modelData.value === "power-saver" ? "󰌪" : (modelData.value === "balanced" ? "󰗑" : (modelData.value === "performance" ? "󰓅" : "󰁔"))
+                icon: modelData.value === "power-saver" ? "" : (modelData.value === "balanced" ? "" : "")
                 iconSize: Ui.Theme.iconSizeLarge
                 accessibleName: selector.accessibleName + ": " + modelData.label
                 toolTip: modelData.label + (selected ? qsTr(" (selected)") : "")

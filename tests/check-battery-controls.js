@@ -235,6 +235,36 @@ for (const extra of [
 }
 {
     const { c, calls } = controller();
+    c.applyPowerProfile({ available: true, profiles: [{ name: "balanced" }, { name: "power-saver" }] });
+    c.applyBattery(state([], { policy: { warning_percent: 35, critical_percent: 10,
+        warning_profile: "balanced", critical_profile: "power-saver", notify_warning: true, notify_critical: true } }));
+    assert.equal(c.levelProfileOptions.length, 3);
+    c.updateLevelEnabled("low", false);
+    assert.equal(calls[0].args[0].warning_profile, "keep-current");
+    assert.equal(calls[0].args[0].notify_warning, false, "disabling a level disables its notification");
+    assert.equal(calls[0].args[0].notify_critical, true, "other level notification is unchanged");
+    assert.equal(c.draftCriticalProfile, "power-saver", "levels toggle independently");
+    assert.equal(c.draftWarningPercent, 35, "disabling preserves the threshold");
+    c.settingsOperationFinished("alert");
+    c.updateLevelEnabled("low", true);
+    assert.equal(c.draftWarningProfile, "balanced", "re-enabling restores the previous profile");
+    assert.equal(calls[1].args[0].notify_warning, true, "enabling a level enables its notification in the same save");
+    c.settingsOperationFinished("alert");
+    c.applyPowerProfile({ available: false, profiles: [] });
+    c.updateLevelEnabled("low", false);
+    assert.equal(c.draftWarningProfile, "keep-current", "can disable an unavailable profile");
+    c.settingsOperationFinished("alert");
+    c.updateLevelEnabled("low", true);
+    assert.equal(c.draftWarningProfile, "keep-current", "cannot enable unavailable profiles");
+    assert.equal(c.draftNotifyWarning, true, "notifications work without a profile service");
+    assert.equal(calls.at(-1).args[0].notify_warning, true);
+    c.settingsOperationFinished("alert");
+    c.applyPowerProfile({ available: true, profiles: [{ name: "power-saver" }] });
+    c.updateLevelEnabled("low", true);
+    assert.equal(c.draftWarningProfile, "power-saver", "falls back to an available profile");
+}
+{
+    const { c, calls } = controller();
     c.powerSleep = { available: true, can_suspend: "yes", can_hibernate: "na", inhibitors: [] };
     assert.equal(c.powerSleepAction("suspend"), true);
     assert.equal(c.actionInFlight, true);
