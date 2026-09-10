@@ -96,6 +96,10 @@ Io.DaemonBackend {
         return callSequenced("power-sleep-" + action, methods[action], {});
     }
 
+    function setSleepPolicy(policy: var): bool {
+        return callSequenced("sleep-policy", BatteryApi.methods.setSleepPolicy, policy);
+    }
+
     function setAlertPolicy(policy: var): bool {
         return callSequenced("battery-alerts", BatteryApi.methods.setAlertPolicy, policy);
     }
@@ -116,6 +120,7 @@ Io.DaemonBackend {
                 battery: controller.applyBattery,
                 power_profile: controller.applyPowerProfile,
                 power_sleep: controller.applyPowerSleep,
+                sleep_policy: controller.applySleepPolicy,
                 history: controller.applyBatteryHistory
             });
         Object.keys(handlers).forEach(function (key) {
@@ -125,7 +130,9 @@ Io.DaemonBackend {
     }
     function rejectRequest(id: string, background: bool, error: string): void {
         const domain = settingsDomain(id);
-        if (background)
+        if (id.startsWith("sleep-policy-"))
+            controller.sleepPolicyFailed(error);
+        else if (background)
             controller.refreshFailed(id, error);
         else if (domain.length > 0)
             controller.settingsOperationFailed(domain, error);
@@ -134,7 +141,9 @@ Io.DaemonBackend {
     }
     function acceptRequest(id: string, background: bool): void {
         const domain = settingsDomain(id);
-        if (background)
+        if (id.startsWith("sleep-policy-"))
+            controller.sleepPolicyFinished();
+        else if (background)
             controller.refreshFinished(id);
         else if (domain.length > 0)
             controller.settingsOperationFinished(domain);
@@ -160,7 +169,9 @@ Io.DaemonBackend {
         controller.handleEvent(event);
     }
     onSendFailed: function (id, message) {
-        if (isBackgroundRequest(id))
+        if (id.startsWith("sleep-policy-"))
+            controller.sleepPolicyFailed(message);
+        else if (isBackgroundRequest(id))
             controller.refreshFailed(id, message);
         else {
             const domain = settingsDomain(id);

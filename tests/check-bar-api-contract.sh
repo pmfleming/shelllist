@@ -38,6 +38,9 @@ jq -e '
   (.snapshot.battery.protection.managed | type == "boolean") and
   (.snapshot.battery.protection.charge_once_active | type == "boolean") and
   (.snapshot.power_profile.profile | type == "string") and
+  (.snapshot.sleep_policy.policy.same_profile | type == "boolean") and
+  (.snapshot.sleep_policy.policy.battery.sleep_minutes | type == "number") and
+  (.snapshot.sleep_policy.policy.plugged.hibernate_minutes | type == "number") and
   (.snapshot.osd_hardware.caps_lock | type == "boolean") and
   (.snapshot.osd_hardware.num_lock | type == "boolean") and
   (.snapshot.notifications.count | type == "number") and
@@ -59,7 +62,7 @@ while IFS= read -r name; do
     echo "BarApi.js declares unknown protocol entry $name" >&2
     exit 1
   }
-done < <(grep -h -oE '"(bar|activity|todos|workspace|media|audio|brightness|battery|powerProfile|power-profile|power-sleep|osd-hardware|notifications|updates|timezone)\.[A-Za-z0-9.-]+"' \
+done < <(grep -h -oE '"(bar|activity|todos|workspace|media|audio|brightness|battery|powerProfile|powerSleep|power-profile|power-sleep|sleep-policy|osd-hardware|notifications|updates|timezone)\.[A-Za-z0-9.-]+"' \
   "$api_js" ${activity_api_js:+"$activity_api_js"} ${battery_api_js:+"$battery_api_js"} \
   | tr -d '"' | sort -u)
 

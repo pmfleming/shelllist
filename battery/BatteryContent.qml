@@ -17,9 +17,8 @@ Ui.ChooserSurface {
 
     Ui.ChooserShortcuts {
         controller: content.controller
-        navigationEnabled: !content.controller.sleepDetailsOpen
         refreshEnabled: !content.controller.actionInFlight
-        detailsTabEnabled: !content.controller.sleepDetailsOpen
+        detailsTabEnabled: true
         onRefreshRequested: content.controller.refreshAll()
         onDetailsTabRequested: content.controller.cycleViewTab()
     }

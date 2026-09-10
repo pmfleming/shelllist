@@ -12,7 +12,6 @@ Ui.DetailColumnCard {
     objectName: "powerSleepCard"
     verticalContentPadding: Ui.Theme.spacingMd
     height: contentImplicitHeight + 2 * verticalContentPadding
-    onVisibleChanged: if (!visible) details.close()
 
     RowLayout {
         Layout.fillWidth: true
@@ -44,18 +43,6 @@ Ui.DetailColumnCard {
                 onClicked: pane.controller.powerSleepAction(modelData)
             }
         }
-
-        Ui.FlatIconButton {
-            id: infoButton
-            objectName: "sleepDetailsButton"
-            Layout.preferredWidth: 36
-            Layout.preferredHeight: 36
-            icon: "󰋼"
-            iconSize: Ui.Theme.iconSizeLarge
-            accessibleName: qsTr("Sleep details")
-            toolTip: qsTr("Capabilities and sleep handlers")
-            onClicked: details.open()
-        }
     }
 
     RowLayout {
@@ -73,14 +60,6 @@ Ui.DetailColumnCard {
             color: pane.controller.sleepBusy ? Ui.Theme.mutedText : (pane.controller.sleepError.length > 0 ? Ui.Theme.danger : Ui.Theme.warning)
         }
 
-        Ui.ActionButton {
-            Layout.preferredWidth: 64
-            Layout.preferredHeight: 30
-            visible: !pane.controller.sleepBusy
-            label: qsTr("Details")
-            onClicked: details.open()
-        }
-
         Ui.FlatIconButton {
             objectName: "sleepRetryButton"
             Layout.preferredWidth: 30
@@ -93,11 +72,5 @@ Ui.DetailColumnCard {
             enabled: pane.controller.canPowerSleepAction(pane.controller.sleepRetryAction)
             onClicked: pane.controller.powerSleepAction(pane.controller.sleepRetryAction)
         }
-    }
-
-    BatterySleepDetails {
-        id: details
-        controller: pane.controller
-        onClosed: if (pane.visible) infoButton.forceActiveFocus()
     }
 }

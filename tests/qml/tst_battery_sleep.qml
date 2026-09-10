@@ -68,26 +68,9 @@ TestCase {
             verify(button.mapToItem(card, button.width, 0).x <= card.width - card.contentPadding);
         }
         verify(!findChild(panel, "sleepAction-hibernate").enabled);
-        const info = findChild(panel, "sleepDetailsButton");
-        verify(info.enabled, "explanations remain accessible when actions are unavailable");
-        mouseClick(info);
-        const popup = findChild(panel, "sleepDetailsPopup");
-        verify(popup !== null);
-        tryCompare(popup, "opened", true);
-        verify(panel.controller.sleepDetailsOpen);
-        const capability = findChild(popup.contentItem, "sleepCapability-hibernate");
-        compare(capability.text, "Not supported by the system");
-        compare(findChild(popup.contentItem, "sleepHandlerName").text, "Network");
-        const explanation = findChild(popup.contentItem, "sleepHandlerReason");
-        compare(explanation.text, reason);
-        compare(explanation.elide, Text.ElideNone);
-        const scroll = popup.contentItem;
-        tryVerify(function () { return scroll.contentHeight > scroll.height; });
-        verify(popup.width <= testCase.width);
-        verify(popup.height <= testCase.height);
-        popup.close();
-        tryCompare(popup, "opened", false);
-        tryCompare(info, "activeFocus", true);
+        verify(findChild(panel, "sleepAction-hibernate").toolTip.indexOf("Not supported by the system") >= 0);
+        verify(findChild(panel, "sleepDetailsButton") === null);
+        verify(findChild(panel, "sleepDetailsPopup") === null);
     }
 
     function test_onlyRealBlockersWarnAndProgressErrorsStayLocal() {
@@ -118,24 +101,56 @@ TestCase {
         verify(!findChild(panel, "sleepStatusRow").visible);
     }
 
-    function test_popupEscapeDoesNotDismissPanelAndTabChangeClosesDetails() {
+    function test_sharedAndSeparateAutomaticSleepControls() {
+        const panel = makePanel();
+        const state = {
+            available: true, active_profile: "battery", hibernate_available: true,
+            policy: {
+                same_profile: false,
+                battery: { sleep_minutes: 15, hibernate_minutes: 60 },
+                plugged: { sleep_minutes: 45, hibernate_minutes: 180 }
+            }
+        };
+        panel.controller.applySleepPolicy(state);
+        verify(waitForRendering(panel));
+        compare(findChild(panel, "sleepDelay-battery").value, "15");
+        compare(findChild(panel, "hibernateDelay-battery").value, "60");
+        compare(findChild(panel, "sleepDelay-plugged").value, "45");
+        compare(findChild(panel, "hibernateDelay-plugged").value, "180");
+        const card = findChild(panel, "automaticSleepCard");
+        for (const name of ["sleepDelay-battery", "hibernateDelay-battery", "sleepDelay-plugged", "hibernateDelay-plugged"]) {
+            const control = findChild(panel, name);
+            verify(control.enabled);
+            verify(control.Accessible.name.length > 0);
+            verify(control.mapToItem(card, control.width, 0).x <= card.width - card.contentPadding);
+        }
+        state.policy.same_profile = true;
+        state.policy.battery.sleep_minutes = 0;
+        panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
+        verify(waitForRendering(panel));
+        verify(findChild(panel, "sleepDelay-plugged") === null);
+        compare(findChild(panel, "sleepDelay-battery").value, "0");
+        verify(!findChild(panel, "hibernateDelay-battery").enabled);
+        state.policy.battery.sleep_minutes = 15;
+        state.hibernate_available = false;
+        panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
+        const hibernate = findChild(panel, "hibernateDelay-battery");
+        verify(hibernate.options.every(function (option) { return option.enabled === (option.value === "0"); }));
+        state.available = false;
+        panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
+        verify(!findChild(panel, "sleepDelay-battery").enabled);
+        verify(!findChild(panel, "sleepSameProfile").interactive);
+    }
+
+    function test_keyboardNavigationAndEscapeRemainAvailable() {
         const panel = makePanel();
         panel.controller.backend.active = false;
         panel.controller.uiActive = true;
         const closeSpy = createTemporaryObject(closeSpyComponent, testCase, { target: panel.controller });
-        const info = findChild(panel, "sleepDetailsButton");
-        info.forceActiveFocus();
-        keyClick(Qt.Key_Space);
-        const popup = findChild(panel, "sleepDetailsPopup");
-        tryCompare(popup, "opened", true);
+        findChild(panel, "sleepAction-lock").forceActiveFocus();
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        compare(panel.controller.viewTab, "overview");
         keyClick(Qt.Key_Escape);
-        tryCompare(popup, "opened", false);
-        compare(closeSpy.count, 0, "Escape closes the details, not the battery panel");
-        verify(!panel.controller.sleepDetailsOpen);
-        popup.open();
-        tryCompare(popup, "opened", true);
-        panel.controller.selectViewTab("overview");
-        tryCompare(popup, "opened", false);
-        verify(!panel.controller.sleepDetailsOpen);
+        compare(closeSpy.count, 1, "Escape dismisses the battery panel directly");
     }
 }

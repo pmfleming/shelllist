@@ -22,6 +22,19 @@ in
       description = "Hyprland modifiers and key for opening Notifications directly. Set null to disable.";
     };
 
+    sleep.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = config.services.hypridle.enable && config.services.hypridle.package != null && cfg.systemd.enable && cfg.systemd.startBarDaemon;
+      defaultText = lib.literalExpression "services.hypridle.enable && services.hypridle.package != null && programs.shelllist.systemd.enable && programs.shelllist.systemd.startBarDaemon";
+      description = ''
+        Let Battery & Power manage hypridle's automatic sleep timeout with shared
+        or separate battery/AC profiles. Preserves lock and DPMS listeners and
+        replaces simple systemctl/loginctl sleep listeners. Custom sleep scripts
+        or source includes must be removed from the base hypridle configuration.
+        Timed hibernation also requires the updated system bar-battery-helper.
+      '';
+    };
+
     systemd = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -52,11 +65,20 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
+    assertions = lib.optional cfg.sleep.enable {
+      assertion = config.services.hypridle.enable && config.services.hypridle.package != null && cfg.systemd.enable && cfg.systemd.startBarDaemon;
+      message = "Shelllist automatic sleep requires services.hypridle.enable and Shelllist's managed bar-daemon service.";
+    };
+
     wayland.windowManager.hyprland.settings.bind = lib.mkIf
       (config.wayland.windowManager.hyprland.enable && cfg.notificationsShortcut != null)
       [ "${cfg.notificationsShortcut}, exec, ${cfg.package}/bin/shelllist notifications open" ];
 
     systemd.user.services = lib.mkIf cfg.systemd.enable {
+      hypridle = lib.mkIf cfg.sleep.enable {
+        Service.ExecStart = lib.mkForce "${cfg.package}/bin/bar-daemon idle --config ${lib.escapeShellArg "${config.xdg.configHome}/hypr/hypridle.conf"} --hypridle ${config.services.hypridle.package}/bin/hypridle";
+      };
+
       shelllist = {
         Unit = {
           Description = "Shelllist desktop action center and top bar";
@@ -84,7 +106,8 @@ in
           Type = "dbus";
           BusName = "org.laufan.BarDaemon";
           ExecStart = "${cfg.package}/bin/bar-daemon daemon";
-          Environment = [ "BAR_DAEMON_NOTIFICATION_BACKEND=native" ];
+          Environment = [ "BAR_DAEMON_NOTIFICATION_BACKEND=native" ]
+            ++ lib.optional cfg.sleep.enable "BAR_DAEMON_IDLE_CONFIG=${config.xdg.configHome}/hypr/hypridle.conf";
           Restart = "on-failure";
           RestartSec = "2s";
         };

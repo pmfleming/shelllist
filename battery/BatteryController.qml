@@ -49,13 +49,19 @@ Ui.ChooserController {
             lock_before_sleep: true,
             inhibitors: []
         })
+    property var sleepPolicyState: ({ available: false })
+    property var sleepPolicyDraft: ({
+            same_profile: true,
+            battery: { sleep_minutes: 30, hibernate_minutes: 0 },
+            plugged: { sleep_minutes: 30, hibernate_minutes: 0 }
+        })
+    property bool sleepPolicyDirty: false
+    property bool sleepPolicySaving: false
+    property string sleepPolicyError: ""
     property string sleepPendingAction: ""
     property string sleepRetryAction: ""
     property string sleepError: ""
-    property bool sleepDetailsOpen: false
     readonly property bool sleepBusy: sleepPendingAction.length > 0 || !!powerSleep.preparing_for_sleep
-    readonly property var sleepBlockers: Presentation.sleepInhibitors(powerSleep, "block")
-    readonly property var sleepDelayHandlers: Presentation.sleepInhibitors(powerSleep, "delay")
     readonly property string sleepStatus: Presentation.sleepStatus(powerSleep, sleepPendingAction, sleepRetryAction, sleepError)
     property string lastError: ""
     property string refreshError: ""
@@ -271,6 +277,53 @@ Ui.ChooserController {
             });
     }
 
+    function applySleepPolicy(value: var): void {
+        sleepPolicyState = value || ({ available: false });
+        if (value && value.policy && !sleepPolicyDirty && !sleepPolicySaving)
+            sleepPolicyDraft = JSON.parse(JSON.stringify(value.policy));
+    }
+
+    function updateSleepPolicy(profile: string, field: string, value: var): bool {
+        if (!sleepPolicyState.available || sleepPolicySaving || actionInFlight)
+            return false;
+        const next = JSON.parse(JSON.stringify(sleepPolicyDraft));
+        if (field === "same_profile") {
+            if (typeof value !== "boolean")
+                return false;
+            next.same_profile = value;
+        } else {
+            if (!["battery", "plugged"].includes(profile) || !["sleep_minutes", "hibernate_minutes"].includes(field) || !Number.isInteger(value) || value < 0 || value > 10080)
+                return false;
+            next[profile][field] = value;
+        }
+        sleepPolicyDraft = next;
+        sleepPolicyDirty = true;
+        return saveSleepPolicy();
+    }
+
+    function saveSleepPolicy(): bool {
+        if (!sleepPolicyState.available || sleepPolicySaving || !sleepPolicyDirty || actionInFlight)
+            return false;
+        sleepPolicySaving = true;
+        sleepPolicyError = "";
+        if (!batteryBackend.setSleepPolicy(sleepPolicyDraft)) {
+            sleepPolicyFailed("Unable to send automatic sleep settings");
+            return false;
+        }
+        return true;
+    }
+
+    function sleepPolicyFinished(): void {
+        sleepPolicySaving = false;
+        sleepPolicyDirty = false;
+        sleepPolicyError = "";
+    }
+
+    function sleepPolicyFailed(message: string): void {
+        sleepPolicySaving = false;
+        sleepPolicyError = message;
+    }
+
     function selectDevice(batteryId: string): void {
         const devices = battery.devices || [];
         const index = devices.findIndex(function (device) {
@@ -288,7 +341,8 @@ Ui.ChooserController {
         const handlers = ({
                 battery: applyBattery,
                 powerProfile: applyPowerProfile,
-                powerSleep: applyPowerSleep
+                powerSleep: applyPowerSleep,
+                sleepPolicy: applySleepPolicy
             });
         if (handlers[kind])
             handlers[kind](data);
@@ -382,6 +436,8 @@ Ui.ChooserController {
     }
 
     function transportFailed(message: string): void {
+        if (sleepPolicySaving)
+            sleepPolicyFailed("Connection lost; settings may have been saved. Retry to confirm. " + message);
         thresholdAutoSave.stop();
         alertAutoSave.stop();
         actionInFlight = false;

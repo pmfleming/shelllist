@@ -206,6 +206,29 @@
         "result": "power_sleep"
       },
       {
+        "name": "powerSleep.setPolicy",
+        "params": {
+          "battery": {
+            "hibernate_minutes": 120,
+            "sleep_minutes": 30
+          },
+          "plugged": {
+            "hibernate_minutes": 180,
+            "sleep_minutes": 60
+          },
+          "same_profile": true
+        },
+        "result": "sleep_policy"
+      },
+      {
+        "name": "powerSleep.idle",
+        "params": {
+          "generation": "1234-5678",
+          "sleep_minutes": 30
+        },
+        "result": "power_sleep"
+      },
+      {
         "name": "notifications.togglePanel",
         "params": {},
         "result": "operation"
@@ -353,6 +376,14 @@
           "changed",
           "lagged"
         ],
+        "name": "sleep-policy.changed"
+      },
+      {
+        "events": [
+          "subscribed",
+          "changed",
+          "lagged"
+        ],
         "name": "osd-hardware.changed"
       },
       {
@@ -458,8 +489,8 @@
         "humidity_percent": 73,
         "id": "home",
         "is_day": true,
-        "location": "Amsterdam",
         "latitude": 52.3676,
+        "location": "Amsterdam",
         "longitude": 4.9041,
         "low_c": 13.0,
         "precipitation_mm": 0.0,
@@ -515,8 +546,8 @@
           "humidity_percent": 73,
           "id": "home",
           "is_day": true,
-          "location": "Amsterdam",
           "latitude": 52.3676,
+          "location": "Amsterdam",
           "longitude": 4.9041,
           "low_c": 13.0,
           "precipitation_mm": 0.0,
@@ -814,6 +845,25 @@
       ],
       "lock_before_sleep": true,
       "preparing_for_sleep": false
+    },
+    "sleep_policy": {
+      "active_profile": "shared",
+      "available": true,
+      "error": null,
+      "hibernate_available": true,
+      "hibernate_error": null,
+      "last_error": null,
+      "policy": {
+        "battery": {
+          "hibernate_minutes": 120,
+          "sleep_minutes": 30
+        },
+        "plugged": {
+          "hibernate_minutes": 180,
+          "sleep_minutes": 60
+        },
+        "same_profile": true
+      }
     },
     "timezone": {
       "abbreviation": "CEST",

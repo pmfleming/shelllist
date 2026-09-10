@@ -104,18 +104,6 @@ function sleepInhibitors(state, mode) {
     });
 }
 
-function sleepHandlerName(who) {
-    const names = {
-        "networkmanager": "Network",
-        "modemmanager": "Mobile broadband",
-        "realtimekit": "Realtime scheduling",
-        "net.reactivated.fprint": "Fingerprint reader",
-        "fprintd": "Fingerprint reader",
-        "pipewire": "Audio"
-    };
-    return names[String(who || "").toLowerCase()] || who || "An application";
-}
-
 function sleepCapabilityDescription(state, action) {
     if (!state || !state.available)
         return "Sleep service unavailable";
@@ -147,14 +135,6 @@ function sleepStatus(state, pendingAction, retryAction, error) {
     if (sleepInhibitors(state, "block").length > 0)
         return "Sleep blocked";
     return "";
-}
-
-function inhibitorSummary(inhibitor) {
-    if (!inhibitor)
-        return "";
-    const owner = inhibitor.who || "An application";
-    const reason = inhibitor.why ? ": " + inhibitor.why : "";
-    return owner + " may delay " + (inhibitor.what || "sleep") + reason;
 }
 
 function protectionRange(protection) {

@@ -279,7 +279,7 @@ for (const extra of [
     assert.equal(c.sleepPendingAction, "");
     assert.equal(c.sleepStatus, "Suspend failed");
     assert.equal(c.sleepRetryAction, "suspend");
-    assert.equal(c.lastError, "", "sleep errors stay local, with complete details in the popover");
+    assert.equal(c.lastError, "", "sleep errors stay local to the sleep controls");
     assert.equal(c.canPowerSleepAction(c.sleepRetryAction), true);
     assert.equal(c.powerSleepAction(c.sleepRetryAction), true);
     assert.equal(c.sleepError, "");
@@ -298,4 +298,41 @@ for (const extra of [
     assert.match(c.sleepError, /may already have been accepted/);
     assert.equal(c.sleepRetryAction, "suspend");
 }
-console.log("battery controls: selection, auto-save, level actions, sleep progress, failure/retry and dispatch passed");
+{
+    const { c, calls } = controller();
+    const policy = { same_profile: false,
+        battery: { sleep_minutes: 15, hibernate_minutes: 60 },
+        plugged: { sleep_minutes: 45, hibernate_minutes: 180 } };
+    const state = { available: true, policy, active_profile: "battery" };
+    c.applySleepPolicy(state);
+    assert.equal(c.updateSleepPolicy("", "same_profile", true), true);
+    assert.equal(c.sleepPolicySaving, true);
+    assert.equal(c.updateSleepPolicy("battery", "sleep_minutes", 30), false, "pending save prevents duplicate writes");
+    assert.equal(calls[0].method, "setSleepPolicy");
+    assert.equal(calls[0].args[0].same_profile, true);
+    assert.equal(calls[0].args[0].plugged.hibernate_minutes, 180, "shared mode retains the separate AC profile");
+    c.applySleepPolicy(state);
+    assert.equal(c.sleepPolicyDraft.same_profile, true, "stale telemetry must not overwrite an in-flight edit");
+    c.sleepPolicyFailed("hypridle restart failed");
+    assert.equal(c.sleepPolicyDirty, true);
+    assert.equal(c.sleepPolicySaving, false);
+    assert.equal(c.sleepPolicyError, "hypridle restart failed");
+    assert.equal(c.saveSleepPolicy(), true, "failed saves offer explicit retry");
+    c.sleepPolicyFinished();
+    c.applySleepPolicy({ ...state, policy: calls[1].args[0] });
+    assert.equal(c.sleepPolicyDirty, false);
+    assert.equal(c.sleepPolicyDraft.same_profile, true);
+    assert.equal(c.updateSleepPolicy("", "same_profile", false), true);
+    assert.equal(c.sleepPolicyDraft.plugged.sleep_minutes, 45);
+    c.sleepPolicyFinished();
+    for (const value of [-1, 1.5, 10081, NaN])
+        assert.equal(c.updateSleepPolicy("battery", "sleep_minutes", value), false);
+    assert.equal(c.updateSleepPolicy("battery", "sleep_minutes", 0), true, "Never is a valid sleep delay");
+    c.transportFailed("disconnected");
+    assert.equal(c.sleepPolicySaving, false);
+    assert.match(c.sleepPolicyError, /may have been saved/);
+    c.sleepPolicyState.available = false;
+    assert.equal(c.saveSleepPolicy(), false, "unmanaged integration never claims settings were applied");
+}
+
+console.log("battery controls: selection, auto-save, level actions, sleep profiles, failure/retry and dispatch passed");
