@@ -113,7 +113,10 @@ function sleepCapabilityDescription(state, action) {
     switch (capability) {
     case "yes": return "Available · locks before sleeping";
     case "challenge": return "Authorisation required · locks before sleeping";
-    case "na": return "Not supported by the system";
+    case "na": {
+        const issues = action === "hibernate" ? ((state.diagnostics || {}).hibernate_issues || []) : [];
+        return issues.length > 0 ? issues.join(" ") : "Not supported by the system";
+    }
     case "no": return "Not permitted by system policy";
     default: return "Capability unavailable";
     }

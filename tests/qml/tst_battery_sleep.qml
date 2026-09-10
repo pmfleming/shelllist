@@ -92,11 +92,16 @@ TestCase {
         controller.applyPowerSleep(sleepState());
         controller.operationFailed("power-sleep-suspend-1", "Screen lock was not confirmed");
         compare(status.text, "Suspend failed");
+        const reason = findChild(panel, "sleepFailureReason");
+        verify(reason.visible);
+        compare(reason.text, "Screen lock was not confirmed");
+        compare(reason.elide, Text.ElideNone);
         compare(controller.lastError, "");
         const retry = findChild(panel, "sleepRetryButton");
         verify(retry.visible && retry.enabled);
         compare(retry.Accessible.name, "Retry Suspend");
         controller.operationFinished("power-sleep-suspend-2");
+        verify(!reason.visible);
         verify(!retry.visible);
         verify(!findChild(panel, "sleepStatusRow").visible);
     }

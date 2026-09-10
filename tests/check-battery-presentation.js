@@ -38,4 +38,7 @@ equal(context.sleepCapabilityDescription(sleep, "hibernate"), "Not supported by 
 equal(context.sleepCapabilityDescription({ ...sleep, can_hibernate: "no" }, "hibernate"), "Not permitted by system policy", "permission denial explained");
 equal(context.sleepCapabilityDescription({ ...sleep, can_hibernate: "challenge" }, "hibernate"), "Authorisation required · locks before sleeping", "authentication requirement explained");
 equal(context.sleepCapabilityDescription({ ...sleep, available: false }, "suspend"), "Sleep service unavailable", "offline state overrides stale capabilities");
+const diagnosed = { ...sleep, diagnostics: { hibernate_issues: ["No active disk-backed swap; zram alone cannot store a hibernation image."] } };
+equal(context.sleepCapabilityDescription(diagnosed, "hibernate"), diagnosed.diagnostics.hibernate_issues[0], "daemon evidence explains the unavailable hibernate action");
+equal(context.sleepCapabilityDescription({ ...diagnosed, can_hibernate: "no" }, "hibernate"), "Not permitted by system policy", "hardware evidence does not mislabel policy denial");
 console.log("battery presentation: policy validation, sleep filtering and capability explanations passed");

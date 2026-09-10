@@ -38,6 +38,7 @@ jq -e '
   (.snapshot.battery.protection.managed | type == "boolean") and
   (.snapshot.battery.protection.charge_once_active | type == "boolean") and
   (.snapshot.power_profile.profile | type == "string") and
+  (.snapshot.power_sleep.diagnostics.hibernate_issues | type == "array") and
   (.snapshot.sleep_policy.policy.same_profile | type == "boolean") and
   (.snapshot.sleep_policy.policy.battery.sleep_minutes | type == "number") and
   (.snapshot.sleep_policy.policy.plugged.hibernate_minutes | type == "number") and

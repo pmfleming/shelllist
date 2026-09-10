@@ -73,4 +73,14 @@ Ui.DetailColumnCard {
             onClicked: pane.controller.powerSleepAction(pane.controller.sleepRetryAction)
         }
     }
+
+    Ui.FieldLabel {
+        objectName: "sleepFailureReason"
+        Layout.fillWidth: true
+        text: pane.controller.sleepError || pane.controller.powerSleep.error || ""
+        visible: text.length > 0 && pane.controller.sleepPendingAction.length === 0
+        color: Ui.Theme.warning
+        wrapMode: Text.Wrap
+        elide: Text.ElideNone
+    }
 }
