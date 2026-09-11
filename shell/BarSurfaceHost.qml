@@ -12,7 +12,7 @@ Item {
     property bool barsEnabled: true
     property bool surfacesActive: false
     property string lastScreenSignature: ""
-    property double lastHeartbeatMs: 0
+    property double lastResumeGeneration: -1
     property bool initialized: false
     property bool recoveryCoolingDown: false
     property bool recoveryPending: false
@@ -35,6 +35,15 @@ Item {
             return;
         }
         recoveryDebounce.restart();
+    }
+
+    function observeSleepState(): void {
+        const generation = Number((controller.powerSleep || {}).resume_generation);
+        if (!Number.isFinite(generation) || generation < 0)
+            return;
+        if (Recovery.resumeGenerationAdvanced(lastResumeGeneration, generation))
+            scheduleRecovery("session-resumed");
+        lastResumeGeneration = generation;
     }
 
     function observeScreens(): void {
@@ -73,7 +82,7 @@ Item {
 
     Component.onCompleted: {
         surfacesActive = barsEnabled;
-        lastHeartbeatMs = Date.now();
+        observeSleepState();
         observeScreens();
     }
 
@@ -84,17 +93,16 @@ Item {
         }
     }
 
+    Connections {
+        target: root.controller
+        function onPowerSleepChanged(): void { root.observeSleepState(); }
+    }
+
     Timer {
         interval: 2000
         repeat: true
         running: root.barsEnabled
-        onTriggered: {
-            const current = Date.now();
-            if (Recovery.heartbeatIndicatesResume(root.lastHeartbeatMs, current, interval, 6000))
-                root.scheduleRecovery("session-resumed");
-            root.observeScreens();
-            root.lastHeartbeatMs = current;
-        }
+        onTriggered: root.observeScreens()
     }
 
     Timer {

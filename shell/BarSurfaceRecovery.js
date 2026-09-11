@@ -11,10 +11,8 @@ function screenSignature(screens) {
     return values.sort().join("|");
 }
 
-function heartbeatIndicatesResume(previousMs, currentMs, intervalMs, toleranceMs) {
-    const previous = Number(previousMs) || 0;
-    const current = Number(currentMs) || 0;
-    if (previous <= 0 || current <= previous)
-        return false;
-    return current - previous > Number(intervalMs) + Number(toleranceMs);
+function resumeGenerationAdvanced(previous, current) {
+    // Initial subscription and daemon restart establish a baseline. A generation
+    // is durable snapshot state, so coalesced PrepareForSleep edges aren't lost.
+    return Number.isFinite(previous) && Number.isFinite(current) && previous >= 0 && current > previous;
 }
