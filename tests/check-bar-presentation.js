@@ -45,6 +45,13 @@ equal(context.mediaPositionPercent({
 }, 1000), 100, "media progress is bounded");
 equal(context.inputOsd({ input_muted: true, source_description: "Microphone" }).progressVisible,
     false, "mute does not invent a volume measurement");
+equal(context.brightnessErrorOsd(), {
+    kind: "brightness-error", icon: "󰃠", label: "Brightness",
+    valueLabel: "Adjustment failed", percent: 0,
+    progressVisible: false, timeoutMs: 3000
+}, "brightness failures are visible without inventing a percentage");
+equal(context.brightnessOsd({ percent: 95 }).valueLabel, "95%",
+    "successful brightness feedback retains confirmed percentage");
 equal(context.idleInhibited({ inhibitors: [{ what: "sleep:idle" }] }), true,
     "idle inhibitor detection");
 equal(context.domainOsd({ powerProfile: "power" }, "power",

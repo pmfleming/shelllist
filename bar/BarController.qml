@@ -258,6 +258,10 @@ Item {
         presentOsd(OsdPresentation.brightnessOsd(state));
     }
 
+    function showBrightnessErrorOsd(): void {
+        presentOsd(OsdPresentation.brightnessErrorOsd());
+    }
+
     function statusModules(now: date): var {
         return StatusPresentation.statusModules({
             activity: activity,

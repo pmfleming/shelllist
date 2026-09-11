@@ -110,10 +110,16 @@ Io.DaemonBackend {
         });
     }
 
+    function showRequestFailure(id: string): void {
+        if (id.startsWith("brightness-adjust-"))
+            controller.showBrightnessErrorOsd();
+    }
+
     function finish(id: string, envelope: var, transportError: string): void {
         const error = responseError(envelope, transportError, "Bar operation failed");
         if (error.length > 0) {
             console.error("shelllist bar request failed id=" + id + " error=" + error);
+            showRequestFailure(id);
             return;
         }
         const data = envelope.data || ({});
@@ -135,9 +141,15 @@ Io.DaemonBackend {
     }
     onSendFailed: function (id, message) {
         console.error("shelllist bar send failed id=" + id + " error=" + message);
+        showRequestFailure(id);
     }
-    onTransportFailed: function (message) {
+    onTransportFailed: function (message, lostRequestIds) {
         console.error("shelllist bar transport failed error=" + message);
+        const brightnessRequest = (lostRequestIds || []).find(function (id) {
+            return id.startsWith("brightness-adjust-");
+        });
+        if (brightnessRequest)
+            showRequestFailure(brightnessRequest);
     }
     onTransportReady: snapshot()
 }

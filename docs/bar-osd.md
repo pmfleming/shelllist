@@ -25,6 +25,7 @@ Shelllist uses one shared OSD frame for transient system feedback, instantiated 
 | Output volume | Successful volume or mute operation response | Volume percent |
 | Microphone | Successful input-mute operation response | Hidden |
 | Display brightness | Successful brightness operation response | Brightness percent |
+| Brightness error | Failed brightness response/send, or transport loss with a pending adjustment | Hidden |
 | Power profile | `power-profile.changed` profile transition | Hidden |
 | Caps Lock / Num Lock | `osd-hardware.changed` LED transition | Hidden |
 | Keyboard backlight | `osd-hardware.changed` brightness transition | Backlight percent |
@@ -32,6 +33,8 @@ Shelllist uses one shared OSD frame for transient system feedback, instantiated 
 | Idle inhibitor | `power-sleep.changed` idle-inhibition transition | Hidden |
 | Audio input/output device | `audio.changed` default node transition | Hidden |
 | Display output | `workspaces.changed` monitor addition/removal | Hidden |
+
+Brightness failures display “Adjustment failed” for three seconds without changing the last confirmed brightness. Detailed errors remain in the journal; requests are never automatically retried.
 
 Initial subscription snapshots do not produce an OSD. Domain OSDs require a previous available state so connecting or restarting `bar-daemon` does not replay every current condition as user feedback. Media state remains visible in the top bar and never produces an OSD.
 
@@ -63,7 +66,7 @@ The daemon's isolated PipeWire test uses only virtual devices:
 | --- | ---: |
 | Volume, microphone, brightness, lock keys, keyboard backlight | 1400 ms |
 | Power profile, idle inhibitor, audio/display device | 2200 ms |
-| Camera and microphone privacy | 3000 ms |
+| Camera and microphone privacy, brightness errors | 3000 ms |
 
 The policy is centralized in `BarPresentation.osdTimeout()`. A new OSD family should extend that function instead of introducing another QML timer or frame.
 

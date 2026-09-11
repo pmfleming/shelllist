@@ -74,6 +74,59 @@ TestCase {
         }
     }
 
+    function test_brightnessFailure_data() {
+        return [
+            { tag: "backend", kind: "backend" },
+            { tag: "response-transport", kind: "response-transport" },
+            { tag: "send", kind: "send" },
+            { tag: "lost-pending-request", kind: "lost-pending-request" }
+        ];
+    }
+
+    function test_brightnessFailure(data) {
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.brightness = { available: true, percent: 65 };
+        controller.showBrightnessOsd(controller.brightness);
+        const backend = controller.backend;
+        const id = "brightness-adjust-1";
+        if (data.kind === "backend") {
+            backend.finish(id, {
+                protocol: "bar-api", version: 1, ok: false,
+                error: { code: "brightness-operation-failed", message: "Permission denied" }
+            }, "");
+        } else if (data.kind === "response-transport") {
+            backend.finish(id, {}, "Transport lost");
+        } else if (data.kind === "send") {
+            backend.sendFailed(id, "Not connected");
+        } else {
+            backend.setPending(id, true);
+            backend.failTransport("Transport lost");
+        }
+        compare(controller.osdVisible, true);
+        compare(controller.osd.kind, "brightness-error");
+        compare(controller.osd.valueLabel, "Adjustment failed");
+        compare(controller.osd.progressVisible, false);
+        compare(controller.osd.timeoutMs, 3000);
+        compare(controller.brightness.percent, 65, "failure must preserve confirmed state");
+        backend.finish("brightness-adjust-2", {
+            protocol: "bar-api", version: 1, ok: true,
+            data: { brightness: { available: true, percent: 70 } }
+        }, "");
+        compare(controller.osd.kind, "brightness");
+        compare(controller.osd.valueLabel, "70%");
+        compare(controller.osd.progressVisible, true);
+    }
+
+    function test_unrelatedFailuresDoNotShowBrightnessError() {
+        const panel = makePanel();
+        panel.controller.osdVisible = false;
+        panel.controller.backend.finish("snapshot-1", {}, "Transport lost");
+        panel.controller.backend.sendFailed("audio-adjust-1", "Not connected");
+        panel.controller.backend.transportFailed("Transport lost", ["snapshot-2"]);
+        compare(panel.controller.osdVisible, false);
+    }
+
     function test_reopeningDuringDismissalIsImmediate() {
         const panel = makePanel();
         panel.controller.showBrightnessOsd({

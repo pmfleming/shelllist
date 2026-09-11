@@ -12,7 +12,7 @@ function audioIcon(audio) {
 }
 function osdTimeout(kind) {
     const value = String(kind || "");
-    if (value.indexOf("privacy") === 0)
+    if (value.indexOf("privacy") === 0 || value === "brightness-error")
         return 3000;
     if (["device", "power-profile", "idle-inhibitor"].includes(value))
         return 2200;
@@ -55,6 +55,17 @@ function brightnessOsd(brightness) {
         percent: percent,
         progressVisible: true,
         timeoutMs: osdTimeout("brightness")
+    };
+}
+function brightnessErrorOsd() {
+    return {
+        kind: "brightness-error",
+        icon: "󰃠",
+        label: "Brightness",
+        valueLabel: "Adjustment failed",
+        percent: 0,
+        progressVisible: false,
+        timeoutMs: osdTimeout("brightness-error")
     };
 }
 function powerProfileIcon(profile) {
