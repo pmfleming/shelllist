@@ -34,8 +34,4 @@ Ui.DetailFlickable {
     WeatherDailyForecast {
         weather: pane.weather
     }
-
-    WeatherMetrics {
-        weather: pane.weather
-    }
 }

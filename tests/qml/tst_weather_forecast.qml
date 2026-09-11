@@ -120,7 +120,7 @@ TestCase {
     }
 
     function test_forecastCardsAcceptEmptyWeather(): void {
-        for (const name of ["WeatherHero", "WeatherDailyForecast", "WeatherMetrics"])
+        for (const name of ["WeatherHero", "WeatherDailyForecast"])
             makeCard(name, { weather: {} });
         makeCard("WeatherLocationRail", {
             locations: [],
