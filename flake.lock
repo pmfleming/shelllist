@@ -13,11 +13,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788384763,
-        "narHash": "sha256-s/fZeBPzPgSO4xoodmWx+6Xe0Wg4YGkmifGzC3bH/3w=",
+        "lastModified": 1789147222,
+        "narHash": "sha256-CeLzSf6cJwn8Dnbk3tM0lXjzKH3Pz5tkNBT49OqNQfg=",
         "ref": "main",
-        "rev": "b52ed2dab85008f2c7f0d5361b2e61f5ca1c54fb",
-        "revCount": 56,
+        "rev": "e180f958f173f03ce8ee51de18323fc8b4b2e3c8",
+        "revCount": 76,
         "type": "git",
         "url": "file:../app-daemon"
       },
@@ -40,11 +40,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789135899,
-        "narHash": "sha256-ffpNO3O4AWpNR/ZvHgDNi9b2/Ht/PHov/PaGmzjLh2c=",
+        "lastModified": 1789146854,
+        "narHash": "sha256-1R8m9sRGnA2HbrYDSreNWO5rF2t1x9TVGhxP/7FkaEs=",
         "ref": "main",
-        "rev": "6ad1c32c7d15c2f694508b5df004d845d3e8d160",
-        "revCount": 102,
+        "rev": "bcbab3a2957a55f637372c031a6b963ab3a8ce29",
+        "revCount": 103,
         "type": "git",
         "url": "file:../bar-daemon"
       },
@@ -182,11 +182,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788384196,
-        "narHash": "sha256-QxDFv7aC4uvLrDpE5nDV8XTnL8mqkX1SFNx+S9w+GN4=",
+        "lastModified": 1789146826,
+        "narHash": "sha256-ksGjX5YP5mNfwXhk/hNJPUQrXC4PEa2H2myX71ErdZk=",
         "ref": "main",
-        "rev": "d667023032344adb3e4526414a63527520357c2f",
-        "revCount": 1,
+        "rev": "00044fe7517d6632d9cbd9e7aa712aa771f6577d",
+        "revCount": 3,
         "type": "git",
         "url": "file:../shelllist-hyprland"
       },
