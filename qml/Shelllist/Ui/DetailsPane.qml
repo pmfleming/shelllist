@@ -36,6 +36,7 @@ Rectangle {
         }
 
         CenteredMessage {
+            anchors.fill: parent
             visible: !pane.contentAvailable
             text: pane.emptyText
             font.pixelSize: pane.emptyFontSize

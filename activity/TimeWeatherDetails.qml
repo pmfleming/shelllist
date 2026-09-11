@@ -73,6 +73,7 @@ Ui.ActionDetailsPane {
     Component {
         id: noWeatherComponent
         Ui.CenteredMessage {
+            // The Loader supplies the message's bounds; no parent anchors.
             text: "Weather is not configured for " + String(pane.city.label || "this city")
         }
     }

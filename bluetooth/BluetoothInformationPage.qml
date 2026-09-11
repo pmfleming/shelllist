@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import "BluetoothFlow.js" as BluetoothFlow
 
@@ -119,14 +120,13 @@ Ui.DetailFlickable {
         ]
     }
 
-    Ui.DetailCard {
+    Ui.DetailColumnCard {
         visible: !!(page.controller.selectedDevice.services && page.controller.selectedDevice.services.length)
-        height: visible ? Math.max(110, servicesText.implicitHeight + 72) : 0
+        height: Math.max(110, implicitHeight)
         title: "Services"
 
         Ui.ThemeText {
-            id: servicesText
-            anchors.fill: parent
+            Layout.fillWidth: true
             text: (page.controller.selectedDevice.services || []).map(function (service) {
                 return service.label;
             }).filter(function (label, index, values) {

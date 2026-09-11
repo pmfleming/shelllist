@@ -61,6 +61,44 @@ When changing QML:
 9. Keep expensive effects small and local; do not add frame-driven decoration to the bar.
 10. Document every lint suppression next to the framework limitation it addresses.
 
+## Detail-page layout contract
+
+Use the same geometry ownership rules in every tab (Applications, Wi-Fi,
+Bluetooth, Clipboard, Battery, and Time & Weather):
+
+- `DetailFlickable` places its direct children in a `Column`. Children supply
+  their width and explicit or implicit height; the column alone owns their `y`.
+  Never put `anchors.fill`, `centerIn`, `top`, `bottom`, or `verticalCenter` on
+  these children. An initially visible invalid child can disable positioning
+  even after it is hidden, breaking subsequent selections and scroll extents.
+- To center content in a section, give an unanchored `Item` a height and anchor
+  its **contents**, not the section itself. `DetailCard` provides such a slot.
+  For text-only empty/loading/error sections, use `CenteredMessage` directly
+  with `width: parent.width` and `height: Math.max(120, implicitHeight)`.
+- `CenteredMessage` is deliberately anchor-free: it centers and wraps text
+  within its assigned bounds, clipping overflow in constrained overlays.
+  Overlay callers explicitly use `anchors.fill: parent`; a sized `Loader`
+  supplies the bounds for loaded messages. Do not reintroduce parent anchors
+  into the shared component.
+- Within `ColumnLayout`/`RowLayout`, use `Layout.*` hints instead of anchors on
+  managed children. Anchor the layout itself only when its parent is a plain
+  content slot, not another positioner or layout.
+- Prefer `DetailColumnCard` for content-sized cards. Its `implicitHeight`
+  includes the layout, optional heading, and stable padding; use it directly
+  or as a minimum (`height: Math.max(110, implicitHeight)`). Do not derive
+  padding from the resulting height, or fill a card with text whose implicit
+  height is simultaneously used to size that card. This avoids circular
+  geometry dependencies (including the Bluetooth Services-card case).
+- Keep tab footers outside scrollable content (`TabbedDetailsStack` or the
+  Battery panel's enclosing layout). Hide inactive sections with `visible`,
+  rather than leaving space or manually adjusting sibling positions.
+
+`tst_detail_layout.qml` checks the shared message/column/layout/loader contract;
+`tst_application_page_layout.qml` covers empty, populated, hidden, and scrolled
+launcher transitions; `tst_detail_pages.qml` exercises the other detail pages
+at multiple widths with layout warnings treated as failures. Battery's tab and
+footer geometry remains covered by `tst_battery_tabs.qml`.
+
 ## Quality gates
 
 Run the complete gate before merging structural changes:

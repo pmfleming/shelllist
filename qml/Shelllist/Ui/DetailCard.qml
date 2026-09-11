@@ -6,7 +6,9 @@ Rectangle {
     property string title: ""
     property var entries: null
     readonly property real headingHeight: title.length > 0 ? heading.implicitHeight : 0
-    property real contentPadding: Math.max(Theme.spacingMd, Math.min(Theme.spacingLg, height * 0.06))
+    // Horizontal padding must not depend on height: wrapped content can own
+    // the card's height, so height -> padding -> text width creates a loop.
+    property real contentPadding: Theme.spacingMd
     readonly property real verticalDensity: Math.max(Theme.densityMinimum, Math.min(1, height / 260))
     property real verticalContentPadding: Theme.verticalSpacing(Theme.spacingMd, verticalDensity)
     property real headingSpacing: title.length > 0 ? Theme.verticalSpacing(Theme.spacingMd, verticalDensity) : 0
@@ -37,7 +39,9 @@ Rectangle {
             id: heading
 
             visible: card.title.length > 0
+            width: parent.width
             text: card.title
+            elide: Text.ElideRight
             font.pixelSize: Theme.fontSizeHeading
             font.weight: Theme.fontWeightBold
         }
@@ -46,7 +50,7 @@ Rectangle {
             id: contentSlot
 
             width: parent.width
-            height: Math.max(0, parent.height - heading.height - parent.spacing)
+            height: Math.max(0, parent.height - card.headingHeight - card.headingSpacing)
 
             DetailGrid {
                 visible: card.entries !== null

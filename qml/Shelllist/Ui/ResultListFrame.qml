@@ -133,6 +133,7 @@ Rectangle {
     }
 
     CenteredMessage {
+        anchors.fill: parent
         z: 3
         visible: frame.emptyVisible
         text: frame.emptyText

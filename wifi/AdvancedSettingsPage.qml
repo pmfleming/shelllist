@@ -286,6 +286,7 @@ Item {
     }
 
     CenteredMessage {
+        anchors.fill: parent
         visible: page.controller.advanced.loading
         text: qsTr("Loading saved profile…")
     }
