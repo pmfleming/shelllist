@@ -27,6 +27,7 @@ jq -e '
   (.snapshot.activity.weather.daily[0].condition_code | type == "number") and
   (.snapshot.workspaces.monitors[0].active_workspace_id | type == "number") and
   (.snapshot.media.players[0].playback_status | type == "string") and
+  (.snapshot.media.players[0].can_seek | type == "boolean") and
   (.snapshot.audio.volume_percent | type == "number") and
   (.snapshot.audio.input_available | type == "boolean") and
   (.snapshot.audio.input_muted | type == "boolean") and

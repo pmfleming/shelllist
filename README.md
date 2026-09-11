@@ -19,7 +19,7 @@ The bar contains:
 
 - monitor-local workspaces with themed application icons and an animated active indicator;
 - the focused application on the active monitor;
-- artwork, title, progress, and previous/play-pause/next controls for the selected MPRIS player;
+- artwork, title, progress, rewind 15s/play-pause/forward 30s controls, and a player selector when multiple MPRIS players are available;
 - StatusNotifierItem tray icons and native DBusMenu menus;
 - network, update, Bluetooth, audio, brightness, battery, power-profile, notification, timezone, and clock modules.
 

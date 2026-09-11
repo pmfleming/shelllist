@@ -93,6 +93,7 @@ Item {
         spacing: 1
 
         Ui.FlatIconButton {
+            objectName: "mediaCycleButton"
             width: 26
             height: 26
             icon: "󰑖"
@@ -111,6 +112,7 @@ Item {
         }
 
         Ui.FlatIconButton {
+            objectName: "mediaRewindButton"
             width: 26
             height: 26
             icon: ""
@@ -129,6 +131,7 @@ Item {
         }
 
         Ui.FlatIconButton {
+            objectName: "mediaPlayPauseButton"
             width: 28
             height: 28
             icon: Presentation.playPauseActionIcon(root.player)
@@ -145,6 +148,7 @@ Item {
         }
 
         Ui.FlatIconButton {
+            objectName: "mediaForwardButton"
             width: 26
             height: 26
             icon: ""
@@ -191,6 +195,11 @@ Item {
     }
 
     Ui.StateLayer {
+        // StateLayer fills its parent by default; keep it off the controls.
+        anchors.fill: undefined
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
         anchors.right: mediaControls.left
         anchors.rightMargin: 2
         focusTarget: root
