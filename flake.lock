@@ -40,11 +40,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789135033,
-        "narHash": "sha256-1i5bdAH+PoYYYV0C0r1xzpbt3fkBl7Jtmiv3a7JglZs=",
+        "lastModified": 1789135899,
+        "narHash": "sha256-ffpNO3O4AWpNR/ZvHgDNi9b2/Ht/PHov/PaGmzjLh2c=",
         "ref": "main",
-        "rev": "b10c25380fc4cf67ae03444dc1c27aaba6e2ae43",
-        "revCount": 101,
+        "rev": "6ad1c32c7d15c2f694508b5df004d845d3e8d160",
+        "revCount": 102,
         "type": "git",
         "url": "file:../bar-daemon"
       },

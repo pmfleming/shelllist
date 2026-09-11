@@ -4,6 +4,7 @@ let
   cfg = config.programs.shelllist;
   system = pkgs.stdenv.hostPlatform.system;
   environment = lib.mapAttrsToList (name: value: "${name}=${value}") cfg.systemd.environment;
+  managedHypridle = import ./hypridle-ready.nix config.services.hypridle.package;
 in
 {
   options.programs.shelllist = {
@@ -76,7 +77,12 @@ in
 
     systemd.user.services = lib.mkIf cfg.systemd.enable {
       hypridle = lib.mkIf cfg.sleep.enable {
-        Service.ExecStart = lib.mkForce "${cfg.package}/bin/bar-daemon idle --config ${lib.escapeShellArg "${config.xdg.configHome}/hypr/hypridle.conf"} --hypridle ${config.services.hypridle.package}/bin/hypridle";
+        Service = {
+          Type = lib.mkForce "notify";
+          NotifyAccess = "main";
+          TimeoutStartSec = "8s";
+          ExecStart = lib.mkForce "${cfg.package}/bin/bar-daemon idle --config ${lib.escapeShellArg "${config.xdg.configHome}/hypr/hypridle.conf"} --hypridle ${managedHypridle}/bin/hypridle";
+        };
       };
 
       shelllist = {

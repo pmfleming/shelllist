@@ -587,6 +587,16 @@
           barDaemon = inputs."bar-daemon".packages.${system}.default;
         in
         {
+          hypridleReadiness = pkgs.runCommand "shelllist-hypridle-readiness"
+            { nativeBuildInputs = [ pkgs.stdenv.cc pkgs.python3 ]; } ''
+            cp ${./nix/hypridle-ready.hpp} readiness.hpp
+            printf '#include "readiness.hpp"\nint main() { return shelllistNotifyReady() ? 0 : 1; }\n' > probe.cpp
+            c++ -std=c++20 probe.cpp -o probe
+            python3 ${./tests/check-hypridle-readiness.py} \
+              ${import ./nix/hypridle-ready.nix pkgs.hypridle}/bin/hypridle ./probe
+            touch $out
+          '';
+
           appDaemonContract = pkgs.runCommand "shelllist-app-daemon-contract"
             {
               nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
