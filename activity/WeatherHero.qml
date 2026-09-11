@@ -7,8 +7,8 @@ import "WeatherVisuals.js" as Visuals
 Rectangle {
     id: hero
     required property var weather
-    required property date now
     readonly property var heroColors: Visuals.heroColors(Visuals.conditionCode(weather.condition_code), weather.is_day !== false)
+    readonly property bool compact: width < 420
     width: parent.width
     height: 192
     radius: Ui.Theme.panelRadius
@@ -26,105 +26,186 @@ Rectangle {
         }
     }
 
-    Ui.ThemeText {
+    Item {
+        id: header
         anchors.left: parent.left
+        anchors.right: parent.right
         anchors.top: parent.top
-        anchors.leftMargin: Ui.Theme.spacingLg
+        anchors.margins: Ui.Theme.spacingLg
         anchors.topMargin: Ui.Theme.spacingMd
-        text: String(hero.weather.location || "—").toUpperCase()
-        color: Ui.Theme.weatherHeroText
-        font.pixelSize: Ui.Theme.fontSizeLabel
-        font.weight: Ui.Theme.fontWeightDemiBold
-    }
-
-    Ui.ThemeText {
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.leftMargin: Ui.Theme.spacingLg
-        anchors.topMargin: 39
-        text: Visuals.weatherTime(hero.now.getTime(), hero.weather)
-        color: Ui.Theme.weatherHeroSecondaryText
-        font.pixelSize: Ui.Theme.fontSizeHeading
-    }
-
-    Ui.ThemeText {
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.rightMargin: Ui.Theme.spacingMd
-        anchors.topMargin: Ui.Theme.spacingSm
-        text: Number(hero.weather.updated_unix_ms || 0) > 0 ? "↻ " + Visuals.weatherTime(hero.weather.updated_unix_ms, hero.weather) : ""
-        color: Ui.Theme.weatherHeroMutedText
-        font.pixelSize: Ui.Theme.fontSizeCaption
-    }
-
-    WeatherIcon {
-        anchors.left: parent.left
-        anchors.leftMargin: Math.max(130, parent.width * 0.25)
-        anchors.verticalCenter: parent.verticalCenter
-        width: 145
-        height: 145
-        conditionCode: Visuals.conditionCode(hero.weather.condition_code)
-        daytime: hero.weather.is_day !== false
-        description: hero.weather.condition || ""
-    }
-
-    Column {
-        anchors.right: parent.right
-        anchors.rightMargin: Ui.Theme.spacingLg
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: 0
+        height: Ui.Theme.fontSizeLabel + 6
 
         Ui.ThemeText {
-            anchors.right: parent.right
-            text: Visuals.numberLabel(hero.weather.temperature_c, "°")
-            color: Ui.Theme.weatherHeroTemperature
-            font.pixelSize: 66
+            objectName: "weatherHeroLocation"
+            anchors.left: parent.left
+            anchors.right: updated.left
+            anchors.rightMargin: Ui.Theme.spacingMd
+            anchors.verticalCenter: parent.verticalCenter
+            text: String(hero.weather.location || "—").toUpperCase()
+            elide: Text.ElideRight
+            color: Ui.Theme.weatherHeroText
+            font.pixelSize: Ui.Theme.fontSizeLabel
+            font.weight: Ui.Theme.fontWeightDemiBold
         }
+
         Ui.ThemeText {
+            id: updated
             anchors.right: parent.right
-            text: Visuals.numberLabel(hero.weather.high_c, "°") + "  " + Visuals.numberLabel(hero.weather.low_c, "°")
-            color: Ui.Theme.weatherHeroSecondaryText
+            anchors.verticalCenter: parent.verticalCenter
+            text: Number(hero.weather.updated_unix_ms || 0) > 0 ? "↻ " + Visuals.weatherTime(hero.weather.updated_unix_ms, hero.weather) : ""
+            color: Ui.Theme.weatherHeroMutedText
+            font.pixelSize: Ui.Theme.fontSizeCaption
+        }
+    }
+
+    Item {
+        id: summary
+        anchors.left: header.left
+        anchors.right: header.right
+        anchors.top: header.bottom
+        anchors.bottom: metrics.top
+        anchors.bottomMargin: Ui.Theme.spacingSm
+
+        WeatherIcon {
+            id: conditionIcon
+            objectName: "weatherHeroIcon"
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            width: hero.compact ? 72 : 112
+            height: Math.min(width, parent.height)
+            conditionCode: Visuals.conditionCode(hero.weather.condition_code)
+            daytime: hero.weather.is_day !== false
+            description: hero.weather.condition || ""
+        }
+
+        Ui.ThemeText {
+            objectName: "weatherHeroCondition"
+            anchors.left: conditionIcon.right
+            anchors.right: temperature.left
+            anchors.margins: Ui.Theme.spacingMd
+            anchors.verticalCenter: parent.verticalCenter
+            text: hero.weather.condition || qsTr("Weather unavailable")
+            wrapMode: Text.WordWrap
+            maximumLineCount: 2
+            elide: Text.ElideRight
+            color: Ui.Theme.weatherHeroText
+            font.pixelSize: hero.compact ? Ui.Theme.fontSizeHeading : Ui.Theme.fontSizeTitle
+            font.weight: Ui.Theme.fontWeightMedium
+        }
+
+        Column {
+            id: temperature
+            objectName: "weatherHeroTemperature"
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.max(currentTemperature.implicitWidth, dailyRange.implicitWidth)
+            spacing: 0
+
+            Ui.ThemeText {
+                id: currentTemperature
+                anchors.right: parent.right
+                text: Visuals.numberLabel(hero.weather.temperature_c, "°")
+                color: Ui.Theme.weatherHeroTemperature
+                font.pixelSize: hero.compact ? 48 : 56
+            }
+            Ui.ThemeText {
+                id: dailyRange
+                anchors.right: parent.right
+                text: "↑ " + Visuals.numberLabel(hero.weather.high_c, "°") + "   ↓ " + Visuals.numberLabel(hero.weather.low_c, "°")
+                color: Ui.Theme.weatherHeroSecondaryText
+                font.pixelSize: Ui.Theme.fontSizeSmall
+            }
         }
     }
 
     Row {
-        anchors.left: parent.left
-        anchors.leftMargin: Ui.Theme.spacingLg
+        id: metrics
+        objectName: "weatherHeroMetrics"
+        anchors.left: header.left
+        anchors.right: header.right
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Ui.Theme.spacingSm
-        spacing: Ui.Theme.spacingLg
+        height: 48
 
         Repeater {
             model: [
                 {
                     icon: "thermometer",
+                    label: qsTr("Feels like"),
                     value: Visuals.numberLabel(hero.weather.apparent_temperature_c, "°")
                 },
                 {
                     icon: "raindrop",
+                    label: qsTr("Rain chance"),
                     value: Visuals.numberLabel(hero.weather.precipitation_probability, "%")
                 },
                 {
                     icon: "wind",
-                    value: Visuals.windCompass(hero.weather.wind_direction_degrees) + "  " + Visuals.numberLabel(hero.weather.wind_speed_kmh, " km/h")
+                    label: qsTr("Wind"),
+                    value: Visuals.windCompass(hero.weather.wind_direction_degrees) + " " + Visuals.numberLabel(hero.weather.wind_speed_kmh, " km/h")
                 }
             ]
-            delegate: Row {
+            delegate: Item {
                 id: heroMetric
                 required property var modelData
-                spacing: 4
+                required property int index
+                objectName: "weatherHeroMetric" + index
+                width: metrics.width / 3
+                height: metrics.height
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: 1
+                    color: Ui.Theme.weatherHeroBorder
+                }
+                Rectangle {
+                    visible: heroMetric.index > 0
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.topMargin: Ui.Theme.spacingMd
+                    anchors.bottomMargin: Ui.Theme.spacingXs
+                    width: 1
+                    color: Ui.Theme.weatherHeroBorder
+                }
                 Image {
-                    width: 21
-                    height: 21
+                    id: metricIcon
+                    anchors.left: parent.left
+                    anchors.leftMargin: heroMetric.index > 0 ? Ui.Theme.spacingMd : 0
+                    anchors.verticalCenter: metricText.verticalCenter
+                    width: hero.compact ? 16 : 21
+                    height: width
                     source: "assets/weather/" + heroMetric.modelData.icon + ".svg"
                     fillMode: Image.PreserveAspectFit
                 }
-                Ui.ThemeText {
+                Column {
+                    id: metricText
+                    anchors.left: metricIcon.right
+                    anchors.leftMargin: Ui.Theme.spacingXs
+                    anchors.right: parent.right
+                    anchors.rightMargin: Ui.Theme.spacingXs
                     anchors.verticalCenter: parent.verticalCenter
-                    text: heroMetric.modelData.value
-                    color: Ui.Theme.weatherHeroMetricText
-                    font.pixelSize: Ui.Theme.fontSizeSmall
-                    font.weight: Ui.Theme.fontWeightDemiBold
+                    anchors.verticalCenterOffset: 3
+                    spacing: 2
+
+                    Ui.ThemeText {
+                        width: parent.width
+                        text: heroMetric.modelData.label
+                        elide: Text.ElideRight
+                        color: Ui.Theme.weatherHeroMutedText
+                        font.pixelSize: Ui.Theme.fontSizeCaption
+                    }
+                    Ui.ThemeText {
+                        width: parent.width
+                        text: heroMetric.modelData.value
+                        fontSizeMode: Text.HorizontalFit
+                        minimumPixelSize: 10
+                        elide: Text.ElideRight
+                        color: Ui.Theme.weatherHeroMetricText
+                        font.pixelSize: Ui.Theme.fontSizeSmall
+                        font.weight: Ui.Theme.fontWeightDemiBold
+                    }
                 }
             }
         }

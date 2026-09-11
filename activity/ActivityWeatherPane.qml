@@ -24,7 +24,6 @@ Ui.DetailFlickable {
 
     WeatherHero {
         weather: pane.weather
-        now: pane.now
     }
 
     WeatherHourlyForecast {
