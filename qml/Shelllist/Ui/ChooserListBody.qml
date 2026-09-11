@@ -12,6 +12,7 @@ Item {
     property var resultModel: null
     property int selectedIndex: 0
     property string emptyText: ""
+    property string emptyIcon: ""
     property string status: ""
     property string icon: ""
     property bool signalIcon: false
@@ -46,6 +47,7 @@ Item {
             resultModel: body.resultModel
             selectedIndex: body.selectedIndex
             emptyText: body.emptyText
+            emptyIcon: body.emptyIcon
             rowDelegate: body.rowDelegate
             onKeyPressed: function (event) {
                 body.chooserController.navigation.handleListKey(event);

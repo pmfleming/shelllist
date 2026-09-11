@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
+import "BluetoothGlyphs.js" as BluetoothGlyphs
 
 Ui.ChooserListPane {
     id: pane
@@ -10,6 +11,7 @@ Ui.ChooserListPane {
     chooserController: controller
     resultModel: controller.filteredResultsModel
     emptyText: controller.radio.hard_blocked ? "Bluetooth is hardware-disabled" : (controller.radio.soft_blocked ? "Bluetooth is blocked" : (!controller.radio.available || Number(controller.radio.adapter_count || 0) === 0 ? "No Bluetooth adapters" : (!controller.radio.powered ? "Bluetooth is off" : (controller.searchAllDevices ? "No Bluetooth devices found" : "No devices in My Devices"))))
+    emptyIcon: controller.radio.hard_blocked || controller.radio.soft_blocked || (controller.radio.available && Number(controller.radio.adapter_count || 0) > 0 && !controller.radio.powered) ? BluetoothGlyphs.glyphs.blocked : ""
     placeholder: controller.searchAllDevices ? "Search All Devices" : "Search My Devices"
     icon: "󰂯"
     powered: controller.powered

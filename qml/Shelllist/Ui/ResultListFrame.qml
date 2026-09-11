@@ -9,6 +9,7 @@ Rectangle {
     property int selectedIndex: 0
     property real uiScale: 1
     property string emptyText: ""
+    property string emptyIcon: ""
     property bool emptyVisible: list.count === 0
     readonly property int count: list.count
     readonly property bool listFocused: list.activeFocus
@@ -133,10 +134,14 @@ Rectangle {
     }
 
     CenteredMessage {
+        objectName: "resultListEmptyMessage"
         anchors.fill: parent
         z: 3
         visible: frame.emptyVisible
-        text: frame.emptyText
-        font.pixelSize: Math.max(Theme.fontSizeCaption, Math.round(Theme.fontSizeBody * frame.uiScale))
+        text: frame.emptyIcon || frame.emptyText
+        font.family: frame.emptyIcon ? Theme.iconFontFamily : Theme.fontFamily
+        font.pixelSize: frame.emptyIcon ? Math.round(64 * frame.uiScale) : Math.max(Theme.fontSizeCaption, Math.round(Theme.fontSizeBody * frame.uiScale))
+        Accessible.role: Accessible.StaticText
+        Accessible.name: frame.emptyText
     }
 }

@@ -73,6 +73,35 @@ TestCase {
         verify(panel.controller.hasSelection);
         return panel;
     }
+    Component {
+        id: listPaneComponent
+        Bt.BluetoothDeviceListPane {
+            resultModel: ListModel {}
+            rowDelegate: Component { Item { width: 100; height: 40 } }
+        }
+    }
+    function test_emptyRadioIcon() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const pane = createTemporaryObject(listPaneComponent, panel, {controller: controller, width: 500, height: 900});
+        verify(pane !== null);
+        const message = findChild(pane, "resultListEmptyMessage");
+        verify(message !== null);
+        for (const scenario of [
+            {radio: {available: true, adapter_count: 1, powered: false, soft_blocked: true}, icon: true, label: "Bluetooth is blocked"},
+            {radio: {available: true, adapter_count: 1, powered: false, hard_blocked: true}, icon: true, label: "Bluetooth is hardware-disabled"},
+            {radio: {available: true, adapter_count: 1, powered: false}, icon: true, label: "Bluetooth is off"},
+            {radio: {available: false, adapter_count: 0, powered: false}, icon: false, label: "No Bluetooth adapters"},
+            {radio: {available: true, adapter_count: 1, powered: true}, icon: false, label: "No devices in My Devices"}
+        ]) {
+            controller.applySnapshot({radio: scenario.radio, adapters: [], devices: []});
+            tryCompare(message, "visible", true);
+            compare(message.text, scenario.icon ? "󰂲" : scenario.label);
+            compare(message.Accessible.name, scenario.label);
+        }
+        pane.resultModel.append({name: "Buds"});
+        tryCompare(message, "visible", false);
+    }
     function test_noiseControlLayout() {
         const panel = makePanel();
         const controller = panel.controller;

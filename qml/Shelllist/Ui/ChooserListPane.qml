@@ -11,6 +11,7 @@ ColumnLayout {
     property real densityScale: Theme.densityScale(height + 2 * chooserController.contentVerticalMargin, chooserController.contentVerticalMargin)
     property var resultModel: null
     property string emptyText: ""
+    property string emptyIcon: ""
     property string placeholder: "Search…"
     property string icon: ""
     property bool signalIcon: false
@@ -105,6 +106,7 @@ ColumnLayout {
         resultModel: pane.resultModel
         selectedIndex: pane.selectedIndex
         emptyText: pane.emptyText
+        emptyIcon: pane.emptyIcon
         status: pane.status
         icon: pane.icon
         signalIcon: pane.signalIcon
