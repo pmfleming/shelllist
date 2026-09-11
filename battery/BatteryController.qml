@@ -51,6 +51,7 @@ Ui.ChooserController {
         })
     property var sleepPolicyState: ({ available: false })
     property var sleepPolicyDraft: ({
+            lid_action: "system",
             same_profile: true,
             battery: { sleep_minutes: 30, hibernate_minutes: 0 },
             plugged: { sleep_minutes: 30, hibernate_minutes: 0 }
@@ -291,6 +292,10 @@ Ui.ChooserController {
             if (typeof value !== "boolean")
                 return false;
             next.same_profile = value;
+        } else if (field === "lid_action") {
+            if (!["system", "ignore", "lock", "suspend", "hibernate", "profile"].includes(value))
+                return false;
+            next.lid_action = value;
         } else {
             if (!["battery", "plugged"].includes(profile) || !["sleep_minutes", "hibernate_minutes"].includes(field) || !Number.isInteger(value) || value < 0 || value > 10080)
                 return false;

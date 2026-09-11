@@ -29,6 +29,37 @@ Ui.DetailColumnCard {
         });
     }
 
+    Ui.FieldLabel {
+        Layout.fillWidth: true
+        text: qsTr("When the lid is closed")
+    }
+
+    Ui.DropDownList {
+        objectName: "lidCloseAction"
+        Layout.fillWidth: true
+        options: [
+            { value: "system", label: qsTr("System default") },
+            { value: "ignore", label: qsTr("Do nothing"), enabled: !!(pane.controller.sleepPolicyState.lid || {}).available },
+            { value: "lock", label: qsTr("Lock screen"), enabled: !!(pane.controller.sleepPolicyState.lid || {}).available },
+            { value: "suspend", label: qsTr("Suspend"), enabled: !!(pane.controller.sleepPolicyState.lid || {}).available },
+            { value: "hibernate", label: qsTr("Hibernate immediately"), enabled: !!(pane.controller.sleepPolicyState.lid || {}).available && ["yes", "challenge"].includes(pane.controller.powerSleep.can_hibernate) },
+            { value: "profile", label: qsTr("Sleep, then hibernate using profile"), enabled: !!(pane.controller.sleepPolicyState.lid || {}).available }
+        ]
+        value: pane.controller.sleepPolicyDraft.lid_action || "system"
+        interactive: pane.interactive
+        Accessible.name: qsTr("Action when the laptop lid is closed")
+        onSelected: function (value) { pane.controller.updateSleepPolicy("", "lid_action", value); }
+    }
+
+    Ui.FieldLabel {
+        objectName: "lidCloseStatus"
+        Layout.fillWidth: true
+        text: (pane.controller.sleepPolicyState.lid || {}).error || qsTr("Managed lid actions ignore docked/external-display use. Profile uses the current power source’s hibernate delay, even when inactivity sleep is Never. System default restores logind’s policy.")
+        color: (pane.controller.sleepPolicyState.lid || {}).error ? Ui.Theme.warning : Ui.Theme.mutedText
+        wrapMode: Text.Wrap
+        elide: Text.ElideNone
+    }
+
     Ui.ToggleRow {
         objectName: "sleepSameProfile"
         Layout.fillWidth: true
@@ -99,7 +130,7 @@ Ui.DetailColumnCard {
                         return Object.assign({}, option, { enabled: option.value === "0" || !!pane.controller.sleepPolicyState.hibernate_available });
                     })
                     value: String(profile.settings.hibernate_minutes)
-                    interactive: pane.interactive && profile.settings.sleep_minutes > 0
+                    interactive: pane.interactive && (profile.settings.sleep_minutes > 0 || pane.controller.sleepPolicyDraft.lid_action === "profile")
                     Accessible.name: qsTr("%1: time asleep before hibernating").arg(profile.modelData === "battery" ? qsTr("Battery") : qsTr("Plugged in"))
                     onSelected: function (value) {
                         pane.controller.updateSleepPolicy(profile.modelData, "hibernate_minutes", Number(value));

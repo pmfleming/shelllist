@@ -325,6 +325,12 @@ for (const extra of [
     assert.equal(c.updateSleepPolicy("", "same_profile", false), true);
     assert.equal(c.sleepPolicyDraft.plugged.sleep_minutes, 45);
     c.sleepPolicyFinished();
+    assert.equal(c.updateSleepPolicy("", "lid_action", "shutdown"), false);
+    for (const action of ["system", "ignore", "lock", "suspend", "hibernate", "profile"]) {
+        assert.equal(c.updateSleepPolicy("", "lid_action", action), true);
+        assert.equal(calls.at(-1).args[0].lid_action, action);
+        c.sleepPolicyFinished();
+    }
     for (const value of [-1, 1.5, 10081, NaN])
         assert.equal(c.updateSleepPolicy("battery", "sleep_minutes", value), false);
     assert.equal(c.updateSleepPolicy("battery", "sleep_minutes", 0), true, "Never is a valid sleep delay");

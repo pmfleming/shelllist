@@ -110,6 +110,7 @@ TestCase {
         const panel = makePanel();
         const state = {
             available: true, active_profile: "battery", hibernate_available: true,
+            lid: { available: true, managed: false, error: null },
             policy: {
                 same_profile: false,
                 battery: { sleep_minutes: 15, hibernate_minutes: 60 },
@@ -122,6 +123,10 @@ TestCase {
         compare(findChild(panel, "hibernateDelay-battery").value, "60");
         compare(findChild(panel, "sleepDelay-plugged").value, "45");
         compare(findChild(panel, "hibernateDelay-plugged").value, "180");
+        const lid = findChild(panel, "lidCloseAction");
+        compare(lid.value, "system", "older policies retain logind behavior");
+        verify(lid.Accessible.name.length > 0);
+        compare(lid.options.length, 6);
         const card = findChild(panel, "automaticSleepCard");
         for (const name of ["sleepDelay-battery", "hibernateDelay-battery", "sleepDelay-plugged", "hibernateDelay-plugged"]) {
             const control = findChild(panel, name);
@@ -136,6 +141,13 @@ TestCase {
         verify(findChild(panel, "sleepDelay-plugged") === null);
         compare(findChild(panel, "sleepDelay-battery").value, "0");
         verify(!findChild(panel, "hibernateDelay-battery").enabled);
+        state.policy.lid_action = "profile";
+        panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
+        compare(lid.value, "profile");
+        verify(findChild(panel, "hibernateDelay-battery").enabled, "lid profile works with Never idle sleep");
+        state.lid.error = "Lid action failed: lock was not confirmed";
+        panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
+        compare(findChild(panel, "lidCloseStatus").text, state.lid.error);
         state.policy.battery.sleep_minutes = 15;
         state.hibernate_available = false;
         panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
