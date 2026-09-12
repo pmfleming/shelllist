@@ -71,11 +71,11 @@ Core.Provider {
                 visible: !!device.connected,
                 enabled: actionEnabled(caps.can_disconnect, device),
                 presentation: primaryPresentation("danger")
-            }), Core.Model.keepOpenAction("reset-policy", "Reset", {
+            }), Core.Model.keepOpenAction("reset-policy", "Reset device overrides", {
                 icon: "󰑓",
                 enabled: actionEnabled(true, device),
                 presentation: {
-                    group: "toolbar",
+                    group: "overflow",
                     tone: "normal",
                     width: 92
                 }

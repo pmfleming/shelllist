@@ -113,9 +113,10 @@ ColumnLayout {
         }
 
         Ui.ActionButton {
-            Layout.preferredWidth: 84
+            objectName: "restoreDeviceName"
+            Layout.preferredWidth: 180
             Layout.preferredHeight: Ui.Theme.compactControlHeight
-            label: "Reset"
+            label: qsTr("Restore original name")
             enabled: !section.controller.actionInFlight && !!section.controller.selectedDevice.remote_name && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
             onClicked: section.controller.resetSelectedName()
         }
@@ -123,6 +124,7 @@ ColumnLayout {
 
     Ui.ActionToggleList {
         Layout.fillWidth: true
+        showDisabledReason: !section.controller.actionInFlight
         actions: section.controller.detailActions.filter(function (action) {
             return action.visible !== false && (action.presentation || {}).group === "settings";
         })

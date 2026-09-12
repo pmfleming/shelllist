@@ -223,9 +223,38 @@ TestCase {
         compare(calls[0].params.device_key, "buds");
         compare(calls[0].params.endpoint_key, "output");
     }
-    function test_policyResetToolbarAction() {
-        const controller = makePanel().controller;
-        verify(controller.triggerDetailAction("reset-policy"));
+    function findToggle(item, title) {
+        if (item.title === title && item.checked !== undefined)
+            return item;
+        for (const child of item.children || []) {
+            const match = findToggle(child, title);
+            if (match)
+                return match;
+        }
+        return null;
+    }
+    function test_busyPolicyDoesNotClaimUnsupported() {
+        const panel = makePanel();
+        verify(findToggle(panel.page, "Reconnect after resume").interactive);
+        verify(panel.controller.updateDevicePolicy({reconnect_on_resume: false}));
+        wait(0); // The action model recreates its delegates when the busy state changes.
+        const row = findToggle(panel.page, "Reconnect after resume");
+        verify(row !== null);
+        verify(!row.interactive);
+        compare(row.subtitle, "");
+        findChild(panel.controller, "bluetoothBackend").pending = ({});
+        wait(0);
+        verify(findToggle(panel.page, "Reconnect after resume").interactive);
+    }
+    function test_policyResetIsScopedToDeviceOverrides() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const reset = findChild(panel.page, "resetDeviceOverrides");
+        verify(reset !== null);
+        compare(reset.label, "Reset device overrides");
+        compare(controller.detailActions.find(action => action.id === "reset-policy").presentation.group, "overflow");
+        compare(findChild(panel.page, "restoreDeviceName").label, "Restore original name");
+        reset.clicked();
         compare(calls.length, 1);
         compare(calls[0].method, "bluetooth.device.policy.update");
         compare(calls[0].params.key, "buds");

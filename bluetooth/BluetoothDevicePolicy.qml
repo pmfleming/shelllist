@@ -60,7 +60,7 @@ ColumnLayout {
     spacing: Ui.Theme.spacingSm
     Ui.ThemeText {
         Layout.fillWidth: true
-        text: qsTr("Effective device settings. Changes override defaults; Reset restores inheritance.")
+        text: qsTr("Changes apply to this device. Reset device overrides restores defaults, including audio preferences.")
         wrapMode: Text.WordWrap
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeSmall
@@ -68,11 +68,21 @@ ColumnLayout {
     Ui.ActionToggleList {
         Layout.fillWidth: true
         actions: section.actions
+        // These controls are disabled only while busy, not because they are unsupported.
+        showDisabledReason: false
         onTriggered: function (field) {
             const values = ({});
             values[field] = field === "audio_route_on_connect" ? (section.policy[field] === "switch" ? "keep" : "switch") : section.policy[field] === false;
             section.controller.updateDevicePolicy(values);
         }
+    }
+    Ui.ActionButton {
+        objectName: "resetDeviceOverrides"
+        Layout.fillWidth: true
+        Layout.preferredHeight: Ui.Theme.compactControlHeight
+        label: qsTr("Reset device overrides")
+        enabled: !section.controller.actionInFlight && section.controller.hasSelection
+        onClicked: section.controller.triggerDetailAction("reset-policy")
     }
     Ui.FieldLabel {
         text: qsTr("Preferred audio profile on connect")
