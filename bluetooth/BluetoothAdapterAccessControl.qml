@@ -31,7 +31,7 @@ ColumnLayout {
     Ui.LabeledValueSlider {
         id: timeout
         Layout.fillWidth: true
-        label: (control.discoverable ? "Discoverable" : "Pairable") + " timeout"
+        label: (control.discoverable ? "Discoverable" : "Incoming pairing") + " timeout"
         from: 0
         to: 3600
         stepSize: 30

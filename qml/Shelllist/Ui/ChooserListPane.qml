@@ -9,6 +9,7 @@ ColumnLayout {
     required property ChooserController chooserController
     required property Component rowDelegate
     property real densityScale: Theme.densityScale(height + 2 * chooserController.contentVerticalMargin, chooserController.contentVerticalMargin)
+    property Component listOptionsComponent: null
     property var resultModel: null
     property string emptyText: ""
     property string emptyIcon: ""
@@ -94,6 +95,13 @@ ColumnLayout {
         onSearchActionRequested: pane.searchActionRequested()
         onPowerRequested: pane.chooserController.setPower()
         onRefreshRequested: pane.requestRefresh()
+    }
+
+    Loader {
+        Layout.fillWidth: true
+        Layout.preferredHeight: (item as Item)?.implicitHeight ?? 0
+        visible: sourceComponent !== null
+        sourceComponent: pane.listOptionsComponent
     }
 
     ChooserListBody {

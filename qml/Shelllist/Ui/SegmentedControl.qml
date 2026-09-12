@@ -107,7 +107,8 @@ Rectangle {
                 readonly property bool selected: index === control.currentIndex
 
                 width: control.segmentWidth
-                height: parent.height
+                // Delegates temporarily lose their parent when the options model changes.
+                height: control.height - 2 * control.contentPadding
                 radius: Math.min(Theme.controlRadius, height / 2)
                 color: !selected && segmentMouse.pressed ? Theme.pressed : (!selected && segmentMouse.containsMouse ? Theme.hover : "transparent")
                 opacity: control.optionEnabled(index) ? 1.0 : Theme.disabledOpacity

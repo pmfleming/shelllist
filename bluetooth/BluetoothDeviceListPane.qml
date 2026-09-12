@@ -32,6 +32,12 @@ Ui.ChooserListPane {
     onIconClicked: controller.screenshotRequested()
     onSearchActionRequested: controller.toggleSearchScope()
 
+    listOptionsComponent: Component {
+        BluetoothListOptions {
+            controller: pane.controller
+        }
+    }
+
     rowDelegate: Component {
         BluetoothDeviceListRow {
             listPane: pane

@@ -14,22 +14,23 @@ Ui.ActionDetailsPane {
     // qmllint enable missing-property
     readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     readonly property int footerHeight: actionHeight
+    readonly property bool deviceContext: controller.hasSelection && controller.detailsTab !== "adapter"
 
     chooserController: controller
     emptyText: "Select a Bluetooth device"
     contentAvailable: controller.hasSelection || controller.detailsTab === "adapter"
     headerHeight: Math.max(56, Math.round(64 * uiScale))
     controlHeight: actionHeight
-    icon: controller.selectedResult ? controller.selectedResult.icon : "󰒓"
-    iconColor: controller.selectedDevice.connected || !controller.hasSelection ? Ui.Theme.active : Ui.Theme.mutedText
+    icon: deviceContext ? controller.selectedResult.icon : "󰒓"
+    iconColor: !deviceContext || controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
     iconBorderColor: Ui.Theme.mix(Ui.Theme.strongBorder, Ui.Theme.surface, 0.40)
-    title: controller.selectedResult ? controller.selectedResult.title : (controller.selectedAdapter.alias || controller.selectedAdapter.name || "Bluetooth adapter")
-    subtitle: controller.hasSelection ? BluetoothFlow.deviceState(controller.selectedDevice) : "Adapter and management settings"
-    subtitleColor: controller.selectedDevice.connected || !controller.hasSelection ? Ui.Theme.active : Ui.Theme.mutedText
+    title: deviceContext ? controller.selectedResult.title : (controller.selectedAdapter.alias || controller.selectedAdapter.name || "Bluetooth adapter")
+    subtitle: deviceContext ? BluetoothFlow.deviceState(controller.selectedDevice) : "Computer-wide Bluetooth settings"
+    subtitleColor: !deviceContext || controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
     subtitleWeight: Ui.Theme.fontWeightMedium
     titlePixelSize: Math.round(Ui.Theme.fontSizeDisplay * uiScale)
-    actions: controller.hasSelection ? controller.detailActions : []
-    secondaryVisible: controller.hasSelection
+    actions: deviceContext ? controller.detailActions : []
+    secondaryVisible: deviceContext
     onActionTriggered: function (actionId) {
         controller.triggerDetailAction(actionId);
     }

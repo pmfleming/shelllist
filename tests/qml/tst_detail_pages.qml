@@ -258,6 +258,7 @@ TestCase {
         for (const width of [675, 320, 480]) {
             page.width = width;
             page.height = width / 2;
+            verify(waitForRendering(page)); // Settle wrapped text and nested layouts before measuring disclosures.
             verifyStack(page);
             const overrides = findChild(page, "deviceOverrides");
             if (overrides) {
@@ -269,6 +270,15 @@ TestCase {
                 verify(reset.visible);
                 verify(reset.mapToItem(page.contentItem, 0, reset.height).y <= page.contentHeight + 1);
                 overrides.expanded = false;
+                tryCompare(page, "contentHeight", collapsedHeight);
+            }
+            const technicalDetails = findChild(page, "adapterTechnicalDetails");
+            if (technicalDetails) {
+                const collapsedHeight = page.contentHeight;
+                technicalDetails.expanded = true;
+                tryVerify(function () { return page.contentHeight > collapsedHeight; });
+                verifyStack(page);
+                technicalDetails.expanded = false;
                 tryCompare(page, "contentHeight", collapsedHeight);
             }
             compare(page.interactive, page.contentHeight > page.height);

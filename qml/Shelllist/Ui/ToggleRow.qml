@@ -47,11 +47,14 @@ Rectangle {
         spacing: Theme.spacingMd
 
         Column {
+            id: labels
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
             spacing: Math.round(Theme.spacingXs / 2)
 
             ThemeText {
+                width: labels.width
+                elide: Text.ElideRight
                 text: UiText.highlightHotkey(row.title, row.hotkey)
                 textFormat: Text.RichText
                 color: row.tone === "danger" ? Theme.danger : (row.tone === "active" ? Theme.active : (row.tone === "warning" ? Theme.warning : Theme.text))
@@ -59,6 +62,8 @@ Rectangle {
             }
 
             ThemeText {
+                objectName: "toggleSubtitle"
+                width: labels.width
                 visible: row.showSubtitle && row.subtitle.length > 0
                 text: row.subtitle
                 color: Theme.subtleText

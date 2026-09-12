@@ -17,6 +17,25 @@ TestCase {
             value: 20
         }
     }
+    Component {
+        id: toggleFactory
+        Ui.ToggleRow {
+            width: 296
+            height: implicitHeight
+            title: "Multipoint"
+            subtitle: "Authenticated configurable Fast Pair multipoint is unavailable"
+            interactive: false
+        }
+    }
+    function test_longDisabledReasonFitsNarrowToggle(): void {
+        const row = createTemporaryObject(toggleFactory, this);
+        verify(waitForRendering(row));
+        const subtitle = findChild(row, "toggleSubtitle");
+        verify(subtitle.truncated);
+        verify(subtitle.mapToItem(row, subtitle.width, 0).x < row.width - 42);
+        compare(row.Accessible.name, row.title + ". " + row.subtitle);
+    }
+
     SignalSpy {
         id: edited
         signalName: "edited"

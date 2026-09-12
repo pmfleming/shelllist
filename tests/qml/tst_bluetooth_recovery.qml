@@ -102,6 +102,40 @@ TestCase {
         pane.resultModel.append({name: "Buds"});
         tryCompare(message, "visible", false);
     }
+    function test_listOptionsPersistAndReflectAcknowledgedSettings() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const pane = createTemporaryObject(listPaneComponent, panel, {controller: controller, width: 320, height: 500});
+        const options = findChild(pane, "bluetoothListOptions");
+        verify(options !== null);
+        verify(!options.expanded);
+        const button = findChild(options, "disclosureButton");
+        button.forceActiveFocus();
+        keyClick(Qt.Key_Space);
+        verify(options.expanded);
+        for (const setting of [
+            {name: "showBlockedDevices", field: "show_blocked_devices"},
+            {name: "showRecentDevices", field: "show_recent_devices"}
+        ]) {
+            const toggle = findChild(pane, setting.name);
+            verify(toggle.visible && toggle.interactive);
+            verify(!toggle.checked);
+            toggle.clicked();
+            compare(calls[calls.length - 1].method, "bluetooth.management.update");
+            compare(calls[calls.length - 1].params[setting.field], true);
+            verify(!toggle.interactive);
+            verify(!toggle.checked); // Wait for the daemon's persisted snapshot.
+            const management = Object.assign({}, controller.management, {[setting.field]: true});
+            controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: controller.allDevices, management: management});
+            findChild(controller, "bluetoothBackend").pending = ({});
+            verify(toggle.checked && toggle.interactive);
+        }
+        compare(calls.length, 2);
+        button.forceActiveFocus();
+        keyClick(Qt.Key_Space);
+        verify(!options.expanded);
+        verify(!findChild(pane, "showBlockedDevices").visible);
+    }
     function test_noiseControlLayout() {
         const panel = makePanel();
         const controller = panel.controller;
@@ -171,6 +205,36 @@ TestCase {
             verify(controller.detailsOpen);
             wait(0);
         }
+    }
+    Component {
+        id: adapterPageComponent
+        Bt.BluetoothAdapterPage {}
+    }
+    function test_bluetoothTabUsesGlobalScopeAndDefaults() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const details = createTemporaryObject(detailsComponent, panel, {controller: controller, width: 600, height: 900});
+        controller.detailsTab = "adapter";
+        compare(details.title, "Adapter");
+        compare(details.subtitle, "Computer-wide Bluetooth settings");
+        compare(details.actions.length, 0);
+        const page = createTemporaryObject(adapterPageComponent, panel, {controller: controller, width: 320, height: 500});
+        verify(page !== null);
+        wait(0);
+        verify(findChild(page, "showBlockedDevices") === null);
+        for (const setting of [
+            {name: "defaultTrustAfterPairing", field: "trust_after_pair"},
+            {name: "defaultReconnectAfterWake", field: "reconnect_on_resume"}
+        ]) {
+            const toggle = findChild(page, setting.name);
+            verify(toggle.checked && toggle.interactive);
+            toggle.clicked();
+            compare(calls[calls.length - 1].method, "bluetooth.management.update");
+            compare(calls[calls.length - 1].params[setting.field], false);
+            compare(calls[calls.length - 1].params.key, undefined);
+            findChild(controller, "bluetoothBackend").pending = ({});
+        }
+        compare(calls.length, 2);
     }
     function test_unavailableInvalidatesCapabilitiesAndSelection() {
         const panel = makePanel(); const controller = panel.controller;

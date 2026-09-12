@@ -15,44 +15,6 @@ ColumnLayout {
         })
     readonly property bool hasDirtyFields: dirtyFields.alias || dirtyFields.discoverableTimeout || dirtyFields.pairableTimeout
     readonly property bool aliasValid: adapterAliasInput.text.trim().length > 0
-    readonly property var behaviorActions: [
-        {
-            id: "trust",
-            label: "Trust after pairing",
-            subtitle: "Mark successfully paired devices as trusted",
-            state: {
-                checked: controller.trustAfterPair
-            },
-            enabled: !controller.globalRequestInFlight
-        },
-        {
-            id: "reconnect",
-            label: "Reconnect after resume",
-            subtitle: "Reconnect devices that were active before suspend",
-            state: {
-                checked: controller.management.reconnect_on_resume !== false
-            },
-            enabled: !controller.globalRequestInFlight
-        },
-        {
-            id: "blocked",
-            label: "Show blocked devices",
-            subtitle: "Include blocked devices so they can be unblocked",
-            state: {
-                checked: !!controller.management.show_blocked_devices
-            },
-            enabled: !controller.globalRequestInFlight
-        },
-        {
-            id: "recent",
-            label: "Keep recently found devices",
-            subtitle: "Retain cached devices in Search all",
-            state: {
-                checked: !!controller.management.show_recent_devices
-            },
-            enabled: !controller.globalRequestInFlight
-        }
-    ]
 
     Layout.fillWidth: true
     spacing: Ui.Theme.spacingMd
@@ -135,23 +97,6 @@ ColumnLayout {
         return true;
     }
 
-    function toggleSetting(actionId: string): void {
-        if (actionId === "trust")
-            controller.setTrustAfterPair(!controller.trustAfterPair);
-        else if (actionId === "reconnect")
-            controller.updateManagement({
-                reconnect_on_resume: controller.management.reconnect_on_resume === false
-            });
-        else if (actionId === "blocked")
-            controller.updateManagement({
-                show_blocked_devices: !controller.management.show_blocked_devices
-            });
-        else if (actionId === "recent")
-            controller.updateManagement({
-                show_recent_devices: !controller.management.show_recent_devices
-            });
-    }
-
     function saveDirtyFields(): void {
         autoSaveTimer.stop();
         if (!hasDirtyFields || !controller.selectedAdapter.key)
@@ -165,9 +110,7 @@ ColumnLayout {
         saveTimeoutIfDirty("pairableTimeout", "set-pairable-timeout", pairableTimeoutRow.value, controller.selectedAdapter.pairable_timeout);
     }
 
-    Component.onCompleted: Qt.callLater(function () {
-        section.syncAdapterFields(true);
-    })
+    Component.onCompleted: Qt.callLater(section.syncAdapterFields, true)
     Component.onDestruction: section.saveDirtyFields()
 
     Timer {
@@ -190,13 +133,15 @@ ColumnLayout {
 
     Ui.DetailColumnCard {
         Layout.fillWidth: true
-        Layout.preferredHeight: 235
-        title: "Adapter"
+        Layout.preferredHeight: implicitHeight
+        title: qsTr("Adapter")
 
         Ui.FieldLabel {
+            visible: section.controller.adapters.length > 1
             text: qsTr("Selected adapter")
         }
         Ui.SegmentedControl {
+            visible: section.controller.adapters.length > 1
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             options: section.controller.adapters.map(function (adapter) {
@@ -215,15 +160,17 @@ ColumnLayout {
         Ui.ToggleRow {
             Layout.fillWidth: true
             Layout.preferredHeight: 38
-            title: qsTr("Adapter powered")
-            subtitle: "Power only this Bluetooth adapter"
+            title: qsTr("Adapter power")
+            subtitle: section.controller.radio.hard_blocked ? "Hardware blocked"
+                : section.controller.radio.soft_blocked ? "Software blocked"
+                : section.controller.selectedAdapter.powered ? "On · selected adapter" : "Off · selected adapter"
             checked: !!section.controller.selectedAdapter.powered
-            interactive: !!section.controller.selectedAdapter.key && !section.controller.globalRequestInFlight
+            interactive: !!section.controller.selectedAdapter.key && !section.controller.globalRequestInFlight && !section.controller.radio.hard_blocked
             onClicked: section.controller.setAdapterPower(section.controller.selectedAdapter, !section.controller.selectedAdapter.powered)
         }
 
         Ui.FieldLabel {
-            text: qsTr("Adapter alias")
+            text: qsTr("Computer’s Bluetooth name")
         }
         Ui.TextField {
             id: adapterAliasInput
@@ -236,11 +183,49 @@ ColumnLayout {
             onEditingFinished: section.saveDirtyFields()
             onAccepted: section.saveDirtyFields()
         }
+
+        Ui.FieldLabel { text: qsTr("Bluetooth state on login") }
+        Ui.SegmentedControl {
+            objectName: "bluetoothLoginState"
+            Layout.fillWidth: true
+            Layout.preferredHeight: Ui.Theme.compactControlHeight
+            options: [
+                {value: "remember", label: "Restore"},
+                {value: "enable", label: "Enable"},
+                {value: "disable", label: "Disable"}
+            ]
+            value: section.controller.management.launch_state || "remember"
+            interactive: !section.controller.globalRequestInFlight
+            onSelected: function (value) {
+                section.controller.updateManagement({launch_state: value});
+            }
+        }
+
+        Ui.DisclosureSection {
+            objectName: "adapterTechnicalDetails"
+            Layout.fillWidth: true
+            title: qsTr("Technical details")
+            Ui.DetailField {
+                Layout.fillWidth: true
+                label: qsTr("Controller")
+                value: section.controller.selectedAdapter.name || "Unavailable"
+            }
+            Ui.DetailField {
+                Layout.fillWidth: true
+                label: qsTr("Address")
+                value: section.controller.selectedAdapter.address || "Unavailable"
+            }
+            Ui.DetailField {
+                Layout.fillWidth: true
+                label: qsTr("Modalias")
+                value: section.controller.selectedAdapter.modalias || "Unavailable"
+            }
+        }
     }
 
     Ui.DetailColumnCard {
         Layout.fillWidth: true
-        Layout.preferredHeight: 230
+        Layout.preferredHeight: implicitHeight
         title: qsTr("Visibility and pairing")
 
         BluetoothAdapterAccessControl {
@@ -264,48 +249,38 @@ ColumnLayout {
             }
             onEditingFinished: section.saveDirtyFields()
         }
+
+        Ui.ToggleRow {
+            objectName: "defaultTrustAfterPairing"
+            Layout.fillWidth: true
+            title: qsTr("Automatically trust new devices")
+            subtitle: qsTr("Default after successful pairing")
+            checked: section.controller.trustAfterPair
+            interactive: !section.controller.globalRequestInFlight
+            onClicked: section.controller.setTrustAfterPair(!checked)
+        }
     }
 
     Ui.DetailColumnCard {
         Layout.fillWidth: true
-        Layout.preferredHeight: 350
-        title: qsTr("Bluetooth behavior")
+        Layout.preferredHeight: implicitHeight
+        title: qsTr("Connection defaults")
 
-        Ui.ActionToggleList {
+        Ui.ToggleRow {
+            objectName: "defaultReconnectAfterWake"
             Layout.fillWidth: true
-            actions: section.behaviorActions
-            onTriggered: function (actionId) {
-                section.toggleSetting(actionId);
-            }
-        }
-
-        Ui.FieldLabel {
-            text: qsTr("State on login")
-        }
-        Ui.SegmentedControl {
-            Layout.fillWidth: true
-            Layout.preferredHeight: Ui.Theme.compactControlHeight
-            options: [
-                {
-                    value: "remember",
-                    label: "Restore"
-                },
-                {
-                    value: "enable",
-                    label: "Enable"
-                },
-                {
-                    value: "disable",
-                    label: "Disable"
-                }
-            ]
-            value: section.controller.management.launch_state || "remember"
+            title: qsTr("Reconnect after wake")
+            subtitle: qsTr("Devices active before sleep")
+            checked: section.controller.management.reconnect_on_resume !== false
             interactive: !section.controller.globalRequestInFlight
-            onSelected: function (value) {
-                section.controller.updateManagement({
-                    launch_state: value
-                });
-            }
+            onClicked: section.controller.updateManagement({reconnect_on_resume: !checked})
+        }
+        Ui.ThemeText {
+            Layout.fillWidth: true
+            text: qsTr("Pairing and connection defaults apply unless overridden under Device → Advanced device options.")
+            wrapMode: Text.WordWrap
+            color: Ui.Theme.mutedText
+            font.pixelSize: Ui.Theme.fontSizeSmall
         }
     }
 }
