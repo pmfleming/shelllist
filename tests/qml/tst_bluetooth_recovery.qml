@@ -235,20 +235,53 @@ TestCase {
     }
     function test_busyPolicyDoesNotClaimUnsupported() {
         const panel = makePanel();
-        verify(findToggle(panel.page, "Reconnect after resume").interactive);
+        findChild(panel.page, "deviceOverrides").expanded = true;
+        verify(findToggle(panel.page, "Reconnect after wake").interactive);
         verify(panel.controller.updateDevicePolicy({reconnect_on_resume: false}));
         wait(0); // The action model recreates its delegates when the busy state changes.
-        const row = findToggle(panel.page, "Reconnect after resume");
+        const row = findToggle(panel.page, "Reconnect after wake");
         verify(row !== null);
         verify(!row.interactive);
         compare(row.subtitle, "");
         findChild(panel.controller, "bluetoothBackend").pending = ({});
         wait(0);
-        verify(findToggle(panel.page, "Reconnect after resume").interactive);
+        verify(findToggle(panel.page, "Reconnect after wake").interactive);
+    }
+    function test_audioPreferencesRemainEditableWithoutLiveAudio() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const device = Object.assign({}, controller.selectedDevice, {device_type: "Headphones",
+            policy: {audio_route_on_connect: "switch", preferred_audio_profile_key: "saved-profile"}});
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [device]});
+        controller.invalidateAudio("Audio service unavailable");
+        wait(0);
+        verify(findChild(panel.page, "deviceAudio").visible);
+        verify(!findChild(panel.page, "currentAudioProfile").visible);
+        const profile = findChild(panel.page, "audioProfileOnConnect");
+        compare(profile.value, "saved-profile");
+        compare(profile.placeholder, "Saved profile (currently unavailable)");
+        verify(profile.interactive);
+        profile.selected("");
+        compare(calls.length, 1);
+        compare(calls[0].method, "bluetooth.device.policy.update");
+        compare(calls[0].params.key, "buds");
+        compare(calls[0].params.preferred_audio_profile_key, null);
+        findChild(controller, "bluetoothBackend").pending = ({});
+        const output = findChild(panel.page, "audioOutputOnConnect");
+        verify(output.checked);
+        output.clicked();
+        compare(calls.length, 2);
+        compare(calls[1].params.audio_route_on_connect, "keep");
     }
     function test_policyResetIsScopedToDeviceOverrides() {
         const panel = makePanel();
         const controller = panel.controller;
+        const overrides = findChild(panel.page, "deviceOverrides");
+        verify(!overrides.expanded);
+        const expand = findChild(overrides, "disclosureButton");
+        expand.forceActiveFocus();
+        keyClick(Qt.Key_Space);
+        verify(overrides.expanded);
         const reset = findChild(panel.page, "resetDeviceOverrides");
         verify(reset !== null);
         compare(reset.label, "Reset device overrides");

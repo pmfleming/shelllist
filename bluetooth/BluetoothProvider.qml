@@ -116,7 +116,7 @@ Core.Provider {
     }
     function wakeAction(device: var, caps: var): var {
         const supported = device.wake_allowed !== null && device.wake_allowed !== undefined;
-        return Core.Model.keepOpenAction("wake", "Wake computer", {
+        return Core.Model.keepOpenAction("wake", "Allow device to wake computer", {
             shortcut: "W",
             kind: "toggle",
             visible: supported,

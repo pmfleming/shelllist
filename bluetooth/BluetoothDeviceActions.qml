@@ -87,7 +87,8 @@ ColumnLayout {
 
         Ui.ThemeText {
             Layout.maximumWidth: Math.round(section.width * 0.55)
-            text: section.controller.selectedDevice.remote_name ? "Original: " + section.controller.selectedDevice.remote_name : "Original name unavailable"
+            visible: !!section.controller.selectedDevice.remote_name && section.controller.selectedDevice.name !== section.controller.selectedDevice.remote_name
+            text: "Original: " + (section.controller.selectedDevice.remote_name || "")
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.fontSizeCaption
             horizontalAlignment: Text.AlignRight
@@ -126,7 +127,7 @@ ColumnLayout {
         Layout.fillWidth: true
         showDisabledReason: !section.controller.actionInFlight
         actions: section.controller.detailActions.filter(function (action) {
-            return action.visible !== false && (action.presentation || {}).group === "settings";
+            return action.visible !== false && action.id !== "multipoint" && (action.presentation || {}).group === "settings";
         })
         onTriggered: function (actionId) {
             section.controller.triggerDetailAction(actionId);

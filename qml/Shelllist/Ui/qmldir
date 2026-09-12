@@ -25,6 +25,7 @@ DetailColumnCard 1.0 DetailColumnCard.qml
 DetailField 1.0 DetailField.qml
 DetailFlickable 1.0 DetailFlickable.qml
 DetailGrid 1.0 DetailGrid.qml
+DisclosureSection 1.0 DisclosureSection.qml
 DetailsHeader 1.0 DetailsHeader.qml
 DetailsPane 1.0 DetailsPane.qml
 DestructiveIconButton 1.0 DestructiveIconButton.qml

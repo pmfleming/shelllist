@@ -259,6 +259,18 @@ TestCase {
             page.width = width;
             page.height = width / 2;
             verifyStack(page);
+            const overrides = findChild(page, "deviceOverrides");
+            if (overrides) {
+                const collapsedHeight = page.contentHeight;
+                overrides.expanded = true;
+                tryVerify(function () { return page.contentHeight > collapsedHeight; });
+                verifyStack(page);
+                const reset = findChild(page, "resetDeviceOverrides");
+                verify(reset.visible);
+                verify(reset.mapToItem(page.contentItem, 0, reset.height).y <= page.contentHeight + 1);
+                overrides.expanded = false;
+                tryCompare(page, "contentHeight", collapsedHeight);
+            }
             compare(page.interactive, page.contentHeight > page.height);
             // Tabs are kept warm or loaded while hidden; both must lay out on return.
             page.visible = false;

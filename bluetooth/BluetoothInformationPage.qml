@@ -7,6 +7,9 @@ Ui.DetailFlickable {
     id: page
 
     required property BluetoothController controller
+    readonly property var deviceAdapter: controller.adapters.find(function (adapter) {
+        return adapter.key === page.controller.selectedDevice.adapter_key;
+    }) || ({})
     readonly property bool hasAudio: !!controller.selectedAudio.device_key
     readonly property bool hasSink: controller.selectedAudio.sink !== null && controller.selectedAudio.sink !== undefined
     readonly property bool hasSource: controller.selectedAudio.source !== null && controller.selectedAudio.source !== undefined
@@ -53,32 +56,20 @@ Ui.DetailFlickable {
 
     Ui.DetailCard {
         visible: page.hasAudio
-        height: visible ? 230 : 0
-        title: qsTr("Audio state")
+        height: visible ? 150 : 0
+        title: qsTr("Audio diagnostics")
         entries: [
             {
                 label: "Last audio switch",
                 value: BluetoothFlow.audioSwitchStatus((page.controller.selectedDevice.fast_pair || {}).last_switch)
             },
             {
-                label: "Profile",
-                value: page.controller.activeAudioProfile.label || "Unavailable"
-            },
-            {
-                label: "Codec",
-                value: page.controller.activeAudioProfile.codec || "Unavailable"
-            },
-            {
-                label: "Output",
+                label: "Output state",
                 value: page.routeState(page.controller.selectedSink, page.hasSink)
             },
             {
-                label: "Input",
+                label: "Input state",
                 value: page.routeState(page.controller.selectedSource, page.hasSource)
-            },
-            {
-                label: "Profiles",
-                value: String(page.controller.selectedAudioProfiles.length)
             },
             {
                 label: "Audio service",
@@ -106,7 +97,7 @@ Ui.DetailFlickable {
             },
             {
                 label: "Adapter",
-                value: page.controller.selectedAdapter.alias || page.controller.selectedAdapter.name || "Unavailable"
+                value: page.deviceAdapter.alias || page.deviceAdapter.name || "Unavailable"
             },
             {
                 label: "Modalias",
