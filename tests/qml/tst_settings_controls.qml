@@ -36,6 +36,31 @@ TestCase {
         compare(row.Accessible.name, row.title + ". " + row.subtitle);
     }
 
+    SignalSpy { id: activated; signalName: "clicked" }
+    function test_focusedToggleRejectsEveryActivationWhileBusy(): void {
+        const row = createTemporaryObject(toggleFactory, this, {interactive: true});
+        activated.target = row;
+        activated.clear();
+        row.forceActiveFocus();
+        keyClick(Qt.Key_Space);
+        compare(activated.count, 1);
+        row.interactive = false;
+        for (const key of [Qt.Key_Space, Qt.Key_Return, Qt.Key_Enter])
+            keyClick(key);
+        mouseClick(row, row.width - 20, row.height / 2);
+        row.activate(); // The accessibility path uses this same guard.
+        compare(activated.count, 1);
+        row.interactive = true;
+        row.forceActiveFocus();
+        for (const key of [Qt.Key_Space, Qt.Key_Return, Qt.Key_Enter])
+            keyClick(key);
+        compare(activated.count, 4);
+        row.enabled = false;
+        row.activate();
+        compare(activated.count, 4);
+        activated.target = null;
+    }
+
     SignalSpy {
         id: edited
         signalName: "edited"

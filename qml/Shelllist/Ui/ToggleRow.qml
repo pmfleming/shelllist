@@ -15,6 +15,11 @@ Rectangle {
 
     signal clicked
 
+    function activate(): void {
+        if (enabled && interactive)
+            clicked();
+    }
+
     width: parent ? parent.width : 0
     implicitHeight: showSubtitle && subtitle.length > 0 ? 40 : 30
     radius: Theme.controlRadius
@@ -22,23 +27,23 @@ Rectangle {
     border.color: activeFocus ? Theme.strongBorder : "transparent"
     border.width: 1
     opacity: enabled && interactive ? 1.0 : Theme.disabledOpacity
-    activeFocusOnTab: enabled && interactive
+    // A control becoming busy may retain focus until Tab moves elsewhere.
+    activeFocusOnTab: enabled && (interactive || activeFocus)
     Accessible.role: Accessible.CheckBox
     Accessible.name: subtitle.length > 0 ? title + ". " + subtitle : title
     Accessible.checked: checked
-    Accessible.onPressAction: if (enabled && interactive)
-        row.clicked()
+    Accessible.onPressAction: row.activate()
 
     Keys.onReturnPressed: function (event) {
-        row.clicked();
+        row.activate();
         event.accepted = true;
     }
     Keys.onEnterPressed: function (event) {
-        row.clicked();
+        row.activate();
         event.accepted = true;
     }
     Keys.onSpacePressed: function (event) {
-        row.clicked();
+        row.activate();
         event.accepted = true;
     }
 
@@ -85,6 +90,6 @@ Rectangle {
         id: area
         focusTarget: row
         enabled: row.enabled && row.interactive
-        onClicked: row.clicked()
+        onClicked: row.activate()
     }
 }
