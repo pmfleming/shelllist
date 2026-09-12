@@ -136,6 +136,32 @@ TestCase {
         verify(!options.expanded);
         verify(!findChild(pane, "showBlockedDevices").visible);
     }
+    function test_emptyListCanOpenBluetoothSettings() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: []});
+        verify(!controller.hasSelection);
+        controller.openDetails();
+        verify(controller.detailsOpen);
+        compare(controller.detailsTab, "adapter");
+        controller.closeDetails();
+        const pane = createTemporaryObject(listPaneComponent, panel, {controller: controller, width: 320, height: 500});
+        const settings = findChild(pane, "openBluetoothSettings");
+        verify(settings !== null && settings.enabled);
+        settings.forceActiveFocus();
+        keyClick(Qt.Key_Space);
+        verify(controller.detailsOpen);
+        compare(controller.detailsTab, "adapter");
+        const details = createTemporaryObject(detailsComponent, panel, {controller: controller, width: 600, height: 900});
+        verify(details.contentAvailable);
+        compare(details.title, "Adapter");
+        // Losing a selection on another tab must also lead to usable global settings.
+        controller.detailsTab = "device";
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [{key: "test", name: "Test", paired: true, capabilities: {}}]});
+        verify(controller.hasSelection);
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: []});
+        compare(controller.detailsTab, "adapter");
+    }
     function test_noiseControlLayout() {
         const panel = makePanel();
         const controller = panel.controller;

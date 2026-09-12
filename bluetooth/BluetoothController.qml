@@ -344,6 +344,18 @@ Ui.ProviderChooserController {
         status = "Resetting Bluetooth device name…";
         return backend.deviceOperation("reset-alias", selectedDevice, {});
     }
+    function openBluetoothSettings() {
+        detailsTab = "adapter";
+        detailsOpen = true;
+    }
+    function openDetails() {
+        if (!hasSelection)
+            detailsTab = "adapter";
+        detailsOpen = true;
+    }
+    onHasSelectionChanged: if (!hasSelection && detailsOpen)
+        detailsTab = "adapter"
+
     function cycleDetailsTab() {
         if (!detailsOpen || !hasSelection) return false;
         const tabs = ["device", "information", "adapter"];

@@ -65,6 +65,8 @@ Shelllist opens an automatic captive portal only after a successful connection r
 
 The Bluetooth surface supports adapter power, bounded discovery, known and nearby devices, pair/connect/disconnect, pairing-agent prompts, trust/wake/multipoint/block/forget actions, persisted battery state, audio profiles, and read-only reported noise-control state.
 
+**Bluetooth settings** beside search opens adapter and global settings even when no devices are listed. With an empty selection, opening details also shows Bluetooth settings.
+
 The UI uses opaque daemon device keys and live subscriptions. It does not parse `bluetoothctl`, route actions by MAC address, or issue unauthenticated Fast Pair noise-control changes.
 
 ### Activity
