@@ -518,9 +518,25 @@ Ui.ProviderChooserController {
         status = "Clipboard events were missed; refreshing current state…";
         scheduleRefresh();
     }
+    function handleTransportReady() {
+        if (!uiActive)
+            return;
+        // Activation may already have queued these requests. Recovery reloads
+        // state, never replays mutations or automatically retries a draft.
+        if (!backend.isPending("session-begin"))
+            backend.beginSession();
+        if (!backend.isPending("settings-get"))
+            backend.getSettings();
+        if (!refreshInFlight) {
+            selectCurrentAfterRefresh = true;
+            refresh();
+        }
+    }
     function handleTransportFailure(message) {
-        clearProviderResults();
+        detailState.preserveDraftOnDisconnect(message);
         detailState.clear();
+        clearProviderResults();
+        sessionId = "";
         actionInFlight = false;
         screenshotInFlight = false;
         activeAction = "";

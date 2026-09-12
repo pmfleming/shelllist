@@ -73,6 +73,42 @@ TestCase {
         verify(!controller.actionInFlight);
         compare(details.editDraft, "Keep this draft");
     }
+    function test_transportRecoveryReloadsVisibleClipboardWithoutReplayingSave() {
+        const controller = makeController();
+        const details = controller.detailState;
+        const backend = findChild(controller, "clipboardBackend");
+        verify(details.beginEdit());
+        reply(controller, "edit-begin", {edit: {id: "lease-1", value: "Original"}});
+        details.updateEditDraft("Draft at disconnect");
+        verify(details.commitEdit());
+        backend.failSharedTransport("Disconnected");
+        compare(controller.filteredResults.length, 0);
+        compare(controller.sessionId, "");
+        compare(details.failedDrafts.first.draft, "Draft at disconnect");
+        calls = [];
+        backend.transportReady();
+        backend.transportReady(); // Pending recovery requests are coalesced.
+        compare(calls.length, 3);
+        verify(calls.some(call => call.method === "clipboard.session.begin"));
+        verify(calls.some(call => call.method === "clipboard.settings.get"));
+        verify(calls.some(call => call.method === "clipboard.history.query"));
+        verify(!calls.some(call => call.method === "clipboard.entry.edit.commit"));
+        reply(controller, "session-begin", {session: {id: "new-session", state: "active"}});
+        const queryId = controller.activeHistoryQueryId;
+        reply(controller, queryId, {history: {revision: 2, entries: [{id: "first", revision: 1, kind: "text", preview: "Original", byte_size: 8}], has_more: false}});
+        compare(controller.sessionId, "new-session");
+        compare(controller.filteredResults.length, 1);
+        details.load();
+        compare(details.editDraft, "Draft at disconnect");
+        verify(details.editing && details.editDirty);
+    }
+    function test_hiddenTransportReadyDoesNotOpenClipboardSession() {
+        const controller = makeController();
+        controller.uiActive = false;
+        calls = [];
+        findChild(controller, "clipboardBackend").transportReady();
+        compare(calls.length, 0);
+    }
     function test_failedSaveRetriesWithFreshLeaseAndKeepsVisibleDraft() {
         const controller = makeController();
         const details = controller.detailState;

@@ -287,6 +287,15 @@ Item {
         entryId = "";
         entryRevision = -1;
     }
+    function preserveDraftOnDisconnect(message: string): void {
+        if (pendingCommit)
+            handleFailure("edit-commit", message);
+        if (editing && editDirty) {
+            editError = message;
+            editId = "";
+            rememberFailedDraft();
+        }
+    }
     function clear(): void {
         rememberFailedDraft();
         editError = "";

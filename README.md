@@ -81,6 +81,8 @@ Time & Weather lists every configured city with its current condition, high/low 
 
 The clipboard surface supports text, image, and binary history; copy and paste actions; inline text editing; favorites; entry deletion; and confirmed history clearing.
 
+An open Clipboard surface reloads its session, settings, and history after daemon reconnection without replaying mutations.
+
 Failed text saves keep an editable, in-memory draft with **Retry save** and **Discard draft** controls. Retry acquires a new edit lease for the original revision, rather than overwriting changes made elsewhere. Failed drafts survive selection changes while Shelllist remains running; they are not written to disk.
 
 Capture policy is also available from the CLI:

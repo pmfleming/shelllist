@@ -188,4 +188,5 @@ Io.DaemonBackend {
     onTransportFailed: function (message) {
         controller.handleTransportFailure(message);
     }
+    onTransportReady: controller.handleTransportReady()
 }
