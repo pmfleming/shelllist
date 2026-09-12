@@ -3,6 +3,7 @@ import "ClipApi.js" as ClipApi
 
 Io.DaemonBackend {
     required property ClipboardController controller
+    objectName: "clipboardBackend"
     endpoint: ({
             daemonName: "clip-daemon",
             protocol: ClipApi.protocol,

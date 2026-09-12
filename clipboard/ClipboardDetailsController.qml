@@ -19,6 +19,12 @@ Item {
     property string editId
     property string editDraft
     property string committedDraft
+    property string editError: ""
+    property var editTarget: null
+    property var editPreview: null
+    property bool retryingEdit: false
+    property var failedDrafts: ({})
+    property var pendingCommit: null
     property int sequence
     property string entryId
     property var replacedSourceIds: []
@@ -34,6 +40,8 @@ Item {
         const target = entry || selectedEntry;
         if (!target || controller.actionInFlight || editOperationActive)
             return false;
+        editTarget = target;
+        editPreview = value;
         editBeginPending = true;
         editIsDirect = target.kind === "text";
         if (!daemonBackend.beginEdit(target)) {
@@ -53,41 +61,111 @@ Item {
             return;
         editDraft = text;
         editDirty = true;
-        autoSaveTimer.restart();
+        if (editError.length === 0)
+            autoSaveTimer.restart();
+        else
+            rememberFailedDraft();
+    }
+    function rememberFailedDraft(): void {
+        if (!editTarget || !editDirty || editError.length === 0)
+            return;
+        const next = Object.assign({}, failedDrafts);
+        next[editTarget.id] = {target: editTarget, preview: editPreview, draft: editDraft, error: editError, direct: editIsDirect};
+        failedDrafts = next;
+    }
+    function forgetFailedDraft(): void {
+        if (!editTarget)
+            return;
+        const next = Object.assign({}, failedDrafts);
+        delete next[editTarget.id];
+        failedDrafts = next;
+    }
+    function restoreFailedDraft(entry: var): bool {
+        const saved = failedDrafts[entry.id];
+        if (!saved)
+            return false;
+        editTarget = saved.target;
+        editPreview = saved.preview;
+        value = saved.preview;
+        entryId = saved.target.id;
+        entryRevision = saved.target.revision;
+        editDraft = saved.draft;
+        editError = saved.error;
+        editIsDirect = saved.direct;
+        editing = true;
+        editDirty = true;
+        return true;
+    }
+    function retryEdit(): bool {
+        if (!editTarget || editError.length === 0 || saveInFlight || editBeginPending || controller.actionInFlight)
+            return false;
+        autoSaveTimer.stop();
+        // Commit consumes its lease even on failure. Obtain a fresh lease for
+        // the ORIGINAL revision; never silently overwrite a newer entry.
+        retryingEdit = true;
+        editBeginPending = true;
+        if (!daemonBackend.beginEdit(editTarget)) {
+            retryingEdit = false;
+            editBeginPending = false;
+            return false;
+        }
+        return true;
+    }
+    function discardFailedEdit(): void {
+        if (saveInFlight || editBeginPending)
+            return;
+        cancelEdit();
+        clearPreview();
+        scheduleLoad();
     }
     function applyEdit(id: string, edit: var): void {
-        if (id === "edit-begin") {
-            editBeginPending = false;
-            editId = edit.id || "";
-            editDraft = edit.value || "";
-            editDirty = false;
-            editing = editId.length > 0;
-        } else if (id === "edit-cancel") {
-            editBeginPending = false;
-            editing = false;
-            editIsDirect = false;
-            editId = "";
-            editDirty = false;
+        if (id !== "edit-begin" || !editBeginPending)
+            return;
+        editBeginPending = false;
+        editId = edit.id || "";
+        if (retryingEdit) {
+            retryingEdit = false;
+            if (!editId) {
+                handleFailure("edit-begin", "Could not renew the clipboard edit session");
+                return;
+            }
+            editError = "";
+            commitEdit();
+            return;
         }
+        editDraft = edit.value || "";
+        editDirty = false;
+        editing = editId.length > 0;
+        // Cancellation is applied locally; late cancel replies must not reset
+        // a different edit session opened in the meantime.
     }
     function commitEdit(): bool {
-        if (!editing || editId.length === 0 || saveInFlight || (editIsDirect && !editDirty))
+        if (!editing || editId.length === 0 || saveInFlight || editError.length > 0 || (editIsDirect && !editDirty))
             return false;
         autoSaveTimer.stop();
         committedDraft = editDraft;
         savingDirectEdit = editIsDirect;
+        pendingCommit = {target: editTarget, preview: editPreview, draft: committedDraft, direct: editIsDirect};
         saveInFlight = true;
         editDirty = false;
         controller.actionInFlight = true;
         controller.activeAction = "edit";
         if (savingDirectEdit)
             controller.status = pasteAfterSave ? "Saving clipboard text before pasting…" : "Saving clipboard text…";
-        daemonBackend.commitEdit(editId, committedDraft);
-        return true;
+        if (daemonBackend.commitEdit(editId, committedDraft))
+            return true;
+        controller.actionInFlight = false;
+        controller.activeAction = "";
+        handleFailure("edit-commit", "Could not send clipboard edit; retry when the service is ready");
+        return false;
     }
     function preparePaste(): bool {
         if (!directTextEdit || entryId.length === 0 || selectedEntryId !== entryId)
             return false;
+        if (editError.length > 0) {
+            controller.status = "Retry or discard the unsaved clipboard draft before pasting";
+            return true;
+        }
         if (saveInFlight) {
             pasteAfterSave = true;
             controller.status = "Saving clipboard text before pasting…";
@@ -102,10 +180,15 @@ Item {
     }
     function finishDirectEdit(): void {
         editorFocused = false;
+        if (editError.length > 0 || editBeginPending)
+            return;
         if (!saveInFlight && !commitEdit())
             cancelEdit();
     }
     function cancelEdit(): void {
+        forgetFailedDraft();
+        editError = "";
+        retryingEdit = false;
         autoSaveTimer.stop();
         if (editId.length > 0)
             daemonBackend.cancelEdit(editId);
@@ -156,10 +239,25 @@ Item {
             });
     }
     function applyEditCommit(nextValue: var): void {
+        const sent = pendingCommit;
+        pendingCommit = null;
+        if (sent && sent.target && (!editTarget || editTarget.id !== sent.target.id)) {
+            const next = Object.assign({}, failedDrafts);
+            delete next[sent.target.id];
+            failedDrafts = next;
+            if (controller.activeAction === "edit") {
+                controller.actionInFlight = false;
+                controller.activeAction = "";
+            }
+            controller.scheduleRefresh();
+            return;
+        }
         const entry = nextValue ? nextValue.entry : null;
         const sourceEntryId = entryId;
         const wasDirect = savingDirectEdit;
         const shouldPaste = wasDirect && pasteAfterSave;
+        forgetFailedDraft();
+        editError = "";
         resetCommitState();
         if (wasDirect && entry) {
             applyDirectEditCommit(nextValue, entry, sourceEntryId, shouldPaste);
@@ -190,6 +288,11 @@ Item {
         entryRevision = -1;
     }
     function clear(): void {
+        rememberFailedDraft();
+        editError = "";
+        editTarget = null;
+        editPreview = null;
+        retryingEdit = false;
         loadTimer.stop();
         autoSaveTimer.stop();
         cancelPreviewRequests();
@@ -238,6 +341,8 @@ Item {
         if (alreadyLoaded(entry))
             return;
         clear();
+        if (restoreFailedDraft(entry))
+            return;
         entryId = entry.id;
         entryRevision = entry.revision;
         loading = true;
@@ -251,6 +356,11 @@ Item {
     function selectionChanged(): void {
         if (editOperationActive && selectedEntryId === entryId)
             return;
+        if (editing && editError.length > 0) {
+            clear();
+            scheduleLoad();
+            return;
+        }
         if (editing) {
             if (editIsDirect && editDirty) {
                 commitEdit();
@@ -295,16 +405,35 @@ Item {
     function handleFailure(id: string, message: string): bool {
         if (id === "edit-begin") {
             editBeginPending = false;
+            if (retryingEdit || editError.length > 0) {
+                retryingEdit = false;
+                editError = message;
+                rememberFailedDraft();
+                return false;
+            }
             editIsDirect = false;
         }
         if (id === "edit-commit") {
+            const sent = pendingCommit;
+            pendingCommit = null;
+            if (sent && sent.target && (!editTarget || editTarget.id !== sent.target.id)) {
+                const next = Object.assign({}, failedDrafts);
+                next[sent.target.id] = {target: sent.target, preview: sent.preview, draft: sent.draft, error: message, direct: sent.direct};
+                failedDrafts = next;
+                scheduleLoad();
+                return false;
+            }
+            autoSaveTimer.stop();
             saveInFlight = false;
             savingDirectEdit = false;
             pasteAfterSave = false;
-            editing = false;
-            editIsDirect = false;
+            editing = true;
             editId = "";
-            editDirty = false;
+            editDirty = true;
+            editError = message;
+            rememberFailedDraft();
+            if (editTarget && selectedEntryId !== editTarget.id)
+                scheduleLoad();
         }
         if (id === requestId) {
             requestId = "";

@@ -68,6 +68,7 @@ TestCase {
     function test_clipboardEditResetAndSelection(): void {
         const controller = createTemporaryObject(clipboardFactory, tests);
         const details = controller.detailState;
+        details.editBeginPending = true;
         details.applyEdit("edit-begin", {
             id: "edit-1",
             value: "original"

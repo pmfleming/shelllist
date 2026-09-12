@@ -17,6 +17,37 @@ Ui.DetailFlickable {
     readonly property int previewCardHeight: Math.max(220, Math.round(availableCardHeight * 0.66))
     readonly property int dataCardHeight: Math.max(250, availableCardHeight - previewCardHeight)
 
+    Ui.DetailColumnCard {
+        visible: cards.detailState.editError.length > 0
+        height: visible ? implicitHeight : 0
+        title: qsTr("Unsaved clipboard draft")
+        Ui.ThemeText {
+            Layout.fillWidth: true
+            text: cards.detailState.editError
+            wrapMode: Text.WordWrap
+            color: Ui.Theme.danger
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            Ui.ActionButton {
+                objectName: "retryClipboardEdit"
+                Layout.fillWidth: true
+                Layout.preferredHeight: Ui.Theme.compactControlHeight
+                label: qsTr("Retry save")
+                enabled: !cards.controller.actionInFlight && !cards.detailState.editBeginPending
+                onClicked: cards.detailState.retryEdit()
+            }
+            Ui.ActionButton {
+                objectName: "discardClipboardEdit"
+                Layout.fillWidth: true
+                Layout.preferredHeight: Ui.Theme.compactControlHeight
+                label: qsTr("Discard draft")
+                enabled: !cards.controller.actionInFlight && !cards.detailState.editBeginPending
+                onClicked: cards.detailState.discardFailedEdit()
+            }
+        }
+    }
+
     Ui.DetailCard {
         title: cards.entry.kind ? cards.entry.kind.charAt(0).toUpperCase() + cards.entry.kind.slice(1) : "Clipboard item"
         height: cards.previewCardHeight
@@ -32,6 +63,7 @@ Ui.DetailFlickable {
             source: cards.detailState.thumbnail ? "file://" + cards.detailState.thumbnail.path : ""
         }
         TextEdit {
+            objectName: "clipboardTextEditor"
             visible: !cards.detailState.thumbnail && cards.detailState.value && cards.detailState.value.text !== null
             anchors.fill: parent
             text: cards.detailState.editing ? cards.detailState.editDraft : (cards.detailState.value ? (cards.detailState.value.text || "") : "")
@@ -40,7 +72,7 @@ Ui.DetailFlickable {
             selectedTextColor: Ui.Theme.text
             font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeBody
-            readOnly: !cards.detailState.editing || cards.detailState.saveInFlight
+            readOnly: !cards.detailState.editing || cards.detailState.saveInFlight || cards.detailState.editBeginPending
             selectByMouse: true
             onActiveFocusChanged: if (cards.directTextEdit)
                 cards.detailState.setEditorFocused(activeFocus)
