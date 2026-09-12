@@ -8,11 +8,12 @@ ColumnLayout {
     required property BluetoothController controller
     readonly property bool editing: adapterAliasInput.inputActiveFocus || discoverableTimeoutRow.inputActiveFocus || pairableTimeoutRow.inputActiveFocus
     property string displayedAdapterKey: ""
-    property var dirtyFields: ({
-            alias: false,
-            discoverableTimeout: false,
-            pairableTimeout: false
-        })
+    readonly property var draft: controller.adapterEdits.draft(displayedAdapterKey)
+    readonly property var dirtyFields: ({
+        alias: draft.fields.alias !== undefined,
+        discoverableTimeout: draft.fields.discoverableTimeout !== undefined,
+        pairableTimeout: draft.fields.pairableTimeout !== undefined
+    })
     readonly property bool hasDirtyFields: dirtyFields.alias || dirtyFields.discoverableTimeout || dirtyFields.pairableTimeout
     readonly property bool aliasValid: adapterAliasInput.text.trim().length > 0
 
@@ -20,39 +21,23 @@ ColumnLayout {
     spacing: Ui.Theme.spacingMd
 
     function setDirty(field: string, value: bool): void {
-        const next = Object.assign({}, dirtyFields);
-        next[field] = value !== false;
-        dirtyFields = next;
-    }
-    function clearDirtyFields(): void {
-        dirtyFields = ({
-                alias: false,
-                discoverableTimeout: false,
-                pairableTimeout: false
-            });
-    }
-
-    function syncAlias(force: bool, adapter: var): void {
-        if (force || !dirtyFields.alias)
-            adapterAliasInput.text = adapter.alias || "";
-    }
-    function syncTimeout(force: bool, field: string, control: var, value: var): void {
-        if (force || !dirtyFields[field])
-            control.value = Math.min(3600, Number(value || 0));
+        if (value === false) {
+            controller.adapterEdits.clearField(displayedAdapterKey, field);
+            return;
+        }
+        const values = {alias: adapterAliasInput.text, discoverableTimeout: discoverableTimeoutRow.value, pairableTimeout: pairableTimeoutRow.value};
+        controller.adapterEdits.edit(displayedAdapterKey, field, values[field]);
     }
     function syncAdapterFields(force: bool): void {
         const adapter = controller.selectedAdapter;
         const nextKey = adapter.key || "";
-        const adapterChanged = nextKey !== displayedAdapterKey;
-        if (adapterChanged) {
+        if (nextKey !== displayedAdapterKey)
             autoSaveTimer.stop();
-            clearDirtyFields();
-        }
         displayedAdapterKey = nextKey;
-        const syncAll = force || adapterChanged;
-        syncAlias(syncAll, adapter);
-        syncTimeout(syncAll, "discoverableTimeout", discoverableTimeoutRow, adapter.discoverable_timeout);
-        syncTimeout(syncAll, "pairableTimeout", pairableTimeoutRow, adapter.pairable_timeout);
+        const fields = controller.adapterEdits.draft(nextKey).fields;
+        adapterAliasInput.text = fields.alias !== undefined ? fields.alias : (adapter.alias || "");
+        discoverableTimeoutRow.value = fields.discoverableTimeout ?? Math.min(3600, Number(adapter.discoverable_timeout || 0));
+        pairableTimeoutRow.value = fields.pairableTimeout ?? Math.min(3600, Number(adapter.pairable_timeout || 0));
     }
 
     function queueAutoSave(field: string, debounce: var): void {
@@ -61,57 +46,15 @@ ColumnLayout {
         debounce === false ? autoSaveTimer.stop() : autoSaveTimer.restart();
     }
 
-    function saveAliasIfDirty(): bool {
-        if (!dirtyFields.alias)
-            return false;
-        const alias = adapterAliasInput.text.trim();
-        if (!aliasValid) {
-            controller.status = "Enter a non-empty Bluetooth adapter alias.";
-            return false;
-        }
-        if (alias === (controller.selectedAdapter.alias || "")) {
-            setDirty("alias", false);
-            return false;
-        }
-        if (!controller.adapterOperation("set-alias", {
-            alias: alias
-        }))
-            return false;
-        setDirty("alias", false);
-        return true;
-    }
-
-    function saveTimeoutIfDirty(field: string, operation: string, value: real, currentValue: var): bool {
-        if (!dirtyFields[field])
-            return false;
-        const timeout = Math.round(Number(value) || 0);
-        if (timeout === Number(currentValue || 0)) {
-            setDirty(field, false);
-            return false;
-        }
-        if (!controller.adapterOperation(operation, {
-            timeout: timeout
-        }))
-            return false;
-        setDirty(field, false);
-        return true;
-    }
-
     function saveDirtyFields(): void {
         autoSaveTimer.stop();
-        if (!hasDirtyFields || !controller.selectedAdapter.key)
-            return;
-        if (controller.globalRequestInFlight)
-            return;
-        if (saveAliasIfDirty())
-            return;
-        if (saveTimeoutIfDirty("discoverableTimeout", "set-discoverable-timeout", discoverableTimeoutRow.value, controller.selectedAdapter.discoverable_timeout))
-            return;
-        saveTimeoutIfDirty("pairableTimeout", "set-pairable-timeout", pairableTimeoutRow.value, controller.selectedAdapter.pairable_timeout);
+        controller.adapterEdits.saveNext(displayedAdapterKey);
     }
 
     Component.onCompleted: Qt.callLater(section.syncAdapterFields, true)
-    Component.onDestruction: section.saveDirtyFields()
+    onDraftChanged: Qt.callLater(section.syncAdapterFields, false)
+    Component.onDestruction: if (hasDirtyFields && !draft.pendingField && !draft.error)
+        section.saveDirtyFields()
 
     Timer {
         id: autoSaveTimer
@@ -126,8 +69,40 @@ ColumnLayout {
             section.syncAdapterFields(section.displayedAdapterKey !== (section.controller.selectedAdapter.key || ""));
         }
         function onActionInFlightChanged() {
-            if (!section.controller.globalRequestInFlight && section.hasDirtyFields)
+            if (!section.controller.globalRequestInFlight && section.hasDirtyFields && !section.draft.error)
                 autoSaveTimer.restart();
+        }
+    }
+
+    Ui.DetailColumnCard {
+        Layout.fillWidth: true
+        Layout.preferredHeight: visible ? implicitHeight : 0
+        visible: section.draft.error.length > 0
+        title: qsTr("Unsaved adapter settings")
+        Ui.ThemeText {
+            Layout.fillWidth: true
+            text: section.draft.error
+            color: Ui.Theme.danger
+            wrapMode: Text.WordWrap
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            Ui.ActionButton {
+                objectName: "retryAdapterSettings"
+                Layout.fillWidth: true
+                Layout.preferredHeight: Ui.Theme.compactControlHeight
+                label: qsTr("Retry save")
+                enabled: !section.controller.globalRequestInFlight
+                onClicked: section.controller.adapterEdits.retry(section.displayedAdapterKey)
+            }
+            Ui.ActionButton {
+                objectName: "discardAdapterSettings"
+                Layout.fillWidth: true
+                Layout.preferredHeight: Ui.Theme.compactControlHeight
+                label: qsTr("Discard drafts")
+                enabled: !section.draft.pendingField
+                onClicked: section.controller.adapterEdits.discard(section.displayedAdapterKey)
+            }
         }
     }
 
@@ -174,6 +149,7 @@ ColumnLayout {
         }
         Ui.TextField {
             id: adapterAliasInput
+            objectName: "adapterNameInput"
             Layout.fillWidth: true
             text: ""
             maximumLength: 248

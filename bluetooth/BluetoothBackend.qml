@@ -8,6 +8,8 @@ Io.DaemonBackend {
     required property BluetoothController controller
     property var operations
     property var finishedOperations
+    property string nameRequestKey: ""
+    property var adapterRequestKeys: ({})
 
     endpoint: ({
             daemonName: "bt-daemon",
@@ -49,6 +51,8 @@ Io.DaemonBackend {
         return Object.keys(values || ({})).length;
     }
     function resetTransportState() {
+        nameRequestKey = "";
+        adapterRequestKeys = ({});
         pending = ({});
         operations = ({});
         finishedOperations = ({});
@@ -76,9 +80,15 @@ Io.DaemonBackend {
     }
     function finish(id, envelope, transportError) {
         const error = responseError(envelope, transportError, "Bluetooth operation failed");
+        if (id === "device-set-alias") {
+            if (error)
+                controller.nameEdits.rejected(nameRequestKey, error);
+            nameRequestKey = "";
+        }
         if (id === "pairing-response")
             controller.finishPairingResponse(error.length === 0);
         if (error.length > 0) {
+            finishAdapterRequest(id, error);
             console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
             controller.status = error;
             return;
@@ -91,8 +101,10 @@ Io.DaemonBackend {
         }
         try {
             applyResponse(id, envelope.data || ({}));
+            finishAdapterRequest(id, "");
             console.info("shelllist bluetooth request completed id=" + id);
         } catch (applyError) {
+            finishAdapterRequest(id, "Could not read the saved adapter settings: " + applyError);
             console.error("shelllist bluetooth request failed id=" + id + " stage=parse error=" + applyError);
             controller.status = "Could not parse bt-daemon " + id + " response: " + applyError;
         }
@@ -235,8 +247,19 @@ Io.DaemonBackend {
             timeout_ms: 15000
         });
     }
+    function finishAdapterRequest(id, error) {
+        const key = adapterRequestKeys[id];
+        if (!key)
+            return;
+        adapterRequestKeys = BtApi.copyWithout(adapterRequestKeys, id);
+        controller.adapterEdits.finish(key, id.slice("adapter-".length), error);
+    }
     function adapterOperation(operation, adapter, values) {
-        return call("adapter-" + operation, BtApi.methods.adapterOperation, Object.assign({
+        const id = "adapter-" + operation;
+        if (isPending(id))
+            return false;
+        adapterRequestKeys = BtApi.copyWith(adapterRequestKeys, id, adapter.key);
+        return call(id, BtApi.methods.adapterOperation, Object.assign({
             key: adapter.key,
             operation: operation
         }, values || ({})));
@@ -257,6 +280,11 @@ Io.DaemonBackend {
         return call("pairing-response", BtApi.methods.pairingRespond, params);
     }
     function deviceOperation(operation, device, values) {
+        if (operation === "set-alias") {
+            if (isPending("device-set-alias"))
+                return false;
+            nameRequestKey = device.key;
+        }
         return call("device-" + operation, BtApi.methods.deviceOperation, Object.assign({
             key: device.key,
             operation: operation

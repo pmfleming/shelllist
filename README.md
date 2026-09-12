@@ -67,6 +67,8 @@ The Bluetooth surface supports adapter power, bounded discovery, known and nearb
 
 **Bluetooth settings** beside search opens adapter and global settings even when no devices are listed. With an empty selection, opening details also shows Bluetooth settings.
 
+Device-name and adapter-setting drafts are marked saved only after daemon acknowledgement. Failed drafts remain in memory across tab changes and offer Retry/Discard instead of retrying automatically.
+
 The UI uses opaque daemon device keys and live subscriptions. It does not parse `bluetoothctl`, route actions by MAC address, or issue unauthenticated Fast Pair noise-control changes.
 
 ### Activity

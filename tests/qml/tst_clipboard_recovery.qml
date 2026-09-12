@@ -12,6 +12,7 @@ TestCase {
     width: 650
     height: 900
     property var calls: []
+    property var views: []
     property var originalFactory
     property var originalSessions
 
@@ -43,6 +44,19 @@ TestCase {
         for (const session of Object.values(Io.DaemonSessions.sessions)) session.client.destroy();
         Io.DaemonSessions.sessions = originalSessions;
         Io.DaemonSessions.clientFactory = originalFactory;
+    }
+    function init() {
+        failOnWarning(/.*(TypeError|Binding loop|invalid context).*/);
+    }
+    function cleanup() {
+        for (const view of views) view.destroy();
+        views = [];
+        wait(0);
+    }
+    function makeCards(controller) {
+        const cards = createTemporaryObject(cardsFactory, testCase, {controller: controller, width: 600, height: 800});
+        views = views.concat([cards]);
+        return cards;
     }
     function makeController() {
         const controller = createTemporaryObject(controllerFactory, testCase);
@@ -113,7 +127,7 @@ TestCase {
         const controller = makeController();
         const details = controller.detailState;
         failEdit(controller);
-        const cards = createTemporaryObject(cardsFactory, testCase, {controller: controller, width: 600, height: 800});
+        const cards = makeCards(controller);
         const editor = findChild(cards, "clipboardTextEditor");
         compare(editor.text, "Keep this draft");
         verify(!editor.readOnly);
@@ -132,7 +146,7 @@ TestCase {
         compare(calls[calls.length - 1].method, "clipboard.entry.edit.commit");
         compare(calls[calls.length - 1].params.edit_id, "lease-2");
         compare(calls[calls.length - 1].params.value, "Updated failed draft");
-        reply(controller, "edit-commit", {entry: {entry: {id: "replacement", revision: 2, kind: "text"}, text: "Updated failed draft"}});
+        reply(controller, "edit-commit", {entry: {entry: {id: "replacement", revision: 2, kind: "text"}, text: "Updated failed draft", files: []}});
         compare(details.editError, "");
         compare(Object.keys(details.failedDrafts).length, 0);
         compare(editor.text, "Updated failed draft");
@@ -164,7 +178,7 @@ TestCase {
         compare(details.editDraft, "Keep this draft");
         verify(details.editing && details.editDirty && !details.editBeginPending);
         compare(details.editError, "Entry changed elsewhere");
-        const cards = createTemporaryObject(cardsFactory, testCase, {controller: controller, width: 600, height: 800});
+        const cards = makeCards(controller);
         findChild(cards, "discardClipboardEdit").clicked();
         verify(!details.editing && !details.editDirty);
         compare(details.editError, "");

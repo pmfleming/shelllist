@@ -10,7 +10,8 @@ ColumnLayout {
     required property BluetoothController controller
     readonly property bool editingName: renameInput.inputActiveFocus
     property string displayedDeviceKey: ""
-    property bool renameDirty: false
+    readonly property var draft: controller.nameEdits.draft(displayedDeviceKey)
+    readonly property bool renameDirty: !!draft && draft.dirty
     readonly property bool renameValid: renameInput.text.trim().length > 0
 
     Layout.fillWidth: true
@@ -19,44 +20,32 @@ ColumnLayout {
     function syncDeviceName(force) {
         const nextKey = controller.selectedDevice.key || "";
         const deviceChanged = nextKey !== displayedDeviceKey;
-        if (deviceChanged) {
+        if (deviceChanged)
             renameAutoSaveTimer.stop();
-            renameDirty = false;
-        }
         displayedDeviceKey = nextKey;
-        if (force || deviceChanged || !renameDirty)
-            renameInput.text = controller.selectedDevice.name || "";
+        const saved = controller.nameEdits.draft(nextKey);
+        renameInput.text = saved ? saved.value : (controller.selectedDevice.name || "");
     }
 
     function queueRename() {
-        renameDirty = true;
+        controller.nameEdits.edit(displayedDeviceKey, renameInput.text);
         controller.status = "Bluetooth device name change pending…";
         renameAutoSaveTimer.restart();
     }
 
     function saveRename() {
         renameAutoSaveTimer.stop();
-        if (!renameDirty || !controller.hasSelection)
-            return;
-        const alias = renameInput.text.trim();
         if (!renameValid) {
             controller.status = "Enter a non-empty Bluetooth device name.";
             return;
         }
-        if (alias === (controller.selectedDevice.name || "")) {
-            renameDirty = false;
-            return;
-        }
-        if (controller.actionInFlight)
-            return;
-        if (controller.renameSelected(alias))
-            renameDirty = false;
+        controller.nameEdits.save(displayedDeviceKey);
     }
 
-    Component.onCompleted: Qt.callLater(function () {
-        section.syncDeviceName(true);
-    })
-    Component.onDestruction: section.saveRename()
+    Component.onCompleted: Qt.callLater(section.syncDeviceName, true)
+    onDraftChanged: Qt.callLater(section.syncDeviceName, false)
+    Component.onDestruction: if (renameDirty && !(draft || {}).pending && !(draft || {}).error)
+        section.saveRename()
 
     Timer {
         id: renameAutoSaveTimer
@@ -71,7 +60,7 @@ ColumnLayout {
             section.syncDeviceName(false);
         }
         function onActionInFlightChanged() {
-            if (!section.controller.actionInFlight && section.renameDirty)
+            if (!section.controller.actionInFlight && section.renameDirty && !(section.draft || {}).error)
                 renameAutoSaveTimer.restart();
         }
     }
@@ -102,6 +91,7 @@ ColumnLayout {
 
         Ui.TextField {
             id: renameInput
+            objectName: "deviceNameInput"
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             text: ""
@@ -118,8 +108,40 @@ ColumnLayout {
             Layout.preferredWidth: 180
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             label: qsTr("Restore original name")
-            enabled: !section.controller.actionInFlight && !!section.controller.selectedDevice.remote_name && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
+            enabled: !section.renameDirty && !section.controller.actionInFlight && !!section.controller.selectedDevice.remote_name && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
             onClicked: section.controller.resetSelectedName()
+        }
+    }
+
+    Ui.ThemeText {
+        Layout.fillWidth: true
+        visible: !!(section.draft || {}).error
+        text: (section.draft || {}).error || ""
+        wrapMode: Text.WordWrap
+        color: Ui.Theme.danger
+        font.pixelSize: Ui.Theme.fontSizeSmall
+    }
+    RowLayout {
+        Layout.fillWidth: true
+        visible: !!(section.draft || {}).error
+        Ui.ActionButton {
+            objectName: "retryDeviceName"
+            Layout.fillWidth: true
+            Layout.preferredHeight: Ui.Theme.compactControlHeight
+            label: qsTr("Retry rename")
+            enabled: !section.controller.actionInFlight && section.renameValid
+            onClicked: section.controller.nameEdits.retry(section.displayedDeviceKey)
+        }
+        Ui.ActionButton {
+            objectName: "discardDeviceName"
+            Layout.fillWidth: true
+            Layout.preferredHeight: Ui.Theme.compactControlHeight
+            label: qsTr("Discard draft")
+            enabled: !(section.draft || {}).pending
+            onClicked: {
+                section.controller.nameEdits.discard(section.displayedDeviceKey);
+                section.syncDeviceName(true);
+            }
         }
     }
 

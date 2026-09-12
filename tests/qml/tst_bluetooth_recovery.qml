@@ -323,6 +323,80 @@ TestCase {
         }
         return null;
     }
+    function test_renameDraftSurvivesFailureAndEditorRecreation() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const backend = findChild(controller, "bluetoothBackend");
+        verify(controller.renameSelected("My renamed buds"));
+        verify(controller.nameEdits.draft("buds").dirty);
+        verify(controller.nameEdits.draft("buds").pending);
+        backend.acceptSharedResponse("device-set-alias", {protocol: "bt-api", version: 1, ok: true,
+            data: {operation: {request_id: "rename-1", device_key: "buds", operation: "set-alias", state: "running"}}}, "");
+        controller.handleOperationEvent({request_id: "rename-1", device_key: "buds", operation: "set-alias", state: "failed", error: {message: "Permission denied"}});
+        wait(0);
+        compare(findChild(panel.page, "deviceNameInput").text, "My renamed buds");
+        const callCount = calls.length;
+        wait(750);
+        compare(calls.length, callCount); // Failed saves must not retry indefinitely.
+        const newPage = createTemporaryObject(devicePageComponent, panel, {controller: controller, width: 600, height: 900});
+        wait(0);
+        compare(findChild(newPage, "deviceNameInput").text, "My renamed buds");
+        findChild(newPage, "retryDeviceName").clicked();
+        compare(calls[calls.length - 1].params.alias, "My renamed buds");
+        backend.acceptSharedResponse("device-set-alias", {protocol: "bt-api", version: 1, ok: false, error: {message: "Adapter unavailable"}}, "");
+        verify(controller.nameEdits.draft("buds").dirty);
+        verify(!controller.nameEdits.draft("buds").pending);
+        findChild(newPage, "discardDeviceName").clicked();
+        compare(findChild(newPage, "deviceNameInput").text, "Buds");
+        compare(controller.nameEdits.draft("buds"), null);
+    }
+    Component { id: devicePageComponent; Bt.BluetoothDevicePage {} }
+    function test_adapterDraftsOnlyClearAfterAcknowledgement() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const edits = controller.adapterEdits;
+        const backend = findChild(controller, "bluetoothBackend");
+        edits.edit("adapter", "alias", "My adapter");
+        edits.edit("adapter", "discoverableTimeout", 120);
+        verify(edits.saveNext("adapter"));
+        compare(edits.draft("adapter").fields.alias, "My adapter");
+        backend.acceptSharedResponse("adapter-set-alias", {protocol: "bt-api", version: 1, ok: false, error: {message: "Permission denied"}}, "");
+        const previousCalls = calls.length;
+        wait(750);
+        compare(calls.length, previousCalls);
+        const page = createTemporaryObject(adapterPageComponent, panel, {controller: controller, width: 600, height: 900});
+        wait(0);
+        compare(findChild(page, "adapterNameInput").text, "My adapter");
+        findChild(page, "retryAdapterSettings").clicked();
+        compare(calls[calls.length - 1].params.alias, "My adapter");
+        backend.acceptSharedResponse("adapter-set-alias", {protocol: "bt-api", version: 1, ok: true,
+            data: {snapshot: {radio: controller.radio, devices: controller.allDevices,
+                adapters: [{key: "adapter", alias: "My adapter", powered: true}]}}}, "");
+        wait(0);
+        compare(edits.draft("adapter").fields.alias, undefined);
+        compare(calls[calls.length - 1].params.operation, "set-discoverable-timeout");
+        compare(calls[calls.length - 1].params.timeout, 120);
+        backend.acceptSharedResponse("adapter-set-discoverable-timeout", {protocol: "bt-api", version: 1, ok: true,
+            data: {snapshot: {radio: controller.radio, devices: controller.allDevices,
+                adapters: [{key: "adapter", alias: "My adapter", powered: true, discoverable_timeout: 120}]}}}, "");
+        compare(Object.keys(edits.draft("adapter").fields).length, 0);
+    }
+    function test_renameAcknowledgementAndDisconnectKeepCorrectState() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        verify(controller.renameSelected("New name"));
+        const snapshot = {radio: controller.radio, adapters: controller.adapters,
+            devices: [Object.assign({}, controller.selectedDevice, {name: "New name", alias: "New name"})]};
+        controller.handleOperationEvent({request_id: "rename-1", device_key: "buds", operation: "set-alias", state: "completed", snapshot: snapshot});
+        compare(controller.nameEdits.draft("buds"), null);
+        compare(findChild(panel.page, "deviceNameInput").text, "New name");
+        findChild(controller, "bluetoothBackend").pending = ({});
+        verify(controller.renameSelected("Keep on disconnect"));
+        findChild(controller, "bluetoothBackend").failSharedTransport("Disconnected");
+        const draft = controller.nameEdits.draft("buds");
+        compare(draft.value, "Keep on disconnect");
+        verify(draft.dirty && !draft.pending && draft.error.length > 0);
+    }
     function test_busyPolicyDoesNotClaimUnsupported() {
         const panel = makePanel();
         findChild(panel.page, "deviceOverrides").expanded = true;

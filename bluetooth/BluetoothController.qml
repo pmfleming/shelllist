@@ -13,6 +13,8 @@ Ui.ProviderChooserController {
     sharedScreenshotStartMessage: "Capturing Bluetooth window…"
     onSharedScreenshotStatusChanged: function (message) { status = message; }
 
+    readonly property alias nameEdits: nameEditState
+    readonly property alias adapterEdits: adapterEditState
     property string detailsTab: "device"
     property alias searchScope: scopeSettings.searchScope
     property var pendingConfirmationAction
@@ -114,6 +116,8 @@ Ui.ProviderChooserController {
         audioStatus = message;
     }
     function handleTransportFailure(message) {
+        nameEditState.transportFailed(message);
+        adapterEditState.transportFailed(message);
         invalidateBluetooth(message);
         scanRequested = false;
         operationState.reset();
@@ -242,8 +246,14 @@ Ui.ProviderChooserController {
         trustAfterPair = !!value;
         updateManagement({ trust_after_pair: trustAfterPair });
     }
-    function handleOperationAccepted(operation) { operationState.accept(operation); }
-    function handleOperationEvent(operation) { operationState.handle(operation); }
+    function handleOperationAccepted(operation) {
+        operationState.accept(operation);
+        nameEditState.observe(operation);
+    }
+    function handleOperationEvent(operation) {
+        operationState.handle(operation);
+        nameEditState.observe(operation);
+    }
     function dismissNavigation(): bool {
         if (dismissNavigationHelp())
             return true;
@@ -333,11 +343,10 @@ Ui.ProviderChooserController {
         return backend.setAudioProfile(selectedDevice.key, profile.key);
     }
     function renameSelected(alias) {
-        const value = (alias || "").trim();
-        if (!hasSelection || value.length === 0 || value === selectedDevice.name || selectedDeviceBusy)
+        if (!hasSelection || actionInFlight)
             return false;
-        status = "Renaming " + selectedDevice.name + "…";
-        return backend.deviceOperation("set-alias", selectedDevice, { alias: value });
+        nameEditState.edit(selectedDevice.key, alias || "");
+        return nameEditState.save(selectedDevice.key);
     }
     function resetSelectedName() {
         if (!hasSelection || selectedDeviceBusy) return false;
@@ -403,6 +412,8 @@ Ui.ProviderChooserController {
     onSelectedResultChanged: pendingConfirmationAction = null
 
     BluetoothBackend { id: backend; objectName: "bluetoothBackend"; controller: bluetoothController }
+    BluetoothNameEdits { id: nameEditState; controller: bluetoothController; backend: backend }
+    BluetoothAdapterEdits { id: adapterEditState; controller: bluetoothController; backend: backend }
     BluetoothOperationController {
         id: operationState
         controller: bluetoothController

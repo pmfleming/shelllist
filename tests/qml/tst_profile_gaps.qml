@@ -105,6 +105,7 @@ TestCase {
             controller: controller,
             width: 700
         });
+        wait(0);
         view.setDirty("alias", true);
         verify(view.hasDirtyFields);
         controller.preferredAdapterKey = "second";
