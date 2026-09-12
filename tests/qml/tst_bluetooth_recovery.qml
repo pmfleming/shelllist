@@ -292,6 +292,45 @@ TestCase {
         compare(controller.pairingPrompt.request_id, "a");
         compare(controller.pairingPrompts.length, 1);
     }
+    function test_pairingInputSurvivesUnrelatedOperationsAndQueueRecovery() {
+        const controller = makePanel().controller;
+        const first = {request_id: "pair-a", device_key: "a", kind: "passkey", response_required: true};
+        const second = {request_id: "pair-b", device_key: "b", kind: "passkey", response_required: true};
+        controller.handlePairingEvent({event: "requested", data: first});
+        controller.pairingInput = "123456";
+        controller.handleOperationEvent({request_id: "op-c", device_key: "c", operation: "connect", state: "completed"});
+        compare(controller.pairingPrompt.request_id, "pair-a");
+        compare(controller.pairingInput, "123456");
+        controller.applyRequestSnapshot({pairing: {active: [first, second]}});
+        compare(controller.pairingInput, "123456");
+        controller.applyRequestSnapshot({pairing: {active: [second, first]}});
+        compare(controller.pairingInput, "");
+        controller.pairingInput = "654321";
+        controller.applyRequestSnapshot({pairing: {active: [first, second]}});
+        compare(controller.pairingInput, "123456");
+        controller.closePairingForDevice("a");
+        compare(controller.pairingInput, "654321");
+        compare(controller.pairingInputs["pair-a"], undefined);
+        controller.invalidateBluetooth("Disconnected");
+        compare(controller.pairingInput, "");
+        compare(Object.keys(controller.pairingInputs).length, 0);
+    }
+    function test_pendingPairingReplyKeepsItsOriginalRequestIdentity() {
+        const controller = makePanel().controller;
+        controller.handlePairingEvent({event: "requested", data: {request_id: "a", device_key: "a", response_required: true}});
+        controller.pairingInput = "123456";
+        verify(controller.respondPairing(true));
+        controller.handlePairingEvent({event: "requested", data: {request_id: "b", device_key: "b", response_required: true}});
+        controller.closePairingForDevice("a");
+        controller.pairingInput = "654321";
+        verify(!controller.respondPairing(true));
+        compare(controller.respondingPairingId, "a");
+        findChild(controller, "bluetoothBackend").acceptSharedResponse("pairing-response", {protocol: "bt-api", version: 1, ok: true, data: {}}, "");
+        compare(controller.pairingPrompt.request_id, "b");
+        compare(controller.pairingInput, "654321");
+        verify(controller.respondPairing(true));
+        compare(calls[calls.length - 1].params.request_id, "b");
+    }
     function test_failedPairingResponseKeepsPromptAndInput() {
         const panel = makePanel(); const controller = panel.controller;
         controller.handlePairingEvent({event: "requested", data: {request_id: "a", device_key: "buds", kind: "passkey", response_required: true}});

@@ -29,9 +29,10 @@ Ui.ProviderChooserController {
     property var audioDevices: []
     property string audioStatus: ""
     property var pairingPrompts: []
+    property var pairingInputs: ({})
     readonly property var pairingPrompt: pairingPrompts.length > 0 ? pairingPrompts[0] : null
     property string respondingPairingId: ""
-    readonly property bool pairingResponsePending: !!pairingPrompt && respondingPairingId === pairingPrompt.request_id
+    readonly property bool pairingResponsePending: backend.isPending("pairing-response") || (!!pairingPrompt && respondingPairingId === pairingPrompt.request_id)
     readonly property alias activeOperations: operationState.activeOperations
     property var activeScan: null
     property bool trustAfterPair: true
@@ -102,9 +103,8 @@ Ui.ProviderChooserController {
         adapters = [];
         allDevices = [];
         invalidateAudio(message);
-        pairingPrompts = [];
+        replacePairingPrompts([]);
         respondingPairingId = "";
-        pairingInput = "";
         activeScan = null;
         scanRequested = false;
         operationState.reset();
@@ -159,9 +159,9 @@ Ui.ProviderChooserController {
         operationState.restore(state.operations);
         activeScan = state.activeScan;
         scanRequested = !!activeScan;
-        pairingPrompts = state.pairingPrompts || [];
-        respondingPairingId = "";
-        pairingInput = "";
+        replacePairingPrompts(state.pairingPrompts || []);
+        if (!backend.isPending("pairing-response"))
+            respondingPairingId = "";
         if (pairingPrompt) {
             status = pairingPrompt.response_required
                 ? "Recovered Bluetooth pairing confirmation"
@@ -268,17 +268,26 @@ Ui.ProviderChooserController {
         status = "Cancelling Bluetooth operation…";
         return backend.cancelOperation(selectedOperation.request_id);
     }
+    function replacePairingPrompts(prompts) {
+        const inputs = Object.assign({}, pairingInputs);
+        if (pairingPrompt)
+            inputs[pairingPrompt.request_id] = pairingInput;
+        const retained = ({});
+        for (const prompt of prompts)
+            retained[prompt.request_id] = inputs[prompt.request_id] || "";
+        pairingInputs = retained;
+        pairingPrompts = prompts;
+        pairingInput = pairingPrompt ? retained[pairingPrompt.request_id] : "";
+    }
     function handlePairingEvent(event) {
         const previousId = pairingPrompt ? pairingPrompt.request_id : "";
-        pairingPrompts = BluetoothFlow.pairingQueue(pairingPrompts, event);
+        replacePairingPrompts(BluetoothFlow.pairingQueue(pairingPrompts, event));
         const nextId = pairingPrompt ? pairingPrompt.request_id : "";
-        if (previousId !== nextId) pairingInput = "";
         status = BluetoothFlow.pairingStatus(pairingPrompt, event) || status;
         if (nextId && previousId !== nextId) pairingInteractionRequested();
     }
     function closePairingForDevice(deviceKey) {
-        pairingPrompts = pairingPrompts.filter(function (prompt) { return prompt.device_key !== deviceKey; });
-        pairingInput = "";
+        replacePairingPrompts(pairingPrompts.filter(function (prompt) { return prompt.device_key !== deviceKey; }));
     }
     function finishPairingResponse(success) {
         const requestId = respondingPairingId;
