@@ -1,11 +1,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import "BatteryHistory.js" as History
 import "BatteryPresentation.js" as Presentation
 
-Ui.ChartFrame {
+Item {
     id: graph
 
     required property var points
@@ -16,44 +17,62 @@ Ui.ChartFrame {
         })
     property real currentPercentage: -1
     property real historyFraction: 1
-    property real axisWidth: 48
+    property string label: ""
+    property string valueText: ""
+    property string referenceText: ""
+    property color lineColor: Ui.Theme.resourceCpu
+    property int graphHeight: 64 + (showTimeAxis ? 28 : 0)
+    property real axisWidth: 138
     property real hoverPosition: -1
     property bool showTimeAxis: false
 
     readonly property var series: History.series(points, "percentage", 100, false)
     readonly property var energySeries: History.energySeries(points)
     readonly property real maximum: energy ? energySeries.maximum : 100
-    readonly property string maximumText: energy ? maximum.toFixed(1) : "100%"
-    readonly property real scaleWidth: maximumLabel.implicitWidth + 8
 
     signal hovered(real position)
 
-    // These are tracks within one card, not two nested cards.
-    color: "transparent"
-    border.width: 0
-    graphHeight: energy ? 126 : 146
+    Layout.fillWidth: true
+    Layout.preferredHeight: graphHeight
+    implicitHeight: graphHeight
     onSeriesChanged: chart.requestPaint()
     onEnergySeriesChanged: chart.requestPaint()
     onForecastChanged: chart.requestPaint()
     onCurrentPercentageChanged: chart.requestPaint()
     onHistoryFractionChanged: chart.requestPaint()
     onHoverPositionChanged: chart.requestPaint()
-    onRepaintRequested: chart.requestPaint()
+    onLineColorChanged: chart.requestPaint()
+    onEnergyChanged: chart.requestPaint()
 
     Ui.ThemeText {
-        id: maximumLabel
         anchors.left: parent.left
-        anchors.top: parent.top
-        text: graph.maximumText
+        y: 4
+        width: graph.axisWidth - 10
+        text: graph.label
         color: Ui.Theme.mutedText
+        elide: Text.ElideRight
         font.pixelSize: Ui.Theme.fontSizeCaption
+        font.weight: Ui.Theme.fontWeightDemiBold
+    }
+
+    Ui.ThemeText {
+        objectName: "batteryHistoryValue"
+        anchors.left: parent.left
+        y: 20
+        width: graph.axisWidth - 10
+        text: graph.valueText
+        color: graph.lineColor
+        elide: Text.ElideRight
+        font.weight: Ui.Theme.fontWeightBold
     }
 
     Ui.ThemeText {
         anchors.left: parent.left
-        y: chart.y + chart.height - implicitHeight
-        text: "0"
-        color: Ui.Theme.mutedText
+        y: 39
+        width: graph.axisWidth - 10
+        text: graph.referenceText
+        color: Ui.Theme.subtleText
+        elide: Text.ElideRight
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 
@@ -62,9 +81,8 @@ Ui.ChartFrame {
         objectName: "batteryHistoryPlot"
         anchors.fill: parent
         anchors.leftMargin: graph.axisWidth
-        anchors.rightMargin: 3
-        anchors.topMargin: 3
-        anchors.bottomMargin: graph.showTimeAxis ? 23 : 3
+        anchors.topMargin: 4
+        anchors.bottomMargin: 6 + (graph.showTimeAxis ? 28 : 0)
         antialiasing: true
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
@@ -93,17 +111,22 @@ Ui.ChartFrame {
                 context.stroke();
             }
             if (graph.historyFraction < 1) {
-                context.fillStyle = Ui.Theme.withAlpha(Ui.Theme.accent, 0.04);
+                context.fillStyle = Ui.Theme.withAlpha(graph.lineColor, 0.04);
                 context.fillRect(nowX, inset, plotWidth * (1 - graph.historyFraction), plotHeight);
             }
-            context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.mutedText, 0.2);
+            context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.border, 0.26);
             context.lineWidth = 1;
             context.beginPath();
-            [0, 0.5, 1].forEach(function (fraction) {
-                const row = inset + fraction * plotHeight;
-                context.moveTo(inset, row);
-                context.lineTo(inset + plotWidth, row);
+            [0.25, 0.5, 0.75].forEach(function (fraction) {
+                const column = inset + fraction * plotWidth;
+                context.moveTo(column, inset);
+                context.lineTo(column, inset + plotHeight);
             });
+            context.stroke();
+            context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.mutedText, 0.22);
+            context.beginPath();
+            context.moveTo(inset, inset + plotHeight);
+            context.lineTo(inset + plotWidth, inset + plotHeight);
             context.stroke();
             if (!graph.energy && graph.forecast.limit !== null) {
                 context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.mutedText, 0.5);
@@ -111,7 +134,7 @@ Ui.ChartFrame {
             }
             context.strokeStyle = graph.lineColor;
             context.fillStyle = graph.energy ? Ui.Theme.withAlpha(graph.lineColor, 0.45) : graph.lineColor;
-            context.lineWidth = 1.5;
+            context.lineWidth = 1.75;
             context.lineJoin = "round";
             context.lineCap = "round";
             if (graph.energy) {
@@ -123,6 +146,23 @@ Ui.ChartFrame {
                 });
             } else {
                 graph.series.segments.forEach(function (segment) {
+                    // Fill each continuous segment separately: sleep/offline gaps
+                    // must never look like measured charge.
+                    if (segment.length > 1) {
+                        context.beginPath();
+                        context.moveTo(x(segment[0].x), inset + plotHeight);
+                        segment.forEach(function (point) {
+                            context.lineTo(x(point.x), y(point.value));
+                        });
+                        context.lineTo(x(segment[segment.length - 1].x), inset + plotHeight);
+                        context.closePath();
+                        const fill = context.createLinearGradient(0, inset, 0, inset + plotHeight);
+                        fill.addColorStop(0, Ui.Theme.withAlpha(graph.lineColor, 0.2));
+                        fill.addColorStop(1, Ui.Theme.withAlpha(graph.lineColor, 0.025));
+                        context.fillStyle = fill;
+                        context.fill();
+                    }
+                    context.fillStyle = graph.lineColor;
                     context.beginPath();
                     segment.forEach(function (point, index) {
                         if (segment.length === 1)
@@ -149,12 +189,12 @@ Ui.ChartFrame {
                     context.stroke();
                 }
             }
-            context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.mutedText, 0.5);
-            context.lineWidth = 1;
-            context.beginPath();
-            context.moveTo(nowX, inset);
-            context.lineTo(nowX, inset + plotHeight);
-            context.stroke();
+            // Only mark "now" inside the plot when a forecast follows it.
+            if (graph.historyFraction < 1) {
+                context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.mutedText, 0.3);
+                context.lineWidth = 1;
+                dashed(nowX, inset, nowX, inset + plotHeight, 2, 3);
+            }
             if (graph.hoverPosition >= 0) {
                 context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.text, 0.6);
                 dashed(inset + graph.hoverPosition * plotWidth, inset, inset + graph.hoverPosition * plotWidth, inset + plotHeight, 2, 3);
@@ -184,6 +224,9 @@ Ui.ChartFrame {
 
     Ui.ThemeText {
         anchors.centerIn: chart
+        width: chart.width
+        horizontalAlignment: Text.AlignHCenter
+        wrapMode: Text.WordWrap
         visible: graph.energy ? graph.energySeries.bars.length === 0 : graph.series.segments.length === 0
         text: graph.energy ? "No observed discharge energy" : (graph.currentPercentage >= 0 ? "Collecting charge history" : "No charge samples")
         color: Ui.Theme.mutedText
@@ -197,7 +240,7 @@ Ui.ChartFrame {
         width: Math.max(0, graph.historyFraction * chart.width - 40)
         elide: Text.ElideRight
         text: graph.series.activeDurationMs > 0 ? "−" + Presentation.duration(graph.series.activeDurationMs / 1000) + " observed" : ""
-        color: Ui.Theme.mutedText
+        color: Ui.Theme.subtleText
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
 
@@ -209,6 +252,7 @@ Ui.ChartFrame {
         text: "Now"
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeCaption
+        font.weight: Ui.Theme.fontWeightDemiBold
     }
 
     Ui.ThemeText {

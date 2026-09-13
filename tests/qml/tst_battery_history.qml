@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import Shelllist.Battery as Battery
+import Shelllist.Ui as Ui
 
 TestCase {
     id: testCase
@@ -106,8 +107,54 @@ TestCase {
         compare(card.estimateText, "Estimating charge time…");
     }
 
-    function test_contentAndPlotsStayInsideCard() {
-        const card = createTemporaryObject(historyCard, testCase, { width: 340 });
+    function test_resourceTimelineStyling() {
+        const card = createTemporaryObject(historyCard, testCase);
+        verify(waitForRendering(card));
+        compare(card.border.width, 0);
+        compare(card.color, Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.7));
+        const charge = findChild(card, "chargeHistoryGraph");
+        const energy = findChild(card, "energyHistoryGraph");
+        compare(charge.lineColor, Ui.Theme.resourceCpu);
+        compare(energy.lineColor, Ui.Theme.resourcePower);
+        compare(charge.height, 64);
+        compare(energy.height, 92);
+        compare(findChild(charge, "batteryHistoryValue").text, "89%");
+        for (const graph of [charge, energy]) {
+            const value = findChild(graph, "batteryHistoryValue");
+            const plot = findChild(graph, "batteryHistoryPlot");
+            verify(value.x + value.width < plot.x, "values occupy a separate left rail");
+            compare(plot.mapToItem(card, 0, 0).x, 150);
+            compare(value.font.weight, Ui.Theme.fontWeightBold);
+        }
+        const energyY = energy.mapToItem(card, 0, 0).y;
+        charge.hovered(0.1);
+        wait(0);
+        compare(energy.mapToItem(card, 0, 0).y, energyY);
+        card.battery = { available: true, percentage: 8, warning: true };
+        compare(charge.lineColor, Ui.Theme.warning);
+    }
+
+    function test_emptyHistory() {
+        const card = createTemporaryObject(historyCard, testCase, {
+            width: 300, history: { points: [] }, battery: { available: false }
+        });
+        verify(waitForRendering(card));
+        const charge = findChild(card, "chargeHistoryGraph");
+        const energy = findChild(card, "energyHistoryGraph");
+        compare(findChild(charge, "batteryHistoryValue").text, "Unavailable");
+        compare(findChild(energy, "batteryHistoryValue").text, "Unavailable");
+        compare(card.historyFraction, 1);
+        compare(card.hoveredSample, null);
+        compare(card.hoveredEnergy, null);
+    }
+
+    function test_contentAndPlotsStayInsideCard_data() {
+        return [{ tag: "narrow", width: 300 }, { tag: "compact", width: 340 },
+            { tag: "normal", width: 500 }];
+    }
+
+    function test_contentAndPlotsStayInsideCard(data) {
+        const card = createTemporaryObject(historyCard, testCase, { width: data.width });
         verify(card !== null);
         verify(waitForRendering(card));
         const charge = findChild(card, "chargeHistoryGraph");
