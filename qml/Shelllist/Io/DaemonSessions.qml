@@ -20,6 +20,15 @@ QtObject {
         return consumerId + "::" + localId;
     }
 
+    function address(session, consumerId, localId, kind) {
+        return {
+            consumerId: consumerId,
+            localId: localId,
+            kind: kind,
+            generation: session.generation
+        };
+    }
+
     function createSession(daemonName, recoverProtocolErrors) {
         const client = clientFactory.createObject(null, {
             daemonName: daemonName,
@@ -33,15 +42,14 @@ QtObject {
             daemonName: daemonName,
             client: client,
             consumers: ({}),
-            routes: ({}),
-            subscriptionOwners: ({}),
+            generation: 0,
             subscriptionSequence: 0
         };
-        client.response.connect(function (id, envelope, transportError) {
-            registry.routeResponse(daemonName, id, envelope, transportError);
+        client.response.connect(function (id, envelope, transportError, route) {
+            registry.routeResponse(daemonName, id, envelope, transportError, route);
         });
-        client.eventReceived.connect(function (event) {
-            registry.routeEvent(daemonName, event);
+        client.eventReceived.connect(function (event, route) {
+            registry.routeEvent(daemonName, event, route);
         });
         client.transportFailed.connect(function (message) {
             registry.failSession(daemonName, message);
@@ -58,22 +66,23 @@ QtObject {
     }
 
     function sessionFor(daemonName, recoverProtocolErrors) {
-        const current = sessions[daemonName];
-        if (current)
-            return current;
-        return createSession(daemonName, recoverProtocolErrors);
+        return sessions[daemonName] || createSession(daemonName, recoverProtocolErrors);
     }
 
     function attach(backend) {
         const session = sessionFor(backend.daemonName, backend.recoverProtocolErrors);
         const id = "consumer-" + (++consumerSequence);
-        session.consumers[id] = {
+        // Only live view handles remain in QML. Copy on change rather than
+        // churning properties on a long-lived QV4 object.
+        const consumers = Object.assign({}, session.consumers);
+        consumers[id] = {
             backend: backend,
             active: !!backend.active,
             streams: (backend.streams || []).slice(),
             baseSubscriptionId: "",
             baseSubscriptionPending: false
         };
+        session.consumers = consumers;
         updateSession(session);
         revision += 1;
         return id;
@@ -83,15 +92,12 @@ QtObject {
         const session = sessions[daemonName];
         if (!session || !session.consumers[consumerId])
             return;
-        cancelOwnedSubscriptions(session, consumerId);
-        delete session.consumers[consumerId];
-        Object.keys(session.routes).forEach(function (id) {
-            const route = session.routes[id];
-            // Keep pending subscription replies routable so their daemon-issued
-            // IDs can be cancelled even after the consumer has disappeared.
-            if (route.consumerId === consumerId && route.kind !== "base-subscription" && route.kind !== "subscription")
-                delete session.routes[id];
-        });
+        // The bridge owns the subscription-ID index. Late subscribe replies
+        // still carry their address and are cancelled below if this view is gone.
+        session.client.release(namespace(consumerId, "cancel-detached"), address(session, consumerId, "cancel-detached", "control"));
+        const consumers = Object.assign({}, session.consumers);
+        delete consumers[consumerId];
+        session.consumers = consumers;
         updateSession(session);
         revision += 1;
     }
@@ -127,28 +133,15 @@ QtObject {
         const session = sessions[daemonName];
         if (!session)
             throw new Error("Shared daemon session is unavailable");
-        const id = namespace(consumerId, localId);
-        session.routes[id] = {
-            consumerId: consumerId,
-            localId: localId,
-            kind: "call"
-        };
-        session.client.call(id, method, params);
+        session.client.call(namespace(consumerId, localId), method, params, address(session, consumerId, localId, "call"));
     }
 
     function cancel(daemonName, consumerId, requestId, cancellationId) {
         const session = sessions[daemonName];
         if (!session)
             throw new Error("Shared daemon session is unavailable");
-        delete session.subscriptionOwners[requestId];
         const localId = cancellationId || ("cancel-" + requestId);
-        const id = namespace(consumerId, localId);
-        session.routes[id] = {
-            consumerId: consumerId,
-            localId: localId,
-            kind: "control"
-        };
-        session.client.cancel(id, requestId);
+        session.client.cancel(namespace(consumerId, localId), requestId, address(session, consumerId, localId, "control"));
     }
 
     function subscribe(daemonName, consumerId, localId, streams, base) {
@@ -156,13 +149,7 @@ QtObject {
         if (!session)
             throw new Error("Shared daemon session is unavailable");
         const transportLocalId = base ? localId + "::" + (++session.subscriptionSequence) : localId;
-        const id = namespace(consumerId, transportLocalId);
-        session.routes[id] = {
-            consumerId: consumerId,
-            localId: localId,
-            kind: base ? "base-subscription" : "subscription"
-        };
-        session.client.subscribeExtra(id, streams || []);
+        session.client.subscribeExtra(namespace(consumerId, transportLocalId), streams || [], address(session, consumerId, localId, base ? "base-subscription" : "subscription"));
     }
 
     function ensureBaseSubscription(session, consumerId, consumer) {
@@ -173,24 +160,13 @@ QtObject {
     }
 
     function cancelBaseSubscription(session, consumerId, consumer) {
-        // Do not retire a request before its reply. While closed, a successful
-        // reply is cancelled by recordSubscription; a reopen can adopt it
-        // instead of issuing a second subscription with no owner.
+        // A reopen adopts a pending request. If its reply arrives while closed,
+        // recordSubscription cancels the daemon-issued ID instead.
         if (!consumer.baseSubscriptionId)
             return;
         const subscriptionId = consumer.baseSubscriptionId;
         consumer.baseSubscriptionId = "";
-        delete session.subscriptionOwners[subscriptionId];
-        session.client.cancel(namespace(consumerId, "cancel-session-subscription"), subscriptionId);
-    }
-
-    function cancelOwnedSubscriptions(session, consumerId) {
-        Object.keys(session.subscriptionOwners).forEach(function (subscriptionId) {
-            if (session.subscriptionOwners[subscriptionId] !== consumerId)
-                return;
-            delete session.subscriptionOwners[subscriptionId];
-            session.client.cancel(namespace(consumerId, "cancel-detached-" + subscriptionId), subscriptionId);
-        });
+        cancel(session.daemonName, consumerId, subscriptionId, "cancel-session-subscription");
     }
 
     function subscriptionId(envelope) {
@@ -199,57 +175,56 @@ QtObject {
     }
 
     function recordSubscription(session, route, consumer, envelope, transportError) {
-        const id = registry.subscriptionId(envelope);
-        if (route.kind === "subscription") {
-            if (id)
-                session.subscriptionOwners[id] = route.consumerId;
-            return;
-        }
         if (route.kind !== "base-subscription")
             return;
         consumer.baseSubscriptionPending = false;
+        const id = registry.subscriptionId(envelope);
         if (!id)
             return;
-        if (consumer.active && !transportError) {
+        if (consumer.active && !transportError)
             consumer.baseSubscriptionId = id;
-            session.subscriptionOwners[id] = route.consumerId;
-        } else {
-            session.client.cancel(namespace(route.consumerId, "cancel-stale-subscription"), id);
-        }
+        else
+            cancel(session.daemonName, route.consumerId, id, "cancel-stale-subscription");
     }
 
-    function routeResponse(daemonName, transportId, envelope, transportError) {
+    function routeResponse(daemonName, transportId, envelope, transportError, route) {
         const session = sessions[daemonName];
         if (!session)
             return;
-        const route = session.routes[transportId];
-        if (!route)
+        if (!route) {
+            // Never fall back to the crashing per-request dictionary or infer a
+            // route kind from a local ID. Shared clients must be upgraded together.
+            if (transportId.indexOf("::") >= 0)
+                session.client.recover("" + daemonName + " client lacks routed replies; rebuild the Rust daemon clients");
             return;
-        delete session.routes[transportId];
+        }
+        if (route.generation !== session.generation)
+            return;
         const consumer = session.consumers[route.consumerId];
         if (!consumer) {
             if (route.kind === "base-subscription" || route.kind === "subscription") {
                 const id = registry.subscriptionId(envelope);
                 if (id)
-                    session.client.cancel(namespace(route.consumerId, "cancel-detached-" + id), id);
+                    cancel(daemonName, route.consumerId, id, "cancel-detached-" + id);
             }
             return;
         }
         recordSubscription(session, route, consumer, envelope, transportError);
         consumer.backend.acceptSharedResponse(route.localId, envelope, transportError);
-        // Shared request IDs are namespaced, so the transport cannot recognize
-        // base subscriptions by its standalone "session-subscribe" ID.
         if (route.kind === "base-subscription" && transportError)
             session.client.recover(transportError);
     }
 
-    function routeEvent(daemonName, event) {
+    function routeEvent(daemonName, event, route) {
         const session = sessions[daemonName];
         if (!session)
             return;
-        const owner = session.subscriptionOwners[event.subscription_id || ""];
-        if (owner && session.consumers[owner]) {
-            session.consumers[owner].backend.acceptSharedEvent(event);
+        if (route) {
+            if (route.generation !== session.generation)
+                return;
+            const consumer = session.consumers[route.consumerId];
+            if (consumer)
+                consumer.backend.acceptSharedEvent(event);
             return;
         }
         if (event.subscription_id)
@@ -278,8 +253,7 @@ QtObject {
         const session = sessions[daemonName];
         if (!session)
             return;
-        session.routes = ({});
-        session.subscriptionOwners = ({});
+        session.generation += 1;
         Object.keys(session.consumers).forEach(function (id) {
             const consumer = session.consumers[id];
             consumer.baseSubscriptionId = "";

@@ -64,8 +64,8 @@ for (const failure of ["start", "exit"]) {
 
 const sessions = source("qml/Shelllist/Io/DaemonSessions.qml");
 
-// Execute the registry's JavaScript routing with a fake transport. Keep the
-// recorded route kind authoritative, even when local IDs resemble controls.
+// Execute the registry with bridge-addressed replies. The echoed route kind
+// is authoritative even when local IDs resemble transport control IDs.
 const registry = { sessions: {}, revision: 0 };
 registry.registry = registry;
 vm.createContext(registry);
@@ -99,8 +99,7 @@ for (const [kind, localId, ok] of [
     const session = {
         daemonName: "test-daemon",
         consumers: { "consumer-1": consumer },
-        routes: { [transportId]: { consumerId: "consumer-1", localId, kind } },
-        subscriptionOwners: {},
+        generation: 0,
         subscriptionSequence: 0,
         client: {
             recover(message) {
@@ -113,11 +112,12 @@ for (const [kind, localId, ok] of [
     registry.sessions["test-daemon"] = session;
     const outcome = routing.responseOutcome({
         id: transportId, ok, error: "subscription refused",
+        route: { consumerId: "consumer-1", localId, kind, generation: 0 },
         response: { data: { subscription: { id: "subscription-1" } } }
     }, "test-daemon");
-    registry.routeResponse("test-daemon", outcome.id, outcome.envelope, outcome.error);
+    registry.routeResponse("test-daemon", outcome.id, outcome.envelope, outcome.error, outcome.route);
     assert.deepEqual(responses, [[localId, outcome.envelope, outcome.error]]);
-    assert.equal(session.routes[transportId], undefined);
+    assert.equal(session.routes, undefined);
     const shouldRecover = kind === "base-subscription" && !ok;
     assert.deepEqual(recoveries, shouldRecover ? ["subscription refused"] : [], `${kind}: ${localId}`);
     assert.deepEqual(failures, recoveries);
@@ -126,7 +126,8 @@ for (const [kind, localId, ok] of [
         assert.equal(consumer.baseSubscriptionId, ok ? "subscription-1" : "");
     }
     if (shouldRecover) {
-        assert.equal(Object.keys(session.subscriptionOwners).length, 0);
+        assert.equal(session.subscriptionOwners, undefined);
+        assert.equal(session.generation, 1);
         registry.restoreSubscriptions("test-daemon");
         assert.equal(subscriptions.length, 1);
         assert.equal(subscriptions[0][0], "consumer-1::session-subscribe::1");
@@ -135,36 +136,37 @@ for (const [kind, localId, ok] of [
 }
 
 function subscriptionLifecycle() {
-    const subscriptions = [], cancellations = [], responses = [];
+    const subscriptions = [], cancellations = [], releases = [], responses = [], events = [];
     const view = {
         active: false, streams: ["battery.changed"],
         baseSubscriptionId: "", baseSubscriptionPending: false,
         backend: {
             acceptSharedResponse: (...args) => responses.push(args),
+            acceptSharedEvent: event => events.push(event),
             failSharedTransport() {}
         }
     };
     const session = {
-        daemonName: "test-daemon", subscriptionSequence: 0,
+        daemonName: "test-daemon", subscriptionSequence: 0, generation: 0,
         consumers: {
             resident: { active: true, streams: [], baseSubscriptionId: "resident-sub",
                 baseSubscriptionPending: false, backend: { failSharedTransport() {} } },
             view
         },
-        routes: {}, subscriptionOwners: { "resident-sub": "resident" },
         client: {
             ready: true, active: true,
             subscribeExtra: (...args) => subscriptions.push(args),
-            cancel: (...args) => cancellations.push(args)
+            cancel: (...args) => cancellations.push(args),
+            release: (...args) => releases.push(args)
         }
     };
     registry.sessions[session.daemonName] = session;
     return {
-        session, view, subscriptions, cancellations, responses,
+        session, view, subscriptions, cancellations, releases, responses, events,
         open: () => registry.update(session.daemonName, "view", true, view.streams, true),
         close: () => registry.update(session.daemonName, "view", false, view.streams, true),
         reply: (index, id) => registry.routeResponse(session.daemonName, subscriptions[index][0],
-            { ok: true, data: { subscription: { id } } }, "")
+            { ok: true, data: { subscription: { id } } }, "", subscriptions[index][2])
     };
 }
 
@@ -213,7 +215,9 @@ function subscriptionLifecycle() {
     fixture.reply(0, "detached-base");
     fixture.reply(1, "detached-extra");
     assert.deepEqual(fixture.cancellations.map(([, id]) => id), ["detached-base", "detached-extra"]);
-    assert.equal(Object.keys(fixture.session.routes).length, 0);
+    assert.equal(fixture.session.routes, undefined);
+    assert.equal(fixture.releases.length, 1);
+    assert.equal(fixture.releases[0][1].consumerId, "view");
     assert.equal(fixture.responses.length, 0);
 }
 
@@ -233,6 +237,31 @@ function subscriptionLifecycle() {
     assert.equal(fixture.view.baseSubscriptionId, "new-generation");
     fixture.close();
     assert.deepEqual(fixture.cancellations.map(([, id]) => id), ["new-generation"]);
+}
+
+// Event ownership is supplied by Rust, not a QML subscription-ID dictionary.
+{
+    const fixture = subscriptionLifecycle();
+    fixture.open();
+    const event = { stream: "updates", subscription_id: "view-sub" };
+    const route = fixture.subscriptions[0][2];
+    registry.routeEvent("test-daemon", event, route);
+    assert.deepEqual(fixture.events, [event]);
+    registry.routeEvent("test-daemon", event, { ...route, consumerId: "missing" });
+    registry.routeEvent("test-daemon", event, null);
+    registry.failSession("test-daemon", "restarted");
+    registry.routeEvent("test-daemon", event, route);
+    assert.equal(fixture.events.length, 1, "unknown, unaddressed and retired events must not leak to another view");
+}
+
+// Startup buffering is bounded, and closing/recovery fences late stdout.
+{
+    const client = { queuedLines: ["first"], maximumQueuedRequests: 1, ready: false,
+        start() {}, retiring: true, handleMessage() { throw new Error("retired message delivered"); } };
+    install(client, transport);
+    assert.throws(() => client.send({ id: "overflow", op: "call" }), /capacity exceeded/);
+    assert.deepEqual(client.queuedLines, ["first"]);
+    client.handleLine('{"kind":"response"}');
 }
 
 console.log("daemon boundary checks passed");

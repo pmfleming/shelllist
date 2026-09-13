@@ -29,6 +29,7 @@ TestCase {
             }
             function subscribeExtra(id: string, streams: var): void {
             }
+            function release(id: string, route: var): void {}
             function cancel(id: string, requestId: string): void {
             }
         }

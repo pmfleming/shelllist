@@ -35,6 +35,7 @@ TestCase {
             }
             function subscribeExtra(id, streams) {
             }
+            function release(id, route) {}
             function cancel(id, requestId) {
             }
         }

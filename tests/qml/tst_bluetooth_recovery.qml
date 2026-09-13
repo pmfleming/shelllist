@@ -29,6 +29,7 @@ TestCase {
             function call(id, method, params) { testCase.calls = testCase.calls.concat([{id: id, method: method, params: params}]); }
             function subscribeExtra(id, streams) {}
             function cancel(id, requestId) {}
+            function release(id, route) {}
         }
     }
     function initTestCase() {

@@ -9,13 +9,14 @@ function shouldRecoverFailure(kind, recoverProtocolErrors) {
 }
 
 function responseOutcome(message, daemonName) {
-    const subscriptionFailure = message.id === "session-subscribe" && !message.ok;
+    const subscriptionFailure = !message.route && message.id === "session-subscribe" && !message.ok;
     const fallback = subscriptionFailure ? daemonName + " subscription failed" : daemonName + " call failed";
     return {
         id: message.id || "",
         envelope: message.ok ? message.response : null,
         error: message.ok ? "" : (message.error || fallback),
-        recover: subscriptionFailure
+        recover: subscriptionFailure,
+        route: message.route || null
     };
 }
 

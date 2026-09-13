@@ -12,6 +12,8 @@ Item {
     property bool automaticSubscribe: true
     required property bool recoverProtocolErrors
     property var queuedLines: []
+    property int maximumQueuedRequests: 256
+    property bool retiring: false
     property var counters: ({
             sequence: 0,
             retryAttempt: 0
@@ -20,8 +22,8 @@ Item {
     property int initialRetryInterval: 1500
     property int maximumRetryInterval: 30000
 
-    signal response(string id, var envelope, string transportError)
-    signal eventReceived(var event)
+    signal response(string id, var envelope, string transportError, var route)
+    signal eventReceived(var event, var route)
     signal transportFailed(string message)
 
     function start() {
@@ -66,18 +68,21 @@ Item {
             }
         }
         subscriptionId = "";
+        // Normal shutdown drains accepted replies so backend pending flags can
+        // settle. Only failed generations fence stdout in recover().
         process.stdinEnabled = false;
     }
 
-    function call(id, method, params) {
+    function call(id, method, params, route) {
         send({
             id: id,
             op: "call",
             method: method,
-            params: params || ({})
+            params: params || ({}),
+            route: route
         });
     }
-    function cancel(idOrRequestId, optionalRequestId) {
+    function cancel(idOrRequestId, optionalRequestId, route) {
         const requestId = optionalRequestId || idOrRequestId;
         if (!requestId)
             return;
@@ -85,13 +90,24 @@ Item {
         send({
             id: id,
             op: "cancel",
-            request_id: requestId
+            request_id: requestId,
+            route: route
+        });
+    }
+
+    function release(id, route) {
+        send({
+            id: id,
+            op: "release",
+            route: route
         });
     }
 
     function send(message) {
         const line = JSON.stringify(message);
         if (!ready) {
+            if (queuedLines.length >= maximumQueuedRequests)
+                throw new Error("bridge startup queue capacity exceeded; request was not sent");
             queuedLines = queuedLines.concat([line]);
             start();
             return;
@@ -117,11 +133,12 @@ Item {
     // Adds a subscription beyond the session's default streams, for a view that
     // only wants a stream while it is open. The daemon computes those payloads
     // only while somebody is subscribed, so dropping it again matters.
-    function subscribeExtra(id, extraStreams) {
+    function subscribeExtra(id, extraStreams, route) {
         send({
             id: id,
             op: "subscribe",
-            streams: extraStreams
+            streams: extraStreams,
+            route: route
         });
     }
 
@@ -144,28 +161,32 @@ Item {
         const outcome = Routing.responseOutcome(message, daemonName);
         if (outcome.recover) {
             console.error("shelllist transport subscription failed daemon=" + daemonName + " error=" + outcome.error);
-            response(outcome.id, null, outcome.error);
+            response(outcome.id, null, outcome.error, outcome.route);
             recover(outcome.error);
             return;
         }
         markHealthy();
         rememberSubscription(message);
-        response(outcome.id, outcome.envelope, outcome.error);
+        response(outcome.id, outcome.envelope, outcome.error, outcome.route);
     }
     function recover(message) {
+        retiring = true;
         transportFailed(message);
-        if (!active)
+        if (!active) {
+            ready = false;
             return;
+        }
         try {
             stop();
         } finally {
+            ready = false;
             scheduleRetry();
         }
     }
     function handleMessage(message) {
         if (message.kind === "event") {
             markHealthy();
-            eventReceived(message.event || ({}));
+            eventReceived(message.event || ({}), message.route || null);
             return;
         }
         if (message.kind === "response") {
@@ -181,6 +202,8 @@ Item {
         }
     }
     function handleLine(line) {
+        if (retiring)
+            return;
         try {
             handleMessage(JSON.parse(line));
         } catch (error) {
@@ -225,6 +248,7 @@ Item {
         }
         onStarted: {
             console.info("shelllist transport started daemon=" + client.daemonName);
+            client.retiring = false;
             client.ready = true;
             try {
                 if (client.automaticSubscribe)
