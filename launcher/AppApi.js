@@ -10,6 +10,7 @@ var methods = ({
         energyOverview: Protocol.methods["applications.energyOverview"],
         refresh: Protocol.methods["applications.refresh"],
         execute: Protocol.methods["applications.execute"],
+        operationStatus: Protocol.methods["applications.operation.status"],
         settingsUpdate: Protocol.methods["applications.settings.update"]
     });
 var streams = ({

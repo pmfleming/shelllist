@@ -38,35 +38,21 @@ ColumnLayout {
     function currentHas(metric: string): bool {
         return application.running ? Resources.currentMetricAvailable(application, metric) : Resources.historicalMetricAvailable(latestPoint, metric);
     }
+    function metricSummary(metric: string): var {
+        const summary = controller.resourceHistorySummary;
+        return summary && summary.metrics ? (summary.metrics[metric] || {}) : {};
+    }
     function historyHas(metric: string): bool {
-        return points.some(function (point) {
-            return Resources.historicalMetricAvailable(point, metric);
-        });
+        return metricSummary(metric).available === true;
     }
     function currentPower(): var {
         return application.running ? application.estimated_app_power_watts || application.power_watts : latestPoint.average_power_watts;
     }
     function average(metric: string): real {
-        const values = points.filter(function (point) {
-            return Resources.historicalMetricAvailable(point, metric);
-        }).map(function (point) {
-            return Number(point[metric]);
-        }).filter(function (value) {
-            return isFinite(value) && value >= 0;
-        });
-        return values.length > 0 ? values.reduce(function (sum, value) {
-            return sum + value;
-        }, 0) / values.length : 0;
+        return Number(metricSummary(metric).mean || 0);
     }
     function peak(metric: string, nested: bool): real {
-        return points.reduce(function (maximum, point) {
-            const availabilityMetric = metric === "estimated_app_power_watts" ? "average_power_watts" : metric;
-            if (!Resources.historicalMetricAvailable(point, availabilityMetric))
-                return maximum;
-            const source = nested ? point.peaks || ({}) : point;
-            const value = Number(source[metric] || 0);
-            return isFinite(value) ? Math.max(maximum, value) : maximum;
-        }, 0);
+        return Number(metricSummary(metric === "estimated_app_power_watts" ? "average_power_watts" : metric).peak || 0);
     }
     function formatted(value: var, kind: string): string {
         if (kind === "bytes")
@@ -78,7 +64,9 @@ ColumnLayout {
         return Resources.percent(value);
     }
     function reference(metric: string, peakMetric: string, kind: string): string {
-        return "avg " + formatted(average(metric), kind) + " · peak " + formatted(peak(peakMetric || metric, !!peakMetric), kind);
+        if (!historyHas(metric))
+            return qsTr("No measurements");
+        return "avg " + formatted(average(metric), kind) + " · peak " + formatted(peak(metric, false), kind);
     }
     function graphSeries(metric: string, peakMetric: string, label: string, color: color, kind: string, direction: int): var {
         return {
@@ -239,6 +227,7 @@ ColumnLayout {
         Layout.fillWidth: true
         title: qsTr("Shared timeline")
         points: history.points
+        summaries: history.controller.resourceHistorySummary ? history.controller.resourceHistorySummary.metrics : ({})
         rangeStartMilliseconds: history.controller.historyWindowStartMs
         rangeEndMilliseconds: history.controller.historyWindowEndMs
         maximumGapMilliseconds: Math.max(30000, (rangeEndMilliseconds - rangeStartMilliseconds) / 500)

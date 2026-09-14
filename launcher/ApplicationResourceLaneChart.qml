@@ -10,6 +10,7 @@ Rectangle {
     required property string title
     required property var points
     required property var lanes
+    property var summaries: ({})
     required property double rangeStartMilliseconds
     required property double rangeEndMilliseconds
     property double maximumGapMilliseconds: 30000
@@ -115,14 +116,8 @@ Rectangle {
                         const configured = Number(lane.modelData.maximum || 0);
                         if (configured > 0)
                             return configured;
-                        const largest = chart.points.reduce(function (current, point) {
-                            return descriptors.reduce(function (next, descriptor) {
-                                if (!Resources.historicalMetricAvailable(point, descriptor.metric))
-                                    return next;
-                                const average = Number(point[descriptor.metric]);
-                                const peak = Number((point.peaks || ({}))[descriptor.peakMetric || ""]);
-                                return Math.max(next, isFinite(average) ? average : 0, isFinite(peak) ? peak : 0);
-                            }, current);
+                        const largest = descriptors.reduce(function (maximum, descriptor) {
+                            return Math.max(maximum, Number((chart.summaries[descriptor.metric] || {}).peak || 0));
                         }, 0);
                         return Math.max(1, largest * 1.15);
                     }
@@ -204,27 +199,8 @@ Rectangle {
                         context.stroke();
                     }
                     function descriptorValues(descriptor) {
-                        const values = [];
-                        let peak = 0;
-                        chart.points.forEach(function (point) {
-                            if (!Resources.historicalMetricAvailable(point, descriptor.metric))
-                                return;
-                            const value = Number(point[descriptor.metric]);
-                            if (isFinite(value) && value >= 0)
-                                values.push(value);
-                            const bucketPeak = Number((point.peaks || ({}))[descriptor.peakMetric || ""]);
-                            if (isFinite(bucketPeak))
-                                peak = Math.max(peak, bucketPeak);
-                        });
-                        const average = values.length > 0 ? values.reduce(function (sum, value) {
-                            return sum + value;
-                        }, 0) / values.length : 0;
-                        return {
-                            average: average,
-                            peak: Math.max(peak, values.reduce(function (largest, value) {
-                                return Math.max(largest, value);
-                            }, 0))
-                        };
+                        const summary = chart.summaries[descriptor.metric] || {};
+                        return { average: Number(summary.mean || 0), peak: Number(summary.peak || 0) };
                     }
                     function drawReferences(context, descriptor, descriptorIndex, maximum) {
                         const values = descriptorValues(descriptor);
@@ -291,6 +267,9 @@ Rectangle {
                     Connections {
                         target: chart
                         function onPointsChanged() {
+                            plot.requestPaint();
+                        }
+                        function onSummariesChanged() {
                             plot.requestPaint();
                         }
                         function onRangeStartMillisecondsChanged() {

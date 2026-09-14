@@ -149,6 +149,11 @@ current layout behavior. No frontend JSON-document splitting or rule grammar.
 
 ### 5. Resource-window statistics → app-daemon
 
+**Implemented after audit:** full-window duration-weighted summaries, metric
+availability/coverage, preserved peaks and native legacy-record normalization.
+QML freezes/validates summary bounds and revision across pages, rather than
+computing statistics in bindings or paint callbacks. Original finding follows.
+
 **Evidence:** `launcher/ApplicationResourceHistory.qml` and
 `ApplicationResourceLaneChart.qml` repeatedly calculate mean/peak/availability
 across history in bindings and paint callbacks. Means are computed per record,

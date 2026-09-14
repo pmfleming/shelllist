@@ -17,7 +17,7 @@ function controller() {
     const state = {
         Lifecycle, calls, cancelled, now: 10 * 86400000,
         resourcesVisible: true, selectedResult: { id: "A" },
-        resourceHistory: [], pendingResourceHistory: [], historyTargetId: "",
+        resourceHistory: [], pendingResourceHistory: [], resourceHistorySummary: null, pendingHistorySummary: null, historyTargetId: "",
         activeHistoryRequestId: "", historyWindowStartMs: 0, historyWindowEndMs: 0,
         historyRange: "30m", historyRequestRange: "", revisionRequestId: "",
         historyCursor: "", pendingHistoryCursor: "",
@@ -43,7 +43,8 @@ function controller() {
 
 function respond(c, points, cursor, hasMore = false) {
     c.applyResourceHistory(c.activeHistoryRequestId,
-        { target_id: c.historyTargetId, points, next_cursor: cursor, has_more: hasMore });
+        { target_id: c.historyTargetId, points, next_cursor: cursor, has_more: hasMore,
+          summary: { window_start_ms: c.historyWindowStartMs, window_end_ms: c.historyWindowEndMs, revision: "stable", metrics: {} } });
 }
 
 {
@@ -121,4 +122,20 @@ function respond(c, points, cursor, hasMore = false) {
     assert.equal(c.historyCursor, "two");
 }
 
-console.log("application history: target/range isolation, incremental pagination, pruning and recovery passed");
+{
+    const c = controller();
+    c.requestResourceHistory();
+    const end = c.historyWindowEndMs;
+    c.now += 60000;
+    respond(c, [{ timestamp_ms: end - 15000 }], "first", true);
+    assert.equal(c.calls.at(-1)[5], end, "pagination freezes its window end");
+    respond(c, [{ timestamp_ms: end }], "last");
+    assert.equal(c.resourceHistorySummary.window_end_ms, end);
+    assert.equal(c.historyWindowEndMs, end, "do not relabel old statistics with a later window");
+    c.requestResourceHistory(true);
+    assert.equal(c.resourceHistorySummary, null, "no stale summary during a new window request");
+    c.applyResourceHistory(c.activeHistoryRequestId, { target_id: "A", points: [], summary: {window_start_ms: 0, window_end_ms: 0} });
+    assert.equal(c.historyInFlight, false);
+    assert.equal(c.resourceHistorySummary, null);
+}
+console.log("application history: target/window isolation, native summaries, pagination and recovery passed");

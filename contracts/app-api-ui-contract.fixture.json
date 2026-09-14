@@ -1,15 +1,14 @@
 {
   "protocol": "app-api",
-  "version": 1,
   "registry": {
     "methods": [
       {
         "name": "applications.query",
         "params_example": {
-          "query": "",
           "category": "",
           "generation": 1,
-          "limit": 500
+          "limit": 500,
+          "query": ""
         },
         "response_key": "applications",
         "stream": "applications.changed"
@@ -22,26 +21,31 @@
       },
       {
         "name": "applications.history",
-        "params_example": {
-          "target_id": "org.example.App.desktop",
-          "since_ms": 0,
-          "cursor": null,
-          "limit": 1000
-        },
-        "response_key": "history",
-        "stream": "applications.changed",
         "pagination": {
           "kind": "opaque-cursor",
+          "order": "oldest-first",
           "request_field": "cursor",
           "response_field": "next_cursor",
-          "order": "oldest-first"
-        }
+          "summary_field": "summary",
+          "summary_revision_field": "revision",
+          "summary_scope": "full-selected-window",
+          "summary_weighting": "observed-duration"
+        },
+        "params_example": {
+          "cursor": null,
+          "limit": 1000,
+          "since_ms": 0,
+          "target_id": "org.example.App.desktop",
+          "until_ms": 15000
+        },
+        "response_key": "history",
+        "stream": "applications.changed"
       },
       {
         "name": "applications.energyOverview",
         "params_example": {
-          "since_ms": 0,
-          "limit": 20
+          "limit": 20,
+          "since_ms": 0
         },
         "response_key": "energy_overview",
         "stream": "applications.changed"
@@ -49,10 +53,10 @@
       {
         "name": "applications.refresh",
         "params_example": {
-          "query": "",
           "category": "",
           "generation": 1,
-          "limit": 500
+          "limit": 500,
+          "query": ""
         },
         "response_key": "applications",
         "stream": "applications.changed"
@@ -60,21 +64,29 @@
       {
         "name": "applications.execute",
         "params_example": {
-          "target_id": "org.example.App.desktop",
           "action": "activate",
-          "window_id": null,
           "desktop_action_id": null,
           "expected_revision": 1,
+          "target_id": "org.example.App.desktop",
+          "window_id": null,
           "workspace_id": "2"
         },
         "response_key": "operation",
         "stream": "applications.operation"
       },
       {
+        "name": "applications.operation.status",
+        "params_example": {
+          "operation_id": "operation-example"
+        },
+        "response_key": "operation_status",
+        "stream": "applications.operation"
+      },
+      {
         "name": "applications.settings.update",
         "params_example": {
-          "target_id": "org.example.App.desktop",
-          "category": "code"
+          "category": "code",
+          "target_id": "org.example.App.desktop"
         },
         "response_key": "settings",
         "stream": "applications.changed"
@@ -91,5 +103,6 @@
         "name": "applications.operation"
       }
     ]
-  }
+  },
+  "version": 1
 }

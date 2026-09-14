@@ -9,6 +9,9 @@ vm.createContext(Resources);
 vm.runInContext(fs.readFileSync(path.join(launcher, "ApplicationResources.js"), "utf8")
     .replace(/^\.pragma library\s*/, ""), Resources);
 
+assert.equal(Resources.historicalMetricAvailable({cpu_percent_of_machine: 10, coverage: 1}, "cpu_percent_of_machine"), false,
+    "legacy normalization must come from the daemon");
+assert.equal(Resources.historicalMetricAvailable({cpu_percent_of_machine: null, availability: {cpu: true}}, "cpu_percent_of_machine"), false);
 const idle = { timestamp_ms: 15000, duration_ms: 15000, gpu_busy_percent: 0,
     disk_read_bytes_per_second: 0, network_receive_bytes_per_second: 0,
     availability: { gpu: true, storage: true, network_bytes: true } };

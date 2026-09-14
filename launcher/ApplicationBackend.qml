@@ -43,10 +43,11 @@ Io.DaemonBackend {
         });
     }
 
-    function history(id: string, targetId: string, sinceMs: double, cursor: var, limit: int): bool {
+    function history(id: string, targetId: string, sinceMs: double, cursor: var, limit: int, untilMs: double): bool {
         return call(id, AppApi.methods.history, {
             target_id: targetId,
             since_ms: sinceMs,
+            until_ms: untilMs,
             cursor: cursor,
             limit: limit
         });

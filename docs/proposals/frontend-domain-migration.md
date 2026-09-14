@@ -28,7 +28,14 @@ Status: implementation in progress, based on the
   app-daemon's vendored adapter as well. Validation: native parser/socket tests,
   a successful read-only live compositor probe, bar-daemon/app-daemon suites,
   Clippy, 191 QML tests, QML lint and bar API fixture checks. No deployment.
-- Phases 5–6 pending.
+- Phase 5 implemented: app-daemon returns full-window, observed-duration-weighted
+  summaries on every history page, with availability, coverage and preserved
+  network peaks. QML freezes pagination bounds, validates summary revision/window,
+  and no longer scans history for statistics or guesses legacy availability.
+  Validation: 68 app-daemon tests passed (3 opt-in tests ignored), Clippy, 191 QML
+  tests, JS history/availability tests, QML lint and app/resource fixture checks.
+  Not deployed.
+- Phase 6 pending.
 
 ## Goal and rule
 

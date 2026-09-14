@@ -34,6 +34,8 @@ Ui.ProviderChooserController {
     property string revisionRequestId: ""
     property var resourceHistory: []
     property var pendingResourceHistory: []
+    property var resourceHistorySummary: null
+    property var pendingHistorySummary: null
     property string historyTargetId: ""
     property string activeHistoryRequestId: ""
     property double historyWindowStartMs: 0
@@ -73,6 +75,8 @@ Ui.ProviderChooserController {
     }
     function clearResourceHistory(): void {
         resourceHistory = [];
+        resourceHistorySummary = null;
+        pendingHistorySummary = null;
         pendingResourceHistory = [];
         historyTargetId = "";
         activeHistoryRequestId = "";
@@ -195,13 +199,27 @@ Ui.ProviderChooserController {
         historyWindowEndMs = Date.now();
         resourceHistory = Lifecycle.mergeResourceHistory(resourceHistory, [], historyWindowStartMs, historyWindowEndMs);
         pendingResourceHistory = [];
+        resourceHistorySummary = null;
+        pendingHistorySummary = null;
         pendingHistoryCursor = historyCursor;
         activeHistoryRequestId = nextHistoryRequestId();
-        backend.history(activeHistoryRequestId, targetId, historyWindowStartMs, historyCursor || null, 1000);
+        backend.history(activeHistoryRequestId, targetId, historyWindowStartMs, historyCursor || null, 1000, historyWindowEndMs);
     }
     function applyResourceHistory(id: string, history: var): void {
         if (id !== activeHistoryRequestId || (history.target_id || "") !== historyTargetId)
             return;
+        const summary = history.summary;
+        if (!summary || summary.window_start_ms !== historyWindowStartMs || summary.window_end_ms !== historyWindowEndMs) {
+            handleFailure(id, "History summary window mismatch; rebuild app-daemon if summaries are missing");
+            return;
+        }
+        if (pendingHistorySummary && pendingHistorySummary.revision !== summary.revision) {
+            historyCursor = "";
+            resourceHistory = [];
+            handleFailure(id, "History changed during pagination; refresh required");
+            return;
+        }
+        pendingHistorySummary = summary;
         if (history.has_more && (!history.next_cursor || history.next_cursor === pendingHistoryCursor)) {
             handleFailure(id, "History pagination did not advance");
             return;
@@ -210,13 +228,13 @@ Ui.ProviderChooserController {
         pendingHistoryCursor = history.next_cursor || pendingHistoryCursor;
         if (history.has_more) {
             activeHistoryRequestId = nextHistoryRequestId();
-            backend.history(activeHistoryRequestId, historyTargetId, historyWindowStartMs, pendingHistoryCursor, 1000);
+            backend.history(activeHistoryRequestId, historyTargetId, historyWindowStartMs, pendingHistoryCursor, 1000, historyWindowEndMs);
             return;
         }
         activeHistoryRequestId = "";
-        historyWindowStartMs = resourceHistorySinceMs();
-        historyWindowEndMs = Date.now();
         resourceHistory = Lifecycle.mergeResourceHistory(resourceHistory, pendingResourceHistory, historyWindowStartMs, historyWindowEndMs);
+        resourceHistorySummary = pendingHistorySummary;
+        pendingHistorySummary = null;
         historyCursor = pendingHistoryCursor;
         pendingResourceHistory = [];
         pendingHistoryCursor = "";
@@ -306,6 +324,13 @@ Ui.ProviderChooserController {
                 activeHistoryRequestId = "";
                 pendingResourceHistory = [];
                 pendingHistoryCursor = "";
+                pendingHistorySummary = null;
+                resourceHistorySummary = null;
+                status = message;
+                if (message.indexOf("history changed or expired") >= 0) {
+                    historyCursor = "";
+                    resourceHistory = [];
+                }
             }
             return;
         }
