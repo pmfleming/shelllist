@@ -48,7 +48,7 @@ Io.DaemonBackend {
                     controller.applyHistory(id, value);
                 },
                 revision: function (value) {
-                    controller.applyRevision(id, value);
+                    controller.applyRevision(id, data.snapshot_revision);
                 },
                 session: controller.applySession,
                 entry: function (value) {
@@ -77,12 +77,13 @@ Io.DaemonBackend {
     function revision(id: string): bool {
         return call(id, ClipApi.methods.historyRevision, {});
     }
-    function query(id: string, text: string, generation: int, limit: int, offset: int): bool {
+    function query(id: string, text: string, generation: int, limit: int, cursor: string): bool {
         return call(id, ClipApi.methods.historyQuery, {
             query: text,
             generation: generation,
             limit: limit,
-            offset: offset || 0
+            fuzzy: true,
+            cursor: cursor || null
         });
     }
     function details(id: string, entry: var): bool {

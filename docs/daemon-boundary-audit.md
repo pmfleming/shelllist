@@ -79,6 +79,12 @@ argv/logs and are not returned by availability-only requests.
 
 ### 2. Clipboard history snapshot/cursor ownership → clip-daemon
 
+**Implemented after audit:** native catalog search and revision-bound opaque
+cursors; changes invalidate cursors rather than retaining snapshot leases. QML
+loads only requested visible pages and does not reconstruct a search catalog.
+The original literal/offset API remains for legacy clients, not new QML. The
+following evidence/target records the original finding.
+
 **Evidence:** `clipboard/ClipboardController.qml::applyHistory` concatenates pages,
 requests the next page using its local accumulated length, and replaces
 `historyRevision` on each page without requiring a single revision throughout.

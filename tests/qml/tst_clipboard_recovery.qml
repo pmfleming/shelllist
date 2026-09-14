@@ -110,13 +110,40 @@ TestCase {
         verify(!calls.some(call => call.method === "clipboard.entry.edit.commit"));
         reply(controller, "session-begin", {session: {id: "new-session", state: "active"}});
         const queryId = controller.activeHistoryQueryId;
-        reply(controller, queryId, {history: {revision: 2, entries: [{id: "first", revision: 1, kind: "text", preview: "Original", byte_size: 8}], has_more: false}});
+        reply(controller, queryId, {history: {revision: 2, snapshot_revision: "2", total: 1, entries: [{id: "first", revision: 1, kind: "text", preview: "Original", byte_size: 8}], has_more: false}});
         compare(controller.sessionId, "new-session");
         compare(controller.filteredResults.length, 1);
         details.load();
         compare(details.editDraft, "Draft at disconnect");
         verify(details.editing && details.editDirty);
     }
+    function test_nativeSearchLoadsOnlyRequestedPagesAndFencesOldQueries() {
+        const controller = makeController();
+        controller.refresh();
+        const firstId = controller.activeHistoryQueryId;
+        const entries = Array.from({length: 200}, function (_, index) { return { id: "row-" + index, revision: 1, kind: "text", preview: "Row " + index }; });
+        reply(controller, firstId, {history: {snapshot_revision: "123", total: 201, offset: 0, entries: entries, next_cursor: "opaque-next", has_more: true}});
+        wait(0);
+        compare(controller.filteredResults.length, 200);
+        compare(calls.filter(call => call.method === "clipboard.history.query").length, 1, "do not eagerly fetch the catalog");
+        controller.loadMoreHistory();
+        const pageId = controller.activeHistoryQueryId;
+        const pageCall = calls.filter(call => call.method === "clipboard.history.query")[1];
+        compare(pageCall.params.cursor, "opaque-next");
+        compare(pageCall.params.fuzzy, true);
+        compare(pageCall.params.offset, undefined);
+        reply(controller, pageId, {history: {snapshot_revision: "123", total: 201, offset: 200, entries: [{id: "last", revision: 1, kind: "text", preview: "Last"}], has_more: false}});
+        compare(controller.filteredResults.length, 201);
+        compare(controller.filteredResults[200].id, "last");
+        controller.filterText = "cafee";
+        tryVerify(function () { return controller.activeHistoryQueryId.length > 0; });
+        const query = calls.filter(call => call.method === "clipboard.history.query").slice(-1)[0];
+        compare(query.params.query, "cafee");
+        compare(query.params.cursor, null);
+        controller.applyHistory(pageId, {snapshot_revision: "old", entries: []});
+        compare(controller.historyRevision, "123", "a superseded page must not replace the current view");
+    }
+
     function test_hiddenTransportReadyDoesNotOpenClipboardSession() {
         const controller = makeController();
         controller.uiActive = false;

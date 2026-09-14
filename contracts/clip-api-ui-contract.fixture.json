@@ -26,10 +26,22 @@
       },
       {
         "name": "clipboard.history.query",
+        "pagination": {
+          "expires_seconds": 120,
+          "kind": "opaque-cursor",
+          "legacy_offset_mode": "fuzzy=false",
+          "max_page_entries": 200,
+          "max_search_entries": 5000,
+          "request_field": "cursor",
+          "response_field": "next_cursor",
+          "revision_field": "snapshot_revision",
+          "stale_error": "stale-cursor"
+        },
         "params_example": {
+          "cursor": null,
+          "fuzzy": true,
           "generation": 1,
           "limit": 100,
-          "offset": 0,
           "query": ""
         },
         "response_key": "history",

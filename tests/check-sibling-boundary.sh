@@ -18,6 +18,10 @@ if ! diff -qr "$projects/daemon-framework/crates" "$projects/app-daemon/vendor/d
   exit 1
 fi
 
+# Both native search callers must use the exact same pure ranking algorithm.
+diff -q "$projects/shelllist/rust/shelllist-search/Cargo.toml" "$projects/clip-daemon/vendor/shelllist-search/Cargo.toml"
+diff -qr "$projects/shelllist/rust/shelllist-search/src" "$projects/clip-daemon/vendor/shelllist-search/src"
+
 # The resource presentation fixture is also daemon-owned, but remains separate
 # from app-api v1 so it can describe every flattened presentation field.
 app_out=$(nix build "$projects/app-daemon#default" --no-link --print-out-paths --no-write-lock-file)

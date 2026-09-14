@@ -9,8 +9,9 @@ Ui.ProviderChooserController {
         id: clipboardProvider
         controller: clipboardController
     }
-    // Load history pages once and let the shared Rust matcher rank each edit.
-    filterRefreshDelay: 0
+    // clip-daemon ranks its catalog; QML keeps only requested visible pages.
+    providerRankedResults: true
+    filterRefreshDelay: 75
     scheduledRefreshDelay: 90
 
     property string status: "Loading clipboard history…"
@@ -38,11 +39,14 @@ Ui.ProviderChooserController {
     property int selectionIndexAfterRefresh: -1
     property string activeHistoryQueryId: ""
     property string revisionRequestId: ""
-    property double historyRevision: -1
+    property string historyRevision: ""
     property int activeHistoryGeneration: 0
-    property var pendingHistoryEntries: []
+    property string historyCursor: ""
+    property string historyQueryId: ""
+    property string historyQueryText: ""
+    property bool appendingHistory: false
+    property int historyPageNumber: 0
     readonly property int historyPageSize: 200
-    readonly property int historySearchLimit: Math.min(5000, Math.max(historyPageSize, Number(settings.max_entries) || 750))
     readonly property alias detailState: detailsModel
     readonly property var selectedEntry: selectedResult ? selectedResult.payload : null
     readonly property var multiSelectedEntries: Object.keys(multiSelectedIds).map(function (entryId) {
@@ -65,7 +69,7 @@ Ui.ProviderChooserController {
         activateUiState(workspaceId);
         backend.beginSession();
         backend.getSettings();
-        if (historyRevision < 0) {
+        if (!historyRevision.length) {
             selectCurrentAfterRefresh = true;
             selectFirst();
             refresh();
@@ -102,7 +106,7 @@ Ui.ProviderChooserController {
         screenshotInFlight = false;
         activeHistoryQueryId = "";
         revisionRequestId = "";
-        pendingHistoryEntries = [];
+        historyCursor = "";
         deleteMenuOpen = false;
         deleteConfirmationOpen = false;
         bulkDeleteConfirmationOpen = false;
@@ -151,16 +155,31 @@ Ui.ProviderChooserController {
     }
     function requestHistory(id, text, generation, limit) {
         activeHistoryQueryId = id;
+        historyQueryId = id;
+        historyQueryText = text;
         activeHistoryGeneration = generation;
-        pendingHistoryEntries = [];
-        backend.query(id, "", generation, historyPageSize, 0);
+        historyCursor = "";
+        appendingHistory = false;
+        backend.query(id, text, generation, historyPageSize, "");
+    }
+    function maybeLoadMoreHistory() {
+        if (filteredResults.length > 0 && selectedIndex >= filteredResults.length - 4)
+            loadMoreHistory();
+    }
+    function loadMoreHistory() {
+        if (!historyCursor.length || activeHistoryQueryId.length || historyQueryText !== filterText)
+            return;
+        appendingHistory = true;
+        activeHistoryQueryId = historyQueryId + "-page-" + (++historyPageNumber);
+        backend.query(activeHistoryQueryId, historyQueryText, activeHistoryGeneration, historyPageSize, historyCursor);
     }
     function cancelQuery(requestId) {
-        if (requestId === activeHistoryQueryId) {
+        if (requestId === historyQueryId) {
+            if (activeHistoryQueryId.length)
+                backend.cancelRequest(activeHistoryQueryId);
             activeHistoryQueryId = "";
-            pendingHistoryEntries = [];
+            historyCursor = "";
         }
-        backend.cancelRequest(requestId);
     }
     function selectCurrentEntry(currentEntry: var): void {
         if (!selectCurrentAfterRefresh)
@@ -183,7 +202,7 @@ Ui.ProviderChooserController {
         if (id !== revisionRequestId)
             return;
         revisionRequestId = "";
-        if (Number(revision) !== historyRevision) {
+        if (revision !== historyRevision) {
             selectCurrentAfterRefresh = true;
             refresh();
             return;
@@ -193,19 +212,20 @@ Ui.ProviderChooserController {
     function applyHistory(id, history) {
         if (id !== activeHistoryQueryId)
             return;
-        historyRevision = Number(history.revision);
-        pendingHistoryEntries = pendingHistoryEntries.concat(history.entries || []);
-        if (history.has_more && pendingHistoryEntries.length < historySearchLimit) {
-            backend.query(id, "", activeHistoryGeneration, historyPageSize, pendingHistoryEntries.length);
-            return;
-        }
-        const entries = pendingHistoryEntries;
+        if (typeof history.snapshot_revision !== "string")
+            return handleFailure(id, "Rebuild clip-daemon for revision-bound history search");
+        historyRevision = history.snapshot_revision;
+        historyCursor = history.next_cursor || "";
+        const entries = history.entries || [];
+        const results = clipboardProvider.resultsForEntries(entries, history.offset || 0);
         activeHistoryQueryId = "";
-        pendingHistoryEntries = [];
-        applyProviderQuery(id, clipboardProvider.resultsForEntries(entries));
-        reconcileMultiSelection(entries);
+        if (appendingHistory)
+            selectionModel.applyNormalizedBatch({ providerId: "clipboard", queryId: historyQueryId, replace: false, results: results });
+        else
+            applyProviderQuery(historyQueryId, results);
+        reconcileMultiSelection(filteredResults.map(function (result) { return result.payload; }));
         selectCurrentEntry(history.current || null);
-        status = entries.length + " clipboard entries" + (history.has_more ? " · search limited to recent entries" : "");
+        status = filteredResults.length + " of " + history.total + " clipboard entries" + (history.search_limited ? " · search limited to recent entries" : "");
         detailState.scheduleLoad();
     }
     function applySession(session) {
@@ -215,8 +235,6 @@ Ui.ProviderChooserController {
     }
     function handleHistoryChanged(revision: var): void {
         if (revisionRequestId.length > 0)
-            return;
-        if (historyRevision >= 0 && Number(revision) === historyRevision)
             return;
         scheduleRefresh();
     }
@@ -500,11 +518,12 @@ Ui.ProviderChooserController {
             if (id === "capture-screenshot")
                 screenshotInFlight = false;
         }
-        if (isActiveQuery(id)) {
+        if (id === activeHistoryQueryId || isActiveQuery(id)) {
             activeHistoryQueryId = "";
-            pendingHistoryEntries = [];
-            clearProviderResults();
+            historyCursor = "";
             status = message;
+            if (message.indexOf("stale-cursor") >= 0)
+                scheduleRefresh();
         } else if (!detailState.handleFailure(id, message)) {
             status = message;
         }
@@ -549,13 +568,14 @@ Ui.ProviderChooserController {
         leaveMultiSelect();
         activeHistoryQueryId = "";
         revisionRequestId = "";
-        historyRevision = -1;
-        pendingHistoryEntries = [];
+        historyRevision = "";
+        historyCursor = "";
         status = message;
     }
     onSelectedResultChanged: {
         deleteConfirmationOpen = false;
         detailState.selectionChanged();
+        Qt.callLater(maybeLoadMoreHistory);
     }
     ClipboardBackend {
         id: backend

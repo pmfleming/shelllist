@@ -34,6 +34,15 @@ Ui.ChooserListPane {
     bodySpacing: Math.round(Ui.Theme.spacingMd * densityScale)
     onIconClicked: controller.screenshotRequested()
 
+    listOptionsComponent: Component {
+        Ui.ActionToolbar {
+            implicitHeight: pane.controller.historyCursor.length > 0 ? Ui.Theme.controlHeight : 0
+            visible: implicitHeight > 0
+            actions: [{ id: "more", label: "Load more entries", enabled: !pane.controller.refreshInFlight }]
+            onTriggered: pane.controller.loadMoreHistory()
+        }
+    }
+
     rowDelegate: Component {
         ClipboardListRow {
             listPane: pane

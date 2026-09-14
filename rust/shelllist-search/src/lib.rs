@@ -26,25 +26,25 @@ enum SearchCommand {
 }
 
 #[derive(Debug, Deserialize)]
-struct SearchItem {
-    key: String,
+pub struct SearchItem {
+    pub key: String,
     #[serde(default)]
-    title: String,
+    pub title: String,
     #[serde(default)]
-    subtitle: String,
+    pub subtitle: String,
     #[serde(default)]
-    keywords: Vec<String>,
+    pub keywords: Vec<String>,
     #[serde(default)]
-    score: i64,
+    pub score: i64,
     #[serde(default, rename = "providerPriority")]
-    provider_priority: i64,
+    pub provider_priority: i64,
 }
 
 #[derive(Debug, Serialize)]
-struct SearchResponse {
-    owner: String,
-    generation: u64,
-    keys: Vec<String>,
+pub struct SearchResponse {
+    pub owner: String,
+    pub generation: u64,
+    pub keys: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -154,7 +154,7 @@ fn item_match(item: &SearchItem, query: &str) -> Option<(i64, String)> {
     Some((score + title_bonus(&title, query), title))
 }
 
-fn rank(owner: String, generation: u64, query: &str, items: &[SearchItem]) -> SearchResponse {
+pub fn rank(owner: String, generation: u64, query: &str, items: &[SearchItem]) -> SearchResponse {
     let query = normalize(query);
     let query = query.trim();
     let mut ranked = items

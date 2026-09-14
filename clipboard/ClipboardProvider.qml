@@ -66,10 +66,10 @@ Core.Provider {
             payload: entry
         });
     }
-    function resultsForEntries(entries) {
+    function resultsForEntries(entries, offset) {
         const history = entries || [];
         return history.map(function (entry, index) {
-            return provider.resultForEntry(entry, history.length - index);
+            return provider.resultForEntry(entry, 100000 - (offset || 0) - index);
         });
     }
     function query(request) {

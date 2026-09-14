@@ -9,7 +9,14 @@ Status: implementation in progress, based on the
   metadata-only availability, profile-version fencing, no frontend QR files/parser.
   Validation: 109 nm-daemon tests passed (3 ignored), Clippy, 196 QML tests,
   QML lint and NM API/binding contract checks. Not deployed.
-- Phases 2–6 pending.
+- Phase 2 implemented: bounded daemon-side search using the shared native matcher,
+  authenticated owner/query/generation-bound cursors with 120-second expiry and
+  explicit invalidation on revision changes; no retained snapshot leases. QML
+  requests visible pages only and cannot merge superseded replies. Native search
+  is capped at 5,000 recent entries and two concurrent workers. Validation: 48
+  clip-daemon tests, 4 matcher tests, 197 QML tests, Clippy, QML lint and clip API
+  contract checks. Not deployed.
+- Phases 3–6 pending.
 
 ## Goal and rule
 

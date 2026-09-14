@@ -9,6 +9,7 @@ ChooserController {
     property alias filterText: results.queryText
     property alias selectedIndex: results.selectedIndex
     property int filterRefreshDelay: 0
+    property bool providerRankedResults: false
     property int scheduledRefreshDelay: 0
     property bool closeDetailsWithoutSelection: false
     property bool sharedScreenshotEnabled: false
@@ -82,6 +83,8 @@ ChooserController {
     Core.ResultStore {
         id: results
         registry: providers
+        providerRankedResults: controller.providerRankedResults
+        rankRequestsEnabled: !controller.providerRankedResults
     }
 
     Io.ClipboardScreenshotCapture {

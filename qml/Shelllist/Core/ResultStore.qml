@@ -25,7 +25,8 @@ Item {
     property double lastSearchRankLatencyMs: -1
     property var pendingModelResults: []
     property bool rankRequestsEnabled: true
-    readonly property bool fuzzyQuery: queryText.trim().length > 0
+    property bool providerRankedResults: false
+    readonly property bool fuzzyQuery: !providerRankedResults && queryText.trim().length > 0
     readonly property var baselineResults: Model.rankResults(sourceResults, "")
     // Fuzzy work belongs to the Rust matcher. While a request is pending, keep
     // the previous keyed model (or the unfiltered baseline for the first edit)
