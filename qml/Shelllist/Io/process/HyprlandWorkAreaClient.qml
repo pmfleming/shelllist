@@ -1,7 +1,6 @@
 import QtQuick
-import Quickshell.Hyprland
-import Quickshell.Io
-import "../HyprlandWorkArea.js" as WorkArea
+import Shelllist.Io as Io
+import "../../../../bar/BarProtocol.generated.js" as Protocol
 
 Item {
     id: client
@@ -10,109 +9,59 @@ Item {
     property string monitorName: ""
     property var snapshot: null
     property bool ready: false
-    property bool refreshPending: false
-    property bool requestRunning: false
-    property int generation: 0
-    property int requestGeneration: 0
-    property string reply: ""
-    readonly property var insets: WorkArea.insets(snapshot, monitorName)
+    readonly property var insets: snapshot && snapshot.available ? (snapshot.monitors[monitorName] || null) : null
 
-    function refresh(): void {
-        if (!active)
+    function apply(value: var): void {
+        if (!active || !value)
             return;
-        if (requestRunning || process.running) {
-            refreshPending = true;
-            return;
-        }
-        refreshPending = false;
-        requestGeneration = generation;
-        requestRunning = true;
-        reply = "";
-        try {
-            process.exec(["hyprctl", "--batch", "-j", "monitors; workspaces; workspacerules; clients; getoption general:gaps_out"]);
-            watchdog.restart();
-        } catch (error) {
-            requestRunning = false;
+        snapshot = value;
+        if (value.available || value.error)
             ready = true;
-            console.warn("Shelllist workspace geometry:", error);
-        }
     }
-
+    function refresh(): void {
+        if (active)
+            backend.call("work-area-snapshot", Protocol.methods["bar.snapshot"], {});
+    }
     function scheduleRefresh(): void {
         if (active)
-            debounce.restart();
+            Qt.callLater(refresh);
     }
-
+    function unavailable(): void {
+        snapshot = null;
+        ready = true;
+    }
     onActiveChanged: {
-        if (active) {
-            ++generation;
-            ready = false;
-            refresh();
-        } else {
-            debounce.stop();
-            refreshPending = false;
-        }
-    }
-    onMonitorNameChanged: scheduleRefresh()
-
-    Connections {
-        target: Hyprland
-        enabled: client.active
-        function onRawEvent(event): void {
-            if (WorkArea.geometryEvent(event.name))
-                client.scheduleRefresh();
-        }
+        snapshot = null;
+        ready = false;
     }
 
+    // View-loading deadline only; system polling and parsing live in bar-daemon.
     Timer {
-        id: debounce
-        interval: 30
-        onTriggered: client.refresh()
+        interval: 2500
+        running: client.active && !client.ready
+        onTriggered: client.ready = true
     }
-    Timer {
-        // Runtime `hyprctl keyword` changes do not always emit configreloaded.
-        // Poll only while this surface is open, never while the host is idle.
-        interval: 1000
-        repeat: true
-        running: client.active
-        onTriggered: client.refresh()
-    }
-    Timer {
-        id: watchdog
-        interval: 2000
-        onTriggered: {
-            // Also retire failed starts: these need not emit Process.exited.
-            client.requestRunning = false;
-            if (process.running)
-                process.signal(9);
-            if (client.active && client.requestGeneration === client.generation)
-                client.ready = true;
-            if (client.refreshPending)
-                client.scheduleRefresh();
+    Io.DaemonBackend {
+        id: backend
+        objectName: "workAreaBackend"
+        active: client.active
+        endpoint: ({ daemonName: "bar-daemon", protocol: Protocol.protocol, version: Protocol.version,
+            subscribedStreams: [Protocol.streams["workarea.changed"]] })
+        onTransportReady: client.refresh()
+        onTransportFailed: client.unavailable()
+        onResponseReceived: function (id, envelope, transportError) {
+            if (responseError(envelope, transportError, "Work area unavailable"))
+                client.unavailable();
+            else
+                client.apply(envelope.data && envelope.data.snapshot ? envelope.data.snapshot.workarea : null);
         }
-    }
-    Process {
-        id: process
-        stdout: StdioCollector {
-            onStreamFinished: client.reply = text
-        }
-        onExited: function (exitCode) { // qmllint disable signal-handler-parameters
-            watchdog.stop();
-            client.requestRunning = false;
-            const current = client.active && client.requestGeneration === client.generation;
-            if (current && exitCode === 0) {
-                try {
-                    const next = WorkArea.parseBatch(client.reply);
-                    if (JSON.stringify(next) !== JSON.stringify(client.snapshot))
-                        client.snapshot = next;
-                } catch (error) {
-                    console.warn("Shelllist workspace geometry:", error);
-                }
-            }
-            if (current)
-                client.ready = true;
-            if (client.refreshPending)
-                client.scheduleRefresh();
+        onEventReceived: function (event) {
+            if (event.stream !== Protocol.streams["workarea.changed"])
+                return;
+            if (event.event === "lagged")
+                client.refresh();
+            else
+                client.apply(event.data);
         }
     }
 }

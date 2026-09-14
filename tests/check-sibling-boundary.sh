@@ -4,7 +4,7 @@ set -euo pipefail
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 projects=$(cd -- "$root/.." && pwd)
 
-for repository in daemon-framework app-daemon bar-daemon bt-daemon clip-daemon nm-daemon; do
+for repository in daemon-framework shelllist-hyprland app-daemon bar-daemon bt-daemon clip-daemon nm-daemon; do
   if [[ ! -f "$projects/$repository/flake.nix" ]]; then
     echo "missing sibling checkout: $projects/$repository" >&2
     exit 2
@@ -17,6 +17,9 @@ if ! diff -qr "$projects/daemon-framework/crates" "$projects/app-daemon/vendor/d
   echo "app-daemon's vendored framework differs from the candidate; refresh the snapshot first" >&2
   exit 1
 fi
+
+diff -q "$projects/shelllist-hyprland/Cargo.toml" "$projects/app-daemon/vendor/shelllist-hyprland/Cargo.toml"
+diff -qr "$projects/shelllist-hyprland/src" "$projects/app-daemon/vendor/shelllist-hyprland/src"
 
 # Both native search callers must use the exact same pure ranking algorithm.
 diff -q "$projects/shelllist/rust/shelllist-search/Cargo.toml" "$projects/clip-daemon/vendor/shelllist-search/Cargo.toml"
@@ -37,6 +40,7 @@ diff -u \
 # cross-repository gate used before updating the release lock.
 nix flake check "$root" --show-trace --no-write-lock-file \
   --override-input daemon-framework "path:$projects/daemon-framework" \
+  --override-input shelllist-hyprland "path:$projects/shelllist-hyprland" \
   --override-input app-daemon "path:$projects/app-daemon" \
   --override-input bar-daemon "path:$projects/bar-daemon" \
   --override-input bt-daemon "path:$projects/bt-daemon" \

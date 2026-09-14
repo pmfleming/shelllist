@@ -128,6 +128,11 @@ protection limits. Fixtures must distinguish missing measurement from zero.
 
 ### 4. Hyprland state parsing and workspace-rule resolution → native adapter
 
+**Implemented after audit:** typed native batch parsing and rule resolution in
+shelllist-hyprland, with one demand-controlled bar-daemon cache/subscription.
+Removed frontend JSON parsing, selector grammar and geometry subprocess polling.
+QScreen-relative clamping remains QML. The following is the original finding.
+
 **Evidence:** `qml/Shelllist/Io/process/HyprlandWorkAreaClient.qml` repeatedly runs
 `hyprctl --batch -j` while open. `HyprlandWorkArea.js` parses concatenated JSON;
 `HyprlandWorkspaceRules.js` interprets selectors and window counts. This is a

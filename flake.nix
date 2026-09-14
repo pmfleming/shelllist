@@ -29,8 +29,7 @@
     app-daemon = {
       url = "git+file:../app-daemon?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.daemonFramework.follows = "daemon-framework";
-      inputs.hyprlandIpc.follows = "shelllist-hyprland";
+      # Native libraries are vendored; the sibling gate verifies their snapshots.
     };
     bar-daemon = {
       url = "git+file:../bar-daemon?ref=main";

@@ -21,7 +21,14 @@ Status: implementation in progress, based on the
   distinguishes unavailable power from measured zero; QML only renders supplied
   values. Validation: 114 bar-daemon tests passed (1 ignored), Clippy, 197 QML
   tests, chart JS tests, QML lint and bar API fixture checks. Not deployed.
-- Phases 4–6 pending.
+- Phase 4 implemented: native typed Hyprland batch parsing/rule resolution,
+  bounded replies and one bar-daemon geometry cache. Subscription guards control
+  demand; owner loss/cancellation drops demand, and no interested views means no
+  geometry polling. QML retains only screen-relative pixel clamping. Updated
+  app-daemon's vendored adapter as well. Validation: native parser/socket tests,
+  a successful read-only live compositor probe, bar-daemon/app-daemon suites,
+  Clippy, 191 QML tests, QML lint and bar API fixture checks. No deployment.
+- Phases 5–6 pending.
 
 ## Goal and rule
 
