@@ -1,17 +1,14 @@
 .pragma library
 
-// Presentation rules for the daemon's network.health stream. The daemon
-// deliberately emits no notifications, so the decision about what a transition
-// means to the user lives here.
+// Presentation of daemon-classified network.health events. NetworkManager
+// transition/reason policy belongs to nm-daemon; the UI only decides where and
+// when to display its recommendation.
 
 var SUBJECT_LABEL = {
     device: "Network device",
     connection: "Connection",
     vpn: "VPN"
 };
-
-// Reason categories that describe a user's own action or an ordinary step.
-var QUIET_CATEGORIES = ["none", "user-requested", "lifecycle"];
 
 function health(event) {
     return (event && event.health) || {};
@@ -21,28 +18,11 @@ function reason(event) {
     return health(event).reason || {};
 }
 
-function isQuiet(event) {
-    const detail = health(event);
-    if (detail.user_requested)
-        return true;
-    return QUIET_CATEGORIES.indexOf(reason(event).category || "unknown") >= 0;
-}
-
-// Only a daemon-recommended terminal failure is worth interrupting the user
-// with. The `unexpected` fallback keeps compatibility with older daemons.
+// Do not maintain a second terminal-state/reason classifier here. This also
+// permits new daemon-classified failure states without a frontend release.
+// Missing advice stays quiet rather than guessing from legacy raw state.
 function isFailure(event) {
-    const detail = health(event);
-    if (detail.notification_recommended !== undefined) {
-        if (detail.notification_recommended !== true)
-            return false;
-    } else if (!detail.unexpected) {
-        return false;
-    }
-    if (detail.transition_kind !== undefined && detail.transition_kind !== "failure")
-        return false;
-    if (isQuiet(event))
-        return false;
-    return detail.state_name === "failed" || detail.state_name === "deactivated" || detail.state_name === "disconnected" || detail.state_name === "unavailable" || detail.state_name === "unmanaged";
+    return health(event).notification_recommended === true;
 }
 
 function notificationKey(event) {

@@ -1,6 +1,6 @@
 # Daemon frontend commonality
 
-Shelllist uses one frontend integration shape for Wi-Fi, Bluetooth, clipboard, applications, and the top bar while leaving domain policy in the owning adapter and controller.
+Shelllist uses one frontend integration shape for Wi-Fi, Bluetooth, clipboard, applications, and the top bar. Domain policy belongs in the owning Rust daemon; frontend adapters/controllers own view intent, presentation, and applying replies. See the [boundary audit](daemon-boundary-audit.md) for remaining migrations.
 
 ## Endpoint contract
 
@@ -23,15 +23,19 @@ The top bar and its Activity and Battery surfaces use the same `DaemonBackend` p
 
 ## Deliberate domain differences
 
-Common infrastructure does not interpret domain payloads. In particular:
+Common infrastructure does not interpret domain payloads. Domain daemons own
+connection/device policy, validated mutations, edit leases, history consistency,
+application lifecycle execution, and resource statistics. Frontend controllers
+own the corresponding visible prompts, unsaved drafts, selection, requested
+ranges, loading/error state, OSDs and notification presentation.
 
-- Wi-Fi keeps typed connection, secret, hotspot, VPN, and statistics transitions;
-- Bluetooth keeps pairing and cancellable device-operation state;
-- clipboard keeps history pagination, edit sessions, validated multi-entry deletion, and wipe confirmation;
-- applications keep catalog generation, lifecycle operations, and resource history;
-- the top bar keeps OSD and notification presentation.
+Do not move daemon-specific policy into `DaemonBackend` or the generic Rust
+bridge. Existing frontend history orchestration/calculations are migration debt,
+not an architectural requirement.
 
-These differences should remain in domain controllers or adapters rather than becoming switches in `DaemonBackend`.
+The Rust bridge carries typed request addresses and owns subscription-event
+routing/cleanup. QML retains only live view handles and base-subscription
+visibility intent, not per-request routing or subscription-owner dictionaries.
 
 ## Validation
 

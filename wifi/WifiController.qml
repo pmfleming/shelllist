@@ -136,11 +136,7 @@ ProviderChooserController {
         services.share.invalidate();
     }
     function shareSelected() {
-        if (!services.share.canShareSelected()) {
-            status = services.share.status;
-            return;
-        }
-        qr.show(services.share.payload, networkName(detailAp));
+        services.share.showSelected();
     }
     // Scanning from the network list joins the network it read; scanning from
     // the share dialog only reports what it read.

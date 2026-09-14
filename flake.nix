@@ -98,7 +98,6 @@
               pkgs.quickshell
               pkgs.hyprland # hyprctl: layer rules and live workspace placement
               self.packages.${system}.shelllistSearch
-              pkgs.qrencode
               pkgs.kdePackages.qrca
               self.packages.${system}.captivePortalBrowser
               nmDaemon
@@ -914,7 +913,6 @@
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-wifi-qr.js} ${./wifi/WifiQr.js}
             touch $out
           '';
 

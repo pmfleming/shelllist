@@ -31,7 +31,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - `NotificationPresentation`, `NotificationStackHeader`, and `RemovalAnimation` keep grouping, routing, stack headers, and transient removal behavior common between active and historical notifications.
 - Every OSD family uses one normalized descriptor, one `BarOsdContent` frame, and one dismissal timer; pure transition and timeout policy stays in `BarOsdPresentation.js`.
 - `StateLayer` and `Elevation` centralize interaction feedback and depth.
-- Operation lifecycle policy is kept in small JavaScript helpers where it can be tested without a running shell.
+- UI operation-state transitions are kept in small testable JavaScript helpers. Authoritative operation lifecycle policy, validation, leases and effects belong in the owning Rust daemon.
 - Terminal backend events are correlated by request/operation IDs before changing UI state.
 
 ## Reachability evidence
@@ -52,7 +52,7 @@ When changing QML:
 
 1. Keep backend transport in `Shelllist.Io` or a domain backend component.
 2. Keep controllers responsible for state transitions, not visual formatting.
-3. Put pure formatting and policy in testable JavaScript helpers.
+3. Put pure formatting and UI presentation decisions in testable JavaScript helpers; keep domain policy, system parsing and telemetry calculations in the owning Rust daemon. Consult the [boundary audit](daemon-boundary-audit.md) before extending an existing frontend calculation.
 4. Prefer shared UI primitives when behavior is repeated across domains.
 5. Preserve stable delegate identity and avoid replacing models for live updates.
 6. Do not add polling when the daemon already exposes a subscription.

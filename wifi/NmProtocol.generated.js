@@ -25,6 +25,7 @@ var methods = ({
     "vpn.connect": "vpn.connect",
     "vpn.disconnect": "vpn.disconnect",
     "wifi.qr.parse": "wifi.qr.parse",
+    "wifi.qr.render": "wifi.qr.render",
     "wifi.qr.connect": "wifi.qr.connect",
     "wifi.networks": "wifi.networks",
     "wifi.band.status": "wifi.band.status",
@@ -37,6 +38,7 @@ var methods = ({
     "wifi.secret.capabilities": "wifi.secret.capabilities",
     "wifi.secret.provide": "wifi.secret.provide",
     "discovery.services": "discovery.services",
+    "operation.status": "operation.status",
 });
 var streams = ({
     "wifi.status": "wifi.status",

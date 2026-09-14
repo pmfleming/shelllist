@@ -4,16 +4,23 @@ set -euo pipefail
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 projects=$(cd -- "$root/.." && pwd)
 
-for repository in app-daemon bar-daemon bt-daemon clip-daemon nm-daemon; do
+for repository in daemon-framework app-daemon bar-daemon bt-daemon clip-daemon nm-daemon; do
   if [[ ! -f "$projects/$repository/flake.nix" ]]; then
     echo "missing sibling checkout: $projects/$repository" >&2
     exit 2
   fi
 done
 
+# app-daemon deliberately vendors the framework. A candidate matrix using the
+# sibling bridge everywhere else must not silently test an older app bridge.
+if ! diff -qr "$projects/daemon-framework/crates" "$projects/app-daemon/vendor/daemon-framework/crates"; then
+  echo "app-daemon's vendored framework differs from the candidate; refresh the snapshot first" >&2
+  exit 1
+fi
+
 # The resource presentation fixture is also daemon-owned, but remains separate
 # from app-api v1 so it can describe every flattened presentation field.
-app_out=$(nix build "$projects/app-daemon#default" --no-link --print-out-paths)
+app_out=$(nix build "$projects/app-daemon#default" --no-link --print-out-paths --no-write-lock-file)
 resource_actual=$(mktemp)
 trap 'rm -f "$resource_actual"' EXIT
 "$app_out/bin/app-daemon" debug resource-contract-fixture > "$resource_actual"
@@ -24,7 +31,8 @@ diff -u \
 # Unlike the normal reproducible flake check, this intentionally evaluates the
 # sibling worktrees (including uncommitted candidate changes). It is the
 # cross-repository gate used before updating the release lock.
-nix flake check "$root" --show-trace \
+nix flake check "$root" --show-trace --no-write-lock-file \
+  --override-input daemon-framework "path:$projects/daemon-framework" \
   --override-input app-daemon "path:$projects/app-daemon" \
   --override-input bar-daemon "path:$projects/bar-daemon" \
   --override-input bt-daemon "path:$projects/bt-daemon" \

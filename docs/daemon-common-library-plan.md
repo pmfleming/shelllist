@@ -1,5 +1,12 @@
 # Shelllist daemon common-library extraction plan
 
+> Historical extraction plan. Several implementation-status and proposed-layout
+> sections below predate the current split. For current ownership, use
+> [daemon frontend commonality](daemon-frontend-commonality.md) and the
+> [2026-09-13 boundary audit](daemon-boundary-audit.md). In particular,
+> `shelllist-search` now lives with Shelllist, not in daemon-framework; domain
+> policy stays in the domain daemons.
+
 ## Purpose
 
 Extract stable, reusable infrastructure from the five Rust daemons used by Shelllist:

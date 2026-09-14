@@ -8,107 +8,70 @@ Item {
     required property WifiBackend backend
 
     property bool available: false
-    property string payload: ""
     property string profilePath: ""
-    property string requestPath: ""
-    property int cacheGeneration: 0
-    property int requestGeneration: 0
-    property var availabilityCache: ({})
+    property string requestKey: ""
+    property int requestGeneration: -1
     property string status: unavailableMessage
     readonly property string unavailableMessage: "Wi-Fi QR sharing is not available for this network."
 
     function canShareSelected() {
-        return available && payload.length > 0;
+        return available && !backend.isPending("share");
     }
     function reset() {
+        available = false;
         profilePath = "";
-        setAvailability(false, "", unavailableMessage);
-    }
-    function cached(path) {
-        return path.length > 0 ? (availabilityCache[path] || null) : null;
-    }
-    function cache(path, isAvailable, qrPayload, message) {
-        if (path.length === 0)
-            return;
-        const updated = Object.assign({}, availabilityCache);
-        updated[path] = {
-            available: isAvailable,
-            payload: qrPayload,
-            message: message
-        };
-        availabilityCache = updated;
+        status = unavailableMessage;
     }
     function invalidate() {
-        cacheGeneration += 1;
-        availabilityCache = ({});
+        controller.qr.close();
         reset();
     }
     function refresh() {
+        if (controller.qr.open && (!controller.detailAp || controller.detailAp.key !== requestKey))
+            controller.qr.close();
         if (!controller.hasSelection)
             return reset();
-        const result = Flow.shareAvailability(controller.detailAp, controller.profileFor(controller.detailAp), "Wi-Fi QR sharing requires an open network or a saved profile with a readable password.");
-        if (result.state !== "check") {
-            profilePath = "";
-            return setAvailability(result.available, result.payload, result.message);
-        }
-        profilePath = result.profilePath;
-        const cachedResult = cached(result.profilePath);
-        if (cachedResult)
-            return setAvailability(cachedResult.available, cachedResult.payload, cachedResult.message);
-        setAvailability(false, "", "Checking saved Wi-Fi password availability…");
-        if (backend.isPending("share"))
-            return;
-        requestPath = result.profilePath;
-        requestGeneration = cacheGeneration;
-        if (!backend.share(result.profilePath))
-            requestPath = "";
+        // Metadata only: never fetch/cache a credential just to enable a button.
+        const hint = Flow.shareHint(controller.detailAp);
+        profilePath = hint.profile_path || (controller.profileFor(controller.detailAp) || {}).path || "";
+        available = !!hint.shareable || (!!hint.requires_profile_secret_check && profilePath.length > 0);
+        status = available ? "Request Wi-Fi sharing" : (hint.reason || unavailableMessage);
     }
-    function copySelected() {
+    function showSelected() {
         if (!canShareSelected())
             return controller.status = status;
-        controller.copyText(payload, "Wi-Fi QR payload for " + Presentation.networkName(controller.detailAp) + " copied to clipboard");
+        controller.qr.begin(Presentation.networkName(controller.detailAp));
+        requestKey = controller.detailAp.key;
+        requestGeneration = controller.qr.generation;
+        const sent = profilePath.length > 0 ? backend.share(profilePath) : backend.renderShare(Flow.wifiQrPayload(controller.detailAp));
+        if (!sent)
+            fail("Could not request Wi-Fi sharing");
     }
-    function setAvailability(isAvailable, qrPayload, message) {
-        available = isAvailable;
-        payload = qrPayload;
-        status = message;
+    function copySelected() {
+        // Fetch credentials only following explicit intent; copying is then an
+        // explicit action in the share dialog, not from an availability cache.
+        showSelected();
     }
-    function refreshIfOpen() {
-        if (controller.detailsOpen)
-            Qt.callLater(refresh);
-    }
-    function applyResult(result, requestedPath, requestedGeneration) {
-        if (requestedGeneration !== cacheGeneration)
-            return refreshIfOpen();
-        const resultPath = result.path || requestedPath;
-        cache(resultPath, result.available, result.payload, result.message);
-        if (resultPath === profilePath)
-            setAvailability(result.available, result.payload, result.message);
-        else
-            refreshIfOpen();
-    }
-    function applyFailure(requestedPath, requestedGeneration, message) {
-        if (requestedGeneration !== cacheGeneration)
-            return refreshIfOpen();
-        cache(requestedPath, false, "", message);
-        if (requestedPath === profilePath)
-            setAvailability(false, "", message);
-        else
-            refreshIfOpen();
+    function isCurrent() {
+        return controller.qr.open && controller.qr.generation === requestGeneration
+            && controller.detailAp && controller.detailAp.key === requestKey;
     }
     function applyResponse(response, errorText) {
-        const requestedPath = requestPath;
-        const requestedGeneration = requestGeneration;
-        requestPath = "";
+        if (!isCurrent())
+            return;
         try {
-            applyResult(Flow.shareCheckAvailability(Api.apiData(response, "result"), unavailableMessage), requestedPath, requestedGeneration);
+            const result = Api.apiData(response, "result");
+            if (result.path && result.path !== profilePath)
+                return fail("Wi-Fi profile changed; request sharing again");
+            if (!result.shareable || !result.qr_svg)
+                return fail(result.reason || errorText || unavailableMessage);
+            controller.qr.show(result);
         } catch (error) {
-            applyFailure(requestedPath, requestedGeneration, "Could not check Wi-Fi QR sharing: " + (errorText || error));
+            fail(errorText || "Could not prepare Wi-Fi sharing");
         }
     }
     function fail(message) {
-        const failedPath = requestPath;
-        requestPath = "";
-        applyFailure(failedPath, requestGeneration, "Could not check Wi-Fi QR sharing: " + message);
+        if (isCurrent())
+            controller.qr.error = message;
     }
 }

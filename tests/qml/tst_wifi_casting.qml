@@ -91,6 +91,35 @@ TestCase {
         return panel;
     }
 
+    function test_sharingIsExplicitAndLateRepliesCannotRestoreSecrets() {
+        const panel = makePanel(false);
+        const controller = panel.controller;
+        controller.replaceProviderResults([{ id: "wifi:test", provider: "wifi", title: "Test", payload: {
+            key: "test", ssid: "Test", share: { requires_profile_secret_check: true, profile_path: profile(false).path }
+        }}], true);
+        controller.shareController.refresh();
+        verify(controller.shareController.available);
+        compare(calls.length, 0, "availability must never request a password");
+        controller.shareSelected();
+        compare(calls.length, 1);
+        compare(calls[0].params.operation, "share");
+        const response = { protocol: "nm-api", version: 1, ok: true, data: { result: {
+            path: profile(false).path, shareable: true, qr_payload: "secret-payload",
+            password: "secret-password", qr_svg: "<svg xmlns=\"http://www.w3.org/2000/svg\"/>"
+        }}};
+        controller.shareController.applyResponse(response, "");
+        compare(controller.qr.password, "secret-password");
+        verify(controller.qr.imageSource.indexOf("data:image/svg+xml;") === 0);
+        controller.qr.close();
+        controller.shareController.applyResponse(response, "");
+        compare(controller.qr.password, "");
+        compare(controller.qr.payload, "");
+        compare(controller.qr.imageSource, "");
+        controller.qr.begin("Another network");
+        controller.shareController.applyResponse(response, "");
+        compare(controller.qr.password, "", "an old generation cannot fill a reopened dialog");
+    }
+
     function test_togglePersistsBothDirections_data() {
         return [{ tag: "enable", initial: false }, { tag: "disable", initial: true }];
     }

@@ -10,6 +10,7 @@ var methods = ({
     "applications.energyOverview": "applications.energyOverview",
     "applications.refresh": "applications.refresh",
     "applications.execute": "applications.execute",
+    "applications.operation.status": "applications.operation.status",
     "applications.settings.update": "applications.settings.update",
 });
 var streams = ({

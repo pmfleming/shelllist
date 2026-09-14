@@ -133,7 +133,7 @@ Battery settings are written through a privileged system D-Bus helper with polki
 
 `shell/shell.qml` is the only UI entry point. Wi-Fi and Bluetooth load eagerly because the bar and hidden pairing requests need them. Applications and Clipboard load on first use. Opened surfaces remain warm.
 
-Every daemon connection uses the shared JSONL transport with bounded restart backoff. Checked fixtures in `contracts/` prevent frontend/backend protocol drift.
+Every daemon connection uses the shared JSONL transport with bounded restart backoff. Checked fixtures in `contracts/` prevent frontend/backend protocol drift. The [daemon boundary audit](docs/daemon-boundary-audit.md) records current ownership and the remaining frontend-to-daemon migrations.
 
 See the [`docs/` index](docs/README.md), especially:
 

@@ -1,7 +1,5 @@
-import Quickshell
 import Quickshell.Io
 import QtQuick
-import "../WifiQr.js" as WifiQr
 
 Item {
     id: qr
@@ -13,7 +11,6 @@ Item {
     property string password: ""
     property string imageSource: ""
     property string error: ""
-    property string outputPath: ""
     property int generation: 0
 
     /// Emitted with a scanned Wi-Fi QR payload. The payload carries a
@@ -21,27 +18,17 @@ Item {
     signal scanned(string payload, bool join)
     signal copyRequested(string text, string message)
 
-    function runtimeDirectory() {
-        return Quickshell.env("XDG_RUNTIME_DIR") || "";
+    function begin(name) {
+        close();
+        networkName = name;
+        open = true;
     }
 
-    function show(qrPayload, name) {
-        if (outputPath.length > 0)
-            cleaner.exec(["rm", "-f", outputPath]);
-        payload = qrPayload;
-        networkName = name;
-        password = WifiQr.payloadField(qrPayload, "P");
-        imageSource = "";
+    function show(result) {
+        payload = result.qr_payload || "";
+        password = result.password || "";
+        imageSource = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(result.qr_svg);
         error = "";
-        open = true;
-        generation += 1;
-        const runtime = runtimeDirectory();
-        if (!runtime.length) {
-            error = "XDG_RUNTIME_DIR is unavailable; refusing to write a secret-bearing QR image to shared temporary storage.";
-            return;
-        }
-        outputPath = runtime + "/shelllist-wifi-qr-" + generation + ".svg";
-        renderer.exec(["qrencode", "--type=SVG", "--output", outputPath]);
     }
 
     function close() {
@@ -50,8 +37,8 @@ Item {
         password = "";
         imageSource = "";
         error = "";
-        if (outputPath.length > 0)
-            cleaner.exec(["rm", "-f", outputPath]);
+        networkName = "";
+        generation += 1;
     }
 
     function copyPayload() {
@@ -75,17 +62,6 @@ Item {
         return true;
     }
 
-    function finishRendering(exitCode) {
-        if (!open) {
-            if (outputPath.length > 0)
-                cleaner.exec(["rm", "-f", outputPath]);
-        } else if (exitCode === 0) {
-            imageSource = "file://" + outputPath;
-        } else {
-            error = renderError.text.length > 0 ? renderError.text : "QR renderer exited with " + exitCode;
-        }
-    }
-
     function finishScanning(exitCode) {
         if (exitCode !== 0) {
             const detail = scannerError.text.length > 0 ? scannerError.text : "exit " + exitCode;
@@ -103,30 +79,6 @@ Item {
             return;
         }
         qr.scanned(scannedText, join);
-    }
-
-    Process {
-        id: renderer
-        stdinEnabled: true
-        stderr: StdioCollector {
-            id: renderError
-            waitForEnd: true
-        }
-        onStarted: {
-            // Keep secret-bearing QR payloads off argv and process listings.
-            renderer.write(qr.payload);
-            renderer.stdinEnabled = false;
-        }
-        // Quickshell's qmltypes omit QProcess::ExitStatus; keep this scoped.
-        // qmllint disable signal-handler-parameters
-        onExited: function (exitCode: int): void {
-            qr.finishRendering(exitCode);
-        }
-        // qmllint enable signal-handler-parameters
-    }
-
-    Process {
-        id: cleaner
     }
 
     Process {

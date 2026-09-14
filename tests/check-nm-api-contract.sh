@@ -148,6 +148,7 @@ jq -r '
           or .name == "wifi.profile.operation"
           or .name == "wifi.secret.provide"
           or .name == "wifi.qr.parse"
+          or .name == "wifi.qr.render"
           or .name == "wifi.qr.connect"
           or .name == "network.inventory"
           or .name == "network.status"

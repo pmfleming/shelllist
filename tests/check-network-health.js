@@ -37,12 +37,19 @@ const daemonSuppressed = event({
 });
 expect("daemon suppressed failure stays quiet", health.isFailure(daemonSuppressed), false);
 
-const inconsistentProgress = event({
-    subject: "device", state_name: "failed", unexpected: true, user_requested: false,
-    transition_kind: "progress", notification_recommended: true,
-    reason: { code: 17, name: "dhcp-failed", category: "address-assignment" }
+const futureFailure = event({
+    subject: "device", state_name: "new-daemon-failure-state", unexpected: true,
+    transition_kind: "failure", notification_recommended: true,
+    reason: { code: 999, name: "new-reason", category: "new-category" }
 });
-expect("non-failure transition kind stays quiet", health.isFailure(inconsistentProgress), false);
+expect("new daemon-classified states do not require a UI classifier update", health.isFailure(futureFailure), true);
+expect("missing recommendation does not trigger legacy state inference", health.isFailure(event({
+    subject: "device", state_name: "failed", unexpected: true,
+    reason: { code: 17, name: "dhcp-failed", category: "address-assignment" }
+})), false);
+expect("non-boolean advice is not interpreted as approval", health.isFailure(event({
+    notification_recommended: "true"
+})), false);
 
 const userDisconnect = event({
     subject: "connection", state_name: "deactivated", unexpected: false, user_requested: true,

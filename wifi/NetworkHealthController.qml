@@ -1,14 +1,14 @@
 import QtQuick
 import "NetworkHealth.js" as Health
 
-// Consumes the daemon's network.health stream. The daemon reports what
-// NetworkManager did; deciding what the user sees is this controller's job.
+// nm-daemon owns failure classification and cross-source correlation. This
+// controller owns only the status-line presentation and duplicate UI feedback.
 Item {
     required property WifiController controller
 
     // Most recent transition, whether or not it was worth surfacing.
     property var lastEvent: null
-    // Most recent transition that looked like a real failure.
+    // Most recent transition the daemon recommended surfacing.
     property var lastFailure: null
     property string lastNotificationKey: ""
     property double lastNotificationAtMs: 0

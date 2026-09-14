@@ -21,6 +21,7 @@ var methods = {
     vpn_connect: Protocol.methods["vpn.connect"],
     vpn_disconnect: Protocol.methods["vpn.disconnect"],
     wifi_qr_parse: Protocol.methods["wifi.qr.parse"],
+    wifi_qr_render: Protocol.methods["wifi.qr.render"],
     wifi_qr_connect: Protocol.methods["wifi.qr.connect"],
     wifi_networks: Protocol.methods["wifi.networks"],
     wifi_band_status: Protocol.methods["wifi.band.status"],

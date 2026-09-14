@@ -97,37 +97,6 @@ function canShareQr(ap) {
 function wifiQrPayload(ap) {
     return canShareQr(ap) ? (shareHint(ap).qr_payload || "") : "";
 }
-function shareAvailability(ap, profile, fallbackMessage) {
-    const share = shareHint(ap);
-    if (canShareQr(ap))
-        return {
-            state: "ready",
-            available: true,
-            payload: wifiQrPayload(ap),
-            message: "Wi-Fi QR payload is ready."
-        };
-    const profilePath = share.profile_path || (profile && profile.path) || "";
-    if (!share.requires_profile_secret_check || profilePath.length === 0)
-        return {
-            state: "unavailable",
-            available: false,
-            payload: "",
-            message: share.reason || fallbackMessage
-        };
-    return {
-        state: "check",
-        profilePath: profilePath
-    };
-}
-function shareCheckAvailability(result, fallbackMessage) {
-    const available = !!result.shareable && !!result.qr_payload;
-    return {
-        path: result.path || "",
-        available: available,
-        payload: available ? result.qr_payload : "",
-        message: available ? "Wi-Fi QR payload is ready." : (result.reason || fallbackMessage)
-    };
-}
 
 function isWrongPasswordReason(reason) {
     return reason === "wrong-password";
