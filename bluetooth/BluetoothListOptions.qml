@@ -6,17 +6,18 @@ ColumnLayout {
 
     required property BluetoothController controller
     property bool expanded: false
+    signal settingsRequested()
     objectName: "bluetoothListOptions"
     spacing: Ui.Theme.spacingSm
 
-    RowLayout {
+    ColumnLayout {
         Layout.fillWidth: true
         Ui.ActionButton {
             objectName: "openBluetoothSettings"
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             label: qsTr("Bluetooth settings")
-            onClicked: options.controller.openBluetoothSettings()
+            onClicked: options.settingsRequested()
         }
         Ui.ActionButton {
             objectName: "disclosureButton"

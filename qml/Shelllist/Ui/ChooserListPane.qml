@@ -25,6 +25,8 @@ ColumnLayout {
     property var refreshHandler: null
     property bool focusOnCompleted: false
     property bool iconActionEnabled: false
+    property string iconAccessibleName: ""
+    readonly property real headerHeight: header.height
     property string searchActionIcon: ""
     property string searchActionToolTip: ""
     property bool searchActionEnabled: true
@@ -82,6 +84,7 @@ ColumnLayout {
         refreshIcon: pane.refreshIcon
         focusOnCompleted: pane.focusOnCompleted
         iconActionEnabled: pane.iconActionEnabled
+        iconAccessibleName: pane.iconAccessibleName
         searchActionIcon: pane.searchActionIcon
         searchActionToolTip: pane.searchActionToolTip
         searchActionEnabled: pane.searchActionEnabled

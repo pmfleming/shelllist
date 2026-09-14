@@ -367,16 +367,23 @@ Ui.ProviderChooserController {
         detailsOpen = true;
     }
     function openDetails() {
-        if (!hasSelection)
-            detailsTab = "adapter";
+        if (!hasSelection) return;
+        if (detailsTab === "adapter")
+            detailsTab = "device";
         detailsOpen = true;
     }
-    onHasSelectionChanged: if (!hasSelection && detailsOpen)
-        detailsTab = "adapter"
+    function toggleDetails() {
+        if (detailsTab === "adapter")
+            openDetails();
+        else
+            detailsOpen ? closeDetails() : openDetails();
+    }
+    onHasSelectionChanged: if (!hasSelection && detailsOpen && detailsTab !== "adapter")
+        closeDetails()
 
     function cycleDetailsTab() {
-        if (!detailsOpen || !hasSelection) return false;
-        const tabs = ["device", "information", "adapter"];
+        if (!detailsOpen || !hasSelection || detailsTab === "adapter") return false;
+        const tabs = ["device", "information"];
         const currentIndex = Math.max(0, tabs.indexOf(detailsTab));
         detailsTab = tabs[(currentIndex + 1) % tabs.length];
         return true;
