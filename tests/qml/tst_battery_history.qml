@@ -16,7 +16,7 @@ TestCase {
         Battery.BatteryHistoryCard {
             width: 500
             battery: ({ available: true, percentage: 89, charging: false })
-            history: ({ points: [
+            history: ({ energy: { bars: [{ x0: 0, x1: 0.5, value: 2.5, observedMs: 900000 }], totalWh: 2.5, maximum: 2.5, intervalMs: 900000, activeDurationMs: 1800000 }, points: [
                 { timestamp_ms: 1788046659368, active_time_ms: 0,
                     continuous: false, percentage: 100, charging: false, plugged: false, power_watts: 8 },
                 { timestamp_ms: 1788047559368, active_time_ms: 900000,
@@ -77,7 +77,8 @@ TestCase {
     function test_forecastLimitAndSharedHover() {
         const card = createTemporaryObject(historyCard, testCase, {
             battery: { available: true, percentage: 60, charging: true, time_to_full_seconds: 3600,
-                protection: { enabled: true, end_percent: 80 } }
+                protection: { enabled: true, end_percent: 80 },
+                forecast: { limit: 80, target: 80, percentage: 60, seconds: 1800, estimating: false, status: "valid" } }
         });
         verify(waitForRendering(card));
         const charge = findChild(card, "chargeHistoryGraph");
@@ -97,12 +98,14 @@ TestCase {
         energy.hovered(-1);
         compare(charge.hoverPosition, -1);
         card.battery = { available: true, percentage: 88, charging: false,
-            protection: { enabled: true, end_percent: 80 } };
+            protection: { enabled: true, end_percent: 80 },
+            forecast: { limit: 80, target: 80, percentage: 88, seconds: 0, estimating: false, status: "limit-reached" } };
         compare(card.forecast.seconds, 0);
         compare(card.historyFraction, 1);
         verify(findChild(charge, "chargeLimitLabel").visible);
         compare(card.estimateText, "Charge limit reached");
-        card.battery = { available: true, percentage: 60, charging: true, time_to_full_seconds: 234972 };
+        card.battery = { available: true, percentage: 60, charging: true, time_to_full_seconds: 234972,
+            forecast: { limit: null, target: 100, percentage: 60, seconds: 0, estimating: true, status: "estimating" } };
         compare(card.forecast.seconds, 0);
         compare(card.estimateText, "Estimating charge time…");
     }

@@ -107,6 +107,11 @@ snapshot. Keep stale mutation/revision rejection in the daemon.
 
 ### 3. Battery history energy and forecast semantics → bar-daemon
 
+**Implemented after audit:** cached native Wh bins/coverage and typed forecast
+status/target/ETA, with explicit aggregate scope and power measurement validity.
+Removed the JS energy and forecast implementations. The following records the
+original finding.
+
 **Evidence:** `battery/BatteryHistory.js` still defines discharge eligibility,
 trapezoidal Wh integration, observed-time bins, target-charge ETA scaling and
 maximum acceptable charge estimates. `bar-daemon/src/battery/history.rs` already

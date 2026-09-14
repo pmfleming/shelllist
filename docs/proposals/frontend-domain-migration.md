@@ -16,7 +16,12 @@ Status: implementation in progress, based on the
   is capped at 5,000 recent entries and two concurrent workers. Validation: 48
   clip-daemon tests, 4 matcher tests, 197 QML tests, Clippy, QML lint and clip API
   contract checks. Not deployed.
-- Phases 3–6 pending.
+- Phase 3 implemented: bar-daemon owns cached discharge-energy bins, observed
+  coverage, actual-limit ETA scaling and forecast status. Native telemetry now
+  distinguishes unavailable power from measured zero; QML only renders supplied
+  values. Validation: 114 bar-daemon tests passed (1 ignored), Clippy, 197 QML
+  tests, chart JS tests, QML lint and bar API fixture checks. Not deployed.
+- Phases 4–6 pending.
 
 ## Goal and rule
 

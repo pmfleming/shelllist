@@ -12,7 +12,7 @@ Rectangle {
     required property var history
     required property var battery
 
-    readonly property var forecast: History.chargeForecast(battery)
+    readonly property var forecast: battery.forecast || ({ limit: null, target: 100, seconds: 0, estimating: false, status: "unavailable" })
     readonly property real historyFraction: forecast.seconds > 0 ? Math.max(60000, chargeGraph.series.activeDurationMs) / (Math.max(60000, chargeGraph.series.activeDurationMs) + forecast.seconds * 1000) : 1
     // Match the application resource timeline's 150px label rail, including padding.
     readonly property real axisWidth: Math.min(138, Math.max(96, content.width * 0.36))
@@ -23,7 +23,7 @@ Rectangle {
     readonly property var hoveredEnergy: hoverPosition >= 0 && historicalPosition <= 1 ? energyGraph.energySeries.bars.find(function (bar) {
         return card.historicalPosition >= bar.x0 && card.historicalPosition <= bar.x1;
     }) : null
-    readonly property string estimateText: forecast.seconds > 0 ? "~" + Presentation.duration(forecast.seconds) + " to " + forecast.target + "%" + (forecast.limit !== null ? " limit" : " full") : (forecast.estimating ? "Estimating charge time…" : (battery.available && forecast.limit !== null && battery.percentage >= forecast.target ? "Charge limit reached" : ""))
+    readonly property string estimateText: forecast.seconds > 0 ? "~" + Presentation.duration(forecast.seconds) + " to " + forecast.target + "%" + (forecast.limit !== null ? " limit" : " full") : (forecast.estimating ? "Estimating charge time…" : (forecast.status === "limit-reached" ? "Charge limit reached" : ""))
 
     width: parent ? parent.width : 0
     implicitHeight: content.implicitHeight + 2 * Ui.Theme.spacingMd
@@ -86,6 +86,7 @@ Rectangle {
             objectName: "energyHistoryGraph"
             points: card.history.points || []
             energy: true
+            energySeries: card.history.energy || ({ bars: [], maximum: 0, totalWh: 0, intervalMs: 0, activeDurationMs: 0 })
             label: qsTr("Energy used")
             valueText: energySeries.bars.length > 0 ? "~" + energySeries.totalWh.toFixed(2) + " Wh" : qsTr("Unavailable")
             referenceText: energySeries.bars.length > 0 ? "max " + maximum.toFixed(1) + " Wh/bin" : qsTr("No measurements")
@@ -101,6 +102,7 @@ Rectangle {
 
         Ui.FieldLabel {
             Layout.fillWidth: true
+            visible: energyGraph.energySeries.bars.length > 0
             text: "Estimated from discharge power · " + Presentation.duration(energyGraph.energySeries.intervalMs / 1000) + " observed-time bins; gaps excluded"
             color: Ui.Theme.subtleText
             font.pixelSize: Ui.Theme.fontSizeCaption

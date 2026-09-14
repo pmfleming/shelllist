@@ -57,44 +57,7 @@ for (const invalid of [null, undefined, NaN, Infinity, -1])
     assert.equal(series([point(0, invalid, 80, false)]).segments.length, 0);
 const backwards = series([point(minute, minute, 80), point(0, 0, 70)]);
 assert.equal(backwards.segments.length, 2, "never interpolate backwards through a clock reset");
-// Estimated energy is integrated in Wh, split into equal active-time bins.
-const discharge = { mode: "discharging", power_watts: 8 };
-const energy = history.energySeries([
-    point(0, 0, 80, false, discharge),
-    point(15 * minute, 15 * minute, 75, true, { ...discharge, power_watts: 12 }),
-    point(2 * day, 15 * minute, 70, false, discharge),
-    point(2 * day + 15 * minute, 30 * minute, 65, true, discharge)
-]);
-equal(energy.bars.map(bar => [bar.x0, bar.x1, bar.value]), [[0, 0.5, 2.5], [0.5, 1, 2]]);
-assert.equal(energy.totalWh, 4.5, "sleep must not consume energy or axis width");
-const split = history.energySeries([point(0, 0, 80, false, discharge),
-    point(30 * minute, 30 * minute, 70, true, { ...discharge, power_watts: 16 })]);
-equal(split.bars.map(bar => bar.value), [2.5, 3.5], "integrate the ramp on each side of a bin boundary");
-for (const extra of [{ power_watts: null }, { power_watts: -1 }, { power_watts: Infinity },
-    { mode: "charging" }, { mode: "holding" }, { continuous: false }, { timestamp_ms: 0 }]) {
-    assert.equal(history.energySeries([point(0, 0, 80, false, discharge),
-        point(minute, minute, 79, true, { ...discharge, ...extra })]).bars.length, 0);
-}
-assert.equal(history.energySeries([point(0, 0, 80, false, discharge),
-    point(day, 0, 70, false, discharge)]).bars.length, 0);
-const partial = history.energySeries([point(0, 0, 80, false, discharge),
-    point(5 * minute, 5 * minute, 79, true, discharge)]);
-assert.equal(partial.bars[0].observedMs, 5 * minute, "partial coverage stays explicit");
-assert.equal(partial.totalWh, 8 / 12, "do not extrapolate unobserved parts of a bin");
-
-const battery = { available: true, percentage: 60, charging: true, time_to_full_seconds: 3600 };
-// The QML history-card test covers an actual charge limit, reaching it, and hover.
-assert.equal(history.chargeForecast({ ...battery, charging: false }).seconds, 0);
-assert.equal(history.chargeForecast({ ...battery, available: false }).seconds, 0);
-for (const seconds of [0, null, -1, NaN, Infinity, 234972]) {
-    const forecast = history.chargeForecast({ ...battery, time_to_full_seconds: seconds });
-    assert.equal(forecast.seconds, 0);
-    assert.equal(forecast.estimating, true);
-}
-for (const protection of [{ enabled: false, desired_enabled: true, end_percent: 80 },
-    { enabled: true, end_percent: 80, charge_once_active: true },
-    { enabled: true, end_percent: null }]) {
-    assert.equal(history.chargeForecast({ ...battery, protection }).limit, null,
-        "show actual limits, not desired or temporarily bypassed ones");
-}
-console.log("battery history: discontinuities, discharge energy and invalid forecasts passed");
+// Domain energy/forecast cases now live in bar-daemon/src/battery/derived.rs.
+assert.equal(history.energySeries, undefined, "no frontend integration fallback");
+assert.equal(history.chargeForecast, undefined, "no frontend forecast fallback");
+console.log("battery history: chart coordinates, discontinuities and domain boundary passed");

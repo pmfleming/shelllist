@@ -27,8 +27,8 @@ Item {
     property bool showTimeAxis: false
 
     readonly property var series: History.series(points, "percentage", 100, false)
-    readonly property var energySeries: History.energySeries(points)
-    readonly property real maximum: energy ? energySeries.maximum : 100
+    property var energySeries: ({ bars: [], maximum: 0, totalWh: 0, intervalMs: 0, activeDurationMs: 0 })
+    readonly property real maximum: energy ? Math.max(0.1, energySeries.maximum) : 100
 
     signal hovered(real position)
 
