@@ -102,11 +102,18 @@ footer geometry remains covered by `tst_battery_tabs.qml`.
 
 ## Quality gates
 
-Run the complete gate before merging structural changes:
+Run the complete co-development gate before merging structural changes:
 
 ```sh
-nix flake check
+tests/check-sibling-boundary.sh
 ```
+
+This checks current sibling Git worktrees, including tracked uncommitted changes,
+without requiring lock updates. Git-add new source files first. It also rejects
+vendored snapshot drift, rather than silently validating an older library. Use
+`nix flake check --keep-going --no-update-lock-file` separately for reproducible
+release validation; ordinary Nix commands do not automatically refresh local Git
+pins.
 
 Useful focused commands:
 

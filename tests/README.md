@@ -115,10 +115,17 @@ Neither check was removed or weakened, and neither the fixtures nor the lock
 were updated to hide the failures. Locked integration and candidate sibling
 worktree integration remain separate concerns.
 
-Recommended commands, from the project's declared development environment:
+Recommended co-development commands, from the declared development environment:
 
 ```sh
-nix flake check --keep-going --no-update-lock-file
+tests/check-sibling-boundary.sh
 python tests/test_profile_qml.py
 tests/run-qml-tests.sh
 ```
+
+The sibling gate overrides release pins with current local Git worktrees and
+checks vendored snapshots before the full flake matrix. Tracked uncommitted
+changes are included; Git-add new files first. It leaves locks and installed
+services untouched. Run `nix flake check --keep-going --no-update-lock-file`
+separately when validating reproducible release pins, not as a substitute for
+current-sibling compatibility.

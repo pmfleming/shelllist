@@ -254,8 +254,20 @@ Animations default on under Hyprland and off elsewhere. Set `SHELLLIST_NO_ANIMAT
 
 ```sh
 nix develop
-nix flake check
+tests/check-sibling-boundary.sh
 ```
+
+The sibling gate is the default **co-development compatibility check**. Every run
+uses the current local Git worktrees of all five daemons, `daemon-framework`, and
+`shelllist-hyprland`, rather than the revisions in `flake.lock`. It includes
+tracked uncommitted changes; Git-add new source files first. It does not fetch
+remote branches, update locks, or activate binaries/services.
+
+Nix always resolves ordinary Git flake inputs through a lock, even a local URL
+with `ref=main`. Rebuilding does not advance those pins, and
+`--no-write-lock-file` alone does not refresh existing pins. The sibling gate
+explicitly overrides them, so compatibility regressions in current development
+are visible without a manual lock update.
 
 Focused checks:
 
@@ -284,13 +296,19 @@ presented frame, cold content readiness, search ranking, and catalog-to-model
 latency. `shelllist responsiveness` exposes the latest in-process timestamps for
 manual diagnosis.
 
-`nix flake check` verifies the reproducibly locked daemon contract fixtures, JavaScript policy tests, QML tests, module evaluation, and the packaged host. Before advancing daemon locks, run the candidate worktree matrix:
+The sibling gate runs the full flake checks against current local inputs:
+daemon contracts, JavaScript policy tests, QML tests, module evaluation, and the
+packaged host. It also checks vendored framework/Hyprland/search snapshots and the
+application resource fixture. Vendored code is not automatically replaced by an
+input override: snapshot drift intentionally fails the gate and must be reviewed
+in its owning daemon repository.
+
+Keep the lock for reproducible release validation, separately from co-development:
 
 ```sh
-tests/check-sibling-boundary.sh
+nix flake check --keep-going --no-update-lock-file
 ```
 
-Git-add new source files first. The gate includes tracked, uncommitted changes
-while excluding ignored build artifacts. It neither updates release pins nor
-activates binaries or services; the ordinary locked check still requires matching
-release pins after cross-repository API changes.
+Advance release pins deliberately after the local compatibility gate passes.
+Ordinary `nix build`, `nix run`, and `nix develop` still use locked inputs; the
+floating-input policy applies to the sibling compatibility gate.
