@@ -13,7 +13,6 @@ ColumnLayout {
     required property var application
     required property real uiScale
 
-    readonly property var measurement: application.measurement || ({})
     readonly property var points: controller.resourceHistory || []
     readonly property var latestPoint: points.length > 0 ? points[points.length - 1] : ({})
     readonly property var current: application.running ? application : latestPoint

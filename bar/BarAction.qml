@@ -6,7 +6,6 @@ Item {
 
     required property string text
     property color foreground: Ui.Theme.text
-    property color hoverColor: Ui.Theme.hover
     property color backgroundColor: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.56)
     property color borderColor: Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72)
     property int horizontalPadding: 10

@@ -59,7 +59,6 @@ Rectangle {
     }
 
     Item {
-        id: summary
         anchors.left: header.left
         anchors.right: header.right
         anchors.top: header.bottom

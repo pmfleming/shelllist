@@ -27,7 +27,6 @@ Ui.ChooserController {
         uiActive: controller.uiActive
     }
     readonly property var notifications: notificationState.notifications
-    readonly property var activeNotificationGroups: notificationState.activeGroups
     property bool preserveNavigationOnDeactivate: false
     property var timezone: ({
             available: false,

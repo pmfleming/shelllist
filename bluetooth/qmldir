@@ -16,7 +16,6 @@ internal BluetoothDeviceActions BluetoothDeviceActions.qml
 internal BluetoothNameEdits BluetoothNameEdits.qml
 internal BluetoothDeviceAudio BluetoothDeviceAudio.qml
 internal BluetoothDevicePolicy BluetoothDevicePolicy.qml
-internal BluetoothFastPairSetup BluetoothFastPairSetup.qml
 internal BluetoothOperationController BluetoothOperationController.qml
 internal BluetoothAdapterSettings BluetoothAdapterSettings.qml
 internal BluetoothAdapterEdits BluetoothAdapterEdits.qml

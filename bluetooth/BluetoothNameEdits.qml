@@ -1,7 +1,6 @@
 import QtQuick
 
 Item {
-    id: edits
     required property BluetoothController controller
     required property BluetoothBackend backend
     property var drafts: ({})

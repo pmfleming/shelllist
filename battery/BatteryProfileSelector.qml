@@ -64,7 +64,6 @@ Item {
             model: selector.options
 
             delegate: Ui.ActionButton {
-                id: button
                 required property int index
                 required property var modelData
                 readonly property bool selected: selector.value === modelData.value
