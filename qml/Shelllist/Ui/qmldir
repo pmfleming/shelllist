@@ -8,6 +8,7 @@ ActionToggleList 1.0 ActionToggleList.qml
 ActionToolbar 1.0 ActionToolbar.qml
 CenteredMessage 1.0 CenteredMessage.qml
 ChartFrame 1.0 ChartFrame.qml
+singleton ChartDrawing 1.0 ChartDrawing.qml
 ChooserController 1.0 ChooserController.qml
 ChooserHeader 1.0 ChooserHeader.qml
 internal ChooserListBody ChooserListBody.qml

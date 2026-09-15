@@ -221,38 +221,17 @@ Rectangle {
                     }
                     function drawSeries(context, descriptor, descriptorIndex, maximum) {
                         const baseline = lane.modelData.chartStyle === "paired" ? height / 2 : height - 3;
-                        validSegments(descriptor, descriptorIndex, maximum).forEach(function (points) {
-                            if (points.length > 1) {
-                                context.beginPath();
-                                context.moveTo(points[0].x, baseline);
-                                points.forEach(function (point) {
-                                    context.lineTo(point.x, point.y);
-                                });
-                                context.lineTo(points[points.length - 1].x, baseline);
-                                context.closePath();
-                                if (lane.modelData.chartStyle === "paired") {
-                                    context.fillStyle = Ui.Theme.withAlpha(descriptor.color, 0.12);
-                                } else {
-                                    const fill = context.createLinearGradient(0, height * 0.2, 0, baseline);
-                                    fill.addColorStop(0, Ui.Theme.withAlpha(descriptor.color, 0.2));
-                                    fill.addColorStop(1, Ui.Theme.withAlpha(descriptor.color, 0.025));
-                                    context.fillStyle = fill;
-                                }
-                                context.fill();
-                            }
-                            context.beginPath();
-                            points.forEach(function (point, pointIndex) {
-                                if (pointIndex === 0)
-                                    context.moveTo(point.x, point.y);
-                                else
-                                    context.lineTo(point.x, point.y);
-                            });
-                            context.strokeStyle = descriptor.color;
-                            context.lineWidth = 1.75;
-                            context.lineJoin = "round";
-                            context.lineCap = "round";
-                            context.stroke();
-                        });
+                        let fill = Ui.Theme.withAlpha(descriptor.color, 0.12);
+                        if (lane.modelData.chartStyle !== "paired") {
+                            fill = context.createLinearGradient(0, height * 0.2, 0, baseline);
+                            fill.addColorStop(0, Ui.Theme.withAlpha(descriptor.color, 0.2));
+                            fill.addColorStop(1, Ui.Theme.withAlpha(descriptor.color, 0.025));
+                        }
+                        context.strokeStyle = descriptor.color;
+                        context.lineWidth = 1.75;
+                        context.lineJoin = "round";
+                        context.lineCap = "round";
+                        Ui.ChartDrawing.series(context, validSegments(descriptor, descriptorIndex, maximum), baseline, fill, false);
                     }
                     function drawBaseline(context) {
                         const y = lane.modelData.chartStyle === "paired" ? height / 2 : height - 3;

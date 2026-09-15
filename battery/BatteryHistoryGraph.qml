@@ -100,16 +100,6 @@ Item {
             function x(value) {
                 return inset + value * graph.historyFraction * plotWidth;
             }
-            function dashed(x0, y0, x1, y1, dash, gap) {
-                const length = Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
-                context.beginPath();
-                for (let offset = 0; offset < length; offset += dash + gap) {
-                    const end = Math.min(length, offset + dash);
-                    context.moveTo(x0 + (x1 - x0) * offset / length, y0 + (y1 - y0) * offset / length);
-                    context.lineTo(x0 + (x1 - x0) * end / length, y0 + (y1 - y0) * end / length);
-                }
-                context.stroke();
-            }
             if (graph.historyFraction < 1) {
                 context.fillStyle = Ui.Theme.withAlpha(graph.lineColor, 0.04);
                 context.fillRect(nowX, inset, plotWidth * (1 - graph.historyFraction), plotHeight);
@@ -130,7 +120,7 @@ Item {
             context.stroke();
             if (!graph.energy && graph.forecast.limit !== null) {
                 context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.mutedText, 0.5);
-                dashed(inset, y(graph.forecast.limit), inset + plotWidth, y(graph.forecast.limit), 4, 5);
+                Ui.ChartDrawing.dashed(context, inset, y(graph.forecast.limit), inset + plotWidth, y(graph.forecast.limit), 4, 5);
             }
             context.strokeStyle = graph.lineColor;
             context.fillStyle = graph.energy ? Ui.Theme.withAlpha(graph.lineColor, 0.45) : graph.lineColor;
@@ -145,45 +135,20 @@ Item {
                     context.fillRect(left + gap / 2, y(bar.value), Math.max(0, barWidth - gap), plotHeight * bar.value / graph.maximum);
                 });
             } else {
-                graph.series.segments.forEach(function (segment) {
-                    // Fill each continuous segment separately: sleep/offline gaps
-                    // must never look like measured charge.
-                    if (segment.length > 1) {
-                        context.beginPath();
-                        context.moveTo(x(segment[0].x), inset + plotHeight);
-                        segment.forEach(function (point) {
-                            context.lineTo(x(point.x), y(point.value));
-                        });
-                        context.lineTo(x(segment[segment.length - 1].x), inset + plotHeight);
-                        context.closePath();
-                        const fill = context.createLinearGradient(0, inset, 0, inset + plotHeight);
-                        fill.addColorStop(0, Ui.Theme.withAlpha(graph.lineColor, 0.2));
-                        fill.addColorStop(1, Ui.Theme.withAlpha(graph.lineColor, 0.025));
-                        context.fillStyle = fill;
-                        context.fill();
-                    }
-                    context.fillStyle = graph.lineColor;
-                    context.beginPath();
-                    segment.forEach(function (point, index) {
-                        if (segment.length === 1)
-                            context.arc(x(point.x), y(point.value), 2, 0, Math.PI * 2);
-                        else if (index === 0)
-                            context.moveTo(x(point.x), y(point.value));
-                        else
-                            context.lineTo(x(point.x), y(point.value));
-                    });
-                    if (segment.length === 1)
-                        context.fill();
-                    else
-                        context.stroke();
+                const fill = context.createLinearGradient(0, inset, 0, inset + plotHeight);
+                fill.addColorStop(0, Ui.Theme.withAlpha(graph.lineColor, 0.2));
+                fill.addColorStop(1, Ui.Theme.withAlpha(graph.lineColor, 0.025));
+                const segments = graph.series.segments.map(function (segment) {
+                    return segment.map(function (point) { return { x: x(point.x), y: y(point.value) }; });
                 });
+                Ui.ChartDrawing.series(context, segments, inset + plotHeight, fill, true);
                 if (graph.currentPercentage >= 0 && graph.currentPercentage <= 100) {
                     context.beginPath();
                     context.arc(nowX, y(graph.currentPercentage), 2, 0, Math.PI * 2);
                     context.fill();
                 }
                 if (graph.forecast.seconds > 0) {
-                    dashed(nowX, y(graph.forecast.percentage), inset + plotWidth, y(graph.forecast.target), 2, 4);
+                    Ui.ChartDrawing.dashed(context, nowX, y(graph.forecast.percentage), inset + plotWidth, y(graph.forecast.target), 2, 4);
                     context.beginPath();
                     context.arc(inset + plotWidth, y(graph.forecast.target), 2, 0, Math.PI * 2);
                     context.stroke();
@@ -193,11 +158,11 @@ Item {
             if (graph.historyFraction < 1) {
                 context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.mutedText, 0.3);
                 context.lineWidth = 1;
-                dashed(nowX, inset, nowX, inset + plotHeight, 2, 3);
+                Ui.ChartDrawing.dashed(context, nowX, inset, nowX, inset + plotHeight, 2, 3);
             }
             if (graph.hoverPosition >= 0) {
                 context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.text, 0.6);
-                dashed(inset + graph.hoverPosition * plotWidth, inset, inset + graph.hoverPosition * plotWidth, inset + plotHeight, 2, 3);
+                Ui.ChartDrawing.dashed(context, inset + graph.hoverPosition * plotWidth, inset, inset + graph.hoverPosition * plotWidth, inset + plotHeight, 2, 3);
             }
         }
 
