@@ -44,36 +44,12 @@ Item {
     onLineColorChanged: chart.requestPaint()
     onEnergyChanged: chart.requestPaint()
 
-    Ui.ThemeText {
-        anchors.left: parent.left
-        y: 4
+    Ui.ChartValueRail {
         width: graph.axisWidth - 10
-        text: graph.label
-        color: Ui.Theme.mutedText
-        elide: Text.ElideRight
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        font.weight: Ui.Theme.fontWeightDemiBold
-    }
-
-    Ui.ThemeText {
-        objectName: "batteryHistoryValue"
-        anchors.left: parent.left
-        y: 20
-        width: graph.axisWidth - 10
-        text: graph.valueText
-        color: graph.lineColor
-        elide: Text.ElideRight
-        font.weight: Ui.Theme.fontWeightBold
-    }
-
-    Ui.ThemeText {
-        anchors.left: parent.left
-        y: 39
-        width: graph.axisWidth - 10
-        text: graph.referenceText
-        color: Ui.Theme.subtleText
-        elide: Text.ElideRight
-        font.pixelSize: Ui.Theme.fontSizeCaption
+        label: graph.label
+        valueText: graph.valueText
+        referenceText: graph.referenceText
+        valueColor: graph.lineColor
     }
 
     Canvas {

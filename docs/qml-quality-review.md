@@ -28,6 +28,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - Workspace, focused-window, media, tray, and OSD presentation are isolated components.
 - Activity, battery, power, and OSD views are split into cohesive panes rather than one large object tree.
 - `ChartFrame`, `LiveClock`, `PulsingLabel`, `NotificationReplyRow`, and `BarOverlayWindow` centralize repeated presentation behavior.
+- `ChartDrawing` shares gap-preserving Canvas paths between battery and application history; `ChartValueRail` keeps their label geometry and styling consistent. Availability, axes, and telemetry policy stay with their existing owners.
 - `NotificationPresentation`, `NotificationStackHeader`, and `RemovalAnimation` keep grouping, routing, stack headers, and transient removal behavior common between active and historical notifications.
 - Every OSD family uses one normalized descriptor, one `BarOsdContent` frame, and one dismissal timer; pure transition and timeout policy stays in `BarOsdPresentation.js`.
 - `StateLayer` and `Elevation` centralize interaction feedback and depth.
@@ -38,7 +39,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 
 `qmlqualitylens.config.json` declares the resident shell and QML test files as entrypoints. It also records dynamic component edges hidden behind `Component`, `Loader.sourceComponent`, and `SplitChooserLayout` factories. These edges are analysis metadata, not runtime dependencies. Keep them synchronized when a surface gains or removes dynamically instantiated content; prefer an explicit edge over a broad unused-component suppression.
 
-The current calibration reaches 196 of 221 components from ten application/test roots. The remaining components are exported module API rather than dead-code findings. Configured edges cover list, details, toolbar, tab, battery, and Time & Weather components instantiated through loaders; cleanup reports no unused components or ids, and resolution reports no unresolved imports or types.
+The current calibration reaches 280 of 282 components from 34 configured/discovered application and test roots. The remaining components are exported module API rather than dead-code findings. Configured edges cover list, details, toolbar, tab, battery, and Time & Weather components instantiated through loaders; cleanup reports no unused components or IDs. Resolution has no unresolved imports; one internal test type (`Launcher.ApplicationSettingsPage`) remains unresolved by Lens, while native Qt lint is clean.
 
 ## Focused declarative-state refactoring
 
@@ -146,6 +147,41 @@ qmlqualitylens measure all --config qmlqualitylens.config.json
 ```
 
 Review the generated reachability, cleanup, hotspot, clone, locality, semantic, runtime-warning, and QML health reports together. Aggregate scores are directional; lint, tests, runtime behavior, and clear ownership boundaries take precedence over optimizing one metric.
+
+## Measured refactoring checkpoint
+
+Compared with `7794505`, using the same corrected Lens on both revisions:
+
+- Production source LOC: 28,866 → 28,805; component effort sum: 38,208 → 38,049.
+- Battery paint cyclomatic/cognitive complexity: 16/31 → 11/17; application
+  series drawing: 5/9 → 3/2.
+- Battery/application chart locality: 15/31 → 33/53.
+- Normalized clone groups: 194 → 191 with expanded limits and no omitted windows
+  or groups. Default Lens clone output remains partial.
+- Unreachable component and unused-ID candidates: both zero. Removed the unused
+  Fast Pair setup UI and its private controller path, not daemon contract fields.
+- Total source LOC including the new pixel tests increases by 21; the overall
+  heuristic score remains 86. No lint suppressions or thresholds were relaxed.
+
+The Qt suite passes 196 cases/hooks (132 `test_` rows), with zero failures/skips.
+Native lint, both parser oracles, offscreen runtime smoke, and the six focused
+Nix checks for QML tests/lint, packaged imports, application resources, TypeScript
+and daemon boundaries pass. Pixel tests preserve missing-data gaps and isolated
+battery samples; existing forecast, hover and narrow-layout tests remain enabled.
+
+The complete flake is still blocked by an app-daemon/framework API mismatch
+(`OwnedTaskRegistry.insert/remove`), using the same daemon derivation at the
+unmodified baseline. The lock rejects `--no-update-lock-file`; validation used
+`--no-write-lock-file` without editing it. This is not successful locked/full
+integration, and no sibling daemon was changed. Formatting drift, incomplete
+coverage and the existing internal ApplicationSettingsPage resolution warning
+remain visible rather than being suppressed.
+
+Lens corrections during this trial cover explicit Component ID scopes, optional
+access/nullish complexity, and singleton dependency/member-use evidence. Raw
+comparison evidence is in the sibling Lens checkout's ignored
+`target/shelllist-review/`; methodology is in its
+`docs/shelllist-refactoring-trial.md`.
 
 ## Areas to watch
 

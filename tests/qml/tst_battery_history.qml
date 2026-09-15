@@ -121,9 +121,9 @@ TestCase {
         compare(energy.lineColor, Ui.Theme.resourcePower);
         compare(charge.height, 64);
         compare(energy.height, 92);
-        compare(findChild(charge, "batteryHistoryValue").text, "89%");
+        compare(findChild(charge, "chartValue").text, "89%");
         for (const graph of [charge, energy]) {
-            const value = findChild(graph, "batteryHistoryValue");
+            const value = findChild(graph, "chartValue");
             const plot = findChild(graph, "batteryHistoryPlot");
             verify(value.x + value.width < plot.x, "values occupy a separate left rail");
             compare(plot.mapToItem(card, 0, 0).x, 150);
@@ -144,8 +144,8 @@ TestCase {
         verify(waitForRendering(card));
         const charge = findChild(card, "chargeHistoryGraph");
         const energy = findChild(card, "energyHistoryGraph");
-        compare(findChild(charge, "batteryHistoryValue").text, "Unavailable");
-        compare(findChild(energy, "batteryHistoryValue").text, "Unavailable");
+        compare(findChild(charge, "chartValue").text, "Unavailable");
+        compare(findChild(energy, "chartValue").text, "Unavailable");
         compare(card.historyFraction, 1);
         compare(card.hoveredSample, null);
         compare(card.hoveredEnergy, null);

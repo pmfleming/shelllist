@@ -60,41 +60,13 @@ Rectangle {
                 width: parent.width
                 height: Math.round(64 * chart.uiScale)
 
-                Ui.ThemeText {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 12
-                    anchors.top: parent.top
-                    anchors.topMargin: 4
+                Ui.ChartValueRail {
+                    x: 12
                     width: chart.plotLeft - 22
-                    text: lane.modelData.label
-                    color: Ui.Theme.mutedText
-                    elide: Text.ElideRight
-                    font.pixelSize: Ui.Theme.fontSizeCaption
-                    font.weight: Ui.Theme.fontWeightDemiBold
-                }
-
-                Ui.ThemeText {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 12
-                    anchors.top: parent.top
-                    anchors.topMargin: 20
-                    width: chart.plotLeft - 22
-                    text: lane.modelData.currentUnavailable ? "" : lane.modelData.valueText
-                    color: lane.modelData.color
-                    elide: Text.ElideRight
-                    font.weight: Ui.Theme.fontWeightBold
-                }
-
-                Ui.ThemeText {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 12
-                    anchors.top: parent.top
-                    anchors.topMargin: 39
-                    width: chart.plotLeft - 22
-                    text: lane.modelData.currentUnavailable ? "No measurements" : lane.modelData.secondaryText || lane.modelData.referenceText || ""
-                    color: Ui.Theme.subtleText
-                    elide: Text.ElideRight
-                    font.pixelSize: Ui.Theme.fontSizeCaption
+                    label: lane.modelData.label
+                    valueText: lane.modelData.currentUnavailable ? "" : lane.modelData.valueText
+                    referenceText: lane.modelData.currentUnavailable ? "No measurements" : lane.modelData.secondaryText || lane.modelData.referenceText || ""
+                    valueColor: lane.modelData.color
                 }
 
                 Canvas {
