@@ -102,18 +102,6 @@ function moonLitBounds(fraction, y) {
     return phase < 0.5 ? { left: terminator, right: limb }
         : { left: -limb, right: -terminator };
 }
-function moonPhase(unixMs) {
-    const synodicMonth = 29.530588853;
-    const referenceNewMoon = Date.UTC(2000, 0, 6, 18, 14, 0);
-    const days = (Number(unixMs || Date.now()) - referenceNewMoon) / 86400000;
-    const age = ((days % synodicMonth) + synodicMonth) % synodicMonth;
-    const fraction = age / synodicMonth;
-    const illumination = Math.round((1 - Math.cos(2 * Math.PI * fraction)) * 50);
-    const names = ["New moon", "Waxing crescent", "First quarter", "Waxing gibbous",
-        "Full moon", "Waning gibbous", "Last quarter", "Waning crescent"];
-    return { name: names[Math.round(fraction * 8) % 8], illumination,
-        age_days: age, fraction };
-}
 function windCompass(degrees) {
     const names = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
     const normalized = ((Number(degrees || 0) % 360) + 360) % 360;

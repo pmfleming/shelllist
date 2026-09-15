@@ -1,12 +1,5 @@
 type Numeric = number | string | null | undefined;
 
-interface MoonPhase {
-    name: string;
-    illumination: number;
-    age_days: number;
-    fraction: number;
-}
-
 const ICON_BY_CODE: Readonly<Record<number, string>> = {
     0: "clear", 1: "partly-cloudy", 2: "partly-cloudy", 3: "overcast",
     45: "fog", 48: "fog",
@@ -126,19 +119,6 @@ function moonLitBounds(fraction: number, y: number): { left: number; right: numb
     const terminator = Math.cos(2 * Math.PI * phase) * limb;
     return phase < 0.5 ? { left: terminator, right: limb }
         : { left: -limb, right: -terminator };
-}
-
-function moonPhase(unixMs: Numeric): MoonPhase {
-    const synodicMonth = 29.530588853;
-    const referenceNewMoon = Date.UTC(2000, 0, 6, 18, 14, 0);
-    const days = (Number(unixMs || Date.now()) - referenceNewMoon) / 86400000;
-    const age = ((days % synodicMonth) + synodicMonth) % synodicMonth;
-    const fraction = age / synodicMonth;
-    const illumination = Math.round((1 - Math.cos(2 * Math.PI * fraction)) * 50);
-    const names = ["New moon", "Waxing crescent", "First quarter", "Waxing gibbous",
-        "Full moon", "Waning gibbous", "Last quarter", "Waning crescent"];
-    return { name: names[Math.round(fraction * 8) % 8], illumination,
-        age_days: age, fraction };
 }
 
 function windCompass(degrees: Numeric): string {

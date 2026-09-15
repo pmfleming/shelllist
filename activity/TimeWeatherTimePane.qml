@@ -15,9 +15,24 @@ Ui.DetailFlickable {
     readonly property double sunrise: Number(weather.sunrise_unix_ms || 0)
     readonly property double sunset: Number(weather.sunset_unix_ms || 0)
     readonly property bool hasSunTimes: sunrise > 0 && sunset > sunrise
-    readonly property double solarNoon: hasSunTimes ? sunrise + (sunset - sunrise) / 2 : 0
+    readonly property var solarNoonMetadata: weather.solar_noon || null
+    readonly property double solarNoon: solarNoonMetadata ? Number(solarNoonMetadata.unix_ms) : 0
     readonly property real sunProgress: hasSunTimes ? Math.max(0, Math.min(1, (now.getTime() - sunrise) / (sunset - sunrise))) : 0
-    readonly property var moon: Visuals.moonPhase(now.getTime())
+    readonly property var moon: city.lunar || null
+
+    function moonName(phase: string): string {
+        switch (phase) {
+        case "new-moon": return qsTr("New moon");
+        case "waxing-crescent": return qsTr("Waxing crescent");
+        case "first-quarter": return qsTr("First quarter");
+        case "waxing-gibbous": return qsTr("Waxing gibbous");
+        case "full-moon": return qsTr("Full moon");
+        case "waning-gibbous": return qsTr("Waning gibbous");
+        case "last-quarter": return qsTr("Last quarter");
+        case "waning-crescent": return qsTr("Waning crescent");
+        default: return qsTr("Unavailable");
+        }
+    }
 
     function time(value: var): string {
         return Number(value || 0) > 0 ? Visuals.localTime(value, offsetSeconds) : "—";
@@ -106,10 +121,10 @@ Ui.DetailFlickable {
                     {
                         daylight: false,
                         label: "Moon",
-                        value: pane.moon.name,
-                        fraction: pane.moon.fraction,
-                        available: true,
-                        detail: pane.moon.illumination + "% illuminated"
+                        value: pane.moon ? pane.moonName(pane.moon.phase) : qsTr("Unavailable"),
+                        fraction: pane.moon ? pane.moon.fraction : 0,
+                        available: !!pane.moon,
+                        detail: pane.moon ? qsTr("Approx. %1% illuminated").arg(pane.moon.illumination_percent) : qsTr("Lunar estimate unavailable")
                     }
                 ]
                 delegate: Column {
@@ -234,8 +249,8 @@ Ui.DetailFlickable {
                         icon: "󰖜"
                     },
                     {
-                        label: "Solar noon",
-                        value: pane.time(pane.solarNoon),
+                        label: qsTr("Approx. solar noon"),
+                        value: pane.solarNoonMetadata ? Visuals.localTime(pane.solarNoon, pane.solarNoonMetadata.utc_offset_seconds) : "—",
                         icon: "󰖙"
                     },
                     {

@@ -1,6 +1,6 @@
 import QtQuick
 import Shelllist.Io as Io
-import "../../../../bar/BarProtocol.generated.js" as Protocol
+import "../../Bar/BarProtocol.generated.js" as Protocol
 
 Item {
     id: client

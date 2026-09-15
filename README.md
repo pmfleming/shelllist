@@ -289,3 +289,8 @@ manual diagnosis.
 ```sh
 tests/check-sibling-boundary.sh
 ```
+
+Git-add new source files first. The gate includes tracked, uncommitted changes
+while excluding ignored build artifacts. It neither updates release pins nor
+activates binaries or services; the ordinary locked check still requires matching
+release pins after cross-repository API changes.

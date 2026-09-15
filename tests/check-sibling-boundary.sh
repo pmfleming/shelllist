@@ -36,13 +36,15 @@ diff -u \
   <(jq -S . "$resource_actual")
 
 # Unlike the normal reproducible flake check, this intentionally evaluates the
-# sibling worktrees (including uncommitted candidate changes). It is the
-# cross-repository gate used before updating the release lock.
-nix flake check "$root" --show-trace --no-write-lock-file \
-  --override-input daemon-framework "path:$projects/daemon-framework" \
-  --override-input shelllist-hyprland "path:$projects/shelllist-hyprland" \
-  --override-input app-daemon "path:$projects/app-daemon" \
-  --override-input bar-daemon "path:$projects/bar-daemon" \
-  --override-input bt-daemon "path:$projects/bt-daemon" \
-  --override-input clip-daemon "path:$projects/clip-daemon" \
-  --override-input nm-daemon "path:$projects/nm-daemon"
+# sibling worktrees (including uncommitted changes to tracked files; git-add new
+# source files first). Git URLs exclude ignored Cargo targets and .git internals:
+# path: inputs would hash/copy tens of GiB of build products into each candidate.
+# This is the cross-repository gate used before updating the release lock.
+nix flake check "$root" --show-trace --keep-going --no-write-lock-file \
+  --override-input daemon-framework "git+file://$projects/daemon-framework" \
+  --override-input shelllist-hyprland "git+file://$projects/shelllist-hyprland" \
+  --override-input app-daemon "git+file://$projects/app-daemon" \
+  --override-input bar-daemon "git+file://$projects/bar-daemon" \
+  --override-input bt-daemon "git+file://$projects/bt-daemon" \
+  --override-input clip-daemon "git+file://$projects/clip-daemon" \
+  --override-input nm-daemon "git+file://$projects/nm-daemon"

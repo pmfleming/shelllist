@@ -17,6 +17,12 @@ jq -e '
   (.version == 1) and
   (.snapshot.activity.event_count | type == "number") and
   (.snapshot.activity.incomplete_todo_count | type == "number") and
+  (.snapshot.activity.lunar.fraction | type == "number") and
+  (.snapshot.activity.lunar.approximate == true) and
+  (.snapshot.activity.lunar.time_basis == "utc") and
+  (.snapshot.activity.weather.solar_noon.unix_ms | type == "number") and
+  (.snapshot.activity.weather.solar_noon.approximate == true) and
+  (.snapshot.activity.weather.solar_noon.timezone == .snapshot.activity.weather.timezone) and
   (.snapshot.activity.weather.condition_code | type == "number") and
   (.snapshot.activity.weather.is_day | type == "boolean") and
   (.snapshot.activity.weather.precipitation_mm | type == "number") and

@@ -74,9 +74,9 @@ function metricCapability(metric) {
 }
 function historicalMetricAvailable(point, metric) {
     const capability = metricCapability(metric);
+    // Legacy-record normalization belongs to app-daemon, not the chart.
     return !!point && typeof point[metric] === "number" && isFinite(point[metric])
         && !!point.availability && point.availability[capability] === true;
-    // Legacy-record normalization belongs to app-daemon, not the chart.
 }
 function currentMetricAvailable(resource, metric) {
     const measurement = resource.measurement || ({});

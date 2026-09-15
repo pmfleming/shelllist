@@ -908,13 +908,6 @@
             touch $out
           '';
 
-          wifiQr = pkgs.runCommand "shelllist-wifi-qr"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            touch $out
-          '';
-
           networkHealth = pkgs.runCommand "shelllist-network-health"
             {
               nativeBuildInputs = [ pkgs.nodejs ];

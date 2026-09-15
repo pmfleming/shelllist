@@ -1,6 +1,11 @@
 # Shelllist/daemon boundary audit — 2026-09-13
 
-## Conclusion
+All six planned migrations are now implemented locally; see the
+[implementation ledger](proposals/frontend-domain-migration.md). Release pins and
+coordinated activation remain separate. The original findings below are retained
+as historical context and annotated with their implementation outcomes.
+
+## Conclusion (original audit)
 
 The system-integration boundary is mostly established, but **domain computation
 and data-lifetime ownership are not fully out of QML**. The request-routing crash
@@ -170,6 +175,11 @@ and window changes produce consistent labels/reference lines without duplicate
 statistical implementations.
 
 ### 6. Astronomical estimates → bar-daemon (lower priority)
+
+**Implemented after audit:** timestamped approximate lunar metadata is published
+with activity, independently of weather. Weather carries optional, local-date and
+IANA-offset-validated solar-noon estimates. QML retains only labels, masking and
+sun-arc progress; missing metadata remains unavailable. Original finding follows.
 
 `activity/WeatherVisuals.js::moonPhase` derives lunar phase/illumination from an
 epoch and fixed period. `TimeWeatherTimePane.qml` estimates solar noon from the

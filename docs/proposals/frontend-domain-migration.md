@@ -1,6 +1,6 @@
 # Plan: move domain work out of Shelllist
 
-Status: implementation in progress, based on the
+Status: phases 1–6 implemented locally; coordinated deployment pending. Based on the
 [2026-09-13 boundary audit](../daemon-boundary-audit.md).
 
 ## Implementation ledger
@@ -35,7 +35,31 @@ Status: implementation in progress, based on the
   Validation: 68 app-daemon tests passed (3 opt-in tests ignored), Clippy, 191 QML
   tests, JS history/availability tests, QML lint and app/resource fixture checks.
   Not deployed.
-- Phase 6 pending.
+- Phase 6 implemented: bar-daemon publishes timestamped, approximate UTC lunar
+  metadata independently of weather, plus optional solar-noon midpoint metadata
+  validated against the city's IANA local date and DST offset. Missing, polar,
+  malformed and stale-day sun times remain unavailable. QML retains localized
+  phase labels, lunar masking and live sun-arc progress, with no estimate fallback.
+  Validation: 118 bar-daemon tests passed (1 opt-in test ignored), Clippy, 192 QML
+  tests, weather-presentation tests, QML lint and bar fixture checks. Not deployed.
+
+## Final candidate validation
+
+The full sibling Nix gate was run, not just its mock wiring test. It caught and
+prompted fixes for stale TypeScript sources behind generated JS (resource
+availability/peaks and lunar estimates), the work-area adapter's packaged import
+path, and an obsolete empty QR check. Candidate inputs now use Git worktrees so
+ignored Cargo outputs are excluded; new source files must be git-added first.
+
+The final captured candidate passed 192 sandboxed QML tests, QML lint, TypeScript
+regeneration checks and the app/bar/bt/clip package/contract checks. **The complete
+gate failed:** nm-daemon's release-mode tests
+`cast_policy::tests::reconcile_rejects_caller_supplied_policy_arguments` and
+`keyring::tests::fake_secret_service_prompts_are_dismissed_and_never_counted_as_success`
+hit their isolated-child deadlines. NM and dependent host/module checks therefore
+remain blocked. This is not a passing release matrix. Concurrent daemon/framework
+edits that appeared during the run were left untouched and are not covered by
+this captured candidate. Release locks and live services were not changed.
 
 ## Goal and rule
 

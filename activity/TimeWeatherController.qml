@@ -63,7 +63,8 @@ ActivityController {
             has_coordinates: false,
             home: false,
             weather: null,
-            has_weather: false
+            has_weather: false,
+            lunar: controller.activity.lunar || null
         };
     }
 

@@ -148,21 +148,29 @@ TestCase {
             city: {
                 label: "Test",
                 utc_offset_seconds: 0,
+                lunar: { phase: "waning-gibbous", fraction: 0.6, illumination_percent: 90, approximate: true },
                 weather: {
                     sunrise_unix_ms: sunrise,
-                    sunset_unix_ms: sunset
+                    sunset_unix_ms: sunset,
+                    solar_noon: { unix_ms: sunrise + 7 * 3600000, utc_offset_seconds: 0, approximate: true }
                 }
             },
             now: new Date((sunrise + sunset) / 2)
         });
         verify(view.hasSunTimes);
         compare(view.sunProgress, 0.5);
+        compare(view.solarNoon, sunrise + 7 * 3600000, "no QML midpoint calculation");
+        compare(view.moon.fraction, 0.6);
+        compare(view.moonName(view.moon.phase), "Waning gibbous");
         view.now = new Date(sunset + 3600000);
         compare(view.sunProgress, 1);
+        compare(view.moon.fraction, 0.6, "clock ticks do not recompute astronomy");
         view.city = {
             label: "No forecast"
         };
         verify(!view.hasSunTimes);
+        compare(view.solarNoon, 0);
+        compare(view.moon, null);
         compare(view.time(0), "—");
     }
 }

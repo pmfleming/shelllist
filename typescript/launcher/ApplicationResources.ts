@@ -77,13 +77,9 @@ function metricCapability(metric: string): string {
 
 function historicalMetricAvailable(point: any, metric: string): boolean {
     const capability = metricCapability(metric);
-    if (!point || !isFinite(Number(point[metric]))) return false;
-    if (point.availability) return point.availability[capability] === true;
-    // Old records did not retain optional capabilities. Never infer support from
-    // a nonzero value; keep their CPU/memory and explicitly sourced RAPL history.
-    if (capability === "cpu" || capability === "memory") return Number(point.coverage) > 0;
-    if (capability === "energy") return point.energy_source === "rapl";
-    return false;
+    // Legacy-record normalization belongs to app-daemon, not the chart.
+    return !!point && typeof point[metric] === "number" && isFinite(point[metric])
+        && !!point.availability && point.availability[capability] === true;
 }
 
 function currentMetricAvailable(resource: any, metric: string): boolean {
@@ -215,7 +211,9 @@ function historyFields(resource: any) {
         field("peaks.gpu_busy_percent", "Peak GPU · busiest engine", percent(peaks.gpu_busy_percent)),
         field("peaks.disk_read_bytes_per_second", "Peak physical read rate", rate(peaks.disk_read_bytes_per_second)),
         field("peaks.disk_write_bytes_per_second", "Peak physical write rate", rate(peaks.disk_write_bytes_per_second)),
-        field("peaks.estimated_app_power_watts", "Peak application power", power(peaks.estimated_app_power_watts))
+        field("peaks.estimated_app_power_watts", "Peak application power", power(peaks.estimated_app_power_watts)),
+        field("peaks.network_receive_bytes_per_second", "Peak receive rate", rate(peaks.network_receive_bytes_per_second)),
+        field("peaks.network_transmit_bytes_per_second", "Peak transmit rate", rate(peaks.network_transmit_bytes_per_second))
     ];
 }
 
