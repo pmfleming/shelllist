@@ -341,4 +341,29 @@ for (const extra of [
     assert.equal(c.saveSleepPolicy(), false, "unmanaged integration never claims settings were applied");
 }
 
+// Connectivity errors expire only after a successful snapshot; effect errors
+// must remain visible because telemetry cannot acknowledge a lost operation.
+for (const operation of ["none", "effect", "threshold", "alert"]) {
+    const { c } = controller();
+    c.actionInFlight = operation === "effect";
+    c.thresholdOperationActive = operation === "threshold";
+    c.alertOperationActive = operation === "alert";
+    c.transportFailed("connection lost");
+    assert.equal(c.transportError, "connection lost");
+    c.refreshFinished("battery-history-1");
+    assert.equal(c.transportError, "connection lost", "history alone does not confirm live status");
+    c.refreshFinished("battery-snapshot-2");
+    assert.equal(c.transportError, "");
+    assert.equal(c.lastError, operation === "effect" ? "connection lost" : "");
+    if (operation === "threshold" || operation === "alert")
+        assert.equal(c[operation + "SaveError"], "connection lost", "recovery must retain failed saves");
+}
+{
+    const { c } = controller();
+    c.operationFailed("battery-charge-once-1", "permission denied");
+    c.transportFailed("connection lost");
+    c.refreshFinished("battery-snapshot-2");
+    assert.equal(c.lastError, "permission denied", "recovery must not erase an earlier operation error");
+}
+
 console.log("battery controls: selection, auto-save, level actions, sleep profiles, failure/retry and dispatch passed");

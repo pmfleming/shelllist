@@ -20,7 +20,7 @@ function install(context, text) {
 }
 const quietConsole = { info() {}, warn() {}, error() {} };
 const transport = source("qml/Shelllist/Io/process/JsonlDaemonClient.qml");
-for (const failure of ["start", "exit"]) {
+for (const failure of ["start", "exit", "recovered-exit"]) {
     const writes = [], failures = [];
     const client = { active: true, ready: false, daemonName: "test-daemon",
         queuedLines: ["destructive-effect"], counters: { retryAttempt: 0 },
@@ -30,17 +30,19 @@ for (const failure of ["start", "exit"]) {
         retryTimer: { running: false, restart() { this.running = true; } },
         transportFailed: message => failures.push(message) };
     client.client = client;
+    client.retiring = failure === "recovered-exit";
     install(client, transport);
     if (failure === "start") client.start();
     else {
         const body = transport.match(/onExited: function \(exitCode\) \{[^\n]*\n([\s\S]*?)\n        \}/)[1];
         vm.runInContext("function exited(exitCode) {" + body + "\n}", client);
-        client.exited(1);
+        client.exited(failure === "recovered-exit" ? 0 : 1);
     }
     client.ready = true;
     client.flushQueue();
     assert.deepEqual(writes, [], `${failure}: failed-generation effects must never replay`);
-    assert.equal(failures.length, 1);
+    assert.equal(failures.length, failure === "recovered-exit" ? 0 : 1,
+        "a recovery shutdown must not overwrite the original transport failure");
 }
 
 // Exercise compatibility and gap handling through the consumer, rather than

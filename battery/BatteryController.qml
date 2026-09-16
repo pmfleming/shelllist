@@ -66,6 +66,7 @@ Ui.ChooserController {
     readonly property string sleepStatus: Presentation.sleepStatus(powerSleep, sleepPendingAction, sleepRetryAction, sleepError)
     property string lastError: ""
     property string refreshError: ""
+    property string transportError: ""
     property string screenshotStatus: ""
     readonly property var viewTabs: [
         {
@@ -441,18 +442,20 @@ Ui.ChooserController {
     }
 
     function transportFailed(message: string): void {
+        transportError = message;
         if (sleepPolicySaving)
             sleepPolicyFailed("Connection lost; settings may have been saved. Retry to confirm. " + message);
         thresholdAutoSave.stop();
         alertAutoSave.stop();
-        actionInFlight = false;
         if (sleepPendingAction.length > 0) {
             sleepPendingAction = "";
             sleepError = "Connection lost. The request may already have been accepted; check the session before retrying. " + message;
             lastError = currentSettingsError();
-        } else {
+        } else if (actionInFlight) {
+            // A recovered snapshot cannot confirm whether an effect succeeded.
             lastError = message;
         }
+        actionInFlight = false;
         if (thresholdOperationActive) {
             thresholdOperationActive = false;
             thresholdSaveError = message;
@@ -468,8 +471,10 @@ Ui.ChooserController {
             refreshError = message;
     }
 
-    function refreshFinished(_id: string): void {
+    function refreshFinished(id: string): void {
         refreshError = "";
+        if (id.startsWith("battery-snapshot-"))
+            transportError = "";
     }
 
     function scheduleThresholdSave(immediate: bool): void {

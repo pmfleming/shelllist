@@ -26,12 +26,14 @@ TestCase {
             property bool recoverProtocolErrors: true
             property string lastId: ""
             property var lastRoute: null
+            property var calls: []
             signal response(string id, var envelope, string transportError, var route)
             signal eventReceived(var event, var route)
             signal transportFailed(string message)
             function call(id, method, params, route) {
                 lastId = id;
                 lastRoute = route;
+                calls = calls.concat([{ id: id, route: route }]);
             }
             function subscribeExtra(id, streams, route) {
             }
@@ -39,6 +41,15 @@ TestCase {
             }
             function release(id, route) {
             }
+        }
+    }
+
+    Component {
+        id: backendFactory
+        Io.DaemonBackend {
+            daemonName: "stress-daemon"
+            active: true
+            onTransportReady: callSequenced("snapshot", "state.get", {})
         }
     }
 
@@ -76,6 +87,20 @@ TestCase {
         Io.DaemonSessions.clientFactory = originalFactory;
     }
 
+    function test_attachToReadySession() {
+        const session = Io.DaemonSessions.sessions[consumer.daemonName];
+        session.client.calls = [];
+        const backend = createTemporaryObject(backendFactory, testCase);
+        verify(backend !== null);
+        verify(backend.ready);
+        compare(session.client.calls.length, 1, "startup must run once, after attachment");
+        compare(session.client.calls[0].route.consumerId, backend.sharedConsumerId);
+        verify(backend.sharedConsumerId.length > 0, "never send an empty bridge route");
+        session.client.ready = false;
+        session.client.ready = true;
+        compare(session.client.calls.length, 2, "reconnect still refreshes the attached backend");
+    }
+
     function test_paginatedRequestChurn() {
         const session = Io.DaemonSessions.sessions[consumer.daemonName];
         for (let generation = 0; generation < 4000; ++generation) {
@@ -89,6 +114,7 @@ TestCase {
                     ok: true,
                     data: {}
                 }, "", session.client.lastRoute);
+            session.client.calls = [];
             if (generation % 100 === 0)
                 gc();
         }

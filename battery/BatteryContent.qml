@@ -13,7 +13,7 @@ Ui.ChooserSurface {
     readonly property var policy: controller.policy
     readonly property var device: controller.primaryDevice || ({})
     readonly property string policyError: protection.error || ""
-    readonly property string errorMessage: controller.lastError.length > 0 ? controller.lastError : (controller.refreshError.length > 0 ? controller.refreshError : policyError)
+    readonly property string errorMessage: controller.lastError.length > 0 ? controller.lastError : (controller.transportError.length > 0 ? controller.transportError : (controller.refreshError.length > 0 ? controller.refreshError : policyError))
 
     Ui.ChooserShortcuts {
         controller: content.controller

@@ -263,7 +263,9 @@ Item {
             // Anything queued against the process that just exited is lost,
             // even if it was queued during the small exit notification race.
             client.clearQueue();
-            if (!client.active)
+            // recover() already reported and scheduled this generation's
+            // failure. Its deliberate shutdown is not a second failure.
+            if (!client.active || client.retiring)
                 return;
             const detail = processError.text.length > 0 ? processError.text : "exit " + exitCode;
             console.error("shelllist transport exited daemon=" + client.daemonName + " detail=" + detail);

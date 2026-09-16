@@ -20,7 +20,9 @@ Item {
     readonly property int pendingCount: Object.keys(pending).length
     readonly property bool ready: {
         DaemonSessions.revision;
-        return DaemonSessions.isReady(daemonName);
+        // A resident session may already be ready during construction. Do
+        // not dispatch startup requests until this backend has its route ID.
+        return sharedConsumerId.length > 0 && DaemonSessions.isReady(daemonName);
     }
 
     // Subscription ids returned by on-demand subscribe requests, keyed by the
@@ -241,8 +243,6 @@ Item {
 
     Component.onCompleted: {
         sharedConsumerId = DaemonSessions.attach(backend);
-        if (ready)
-            transportReady();
     }
     Component.onDestruction: {
         if (sharedConsumerId)
