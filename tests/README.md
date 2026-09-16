@@ -123,9 +123,8 @@ python tests/test_profile_qml.py
 tests/run-qml-tests.sh
 ```
 
-The sibling gate overrides release pins with current local Git worktrees and
-checks vendored snapshots before the full flake matrix. Tracked uncommitted
-changes are included; Git-add new files first. It leaves locks and installed
-services untouched. Run `nix flake check --keep-going --no-update-lock-file`
-separately when validating reproducible release pins, not as a substitute for
-current-sibling compatibility.
+The sibling gate snapshots current local Git worktrees once, then runs the
+framework, consumer, and UI matrix against the same graph. Tracked uncommitted
+changes are included; Git-add new files first. It leaves source locks and
+installed services untouched. All five daemons share one current framework;
+there are no framework deployment pins or vendored framework snapshots.

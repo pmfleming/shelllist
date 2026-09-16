@@ -1,38 +1,41 @@
 {
   description = "Single-host Quickshell desktop action center";
 
+  # CO-DEVELOPMENT INVARIANT: all five consumers follow ONE current framework.
+  # tools/local-build.py in daemon-framework resolves worktrees once per run.
+  # Never add local revision pins or private/vendored framework dependencies.
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     daemon-framework = {
-      url = "git+file:../daemon-framework?ref=main";
+      url = "git+file:../daemon-framework";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     shelllist-hyprland = {
-      url = "git+file:../shelllist-hyprland?ref=main";
+      url = "git+file:../shelllist-hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nm-daemon = {
-      url = "git+file:../nm-daemon?ref=main";
+      url = "git+file:../nm-daemon";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.daemonFramework.follows = "daemon-framework";
     };
     bt-daemon = {
-      url = "git+file:../bt-daemon?ref=main";
+      url = "git+file:../bt-daemon";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.daemonFramework.follows = "daemon-framework";
     };
     clip-daemon = {
-      url = "git+file:../clip-daemon?ref=main";
+      url = "git+file:../clip-daemon";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.daemonFramework.follows = "daemon-framework";
     };
     app-daemon = {
-      url = "git+file:../app-daemon?ref=main";
+      url = "git+file:../app-daemon";
       inputs.nixpkgs.follows = "nixpkgs";
-      # Native libraries are vendored; the sibling gate verifies their snapshots.
+      inputs.daemonFramework.follows = "daemon-framework";
     };
     bar-daemon = {
-      url = "git+file:../bar-daemon?ref=main";
+      url = "git+file:../bar-daemon";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.daemonFramework.follows = "daemon-framework";
       inputs.hyprlandIpc.follows = "shelllist-hyprland";
@@ -585,6 +588,32 @@
           barDaemon = inputs."bar-daemon".packages.${system}.default;
         in
         {
+          # Flake checks do not recurse into inputs. Keep the shared framework
+          # suite and all consumer package tests in the mandatory local matrix.
+          frameworkWorkspace = inputs.daemon-framework.checks.${system}.workspace;
+          localBuildPolicy = inputs.daemon-framework.checks.${system}.localBuild;
+          appDaemonPackage = appDaemon;
+          barDaemonPackage = barDaemon;
+          btDaemonPackage = btDaemon;
+          clipDaemonPackage = clipDaemon;
+          nmDaemonPackage = nmDaemon;
+          otherSourceSnapshots = pkgs.runCommand "shelllist-other-source-snapshots"
+            { nativeBuildInputs = [ pkgs.diffutils ]; } ''
+            diff -q ${inputs.shelllist-hyprland}/Cargo.toml ${inputs.app-daemon}/vendor/shelllist-hyprland/Cargo.toml
+            diff -qr ${inputs.shelllist-hyprland}/src ${inputs.app-daemon}/vendor/shelllist-hyprland/src
+            diff -q ${./rust/shelllist-search}/Cargo.toml ${inputs.clip-daemon}/vendor/shelllist-search/Cargo.toml
+            diff -qr ${./rust/shelllist-search}/src ${inputs.clip-daemon}/vendor/shelllist-search/src
+            touch $out
+          '';
+          appResourceContract = pkgs.runCommand "shelllist-app-resource-contract"
+            { nativeBuildInputs = [ pkgs.diffutils pkgs.jq ]; } ''
+            ${appDaemon}/bin/app-daemon debug resource-contract-fixture > actual.json
+            diff -u \
+              <(jq -S . ${./contracts/app-resource-ui-contract.fixture.json}) \
+              <(jq -S . actual.json)
+            touch $out
+          '';
+
           hypridleReadiness = pkgs.runCommand "shelllist-hypridle-readiness"
             { nativeBuildInputs = [ pkgs.stdenv.cc pkgs.python3 ]; } ''
             cp ${./nix/hypridle-ready.hpp} readiness.hpp

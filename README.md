@@ -146,7 +146,7 @@ See the [`docs/` index](docs/README.md), especially:
 
 ## Installation
 
-The flake pins the shared framework and sibling daemon checkouts through relative Git inputs. Keep `shelllist`, `daemon-framework`, `app-daemon`, `bar-daemon`, `bt-daemon`, `clip-daemon`, and `nm-daemon` in the same parent directory, or override those inputs.
+Keep `shelllist`, `daemon-framework`, `shelllist-hyprland`, and all five daemons in the same parent directory. The supported `local-build` commands snapshot these current worktrees together; local project revisions must not be deployment-pinned.
 
 Run directly:
 
@@ -253,7 +253,7 @@ Animations default on under Hyprland and off elsewhere. Set `SHELLLIST_NO_ANIMAT
 ## Development
 
 ```sh
-nix develop
+python3 ../daemon-framework/tools/local-build.py develop .
 tests/check-sibling-boundary.sh
 ```
 
@@ -263,11 +263,10 @@ uses the current local Git worktrees of all five daemons, `daemon-framework`, an
 tracked uncommitted changes; Git-add new source files first. It does not fetch
 remote branches, update locks, or activate binaries/services.
 
-Nix always resolves ordinary Git flake inputs through a lock, even a local URL
-with `ref=main`. Rebuilding does not advance those pins, and
-`--no-write-lock-file` alone does not refresh existing pins. The sibling gate
-explicitly overrides them, so compatibility regressions in current development
-are visible without a manual lock update.
+The gate snapshots each tracked worktree once and resolves a disposable graph.
+All five daemons follow the same framework source. Persistent locks retain only
+third-party dependencies. No commits or manual lock updates are needed. Ordinary
+Nix commands can recreate local pins, so use `local-build.py` for Nix development.
 
 Focused checks:
 
@@ -298,17 +297,15 @@ manual diagnosis.
 
 The sibling gate runs the full flake checks against current local inputs:
 daemon contracts, JavaScript policy tests, QML tests, module evaluation, and the
-packaged host. It also checks vendored framework/Hyprland/search snapshots and the
-application resource fixture. Vendored code is not automatically replaced by an
-input override: snapshot drift intentionally fails the gate and must be reviewed
-in its owning daemon repository.
+packaged host, framework workspace tests, and all five daemon package suites.
+It also checks the remaining Hyprland/search snapshots and application resource
+fixture. There is no vendored framework and no separate local deployment pin.
 
-Keep the lock for reproducible release validation, separately from co-development:
+For standalone Nix builds use:
 
 ```sh
-nix flake check --keep-going --no-update-lock-file
+python3 ../daemon-framework/tools/local-build.py build .
 ```
 
-Advance release pins deliberately after the local compatibility gate passes.
-Ordinary `nix build`, `nix run`, and `nix develop` still use locked inputs; the
-floating-input policy applies to the sibling compatibility gate.
+The desktop `rebuild` applies this same current-source policy and reuses one
+snapshot for compatibility checks and deployment.
