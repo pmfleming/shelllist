@@ -10,10 +10,9 @@ Ui.ProviderChooserSurface {
     chooserController: controller
     surfaceName: "Bluetooth"
     readonly property bool editingDetails: detailsItem ? detailsItem.editingText : false
-    readonly property bool optionsOpen: listItem ? listItem.optionsOpen : false
-    navigationEnabled: !controller.modalPromptOpen && !controller.navigationHelpOpen && !editingDetails && !optionsOpen
+    navigationEnabled: !controller.modalPromptOpen && !controller.navigationHelpOpen && !editingDetails
     refreshEnabled: controller.powered && !controller.refreshInFlight && !controller.actionInFlight && navigationEnabled
-    helpEnabled: controller.uiActive && !controller.modalPromptOpen && !editingDetails && !optionsOpen
+    helpEnabled: controller.uiActive && !controller.modalPromptOpen && !editingDetails
     helpEntries: [
         {
             keys: "F5",

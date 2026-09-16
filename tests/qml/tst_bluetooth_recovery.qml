@@ -85,21 +85,40 @@ TestCase {
         id: contentComponent
         Bt.BluetoothContent {}
     }
-    function test_optionsEscapeDoesNotCloseDetails() {
+    Component { id: spyComponent; SignalSpy {} }
+    function test_headerScreenshotAndSearchSettingsAreSeparate() {
         const panel = makePanel();
         const controller = panel.controller;
         controller.uiActive = true;
-        controller.openDetails();
-        const content = createTemporaryObject(contentComponent, panel, {controller: controller});
+        const content = createTemporaryObject(contentComponent, panel, {controller: controller, width: 720, height: 1000});
         verify(content !== null);
         tryVerify(() => content.listItem !== null);
-        content.listItem.iconClicked();
-        tryCompare(content, "optionsOpen", true);
-        verify(!content.navigationEnabled);
-        keyClick(Qt.Key_Escape);
-        tryCompare(content, "optionsOpen", false);
+        const pane = content.listItem;
+        const spy = createTemporaryObject(spyComponent, panel, {target: controller, signalName: "screenshotRequested"});
+        const button = findChild(pane, "chooserIconButton");
+        verify(button !== null && button.clickable);
+        compare(button.Accessible.name, "Take a screenshot");
+        button.forceActiveFocus();
+        keyClick(Qt.Key_Space);
+        compare(spy.count, 1);
+        verify(!controller.detailsOpen);
+        const scope = controller.searchScope;
+        pane.searchActionRequested();
         verify(controller.detailsOpen);
+        compare(controller.detailsTab, "adapter");
+        compare(controller.searchScope, scope);
+        compare(spy.count, 1);
+        verify(findChild(pane, "bluetoothOptionsPopup") === null);
         verify(content.navigationEnabled);
+        pane.focusSearch();
+        keyClick(Qt.Key_Escape);
+        tryCompare(controller, "detailsOpen", false);
+        controller.handlePairingEvent({event: "requested", data: {request_id: "pair", device_key: "buds", response_required: true}});
+        verify(!pane.iconActionEnabled && !pane.searchActionEnabled);
+        pane.iconClicked();
+        pane.searchActionRequested();
+        compare(spy.count, 1);
+        verify(!controller.detailsOpen);
     }
     function test_emptyRadioIcon() {
         const panel = makePanel();
@@ -126,24 +145,14 @@ TestCase {
     function test_listOptionsPersistAndReflectAcknowledgedSettings() {
         const panel = makePanel();
         const controller = panel.controller;
-        const pane = createTemporaryObject(listPaneComponent, panel, {controller: controller, width: 320, height: 500});
-        const popup = findChild(pane, "bluetoothOptionsPopup");
-        verify(!popup.visible);
-        compare(pane.listOptionsComponent, null);
-        pane.iconClicked();
-        tryCompare(popup, "visible", true);
-        const options = findChild(pane, "bluetoothListOptions");
-        verify(options !== null);
-        verify(!options.expanded);
-        const button = findChild(options, "disclosureButton");
-        button.forceActiveFocus();
-        keyClick(Qt.Key_Space);
-        verify(options.expanded);
+        controller.openBluetoothSettings();
+        const page = createTemporaryObject(adapterPageComponent, panel, {controller: controller, width: 320, height: 500});
+        verify(findChild(page, "bluetoothListOptions") !== null);
         for (const setting of [
             {name: "showBlockedDevices", field: "show_blocked_devices"},
             {name: "showRecentDevices", field: "show_recent_devices"}
         ]) {
-            const toggle = findChild(pane, setting.name);
+            const toggle = findChild(page, setting.name);
             verify(toggle.visible && toggle.interactive);
             verify(!toggle.checked);
             toggle.clicked();
@@ -157,13 +166,20 @@ TestCase {
             verify(toggle.checked && toggle.interactive);
         }
         compare(calls.length, 2);
-        button.forceActiveFocus();
-        keyClick(Qt.Key_Space);
-        verify(!options.expanded);
-        verify(!findChild(pane, "showBlockedDevices").visible);
-        keyClick(Qt.Key_Escape);
-        tryCompare(popup, "visible", false);
-        verify(!controller.detailsOpen);
+        const scope = findChild(page, "bluetoothSearchScope");
+        scope.selected("all");
+        verify(controller.searchAllDevices);
+        verify(controller.detailsOpen);
+        compare(controller.detailsTab, "adapter");
+        compare(calls[calls.length - 1].method, "bluetooth.scan");
+        findChild(controller, "bluetoothBackend").pending = ({});
+        scope.selected("mine");
+        verify(!controller.searchAllDevices);
+        verify(controller.detailsOpen);
+        const reopened = createTemporaryObject(adapterPageComponent, panel, {controller: controller, width: 320, height: 500});
+        verify(findChild(reopened, "showBlockedDevices").checked);
+        verify(findChild(reopened, "showRecentDevices").checked);
+        compare(findChild(reopened, "bluetoothSearchScope").value, "mine");
     }
     function test_emptyListCanOpenBluetoothSettings() {
         const panel = makePanel();
@@ -173,17 +189,14 @@ TestCase {
         controller.openDetails();
         verify(!controller.detailsOpen);
         const pane = createTemporaryObject(listPaneComponent, panel, {controller: controller, width: 320, height: 500});
-        pane.iconClicked();
-        const settings = findChild(pane, "openBluetoothSettings");
-        verify(settings !== null && settings.enabled);
-        settings.forceActiveFocus();
-        keyClick(Qt.Key_Space);
+        verify(pane.searchActionEnabled);
+        pane.searchActionRequested();
         verify(controller.detailsOpen);
         compare(controller.detailsTab, "adapter");
         const details = createTemporaryObject(detailsComponent, panel, {controller: controller, width: 600, height: 900});
         verify(details.contentAvailable);
-        compare(details.title, "Adapter");
-        verify(!findChild(pane, "bluetoothOptionsPopup").visible);
+        compare(details.title, "Bluetooth");
+        tryVerify(() => findChild(details, "bluetoothListOptions") !== null);
         // Losing a selection must not implicitly open global settings.
         controller.detailsTab = "device";
         controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [{key: "test", name: "Test", paired: true, capabilities: {}}]});
@@ -281,13 +294,13 @@ TestCase {
         compare(tabs.tabs.length, 0);
         compare(tabs.footerHeight, 0);
         verify(!controller.cycleDetailsTab());
-        compare(details.title, "Adapter");
+        compare(details.title, "Bluetooth");
         compare(details.subtitle, "Computer-wide Bluetooth settings");
         compare(details.actions.length, 0);
         const page = createTemporaryObject(adapterPageComponent, panel, {controller: controller, width: 320, height: 500});
         verify(page !== null);
         wait(0);
-        verify(findChild(page, "showBlockedDevices") === null);
+        verify(findChild(page, "showBlockedDevices") !== null);
         for (const setting of [
             {name: "defaultTrustAfterPairing", field: "trust_after_pair"},
             {name: "defaultReconnectAfterWake", field: "reconnect_on_resume"}
@@ -304,6 +317,34 @@ TestCase {
         controller.toggleDetails();
         verify(controller.detailsOpen);
         compare(controller.detailsTab, "device");
+    }
+    function test_radioSelectionAndPowerAreControlledInBluetoothSettings() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.applySnapshot({radio: {available: true, operational: true, powered: true, adapter_count: 2},
+            adapters: [{key: "adapter", alias: "Built-in", powered: true}, {key: "usb", alias: "USB", powered: false}],
+            devices: controller.allDevices});
+        controller.openBluetoothSettings();
+        const page = createTemporaryObject(adapterPageComponent, panel, {controller: controller, width: 320, height: 500});
+        wait(0);
+        const selector = findChild(page, "bluetoothRadioSelector");
+        verify(selector.visible && selector.interactive);
+        selector.selected("usb");
+        compare(calls[calls.length - 1].method, "bluetooth.management.update");
+        compare(calls[calls.length - 1].params.preferred_adapter_key, "usb");
+        compare(controller.selectedAdapter.key, "usb");
+        const backend = findChild(controller, "bluetoothBackend");
+        backend.pending = ({});
+        const power = findChild(page, "bluetoothRadioPower");
+        verify(!power.checked && power.interactive);
+        power.clicked();
+        compare(calls[calls.length - 1].method, "bluetooth.setPowered");
+        compare(calls[calls.length - 1].params.adapter_key, "usb");
+        compare(calls[calls.length - 1].params.powered, true);
+        backend.pending = ({});
+        controller.applySnapshot({radio: {available: false, adapter_count: 0, powered: false}, adapters: [], devices: []});
+        verify(!selector.visible && !power.interactive);
+        verify(controller.detailsOpen);
     }
     function test_unavailableInvalidatesCapabilitiesAndSelection() {
         const panel = makePanel(); const controller = panel.controller;

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 
 RowLayout {
@@ -49,6 +50,11 @@ RowLayout {
     }
 
     IconTile {
+        objectName: "chooserIconButton"
+        Controls.ToolTip.visible: iconHover.hovered && header.iconAccessibleName.length > 0
+        Controls.ToolTip.text: header.iconAccessibleName
+        Controls.ToolTip.delay: 450
+        HoverHandler { id: iconHover }
         Layout.preferredWidth: header.scaled(Theme.controlHeight)
         Layout.preferredHeight: header.scaled(Theme.controlHeight)
         Layout.alignment: Qt.AlignVCenter

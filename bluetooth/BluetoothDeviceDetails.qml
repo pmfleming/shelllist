@@ -24,7 +24,7 @@ Ui.ActionDetailsPane {
     icon: deviceContext ? controller.selectedResult.icon : "󰒓"
     iconColor: !deviceContext || controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
     iconBorderColor: Ui.Theme.mix(Ui.Theme.strongBorder, Ui.Theme.surface, 0.40)
-    title: deviceContext ? controller.selectedResult.title : (controller.selectedAdapter.alias || controller.selectedAdapter.name || "Bluetooth adapter")
+    title: deviceContext ? controller.selectedResult.title : qsTr("Bluetooth")
     subtitle: deviceContext ? BluetoothFlow.deviceState(controller.selectedDevice) : "Computer-wide Bluetooth settings"
     subtitleColor: !deviceContext || controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText
     subtitleWeight: Ui.Theme.fontWeightMedium

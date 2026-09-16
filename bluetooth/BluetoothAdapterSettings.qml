@@ -109,13 +109,14 @@ ColumnLayout {
     Ui.DetailColumnCard {
         Layout.fillWidth: true
         Layout.preferredHeight: implicitHeight
-        title: qsTr("Adapter")
+        title: qsTr("Bluetooth radio")
 
         Ui.FieldLabel {
             visible: section.controller.adapters.length > 1
-            text: qsTr("Selected adapter")
+            text: qsTr("Preferred radio")
         }
         Ui.SegmentedControl {
+            objectName: "bluetoothRadioSelector"
             visible: section.controller.adapters.length > 1
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
@@ -133,9 +134,10 @@ ColumnLayout {
         }
 
         Ui.ToggleRow {
+            objectName: "bluetoothRadioPower"
             Layout.fillWidth: true
             Layout.preferredHeight: 38
-            title: qsTr("Adapter power")
+            title: qsTr("Radio power")
             subtitle: section.controller.radio.hard_blocked ? "Hardware blocked"
                 : section.controller.radio.soft_blocked ? "Software blocked"
                 : section.controller.selectedAdapter.powered ? "On · selected adapter" : "Off · selected adapter"

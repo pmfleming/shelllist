@@ -15,6 +15,7 @@ ColumnLayout {
     property string emptyIcon: ""
     property string placeholder: "Search…"
     property string icon: ""
+    property string headerIcon: icon
     property bool signalIcon: false
     property bool powered: false
     property bool refreshing: false
@@ -74,7 +75,7 @@ ColumnLayout {
         id: header
         uiScale: pane.densityScale
         placeholder: pane.placeholder
-        icon: pane.icon
+        icon: pane.headerIcon
         signalIcon: pane.signalIcon
         filterText: pane.filterText
         powered: pane.powered

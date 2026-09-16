@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
 Ui.DetailFlickable {
@@ -7,9 +8,18 @@ Ui.DetailFlickable {
     required property BluetoothController controller
     readonly property alias editing: settings.editing
 
-    BluetoothAdapterSettings {
-        id: settings
+    ColumnLayout {
         width: parent.width
-        controller: page.controller
+        spacing: Ui.Theme.spacingMd
+
+        BluetoothListOptions {
+            Layout.fillWidth: true
+            controller: page.controller
+        }
+        BluetoothAdapterSettings {
+            id: settings
+            Layout.fillWidth: true
+            controller: page.controller
+        }
     }
 }

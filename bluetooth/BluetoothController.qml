@@ -142,16 +142,14 @@ Ui.ProviderChooserController {
         activeScan = null;
         scanRequested = false;
         searchScope = scope;
-        detailsOpen = false;
+        if (detailsTab !== "adapter")
+            detailsOpen = false;
         rebuildResults(true);
         if (searchAllDevices && powered) {
             scanRequested = true;
             backend.setScanning(true, selectedAdapter.key);
         }
         status = statusForSnapshot();
-    }
-    function toggleSearchScope() {
-        setSearchScope(searchAllDevices ? "mine" : "all");
     }
     function applyAudioSnapshot(devices) { audioDevices = devices || []; audioStatus = ""; }
     function applyRequestSnapshot(requests: var): void {
