@@ -110,6 +110,13 @@ TestCase {
         compare(spy.count, 1);
         verify(findChild(pane, "bluetoothOptionsPopup") === null);
         verify(content.navigationEnabled);
+        pane.searchActionRequested();
+        verify(!controller.detailsOpen);
+        controller.openDetails();
+        compare(controller.detailsTab, "device");
+        pane.searchActionRequested();
+        verify(controller.detailsOpen);
+        compare(controller.detailsTab, "adapter");
         pane.focusSearch();
         keyClick(Qt.Key_Escape);
         tryCompare(controller, "detailsOpen", false);
@@ -197,6 +204,11 @@ TestCase {
         verify(details.contentAvailable);
         compare(details.title, "Bluetooth");
         tryVerify(() => findChild(details, "bluetoothListOptions") !== null);
+        pane.searchActionRequested();
+        verify(!controller.detailsOpen);
+        pane.searchActionRequested();
+        verify(controller.detailsOpen);
+        compare(controller.detailsTab, "adapter");
         // Losing a selection must not implicitly open global settings.
         controller.detailsTab = "device";
         controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [{key: "test", name: "Test", paired: true, capabilities: {}}]});

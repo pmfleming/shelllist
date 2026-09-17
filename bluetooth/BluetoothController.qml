@@ -349,6 +349,12 @@ Ui.ProviderChooserController {
         detailsTab = "adapter";
         detailsOpen = true;
     }
+    function toggleBluetoothSettings() {
+        if (detailsOpen && detailsTab === "adapter")
+            closeDetails();
+        else
+            openBluetoothSettings();
+    }
     function openDetails() {
         if (!hasSelection) return;
         if (detailsTab === "adapter")
