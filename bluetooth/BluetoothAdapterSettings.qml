@@ -109,6 +109,7 @@ ColumnLayout {
     Ui.DetailColumnCard {
         Layout.fillWidth: true
         Layout.preferredHeight: implicitHeight
+        visible: section.controller.adapterSettingsTab === "general"
         title: qsTr("Bluetooth radio")
 
         Ui.FieldLabel {
@@ -204,6 +205,7 @@ ColumnLayout {
     Ui.DetailColumnCard {
         Layout.fillWidth: true
         Layout.preferredHeight: implicitHeight
+        visible: section.controller.adapterSettingsTab === "pairing"
         title: qsTr("Visibility and pairing")
 
         BluetoothAdapterAccessControl {
@@ -242,6 +244,7 @@ ColumnLayout {
     Ui.DetailColumnCard {
         Layout.fillWidth: true
         Layout.preferredHeight: implicitHeight
+        visible: section.controller.adapterSettingsTab === "general"
         title: qsTr("Connection defaults")
 
         Ui.ToggleRow {

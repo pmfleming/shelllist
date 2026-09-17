@@ -16,6 +16,7 @@ Ui.ProviderChooserController {
     readonly property alias nameEdits: nameEditState
     readonly property alias adapterEdits: adapterEditState
     property string detailsTab: "device"
+    property string adapterSettingsTab: "general"
     property alias searchScope: scopeSettings.searchScope
     property var pendingConfirmationAction
     property bool scanRequested: false
@@ -364,7 +365,12 @@ Ui.ProviderChooserController {
         closeDetails()
 
     function cycleDetailsTab() {
-        if (!detailsOpen || !hasSelection || detailsTab === "adapter") return false;
+        if (!detailsOpen) return false;
+        if (detailsTab === "adapter") {
+            adapterSettingsTab = adapterSettingsTab === "general" ? "pairing" : "general";
+            return true;
+        }
+        if (!hasSelection) return false;
         const tabs = ["device", "information"];
         const currentIndex = Math.max(0, tabs.indexOf(detailsTab));
         detailsTab = tabs[(currentIndex + 1) % tabs.length];

@@ -149,6 +149,10 @@ TestCase {
                 factory: adapterFactory
             },
             {
+                tag: "bluetooth-adapter-pairing",
+                factory: adapterFactory
+            },
+            {
                 tag: "clipboard-details",
                 factory: clipboardFactory
             },
@@ -256,6 +260,8 @@ TestCase {
         verify(page !== null);
         verifyStack(page);
         populate(page, data.tag);
+        if (data.tag === "bluetooth-adapter-pairing")
+            page.controller.adapterSettingsTab = "pairing";
         for (const width of [675, 320, 480]) {
             page.width = width;
             page.height = width / 2;
@@ -274,7 +280,7 @@ TestCase {
                 tryCompare(page, "contentHeight", collapsedHeight);
             }
             const technicalDetails = findChild(page, "adapterTechnicalDetails");
-            if (technicalDetails) {
+            if (technicalDetails && technicalDetails.visible) {
                 const collapsedHeight = page.contentHeight;
                 technicalDetails.expanded = true;
                 tryVerify(function () { return page.contentHeight > collapsedHeight; });

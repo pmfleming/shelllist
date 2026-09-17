@@ -38,9 +38,9 @@ Ui.ActionDetailsPane {
     Ui.TabbedDetailsStack {
         anchors.fill: parent
         objectName: "bluetoothDetailsTabs"
-        footerHeight: pane.deviceContext ? pane.footerHeight : 0
-        sectionSpacing: pane.deviceContext ? pane.sectionSpacing : 0
-        selectedValue: pane.controller.detailsTab
+        footerHeight: pane.footerHeight
+        sectionSpacing: pane.sectionSpacing
+        selectedValue: pane.deviceContext ? pane.controller.detailsTab : pane.controller.adapterSettingsTab
         tabs: pane.deviceContext ? [
             {
                 value: "device",
@@ -52,9 +52,23 @@ Ui.ActionDetailsPane {
                 icon: "󰋼",
                 label: "Information"
             }
-        ] : []
+        ] : [
+            {
+                value: "general",
+                icon: "󰒓",
+                label: qsTr("General")
+            },
+            {
+                value: "pairing",
+                icon: "󰂯",
+                label: qsTr("Pairing")
+            }
+        ]
         onSelected: function (value) {
-            pane.controller.detailsTab = value;
+            if (pane.deviceContext)
+                pane.controller.detailsTab = value;
+            else
+                pane.controller.adapterSettingsTab = value;
         }
 
         Item {

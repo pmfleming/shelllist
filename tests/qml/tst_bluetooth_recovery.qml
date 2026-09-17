@@ -291,9 +291,13 @@ TestCase {
         verify(controller.cycleDetailsTab());
         compare(controller.detailsTab, "device");
         controller.openBluetoothSettings();
-        compare(tabs.tabs.length, 0);
-        compare(tabs.footerHeight, 0);
-        verify(!controller.cycleDetailsTab());
+        compare(tabs.tabs.map(tab => tab.value), ["general", "pairing"]);
+        verify(tabs.footerHeight > 0);
+        compare(tabs.selectedValue, "general");
+        verify(controller.cycleDetailsTab());
+        compare(tabs.selectedValue, "pairing");
+        tabs.selected("general");
+        compare(controller.adapterSettingsTab, "general");
         compare(details.title, "Bluetooth");
         compare(details.subtitle, "Computer-wide Bluetooth settings");
         compare(details.actions.length, 0);
@@ -301,12 +305,15 @@ TestCase {
         verify(page !== null);
         wait(0);
         verify(findChild(page, "showBlockedDevices") !== null);
+        verify(findChild(page, "bluetoothRadioPower").visible);
+        verify(!findChild(page, "defaultTrustAfterPairing").visible);
         for (const setting of [
-            {name: "defaultTrustAfterPairing", field: "trust_after_pair"},
-            {name: "defaultReconnectAfterWake", field: "reconnect_on_resume"}
+            {name: "defaultTrustAfterPairing", field: "trust_after_pair", tab: "pairing"},
+            {name: "defaultReconnectAfterWake", field: "reconnect_on_resume", tab: "general"}
         ]) {
+            tabs.selected(setting.tab);
             const toggle = findChild(page, setting.name);
-            verify(toggle.checked && toggle.interactive);
+            verify(toggle.visible && toggle.checked && toggle.interactive);
             toggle.clicked();
             compare(calls[calls.length - 1].method, "bluetooth.management.update");
             compare(calls[calls.length - 1].params[setting.field], false);
@@ -314,6 +321,11 @@ TestCase {
             findChild(controller, "bluetoothBackend").pending = ({});
         }
         compare(calls.length, 2);
+        page.contentY = 100;
+        tabs.selected("pairing");
+        compare(page.contentY, 0);
+        verify(!findChild(page, "bluetoothRadioPower").visible);
+        verify(!findChild(page, "showBlockedDevices").visible);
         controller.toggleDetails();
         verify(controller.detailsOpen);
         compare(controller.detailsTab, "device");
@@ -345,6 +357,8 @@ TestCase {
         controller.applySnapshot({radio: {available: false, adapter_count: 0, powered: false}, adapters: [], devices: []});
         verify(!selector.visible && !power.interactive);
         verify(controller.detailsOpen);
+        verify(controller.cycleDetailsTab());
+        compare(controller.adapterSettingsTab, "pairing");
     }
     function test_unavailableInvalidatesCapabilitiesAndSelection() {
         const panel = makePanel(); const controller = panel.controller;
