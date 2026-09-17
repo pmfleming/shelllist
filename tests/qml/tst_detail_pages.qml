@@ -269,15 +269,8 @@ TestCase {
             verifyStack(page);
             const overrides = findChild(page, "deviceOverrides");
             if (overrides) {
-                const collapsedHeight = page.contentHeight;
-                overrides.expanded = true;
-                tryVerify(function () { return page.contentHeight > collapsedHeight; });
-                verifyStack(page);
-                const reset = findChild(page, "resetDeviceOverrides");
-                verify(reset.visible);
-                verify(reset.mapToItem(page.contentItem, 0, reset.height).y <= page.contentHeight + 1);
-                overrides.expanded = false;
-                tryCompare(page, "contentHeight", collapsedHeight);
+                verify(overrides.visible);
+                verify(overrides.mapToItem(page.contentItem, 0, overrides.height).y <= page.contentHeight + 1);
             }
             const technicalDetails = findChild(page, "adapterTechnicalDetails");
             if (technicalDetails && technicalDetails.visible) {

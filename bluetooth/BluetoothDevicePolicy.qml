@@ -42,12 +42,4 @@ ColumnLayout {
             section.controller.updateDevicePolicy(values);
         }
     }
-    Ui.ActionButton {
-        objectName: "resetDeviceOverrides"
-        Layout.fillWidth: true
-        Layout.preferredHeight: Ui.Theme.compactControlHeight
-        label: qsTr("Reset device overrides")
-        enabled: !section.controller.actionInFlight && section.controller.hasSelection
-        onClicked: section.controller.triggerDetailAction("reset-policy")
-    }
 }

@@ -548,7 +548,7 @@ TestCase {
     }
     function test_busyPolicyDoesNotClaimUnsupported() {
         const panel = makePanel();
-        findChild(panel.page, "deviceOverrides").expanded = true;
+        verify(findToggle(panel.page, "Reconnect after wake").visible);
         verify(findToggle(panel.page, "Reconnect after wake").interactive);
         verify(panel.controller.updateDevicePolicy({reconnect_on_resume: false}));
         wait(0); // The action model recreates its delegates when the busy state changes.
@@ -586,19 +586,31 @@ TestCase {
         compare(calls.length, 2);
         compare(calls[1].params.audio_route_on_connect, "keep");
     }
+    Component {
+        id: deviceDetailsComponent
+        Bt.BluetoothDeviceDetails { uiScale: 1 }
+    }
+    function findButton(item, label) {
+        if (item.label === label && typeof item.clicked === "function") return item;
+        for (const child of item.children || []) {
+            const found = findButton(child, label);
+            if (found) return found;
+        }
+        return null;
+    }
     function test_policyResetIsScopedToDeviceOverrides() {
         const panel = makePanel();
         const controller = panel.controller;
-        const overrides = findChild(panel.page, "deviceOverrides");
-        verify(!overrides.expanded);
-        const expand = findChild(overrides, "disclosureButton");
-        expand.forceActiveFocus();
-        keyClick(Qt.Key_Space);
-        verify(overrides.expanded);
-        const reset = findChild(panel.page, "resetDeviceOverrides");
+        const details = createTemporaryObject(deviceDetailsComponent, panel, {
+            controller: controller, width: 720, height: 1000
+        });
+        verify(details !== null);
+        const reset = findButton(details, "Reset");
         verify(reset !== null);
-        compare(reset.label, "Reset device overrides");
-        compare(controller.detailActions.find(action => action.id === "reset-policy").presentation.group, "overflow");
+        verify(reset.visible);
+        const forget = findButton(details, "Forget");
+        verify(forget !== null && forget.visible);
+        compare(reset.parent, forget.parent);
         compare(findChild(panel.page, "restoreDeviceName").label, "Restore original name");
         reset.clicked();
         compare(calls.length, 1);

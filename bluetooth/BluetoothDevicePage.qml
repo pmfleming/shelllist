@@ -7,8 +7,6 @@ Ui.DetailFlickable {
 
     required property BluetoothController controller
     readonly property alias editingName: settings.editingName
-    readonly property string deviceKey: controller.selectedDevice.key || ""
-    onDeviceKeyChanged: overrides.expanded = false
 
     Item {
         width: parent.width
@@ -45,16 +43,12 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailColumnCard {
+        objectName: "deviceOverrides"
         height: implicitHeight
-        Ui.DisclosureSection {
-            id: overrides
-            objectName: "deviceOverrides"
+        title: qsTr("Advanced device options")
+        BluetoothDevicePolicy {
             Layout.fillWidth: true
-            title: qsTr("Advanced device options")
-            BluetoothDevicePolicy {
-                Layout.fillWidth: true
-                controller: page.controller
-            }
+            controller: page.controller
         }
     }
 }
