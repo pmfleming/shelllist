@@ -165,15 +165,6 @@ function energy(milliwattHours) {
     return value >= 1000 ? (value / 1000).toFixed(2) + " Wh" : value.toFixed(value >= 100 ? 0 : 1) + " mWh";
 }
 
-function historyRange(history) {
-    const points = history && history.points ? history.points : [];
-    if (points.length === 0)
-        return "Collecting samples";
-    const first = new Date(Number(points[0].timestamp_ms || 0));
-    const last = new Date(Number(points[points.length - 1].timestamp_ms || 0));
-    return first.toLocaleDateString() + " – " + last.toLocaleDateString();
-}
-
 function alertRangeValid(warningPercent, criticalPercent) {
     const warning = Number(warningPercent);
     const critical = Number(criticalPercent);

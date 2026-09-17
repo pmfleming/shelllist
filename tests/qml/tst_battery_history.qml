@@ -74,67 +74,63 @@ TestCase {
         });
     }
 
-    function test_forecastLimitAndSharedHover() {
+    function test_forecastAndHoverFollowPowerSource() {
         const card = createTemporaryObject(historyCard, testCase, {
-            battery: { available: true, percentage: 60, charging: true, time_to_full_seconds: 3600,
-                protection: { enabled: true, end_percent: 80 },
-                forecast: { limit: 80, target: 80, percentage: 60, seconds: 1800, estimating: false, status: "valid" } }
+            battery: { available: true, percentage: 60, charging: true, plugged: true,
+                forecast: { limit: 80, target: 80, percentage: 60, seconds: 1800 } }
         });
         verify(waitForRendering(card));
-        const charge = findChild(card, "chargeHistoryGraph");
-        const energy = findChild(card, "energyHistoryGraph");
-        compare(card.forecast.seconds, 1800);
-        compare(card.historyFraction, 0.5);
-        compare(charge.historyFraction, energy.historyFraction);
-        verify(findChild(charge, "chargeLimitLabel").visible);
-        verify(findChild(card, "batteryHistoryEstimate").text.indexOf("80% limit") > 0);
-        charge.hovered(0.1);
-        compare(energy.hoverPosition, 0.1);
-        verify(card.hoveredSample !== null);
-        verify(card.hoveredEnergy !== null);
-        energy.hovered(0.75);
-        compare(charge.hoverPosition, 0.75);
-        verify(findChild(card, "batteryHistoryHover").text.indexOf("Projected charge") === 0);
-        energy.hovered(-1);
-        compare(charge.hoverPosition, -1);
-        card.battery = { available: true, percentage: 88, charging: false,
-            protection: { enabled: true, end_percent: 80 },
-            forecast: { limit: 80, target: 80, percentage: 88, seconds: 0, estimating: false, status: "limit-reached" } };
-        compare(card.forecast.seconds, 0);
-        compare(card.historyFraction, 1);
-        verify(findChild(charge, "chargeLimitLabel").visible);
+        const graph = findChild(card, "batteryTimelineGraph");
+        compare(graph.historyFraction, 0.5);
+        verify(findChild(graph, "chargeLimitLabel").visible);
+        compare(card.estimateText, "to 80% limit");
+        graph.hovered(0.1);
+        verify(graph.hoveredSample !== null);
+        verify(graph.hoveredPower !== null);
+        verify(graph.hoverText.indexOf("W") > 0);
+        graph.hovered(0.75);
+        verify(graph.hoverText.indexOf("Estimated") === 0);
+        card.battery = { available: true, percentage: 85, plugged: false,
+            forecast: { limit: 80, target: 0, percentage: 85, seconds: 12600 } };
+        compare(graph.forecast.target, 0);
+        compare(card.estimateText, "to empty");
+        verify(graph.hoverText.indexOf("to empty") > 0);
+        card.battery = { available: true, percentage: 80, plugged: true,
+            forecast: { limit: 80, target: 80, percentage: 80, seconds: 0, status: "limit-reached" } };
+        compare(graph.historyFraction, 1);
         compare(card.estimateText, "Charge limit reached");
-        card.battery = { available: true, percentage: 60, charging: true, time_to_full_seconds: 234972,
-            forecast: { limit: null, target: 100, percentage: 60, seconds: 0, estimating: true, status: "estimating" } };
-        compare(card.forecast.seconds, 0);
-        compare(card.estimateText, "Estimating charge time…");
+        card.battery = { available: true, percentage: 60, charging: true, plugged: true,
+            forecast: { limit: null, target: 100, percentage: 60, seconds: 0, estimating: true } };
+        compare(card.estimateText, "Estimating…");
+        compare(graph.historyFraction, 1);
     }
 
-    function test_resourceTimelineStyling() {
-        const card = createTemporaryObject(historyCard, testCase);
+    function test_rangeSelectionAndMissingPower() {
+        const card = createTemporaryObject(historyCard, testCase, {
+            history: { points: [
+                { timestamp_ms: 1000, active_time_ms: 0, percentage: 100, power_watts: 20, power_valid: true },
+                { timestamp_ms: 25201000, active_time_ms: 25200000, percentage: 80, power_watts: 0, power_valid: false },
+                { timestamp_ms: 28801000, active_time_ms: 28800000, percentage: 60, power_watts: 0, power_valid: true, continuous: true }
+            ] }
+        });
         verify(waitForRendering(card));
-        compare(card.border.width, 0);
-        compare(card.color, Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.7));
-        const charge = findChild(card, "chargeHistoryGraph");
-        const energy = findChild(card, "energyHistoryGraph");
-        compare(charge.lineColor, Ui.Theme.resourceCpu);
-        compare(energy.lineColor, Ui.Theme.resourcePower);
-        compare(charge.height, 64);
-        compare(energy.height, 92);
-        compare(findChild(charge, "chartValue").text, "89%");
-        for (const graph of [charge, energy]) {
-            const value = findChild(graph, "chartValue");
-            const plot = findChild(graph, "batteryHistoryPlot");
-            verify(value.x + value.width < plot.x, "values occupy a separate left rail");
-            compare(plot.mapToItem(card, 0, 0).x, 150);
-            compare(value.font.weight, Ui.Theme.fontWeightBold);
-        }
-        const energyY = energy.mapToItem(card, 0, 0).y;
-        charge.hovered(0.1);
-        wait(0);
-        compare(energy.mapToItem(card, 0, 0).y, energyY);
-        card.battery = { available: true, percentage: 8, warning: true };
-        compare(charge.lineColor, Ui.Theme.warning);
+        const graph = findChild(card, "batteryTimelineGraph");
+        compare(graph.points.length, 2);
+        compare(graph.powerSeries.segments.length, 1);
+        compare(graph.powerSeries.segments[0].length, 1);
+        compare(graph.powerSeries.segments[0][0].value, 0);
+        const ranges = findChild(card, "batteryHistoryRange");
+        ranges.choose(1);
+        compare(card.range, "24");
+        compare(graph.points.length, 3);
+        compare(graph.powerSeries.segments.length, 2);
+        ranges.choose(0);
+        compare(graph.points.length, 2);
+        card.battery = { available: true, percentage: 59, history: { current_point:
+            { timestamp_ms: 28831000, active_time_ms: 28830000, percentage: 59,
+                power_watts: 10, power_valid: true, continuous: true } } };
+        compare(graph.points.length, 3);
+        compare(graph.series.segments[0][2].value, 59, "live charge must reach the Now marker");
     }
 
     function test_emptyHistory() {
@@ -142,44 +138,38 @@ TestCase {
             width: 300, history: { points: [] }, battery: { available: false }
         });
         verify(waitForRendering(card));
-        const charge = findChild(card, "chargeHistoryGraph");
-        const energy = findChild(card, "energyHistoryGraph");
-        compare(findChild(charge, "chartValue").text, "Unavailable");
-        compare(findChild(energy, "chartValue").text, "Unavailable");
-        compare(card.historyFraction, 1);
-        compare(card.hoveredSample, null);
-        compare(card.hoveredEnergy, null);
+        const graph = findChild(card, "batteryTimelineGraph");
+        compare(card.estimateText, "Unavailable");
+        verify(findChild(graph, "historyEmptyLabel").visible);
+        compare(graph.historyFraction, 1);
+        compare(graph.hoveredSample, null);
+        compare(graph.hoveredPower, null);
+        card.battery = { available: true, percentage: 85,
+            forecast: { limit: null, target: 0, percentage: 85, seconds: 12600 } };
+        verify(!findChild(graph, "historyEmptyLabel").visible);
+        verify(graph.historyFraction > 0 && graph.historyFraction < 1);
     }
 
-    function test_contentAndPlotsStayInsideCard_data() {
+    function test_contentAndPlotStayInsideCard_data() {
         return [{ tag: "narrow", width: 300 }, { tag: "compact", width: 340 },
             { tag: "normal", width: 500 }];
     }
 
-    function test_contentAndPlotsStayInsideCard(data) {
+    function test_contentAndPlotStayInsideCard(data) {
         const card = createTemporaryObject(historyCard, testCase, { width: data.width });
         verify(card !== null);
         verify(waitForRendering(card));
-        const charge = findChild(card, "chargeHistoryGraph");
-        const energy = findChild(card, "energyHistoryGraph");
-        verify(charge !== null && energy !== null);
-        for (const graph of [charge, energy]) {
-            const position = graph.mapToItem(card, 0, 0);
-            verify(position.x >= 0 && position.y >= 0);
-            verify(position.x + graph.width <= card.width);
-            verify(position.y + graph.height <= card.height,
-                "graph must not overflow the bottom of its card");
-            const plot = findChild(graph, "batteryHistoryPlot");
-            const plotPosition = plot.mapToItem(graph, 0, 0);
-            verify(plotPosition.x >= 0 && plotPosition.y >= 0);
-            verify(plotPosition.y + plot.height <= graph.height);
-            verify(plot.width > 0 && plot.height > 0);
-        }
-        const chargePlot = findChild(charge, "batteryHistoryPlot");
-        const energyPlot = findChild(energy, "batteryHistoryPlot");
-        compare(chargePlot.mapToItem(card, 0, 0).x, energyPlot.mapToItem(card, 0, 0).x);
-        compare(chargePlot.width, energyPlot.width, "tracks share the exact same time axis");
-        const top = charge.mapToItem(card, 0, 0).y;
-        verify(energy.mapToItem(card, 0, 0).y >= top + charge.height + card.contentSpacing);
+        const graph = findChild(card, "batteryTimelineGraph");
+        const position = graph.mapToItem(card, 0, 0);
+        verify(position.x >= 0 && position.y >= 0);
+        verify(position.x + graph.width <= card.width);
+        verify(position.y + graph.height <= card.height);
+        const plot = findChild(graph, "batteryHistoryPlot");
+        verify(plot.width > 0 && plot.height > 0);
+        verify(plot.y + plot.height <= graph.height);
+        const initialHeight = card.height;
+        graph.hovered(0.1);
+        wait(0);
+        compare(card.height, initialHeight, "hover must not move the chart or application list");
     }
 }

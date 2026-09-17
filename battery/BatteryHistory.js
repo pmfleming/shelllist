@@ -31,6 +31,8 @@ function metricAvailable(point, metric, positiveOnly) {
         return false;
     if (metric === "percentage" && value > 100)
         return false;
+    if (metric === "power_watts" && (point.power_valid === false || (point.power_valid !== true && value === 0)))
+        return false;
     return metric !== "time_to_full_seconds" || (point.charging === true && value > 0);
 }
 
@@ -58,7 +60,8 @@ function series(points, metric, minimumMaximum, positiveOnly) {
         segment.push({
             x: timeline.duration > 0 ? (point.active_time_ms - timeline.first) / timeline.duration : 0.5,
             value: point[metric],
-            timestamp_ms: point.timestamp_ms
+            timestamp_ms: point.timestamp_ms,
+            charging: point.charging === true
         });
         maximum = Math.max(maximum, point[metric]);
         previous = point;
@@ -69,6 +72,33 @@ function series(points, metric, minimumMaximum, positiveOnly) {
         activeDurationMs: timeline.duration,
         hasActiveTimeline: timeline.available
     };
+}
+
+// Range controls select observed time, matching the daemon's gap-free x axis.
+function windowPoints(points, hours, currentPoint) {
+    const samples = (points || []).filter(observedPoint);
+    // A lightweight daemon observation extends the chart between stored bins.
+    // Never append an older event to a newer history response or join a clock reset.
+    const last = samples.length ? samples[samples.length - 1] : null;
+    if (currentPoint && observedPoint(currentPoint) && (!last || currentPoint.timestamp_ms > last.timestamp_ms))
+        samples.push(currentPoint);
+    const timeline = activeTimeline(samples);
+    const cutoff = timeline.first + timeline.duration - hours * 3600000;
+    return samples.filter(function (point) { return point.active_time_ms >= cutoff; });
+}
+function forecastLabel(battery) {
+    const forecast = battery.forecast || {};
+    if (!battery.available)
+        return "Unavailable";
+    if (forecast.seconds > 0)
+        return forecast.target === 0 ? "to empty" : (forecast.limit !== null && forecast.limit !== undefined ? "to " + forecast.target + "% limit" : "to full");
+    if (forecast.estimating)
+        return "Estimating…";
+    if (forecast.status === "limit-reached")
+        return "Charge limit reached";
+    if (forecast.status === "full" || battery.state === "fully-charged")
+        return "Fully charged";
+    return battery.charging ? "Charging" : (battery.plugged ? "Not charging" : "On battery");
 }
 
 function nearestSample(points, x) {
@@ -83,17 +113,4 @@ function nearestSample(points, x) {
         });
     });
     return nearest;
-}
-
-function activeDuration(points) {
-    const samples = (points || []).filter(function (point) {
-        return nonnegative(point.active_time_ms);
-    });
-    if (samples.length === 0)
-        return "Collecting active-time samples";
-    const duration = Math.max(0, samples[samples.length - 1].active_time_ms - samples[0].active_time_ms);
-    const minutes = Math.floor(duration / 60000);
-    const hours = Math.floor(minutes / 60);
-    const label = hours > 0 ? hours + "h " + minutes % 60 + "m" : (minutes > 0 ? minutes + "m" : "<1m");
-    return label + " observed · sleep/offline time omitted";
 }

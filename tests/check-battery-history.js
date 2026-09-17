@@ -57,6 +57,26 @@ for (const invalid of [null, undefined, NaN, Infinity, -1])
     assert.equal(series([point(0, invalid, 80, false)]).segments.length, 0);
 const backwards = series([point(minute, minute, 80), point(0, 0, 70)]);
 assert.equal(backwards.segments.length, 2, "never interpolate backwards through a clock reset");
+
+const watts = series([
+    point(0, 0, 80, false, { power_watts: 0, power_valid: false }),
+    point(minute, minute, 79, true, { power_watts: 0, power_valid: true }),
+    point(2 * minute, 2 * minute, 78, true, { power_watts: 15, power_valid: false }),
+    point(3 * minute, 3 * minute, 77, true, { power_watts: 12 }),
+    point(4 * minute, 4 * minute, 78, true, { power_watts: 8, charging: true })
+], "power_watts");
+equal(watts.segments.map(s => s.map(p => p.value)), [[0], [12, 8]],
+    "unknown and legacy-zero power must not be presented as measured zero");
+assert.equal(watts.segments[1][1].charging, true, "preserve charge direction for power bars");
+equal(history.windowPoints(points, 0.25).map(p => p.percentage), [90, 70, 60],
+    "range controls use observed time and retain both sides of sleep discontinuities");
+const live = point(2 * day + 16 * minute, 31 * minute, 59);
+const extended = history.windowPoints(points, 6, live);
+assert.equal(extended.length, 5, "append the live observation between persisted buckets");
+assert.equal(series(extended).activeDurationMs, 31 * minute);
+assert.equal(history.windowPoints(extended, 6, live).length, 5, "do not duplicate a persisted/live point");
+assert.equal(history.windowPoints(extended, 6, points[1]).length, 5, "late metadata cannot rewind a newer response");
+assert.equal(points.length, 4, "windowing must not mutate the history cache");
 // Domain energy/forecast cases now live in bar-daemon/src/battery/derived.rs.
 assert.equal(history.energySeries, undefined, "no frontend integration fallback");
 assert.equal(history.chargeForecast, undefined, "no frontend forecast fallback");

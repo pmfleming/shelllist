@@ -15,27 +15,6 @@ Column {
     width: parent.width
     spacing: Ui.Theme.verticalSpacing(Ui.Theme.spacingMd, Ui.Theme.densityScale(height, 0))
 
-    Ui.DetailCard {
-        height: 142
-        title: qsTr("Current status")
-        entries: [
-            {
-                label: "State",
-                value: Presentation.stateLabel(pane.battery),
-                valueColor: pane.battery.plugged ? Ui.Theme.active : Ui.Theme.text,
-                valueBold: true
-            },
-            {
-                label: "Time",
-                value: Presentation.timeLabel(pane.battery)
-            },
-            {
-                label: "Power",
-                value: Number(pane.battery.power_watts || 0).toFixed(1) + " W"
-            }
-        ]
-    }
-
     BatteryHistoryCard {
         history: pane.controller.batteryHistory
         battery: pane.battery

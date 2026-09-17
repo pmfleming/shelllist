@@ -11,115 +11,133 @@ Rectangle {
 
     required property var history
     required property var battery
-
-    readonly property var forecast: battery.forecast || ({ limit: null, target: 100, seconds: 0, estimating: false, status: "unavailable" })
-    readonly property real historyFraction: forecast.seconds > 0 ? Math.max(60000, chargeGraph.series.activeDurationMs) / (Math.max(60000, chargeGraph.series.activeDurationMs) + forecast.seconds * 1000) : 1
-    // Match the application resource timeline's 150px label rail, including padding.
-    readonly property real axisWidth: Math.min(138, Math.max(96, content.width * 0.36))
-    property int contentSpacing: Ui.Theme.spacingSm
-    property real hoverPosition: -1
-    readonly property real historicalPosition: hoverPosition / historyFraction
-    readonly property var hoveredSample: hoverPosition >= 0 && historicalPosition <= 1 ? History.nearestSample(chargeGraph.series.segments, historicalPosition) : null
-    readonly property var hoveredEnergy: hoverPosition >= 0 && historicalPosition <= 1 ? energyGraph.energySeries.bars.find(function (bar) {
-        return card.historicalPosition >= bar.x0 && card.historicalPosition <= bar.x1;
-    }) : null
-    readonly property string estimateText: forecast.seconds > 0 ? "~" + Presentation.duration(forecast.seconds) + " to " + forecast.target + "%" + (forecast.limit !== null ? " limit" : " full") : (forecast.estimating ? "Estimating charge time…" : (forecast.status === "limit-reached" ? "Charge limit reached" : ""))
+    property string range: "6"
+    readonly property var forecast: battery.forecast || ({ limit: null, target: 100, seconds: 0 })
+    readonly property string estimateText: History.forecastLabel(battery)
+    readonly property var points: History.windowPoints(history.points || [], Number(range), (battery.history || {}).current_point || history.current_point)
+    readonly property bool powerAvailable: battery.available && battery.power_available === true
+        && History.nonnegative(battery.power_watts)
 
     width: parent ? parent.width : 0
     implicitHeight: content.implicitHeight + 2 * Ui.Theme.spacingMd
     height: implicitHeight
     radius: Ui.Theme.cardRadius
     color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.7)
-    border.width: 0
 
     ColumnLayout {
         id: content
         anchors.fill: parent
         anchors.margins: Ui.Theme.spacingMd
-        spacing: card.contentSpacing
+        spacing: Ui.Theme.spacingMd
 
-        Ui.ThemeText {
+        RowLayout {
             Layout.fillWidth: true
-            text: qsTr("Battery history · 7 days")
-            font.pixelSize: Ui.Theme.fontSizeLabel
-            font.weight: Ui.Theme.fontWeightDemiBold
-            elide: Text.ElideRight
+            spacing: Ui.Theme.spacingMd
+
+            Ui.GlyphLabel {
+                glyph: card.battery.plugged ? "󰚥" : "󰁹"
+                color: card.battery.plugged ? Ui.Theme.active : Ui.Theme.accent
+                font.pixelSize: Ui.Theme.iconSizeLarge
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+
+                Ui.ThemeText {
+                    objectName: "batteryHistoryEstimate"
+                    Layout.fillWidth: true
+                    text: card.forecast.seconds > 0 ? "~" + Presentation.duration(card.forecast.seconds) : card.estimateText
+                    font.pixelSize: card.forecast.seconds > 0 ? Ui.Theme.fontSizeTitle : Ui.Theme.fontSizeLabel
+                    font.weight: Ui.Theme.fontWeightBold
+                    wrapMode: Text.WordWrap
+                }
+
+                Ui.FieldLabel {
+                    Layout.fillWidth: true
+                    visible: card.forecast.seconds > 0
+                    text: card.estimateText
+                    font.pixelSize: Ui.Theme.fontSizeCaption
+                }
+            }
+
+            ColumnLayout {
+                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                spacing: 2
+
+                Ui.ThemeText {
+                    text: card.powerAvailable ? (card.battery.charging ? "+" : "") + card.battery.power_watts.toFixed(1) + " W" : "— W"
+                    color: card.battery.charging ? Ui.Theme.active : Ui.Theme.resourcePower
+                    font.pixelSize: Ui.Theme.fontSizeLabel
+                    font.weight: Ui.Theme.fontWeightDemiBold
+                }
+
+                Ui.FieldLabel {
+                    text: card.battery.charging ? qsTr("into battery") : qsTr("from battery")
+                    visible: card.powerAvailable && (card.battery.charging || !card.battery.plugged)
+                    font.pixelSize: Ui.Theme.fontSizeCaption
+                }
+            }
         }
 
-        Ui.FieldLabel {
+        RowLayout {
             Layout.fillWidth: true
-            text: Presentation.historyRange(card.history) + " · " + History.activeDuration(card.history.points || [])
-            color: Ui.Theme.subtleText
-            font.pixelSize: Ui.Theme.fontSizeCaption
-            wrapMode: Text.WordWrap
-            elide: Text.ElideNone
-        }
+            spacing: Ui.Theme.spacingSm
 
-        Ui.FieldLabel {
-            objectName: "batteryHistoryEstimate"
-            Layout.fillWidth: true
-            visible: text.length > 0
-            text: card.estimateText
-            font.pixelSize: Ui.Theme.fontSizeCaption
+            Ui.FieldLabel {
+                Layout.fillWidth: true
+                text: Presentation.stateLabel(card.battery)
+                elide: Text.ElideRight
+                font.pixelSize: Ui.Theme.fontSizeCaption
+            }
+
+            Ui.SegmentedControl {
+                objectName: "batteryHistoryRange"
+                Layout.preferredWidth: Math.min(168, content.width * 0.55)
+                options: [{ value: "6", label: "6h" }, { value: "24", label: "24h" }, { value: "168", label: "7d" }]
+                value: card.range
+                onSelected: function (value) { card.range = value; }
+            }
         }
 
         BatteryHistoryGraph {
-            id: chargeGraph
-            objectName: "chargeHistoryGraph"
-            points: card.history.points || []
-            label: qsTr("Charge level")
-            valueText: card.battery.available ? Math.round(Number(card.battery.percentage) || 0) + "%" : qsTr("Unavailable")
-            referenceText: Presentation.stateLabel(card.battery)
-            lineColor: card.battery.warning ? Ui.Theme.warning : Ui.Theme.resourceCpu
+            id: graph
+            objectName: "batteryTimelineGraph"
+            points: card.points
             forecast: card.forecast
             currentPercentage: card.battery.available ? Number(card.battery.percentage) : -1
-            historyFraction: card.historyFraction
-            axisWidth: card.axisWidth
-            hoverPosition: card.hoverPosition
-            onHovered: function (position) {
-                card.hoverPosition = position;
-            }
+            lineColor: card.battery.warning ? Ui.Theme.warning : Ui.Theme.resourceCpu
         }
 
-        BatteryHistoryGraph {
-            id: energyGraph
-            objectName: "energyHistoryGraph"
-            points: card.history.points || []
-            energy: true
-            energySeries: card.history.energy || ({ bars: [], maximum: 0, totalWh: 0, intervalMs: 0, activeDurationMs: 0 })
-            label: qsTr("Energy used")
-            valueText: energySeries.bars.length > 0 ? "~" + energySeries.totalWh.toFixed(2) + " Wh" : qsTr("Unavailable")
-            referenceText: energySeries.bars.length > 0 ? "max " + maximum.toFixed(1) + " Wh/bin" : qsTr("No measurements")
-            lineColor: Ui.Theme.resourcePower
-            historyFraction: card.historyFraction
-            axisWidth: card.axisWidth
-            hoverPosition: card.hoverPosition
-            showTimeAxis: true
-            onHovered: function (position) {
-                card.hoverPosition = position;
-            }
-        }
-
-        Ui.FieldLabel {
+        RowLayout {
             Layout.fillWidth: true
-            visible: energyGraph.energySeries.bars.length > 0
-            text: "Estimated from discharge power · " + Presentation.duration(energyGraph.energySeries.intervalMs / 1000) + " observed-time bins; gaps excluded"
-            color: Ui.Theme.subtleText
-            font.pixelSize: Ui.Theme.fontSizeCaption
-            wrapMode: Text.WordWrap
-            elide: Text.ElideNone
-        }
+            spacing: 5
 
-        Ui.FieldLabel {
-            objectName: "batteryHistoryHover"
-            Layout.fillWidth: true
-            // Keep both tracks stationary when the shared readout changes.
-            Layout.minimumHeight: font.pixelSize * 3
-            text: card.hoverPosition < 0 ? "Hover either track to inspect charge and energy." : (card.historicalPosition > 1 ? "Projected charge · " + card.estimateText : ((card.hoveredSample ? new Date(card.hoveredSample.timestamp_ms).toLocaleString() + " · " + Math.round(card.hoveredSample.value) + "% (nearest sample)" : "No charge sample") + "\n" + (card.hoveredEnergy ? "~" + card.hoveredEnergy.value.toFixed(2) + " Wh · " + Presentation.duration(card.hoveredEnergy.observedMs / 1000) + " sampled in bin" : "No discharge energy sampled here")))
-            color: Ui.Theme.subtleText
-            font.pixelSize: Ui.Theme.fontSizeCaption
-            wrapMode: Text.WordWrap
-            elide: Text.ElideNone
+            Rectangle {
+                Layout.preferredWidth: 14
+                Layout.preferredHeight: 3
+                color: graph.lineColor
+            }
+            Ui.FieldLabel {
+                text: qsTr("Charge %")
+                font.pixelSize: Ui.Theme.fontSizeCaption
+            }
+            Item { Layout.preferredWidth: 5 }
+            Rectangle {
+                Layout.preferredWidth: 9
+                Layout.preferredHeight: 9
+                color: Ui.Theme.resourcePower
+            }
+            Ui.FieldLabel {
+                text: qsTr("Battery W")
+                font.pixelSize: Ui.Theme.fontSizeCaption
+            }
+            Item { Layout.fillWidth: true }
+            Ui.FieldLabel {
+                text: qsTr("Observed time")
+                font.pixelSize: Ui.Theme.fontSizeCaption
+                visible: content.width > 330
+            }
         }
     }
 }
