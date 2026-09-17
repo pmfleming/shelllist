@@ -258,7 +258,7 @@ ColumnLayout {
         }
         Ui.ThemeText {
             Layout.fillWidth: true
-            text: qsTr("Pairing and connection defaults apply unless overridden under Device → Advanced device options.")
+            text: qsTr("Pairing and connection defaults apply unless overridden in the device’s Settings tab.")
             wrapMode: Text.WordWrap
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.fontSizeSmall

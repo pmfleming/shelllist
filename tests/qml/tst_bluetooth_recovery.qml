@@ -297,7 +297,9 @@ TestCase {
         const details = createTemporaryObject(detailsComponent, panel, {controller: controller, width: 600, height: 900});
         controller.openDetails();
         const tabs = findChild(details, "bluetoothDetailsTabs");
-        compare(tabs.tabs.map(tab => tab.value), ["device", "information"]);
+        compare(tabs.tabs.map(tab => tab.value), ["device", "settings", "information"]);
+        verify(controller.cycleDetailsTab());
+        compare(controller.detailsTab, "settings");
         verify(controller.cycleDetailsTab());
         compare(controller.detailsTab, "information");
         verify(controller.cycleDetailsTab());
@@ -546,8 +548,35 @@ TestCase {
         compare(draft.value, "Keep on disconnect");
         verify(draft.dirty && !draft.pending && draft.error.length > 0);
     }
+    function test_deviceControlsAreSplitAcrossTabs() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const audio = findChild(panel.page, "deviceAudio");
+        const name = findChild(panel.page, "deviceNameInput");
+        const policy = findChild(panel.page, "devicePolicy");
+        verify(audio.visible);
+        verify(!name.visible);
+        verify(!policy.visible);
+        compare(findChild(panel.page, "deviceOverrides"), null);
+
+        controller.detailsTab = "settings";
+        verify(!audio.visible);
+        verify(name.visible);
+        verify(policy.visible);
+        verify(findToggle(panel.page, "Reconnect after wake").visible);
+        name.focusInput(false);
+        verify(panel.page.editingName);
+
+        controller.detailsTab = "device";
+        verify(!panel.page.editingName);
+        compare(panel.page.contentY, 0);
+        verify(audio.visible);
+        verify(!name.visible);
+        verify(!policy.visible);
+    }
     function test_busyPolicyDoesNotClaimUnsupported() {
         const panel = makePanel();
+        panel.controller.detailsTab = "settings";
         verify(findToggle(panel.page, "Reconnect after wake").visible);
         verify(findToggle(panel.page, "Reconnect after wake").interactive);
         verify(panel.controller.updateDevicePolicy({reconnect_on_resume: false}));

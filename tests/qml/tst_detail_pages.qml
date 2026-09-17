@@ -141,6 +141,10 @@ TestCase {
                 factory: deviceFactory
             },
             {
+                tag: "bluetooth-settings",
+                factory: deviceFactory
+            },
+            {
                 tag: "bluetooth-information",
                 factory: informationFactory
             },
@@ -260,6 +264,8 @@ TestCase {
         verify(page !== null);
         verifyStack(page);
         populate(page, data.tag);
+        if (data.tag === "bluetooth-settings")
+            page.controller.detailsTab = "settings";
         if (data.tag === "bluetooth-adapter-pairing")
             page.controller.adapterSettingsTab = "pairing";
         for (const width of [675, 320, 480]) {
@@ -267,10 +273,11 @@ TestCase {
             page.height = width / 2;
             verify(waitForRendering(page)); // Settle wrapped text and nested layouts before measuring disclosures.
             verifyStack(page);
-            const overrides = findChild(page, "deviceOverrides");
-            if (overrides) {
-                verify(overrides.visible);
-                verify(overrides.mapToItem(page.contentItem, 0, overrides.height).y <= page.contentHeight + 1);
+            const policy = findChild(page, "devicePolicy");
+            if (policy) {
+                compare(policy.visible, data.tag === "bluetooth-settings");
+                if (policy.visible)
+                    verify(policy.mapToItem(page.contentItem, 0, policy.height).y <= page.contentHeight + 1);
             }
             const technicalDetails = findChild(page, "adapterTechnicalDetails");
             if (technicalDetails && technicalDetails.visible) {

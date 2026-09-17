@@ -48,6 +48,11 @@ Ui.ActionDetailsPane {
                 label: "Device"
             },
             {
+                value: "settings",
+                icon: "󰒓",
+                label: qsTr("Settings")
+            },
+            {
                 value: "information",
                 icon: "󰋼",
                 label: "Information"
@@ -80,7 +85,7 @@ Ui.ActionDetailsPane {
             Loader {
                 id: deviceLoader
                 anchors.fill: parent
-                active: pane.controller.hasSelection && pane.controller.detailsTab === "device"
+                active: pane.controller.hasSelection && (pane.controller.detailsTab === "device" || pane.controller.detailsTab === "settings")
                 asynchronous: true
                 sourceComponent: Component {
                     BluetoothDevicePage {

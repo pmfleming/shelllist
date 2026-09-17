@@ -377,7 +377,7 @@ Ui.ProviderChooserController {
             return true;
         }
         if (!hasSelection) return false;
-        const tabs = ["device", "information"];
+        const tabs = ["device", "settings", "information"];
         const currentIndex = Math.max(0, tabs.indexOf(detailsTab));
         detailsTab = tabs[(currentIndex + 1) % tabs.length];
         return true;

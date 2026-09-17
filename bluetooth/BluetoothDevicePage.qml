@@ -7,8 +7,17 @@ Ui.DetailFlickable {
 
     required property BluetoothController controller
     readonly property alias editingName: settings.editingName
+    readonly property string selectedTab: controller.detailsTab
+
+    onSelectedTabChanged: {
+        if (page.editingName)
+            page.forceActiveFocus();
+        page.cancelFlick();
+        page.contentY = 0;
+    }
 
     Item {
+        visible: page.selectedTab === "device"
         width: parent.width
         height: noiseControl.visible ? Math.max(batteryStatus.implicitHeight, noiseControl.y + noiseControl.implicitHeight) : batteryStatus.implicitHeight
 
@@ -30,10 +39,14 @@ Ui.DetailFlickable {
         }
     }
 
-    BluetoothDeviceAudio { controller: page.controller }
+    BluetoothDeviceAudio {
+        controller: page.controller
+        visible: page.selectedTab === "device" && audioDevice
+    }
 
     Ui.DetailColumnCard {
         height: implicitHeight
+        visible: page.selectedTab === "settings"
         title: qsTr("Device settings")
         BluetoothDeviceActions {
             id: settings
@@ -43,9 +56,10 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailColumnCard {
-        objectName: "deviceOverrides"
+        objectName: "devicePolicy"
         height: implicitHeight
-        title: qsTr("Advanced device options")
+        visible: page.selectedTab === "settings"
+        title: qsTr("Connection and pairing")
         BluetoothDevicePolicy {
             Layout.fillWidth: true
             controller: page.controller
