@@ -24,9 +24,9 @@ function controller() {
     const calls = [];
     const context = vm.createContext({
         Flow: library(flowPath), Presentation: library(presentationPath),
-        uiActive: false, actionInFlight: false, sendSucceeds: true,
+        uiActive: false, actionInFlight: false, sendSucceeds: true, backendReady: true,
         thresholdAutoSave: timer(), alertAutoSave: timer(),
-        batteryBackend: new Proxy({}, { get: (_, method) => (...args) => {
+        batteryBackend: new Proxy({}, { get: (_, method) => method === "ready" ? context.backendReady : (...args) => {
             calls.push({ method, args });
             return context.sendSucceeds;
         } })
@@ -201,14 +201,34 @@ for (const extra of [
     assert.equal(c.actionInFlight, false);
     c.sendSucceeds = true;
     assert.equal(c.setKeepAwake(false), true);
+    c.backendReady = false;
     c.transportFailed("disconnected");
     assert.equal(c.keepAwakePending, false);
     assert.equal(c.canSetKeepAwake, false);
     assert.equal(c.canPowerSleepAction("lock"), false, "stale telemetry is not actionable");
     assert.ok(c.keepAwakeError.includes("unknown"));
+    c.backendReady = true;
     c.applyPowerSleep({ ...c.powerSleep, available: true, keep_awake: false });
     assert.equal(c.canSetKeepAwake, true);
     assert.equal(c.keepAwakeError, "", "fresh snapshot resolves connection uncertainty");
+}
+for (const reportedActive of [false, true]) {
+    const { c, calls } = controller();
+    c.applyPowerSleep({ available: false, keep_awake: reportedActive, preparing_for_sleep: true,
+        error: "logind telemetry unavailable" });
+    assert.equal(c.canSetKeepAwake, true, "release is independent of telemetry and preparation hints");
+    assert.equal(c.setKeepAwake(true), false, "must never acquire protection with unavailable telemetry");
+    assert.equal(c.toggleKeepAwake(), true, "click always releases when telemetry is unavailable");
+    assert.deepEqual(calls[0], { method: "setKeepAwake", args: [false] });
+    assert.equal(c.toggleKeepAwake(), false, "duplicate releases remain guarded");
+    c.operationFinished("power-keep-awake-1");
+    c.sleepPendingAction = "suspend";
+    assert.equal(c.setKeepAwake(false), false);
+    c.sleepPendingAction = "";
+    c.backendReady = false;
+    assert.equal(c.setKeepAwake(false), false, "disconnected transport is not actionable");
+    c.backendReady = true;
+    assert.equal(c.setKeepAwake(false), true, "reconnection permits release before healthy telemetry returns");
 }
 {
     const { c, calls } = controller();

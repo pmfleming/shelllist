@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest
 import Shelllist.Battery as Battery
+import Shelllist.Io as Io
 
 TestCase {
     id: testCase
@@ -11,6 +12,38 @@ TestCase {
     visible: true
     width: 420
     height: 760
+    property var originalFactory
+    property var originalSessions
+    property var calls: []
+
+    Component {
+        id: clientFactory
+        QtObject {
+            property string daemonName
+            property var streams: []
+            property bool active: false
+            property bool ready: true
+            property bool recoverProtocolErrors: false
+            signal response(string id, var envelope, string transportError, var route)
+            signal eventReceived(var event, var route)
+            signal transportFailed(string message)
+            function call(id, method, params, route) { testCase.calls = testCase.calls.concat([{ id: id, method: method, params: params }]); }
+            function subscribeExtra(id, streams, route) {}
+            function cancel(id, requestId, route) {}
+            function release(id, route) {}
+        }
+    }
+    function initTestCase() {
+        originalFactory = Io.DaemonSessions.clientFactory;
+        originalSessions = Io.DaemonSessions.sessions;
+        Io.DaemonSessions.sessions = ({});
+        Io.DaemonSessions.clientFactory = clientFactory;
+    }
+    function cleanupTestCase() {
+        for (const session of Object.values(Io.DaemonSessions.sessions)) session.client.destroy();
+        Io.DaemonSessions.sessions = originalSessions;
+        Io.DaemonSessions.clientFactory = originalFactory;
+    }
 
     Component {
         id: panelComponent
@@ -143,6 +176,38 @@ TestCase {
         controller.applyPowerSleep(oldDaemon);
         verify(!button.enabled);
         verify(button.toolTip.indexOf("updated bar-daemon") >= 0);
+    }
+
+    function test_degradedTelemetryAllowsOnlyReleaseThroughKeyboardAndAccessibility() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const button = findChild(panel, "keepAwakeButton");
+        const client = Io.DaemonSessions.sessions["bar-daemon"].client;
+        controller.applyPowerSleep({ available: false, keep_awake: false, preparing_for_sleep: true });
+        verify(button.enabled, "even a default false snapshot must allow releasing an existing FD");
+        verify(button.toolTip.indexOf("turn off Keep awake") >= 0);
+        calls = [];
+        button.forceActiveFocus();
+        keyClick(Qt.Key_Space);
+        compare(calls.length, 1);
+        compare(calls[0].method, "powerSleep.setKeepAwake");
+        compare(calls[0].params.enabled, false);
+        verify(!button.enabled);
+        controller.operationFinished("power-keep-awake-1");
+        button.Accessible.toggleAction();
+        compare(calls.length, 2);
+        compare(calls[1].params.enabled, false);
+        controller.operationFinished("power-keep-awake-2");
+        client.ready = false;
+        verify(!button.enabled);
+        verify(button.toolTip.indexOf("Reconnect") >= 0);
+        client.ready = true;
+        verify(button.enabled);
+        controller.applyPowerSleep(sleepState());
+        calls = [];
+        button.Accessible.toggleAction();
+        compare(calls.length, 1);
+        compare(calls[0].params.enabled, true, "healthy telemetry restores ordinary toggling");
     }
 
     function test_sharedAndSeparateAutomaticSleepControls() {

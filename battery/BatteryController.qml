@@ -65,7 +65,11 @@ Ui.ChooserController {
     property bool keepAwakePending: false
     property string keepAwakeError: ""
     readonly property bool keepAwake: powerSleep.keep_awake === true
-    readonly property bool canSetKeepAwake: powerSleep.keep_awake !== undefined && powerSleep.available && !actionInFlight && !sleepBusy
+
+    // With unavailable telemetry the only safe action is an idempotent release,
+    // even if a degraded snapshot defaulted keep_awake to false.
+    readonly property bool keepAwakeReleaseOnly: !powerSleep.available
+    readonly property bool canSetKeepAwake: powerSleep.keep_awake !== undefined && backend.ready && !actionInFlight && !keepAwakePending && sleepPendingAction.length === 0 && (keepAwakeReleaseOnly || keepAwake || !powerSleep.preparing_for_sleep)
     readonly property bool sleepBusy: sleepPendingAction.length > 0 || !!powerSleep.preparing_for_sleep
     readonly property string sleepStatus: Presentation.sleepStatus(powerSleep, sleepPendingAction, sleepRetryAction, sleepError)
     property string lastError: ""
@@ -712,8 +716,12 @@ Ui.ChooserController {
         return startOperation(backend.setPowerActionEnabled(action, enabled));
     }
 
+    function toggleKeepAwake(): bool {
+        return setKeepAwake(!keepAwakeReleaseOnly && !keepAwake);
+    }
+
     function setKeepAwake(enabled: bool): bool {
-        if (!canSetKeepAwake || typeof enabled !== "boolean")
+        if (!canSetKeepAwake || typeof enabled !== "boolean" || (enabled && (keepAwakeReleaseOnly || sleepBusy)))
             return false;
         keepAwakePending = true;
         keepAwakeError = "";
