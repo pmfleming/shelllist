@@ -26,6 +26,10 @@ ModalFrame {
             action: "Run the primary action"
         },
         {
+            keys: "Alt+Enter",
+            action: "Activate the button in the focused search box"
+        },
+        {
             keys: "→ / ←",
             action: "Open / close details"
         },
