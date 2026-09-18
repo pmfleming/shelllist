@@ -9,6 +9,7 @@ Io.DaemonBackend {
     property var operations
     property var finishedOperations
     property string nameRequestKey: ""
+    property var pendingAudioProfile: null
     property var adapterRequestKeys: ({})
 
     endpoint: ({
@@ -51,6 +52,7 @@ Io.DaemonBackend {
         return Object.keys(values || ({})).length;
     }
     function resetTransportState() {
+        pendingAudioProfile = null;
         nameRequestKey = "";
         adapterRequestKeys = ({});
         pending = ({});
@@ -80,6 +82,9 @@ Io.DaemonBackend {
     }
     function finish(id, envelope, transportError) {
         const error = responseError(envelope, transportError, "Bluetooth operation failed");
+        const audioProfile = id === "audio-set-profile" ? pendingAudioProfile : null;
+        if (id === "audio-set-profile")
+            pendingAudioProfile = null;
         if (id === "device-set-alias") {
             if (error)
                 controller.nameEdits.rejected(nameRequestKey, error);
@@ -90,7 +95,8 @@ Io.DaemonBackend {
         if (error.length > 0) {
             finishAdapterRequest(id, error);
             console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
-            controller.status = error;
+            controller.status = id === "audio-profile-policy"
+                ? "Audio profile applied, but could not remember it: " + error : error;
             return;
         }
         const cancellation = cancellationStatus(id);
@@ -101,6 +107,15 @@ Io.DaemonBackend {
         }
         try {
             applyResponse(id, envelope.data || ({}));
+            if (audioProfile) {
+                controller.status = "Remembering Bluetooth audio profile…";
+                if (!call("audio-profile-policy", BtApi.methods.devicePolicyUpdate, {
+                    key: audioProfile.deviceKey, preferred_audio_profile_key: audioProfile.profileKey
+                }))
+                    controller.status = "Audio profile applied, but could not remember it";
+            } else if (id === "audio-profile-policy") {
+                controller.status = "Bluetooth audio profile updated and remembered";
+            }
             finishAdapterRequest(id, "");
             console.info("shelllist bluetooth request completed id=" + id);
         } catch (applyError) {
@@ -217,10 +232,17 @@ Io.DaemonBackend {
         });
     }
     function setAudioProfile(deviceKey, profileKey) {
-        return call("audio-set-profile", BtApi.methods.audioSetProfile, {
+        if (isPending("audio-set-profile") || isPending("audio-profile-policy"))
+            return false;
+        // Capture the device now: selection can change before the reply arrives.
+        pendingAudioProfile = {deviceKey: deviceKey, profileKey: profileKey};
+        const sent = call("audio-set-profile", BtApi.methods.audioSetProfile, {
             device_key: deviceKey,
             profile_key: profileKey
         });
+        if (!sent)
+            pendingAudioProfile = null;
+        return sent;
     }
     function recoverRequests() {
         if (isPending("requests"))

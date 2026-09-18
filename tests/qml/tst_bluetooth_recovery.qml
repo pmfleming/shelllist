@@ -464,6 +464,80 @@ TestCase {
         compare(calls[0].params.device_key, "buds");
         compare(calls[0].params.endpoint_key, "output");
     }
+    function setupAudioProfile(panel) {
+        panel.controller.applyAudioSnapshot([{device_key: "buds", active_profile_key: "sbc",
+            profiles: [{key: "sbc", label: "SBC"}, {key: "aac", label: "AAC"},
+                {key: "unavailable", label: "Unavailable", available: false}]}]);
+        return findChild(panel.page, "currentAudioProfile");
+    }
+    function test_audioProfileAppliesThenRemembersOriginalDevice() {
+        const panel = makePanel();
+        const profile = setupAudioProfile(panel);
+        const backend = findChild(panel.controller, "bluetoothBackend");
+        compare(findChild(panel.page, "audioProfileOnConnect"), null);
+        compare(profile.value, "sbc");
+        profile.activated(profile.optionIndex("aac"));
+        compare(calls.length, 1);
+        compare(calls[0].method, "bluetooth.audio.setProfile");
+        compare(calls[0].params.device_key, "buds");
+        compare(calls[0].params.profile_key, "aac");
+        verify(!profile.interactive);
+        panel.controller.applySnapshot({radio: panel.controller.radio, adapters: panel.controller.adapters,
+            devices: [{key: "other", name: "Other", paired: true}]});
+        backend.acceptSharedResponse("audio-set-profile", {protocol: "bt-api", version: 1, ok: true,
+            data: {audio_devices: [{device_key: "buds", active_profile_key: "aac"}]}}, "");
+        compare(calls.length, 2);
+        compare(calls[1].method, "bluetooth.device.policy.update");
+        compare(calls[1].params.key, "buds");
+        compare(calls[1].params.preferred_audio_profile_key, "aac");
+        verify(backend.requestRunning);
+        backend.acceptSharedResponse("audio-profile-policy", {protocol: "bt-api", version: 1, ok: true, data: {}}, "");
+        verify(!backend.requestRunning);
+        compare(panel.controller.status, "Bluetooth audio profile updated and remembered");
+    }
+    function test_activeAudioProfileCanBeRemembered() {
+        const panel = makePanel();
+        const profile = setupAudioProfile(panel);
+        profile.activated(profile.optionIndex("sbc"));
+        compare(calls.length, 1);
+        compare(calls[0].params.profile_key, "sbc");
+    }
+    function test_failedAudioProfileIsNotRemembered() {
+        const panel = makePanel();
+        const profile = setupAudioProfile(panel);
+        const backend = findChild(panel.controller, "bluetoothBackend");
+        profile.activated(profile.optionIndex("unavailable"));
+        compare(calls.length, 0);
+        profile.selected("aac");
+        backend.acceptSharedResponse("audio-set-profile", {protocol: "bt-api", version: 1, ok: false,
+            error: {message: "Profile unavailable"}}, "");
+        compare(calls.length, 1);
+        compare(backend.pendingAudioProfile, null);
+        compare(profile.value, "sbc");
+        verify(profile.interactive);
+        compare(panel.controller.status, "Profile unavailable");
+    }
+    function test_audioProfileSaveFailureIsReported() {
+        const panel = makePanel();
+        const profile = setupAudioProfile(panel);
+        const backend = findChild(panel.controller, "bluetoothBackend");
+        profile.selected("aac");
+        backend.acceptSharedResponse("audio-set-profile", {protocol: "bt-api", version: 1, ok: true,
+            data: {audio_devices: [{device_key: "buds", active_profile_key: "aac"}]}}, "");
+        backend.acceptSharedResponse("audio-profile-policy", {protocol: "bt-api", version: 1, ok: false,
+            error: {message: "Permission denied"}}, "");
+        compare(profile.value, "aac");
+        verify(profile.interactive);
+        compare(panel.controller.status, "Audio profile applied, but could not remember it: Permission denied");
+    }
+    function test_audioProfileTransportFailureClearsPendingPreference() {
+        const panel = makePanel();
+        setupAudioProfile(panel).selected("aac");
+        const backend = findChild(panel.controller, "bluetoothBackend");
+        backend.failSharedTransport("Disconnected");
+        compare(backend.pendingAudioProfile, null);
+        compare(calls.length, 1);
+    }
     function findToggle(item, title) {
         if (item.title === title && item.checked !== undefined)
             return item;
@@ -598,8 +672,9 @@ TestCase {
         controller.invalidateAudio("Audio service unavailable");
         wait(0);
         verify(findChild(panel.page, "deviceAudio").visible);
-        verify(!findChild(panel.page, "currentAudioProfile").visible);
-        const profile = findChild(panel.page, "audioProfileOnConnect");
+        compare(findChild(panel.page, "audioProfileOnConnect"), null);
+        const profile = findChild(panel.page, "currentAudioProfile");
+        verify(profile.visible);
         compare(profile.value, "saved-profile");
         compare(profile.placeholder, "Saved profile (currently unavailable)");
         verify(profile.interactive);
