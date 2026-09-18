@@ -271,7 +271,7 @@ TestCase {
         for (const width of [675, 320, 480]) {
             page.width = width;
             page.height = width / 2;
-            verify(waitForRendering(page)); // Settle wrapped text and nested layouts before measuring disclosures.
+            verify(waitForRendering(page)); // Settle wrapped text and nested layouts before measuring cards.
             verifyStack(page);
             const policy = findChild(page, "devicePolicy");
             if (policy) {
@@ -281,12 +281,11 @@ TestCase {
             }
             const technicalDetails = findChild(page, "adapterTechnicalDetails");
             if (technicalDetails && technicalDetails.visible) {
-                const collapsedHeight = page.contentHeight;
-                technicalDetails.expanded = true;
-                tryVerify(function () { return page.contentHeight > collapsedHeight; });
-                verifyStack(page);
-                technicalDetails.expanded = false;
-                tryCompare(page, "contentHeight", collapsedHeight);
+                for (const name of ["adapterControllerName", "adapterAddress", "adapterModalias"]) {
+                    const field = findChild(technicalDetails, name);
+                    verify(field !== null && field.visible);
+                    verify(field.mapToItem(page.contentItem, 0, field.height).y <= page.contentHeight + 1);
+                }
             }
             compare(page.interactive, page.contentHeight > page.height);
             // Tabs are kept warm or loaded while hidden; both must lay out on return.

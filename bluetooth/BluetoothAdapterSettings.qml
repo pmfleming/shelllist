@@ -147,22 +147,6 @@ ColumnLayout {
             onClicked: section.controller.setAdapterPower(section.controller.selectedAdapter, !section.controller.selectedAdapter.powered)
         }
 
-        Ui.FieldLabel {
-            text: qsTr("Computer’s Bluetooth name")
-        }
-        Ui.TextField {
-            id: adapterAliasInput
-            objectName: "adapterNameInput"
-            Layout.fillWidth: true
-            text: ""
-            maximumLength: 248
-            inputValid: section.aliasValid
-            readOnly: section.controller.globalRequestInFlight || !section.controller.selectedAdapter.key
-            onEdited: section.queueAutoSave("alias")
-            onEditingFinished: section.saveDirtyFields()
-            onAccepted: section.saveDirtyFields()
-        }
-
         Ui.FieldLabel { text: qsTr("Bluetooth state on login") }
         Ui.SegmentedControl {
             objectName: "bluetoothLoginState"
@@ -179,26 +163,30 @@ ColumnLayout {
                 section.controller.updateManagement({launch_state: value});
             }
         }
+    }
 
-        Ui.DisclosureSection {
-            objectName: "adapterTechnicalDetails"
+    Ui.DetailColumnCard {
+        objectName: "adapterTechnicalDetails"
+        Layout.fillWidth: true
+        visible: section.controller.adapterSettingsTab === "general"
+        title: qsTr("Technical details")
+        Ui.DetailField {
+            objectName: "adapterControllerName"
             Layout.fillWidth: true
-            title: qsTr("Technical details")
-            Ui.DetailField {
-                Layout.fillWidth: true
-                label: qsTr("Controller")
-                value: section.controller.selectedAdapter.name || "Unavailable"
-            }
-            Ui.DetailField {
-                Layout.fillWidth: true
-                label: qsTr("Address")
-                value: section.controller.selectedAdapter.address || "Unavailable"
-            }
-            Ui.DetailField {
-                Layout.fillWidth: true
-                label: qsTr("Modalias")
-                value: section.controller.selectedAdapter.modalias || "Unavailable"
-            }
+            label: qsTr("Controller")
+            value: section.controller.selectedAdapter.name || "Unavailable"
+        }
+        Ui.DetailField {
+            objectName: "adapterAddress"
+            Layout.fillWidth: true
+            label: qsTr("Address")
+            value: section.controller.selectedAdapter.address || "Unavailable"
+        }
+        Ui.DetailField {
+            objectName: "adapterModalias"
+            Layout.fillWidth: true
+            label: qsTr("Modalias")
+            value: section.controller.selectedAdapter.modalias || "Unavailable"
         }
     }
 
@@ -207,6 +195,20 @@ ColumnLayout {
         Layout.preferredHeight: implicitHeight
         visible: section.controller.adapterSettingsTab === "pairing"
         title: qsTr("Visibility and pairing")
+
+        Ui.FieldLabel { text: qsTr("Computer’s Bluetooth name") }
+        Ui.TextField {
+            id: adapterAliasInput
+            objectName: "adapterNameInput"
+            Layout.fillWidth: true
+            text: ""
+            maximumLength: 248
+            inputValid: section.aliasValid
+            readOnly: section.controller.globalRequestInFlight || !section.controller.selectedAdapter.key
+            onEdited: section.queueAutoSave("alias")
+            onEditingFinished: section.saveDirtyFields()
+            onAccepted: section.saveDirtyFields()
+        }
 
         BluetoothAdapterAccessControl {
             id: discoverableTimeoutRow
@@ -229,6 +231,13 @@ ColumnLayout {
             }
             onEditingFinished: section.saveDirtyFields()
         }
+    }
+
+    Ui.DetailColumnCard {
+        Layout.fillWidth: true
+        Layout.preferredHeight: implicitHeight
+        visible: section.controller.adapterSettingsTab === "pairing"
+        title: qsTr("Pairing and connection defaults")
 
         Ui.ToggleRow {
             objectName: "defaultTrustAfterPairing"
@@ -239,13 +248,6 @@ ColumnLayout {
             interactive: !section.controller.globalRequestInFlight
             onClicked: section.controller.setTrustAfterPair(!checked)
         }
-    }
-
-    Ui.DetailColumnCard {
-        Layout.fillWidth: true
-        Layout.preferredHeight: implicitHeight
-        visible: section.controller.adapterSettingsTab === "general"
-        title: qsTr("Connection defaults")
 
         Ui.ToggleRow {
             objectName: "defaultReconnectAfterWake"

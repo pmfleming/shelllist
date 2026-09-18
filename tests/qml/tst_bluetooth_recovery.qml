@@ -321,9 +321,11 @@ TestCase {
         verify(findChild(page, "showBlockedDevices") !== null);
         verify(findChild(page, "bluetoothRadioPower").visible);
         verify(!findChild(page, "defaultTrustAfterPairing").visible);
+        verify(!findChild(page, "defaultReconnectAfterWake").visible);
+        verify(!findChild(page, "adapterNameInput").visible);
         for (const setting of [
             {name: "defaultTrustAfterPairing", field: "trust_after_pair", tab: "pairing"},
-            {name: "defaultReconnectAfterWake", field: "reconnect_on_resume", tab: "general"}
+            {name: "defaultReconnectAfterWake", field: "reconnect_on_resume", tab: "pairing"}
         ]) {
             tabs.selected(setting.tab);
             const toggle = findChild(page, setting.name);
@@ -335,14 +337,43 @@ TestCase {
             findChild(controller, "bluetoothBackend").pending = ({});
         }
         compare(calls.length, 2);
+        tabs.selected("general");
         page.contentY = 100;
         tabs.selected("pairing");
         compare(page.contentY, 0);
         verify(!findChild(page, "bluetoothRadioPower").visible);
         verify(!findChild(page, "showBlockedDevices").visible);
+        verify(findChild(page, "adapterNameInput").visible);
+        verify(findChild(page, "defaultReconnectAfterWake").visible);
         controller.toggleDetails();
         verify(controller.detailsOpen);
         compare(controller.detailsTab, "device");
+    }
+    function test_adapterTechnicalDetailsAreAlwaysExpandedInGeneral() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.applySnapshot({radio: controller.radio, devices: controller.allDevices,
+            adapters: [{key: "adapter", alias: "Computer", name: "hci0", powered: true,
+                address: "AA:BB:CC:DD:EE:FF", modalias: "usb:v1234p5678"}]});
+        const page = createTemporaryObject(adapterPageComponent, panel, {controller: controller, width: 320, height: 500});
+        wait(0);
+        for (const field of [
+            {name: "adapterControllerName", value: "hci0"},
+            {name: "adapterAddress", value: "AA:BB:CC:DD:EE:FF"},
+            {name: "adapterModalias", value: "usb:v1234p5678"}
+        ]) {
+            const item = findChild(page, field.name);
+            verify(item.visible);
+            compare(item.value, field.value);
+        }
+        controller.adapterSettingsTab = "pairing";
+        verify(!findChild(page, "adapterTechnicalDetails").visible);
+        verify(findChild(page, "adapterNameInput").visible);
+        compare(findChild(page, "adapterNameInput").text, "Computer");
+        controller.adapterSettingsTab = "general";
+        verify(findChild(page, "adapterControllerName").visible);
+        verify(findChild(page, "adapterAddress").visible);
+        verify(findChild(page, "adapterModalias").visible);
     }
     function test_radioSelectionAndPowerAreControlledInBluetoothSettings() {
         const panel = makePanel();
