@@ -31,7 +31,7 @@ TestCase {
 
     function sleepState(inhibitors) {
         return { available: true, can_suspend: "yes", can_hibernate: "na",
-            lock_before_sleep: true, preparing_for_sleep: false, inhibitors: inhibitors || [] };
+            lock_before_sleep: true, keep_awake: false, preparing_for_sleep: false, inhibitors: inhibitors || [] };
     }
 
     function makePanel(inhibitors) {
@@ -104,6 +104,45 @@ TestCase {
         verify(!reason.visible);
         verify(!retry.visible);
         verify(!findChild(panel, "sleepStatusRow").visible);
+    }
+
+    function test_keepAwakeIsAccessibleAndOnlyDisablesSleep() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const button = findChild(panel, "keepAwakeButton");
+        const card = findChild(panel, "powerSleepCard");
+        verify(button.enabled);
+        compare(button.Accessible.name, "Keep awake");
+        verify(button.Accessible.checkable);
+        verify(!button.Accessible.checked);
+        verify(button.toolTip.indexOf("locking and screen blanking continue") >= 0);
+        verify(button.mapToItem(card, button.width, 0).x <= card.width - card.contentPadding);
+        controller.applyPowerSleep(Object.assign(sleepState(), { keep_awake: true, can_hibernate: "yes" }));
+        verify(button.Accessible.checked);
+        compare(button.tone, "accent");
+        verify(button.enabled, "must be able to turn it off");
+        verify(findChild(panel, "sleepAction-lock").enabled);
+        verify(!findChild(panel, "sleepAction-suspend").enabled);
+        verify(!findChild(panel, "sleepAction-hibernate").enabled);
+        compare(findChild(panel, "sleepStatusText").text, "Keep awake on · sleep & hibernate blocked");
+        controller.keepAwakePending = true;
+        controller.actionInFlight = true;
+        verify(!button.enabled);
+        compare(findChild(panel, "keepAwakeStatus").text, "Updating Keep awake…");
+        controller.operationFailed("power-keep-awake-1", "Permission denied");
+        verify(button.enabled);
+        compare(findChild(panel, "keepAwakeStatus").text, "Permission denied");
+        verify(!findChild(panel, "sleepRetryButton").visible);
+        controller.applyPowerSleep(sleepState());
+        verify(!button.Accessible.checked);
+        verify(findChild(panel, "sleepAction-suspend").enabled);
+        button.forceActiveFocus();
+        verify(button.activeFocus);
+        const oldDaemon = sleepState();
+        delete oldDaemon.keep_awake;
+        controller.applyPowerSleep(oldDaemon);
+        verify(!button.enabled);
+        verify(button.toolTip.indexOf("updated bar-daemon") >= 0);
     }
 
     function test_sharedAndSeparateAutomaticSleepControls() {

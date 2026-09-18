@@ -32,6 +32,7 @@ var methods = ({
     "powerSleep.lock": "powerSleep.lock",
     "powerSleep.suspend": "powerSleep.suspend",
     "powerSleep.hibernate": "powerSleep.hibernate",
+    "powerSleep.setKeepAwake": "powerSleep.setKeepAwake",
     "powerSleep.setPolicy": "powerSleep.setPolicy",
     "powerSleep.idle": "powerSleep.idle",
     "notifications.togglePanel": "notifications.togglePanel",

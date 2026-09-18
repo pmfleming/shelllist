@@ -174,6 +174,44 @@ for (const extra of [
 }
 {
     const { c, calls } = controller();
+    c.applyPowerSleep({ available: true, can_suspend: "yes", can_hibernate: "yes" });
+    assert.equal(c.setKeepAwake(true), false, "older daemon must not offer unsupported control");
+    c.applyPowerSleep({ ...c.powerSleep, keep_awake: false });
+    assert.equal(c.setKeepAwake(true), true);
+    assert.equal(c.keepAwake, false, "wait for daemon confirmation, not an optimistic toggle");
+    assert.equal(c.keepAwakePending, true);
+    assert.equal(c.setKeepAwake(true), false, "suppress repeated clicks");
+    assert.equal(c.canPowerSleepAction("suspend"), false);
+    assert.deepEqual(calls[0], { method: "setKeepAwake", args: [true] });
+    c.operationFinished("power-keep-awake-1");
+    c.applyPowerSleep({ ...c.powerSleep, keep_awake: true });
+    assert.equal(c.keepAwake, true);
+    assert.equal(c.canPowerSleepAction("suspend"), false);
+    assert.equal(c.canPowerSleepAction("hibernate"), false);
+    assert.equal(c.canPowerSleepAction("lock"), true);
+    assert.equal(c.setKeepAwake(false), true);
+    c.operationFailed("power-keep-awake-2", "denied");
+    assert.equal(c.keepAwake, true, "failed release must not claim sleep is allowed");
+    assert.equal(c.keepAwakePending, false);
+    assert.equal(c.keepAwakeError, "denied");
+    assert.equal(c.sleepRetryAction, "", "a failed toggle must never offer a sleep retry");
+    c.sendSucceeds = false;
+    assert.equal(c.setKeepAwake(false), false);
+    assert.equal(c.keepAwakePending, false);
+    assert.equal(c.actionInFlight, false);
+    c.sendSucceeds = true;
+    assert.equal(c.setKeepAwake(false), true);
+    c.transportFailed("disconnected");
+    assert.equal(c.keepAwakePending, false);
+    assert.equal(c.canSetKeepAwake, false);
+    assert.equal(c.canPowerSleepAction("lock"), false, "stale telemetry is not actionable");
+    assert.ok(c.keepAwakeError.includes("unknown"));
+    c.applyPowerSleep({ ...c.powerSleep, available: true, keep_awake: false });
+    assert.equal(c.canSetKeepAwake, true);
+    assert.equal(c.keepAwakeError, "", "fresh snapshot resolves connection uncertainty");
+}
+{
+    const { c, calls } = controller();
     c.powerProfile = { available: false, profiles: [{ name: "balanced" }],
         battery_aware: true, actions: [{ name: "test-action" }] };
     assert.equal(c.setBatteryAware(false), false);
@@ -188,7 +226,7 @@ for (const extra of [
 {
     const calls = [];
     const backend = vm.createContext({
-        BatteryApi: { methods: { lock: "lock", suspend: "suspend", hibernate: "hibernate" } },
+        BatteryApi: { methods: { lock: "lock", suspend: "suspend", hibernate: "hibernate", setKeepAwake: "powerSleep.setKeepAwake" } },
         callSequenced: (...args) => { calls.push(args); return true; }
     });
     vm.runInContext(functions(fs.readFileSync(backendPath, "utf8")), backend);
@@ -198,6 +236,9 @@ for (const extra of [
     for (const action of ["lock", "suspend", "hibernate"])
         assert.equal(backend.powerSleepAction(action), true);
     assert.deepEqual(calls.map(call => call[1]), ["lock", "suspend", "hibernate"]);
+    assert.equal(backend.setKeepAwake(true), true);
+    assert.deepEqual(JSON.parse(JSON.stringify(calls[3])),
+        ["power-keep-awake", "powerSleep.setKeepAwake", { enabled: true }]);
 }
 {
     const { c, calls } = controller();

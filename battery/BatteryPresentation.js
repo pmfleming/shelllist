@@ -109,6 +109,8 @@ function sleepCapabilityDescription(state, action) {
         return "Sleep service unavailable";
     if (action === "lock")
         return "Lock the current session";
+    if (state.keep_awake)
+        return "Turn off Keep awake before sleeping";
     const capability = action === "suspend" ? state.can_suspend : state.can_hibernate;
     switch (capability) {
     case "yes": return "Available · locks before sleeping";
@@ -135,6 +137,8 @@ function sleepStatus(state, pendingAction, retryAction, error) {
         return sleepActionName(retryAction) + " failed";
     if (!state || !state.available)
         return "Sleep controls unavailable";
+    if (state.keep_awake)
+        return "Keep awake on · sleep & hibernate blocked";
     if (sleepInhibitors(state, "block").length > 0)
         return "Sleep blocked";
     return "";

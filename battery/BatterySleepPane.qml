@@ -24,6 +24,27 @@ Ui.DetailColumnCard {
             font.weight: Ui.Theme.fontWeightBold
         }
 
+        Ui.ActionButton {
+            objectName: "keepAwakeButton"
+            Layout.preferredWidth: 36
+            Layout.preferredHeight: 36
+            icon: "󰅶"
+            iconSize: Ui.Theme.iconSizeLarge
+            tone: pane.controller.keepAwake ? "accent" : "normal"
+            accessibleName: qsTr("Keep awake")
+            Accessible.role: Accessible.CheckBox
+            Accessible.checkable: true
+            Accessible.checked: pane.controller.keepAwake
+            Accessible.onToggleAction: if (enabled) pane.controller.setKeepAwake(!pane.controller.keepAwake)
+            toolTip: pane.controller.powerSleep.keep_awake === undefined
+                ? qsTr("Keep awake requires an updated bar-daemon")
+                : (pane.controller.keepAwake
+                    ? qsTr("Turn off Keep awake · allow sleep and hibernate again")
+                    : qsTr("Keep awake · block sleep, hibernate and lid sleep; locking and screen blanking continue"))
+            enabled: pane.controller.canSetKeepAwake
+            onClicked: pane.controller.setKeepAwake(!pane.controller.keepAwake)
+        }
+
         Repeater {
             model: ["lock", "suspend", "hibernate"]
 
@@ -72,6 +93,16 @@ Ui.DetailColumnCard {
             enabled: pane.controller.canPowerSleepAction(pane.controller.sleepRetryAction)
             onClicked: pane.controller.powerSleepAction(pane.controller.sleepRetryAction)
         }
+    }
+
+    Ui.FieldLabel {
+        objectName: "keepAwakeStatus"
+        Layout.fillWidth: true
+        visible: pane.controller.keepAwakePending || pane.controller.keepAwakeError.length > 0
+        text: pane.controller.keepAwakePending ? qsTr("Updating Keep awake…") : pane.controller.keepAwakeError
+        color: pane.controller.keepAwakeError.length > 0 ? Ui.Theme.danger : Ui.Theme.mutedText
+        wrapMode: Text.Wrap
+        elide: Text.ElideNone
     }
 
     Ui.FieldLabel {

@@ -21,6 +21,7 @@ var methods = {
     lock: Protocol.methods["powerSleep.lock"],
     suspend: Protocol.methods["powerSleep.suspend"],
     hibernate: Protocol.methods["powerSleep.hibernate"],
+    setKeepAwake: Protocol.methods["powerSleep.setKeepAwake"],
     setSleepPolicy: Protocol.methods["powerSleep.setPolicy"]
 };
 

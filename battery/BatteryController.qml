@@ -62,6 +62,10 @@ Ui.ChooserController {
     property string sleepPendingAction: ""
     property string sleepRetryAction: ""
     property string sleepError: ""
+    property bool keepAwakePending: false
+    property string keepAwakeError: ""
+    readonly property bool keepAwake: powerSleep.keep_awake === true
+    readonly property bool canSetKeepAwake: powerSleep.keep_awake !== undefined && powerSleep.available && !actionInFlight && !sleepBusy
     readonly property bool sleepBusy: sleepPendingAction.length > 0 || !!powerSleep.preparing_for_sleep
     readonly property string sleepStatus: Presentation.sleepStatus(powerSleep, sleepPendingAction, sleepRetryAction, sleepError)
     property string lastError: ""
@@ -273,6 +277,8 @@ Ui.ChooserController {
     }
 
     function applyPowerSleep(value: var): void {
+        if (value && value.available && !powerSleep.available && !keepAwakePending)
+            keepAwakeError = "";
         powerSleep = value || ({
                 available: false,
                 inhibitors: []
@@ -384,6 +390,10 @@ Ui.ChooserController {
     }
 
     function operationFinished(id: string): void {
+        if (id.startsWith("power-keep-awake-")) {
+            keepAwakePending = false;
+            keepAwakeError = "";
+        }
         if (id.startsWith("power-sleep-")) {
             sleepPendingAction = "";
             sleepRetryAction = "";
@@ -396,7 +406,11 @@ Ui.ChooserController {
 
     function operationFailed(id: string, message: string): void {
         actionInFlight = false;
-        if (id.startsWith("power-sleep-")) {
+        if (id.startsWith("power-keep-awake-")) {
+            keepAwakePending = false;
+            keepAwakeError = message;
+            lastError = currentSettingsError();
+        } else if (id.startsWith("power-sleep-")) {
             sleepPendingAction = "";
             sleepError = message;
             lastError = currentSettingsError();
@@ -443,6 +457,11 @@ Ui.ChooserController {
 
     function transportFailed(message: string): void {
         transportError = message;
+        powerSleep = Object.assign({}, powerSleep, { available: false });
+        if (keepAwakePending) {
+            keepAwakePending = false;
+            keepAwakeError = "Connection lost; Keep awake state is unknown until reconnected. " + message;
+        }
         if (sleepPolicySaving)
             sleepPolicyFailed("Connection lost; settings may have been saved. Retry to confirm. " + message);
         thresholdAutoSave.stop();
@@ -693,8 +712,22 @@ Ui.ChooserController {
         return startOperation(backend.setPowerActionEnabled(action, enabled));
     }
 
+    function setKeepAwake(enabled: bool): bool {
+        if (!canSetKeepAwake || typeof enabled !== "boolean")
+            return false;
+        keepAwakePending = true;
+        keepAwakeError = "";
+        actionInFlight = true;
+        if (batteryBackend.setKeepAwake(enabled))
+            return true;
+        operationFailed("power-keep-awake-", keepAwakeError || "Unable to change Keep awake");
+        return false;
+    }
+
     function canPowerSleepAction(action: string): bool {
         if (actionInFlight || sleepBusy || !powerSleep.available || ["lock", "suspend", "hibernate"].indexOf(action) < 0)
+            return false;
+        if (action !== "lock" && keepAwake)
             return false;
         if (action === "suspend" && !Presentation.sleepCapabilityAvailable(powerSleep.can_suspend))
             return false;

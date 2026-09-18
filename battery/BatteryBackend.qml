@@ -96,6 +96,10 @@ Io.DaemonBackend {
         return callSequenced("power-sleep-" + action, methods[action], {});
     }
 
+    function setKeepAwake(enabled: bool): bool {
+        return callSequenced("power-keep-awake", BatteryApi.methods.setKeepAwake, { enabled: enabled });
+    }
+
     function setSleepPolicy(policy: var): bool {
         return callSequenced("sleep-policy", BatteryApi.methods.setSleepPolicy, policy);
     }
