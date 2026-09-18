@@ -46,6 +46,7 @@ function series(points, metric, minimumMaximum, positiveOnly) {
     const timeline = activeTimeline(samples);
     let maximum = Math.max(1, minimumMaximum || 0);
     const segments = [];
+    const breaks = [];
     let segment = null, previous = null;
     samples.forEach(function (point) {
         if (!metricAvailable(point, metric, positiveOnly)) {
@@ -54,6 +55,8 @@ function series(points, metric, minimumMaximum, positiveOnly) {
             return;
         }
         if (!segment || !continuousAfter(previous, point)) {
+            if (previous !== null)
+                breaks.push(timeline.duration > 0 ? (point.active_time_ms - timeline.first) / timeline.duration : 0.5);
             segment = [];
             segments.push(segment);
         }
@@ -68,10 +71,37 @@ function series(points, metric, minimumMaximum, positiveOnly) {
     });
     return {
         segments: segments,
+        breaks: breaks,
         maximum: maximum,
         activeDurationMs: timeline.duration,
         hasActiveTimeline: timeline.available
     };
+}
+
+// Interpolate signed power through zero at charge/discharge transitions, then
+// draw both directions above the baseline. Never bridge missing data or sleep.
+function powerAreas(segments) {
+    const areas = [];
+    segments.forEach(function (segment) {
+        if (!segment.length)
+            return;
+        let area = { charging: segment[0].charging, points: [segment[0]] };
+        areas.push(area);
+        for (let index = 1; index < segment.length; ++index) {
+            const previous = segment[index - 1];
+            const point = segment[index];
+            if (point.charging !== previous.charging) {
+                const total = previous.value + point.value;
+                const fraction = total > 0 ? previous.value / total : 0.5;
+                const zero = { x: previous.x + (point.x - previous.x) * fraction, value: 0 };
+                area.points.push(zero);
+                area = { charging: point.charging, points: [zero] };
+                areas.push(area);
+            }
+            area.points.push(point);
+        }
+    });
+    return areas;
 }
 
 // Range controls select observed time, matching the daemon's gap-free x axis.

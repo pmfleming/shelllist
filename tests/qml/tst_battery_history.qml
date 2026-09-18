@@ -133,6 +133,34 @@ TestCase {
         compare(graph.series.segments[0][2].value, 59, "live charge must reach the Now marker");
     }
 
+    function test_powerAreasAndSleepMarkers() {
+        const graph = createTemporaryObject(edgeGraph, testCase);
+        graph.points = [
+            { timestamp_ms: 1000, active_time_ms: 0, percentage: 90,
+                power_watts: 10, charging: false, continuous: false },
+            { timestamp_ms: 61000, active_time_ms: 60000, percentage: 80,
+                power_watts: 20, charging: false, continuous: true },
+            { timestamp_ms: 121000, active_time_ms: 120000, percentage: 85,
+                power_watts: 20, charging: true, continuous: true },
+            { timestamp_ms: 361000, active_time_ms: 120000, percentage: 95,
+                power_watts: 10, charging: true, continuous: false },
+            { timestamp_ms: 421000, active_time_ms: 180000, percentage: 100,
+                power_watts: 5, charging: true, continuous: true }
+        ];
+        verify(waitForRendering(graph));
+        compare(graph.points.length, 5);
+        compare(graph.series.segments.length, 2);
+        compare(graph.powerSeries.segments.length, 2);
+        compare(graph.powerAreas.length, 3);
+        compare(graph.powerAreas[0].charging, false);
+        compare(graph.powerAreas[1].charging, true);
+        compare(graph.powerAreas[2].charging, true);
+        compare(graph.powerAreas[0].points[2].value, 0);
+        compare(graph.powerAreas[0].points[2].x, graph.powerAreas[1].points[0].x);
+        compare(graph.series.breaks.length, 1);
+        compare(graph.series.breaks[0], 2 / 3);
+    }
+
     function test_emptyHistory() {
         const card = createTemporaryObject(historyCard, testCase, {
             width: 300, history: { points: [] }, battery: { available: false }
@@ -167,6 +195,15 @@ TestCase {
         const plot = findChild(graph, "batteryHistoryPlot");
         verify(plot.width > 0 && plot.height > 0);
         verify(plot.y + plot.height <= graph.height);
+        const legend = findChild(card, "batteryHistoryLegend");
+        for (const name of ["batteryChargingLegend", "batteryDischargingLegend"]) {
+            const label = findChild(card, name);
+            verify(label.visible);
+            const labelPosition = label.mapToItem(card, 0, 0);
+            verify(labelPosition.x >= 0 && labelPosition.x + label.width <= card.width);
+            verify(labelPosition.y + label.height <= card.height);
+        }
+        verify(legend.height > 0);
         const initialHeight = card.height;
         graph.hovered(0.1);
         wait(0);

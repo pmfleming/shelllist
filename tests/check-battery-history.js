@@ -27,6 +27,7 @@ const compact = series(points);
 equal(compact.segments.map(segment => segment.map(p => p.x)), [[0, 0.5], [0.5, 1]],
     "two days offline must use no graph width or connecting line");
 assert.equal(compact.segments[1][0].timestamp_ms, 3 * day, "retain wall-clock labels");
+equal(compact.breaks, [0.5], "mark the resume boundary on the observed-time axis");
 
 const shortGap = series([point(0, 0, 80, false), point(minute, minute, 79),
     point(2 * minute, minute, 90, false), point(3 * minute, 2 * minute, 89)]);
@@ -67,7 +68,29 @@ const watts = series([
 ], "power_watts");
 equal(watts.segments.map(s => s.map(p => p.value)), [[0], [12, 8]],
     "unknown and legacy-zero power must not be presented as measured zero");
-assert.equal(watts.segments[1][1].charging, true, "preserve charge direction for power bars");
+assert.equal(watts.segments[1][1].charging, true, "preserve charge direction for power areas");
+const areas = history.powerAreas(watts.segments);
+equal(areas.map(area => [area.charging, area.points.map(p => p.value)]),
+    [[false, [0]], [false, [12, 0]], [true, [0, 8]]],
+    "power areas split at missing samples and change colour through zero");
+assert.equal(areas[1].points[1].x, 0.9, "interpolate signed power at the zero crossing");
+assert.equal(areas[2].points[0].x, 0.9, "opposite colours meet without a gap");
+const sleepingWatts = series([
+    point(0, 0, 80, false, { power_watts: 12 }),
+    point(minute, minute, 79, true, { power_watts: 8 }),
+    point(day, minute, 60, false, { power_watts: 20 }),
+    point(day + minute, 2 * minute, 59, true, { power_watts: 10 })
+], "power_watts");
+equal(history.powerAreas(sleepingWatts.segments).map(area => area.points.map(p => p.value)),
+    [[12, 8], [20, 10]], "same-direction areas must not connect across sleep");
+const zeroTransition = series([
+    point(0, 0, 80, false, { power_watts: 0, power_valid: true }),
+    point(minute, minute, 80, true, { power_watts: 0, power_valid: true, charging: true })
+], "power_watts");
+const zeroAreas = history.powerAreas(zeroTransition.segments);
+assert.equal(zeroAreas[0].points[1].x, 0.5, "zero-to-zero mode changes remain finite");
+equal(zeroTransition.breaks, [], "mode transitions are not sleep boundaries");
+equal(history.powerAreas([]), []);
 equal(history.windowPoints(points, 0.25).map(p => p.percentage), [90, 70, 60],
     "range controls use observed time and retain both sides of sleep discontinuities");
 const live = point(2 * day + 16 * minute, 31 * minute, 59);

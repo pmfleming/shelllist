@@ -18,6 +18,7 @@ Item {
     readonly property int graphHeight: 246
     readonly property var series: History.series(points, "percentage", 100, false)
     readonly property var powerSeries: History.series(points, "power_watts", 0, false)
+    readonly property var powerAreas: History.powerAreas(powerSeries.segments)
     readonly property real powerMaximum: Math.max(10, Math.ceil(powerSeries.maximum / 10) * 10)
     readonly property real historyFraction: forecast.seconds > 0 ? Math.max(60000, series.activeDurationMs) / (Math.max(60000, series.activeDurationMs) + forecast.seconds * 1000) : 1
     readonly property real historicalPosition: hoverPosition / historyFraction
@@ -35,6 +36,7 @@ Item {
     implicitHeight: graphHeight
     onSeriesChanged: chart.requestPaint()
     onPowerSeriesChanged: chart.requestPaint()
+    onPowerAreasChanged: chart.requestPaint()
     onForecastChanged: chart.requestPaint()
     onCurrentPercentageChanged: chart.requestPaint()
     onHistoryFractionChanged: chart.requestPaint()
@@ -102,17 +104,27 @@ Item {
             });
             context.stroke();
 
-            // Bars are actual sampled battery watts, not Wh bins or invented
-            // future power. Colour distinguishes charging from discharging.
-            const samples = graph.powerSeries.segments.reduce(function (all, segment) { return all.concat(segment); }, []);
-            samples.forEach(function (point, index) {
-                const previous = index > 0 ? samples[index - 1].x : -1;
-                const next = index + 1 < samples.length ? samples[index + 1].x : 2;
-                const barWidth = Math.max(1, Math.min(7, (point.x - previous) * graph.historyFraction * plotWidth * 0.7, (next - point.x) * graph.historyFraction * plotWidth * 0.7));
-                const barHeight = point.value / graph.powerMaximum * plotHeight;
-                context.fillStyle = Ui.Theme.withAlpha(point.charging ? Ui.Theme.active : Ui.Theme.resourcePower, 0.6);
-                const left = Math.max(inset, Math.min(inset + plotWidth - barWidth, x(point.x) - barWidth / 2));
-                context.fillRect(left, inset + plotHeight - barHeight, barWidth, Math.max(1, barHeight));
+            // Connect historical wattage measurements, keeping sleep/missing
+            // data separate and colouring each direction independently.
+            context.lineWidth = 1.5;
+            context.lineJoin = "round";
+            context.lineCap = "round";
+            graph.powerAreas.forEach(function (area) {
+                const color = area.charging ? Ui.Theme.active : Ui.Theme.resourcePower;
+                context.strokeStyle = color;
+                context.fillStyle = color;
+                const points = area.points.map(function (point) {
+                    return { x: x(point.x), y: inset + (1 - point.value / graph.powerMaximum) * plotHeight };
+                });
+                Ui.ChartDrawing.series(context, [points], inset + plotHeight, Ui.Theme.withAlpha(color, 0.28), true);
+            });
+
+            // Explicit observation boundaries (sleep/restart/clock gaps), not
+            // charging-mode changes. Downtime occupies no observed-time width.
+            context.strokeStyle = Ui.Theme.resourceCpu;
+            context.lineWidth = 1;
+            graph.series.breaks.forEach(function (position) {
+                Ui.ChartDrawing.dashed(context, x(position), inset, x(position), inset + plotHeight, 4, 4);
             });
 
             context.strokeStyle = graph.lineColor;

@@ -109,30 +109,52 @@ Rectangle {
             lineColor: card.battery.warning ? Ui.Theme.warning : Ui.Theme.resourceCpu
         }
 
-        RowLayout {
+        Flow {
+            objectName: "batteryHistoryLegend"
             Layout.fillWidth: true
-            spacing: 5
+            spacing: Ui.Theme.spacingSm
 
-            Rectangle {
-                Layout.preferredWidth: 14
-                Layout.preferredHeight: 3
-                color: graph.lineColor
+            Row {
+                spacing: 5
+                Rectangle {
+                    width: 14
+                    height: 3
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: graph.lineColor
+                }
+                Ui.FieldLabel {
+                    text: qsTr("Charge %")
+                    font.pixelSize: Ui.Theme.fontSizeCaption
+                }
             }
-            Ui.FieldLabel {
-                text: qsTr("Charge %")
-                font.pixelSize: Ui.Theme.fontSizeCaption
+            Row {
+                spacing: 5
+                Rectangle {
+                    width: 9
+                    height: 9
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: Ui.Theme.resourcePower
+                }
+                Ui.FieldLabel {
+                    objectName: "batteryDischargingLegend"
+                    text: qsTr("Discharging W")
+                    font.pixelSize: Ui.Theme.fontSizeCaption
+                }
             }
-            Item { Layout.preferredWidth: 5 }
-            Rectangle {
-                Layout.preferredWidth: 9
-                Layout.preferredHeight: 9
-                color: Ui.Theme.resourcePower
+            Row {
+                spacing: 5
+                Rectangle {
+                    width: 9
+                    height: 9
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: Ui.Theme.active
+                }
+                Ui.FieldLabel {
+                    objectName: "batteryChargingLegend"
+                    text: qsTr("Charging W")
+                    font.pixelSize: Ui.Theme.fontSizeCaption
+                }
             }
-            Ui.FieldLabel {
-                text: qsTr("Battery W")
-                font.pixelSize: Ui.Theme.fontSizeCaption
-            }
-            Item { Layout.fillWidth: true }
             Ui.FieldLabel {
                 text: qsTr("Observed time")
                 font.pixelSize: Ui.Theme.fontSizeCaption
