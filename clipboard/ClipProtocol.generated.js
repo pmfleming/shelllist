@@ -18,6 +18,7 @@ var methods = ({
     "clipboard.entry.edit.cancel": "clipboard.entry.edit.cancel",
     "clipboard.capture.setPaused": "clipboard.capture.setPaused",
     "clipboard.capture.screenshot": "clipboard.capture.screenshot",
+    "clipboard.capture.interactive": "clipboard.capture.interactive",
     "clipboard.selection.publishText": "clipboard.selection.publishText",
     "clipboard.selection.publishFiles": "clipboard.selection.publishFiles",
     "clipboard.settings.get": "clipboard.settings.get",
