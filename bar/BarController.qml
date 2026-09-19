@@ -285,7 +285,7 @@ Item {
                     Quickshell.execDetached(["shelllist-captive-portal", "--manual", "--fallback"]);
                 },
                 updates: function () {
-                    Quickshell.execDetached(["ghostty", "-e", "bash", "-lc", "journalctl -u nixos-update-fast.service -u nixos-update-delayed.service -u delayed-nixos-update.service -n 100 --no-pager; read -r -p 'Press enter to close'"]);
+                    Quickshell.execDetached(["ghostty", "-e", "bash", "-lc", "journalctl -u 'nixos-update-*.service' -u 'nixos-ai-tools-*.service' -n 150 --no-pager; read -r -p 'Press enter to close'"]);
                 },
                 bluetooth: function () {
                     openSurface("bluetooth");

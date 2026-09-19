@@ -65,6 +65,16 @@ equal(context.nextPowerProfile({ profile: "performance", profiles: [
     { name: "performance" }, { name: "power-saver" }, { name: "balanced" }
 ] }), "power-saver", "power profile cycling wraps");
 
+equal(context.updateModule({ available: true, ready: false, jobs: [{ name: "system", status: "running", phase: "building" }] }).visible,
+    true, "running update jobs are visible before a candidate is ready");
+const interruptedUpdate = context.updateModule({ available: true, jobs: [{ name: "system", status: "interrupted", phase: "staging", error: "Worker stopped" }] });
+equal(interruptedUpdate.tone, "warning", "interrupted update jobs warn rather than appearing successful");
+equal(interruptedUpdate.tooltip.includes("Worker stopped"), true, "update errors remain inspectable");
+equal(context.updateModule({ available: true, jobs: [{ name: "ai-tools-stale", status: "completed", phase: "stale" }] }).visible,
+    true, "AI tools staleness is visible");
+equal(context.updateModule({ available: true, jobs: [{ name: "system", status: "completed", phase: "skipped" }] }).visible,
+    false, "harmless skipped jobs do not claim an available update");
+
 const modules = context.statusModules({
     activity: { available: true, incomplete_todo_count: 1, next_event: null },
     network: { active: false }, updates: { available: true, ready: true },

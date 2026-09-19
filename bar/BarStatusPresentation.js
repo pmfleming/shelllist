@@ -136,9 +136,19 @@ function networkModule(status) {
     });
 }
 function updateModule(updates) {
-    return statusModule("updates", "󰚰", "A checked and built NixOS update is waiting for automatic safety or manual approval", {
-        visible: !!(updates && updates.available && updates.ready), maxDensity: 3,
-        tone: "accent", weight: 700, primary: "updates"
+    const jobs = (updates && updates.jobs) || [];
+    const running = jobs.some(function (job) { return job.status === "running"; });
+    const problem = jobs.some(function (job) { return job.status === "failed" || job.status === "interrupted" || job.phase === "stale"; });
+    const lines = jobs.map(function (job) {
+        const name = ({ system: "NixOS", "ai-tools": "AI tools", "ai-tools-stale": "AI tools freshness" })[job.name] || "Updates";
+        return name + ": " + (job.phase || job.status) + " · " + job.status + (job.error ? "\n" + job.error : "");
+    });
+    if (updates && updates.ready)
+        lines.unshift("A checked and built NixOS update is waiting for automatic safety or manual approval");
+    lines.push("Click to inspect update service journals");
+    return statusModule("updates", "󰚰", lines.join("\n"), {
+        visible: !!(updates && updates.available && (updates.ready || running || problem)), maxDensity: 3,
+        tone: problem ? "warning" : "accent", weight: 700, primary: "updates"
     });
 }
 function bluetoothModule(bluetooth) {

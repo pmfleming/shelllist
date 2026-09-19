@@ -62,6 +62,7 @@ jq -e '
   (.snapshot.notification_active.notifications[0].group_key | type == "string") and
   (.snapshot.notification_active.notifications[0].source_monitor | type == "string") and
   (.snapshot.updates.ready | type == "boolean") and
+  (.snapshot.updates.jobs | type == "array") and
   (.snapshot.activity.weather.timezone_region_ids | type == "array") and
   (.snapshot.activity.world_clocks[0].timezone_region_ids | type == "array") and
   (.snapshot.timezone.utc_offset_seconds | type == "number") and
