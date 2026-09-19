@@ -104,6 +104,11 @@ Io.DaemonBackend {
         return callSequenced("display-policy", BatteryApi.methods.setDisplayPolicy, { prefer_external: preferExternal });
     }
 
+    function displayLayoutAction(action: string, params: var): bool {
+        const method = ({ preview: BatteryApi.methods.previewDisplayLayout, confirm: BatteryApi.methods.confirmDisplayLayout, revert: BatteryApi.methods.revertDisplayLayout })[action];
+        return !!method && callSequenced("display-policy-layout-" + action, method, params);
+    }
+
     function setSleepPolicy(policy: var): bool {
         return callSequenced("sleep-policy", BatteryApi.methods.setSleepPolicy, policy);
     }

@@ -52,6 +52,10 @@ ShellRoot {
     }
 
     function openSurface(surfaceId: string): bool {
+        if (surfaceId === "displays") {
+            surfaces.openDisplays();
+            return true;
+        }
         if (!selectSurface(surfaceId))
             return false;
         if (windowHost.popoverMode && !windowHost.popoverVisible)
@@ -241,6 +245,11 @@ ShellRoot {
         shortcutName: "clipboard"
         description: "Toggle Shelllist Clipboard"
         onTriggered: shell.toggleSurface("clipboard")
+    }
+    Ui.ShelllistGlobalShortcut {
+        shortcutName: "displays"
+        description: "Open Shelllist display settings"
+        onTriggered: surfaces.openDisplays()
     }
     Ui.ShelllistGlobalShortcut {
         shortcutName: "battery"

@@ -35,6 +35,7 @@ Ui.DetailColumnCard {
                "internal": qsTr("Using the laptop screen · no usable external display detected."),
                "all-displays": qsTr("Laptop screen enabled alongside connected external displays."),
                "sleeping": qsTr("Display changes paused while preparing for sleep."),
+               "layout-preview": qsTr("Laptop fallback enabled while the layout is being tested or restored."),
                "pending": qsTr("Applying display preference…") })[pane.controller.displayPolicyState.status] || qsTr("Checking displays…")))
         wrapMode: Text.Wrap
         elide: Text.ElideNone

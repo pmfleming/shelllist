@@ -237,6 +237,38 @@ TestCase {
         verify(status.text.indexOf("Laptop screen enabled") >= 0);
     }
 
+    function test_layoutDraftSurvivesTelemetryAndConfirmationUsesDaemonToken() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const pane = findChild(panel, "displayLayoutCard");
+        const state = { available: true, policy: { prefer_external: true }, status: "internal", layout: { saved: { outputs: [] }, trial: null },
+            outputs: [{ name: "eDP-1", width: 1920, height: 1200, refreshRate: 60, x: 0, y: 0, scale: 1.25, transform: 0, disabled: false, availableModes: ["1920x1200@60.00Hz"] }] };
+        controller.applyDisplayPolicy(state);
+        compare(pane.draft.length, 1);
+        pane.edit(0, "scale", "1.5");
+        controller.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        compare(pane.draft[0].scale, "1.5");
+        calls = [];
+        pane.preview();
+        compare(calls.length, 1);
+        compare(calls[0].method, "displayLayout.preview");
+        compare(calls[0].params.outputs[0].scale, 1.5);
+        verify(calls[0].params.outputs[0].enabled);
+        verify(!("modes" in calls[0].params.outputs[0]));
+        controller.operationFinished("display-policy-layout-preview-1");
+        state.layout.trial = { id: "daemon-token", expires_at: Date.now() / 1000 + 20 };
+        controller.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        verify(!pane.interactive);
+        findChild(panel, "confirmDisplayLayout").clicked();
+        compare(calls[1].method, "displayLayout.confirm");
+        compare(calls[1].params.id, "daemon-token");
+        controller.operationFinished("display-policy-layout-confirm-2");
+        state.layout.trial = null;
+        controller.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
+        verify(!pane.dirty);
+        compare(pane.draft[0].scale, 1.25);
+    }
+
     function test_sharedAndSeparateAutomaticSleepControls() {
         const panel = makePanel();
         const state = {

@@ -64,6 +64,7 @@ Item {
     property string pendingActivitySection: ""
     property string pendingTimeWeatherTab: ""
     property var pendingNotificationRequest: null
+    property bool pendingDisplaySettings: false
     readonly property alias notificationState: sharedNotifications
     readonly property var notificationController: {
         const bundle = bundleFor("notifications");
@@ -216,7 +217,25 @@ Item {
         notificationController.openNotifications(request.key, request.tab, request.origin);
     }
 
+    function openDisplays(): void {
+        pendingDisplaySettings = true;
+        ensureLoaded("battery");
+        applyPendingDisplays();
+        surfaceRequested("battery");
+    }
+
+    function applyPendingDisplays(): void {
+        const bundle = bundleFor("battery");
+        if (!pendingDisplaySettings || !bundle)
+            return;
+        const controller = bundle.controller;
+        controller.viewTab = "power";
+        pendingDisplaySettings = false;
+    }
+
     function notifySurfaceReady(surfaceId: string): void {
+        if (surfaceId === "battery")
+            applyPendingDisplays();
         if (surfaceId === "activity")
             applyPendingActivitySection();
         else if (surfaceId === "time-weather")

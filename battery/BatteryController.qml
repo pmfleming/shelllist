@@ -296,6 +296,18 @@ Ui.ChooserController {
         displayPolicyState = value || ({ available: false });
     }
 
+    function displayLayoutAction(action: string, params: var): bool {
+        if (!["preview", "confirm", "revert"].includes(action) || !displayPolicyState.available || !backend.ready || actionInFlight)
+            return false;
+        displayPolicySaving = true;
+        displayPolicyError = "";
+        actionInFlight = true;
+        if (batteryBackend.displayLayoutAction(action, params))
+            return true;
+        operationFailed("display-policy-layout-", "Unable to send display layout request");
+        return false;
+    }
+
     function setPreferExternal(enabled: bool): bool {
         if (typeof enabled !== "boolean" || !displayPolicyState.available || !backend.ready || actionInFlight || displayPolicySaving)
             return false;

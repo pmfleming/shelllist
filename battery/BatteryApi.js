@@ -23,7 +23,10 @@ var methods = {
     hibernate: Protocol.methods["powerSleep.hibernate"],
     setKeepAwake: Protocol.methods["powerSleep.setKeepAwake"],
     setSleepPolicy: Protocol.methods["powerSleep.setPolicy"],
-    setDisplayPolicy: Protocol.methods["displayPolicy.set"]
+    setDisplayPolicy: Protocol.methods["displayPolicy.set"],
+    previewDisplayLayout: Protocol.methods["displayLayout.preview"],
+    confirmDisplayLayout: Protocol.methods["displayLayout.confirm"],
+    revertDisplayLayout: Protocol.methods["displayLayout.revert"]
 };
 
 var streams = {
