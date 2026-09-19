@@ -36,6 +36,11 @@ in
       '';
     };
 
+    displays.enable = lib.mkEnableOption ''daemon-owned laptop display switching.
+      Removes the need for hypr-monitor-auto; the external-only preference is
+      saved by Battery & Power, not configured declaratively. Requires Hyprland
+      with Lua monitor control. Do not run another automatic display manager'';
+
     systemd = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -69,6 +74,9 @@ in
     assertions = lib.optional cfg.sleep.enable {
       assertion = config.services.hypridle.enable && config.services.hypridle.package != null && cfg.systemd.enable && cfg.systemd.startBarDaemon;
       message = "Shelllist automatic sleep requires services.hypridle.enable and Shelllist's managed bar-daemon service.";
+    } ++ lib.optional cfg.displays.enable {
+      assertion = cfg.systemd.enable && cfg.systemd.startBarDaemon;
+      message = "Shelllist display control requires the managed bar-daemon service.";
     };
 
     wayland.windowManager.hyprland.settings.bind = lib.mkIf
@@ -104,16 +112,18 @@ in
         Unit = {
           Description = "Quickshell bar status and policy service";
           PartOf = [ cfg.systemd.target ];
-          After = [ cfg.systemd.target "dbus.service" "pipewire.service" "wireplumber.service" ];
+          After = [ cfg.systemd.target "dbus.service" "pipewire.service" "wireplumber.service" ]
+            ++ lib.optional cfg.displays.enable "hypr-monitor-auto.service";
           Before = [ "swaync.service" ];
-          Conflicts = [ "swaync.service" ];
+          Conflicts = [ "swaync.service" ] ++ lib.optional cfg.displays.enable "hypr-monitor-auto.service";
         };
         Service = {
           Type = "dbus";
           BusName = "org.laufan.BarDaemon";
           ExecStart = "${cfg.package}/bin/bar-daemon daemon";
           Environment = [ "BAR_DAEMON_NOTIFICATION_BACKEND=native" ]
-            ++ lib.optional cfg.sleep.enable "BAR_DAEMON_IDLE_CONFIG=${config.xdg.configHome}/hypr/hypridle.conf";
+            ++ lib.optional cfg.sleep.enable "BAR_DAEMON_IDLE_CONFIG=${config.xdg.configHome}/hypr/hypridle.conf"
+            ++ lib.optional cfg.displays.enable "BAR_DAEMON_DISPLAY_CONTROL=1";
           Restart = "on-failure";
           RestartSec = "2s";
         };

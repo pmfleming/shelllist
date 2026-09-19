@@ -212,6 +212,30 @@ for (const extra of [
     assert.equal(c.canSetKeepAwake, true);
     assert.equal(c.keepAwakeError, "", "fresh snapshot resolves connection uncertainty");
 }
+{
+    const { c, calls } = controller();
+    assert.equal(c.setPreferExternal(true), false, "integration is opt-in");
+    c.applyDisplayPolicy({ available: true, policy: { prefer_external: true }, status: "external" });
+    assert.equal(c.setPreferExternal(false), true);
+    assert.deepEqual(calls[0], { method: "setDisplayPolicy", args: [false] });
+    assert.equal(c.displayPolicyState.policy.prefer_external, true, "no optimistic preference before save");
+    assert.equal(c.setPreferExternal(true), false, "saving is serialized");
+    c.operationFailed("display-policy-1", "disk full");
+    assert.equal(c.displayPolicySaving, false);
+    assert.equal(c.displayPolicyError, "disk full");
+    assert.equal(c.lastError, "", "display errors stay in their card");
+    c.backendReady = false;
+    assert.equal(c.setPreferExternal(false), false);
+    c.backendReady = true;
+    assert.equal(c.setPreferExternal(false), true);
+    c.operationFinished("display-policy-2");
+    c.applyDisplayPolicy({ available: true, policy: { prefer_external: false }, status: "pending" });
+    assert.equal(c.displayPolicyError, "");
+    assert.equal(c.displayPolicyState.policy.prefer_external, false);
+    c.sendSucceeds = false;
+    assert.equal(c.setPreferExternal(true), false);
+    assert.equal(c.displayPolicySaving, false);
+}
 for (const reportedActive of [false, true]) {
     const { c, calls } = controller();
     c.applyPowerSleep({ available: false, keep_awake: reportedActive, preparing_for_sleep: true,

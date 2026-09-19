@@ -210,6 +210,33 @@ TestCase {
         compare(calls[0].params.enabled, true, "healthy telemetry restores ordinary toggling");
     }
 
+    function test_displayPreferenceIsDaemonOwnedAndRecoveryStatusIsVisible() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const toggle = findChild(panel, "preferExternalDisplay");
+        const status = findChild(panel, "displayPolicyStatus");
+        verify(!toggle.interactive);
+        controller.applyDisplayPolicy({ available: true, policy: { prefer_external: true }, status: "settling" });
+        verify(toggle.checked);
+        verify(toggle.interactive);
+        verify(status.text.indexOf("stable") >= 0);
+        verify(toggle.Accessible.name.length > 0);
+        calls = [];
+        toggle.clicked();
+        compare(calls.length, 1);
+        compare(calls[0].method, "displayPolicy.set");
+        compare(calls[0].params.prefer_external, false);
+        verify(toggle.checked, "wait for the daemon confirmation");
+        verify(!toggle.interactive);
+        controller.operationFailed("display-policy-1", "Permission denied");
+        compare(status.text, "Permission denied");
+        verify(toggle.interactive);
+        controller.operationFinished("display-policy-2");
+        controller.applyDisplayPolicy({ available: true, policy: { prefer_external: false }, status: "all-displays" });
+        verify(!toggle.checked);
+        verify(status.text.indexOf("Laptop screen enabled") >= 0);
+    }
+
     function test_sharedAndSeparateAutomaticSleepControls() {
         const panel = makePanel();
         const state = {

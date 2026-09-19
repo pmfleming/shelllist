@@ -57,5 +57,7 @@ function eventKind(event, streams) {
         return "powerSleep";
     if (event.stream === streams.sleepPolicy)
         return "sleepPolicy";
+    if (event.stream === streams.displayPolicy)
+        return "displayPolicy";
     return "";
 }

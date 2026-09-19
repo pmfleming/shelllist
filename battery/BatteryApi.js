@@ -22,14 +22,16 @@ var methods = {
     suspend: Protocol.methods["powerSleep.suspend"],
     hibernate: Protocol.methods["powerSleep.hibernate"],
     setKeepAwake: Protocol.methods["powerSleep.setKeepAwake"],
-    setSleepPolicy: Protocol.methods["powerSleep.setPolicy"]
+    setSleepPolicy: Protocol.methods["powerSleep.setPolicy"],
+    setDisplayPolicy: Protocol.methods["displayPolicy.set"]
 };
 
 var streams = {
     battery: Protocol.streams["battery.changed"],
     powerProfile: Protocol.streams["power-profile.changed"],
     powerSleep: Protocol.streams["power-sleep.changed"],
-    sleepPolicy: Protocol.streams["sleep-policy.changed"]
+    sleepPolicy: Protocol.streams["sleep-policy.changed"],
+    displayPolicy: Protocol.streams["display-policy.changed"]
 };
 
-var subscribedStreams = [streams.battery, streams.powerProfile, streams.powerSleep, streams.sleepPolicy];
+var subscribedStreams = [streams.battery, streams.powerProfile, streams.powerSleep, streams.sleepPolicy, streams.displayPolicy];

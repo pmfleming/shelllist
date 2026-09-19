@@ -100,6 +100,10 @@ Io.DaemonBackend {
         return callSequenced("power-keep-awake", BatteryApi.methods.setKeepAwake, { enabled: enabled });
     }
 
+    function setDisplayPolicy(preferExternal: bool): bool {
+        return callSequenced("display-policy", BatteryApi.methods.setDisplayPolicy, { prefer_external: preferExternal });
+    }
+
     function setSleepPolicy(policy: var): bool {
         return callSequenced("sleep-policy", BatteryApi.methods.setSleepPolicy, policy);
     }
@@ -125,6 +129,7 @@ Io.DaemonBackend {
                 power_profile: controller.applyPowerProfile,
                 power_sleep: controller.applyPowerSleep,
                 sleep_policy: controller.applySleepPolicy,
+                display_policy: controller.applyDisplayPolicy,
                 history: controller.applyBatteryHistory
             });
         Object.keys(handlers).forEach(function (key) {

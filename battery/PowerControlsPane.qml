@@ -110,6 +110,10 @@ Column {
         }
     }
 
+    BatteryDisplayPane {
+        controller: pane.controller
+    }
+
     BatterySleepPolicyPane {
         controller: pane.controller
     }

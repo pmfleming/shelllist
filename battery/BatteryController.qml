@@ -49,6 +49,9 @@ Ui.ChooserController {
             lock_before_sleep: true,
             inhibitors: []
         })
+    property var displayPolicyState: ({ available: false })
+    property bool displayPolicySaving: false
+    property string displayPolicyError: ""
     property var sleepPolicyState: ({ available: false })
     property var sleepPolicyDraft: ({
             lid_action: "system",
@@ -289,6 +292,22 @@ Ui.ChooserController {
             });
     }
 
+    function applyDisplayPolicy(value: var): void {
+        displayPolicyState = value || ({ available: false });
+    }
+
+    function setPreferExternal(enabled: bool): bool {
+        if (typeof enabled !== "boolean" || !displayPolicyState.available || !backend.ready || actionInFlight || displayPolicySaving)
+            return false;
+        displayPolicySaving = true;
+        displayPolicyError = "";
+        actionInFlight = true;
+        if (batteryBackend.setDisplayPolicy(enabled))
+            return true;
+        operationFailed("display-policy-", displayPolicyError || "Unable to save display preference");
+        return false;
+    }
+
     function applySleepPolicy(value: var): void {
         sleepPolicyState = value || ({ available: false });
         if (value && value.policy && !sleepPolicyDirty && !sleepPolicySaving)
@@ -358,7 +377,8 @@ Ui.ChooserController {
                 battery: applyBattery,
                 powerProfile: applyPowerProfile,
                 powerSleep: applyPowerSleep,
-                sleepPolicy: applySleepPolicy
+                sleepPolicy: applySleepPolicy,
+                displayPolicy: applyDisplayPolicy
             });
         if (handlers[kind])
             handlers[kind](data);
@@ -394,6 +414,10 @@ Ui.ChooserController {
     }
 
     function operationFinished(id: string): void {
+        if (id.startsWith("display-policy-")) {
+            displayPolicySaving = false;
+            displayPolicyError = "";
+        }
         if (id.startsWith("power-keep-awake-")) {
             keepAwakePending = false;
             keepAwakeError = "";
@@ -410,7 +434,11 @@ Ui.ChooserController {
 
     function operationFailed(id: string, message: string): void {
         actionInFlight = false;
-        if (id.startsWith("power-keep-awake-")) {
+        if (id.startsWith("display-policy-")) {
+            displayPolicySaving = false;
+            displayPolicyError = message;
+            lastError = currentSettingsError();
+        } else if (id.startsWith("power-keep-awake-")) {
             keepAwakePending = false;
             keepAwakeError = message;
             lastError = currentSettingsError();
@@ -461,6 +489,10 @@ Ui.ChooserController {
 
     function transportFailed(message: string): void {
         transportError = message;
+        if (displayPolicySaving) {
+            displayPolicySaving = false;
+            displayPolicyError = "Connection lost; the display preference may have been saved. " + message;
+        }
         powerSleep = Object.assign({}, powerSleep, { available: false });
         if (keepAwakePending) {
             keepAwakePending = false;
