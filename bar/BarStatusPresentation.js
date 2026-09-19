@@ -139,8 +139,9 @@ function updateModule(updates) {
     const jobs = (updates && updates.jobs) || [];
     const running = jobs.some(function (job) { return job.status === "running"; });
     const problem = jobs.some(function (job) { return job.status === "failed" || job.status === "interrupted" || job.phase === "stale"; });
+    const names = { system: "NixOS", "ai-tools": "AI tools", "ai-tools-stale": "AI tools freshness" };
     const lines = jobs.map(function (job) {
-        const name = ({ system: "NixOS", "ai-tools": "AI tools", "ai-tools-stale": "AI tools freshness" })[job.name] || "Updates";
+        const name = names[job.name] || "Updates";
         return name + ": " + (job.phase || job.status) + " · " + job.status + (job.error ? "\n" + job.error : "");
     });
     if (updates && updates.ready)

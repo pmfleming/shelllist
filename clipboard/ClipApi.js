@@ -31,6 +31,7 @@ var methods = {
     editCancel: Protocol.methods["clipboard.entry.edit.cancel"],
     captureSetPaused: Protocol.methods["clipboard.capture.setPaused"],
     captureScreenshot: Protocol.methods["clipboard.capture.screenshot"],
+    captureInteractive: Protocol.methods["clipboard.capture.interactive"],
     selectionPublishText: Protocol.methods["clipboard.selection.publishText"],
     selectionPublishFiles: Protocol.methods["clipboard.selection.publishFiles"],
     settingsGet: Protocol.methods["clipboard.settings.get"],
