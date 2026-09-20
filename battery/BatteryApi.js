@@ -22,7 +22,9 @@ var methods = {
     suspend: Protocol.methods["powerSleep.suspend"],
     hibernate: Protocol.methods["powerSleep.hibernate"],
     setKeepAwake: Protocol.methods["powerSleep.setKeepAwake"],
-    setSleepPolicy: Protocol.methods["powerSleep.setPolicy"]
+    setSleepPolicy: Protocol.methods["powerSleep.setPolicy"],
+    cancelCritical: Protocol.methods["powerSleep.cancelCritical"],
+    setCriticalPolicy: Protocol.methods["powerSleep.setCriticalPolicy"]
 };
 
 var streams = {

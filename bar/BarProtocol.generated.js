@@ -35,6 +35,8 @@ var methods = ({
     "powerSleep.setKeepAwake": "powerSleep.setKeepAwake",
     "powerSleep.setPolicy": "powerSleep.setPolicy",
     "powerSleep.idle": "powerSleep.idle",
+    "powerSleep.cancelCritical": "powerSleep.cancelCritical",
+    "powerSleep.setCriticalPolicy": "powerSleep.setCriticalPolicy",
     "displayPolicy.set": "displayPolicy.set",
     "displayLayout.preview": "displayLayout.preview",
     "displayLayout.confirm": "displayLayout.confirm",

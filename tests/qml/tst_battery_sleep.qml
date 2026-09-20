@@ -271,6 +271,27 @@ TestCase {
         verify(!findChild(panel, "sleepSameProfile").interactive);
     }
 
+    function test_criticalProtectionControlsAndUnknownOutcome() {
+        const panel = makePanel();
+        const state = { available: false, policy: {
+            same_profile: true, battery: { sleep_minutes: 30, hibernate_minutes: 0 },
+            plugged: { sleep_minutes: 30, hibernate_minutes: 0 },
+            critical_battery: { enabled: false, percent: 5, grace_seconds: 60 }
+        }, critical_battery: { phase: "disabled", remaining_seconds: 0 } };
+        panel.controller.applySleepPolicy(state);
+        verify(!findChild(panel, "criticalBatteryEnabled").checked);
+        compare(findChild(panel, "criticalBatteryPercent").value, "5");
+        state.policy.critical_battery.enabled = true;
+        state.critical_battery = { phase: "countdown", remaining_seconds: 45 };
+        panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
+        verify(findChild(panel, "criticalBatteryStatus").text.includes("45"));
+        verify(findChild(panel, "criticalBatteryCancel").visible);
+        panel.controller.applyPowerSleep(Object.assign(sleepState(), { operation: { phase: "unknown", error: "reply lost" } }));
+        panel.controller.sleepError = "reply lost";
+        verify(!findChild(panel, "sleepRetryButton").visible);
+        verify(findChild(panel, "sleepStatusText").text.includes("outcome unknown"));
+    }
+
     function test_keyboardNavigationAndEscapeRemainAvailable() {
         const panel = makePanel();
         panel.controller.backend.active = false;

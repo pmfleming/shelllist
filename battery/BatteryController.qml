@@ -58,6 +58,7 @@ Ui.ChooserController {
         })
     property bool sleepPolicyDirty: false
     property bool sleepPolicySaving: false
+    property bool sleepPolicyCriticalOnly: false
     property string sleepPolicyError: ""
     property string sleepPendingAction: ""
     property string sleepRetryAction: ""
@@ -297,10 +298,17 @@ Ui.ChooserController {
     }
 
     function updateSleepPolicy(profile: string, field: string, value: var): bool {
-        if (!sleepPolicyState.available || sleepPolicySaving || actionInFlight)
+        if ((!sleepPolicyState.available && profile !== "critical_battery") || sleepPolicySaving || actionInFlight)
             return false;
         const next = JSON.parse(JSON.stringify(sleepPolicyDraft));
-        if (field === "same_profile") {
+        if (profile === "critical_battery") {
+            if (field === "enabled" ? typeof value !== "boolean"
+                : !["percent", "grace_seconds"].includes(field) || !Number.isInteger(value)
+                    || (field === "percent" ? value < 1 || value > 20 : value < 30 || value > 300))
+                return false;
+            next.critical_battery = Object.assign({ enabled: false, percent: 5, grace_seconds: 60 }, next.critical_battery || {});
+            next.critical_battery[field] = value;
+        } else if (field === "same_profile") {
             if (typeof value !== "boolean")
                 return false;
             next.same_profile = value;
@@ -314,20 +322,28 @@ Ui.ChooserController {
             next[profile][field] = value;
         }
         sleepPolicyDraft = next;
+        sleepPolicyCriticalOnly = profile === "critical_battery" && (!sleepPolicyDirty || sleepPolicyCriticalOnly);
         sleepPolicyDirty = true;
         return saveSleepPolicy();
     }
 
     function saveSleepPolicy(): bool {
-        if (!sleepPolicyState.available || sleepPolicySaving || !sleepPolicyDirty || actionInFlight)
+        if ((!sleepPolicyState.available && !sleepPolicyCriticalOnly) || sleepPolicySaving || !sleepPolicyDirty || actionInFlight)
             return false;
         sleepPolicySaving = true;
         sleepPolicyError = "";
-        if (!batteryBackend.setSleepPolicy(sleepPolicyDraft)) {
+        const sent = sleepPolicyCriticalOnly ? batteryBackend.setCriticalPolicy(sleepPolicyDraft.critical_battery) : batteryBackend.setSleepPolicy(sleepPolicyDraft);
+        if (!sent) {
             sleepPolicyFailed("Unable to send automatic sleep settings");
             return false;
         }
         return true;
+    }
+
+    function cancelCriticalBattery(): bool {
+        if (actionInFlight || !["countdown", "acting"].includes((sleepPolicyState.critical_battery || {}).phase))
+            return false;
+        return startOperation(batteryBackend.cancelCriticalBattery());
     }
 
     function sleepPolicyFinished(): void {

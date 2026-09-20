@@ -9,6 +9,9 @@ Ui.DetailColumnCard {
 
     required property BatteryController controller
     readonly property bool interactive: controller.sleepPolicyState.available && !controller.sleepPolicySaving && !controller.actionInFlight
+    readonly property bool criticalInteractive: controller.backend.ready && !controller.sleepPolicySaving && !controller.actionInFlight
+    readonly property var criticalPolicy: controller.sleepPolicyDraft.critical_battery || ({ enabled: false, percent: 5, grace_seconds: 60 })
+    readonly property var criticalState: controller.sleepPolicyState.critical_battery || ({})
     objectName: "automaticSleepCard"
     title: qsTr("Automatic sleep & hibernate")
     verticalContentPadding: Ui.Theme.spacingMd
@@ -156,10 +159,70 @@ Ui.DetailColumnCard {
         elide: Text.ElideNone
     }
 
+    Ui.ToggleRow {
+        objectName: "criticalBatteryEnabled"
+        Layout.fillWidth: true
+        Layout.preferredHeight: 64
+        title: qsTr("Critical-battery hibernation")
+        subtitle: qsTr("Opt-in awake protection · do not enable a second power manager")
+        checked: pane.criticalPolicy.enabled
+        interactive: pane.criticalInteractive
+        onClicked: pane.controller.updateSleepPolicy("critical_battery", "enabled", !checked)
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        Ui.FieldLabel { Layout.fillWidth: true; text: qsTr("Hibernate at or below") }
+        Ui.DropDownList {
+            objectName: "criticalBatteryPercent"
+            Layout.preferredWidth: 116
+            options: Array.from({ length: 20 }, function (_, i) { return { value: String(i + 1), label: String(i + 1) + "%" }; })
+            value: String(pane.criticalPolicy.percent)
+            interactive: pane.criticalInteractive && pane.criticalPolicy.enabled
+            Accessible.name: qsTr("Critical-battery hibernation threshold")
+            onSelected: function (value) { pane.controller.updateSleepPolicy("critical_battery", "percent", Number(value)); }
+        }
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        Ui.FieldLabel { Layout.fillWidth: true; text: qsTr("Warning period") }
+        Ui.DropDownList {
+            objectName: "criticalBatteryGrace"
+            Layout.preferredWidth: 116
+            options: Array.from(new Set([30, 60, 90, 120, 180, 300, pane.criticalPolicy.grace_seconds])).sort(function (a, b) { return a - b; }).map(function (seconds) { return { value: String(seconds), label: qsTr("%1 s").arg(seconds) }; })
+            value: String(pane.criticalPolicy.grace_seconds)
+            interactive: pane.criticalInteractive && pane.criticalPolicy.enabled
+            Accessible.name: qsTr("Critical-battery warning period")
+            onSelected: function (value) { pane.controller.updateSleepPolicy("critical_battery", "grace_seconds", Number(value)); }
+        }
+    }
+
+    Ui.FieldLabel {
+        objectName: "criticalBatteryStatus"
+        Layout.fillWidth: true
+        text: pane.criticalState.error || (pane.criticalState.phase === "countdown"
+            ? qsTr("Hibernation in %1 seconds unless AC connects or you cancel.").arg(pane.criticalState.remaining_seconds)
+            : qsTr("State: %1. Requires working hibernation. Locking and inhibitors remain enforced; failures are not retried automatically.").arg(pane.criticalState.phase || "disabled"))
+        color: pane.criticalState.error ? Ui.Theme.warning : Ui.Theme.mutedText
+        wrapMode: Text.Wrap
+        elide: Text.ElideNone
+    }
+
+    Ui.ActionButton {
+        objectName: "criticalBatteryCancel"
+        Layout.fillWidth: true
+        visible: ["countdown", "acting"].includes(pane.criticalState.phase)
+        label: qsTr("Cancel critical-battery hibernation")
+        enabled: !pane.controller.actionInFlight
+        toolTip: qsTr("Cancels this battery episode. An already dispatched request cannot be undone.")
+        onClicked: pane.controller.cancelCriticalBattery()
+    }
+
     Ui.FieldLabel {
         objectName: "sleepPolicyStatus"
         Layout.fillWidth: true
-        text: pane.controller.sleepPolicyError || pane.controller.sleepPolicyState.error || pane.controller.sleepPolicyState.last_error || (!pane.controller.sleepPolicyState.available ? qsTr("Automatic sleep requires the managed hypridle integration.") : (pane.controller.sleepPolicySaving ? qsTr("Saving…") : qsTr("Changes apply automatically and restart the inactivity countdown.")))
+        text: pane.controller.sleepPolicyError || pane.controller.sleepPolicyState.error || pane.controller.sleepPolicyState.last_error || (!pane.controller.sleepPolicyState.available ? qsTr("Automatic sleep requires the managed hypridle integration.") : (pane.controller.sleepPolicySaving ? qsTr("Saving…") : qsTr("Changes apply automatically. Only an altered sleep timeout resets its countdown; lock and display timers are preserved.")))
         color: pane.controller.sleepPolicyError.length > 0 || pane.controller.sleepPolicyState.error || pane.controller.sleepPolicyState.last_error ? Ui.Theme.warning : Ui.Theme.mutedText
         wrapMode: Text.Wrap
         elide: Text.ElideNone
@@ -170,7 +233,7 @@ Ui.DetailColumnCard {
         Layout.fillWidth: true
         visible: pane.controller.sleepPolicyError.length > 0 && pane.controller.sleepPolicyDirty
         label: qsTr("Retry settings")
-        enabled: pane.interactive
+        enabled: pane.controller.sleepPolicyCriticalOnly ? pane.criticalInteractive : pane.interactive
         onClicked: pane.controller.saveSleepPolicy()
     }
 }

@@ -100,6 +100,14 @@ Io.DaemonBackend {
         return callSequenced("power-keep-awake", BatteryApi.methods.setKeepAwake, { enabled: enabled });
     }
 
+    function setCriticalPolicy(policy: var): bool {
+        return callSequenced("sleep-policy", BatteryApi.methods.setCriticalPolicy, policy);
+    }
+
+    function cancelCriticalBattery(): bool {
+        return callSequenced("critical-battery-cancel", BatteryApi.methods.cancelCritical, {});
+    }
+
     function setSleepPolicy(policy: var): bool {
         return callSequenced("sleep-policy", BatteryApi.methods.setSleepPolicy, policy);
     }

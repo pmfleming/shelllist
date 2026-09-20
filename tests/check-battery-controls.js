@@ -429,4 +429,22 @@ for (const operation of ["none", "effect", "threshold", "alert"]) {
     assert.equal(c.lastError, "permission denied", "recovery must not erase an earlier operation error");
 }
 
-console.log("battery controls: selection, auto-save, level actions, sleep profiles, failure/retry and dispatch passed");
+{
+    const { c, calls } = controller();
+    c.sleepPolicyState = { available: true, critical_battery: { phase: "armed" } };
+    for (const [field, value] of [["percent", 0], ["percent", 21], ["grace_seconds", 0], ["grace_seconds", 301], ["enabled", "yes"]])
+        assert.equal(c.updateSleepPolicy("critical_battery", field, value), false);
+    assert.equal(c.updateSleepPolicy("critical_battery", "enabled", true), true);
+    assert.equal(calls[0].method, "setCriticalPolicy");
+    assert.equal(calls[0].args[0].enabled, true);
+    assert.equal(calls[0].args[0].grace_seconds, 60);
+    c.sleepPolicyFinished();
+    c.sleepPolicyState.available = false;
+    assert.equal(c.updateSleepPolicy("critical_battery", "enabled", false), true, "critical protection can be disabled without working idle integration");
+    c.sleepPolicyFinished();
+    assert.equal(c.cancelCriticalBattery(), false);
+    c.sleepPolicyState.critical_battery.phase = "countdown";
+    assert.equal(c.cancelCriticalBattery(), true);
+    assert.equal(calls.at(-1).method, "cancelCriticalBattery");
+}
+console.log("battery controls: selection, auto-save, level actions, sleep profiles, critical protection, failure/retry and dispatch passed");
