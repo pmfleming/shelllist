@@ -775,6 +775,12 @@
             touch $out
           '';
 
+          displayModel = pkgs.runCommand "shelllist-display-model"
+            { nativeBuildInputs = [ pkgs.nodejs ]; } ''
+            node ${./tests/check-display-model.js} ${./displays/DisplayModel.js}
+            touch $out
+          '';
+
           batteryPresentation = pkgs.runCommand "shelllist-battery-presentation"
             {
               nativeBuildInputs = [ pkgs.nodejs ];

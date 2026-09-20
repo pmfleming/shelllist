@@ -10,7 +10,7 @@ Ui.ChooserSurface {
 
     Ui.ChooserShortcuts {
         controller: content.controller
-        navigationEnabled: !content.controller.discardPrompt
+        navigationEnabled: !content.controller.discardPrompt && !content.controller.layoutDragging
         refreshEnabled: !content.controller.actionInFlight && !content.controller.trial && !content.controller.discardPrompt
         onRefreshRequested: content.controller.refresh()
     }

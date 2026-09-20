@@ -157,6 +157,80 @@ TestCase {
         verify(!c.stale && !c.dirty);
         compare(c.draft.length, 1);
     }
+    function test_narrowWorkspaceRevealsFocusedControls() {
+        const panel = makePanel();
+        panel.width = 390;
+        panel.height = 600;
+        const c = panel.controller;
+        c.uiActive = true;
+        c.selectOutput("DP-1");
+        c.openDetails();
+        verify(waitForRendering(panel));
+        const page = findChild(panel, "displayLayoutWorkspace");
+        const enabled = findChild(panel, "displayEnabled");
+        enabled.forceActiveFocus();
+        tryVerify(function () { return page.contentY > 0; });
+        const position = enabled.mapToItem(page, 0, 0);
+        verify(position.y >= 0);
+        verify(position.y + enabled.height <= page.height + 1);
+        for (const name of ["displayResolution", "displayRefreshRate", "displayScale", "displayRotation", "displayX", "displayY"]) {
+            const field = findChild(panel, name);
+            verify(field.mapToItem(panel, field.width, 0).x <= panel.width);
+            verify(field.Accessible.name.length > 0);
+        }
+    }
+    function test_reconnectionClearsOnlyResolvedCloseIntent() {
+        const c = makePanel().controller;
+        c.edit("DP-1", "x", 1800);
+        verify(c.preview());
+        c.deactivateUi();
+        verify(c.revertOnArrival);
+        c.transportFailed("lost preview response");
+        verify(!c.canEdit);
+        c.applyDisplayPolicy(displayState());
+        verify(!c.revertOnArrival, "authoritative no-trial snapshot clears old close intent");
+        c.reloadDraft();
+        c.edit("DP-1", "x", 1800);
+        verify(c.preview());
+        const value = displayState();
+        value.layout.trial = { id: "new-token", expires_at: Date.now() / 1000 + 20 };
+        c.applyDisplayPolicy(value);
+        const count = calls.length;
+        c.requestFinished(calls[count - 1].id);
+        compare(calls.length, count, "a later intentional preview is not auto-reverted");
+    }
+    function test_sameConnectorReplacementInvalidatesTrialAndExpiredCannotConfirm() {
+        const c = makePanel().controller;
+        c.edit("DP-1", "x", 1800);
+        const value = displayState();
+        value.layout.trial = { id: "token", expires_at: Date.now() / 1000 + 20 };
+        c.applyDisplayPolicy(value);
+        value.outputs[1].id = 99;
+        c.applyDisplayPolicy(value);
+        verify(c.stale);
+        verify(!c.displayLayoutAction("confirm", { id: "token" }));
+        c.stale = false;
+        c.clock = Date.now() + 30000;
+        verify(!c.displayLayoutAction("confirm", { id: "token" }));
+        verify(c.displayLayoutAction("revert", { id: "token" }));
+    }
+    function test_desktopOnlyAndUnavailableStates() {
+        const panel = makePanel();
+        const c = panel.controller;
+        const value = displayState();
+        value.outputs.shift();
+        c.applyDisplayPolicy(value);
+        verify(!findChild(panel, "displayPolicyCard").visible);
+        c.edit("DP-1", "enabled", false);
+        verify(!c.canPreview, "desktop cannot disable its last output");
+        c.reloadDraft();
+        c.edit("DP-1", "x", "1536");
+        verify(!c.dirty, "equivalent numeric field edits are not changes");
+        value.available = false;
+        c.applyDisplayPolicy(value);
+        verify(!c.canChange);
+        verify(c.statusMessage.indexOf("programs.shelllist.displays.enable") >= 0);
+    }
     function test_trialTokensAndHiddenPreviewRevert() {
         const c = makePanel().controller;
         const value = displayState();

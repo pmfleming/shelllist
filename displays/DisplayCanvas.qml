@@ -16,6 +16,8 @@ Rectangle {
     readonly property real originX: (width - extent.width * factor) / 2 - extent.x * factor
     readonly property real originY: (height - extent.height * factor) / 2 - extent.y * factor
     property bool dragging: false
+    onDraggingChanged: controller.layoutDragging = dragging
+    Component.onDestruction: controller.layoutDragging = false
     property string dragName: ""
     property real dragX: 0
     property real dragY: 0

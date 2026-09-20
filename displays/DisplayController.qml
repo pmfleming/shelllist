@@ -21,6 +21,7 @@ Ui.ChooserController {
     property string referenceName: ""
     property bool discardPrompt: false
     property bool identifyActive: false
+    property bool layoutDragging: false
     property double clock: Date.now()
     readonly property bool displayPolicySaving: actionInFlight
     readonly property var outputs: Model.outputs(displayPolicyState)
@@ -44,7 +45,7 @@ Ui.ChooserController {
                 displayPolicyState.status === "settling" ? qsTr("Waiting for external display…") : "")
 
     navigationPrimaryEnabled: false
-    navigationBlocked: dirty || discardPrompt || actionInFlight || !!trial
+    navigationBlocked: dirty || discardPrompt || layoutDragging || actionInFlight || !!trial
     hasSelection: outputs.length > 0
     // Use the common expansion animation, but clamp both widths to this output.
     closedWidthFraction: 1
@@ -66,7 +67,7 @@ Ui.ChooserController {
         stale = false;
         discardPrompt = false;
         if (!outputs.some(function (o) { return o.name === selectedName; }))
-            selectedName = outputs.length ? outputs[0].name : "";
+            selectedName = (outputs.find(function (o) { return !o.disabled; }) || outputs[0] || {}).name || "";
         if (!outputs.some(function (o) { return o.name === referenceName && o.name !== selectedName; }))
             referenceName = (outputs.find(function (o) { return o.name !== selectedName; }) || {}).name || "";
     }
@@ -74,6 +75,8 @@ Ui.ChooserController {
         const previousTrial = observedTrialId;
         displayPolicyState = Object.assign({}, value || ({ available: false }));
         observedTrialId = trial ? trial.id : "";
+        if (!trial && pendingAction !== "preview")
+            revertOnArrival = false;
         stateReady = true;
         clock = Date.now();
         if (trial) {
@@ -129,7 +132,7 @@ Ui.ChooserController {
         draft = draft.map(function (o) {
             if (o.name !== name) return o;
             const next = Object.assign({}, o);
-            next[key] = value;
+            next[key] = ["x", "y", "scale", "transform"].includes(key) && Model.number(value) ? Number(value) : value;
             return next;
         });
     }
@@ -210,6 +213,7 @@ Ui.ChooserController {
         }
     }
     function activateUi(workspaceId) {
+        stateReady = false;
         activateUiState(workspaceId);
         refresh();
     }

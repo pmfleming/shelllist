@@ -8,6 +8,7 @@ Ui.DetailFlickable {
     id: workspace
     required property DisplayController controller
     objectName: "displayLayoutWorkspace"
+    revealFocusedControl: true
     GridLayout {
         width: workspace.width
         columns: width >= 740 ? 2 : 1
@@ -45,6 +46,7 @@ Ui.DetailFlickable {
     Connections {
         target: workspace.controller
         function onEditorFocusRequested(): void { diagram.forceActiveFocus(); }
+        function onFocusSearchRequested(): void { diagram.forceActiveFocus(); }
     }
     Component.onCompleted: if (controller.uiActive) diagram.forceActiveFocus()
 }

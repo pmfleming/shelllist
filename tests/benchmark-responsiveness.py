@@ -67,7 +67,7 @@ def summary(samples: list[dict], field: str) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--surfaces", nargs="+", default=[
-        "applications", "wifi", "bluetooth", "clipboard", "battery", "activity",
+        "applications", "wifi", "bluetooth", "clipboard", "displays", "battery", "activity",
         "time-weather"
     ])
     parser.add_argument("--timeout", type=float, default=3.0)

@@ -7,6 +7,7 @@ The repository README is the user-facing overview and installation guide. These 
 | [`activity.md`](activity.md) | Activity surface, notification grouping, monitor routing, and ownership |
 | [`application-launcher.md`](application-launcher.md) | Launcher behavior, lifecycle, resources, and `app-daemon` boundary |
 | [`bar-osd.md`](bar-osd.md) | Shared OSD descriptor, event sources, timeout policy, and extension rules |
+| [`displays.md`](displays.md) | Dedicated Displays callout, layout workspace, keyboard controls and daemon-owned recovery |
 | [`daemon-frontend-commonality.md`](daemon-frontend-commonality.md) | Common daemon endpoint, recovery, sequencing, and chooser integration contracts |
 | [`list-interaction-contract.md`](list-interaction-contract.md) | Mouse-wheel, precision-touchpad, and touch scrolling requirements |
 | [`provider-model.md`](provider-model.md) | Shared provider, result, query, and action value contracts |

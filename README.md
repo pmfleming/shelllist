@@ -1,6 +1,6 @@
 # Shelllist
 
-Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and eight keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, **Activity**, **Notifications**, **Time & Weather**, and **Battery**.
+Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and nine keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, **Activity**, **Notifications**, **Time & Weather**, **Displays**, and **Battery**.
 
 Rust daemons handle system integration and policy. Shelllist handles windows, layout, navigation, animation, and presentation.
 
@@ -21,7 +21,7 @@ The bar contains:
 - the focused application on the active monitor;
 - artwork, title, progress, rewind 15s/play-pause/forward 30s controls, and a player selector when multiple MPRIS players are available;
 - StatusNotifierItem tray icons and native DBusMenu menus;
-- network, update, Bluetooth, audio, brightness, battery, power-profile, notification, timezone, and clock modules.
+- network, update, Bluetooth, audio, brightness, displays, battery, power-profile, notification, timezone, and clock modules.
 
 Modules collapse progressively on narrow outputs. The bar uses flat controls, translucent status pods, and no hover tooltips.
 
@@ -36,6 +36,7 @@ Common bar interactions:
 | Bluetooth | Open Bluetooth | — | — |
 | Audio | Open `pavucontrol` | Toggle mute | Adjust volume |
 | Brightness | Increase | Decrease | Adjust brightness |
+| Displays | Open Displays | — | — |
 | Battery | Open Battery | — | — |
 | Activity | Open Activity | — | — |
 | Timezone / clock | Open Time & Weather | — | — |
@@ -95,6 +96,21 @@ shelllist clipboard private
 shelllist clipboard resume
 shelllist clipboard kept 750
 ```
+
+### Displays
+
+The dedicated Displays callout shows a numbered, logical-size diagram and active
+outputs. **Arrange** expands into a canvas and per-screen inspector using the same
+host, theme, controls and keyboard focus as other surfaces. Drag screens to snap
+edges, or use arrows to move by 16 logical pixels (Shift: 1, Ctrl: 64); brackets
+select a screen. The eye icon identifies enabled outputs for three seconds.
+
+Mode, scale, rotation and position changes stay in a draft until **Preview**
+(Ctrl+Enter). **Keep** saves the observed layout; Escape, closure or the daemon's
+20-second deadline reverts it. **Prefer external** is a separate, acknowledged
+persistent docking preference. Power & sleep no longer owns display controls.
+Open with `shelllist open displays` or the `displays` global shortcut. See
+[`docs/displays.md`](docs/displays.md) for behavior, ownership and test details.
 
 ### Battery
 
@@ -272,7 +288,7 @@ Focused checks:
 
 ```sh
 shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml activity/*.qml \
-  bar/*.qml battery/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml \
+  bar/*.qml battery/*.qml displays/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml \
   wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-bar-presentation.js bar/Bar{Workspace,Media,Osd,Status}Presentation.js \
   qml/Shelllist/Core/Duration.js

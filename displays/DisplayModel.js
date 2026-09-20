@@ -10,14 +10,21 @@ function outputs(state) {
 function title(output) { return internal(output.name) ? "Laptop" : (output.description || output.name || ""); }
 function parseMode(value) {
     const match = /^(\d+)x(\d+)@(\d+(?:\.\d+)?)(?:Hz)?$/.exec(String(value));
-    return match ? { width: Number(match[1]), height: Number(match[2]), rate: Number(match[3]), size: match[1] + "x" + match[2] } : null;
+    if (!match) return null;
+    const width = Number(match[1]), height = Number(match[2]), rate = Number(match[3]);
+    return width > 0 && width <= 16384 && height > 0 && height <= 16384 && rate >= 1 && rate <= 1000
+        ? { width: width, height: height, rate: rate, size: match[1] + "x" + match[2] } : null;
 }
 function currentMode(output) {
     const observed = output.width + "x" + output.height + "@" + Number(output.refreshRate).toFixed(2);
-    return (output.availableModes || []).find(function (value) {
+    const matching = (output.availableModes || []).filter(function (value) {
         const m = parseMode(value);
         return m && m.width === output.width && m.height === output.height && Math.abs(m.rate - output.refreshRate) < 0.1;
-    }) || observed;
+    });
+    matching.sort(function (a, b) {
+        return Math.abs(parseMode(a).rate - output.refreshRate) - Math.abs(parseMode(b).rate - output.refreshRate);
+    });
+    return matching[0] || observed;
 }
 function modes(output) {
     const values = (output.availableModes || []).filter(function (v) { return !!parseMode(v); });
@@ -62,7 +69,7 @@ function rect(output) {
     const m = parseMode(output.mode) || { width: output.width || 1, height: output.height || 1 };
     const scale = number(output.scale) && Number(output.scale) > 0 ? Number(output.scale) : 1;
     const rotated = Number(output.transform || 0) % 2 === 1;
-    return { x: Number(output.x) || 0, y: Number(output.y) || 0,
+    return { x: number(output.x) ? Number(output.x) : 0, y: number(output.y) ? Number(output.y) : 0,
         width: (rotated ? m.height : m.width) / scale, height: (rotated ? m.width : m.height) / scale };
 }
 function bounds(values) {

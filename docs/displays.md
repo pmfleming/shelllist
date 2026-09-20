@@ -63,3 +63,18 @@ module/registry qmllint, migrated Battery tests and bar presentation tests.
 The direct local Qt runner lacked the SVG image plugin for unrelated weather/map
 fixtures; those warnings did not fail tests. Offscreen compact, wide and narrow
 renders inspected; no physical outputs were modified during development.
+
+Stage 3: 12 focused Displays QML tests and 230 full QML tests passed. Pure geometry
+and payload validation, strict QML lint, generated TypeScript, packaged imports,
+bar-api contracts and the complete current-worktree Nix check passed. The first
+full check exceeded its time budget rebuilding dependencies; the cached retry
+completed successfully. Fifteen focused bar-daemon display-policy/layout tests
+also passed, including replacement ordering, topology replacement, durable policy
+conflict rejection, restart/resume, monotonic expiry and failed rollback recovery.
+
+The packaged module was loaded in Quickshell using a non-mutating fixture and no
+visible windows. Identify's layer-shell type requires a Wayland backend, so that
+load check used Wayland rather than Qt's offscreen platform. Actual docking,
+physical mode switching, lid behavior and suspend/resume remain the manual
+hardware acceptance matrix. No running shell/daemon service was replaced or
+activated by this implementation.
