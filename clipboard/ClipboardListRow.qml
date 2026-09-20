@@ -12,9 +12,12 @@ Ui.ResultRow {
     trailingActionWidth: scaled(40)
     primaryEnabled: !controller.multiSelectMode
     detailsActionVisible: !controller.multiSelectMode
-    pickHandler: controller.multiSelectMode ? function (rowIndex) {
-        controller.toggleEntrySelection(rowIndex);
-    } : null
+    function pick(rowIndex: int): void {
+        if (controller.multiSelectMode)
+            controller.toggleEntrySelection(rowIndex);
+        else
+            listPane.pick(rowIndex);
+    }
 
     Ui.GlyphLabel {
         Layout.preferredWidth: row.scaled(30)

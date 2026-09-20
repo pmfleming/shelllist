@@ -687,30 +687,33 @@
               nativeBuildInputs = [ pkgs.qt6.qtdeclarative pkgs.quickshell ];
             } ''
             run_qmllint() {
-              qmllint \
+              qmllint --max-warnings 0 \
                 -I "${pkgs.qt6.qtdeclarative}/lib/qt-6/qml" \
                 -I "${pkgs.quickshell}/lib/qt-6/qml" \
-                -I ${./qml} \
+                -I ${./.}/qml \
                 "$@"
             }
 
+            # Preserve relative test imports and Shelllist module symlinks.
+            # Separate Nix paths for each directory silently broke resolution
+            # while qmllint still exited successfully with warnings.
             sources=(
-              ${./qml}/Shelllist/Core/*.qml
-              ${./qml}/Shelllist/Io/*.qml
-              ${./qml}/Shelllist/Io/process/*.qml
-              ${./qml}/Shelllist/Ui/*.qml
-              ${./shell}/*.qml
-              ${./bar}/*.qml
-              ${./bluetooth}/*.qml
-              ${./clipboard}/*.qml
-              ${./launcher}/*.qml
-              ${./battery}/*.qml
-              ${./displays}/*.qml
-              ${./activity}/*.qml
-              ${./wifi}/*.qml
-              ${./wifi}/networkinput/*.qml
-              ${./wifi}/process/*.qml
-              ${./tests/qml}/*.qml
+              ${./.}/qml/Shelllist/Core/*.qml
+              ${./.}/qml/Shelllist/Io/*.qml
+              ${./.}/qml/Shelllist/Io/process/*.qml
+              ${./.}/qml/Shelllist/Ui/*.qml
+              ${./.}/shell/*.qml
+              ${./.}/bar/*.qml
+              ${./.}/bluetooth/*.qml
+              ${./.}/clipboard/*.qml
+              ${./.}/launcher/*.qml
+              ${./.}/battery/*.qml
+              ${./.}/displays/*.qml
+              ${./.}/activity/*.qml
+              ${./.}/wifi/*.qml
+              ${./.}/wifi/networkinput/*.qml
+              ${./.}/wifi/process/*.qml
+              ${./.}/tests/qml/*.qml
             )
             strict_sources=()
             for source in "''${sources[@]}"; do
@@ -723,7 +726,7 @@
             run_qmllint "''${strict_sources[@]}"
             # Quickshell 0.3's private GlobalShortcut qmltypes reference an
             # unexported PostReloadHook. Suppress only that upstream import warning.
-            run_qmllint --import disable ${./qml}/Shelllist/Ui/ShelllistGlobalShortcut.qml
+            run_qmllint --import disable ${./.}/qml/Shelllist/Ui/ShelllistGlobalShortcut.qml
             touch $out
           '';
 
@@ -1057,7 +1060,7 @@
               runtimeInputs = [ pkgs.qt6.qtdeclarative pkgs.quickshell ];
               text = ''
                 run_qmllint() {
-                  qmllint \
+                  qmllint --max-warnings 0 \
                     -I "${pkgs.qt6.qtdeclarative}/lib/qt-6/qml" \
                     -I "${pkgs.quickshell}/lib/qt-6/qml" \
                     -I "$PWD/qml" \

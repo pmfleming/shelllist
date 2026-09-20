@@ -23,7 +23,7 @@ Ui.ChooserListPane {
     busy: controller.refreshInFlight || controller.operationBlocked
     powerEnabled: false
     refreshEnabled: !controller.operationBlocked
-    refreshHandler: function () {
+    function requestRefresh(): void {
         controller.refresh(true);
     }
     iconActionEnabled: !controller.operationBlocked

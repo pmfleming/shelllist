@@ -1,64 +1,44 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const vm = require("vm");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const vm = require("node:vm");
 
 const [resourcesPath, fixturePath] = process.argv.slice(2);
 if (!resourcesPath || !fixturePath)
     throw new Error("usage: check-application-resources.js <ApplicationResources.js> <fixture.json>");
+const resources = {};
+vm.createContext(resources);
+vm.runInContext(fs.readFileSync(resourcesPath, "utf8").replace(/^\.pragma library\s*/, ""), resources);
+const {current, history_point: history} = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
-const source = fs.readFileSync(resourcesPath, "utf8").replace(/^\.pragma library\s*/, "");
-const context = {};
-vm.createContext(context);
-vm.runInContext(source, context, { filename: resourcesPath });
-
-const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
-
-function leafPaths(value, prefix = "") {
-    return Object.entries(value).flatMap(([key, child]) => {
-        const path = prefix ? `${prefix}.${key}` : key;
-        return child !== null && typeof child === "object" && !Array.isArray(child)
-            ? leafPaths(child, path) : [path];
-    });
+// Exercise the presentation the UI actually consumes, not the retired detail
+// table's catalogue of every wire field. Rust still owns the complete fixture.
+for (const metric of ["cpu_percent_of_machine", "memory_bytes", "gpu_busy_percent",
+    "disk_read_bytes_per_second", "disk_write_bytes_per_second", "disk_space_total_bytes",
+    "referenced_file_disk_bytes", "gpu_memory_allocated_bytes", "attributed_fraction"]) {
+    assert.equal(typeof current[metric], "number", metric);
+    assert.equal(resources.currentMetricAvailable(current, metric), true, metric);
+    assert.equal(resources.historicalMetricAvailable(history, metric), true, metric);
+    assert.equal(resources.historicalMetricAvailable({...history, [metric]: null}, metric), false, metric);
 }
-
-function detailKeys(resource, historical) {
-    return context.detailGroups(resource, historical)
-        .flatMap(group => group.fields.map(field => field.key));
+assert.equal(resources.currentMetricAvailable(current, "estimated_app_power_watts"), true);
+assert.equal(resources.historicalMetricAvailable(history, "average_power_watts"), true);
+for (const metric of ["network_receive_bytes_per_second", "network_transmit_bytes_per_second"]) {
+    assert.equal(resources.currentMetricAvailable(current, metric), false, "unsupported is not idle");
+    assert.equal(resources.historicalMetricAvailable(history, metric), false);
+    assert.equal(resources.historicalMetricAvailable({...history,
+        availability: {...history.availability, network_bytes: true}}, metric), true, "measured zero is valid");
 }
-
-function compare(actual, expected, description) {
-    const actualSet = new Set(actual);
-    const expectedSet = new Set(expected);
-    const missing = [...expectedSet].filter(key => !actualSet.has(key));
-    const unexpected = [...actualSet].filter(key => !expectedSet.has(key));
-    if (missing.length || unexpected.length) {
-        throw new Error(`${description} mismatch\nmissing: ${missing.join(", ") || "none"}\nunexpected: ${unexpected.join(", ") || "none"}`);
-    }
-    if (actual.length !== actualSet.size)
-        throw new Error(`${description} contains duplicate field dispositions`);
-}
-
-// The daemon owns this wire fixture and tests it against the serialized Rust
-// model. This check deliberately consumes only that public contract instead of
-// parsing private Rust source layout.
-const currentExpected = leafPaths(fixture.current);
-const historyExpected = leafPaths(fixture.history_point);
-
-compare(detailKeys(fixture.current, false), currentExpected, "current UI/wire contract");
-compare(detailKeys(fixture.history_point, true), historyExpected, "history UI/wire contract");
-
-const unavailableNetwork = Object.assign({}, fixture.current, {
-    measurement: Object.assign({}, fixture.current.measurement, { network_bytes_available: false })
-});
-const capabilityFields = new Map(detailKeys(unavailableNetwork, false).map(key => [key, true]));
-if (!capabilityFields.has("measurement.network_bytes_available"))
-    throw new Error("unsupported network byte accounting is not presented");
-if (!context.metadataBadges(Object.assign({ running: true }, fixture.current), null)
-        .some(badge => badge.text.includes("coverage")))
-    throw new Error("measurement provenance badges omit coverage");
-if (!context.metadataBadges({ running: false }, fixture.history_point)
-        .some(badge => badge.text === "Retained history"))
-    throw new Error("retained history provenance is not presented");
-
-console.log(`application resources: ${currentExpected.length} current and ${historyExpected.length} historical fields covered`);
+assert.equal(resources.bytes(current.memory_bytes), "700 MiB");
+assert.equal(resources.rate(current.disk_read_bytes_per_second), "512 KiB/s");
+assert.equal(resources.power(current.estimated_app_power_watts), "2.22 W");
+const badges = resources.metadataBadges({...current, running: true}, null);
+assert.ok(badges.some(badge => badge.text === "96.0% coverage"));
+assert.ok(badges.some(badge => badge.text === "2.0 s samples"));
+assert.ok(badges.some(badge => badge.text === "Energy low" && badge.tone === "warning"));
+const historical = resources.metadataBadges({running: false}, history);
+assert.ok(historical.some(badge => badge.text === "Retained history"));
+assert.ok(historical.some(badge => badge.text === "7 samples"));
+assert.equal(resources.metadataBadges(null, null).length, 0);
+console.log("application resources: live chart metrics, unavailable/idle distinction, formatting and provenance passed");

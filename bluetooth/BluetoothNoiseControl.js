@@ -50,7 +50,3 @@ function activeMode(control) {
         image: ""
     };
 }
-
-function activeLabel(control) {
-    return activeMode(control).label;
-}

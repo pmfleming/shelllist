@@ -166,7 +166,6 @@ Item {
         }
 
         MouseArea {
-            id: hoverArea
             anchors.fill: parent
             hoverEnabled: true
             acceptedButtons: Qt.NoButton
@@ -200,7 +199,6 @@ Item {
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
     Ui.ThemeText {
-        id: pastLabel
         anchors.left: chart.left
         anchors.bottom: parent.bottom
         width: Math.max(0, graph.historyFraction * chart.width - nowLabel.implicitWidth - 8)

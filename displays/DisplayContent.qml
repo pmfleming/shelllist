@@ -70,7 +70,6 @@ Ui.ChooserSurface {
             font.pixelSize: Ui.Theme.fontSizeSmall
         }
         Loader {
-            id: body
             Layout.fillWidth: true
             Layout.fillHeight: true
             sourceComponent: content.controller.detailsOpen ? workspace : overview

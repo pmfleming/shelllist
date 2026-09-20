@@ -411,38 +411,46 @@ Item {
         if (selectedEntryMatches(entryId, entryRevision) && nextValue.entry_id === entryId && nextValue.revision === entryRevision)
             thumbnail = nextValue;
     }
-    function handleFailure(id: string, message: string): bool {
-        if (id === "edit-begin") {
-            editBeginPending = false;
-            if (retryingEdit || editError.length > 0) {
-                retryingEdit = false;
-                editError = message;
-                rememberFailedDraft();
-                return false;
-            }
-            editIsDirect = false;
-        }
-        if (id === "edit-commit") {
-            const sent = pendingCommit;
-            pendingCommit = null;
-            if (sent && sent.target && (!editTarget || editTarget.id !== sent.target.id)) {
-                const next = Object.assign({}, failedDrafts);
-                next[sent.target.id] = {target: sent.target, preview: sent.preview, draft: sent.draft, error: message, direct: sent.direct};
-                failedDrafts = next;
-                scheduleLoad();
-                return false;
-            }
-            autoSaveTimer.stop();
-            saveInFlight = false;
-            savingDirectEdit = false;
-            pasteAfterSave = false;
-            editing = true;
-            editId = "";
-            editDirty = true;
+    function failEditBegin(message: string): void {
+        editBeginPending = false;
+        if (retryingEdit || editError.length > 0) {
+            retryingEdit = false;
             editError = message;
             rememberFailedDraft();
-            if (editTarget && selectedEntryId !== editTarget.id)
-                scheduleLoad();
+        } else {
+            editIsDirect = false;
+        }
+    }
+    function failEditCommit(message: string): void {
+        const sent = pendingCommit;
+        pendingCommit = null;
+        if (sent && sent.target && (!editTarget || editTarget.id !== sent.target.id)) {
+            const next = Object.assign({}, failedDrafts);
+            next[sent.target.id] = {target: sent.target, preview: sent.preview, draft: sent.draft, error: message, direct: sent.direct};
+            failedDrafts = next;
+            scheduleLoad();
+            return;
+        }
+        autoSaveTimer.stop();
+        saveInFlight = false;
+        savingDirectEdit = false;
+        pasteAfterSave = false;
+        editing = true;
+        editId = "";
+        editDirty = true;
+        editError = message;
+        rememberFailedDraft();
+        if (editTarget && selectedEntryId !== editTarget.id)
+            scheduleLoad();
+    }
+    function handleFailure(id: string, message: string): bool {
+        if (id === "edit-begin") {
+            failEditBegin(message);
+            return false;
+        }
+        if (id === "edit-commit") {
+            failEditCommit(message);
+            return false;
         }
         if (id === requestId) {
             requestId = "";

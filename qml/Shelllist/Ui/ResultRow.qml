@@ -15,7 +15,6 @@ Rectangle {
     property bool pointerPressed: false
     property string accessibleName: ""
     property real trailingActionWidth: 0
-    property var pickHandler: null
     property bool primaryEnabled: true
     property bool detailsActionVisible: true
     readonly property bool selected: index === selectedIndex
@@ -25,11 +24,11 @@ Rectangle {
     signal primaryRequested
     signal detailsToggled(int rowIndex)
 
+    function pick(rowIndex: int): void {
+        listPane.pick(rowIndex);
+    }
     onPicked: function (rowIndex) {
-        if (pickHandler)
-            pickHandler(rowIndex);
-        else
-            listPane.pick(rowIndex);
+        pick(rowIndex);
     }
     onPrimaryRequested: if (primaryEnabled)
         listPane.chooserController.primarySelected()

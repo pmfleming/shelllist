@@ -18,7 +18,7 @@ Ui.ChooserListPane {
     powerEnabled: false
     refreshEnabled: !controller.actionInFlight && !controller.wipeChallenge && (!controller.multiSelectMode || controller.multiSelectedCount > 0)
     refreshIcon: "󰆴"
-    refreshHandler: function () {
+    function requestRefresh(): void {
         if (pane.controller.multiSelectMode)
             pane.controller.requestBulkDelete();
         else

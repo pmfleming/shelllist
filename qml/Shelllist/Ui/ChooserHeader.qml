@@ -126,7 +126,6 @@ RowLayout {
         Accessible.role: Accessible.CheckBox
         Accessible.name: header.powerAccessibleName
         Accessible.checked: checked
-        Accessible.onToggleAction: toggle()
         Layout.preferredWidth: header.scaled(56)
         Layout.preferredHeight: header.scaled(Theme.controlHeight)
         Layout.alignment: Qt.AlignVCenter

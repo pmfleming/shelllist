@@ -1,6 +1,6 @@
 import QtQuick
 
-Rectangle {
+ActionControl {
     id: control
 
     property bool checked: false
@@ -16,25 +16,11 @@ Rectangle {
     border.color: activeFocus ? Theme.strongBorder : "transparent"
     border.width: 1
     opacity: enabled ? 1.0 : Theme.disabledOpacity
-    activeFocusOnTab: enabled
-
-    Keys.onReturnPressed: function (event) {
-        control.toggle();
-        event.accepted = true;
-    }
-    Keys.onEnterPressed: function (event) {
-        control.toggle();
-        event.accepted = true;
-    }
-    Keys.onSpacePressed: function (event) {
-        control.toggle();
-        event.accepted = true;
-    }
-
-    function toggle() {
-        if (enabled)
-            toggled(!checked);
-    }
+    accessibleName: checked ? qsTr("Turn off") : qsTr("Turn on")
+    Accessible.role: Accessible.CheckBox
+    Accessible.checked: checked
+    Accessible.onToggleAction: activate()
+    onClicked: toggled(!checked)
 
     TogglePill {
         readonly property real visualScale: Math.min(control.width / 56, control.height / Theme.controlHeight)
@@ -50,6 +36,6 @@ Rectangle {
     ControlPointerArea {
         id: area
         focusTarget: control
-        onClicked: control.toggle()
+        onClicked: control.activate()
     }
 }

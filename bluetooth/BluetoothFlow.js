@@ -38,44 +38,23 @@ function pairingStatus(prompt, envelope) {
 function pairingQueue(prompts, envelope) {
     const event = envelope || ({});
     const prompt = event.data || ({});
-    if (!prompt.request_id)
-        return prompts || [];
     const current = prompts || [];
-    if (["requested", "display"].includes(event.event)) {
-        const index = current.findIndex(function (item) {
-            return item.request_id === prompt.request_id
-                || (event.event === "display" && item.device_key === prompt.device_key && item.kind === prompt.kind);
-        });
-        if (index < 0)
-            return current.concat([prompt]);
-        return current.map(function (item, i) { return i === index ? prompt : item; });
-    }
+    if (!prompt.request_id)
+        return current;
     if (["cancelled", "answered"].includes(event.event))
         return current.filter(function (item) { return item.request_id !== prompt.request_id; });
-    return current;
-}
-function pairingTransition(currentPrompt, envelope) {
-    const event = envelope || ({});
-    const prompt = event.data || ({});
-    if (["requested", "display"].includes(event.event))
-        return { changed: true, prompt: prompt };
-    const matchingCancellation = ["cancelled", "answered"].includes(event.event)
-        && currentPrompt && currentPrompt.request_id === prompt.request_id;
-    return matchingCancellation
-        ? { changed: true, prompt: null }
-        : { changed: false, prompt: currentPrompt || null };
+    if (!["requested", "display"].includes(event.event))
+        return current;
+    const display = event.event === "display";
+    const index = current.findIndex(function (item) {
+        return item.request_id === prompt.request_id
+            || (display && item.device_key === prompt.device_key && item.kind === prompt.kind);
+    });
+    return index < 0 ? current.concat([prompt])
+        : current.map(function (item, i) { return i === index ? prompt : item; });
 }
 function isActiveOperation(operation) {
     return !!operation && ["queued", "running"].includes(operation.state);
-}
-function isTerminalOperation(operation) {
-    return !!operation && ["completed", "failed", "cancelled"].includes(operation.state);
-}
-function operationEndsPairing(operation, prompt) {
-    return isTerminalOperation(operation) && !!prompt && prompt.device_key === operation.device_key;
-}
-function withoutMatchingOperation(current, requestId) {
-    return current && current.request_id === requestId ? null : current;
 }
 function shouldRescanAfterOperation(operation, uiActive, powered, scanning) {
     return !!operation && operation.operation === "pair" && operation.state === "failed"
@@ -182,21 +161,6 @@ function operationCompletionStatus(operation, deviceName) {
 }
 function activeOperationStatus(operation, deviceName) {
     return operation.operation.charAt(0).toUpperCase() + operation.operation.slice(1) + " " + deviceName + "…";
-}
-function operationTransition(activeOperation, pairingPrompt, operation, deviceName, uiActive, powered, scanning) {
-    if (!operation || !operation.request_id)
-        return null;
-    if (isActiveOperation(operation))
-        return { activeOperation: operation, active: true, clearPairing: false,
-            status: activeOperationStatus(operation, deviceName), rescan: false };
-    const rescan = shouldRescanAfterOperation(operation, uiActive, powered, scanning);
-    return {
-        activeOperation: withoutMatchingOperation(activeOperation, operation.request_id),
-        active: false,
-        clearPairing: operationEndsPairing(operation, pairingPrompt),
-        status: rescan ? "Device is no longer nearby · scanning again…" : operationCompletionStatus(operation, deviceName),
-        rescan: rescan
-    };
 }
 const directOperations = ({ pair: "pair", connect: "connect", disconnect: "disconnect", forget: "remove" });
 const toggleOperations = ({

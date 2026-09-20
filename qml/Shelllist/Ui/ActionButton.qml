@@ -1,11 +1,11 @@
 import QtQuick
 import QtQuick.Controls as Controls
 
-Rectangle {
+ActionControl {
     id: control
 
     property string label: ""
-    property string accessibleName: label
+    accessibleName: label
     property string icon: ""
     property int iconSize: Theme.iconSizeSmall
     property string hotkey: ""
@@ -18,38 +18,14 @@ Rectangle {
     property color labelColor: tone === "accent" ? Theme.accentText : (tone === "active" ? Theme.activeText : (tone === "danger" ? Theme.dangerText : (tone === "warning" ? Theme.warningText : Theme.text)))
     readonly property bool hovered: area.containsMouse
     readonly property bool pressed: area.pressed
-    readonly property string interactionState: !enabled ? "disabled" : (pressed ? "pressed" : (hovered || activeFocus ? "highlighted" : "flat"))
-
-    signal clicked
+    readonly property string interactionState: !enabled || !interactive ? "disabled" : (pressed ? "pressed" : (hovered || activeFocus ? "highlighted" : "flat"))
 
     implicitHeight: Theme.controlHeight
     radius: Theme.controlRadius
     color: interactionState === "pressed" ? pressedBackgroundColor : (interactionState === "highlighted" ? hoverBackgroundColor : backgroundColor)
     border.color: activeFocus ? Theme.strongBorder : borderColor
     border.width: 1
-    opacity: enabled ? 1.0 : Theme.disabledOpacity
-    activeFocusOnTab: enabled
-    Accessible.role: Accessible.Button
-    Accessible.name: accessibleName
-    Accessible.onPressAction: if (enabled)
-        control.clicked()
-
-    Keys.onReturnPressed: function (event) {
-        if (!event.isAutoRepeat)
-            control.clicked();
-        event.accepted = true;
-    }
-    Keys.onEnterPressed: function (event) {
-        if (!event.isAutoRepeat)
-            control.clicked();
-        event.accepted = true;
-    }
-    Keys.onSpacePressed: function (event) {
-        if (!event.isAutoRepeat)
-            control.clicked();
-        event.accepted = true;
-    }
-
+    opacity: enabled && interactive ? 1.0 : Theme.disabledOpacity
     ControlLabel {
         anchors.centerIn: parent
         label: control.label
@@ -63,10 +39,11 @@ Rectangle {
     StateLayer {
         id: area
         focusTarget: control
+        interactive: control.interactive
         radius: control.radius
         stateColor: control.labelColor
         showStateBackground: false
-        onClicked: control.clicked()
+        onClicked: control.activate()
     }
 
     Controls.ToolTip.visible: area.containsMouse && control.toolTip.length > 0

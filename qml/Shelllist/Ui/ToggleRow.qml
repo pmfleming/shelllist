@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import "UiText.js" as UiText
 
-Rectangle {
+ActionControl {
     id: row
 
     property string title: ""
@@ -10,15 +10,7 @@ Rectangle {
     property string hotkey: ""
     property string tone: "normal"
     property bool checked: false
-    property bool interactive: true
     property bool showSubtitle: true
-
-    signal clicked
-
-    function activate(): void {
-        if (enabled && interactive)
-            clicked();
-    }
 
     width: parent ? parent.width : 0
     implicitHeight: showSubtitle && subtitle.length > 0 ? 40 : 30
@@ -27,26 +19,10 @@ Rectangle {
     border.color: activeFocus ? Theme.strongBorder : "transparent"
     border.width: 1
     opacity: enabled && interactive ? 1.0 : Theme.disabledOpacity
-    // A control becoming busy may retain focus until Tab moves elsewhere.
-    activeFocusOnTab: enabled && (interactive || activeFocus)
+    accessibleName: subtitle.length > 0 ? title + ". " + subtitle : title
     Accessible.role: Accessible.CheckBox
-    Accessible.name: subtitle.length > 0 ? title + ". " + subtitle : title
     Accessible.checked: checked
-    Accessible.onPressAction: row.activate()
-
-    Keys.onReturnPressed: function (event) {
-        row.activate();
-        event.accepted = true;
-    }
-    Keys.onEnterPressed: function (event) {
-        row.activate();
-        event.accepted = true;
-    }
-    Keys.onSpacePressed: function (event) {
-        row.activate();
-        event.accepted = true;
-    }
-
+    Accessible.onToggleAction: activate()
     RowLayout {
         anchors.fill: parent
         spacing: Theme.spacingMd

@@ -167,7 +167,6 @@ Rectangle {
                 Accessible.role: Accessible.CheckBox
                 Accessible.name: qsTr("Do not disturb")
                 Accessible.checked: checked
-                Accessible.onToggleAction: toggle()
                 onToggled: function (checked) {
                     notificationCard.controller.notificationState.setDndEnabled(checked);
                 }

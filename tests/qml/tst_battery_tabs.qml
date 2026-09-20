@@ -117,7 +117,7 @@ TestCase {
         verify(!findChild(panel, "batteryCriticalNotify"));
         verify(!findChild(panel, "batteryLowEnabled").checked);
         verify(findChild(panel, "batteryCriticalEnabled").checked);
-        findChild(panel, "batteryLowEnabled").toggle();
+        findChild(panel, "batteryLowEnabled").activate();
         verify(controller.draftNotifyWarning);
         compare(controller.draftWarningProfile, "balanced");
         controller.settingsOperationFinished("alert");

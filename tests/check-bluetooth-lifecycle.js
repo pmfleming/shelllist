@@ -51,11 +51,11 @@ expect("answer removes only matching prompt", queue.length === 0);
 queue = flow.pairingQueue([], { event: "display", data: { request_id: "display-1", device_key: "keyboard", kind: "display-passkey", entered: 1 } });
 queue = flow.pairingQueue(queue, { event: "display", data: { request_id: "display-2", device_key: "keyboard", kind: "display-passkey", entered: 2 } });
 expect("display progress replaces rather than queues", queue.length === 1 && queue[0].entered === 2);
-const transition = flow.pairingTransition(requested.data, {
+const cancelled = flow.pairingQueue([requested.data], {
     event: "cancelled",
     data: { request_id: "pairing-1", reason: "timeout" }
 });
-expect("matching timeout closes prompt", transition.changed && transition.prompt === null);
+expect("matching timeout removes prompt", cancelled.length === 0);
 
 expect("scan failure exposes its error", flow.scanCompletionStatus({ state: "failed", error: { message: "radio failed" } }, 0, "Scanning") === "radio failed");
 const myDevices = flow.devicesForView([
@@ -76,14 +76,10 @@ expect("Search all honors hidden blocked devices", !currentDevices.some(device =
 expect("blocked paired devices can be managed from My Devices", flow.devicesForView([{key: "blocked", paired: true, blocked: true}], "mine", {show_blocked_devices: true}).length === 1);
 expect("Search all can hide an unblocked stale device", !currentDevices.some(device => device.key === "recent"));
 expect("other operation failures do not trigger scan", !flow.shouldRescanAfterOperation({ operation: "connect", state: "failed", error: { code: "device-unavailable" } }, true, true, false));
-const activeOperation = flow.operationTransition(null, null, {
-    request_id: "operation-1", operation: "connect", state: "running"
-}, "Headset", true, true, false);
-const failedPair = flow.operationTransition(activeOperation.activeOperation, requested.data, {
-    request_id: "operation-1", operation: "pair", state: "failed", device_key: "device-1",
-    error: { code: "device-unavailable" }
-}, "Headset", true, true, false);
-expect("failed unavailable pair transitions to rescan", failedPair.rescan && failedPair.clearPairing && failedPair.activeOperation === null);
+expect("running operations remain active", flow.isActiveOperation({ state: "running" }));
+expect("failed unavailable pair requests rescan", flow.shouldRescanAfterOperation({
+    operation: "pair", state: "failed", error: { code: "device-unavailable" }
+}, true, true, false));
 const activeLifecycle = api.lifecycleState({ request_id: "operation-1" }, {}, {}, "running", ["completed"]);
 const finishedLifecycle = api.lifecycleState({ request_id: "operation-1" }, activeLifecycle.active, {}, "completed", ["completed"]);
 expect("backend lifecycle removes terminal requests", !finishedLifecycle.active["operation-1"]);

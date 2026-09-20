@@ -43,13 +43,8 @@ Item {
         return backend.stopHotspot();
     }
 
-    function cancel() {
-        if (requestId.length === 0)
-            return false;
-        const cancelled = backend.cancel(requestId);
-        if (!cancelled)
-            console.warn("shelllist hotspot cancellation failed request_id=" + requestId);
-        return cancelled;
+    function cancel(): bool {
+        return backend.cancel(requestId);
     }
 
     // Credentials are dropped as soon as they are no longer being shown.

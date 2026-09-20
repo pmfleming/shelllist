@@ -1,33 +1,14 @@
 import QtQuick
 
-Item {
+ActionControl {
     id: area
 
-    required property string accessibleName
+    required accessibleName
     property real focusRadius: Theme.controlRadius
     readonly property bool hovered: pointer.containsMouse
-    signal clicked
-
-    activeFocusOnTab: enabled
-    Accessible.role: Accessible.Button
-    Accessible.name: accessibleName
-    Accessible.onPressAction: activate()
-    Keys.onReturnPressed: activate()
-    Keys.onEnterPressed: activate()
-    Keys.onSpacePressed: activate()
-
-    function activate(): void {
-        if (enabled)
-            clicked();
-    }
-
-    Rectangle {
-        anchors.fill: parent
-        radius: area.focusRadius
-        color: "transparent"
-        border.width: area.activeFocus ? 1 : 0
-        border.color: Theme.accent
-    }
+    radius: focusRadius
+    border.width: activeFocus ? 1 : 0
+    border.color: Theme.accent
 
     ControlPointerArea {
         id: pointer

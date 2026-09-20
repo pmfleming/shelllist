@@ -21,6 +21,23 @@ Wi-Fi, Bluetooth, clipboard, and application surfaces use `ProviderChooserContro
 
 The top bar and its Activity and Battery surfaces use the same `DaemonBackend` primitives even though they are not search providers. Their requests use common sequencing and share the single `bar-daemon` session.
 
+## Shared model and interaction ownership
+
+`Core.KeyedListModel` reconciles stable keyed values for all four provider
+choosers (through `ResultStore`) and for the bar. It owns incremental moves,
+insertions/removals, bounded rebuild chunks and stale-work fencing. Consumers
+own selection, search, payloads and presentation; the bar overrides `equivalent`
+to retain its descriptor comparison without a second reconciliation algorithm.
+
+`Ui.ActionControl` supplies guarded keyboard/accessibility activation for shared
+buttons, tabs, toggles, action areas and bar actions. Bar secondary buttons and
+wheel actions remain distinct. `ChooserListPane.requestRefresh()` and
+`ResultRow.pick()` are explicit method contracts, not mutable function properties.
+Domain overrides keep Bluetooth discovery, clipboard deletion/multi-selection
+and application force-refresh behavior local.
+
+See the [measured review](reviews/commonality-2026-09-20.md) for evidence and limits.
+
 ## Deliberate domain differences
 
 Common infrastructure does not interpret domain payloads. Domain daemons own

@@ -2,13 +2,20 @@
 
 Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract checks, and the Nix build as authoritative. `qmlqualitylens` is an additional structural review tool; generated reports live under `target/` and are not a release contract.
 
+## Latest review
+
+The [2026-09-20 commonality review](reviews/commonality-2026-09-20.md) records the
+current before/after measurements, shared model/activation refactors, dead-code
+removal and remaining findings. The complete worktree gate now passes. Native
+lint is warning-fatal and preserves the source tree's relative import layout.
+
 ## Current structure
 
 The UI is divided by ownership rather than by screen size:
 
 - `shell/` owns the resident host, surface registry, IPC, and monitor-local bar creation.
 - `bar/` owns bar, active notification, and OSD presentation only.
-- `activity/`, `battery/`, `launcher/`, `wifi/`, `bluetooth/`, and `clipboard/` own domain-specific controllers and views.
+- `activity/`, `battery/`, `displays/`, `launcher/`, `wifi/`, `bluetooth/`, and `clipboard/` own domain-specific controllers and views.
 - `Shelllist.Core` owns provider contracts, normalization, ranking, and keyed result models.
 - `Shelllist.Io` owns daemon transport and process boundaries.
 - `Shelllist.Ui` owns theme tokens, windows, chooser layout, controls, state layers, elevation, details, prompts, and navigation.
@@ -22,12 +29,13 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - `ProviderChooserSurface` composes chooser shortcuts, split layout, density, default navigation/refresh/detail policy, and navigation help once for Wi-Fi, Bluetooth, Clipboard, and Applications.
 - `ChooserShortcuts` centralizes Escape, refresh, and details-tab shortcuts.
 - `ChooserListPane` derives its own density instead of requiring every domain wrapper to forward presentation state.
-- `ResultStore` reconciles one persistent keyed model instead of replacing ListView models.
+- `KeyedListModel` owns persistent model reconciliation and chunking for `ResultStore` and the bar; selection and ranking remain in `ResultStore`.
+- `ActionControl` shares keyboard/accessibility activation and busy-focus policy across chooser controls and bar actions.
 - Providers resolve dynamic actions at use time rather than copying actions into recurring snapshots.
 - `BarContent` renders normalized status descriptors through one delegate.
 - Workspace, focused-window, media, tray, and OSD presentation are isolated components.
 - Activity, battery, power, and OSD views are split into cohesive panes rather than one large object tree.
-- `ChartFrame`, `LiveClock`, `PulsingLabel`, `NotificationReplyRow`, and `BarOverlayWindow` centralize repeated presentation behavior.
+- `LiveClock`, `PulsingLabel`, `NotificationReplyRow`, and `BarOverlayWindow` centralize repeated presentation behavior.
 - `ChartDrawing` shares gap-preserving Canvas paths between battery and application history; `ChartValueRail` keeps their label geometry and styling consistent. Availability, axes, and telemetry policy stay with their existing owners.
 - `NotificationPresentation`, `NotificationStackHeader`, and `RemovalAnimation` keep grouping, routing, stack headers, and transient removal behavior common between active and historical notifications.
 - Every OSD family uses one normalized descriptor, one `BarOsdContent` frame, and one dismissal timer; pure transition and timeout policy stays in `BarOsdPresentation.js`.
@@ -39,13 +47,13 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 
 `qmlqualitylens.config.json` declares the resident shell and QML test files as entrypoints. It also records dynamic component edges hidden behind `Component`, `Loader.sourceComponent`, and `SplitChooserLayout` factories. These edges are analysis metadata, not runtime dependencies. Keep them synchronized when a surface gains or removes dynamically instantiated content; prefer an explicit edge over a broad unused-component suppression.
 
-The current calibration reaches 280 of 282 components from 34 configured/discovered application and test roots. The remaining components are exported module API rather than dead-code findings. Configured edges cover list, details, toolbar, tab, battery, and Time & Weather components instantiated through loaders; cleanup reports no unused components or IDs. Resolution has no unresolved imports; one internal test type (`Launcher.ApplicationSettingsPage`) remains unresolved by Lens, while native Qt lint is clean.
+The current calibration reaches 295 of 298 components from 38 configured/discovered application and test roots. The remaining three (`ChartFrame`, `ChooserWindowHost`, `DisclosureSection`) are exported module API rather than confirmed dead code. Configured edges cover components instantiated through loaders; cleanup reports no unused components or IDs. Resolution has no unresolved imports; one internal test type (`Launcher.ApplicationSettingsPage`) remains unresolved by Lens, while native Qt lint is clean.
 
 ## Focused declarative-state refactoring
 
 When a property is intentionally mutable, initialize it as state rather than first creating a binding that an event handler later destroys. Keep responsive defaults in separate readonly derived properties. Similarly, an animated geometry axis must have one owner: do not combine `anchors.fill` with an explicit animated `x` or `y` binding.
 
-The focused passes applied these rules to bar surface recovery, media progress time, Activity clock state, battery selection state, StateLayer ripple origins, and OSD vertical motion. Delegate computation was also moved out of `DropDownList`. The semantic report now has no active high- or medium-severity findings.
+The focused passes applied these rules to bar surface recovery, media progress time, Activity clock state, battery selection state, StateLayer ripple origins, and OSD vertical motion. Delegate computation was also moved out of `DropDownList`. These passes removed the binding-overwrite and geometry conflicts they targeted; other structural review findings remain visible in Lens.
 
 ## Review rules
 
@@ -155,7 +163,7 @@ qmlqualitylens measure all --config qmlqualitylens.config.json
 
 Review the generated reachability, cleanup, hotspot, clone, locality, semantic, runtime-warning, and QML health reports together. Aggregate scores are directional; lint, tests, runtime behavior, and clear ownership boundaries take precedence over optimizing one metric.
 
-## Measured refactoring checkpoint
+## Historical refactoring checkpoint
 
 Compared with `7794505`, using the same corrected Lens on both revisions:
 
@@ -176,9 +184,9 @@ Nix checks for QML tests/lint, packaged imports, application resources, TypeScri
 and daemon boundaries pass. Pixel tests preserve missing-data gaps and isolated
 battery samples; existing forecast, hover and narrow-layout tests remain enabled.
 
-The complete flake is still blocked by an app-daemon/framework API mismatch
-(`OwnedTaskRegistry.insert/remove`), using the same daemon derivation at the
-unmodified baseline. The lock rejects `--no-update-lock-file`; validation used
+At that historical checkpoint, the complete flake was blocked by an
+app-daemon/framework API mismatch (`OwnedTaskRegistry.insert/remove`), using the
+same daemon derivation at the unmodified baseline. The lock rejects `--no-update-lock-file`; validation used
 `--no-write-lock-file` without editing it. This is not successful locked/full
 integration, and no sibling daemon was changed. Formatting drift, incomplete
 coverage and the existing internal ApplicationSettingsPage resolution warning

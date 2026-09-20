@@ -38,8 +38,8 @@ trap 'rm -rf "$workdir"' EXIT
 cd "$workdir"
 imports=(-I "$qt_root/lib/qt-6/qml" -I "$quickshell_root/lib/qt-6/qml")
 if ((${#sources[@]} > 0)); then
-  qmllint "${imports[@]}" "${options[@]}" -- "${sources[@]}"
+  qmllint --max-warnings 0 "${imports[@]}" "${options[@]}" -- "${sources[@]}"
 fi
 if ((${#shortcut_sources[@]} > 0)); then
-  qmllint "${imports[@]}" "${options[@]}" --import disable -- "${shortcut_sources[@]}"
+  qmllint --max-warnings 0 "${imports[@]}" "${options[@]}" --import disable -- "${shortcut_sources[@]}"
 fi

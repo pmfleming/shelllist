@@ -10,7 +10,6 @@ ColumnLayout {
     required property DisplayController controller
     spacing: Ui.Theme.spacingMd
     DisplayCanvas {
-        id: diagram
         Layout.fillWidth: true
         Layout.preferredHeight: Math.max(130, Math.min(220, overview.height * 0.4))
         controller: overview.controller

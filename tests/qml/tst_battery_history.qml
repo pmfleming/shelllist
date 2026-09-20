@@ -1,7 +1,6 @@
 import QtQuick
 import QtTest
 import Shelllist.Battery as Battery
-import Shelllist.Ui as Ui
 
 TestCase {
     id: testCase

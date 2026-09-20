@@ -93,7 +93,7 @@ function utcOffset(seconds) {
 }
 function statusModule(id, text, tooltip, options) {
     return Object.assign({
-        id: id, text: text, compactText: text, tooltip: tooltip,
+        id: id, key: id, text: text, compactText: text, tooltip: tooltip,
         visible: true, maxDensity: 2, interactive: true,
         tone: "text", weight: 400, primary: "", secondary: "", middle: "",
         wheelUp: "", wheelDown: ""
@@ -135,20 +135,22 @@ function networkModule(status) {
         primary: "wifi", secondary: "portal"
     });
 }
-function updateModule(updates) {
-    const jobs = (updates && updates.jobs) || [];
-    const running = jobs.some(function (job) { return job.status === "running"; });
-    const problem = jobs.some(function (job) { return job.status === "failed" || job.status === "interrupted" || job.phase === "stale"; });
+function updateJobDescription(job) {
     const names = { system: "NixOS", "ai-tools": "AI tools", "ai-tools-stale": "AI tools freshness" };
-    const lines = jobs.map(function (job) {
-        const name = names[job.name] || "Updates";
-        return name + ": " + (job.phase || job.status) + " · " + job.status + (job.error ? "\n" + job.error : "");
-    });
-    if (updates && updates.ready)
+    const name = names[job.name] || "Updates";
+    return name + ": " + (job.phase || job.status) + " · " + job.status + (job.error ? "\n" + job.error : "");
+}
+function updateModule(updates) {
+    const jobs = updates?.jobs ?? [];
+    const running = jobs.some(function (job) { return job.status === "running"; });
+    const problem = jobs.some(function (job) { return ["failed", "interrupted"].includes(job.status) || job.phase === "stale"; });
+    const lines = jobs.map(updateJobDescription);
+    const ready = !!updates?.ready;
+    if (ready)
         lines.unshift("A checked and built NixOS update is waiting for automatic safety or manual approval");
     lines.push("Click to inspect update service journals");
     return statusModule("updates", "󰚰", lines.join("\n"), {
-        visible: !!(updates && updates.available && (updates.ready || running || problem)), maxDensity: 3,
+        visible: !!updates?.available && (ready || running || problem), maxDensity: 3,
         tone: problem ? "warning" : "accent", weight: 700, primary: "updates"
     });
 }

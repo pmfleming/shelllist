@@ -3,7 +3,7 @@ import Shelllist.Io as Io
 import "BarApi.js" as BarApi
 
 Io.DaemonBackend {
-    required property var controller
+    required property BarController controller
     endpoint: ({
             daemonName: "bar-daemon",
             protocol: BarApi.protocol,

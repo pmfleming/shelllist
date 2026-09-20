@@ -8,10 +8,7 @@ Ui.ActionDetailsPane {
     id: pane
 
     required property BluetoothController controller
-    // Loader.item is dynamically resolved to the selected detail component.
-    // qmllint disable missing-property
-    readonly property bool editingText: (deviceLoader.item ? !!deviceLoader.item["editingName"] : false) || (adapterLoader.item ? !!adapterLoader.item["editing"] : false)
-    // qmllint enable missing-property
+    readonly property bool editingText: ((deviceLoader.item as BluetoothDevicePage)?.editingName ?? false) || ((adapterLoader.item as BluetoothAdapterPage)?.editing ?? false)
     readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     readonly property int footerHeight: actionHeight
     readonly property bool deviceContext: controller.hasSelection && controller.detailsTab !== "adapter"

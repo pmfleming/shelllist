@@ -16,19 +16,9 @@ function mediaPlayerOrdinal(media, playerId) {
 function playerIcon(player) {
     return player && String(player.desktop_entry || "").toLowerCase().indexOf("spotify") >= 0 ? "" : "";
 }
-function playbackIcon(player) {
-    const status = player ? String(player.playback_status || "").toLowerCase() : "stopped";
-    return status === "playing" ? "" : status === "paused" ? "" : "";
-}
 function playPauseActionIcon(player) {
     const status = player ? String(player.playback_status || "").toLowerCase() : "stopped";
     return status === "playing" ? "" : "";
-}
-function mediaText(player) {
-    if (!player)
-        return "";
-    const title = player.title || player.identity || "Unknown track";
-    return playerIcon(player) + " " + title + "  " + playbackIcon(player);
 }
 function mediaPositionPercent(player, nowMs) {
     if (!player)

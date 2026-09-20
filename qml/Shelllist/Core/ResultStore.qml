@@ -14,16 +14,10 @@ Item {
     property int searchGeneration: 0
     property int appliedSearchGeneration: -1
     property var rustRankedResults: []
-    property int maximumIncrementalOrderChanges: 32
-    property int maximumSynchronousModelItems: 200
-    property int modelRebuildChunkSize: 64
-    property int modelSyncGeneration: 0
-    property int pendingModelIndex: 0
     property double catalogUpdateStartedAtMs: 0
     property double searchRankRequestedAtMs: 0
     property double lastCatalogToModelLatencyMs: -1
     property double lastSearchRankLatencyMs: -1
-    property var pendingModelResults: []
     property bool rankRequestsEnabled: true
     property bool providerRankedResults: false
     readonly property bool fuzzyQuery: !providerRankedResults && queryText.trim().length > 0
@@ -193,121 +187,6 @@ Item {
         catalogUpdateStartedAtMs = 0;
     }
 
-    function rebuildVisibleModel(): void {
-        modelSyncGeneration += 1;
-        pendingModelResults = [];
-        pendingModelIndex = 0;
-        visibleListModel.clear();
-        for (let index = 0; index < visibleResults.length; index++) {
-            const result = visibleResults[index];
-            visibleListModel.append({
-                resultKey: result.key,
-                resultData: result
-            });
-        }
-        recordCatalogToModelLatency();
-    }
-
-    function continueProgressiveModelRebuild(generation: int): void {
-        if (generation !== modelSyncGeneration)
-            return;
-        const end = Math.min(pendingModelIndex + modelRebuildChunkSize, pendingModelResults.length);
-        while (pendingModelIndex < end) {
-            const result = pendingModelResults[pendingModelIndex];
-            visibleListModel.append({
-                resultKey: result.key,
-                resultData: result
-            });
-            pendingModelIndex += 1;
-        }
-        recordCatalogToModelLatency();
-        if (pendingModelIndex < pendingModelResults.length) {
-            Qt.callLater(continueProgressiveModelRebuild, generation);
-            return;
-        }
-        pendingModelResults = [];
-        pendingModelIndex = 0;
-    }
-
-    function startProgressiveModelRebuild(): void {
-        modelSyncGeneration += 1;
-        const generation = modelSyncGeneration;
-        pendingModelResults = visibleResults.slice();
-        pendingModelIndex = 0;
-        visibleListModel.clear();
-        continueProgressiveModelRebuild(generation);
-    }
-
-    function currentModelOrder(): var {
-        const keys = [];
-        for (let index = 0; index < visibleListModel.count; index++)
-            keys.push(visibleListModel.get(index).resultKey);
-        return keys;
-    }
-
-    function orderChangeCount(currentKeys: var): int {
-        const largest = Math.max(currentKeys.length, visibleResults.length);
-        let changed = Math.abs(currentKeys.length - visibleResults.length);
-        const shared = Math.min(currentKeys.length, visibleResults.length);
-        for (let index = 0; index < shared; index++) {
-            if (currentKeys[index] !== visibleResults[index].key)
-                changed += 1;
-            if (changed > maximumIncrementalOrderChanges)
-                return changed;
-        }
-        return Math.min(changed, largest);
-    }
-
-    function refreshIndexes(keys: var, indexes: var, from: int, to: int): void {
-        const first = Math.max(0, Math.min(from, to));
-        const last = Math.min(keys.length - 1, Math.max(from, to));
-        for (let index = first; index <= last; index++)
-            indexes[keys[index]] = index;
-    }
-
-    function syncVisibleModel(): void {
-        const keys = currentModelOrder();
-        if (orderChangeCount(keys) > maximumIncrementalOrderChanges) {
-            if (visibleResults.length > maximumSynchronousModelItems)
-                startProgressiveModelRebuild();
-            else
-                rebuildVisibleModel();
-            return;
-        }
-
-        modelSyncGeneration += 1;
-        pendingModelResults = [];
-        pendingModelIndex = 0;
-
-        const indexes = ({});
-        for (let index = 0; index < keys.length; index++)
-            indexes[keys[index]] = index;
-
-        for (let desiredIndex = 0; desiredIndex < visibleResults.length; desiredIndex++) {
-            const desired = visibleResults[desiredIndex];
-            const found = indexes[desired.key];
-            if (found === undefined) {
-                visibleListModel.insert(desiredIndex, {
-                    resultKey: desired.key,
-                    resultData: desired
-                });
-                keys.splice(desiredIndex, 0, desired.key);
-                refreshIndexes(keys, indexes, desiredIndex, keys.length - 1);
-                continue;
-            }
-            const currentIndex = Number(found);
-            if (currentIndex !== desiredIndex) {
-                visibleListModel.move(currentIndex, desiredIndex, 1);
-                keys.splice(desiredIndex, 0, keys.splice(currentIndex, 1)[0]);
-                refreshIndexes(keys, indexes, currentIndex, desiredIndex);
-            }
-            visibleListModel.setProperty(desiredIndex, "resultData", desired);
-        }
-        if (visibleListModel.count > visibleResults.length)
-            visibleListModel.remove(visibleResults.length, visibleListModel.count - visibleResults.length);
-        recordCatalogToModelLatency();
-    }
-
     onSourceResultsChanged: {
         if (rankRequestsEnabled && searchOwner.length > 0)
             SearchService.updateCatalog(searchOwner, sourceResults);
@@ -317,10 +196,7 @@ Item {
         selectedIndex = 0;
         requestRustRanking();
     }
-    onVisibleResultsChanged: {
-        selectedIndex = clampIndex(selectedIndex);
-        syncVisibleModel();
-    }
+    onVisibleResultsChanged: selectedIndex = clampIndex(selectedIndex)
 
     Component.onCompleted: {
         searchOwner = SearchService.allocateOwner();
@@ -336,8 +212,9 @@ Item {
         }
     }
 
-    ListModel {
+    KeyedListModel {
         id: visibleListModel
-        dynamicRoles: true
+        values: resultStore.visibleResults
+        onChunkApplied: resultStore.recordCatalogToModelLatency()
     }
 }

@@ -103,6 +103,24 @@ TestCase {
         compare(merged[4].ssid, "Hidden");
     }
 
+    function test_deltaPrecedenceAndHiddenNetworks() {
+        const current = [{key: "a", strength: 1}, {key: "b", strength: 2}];
+        const event = {
+            removed: [{key: "a"}],
+            changed: [{key: "b", strength: 3}, {key: "b", strength: 4}],
+            added: [{key: "a", strength: 5}, {key: "b", strength: 6},
+                {ssid: "Hidden 1"}, {ssid: "Hidden 2"}, {key: "__proto__"}]
+        };
+        const merged = Flow.mergeNetworkChanges(current, event);
+        compare(merged.length, 5);
+        compare(merged[0].strength, 3, "first replacement wins");
+        compare(merged[1].key, "a", "removed then re-added goes to the end");
+        compare(merged[2].ssid, "Hidden 1");
+        compare(merged[3].ssid, "Hidden 2", "keyless networks are not deduplicated");
+        compare(merged[4].key, "__proto__");
+        compare(current[1].strength, 2, "do not mutate the previous snapshot");
+    }
+
     function test_submitsEveryRequestedSecret() {
         prompt.openDaemonSecretPrompt({
             request_id: "secret-1",

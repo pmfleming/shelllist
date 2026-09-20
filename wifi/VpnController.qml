@@ -54,13 +54,8 @@ Item {
         } : ({}));
     }
 
-    function cancel() {
-        if (requestId.length === 0)
-            return false;
-        const cancelled = backend.cancel(requestId);
-        if (!cancelled)
-            console.warn("shelllist vpn cancellation failed request_id=" + requestId);
-        return cancelled;
+    function cancel(): bool {
+        return backend.cancel(requestId);
     }
 
     function applyProfiles(value) {

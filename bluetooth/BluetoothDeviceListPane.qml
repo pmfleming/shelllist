@@ -28,7 +28,7 @@ Ui.ChooserListPane {
     filterText: controller.filterText
     status: controller.status
     listInset: Math.round(12 * densityScale)
-    refreshHandler: function () {
+    function requestRefresh(): void {
         controller.refreshList();
     }
     onIconClicked: if (iconActionEnabled) controller.screenshotRequested()

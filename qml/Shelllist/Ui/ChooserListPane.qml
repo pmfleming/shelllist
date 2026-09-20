@@ -23,7 +23,6 @@ ColumnLayout {
     property bool powerEnabled: true
     property bool refreshEnabled: true
     property string refreshIcon: "󰑐"
-    property var refreshHandler: null
     property bool focusOnCompleted: false
     property bool iconActionEnabled: false
     property string iconAccessibleName: ""
@@ -48,10 +47,7 @@ ColumnLayout {
         chooserController.selectFirst();
     }
     function requestRefresh(): void {
-        if (refreshHandler)
-            refreshHandler();
-        else
-            chooserController.refresh();
+        chooserController.refresh();
     }
 
     Layout.fillWidth: true

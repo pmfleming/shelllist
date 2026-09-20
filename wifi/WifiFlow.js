@@ -2,29 +2,25 @@
 .import "WifiPresentation.js" as Presentation
 
 function mergeNetworkChanges(currentNetworks, event) {
-    const removedKeys = (event.removed || []).map(function (network) {
-        return network.key;
-    }).filter(Boolean);
+    const removedKeys = new Set((event.removed || []).map(network => network.key).filter(Boolean));
     const replacements = (event.changed || []).concat(event.added || []);
-    const retained = currentNetworks.filter(function (network) {
-        return !removedKeys.includes(network.key);
-    }).map(function (network) {
-        return replacements.find(function (candidate) {
-            return candidate.key === network.key;
-        }) || network;
-    });
-    const retainedKeys = retained.map(function (network) {
-        return network.key;
-    });
-    const additions = [];
-    replacements.forEach(function (network) {
-        if (!network.key || !retainedKeys.includes(network.key)) {
-            additions.push(network);
-            if (network.key)
-                retainedKeys.push(network.key);
-        }
-    });
-    return retained.concat(additions);
+    const byKey = new Map();
+    // Preserve first-replacement precedence without searching the whole delta
+    // for every existing network. Removal followed by addition remains valid.
+    for (const network of replacements) {
+        if (!byKey.has(network.key))
+            byKey.set(network.key, network);
+    }
+    const retained = currentNetworks.filter(network => !removedKeys.has(network.key))
+        .map(network => byKey.get(network.key) || network);
+    const retainedKeys = new Set(retained.map(network => network.key));
+    for (const network of replacements) {
+        if (network.key && retainedKeys.has(network.key))
+            continue;
+        retained.push(network);
+        retainedKeys.add(network.key);
+    }
+    return retained;
 }
 
 function powerStatus(activeStatus, radios, enabled) {

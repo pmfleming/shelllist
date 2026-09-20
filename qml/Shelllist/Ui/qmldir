@@ -1,6 +1,7 @@
 module Shelllist.Ui
 singleton Theme 1.0 Theme.qml
 ThemeText 1.0 ThemeText.qml
+ActionControl 1.0 ActionControl.qml
 ActionButton 1.0 ActionButton.qml
 ActionArea 1.0 ActionArea.qml
 ActionDetailsPane 1.0 ActionDetailsPane.qml

@@ -12,6 +12,7 @@ The repository README is the user-facing overview and installation guide. These 
 | [`list-interaction-contract.md`](list-interaction-contract.md) | Mouse-wheel, precision-touchpad, and touch scrolling requirements |
 | [`provider-model.md`](provider-model.md) | Shared provider, result, query, and action value contracts |
 | [`qml-quality-review.md`](qml-quality-review.md) | QML structure, maintenance decisions, and quality gates |
+| [`reviews/commonality-2026-09-20.md`](reviews/commonality-2026-09-20.md) | Measured shared frontend refactor, validation, and remaining debt |
 
 ## Sources of truth
 

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
+import Shelllist.Core as Core
 import "BarStatusPresentation.js" as Presentation
 
 Item {
@@ -34,37 +35,11 @@ Item {
         const base = Ui.Theme.mix(Ui.Theme.surfaceRaised, foreground, neutralTone(tone) ? 0.02 : 0.08);
         return Ui.Theme.withAlpha(base, 0.62);
     }
-    function rebuildStatusModel(): void {
-        statusModel.clear();
-        for (let index = 0; index < statusDescriptors.length; index++)
-            statusModel.append({
-                descriptor: statusDescriptors[index]
-            });
-    }
-    function syncStatusModel(): void {
-        if (statusModel.count !== statusDescriptors.length) {
-            rebuildStatusModel();
-            return;
-        }
-        for (let index = 0; index < statusDescriptors.length; index++) {
-            if (statusModel.get(index).descriptor.id !== statusDescriptors[index].id) {
-                rebuildStatusModel();
-                return;
-            }
-        }
-        for (let index = 0; index < statusDescriptors.length; index++) {
-            const descriptor = statusDescriptors[index];
-            if (!Presentation.statusModuleEqual(statusModel.get(index).descriptor, descriptor))
-                statusModel.setProperty(index, "descriptor", descriptor);
-        }
-    }
     function updateClock(): void {
         now = new Date();
         clockTimer.interval = Presentation.nextMinuteDelay(now.getTime());
         clockTimer.restart();
     }
-
-    onStatusDescriptorsChanged: syncStatusModel()
 
     Rectangle {
         anchors.fill: parent
@@ -151,16 +126,20 @@ Item {
         }
 
         Repeater {
-            model: ListModel {
-                id: statusModel
-                dynamicRoles: true
+            model: Core.KeyedListModel {
+                values: root.statusDescriptors
+                function equivalent(left: var, right: var): bool {
+                    return Presentation.statusModuleEqual(left, right);
+                }
             }
 
             delegate: BarAction {
-                required property var descriptor
+                required property var resultData
+                readonly property var descriptor: resultData
 
                 height: parent.height
                 text: Presentation.moduleText(descriptor, root.layoutDensity)
+                toolTip: descriptor.tooltip
                 horizontalPadding: root.layoutDensity === 0 ? 10 : root.layoutDensity === 1 ? 7 : 5
                 foreground: root.moduleColor(descriptor.tone)
                 backgroundColor: root.moduleBackground(descriptor.tone)
@@ -176,10 +155,7 @@ Item {
         }
     }
 
-    Component.onCompleted: {
-        updateClock();
-        syncStatusModel();
-    }
+    Component.onCompleted: updateClock()
     Timer {
         id: clockTimer
         repeat: false

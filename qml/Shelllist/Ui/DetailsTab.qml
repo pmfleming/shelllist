@@ -1,6 +1,6 @@
 import QtQuick
 
-Rectangle {
+ActionControl {
     id: tab
 
     property string label: ""
@@ -8,26 +8,13 @@ Rectangle {
     property string hotkey: ""
     property bool selected: false
 
-    signal clicked
+    accessibleName: label
+    Accessible.selected: selected
 
     color: selected ? Theme.selected : (enabled && area.pressed ? Theme.pressed : (enabled && area.containsMouse ? Theme.hover : "transparent"))
     border.color: activeFocus ? Theme.strongBorder : "transparent"
     border.width: 1
     opacity: enabled ? 1.0 : Theme.disabledOpacity
-    activeFocusOnTab: enabled
-
-    Keys.onReturnPressed: function (event) {
-        tab.clicked();
-        event.accepted = true;
-    }
-    Keys.onEnterPressed: function (event) {
-        tab.clicked();
-        event.accepted = true;
-    }
-    Keys.onSpacePressed: function (event) {
-        tab.clicked();
-        event.accepted = true;
-    }
 
     Rectangle {
         anchors.top: parent.top
@@ -54,6 +41,6 @@ Rectangle {
     ControlPointerArea {
         id: area
         focusTarget: tab
-        onClicked: tab.clicked()
+        onClicked: tab.activate()
     }
 }

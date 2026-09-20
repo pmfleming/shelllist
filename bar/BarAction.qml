@@ -1,7 +1,8 @@
 import QtQuick
+import QtQuick.Controls as Controls
 import Shelllist.Ui as Ui
 
-Item {
+Ui.ActionControl {
     id: root
 
     required property string text
@@ -10,7 +11,9 @@ Item {
     property color borderColor: Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72)
     property int horizontalPadding: 10
     property int minimumWidth: 0
-    property bool interactive: true
+    property string toolTip: text
+    accessibleName: toolTip
+    onClicked: primaryTriggered()
     property alias elide: label.elide
     property alias fontWeight: label.font.weight
 
@@ -21,10 +24,10 @@ Item {
     signal wheelDown
 
     function routeClick(button: int): void {
-        if (!interactive)
+        if (!enabled || !interactive)
             return;
         const handlers = ({});
-        handlers[Qt.LeftButton] = primaryTriggered;
+        handlers[Qt.LeftButton] = activate;
         handlers[Qt.RightButton] = secondaryTriggered;
         handlers[Qt.MiddleButton] = middleTriggered;
         if (handlers[button])
@@ -32,7 +35,7 @@ Item {
     }
 
     function routeWheel(delta: int): void {
-        if (!interactive || delta === 0)
+        if (!enabled || !interactive || delta === 0)
             return;
         (delta > 0 ? wheelUp : wheelDown)();
     }
@@ -45,7 +48,7 @@ Item {
         radius: 0
         color: root.backgroundColor
         border.width: 1
-        border.color: root.borderColor
+        border.color: root.activeFocus ? Ui.Theme.strongBorder : root.borderColor
 
         Behavior on color {
             enabled: !Ui.Theme.noAnimations
@@ -77,7 +80,12 @@ Item {
         }
     }
 
+    Controls.ToolTip.visible: stateLayer.hovered && root.toolTip.length > 0
+    Controls.ToolTip.text: toolTip
+    Controls.ToolTip.delay: 450
+
     Ui.StateLayer {
+        id: stateLayer
         focusTarget: root
         radius: 0
         stateColor: root.foreground

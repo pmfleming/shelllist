@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtTest
 import Shelllist.Activity as Activity
@@ -5,10 +7,25 @@ import Shelllist.Activity as Activity
 TestCase {
     id: testCase
     name: "TimeWeatherSelection"
+    property int refreshes: 0
 
     Component {
         id: controllerComponent
-        Activity.TimeWeatherController {}
+        Activity.TimeWeatherController {
+            function refresh(): void { testCase.refreshes++; }
+        }
+    }
+    Component { id: contentComponent; Activity.TimeWeatherContent {} }
+
+    function test_constructsSharedListAndUsesDefaultRefresh() {
+        const controller = makeController();
+        const content = createTemporaryObject(contentComponent, testCase,
+            {controller: controller, width: 900, height: 700});
+        verify(content !== null);
+        verify(content.listItem !== null);
+        refreshes = 0;
+        content.listItem.requestRefresh();
+        compare(refreshes, 1);
     }
 
     function weather(id, location, timezone, home) {
