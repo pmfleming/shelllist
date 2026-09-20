@@ -10,7 +10,7 @@ const helper = {};
 vm.createContext(helper);
 vm.runInContext(fs.readFileSync(helperPath, "utf8").replace(/^\.pragma library\s*/, ""), helper);
 
-// The device-page test covers reported modes, image loading and hidden status.
+// Keep the unknown-status boundary, not a catalogue of artwork or its layout.
 // Mode selection/provisioning are no longer exposed by the project UI.
 assert.equal(helper.activeMode({ active_mode: "vendor-mode" }).image, "",
     "unknown active status has no misleading artwork");

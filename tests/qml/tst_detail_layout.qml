@@ -40,41 +40,6 @@ TestCase {
     }
 
     Component {
-        id: layoutFactory
-        ColumnLayout {
-            width: 240
-            property alias message: message
-            property alias footer: footer
-
-            Ui.CenteredMessage {
-                id: message
-                Layout.fillWidth: true
-                Layout.minimumHeight: 120
-                text: "No additional actions"
-            }
-            Rectangle {
-                id: footer
-                Layout.fillWidth: true
-                Layout.preferredHeight: 50
-            }
-        }
-    }
-
-    Component {
-        id: overlayFactory
-        Item {
-            width: 320
-            height: 180
-            property alias message: message
-            Ui.CenteredMessage {
-                id: message
-                anchors.fill: parent
-                text: "Loading details…"
-            }
-        }
-    }
-
-    Component {
         id: cardFactory
         Ui.DetailColumnCard {
             width: 320
@@ -152,16 +117,6 @@ TestCase {
         verify(!page.interactive, "short content must stop scrolling");
     }
 
-    function test_columnLayoutOwnsMessageGeometry() {
-        const layout = createTemporaryObject(layoutFactory, testCase);
-        verify(layout !== null);
-        tryVerify(function () {
-            return layout.footer.y >= layout.message.y + layout.message.height;
-        });
-        compare(layout.message.width, layout.width);
-        verify(layout.message.height >= 120);
-    }
-
     function test_contentSizedCardsAndHiddenHeadings() {
         const card = createTemporaryObject(cardFactory, testCase);
         verify(card !== null);
@@ -211,20 +166,4 @@ TestCase {
         }
     }
 
-    function test_overlayCentersWithinExplicitBounds() {
-        const overlay = createTemporaryObject(overlayFactory, testCase);
-        verify(overlay !== null);
-        for (const width of [320, 180, 675]) {
-            overlay.width = width;
-            overlay.height = width / 2;
-            tryCompare(overlay.message, "width", width);
-            tryCompare(overlay.message, "height", overlay.height);
-            compare(overlay.message.x, 0);
-            compare(overlay.message.y, 0);
-            compare(overlay.message.horizontalAlignment, Text.AlignHCenter);
-            compare(overlay.message.verticalAlignment, Text.AlignVCenter);
-            overlay.message.visible = false;
-            overlay.message.visible = true;
-        }
-    }
 }

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtTest
-import Shelllist.Ui as Ui
 import Shelllist.Battery as Battery
 
 TestCase {
@@ -74,28 +73,6 @@ TestCase {
         compare(controller.viewTab, "care");
     }
 
-    function test_tabsStayAtBottom() {
-        const panel = makePanel();
-        const page = findChild(panel, "batteryDetailPage");
-        const tabs = findChild(panel, "batteryViewTabs");
-        for (const height of [760, 560]) {
-            panel.height = height;
-            for (const tab of tabs.tabs) {
-                panel.controller.selectViewTab(tab.value);
-                tryVerify(function () {
-                    return tabs.mapToItem(panel, 0, tabs.height).y === panel.height - Ui.Theme.contentMargin;
-                });
-                compare(tabs.height, Ui.Theme.controlHeight);
-                verify(page.mapToItem(panel, 0, page.height).y < tabs.mapToItem(panel, 0, 0).y);
-                const footerY = tabs.mapToItem(panel, 0, 0).y;
-                page.contentY = 100;
-                compare(tabs.mapToItem(panel, 0, 0).y, footerY);
-            }
-        }
-        panel.controller.actionInFlight = true;
-        verify(!tabs.enabled);
-    }
-
     function test_levelsLiveInPowerTabWithIndependentActions() {
         const panel = makePanel();
         const controller = panel.controller;
@@ -150,7 +127,7 @@ TestCase {
         verify(findChild(panel, "batteryAutomationStatus").visible);
     }
 
-    function test_profileIconsAreCompactAccessibleAndKeyboardOperable() {
+    function test_profileSelectionSupportsKeyboardAndAccessibility() {
         const panel = makePanel();
         const controller = panel.controller;
         controller.applyPowerProfile({ available: true, profile: "balanced",
@@ -158,44 +135,28 @@ TestCase {
             battery_automation: { status: "waiting" } });
         controller.selectViewTab("power");
         const selector = findChild(panel, "batteryLowProfile");
-        const mode = findChild(panel, "batteryPowerModeProfile");
         const toggle = findChild(panel, "batteryLowEnabled");
         const point = findChild(panel, "batteryLowPoint");
         for (const width of [420, 560]) {
             panel.width = width;
             verify(waitForRendering(panel));
-            verify(findChild(panel, "powerModeCard").height <= 80, "mode title and icons share one row");
-            verify(findChild(panel, "batteryLevelsCard").height < 280, "each level uses only two rows");
-            compare(toggle.mapToItem(panel, 0, toggle.height / 2).y, point.mapToItem(panel, 0, point.height / 2).y);
-            verify(point.mapToItem(panel, point.width, 0).x < toggle.mapToItem(panel, 0, 0).x);
-            verify(findChild(point, "labeledValueSliderInput").width >= 40);
             const card = findChild(panel, "batteryLevelsCard");
             verify(selector.mapToItem(card, selector.width, 0).x <= card.width - card.contentPadding + 1,
                 "profile selector stays inside the card: " + selector.mapToItem(card, selector.width, 0).x + " <= " + (card.width - card.contentPadding));
-            compare(mode.width, 3 * 36 + 2 * Ui.Theme.spacingXs);
         }
         controller.applyPowerProfile({ available: true, profile: "balanced",
             profiles: [{ name: "power-saver" }, { name: "balanced" }],
             battery_automation: { status: "waiting" } });
         verify(waitForRendering(panel));
-        verify(!findChild(selector, "profileOption-keep-current"));
         const saver = findChild(selector, "profileOption-power-saver");
         const balanced = findChild(selector, "profileOption-balanced");
         const performance = findChild(selector, "profileOption-performance");
-        compare(saver.icon, "");
-        compare(balanced.icon, "");
-        compare(performance.icon, "");
         for (const button of [saver, balanced, performance]) {
-            compare(button.label, "");
-            verify(button.icon.length > 0);
-            verify(button.toolTip.length > 0);
             verify(button.Accessible.name.indexOf("Low battery power profile") >= 0);
             compare(button.Accessible.role, Accessible.RadioButton);
         }
         verify(saver.Accessible.checked);
         verify(!performance.enabled);
-        verify(saver.labelColor.toString() !== balanced.labelColor.toString());
-        verify(balanced.labelColor.toString() !== performance.labelColor.toString());
         const spy = createTemporaryObject(profileSpyComponent, testCase, { target: selector });
         mouseClick(balanced);
         compare(spy.count, 1);

@@ -17,12 +17,8 @@ equal(context.expectedRevision(15592525670148626000), null,
     "unsafe daemon revision disables stale-state validation");
 equal(context.expectedRevision(9007199254740991), 9007199254740991,
     "largest JavaScript-safe revision is retained");
-equal(context.expectedRevision(null), null, "missing revision remains absent");
 
 const request = { actionId: "focus-window-2" };
-equal(context.operationMatches(request, "app.desktop", {
-    target_id: "app.desktop", action: "focus-window"
-}), true, "matching asynchronous operation is accepted");
 equal(context.operationMatches(request, "app.desktop", {
     target_id: "other.desktop", action: "focus-window"
 }), false, "another target is rejected");

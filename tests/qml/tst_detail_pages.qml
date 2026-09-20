@@ -3,9 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest
 import Shelllist.Io as Io
-import "../../qml/Shelllist/Activity" as Activity
 import "../../bluetooth" as Bluetooth
-import "../../clipboard" as Clipboard
 import "../../launcher" as Launcher
 import "../../wifi" as Wifi
 
@@ -19,7 +17,9 @@ TestCase {
     property var originalClientFactory
     property var originalSessions
 
-    // Keep layout tests independent of daemon startup, subscriptions and retries.
+    // Representative consumers of DetailFlickable: dynamic resource cards,
+    // adapter settings and fixed-height network cards. Shared layout behavior
+    // belongs to tst_detail_layout; domain recovery tests construct other pages.
     Component {
         id: clientFactory
         QtObject {
@@ -31,13 +31,10 @@ TestCase {
             signal response(string id, var envelope, string transportError)
             signal eventReceived(var event)
             signal transportFailed(string message)
-            function call(id, method, params) {
-            }
-            function subscribeExtra(id, streams) {
-            }
+            function call(id, method, params) {}
+            function subscribeExtra(id, streams) {}
             function release(id, route) {}
-            function cancel(id, requestId) {
-            }
+            function cancel(id, requestId) {}
         }
     }
 
@@ -64,34 +61,9 @@ TestCase {
         }
     }
     Component {
-        id: settingsFactory
-        Launcher.ApplicationSettingsPage {
-            controller: Launcher.ApplicationController {}
-            application: ({})
-        }
-    }
-    Component {
-        id: deviceFactory
-        Bluetooth.BluetoothDevicePage {
-            controller: Bluetooth.BluetoothController {}
-        }
-    }
-    Component {
-        id: informationFactory
-        Bluetooth.BluetoothInformationPage {
-            controller: Bluetooth.BluetoothController {}
-        }
-    }
-    Component {
         id: adapterFactory
         Bluetooth.BluetoothAdapterPage {
             controller: Bluetooth.BluetoothController {}
-        }
-    }
-    Component {
-        id: clipboardFactory
-        Clipboard.ClipboardDetailCards {
-            controller: Clipboard.ClipboardController {}
         }
     }
     Component {
@@ -107,20 +79,6 @@ TestCase {
             profileCardHeight: 220
         }
     }
-    Component {
-        id: weatherFactory
-        Activity.ActivityWeatherPane {
-            controller: Activity.ActivityController {}
-            now: new Date(2026, 8, 11, 12)
-        }
-    }
-    Component {
-        id: timeFactory
-        Activity.TimeWeatherTimePane {
-            city: ({})
-            now: new Date(2026, 8, 11, 12)
-        }
-    }
 
     function init() {
         failOnWarning(/.*(Column.*will not function|anchors.*layout|Binding loop).*/i);
@@ -128,50 +86,9 @@ TestCase {
 
     function test_tabsStackAndResize_data() {
         return [
-            {
-                tag: "application-resources",
-                factory: resourcesFactory
-            },
-            {
-                tag: "application-settings",
-                factory: settingsFactory
-            },
-            {
-                tag: "bluetooth-device",
-                factory: deviceFactory
-            },
-            {
-                tag: "bluetooth-settings",
-                factory: deviceFactory
-            },
-            {
-                tag: "bluetooth-information",
-                factory: informationFactory
-            },
-            {
-                tag: "bluetooth-adapter",
-                factory: adapterFactory
-            },
-            {
-                tag: "bluetooth-adapter-pairing",
-                factory: adapterFactory
-            },
-            {
-                tag: "clipboard-details",
-                factory: clipboardFactory
-            },
-            {
-                tag: "wifi-network",
-                factory: networkFactory
-            },
-            {
-                tag: "weather",
-                factory: weatherFactory
-            },
-            {
-                tag: "time",
-                factory: timeFactory
-            }
+            { tag: "application-resources", factory: resourcesFactory },
+            { tag: "bluetooth-adapter", factory: adapterFactory },
+            { tag: "wifi-network", factory: networkFactory }
         ];
     }
 
@@ -193,69 +110,6 @@ TestCase {
         }, 1000, "tab sections must stay ordered, fit horizontally, and contribute to the scroll extent");
     }
 
-    function populate(page, tag) {
-        if (tag.startsWith("bluetooth-")) {
-            page.controller.applySnapshot({
-                radio: {
-                    available: true,
-                    operational: true,
-                    powered: true,
-                    adapter_count: 1
-                },
-                adapters: [
-                    {
-                        key: "adapter",
-                        alias: "Adapter",
-                        powered: true
-                    }
-                ],
-                devices: [
-                    {
-                        key: "headset",
-                        name: "Headset",
-                        paired: true,
-                        connected: true,
-                        adapter_key: "adapter",
-                        battery: [],
-                        services: [
-                            {
-                                label: "Audio"
-                            }
-                        ],
-                        policy: {},
-                        capabilities: {}
-                    }
-                ]
-            });
-            page.controller.applyAudioSnapshot([
-                {
-                    device_key: "headset",
-                    profiles: [],
-                    sink: {
-                        ready: true,
-                        is_default: true
-                    },
-                    source: null
-                }
-            ]);
-        } else if (tag === "clipboard-details") {
-            page.controller.detailState.value = {
-                entry: {
-                    kind: "text"
-                },
-                files: [],
-                text: "Clipboard text"
-            };
-        } else if (tag === "application-resources") {
-            page.application = {
-                running: true,
-                name: "Application"
-            };
-        } else if (tag === "weather") {
-            page.showLocationRail = false;
-        }
-    }
-
     function test_tabsStackAndResize(data) {
         const page = createTemporaryObject(data.factory, testCase, {
             width: 675,
@@ -263,30 +117,20 @@ TestCase {
         });
         verify(page !== null);
         verifyStack(page);
-        populate(page, data.tag);
-        if (data.tag === "bluetooth-settings")
-            page.controller.detailsTab = "settings";
-        if (data.tag === "bluetooth-adapter-pairing")
-            page.controller.adapterSettingsTab = "pairing";
+        if (data.tag === "bluetooth-adapter") {
+            page.controller.applySnapshot({
+                radio: { available: true, operational: true, powered: true, adapter_count: 1 },
+                adapters: [{ key: "adapter", alias: "Adapter", powered: true }],
+                devices: []
+            });
+        } else if (data.tag === "application-resources") {
+            page.application = { running: true, name: "Application" };
+        }
         for (const width of [675, 320, 480]) {
             page.width = width;
             page.height = width / 2;
-            verify(waitForRendering(page)); // Settle wrapped text and nested layouts before measuring cards.
+            verify(waitForRendering(page));
             verifyStack(page);
-            const policy = findChild(page, "devicePolicy");
-            if (policy) {
-                compare(policy.visible, data.tag === "bluetooth-settings");
-                if (policy.visible)
-                    verify(policy.mapToItem(page.contentItem, 0, policy.height).y <= page.contentHeight + 1);
-            }
-            const technicalDetails = findChild(page, "adapterTechnicalDetails");
-            if (technicalDetails && technicalDetails.visible) {
-                for (const name of ["adapterControllerName", "adapterAddress", "adapterModalias"]) {
-                    const field = findChild(technicalDetails, name);
-                    verify(field !== null && field.visible);
-                    verify(field.mapToItem(page.contentItem, 0, field.height).y <= page.contentHeight + 1);
-                }
-            }
             compare(page.interactive, page.contentHeight > page.height);
             // Tabs are kept warm or loaded while hidden; both must lay out on return.
             page.visible = false;

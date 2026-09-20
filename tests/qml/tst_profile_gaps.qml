@@ -1,6 +1,5 @@
 import QtQuick
 import QtTest
-import Shelllist.Clipboard as Clipboard
 import Shelllist.Bluetooth as Bluetooth
 import Shelllist.Io as Io
 
@@ -50,10 +49,6 @@ TestCase {
     }
 
     Component {
-        id: clipboardFactory
-        Clipboard.ClipboardController {}
-    }
-    Component {
         id: bluetoothFactory
         Bluetooth.BluetoothController {}
     }
@@ -64,29 +59,6 @@ TestCase {
         const view = createTemporaryObject(component, tests, properties);
         verify(view !== null);
         return view;
-    }
-
-    function test_clipboardEditResetAndSelection(): void {
-        const controller = createTemporaryObject(clipboardFactory, tests);
-        const details = controller.detailState;
-        details.editBeginPending = true;
-        details.applyEdit("edit-begin", {
-            id: "edit-1",
-            value: "original"
-        });
-        details.editIsDirect = true;
-        details.updateEditDraft("changed");
-        verify(details.editing);
-        verify(details.editDirty);
-        compare(details.editDraft, "changed");
-        details.clear();
-        verify(!details.editing && !details.editDirty && !details.saveInFlight);
-        compare(details.editDraft, "");
-        controller.enterMultiSelect();
-        verify(controller.multiSelectMode);
-        controller.leaveMultiSelect();
-        verify(!controller.multiSelectMode);
-        compare(controller.multiSelectedCount, 0);
     }
 
     function test_adapterSwitchClearsDrafts(): void {

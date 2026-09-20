@@ -132,34 +132,6 @@ TestCase {
         compare(graph.series.segments[0][2].value, 59, "live charge must reach the Now marker");
     }
 
-    function test_powerAreasAndSleepMarkers() {
-        const graph = createTemporaryObject(edgeGraph, testCase);
-        graph.points = [
-            { timestamp_ms: 1000, active_time_ms: 0, percentage: 90,
-                power_watts: 10, charging: false, continuous: false },
-            { timestamp_ms: 61000, active_time_ms: 60000, percentage: 80,
-                power_watts: 20, charging: false, continuous: true },
-            { timestamp_ms: 121000, active_time_ms: 120000, percentage: 85,
-                power_watts: 20, charging: true, continuous: true },
-            { timestamp_ms: 361000, active_time_ms: 120000, percentage: 95,
-                power_watts: 10, charging: true, continuous: false },
-            { timestamp_ms: 421000, active_time_ms: 180000, percentage: 100,
-                power_watts: 5, charging: true, continuous: true }
-        ];
-        verify(waitForRendering(graph));
-        compare(graph.points.length, 5);
-        compare(graph.series.segments.length, 2);
-        compare(graph.powerSeries.segments.length, 2);
-        compare(graph.powerAreas.length, 3);
-        compare(graph.powerAreas[0].charging, false);
-        compare(graph.powerAreas[1].charging, true);
-        compare(graph.powerAreas[2].charging, true);
-        compare(graph.powerAreas[0].points[2].value, 0);
-        compare(graph.powerAreas[0].points[2].x, graph.powerAreas[1].points[0].x);
-        compare(graph.series.breaks.length, 1);
-        compare(graph.series.breaks[0], 2 / 3);
-    }
-
     function test_emptyHistory() {
         const card = createTemporaryObject(historyCard, testCase, {
             width: 300, history: { points: [] }, battery: { available: false }
@@ -177,13 +149,9 @@ TestCase {
         verify(graph.historyFraction > 0 && graph.historyFraction < 1);
     }
 
-    function test_contentAndPlotStayInsideCard_data() {
-        return [{ tag: "narrow", width: 300 }, { tag: "compact", width: 340 },
-            { tag: "normal", width: 500 }];
-    }
-
-    function test_contentAndPlotStayInsideCard(data) {
-        const card = createTemporaryObject(historyCard, testCase, { width: data.width });
+    function test_contentAndPlotStayInsideCard() {
+        // The narrow case catches overflow; other tests exercise the default width.
+        const card = createTemporaryObject(historyCard, testCase, { width: 300 });
         verify(card !== null);
         verify(waitForRendering(card));
         const graph = findChild(card, "batteryTimelineGraph");

@@ -127,28 +127,6 @@ TestCase {
         compare(spy.count, 1);
         verify(!controller.detailsOpen);
     }
-    function test_emptyRadioIcon() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const pane = createTemporaryObject(listPaneComponent, panel, {controller: controller, width: 500, height: 900});
-        verify(pane !== null);
-        const message = findChild(pane, "resultListEmptyMessage");
-        verify(message !== null);
-        for (const scenario of [
-            {radio: {available: true, adapter_count: 1, powered: false, soft_blocked: true}, icon: true, label: "Bluetooth is blocked"},
-            {radio: {available: true, adapter_count: 1, powered: false, hard_blocked: true}, icon: true, label: "Bluetooth is hardware-disabled"},
-            {radio: {available: true, adapter_count: 1, powered: false}, icon: true, label: "Bluetooth is off"},
-            {radio: {available: false, adapter_count: 0, powered: false}, icon: false, label: "No Bluetooth adapters"},
-            {radio: {available: true, adapter_count: 1, powered: true}, icon: false, label: "No devices in My Devices"}
-        ]) {
-            controller.applySnapshot({radio: scenario.radio, adapters: [], devices: []});
-            tryCompare(message, "visible", true);
-            compare(message.text, scenario.icon ? "󰂲" : scenario.label);
-            compare(message.Accessible.name, scenario.label);
-        }
-        pane.resultModel.append({name: "Buds"});
-        tryCompare(message, "visible", false);
-    }
     function test_listOptionsPersistAndReflectAcknowledgedSettings() {
         const panel = makePanel();
         const controller = panel.controller;
@@ -216,49 +194,6 @@ TestCase {
         controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: []});
         compare(controller.detailsTab, "device");
         verify(!controller.detailsOpen);
-    }
-    function test_noiseControlLayout() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const original = controller.selectedDevice;
-        let commonFontSize = 0;
-        // Exercise both ring sizes without a width × topology × mode cross-product.
-        for (const scenario of [
-            {width: 320, components: ["left", "right"]},
-            {width: 720, components: ["main"]}
-        ]) {
-            panel.width = scenario.width;
-            const components = scenario.components;
-            for (const mode of ["noise-cancelling", "off", "adaptive", "transparent"]) {
-                const device = Object.assign({}, original, {
-                    battery_live: true,
-                    battery: components.map(function (component) { return {component: component, percentage: 100}; }),
-                    fast_pair: {noise_control: {available_modes: [mode], active_mode: mode}}
-                });
-                controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [device]});
-                wait(0);
-                const icon = findChild(panel.page, "noiseControlIcon");
-                const label = findChild(panel.page, "noiseControlLabel");
-                const percentage = findChild(panel.page, "batteryPercentage-" + components[0]);
-                verify(icon !== null && label !== null && percentage !== null);
-                tryCompare(icon, "status", Image.Ready);
-                const iconBottom = icon.mapToItem(panel.page, icon.width, icon.height);
-                const percentageBottom = percentage.mapToItem(panel.page, 0, percentage.height);
-                fuzzyCompare(iconBottom.x, panel.page.width, 0.01);
-                fuzzyCompare(iconBottom.y, percentageBottom.y, 0.01);
-                fuzzyCompare(label.mapToItem(icon, label.width / 2, 0).x, icon.width / 2, 0.01);
-                verify(label.mapToItem(icon, 0, 0).y > icon.height);
-                verify(label.contentWidth <= icon.width * 1.5);
-                compare(label.text, mode === "noise-cancelling" ? "Noise\ncancellation" : mode === "transparent" ? "Ambient" : mode === "off" ? "Off" : "Adaptive");
-                if (commonFontSize)
-                    compare(label.font.pixelSize, commonFontSize);
-                commonFontSize = label.font.pixelSize;
-            }
-        }
-        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters,
-            devices: [Object.assign({}, original, {fast_pair: null})]});
-        wait(0);
-        verify(!findChild(panel.page, "noiseControlIcon").visible);
     }
     Component {
         id: detailsComponent
@@ -348,32 +283,6 @@ TestCase {
         controller.toggleDetails();
         verify(controller.detailsOpen);
         compare(controller.detailsTab, "device");
-    }
-    function test_adapterTechnicalDetailsAreAlwaysExpandedInGeneral() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        controller.applySnapshot({radio: controller.radio, devices: controller.allDevices,
-            adapters: [{key: "adapter", alias: "Computer", name: "hci0", powered: true,
-                address: "AA:BB:CC:DD:EE:FF", modalias: "usb:v1234p5678"}]});
-        const page = createTemporaryObject(adapterPageComponent, panel, {controller: controller, width: 320, height: 500});
-        wait(0);
-        for (const field of [
-            {name: "adapterControllerName", value: "hci0"},
-            {name: "adapterAddress", value: "AA:BB:CC:DD:EE:FF"},
-            {name: "adapterModalias", value: "usb:v1234p5678"}
-        ]) {
-            const item = findChild(page, field.name);
-            verify(item.visible);
-            compare(item.value, field.value);
-        }
-        controller.adapterSettingsTab = "pairing";
-        verify(!findChild(page, "adapterTechnicalDetails").visible);
-        verify(findChild(page, "adapterNameInput").visible);
-        compare(findChild(page, "adapterNameInput").text, "Computer");
-        controller.adapterSettingsTab = "general";
-        verify(findChild(page, "adapterControllerName").visible);
-        verify(findChild(page, "adapterAddress").visible);
-        verify(findChild(page, "adapterModalias").visible);
     }
     function test_radioSelectionAndPowerAreControlledInBluetoothSettings() {
         const panel = makePanel();
@@ -526,13 +435,6 @@ TestCase {
         verify(!backend.requestRunning);
         compare(panel.controller.status, "Bluetooth audio profile updated and remembered");
     }
-    function test_activeAudioProfileCanBeRemembered() {
-        const panel = makePanel();
-        const profile = setupAudioProfile(panel);
-        profile.activated(profile.optionIndex("sbc"));
-        compare(calls.length, 1);
-        compare(calls[0].params.profile_key, "sbc");
-    }
     function test_failedAudioProfileIsNotRemembered() {
         const panel = makePanel();
         const profile = setupAudioProfile(panel);
@@ -652,32 +554,6 @@ TestCase {
         const draft = controller.nameEdits.draft("buds");
         compare(draft.value, "Keep on disconnect");
         verify(draft.dirty && !draft.pending && draft.error.length > 0);
-    }
-    function test_deviceControlsAreSplitAcrossTabs() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const audio = findChild(panel.page, "deviceAudio");
-        const name = findChild(panel.page, "deviceNameInput");
-        const policy = findChild(panel.page, "devicePolicy");
-        verify(audio.visible);
-        verify(!name.visible);
-        verify(!policy.visible);
-        compare(findChild(panel.page, "deviceOverrides"), null);
-
-        controller.detailsTab = "settings";
-        verify(!audio.visible);
-        verify(name.visible);
-        verify(policy.visible);
-        verify(findToggle(panel.page, "Reconnect after wake").visible);
-        name.focusInput(false);
-        verify(panel.page.editingName);
-
-        controller.detailsTab = "device";
-        verify(!panel.page.editingName);
-        compare(panel.page.contentY, 0);
-        verify(audio.visible);
-        verify(!name.visible);
-        verify(!policy.visible);
     }
     function test_busyPolicyDoesNotClaimUnsupported() {
         const panel = makePanel();

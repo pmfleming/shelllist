@@ -5,126 +5,99 @@ failure. Prefer representative scenarios over repeated fixtures. Do not mirror
 implementation tables, compare helpers against themselves, or freeze visual
 choices unless they are an explicit user-facing regression.
 
-## Pruning inventory
+## Current pruning inventory
 
-Baseline: Shelllist commit `36e8a95`. This inventory supersedes the earlier
-pruning snapshot; it does not count sibling daemon repositories.
+Baseline: Shelllist `d6a339f`. This pass supersedes the previous inventory against
+`36e8a95` (available in Git history); sibling daemon repositories are not pruned.
 
-Shelllist mixes ad-hoc JavaScript checks, QtTest, Rust and Python, so there is no
-single runner-reported total. Using the reproducible inventory below:
+Shelllist has ad-hoc JavaScript checks, QtTest, Rust and Python, not a single
+runner-reported test total. Using the **same counting rule as the previous pass**:
 
-| Inventory unit | Before | After |
-| --- | ---: | ---: |
-| JavaScript assertion/helper call sites | 371 | 232 |
-| Executed QML cases, including data rows | 92 | 76 |
-| Rust test functions | 4 | 4 |
-| Python test methods | 2 | 2 |
-| Daemon contract suites | 5 | 5 |
-| **Combined inventory units** | **474** | **319** |
+| Inventory unit | Before | After | Removed |
+| --- | ---: | ---: | ---: |
+| JavaScript assertion/helper call sites | 460 | 274 | 186 |
+| Executed QML behavioral cases, including data rows | 175 | 148 | 27 |
+| Rust test functions | 4 | 4 | 0 |
+| Python test methods | 2 | 2 | 0 |
+| Daemon contract suites | 5 | 5 | 0 |
+| **Combined inventory units** | **646** | **433** | **213** |
 
-That is a **32.7% net reduction**, not a coverage percentage or a count of
-independent scenarios. QML excludes setup/cleanup; its full runner total is 124
-passes, of which 48 are lifecycle hooks. Seventeen QML cases were removed; an
-unrelated battery-tab regression was added concurrently and is included in the
-final total. Existing tests were not merely combined or renamed to lower runner
-totals. Redundant assertions within retained scenarios were also removed.
+**32.97% removed; 67.03% retained**, the nearest whole-unit result to 67% of 646
+(432.82). These are mixed inventory units, **not 646 independent scenarios** and
+not a coverage percentage. In particular, Qt's full total changed from 247 to
+220 passes; both include 72 setup/cleanup hooks, which are excluded above.
 
-JavaScript counts line-leading assertion/helper calls using the fixed expression
-below, including calls inside helpers and loops once per source site, not once
-per invocation or data row. It is a syntactic inventory, not a count of every
-failure guard. Packaging, build, lint, performance, generated-asset and module
-checks remain enabled but are not counted as behavioral cases.
+JavaScript counts line-leading assertion/helper calls once per source site,
+including calls inside helpers and loops, not once per invocation. Redundant
+assertions within retained scenarios were removed as well as whole scenarios.
+Tests were not disabled, renamed out of discovery, or packed into larger
+assertions to lower the count. Setup calls remain where later observations
+already prove their result; removing an assertion does not remove the action.
 
-Reproduce the JavaScript numbers from the repository root:
+As before, infrastructure gates are additional and unpruned: packaging/imports,
+module evaluation, generated assets/TypeScript, native lint, performance,
+application-resource fixture compatibility and native hypridle readiness.
+They are not counted as behavioral cases. The five counted contract suites are
+the `*DaemonContract` flake checks. Rust's four tests are in
+`rust/shelllist-search/src/lib.rs`; Python's two are in `test_profile_qml.py`.
+
+### Reproduce
+
+Capture each QML log from its matching revision in the declared development
+environment, then use the current inventory script from the repository root:
 
 ```sh
-python - <<'PY'
-from pathlib import Path
-import re
-import subprocess
-
-pattern = r'^\s*(?:assert\.\w+|expect|expectState|equal|near|ok|throws|compare)\('
-for revision in ('36e8a95', None):
-    if revision:
-        names = subprocess.check_output(
-            ['git', 'ls-tree', '-r', '--name-only', revision, 'tests'], text=True).splitlines()
-        sources = [subprocess.check_output(['git', 'show', f'{revision}:{name}'], text=True)
-                   for name in names if re.fullmatch(r'tests/check-.*\.js', name)
-                   and not name.endswith('check-packaged-imports.js')]
-    else:
-        sources = [path.read_text() for path in Path('tests').glob('check-*.js')
-                   if path.name != 'check-packaged-imports.js']
-    print(revision or 'working tree', sum(len(re.findall(pattern, text, re.M)) for text in sources))
-PY
-
-tests/run-qml-tests.sh > /tmp/shelllist-qml-tests.txt
-grep -c '^PASS.*::test_' /tmp/shelllist-qml-tests.txt
+# Before editing, at d6a339f:
+tests/run-qml-tests.sh > /tmp/shelllist-qml-before.log
+# After editing:
+tests/run-qml-tests.sh > /tmp/shelllist-qml-after.log
+python3 tests/count-test-inventory.py --revision d6a339f \
+  --qml-log /tmp/shelllist-qml-before.log
+python3 tests/count-test-inventory.py --qml-log /tmp/shelllist-qml-after.log
 ```
 
-Rust has four `#[test]` functions in `rust/shelllist-search/src/lib.rs`; Python
-has two methods in `tests/test_profile_qml.py`. The five daemon contract suites
-are the `*DaemonContract` flake checks. Table/loop size reductions inside a QML
-case, such as the Bluetooth layout matrix, do not reduce its inventory count.
+The script preserves the previous JavaScript counting expression and rejects
+incomplete, failing, skipped or duplicate-case Qt logs. The source revision and
+log must match; the log itself does not encode a Git revision.
 
-## Removal decisions and remaining coverage owners
+## Removal decisions and remaining owners
 
 | Removed or reduced | Remaining owner / rationale |
 | --- | --- |
-| Fast Pair toggle/provisioning and noise-mode mutation UI tests | These controls were removed from the project UI. Read-only battery topology, mode artwork, unknown state and the requested icon/label alignment remain tested. Daemon contracts are unchanged. |
-| Direct Bluetooth prompt-queue assertions and one-field response classification checks | `tst_bluetooth_recovery.qml` exercises concurrent prompts, retained input, failed replies, unavailable backends, live reconnects and opaque-key routing. Distinct display-progress, scan-failure and operation-terminal cases remain in the JS suite. |
-| Provider execution-request serialization and layout-presentation constraints | `tst_provider_registry.qml` checks real dispatch, provider/result identity, context and disabled-action rejection. Model validation, cross-provider batches, asynchronous ranking and Rust search regressions remain. |
-| Notification formatting, filter/merge duplicates and numeric preview capacities | `tst_notifications.qml` owns active/history filtering, multi-page catch-up, DND acknowledgement, pending/error replies, persistent drafts, live focus and narrow-height reachability. JS retains untrusted group keys, reused notification IDs, updates and monitor routing. |
-| Battery selection internals, repeated forecast values and duplicate action allowlists | Controller tests retain actual saved values/target identity, abandoned edits, autosave failure/editing races, global operation exclusion, AC/cancellation rules and capability guards. Backend tests retain the power-action allowlist. History-card tests retain real limits/hover; JS retains invalid samples, discontinuities, charging outliers and energy integration. |
-| Application history bookkeeping and repeated range changes | Retained tests cover target/range isolation, stale replies, cancellation, multi-page catch-up, sliding-window pruning, empty cursor retention, partial failures, overlapping pages and nonadvancing cursors. Chart tests retain supported zero readings and gaps for unavailable measurements. |
-| Exact palette/header/typography/badge assertions, navigation-key lookup enumeration, redundant ActionArea checks and bar action-ID table mirrors | Keyboard activation, disabled controls, accessibility labels, visible list selection, intentional scrolling, essential bar reachability and immediate OSD feedback remain covered through consumers. These removals free incidental visual/composition choices, not protocol requirements. |
-| Legacy network-health fallback messages and raw Wi-Fi flag precedence | Current daemon failure recommendations, suppression policy, successful/sleep traces, unknown actionable failures, captive portals and security distinctions remain covered. Health logging now uses an injected credential sentinel rather than checking for the word “password.” |
-| Repeated geometry/ranking helper checks and resource capability booleans | Monitor transforms, workspace rules, snapshot parsing, bounds, real ranking outcomes, resource aggregation and actual chart segmentation remain covered. Current supported Hyprland dispatcher syntaxes are retained. |
+| Battery controller status/busy booleans, repeated success returns, legacy alert-policy migration and level-toggle duplicates | `tst_battery_sleep.qml` and `tst_battery_tabs.qml` own user-visible state, acknowledgement, keyboard/accessibility, independent levels and unknown-outcome handling. JS retains autosave races, edited battery identity, global operation exclusion, capability guards, AC/cancellation, command dispatch, failed saves and transport uncertainty. Unavailable-service level fallback and explicit automation resume remain checked. |
+| Battery sleep message catalogue and duplicated helper capability checks | Actual sleep controls own displayed messages and inhibition. JS retains invalid threshold boundaries, block-weak filtering and daemon diagnosis versus policy-denial precedence. |
+| Battery chart property copies, obsolete helper-absence checks and repeated widths | JS retains invalid samples, discontinuities, signed power areas, charging outliers, zero transitions and duplicate/late observations. Qt retains actual isolated 0/100% rendering, forecast/hover changes, range/live updates, empty history and narrow-card bounds. The repeated Qt power-area calculation case is removed in favor of JS's direct algorithm checks. |
+| Application history bookkeeping and formatter/badge catalogues | History tests retain target/range isolation, stale replies, cancellation, paginated catch-up, sliding-window pruning, cursor retention, partial failures, overlap, nonadvancing cursors and frozen native summary windows. Resource tests retain unavailable/null versus measured-zero data, low-confidence warnings, actual canvas gaps and rejection of battery discharge as per-app power. |
+| Bar helper OSD snapshots, incidental cycling/visibility choices and duplicate resume inputs | Actual bar OSD tests retain immediate confirmed values, all four failure routes, unrelated-error isolation and reopening during dismissal. Resume tests retain initial/repeated/incremented/reset generations; routing, media progress, update failure visibility and narrow-screen action reachability remain. |
+| Bluetooth icon/text/layout matrices, technical-field placement, tab-composition constraints, one-field audio-profile dispatch duplicate and repeated list-filter combinations | Recovery tests retain pairing queue/input/request identity, failed replies, unavailable services, live reconnect, opaque audio keys, apply-then-remember identity, save/transport failures, rename/adapter drafts, global settings and scoped reset. JS retains representative mine/all filtering, display-passkey progress, action validation, scan failure and terminal lifecycle behavior. Shared controls own activation/busy policy. |
+| Repeating shared detail layout across eleven page variants | Three representative consumers remain: application resources, Bluetooth adapter and Wi-Fi cards, each resized and hidden/reopened. Shared `DetailLayout` still covers wrapping, hidden children/headings, scrolling and asynchronous loader/footer bounds. Consumer recovery suites and packaged smoke cover other construction paths; this is intentionally not exhaustive per-page visual coverage. |
+| Pure Qt anchoring/centering checks, weather hero pixel composition, empty-card construction-only smoke, fixed Time & Weather placement, retired compositor helper names and a repeated geometry row | Retain dynamic layout failure boundaries, real weather clock/keyboard behavior, native work-area changes, fractional/negative-origin geometry and tiny-screen clamping. Icon alignment, exact weather columns and incidental placement are no longer frozen. |
+| Clipboard reset-only profiler-gap case | Clipboard recovery and action tests own failed/late saves, visible draft persistence, conflicts/discard, selection, leases, native search and revision-checked deletion. Adapter isolation, asynchronous battery artwork and native solar metadata tests remain. |
+| Network-health reason/state traces duplicating a daemon-owned classifier | Retain recommended/suppressed notification policy, strict boolean advice, daemon messages, deduplication and credential-redacted logging. The frontend should not reimplement DHCP/VPN/sleep classification. |
+| Display title/picker counts, a duplicate rotated rectangle and helper fingerprint comparisons | All ten Displays Qt cases are untouched, including preview/confirm/revert, pending-close cancellation, topology replacement and reconnection. JS retains exact refresh strings, mixed-DPI/rotation geometry, malformed input, safe finite rectangles, fallback/last-output protection, complete unique connector sets, payload fields and snapping. |
 
-The shared-session/transport suite is untouched: failed-generation effects must
-never replay, incompatible events are rejected, gaps resynchronize, late
-subscriptions are cancelled, detached owners cannot receive replies, and stale
-generations cannot claim new requests. Wi-Fi secret submission, IP validation,
-clipboard background annotation and revision-checked bulk deletion are also
-unchanged. All Rust search and Python profiler tests are retained.
-
-No production behavior, protocol fixture, generated binding, dependency lock,
-security guard or quality threshold was changed by this pruning pass. The
-concurrent battery-tab implementation and test changes were left untouched.
+The daemon-boundary/session, Wi-Fi secret/casting/IP, clipboard recovery/action,
+notification interaction, shared activation/keyed-model, Rust search and Python
+profiler suites are unchanged. No production code, contract fixture, dependency
+lock, runner discovery rule or quality threshold changed.
 
 ## Validation
 
-Completed for this pass:
+- Fresh baseline: **175 QML behavioral cases**, zero failures/skips.
+- Retained suite: **148 QML behavioral cases**, zero failures/skips (220 passes
+  including hooks); **2 Python tests passed**.
+- Full current-worktree Nix gate: **all checks passed**, including all five daemon
+  contracts, Rust search, native lint, packaging, generated code and performance.
+- Manual warning-fatal QML lint and offscreen Quickshell smoke: **passed**.
 
-- All retained JavaScript suites and the QML/search flake checks pass.
-- QtTest: **76 behavioral cases**, zero failures/skips (124 passes with hooks).
-- `python tests/test_profile_qml.py`: **2 passed**.
-- `git diff --check`: clean.
-- `nix flake check --keep-going --no-update-lock-file`: all checks except two
-  existing contract failures pass, including QML lint, packaging, generated
-  assets/TypeScript, performance and module evaluation.
-
-The two failures reproduce at the unmodified baseline `36e8a95`, with identical
-Nix derivations:
-
-- `btDaemonContract`: the locked daemon fixture lacks the already-checked-in
-  `fast_pair_controls_enabled` policy field.
-- `nmDaemonContract`: the checked-in `NmApi.js` differs from generated output
-  in formatting.
-
-Neither check was removed or weakened, and neither the fixtures nor the lock
-were updated to hide the failures. Locked integration and candidate sibling
-worktree integration remain separate concerns.
-
-Recommended co-development commands, from the declared development environment:
+Supported co-development commands, from the Projects directory:
 
 ```sh
-tests/check-sibling-boundary.sh
-python tests/test_profile_qml.py
-tests/run-qml-tests.sh
+python3 daemon-framework/tools/local-build.py check shelllist --keep-going
+python3 daemon-framework/tools/local-build.py develop shelllist --command bash -c \
+  'cd /home/laufan/Projects/shelllist && tests/run-qml-tests.sh && python3 tests/test_profile_qml.py'
 ```
 
-The sibling gate snapshots current local Git worktrees once, then runs the
-framework, consumer, and UI matrix against the same graph. Tracked uncommitted
-changes are included; Git-add new files first. It leaves source locks and
-installed services untouched. All five daemons share one current framework;
-there are no framework deployment pins or vendored framework snapshots.
+The gate snapshots local Git worktrees; Git-add new files first. It leaves locks,
+installed services and live hardware state untouched. Nothing is deployed or
+restarted by this pruning pass.

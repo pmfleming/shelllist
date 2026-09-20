@@ -45,33 +45,18 @@ equal(context.mediaPositionPercent({
 }, 1000), 100, "media progress is bounded");
 equal(context.inputOsd({ input_muted: true, source_description: "Microphone" }).progressVisible,
     false, "mute does not invent a volume measurement");
-equal(context.brightnessErrorOsd(), {
-    kind: "brightness-error", icon: "󰃠", label: "Brightness",
-    valueLabel: "Adjustment failed", percent: 0,
-    progressVisible: false, timeoutMs: 3000
-}, "brightness failures are visible without inventing a percentage");
-equal(context.brightnessOsd({ percent: 95 }).valueLabel, "95%",
-    "successful brightness feedback retains confirmed percentage");
-equal(context.idleInhibited({ inhibitors: [{ what: "sleep:idle" }] }), true,
-    "idle inhibitor detection");
-equal(context.domainOsd({ powerProfile: "power" }, "power",
-    { available: true, profile: "balanced" }, { available: true, profile: "performance" }).kind,
-    "power-profile", "domain changes route through shared OSD policy");
+// Brightness OSD acknowledgement and all failure routes are exercised through
+// BarController and the actual surface in tst_bar_osd_responsiveness.qml.
 equal(context.domainOsd({ media: "media" }, "media",
     { available: true, active_player: "player", players: [{ id: "player", title: "Old" }] },
     { available: true, active_player: "player", players: [{ id: "player", title: "New" }] }),
     null, "media changes do not produce an OSD");
-equal(context.nextPowerProfile({ profile: "performance", profiles: [
-    { name: "performance" }, { name: "power-saver" }, { name: "balanced" }
-] }), "power-saver", "power profile cycling wraps");
 
 equal(context.updateModule({ available: true, ready: false, jobs: [{ name: "system", status: "running", phase: "building" }] }).visible,
     true, "running update jobs are visible before a candidate is ready");
 const interruptedUpdate = context.updateModule({ available: true, jobs: [{ name: "system", status: "interrupted", phase: "staging", error: "Worker stopped" }] });
 equal(interruptedUpdate.tone, "warning", "interrupted update jobs warn rather than appearing successful");
 equal(interruptedUpdate.tooltip.includes("Worker stopped"), true, "update errors remain inspectable");
-equal(context.updateModule({ available: true, jobs: [{ name: "ai-tools-stale", status: "completed", phase: "stale" }] }).visible,
-    true, "AI tools staleness is visible");
 equal(context.updateModule({ available: true, jobs: [{ name: "system", status: "completed", phase: "skipped" }] }).visible,
     false, "harmless skipped jobs do not claim an available update");
 
