@@ -40,6 +40,7 @@ Item {
             available: false,
             percent: 0
         })
+    property var displays: ({ available: false, outputs: [] })
     property var battery: ({
             available: false,
             percentage: 0
@@ -270,6 +271,7 @@ Item {
             updates: updates,
             audio: audio,
             brightness: brightness,
+            displays: displays,
             battery: battery,
             powerProfile: powerProfile,
             notifications: notifications,
@@ -307,6 +309,9 @@ Item {
                 },
                 "brightness-down": function () {
                     backend.adjustBrightness(-5);
+                },
+                displays: function () {
+                    openSurface("displays");
                 },
                 battery: function () {
                     openSurface("battery");

@@ -133,7 +133,7 @@
                 shelllist daemon                  Ensure the resident host is running
                 shelllist run                     Run the resident host in the foreground
 
-              Surfaces: applications, wifi, bluetooth, clipboard, battery, activity, notifications, time-weather (open displays for layout settings)
+              Surfaces: applications, wifi, bluetooth, clipboard, displays, battery, activity, notifications, time-weather
 
               Clipboard settings:
                 shelllist clipboard pause
@@ -339,7 +339,7 @@
                     *) usage >&2; exit 2 ;;
                   esac
                   ;;
-                applications|wifi|bluetooth|battery|activity|notifications|time-weather)
+                applications|wifi|bluetooth|displays|battery|activity|notifications|time-weather)
                   action=''${2:-toggle}
                   [ "$#" -le 2 ] || { usage >&2; exit 2; }
                   case "$action" in open|toggle) surface_call "$action" "$command" ;; *) usage >&2; exit 2 ;; esac
@@ -573,7 +573,7 @@
             installPhase = ''
               runHook preInstall
               mkdir -p $out/share/shelllist
-              cp -r shell bar wifi bluetooth clipboard launcher battery activity qml $out/share/shelllist/
+              cp -r shell bar wifi bluetooth clipboard launcher battery displays activity qml $out/share/shelllist/
               runHook postInstall
             '';
           };
@@ -677,7 +677,8 @@
               ${./contracts/bar-api-ui-contract.fixture.json} \
               ${./bar/BarApi.js} \
               ${./activity/ActivityApi.js} \
-              ${./battery/BatteryApi.js}
+              ${./battery/BatteryApi.js} \
+              ${./displays/DisplayApi.js}
             touch $out
           '';
 
@@ -704,6 +705,7 @@
               ${./clipboard}/*.qml
               ${./launcher}/*.qml
               ${./battery}/*.qml
+              ${./displays}/*.qml
               ${./activity}/*.qml
               ${./wifi}/*.qml
               ${./wifi}/networkinput/*.qml
@@ -965,6 +967,7 @@
             cp -r ${./qml} test-root/qml
             chmod -R u+w test-root/qml
             ln -sfn ${./battery} test-root/qml/Shelllist/Battery
+            ln -sfn ${./displays} test-root/qml/Shelllist/Displays
             ln -sfn ${./activity} test-root/qml/Shelllist/Activity
             ln -sfn ${./bar} test-root/qml/Shelllist/Bar
             ln -s ${./clipboard} test-root/clipboard

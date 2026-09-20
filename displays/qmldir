@@ -1,0 +1,6 @@
+module Shelllist.Displays
+DisplayController 1.0 DisplayController.qml
+DisplayContent 1.0 DisplayContent.qml
+internal DisplayBackend DisplayBackend.qml
+internal DisplayPolicyPane DisplayPolicyPane.qml
+internal DisplayLayoutPane DisplayLayoutPane.qml

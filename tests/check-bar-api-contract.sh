@@ -6,6 +6,7 @@ fixture=${2:?checked fixture required}
 api_js=${3:?BarApi.js required}
 activity_api_js=${4:-}
 battery_api_js=${5:-}
+display_api_js=${6:-}
 
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
@@ -76,7 +77,7 @@ while IFS= read -r name; do
     exit 1
   }
 done < <(grep -h -oE '"(bar|activity|todos|workspace|media|audio|brightness|battery|powerProfile|powerSleep|displayPolicy|displayLayout|display-policy|power-profile|power-sleep|sleep-policy|osd-hardware|notifications|updates|timezone)\.[A-Za-z0-9.-]+"' \
-  "$api_js" ${activity_api_js:+"$activity_api_js"} ${battery_api_js:+"$battery_api_js"} \
+  "$api_js" ${activity_api_js:+"$activity_api_js"} ${battery_api_js:+"$battery_api_js"} ${display_api_js:+"$display_api_js"} \
   | tr -d '"' | sort -u)
 
 echo "bar-api contract: checked fixture and frontend registry match"

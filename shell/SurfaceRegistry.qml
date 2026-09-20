@@ -9,6 +9,7 @@ import Shelllist.Clipboard as Clipboard
 import Shelllist.Launcher as Launcher
 import Shelllist.Activity as Activity
 import Shelllist.Battery as Battery
+import Shelllist.Displays as Displays
 
 Item {
     id: registry
@@ -33,6 +34,11 @@ Item {
             id: "clipboard",
             name: "Clipboard",
             icon: "󰅇"
+        },
+        {
+            id: "displays",
+            name: "Displays",
+            icon: "󰍹"
         },
         {
             id: "battery",
@@ -64,7 +70,6 @@ Item {
     property string pendingActivitySection: ""
     property string pendingTimeWeatherTab: ""
     property var pendingNotificationRequest: null
-    property bool pendingDisplaySettings: false
     readonly property alias notificationState: sharedNotifications
     readonly property var notificationController: {
         const bundle = bundleFor("notifications");
@@ -137,6 +142,7 @@ Item {
                 bluetooth: bluetoothBundle.item,
                 clipboard: clipboardBundle.item,
                 battery: batteryBundle.item,
+                displays: displayBundle.item,
                 activity: activityBundle.item,
                 notifications: notificationBundle.item,
                 "time-weather": timeWeatherBundle.item
@@ -218,24 +224,10 @@ Item {
     }
 
     function openDisplays(): void {
-        pendingDisplaySettings = true;
-        ensureLoaded("battery");
-        applyPendingDisplays();
-        surfaceRequested("battery");
-    }
-
-    function applyPendingDisplays(): void {
-        const bundle = bundleFor("battery");
-        if (!pendingDisplaySettings || !bundle)
-            return;
-        const controller = bundle.controller;
-        controller.viewTab = "power";
-        pendingDisplaySettings = false;
+        surfaceRequested("displays");
     }
 
     function notifySurfaceReady(surfaceId: string): void {
-        if (surfaceId === "battery")
-            applyPendingDisplays();
         if (surfaceId === "activity")
             applyPendingActivitySection();
         else if (surfaceId === "time-weather")
@@ -326,6 +318,25 @@ Item {
                     id: bluetoothController
                     onPairingInteractionRequested: registry.surfaceRequested("bluetooth")
                 }
+            }
+        }
+    }
+
+    Loader {
+        id: displayBundle
+        active: registry.isLoaded("displays")
+        asynchronous: true
+        onLoaded: registry.notifySurfaceReady("displays")
+        sourceComponent: Component {
+            SurfaceBundle {
+                surfaceId: "displays"
+                displayName: "Displays"
+                icon: "󰍹"
+                controller: displayController
+                content: Component {
+                    Displays.DisplayContent { controller: displayController }
+                }
+                Displays.DisplayController { id: displayController }
             }
         }
     }

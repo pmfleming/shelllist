@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="780" viewBox="0 0 1200 780" role="img" aria-labelledby="title desc"><title id="title">Option C — command-first display palette</title><desc id="desc">A searchable Displays command palette with actions on the left, a read-only current layout and explanation on the right, keyboard shortcuts and explicit policy action wording. It links to the same visual editor instead of editing monitor coordinates in search results.</desc><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#34444f"/></pattern></defs>
+<rect x="0" y="0" width="1200" height="780" rx="0" fill="#10171d"/>
+<rect x="18" y="16" width="1164" height="43" rx="10" fill="#19232b" stroke="#35454f" stroke-width="1"/>
+<text x="38" y="43" fill="#edf3f5" font-family="Noto Sans, sans-serif" font-size="13" font-weight="500">1   2   3     /     Code</text>
+<text x="315" y="43" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="12" font-weight="400">shelllist · display-control proposal</text>
+<text x="862" y="43" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="12" font-weight="400">Wi-Fi</text>
+<rect x="917" y="23" width="92" height="29" rx="7" fill="#122b24"/>
+<text x="932" y="43" fill="#a7e8ce" font-family="Noto Sans, sans-serif" font-size="12" font-weight="600">▣  Displays</text>
+<text x="1027" y="43" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="12" font-weight="400">76%    12:41</text>
+<rect x="90" y="101" width="223" height="26" rx="13" fill="#122b24"/>
+<text x="102" y="119" fill="#a7e8ce" font-family="Noto Sans, sans-serif" font-size="11" font-weight="600">OPTION C · KEYBOARD FIRST</text>
+<text x="90" y="156" fill="#edf3f5" font-family="Noto Sans, sans-serif" font-size="29" font-weight="600">Find the action. Keep the context.</text>
+<rect x="90" y="192" width="1020" height="447" rx="18" fill="#19232b" stroke="#35454f" stroke-width="1"/>
+<rect x="110" y="213" width="980" height="50" rx="9" fill="#111c24" stroke="#a7e8ce" stroke-width="2"/>
+<text x="128" y="246" fill="#a7e8ce" font-family="Noto Sans, sans-serif" font-size="16" font-weight="600">Displays  /  </text>
+<text x="247" y="246" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="16" font-weight="400">Search actions or screens…</text>
+<text x="1049" y="245" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="12" font-weight="400">Esc</text>
+<path d="M670 282 L670 591" stroke="#35454f" fill="none"/>
+<text x="114" y="297" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="11" font-weight="600">ACTIONS</text>
+<rect x="109" y="310" width="545" height="65" rx="9" fill="#122b24" stroke="#a7e8ce" stroke-width="1"/>
+<text x="127" y="337" fill="#a7e8ce" font-family="Noto Sans, sans-serif" font-size="16" font-weight="600">Arrange &amp; configure</text>
+<text x="127" y="359" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="12" font-weight="400">Open the visual layout editor</text>
+<text x="619" y="347" fill="#a7e8ce" font-family="Noto Sans, sans-serif" font-size="20" font-weight="400">↵</text>
+<text x="127" y="405" fill="#edf3f5" font-family="Noto Sans, sans-serif" font-size="15" font-weight="500">Identify screens</text>
+<text x="127" y="428" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="12" font-weight="400">Show matching numbers on connected outputs</text>
+<text x="127" y="475" fill="#edf3f5" font-family="Noto Sans, sans-serif" font-size="15" font-weight="500">Enable external-display preference</text>
+<text x="127" y="498" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="12" font-weight="400">Saved policy · turn laptop off when external is stable</text>
+<text x="127" y="545" fill="#edf3f5" font-family="Noto Sans, sans-serif" font-size="15" font-weight="500">Dell U2723QE</text>
+<text x="127" y="568" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="12" font-weight="400">Open this screen’s resolution, scale and rotation</text>
+<text x="696" y="301" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="11" font-weight="600">CURRENT · LAPTOP + EXTERNAL</text>
+<rect x="691" y="319" width="396" height="173" rx="9" fill="#142029" stroke="#35454f" stroke-width="1"/>
+<rect x="722" y="390" width="113" height="72" rx="7" fill="#2b3a45" stroke="#70828e" stroke-width="2"/>
+<rect x="732" y="400" width="28" height="26" rx="13" fill="#485b69"/>
+<text x="744" y="418" fill="#edf3f5" font-family="Noto Sans, sans-serif" font-size="11" font-weight="600">1</text>
+<text x="778.5" y="434.0" fill="#edf3f5" font-family="Noto Sans, sans-serif" font-size="14" font-weight="600" text-anchor="middle">Laptop</text>
+<rect x="835" y="356" width="211" height="106" rx="7" fill="#294237" stroke="#a7e8ce" stroke-width="2"/>
+<rect x="845" y="366" width="28" height="26" rx="13" fill="#a7e8ce"/>
+<text x="857" y="384" fill="#122b24" font-family="Noto Sans, sans-serif" font-size="11" font-weight="600">2</text>
+<text x="940.5" y="417.0" fill="#edf3f5" font-family="Noto Sans, sans-serif" font-size="14" font-weight="600" text-anchor="middle">Dell U2723QE</text>
+<text x="697" y="522" fill="#edf3f5" font-family="Noto Sans, sans-serif" font-size="15" font-weight="600">Arrange &amp; configure</text>
+<text x="697" y="548" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="12" font-weight="400">Opens an editor without applying changes.</text>
+<text x="697" y="571" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="12" font-weight="400">Preview and Keep are separate actions.</text>
+<path d="M110 589 L1090 589" stroke="#35454f" fill="none"/>
+<text x="116" y="620" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="12" font-weight="400">↑ ↓  Select     Enter  Open     Tab  Switch pane     Esc  Close</text>
+<text x="90" y="692" fill="#edf3f5" font-family="Noto Sans, sans-serif" font-size="18" font-weight="600">Fast once learned; less discoverable on first use.</text>
+<text x="90" y="722" fill="#b1c0ca" font-family="Noto Sans, sans-serif" font-size="14" font-weight="400">Use the shared provider/action model. Add as an optional entry point after the dedicated callout ships.</text>
+<text x="90" y="754" fill="#a7e8ce" font-family="Noto Sans, sans-serif" font-size="13" font-weight="400">No command silently changes layouts. No unsupported Mirror or profile actions are shown.</text>
+</svg>

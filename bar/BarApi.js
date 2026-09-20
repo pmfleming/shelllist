@@ -29,6 +29,7 @@ var streams = {
     media: Protocol.streams["media.changed"],
     audio: Protocol.streams["audio.changed"],
     brightness: Protocol.streams["brightness.changed"],
+    displays: Protocol.streams["display-policy.changed"],
     battery: Protocol.streams["battery.changed"],
     powerProfile: Protocol.streams["power-profile.changed"],
     powerSleep: Protocol.streams["power-sleep.changed"],
@@ -49,6 +50,7 @@ propertyByStream[streams.workspaces] = "workspaces";
 propertyByStream[streams.media] = "media";
 propertyByStream[streams.audio] = "audio";
 propertyByStream[streams.brightness] = "brightness";
+propertyByStream[streams.displays] = "displays";
 propertyByStream[streams.battery] = "battery";
 propertyByStream[streams.powerProfile] = "powerProfile";
 propertyByStream[streams.powerSleep] = "powerSleep";
@@ -64,6 +66,7 @@ var propertyByPayload = {
     media: "media",
     audio: "audio",
     brightness: "brightness",
+    display_policy: "displays",
     battery: "battery",
     power_profile: "powerProfile",
     power_sleep: "powerSleep",
