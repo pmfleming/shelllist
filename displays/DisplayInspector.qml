@@ -1,0 +1,132 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Layouts
+import Shelllist.Ui as Ui
+import "DisplayModel.js" as Model
+
+ColumnLayout {
+    id: inspector
+    required property DisplayController controller
+    readonly property var output: controller.selectedOutput || ({ name: "", availableModes: [] })
+    readonly property var draft: controller.selectedDraft || ({ mode: "", scale: 1, transform: 0, x: 0, y: 0, enabled: false })
+    spacing: Ui.Theme.spacingMd
+    enabled: controller.canEdit
+
+    Ui.DropDownList {
+        objectName: "displaySelection"
+        Layout.fillWidth: true
+        options: inspector.controller.outputs.map(function (o, i) { return { value: o.name, label: (i + 1) + " · " + Model.title(o) }; })
+        value: inspector.controller.selectedName
+        Accessible.name: qsTr("Selected display")
+        onSelected: function (value) { inspector.controller.selectOutput(value); }
+    }
+    Ui.FieldLabel { text: qsTr("Resolution / refresh") }
+    RowLayout {
+        Layout.fillWidth: true
+        Ui.DropDownList {
+            objectName: "displayResolution"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            options: Model.resolutions(inspector.output)
+            value: (Model.parseMode(inspector.draft.mode) || {}).size || ""
+            Accessible.name: qsTr("Resolution")
+            onSelected: function (value) {
+                const choices = Model.modes(inspector.output).filter(function (m) { return (Model.parseMode(m) || {}).size === value; });
+                const oldRate = (Model.parseMode(inspector.draft.mode) || {}).rate;
+                const choice = choices.find(function (m) { return Model.parseMode(m).rate === oldRate; }) || choices[0];
+                if (choice) inspector.controller.edit(inspector.output.name, "mode", choice);
+            }
+        }
+        Ui.DropDownList {
+            objectName: "displayRefreshRate"
+            Layout.preferredWidth: 108
+            options: Model.rates(inspector.output, inspector.draft.mode)
+            value: inspector.draft.mode
+            Accessible.name: qsTr("Refresh rate")
+            onSelected: function (value) { inspector.controller.edit(inspector.output.name, "mode", value); }
+        }
+    }
+    Ui.FieldLabel { text: qsTr("Scale / rotation") }
+    RowLayout {
+        Layout.fillWidth: true
+        Ui.DropDownList {
+            objectName: "displayScale"
+            Layout.preferredWidth: 108
+            options: {
+                const values = [0.5, 0.75, 1, 1.25, 1.5, 1.6, 1.75, 2, 2.5, 3, 4];
+                const current = Number(inspector.draft.scale);
+                if (Number.isFinite(current) && !values.includes(current)) values.push(current);
+                return values.sort(function (a, b) { return a - b; }).map(function (v) { return { value: String(v), label: Math.round(v * 10000) / 100 + "%" }; });
+            }
+            value: String(inspector.draft.scale)
+            Accessible.name: qsTr("Scale")
+            onSelected: function (value) { inspector.controller.edit(inspector.output.name, "scale", Number(value)); }
+        }
+        Ui.DropDownList {
+            objectName: "displayRotation"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            options: ["0°", "90°", "180°", "270°", "↔ 0°", "↔ 90°", "↔ 180°", "↔ 270°"].map(function (label, i) { return { value: String(i), label: label }; })
+            value: String(inspector.draft.transform)
+            Accessible.name: qsTr("Rotation and reflection")
+            onSelected: function (value) { inspector.controller.edit(inspector.output.name, "transform", Number(value)); }
+        }
+    }
+    Ui.FieldLabel { text: qsTr("Position") }
+    RowLayout {
+        Layout.fillWidth: true
+        Ui.TextField {
+            objectName: "displayX"
+            Layout.fillWidth: true
+            text: String(inspector.draft.x)
+            inputMethodHints: Qt.ImhFormattedNumbersOnly
+            maximumLength: 8
+            Accessible.name: qsTr("X position in logical pixels")
+            onEdited: function (value) { inspector.controller.edit(inspector.output.name, "x", value); }
+        }
+        Ui.TextField {
+            objectName: "displayY"
+            Layout.fillWidth: true
+            text: String(inspector.draft.y)
+            inputMethodHints: Qt.ImhFormattedNumbersOnly
+            maximumLength: 8
+            Accessible.name: qsTr("Y position in logical pixels")
+            onEdited: function (value) { inspector.controller.edit(inspector.output.name, "y", value); }
+        }
+    }
+    RowLayout {
+        visible: inspector.controller.outputs.length > 1
+        Layout.fillWidth: true
+        spacing: Ui.Theme.spacingXs
+        Repeater {
+            model: [{ side: "left", icon: "󰁍" }, { side: "above", icon: "󰁝" }, { side: "below", icon: "󰁅" }, { side: "right", icon: "󰁔" }]
+            delegate: Ui.ActionButton {
+                required property var modelData
+                Layout.preferredWidth: Ui.Theme.controlHeight
+                icon: modelData.icon
+                accessibleName: qsTr("Place %1 of %2").arg(modelData.side).arg(inspector.controller.referenceName)
+                toolTip: accessibleName
+                onClicked: inspector.controller.placeSelected(modelData.side)
+            }
+        }
+        Ui.DropDownList {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            options: inspector.controller.outputs.filter(function (o) { return o.name !== inspector.output.name; }).map(function (o) { return { value: o.name, label: o.name }; })
+            value: inspector.controller.referenceName
+            Accessible.name: qsTr("Position relative to display")
+            onSelected: function (value) { inspector.controller.referenceName = value; }
+        }
+    }
+    Ui.ToggleRow {
+        objectName: "displayEnabled"
+        Layout.fillWidth: true
+        Layout.preferredHeight: Ui.Theme.controlHeight
+        title: Model.internal(inspector.output.name) ? qsTr("Laptop fallback") : qsTr("Enabled")
+        subtitle: Model.internal(inspector.output.name) ? qsTr("Managed by the external-display preference") : ""
+        checked: inspector.draft.enabled
+        interactive: !Model.internal(inspector.output.name)
+        onClicked: inspector.controller.edit(inspector.output.name, "enabled", !checked)
+    }
+}

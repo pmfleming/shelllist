@@ -35,15 +35,18 @@ Rectangle {
         control.clicked()
 
     Keys.onReturnPressed: function (event) {
-        control.clicked();
+        if (!event.isAutoRepeat)
+            control.clicked();
         event.accepted = true;
     }
     Keys.onEnterPressed: function (event) {
-        control.clicked();
+        if (!event.isAutoRepeat)
+            control.clicked();
         event.accepted = true;
     }
     Keys.onSpacePressed: function (event) {
-        control.clicked();
+        if (!event.isAutoRepeat)
+            control.clicked();
         event.accepted = true;
     }
 

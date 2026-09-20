@@ -210,63 +210,12 @@ TestCase {
         compare(calls[0].params.enabled, true, "healthy telemetry restores ordinary toggling");
     }
 
-    function test_displayPreferenceIsDaemonOwnedAndRecoveryStatusIsVisible() {
+    function test_displayControlsMovedOutOfPower() {
         const panel = makePanel();
-        const controller = panel.controller;
-        const toggle = findChild(panel, "preferExternalDisplay");
-        const status = findChild(panel, "displayPolicyStatus");
-        verify(!toggle.interactive);
-        controller.applyDisplayPolicy({ available: true, policy: { prefer_external: true }, status: "settling" });
-        verify(toggle.checked);
-        verify(toggle.interactive);
-        verify(status.text.indexOf("stable") >= 0);
-        verify(toggle.Accessible.name.length > 0);
-        calls = [];
-        toggle.clicked();
-        compare(calls.length, 1);
-        compare(calls[0].method, "displayPolicy.set");
-        compare(calls[0].params.prefer_external, false);
-        verify(toggle.checked, "wait for the daemon confirmation");
-        verify(!toggle.interactive);
-        controller.operationFailed("display-policy-1", "Permission denied");
-        compare(status.text, "Permission denied");
-        verify(toggle.interactive);
-        controller.operationFinished("display-policy-2");
-        controller.applyDisplayPolicy({ available: true, policy: { prefer_external: false }, status: "all-displays" });
-        verify(!toggle.checked);
-        verify(status.text.indexOf("Laptop screen enabled") >= 0);
-    }
-
-    function test_layoutDraftSurvivesTelemetryAndConfirmationUsesDaemonToken() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const pane = findChild(panel, "displayLayoutCard");
-        const state = { available: true, policy: { prefer_external: true }, status: "internal", layout: { saved: { outputs: [] }, trial: null },
-            outputs: [{ name: "eDP-1", width: 1920, height: 1200, refreshRate: 60, x: 0, y: 0, scale: 1.25, transform: 0, disabled: false, availableModes: ["1920x1200@60.00Hz"] }] };
-        controller.applyDisplayPolicy(state);
-        compare(pane.draft.length, 1);
-        pane.edit(0, "scale", "1.5");
-        controller.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
-        compare(pane.draft[0].scale, "1.5");
-        calls = [];
-        pane.preview();
-        compare(calls.length, 1);
-        compare(calls[0].method, "displayLayout.preview");
-        compare(calls[0].params.outputs[0].scale, 1.5);
-        verify(calls[0].params.outputs[0].enabled);
-        verify(!("modes" in calls[0].params.outputs[0]));
-        controller.operationFinished("display-policy-layout-preview-1");
-        state.layout.trial = { id: "daemon-token", expires_at: Date.now() / 1000 + 20 };
-        controller.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
-        verify(!pane.interactive);
-        findChild(panel, "confirmDisplayLayout").clicked();
-        compare(calls[1].method, "displayLayout.confirm");
-        compare(calls[1].params.id, "daemon-token");
-        controller.operationFinished("display-policy-layout-confirm-2");
-        state.layout.trial = null;
-        controller.applyDisplayPolicy(JSON.parse(JSON.stringify(state)));
-        verify(!pane.dirty);
-        compare(pane.draft[0].scale, 1.25);
+        verify(findChild(panel, "preferExternalDisplay") === null);
+        verify(findChild(panel, "displayLayoutCard") === null);
+        verify(!("displayPolicyState" in panel.controller));
+        verify(!panel.controller.backend.streams.includes("display-policy.changed"));
     }
 
     function test_sharedAndSeparateAutomaticSleepControls() {

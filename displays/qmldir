@@ -1,6 +1,11 @@
 module Shelllist.Displays
 DisplayController 1.0 DisplayController.qml
 DisplayContent 1.0 DisplayContent.qml
+DisplayIdentifyOverlay 1.0 DisplayIdentifyOverlay.qml
 internal DisplayBackend DisplayBackend.qml
 internal DisplayPolicyPane DisplayPolicyPane.qml
 internal DisplayLayoutPane DisplayLayoutPane.qml
+internal DisplayOverview DisplayOverview.qml
+internal DisplayCanvas DisplayCanvas.qml
+internal DisplayInspector DisplayInspector.qml
+internal DisplayTrialDialog DisplayTrialDialog.qml

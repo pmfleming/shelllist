@@ -92,6 +92,10 @@ Item {
         const bundle = bundleFor("bluetooth");
         return bundle ? bundle.controller : null;
     }
+    readonly property var displayController: {
+        const bundle = bundleFor("displays");
+        return bundle ? bundle.controller : null;
+    }
     readonly property var activityController: {
         const bundle = bundleFor("activity");
         return bundle ? bundle.controller : null;

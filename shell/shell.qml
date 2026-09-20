@@ -5,6 +5,7 @@ import Quickshell.Io
 import QtQuick
 import Shelllist.Ui as Ui
 import Shelllist.Bar as Bar
+import Shelllist.Displays as Displays
 
 ShellRoot {
     id: shell
@@ -96,6 +97,8 @@ ShellRoot {
             surfaces.currentController.focusSearchRequested();
         }
     }
+
+    Displays.DisplayIdentifyOverlay { controller: surfaces.displayController }
 
     Bar.BarController {
         id: barController

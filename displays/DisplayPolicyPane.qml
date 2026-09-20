@@ -4,41 +4,27 @@ import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
-Ui.DetailColumnCard {
+Ui.DetailCard {
     id: pane
     required property DisplayController controller
     objectName: "displayPolicyCard"
-    title: qsTr("Laptop & external display")
-    verticalContentPadding: Ui.Theme.spacingMd
-    headingSpacing: Ui.Theme.spacingMd
-    height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
-
-    Ui.ToggleRow {
-        objectName: "preferExternalDisplay"
-        Layout.fillWidth: true
-        Layout.preferredHeight: 60
-        title: qsTr("Use only the external display")
-        subtitle: qsTr("Keep the laptop screen as a fallback while docking")
-        checked: !!(pane.controller.displayPolicyState.policy || {}).prefer_external
-        interactive: pane.controller.canChange
-        onClicked: pane.controller.setPreferExternal(!checked)
-    }
-
-    Ui.FieldLabel {
-        objectName: "displayPolicyStatus"
-        Layout.fillWidth: true
-        text: pane.controller.displayPolicyError || pane.controller.displayPolicyState.error ||
-            (!pane.controller.displayPolicyState.available ? qsTr("Requires daemon display integration (programs.shelllist.displays.enable).") :
-            (pane.controller.displayPolicySaving ? qsTr("Saving display preference…") :
-            ({ "settling": qsTr("Waiting for the external display to stay stable before hiding the laptop screen."),
-               "external": qsTr("External-only mode · laptop fallback returns if the display disconnects."),
-               "internal": qsTr("Using the laptop screen · no usable external display detected."),
-               "all-displays": qsTr("Laptop screen enabled alongside connected external displays."),
-               "sleeping": qsTr("Display changes paused while preparing for sleep."),
-               "layout-preview": qsTr("Laptop fallback enabled while the layout is being tested or restored."),
-               "pending": qsTr("Applying display preference…") })[pane.controller.displayPolicyState.status] || qsTr("Checking displays…")))
-        wrapMode: Text.Wrap
-        elide: Text.ElideNone
-        color: pane.controller.displayPolicyError || pane.controller.displayPolicyState.error ? Ui.Theme.warning : Ui.Theme.mutedText
+    implicitHeight: 66
+    RowLayout {
+        anchors.fill: parent
+        spacing: Ui.Theme.spacingMd
+        Ui.GlyphLabel { glyph: "󰌢"; color: (pane.controller.displayPolicyState.policy || {}).prefer_external ? Ui.Theme.disabledText : Ui.Theme.accent }
+        Ui.GlyphLabel { glyph: "󰁔"; color: Ui.Theme.mutedText }
+        Ui.GlyphLabel { glyph: "󰍹"; color: Ui.Theme.accent }
+        Ui.ToggleRow {
+            objectName: "preferExternalDisplay"
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            title: qsTr("Prefer external")
+            subtitle: qsTr("Saved docking preference. Laptop returns if external displays disconnect.")
+            showSubtitle: false
+            checked: !!(pane.controller.displayPolicyState.policy || {}).prefer_external
+            interactive: pane.controller.canSetPolicy
+            onClicked: pane.controller.setPreferExternal(!checked)
+        }
     }
 }
