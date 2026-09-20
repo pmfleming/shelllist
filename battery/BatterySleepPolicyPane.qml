@@ -42,7 +42,7 @@ Ui.DetailColumnCard {
             { value: "ignore", label: qsTr("Do nothing"), enabled: !!(pane.controller.sleepPolicyState.lid || {}).available },
             { value: "lock", label: qsTr("Lock screen"), enabled: !!(pane.controller.sleepPolicyState.lid || {}).available },
             { value: "suspend", label: qsTr("Suspend"), enabled: !!(pane.controller.sleepPolicyState.lid || {}).available },
-            { value: "hibernate", label: qsTr("Hibernate immediately"), enabled: !!(pane.controller.sleepPolicyState.lid || {}).available && ["yes", "challenge"].includes(pane.controller.powerSleep.can_hibernate) },
+            { value: "hibernate", label: qsTr("Hibernate immediately"), enabled: !!(pane.controller.sleepPolicyState.lid || {}).available && ["yes", "challenge", "inhibited", "inhibitor-blocked", "challenge-inhibitor-blocked"].includes(pane.controller.powerSleep.can_hibernate) },
             { value: "profile", label: qsTr("Sleep, then hibernate using profile"), enabled: !!(pane.controller.sleepPolicyState.lid || {}).available }
         ]
         value: pane.controller.sleepPolicyDraft.lid_action || "system"

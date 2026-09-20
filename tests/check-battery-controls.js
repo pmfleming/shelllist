@@ -151,7 +151,7 @@ for (const extra of [
     const { c, calls } = controller();
     c.powerSleep = { available: true, can_suspend: "yes", can_hibernate: "challenge" };
     // The backend dispatch test below owns the action allowlist.
-    for (const capability of ["no", "na", "", undefined]) {
+    for (const capability of ["no", "na", "challenge", "inhibited", "inhibitor-blocked", "challenge-inhibitor-blocked", "", undefined]) {
         c.powerSleep.can_suspend = capability;
         assert.equal(c.powerSleepAction("suspend"), false);
     }
@@ -166,6 +166,8 @@ for (const extra of [
     assert.equal(c.powerSleepAction("hibernate"), false, "pending lock prevents duplicate requests");
     c.operationFinished("power-sleep-lock-1");
     assert.equal(c.sleepStatus, "");
+    assert.equal(c.powerSleepAction("hibernate"), false, "non-interactive authorization required");
+    c.powerSleep.can_hibernate = "yes";
     assert.equal(c.powerSleepAction("hibernate"), true);
     c.operationFinished("power-sleep-hibernate-2");
     c.powerSleep.available = false;

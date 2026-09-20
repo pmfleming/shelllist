@@ -94,7 +94,7 @@ function calibrationLabel(operation) {
 }
 
 function sleepCapabilityAvailable(value) {
-    return value === "yes" || value === "challenge";
+    return value === "yes";
 }
 
 function sleepInhibitors(state, mode) {
@@ -114,12 +114,15 @@ function sleepCapabilityDescription(state, action) {
     const capability = action === "suspend" ? state.can_suspend : state.can_hibernate;
     switch (capability) {
     case "yes": return "Available · locks before sleeping";
-    case "challenge": return "Authorisation required · locks before sleeping";
+    case "challenge": return "Authorisation required · configure system policy before sleeping";
+    case "inhibited":
+    case "inhibitor-blocked": return "Temporarily blocked by an application’s sleep inhibitor";
+    case "challenge-inhibitor-blocked": return "Sleep is inhibited and also requires authorisation";
     case "na": {
         const issues = action === "hibernate" ? ((state.diagnostics || {}).hibernate_issues || []) : [];
         return issues.length > 0 ? issues.join(" ") : "Not supported by the system";
     }
-    case "no": return "Not permitted by system policy";
+    case "no": return "Disabled or not permitted by system policy";
     default: return "Capability unavailable";
     }
 }
