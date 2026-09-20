@@ -70,7 +70,8 @@ Ui.ChooserController {
     // even if a degraded snapshot defaulted keep_awake to false.
     readonly property bool keepAwakeReleaseOnly: !powerSleep.available
     readonly property bool canSetKeepAwake: powerSleep.keep_awake !== undefined && backend.ready && !actionInFlight && !keepAwakePending && sleepPendingAction.length === 0 && (keepAwakeReleaseOnly || keepAwake || !powerSleep.preparing_for_sleep)
-    readonly property bool sleepBusy: sleepPendingAction.length > 0 || !!powerSleep.preparing_for_sleep
+    readonly property bool sleepOutcomeUnknown: (powerSleep.operation || {}).phase === "unknown"
+    readonly property bool sleepBusy: sleepPendingAction.length > 0 || !!powerSleep.preparing_for_sleep || ["requested", "dispatching", "accepted", "preparing", "returned"].includes((powerSleep.operation || {}).phase)
     readonly property string sleepStatus: Presentation.sleepStatus(powerSleep, sleepPendingAction, sleepRetryAction, sleepError)
     property string lastError: ""
     property string refreshError: ""

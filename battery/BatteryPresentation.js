@@ -136,6 +136,15 @@ function sleepStatus(state, pendingAction, retryAction, error) {
         return "Preparing sleep…";
     if (pendingAction)
         return "Locking…";
+    const operation = (state || {}).operation || {};
+    if (operation.phase === "unknown")
+        return "Sleep outcome unknown · inspect the session before another request";
+    if (operation.phase === "failed")
+        return sleepActionName(operation.action) + " failed";
+    if (["requested", "dispatching", "accepted"].includes(operation.phase))
+        return "Sleep requested · awaiting system confirmation";
+    if (operation.phase === "returned")
+        return "Checking sleep result…";
     if (error)
         return sleepActionName(retryAction) + " failed";
     if (!state || !state.available)

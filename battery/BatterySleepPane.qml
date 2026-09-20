@@ -89,7 +89,7 @@ Ui.DetailColumnCard {
             objectName: "sleepRetryButton"
             Layout.preferredWidth: 30
             Layout.preferredHeight: 30
-            visible: pane.controller.sleepError.length > 0 && !pane.controller.sleepBusy
+            visible: pane.controller.sleepError.length > 0 && !pane.controller.sleepBusy && !pane.controller.sleepOutcomeUnknown
             icon: "󰑐"
             flatIconColor: Ui.Theme.accent
             accessibleName: qsTr("Retry %1").arg(Presentation.sleepActionName(pane.controller.sleepRetryAction))
@@ -112,7 +112,7 @@ Ui.DetailColumnCard {
     Ui.FieldLabel {
         objectName: "sleepFailureReason"
         Layout.fillWidth: true
-        text: pane.controller.sleepError || pane.controller.powerSleep.error || ""
+        text: (pane.controller.powerSleep.operation || {}).error || pane.controller.sleepError || pane.controller.powerSleep.error || ""
         visible: text.length > 0 && pane.controller.sleepPendingAction.length === 0
         color: Ui.Theme.warning
         wrapMode: Text.Wrap

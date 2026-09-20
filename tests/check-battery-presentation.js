@@ -46,6 +46,8 @@ for (const capability of ["inhibited", "inhibitor-blocked", "challenge-inhibitor
     equal(context.sleepCapabilityAvailable(capability), false, "inhibited action cannot dispatch");
     equal(context.sleepCapabilityDescription({ ...sleep, can_hibernate: capability }, "hibernate").includes("inhibit"), true, "inhibition is explained");
 }
+equal(context.sleepStatus({ ...sleep, operation: { phase: "unknown" } }, "", "hibernate", "lost reply").includes("outcome unknown"), true, "uncertain actions do not invite retry");
+equal(context.sleepStatus({ ...sleep, operation: { phase: "failed", action: "hibernate" } }, "", "", ""), "Hibernate failed", "late job failures remain visible");
 const diagnosed = { ...sleep, diagnostics: { hibernate_issues: ["No active disk-backed swap; zram alone cannot store a hibernation image."] } };
 equal(context.sleepCapabilityDescription(diagnosed, "hibernate"), diagnosed.diagnostics.hibernate_issues[0], "daemon evidence explains the unavailable hibernate action");
 equal(context.sleepCapabilityDescription({ ...diagnosed, can_hibernate: "no" }, "hibernate"), "Disabled or not permitted by system policy", "hardware evidence does not mislabel policy denial");
