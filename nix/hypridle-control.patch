@@ -1,6 +1,6 @@
 --- a/src/core/Hypridle.hpp
 +++ b/src/core/Hypridle.hpp
-@@ -51,6 +51,16 @@
+@@ -51,6 +51,18 @@
      void               uninhibitSleep();
  
    private:
@@ -13,6 +13,8 @@
 +    std::string m_shelllistBaseGeneration, m_shelllistGeneration, m_shelllistCommand;
 +    uint32_t m_shelllistMinutes = 0;
 +    uint64_t m_shelllistRevision = 0;
++    uint64_t m_shelllistEpisode = 0;
++    bool m_shelllistIdle = false;
 +
      void    setupDBUS();
      void    enterEventLoop();
@@ -65,7 +67,37 @@
          // finalize wayland dispatching. Dispatch pending on the queue
          int ret = 0;
          do {
-@@ -298,6 +305,7 @@
+@@ -268,11 +275,21 @@
+         return;
+     }
+ 
++    if (pListener == &m_shelllistListener) {
++        m_shelllistIdle = true;
++        ++m_shelllistEpisode;
++        spawn(pListener->onTimeout + " --episode " + std::to_string(m_shelllistEpisode));
++        return;
++    }
+     Debug::log(LOG, "Running {}", pListener->onTimeout);
+     spawn(pListener->onTimeout);
+ }
+ 
+ void CHypridle::onResumed(SIdleListener* pListener) {
++    // Any activity invalidates a pending sleep, even if a different listener
++    // supplied the resume event or inhibition suppresses its on-resume command.
++    m_shelllistIdle = false;
++    ++m_shelllistEpisode;
+     Debug::log(LOG, "Resumed: rule {:x}", (uintptr_t)pListener);
+     isIdled = false;
+     if (g_pHypridle->m_iInhibitLocks > 0 && !pListener->ignoreInhibit) {
+@@ -290,6 +307,7 @@
+ }
+ 
+ void CHypridle::onInhibit(bool lock) {
++    if (lock) { m_shelllistIdle = false; ++m_shelllistEpisode; }
+     m_iInhibitLocks += lock ? 1 : -1;
+ 
+     if (m_iInhibitLocks < 0) {
+@@ -298,6 +316,7 @@
      }
  
      if (m_iInhibitLocks == 0 && isIdled) {
