@@ -32,7 +32,7 @@ var streams = {
     displays: Protocol.streams["display-policy.changed"],
     battery: Protocol.streams["battery.changed"],
     powerProfile: Protocol.streams["power-profile.changed"],
-    powerSleep: Protocol.streams["power-sleep.changed"],
+    powerSuspend: Protocol.streams["power-sleep.changed"],
     osdHardware: Protocol.streams["osd-hardware.changed"],
     notifications: Protocol.streams["notifications.changed"],
     notificationActive: Protocol.streams["notifications.active.changed"],
@@ -53,7 +53,7 @@ propertyByStream[streams.brightness] = "brightness";
 propertyByStream[streams.displays] = "displays";
 propertyByStream[streams.battery] = "battery";
 propertyByStream[streams.powerProfile] = "powerProfile";
-propertyByStream[streams.powerSleep] = "powerSleep";
+propertyByStream[streams.powerSuspend] = "powerSuspend";
 propertyByStream[streams.osdHardware] = "osdHardware";
 propertyByStream[streams.notifications] = "notifications";
 propertyByStream[streams.notificationActive] = "notificationActive";
@@ -69,7 +69,7 @@ var propertyByPayload = {
     display_policy: "displays",
     battery: "battery",
     power_profile: "powerProfile",
-    power_sleep: "powerSleep",
+    power_sleep: "powerSuspend",
     osd_hardware: "osdHardware",
     notifications: "notifications",
     notification_active: "notificationActive",

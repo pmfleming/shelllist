@@ -13,7 +13,7 @@ function equal(actual, expected, message) {
 }
 
 equal(context.resumeGenerationAdvanced(-1, 3), false, "initial snapshot is a baseline");
-equal(context.resumeGenerationAdvanced(0, 1), true, "short sleep has an explicit resume event");
+equal(context.resumeGenerationAdvanced(0, 1), true, "short suspend has an explicit resume event");
 equal(context.resumeGenerationAdvanced(1, 1), false, "repeated telemetry and wall-clock jumps do not rebuild");
 equal(context.resumeGenerationAdvanced(4, 0), false, "daemon restart resets the baseline");
 

@@ -37,8 +37,8 @@ Item {
         recoveryDebounce.restart();
     }
 
-    function observeSleepState(): void {
-        const generation = Number((controller.powerSleep || {}).resume_generation);
+    function observeSuspendState(): void {
+        const generation = Number((controller.powerSuspend || {}).resume_generation);
         if (!Number.isFinite(generation) || generation < 0)
             return;
         if (Recovery.resumeGenerationAdvanced(lastResumeGeneration, generation))
@@ -82,7 +82,7 @@ Item {
 
     Component.onCompleted: {
         surfacesActive = barsEnabled;
-        observeSleepState();
+        observeSuspendState();
         observeScreens();
     }
 
@@ -95,7 +95,7 @@ Item {
 
     Connections {
         target: root.controller
-        function onPowerSleepChanged(): void { root.observeSleepState(); }
+        function onPowerSuspendChanged(): void { root.observeSuspendState(); }
     }
 
     Timer {

@@ -82,7 +82,7 @@
  }
  
  void CHypridle::onResumed(SIdleListener* pListener) {
-+    // Any activity invalidates a pending sleep, even if a different listener
++    // Any activity invalidates a pending suspend, even if a different listener
 +    // supplied the resume event or inhibition suppresses its on-resume command.
 +    m_shelllistIdle = false;
 +    ++m_shelllistEpisode;

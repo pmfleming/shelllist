@@ -58,6 +58,19 @@ TestCase {
         return panel;
     }
 
+    function test_suspendTelemetryKeepsResumeAndOsdRouting() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.applySnapshot({ power_sleep: { available: true, inhibitors: [], resume_generation: 2 } });
+        compare(controller.powerSuspend.resume_generation, 2);
+        controller.handleEvent({ event: "changed", stream: "power-sleep.changed", data: {
+            available: true, inhibitors: [{ what: "idle", mode: "block" }], resume_generation: 3
+        } });
+        compare(controller.powerSuspend.resume_generation, 3);
+        compare(controller.osd.kind, "idle-inhibitor");
+        compare(controller.osd.valueLabel, "Active");
+    }
+
     function test_progressTracksEveryConfirmedValueImmediately() {
         const panel = makePanel();
         const fill = findChild(panel, "osdProgressFill");

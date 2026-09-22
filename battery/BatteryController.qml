@@ -41,7 +41,9 @@ Ui.ChooserController {
             actions: [],
             active_holds: []
         })
-    property var powerSleep: ({
+
+    // Telemetry and policy fields retain bar-api v1 keys for daemon compatibility.
+    property var powerSuspend: ({
             available: false,
             can_suspend: "no",
             can_hibernate: "no",
@@ -49,31 +51,31 @@ Ui.ChooserController {
             lock_before_sleep: true,
             inhibitors: []
         })
-    property var sleepPolicyState: ({ available: false })
-    property var sleepPolicyDraft: ({
+    property var suspendPolicyState: ({ available: false })
+    property var suspendPolicyDraft: ({
             lid_action: "system",
             same_profile: true,
             battery: { sleep_minutes: 30, hibernate_minutes: 0 },
             plugged: { sleep_minutes: 30, hibernate_minutes: 0 }
         })
-    property bool sleepPolicyDirty: false
-    property bool sleepPolicySaving: false
-    property bool sleepPolicyCriticalOnly: false
-    property string sleepPolicyError: ""
-    property string sleepPendingAction: ""
-    property string sleepRetryAction: ""
-    property string sleepError: ""
+    property bool suspendPolicyDirty: false
+    property bool suspendPolicySaving: false
+    property bool suspendPolicyCriticalOnly: false
+    property string suspendPolicyError: ""
+    property string suspendPendingAction: ""
+    property string suspendRetryAction: ""
+    property string suspendError: ""
     property bool keepAwakePending: false
     property string keepAwakeError: ""
-    readonly property bool keepAwake: powerSleep.keep_awake === true
+    readonly property bool keepAwake: powerSuspend.keep_awake === true
 
     // With unavailable telemetry the only safe action is an idempotent release,
     // even if a degraded snapshot defaulted keep_awake to false.
-    readonly property bool keepAwakeReleaseOnly: !powerSleep.available
-    readonly property bool canSetKeepAwake: powerSleep.keep_awake !== undefined && backend.ready && !actionInFlight && !keepAwakePending && sleepPendingAction.length === 0 && (keepAwakeReleaseOnly || keepAwake || !powerSleep.preparing_for_sleep)
-    readonly property bool sleepOutcomeUnknown: (powerSleep.operation || {}).phase === "unknown"
-    readonly property bool sleepBusy: sleepPendingAction.length > 0 || !!powerSleep.preparing_for_sleep || ["requested", "dispatching", "accepted", "preparing", "returned"].includes((powerSleep.operation || {}).phase)
-    readonly property string sleepStatus: Presentation.sleepStatus(powerSleep, sleepPendingAction, sleepRetryAction, sleepError)
+    readonly property bool keepAwakeReleaseOnly: !powerSuspend.available
+    readonly property bool canSetKeepAwake: powerSuspend.keep_awake !== undefined && backend.ready && !actionInFlight && !keepAwakePending && suspendPendingAction.length === 0 && (keepAwakeReleaseOnly || keepAwake || !powerSuspend.preparing_for_sleep)
+    readonly property bool suspendOutcomeUnknown: (powerSuspend.operation || {}).phase === "unknown"
+    readonly property bool suspendBusy: suspendPendingAction.length > 0 || !!powerSuspend.preparing_for_sleep || ["requested", "dispatching", "accepted", "preparing", "returned"].includes((powerSuspend.operation || {}).phase)
+    readonly property string suspendStatus: Presentation.suspendStatus(powerSuspend, suspendPendingAction, suspendRetryAction, suspendError)
     property string lastError: ""
     property string refreshError: ""
     property string transportError: ""
@@ -92,7 +94,7 @@ Ui.ChooserController {
         {
             value: "power",
             icon: "󰐥",
-            label: "Sleep"
+            label: "Suspend"
         }
     ]
     property string viewTab: "overview"
@@ -282,25 +284,25 @@ Ui.ChooserController {
             });
     }
 
-    function applyPowerSleep(value: var): void {
-        if (value && value.available && !powerSleep.available && !keepAwakePending)
+    function applyPowerSuspend(value: var): void {
+        if (value && value.available && !powerSuspend.available && !keepAwakePending)
             keepAwakeError = "";
-        powerSleep = value || ({
+        powerSuspend = value || ({
                 available: false,
                 inhibitors: []
             });
     }
 
-    function applySleepPolicy(value: var): void {
-        sleepPolicyState = value || ({ available: false });
-        if (value && value.policy && !sleepPolicyDirty && !sleepPolicySaving)
-            sleepPolicyDraft = JSON.parse(JSON.stringify(value.policy));
+    function applySuspendPolicy(value: var): void {
+        suspendPolicyState = value || ({ available: false });
+        if (value && value.policy && !suspendPolicyDirty && !suspendPolicySaving)
+            suspendPolicyDraft = JSON.parse(JSON.stringify(value.policy));
     }
 
-    function updateSleepPolicy(profile: string, field: string, value: var): bool {
-        if ((!sleepPolicyState.available && profile !== "critical_battery") || sleepPolicySaving || actionInFlight)
+    function updateSuspendPolicy(profile: string, field: string, value: var): bool {
+        if ((!suspendPolicyState.available && profile !== "critical_battery") || suspendPolicySaving || actionInFlight)
             return false;
-        const next = JSON.parse(JSON.stringify(sleepPolicyDraft));
+        const next = JSON.parse(JSON.stringify(suspendPolicyDraft));
         if (profile === "critical_battery") {
             if (field === "enabled" ? typeof value !== "boolean"
                 : !["percent", "grace_seconds"].includes(field) || !Number.isInteger(value)
@@ -321,40 +323,40 @@ Ui.ChooserController {
                 return false;
             next[profile][field] = value;
         }
-        sleepPolicyDraft = next;
-        sleepPolicyCriticalOnly = profile === "critical_battery" && (!sleepPolicyDirty || sleepPolicyCriticalOnly);
-        sleepPolicyDirty = true;
-        return saveSleepPolicy();
+        suspendPolicyDraft = next;
+        suspendPolicyCriticalOnly = profile === "critical_battery" && (!suspendPolicyDirty || suspendPolicyCriticalOnly);
+        suspendPolicyDirty = true;
+        return saveSuspendPolicy();
     }
 
-    function saveSleepPolicy(): bool {
-        if ((!sleepPolicyState.available && !sleepPolicyCriticalOnly) || sleepPolicySaving || !sleepPolicyDirty || actionInFlight)
+    function saveSuspendPolicy(): bool {
+        if ((!suspendPolicyState.available && !suspendPolicyCriticalOnly) || suspendPolicySaving || !suspendPolicyDirty || actionInFlight)
             return false;
-        sleepPolicySaving = true;
-        sleepPolicyError = "";
-        const sent = sleepPolicyCriticalOnly ? batteryBackend.setCriticalPolicy(sleepPolicyDraft.critical_battery) : batteryBackend.setSleepPolicy(sleepPolicyDraft);
+        suspendPolicySaving = true;
+        suspendPolicyError = "";
+        const sent = suspendPolicyCriticalOnly ? batteryBackend.setCriticalPolicy(suspendPolicyDraft.critical_battery) : batteryBackend.setSuspendPolicy(suspendPolicyDraft);
         if (!sent) {
-            sleepPolicyFailed("Unable to send automatic sleep settings");
+            suspendPolicyFailed("Unable to send automatic suspend settings");
             return false;
         }
         return true;
     }
 
     function cancelCriticalBattery(): bool {
-        if (actionInFlight || !["countdown", "acting"].includes((sleepPolicyState.critical_battery || {}).phase))
+        if (actionInFlight || !["countdown", "acting"].includes((suspendPolicyState.critical_battery || {}).phase))
             return false;
         return startOperation(batteryBackend.cancelCriticalBattery());
     }
 
-    function sleepPolicyFinished(): void {
-        sleepPolicySaving = false;
-        sleepPolicyDirty = false;
-        sleepPolicyError = "";
+    function suspendPolicyFinished(): void {
+        suspendPolicySaving = false;
+        suspendPolicyDirty = false;
+        suspendPolicyError = "";
     }
 
-    function sleepPolicyFailed(message: string): void {
-        sleepPolicySaving = false;
-        sleepPolicyError = message;
+    function suspendPolicyFailed(message: string): void {
+        suspendPolicySaving = false;
+        suspendPolicyError = message;
     }
 
     function selectDevice(batteryId: string): void {
@@ -374,8 +376,8 @@ Ui.ChooserController {
         const handlers = ({
                 battery: applyBattery,
                 powerProfile: applyPowerProfile,
-                powerSleep: applyPowerSleep,
-                sleepPolicy: applySleepPolicy
+                powerSuspend: applyPowerSuspend,
+                suspendPolicy: applySuspendPolicy
             });
         if (handlers[kind])
             handlers[kind](data);
@@ -415,10 +417,10 @@ Ui.ChooserController {
             keepAwakePending = false;
             keepAwakeError = "";
         }
-        if (id.startsWith("power-sleep-")) {
-            sleepPendingAction = "";
-            sleepRetryAction = "";
-            sleepError = "";
+        if (id.startsWith("power-suspend-")) {
+            suspendPendingAction = "";
+            suspendRetryAction = "";
+            suspendError = "";
         }
         actionInFlight = false;
         lastError = currentSettingsError();
@@ -431,9 +433,9 @@ Ui.ChooserController {
             keepAwakePending = false;
             keepAwakeError = message;
             lastError = currentSettingsError();
-        } else if (id.startsWith("power-sleep-")) {
-            sleepPendingAction = "";
-            sleepError = message;
+        } else if (id.startsWith("power-suspend-")) {
+            suspendPendingAction = "";
+            suspendError = message;
             lastError = currentSettingsError();
         } else {
             lastError = message;
@@ -478,18 +480,18 @@ Ui.ChooserController {
 
     function transportFailed(message: string): void {
         transportError = message;
-        powerSleep = Object.assign({}, powerSleep, { available: false });
+        powerSuspend = Object.assign({}, powerSuspend, { available: false });
         if (keepAwakePending) {
             keepAwakePending = false;
             keepAwakeError = "Connection lost; Keep awake state is unknown until reconnected. " + message;
         }
-        if (sleepPolicySaving)
-            sleepPolicyFailed("Connection lost; settings may have been saved. Retry to confirm. " + message);
+        if (suspendPolicySaving)
+            suspendPolicyFailed("Connection lost; settings may have been saved. Retry to confirm. " + message);
         thresholdAutoSave.stop();
         alertAutoSave.stop();
-        if (sleepPendingAction.length > 0) {
-            sleepPendingAction = "";
-            sleepError = "Connection lost. The request may already have been accepted; check the session before retrying. " + message;
+        if (suspendPendingAction.length > 0) {
+            suspendPendingAction = "";
+            suspendError = "Connection lost. The request may already have been accepted; check the session before retrying. " + message;
             lastError = currentSettingsError();
         } else if (actionInFlight) {
             // A recovered snapshot cannot confirm whether an effect succeeded.
@@ -738,7 +740,7 @@ Ui.ChooserController {
     }
 
     function setKeepAwake(enabled: bool): bool {
-        if (!canSetKeepAwake || typeof enabled !== "boolean" || (enabled && (keepAwakeReleaseOnly || sleepBusy)))
+        if (!canSetKeepAwake || typeof enabled !== "boolean" || (enabled && (keepAwakeReleaseOnly || suspendBusy)))
             return false;
         keepAwakePending = true;
         keepAwakeError = "";
@@ -749,30 +751,30 @@ Ui.ChooserController {
         return false;
     }
 
-    function canPowerSleepAction(action: string): bool {
-        if (actionInFlight || sleepBusy || !powerSleep.available || ["lock", "suspend", "hibernate"].indexOf(action) < 0)
+    function canPowerSuspendAction(action: string): bool {
+        if (actionInFlight || suspendBusy || !powerSuspend.available || ["lock", "suspend", "hibernate"].indexOf(action) < 0)
             return false;
         if (action !== "lock" && keepAwake)
             return false;
-        if (action === "suspend" && !Presentation.sleepCapabilityAvailable(powerSleep.can_suspend))
+        if (action === "suspend" && !Presentation.suspendCapabilityAvailable(powerSuspend.can_suspend))
             return false;
-        if (action === "hibernate" && !Presentation.sleepCapabilityAvailable(powerSleep.can_hibernate))
+        if (action === "hibernate" && !Presentation.suspendCapabilityAvailable(powerSuspend.can_hibernate))
             return false;
         return true;
     }
 
-    function powerSleepAction(action: string): bool {
-        if (!canPowerSleepAction(action))
+    function powerSuspendAction(action: string): bool {
+        if (!canPowerSuspendAction(action))
             return false;
         // Set state before sending: transport rejection can be synchronous.
-        sleepPendingAction = action;
-        sleepRetryAction = action;
-        sleepError = "";
+        suspendPendingAction = action;
+        suspendRetryAction = action;
+        suspendError = "";
         lastError = currentSettingsError();
         actionInFlight = true;
-        if (backend.powerSleepAction(action))
+        if (backend.powerSuspendAction(action))
             return true;
-        operationFailed("power-sleep-" + action, sleepError || "Unable to send the request");
+        operationFailed("power-suspend-" + action, suspendError || "Unable to send the request");
         return false;
     }
 

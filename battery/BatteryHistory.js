@@ -79,7 +79,7 @@ function series(points, metric, minimumMaximum, positiveOnly) {
 }
 
 // Interpolate signed power through zero at charge/discharge transitions, then
-// draw both directions above the baseline. Never bridge missing data or sleep.
+// draw both directions above the baseline. Never bridge missing data or suspend.
 function powerAreas(segments) {
     const areas = [];
     segments.forEach(function (segment) {

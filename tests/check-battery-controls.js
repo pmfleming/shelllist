@@ -147,37 +147,37 @@ for (const extra of [
     assert.equal(calls[0].method, "cancelCalibration");
 }
 
-// Qt's BatterySleep/BatteryTabs suites own visible status, busy controls,
+// Qt's BatterySuspend/BatteryTabs suites own visible status, busy controls,
 // independent level toggles and acknowledged Keep awake state. Keep the extra
 // command guards and transport failure paths here, not a second UI-state matrix.
 {
     const { c, calls } = controller();
-    c.powerSleep = { available: true, can_suspend: "yes", can_hibernate: "challenge" };
+    c.powerSuspend = { available: true, can_suspend: "yes", can_hibernate: "challenge" };
     for (const capability of ["no", "na", "challenge", "inhibited", "inhibitor-blocked", "challenge-inhibitor-blocked", "", undefined]) {
-        c.powerSleep.can_suspend = capability;
-        assert.equal(c.powerSleepAction("suspend"), false);
+        c.powerSuspend.can_suspend = capability;
+        assert.equal(c.powerSuspendAction("suspend"), false);
     }
-    c.powerSleep.can_suspend = "yes";
-    c.powerSleep.preparing_for_sleep = true;
-    assert.equal(c.powerSleepAction("lock"), false);
-    c.powerSleep.preparing_for_sleep = false;
-    c.powerSleepAction("lock");
-    assert.equal(c.powerSleepAction("hibernate"), false, "pending lock prevents duplicate requests");
-    c.operationFinished("power-sleep-lock-1");
-    assert.equal(c.powerSleepAction("hibernate"), false, "non-interactive authorization required");
-    c.powerSleep.can_hibernate = "yes";
-    c.powerSleepAction("hibernate");
-    c.operationFinished("power-sleep-hibernate-2");
-    c.powerSleep.available = false;
-    c.powerSleepAction("lock");
+    c.powerSuspend.can_suspend = "yes";
+    c.powerSuspend.preparing_for_sleep = true;
+    assert.equal(c.powerSuspendAction("lock"), false);
+    c.powerSuspend.preparing_for_sleep = false;
+    c.powerSuspendAction("lock");
+    assert.equal(c.powerSuspendAction("hibernate"), false, "pending lock prevents duplicate requests");
+    c.operationFinished("power-suspend-lock-1");
+    assert.equal(c.powerSuspendAction("hibernate"), false, "non-interactive authorization required");
+    c.powerSuspend.can_hibernate = "yes";
+    c.powerSuspendAction("hibernate");
+    c.operationFinished("power-suspend-hibernate-2");
+    c.powerSuspend.available = false;
+    c.powerSuspendAction("lock");
     assert.equal(calls.length, 2, "unavailable telemetry must not dispatch another command");
 }
 {
     const { c } = controller();
-    c.applyPowerSleep({ available: true, can_suspend: "yes", keep_awake: true });
+    c.applyPowerSuspend({ available: true, can_suspend: "yes", keep_awake: true });
     c.setKeepAwake(false);
     c.operationFailed("power-keep-awake-1", "denied");
-    assert.equal(c.keepAwake, true, "failed release must not claim sleep is allowed");
+    assert.equal(c.keepAwake, true, "failed release must not claim suspend is allowed");
     c.sendSucceeds = false;
     c.setKeepAwake(false);
     assert.equal(c.actionInFlight, false, "synchronous failure cannot strand controls busy");
@@ -186,19 +186,19 @@ for (const extra of [
     c.backendReady = false;
     c.transportFailed("disconnected");
     assert.equal(c.canSetKeepAwake, false);
-    assert.equal(c.canPowerSleepAction("lock"), false, "stale telemetry is not actionable");
+    assert.equal(c.canPowerSuspendAction("lock"), false, "stale telemetry is not actionable");
     assert.ok(c.keepAwakeError.includes("unknown"));
     c.backendReady = true;
-    c.applyPowerSleep({ available: true, keep_awake: false });
+    c.applyPowerSuspend({ available: true, keep_awake: false });
     assert.equal(c.keepAwakeError, "", "fresh snapshot resolves connection uncertainty");
 }
 for (const reportedActive of [false, true]) {
     const { c } = controller();
-    c.applyPowerSleep({ available: false, keep_awake: reportedActive, preparing_for_sleep: true });
+    c.applyPowerSuspend({ available: false, keep_awake: reportedActive, preparing_for_sleep: true });
     assert.equal(c.setKeepAwake(true), false, "must never acquire protection with unavailable telemetry");
-    c.sleepPendingAction = "suspend";
+    c.suspendPendingAction = "suspend";
     assert.equal(c.setKeepAwake(false), false);
-    c.sleepPendingAction = "";
+    c.suspendPendingAction = "";
     c.backendReady = false;
     assert.equal(c.setKeepAwake(false), false, "disconnected transport is not actionable");
 }
@@ -224,9 +224,9 @@ for (const reportedActive of [false, true]) {
     });
     vm.runInContext(functions(fs.readFileSync(backendPath, "utf8")), backend);
     for (const action of ["", "typo", "toString", "__proto__"])
-        assert.equal(backend.powerSleepAction(action), false);
+        assert.equal(backend.powerSuspendAction(action), false);
     for (const action of ["lock", "suspend", "hibernate"])
-        backend.powerSleepAction(action);
+        backend.powerSuspendAction(action);
     assert.deepEqual(calls.map(call => call[1]), ["lock", "suspend", "hibernate"]);
     backend.setKeepAwake(true);
     assert.deepEqual(JSON.parse(JSON.stringify(calls[3])),
@@ -259,19 +259,19 @@ for (const reportedActive of [false, true]) {
 }
 {
     const { c } = controller();
-    c.powerSleep = { available: true, can_suspend: "yes", inhibitors: [] };
-    c.powerSleepAction("suspend");
-    c.operationFailed("power-sleep-suspend-1", "Screen lock was not confirmed");
-    assert.equal(c.powerSleepAction(c.sleepRetryAction), true, "failed commands can be retried explicitly");
-    c.operationFinished("power-sleep-suspend-2");
+    c.powerSuspend = { available: true, can_suspend: "yes", inhibitors: [] };
+    c.powerSuspendAction("suspend");
+    c.operationFailed("power-suspend-suspend-1", "Screen lock was not confirmed");
+    assert.equal(c.powerSuspendAction(c.suspendRetryAction), true, "failed commands can be retried explicitly");
+    c.operationFinished("power-suspend-suspend-2");
     c.sendSucceeds = false;
-    c.powerSleepAction("lock");
+    c.powerSuspendAction("lock");
     assert.equal(c.actionInFlight, false, "synchronous rejection cannot leave the controls busy");
     c.sendSucceeds = true;
-    c.powerSleepAction("suspend");
+    c.powerSuspendAction("suspend");
     c.transportFailed("Transport closed");
     assert.equal(c.actionInFlight, false);
-    assert.match(c.sleepError, /may already have been accepted/);
+    assert.match(c.suspendError, /may already have been accepted/);
 }
 {
     const { c, calls } = controller();
@@ -279,26 +279,26 @@ for (const reportedActive of [false, true]) {
         battery: { sleep_minutes: 15, hibernate_minutes: 60 },
         plugged: { sleep_minutes: 45, hibernate_minutes: 180 } };
     const state = { available: true, policy, active_profile: "battery" };
-    c.applySleepPolicy(state);
-    c.updateSleepPolicy("", "same_profile", true);
+    c.applySuspendPolicy(state);
+    c.updateSuspendPolicy("", "same_profile", true);
     assert.equal(calls[0].args[0].same_profile, true);
-    assert.equal(c.updateSleepPolicy("battery", "sleep_minutes", 30), false, "pending save prevents duplicate writes");
+    assert.equal(c.updateSuspendPolicy("battery", "sleep_minutes", 30), false, "pending save prevents duplicate writes");
     assert.equal(calls[0].args[0].plugged.hibernate_minutes, 180, "shared mode retains the separate AC profile");
-    c.applySleepPolicy(state);
-    assert.equal(c.sleepPolicyDraft.same_profile, true, "stale telemetry must not overwrite an in-flight edit");
-    c.sleepPolicyFailed("hypridle restart failed");
-    assert.equal(c.sleepPolicyDirty, true);
-    assert.equal(c.saveSleepPolicy(), true, "failed saves offer explicit retry");
-    c.sleepPolicyFinished();
-    c.applySleepPolicy({ ...state, policy: calls[1].args[0] });
-    assert.equal(c.updateSleepPolicy("", "lid_action", "shutdown"), false);
+    c.applySuspendPolicy(state);
+    assert.equal(c.suspendPolicyDraft.same_profile, true, "stale telemetry must not overwrite an in-flight edit");
+    c.suspendPolicyFailed("hypridle restart failed");
+    assert.equal(c.suspendPolicyDirty, true);
+    assert.equal(c.saveSuspendPolicy(), true, "failed saves offer explicit retry");
+    c.suspendPolicyFinished();
+    c.applySuspendPolicy({ ...state, policy: calls[1].args[0] });
+    assert.equal(c.updateSuspendPolicy("", "lid_action", "shutdown"), false);
     for (const value of [-1, 1.5, 10081, NaN])
-        assert.equal(c.updateSleepPolicy("battery", "sleep_minutes", value), false);
-    c.updateSleepPolicy("battery", "sleep_minutes", 0);
+        assert.equal(c.updateSuspendPolicy("battery", "sleep_minutes", value), false);
+    c.updateSuspendPolicy("battery", "sleep_minutes", 0);
     c.transportFailed("disconnected");
-    assert.match(c.sleepPolicyError, /may have been saved/);
-    c.sleepPolicyState.available = false;
-    assert.equal(c.saveSleepPolicy(), false, "unmanaged integration never claims settings were applied");
+    assert.match(c.suspendPolicyError, /may have been saved/);
+    c.suspendPolicyState.available = false;
+    assert.equal(c.saveSuspendPolicy(), false, "unmanaged integration never claims settings were applied");
 }
 
 // Connectivity errors expire only after a successful snapshot; effect errors
@@ -326,18 +326,18 @@ for (const operation of ["none", "effect", "threshold", "alert"]) {
 }
 {
     const { c, calls } = controller();
-    c.sleepPolicyState = { available: true, critical_battery: { phase: "armed" } };
+    c.suspendPolicyState = { available: true, critical_battery: { phase: "armed" } };
     for (const [field, value] of [["percent", 0], ["percent", 21], ["grace_seconds", 0], ["grace_seconds", 301], ["enabled", "yes"]])
-        assert.equal(c.updateSleepPolicy("critical_battery", field, value), false);
-    c.updateSleepPolicy("critical_battery", "enabled", true);
+        assert.equal(c.updateSuspendPolicy("critical_battery", field, value), false);
+    c.updateSuspendPolicy("critical_battery", "enabled", true);
     assert.equal(calls[0].method, "setCriticalPolicy");
     assert.equal(calls[0].args[0].enabled, true);
-    c.sleepPolicyFinished();
-    c.sleepPolicyState.available = false;
-    assert.equal(c.updateSleepPolicy("critical_battery", "enabled", false), true, "critical protection can be disabled without working idle integration");
-    c.sleepPolicyFinished();
+    c.suspendPolicyFinished();
+    c.suspendPolicyState.available = false;
+    assert.equal(c.updateSuspendPolicy("critical_battery", "enabled", false), true, "critical protection can be disabled without working idle integration");
+    c.suspendPolicyFinished();
     assert.equal(c.cancelCriticalBattery(), false);
-    c.sleepPolicyState.critical_battery.phase = "countdown";
+    c.suspendPolicyState.critical_battery.phase = "countdown";
     c.cancelCriticalBattery();
     assert.equal(calls.at(-1).method, "cancelCriticalBattery");
 }

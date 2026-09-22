@@ -38,7 +38,7 @@ policy, not an accidental consequence of a QML object remaining alive.
 
 | Area | Evidence / boundary |
 | --- | --- |
-| Battery hardware, charge protection, automatic power profiles, calibration and sleep | `bar-daemon/src/battery/{config,policy,levels,monitor,helper}.rs`, `src/api/battery.rs` and power/sleep modules own validation, persistence and effects. QML's slider constraints and pending drafts are supplemental UI behavior. |
+| Battery hardware, charge protection, automatic power profiles, calibration and suspend | `bar-daemon/src/battery/{config,policy,levels,monitor,helper}.rs`, `src/api/battery.rs` and power/suspend modules own validation, persistence and effects. QML's slider constraints and pending drafts are supplemental UI behavior. |
 | Application catalog, process telemetry, attribution and stored history | `app-daemon/src/history.rs` and `src/history/aggregate.rs` own collection, retention, duration-weighted buckets and cursor epochs. Remaining frontend window statistics are listed below. |
 | Bluetooth discovery, pairing, reconnect/noise-control policy and persistent device state | `bt-daemon` owns BlueZ/device operations. Prompt order, draft retention, selected adapter and icon ordering legitimately remain in QML. |
 | Clipboard data, revision-checked mutations, edits, screenshot/annotation effects | `clip-daemon/src/actions.rs` and `src/ringboard.rs` own the backend operations, leases and revision checks. History snapshot consumption and QR-related frontend artifacts need separate attention. |
@@ -128,7 +128,7 @@ shared hover, line/fill painting and duration formatting in QML. Do not replace
 this with daemon-supplied pixel coordinates or keep a JS calculation fallback.
 
 **Acceptance:** move the current energy/forecast policy tests to Rust and cover
-sleep/restart gaps, mode transitions, invalid samples, zero/full charge and
+suspend/restart gaps, mode transitions, invalid samples, zero/full charge and
 protection limits. Fixtures must distinguish missing measurement from zero.
 
 ### 4. Hyprland state parsing and workspace-rule resolution → native adapter

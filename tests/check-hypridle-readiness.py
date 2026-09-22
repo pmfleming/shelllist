@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Readiness tests without a compositor, logind calls, or sleep operations."""
+"""Readiness tests without a compositor, logind calls, or suspend operations."""
 import os
 import pathlib
 import socket

@@ -42,7 +42,7 @@ expect("non-boolean advice is not interpreted as approval", health.isFailure(eve
 })), false);
 
 // The daemon classifies lifecycle traces. Repeating each reason/state here
-// only retests the recommendation boolean, not DHCP, VPN or sleep behavior.
+// only retests the recommendation boolean, not DHCP, VPN or suspend behavior.
 
 const secret = "must-not-appear-in-health-logs";
 const withSecret = event({ ...daemonFailure.health, password: secret, secrets: { psk: secret } });

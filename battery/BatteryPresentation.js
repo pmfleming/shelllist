@@ -93,31 +93,33 @@ function calibrationLabel(operation) {
     return "Calibration is recovering its saved battery policy";
 }
 
-function sleepCapabilityAvailable(value) {
+function suspendCapabilityAvailable(value) {
     return value === "yes";
 }
 
-function sleepInhibitors(state, mode) {
+function suspendInhibitors(state, mode) {
     return ((state || {}).inhibitors || []).filter(function (item) {
+        // logind's inhibitor category is an external API token, not a UI label.
         const relevant = String(item.what || "").split(":").indexOf("sleep") >= 0;
         return relevant && (mode === "block" ? ["block", "block-weak"].indexOf(item.mode) >= 0 : item.mode === mode);
     });
 }
 
-function sleepCapabilityDescription(state, action) {
+function suspendCapabilityDescription(state, action) {
     if (!state || !state.available)
-        return "Sleep service unavailable";
+        return "Suspend service unavailable";
     if (action === "lock")
         return "Lock the current session";
+    const transition = action === "hibernate" ? "hibernating" : "suspending";
     if (state.keep_awake)
-        return "Turn off Keep awake before sleeping";
+        return "Turn off Keep awake before " + transition;
     const capability = action === "suspend" ? state.can_suspend : state.can_hibernate;
     switch (capability) {
-    case "yes": return "Available · locks before sleeping";
-    case "challenge": return "Authorisation required · configure system policy before sleeping";
+    case "yes": return "Available · locks before " + transition;
+    case "challenge": return "Authorisation required · configure system policy before " + transition;
     case "inhibited":
-    case "inhibitor-blocked": return "Temporarily blocked by an application’s sleep inhibitor";
-    case "challenge-inhibitor-blocked": return "Sleep is inhibited and also requires authorisation";
+    case "inhibitor-blocked": return "Temporarily blocked by an application’s suspend inhibitor";
+    case "challenge-inhibitor-blocked": return "Suspend is inhibited and also requires authorisation";
     case "na": {
         const issues = action === "hibernate" ? ((state.diagnostics || {}).hibernate_issues || []) : [];
         return issues.length > 0 ? issues.join(" ") : "Not supported by the system";
@@ -127,32 +129,33 @@ function sleepCapabilityDescription(state, action) {
     }
 }
 
-function sleepActionName(action) {
-    return ({ lock: "Lock", suspend: "Suspend", hibernate: "Hibernate" })[action] || "Sleep";
+function suspendActionName(action) {
+    return ({ lock: "Lock", suspend: "Suspend", hibernate: "Hibernate" })[action] || "Suspend";
 }
 
-function sleepStatus(state, pendingAction, retryAction, error) {
+function suspendStatus(state, pendingAction, retryAction, error) {
+    const operation = (state || {}).operation || {};
+    const action = suspendActionName(operation.action || pendingAction || retryAction);
     if (state && state.preparing_for_sleep)
-        return "Preparing sleep…";
+        return "Preparing " + action.toLowerCase() + "…";
     if (pendingAction)
         return "Locking…";
-    const operation = (state || {}).operation || {};
     if (operation.phase === "unknown")
-        return "Sleep outcome unknown · inspect the session before another request";
+        return action + " outcome unknown · inspect the session before another request";
     if (operation.phase === "failed")
-        return sleepActionName(operation.action) + " failed";
+        return suspendActionName(operation.action) + " failed";
     if (["requested", "dispatching", "accepted"].includes(operation.phase))
-        return "Sleep requested · awaiting system confirmation";
+        return action + " requested · awaiting system confirmation";
     if (operation.phase === "returned")
-        return "Checking sleep result…";
+        return "Checking " + action.toLowerCase() + " result…";
     if (error)
-        return sleepActionName(retryAction) + " failed";
+        return suspendActionName(retryAction) + " failed";
     if (!state || !state.available)
-        return "Sleep controls unavailable";
+        return "Suspend controls unavailable";
     if (state.keep_awake)
-        return "Keep awake on · sleep & hibernate blocked";
-    if (sleepInhibitors(state, "block").length > 0)
-        return "Sleep blocked";
+        return "Keep awake on · suspend & hibernate blocked";
+    if (suspendInhibitors(state, "block").length > 0)
+        return "Suspend blocked";
     return "";
 }
 

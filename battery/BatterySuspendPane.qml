@@ -9,7 +9,7 @@ Ui.DetailColumnCard {
     id: pane
 
     required property BatteryController controller
-    objectName: "powerSleepCard"
+    objectName: "powerSuspendCard"
     verticalContentPadding: Ui.Theme.spacingMd
     height: contentImplicitHeight + 2 * verticalContentPadding
 
@@ -19,7 +19,7 @@ Ui.DetailColumnCard {
 
         Ui.ThemeText {
             Layout.fillWidth: true
-            text: qsTr("Lock & sleep")
+            text: qsTr("Lock & suspend")
             font.pixelSize: Ui.Theme.fontSizeHeading
             font.weight: Ui.Theme.fontWeightBold
         }
@@ -36,15 +36,15 @@ Ui.DetailColumnCard {
             Accessible.checkable: true
             Accessible.checked: pane.controller.keepAwake
             Accessible.onToggleAction: if (enabled) pane.controller.toggleKeepAwake()
-            toolTip: pane.controller.powerSleep.keep_awake === undefined
+            toolTip: pane.controller.powerSuspend.keep_awake === undefined
                 ? qsTr("Keep awake requires an updated bar-daemon")
                 : (!pane.controller.backend.ready
                     ? qsTr("Reconnect to the power service to change Keep awake")
                     : (pane.controller.keepAwakeReleaseOnly
-                        ? qsTr("Sleep status unavailable · turn off Keep awake")
+                        ? qsTr("Suspend status unavailable · turn off Keep awake")
                         : (pane.controller.keepAwake
-                            ? qsTr("Turn off Keep awake · allow sleep and hibernate again")
-                            : qsTr("Keep awake · block sleep, hibernate and lid sleep; locking and screen blanking continue"))))
+                            ? qsTr("Turn off Keep awake · allow suspend and hibernate again")
+                            : qsTr("Keep awake · block suspend, hibernate and lid suspend; locking and screen blanking continue"))))
             enabled: pane.controller.canSetKeepAwake
             onClicked: pane.controller.toggleKeepAwake()
         }
@@ -54,7 +54,7 @@ Ui.DetailColumnCard {
 
             delegate: Ui.ActionButton {
                 required property string modelData
-                objectName: "sleepAction-" + modelData
+                objectName: "suspendAction-" + modelData
                 Layout.preferredWidth: 36
                 Layout.preferredHeight: 36
                 icon: modelData === "lock" ? "󰌾" : (modelData === "suspend" ? "󰖔" : "󰒲")
@@ -62,40 +62,40 @@ Ui.DetailColumnCard {
                 labelColor: modelData === "lock" ? Ui.Theme.accent : (modelData === "suspend" ? (Ui.Theme.dark ? "#a78bfa" : "#7c3aed") : Ui.Theme.warning)
                 backgroundColor: Ui.Theme.input
                 borderColor: "transparent"
-                accessibleName: Presentation.sleepActionName(modelData)
-                toolTip: accessibleName + " · " + Presentation.sleepCapabilityDescription(pane.controller.powerSleep, modelData)
-                enabled: pane.controller.canPowerSleepAction(modelData)
-                onClicked: pane.controller.powerSleepAction(modelData)
+                accessibleName: Presentation.suspendActionName(modelData)
+                toolTip: accessibleName + " · " + Presentation.suspendCapabilityDescription(pane.controller.powerSuspend, modelData)
+                enabled: pane.controller.canPowerSuspendAction(modelData)
+                onClicked: pane.controller.powerSuspendAction(modelData)
             }
         }
     }
 
     RowLayout {
-        objectName: "sleepStatusRow"
+        objectName: "suspendStatusRow"
         Layout.fillWidth: true
-        visible: pane.controller.sleepStatus.length > 0
+        visible: pane.controller.suspendStatus.length > 0
         spacing: Ui.Theme.spacingSm
 
         Ui.FieldLabel {
-            objectName: "sleepStatusText"
+            objectName: "suspendStatusText"
             Layout.fillWidth: true
-            text: pane.controller.sleepStatus
+            text: pane.controller.suspendStatus
             wrapMode: Text.Wrap
             elide: Text.ElideNone
-            color: pane.controller.sleepBusy ? Ui.Theme.mutedText : (pane.controller.sleepError.length > 0 ? Ui.Theme.danger : Ui.Theme.warning)
+            color: pane.controller.suspendBusy ? Ui.Theme.mutedText : (pane.controller.suspendError.length > 0 ? Ui.Theme.danger : Ui.Theme.warning)
         }
 
         Ui.FlatIconButton {
-            objectName: "sleepRetryButton"
+            objectName: "suspendRetryButton"
             Layout.preferredWidth: 30
             Layout.preferredHeight: 30
-            visible: pane.controller.sleepError.length > 0 && !pane.controller.sleepBusy && !pane.controller.sleepOutcomeUnknown
+            visible: pane.controller.suspendError.length > 0 && !pane.controller.suspendBusy && !pane.controller.suspendOutcomeUnknown
             icon: "󰑐"
             flatIconColor: Ui.Theme.accent
-            accessibleName: qsTr("Retry %1").arg(Presentation.sleepActionName(pane.controller.sleepRetryAction))
+            accessibleName: qsTr("Retry %1").arg(Presentation.suspendActionName(pane.controller.suspendRetryAction))
             toolTip: accessibleName
-            enabled: pane.controller.canPowerSleepAction(pane.controller.sleepRetryAction)
-            onClicked: pane.controller.powerSleepAction(pane.controller.sleepRetryAction)
+            enabled: pane.controller.canPowerSuspendAction(pane.controller.suspendRetryAction)
+            onClicked: pane.controller.powerSuspendAction(pane.controller.suspendRetryAction)
         }
     }
 
@@ -110,10 +110,10 @@ Ui.DetailColumnCard {
     }
 
     Ui.FieldLabel {
-        objectName: "sleepFailureReason"
+        objectName: "suspendFailureReason"
         Layout.fillWidth: true
-        text: (pane.controller.powerSleep.operation || {}).error || pane.controller.sleepError || pane.controller.powerSleep.error || ""
-        visible: text.length > 0 && pane.controller.sleepPendingAction.length === 0
+        text: (pane.controller.powerSuspend.operation || {}).error || pane.controller.suspendError || pane.controller.powerSuspend.error || ""
+        visible: text.length > 0 && pane.controller.suspendPendingAction.length === 0
         color: Ui.Theme.warning
         wrapMode: Text.Wrap
         elide: Text.ElideNone

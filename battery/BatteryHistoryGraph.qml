@@ -104,7 +104,7 @@ Item {
             });
             context.stroke();
 
-            // Connect historical wattage measurements, keeping sleep/missing
+            // Connect historical wattage measurements, keeping suspend/missing
             // data separate and colouring each direction independently.
             context.lineWidth = 1.5;
             context.lineJoin = "round";
@@ -119,7 +119,7 @@ Item {
                 Ui.ChartDrawing.series(context, [points], inset + plotHeight, Ui.Theme.withAlpha(color, 0.28), true);
             });
 
-            // Explicit observation boundaries (sleep/restart/clock gaps), not
+            // Explicit observation boundaries (suspend/restart/clock gaps), not
             // charging-mode changes. Downtime occupies no observed-time width.
             context.strokeStyle = Ui.Theme.resourceCpu;
             context.lineWidth = 1;

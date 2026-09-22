@@ -139,14 +139,14 @@ function hardwareOsd(previous, current) {
         return keyboardBacklightOsd(value.keyboard_backlight_percent);
     return null;
 }
-function idleInhibited(powerSleep) {
-    return (powerSleep && Array.isArray(powerSleep.inhibitors) ? powerSleep.inhibitors : [])
+function idleInhibited(powerSuspend) {
+    return (powerSuspend && Array.isArray(powerSuspend.inhibitors) ? powerSuspend.inhibitors : [])
         .some(function (inhibitor) {
         return String(inhibitor.what || "").split(":").includes("idle");
     });
 }
-function idleInhibitorOsd(powerSleep) {
-    const active = idleInhibited(powerSleep);
+function idleInhibitorOsd(powerSuspend) {
+    const active = idleInhibited(powerSuspend);
     return {
         kind: "idle-inhibitor",
         icon: active ? "󰒳" : "󰒲",
@@ -174,7 +174,7 @@ function domainOsd(streams, stream, previous, value) {
     handlers[streams.powerProfile] = function () { return changedPowerProfileOsd(previous, value); };
     handlers[streams.audio] = function () { return availableDomainOsd(previous, value, audioDeviceOsd); };
     handlers[streams.workspaces] = function () { return availableDomainOsd(previous, value, displayOutputOsd); };
-    handlers[streams.powerSleep] = function () { return changedIdleInhibitorOsd(previous, value); };
+    handlers[streams.powerSuspend] = function () { return changedIdleInhibitorOsd(previous, value); };
     handlers[streams.osdHardware] = function () { return availableDomainOsd(previous, value, hardwareOsd); };
     return handlers[stream] ? handlers[stream]() : null;
 }

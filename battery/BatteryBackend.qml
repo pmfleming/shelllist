@@ -85,7 +85,7 @@ Io.DaemonBackend {
         });
     }
 
-    function powerSleepAction(action: string): bool {
+    function powerSuspendAction(action: string): bool {
         const methods = {
             lock: BatteryApi.methods.lock,
             suspend: BatteryApi.methods.suspend,
@@ -93,7 +93,7 @@ Io.DaemonBackend {
         };
         if (!["lock", "suspend", "hibernate"].includes(action))
             return false;
-        return callSequenced("power-sleep-" + action, methods[action], {});
+        return callSequenced("power-suspend-" + action, methods[action], {});
     }
 
     function setKeepAwake(enabled: bool): bool {
@@ -101,15 +101,15 @@ Io.DaemonBackend {
     }
 
     function setCriticalPolicy(policy: var): bool {
-        return callSequenced("sleep-policy", BatteryApi.methods.setCriticalPolicy, policy);
+        return callSequenced("suspend-policy", BatteryApi.methods.setCriticalPolicy, policy);
     }
 
     function cancelCriticalBattery(): bool {
         return callSequenced("critical-battery-cancel", BatteryApi.methods.cancelCritical, {});
     }
 
-    function setSleepPolicy(policy: var): bool {
-        return callSequenced("sleep-policy", BatteryApi.methods.setSleepPolicy, policy);
+    function setSuspendPolicy(policy: var): bool {
+        return callSequenced("suspend-policy", BatteryApi.methods.setSuspendPolicy, policy);
     }
 
     function setAlertPolicy(policy: var): bool {
@@ -131,8 +131,8 @@ Io.DaemonBackend {
         const handlers = ({
                 battery: controller.applyBattery,
                 power_profile: controller.applyPowerProfile,
-                power_sleep: controller.applyPowerSleep,
-                sleep_policy: controller.applySleepPolicy,
+                power_sleep: controller.applyPowerSuspend,
+                sleep_policy: controller.applySuspendPolicy,
                 history: controller.applyBatteryHistory
             });
         Object.keys(handlers).forEach(function (key) {
@@ -142,8 +142,8 @@ Io.DaemonBackend {
     }
     function rejectRequest(id: string, background: bool, error: string): void {
         const domain = settingsDomain(id);
-        if (id.startsWith("sleep-policy-"))
-            controller.sleepPolicyFailed(error);
+        if (id.startsWith("suspend-policy-"))
+            controller.suspendPolicyFailed(error);
         else if (background)
             controller.refreshFailed(id, error);
         else if (domain.length > 0)
@@ -153,8 +153,8 @@ Io.DaemonBackend {
     }
     function acceptRequest(id: string, background: bool): void {
         const domain = settingsDomain(id);
-        if (id.startsWith("sleep-policy-"))
-            controller.sleepPolicyFinished();
+        if (id.startsWith("suspend-policy-"))
+            controller.suspendPolicyFinished();
         else if (background)
             controller.refreshFinished(id);
         else if (domain.length > 0)
@@ -181,8 +181,8 @@ Io.DaemonBackend {
         controller.handleEvent(event);
     }
     onSendFailed: function (id, message) {
-        if (id.startsWith("sleep-policy-"))
-            controller.sleepPolicyFailed(message);
+        if (id.startsWith("suspend-policy-"))
+            controller.suspendPolicyFailed(message);
         else if (isBackgroundRequest(id))
             controller.refreshFailed(id, message);
         else {

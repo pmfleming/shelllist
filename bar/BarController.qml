@@ -50,7 +50,7 @@ Item {
             profile: "",
             profiles: []
         })
-    property var powerSleep: ({
+    property var powerSuspend: ({
             available: false,
             inhibitors: []
         })

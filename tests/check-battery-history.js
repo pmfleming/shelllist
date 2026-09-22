@@ -31,7 +31,7 @@ equal(compact.breaks, [0.5], "mark the resume boundary on the observed-time axis
 const shortGap = series([point(0, 0, 80, false), point(minute, minute, 79),
     point(2 * minute, minute, 90, false), point(3 * minute, 2 * minute, 89)]);
 equal(shortGap.segments.map(segment => segment.length), [2, 2],
-    "explicit restart/sleep markers must split even a short wall-clock gap");
+    "explicit restart/suspend markers must split even a short wall-clock gap");
 
 const charging = series([
     point(0, 0, 20, false, { charging: true, time_to_full_seconds: 3600 }),
@@ -66,14 +66,14 @@ equal(areas.map(area => [area.charging, area.points.map(p => p.value)]),
     [[false, [0]], [false, [12, 0]], [true, [0, 8]]],
     "power areas split at missing samples and change colour through zero");
 assert.equal(areas[1].points[1].x, 0.9, "interpolate signed power at the zero crossing");
-const sleepingWatts = series([
+const suspendedWatts = series([
     point(0, 0, 80, false, { power_watts: 12 }),
     point(minute, minute, 79, true, { power_watts: 8 }),
     point(day, minute, 60, false, { power_watts: 20 }),
     point(day + minute, 2 * minute, 59, true, { power_watts: 10 })
 ], "power_watts");
-equal(history.powerAreas(sleepingWatts.segments).map(area => area.points.map(p => p.value)),
-    [[12, 8], [20, 10]], "same-direction areas must not connect across sleep");
+equal(history.powerAreas(suspendedWatts.segments).map(area => area.points.map(p => p.value)),
+    [[12, 8], [20, 10]], "same-direction areas must not connect across suspend");
 const zeroTransition = series([
     point(0, 0, 80, false, { power_watts: 0, power_valid: true }),
     point(minute, minute, 80, true, { power_watts: 0, power_valid: true, charging: true })

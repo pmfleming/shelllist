@@ -53,9 +53,9 @@ function eventKind(event, streams) {
         return "battery";
     if (event.stream === streams.powerProfile)
         return "powerProfile";
-    if (event.stream === streams.powerSleep)
-        return "powerSleep";
-    if (event.stream === streams.sleepPolicy)
-        return "sleepPolicy";
+    if (event.stream === streams.powerSuspend)
+        return "powerSuspend";
+    if (event.stream === streams.suspendPolicy)
+        return "suspendPolicy";
     return "";
 }

@@ -52,11 +52,11 @@ Column {
         }
     }
 
-    BatterySleepPolicyPane {
+    BatterySuspendPolicyPane {
         controller: pane.controller
     }
 
-    BatterySleepPane {
+    BatterySuspendPane {
         controller: pane.controller
     }
 }

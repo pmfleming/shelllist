@@ -7,6 +7,12 @@ let
   managedHypridle = import ./hypridle-ready.nix config.services.hypridle.package;
 in
 {
+  imports = [
+    (lib.mkRenamedOptionModule
+      [ "programs" "shelllist" "sleep" "enable" ]
+      [ "programs" "shelllist" "suspend" "enable" ])
+  ];
+
   options.programs.shelllist = {
     enable = lib.mkEnableOption "Shelllist desktop action center and top bar";
 
@@ -23,14 +29,14 @@ in
       description = "Hyprland modifiers and key for opening Notifications directly. Set null to disable.";
     };
 
-    sleep.enable = lib.mkOption {
+    suspend.enable = lib.mkOption {
       type = lib.types.bool;
       default = config.services.hypridle.enable && config.services.hypridle.package != null && cfg.systemd.enable && cfg.systemd.startBarDaemon;
       defaultText = lib.literalExpression "services.hypridle.enable && services.hypridle.package != null && programs.shelllist.systemd.enable && programs.shelllist.systemd.startBarDaemon";
       description = ''
-        Let Battery & Power manage hypridle's automatic sleep timeout with shared
+        Let Battery & Power manage hypridle's automatic suspend timeout with shared
         or separate battery/AC profiles. Preserves lock and DPMS listeners and
-        replaces simple systemctl/loginctl sleep listeners. Custom sleep scripts
+        replaces simple systemctl/loginctl suspend listeners. Custom suspend scripts
         or source includes must be removed from the base hypridle configuration.
         Timed hibernation also requires the updated system bar-battery-helper.
       '';
@@ -71,9 +77,9 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    assertions = lib.optional cfg.sleep.enable {
+    assertions = lib.optional cfg.suspend.enable {
       assertion = config.services.hypridle.enable && config.services.hypridle.package != null && cfg.systemd.enable && cfg.systemd.startBarDaemon;
-      message = "Shelllist automatic sleep requires services.hypridle.enable and Shelllist's managed bar-daemon service.";
+      message = "Shelllist automatic suspend requires services.hypridle.enable and Shelllist's managed bar-daemon service.";
     } ++ lib.optional cfg.displays.enable {
       assertion = cfg.systemd.enable && cfg.systemd.startBarDaemon;
       message = "Shelllist display control requires the managed bar-daemon service.";
@@ -84,7 +90,7 @@ in
       [ "${cfg.notificationsShortcut}, exec, ${cfg.package}/bin/shelllist notifications open" ];
 
     systemd.user.services = lib.mkIf cfg.systemd.enable {
-      hypridle = lib.mkIf cfg.sleep.enable {
+      hypridle = lib.mkIf cfg.suspend.enable {
         Service = {
           Type = lib.mkForce "notify";
           NotifyAccess = "main";
@@ -122,7 +128,7 @@ in
           BusName = "org.laufan.BarDaemon";
           ExecStart = "${cfg.package}/bin/bar-daemon daemon";
           Environment = [ "BAR_DAEMON_NOTIFICATION_BACKEND=native" ]
-            ++ lib.optional cfg.sleep.enable "BAR_DAEMON_IDLE_CONFIG=${config.xdg.configHome}/hypr/hypridle.conf"
+            ++ lib.optional cfg.suspend.enable "BAR_DAEMON_IDLE_CONFIG=${config.xdg.configHome}/hypr/hypridle.conf"
             ++ lib.optional cfg.displays.enable "BAR_DAEMON_DISPLAY_CONTROL=1";
           Restart = "on-failure";
           RestartSec = "2s";

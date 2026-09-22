@@ -1,4 +1,4 @@
-// Managed sleep listener control. Runs on Hypridle's existing event-loop thread;
+// Managed suspend listener control. Runs on Hypridle's existing event-loop thread;
 // changing this listener never restarts lock/DPMS listeners or loses inhibitor cookies.
 #include "Hypridle.hpp"
 #include "../helpers/ShelllistReady.hpp"
@@ -13,7 +13,7 @@ void CHypridle::setupShelllistControl() {
     const char* command = std::getenv("BAR_DAEMON_IDLE_COMMAND");
     const char* minutes = std::getenv("BAR_DAEMON_IDLE_MINUTES");
     if (!generation || !command || !minutes)
-        throw std::runtime_error("Managed sleep environment is incomplete");
+        throw std::runtime_error("Managed suspend environment is incomplete");
     m_shelllistBaseGeneration = generation;
     m_shelllistGeneration = generation;
     m_shelllistCommand = command;
@@ -22,7 +22,7 @@ void CHypridle::setupShelllistControl() {
     m_shelllistObject->addVTable(
         sdbus::registerMethod("GetState").implementedAs([this]() {
             // Drain compositor activity before attesting that an idle episode
-            // is still valid. A stale local bool is not a pre-sleep barrier.
+            // is still valid. A stale local bool is not a pre-suspend barrier.
             if (wl_display_roundtrip(m_sWaylandState.display) < 0)
                 throw sdbus::Error(sdbus::Error::Name{"org.laufan.Hypridle.Disconnected"}, "Compositor disconnected");
             return sdbus::Struct<uint32_t, std::string, uint32_t, uint64_t, bool>{getpid(), m_shelllistGeneration, m_shelllistMinutes, m_shelllistEpisode, m_shelllistIdle && m_iInhibitLocks == 0};

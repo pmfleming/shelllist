@@ -7,7 +7,7 @@ import Shelllist.Io as Io
 
 TestCase {
     id: testCase
-    name: "BatterySleep"
+    name: "BatterySuspend"
     when: windowShown
     visible: true
     width: 420
@@ -27,7 +27,7 @@ TestCase {
             signal response(string id, var envelope, string transportError, var route)
             signal eventReceived(var event, var route)
             signal transportFailed(string message)
-            function call(id, method, params, route) { testCase.calls = testCase.calls.concat([{ id: id, method: method, params: params }]); }
+            function call(id, method, params, route) { testCase.calls = testCase.calls.concat([{ id: id, method: method, params: params, route: route }]); }
             function subscribeExtra(id, streams, route) {}
             function cancel(id, requestId, route) {}
             function release(id, route) {}
@@ -62,7 +62,7 @@ TestCase {
         SignalSpy { signalName: "closeWindowRequested" }
     }
 
-    function sleepState(inhibitors) {
+    function suspendState(inhibitors) {
         return { available: true, can_suspend: "yes", can_hibernate: "na",
             lock_before_sleep: true, keep_awake: false, preparing_for_sleep: false, inhibitors: inhibitors || [] };
     }
@@ -73,7 +73,7 @@ TestCase {
         panel.controller.applyPowerProfile({ available: true, profile: "balanced",
             profiles: [{ name: "power-saver" }, { name: "balanced" }, { name: "performance" }],
             battery_automation: { status: "waiting" } });
-        panel.controller.applyPowerSleep(sleepState(inhibitors));
+        panel.controller.applyPowerSuspend(suspendState(inhibitors));
         panel.controller.selectViewTab("power");
         verify(waitForRendering(panel));
         const page = findChild(panel, "batteryDetailPage");
@@ -83,81 +83,81 @@ TestCase {
     }
 
     function test_normalHandlersStayHiddenAndUnavailableActionsAreExplained() {
-        const reason = "Disconnecting network connections cleanly before sleeping. ".repeat(60);
+        const reason = "Disconnecting network connections cleanly before suspending. ".repeat(60);
         const panel = makePanel([
             { what: "sleep", mode: "delay", who: "NetworkManager", why: reason },
             { what: "shutdown", mode: "block", who: "Updater", why: "Installing updates" },
             { what: "handle-lid-switch", mode: "block", who: "Desktop", why: "Owns lid behaviour" }
         ]);
-        const card = findChild(panel, "powerSleepCard");
-        verify(card.height <= 80, "normal sleep handlers must not expand the one-row card");
-        verify(!findChild(panel, "sleepStatusRow").visible);
+        const card = findChild(panel, "powerSuspendCard");
+        verify(card.height <= 80, "normal suspend handlers must not expand the one-row card");
+        verify(!findChild(panel, "suspendStatusRow").visible);
         for (const action of ["lock", "suspend", "hibernate"]) {
-            const button = findChild(panel, "sleepAction-" + action);
+            const button = findChild(panel, "suspendAction-" + action);
             compare(button.label, "");
             verify(button.icon.length > 0);
             verify(button.Accessible.name.length > 0);
             verify(button.toolTip.length > 0);
             verify(button.mapToItem(card, button.width, 0).x <= card.width - card.contentPadding);
         }
-        verify(!findChild(panel, "sleepAction-hibernate").enabled);
-        verify(findChild(panel, "sleepAction-hibernate").toolTip.indexOf("Not supported by the system") >= 0);
-        verify(findChild(panel, "sleepDetailsButton") === null);
-        verify(findChild(panel, "sleepDetailsPopup") === null);
+        verify(!findChild(panel, "suspendAction-hibernate").enabled);
+        verify(findChild(panel, "suspendAction-hibernate").toolTip.indexOf("Not supported by the system") >= 0);
+        verify(findChild(panel, "suspendDetailsButton") === null);
+        verify(findChild(panel, "suspendDetailsPopup") === null);
     }
 
     function test_onlyRealBlockersWarnAndProgressErrorsStayLocal() {
         const panel = makePanel([{ what: "shutdown:sleep", mode: "block", who: "Editor", why: "Saving document" }]);
         const controller = panel.controller;
-        const status = findChild(panel, "sleepStatusText");
-        verify(findChild(panel, "sleepStatusRow").visible);
-        compare(status.text, "Sleep blocked");
-        controller.applyPowerSleep(sleepState([{ what: "sleep", mode: "delay", who: "NetworkManager" }]));
-        verify(!findChild(panel, "sleepStatusRow").visible);
-        controller.sleepPendingAction = "suspend";
-        controller.sleepRetryAction = "suspend";
+        const status = findChild(panel, "suspendStatusText");
+        verify(findChild(panel, "suspendStatusRow").visible);
+        compare(status.text, "Suspend blocked");
+        controller.applyPowerSuspend(suspendState([{ what: "sleep", mode: "delay", who: "NetworkManager" }]));
+        verify(!findChild(panel, "suspendStatusRow").visible);
+        controller.suspendPendingAction = "suspend";
+        controller.suspendRetryAction = "suspend";
         controller.actionInFlight = true;
         compare(status.text, "Locking…");
         for (const action of ["lock", "suspend", "hibernate"])
-            verify(!findChild(panel, "sleepAction-" + action).enabled);
-        controller.applyPowerSleep(Object.assign(sleepState(), { preparing_for_sleep: true }));
-        compare(status.text, "Preparing sleep…");
-        controller.applyPowerSleep(sleepState());
-        controller.operationFailed("power-sleep-suspend-1", "Screen lock was not confirmed");
+            verify(!findChild(panel, "suspendAction-" + action).enabled);
+        controller.applyPowerSuspend(Object.assign(suspendState(), { preparing_for_sleep: true }));
+        compare(status.text, "Preparing suspend…");
+        controller.applyPowerSuspend(suspendState());
+        controller.operationFailed("power-suspend-suspend-1", "Screen lock was not confirmed");
         compare(status.text, "Suspend failed");
-        const reason = findChild(panel, "sleepFailureReason");
+        const reason = findChild(panel, "suspendFailureReason");
         verify(reason.visible);
         compare(reason.text, "Screen lock was not confirmed");
         compare(reason.elide, Text.ElideNone);
         compare(controller.lastError, "");
-        const retry = findChild(panel, "sleepRetryButton");
+        const retry = findChild(panel, "suspendRetryButton");
         verify(retry.visible && retry.enabled);
         compare(retry.Accessible.name, "Retry Suspend");
-        controller.operationFinished("power-sleep-suspend-2");
+        controller.operationFinished("power-suspend-suspend-2");
         verify(!reason.visible);
         verify(!retry.visible);
-        verify(!findChild(panel, "sleepStatusRow").visible);
+        verify(!findChild(panel, "suspendStatusRow").visible);
     }
 
-    function test_keepAwakeIsAccessibleAndOnlyDisablesSleep() {
+    function test_keepAwakeIsAccessibleAndOnlyDisablesSuspend() {
         const panel = makePanel();
         const controller = panel.controller;
         const button = findChild(panel, "keepAwakeButton");
-        const card = findChild(panel, "powerSleepCard");
+        const card = findChild(panel, "powerSuspendCard");
         verify(button.enabled);
         compare(button.Accessible.name, "Keep awake");
         verify(button.Accessible.checkable);
         verify(!button.Accessible.checked);
         verify(button.toolTip.indexOf("locking and screen blanking continue") >= 0);
         verify(button.mapToItem(card, button.width, 0).x <= card.width - card.contentPadding);
-        controller.applyPowerSleep(Object.assign(sleepState(), { keep_awake: true, can_hibernate: "yes" }));
+        controller.applyPowerSuspend(Object.assign(suspendState(), { keep_awake: true, can_hibernate: "yes" }));
         verify(button.Accessible.checked);
         compare(button.tone, "accent");
         verify(button.enabled, "must be able to turn it off");
-        verify(findChild(panel, "sleepAction-lock").enabled);
-        verify(!findChild(panel, "sleepAction-suspend").enabled);
-        verify(!findChild(panel, "sleepAction-hibernate").enabled);
-        compare(findChild(panel, "sleepStatusText").text, "Keep awake on · sleep & hibernate blocked");
+        verify(findChild(panel, "suspendAction-lock").enabled);
+        verify(!findChild(panel, "suspendAction-suspend").enabled);
+        verify(!findChild(panel, "suspendAction-hibernate").enabled);
+        compare(findChild(panel, "suspendStatusText").text, "Keep awake on · suspend & hibernate blocked");
         controller.keepAwakePending = true;
         controller.actionInFlight = true;
         verify(!button.enabled);
@@ -165,15 +165,15 @@ TestCase {
         controller.operationFailed("power-keep-awake-1", "Permission denied");
         verify(button.enabled);
         compare(findChild(panel, "keepAwakeStatus").text, "Permission denied");
-        verify(!findChild(panel, "sleepRetryButton").visible);
-        controller.applyPowerSleep(sleepState());
+        verify(!findChild(panel, "suspendRetryButton").visible);
+        controller.applyPowerSuspend(suspendState());
         verify(!button.Accessible.checked);
-        verify(findChild(panel, "sleepAction-suspend").enabled);
+        verify(findChild(panel, "suspendAction-suspend").enabled);
         button.forceActiveFocus();
         verify(button.activeFocus);
-        const oldDaemon = sleepState();
+        const oldDaemon = suspendState();
         delete oldDaemon.keep_awake;
-        controller.applyPowerSleep(oldDaemon);
+        controller.applyPowerSuspend(oldDaemon);
         verify(!button.enabled);
         verify(button.toolTip.indexOf("updated bar-daemon") >= 0);
     }
@@ -183,7 +183,7 @@ TestCase {
         const controller = panel.controller;
         const button = findChild(panel, "keepAwakeButton");
         const client = Io.DaemonSessions.sessions["bar-daemon"].client;
-        controller.applyPowerSleep({ available: false, keep_awake: false, preparing_for_sleep: true });
+        controller.applyPowerSuspend({ available: false, keep_awake: false, preparing_for_sleep: true });
         verify(button.enabled, "even a default false snapshot must allow releasing an existing FD");
         verify(button.toolTip.indexOf("turn off Keep awake") >= 0);
         calls = [];
@@ -203,7 +203,7 @@ TestCase {
         verify(button.toolTip.indexOf("Reconnect") >= 0);
         client.ready = true;
         verify(button.enabled);
-        controller.applyPowerSleep(sleepState());
+        controller.applyPowerSuspend(suspendState());
         calls = [];
         button.Accessible.toggleAction();
         compare(calls.length, 1);
@@ -218,7 +218,7 @@ TestCase {
         verify(!panel.controller.backend.streams.includes("display-policy.changed"));
     }
 
-    function test_sharedAndSeparateAutomaticSleepControls() {
+    function test_sharedAndSeparateAutomaticSuspendControls() {
         const panel = makePanel();
         const state = {
             available: true, active_profile: "battery", hibernate_available: true,
@@ -229,18 +229,18 @@ TestCase {
                 plugged: { sleep_minutes: 45, hibernate_minutes: 180 }
             }
         };
-        panel.controller.applySleepPolicy(state);
+        panel.controller.applySuspendPolicy(state);
         verify(waitForRendering(panel));
-        compare(findChild(panel, "sleepDelay-battery").value, "15");
+        compare(findChild(panel, "suspendDelay-battery").value, "15");
         compare(findChild(panel, "hibernateDelay-battery").value, "60");
-        compare(findChild(panel, "sleepDelay-plugged").value, "45");
+        compare(findChild(panel, "suspendDelay-plugged").value, "45");
         compare(findChild(panel, "hibernateDelay-plugged").value, "180");
         const lid = findChild(panel, "lidCloseAction");
         compare(lid.value, "system", "older policies retain logind behavior");
         verify(lid.Accessible.name.length > 0);
         compare(lid.options.length, 6);
-        const card = findChild(panel, "automaticSleepCard");
-        for (const name of ["sleepDelay-battery", "hibernateDelay-battery", "sleepDelay-plugged", "hibernateDelay-plugged"]) {
+        const card = findChild(panel, "automaticSuspendCard");
+        for (const name of ["suspendDelay-battery", "hibernateDelay-battery", "suspendDelay-plugged", "hibernateDelay-plugged"]) {
             const control = findChild(panel, name);
             verify(control.enabled);
             verify(control.Accessible.name.length > 0);
@@ -248,27 +248,27 @@ TestCase {
         }
         state.policy.same_profile = true;
         state.policy.battery.sleep_minutes = 0;
-        panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
+        panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
         verify(waitForRendering(panel));
-        verify(findChild(panel, "sleepDelay-plugged") === null);
-        compare(findChild(panel, "sleepDelay-battery").value, "0");
+        verify(findChild(panel, "suspendDelay-plugged") === null);
+        compare(findChild(panel, "suspendDelay-battery").value, "0");
         verify(!findChild(panel, "hibernateDelay-battery").enabled);
         state.policy.lid_action = "profile";
-        panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
+        panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
         compare(lid.value, "profile");
-        verify(findChild(panel, "hibernateDelay-battery").enabled, "lid profile works with Never idle sleep");
+        verify(findChild(panel, "hibernateDelay-battery").enabled, "lid profile works with Never idle suspend");
         state.lid.error = "Lid action failed: lock was not confirmed";
-        panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
+        panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
         compare(findChild(panel, "lidCloseStatus").text, state.lid.error);
         state.policy.battery.sleep_minutes = 15;
         state.hibernate_available = false;
-        panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
+        panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
         const hibernate = findChild(panel, "hibernateDelay-battery");
         verify(hibernate.options.every(function (option) { return option.enabled === (option.value === "0"); }));
         state.available = false;
-        panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
-        verify(!findChild(panel, "sleepDelay-battery").enabled);
-        verify(!findChild(panel, "sleepSameProfile").interactive);
+        panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
+        verify(!findChild(panel, "suspendDelay-battery").enabled);
+        verify(!findChild(panel, "suspendSameProfile").interactive);
     }
 
     function test_criticalProtectionControlsAndUnknownOutcome() {
@@ -278,18 +278,70 @@ TestCase {
             plugged: { sleep_minutes: 30, hibernate_minutes: 0 },
             critical_battery: { enabled: false, percent: 5, grace_seconds: 60 }
         }, critical_battery: { phase: "disabled", remaining_seconds: 0 } };
-        panel.controller.applySleepPolicy(state);
+        panel.controller.applySuspendPolicy(state);
         verify(!findChild(panel, "criticalBatteryEnabled").checked);
         compare(findChild(panel, "criticalBatteryPercent").value, "5");
         state.policy.critical_battery.enabled = true;
         state.critical_battery = { phase: "countdown", remaining_seconds: 45 };
-        panel.controller.applySleepPolicy(JSON.parse(JSON.stringify(state)));
+        panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
         verify(findChild(panel, "criticalBatteryStatus").text.includes("45"));
         verify(findChild(panel, "criticalBatteryCancel").visible);
-        panel.controller.applyPowerSleep(Object.assign(sleepState(), { operation: { phase: "unknown", error: "reply lost" } }));
-        panel.controller.sleepError = "reply lost";
-        verify(!findChild(panel, "sleepRetryButton").visible);
-        verify(findChild(panel, "sleepStatusText").text.includes("outcome unknown"));
+        panel.controller.applyPowerSuspend(Object.assign(suspendState(), { operation: { phase: "unknown", error: "reply lost" } }));
+        panel.controller.suspendError = "reply lost";
+        verify(!findChild(panel, "suspendRetryButton").visible);
+        verify(findChild(panel, "suspendStatusText").text.includes("outcome unknown"));
+    }
+
+    function test_suspendNamesPreserveDaemonWireContract() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const backend = controller.backend;
+        const state = { available: true, policy: {
+            same_profile: true,
+            battery: { sleep_minutes: 30, hibernate_minutes: 60 },
+            plugged: { sleep_minutes: 45, hibernate_minutes: 180 }
+        } };
+        verify(backend.streams.includes("power-sleep.changed"));
+        verify(backend.streams.includes("sleep-policy.changed"));
+        backend.applyData({ snapshot: { power_sleep: suspendState(), sleep_policy: state } });
+        verify(controller.powerSuspend.available);
+        compare(controller.suspendPolicyDraft.battery.sleep_minutes, 30);
+        calls = [];
+        verify(controller.updateSuspendPolicy("battery", "sleep_minutes", 15));
+        compare(calls.length, 1);
+        compare(calls[0].method, "powerSleep.setPolicy");
+        compare(calls[0].params.battery.sleep_minutes, 15);
+        compare(calls[0].params.battery.hibernate_minutes, 60);
+        compare(calls[0].params.plugged.hibernate_minutes, 180);
+        verify(controller.suspendPolicySaving);
+        Io.DaemonSessions.sessions["bar-daemon"].client.response(calls[0].id, {
+            protocol: backend.expectedProtocol, version: backend.expectedVersion,
+            ok: true, data: { sleep_policy: { available: true, policy: calls[0].params } }
+        }, "", calls[0].route);
+        verify(!controller.suspendPolicySaving);
+        verify(!controller.suspendPolicyDirty);
+        compare(controller.suspendPolicyDraft.battery.sleep_minutes, 15);
+        controller.handleEvent({ event: "changed", stream: "power-sleep.changed",
+            data: Object.assign(suspendState(), { keep_awake: true }) });
+        verify(controller.keepAwake);
+        controller.handleEvent({ event: "changed", stream: "sleep-policy.changed", data: state });
+        compare(controller.suspendPolicyDraft.battery.sleep_minutes, 30);
+    }
+
+    function test_hibernateStatusRemainsDistinctFromSuspend() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.applyPowerSuspend(Object.assign(suspendState(), {
+            can_hibernate: "yes", preparing_for_sleep: true,
+            operation: { action: "hibernate", phase: "preparing" }
+        }));
+        compare(findChild(panel, "suspendStatusText").text, "Preparing hibernate…");
+        verify(findChild(panel, "suspendAction-hibernate").toolTip.includes("hibernating"));
+        controller.applyPowerSuspend(Object.assign(suspendState(), {
+            operation: { action: "hibernate", phase: "unknown" }
+        }));
+        compare(findChild(panel, "suspendStatusText").text,
+            "Hibernate outcome unknown · inspect the session before another request");
     }
 
     function test_keyboardNavigationAndEscapeRemainAvailable() {
@@ -297,7 +349,7 @@ TestCase {
         panel.controller.backend.active = false;
         panel.controller.uiActive = true;
         const closeSpy = createTemporaryObject(closeSpyComponent, testCase, { target: panel.controller });
-        findChild(panel, "sleepAction-lock").forceActiveFocus();
+        findChild(panel, "suspendAction-lock").forceActiveFocus();
         keyClick(Qt.Key_Tab, Qt.ControlModifier);
         compare(panel.controller.viewTab, "overview");
         keyClick(Qt.Key_Escape);

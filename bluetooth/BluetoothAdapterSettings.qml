@@ -253,7 +253,7 @@ ColumnLayout {
             objectName: "defaultReconnectAfterWake"
             Layout.fillWidth: true
             title: qsTr("Reconnect after wake")
-            subtitle: qsTr("Devices active before sleep")
+            subtitle: qsTr("Devices active before suspend")
             checked: section.controller.management.reconnect_on_resume !== false
             interactive: !section.controller.globalRequestInFlight
             onClicked: section.controller.updateManagement({reconnect_on_resume: !checked})

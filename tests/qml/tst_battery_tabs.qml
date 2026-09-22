@@ -53,7 +53,7 @@ TestCase {
         compare(tabs.tabs.length, 3);
         compare(tabs.tabs[0].label, "Power");
         compare(tabs.tabs[1].label, "Battery");
-        compare(tabs.tabs[2].label, "Sleep");
+        compare(tabs.tabs[2].label, "Suspend");
         compare(controller.viewTab, "overview");
         const panes = [findChild(panel, "batteryOverviewPane"),
             findChild(panel, "batteryCarePane"), findChild(panel, "batteryPowerPane")];
@@ -82,12 +82,12 @@ TestCase {
         controller.applyPowerProfile({ available: true, profile: "balanced",
             profiles: [{ name: "power-saver" }, { name: "balanced" }, { name: "performance" }] });
         const summary = findChild(panel, "batteryOverviewPane");
-        const sleep = findChild(panel, "batteryPowerPane");
+        const suspend = findChild(panel, "batteryPowerPane");
         const card = findChild(summary, "powerModeCard");
         const selector = findChild(card, "batteryPowerModeProfile");
         verify(card !== null);
         verify(selector !== null);
-        verify(!findChild(sleep, "powerModeCard"));
+        verify(!findChild(suspend, "powerModeCard"));
         verify(card.visible);
         compare(card.y, 0, "power mode is the first card");
         compare(selector.value, "balanced");
@@ -96,7 +96,7 @@ TestCase {
         verify(!selector.interactive);
         controller.actionInFlight = false;
         controller.selectViewTab("power");
-        verify(!card.visible, "Sleep does not show power mode");
+        verify(!card.visible, "Suspend does not show power mode");
         controller.selectViewTab("overview");
         verify(card.visible);
         for (const width of [420, 560]) {

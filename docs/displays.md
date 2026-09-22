@@ -75,7 +75,7 @@ Escape closes this settings menu before returning from details.
 `bar-daemon` remains the only display configuration owner. Enable
 `programs.shelllist.displays.enable` to permit changes. Existing preferences,
 layout journals and `monitors.lua` are preserved. Display settings never change
-lid actions, sleep policy or DPMS. Battery & Power no longer owns display state,
+lid actions, suspend policy or DPMS. Battery & Power no longer owns display state,
 requests, subscriptions or controls.
 
 No mirroring, named profiles, workspace assignment, HDR/VRR or competing display
