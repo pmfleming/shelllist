@@ -19,6 +19,7 @@ assert.equal(model.currentMode({ ...outputs[1], refreshRate: 60 }), "3840x2160@6
 assert.deepEqual(plain(model.rect(draft[1])), { x: 0, y: 0, width: 2560, height: 1440 });
 assert.deepEqual(plain(model.rect({ ...draft[1], transform: 1 })), { x: 0, y: 0, width: 1440, height: 2560 });
 assert.deepEqual(plain(model.bounds(draft)), { x: -1536, y: 0, width: 4096, height: 1440 });
+assert.deepEqual(plain(model.rates({ name: "", availableModes: [] }, "")), [], "an empty chooser selection has no refresh rates");
 assert.equal(model.parseMode("3840x2160@NaN"), null);
 assert.equal(model.parseMode("0x2160@60"), null);
 assert.equal(model.parseMode("3840x2160@60;exec"), null);

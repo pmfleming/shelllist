@@ -5,26 +5,57 @@ control in the bar, the `displays` global shortcut, or
 `shelllist open displays`. It uses the shared chooser host, theme, controls and
 resident bar-daemon transport; opening it does not initialize Battery.
 
-## Compact callout
+## Searchable callout
 
-The diagram shows actual connected output geometry and enabled state. Numbered
-output rows open the selected display in the layout workspace; **Arrange** expands
-the surface using the common chooser animation. The eye icon identifies enabled
-screens for three seconds, without enabling disabled displays or taking focus.
+The compact view uses Shelllist's shared search and keyed result list. It lists
+connected supported outputs, including disabled ones, with observed enabled state,
+connector, resolution and refresh rate. Enabled displays sort first. Search uses
+the shared Rust matcher over names, connectors and reported manufacturer/model or
+serial metadata; it does not discover disconnected or wireless displays.
 
-The **Prefer external** switch saves docking policy immediately after daemon
-acknowledgement. It is not a temporary mode selector. Laptop fallback returns
-when no usable external display remains. The switch is hidden on desktop-only
-setups and locked while a layout draft or trial is pending.
+Up/Down selects a row; **Right** or its chevron expands that display's options
+beside the list. The compact diagram is replaced by this list. On narrow outputs,
+details occupy the available width and **Back to displays** returns to the list.
+Left closes details when not consumed by an editor, canvas or tab control; Left
+inside a position field moves its cursor. Returning to the list restores search
+focus. Empty searches and disconnected displays have distinct messages, and Back
+and draft recovery remain available even if the selected display disappears.
 
-## Layout workspace
+## Selected display options
 
-The workspace combines a logical-size map and a shared-control inspector. Below
-740 logical pixels the inspector stacks beneath the canvas in a scrollable page.
-Resolution and refresh controls preserve advertised backend mode strings. Scale,
-rotation/reflection, X/Y position and external enablement are editable. Relative
-placement arrows position the selected screen beside the chosen reference screen.
-Internal enablement remains owned by docking policy; previews retain its fallback.
+One prominent **Preview changes** button sits at the top, with two or three
+secondary buttons below it:
+
+- **Identify** marks the selected enabled screen for three seconds. It never
+  enables a disabled screen or takes focus. The monitor icon beside search
+  identifies all enabled screens.
+- **Arrange** switches to Settings and reveals the logical-size layout canvas.
+- **Enable / Disable** changes the selected external screen's draft only. Internal
+  enablement remains owned by docking policy, so this button is omitted for it.
+
+**Settings** contains resolution/refresh, scale, rotation/reflection, X/Y position,
+and relative placement. Controls preserve advertised backend mode strings. The
+optional canvas stacks above the inspector below 740 logical pixels; it can be
+hidden without discarding edits. **Information** is read-only observed state,
+including connector, available identity metadata, mode, logical size, scale and
+position. Missing metadata is omitted. Ctrl+Tab cycles the two tabs. Switching
+displays or tabs retains the complete layout draft.
+
+**Preview changes** is enabled only for a valid, changed layout. It previews the
+**whole layout**, not just the selected screen. Unsaved/stale/error status and
+Discard/Reload remain above the tabs. Narrow headers stack the primary button
+above the secondary row, and settings scroll while tab controls stay visible.
+
+## Display-wide settings
+
+The gear beside search (also Alt+Enter in search) opens display-wide settings,
+independently of the selected result. **Prefer external** saves docking policy
+only after daemon acknowledgement. It is not a temporary mode selector. Laptop
+fallback returns when no usable external display remains. The switch is hidden
+on desktop-only setups and locked while a layout draft or trial is pending.
+Escape closes this settings menu before returning from details.
+
+## Layout safety and keyboard controls
 
 - Drag screens to align edges; hold Alt to bypass snapping.
 - On the canvas, `[` / `]` select an output. Arrows (or h/j/k/l) move by 16 logical
@@ -50,7 +81,21 @@ requests, subscriptions or controls.
 No mirroring, named profiles, workspace assignment, HDR/VRR or competing display
 manager is introduced. Those require separate backend capability/transaction work.
 
-## Delivery checkpoints
+## Searchable chooser validation
+
+The chooser refactor retains the daemon protocol and rollback behavior. Focused
+QML coverage includes search/selection, live action identity, action hierarchy,
+Settings/Information, draft retention, empty-selection hotplug recovery, cursor
+navigation and action/tab geometry at 320, 390 and 1040 pixels. Existing preview,
+confirmation, reconnect, topology and pending-close tests remain in place.
+Validation passed: 20 focused Displays QML cases, 230 full QML cases, warning-fatal
+QML lint, display/provider model checks, daemon boundary checks, packaged imports,
+and the complete current-worktree Nix gate (including TypeScript and contracts).
+Offscreen compact, Settings, Information, Arrange and narrow renders were inspected
+using a non-mutating fixture. Physical mode switching/docking remains a manual
+hardware acceptance check; no running service is replaced by these tests.
+
+## Initial delivery checkpoints
 
 1. Independent surface and bar/CLI/shortcut routes; isolated backend and tests.
 2. Compact diagram, workspace, Identify, common controls and keyboard navigation;

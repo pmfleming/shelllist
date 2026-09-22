@@ -68,6 +68,71 @@ TestCase {
         calls = [];
         return panel;
     }
+    function visibleAction(item, label) {
+        for (const child of item.children || []) {
+            if (child.visible && child.label === label && child.toolTip !== undefined) return child;
+            const found = visibleAction(child, label);
+            if (found) return found;
+        }
+        return null;
+    }
+    function test_actionGeometry_data() {
+        return [{ tag: "small", width: 320, height: 480 }, { tag: "narrow", width: 390, height: 600 }, { tag: "wide", width: 1040, height: 780 }];
+    }
+    function test_actionGeometry(data) {
+        const panel = makePanel();
+        panel.width = data.width;
+        panel.height = data.height;
+        panel.controller.openDetails();
+        tryVerify(function () { return findChild(panel, "displayDetails") !== null; });
+        verify(waitForRendering(panel));
+        const primary = visibleAction(panel, "Preview changes");
+        verify(primary !== null);
+        const primaryPosition = primary.mapToItem(panel, 0, 0);
+        for (const label of ["Preview changes", "Identify", "Arrange", "Disable"]) {
+            const button = visibleAction(panel, label);
+            verify(button !== null);
+            const position = button.mapToItem(panel, 0, 0);
+            verify(position.x >= 0 && position.x + button.width <= panel.width + 1, label + " fits horizontally");
+            if (label !== "Preview changes") verify(position.y >= primaryPosition.y + primary.height, "secondary actions are below the primary");
+        }
+        const tabs = findChild(panel, "displayDetailsTabs");
+        verify(tabs.mapToItem(panel, 0, tabs.height).y <= panel.height + 1);
+    }
+    function test_emptySelectionRetainsBackAndDraftRecovery() {
+        const panel = makePanel();
+        const c = panel.controller;
+        panel.width = 390;
+        panel.height = 600;
+        c.uiActive = true;
+        c.openDetails();
+        tryVerify(function () { return findChild(panel, "backToDisplayList") !== null; });
+        c.edit("DP-1", "scale", 2);
+        const empty = displayState();
+        empty.outputs = [];
+        c.applyDisplayPolicy(empty);
+        verify(c.stale && c.dirty);
+        verify(!c.hasSelection);
+        verify(findChild(panel, "displayEmptyDetails").visible);
+        const back = findChild(panel, "backToDisplayList");
+        verify(back.visible && back.enabled);
+        back.forceActiveFocus();
+        keyClick(Qt.Key_Left);
+        verify(c.discardPrompt, "Left/back still protects a disconnected display's draft");
+        c.discardAndClose();
+        tryVerify(function () { return findChild(panel, "displayList").visible; });
+        compare(findChild(panel, "displayList").emptyText, "No connected displays");
+        verify(!c.dirty);
+        c.applyDisplayPolicy(displayState());
+        verify(c.hasSelection);
+        c.selectionModel.rankRequestsEnabled = false;
+        c.filterText = "unmatched";
+        const store = c.selectionModel;
+        store.applyRustRanking(store.searchOwner, store.searchGeneration, []);
+        compare(findChild(panel, "displayList").emptyText, "No matching displays");
+        c.filterText = "";
+        verify(c.hasSelection);
+    }
     function test_settingsInformationAndTextNavigation() {
         const panel = makePanel();
         const c = panel.controller;

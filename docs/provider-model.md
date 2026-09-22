@@ -148,8 +148,11 @@ The normalized result and action are included for adapter convenience. Routing s
 - `WifiProvider.qml` maps `nm-api` network state and connection/profile actions.
 - `BluetoothProvider.qml` maps opaque-keyed `bt-api` devices and operations.
 - `ClipboardProvider.qml` maps `clip-api` history entries and clipboard actions.
+- `DisplayProvider.qml` maps connected outputs to searchable results and resolves
+  live display actions against current connector/output identity. Preview applies
+  the complete validated layout draft; enablement changes remain draft-only.
 
-All four use the same result store and chooser navigation while retaining independent backend protocols and domain-specific details views. New searchable domains should add a provider adapter instead of adding domain branches to generic UI components.
+These adapters use the same result store and chooser navigation while retaining independent backend protocols and domain-specific details views. New searchable domains should add a provider adapter instead of adding domain branches to generic UI components.
 
 ## Validation
 

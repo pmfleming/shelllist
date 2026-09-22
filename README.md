@@ -98,18 +98,21 @@ shelllist clipboard kept 750
 
 ### Displays
 
-The dedicated Displays callout shows a numbered, logical-size diagram and active
-outputs. **Arrange** expands into a canvas and per-screen inspector using the same
-host, theme, controls and keyboard focus as other surfaces. Drag screens to snap
-edges, or use arrows to move by 16 logical pixels (Shift: 1, Ctrl: 64); brackets
-select a screen. The eye icon identifies enabled outputs for three seconds.
+Displays is a searchable list of connected outputs, including disabled displays.
+**Right** or the row chevron expands the selected display's options. One primary
+**Preview changes** button sits above **Identify**, **Arrange**, and an external
+screen's **Enable/Disable** button. **Settings** contains mode, scale, rotation and
+position controls; **Information** shows read-only observed display details.
+Ctrl+Tab switches tabs. Arrange reveals the existing snapping layout canvas.
 
-Mode, scale, rotation and position changes stay in a draft until **Preview**
-(Ctrl+Enter). **Keep** saves the observed layout; Escape, closure or the daemon's
-20-second deadline reverts it. **Prefer external** is a separate, acknowledged
-persistent docking preference. Sleep no longer owns display controls.
-Open with `shelllist open displays` or the `displays` global shortcut. See
-[`docs/displays.md`](docs/displays.md) for behavior, ownership and test details.
+Changes stay in a draft until **Preview changes** (Ctrl+Enter), which previews the
+whole layout. **Keep** saves it; Escape, closure or the daemon's 20-second deadline
+reverts it. Search, display selection and tab changes preserve edits. The gear
+beside search opens display-wide settings, including the acknowledged persistent
+**Prefer external** docking preference. Narrow outputs show details with a Back
+button instead of clipping the split view. Sleep does not own display controls.
+Open with `shelllist open displays` or the `displays` global shortcut.
+See [`docs/displays.md`](docs/displays.md) for behavior, ownership and tests.
 
 ### Battery
 

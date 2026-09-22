@@ -9,9 +9,9 @@ Ui.ActionDetailsPane {
     required property DisplayController controller
     objectName: "displayDetails"
     chooserController: controller
-    emptyText: qsTr("Select a display · clear search to see all displays")
+    contentAvailable: true
     icon: controller.selectedResult ? controller.selectedResult.icon : "󰍹"
-    title: controller.selectedResult ? controller.selectedResult.title : ""
+    title: controller.selectedResult ? controller.selectedResult.title : qsTr("Displays")
     subtitle: controller.selectedResult ? controller.selectedResult.subtitle : ""
     actions: controller.detailActions
     stackedPrimary: width < 440
@@ -19,6 +19,16 @@ Ui.ActionDetailsPane {
     rightMargin: 0
     enabled: !controller.trial && !controller.discardPrompt && !controller.actionInFlight
     onActionTriggered: function (actionId) { controller.triggerDetailAction(actionId); }
+    Keys.onLeftPressed: function (event) {
+        if (event.modifiers !== Qt.NoModifier) return;
+        controller.closeDetails();
+        event.accepted = true;
+    }
+    function focusNarrowDetails(): void {
+        if (width < 440 && controller.uiActive && !controller.arrangementOpen)
+            backButton.forceActiveFocus();
+    }
+    Component.onCompleted: Qt.callLater(focusNarrowDetails)
 
     ColumnLayout {
         anchors.fill: parent
@@ -26,6 +36,7 @@ Ui.ActionDetailsPane {
         RowLayout {
             Layout.fillWidth: true
             Ui.FlatIconButton {
+                id: backButton
                 objectName: "backToDisplayList"
                 Layout.preferredWidth: Ui.Theme.controlHeight
                 Layout.preferredHeight: Ui.Theme.controlHeight
@@ -51,8 +62,16 @@ Ui.ActionDetailsPane {
                 onClicked: pane.controller.reloadDraft()
             }
         }
+        Ui.CenteredMessage {
+            objectName: "displayEmptyDetails"
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: !pane.controller.selectedOutput
+            text: qsTr("No display selected · go back to the list or clear search")
+        }
         Ui.TabbedDetailsStack {
             objectName: "displayDetailsTabs"
+            visible: !!pane.controller.selectedOutput
             Layout.fillWidth: true
             Layout.fillHeight: true
             footerHeight: pane.controlHeight
