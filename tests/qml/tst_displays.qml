@@ -68,6 +68,31 @@ TestCase {
         calls = [];
         return panel;
     }
+    function test_providerResultsAndLiveActions() {
+        const c = makePanel().controller;
+        const provider = c.displayProvider;
+        const results = provider.resultsForOutputs(c.outputs);
+        compare(results.length, 2);
+        compare(results[0].key, "displays::eDP-1");
+        verify(results[0].subtitle.indexOf("Disabled") >= 0);
+        verify(results[1].keywords.indexOf("DP-1") >= 0);
+        const internalActions = provider.actionsFor(results[0]);
+        verify(!internalActions.find(a => a.id === "toggle-enabled").visible);
+        verify(!internalActions.find(a => a.id === "identify").enabled);
+        verify(!provider.actionsFor(results[1]).find(a => a.id === "preview").enabled);
+        verify(provider.execute({ result: results[1], actionId: "toggle-enabled" }));
+        verify(c.dirty);
+        compare(calls.length, 0, "enablement is draft-only");
+        verify(provider.actionsFor(results[1]).find(a => a.id === "preview").enabled);
+        verify(provider.execute({ result: results[1], actionId: "identify" }));
+        compare(c.identifyName, "DP-1");
+        verify(c.identifyActive);
+        const changed = displayState();
+        changed.outputs[1].id = 99;
+        c.applyDisplayPolicy(changed);
+        compare(provider.actionsFor(results[1]).length, 0, "stale output identity is rejected");
+        verify(!provider.execute({ result: results[1], actionId: "toggle-enabled" }));
+    }
     function test_policyIsAcknowledgedAndDisplayOnly() {
         const panel = makePanel();
         const c = panel.controller;

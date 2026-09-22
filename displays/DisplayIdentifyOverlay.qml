@@ -15,7 +15,7 @@ Item {
             required property var modelData
             readonly property int outputIndex: root.controller ? root.controller.outputs.findIndex(function (o) { return o.name === window.modelData.name && !o.disabled; }) : -1
             screen: modelData
-            visible: outputIndex >= 0
+            visible: outputIndex >= 0 && (!root.controller.identifyName || root.controller.identifyName === modelData.name)
             color: "transparent"
             implicitWidth: 190
             implicitHeight: 100

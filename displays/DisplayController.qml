@@ -21,6 +21,10 @@ Ui.ChooserController {
     property string referenceName: ""
     property bool discardPrompt: false
     property bool identifyActive: false
+    property string identifyName: ""
+    property string detailsTab: "settings"
+    property bool arrangementOpen: false
+    readonly property DisplayProvider displayProvider: DisplayProvider { controller: controller }
     property bool layoutDragging: false
     property double clock: Date.now()
     readonly property bool displayPolicySaving: actionInFlight
@@ -179,7 +183,30 @@ Ui.ChooserController {
         detailsOpen = false;
         compactFocusRequested();
     }
+    function executeOutputAction(actionId: string, name: string): bool {
+        if (!outputs.some(function (output) { return output.name === name; })) return false;
+        if (actionId === "preview") return preview();
+        selectOutput(name);
+        if (actionId === "identify") {
+            identifyName = name;
+            identifyActive = true;
+            identifyTimer.restart();
+            return true;
+        }
+        if (actionId === "arrange") {
+            detailsTab = "settings";
+            arrangementOpen = true;
+            openDetails();
+            return true;
+        }
+        if (actionId === "toggle-enabled" && selectedDraft && canEdit) {
+            edit(name, "enabled", !selectedDraft.enabled);
+            return true;
+        }
+        return false;
+    }
     function identify(): void {
+        identifyName = "";
         identifyActive = true;
         identifyTimer.restart();
     }
