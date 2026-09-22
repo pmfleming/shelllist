@@ -6,6 +6,10 @@ Rectangle {
     required property Component rowDelegate
     required property ChooserController controller
     property var resultModel: null
+    property Component footerComponent: null
+    property bool preserveViewportOnAppend: false
+    readonly property bool nearEnd: list.count > 0 && list.height > 0
+        && list.contentHeight - (list.contentY - list.originY + list.height) <= 4 * delegateHeight
     property int selectedIndex: 0
     property real uiScale: 1
     property string emptyText: ""
@@ -59,7 +63,14 @@ Rectangle {
         model: frame.resultModel
         // Reconcile after a mutation batch; a binding alone does not undo
         // ListView's internal index changes when selectedIndex stays the same.
-        onCountChanged: Qt.callLater(frame.revealSelection)
+        property int previousCount: 0
+        onCountChanged: {
+            // Paging must not pull a mouse-scrolled viewport back to selection.
+            if (!frame.preserveViewportOnAppend || count <= previousCount)
+                Qt.callLater(frame.revealSelection);
+            previousCount = count;
+        }
+        footer: frame.footerComponent
         activeFocusOnTab: true
         Keys.onPressed: function (event) {
             frame.keyPressed(event);

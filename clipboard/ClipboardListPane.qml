@@ -34,12 +34,46 @@ Ui.ChooserListPane {
     bodySpacing: Math.round(Ui.Theme.spacingMd * densityScale)
     onIconClicked: controller.screenshotRequested()
 
-    listOptionsComponent: Component {
-        Ui.ActionToolbar {
-            implicitHeight: pane.controller.historyCursor.length > 0 ? Ui.Theme.controlHeight : 0
-            visible: implicitHeight > 0
-            actions: [{ id: "more", label: "Load more entries", enabled: !pane.controller.refreshInFlight }]
-            onTriggered: pane.controller.loadMoreHistory()
+    preserveViewportOnAppend: true
+    readonly property bool shouldLoadMore: visible && listNearEnd && controller.canAutoLoadMoreHistory
+    onShouldLoadMoreChanged: if (shouldLoadMore) Qt.callLater(loadNextPage)
+
+    function loadNextPage(): void {
+        if (shouldLoadMore)
+            controller.loadMoreHistory();
+    }
+
+    listFooterComponent: Component {
+        Item {
+            id: footer
+            objectName: "clipboardPagingFooter"
+            width: ListView.view ? ListView.view.width : 0
+            height: pane.controller.loadingMoreHistory || pane.controller.historyPageError.length > 0
+                ? Ui.Theme.controlHeight + Ui.Theme.spacingMd : 0
+            visible: height > 0
+
+            Text {
+                anchors.centerIn: parent
+                visible: pane.controller.loadingMoreHistory
+                text: "Loading more…"
+                color: Ui.Theme.mutedText
+                font.family: Ui.Theme.fontFamily
+                font.pixelSize: Ui.Theme.fontSizeCaption
+                Accessible.role: Accessible.StaticText
+                Accessible.name: text
+            }
+
+            Ui.ActionButton {
+                objectName: "retryClipboardHistory"
+                anchors.centerIn: parent
+                width: Math.min(footer.width, 280)
+                visible: pane.controller.historyPageError.length > 0
+                label: "Couldn’t load more · Retry"
+                toolTip: pane.controller.historyPageError
+                backgroundColor: "transparent"
+                borderColor: "transparent"
+                onClicked: pane.controller.loadMoreHistory()
+            }
         }
     }
 

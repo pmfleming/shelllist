@@ -10,6 +10,9 @@ ColumnLayout {
     required property Component rowDelegate
     property real densityScale: Theme.densityScale(height + 2 * chooserController.contentVerticalMargin, chooserController.contentVerticalMargin)
     property Component listOptionsComponent: null
+    property Component listFooterComponent: null
+    property bool preserveViewportOnAppend: false
+    readonly property bool listNearEnd: body.listNearEnd
     property var resultModel: null
     property string emptyText: ""
     property string emptyIcon: ""
@@ -114,6 +117,8 @@ ColumnLayout {
         rowDelegate: pane.rowDelegate
         densityScale: pane.densityScale
         resultModel: pane.resultModel
+        listFooterComponent: pane.listFooterComponent
+        preserveViewportOnAppend: pane.preserveViewportOnAppend
         selectedIndex: pane.selectedIndex
         emptyText: pane.emptyText
         emptyIcon: pane.emptyIcon

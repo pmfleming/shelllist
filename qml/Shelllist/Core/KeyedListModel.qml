@@ -94,6 +94,17 @@ ListModel {
         pendingValues = [];
         pendingIndex = 0;
         const keys = currentKeys();
+        // Large history pages are append-only, not a reorder. Preserve existing
+        // delegates (and the viewport) instead of crossing the reset threshold.
+        if (values.length > keys.length && keys.every(function (key, index) { return key === values[index].key; })) {
+            for (let index = 0; index < keys.length; index++) {
+                if (!equivalent(get(index).resultData, values[index]))
+                    setProperty(index, "resultData", values[index]);
+            }
+            pendingValues = values.slice(keys.length);
+            appendChunk(generation);
+            return;
+        }
         if (orderChanges(keys) <= maximumIncrementalOrderChanges) {
             reconcile(keys);
             return;

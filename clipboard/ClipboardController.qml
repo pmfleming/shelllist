@@ -45,6 +45,11 @@ Ui.ProviderChooserController {
     property string historyQueryId: ""
     property string historyQueryText: ""
     property bool appendingHistory: false
+    property string historyPageError: ""
+    readonly property bool loadingMoreHistory: appendingHistory && activeHistoryQueryId.length > 0
+    readonly property bool canAutoLoadMoreHistory: uiActive && historyCursor.length > 0
+        && !activeHistoryQueryId.length && !revisionRequestId.length
+        && !historyPageError.length && historyQueryText === filterText
     property int historyPageNumber: 0
     readonly property int historyPageSize: 200
     readonly property alias detailState: detailsModel
@@ -106,7 +111,9 @@ Ui.ProviderChooserController {
         screenshotInFlight = false;
         activeHistoryQueryId = "";
         revisionRequestId = "";
-        historyCursor = "";
+        // Keep the cursor with the warm result cache; activation validates its
+        // snapshot revision before allowing another page.
+        appendingHistory = false;
         deleteMenuOpen = false;
         deleteConfirmationOpen = false;
         bulkDeleteConfirmationOpen = false;
@@ -159,16 +166,18 @@ Ui.ProviderChooserController {
         historyQueryText = text;
         activeHistoryGeneration = generation;
         historyCursor = "";
+        historyPageError = "";
         appendingHistory = false;
         backend.query(id, text, generation, historyPageSize, "");
     }
     function maybeLoadMoreHistory() {
-        if (filteredResults.length > 0 && selectedIndex >= filteredResults.length - 4)
+        if (canAutoLoadMoreHistory && filteredResults.length > 0 && selectedIndex >= filteredResults.length - 4)
             loadMoreHistory();
     }
     function loadMoreHistory() {
-        if (!historyCursor.length || activeHistoryQueryId.length || historyQueryText !== filterText)
+        if (!uiActive || !historyCursor.length || activeHistoryQueryId.length || revisionRequestId.length || historyQueryText !== filterText)
             return;
+        historyPageError = "";
         appendingHistory = true;
         activeHistoryQueryId = historyQueryId + "-page-" + (++historyPageNumber);
         backend.query(activeHistoryQueryId, historyQueryText, activeHistoryGeneration, historyPageSize, historyCursor);
@@ -223,6 +232,8 @@ Ui.ProviderChooserController {
             selectionModel.applyNormalizedBatch({ providerId: "clipboard", queryId: historyQueryId, replace: false, results: results });
         else
             applyProviderQuery(historyQueryId, results);
+        appendingHistory = false;
+        historyPageError = "";
         reconcileMultiSelection(filteredResults.map(function (result) { return result.payload; }));
         selectCurrentEntry(history.current || null);
         status = filteredResults.length + " of " + history.total + " clipboard entries" + (history.search_limited ? " · search limited to recent entries" : "");
@@ -519,10 +530,16 @@ Ui.ProviderChooserController {
                 screenshotInFlight = false;
         }
         if (id === activeHistoryQueryId || isActiveQuery(id)) {
+            const staleCursor = message.indexOf("stale-cursor") >= 0;
+            // Keep the page cursor and existing rows for an explicit retry.
+            // Stale snapshots instead require a fresh first-page query.
+            historyPageError = appendingHistory && !staleCursor ? message : "";
             activeHistoryQueryId = "";
-            historyCursor = "";
+            appendingHistory = false;
+            if (!historyPageError.length)
+                historyCursor = "";
             status = message;
-            if (message.indexOf("stale-cursor") >= 0)
+            if (staleCursor)
                 scheduleRefresh();
         } else if (!detailState.handleFailure(id, message)) {
             status = message;
@@ -570,6 +587,8 @@ Ui.ProviderChooserController {
         revisionRequestId = "";
         historyRevision = "";
         historyCursor = "";
+        historyPageError = "";
+        appendingHistory = false;
         status = message;
     }
     onSelectedResultChanged: {

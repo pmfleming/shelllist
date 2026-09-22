@@ -35,6 +35,7 @@ TestCase {
     }
     Component { id: controllerFactory; Clip.ClipboardController {} }
     Component { id: cardsFactory; Clip.ClipboardDetailCards {} }
+    Component { id: paneFactory; Clip.ClipboardListPane {} }
     function initTestCase() {
         originalFactory = Io.DaemonSessions.clientFactory;
         originalSessions = Io.DaemonSessions.sessions;
@@ -142,6 +143,143 @@ TestCase {
         compare(query.params.cursor, null);
         controller.applyHistory(pageId, {snapshot_revision: "old", entries: []});
         compare(controller.historyRevision, "123", "a superseded page must not replace the current view");
+    }
+
+    function pagedController() {
+        const controller = makeController();
+        controller.refresh();
+        const entries = Array.from({length: 200}, function (_, index) {
+            return {id: "row-" + index, revision: 1, kind: "text", preview: "Row " + index, favorite: false};
+        });
+        reply(controller, controller.activeHistoryQueryId, {history: {
+            snapshot_revision: "123", total: 400, offset: 0, entries: entries, next_cursor: "next-page"
+        }});
+        wait(0);
+        calls = [];
+        return controller;
+    }
+    function makePane(controller) {
+        const pane = createTemporaryObject(paneFactory, testCase, {controller: controller, width: 600, height: 600});
+        verify(pane !== null);
+        views = views.concat([pane]);
+        verify(waitForRendering(pane));
+        wait(0);
+        return pane;
+    }
+    function historyCalls() {
+        return calls.filter(call => call.method === "clipboard.history.query");
+    }
+    function test_scrollPrefetchPreservesViewportAndSelection() {
+        const controller = pagedController();
+        const pane = makePane(controller);
+        const list = findChild(pane, "resultListView");
+        tryCompare(list, "count", 200);
+        wait(0);
+        compare(historyCalls().length, 0, "opening must not fetch the whole catalog");
+        compare(pane.listOptionsComponent, null, "no top pagination toolbar");
+        list.positionViewAtIndex(195, ListView.Beginning);
+        tryCompare(controller, "loadingMoreHistory", true);
+        compare(historyCalls().length, 1);
+        compare(controller.selectedIndex, 0, "mouse scrolling need not change selection");
+        const scrollY = list.contentY;
+        verify(list.footerItem.height > 0, "show loading feedback at the bottom");
+        controller.loadMoreHistory();
+        compare(historyCalls().length, 1, "coalesce requests in flight");
+        const entries = Array.from({length: 200}, function (_, index) {
+            return {id: "row-" + (200 + index), revision: 1, kind: "text", preview: "More " + index, favorite: false};
+        });
+        reply(controller, controller.activeHistoryQueryId, {history: {
+            snapshot_revision: "123", total: 400, offset: 200, entries: entries
+        }});
+        tryCompare(list, "count", 400);
+        wait(0);
+        compare(controller.selectedIndex, 0);
+        compare(list.contentY, scrollY, "appending must not jump back to the selected row");
+        compare(list.footerItem.height, 0);
+        list.positionViewAtEnd();
+        wait(0);
+        compare(historyCalls().length, 1, "stop at cursor exhaustion");
+    }
+    function test_pageFailureOffersExplicitRetryWithoutLoop() {
+        const controller = pagedController();
+        const pane = makePane(controller);
+        const list = findChild(pane, "resultListView");
+        tryCompare(list, "count", 200);
+        wait(0); // Let initial selection reveal settle before scrolling.
+        list.positionViewAtEnd();
+        tryCompare(controller, "loadingMoreHistory", true);
+        reply(controller, controller.activeHistoryQueryId, {}, "Temporary read failure");
+        compare(controller.historyCursor, "next-page");
+        compare(controller.historyPageError, "Temporary read failure");
+        compare(controller.filteredResults.length, 200);
+        const retry = findChild(pane, "retryClipboardHistory");
+        verify(retry.visible);
+        controller.select(199);
+        list.positionViewAtEnd();
+        wait(100);
+        compare(historyCalls().length, 1, "neither scrolling nor selection automatically retries errors");
+        retry.clicked();
+        compare(historyCalls().length, 2);
+        compare(historyCalls()[1].params.cursor, "next-page");
+        compare(controller.historyPageError, "");
+        verify(controller.loadingMoreHistory);
+        reply(controller, controller.activeHistoryQueryId, {history: {
+            snapshot_revision: "123", total: 201, offset: 200,
+            entries: [{id: "last", revision: 1, kind: "text", preview: "Last", favorite: false}]
+        }});
+        wait(0);
+        compare(controller.filteredResults.length, 201);
+        compare(controller.selectedIndex, 199);
+        compare(list.footerItem.height, 0);
+        compare(historyCalls().length, 2);
+    }
+    function test_keyboardPrefetchAndHiddenGuard() {
+        const controller = pagedController();
+        controller.select(195);
+        wait(0);
+        compare(historyCalls().length, 0);
+        controller.select(196);
+        tryCompare(controller, "loadingMoreHistory", true);
+        compare(historyCalls().length, 1);
+        reply(controller, controller.activeHistoryQueryId, {}, "Temporary read failure");
+        controller.uiActive = false;
+        controller.loadMoreHistory();
+        compare(historyCalls().length, 1, "hidden surfaces must not page");
+    }
+    function test_warmReopenRetainsCursorAfterRevisionCheck() {
+        const controller = pagedController();
+        controller.deactivateUi();
+        compare(controller.historyCursor, "next-page");
+        controller.activateUi("1");
+        verify(controller.revisionRequestId.length > 0);
+        controller.loadMoreHistory();
+        compare(historyCalls().length, 0, "validate the cached snapshot before paging");
+        reply(controller, controller.revisionRequestId, {revision: {}, snapshot_revision: "123"});
+        controller.loadMoreHistory();
+        compare(historyCalls().length, 1);
+        compare(historyCalls()[0].params.cursor, "next-page");
+    }
+    function test_searchChangeClearsPageErrorAndOldCursor() {
+        const controller = pagedController();
+        controller.loadMoreHistory();
+        reply(controller, controller.activeHistoryQueryId, {}, "Temporary read failure");
+        controller.filterText = "new search";
+        controller.loadMoreHistory();
+        compare(historyCalls().length, 1, "never retry the old query after search changes");
+        tryVerify(function () { return historyCalls().length === 2; });
+        compare(controller.historyPageError, "");
+        compare(controller.historyCursor, "");
+        compare(historyCalls()[1].params.query, "new search");
+        compare(historyCalls()[1].params.cursor, null);
+    }
+    function test_stalePageRefreshesInsteadOfRetryingCursor() {
+        const controller = pagedController();
+        controller.loadMoreHistory();
+        reply(controller, controller.activeHistoryQueryId, {}, "stale-cursor: history changed");
+        compare(controller.historyCursor, "");
+        compare(controller.historyPageError, "");
+        tryVerify(function () { return historyCalls().length === 2; });
+        compare(historyCalls()[1].params.cursor, null);
     }
 
     function test_hiddenTransportReadyDoesNotOpenClipboardSession() {

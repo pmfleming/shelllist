@@ -10,6 +10,9 @@ Item {
     required property Component rowDelegate
     required property real densityScale
     property var resultModel: null
+    property Component listFooterComponent: null
+    property bool preserveViewportOnAppend: false
+    readonly property bool listNearEnd: listFrame.nearEnd
     property int selectedIndex: 0
     property string emptyText: ""
     property string emptyIcon: ""
@@ -45,6 +48,8 @@ Item {
             uiScale: body.densityScale
             controller: body.chooserController
             resultModel: body.resultModel
+            footerComponent: body.listFooterComponent
+            preserveViewportOnAppend: body.preserveViewportOnAppend
             selectedIndex: body.selectedIndex
             emptyText: body.emptyText
             emptyIcon: body.emptyIcon
