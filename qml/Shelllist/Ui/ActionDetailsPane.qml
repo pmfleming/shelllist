@@ -20,6 +20,7 @@ DetailsPane {
     property alias headerHeight: header.headerHeight
     property alias controlHeight: header.controlHeight
     property alias secondaryVisible: header.secondaryVisible
+    property alias stackedPrimary: header.stackedPrimary
     readonly property real bodyHeight: body.height
     default property alias bodyContent: body.data
 

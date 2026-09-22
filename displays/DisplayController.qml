@@ -182,7 +182,6 @@ Ui.ProviderChooserController {
     function openDetails() {
         if (!hasSelection || navigationBlocked) return;
         detailsOpen = true;
-        editorFocusRequested();
     }
     function closeDetails() {
         if (trial || actionInFlight) return;
@@ -211,6 +210,7 @@ Ui.ProviderChooserController {
             detailsTab = "settings";
             arrangementOpen = true;
             openDetails();
+            Qt.callLater(editorFocusRequested);
             return true;
         }
         if (actionId === "toggle-enabled" && selectedDraft && canEdit) {

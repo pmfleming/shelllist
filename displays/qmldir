@@ -9,6 +9,7 @@ internal DisplayLayoutPane DisplayLayoutPane.qml
 internal DisplayListPane DisplayListPane.qml
 internal DisplayListRow DisplayListRow.qml
 internal DisplayDetails DisplayDetails.qml
+internal DisplayInformation DisplayInformation.qml
 internal DisplayCanvas DisplayCanvas.qml
 internal DisplayInspector DisplayInspector.qml
 internal DisplayTrialDialog DisplayTrialDialog.qml

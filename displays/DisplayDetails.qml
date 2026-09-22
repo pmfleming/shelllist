@@ -14,6 +14,7 @@ Ui.ActionDetailsPane {
     title: controller.selectedResult ? controller.selectedResult.title : ""
     subtitle: controller.selectedResult ? controller.selectedResult.subtitle : ""
     actions: controller.detailActions
+    stackedPrimary: width < 440
     leftMargin: 0
     rightMargin: 0
     enabled: !controller.trial && !controller.discardPrompt && !controller.actionInFlight
@@ -50,10 +51,29 @@ Ui.ActionDetailsPane {
                 onClicked: pane.controller.reloadDraft()
             }
         }
-        DisplayLayoutPane {
+        Ui.TabbedDetailsStack {
+            objectName: "displayDetailsTabs"
             Layout.fillWidth: true
             Layout.fillHeight: true
-            controller: pane.controller
+            footerHeight: pane.controlHeight
+            sectionSpacing: pane.sectionSpacing
+            selectedValue: pane.controller.detailsTab
+            tabs: [
+                { value: "settings", label: qsTr("Settings"), icon: "󰒓" },
+                { value: "information", label: qsTr("Information"), icon: "󰋼" }
+            ]
+            onSelected: function (value) { pane.controller.detailsTab = value; }
+
+            DisplayLayoutPane {
+                anchors.fill: parent
+                visible: pane.controller.detailsTab === "settings"
+                controller: pane.controller
+            }
+            DisplayInformation {
+                anchors.fill: parent
+                visible: pane.controller.detailsTab === "information"
+                controller: pane.controller
+            }
         }
     }
 }

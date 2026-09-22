@@ -11,11 +11,12 @@ Ui.DetailFlickable {
     revealFocusedControl: true
     GridLayout {
         width: workspace.width
-        columns: width >= 740 ? 2 : 1
+        columns: workspace.controller.arrangementOpen && width >= 740 ? 2 : 1
         height: columns === 2 ? Math.max(implicitHeight, workspace.height) : implicitHeight
         columnSpacing: Ui.Theme.spacingLg
         rowSpacing: Ui.Theme.spacingMd
         ColumnLayout {
+            visible: workspace.controller.arrangementOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.preferredWidth: 620
@@ -28,15 +29,27 @@ Ui.DetailFlickable {
                 controller: workspace.controller
                 editing: true
             }
-            Ui.ThemeText {
+            RowLayout {
                 Layout.fillWidth: true
-                text: "[ ]   ·   ← ↑ ↓ →  16 px   ·   Shift  1 px   ·   Ctrl  64 px"
-                color: Ui.Theme.mutedText
-                font.pixelSize: Ui.Theme.fontSizeSmall
-                wrapMode: Text.Wrap
+                Ui.ThemeText {
+                    Layout.fillWidth: true
+                    text: "[ ]   ·   ← ↑ ↓ →  16 px   ·   Shift  1 px   ·   Ctrl  64 px"
+                    color: Ui.Theme.mutedText
+                    font.pixelSize: Ui.Theme.fontSizeSmall
+                    wrapMode: Text.Wrap
+                }
+                Ui.FlatIconButton {
+                    Layout.preferredWidth: Ui.Theme.controlHeight
+                    Layout.preferredHeight: Ui.Theme.controlHeight
+                    icon: "󰅖"
+                    accessibleName: qsTr("Hide arrangement canvas")
+                    toolTip: accessibleName
+                    onClicked: { workspace.controller.arrangementOpen = false; inspector.focusFirstControl(); }
+                }
             }
         }
         DisplayInspector {
+            id: inspector
             Layout.fillWidth: true
             Layout.preferredWidth: 320
             Layout.alignment: Qt.AlignTop
@@ -45,8 +58,11 @@ Ui.DetailFlickable {
     }
     Connections {
         target: workspace.controller
-        function onEditorFocusRequested(): void { diagram.forceActiveFocus(); }
-        function onFocusSearchRequested(): void { diagram.forceActiveFocus(); }
+        function onEditorFocusRequested(): void {
+            if (!workspace.visible) return;
+            if (workspace.controller.arrangementOpen) diagram.forceActiveFocus();
+            else inspector.focusFirstControl();
+        }
     }
-    Component.onCompleted: if (controller.uiActive) diagram.forceActiveFocus()
+    Component.onCompleted: if (controller.uiActive && controller.arrangementOpen && visible) diagram.forceActiveFocus()
 }

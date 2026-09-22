@@ -13,18 +13,12 @@ ColumnLayout {
     spacing: Ui.Theme.spacingMd
     enabled: controller.canEdit
 
-    Ui.DropDownList {
-        objectName: "displaySelection"
-        Layout.fillWidth: true
-        options: inspector.controller.outputs.map(function (o, i) { return { value: o.name, label: (i + 1) + " · " + Model.title(o) }; })
-        value: inspector.controller.selectedName
-        Accessible.name: qsTr("Selected display")
-        onSelected: function (value) { inspector.controller.selectOutput(value); }
-    }
+    function focusFirstControl(): void { resolution.forceActiveFocus(); }
     Ui.FieldLabel { text: qsTr("Resolution / refresh") }
     RowLayout {
         Layout.fillWidth: true
         Ui.DropDownList {
+            id: resolution
             objectName: "displayResolution"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
@@ -119,14 +113,12 @@ ColumnLayout {
             onSelected: function (value) { inspector.controller.referenceName = value; }
         }
     }
-    Ui.ToggleRow {
-        objectName: "displayEnabled"
+    Ui.ThemeText {
+        objectName: "displayEnablementStatus"
         Layout.fillWidth: true
-        Layout.preferredHeight: Ui.Theme.controlHeight
-        title: Model.internal(inspector.output.name) ? qsTr("Laptop fallback") : qsTr("Enabled")
-        subtitle: Model.internal(inspector.output.name) ? qsTr("Managed by the external-display preference") : ""
-        checked: inspector.draft.enabled
-        interactive: !Model.internal(inspector.output.name)
-        onClicked: inspector.controller.edit(inspector.output.name, "enabled", !checked)
+        text: Model.internal(inspector.output.name) ? qsTr("Laptop fallback is managed by the display-wide docking preference.") : (inspector.draft.enabled ? qsTr("Enabled in the draft") : qsTr("Disabled in the draft"))
+        wrapMode: Text.Wrap
+        color: Ui.Theme.mutedText
+        font.pixelSize: Ui.Theme.fontSizeSmall
     }
 }

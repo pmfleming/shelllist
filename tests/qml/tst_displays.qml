@@ -68,6 +68,45 @@ TestCase {
         calls = [];
         return panel;
     }
+    function test_settingsInformationAndTextNavigation() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        const state = displayState();
+        state.outputs[1].make = "Dell";
+        state.outputs[1].model = "U2723QE";
+        state.outputs[1].serial = "TEST-123";
+        c.applyDisplayPolicy(state);
+        c.openDetails();
+        tryVerify(function () { return findChild(panel, "displayDetailsTabs") !== null; });
+        const tabs = findChild(panel, "displayDetailsTabs");
+        const info = findChild(panel, "displayInformation");
+        compare(tabs.tabs.length, 2);
+        compare(tabs.selectedValue, "settings");
+        const x = findChild(panel, "displayX");
+        x.focusInput(false);
+        x.cursorPosition = 2;
+        const before = c.selectedDraft.x;
+        keyClick(Qt.Key_Left);
+        compare(x.cursorPosition, 1);
+        verify(c.detailsOpen, "Left edits text rather than closing details");
+        compare(c.selectedDraft.x, before);
+        c.edit("DP-1", "scale", 2);
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        compare(c.detailsTab, "information");
+        verify(info.visible);
+        compare(info.entries.find(e => e.label === "Scale").value, "150%", "Information shows observed state, not the draft");
+        compare(info.entries.find(e => e.label === "Manufacturer").value, "Dell");
+        verify(!findChild(panel, "displayLayoutWorkspace").visible);
+        verify(c.triggerDetailAction("arrange"));
+        compare(c.detailsTab, "settings");
+        compare(c.selectedDraft.scale, 2);
+        c.selectOutput("eDP-1");
+        c.cycleDetailsTab();
+        verify(!info.entries.some(e => e.label === "Serial number"), "missing metadata is omitted");
+        compare(c.detailActions.filter(a => a.visible && a.presentation.group === "toolbar").length, 2);
+        compare(calls.length, 0);
+    }
     function test_listRightExpansionAndActionHierarchy() {
         const panel = makePanel();
         const c = panel.controller;
@@ -188,6 +227,9 @@ TestCase {
         tryVerify(function () { return findChild(panel, "displayWorkspaceCanvas") !== null; });
         const canvas = findChild(panel, "displayWorkspaceCanvas");
         verify(canvas !== null);
+        verify(!canvas.visible, "the canvas is not the initial details view");
+        verify(c.triggerDetailAction("arrange"));
+        tryVerify(function () { return canvas.visible; });
         canvas.forceActiveFocus();
         calls = [];
         const before = c.selectedDraft.x;
@@ -256,14 +298,16 @@ TestCase {
         c.selectOutput("DP-1");
         c.openDetails();
         verify(waitForRendering(panel));
-        tryVerify(function () { return findChild(panel, "displayEnabled") !== null; });
+        tryVerify(function () { return findChild(panel, "displayY") !== null; });
+        verify(c.triggerDetailAction("arrange"));
         const page = findChild(panel, "displayLayoutWorkspace");
-        const enabled = findChild(panel, "displayEnabled");
-        enabled.forceActiveFocus();
+        const fieldY = findChild(panel, "displayY");
+        verify(waitForRendering(panel));
+        fieldY.focusInput(false);
         tryVerify(function () { return page.contentY > 0; });
-        const position = enabled.mapToItem(page, 0, 0);
+        const position = fieldY.mapToItem(page, 0, 0);
         verify(position.y >= 0);
-        verify(position.y + enabled.height <= page.height + 1);
+        verify(position.y + fieldY.height <= page.height + 1);
         for (const name of ["displayResolution", "displayRefreshRate", "displayScale", "displayRotation", "displayX", "displayY"]) {
             const field = findChild(panel, name);
             verify(field.mapToItem(panel, field.width, 0).x <= panel.width);

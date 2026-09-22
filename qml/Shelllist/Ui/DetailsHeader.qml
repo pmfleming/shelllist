@@ -21,6 +21,10 @@ Column {
     property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     property int controlHeight: Math.max(Theme.compactControlHeight, Math.round(Theme.controlHeight * uiScale))
     property bool secondaryVisible: true
+    property bool stackedPrimary: false
+    readonly property bool hasStackedPrimary: stackedPrimary && actions.some(function (action) {
+        return action.visible !== false && (action.presentation || {}).group === "primary";
+    })
     property int sectionSpacing: Theme.verticalSpacing(Theme.spacingMd, uiScale)
     readonly property bool hasSecondaryActions: secondaryVisible && actions.some(function (action) {
         return action.visible !== false && (action.presentation || {}).group === "toolbar";
@@ -29,8 +33,8 @@ Column {
 
     signal actionTriggered(string actionId)
 
-    spacing: hasSecondaryActions ? sectionSpacing : 0
-    height: headerHeight + secondaryHeight + spacing
+    spacing: hasSecondaryActions || hasStackedPrimary ? sectionSpacing : 0
+    height: headerHeight + secondaryHeight + (hasStackedPrimary ? controlHeight : 0) + spacing * (Number(hasSecondaryActions) + Number(hasStackedPrimary))
 
     RowLayout {
         width: parent.width
@@ -71,7 +75,7 @@ Column {
         }
 
         ActionToolbar {
-            visible: header.actions.length > 0
+            visible: !header.stackedPrimary && header.actions.length > 0
             Layout.preferredWidth: visible ? header.actionWidth : 0
             Layout.preferredHeight: header.controlHeight
             actions: header.actions
@@ -84,12 +88,24 @@ Column {
     }
 
     ActionToolbar {
+        visible: header.hasStackedPrimary
+        width: parent.width
+        height: header.controlHeight
+        actions: header.actions
+        group: "primary"
+        fillActions: true
+        controlHeight: header.controlHeight
+        onTriggered: function (actionId) { header.actionTriggered(actionId); }
+    }
+
+    ActionToolbar {
         visible: header.hasSecondaryActions
         width: parent.width
         height: header.secondaryHeight
         actions: header.actions
         group: "toolbar"
         alignRight: true
+        fillActions: header.stackedPrimary
         controlHeight: header.controlHeight
         onTriggered: function (actionId) {
             header.actionTriggered(actionId);

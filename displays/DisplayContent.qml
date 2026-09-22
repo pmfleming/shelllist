@@ -11,13 +11,15 @@ Ui.ProviderChooserSurface {
     minimumSplitDetailsWidth: 350
     navigationEnabled: !controller.discardPrompt && !controller.layoutDragging && !controller.navigationHelpOpen
     refreshEnabled: !controller.actionInFlight && !controller.trial && navigationEnabled
-    detailsTabEnabled: false
+    detailsTabEnabled: navigationEnabled && controller.detailsOpen && controller.hasSelection && !controller.trial && !controller.actionInFlight
     helpEnabled: controller.uiActive && !controller.discardPrompt && !controller.trial
     helpEntries: [
         { keys: "Right", action: qsTr("Expand selected display") },
+        { keys: "Ctrl+Tab", action: qsTr("Switch Settings / Information") },
         { keys: "Ctrl+Enter", action: qsTr("Preview the whole layout · keep within 20 seconds") }
     ]
     onRefreshRequested: controller.refresh()
+    onDetailsTabRequested: controller.cycleDetailsTab()
 
     listComponent: Component { DisplayListPane { controller: content.controller } }
     detailsComponent: Component { DisplayDetails { controller: content.controller; uiScale: content.uiScale } }
