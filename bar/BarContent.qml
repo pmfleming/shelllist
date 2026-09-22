@@ -139,7 +139,7 @@ Item {
 
                 height: parent.height
                 text: Presentation.moduleText(descriptor, root.layoutDensity)
-                toolTip: descriptor.tooltip
+                accessibleName: descriptor.tooltip
                 horizontalPadding: root.layoutDensity === 0 ? 10 : root.layoutDensity === 1 ? 7 : 5
                 foreground: root.moduleColor(descriptor.tone)
                 backgroundColor: root.moduleBackground(descriptor.tone)

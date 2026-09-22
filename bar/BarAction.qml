@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls as Controls
 import Shelllist.Ui as Ui
 
 Ui.ActionControl {
@@ -11,8 +10,7 @@ Ui.ActionControl {
     property color borderColor: Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72)
     property int horizontalPadding: 10
     property int minimumWidth: 0
-    property string toolTip: text
-    accessibleName: toolTip
+    accessibleName: text
     onClicked: primaryTriggered()
     property alias elide: label.elide
     property alias fontWeight: label.font.weight
@@ -80,12 +78,7 @@ Ui.ActionControl {
         }
     }
 
-    Controls.ToolTip.visible: stateLayer.hovered && root.toolTip.length > 0
-    Controls.ToolTip.text: toolTip
-    Controls.ToolTip.delay: 450
-
     Ui.StateLayer {
-        id: stateLayer
         focusTarget: root
         radius: 0
         stateColor: root.foreground

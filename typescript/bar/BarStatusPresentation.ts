@@ -200,16 +200,6 @@ function audioModule(audio: any) {
     });
 }
 
-function brightnessModule(brightness: any) {
-    const percent = brightness ? brightness.percent : 0;
-    return statusModule("brightness", "󰃠", "Brightness: " + percent
-        + "%\nLeft click: brighter\nRight click: dimmer", {
-        visible: !!(brightness && brightness.available), maxDensity: 1,
-        primary: "brightness-up", secondary: "brightness-down",
-        wheelUp: "brightness-up", wheelDown: "brightness-down"
-    });
-}
-
 function displaysModule(displays: any) {
     const outputs = (displays && displays.outputs) || [];
     const icon = outputs.length > 1 ? "󰍺" : "󰍹";
@@ -291,7 +281,7 @@ function statusModules(state: any, now: any) {
     return [
         networkModule(state.network), updateModule(state.updates),
         bluetoothModule(state.bluetooth), audioModule(state.audio),
-        brightnessModule(state.brightness), displaysModule(state.displays), batteryModule(state.battery),
+        displaysModule(state.displays), batteryModule(state.battery),
         powerModule(state.powerProfile), activityModule(state.activity, state.notifications),
         timezoneModule(state.timezone), clockModule(now, state.timezone)
     ];

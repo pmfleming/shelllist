@@ -82,7 +82,7 @@ Ui.ChooserController {
         {
             value: "overview",
             icon: "󰋜",
-            label: "Overview"
+            label: "Power"
         },
         {
             value: "care",

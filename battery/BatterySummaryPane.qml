@@ -15,6 +15,63 @@ Column {
     width: parent.width
     spacing: Ui.Theme.verticalSpacing(Ui.Theme.spacingMd, Ui.Theme.densityScale(height, 0))
 
+    Ui.DetailColumnCard {
+        objectName: "powerModeCard"
+        verticalContentPadding: Ui.Theme.spacingMd
+        height: contentImplicitHeight + 2 * verticalContentPadding
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Ui.Theme.spacingMd
+
+            Ui.ThemeText {
+                Layout.fillWidth: true
+                text: qsTr("Power mode")
+                font.pixelSize: Ui.Theme.fontSizeHeading
+                font.weight: Ui.Theme.fontWeightBold
+            }
+
+            BatteryProfileSelector {
+                objectName: "batteryPowerModeProfile"
+                Layout.preferredWidth: implicitWidth
+                Layout.preferredHeight: implicitHeight
+                accessibleName: qsTr("Power mode")
+                options: pane.controller.profileOptions
+                value: pane.controller.powerProfile.profile || ""
+                interactive: pane.controller.powerProfile.available && !pane.controller.actionInFlight
+                onSelected: function (value) {
+                    pane.controller.setPowerProfile(value);
+                }
+            }
+        }
+
+        Ui.FieldLabel {
+            Layout.fillWidth: true
+            visible: !pane.controller.powerProfile.available
+            text: qsTr("power-profiles-daemon is unavailable")
+            color: Ui.Theme.warning
+        }
+
+        Ui.FieldLabel {
+            Layout.fillWidth: true
+            visible: !!pane.controller.powerProfile.performance_degraded
+            text: "Performance is limited: " + pane.controller.powerProfile.performance_degraded
+            color: Ui.Theme.warning
+        }
+
+        Repeater {
+            model: pane.controller.powerProfile.active_holds || []
+
+            delegate: Ui.FieldLabel {
+                required property var modelData
+                Layout.fillWidth: true
+                Layout.preferredHeight: 26
+                text: Presentation.holdSummary(modelData)
+                color: Ui.Theme.active
+            }
+        }
+    }
+
     BatteryHistoryCard {
         history: pane.controller.batteryHistory
         battery: pane.battery

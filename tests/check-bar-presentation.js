@@ -73,11 +73,15 @@ const modules = context.statusModules({
     notifications: { count: 2, dnd: false },
     timezone: { available: true, city: "Taipei", abbreviation: "CST", utc_offset_seconds: 28800 }
 }, new Date(0));
+equal(modules.some(item => item.id === "brightness"), false,
+    "brightness stays in shortcuts and OSD, not the bar");
+equal(modules.find(item => item.id === "displays").primary, "displays",
+    "monitor control still opens Displays");
 // Keep reachability, not a mirror of the action-ID table or module order.
 equal(context.activityModule({ available: false }, { count: 0 }).visible, true,
     "agenda remains reachable without a calendar provider");
 const narrow = context.visibleStatusModules(modules, context.layoutDensity(600)).map(item => item.id);
-equal(["network", "battery", "activity", "clock"].every(id => narrow.includes(id)), true,
+equal(["network", "displays", "battery", "activity", "clock"].every(id => narrow.includes(id)), true,
     "essential actions survive a narrow screen");
 
 console.log("bar presentation: monitor routing, OSD policy, progress and essential actions passed");

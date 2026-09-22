@@ -270,7 +270,6 @@ Item {
             bluetooth: bluetoothController,
             updates: updates,
             audio: audio,
-            brightness: brightness,
             displays: displays,
             battery: battery,
             powerProfile: powerProfile,
@@ -303,12 +302,6 @@ Item {
                 },
                 "audio-down": function () {
                     backend.adjustAudio(-5);
-                },
-                "brightness-up": function () {
-                    backend.adjustBrightness(5);
-                },
-                "brightness-down": function () {
-                    backend.adjustBrightness(-5);
                 },
                 displays: function () {
                     openSurface("displays");

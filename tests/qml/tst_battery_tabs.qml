@@ -51,6 +51,7 @@ TestCase {
         const page = findChild(panel, "batteryDetailPage");
         const tabs = findChild(panel, "batteryViewTabs");
         compare(tabs.tabs.length, 3);
+        compare(tabs.tabs[0].label, "Power");
         compare(controller.viewTab, "overview");
         const panes = [findChild(panel, "batteryOverviewPane"),
             findChild(panel, "batteryCarePane"), findChild(panel, "batteryPowerPane")];
@@ -71,6 +72,39 @@ TestCase {
         compare(controller.viewTab, "overview", "ignore unknown tabs");
         tabs.selected("care");
         compare(controller.viewTab, "care");
+    }
+
+    function test_powerModeLivesInSummaryTab() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.applyPowerProfile({ available: true, profile: "balanced",
+            profiles: [{ name: "power-saver" }, { name: "balanced" }, { name: "performance" }] });
+        const summary = findChild(panel, "batteryOverviewPane");
+        const sleep = findChild(panel, "batteryPowerPane");
+        const card = findChild(summary, "powerModeCard");
+        const selector = findChild(card, "batteryPowerModeProfile");
+        verify(card !== null);
+        verify(selector !== null);
+        verify(!findChild(sleep, "powerModeCard"));
+        verify(card.visible);
+        compare(card.y, 0, "power mode is the first card");
+        compare(selector.value, "balanced");
+        verify(selector.interactive);
+        controller.actionInFlight = true;
+        verify(!selector.interactive);
+        controller.actionInFlight = false;
+        controller.selectViewTab("power");
+        verify(!card.visible, "Power & sleep does not show power mode");
+        controller.selectViewTab("overview");
+        verify(card.visible);
+        for (const width of [420, 560]) {
+            panel.width = width;
+            verify(waitForRendering(panel));
+            verify(selector.mapToItem(card, selector.width, 0).x <= card.width - card.contentPadding + 1,
+                "power mode selector stays inside its card");
+        }
+        controller.applyPowerProfile({ available: false, profiles: [] });
+        verify(!selector.interactive);
     }
 
     function test_levelsLiveInPowerTabWithIndependentActions() {

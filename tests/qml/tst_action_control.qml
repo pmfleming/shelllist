@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls as Controls
 import QtTest
 import Shelllist.Ui as Ui
 import Shelllist.Bar as Bar
@@ -62,6 +63,16 @@ TestCase {
         if (checkable)
             control.Accessible.toggleAction();
         compare(clicks.count, accepted, "disabled controls must not activate");
+    }
+    function test_barHoverHasNoTooltip() {
+        const control = createTemporaryObject(bar, testCase, {width: 160, height: 40});
+        verify(control !== null);
+        compare(control.accessibleName, "Bar");
+        control.accessibleName = "Display settings";
+        compare(control.Accessible.name, "Display settings");
+        mouseMove(control, 80, 20);
+        wait(600);
+        compare(control.Controls.ToolTip.visible, false, "bar hover must not show a tooltip");
     }
     function test_barSecondaryIsDistinctFromPrimary() {
         const control = createTemporaryObject(bar, testCase, {width: 160, height: 40});
