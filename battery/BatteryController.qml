@@ -87,12 +87,12 @@ Ui.ChooserController {
         {
             value: "care",
             icon: "󰂂",
-            label: "Battery care"
+            label: "Battery"
         },
         {
             value: "power",
             icon: "󰐥",
-            label: "Power & sleep"
+            label: "Sleep"
         }
     ]
     property string viewTab: "overview"

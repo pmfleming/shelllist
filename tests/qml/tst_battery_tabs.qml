@@ -52,6 +52,8 @@ TestCase {
         const tabs = findChild(panel, "batteryViewTabs");
         compare(tabs.tabs.length, 3);
         compare(tabs.tabs[0].label, "Power");
+        compare(tabs.tabs[1].label, "Battery");
+        compare(tabs.tabs[2].label, "Sleep");
         compare(controller.viewTab, "overview");
         const panes = [findChild(panel, "batteryOverviewPane"),
             findChild(panel, "batteryCarePane"), findChild(panel, "batteryPowerPane")];
@@ -94,7 +96,7 @@ TestCase {
         verify(!selector.interactive);
         controller.actionInFlight = false;
         controller.selectViewTab("power");
-        verify(!card.visible, "Power & sleep does not show power mode");
+        verify(!card.visible, "Sleep does not show power mode");
         controller.selectViewTab("overview");
         verify(card.visible);
         for (const width of [420, 560]) {

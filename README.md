@@ -107,7 +107,7 @@ select a screen. The eye icon identifies enabled outputs for three seconds.
 Mode, scale, rotation and position changes stay in a draft until **Preview**
 (Ctrl+Enter). **Keep** saves the observed layout; Escape, closure or the daemon's
 20-second deadline reverts it. **Prefer external** is a separate, acknowledged
-persistent docking preference. Power & sleep no longer owns display controls.
+persistent docking preference. Sleep no longer owns display controls.
 Open with `shelllist open displays` or the `displays` global shortcut. See
 [`docs/displays.md`](docs/displays.md) for behavior, ownership and test details.
 
@@ -116,8 +116,8 @@ Open with `shelllist open displays` or the `displays` global shortcut. See
 The Battery & Power surface has three tabs, cycled with `Ctrl+Tab`:
 
 - **Power:** power mode, live status, charge/energy history, and estimated per-application energy since the last charge or across the last week.
-- **Battery care:** device selection, firmware charge thresholds, one-time full charging, pause/resume charging, calibration, full/charge-limit notification, health, cycles, and hardware details. Device selection stays beside the settings and health information it controls.
-- **Power & sleep:** shared **Battery levels & actions**, adaptive hardware tuning, and lock/suspend/hibernate controls with sleep inhibitors. Low and Critical each have an editable percentage, a level on/off switch, and top-bar-matching profile icons (Power saver, Balanced, or Performance where supported). Enabling a level enables its threshold notification and selected automatic profile; disabling it disables both. Notifications also work without a power-profile service. Rules apply while unplugged, with a 3-percentage-point recovery margin. Manual profile selection pauses automatic switching until recovery or AC; the status includes a Resume action. The daemon preserves existing thresholds and migrates the old automatic-saver preference to both levels.
+- **Battery:** device selection, firmware charge thresholds, one-time full charging, pause/resume charging, calibration, full/charge-limit notification, health, cycles, and hardware details. Device selection stays beside the settings and health information it controls.
+- **Sleep:** shared **Battery levels & actions**, adaptive hardware tuning, and lock/suspend/hibernate controls with sleep inhibitors. Low and Critical each have an editable percentage, a level on/off switch, and top-bar-matching profile icons (Power saver, Balanced, or Performance where supported). Enabling a level enables its threshold notification and selected automatic profile; disabling it disables both. Notifications also work without a power-profile service. Rules apply while unplugged, with a 3-percentage-point recovery margin. Manual profile selection pauses automatic switching until recovery or AC; the status includes a Resume action. The daemon preserves existing thresholds and migrates the old automatic-saver preference to both levels.
 
 The Power tab combines battery percentage and measured battery watts on one timeline, with 6h, 24h, and 7d observed-time ranges. Sleep/offline periods are omitted and missing observations break the line. Blue shows charge, rose bars show discharge power, and green bars show charging power; these are battery-flow measurements, not total AC wall power. A dashed projection and approximate ETA point to empty while unplugged, or full/the active protection limit while charging. The daemon supplies both forecasts; missing or implausible estimates stay unplotted. Hover reveals sample times and values without adding persistent text. Application attribution comes from `app-daemon`'s low-confidence RAPL CPU-time estimate; system-only loads such as the display and radios are not assigned to apps.
 
