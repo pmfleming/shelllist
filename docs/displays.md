@@ -41,6 +41,13 @@ including connector, available identity metadata, mode, logical size, scale and
 position. Missing metadata is omitted. Ctrl+Tab cycles the two tabs. Switching
 displays or tabs retains the complete layout draft.
 
+Both tabs use the same inset detail layout, themed cards, typography and fixed
+footer as the other chooser surfaces. Settings groups individually labelled
+controls into **Display settings** and **Position** cards. Information groups
+observed values into **Display status** and **Display information** cards, with
+one column on narrow outputs and two where space permits. Cards grow with their
+contents; the page scrolls without moving the tabs.
+
 **Preview changes** is enabled only for a valid, changed layout. It previews the
 **whole layout**, not just the selected screen. Unsaved/stale/error status and
 Discard/Reload remain above the tabs. Narrow headers stack the primary button

@@ -99,6 +99,86 @@ TestCase {
         const tabs = findChild(panel, "displayDetailsTabs");
         verify(tabs.mapToItem(panel, 0, tabs.height).y <= panel.height + 1);
     }
+    function test_detailCardsAndFieldsFit_data() {
+        return [{ tag: "small", width: 320, height: 480 },
+            { tag: "narrow", width: 390, height: 600 },
+            { tag: "wide", width: 1040, height: 780 }];
+    }
+    function test_detailCardsAndFieldsFit(data) {
+        const panel = makePanel();
+        panel.width = data.width;
+        panel.height = data.height;
+        const c = panel.controller;
+        const state = displayState();
+        state.outputs[1].description = "A long manufacturer display description that must not widen the information card";
+        state.outputs[1].serial = "TEST-12345678901234567890";
+        c.applyDisplayPolicy(state);
+        c.openDetails();
+        tryVerify(function () { return findChild(panel, "displayModeCard") !== null; });
+        verify(waitForRendering(panel));
+        const pane = findChild(panel, "displayDetails");
+        verify(pane.leftMargin > 0 && pane.rightMargin > 0, "details use shared inset spacing");
+        const tabs = findChild(panel, "displayDetailsTabs");
+        const footerBottom = tabs.mapToItem(panel, 0, tabs.height).y;
+        for (const group of [
+            { card: "displayModeCard", fields: ["displayResolution", "displayRefreshRate", "displayScale", "displayRotation"] },
+            { card: "displayPositionCard", fields: ["displayX", "displayY", "displayPositionReference", "displayPlace-left", "displayPlace-right"] }
+        ]) {
+            const card = findChild(panel, group.card);
+            verify(card.height > 0);
+            compare(card.title.length > 0, true);
+            for (const name of group.fields) {
+                const field = findChild(card, name);
+                verify(field !== null, name);
+                const position = field.mapToItem(card, 0, 0);
+                verify(position.x >= card.contentPadding - 1, name + " respects left padding");
+                verify(position.x + field.width <= card.width - card.contentPadding + 1, name + " respects right padding");
+                verify(position.y + field.height <= card.height - card.verticalContentPadding + 1, name + " fits its content-sized card");
+            }
+        }
+        const modeFields = findChild(panel, "displayModeFields");
+        compare(modeFields.columns, modeFields.width >= 300 ? 2 : 1,
+            "small settings cards stack controls instead of truncating their values");
+        const resolution = findChild(panel, "displayResolution");
+        const scale = findChild(panel, "displayScale");
+        fuzzyCompare(resolution.width, scale.width, 1, "settings columns align");
+        tabs.selected("information");
+        verify(waitForRendering(panel));
+        for (const name of ["displayStatusCard", "displayIdentityCard"]) {
+            const card = findChild(panel, name);
+            const grid = findChild(card, name + "Fields");
+            verify(card.visible);
+            compare(grid.columns, grid.width >= 360 ? 2 : 1);
+            for (const field of grid.children) {
+                if (field.label === undefined) continue;
+                const position = field.mapToItem(card, 0, 0);
+                verify(position.x + field.width <= card.width - card.contentPadding + 1, "information fields stay inside the card");
+                verify(position.y + field.height <= card.height - card.verticalContentPadding + 1, "information cards grow with their rows");
+            }
+        }
+        compare(tabs.mapToItem(panel, 0, tabs.height).y, footerBottom, "tab footer stays fixed across pages");
+        compare(calls.length, 0, "appearance and tab changes never configure physical displays");
+    }
+
+    function test_groupedSettingsRemainDraftOnly() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.openDetails();
+        tryVerify(function () { return findChild(panel, "displayModeCard") !== null; });
+        findChild(panel, "displayScale").selected("2");
+        findChild(panel, "displayRotation").selected("1");
+        findChild(panel, "displayX").edited("-200");
+        compare(c.selectedDraft.scale, 2);
+        compare(c.selectedDraft.transform, 1);
+        compare(c.selectedDraft.x, -200);
+        compare(c.selectedOutput.scale, 1.5);
+        verify(c.dirty);
+        findChild(panel, "displayPositionReference").selected("eDP-1");
+        findChild(panel, "displayPlace-left").clicked();
+        verify(c.selectedDraft.x < 0);
+        compare(calls.length, 0);
+    }
+
     function test_emptySelectionRetainsBackAndDraftRecovery() {
         const panel = makePanel();
         const c = panel.controller;

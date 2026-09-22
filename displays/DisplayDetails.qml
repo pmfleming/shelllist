@@ -8,15 +8,19 @@ Ui.ActionDetailsPane {
     id: pane
     required property DisplayController controller
     objectName: "displayDetails"
+    readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
+    readonly property bool narrowDetails: width - leftMargin - rightMargin < 440
     chooserController: controller
     contentAvailable: true
+    headerHeight: Math.max(56, Math.round(64 * uiScale))
+    controlHeight: actionHeight
     icon: controller.selectedResult ? controller.selectedResult.icon : "󰍹"
+    iconColor: controller.selectedOutput && !controller.selectedOutput.disabled ? Ui.Theme.active : Ui.Theme.mutedText
     title: controller.selectedResult ? controller.selectedResult.title : qsTr("Displays")
     subtitle: controller.selectedResult ? controller.selectedResult.subtitle : ""
     actions: controller.detailActions
-    stackedPrimary: width < 440
-    leftMargin: 0
-    rightMargin: 0
+    subtitleWeight: Ui.Theme.fontWeightMedium
+    stackedPrimary: narrowDetails
     enabled: !controller.trial && !controller.discardPrompt && !controller.actionInFlight
     onActionTriggered: function (actionId) { controller.triggerDetailAction(actionId); }
     Keys.onLeftPressed: function (event) {
@@ -25,16 +29,17 @@ Ui.ActionDetailsPane {
         event.accepted = true;
     }
     function focusNarrowDetails(): void {
-        if (width < 440 && controller.uiActive && !controller.arrangementOpen)
+        if (narrowDetails && controller.uiActive && !controller.arrangementOpen)
             backButton.forceActiveFocus();
     }
     Component.onCompleted: Qt.callLater(focusNarrowDetails)
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: Ui.Theme.spacingSm
+        spacing: pane.sectionSpacing
         RowLayout {
             Layout.fillWidth: true
+            spacing: Ui.Theme.spacingSm
             Ui.FlatIconButton {
                 id: backButton
                 objectName: "backToDisplayList"
@@ -52,9 +57,10 @@ Ui.ActionDetailsPane {
                 font.pixelSize: Ui.Theme.fontSizeSmall
                 color: pane.controller.statusMessage ? Ui.Theme.warning : Ui.Theme.mutedText
             }
-            Ui.ActionButton {
+            Ui.FlatIconButton {
                 objectName: "reloadDisplayLayout"
                 Layout.preferredWidth: Ui.Theme.controlHeight
+                Layout.preferredHeight: Ui.Theme.controlHeight
                 icon: "󰕍"
                 accessibleName: pane.controller.stale ? qsTr("Reload current displays") : qsTr("Discard layout changes")
                 toolTip: accessibleName
