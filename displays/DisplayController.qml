@@ -24,6 +24,7 @@ Ui.ProviderChooserController {
     property string identifyName: ""
     property string detailsTab: "settings"
     property bool arrangementOpen: false
+    property bool displaySettingsOpen: false
     readonly property DisplayProvider displayProvider: DisplayProvider { controller: controller }
     property bool layoutDragging: false
     property double clock: Date.now()
@@ -188,11 +189,13 @@ Ui.ProviderChooserController {
         if (dirty) { discardPrompt = true; return; }
         detailsOpen = false;
         compactFocusRequested();
+        focusSearchRequested();
     }
     function discardAndClose(): void {
         reloadDraft();
         detailsOpen = false;
         compactFocusRequested();
+        focusSearchRequested();
     }
     function executeOutputAction(actionId: string, name: string): bool {
         if (!outputs.some(function (output) { return output.name === name; })) return false;
@@ -265,6 +268,7 @@ Ui.ProviderChooserController {
         if (discardPrompt) { discardPrompt = false; editorFocusRequested(); return true; }
         if (trial) { displayLayoutAction("revert", { id: trial.id }); return true; }
         if (actionInFlight) return true;
+        if (displaySettingsOpen) { displaySettingsOpen = false; focusSearchRequested(); return true; }
         return dismissNavigationHelp() || dismissDetailsOrWindow();
     }
 

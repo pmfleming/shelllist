@@ -68,6 +68,34 @@ TestCase {
         calls = [];
         return panel;
     }
+    function test_listRightExpansionAndActionHierarchy() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        const list = findChild(panel, "displayList");
+        list.focusTop();
+        keyClick(Qt.Key_Right);
+        verify(c.detailsOpen);
+        tryVerify(function () { return findChild(panel, "displayDetails") !== null; });
+        const pane = findChild(panel, "displayDetails");
+        const primary = pane.actions.filter(a => a.visible && a.presentation.group === "primary");
+        const secondary = pane.actions.filter(a => a.visible && a.presentation.group === "toolbar");
+        compare(primary.length, 1);
+        compare(primary[0].label, "Preview changes");
+        compare(secondary.length, 3);
+        verify(pane.mapToItem(panel, 0, 0).x >= list.width, "details expand beside the list");
+        verify(!c.triggerDetailAction("preview"));
+        c.edit("DP-1", "scale", 2);
+        verify(pane.actions.find(a => a.id === "preview").enabled);
+        compare(calls.length, 0);
+        c.reloadDraft();
+        panel.width = 390;
+        verify(waitForRendering(panel));
+        verify(!list.visible, "small outputs show a navigable single details pane");
+        findChild(panel, "backToDisplayList").clicked();
+        tryVerify(function () { return list.visible; });
+        verify(!c.detailsOpen);
+    }
     function test_sharedSelectionSearchAndDraftRetention() {
         const c = makePanel().controller;
         compare(c.filteredResults.length, 2);
@@ -143,17 +171,21 @@ TestCase {
         c.applyDisplayPolicy(displayState());
         verify(c.canChange);
     }
-    function test_diagramSummaryAndWorkspaceKeyboard() {
+    function test_listSummaryAndWorkspaceKeyboard() {
         const panel = makePanel();
         const c = panel.controller;
         compare(c.activeCount, 1, "summary shows actual state, not the fallback preview draft");
         verify(c.draft[0].enabled, "preview retains laptop fallback");
-        verify(findChild(panel, "displayOverviewCanvas") !== null);
+        verify(findChild(panel, "displayList") !== null);
+        verify(!findChild(panel, "chooserPowerToggle").visible);
+        c.displaySettingsOpen = true;
         verify(findChild(panel, "preferExternalDisplay").Accessible.name.length > 0);
+        c.displaySettingsOpen = false;
         c.uiActive = true;
         c.selectOutput("DP-1");
         c.openDetails();
         verify(waitForRendering(panel));
+        tryVerify(function () { return findChild(panel, "displayWorkspaceCanvas") !== null; });
         const canvas = findChild(panel, "displayWorkspaceCanvas");
         verify(canvas !== null);
         canvas.forceActiveFocus();
@@ -224,6 +256,7 @@ TestCase {
         c.selectOutput("DP-1");
         c.openDetails();
         verify(waitForRendering(panel));
+        tryVerify(function () { return findChild(panel, "displayEnabled") !== null; });
         const page = findChild(panel, "displayLayoutWorkspace");
         const enabled = findChild(panel, "displayEnabled");
         enabled.forceActiveFocus();
@@ -278,6 +311,7 @@ TestCase {
         const value = displayState();
         value.outputs.shift();
         c.applyDisplayPolicy(value);
+        c.displaySettingsOpen = true;
         verify(!findChild(panel, "displayPolicyCard").visible);
         c.edit("DP-1", "enabled", false);
         verify(!c.canPreview, "desktop cannot disable its last output");

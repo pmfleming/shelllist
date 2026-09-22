@@ -21,6 +21,7 @@ ColumnLayout {
     property bool refreshing: false
     property bool busy: false
     property bool powerEnabled: true
+    property bool powerVisible: true
     property bool refreshEnabled: true
     property string refreshIcon: "󰑐"
     property bool focusOnCompleted: false
@@ -77,6 +78,7 @@ ColumnLayout {
         powered: pane.powered
         refreshing: pane.refreshing
         powerEnabled: pane.powerEnabled
+        powerVisible: pane.powerVisible
         refreshEnabled: pane.refreshEnabled
         refreshIcon: pane.refreshIcon
         focusOnCompleted: pane.focusOnCompleted

@@ -9,6 +9,7 @@ ChooserSurface {
     required property Component listComponent
     required property Component detailsComponent
     property string surfaceName: "Shelllist"
+    property alias minimumSplitDetailsWidth: chooser.minimumSplitDetailsWidth
     property var helpEntries: []
     property bool navigationEnabled: !chooserController.navigationHelpOpen
     property bool refreshEnabled: navigationEnabled && !chooserController.actionInFlight

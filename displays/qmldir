@@ -6,7 +6,9 @@ internal DisplayProvider DisplayProvider.qml
 internal DisplayBackend DisplayBackend.qml
 internal DisplayPolicyPane DisplayPolicyPane.qml
 internal DisplayLayoutPane DisplayLayoutPane.qml
-internal DisplayOverview DisplayOverview.qml
+internal DisplayListPane DisplayListPane.qml
+internal DisplayListRow DisplayListRow.qml
+internal DisplayDetails DisplayDetails.qml
 internal DisplayCanvas DisplayCanvas.qml
 internal DisplayInspector DisplayInspector.qml
 internal DisplayTrialDialog DisplayTrialDialog.qml

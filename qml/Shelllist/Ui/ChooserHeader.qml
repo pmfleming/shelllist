@@ -13,6 +13,7 @@ RowLayout {
     property bool powered: false
     property bool refreshing: false
     property bool powerEnabled: true
+    property bool powerVisible: true
     property bool refreshEnabled: true
     property string refreshIcon: "󰑐"
     property bool focusOnCompleted: false
@@ -123,6 +124,7 @@ RowLayout {
 
     ToggleSwitch {
         objectName: "chooserPowerToggle"
+        visible: header.powerVisible
         Accessible.role: Accessible.CheckBox
         Accessible.name: header.powerAccessibleName
         Accessible.checked: checked
