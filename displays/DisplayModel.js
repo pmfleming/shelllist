@@ -117,6 +117,6 @@ function resolutions(output) {
 }
 function rates(output, mode) {
     const size = (parseMode(mode) || {}).size;
-    return modes(output).filter(function (v) { return (parseMode(v) || {}).size === size; })
+    return modes(output).filter(function (v) { const parsed = parseMode(v); return parsed && parsed.size === size; })
         .map(function (v) { return { value: v, label: parseMode(v).rate + " Hz" }; });
 }

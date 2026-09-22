@@ -2,7 +2,7 @@ import QtQuick
 import Shelllist.Ui as Ui
 import "DisplayModel.js" as Model
 
-Ui.ChooserController {
+Ui.ProviderChooserController {
     id: controller
 
     property var displayPolicyState: ({ available: false })
@@ -17,7 +17,7 @@ Ui.ChooserController {
     property string baselineTopology: ""
     property bool baselinePreference: false
     property bool stale: false
-    property string selectedName: ""
+    readonly property string selectedName: selectedResult ? selectedResult.id : ""
     property string referenceName: ""
     property bool discardPrompt: false
     property bool identifyActive: false
@@ -49,8 +49,9 @@ Ui.ChooserController {
                 displayPolicyState.status === "settling" ? qsTr("Waiting for external display…") : "")
 
     navigationPrimaryEnabled: false
-    navigationBlocked: dirty || discardPrompt || layoutDragging || actionInFlight || !!trial
-    hasSelection: outputs.length > 0
+    provider: displayProvider
+    navigationBlocked: discardPrompt || layoutDragging || actionInFlight || !!trial
+    onSelectedNameChanged: updateReference()
     // Use the common expansion animation, but clamp both widths to this output.
     closedWidthFraction: 1
     openWidthFraction: 1
@@ -70,14 +71,12 @@ Ui.ChooserController {
         baselinePreference = !!(displayPolicyState.policy || {}).prefer_external;
         stale = false;
         discardPrompt = false;
-        if (!outputs.some(function (o) { return o.name === selectedName; }))
-            selectedName = (outputs.find(function (o) { return !o.disabled; }) || outputs[0] || {}).name || "";
-        if (!outputs.some(function (o) { return o.name === referenceName && o.name !== selectedName; }))
-            referenceName = (outputs.find(function (o) { return o.name !== selectedName; }) || {}).name || "";
+        updateReference();
     }
     function applyDisplayPolicy(value: var): void {
         const previousTrial = observedTrialId;
         displayPolicyState = Object.assign({}, value || ({ available: false }));
+        replaceProviderResults(displayProvider.resultsForOutputs(outputs), false);
         observedTrialId = trial ? trial.id : "";
         if (!trial && pendingAction !== "preview")
             revertOnArrival = false;
@@ -157,18 +156,30 @@ Ui.ChooserController {
         const position = Model.adjacent(selectedDraft, reference, side);
         moveTo(selectedName, position.x, position.y, 0);
     }
+    function updateReference(): void {
+        if (!outputs.some(function (o) { return o.name === referenceName && o.name !== selectedName; }))
+            referenceName = (outputs.find(function (o) { return o.name !== selectedName; }) || {}).name || "";
+    }
     function selectOutput(name: string): void {
         if (!outputs.some(function (o) { return o.name === name; })) return;
-        selectedName = name;
-        if (referenceName === name || !referenceName)
-            referenceName = (outputs.find(function (o) { return o.name !== name; }) || {}).name || "";
+        if (!filteredResults.some(function (result) { return result.id === name; }))
+            filterText = "";
+        const index = filteredResults.findIndex(function (result) { return result.id === name; });
+        if (index >= 0) selectedIndex = index;
+        updateReference();
+    }
+    function triggerDetailAction(actionId): bool {
+        return !navigationBlocked && executeSelected(actionId);
+    }
+    function cycleDetailsTab(): void {
+        detailsTab = detailsTab === "settings" ? "information" : "settings";
     }
     function cycleOutput(delta: int): void {
         if (!outputs.length) return;
         selectOutput(outputs[(Math.max(0, selectedNumber - 1) + delta + outputs.length) % outputs.length].name);
     }
     function openDetails() {
-        if (!outputs.length) return;
+        if (!hasSelection || navigationBlocked) return;
         detailsOpen = true;
         editorFocusRequested();
     }

@@ -68,6 +68,39 @@ TestCase {
         calls = [];
         return panel;
     }
+    function test_sharedSelectionSearchAndDraftRetention() {
+        const c = makePanel().controller;
+        compare(c.filteredResults.length, 2);
+        compare(c.selectedName, "DP-1", "enabled displays sort first");
+        c.edit("DP-1", "scale", 2);
+        c.moveSelection(1);
+        compare(c.selectedName, "eDP-1");
+        verify(!c.navigationBlocked, "a draft does not prevent browsing displays");
+        c.openDetails();
+        verify(c.detailsOpen);
+        c.cycleDetailsTab();
+        compare(c.detailsTab, "information");
+        c.selectOutput("DP-1");
+        compare(c.selectedDraft.scale, 2);
+        c.applyDisplayPolicy(displayState());
+        compare(c.selectedName, "DP-1");
+        compare(c.selectedDraft.scale, 2);
+        const store = c.selectionModel;
+        store.rankRequestsEnabled = false;
+        c.filterText = "Laptop";
+        store.applyRustRanking(store.searchOwner, store.searchGeneration, ["displays::eDP-1"]);
+        compare(c.filteredResults.length, 1);
+        compare(c.selectedName, "eDP-1");
+        c.filterText = "not a display";
+        store.applyRustRanking(store.searchOwner, store.searchGeneration, []);
+        verify(!c.hasSelection);
+        verify(c.dirty, "zero search results must not discard the layout");
+        c.filterText = "";
+        c.selectOutput("DP-1");
+        compare(c.selectedDraft.scale, 2);
+        verify(c.triggerDetailAction("toggle-enabled"));
+        compare(calls.length, 0);
+    }
     function test_providerResultsAndLiveActions() {
         const c = makePanel().controller;
         const provider = c.displayProvider;
