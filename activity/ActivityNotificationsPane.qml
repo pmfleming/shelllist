@@ -28,71 +28,26 @@ Rectangle {
         }
     }
 
-    Column {
-        id: toolbar
+    Ui.ThemeText {
+        id: errorText
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: Ui.Theme.spacingMd
-        spacing: Ui.Theme.spacingSm
-
-        Flow {
-            width: parent.width
-            spacing: Ui.Theme.spacingSm
-            Ui.ActionButton {
-                width: Math.min(164, parent.width)
-                height: 36
-                label: "Dismiss all active"
-                enabled: pane.notificationState.activeNotifications.length > 0
-                toolTip: qsTr("Dismiss across all apps, including snoozed notifications; history is kept")
-                onClicked: pane.notificationState.clearNotifications()
-            }
-        }
-        Flow {
-            width: parent.width
-            spacing: Ui.Theme.spacingSm
-            ActivityHeaderButton {
-                label: "Active " + pane.notificationState.activeNotifications.length
-                checked: pane.controller.tab === "active"
-                onTriggered: pane.controller.tab = "active"
-            }
-            ActivityHeaderButton {
-                label: "History"
-                checked: pane.controller.tab === "history"
-                onTriggered: pane.controller.tab = "history"
-            }
-            Ui.ThemeText {
-                height: 34
-                verticalAlignment: Text.AlignVCenter
-                text: pane.controller.tab === "history" ? pane.notificationState.history.length + " loaded" : ""
-                color: Ui.Theme.mutedText
-                font.pixelSize: Ui.Theme.fontSizeCaption
-            }
-        }
-        Ui.ThemeText {
-            visible: pane.notificationState.draftCount > 0
-            width: parent.width
-            text: pane.notificationState.draftCount + (pane.notificationState.draftCount === 1 ? " unsent draft" : " unsent drafts") + " · retained when closed"
-            color: Ui.Theme.mutedText
-            wrapMode: Text.Wrap
-            font.pixelSize: Ui.Theme.fontSizeCaption
-        }
-        Ui.ThemeText {
-            visible: text.length > 0
-            width: parent.width
-            text: pane.notificationState.lastError || (pane.controller.tab === "history" ? pane.notificationState.historyError : "")
-            color: Ui.Theme.danger
-            wrapMode: Text.Wrap
-            font.pixelSize: Ui.Theme.fontSizeSmall
-        }
+        anchors.margins: visible ? Ui.Theme.spacingMd : 0
+        visible: text.length > 0
+        height: visible ? implicitHeight : 0
+        text: pane.notificationState.lastError || (pane.controller.tab === "history" ? pane.notificationState.historyError : "")
+        color: Ui.Theme.danger
+        wrapMode: Text.Wrap
+        font.pixelSize: Ui.Theme.fontSizeSmall
     }
 
     Ui.ScrollableListView {
         id: list
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: toolbar.bottom
-        anchors.bottom: footer.top
+        anchors.top: errorText.bottom
+        anchors.bottom: parent.bottom
         anchors.margins: Ui.Theme.spacingMd
         clip: true
         spacing: Ui.Theme.spacingSm
@@ -110,41 +65,55 @@ Rectangle {
         Keys.onLeftPressed: pane.controller.expandSelected(false)
         Keys.onReturnPressed: pane.controller.expandSelected(true)
 
-        Ui.ThemeText {
-            anchors.centerIn: parent
-            width: parent.width - 20
-            visible: pane.controller.visibleGroups.length === 0
-            text: {
-                if (pane.controller.tab === "history" && (pane.notificationState.historyLoading || (!pane.notificationState.historyLoaded && !pane.notificationState.historyError)))
-                    return "Loading history…";
-                if (pane.controller.tab === "history" && pane.notificationState.historyError)
-                    return "Could not load history. Use Refresh to retry.";
-                if (pane.controller.filterText.trim())
-                    return "No matching notifications";
-                if (pane.controller.tab === "history")
-                    return "No notification history";
-                return pane.notificationState.notifications.available ? "No active notifications · History is still available" : "Notifications unavailable";
+        readonly property bool shouldLoadMore: pane.controller.tab === "history" && pane.notificationState.historyHasMore && !pane.notificationState.historyLoading && !pane.notificationState.historyError && count > 0 && contentHeight > 0 && contentY - originY + height >= contentHeight - height * 0.5
+        onShouldLoadMoreChanged: if (shouldLoadMore)
+            Qt.callLater(pane.notificationState.loadMoreHistory)
+
+        footer: Item {
+            width: ListView.view ? ListView.view.width : 0
+            height: pane.controller.tab === "history" && pane.notificationState.historyLoading && pane.notificationState.history.length > 0 ? Ui.Theme.controlHeight : 0
+            visible: height > 0
+            Ui.ThemeText {
+                anchors.centerIn: parent
+                text: "Loading…"
+                color: Ui.Theme.mutedText
+                font.pixelSize: Ui.Theme.fontSizeCaption
             }
-            color: Ui.Theme.mutedText
-            horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.Wrap
-            font.pixelSize: Ui.Theme.fontSizeSmall
         }
-    }
-    Flow {
-        id: footer
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.margins: Ui.Theme.spacingMd
-        spacing: Ui.Theme.spacingSm
-        Ui.ActionButton {
-            visible: pane.controller.tab === "history" && pane.notificationState.historyHasMore
-            width: Math.min(190, parent.width)
-            height: 34
-            label: pane.notificationState.historyLoading ? "Loading…" : "Load older notifications"
-            enabled: !pane.notificationState.historyLoading
-            onClicked: pane.notificationState.loadMoreHistory()
+
+        Column {
+            objectName: "notificationEmptyState"
+            anchors.centerIn: parent
+            width: parent.width - 40
+            visible: pane.controller.visibleGroups.length === 0
+            spacing: Ui.Theme.spacingSm
+            readonly property bool loading: pane.controller.tab === "history" && (pane.notificationState.historyLoading || (!pane.notificationState.historyLoaded && !pane.notificationState.historyError))
+            readonly property bool filtered: pane.controller.filterText.trim().length > 0
+
+            Ui.GlyphLabel {
+                anchors.horizontalCenter: parent.horizontalCenter
+                glyph: parent.filtered ? "󰍉" : pane.controller.tab === "history" ? "󰋚" : pane.notificationState.notifications.dnd ? "󰂛" : "󰂚"
+                color: Ui.Theme.subtleText
+                font.pixelSize: 40
+            }
+            Ui.ThemeText {
+                width: parent.width
+                text: {
+                    if (parent.loading)
+                        return "Loading…";
+                    if (pane.controller.tab === "history" && pane.notificationState.historyError)
+                        return "History unavailable";
+                    if (parent.filtered)
+                        return "No matches";
+                    if (pane.controller.tab === "history")
+                        return "No history";
+                    return pane.notificationState.notifications.available ? "All caught up" : "Notifications unavailable";
+                }
+                color: Ui.Theme.mutedText
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                font.pixelSize: Ui.Theme.fontSizeSmall
+            }
         }
     }
     Connections {

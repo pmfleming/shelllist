@@ -8,14 +8,30 @@ function isReplyAction(action) {
     return String(action && action.key || "").toLowerCase().indexOf("reply") >= 0;
 }
 
+// Freedesktop reserves "default" for activating the notification itself.
+function isDefaultAction(action) {
+    return String(action && action.key || "") === "default";
+}
+
+// Arrays passed through a Repeater's modelData arrive as array-like sequences.
 function notificationActions(notification) {
-    return Array.isArray(notification.actions) ? notification.actions : [];
+    const actions = notification && notification.actions;
+    return actions && typeof actions.length === "number" && typeof actions !== "string" ? Array.prototype.slice.call(actions) : [];
 }
 
 function standardActions(notification) {
     return notificationActions(notification).filter(function (action) {
-        return !isReplyAction(action);
+        return !isReplyAction(action) && !isDefaultAction(action);
     });
+}
+
+function defaultAction(notification) {
+    return notificationActions(notification).find(isDefaultAction) || null;
+}
+
+function urgency(notification) {
+    const hints = notification && notification.hints || ({});
+    return Number(hints.urgency || 0);
 }
 
 function replyAction(notification) {
@@ -136,6 +152,28 @@ function relativeTime(createdMs, nowMs) {
     if (minutes < 1440)
         return Math.floor(minutes / 60) + "h ago";
     return Math.floor(minutes / 1440) + "d ago";
+}
+
+const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// Compact timestamp: relative within a day, then "Yesterday", then a date.
+function timeLabel(createdMs, nowMs) {
+    const created = Number(createdMs);
+    if (!Number.isFinite(created) || created <= 0)
+        return "";
+    const minutes = Math.max(0, Math.floor((nowMs - created) / 60000));
+    if (minutes < 1)
+        return "now";
+    if (minutes < 60)
+        return minutes + "m";
+    const then = new Date(created);
+    const today = new Date(nowMs);
+    today.setHours(0, 0, 0, 0);
+    if (then >= today)
+        return Math.floor(minutes / 60) + "h";
+    if (then >= new Date(today.getTime() - 86400000))
+        return "Yesterday";
+    return then.getDate() + " " + monthNames[then.getMonth()];
 }
 
 function notificationMonitor(notification, focusedMonitor, monitorNames) {

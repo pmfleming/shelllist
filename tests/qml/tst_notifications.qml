@@ -166,6 +166,21 @@ TestCase {
         content.destroy();
         wait(50);
     }
+    function test_collapsedStackPeeksBeneathNewestCard() {
+        const state = makeState();
+        const controller = makeController(state);
+        const content = createTemporaryObject(contentComponent, controller,
+            { controller: controller, width: 453, height: 600 });
+        wait(50);
+        const peek = findChild(content, "notificationStackPeek");
+        verify(peek !== null);
+        const row = findChild(content, "notificationHistoryRow-100");
+        verify(peek.visible);
+        verify(peek.y + peek.height > row.height);
+        state.setExpanded("chat", true);
+        wait(50);
+        compare(findChild(content, "notificationStackPeek"), null);
+    }
     function test_backendFailuresRetireLoadingAndPreserveDraft() {
         const state = makeState();
         compare(state.backend.store, state);

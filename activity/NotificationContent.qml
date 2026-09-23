@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls as Controls
 import Shelllist.Ui as Ui
 
 Ui.ChooserSurface {
@@ -48,36 +49,106 @@ Ui.ChooserSurface {
             }
         }
         Row {
+            id: toolbar
+            readonly property NotificationState notificationState: content.controller.notificationState
+            readonly property int activeCount: notificationState.activeNotifications.length
             width: parent.width
-            height: 34
+            height: Ui.Theme.compactControlHeight
             spacing: Ui.Theme.spacingSm
 
             Ui.FlatIconButton {
                 id: backButton
                 visible: content.controller.returnSurface === "activity"
-                width: visible ? 34 : 0
-                height: 34
+                width: visible ? height : 0
+                height: parent.height
                 icon: "󰁍"
                 accessibleName: "Back to agenda"
                 toolTip: accessibleName
                 onClicked: content.controller.goBack()
             }
+            Ui.SegmentedControl {
+                id: tabs
+                objectName: "notificationTabs"
+                width: Math.min(220, parent.width - backButton.width - trailing.width - parent.spacing * 2)
+                height: parent.height
+                value: content.controller.tab
+                options: [
+                    {
+                        value: "active",
+                        label: toolbar.activeCount > 0 ? "Active  " + toolbar.activeCount : "Active"
+                    },
+                    {
+                        value: "history",
+                        label: "History"
+                    }
+                ]
+                onSelected: function (value) {
+                    content.controller.tab = value;
+                }
+            }
             Ui.ThemeText {
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - backButton.width - closeButton.width - parent.spacing * (backButton.visible ? 2 : 1)
-                text: content.controller.screenshotStatus || "Notifications · DND " + (content.controller.notificationState.notifications.dnd ? "on" : "off")
+                width: parent.width - backButton.width - tabs.width - trailing.width - parent.spacing * 3
+                text: content.controller.screenshotStatus
                 elide: Text.ElideRight
+                horizontalAlignment: Text.AlignRight
                 color: Ui.Theme.mutedText
-                font.pixelSize: Ui.Theme.fontSizeSmall
+                font.pixelSize: Ui.Theme.fontSizeCaption
             }
-            Ui.FlatIconButton {
-                id: closeButton
-                width: 34
-                height: 34
-                icon: "󰅖"
-                accessibleName: "Close notifications (drafts retained)"
-                toolTip: accessibleName
-                onClicked: content.controller.closeWindowRequested()
+            Row {
+                id: trailing
+                height: parent.height
+                spacing: 2
+
+                Row {
+                    objectName: "notificationDraftIndicator"
+                    visible: toolbar.notificationState.draftCount > 0
+                    height: parent.height
+                    rightPadding: Ui.Theme.spacingSm
+                    spacing: Ui.Theme.spacingXs
+                    Accessible.role: Accessible.StaticText
+                    Accessible.name: draftTip.text
+                    Controls.ToolTip {
+                        id: draftTip
+                        visible: draftHover.hovered
+                        delay: 450
+                        text: toolbar.notificationState.draftCount === 1 ? "1 unsent reply draft" : toolbar.notificationState.draftCount + " unsent reply drafts"
+                    }
+                    HoverHandler {
+                        id: draftHover
+                    }
+                    Ui.GlyphLabel {
+                        anchors.verticalCenter: parent.verticalCenter
+                        glyph: "󰏫"
+                        font.pixelSize: Ui.Theme.iconSizeSmall
+                    }
+                    Ui.ThemeText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: String(toolbar.notificationState.draftCount)
+                        color: Ui.Theme.mutedText
+                        font.pixelSize: Ui.Theme.fontSizeSmall
+                    }
+                }
+                Ui.FlatIconButton {
+                    objectName: "notificationClearAll"
+                    visible: content.controller.tab === "active"
+                    width: visible ? height : 0
+                    height: parent.height
+                    icon: "󰎟"
+                    enabled: toolbar.activeCount > 0
+                    accessibleName: "Dismiss all active notifications"
+                    toolTip: accessibleName
+                    onClicked: toolbar.notificationState.clearNotifications()
+                }
+                Ui.FlatIconButton {
+                    id: closeButton
+                    width: height
+                    height: parent.height
+                    icon: "󰅖"
+                    accessibleName: "Close"
+                    toolTip: accessibleName
+                    onClicked: content.controller.closeWindowRequested()
+                }
             }
         }
         ActivityNotificationsPane {

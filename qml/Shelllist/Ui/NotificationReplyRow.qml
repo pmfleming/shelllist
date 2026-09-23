@@ -10,11 +10,15 @@ Column {
     property bool canReply: true
     property string errorText: ""
     property int controlHeight: 34
-    property int buttonWidth: 62
+    property int buttonWidth: controlHeight
     signal draftEdited(string text)
 
     width: parent.width
     spacing: Theme.spacingXs
+
+    function focusInput(): void {
+        field.focusInput(false);
+    }
 
     function send(): void {
         const value = field.text.trim();
@@ -42,9 +46,13 @@ Column {
         }
         ActionButton {
             id: sendButton
-            width: reply.sending ? Math.max(80, reply.buttonWidth) : reply.buttonWidth
+            width: reply.buttonWidth
             height: reply.controlHeight
-            label: reply.sending ? "Sending…" : "Send"
+            tone: "accent"
+            icon: reply.sending ? "󰔟" : "󰒊"
+            iconSize: Theme.iconSize
+            accessibleName: reply.sending ? "Sending reply" : "Send reply"
+            toolTip: accessibleName
             enabled: field.text.trim().length > 0 && !reply.sending && reply.canReply
             onClicked: reply.send()
         }
@@ -52,7 +60,7 @@ Column {
     ThemeText {
         width: parent.width
         visible: text.length > 0
-        text: reply.errorText || (!reply.canReply ? "No longer active · draft retained" : "")
+        text: reply.errorText || (!reply.canReply ? "No longer active" : "")
         color: Theme.danger
         wrapMode: Text.Wrap
         font.pixelSize: Theme.fontSizeCaption

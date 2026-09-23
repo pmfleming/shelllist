@@ -13,13 +13,15 @@ Rectangle {
     readonly property bool multiple: group.records.length > 1
     readonly property var visibleRecords: expanded ? group.records : group.records.slice(0, 1)
     readonly property int contentMargin: expanded && multiple ? Ui.Theme.spacingSm : 0
+    // Collapsed stacks peek out beneath the newest card, as toasts do.
+    readonly property int peekDepth: multiple && !expanded ? (group.records.length > 2 ? 10 : 5) : 0
 
     width: ListView.view ? ListView.view.width : 300
-    implicitHeight: content.implicitHeight + contentMargin * 2
+    implicitHeight: content.implicitHeight + contentMargin * 2 + peekDepth
     radius: Ui.Theme.cardRadius
     color: expanded && multiple ? Ui.Theme.withAlpha(Ui.Theme.surface, 0.72) : "transparent"
     border.width: 1
-    border.color: controller.selectedGroupKey === group.key ? Ui.Theme.accent : expanded && multiple ? Ui.Theme.border : "transparent"
+    border.color: controller.selectedGroupKey === group.key && ListView.view && ListView.view.activeFocus ? Ui.Theme.accent : expanded && multiple ? Ui.Theme.border : "transparent"
 
     function rebuildRecords(): void {
         Ui.NotificationPresentation.syncKeyedModel(recordsModel, visibleRecords.map(function (record) {
@@ -42,6 +44,23 @@ Rectangle {
         NumberAnimation {
             duration: Ui.Theme.animationNormal
             easing.type: Ui.Theme.easingStandard
+        }
+    }
+
+    Repeater {
+        model: stack.peekDepth > 0 ? (stack.group.records.length > 2 ? 2 : 1) : 0
+        Rectangle {
+            required property int index
+            objectName: "notificationStackPeek"
+            readonly property int inset: (index + 1) * 5
+            z: -1 - index
+            x: inset * 2
+            y: inset
+            width: stack.width - inset * 4
+            height: content.implicitHeight
+            radius: Ui.Theme.cardRadius
+            color: Ui.Theme.mix(Ui.Theme.surfaceRaised, Ui.Theme.text, index === 0 ? 0.04 : 0.02)
+            border.color: Ui.Theme.mix(Ui.Theme.controlBorder, Ui.Theme.surface, index === 0 ? 0 : 0.35)
         }
     }
 

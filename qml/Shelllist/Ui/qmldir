@@ -49,6 +49,7 @@ LiveClock 1.0 LiveClock.qml
 ModalFrame 1.0 ModalFrame.qml
 NavigationHelpDialog 1.0 NavigationHelpDialog.qml
 NotificationActionList 1.0 NotificationActionList.qml
+NotificationAppIcon 1.0 NotificationAppIcon.qml
 NotificationReplyRow 1.0 NotificationReplyRow.qml
 NotificationStackHeader 1.0 NotificationStackHeader.qml
 NotificationPresentation 1.0 NotificationPresentation.js
