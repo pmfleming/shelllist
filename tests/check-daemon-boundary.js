@@ -64,6 +64,34 @@ for (const failure of ["start", "exit", "recovered-exit"]) {
     assert.deepEqual(gaps, ["updates"], "gaps trigger resynchronization, not normal updates");
 }
 
+// Extra subscriptions must be cancelled by daemon ID, even if the view closes
+// before the reply. Neither subscribe replies nor lost IDs leak to feature code.
+for (const closeBeforeReply of [false, true]) {
+    const cancellations = [], failures = [];
+    const backend = {
+        pending: {}, extraSubscriptions: {}, extraSubscriptionCancellations: {},
+        subscriptionSequence: 0, daemonName: "test-daemon", sharedConsumerId: "view",
+        console: quietConsole,
+        DaemonSessions: { subscribe() {}, cancel: (...args) => cancellations.push(args) },
+        responseReceived() { throw new Error("subscription reply escaped"); },
+        transportFailed: (...args) => failures.push(args)
+    };
+    install(backend, source("qml/Shelllist/Io/DaemonBackend.qml"));
+    const id = backend.subscribeStreams(["updates"]);
+    if (closeBeforeReply) backend.unsubscribeStreams(id);
+    backend.acceptSharedResponse(id, { data: { subscription: { id: "daemon-sub" } } }, "");
+    if (!closeBeforeReply) backend.unsubscribeStreams(id);
+    assert.equal(cancellations.length, 1);
+    assert.equal(cancellations[0][2], "daemon-sub");
+    assert.equal(backend.isPending(id), false);
+    assert.deepEqual(Object.keys(backend.extraSubscriptions), []);
+    assert.deepEqual(Object.keys(backend.extraSubscriptionCancellations), []);
+    const pending = backend.subscribeStreams(["updates"]);
+    backend.failSharedTransport("Disconnected");
+    assert.deepEqual(Array.from(failures[0][1]), [pending]);
+    assert.equal(backend.unsubscribeStreams(pending), false);
+}
+
 const sessions = source("qml/Shelllist/Io/DaemonSessions.qml");
 
 // Execute the registry with bridge-addressed replies. The echoed route kind

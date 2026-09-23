@@ -1,52 +1,18 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtTest
-import Shelllist.Io as Io
 import "../../clipboard" as Clip
 
-TestCase {
+DaemonTestCase {
     id: testCase
     name: "ClipboardRecovery"
     when: windowShown
     visible: true
     width: 650
     height: 900
-    property var calls: []
     property var views: []
-    property var originalFactory
-    property var originalSessions
-
-    Component {
-        id: clientFactory
-        QtObject {
-            property string daemonName
-            property var streams: []
-            property bool active: false
-            property bool ready: true
-            property bool recoverProtocolErrors: false
-            signal response(string id, var envelope, string transportError)
-            signal eventReceived(var event)
-            signal transportFailed(string message)
-            function call(id, method, params) { testCase.calls = testCase.calls.concat([{id: id, method: method, params: params}]); }
-            function subscribeExtra(id, streams) {}
-            function cancel(id, requestId) {}
-            function release(id, route) {}
-        }
-    }
     Component { id: controllerFactory; Clip.ClipboardController {} }
     Component { id: cardsFactory; Clip.ClipboardDetailCards {} }
     Component { id: paneFactory; Clip.ClipboardListPane {} }
-    function initTestCase() {
-        originalFactory = Io.DaemonSessions.clientFactory;
-        originalSessions = Io.DaemonSessions.sessions;
-        Io.DaemonSessions.sessions = ({});
-        Io.DaemonSessions.clientFactory = clientFactory;
-    }
-    function cleanupTestCase() {
-        for (const session of Object.values(Io.DaemonSessions.sessions)) session.client.destroy();
-        Io.DaemonSessions.sessions = originalSessions;
-        Io.DaemonSessions.clientFactory = originalFactory;
-    }
     function init() {
         failOnWarning(/.*(TypeError|Binding loop|invalid context).*/);
     }

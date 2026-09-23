@@ -3,12 +3,10 @@ import "AppApi.js" as AppApi
 
 Io.DaemonBackend {
     required property ApplicationController controller
-    endpoint: ({
-            daemonName: "app-daemon",
-            protocol: AppApi.protocol,
-            version: AppApi.version,
-            subscribedStreams: AppApi.subscribedStreams
-        })
+    daemonName: "app-daemon"
+    expectedProtocol: AppApi.protocol
+    expectedVersion: AppApi.version
+    streams: AppApi.subscribedStreams
     active: controller.uiActive
 
     function finish(id: string, envelope: var, transportError: string): void {

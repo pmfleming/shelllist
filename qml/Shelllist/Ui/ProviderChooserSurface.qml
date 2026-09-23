@@ -17,8 +17,8 @@ ChooserSurface {
     property bool refreshAutoRepeat: true
     property bool helpEnabled: chooserController.uiActive
     readonly property real uiScale: Theme.densityScale(height, chooserController.contentVerticalMargin)
-    readonly property var listItem: chooser.listItem
-    readonly property var detailsItem: chooser.detailsItem
+    readonly property ChooserListPane listItem: chooser.listItem
+    readonly property Item detailsItem: chooser.detailsItem
 
     signal refreshRequested
     signal detailsTabRequested

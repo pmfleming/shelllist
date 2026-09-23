@@ -4,7 +4,7 @@ import QtQuick
 import Shelllist.Ui as Ui
 import "BarWorkspacePresentation.js" as Presentation
 
-Item {
+Ui.ActionControl {
     id: button
 
     required property BarController controller
@@ -15,6 +15,9 @@ Item {
     readonly property bool active: Presentation.activeWorkspaceId(controller.workspaces, screenName) === workspaceId
     readonly property bool occupied: !!workspace && Number(workspace.windows || 0) > 0
     readonly property string iconName: Presentation.workspaceIconName(workspaceId)
+
+    accessibleName: qsTr("Workspace %1").arg(workspaceId)
+    onClicked: controller.focusWorkspace(workspaceId)
 
     width: compact ? 23 : 27
     height: 51
@@ -83,6 +86,6 @@ Item {
         showStateBackground: true
         hoverOpacity: 0.10
         pressedOpacity: 0.16
-        onClicked: button.controller.focusWorkspace(button.workspaceId)
+        onClicked: button.activate()
     }
 }

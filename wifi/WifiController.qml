@@ -61,42 +61,18 @@ ProviderChooserController {
     readonly property WifiQrService qr: qrController
     readonly property var daemonEventHandlerByStream: {
         const handlers = ({});
-        handlers[NmApi.streams.wifi_status] = function (event) {
-            wifi.applyStatusEvent(event);
-        };
-        handlers[NmApi.streams.network_connectivity] = function (event) {
-            connection.applyConnectivityEvent(event);
-        };
-        handlers[NmApi.streams.wifi_networks] = function (event) {
-            wifi.applyNetworkEvent(event);
-        };
-        handlers[NmApi.streams.wifi_scan] = function (event) {
-            scan.handleStream(event);
-        };
-        handlers[NmApi.streams.wifi_connect] = function (event) {
-            connection.handleEvent(event);
-        };
-        handlers[NmApi.streams.wifi_band] = function (event) {
-            wifi.handleBandEvent(event);
-        };
-        handlers[NmApi.streams.wifi_secret] = function (event) {
-            wifi.handleSecretEvent(event);
-        };
-        handlers[NmApi.streams.network_health] = function (event) {
-            health.handleEvent(event);
-        };
-        handlers[NmApi.streams.network_inventory] = function (event) {
-            inventory.handleEvent(event);
-        };
-        handlers[NmApi.streams.network_statistics] = function (event) {
-            statistics.handleEvent(event);
-        };
-        handlers[NmApi.streams.hotspot] = function (event) {
-            hotspot.handleEvent(event);
-        };
-        handlers[NmApi.streams.vpn] = function (event) {
-            vpn.handleEvent(event);
-        };
+        handlers[NmApi.streams.wifi_status] = wifi.applyStatusEvent;
+        handlers[NmApi.streams.network_connectivity] = connection.applyConnectivityEvent;
+        handlers[NmApi.streams.wifi_networks] = wifi.applyNetworkEvent;
+        handlers[NmApi.streams.wifi_scan] = scan.handleStream;
+        handlers[NmApi.streams.wifi_connect] = connection.handleEvent;
+        handlers[NmApi.streams.wifi_band] = wifi.handleBandEvent;
+        handlers[NmApi.streams.wifi_secret] = wifi.handleSecretEvent;
+        handlers[NmApi.streams.network_health] = health.handleEvent;
+        handlers[NmApi.streams.network_inventory] = inventory.handleEvent;
+        handlers[NmApi.streams.network_statistics] = statistics.handleEvent;
+        handlers[NmApi.streams.hotspot] = hotspot.handleEvent;
+        handlers[NmApi.streams.vpn] = vpn.handleEvent;
         return handlers;
     }
 

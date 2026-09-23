@@ -6,7 +6,7 @@ import QtTest
 import Shelllist.Ui as Ui
 import Shelllist.Bar as Bar
 
-TestCase {
+DaemonTestCase {
     id: testCase
     name: "ActionControl"
     when: windowShown
@@ -20,6 +20,14 @@ TestCase {
     Component { id: toggle; Ui.ToggleRow { title: "Toggle" } }
     Component { id: toggleSwitch; Ui.ToggleSwitch {} }
     Component { id: bar; Bar.BarAction { text: "Bar" } }
+    Component {
+        id: workspace
+        Bar.WorkspaceButton {
+            workspaceId: 3
+            screenName: "test"
+            controller: Bar.BarController { surfaceRegistry: null }
+        }
+    }
     SignalSpy { id: clicks; signalName: "clicked" }
     SignalSpy { id: secondary; signalName: "secondaryTriggered" }
 
@@ -27,7 +35,8 @@ TestCase {
         return [
             {tag: "button", factory: button}, {tag: "area", factory: area},
             {tag: "tab", factory: tab}, {tag: "toggle", factory: toggle},
-            {tag: "switch", factory: toggleSwitch}, {tag: "bar", factory: bar}
+            {tag: "switch", factory: toggleSwitch}, {tag: "bar", factory: bar},
+            {tag: "workspace", factory: workspace}
         ];
     }
     function test_sharedActivation(data) {
@@ -63,6 +72,12 @@ TestCase {
         if (checkable)
             control.Accessible.toggleAction();
         compare(clicks.count, accepted, "disabled controls must not activate");
+        if (data.tag === "workspace") {
+            const requests = calls.filter(call => call.method === "workspace.focus");
+            compare(requests.length, accepted);
+            compare(requests[0].params.workspace_id, 3);
+            compare(control.Accessible.name, "Workspace 3");
+        }
     }
     function test_barHoverHasNoTooltip() {
         const control = createTemporaryObject(bar, testCase, {width: 160, height: 40});

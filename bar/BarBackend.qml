@@ -4,12 +4,10 @@ import "BarApi.js" as BarApi
 
 Io.DaemonBackend {
     required property BarController controller
-    endpoint: ({
-            daemonName: "bar-daemon",
-            protocol: BarApi.protocol,
-            version: BarApi.version,
-            subscribedStreams: BarApi.subscribedStreams
-        })
+    daemonName: "bar-daemon"
+    expectedProtocol: BarApi.protocol
+    expectedVersion: BarApi.version
+    streams: BarApi.subscribedStreams
     active: true
 
     function snapshot(): bool {

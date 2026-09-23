@@ -4,11 +4,10 @@ import Shelllist.Core as Core
 Item {
     id: backend
 
-    property var endpoint: null
-    property string daemonName: endpoint ? String(endpoint.daemonName || "") : ""
-    property string expectedProtocol: endpoint ? String(endpoint.protocol || "") : ""
-    property int expectedVersion: endpoint ? Number(endpoint.version || 0) : 0
-    property var streams: endpoint ? (endpoint.subscribedStreams || []) : []
+    required property string daemonName
+    property string expectedProtocol: ""
+    property int expectedVersion: 0
+    property list<string> streams: []
     required property bool active
     property bool recoverProtocolErrors: true
     property var pending: ({})
@@ -148,15 +147,6 @@ Item {
         return subscription.id || "";
     }
 
-    function rememberExtraSubscription(id: string, envelope: var): void {
-        const subscriptionId = extraSubscriptionId(envelope);
-        if (!subscriptionId)
-            return;
-        const next = Object.assign({}, extraSubscriptions);
-        next[id] = subscriptionId;
-        extraSubscriptions = next;
-    }
-
     function finishExtraSubscription(id: string, envelope: var, transportError: string): void {
         const cancelWhenReady = !!extraSubscriptionCancellations[id];
         if (cancelWhenReady) {
@@ -174,10 +164,14 @@ Item {
                 cancel(subscriptionId);
             return;
         }
-        rememberExtraSubscription(id, envelope);
+        if (subscriptionId.length > 0) {
+            const next = Object.assign({}, extraSubscriptions);
+            next[id] = subscriptionId;
+            extraSubscriptions = next;
+        }
     }
 
-    function acceptResponse(id: string, envelope: var, transportError: string): void {
+    function acceptSharedResponse(id: string, envelope: var, transportError: string): void {
         setPending(id, false);
         if (id.startsWith("subscribe-")) {
             finishExtraSubscription(id, envelope, transportError);
@@ -187,7 +181,7 @@ Item {
             responseReceived(id, envelope, transportError);
     }
 
-    function failTransport(message: string): void {
+    function failSharedTransport(message: string): void {
         const lostRequestIds = Object.keys(pending);
         pending = ({});
         // A new session resubscribes from scratch, so stale ids must not be
@@ -210,7 +204,7 @@ Item {
         return event.event === "lagged" || !!(event.data && event.data.resync_required);
     }
 
-    function acceptEvent(event: var): void {
+    function acceptSharedEvent(event: var): void {
         const error = eventEnvelopeError(event);
         if (error.length > 0) {
             console.warn("shelllist " + daemonName + " event rejected error=" + error);
@@ -221,18 +215,6 @@ Item {
             return;
         }
         eventReceived(event);
-    }
-
-    function acceptSharedResponse(id: string, envelope: var, transportError: string): void {
-        acceptResponse(id, envelope, transportError);
-    }
-
-    function acceptSharedEvent(event: var): void {
-        acceptEvent(event);
-    }
-
-    function failSharedTransport(message: string): void {
-        failTransport(message);
     }
 
     function updateSharedSession(): void {

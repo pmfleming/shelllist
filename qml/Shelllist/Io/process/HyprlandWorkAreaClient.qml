@@ -45,8 +45,10 @@ Item {
         id: backend
         objectName: "workAreaBackend"
         active: client.active
-        endpoint: ({ daemonName: "bar-daemon", protocol: Protocol.protocol, version: Protocol.version,
-            subscribedStreams: [Protocol.streams["workarea.changed"]] })
+        daemonName: "bar-daemon"
+        expectedProtocol: Protocol.protocol
+        expectedVersion: Protocol.version
+        streams: [Protocol.streams["workarea.changed"]]
         onTransportReady: client.refresh()
         onTransportFailed: client.unavailable()
         onResponseReceived: function (id, envelope, transportError) {
@@ -55,12 +57,9 @@ Item {
             else
                 client.apply(envelope.data && envelope.data.snapshot ? envelope.data.snapshot.workarea : null);
         }
+        onEventGapDetected: client.refresh()
         onEventReceived: function (event) {
-            if (event.stream !== Protocol.streams["workarea.changed"])
-                return;
-            if (event.event === "lagged")
-                client.refresh();
-            else
+            if (event.stream === Protocol.streams["workarea.changed"])
                 client.apply(event.data);
         }
     }

@@ -9,7 +9,7 @@ Ui.ProviderChooserSurface {
     required property BluetoothController controller
     chooserController: controller
     surfaceName: "Bluetooth"
-    readonly property bool editingDetails: detailsItem ? detailsItem.editingText : false
+    readonly property bool editingDetails: (detailsItem as BluetoothDeviceDetails)?.editingText ?? false
     navigationEnabled: !controller.modalPromptOpen && !controller.navigationHelpOpen && !editingDetails
     refreshEnabled: controller.powered && !controller.refreshInFlight && !controller.actionInFlight && navigationEnabled
     helpEnabled: controller.uiActive && !controller.modalPromptOpen && !editingDetails

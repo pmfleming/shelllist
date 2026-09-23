@@ -4,12 +4,10 @@ import "ClipApi.js" as ClipApi
 Io.DaemonBackend {
     required property ClipboardController controller
     objectName: "clipboardBackend"
-    endpoint: ({
-            daemonName: "clip-daemon",
-            protocol: ClipApi.protocol,
-            version: ClipApi.version,
-            subscribedStreams: ClipApi.subscribedStreams
-        })
+    daemonName: "clip-daemon"
+    expectedProtocol: ClipApi.protocol
+    expectedVersion: ClipApi.version
+    streams: ClipApi.subscribedStreams
     // Annotation continues after the picker hides. Keep the bridge alive until
     // its terminal event arrives, otherwise bridge shutdown cancels Satty.
     active: controller.uiActive || controller.backgroundOperationInFlight

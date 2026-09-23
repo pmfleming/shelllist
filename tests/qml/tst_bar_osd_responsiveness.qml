@@ -114,7 +114,7 @@ TestCase {
             backend.sendFailed(id, "Not connected");
         } else {
             backend.setPending(id, true);
-            backend.failTransport("Transport lost");
+            backend.failSharedTransport("Transport lost");
         }
         compare(controller.osdVisible, true);
         compare(controller.osd.kind, "brightness-error");

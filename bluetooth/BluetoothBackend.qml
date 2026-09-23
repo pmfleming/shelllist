@@ -6,24 +6,22 @@ Io.DaemonBackend {
     id: backend
 
     required property BluetoothController controller
-    property var operations
-    property var finishedOperations
+    property var operations: ({})
+    property var finishedOperations: ({})
     property string nameRequestKey: ""
     property var pendingAudioProfile: null
     property var adapterRequestKeys: ({})
 
-    endpoint: ({
-            daemonName: "bt-daemon",
-            protocol: BtApi.protocol,
-            version: BtApi.version,
-            subscribedStreams: BtApi.subscribedStreams
-        })
+    daemonName: "bt-daemon"
+    expectedProtocol: BtApi.protocol
+    expectedVersion: BtApi.version
+    streams: BtApi.subscribedStreams
     // Pairing authorization can arrive while the popup is hidden.
     active: true
-    readonly property bool running: requestRunning || itemCount(operations) > 0
+    readonly property bool running: requestRunning || Object.keys(operations).length > 0
     readonly property var eventHandlers: {
         const handlers = ({});
-        handlers[BtApi.streams.pairing] = backend.handlePairingEvent;
+        handlers[BtApi.streams.pairing] = controller.handlePairingEvent;
         handlers[BtApi.streams.scan] = backend.handleScanEvent;
         handlers[BtApi.streams.audio] = backend.handleAudioEvent;
         handlers[BtApi.streams.operation] = backend.handleOperationEvent;
@@ -48,9 +46,6 @@ Io.DaemonBackend {
             }
         })
 
-    function itemCount(values) {
-        return Object.keys(values || ({})).length;
-    }
     function resetTransportState() {
         pendingAudioProfile = null;
         nameRequestKey = "";
@@ -75,16 +70,7 @@ Io.DaemonBackend {
         finishedOperations = recent;
         controller.applyRequestSnapshot(requests || ({}));
     }
-    function cancellationStatus(id) {
-        if (id.indexOf("cancel-operation-") === 0)
-            return "Cancelling Bluetooth operation…";
-        return "";
-    }
-    function finish(id, envelope, transportError) {
-        const error = responseError(envelope, transportError, "Bluetooth operation failed");
-        const audioProfile = id === "audio-set-profile" ? pendingAudioProfile : null;
-        if (id === "audio-set-profile")
-            pendingAudioProfile = null;
+    function finishDeviceRequest(id: string, error: string): void {
         if (id === "device-set-alias") {
             if (error)
                 controller.nameEdits.rejected(nameRequestKey, error);
@@ -92,6 +78,24 @@ Io.DaemonBackend {
         }
         if (id === "pairing-response")
             controller.finishPairingResponse(error.length === 0);
+    }
+    function rememberAudioProfile(id: string, audioProfile: var): void {
+        if (audioProfile) {
+            controller.status = "Remembering Bluetooth audio profile…";
+            if (!call("audio-profile-policy", BtApi.methods.devicePolicyUpdate, {
+                key: audioProfile.deviceKey, preferred_audio_profile_key: audioProfile.profileKey
+            }))
+                controller.status = "Audio profile applied, but could not remember it";
+        } else if (id === "audio-profile-policy") {
+            controller.status = "Bluetooth audio profile updated and remembered";
+        }
+    }
+    function finish(id: string, envelope: var, transportError: string): void {
+        const error = responseError(envelope, transportError, "Bluetooth operation failed");
+        const audioProfile = id === "audio-set-profile" ? pendingAudioProfile : null;
+        if (id === "audio-set-profile")
+            pendingAudioProfile = null;
+        finishDeviceRequest(id, error);
         if (error.length > 0) {
             finishAdapterRequest(id, error);
             console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
@@ -99,23 +103,14 @@ Io.DaemonBackend {
                 ? "Audio profile applied, but could not remember it: " + error : error;
             return;
         }
-        const cancellation = cancellationStatus(id);
-        if (cancellation.length > 0) {
+        if (id.startsWith("cancel-operation-")) {
             console.info("shelllist bluetooth cancellation accepted id=" + id);
-            controller.status = cancellation;
+            controller.status = "Cancelling Bluetooth operation…";
             return;
         }
         try {
             applyResponse(id, envelope.data || ({}));
-            if (audioProfile) {
-                controller.status = "Remembering Bluetooth audio profile…";
-                if (!call("audio-profile-policy", BtApi.methods.devicePolicyUpdate, {
-                    key: audioProfile.deviceKey, preferred_audio_profile_key: audioProfile.profileKey
-                }))
-                    controller.status = "Audio profile applied, but could not remember it";
-            } else if (id === "audio-profile-policy") {
-                controller.status = "Bluetooth audio profile updated and remembered";
-            }
+            rememberAudioProfile(id, audioProfile);
             finishAdapterRequest(id, "");
             console.info("shelllist bluetooth request completed id=" + id);
         } catch (applyError) {
@@ -149,9 +144,6 @@ Io.DaemonBackend {
         controller.handleOperationAccepted(operation);
     }
 
-    function dispatchStreamEvent(event) {
-        return routeEvent(event, eventHandlers);
-    }
     function applyUnhandledEvent(event) {
         if (event.event === "unavailable" || event.event === "loading") {
             controller.invalidateBluetooth((event.error && event.error.message) || (event.event === "loading" ? "Bluetooth is loading…" : "BlueZ is unavailable"));
@@ -169,21 +161,15 @@ Io.DaemonBackend {
         if (!isPending("snapshot"))
             refresh();
     }
-    function processEvent(event: var): void {
-        if (!dispatchStreamEvent(event))
-            applyUnhandledEvent(event);
-    }
     function handleEvent(event: var): void {
         try {
-            processEvent(event);
+            if (!routeEvent(event, eventHandlers))
+                applyUnhandledEvent(event);
         } catch (error) {
             const stream = event && event.stream ? event.stream : "unknown";
             console.error("shelllist bluetooth event failed stream=" + stream + " error=" + error);
             controller.status = "Could not process bt-daemon event: " + error;
         }
-    }
-    function handlePairingEvent(event) {
-        controller.handlePairingEvent(event);
     }
     function handleScanEvent(event) {
         controller.handleScanEvent(event.data || ({}));

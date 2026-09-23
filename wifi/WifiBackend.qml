@@ -8,12 +8,10 @@ Io.DaemonBackend {
     id: backend
 
     required property WifiController controller
-    endpoint: ({
-            daemonName: "nm-daemon",
-            protocol: NmApi.protocol,
-            version: NmApi.version,
-            subscribedStreams: NmApi.subscribedStreams
-        })
+    daemonName: "nm-daemon"
+    expectedProtocol: NmApi.protocol
+    expectedVersion: NmApi.version
+    streams: NmApi.subscribedStreams
     recoverProtocolErrors: false
     active: controller.statusMonitorActive || controller.uiActive || requestRunning || controller.connection.running || controller.promptActive
     readonly property bool listRunning: isPending("networks")
@@ -25,54 +23,34 @@ Io.DaemonBackend {
             "status-recovery": function (value) {
                 controller.applyRecoveredStatus(Api.apiData(value, "status") || null);
             },
-            "networks": function (value) {
-                backend.handleNetworks(value);
-            },
+            "networks": backend.handleNetworks,
             "band-status": function (value) {
                 controller.applyBandStatus(Api.apiData(value, "band") || ({}));
             },
             "band-set": function (value) {
                 controller.applyBandStart(Api.apiData(value, "result") || ({}));
             },
-            "scan-start": function (value) {
-                backend.handleScanStart(value);
-            },
+            "scan-start": backend.handleScanStart,
             "power": function (value) {
                 controller.applyPowerResult(Api.apiData(value, "result") || ({}));
             },
-            "connect-start": function (value) {
-                backend.handleConnectStart(value);
-            },
-            "disconnect": function (value) {
-                backend.handleDisconnect(value);
-            },
+            "connect-start": backend.handleConnectStart,
+            "disconnect": backend.handleDisconnect,
             "advanced-load": function (value) {
                 controller.advanced.applyProfile(Api.apiData(value, "result") || ({}));
             },
-            "advanced-save": function (value) {
-                backend.handleAdvancedSave(value);
-            },
+            "advanced-save": backend.handleAdvancedSave,
             "advanced-secret": function (value) {
                 controller.advanced.applySecret(Api.apiData(value, "result") || ({}));
             },
-            "profile": function (value) {
-                backend.handleProfile(value);
-            },
+            "profile": backend.handleProfile,
             "share": function (value) {
                 controller.applyShareResponse(value, "Saved profile could not be shared");
             },
-            "secret-provide": function (value) {
-                backend.handleSecretResponse(value);
-            },
-            "secret-cancel": function (value) {
-                backend.handleSecretResponse(value);
-            },
-            "qr-parse": function (value) {
-                backend.handleQrParse(value);
-            },
-            "qr-connect": function (value) {
-                backend.handleConnectStart(value);
-            },
+            "secret-provide": backend.handleSecretResponse,
+            "secret-cancel": backend.handleSecretResponse,
+            "qr-parse": backend.handleQrParse,
+            "qr-connect": backend.handleConnectStart,
             "hotspot-capabilities": function (value) {
                 controller.hotspot.applyCapabilities(Api.apiData(value, "hotspot") || null);
             },

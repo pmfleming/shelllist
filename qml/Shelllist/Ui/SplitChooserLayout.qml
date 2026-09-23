@@ -12,8 +12,8 @@ RowLayout {
     readonly property bool singlePane: minimumSplitDetailsWidth > 0 && width < controller.listPaneWidth + controller.detailsGapWidth + minimumSplitDetailsWidth
     readonly property real listWidth: singlePane ? width : controller.listPaneWidth
     readonly property real detailWidth: singlePane ? width : controller.detailsPaneWidth
-    readonly property var listItem: listLoader.item
-    readonly property var detailsItem: detailsLoader.item
+    readonly property ChooserListPane listItem: listLoader.item as ChooserListPane
+    readonly property Item detailsItem: detailsLoader.item as Item
     readonly property real verticalDensity: Theme.densityScale(height, controller.contentVerticalMargin)
     readonly property int verticalMargin: Theme.verticalSpacing(controller.contentVerticalMargin, verticalDensity)
 

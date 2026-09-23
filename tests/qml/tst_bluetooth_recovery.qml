@@ -1,48 +1,15 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest
-import Shelllist.Io as Io
 import "../../bluetooth" as Bt
 
-TestCase {
+DaemonTestCase {
     id: testCase
     name: "BluetoothRecovery"
     when: windowShown
     visible: true
     width: 720
     height: 1000
-    property var calls: []
-    property var originalFactory
-    property var originalSessions
-
-    Component {
-        id: clientFactory
-        QtObject {
-            property string daemonName
-            property var streams: []
-            property bool active: false
-            property bool ready: true
-            property bool recoverProtocolErrors: false
-            signal response(string id, var envelope, string transportError)
-            signal eventReceived(var event)
-            signal transportFailed(string message)
-            function call(id, method, params) { testCase.calls = testCase.calls.concat([{id: id, method: method, params: params}]); }
-            function subscribeExtra(id, streams) {}
-            function cancel(id, requestId) {}
-            function release(id, route) {}
-        }
-    }
-    function initTestCase() {
-        originalFactory = Io.DaemonSessions.clientFactory;
-        originalSessions = Io.DaemonSessions.sessions;
-        Io.DaemonSessions.sessions = ({});
-        Io.DaemonSessions.clientFactory = clientFactory;
-    }
-    function cleanupTestCase() {
-        for (const name of Object.keys(Io.DaemonSessions.sessions)) Io.DaemonSessions.sessions[name].client.destroy();
-        Io.DaemonSessions.sessions = originalSessions;
-        Io.DaemonSessions.clientFactory = originalFactory;
-    }
     Component {
         id: panelComponent
         Item {

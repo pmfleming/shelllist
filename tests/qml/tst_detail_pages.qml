@@ -1,57 +1,22 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtTest
-import Shelllist.Io as Io
 import "../../bluetooth" as Bluetooth
 import "../../launcher" as Launcher
 import "../../wifi" as Wifi
 
-TestCase {
+DaemonTestCase {
     id: testCase
     name: "DetailPages"
     when: windowShown
     visible: true
     width: 800
     height: 700
-    property var originalClientFactory
-    property var originalSessions
+    clientReady: false
 
     // Representative consumers of DetailFlickable: dynamic resource cards,
     // adapter settings and fixed-height network cards. Shared layout behavior
     // belongs to tst_detail_layout; domain recovery tests construct other pages.
-    Component {
-        id: clientFactory
-        QtObject {
-            property string daemonName
-            property var streams: []
-            property bool active: false
-            property bool ready: false
-            property bool recoverProtocolErrors: false
-            signal response(string id, var envelope, string transportError)
-            signal eventReceived(var event)
-            signal transportFailed(string message)
-            function call(id, method, params) {}
-            function subscribeExtra(id, streams) {}
-            function release(id, route) {}
-            function cancel(id, requestId) {}
-        }
-    }
-
-    function initTestCase() {
-        originalClientFactory = Io.DaemonSessions.clientFactory;
-        originalSessions = Io.DaemonSessions.sessions;
-        Io.DaemonSessions.sessions = ({});
-        Io.DaemonSessions.clientFactory = clientFactory;
-    }
-
-    function cleanupTestCase() {
-        for (const session of Object.values(Io.DaemonSessions.sessions))
-            session.client.destroy();
-        Io.DaemonSessions.sessions = originalSessions;
-        Io.DaemonSessions.clientFactory = originalClientFactory;
-    }
-
     Component {
         id: resourcesFactory
         Launcher.ApplicationResourcesPage {

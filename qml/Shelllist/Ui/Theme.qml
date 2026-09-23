@@ -100,7 +100,6 @@ Item {
     readonly property int animationFast: 170
     readonly property int animationInteractive: 170
     readonly property int animationNormal: 220
-    readonly property int animationSlow: 240
     readonly property int spinnerDuration: 900
     readonly property int easingStandard: Easing.InOutCubic
     readonly property int easingResponsive: Easing.OutCubic
