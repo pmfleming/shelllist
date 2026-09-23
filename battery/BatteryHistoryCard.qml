@@ -112,7 +112,7 @@ Rectangle {
         Flow {
             objectName: "batteryHistoryLegend"
             Layout.fillWidth: true
-            spacing: Ui.Theme.spacingSm
+            spacing: Ui.Theme.spacingLg
 
             Row {
                 spacing: 5
@@ -123,7 +123,8 @@ Rectangle {
                     color: graph.lineColor
                 }
                 Ui.FieldLabel {
-                    text: qsTr("Charge %")
+                    objectName: "batteryChargeLegend"
+                    text: qsTr("Charge")
                     font.pixelSize: Ui.Theme.fontSizeCaption
                 }
             }
@@ -137,7 +138,7 @@ Rectangle {
                 }
                 Ui.FieldLabel {
                     objectName: "batteryDischargingLegend"
-                    text: qsTr("Discharging W")
+                    text: qsTr("Discharging")
                     font.pixelSize: Ui.Theme.fontSizeCaption
                 }
             }
@@ -151,12 +152,13 @@ Rectangle {
                 }
                 Ui.FieldLabel {
                     objectName: "batteryChargingLegend"
-                    text: qsTr("Charging W")
+                    text: qsTr("Charging")
                     font.pixelSize: Ui.Theme.fontSizeCaption
                 }
             }
             Ui.FieldLabel {
-                text: qsTr("Observed time")
+                objectName: "batteryTimeLegend"
+                text: qsTr("Time")
                 font.pixelSize: Ui.Theme.fontSizeCaption
                 visible: content.width > 330
             }

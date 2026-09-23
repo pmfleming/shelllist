@@ -14,12 +14,15 @@ Core.Provider {
 
     function resultsForOutputs(outputs: var): var {
         return outputs.map(function (output) {
+            const dockedOff = output.disabled && Model.internal(output.name)
+                && controller.displayPolicyState.available && controller.displayPolicyState.status === "external"
+                && (controller.displayPolicyState.policy || {}).prefer_external;
             return Core.Model.result({
                 providerId: providerId,
                 providerPriority: priority,
                 id: output.name,
                 title: Model.title(output),
-                subtitle: output.name + " · " + (output.disabled ? qsTr("Disabled") : qsTr("Enabled")) +
+                subtitle: output.name + " · " + (dockedOff ? qsTr("Off · External display preferred") : output.disabled ? qsTr("Disabled") : qsTr("Enabled")) +
                     (output.width > 0 && output.height > 0 ? " · " + output.width + "×" + output.height + " · " + Number(output.refreshRate).toFixed(2) + " Hz" : ""),
                 icon: Model.internal(output.name) ? "󰌢" : "󰍹",
                 keywords: [output.name, output.description || "", output.make || "", output.model || "", output.serial || ""],

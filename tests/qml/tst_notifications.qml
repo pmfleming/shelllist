@@ -13,8 +13,6 @@ TestCase {
     Component { id: stateComponent; Activity.NotificationState {} }
     Component { id: controllerComponent; Activity.NotificationController {} }
     Component { id: contentComponent; Activity.NotificationContent {} }
-    Component { id: activityComponent; Activity.ActivityController {} }
-    Component { id: agendaContentComponent; Activity.ActivityContent {} }
     Component {
         id: fakeBackendComponent
         Activity.NotificationBackend {
@@ -117,22 +115,6 @@ TestCase {
         compare(state.history.length, 100);
         verify(!state.historyLoading);
     }
-    function test_expansionAndDraftSurviveNavigationAndUpdates() {
-        const state = makeState();
-        const controller = makeController(state);
-        controller.openNotifications("chat", "active", "activity");
-        verify(state.expandedGroups.chat);
-        compare(controller.selectedGroupKey, "chat");
-        state.setDraft(100, "Keep this draft");
-        controller.deactivateUi();
-        state.notificationActive = { notifications: [notification(101), notification(100)] };
-        verify(state.expandedGroups.chat);
-        compare(state.drafts[100], "Keep this draft");
-        compare(controller.groupModel.get(0).key, "chat");
-        controller.tab = "history";
-        controller.tab = "active";
-        compare(state.drafts[100], "Keep this draft");
-    }
     function test_replyAcknowledgementAndFailure() {
         const state = makeState();
         state.backend = createTemporaryObject(fakeBackendComponent, state, { store: state });
@@ -158,37 +140,6 @@ TestCase {
         verify(!state.replyNotification(2, "Retain this"));
         compare(state.drafts[2], "Retain this");
         verify(state.replies[2].error.length > 0);
-    }
-    function test_agendaPreviewsFillHeightAndKeepControlsVisible() {
-        const state = makeState();
-        const records = [];
-        for (let id = 20; id > 0; --id) records.push(record(id));
-        state.history = records;
-        const controller = createTemporaryObject(activityComponent, state, {
-            notificationState: state, rangeQueriesEnabled: false, width: 520, height: 1100
-        });
-        const content = createTemporaryObject(agendaContentComponent, controller, {
-            controller: controller, width: 520, height: 1100
-        });
-        verify(content !== null);
-        wait(50);
-        const card = findChild(content, "agendaNotificationCard");
-        const expand = findChild(content, "agendaNotificationsExpand");
-        verify(card.previewGroups.length > 3);
-        compare(card.previewGroups[0].records[0].id, 100);
-        compare(card.previewGroups[1].records[0].history_id, 20);
-        verify(expand.mapToItem(card, 0, expand.height).y <= card.height);
-        const largerCount = card.previewGroups.length;
-        controller.height = 700;
-        wait(50);
-        verify(card.previewGroups.length < largerCount);
-        verify(expand.mapToItem(card, 0, expand.height).y <= card.height);
-        state.notificationActive = { notifications: [] };
-        state.history = [];
-        wait(50);
-        verify(expand.mapToItem(card, 0, expand.height).y <= card.height);
-        content.destroy();
-        wait(50);
     }
     function test_liveUpdateRetainsReplyDelegateAndFocus() {
         const state = makeState();

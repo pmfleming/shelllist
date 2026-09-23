@@ -11,7 +11,7 @@ Ui.ProviderChooserSurface {
     surfaceName: "Clipboard"
     readonly property var selectedEntry: content.controller.selectedEntry || ({})
     readonly property bool actionsEnabled: content.controller.uiActive && content.controller.hasSelection && !content.controller.multiSelectMode && !content.controller.deleteMenuOpen && !content.controller.actionInFlight && !content.controller.wipeChallenge && !content.controller.navigationHelpOpen
-    detailsTabEnabled: false
+    detailsTabEnabled: content.actionsEnabled && content.controller.detailsOpen
     helpEnabled: content.controller.uiActive && !content.controller.multiSelectMode && !content.controller.deleteMenuOpen && !content.controller.detailState.editorFocused && !content.controller.deleteConfirmationOpen && !content.controller.bulkDeleteConfirmationOpen && !content.controller.wipeChallenge
     helpEntries: [
         {
@@ -36,6 +36,7 @@ Ui.ProviderChooserSurface {
         }
     ]
     onRefreshRequested: content.controller.refresh()
+    onDetailsTabRequested: content.controller.cycleDetailsTab()
 
     listComponent: Component {
         ClipboardListPane {

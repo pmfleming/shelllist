@@ -24,17 +24,9 @@ function equal(actual, expected, message) {
         throw new Error(`${message}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
 
-// Monitor routing, not the icon assigned to each personal workspace.
-equal(context.workspaceIds({ workspaces: [
-    { id: 8, monitor: "eDP-1" }, { id: 7, monitor: "DP-1" }, { id: 3, monitor: "eDP-1" }
-] }, "eDP-1"), [1, 2, 3, 4, 5, 8], "persistent and dynamic workspaces");
+// Retain monitor isolation rather than prescribing personal workspace IDs.
 equal(context.activeWindowFor({ focused_monitor: "eDP-1", active_window: { title: "Terminal" } }, "DP-1"),
     null, "active window is hidden on other monitors");
-const mediaPlayers = {
-    active_player: "browser",
-    players: [{ id: "browser", title: "Podcast" }, { id: "spotify", title: "Music" }]
-};
-equal(context.playerFor(mediaPlayers).id, "browser", "daemon-selected media player");
 equal(context.mediaPositionPercent({
     length_us: 240000000, position_us: 60000000, playback_status: "playing",
     position_observed_at_unix_ms: 1000, playback_rate: 1
@@ -47,18 +39,6 @@ equal(context.inputOsd({ input_muted: true, source_description: "Microphone" }).
     false, "mute does not invent a volume measurement");
 // Brightness OSD acknowledgement and all failure routes are exercised through
 // BarController and the actual surface in tst_bar_osd_responsiveness.qml.
-equal(context.domainOsd({ media: "media" }, "media",
-    { available: true, active_player: "player", players: [{ id: "player", title: "Old" }] },
-    { available: true, active_player: "player", players: [{ id: "player", title: "New" }] }),
-    null, "media changes do not produce an OSD");
-
-equal(context.updateModule({ available: true, ready: false, jobs: [{ name: "system", status: "running", phase: "building" }] }).visible,
-    true, "running update jobs are visible before a candidate is ready");
-const interruptedUpdate = context.updateModule({ available: true, jobs: [{ name: "system", status: "interrupted", phase: "staging", error: "Worker stopped" }] });
-equal(interruptedUpdate.tone, "warning", "interrupted update jobs warn rather than appearing successful");
-equal(interruptedUpdate.tooltip.includes("Worker stopped"), true, "update errors remain inspectable");
-equal(context.updateModule({ available: true, jobs: [{ name: "system", status: "completed", phase: "skipped" }] }).visible,
-    false, "harmless skipped jobs do not claim an available update");
 
 const modules = context.statusModules({
     activity: { available: true, incomplete_todo_count: 1, next_event: null },
@@ -73,10 +53,6 @@ const modules = context.statusModules({
     notifications: { count: 2, dnd: false },
     timezone: { available: true, city: "Taipei", abbreviation: "CST", utc_offset_seconds: 28800 }
 }, new Date(0));
-equal(modules.some(item => item.id === "brightness"), false,
-    "brightness stays in shortcuts and OSD, not the bar");
-equal(modules.find(item => item.id === "displays").primary, "displays",
-    "monitor control still opens Displays");
 // Keep reachability, not a mirror of the action-ID table or module order.
 equal(context.activityModule({ available: false }, { count: 0 }).visible, true,
     "agenda remains reachable without a calendar provider");

@@ -129,30 +129,4 @@ Column {
             }
         }
     }
-
-    Ui.DetailColumnCard {
-        objectName: "batteryChargeNotificationCard"
-        verticalContentPadding: Ui.Theme.spacingMd
-        headingSpacing: Ui.Theme.spacingMd
-        height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
-        title: qsTr("Charge notification")
-
-        Ui.ToggleRow {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 42
-            title: qsTr("Notify when full")
-            subtitle: qsTr("Notify at the charge limit, or 100% when unprotected")
-            checked: pane.controller.draftNotifyWhenFull
-            interactive: !pane.controller.actionInFlight
-            onClicked: pane.controller.updateNotifyWhenFull(!checked)
-        }
-
-        Ui.SaveStatusLabel {
-            Layout.fillWidth: true
-            text: pane.controller.alertSaveStatus
-            valid: pane.controller.alertDraftValid
-            error: pane.controller.alertSaveError
-            saving: pane.controller.alertOperationActive
-        }
-    }
 }

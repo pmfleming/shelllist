@@ -54,18 +54,19 @@ function series(points, metric, minimumMaximum, positiveOnly) {
             previous = null;
             return;
         }
-        if (!segment || !continuousAfter(previous, point)) {
-            if (previous !== null)
-                breaks.push(timeline.duration > 0 ? (point.active_time_ms - timeline.first) / timeline.duration : 0.5);
-            segment = [];
-            segments.push(segment);
-        }
-        segment.push({
+        const sample = {
             x: timeline.duration > 0 ? (point.active_time_ms - timeline.first) / timeline.duration : 0.5,
             value: point[metric],
             timestamp_ms: point.timestamp_ms,
             charging: point.charging === true
-        });
+        };
+        if (!segment || !continuousAfter(previous, point)) {
+            if (previous !== null)
+                breaks.push({ from: segment[segment.length - 1], to: sample });
+            segment = [];
+            segments.push(segment);
+        }
+        segment.push(sample);
         maximum = Math.max(maximum, point[metric]);
         previous = point;
     });

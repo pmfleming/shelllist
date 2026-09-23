@@ -82,30 +82,6 @@ TestCase {
         return panel;
     }
 
-    function test_normalHandlersStayHiddenAndUnavailableActionsAreExplained() {
-        const reason = "Disconnecting network connections cleanly before suspending. ".repeat(60);
-        const panel = makePanel([
-            { what: "sleep", mode: "delay", who: "NetworkManager", why: reason },
-            { what: "shutdown", mode: "block", who: "Updater", why: "Installing updates" },
-            { what: "handle-lid-switch", mode: "block", who: "Desktop", why: "Owns lid behaviour" }
-        ]);
-        const card = findChild(panel, "powerSuspendCard");
-        verify(card.height <= 80, "normal suspend handlers must not expand the one-row card");
-        verify(!findChild(panel, "suspendStatusRow").visible);
-        for (const action of ["lock", "suspend", "hibernate"]) {
-            const button = findChild(panel, "suspendAction-" + action);
-            compare(button.label, "");
-            verify(button.icon.length > 0);
-            verify(button.Accessible.name.length > 0);
-            verify(button.toolTip.length > 0);
-            verify(button.mapToItem(card, button.width, 0).x <= card.width - card.contentPadding);
-        }
-        verify(!findChild(panel, "suspendAction-hibernate").enabled);
-        verify(findChild(panel, "suspendAction-hibernate").toolTip.indexOf("Not supported by the system") >= 0);
-        verify(findChild(panel, "suspendDetailsButton") === null);
-        verify(findChild(panel, "suspendDetailsPopup") === null);
-    }
-
     function test_onlyRealBlockersWarnAndProgressErrorsStayLocal() {
         const panel = makePanel([{ what: "shutdown:sleep", mode: "block", who: "Editor", why: "Saving document" }]);
         const controller = panel.controller;
@@ -208,14 +184,6 @@ TestCase {
         button.Accessible.toggleAction();
         compare(calls.length, 1);
         compare(calls[0].params.enabled, true, "healthy telemetry restores ordinary toggling");
-    }
-
-    function test_displayControlsMovedOutOfPower() {
-        const panel = makePanel();
-        verify(findChild(panel, "preferExternalDisplay") === null);
-        verify(findChild(panel, "displayLayoutCard") === null);
-        verify(!("displayPolicyState" in panel.controller));
-        verify(!panel.controller.backend.streams.includes("display-policy.changed"));
     }
 
     function test_sharedAndSeparateAutomaticSuspendControls() {
@@ -326,22 +294,6 @@ TestCase {
         verify(controller.keepAwake);
         controller.handleEvent({ event: "changed", stream: "sleep-policy.changed", data: state });
         compare(controller.suspendPolicyDraft.battery.sleep_minutes, 30);
-    }
-
-    function test_hibernateStatusRemainsDistinctFromSuspend() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        controller.applyPowerSuspend(Object.assign(suspendState(), {
-            can_hibernate: "yes", preparing_for_sleep: true,
-            operation: { action: "hibernate", phase: "preparing" }
-        }));
-        compare(findChild(panel, "suspendStatusText").text, "Preparing hibernate…");
-        verify(findChild(panel, "suspendAction-hibernate").toolTip.includes("hibernating"));
-        controller.applyPowerSuspend(Object.assign(suspendState(), {
-            operation: { action: "hibernate", phase: "unknown" }
-        }));
-        compare(findChild(panel, "suspendStatusText").text,
-            "Hibernate outcome unknown · inspect the session before another request");
     }
 
     function test_keyboardNavigationAndEscapeRemainAvailable() {

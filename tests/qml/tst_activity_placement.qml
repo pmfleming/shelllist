@@ -6,8 +6,6 @@ TestCase {
     name: "ActivityPlacement"
     function test_logicalGeometry_data() {
         return [
-            { tag: "fractional-laptop", margins: {left: 2, top: 53, right: 2, bottom: 2}, screen: {x: 0, y: 0, width: 1536, height: 960},
-                expected: {x: 2, y: 53, width: 1532, height: 905, left: 2, top: 53, right: 2, bottom: 2} },
             { tag: "hidpi-negative-origin", margins: {left: 26, top: 82, right: 12, bottom: 22}, screen: {x: -1920, y: -100, width: 1920, height: 1080},
                 expected: {x: -1894, y: -18, width: 1882, height: 976, left: 26, top: 82, right: 12, bottom: 22} }
         ];

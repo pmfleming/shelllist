@@ -44,123 +44,46 @@ TestCase {
                 start_percent: end - 5, end_percent: end } };
     }
 
-    function test_threeTabsAndKeyboardCycle() {
-        const panel = makePanel();
-        panel.width = 420;
-        const controller = panel.controller;
-        const page = findChild(panel, "batteryDetailPage");
-        const tabs = findChild(panel, "batteryViewTabs");
-        compare(tabs.tabs.length, 3);
-        compare(tabs.tabs[0].label, "Power");
-        compare(tabs.tabs[1].label, "Battery");
-        compare(tabs.tabs[2].label, "Suspend");
-        compare(controller.viewTab, "overview");
-        const panes = [findChild(panel, "batteryOverviewPane"),
-            findChild(panel, "batteryCarePane"), findChild(panel, "batteryPowerPane")];
-        for (let index = 0; index < 3; ++index) {
-            compare(controller.viewTab, tabs.tabs[index].value);
-            compare(tabs.selectedValue, controller.viewTab);
-            verify(tabs.tabs[index].icon.length > 0);
-            for (let other = 0; other < 3; ++other)
-                compare(panes[other].visible, index === other);
-            tryCompare(page, "contentHeight", panes[index].height);
-            compare(panes[index].width, page.width);
-            compare(panes[index].mapToItem(page.contentItem, 0, 0).y, 0,
-                "hidden tabs must not leave empty space in the active page");
-            verify(controller.cycleViewTab());
-        }
-        compare(controller.viewTab, "overview", "cycle wraps to the first tab");
-        controller.selectViewTab("invalid");
-        compare(controller.viewTab, "overview", "ignore unknown tabs");
-        tabs.selected("care");
-        compare(controller.viewTab, "care");
-    }
-
-    function test_powerModeLivesInSummaryTab() {
+    function test_chargeNotificationIsFirstAndTracksChargeTarget() {
         const panel = makePanel();
         const controller = panel.controller;
-        controller.applyPowerProfile({ available: true, profile: "balanced",
-            profiles: [{ name: "power-saver" }, { name: "balanced" }, { name: "performance" }] });
-        const summary = findChild(panel, "batteryOverviewPane");
-        const suspend = findChild(panel, "batteryPowerPane");
-        const card = findChild(summary, "powerModeCard");
-        const selector = findChild(card, "batteryPowerModeProfile");
-        verify(card !== null);
-        verify(selector !== null);
-        verify(!findChild(suspend, "powerModeCard"));
-        verify(card.visible);
-        compare(card.y, 0, "power mode is the first card");
-        compare(selector.value, "balanced");
-        verify(selector.interactive);
-        controller.actionInFlight = true;
-        verify(!selector.interactive);
-        controller.actionInFlight = false;
-        controller.selectViewTab("power");
-        verify(!card.visible, "Suspend does not show power mode");
-        controller.selectViewTab("overview");
-        verify(card.visible);
-        for (const width of [420, 560]) {
-            panel.width = width;
-            verify(waitForRendering(panel));
-            verify(selector.mapToItem(card, selector.width, 0).x <= card.width - card.contentPadding + 1,
-                "power mode selector stays inside its card");
-        }
-        controller.applyPowerProfile({ available: false, profiles: [] });
-        verify(!selector.interactive);
-    }
-
-    function test_levelsLiveInPowerTabWithIndependentActions() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        controller.applyPowerProfile({ available: true, profiles: [{ name: "balanced" }, { name: "power-saver" }],
-            battery_automation: { level: "low", status: "paused", profile: "power-saver" } });
-        controller.applyBattery({ available: true, percentage: 20, policy: {
-            warning_percent: 35, critical_percent: 10, notify_warning: false, notify_critical: true,
-            warning_profile: "balanced", critical_profile: "power-saver", notify_when_full: false
-        } });
         controller.selectViewTab("care");
-        verify(!findChild(panel, "batteryLevelsCard").visible);
-        verify(findChild(panel, "batteryChargeNotificationCard").visible);
-        controller.selectViewTab("power");
-        verify(findChild(panel, "batteryLevelsCard").visible);
-        verify(!findChild(panel, "batteryChargeNotificationCard").visible);
-        compare(findChild(panel, "batteryLowPoint").value, 35);
-        compare(findChild(panel, "batteryCriticalPoint").value, 10);
-        verify(!findChild(panel, "batteryLowNotify"));
-        verify(!findChild(panel, "batteryCriticalNotify"));
-        verify(!findChild(panel, "batteryLowEnabled").checked);
-        verify(findChild(panel, "batteryCriticalEnabled").checked);
-        findChild(panel, "batteryLowEnabled").activate();
-        verify(controller.draftNotifyWarning);
-        compare(controller.draftWarningProfile, "balanced");
+        const card = findChild(panel, "batteryChargeNotificationCard");
+        const toggle = findChild(card, "batteryChargeNotificationToggle");
+        const status = findChild(card, "batteryChargeNotificationSaveStatus");
+        const care = findChild(panel, "batteryCarePane");
+        for (const scenario of [
+            { enabled: true, end: 80, once: false, title: "Notify at charge limit (80%)" },
+            { enabled: true, end: 85, once: false, title: "Notify at charge limit (85%)" },
+            { enabled: true, end: 85, once: true, title: "Notify at 100%" },
+            { enabled: false, end: 85, once: false, title: "Notify at 100%" },
+            { enabled: true, end: 100, once: false, title: "Notify at 100%" },
+            { enabled: true, end: null, once: false, title: "Notify at 100%" }
+        ]) {
+            const limited = device("BAT0", 80, 80);
+            limited.protection.enabled = scenario.enabled;
+            limited.protection.end_percent = scenario.end;
+            limited.protection.charge_once_active = scenario.once;
+            controller.applyBattery({ available: true, plugged: true, devices: [limited, device("BAT1", 90, 85)] });
+            verify(waitForRendering(panel));
+            compare(card.mapToItem(care, 0, 0).y, 0, "notification is first, even with a device selector");
+            compare(toggle.title, scenario.title);
+            compare(toggle.subtitle, "");
+            verify(!findChild(toggle, "toggleSubtitle").visible);
+            verify(!status.visible, "routine applied status stays hidden");
+        }
+        controller.applyBattery({ available: true, devices: [] });
+        compare(toggle.title, "Notify at 100%");
+        toggle.activate();
+        verify(!controller.draftNotifyWhenFull);
         controller.settingsOperationFinished("alert");
-        const profile = findChild(panel, "batteryLowProfile");
-        compare(profile.value, "balanced");
-        compare(profile.options.length, 3);
-        verify(!profile.optionEnabled(2), "unavailable Performance cannot be selected");
-        verify(findChild(panel, "batteryAutomationResume").visible);
-        verify(findChild(panel, "batteryAutomationStatus").text.indexOf("paused") >= 0);
-        panel.width = 420;
-        verify(waitForRendering(panel));
-        const page = findChild(panel, "batteryDetailPage");
-        const card = findChild(panel, "batteryLevelsCard");
-        verify(card.width <= page.width);
-        const footer = findChild(panel, "batteryViewTabs");
-        verify(page.mapToItem(panel, 0, page.height).y < footer.mapToItem(panel, 0, 0).y);
-        controller.applyPowerProfile({ available: true, profiles: [],
-            battery_automation: { level: "normal", status: "waiting", profile: "" } });
-        verify(!findChild(panel, "batteryAutomationResume").visible);
-        verify(!findChild(panel, "batteryAutomationStatus").visible);
-        const saveStatus = findChild(panel, "batteryLevelsSaveStatus");
-        verify(!saveStatus.visible, "routine applied status stays hidden");
+        controller.actionInFlight = true;
+        verify(!toggle.interactive);
         controller.alertOperationActive = true;
-        verify(saveStatus.visible, "saving feedback remains available");
+        verify(status.visible, "saving feedback remains available");
         controller.alertOperationActive = false;
         controller.alertSaveError = "Unable to save";
-        verify(saveStatus.visible, "save errors remain visible");
-        controller.applyPowerProfile({ available: true, profiles: [],
-            battery_automation: { level: "low", status: "error", error: "Unable to switch profile" } });
-        verify(findChild(panel, "batteryAutomationStatus").visible);
+        verify(status.visible, "save errors remain visible");
     }
 
     function test_profileSelectionSupportsKeyboardAndAccessibility() {

@@ -105,12 +105,14 @@ screen's **Enable/Disable** button. **Settings** contains mode, scale, rotation 
 position controls; **Information** shows read-only observed display details.
 Ctrl+Tab switches tabs. Arrange reveals the existing snapping layout canvas.
 
-Changes stay in a draft until **Preview changes** (Ctrl+Enter), which previews the
-whole layout. **Keep** saves it; Escape, closure or the daemon's 20-second deadline
-reverts it. Search, display selection and tab changes preserve edits. The gear
-beside search opens display-wide settings, including the acknowledged persistent
-**Prefer external** docking preference. Narrow outputs show details with a Back
-button instead of clipping the split view. Suspend does not own display controls.
+Layout changes stay in a draft until **Preview changes** (Ctrl+Enter), which previews
+the whole layout. **Keep** saves it; Escape, closure or the daemon's 20-second deadline
+reverts it. Search, display selection and tab changes preserve edits. The laptop
+screen's **Settings → When docked** section chooses whether to keep it on or turn
+it off automatically when external displays are available. This preference saves
+automatically after daemon acknowledgement, independently of layout previews; the
+laptop returns when external displays disconnect. Narrow outputs show details with
+a Back button instead of clipping the split view. Suspend does not own display controls.
 Open with `shelllist open displays` or the `displays` global shortcut.
 See [`docs/displays.md`](docs/displays.md) for behavior, ownership and tests.
 

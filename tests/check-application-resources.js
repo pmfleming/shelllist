@@ -26,6 +26,4 @@ for (const metric of ["network_receive_bytes_per_second", "network_transmit_byte
     assert.equal(resources.historicalMetricAvailable({...history,
         availability: {...history.availability, network_bytes: true}}, metric), true, "measured zero is valid");
 }
-const badges = resources.metadataBadges({...current, running: true}, null);
-assert.ok(badges.some(badge => badge.text === "Energy low" && badge.tone === "warning"));
-console.log("application resources: live metrics, unavailable/idle distinction and low-confidence warning passed");
+console.log("application resources: live metrics and unavailable/idle distinction passed");

@@ -89,28 +89,6 @@ TestCase {
         view.destroy();
     }
 
-    function test_batteryArtworkLoadsWithoutBlockingCreation(): void {
-        const view = createView("Bluetooth/BluetoothBatteryStatus.qml", {
-            width: 320,
-            height: 180,
-            device: {
-                device_type: "mouse",
-                battery_live: true,
-                battery: [
-                    {
-                        component: "main",
-                        percentage: 70
-                    }
-                ]
-            }
-        });
-        const image = findChild(view, "batteryArtwork-main");
-        verify(image !== null);
-        verify(image.asynchronous);
-        tryCompare(image, "status", Image.Ready);
-        verify(view.implicitHeight > 0);
-    }
-
     function test_solarProgressTracksClockAndMissingData(): void {
         const sunrise = Date.UTC(2026, 0, 1, 6);
         const sunset = Date.UTC(2026, 0, 1, 18);

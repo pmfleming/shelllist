@@ -6,6 +6,7 @@ import Shelllist.Ui as Ui
 
 Ui.DetailFlickable {
     id: cards
+    objectName: "clipboardDetailPage"
 
     required property ClipboardController controller
     readonly property ClipboardDetailsController detailState: controller.detailState
@@ -13,12 +14,11 @@ Ui.DetailFlickable {
     readonly property var files: detailState.value ? detailState.value.files : []
     readonly property var imageFacts: detailState.value ? detailState.value.image : null
     readonly property bool directTextEdit: entry.kind === "text"
-    readonly property int availableCardHeight: Math.max(0, height - cardSpacing)
-    readonly property int previewCardHeight: Math.max(220, Math.round(availableCardHeight * 0.66))
-    readonly property int dataCardHeight: Math.max(250, availableCardHeight - previewCardHeight)
+    readonly property string selectedTab: controller.detailsTab
+    onSelectedTabChanged: contentY = 0
 
     Ui.DetailColumnCard {
-        visible: cards.detailState.editError.length > 0
+        visible: cards.selectedTab === "data" && cards.detailState.editError.length > 0
         height: visible ? implicitHeight : 0
         title: qsTr("Unsaved clipboard draft")
         Ui.ThemeText {
@@ -49,8 +49,10 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailCard {
+        objectName: "clipboardDataCard"
+        visible: cards.selectedTab === "data"
         title: cards.entry.kind ? cards.entry.kind.charAt(0).toUpperCase() + cards.entry.kind.slice(1) : "Clipboard item"
-        height: cards.previewCardHeight
+        height: Math.max(220, cards.height)
 
         Image {
             visible: !!cards.detailState.thumbnail
@@ -74,6 +76,7 @@ Ui.DetailFlickable {
             font.pixelSize: Ui.Theme.fontSizeBody
             readOnly: !cards.detailState.editing || cards.detailState.saveInFlight || cards.detailState.editBeginPending
             selectByMouse: true
+            onVisibleChanged: if (!visible) focus = false
             onActiveFocusChanged: if (cards.directTextEdit)
                 cards.detailState.setEditorFocused(activeFocus)
             onTextChanged: if (cards.detailState.editing && activeFocus) {
@@ -93,8 +96,10 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailColumnCard {
-        title: "Data"
-        height: cards.dataCardHeight
+        objectName: "clipboardInfoCard"
+        visible: cards.selectedTab === "info"
+        title: qsTr("Info")
+        height: Math.max(250, cards.height)
 
         Item {
             Layout.fillWidth: true

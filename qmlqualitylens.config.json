@@ -8,7 +8,6 @@
     "tests/qml/tst_action_control.qml",
     "tests/qml/tst_bluetooth_recovery.qml",
     "tests/qml/tst_clipboard_recovery.qml",
-    "tests/qml/tst_detail_pages.qml",
     "tests/qml/tst_wifi_casting.qml",
     "tests/qml/tst_work_area.qml",
     "tests/qml/tst_hyprland_dispatch.qml",

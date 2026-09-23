@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
 Ui.ChooserListPane {
@@ -24,30 +23,6 @@ Ui.ChooserListPane {
     iconActionEnabled: controller.activeCount > 0
     iconAccessibleName: qsTr("Identify all enabled displays")
     onIconClicked: controller.identify()
-    searchActionIcon: "󰒓"
-    searchActionToolTip: qsTr("Display-wide settings")
-    onSearchActionRequested: controller.displaySettingsOpen = !controller.displaySettingsOpen
-    listOptionsComponent: controller.displaySettingsOpen ? settings : null
-
-    Component {
-        id: settings
-        ColumnLayout {
-            spacing: Ui.Theme.spacingSm
-            Ui.SectionLabel { text: qsTr("Display-wide settings") }
-            DisplayPolicyPane {
-                Layout.fillWidth: true
-                visible: pane.controller.hasInternal
-                controller: pane.controller
-            }
-            Ui.ThemeText {
-                Layout.fillWidth: true
-                text: pane.controller.hasInternal ? qsTr("Saved docking preference. The laptop returns when external displays disconnect.") : qsTr("No docking preference on desktop-only setups.")
-                wrapMode: Text.Wrap
-                color: Ui.Theme.mutedText
-                font.pixelSize: Ui.Theme.fontSizeSmall
-            }
-        }
-    }
     rowDelegate: Component {
         DisplayListRow { listPane: pane }
     }

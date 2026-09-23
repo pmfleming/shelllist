@@ -12,6 +12,7 @@ DaemonTestCase {
     property var views: []
     Component { id: controllerFactory; Clip.ClipboardController {} }
     Component { id: cardsFactory; Clip.ClipboardDetailCards {} }
+    Component { id: detailsFactory; Clip.ClipboardDetails { uiScale: 1 } }
     Component { id: paneFactory; Clip.ClipboardListPane {} }
     function init() {
         failOnWarning(/.*(TypeError|Binding loop|invalid context).*/);
@@ -246,6 +247,23 @@ DaemonTestCase {
         compare(controller.historyPageError, "");
         tryVerify(function () { return historyCalls().length === 2; });
         compare(historyCalls()[1].params.cursor, null);
+    }
+
+    function test_switchingTabsPreservesClipboardDraft() {
+        const controller = makeController();
+        failEdit(controller);
+        const cards = makeCards(controller);
+        const editor = findChild(cards, "clipboardTextEditor");
+        editor.forceActiveFocus();
+        verify(controller.detailState.editorFocused);
+        controller.cycleDetailsTab();
+        verify(!editor.visible);
+        verify(!controller.detailState.editorFocused);
+        compare(controller.detailState.editDraft, "Keep this draft");
+        controller.cycleDetailsTab();
+        verify(editor.visible);
+        compare(editor.text, "Keep this draft");
+        verify(findChild(cards, "retryClipboardEdit").visible);
     }
 
     function test_hiddenTransportReadyDoesNotOpenClipboardSession() {

@@ -53,14 +53,21 @@ contents; the page scrolls without moving the tabs.
 Discard/Reload remain above the tabs. Narrow headers stack the primary button
 above the secondary row, and settings scroll while tab controls stay visible.
 
-## Display-wide settings
+## Laptop docking settings
 
-The gear beside search (also Alt+Enter in search) opens display-wide settings,
-independently of the selected result. **Prefer external** saves docking policy
-only after daemon acknowledgement. It is not a temporary mode selector. Laptop
-fallback returns when no usable external display remains. The switch is hidden
-on desktop-only setups and locked while a layout draft or trial is pending.
-Escape closes this settings menu before returning from details.
+Select the laptop screen, including when it is off, and open **Settings → When
+docked**. Choose **Keep laptop screen on** or **Turn off automatically** when an
+external display is available. This persistent preference is labelled **Saved
+automatically · no preview needed**; the displayed choice changes only after daemon
+acknowledgement. A failed save leaves the previous choice selected and reports the
+error so the choice can be retried. No separate gear menu is needed.
+
+The laptop returns automatically when no usable external display remains. A
+policy-disabled laptop stays selectable in the list with **Off · External display
+preferred**. The docking section is absent from external monitors' settings and
+from desktop-only setups. It is locked while a layout draft or trial is pending,
+with a reminder to finish or discard layout changes first. Resolution, scale,
+rotation and position retain their existing Preview/Keep workflow.
 
 ## Layout safety and keyboard controls
 

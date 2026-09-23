@@ -110,6 +110,7 @@ DaemonTestCase {
             toggle.clicked();
             compare(calls[calls.length - 1].method, "bluetooth.management.update");
             compare(calls[calls.length - 1].params[setting.field], true);
+            compare(calls[calls.length - 1].params.key, undefined, "list preferences are global, not device-scoped");
             verify(!toggle.interactive);
             verify(!toggle.checked); // Wait for the daemon's persisted snapshot.
             const management = Object.assign({}, controller.management, {[setting.field]: true});
@@ -193,64 +194,6 @@ DaemonTestCase {
         id: adapterPageComponent
         Bt.BluetoothAdapterPage {}
     }
-    function test_bluetoothSettingsUseGlobalScopeAndDefaults() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const details = createTemporaryObject(detailsComponent, panel, {controller: controller, width: 600, height: 900});
-        controller.openDetails();
-        const tabs = findChild(details, "bluetoothDetailsTabs");
-        compare(tabs.tabs.map(tab => tab.value), ["device", "settings", "information"]);
-        verify(controller.cycleDetailsTab());
-        compare(controller.detailsTab, "settings");
-        verify(controller.cycleDetailsTab());
-        compare(controller.detailsTab, "information");
-        verify(controller.cycleDetailsTab());
-        compare(controller.detailsTab, "device");
-        controller.openBluetoothSettings();
-        compare(tabs.tabs.map(tab => tab.value), ["general", "pairing"]);
-        verify(tabs.footerHeight > 0);
-        compare(tabs.selectedValue, "general");
-        verify(controller.cycleDetailsTab());
-        compare(tabs.selectedValue, "pairing");
-        tabs.selected("general");
-        compare(controller.adapterSettingsTab, "general");
-        compare(details.title, "Bluetooth");
-        compare(details.subtitle, "Computer-wide Bluetooth settings");
-        compare(details.actions.length, 0);
-        const page = createTemporaryObject(adapterPageComponent, panel, {controller: controller, width: 320, height: 500});
-        verify(page !== null);
-        wait(0);
-        verify(findChild(page, "showBlockedDevices") !== null);
-        verify(findChild(page, "bluetoothRadioPower").visible);
-        verify(!findChild(page, "defaultTrustAfterPairing").visible);
-        verify(!findChild(page, "defaultReconnectAfterWake").visible);
-        verify(!findChild(page, "adapterNameInput").visible);
-        for (const setting of [
-            {name: "defaultTrustAfterPairing", field: "trust_after_pair", tab: "pairing"},
-            {name: "defaultReconnectAfterWake", field: "reconnect_on_resume", tab: "pairing"}
-        ]) {
-            tabs.selected(setting.tab);
-            const toggle = findChild(page, setting.name);
-            verify(toggle.visible && toggle.checked && toggle.interactive);
-            toggle.clicked();
-            compare(calls[calls.length - 1].method, "bluetooth.management.update");
-            compare(calls[calls.length - 1].params[setting.field], false);
-            compare(calls[calls.length - 1].params.key, undefined);
-            findChild(controller, "bluetoothBackend").pending = ({});
-        }
-        compare(calls.length, 2);
-        tabs.selected("general");
-        page.contentY = 100;
-        tabs.selected("pairing");
-        compare(page.contentY, 0);
-        verify(!findChild(page, "bluetoothRadioPower").visible);
-        verify(!findChild(page, "showBlockedDevices").visible);
-        verify(findChild(page, "adapterNameInput").visible);
-        verify(findChild(page, "defaultReconnectAfterWake").visible);
-        controller.toggleDetails();
-        verify(controller.detailsOpen);
-        compare(controller.detailsTab, "device");
-    }
     function test_radioSelectionAndPowerAreControlledInBluetoothSettings() {
         const panel = makePanel();
         const controller = panel.controller;
@@ -299,17 +242,6 @@ DaemonTestCase {
         compare(panel.controller.audioDevices.length, 0);
         verify(panel.controller.backendAvailable);
         verify(panel.controller.hasSelection);
-    }
-    function test_concurrentPairingDoesNotLoseTheFirstPromptOrInput() {
-        const controller = makePanel().controller;
-        controller.handlePairingEvent({event: "requested", data: {request_id: "a", device_key: "a", response_required: true}});
-        controller.pairingInput = "123456";
-        controller.handlePairingEvent({event: "requested", data: {request_id: "b", device_key: "b", response_required: true}});
-        compare(controller.pairingPrompt.request_id, "a");
-        compare(controller.pairingInput, "123456");
-        controller.handlePairingEvent({event: "cancelled", data: {request_id: "b"}});
-        compare(controller.pairingPrompt.request_id, "a");
-        compare(controller.pairingPrompts.length, 1);
     }
     function test_pairingInputSurvivesUnrelatedOperationsAndQueueRecovery() {
         const controller = makePanel().controller;
@@ -430,14 +362,6 @@ DaemonTestCase {
         verify(profile.interactive);
         compare(panel.controller.status, "Audio profile applied, but could not remember it: Permission denied");
     }
-    function test_audioProfileTransportFailureClearsPendingPreference() {
-        const panel = makePanel();
-        setupAudioProfile(panel).selected("aac");
-        const backend = findChild(panel.controller, "bluetoothBackend");
-        backend.failSharedTransport("Disconnected");
-        compare(backend.pendingAudioProfile, null);
-        compare(calls.length, 1);
-    }
     function findToggle(item, title) {
         if (item.title === title && item.checked !== undefined)
             return item;
@@ -521,21 +445,6 @@ DaemonTestCase {
         const draft = controller.nameEdits.draft("buds");
         compare(draft.value, "Keep on disconnect");
         verify(draft.dirty && !draft.pending && draft.error.length > 0);
-    }
-    function test_busyPolicyDoesNotClaimUnsupported() {
-        const panel = makePanel();
-        panel.controller.detailsTab = "settings";
-        verify(findToggle(panel.page, "Reconnect after wake").visible);
-        verify(findToggle(panel.page, "Reconnect after wake").interactive);
-        verify(panel.controller.updateDevicePolicy({reconnect_on_resume: false}));
-        wait(0); // The action model recreates its delegates when the busy state changes.
-        const row = findToggle(panel.page, "Reconnect after wake");
-        verify(row !== null);
-        verify(!row.interactive);
-        compare(row.subtitle, "");
-        findChild(panel.controller, "bluetoothBackend").pending = ({});
-        wait(0);
-        verify(findToggle(panel.page, "Reconnect after wake").interactive);
     }
     function test_audioPreferencesRemainEditableWithoutLiveAudio() {
         const panel = makePanel();

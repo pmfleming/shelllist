@@ -116,10 +116,23 @@ Ui.ActionDetailsPane {
             font.pixelSize: Ui.Theme.fontSizeBody
         }
 
-        ClipboardDetailCards {
+        Ui.TabbedDetailsStack {
+            objectName: "clipboardDetailsTabs"
             anchors.fill: parent
             visible: !pane.detailState.loading && pane.detailState.error.length === 0 && !!pane.detailState.value
-            controller: pane.controller
+            footerHeight: pane.controlHeight
+            sectionSpacing: pane.sectionSpacing
+            selectedValue: pane.controller.detailsTab
+            tabs: [
+                { value: "data", label: qsTr("Data"), icon: "󰆏" },
+                { value: "info", label: qsTr("Info"), icon: "󰋼" }
+            ]
+            onSelected: function (value) { pane.controller.detailsTab = value; }
+
+            ClipboardDetailCards {
+                anchors.fill: parent
+                controller: pane.controller
+            }
         }
     }
 }

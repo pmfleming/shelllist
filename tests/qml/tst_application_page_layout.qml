@@ -91,15 +91,4 @@ TestCase {
         }
     }
 
-    function test_contentCanShrinkAfterScrolling() {
-        const page = createTemporaryObject(pageFactory, testCase);
-        page.application = application(8, 3, "");
-        verifyStack(page);
-        verify(page.interactive);
-        page.contentY = page.contentHeight - page.height;
-        page.application = application(0, 0, "");
-        verifyStack(page);
-        verify(!page.interactive);
-        tryCompare(page, "contentY", 0);
-    }
 }

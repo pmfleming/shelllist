@@ -68,98 +68,6 @@ TestCase {
         calls = [];
         return panel;
     }
-    function visibleAction(item, label) {
-        for (const child of item.children || []) {
-            if (child.visible && child.label === label && child.toolTip !== undefined) return child;
-            const found = visibleAction(child, label);
-            if (found) return found;
-        }
-        return null;
-    }
-    function test_actionGeometry_data() {
-        return [{ tag: "small", width: 320, height: 480 }, { tag: "narrow", width: 390, height: 600 }, { tag: "wide", width: 1040, height: 780 }];
-    }
-    function test_actionGeometry(data) {
-        const panel = makePanel();
-        panel.width = data.width;
-        panel.height = data.height;
-        panel.controller.openDetails();
-        tryVerify(function () { return findChild(panel, "displayDetails") !== null; });
-        verify(waitForRendering(panel));
-        const primary = visibleAction(panel, "Preview changes");
-        verify(primary !== null);
-        const primaryPosition = primary.mapToItem(panel, 0, 0);
-        for (const label of ["Preview changes", "Identify", "Arrange", "Disable"]) {
-            const button = visibleAction(panel, label);
-            verify(button !== null);
-            const position = button.mapToItem(panel, 0, 0);
-            verify(position.x >= 0 && position.x + button.width <= panel.width + 1, label + " fits horizontally");
-            if (label !== "Preview changes") verify(position.y >= primaryPosition.y + primary.height, "secondary actions are below the primary");
-        }
-        const tabs = findChild(panel, "displayDetailsTabs");
-        verify(tabs.mapToItem(panel, 0, tabs.height).y <= panel.height + 1);
-    }
-    function test_detailCardsAndFieldsFit_data() {
-        return [{ tag: "small", width: 320, height: 480 },
-            { tag: "narrow", width: 390, height: 600 },
-            { tag: "wide", width: 1040, height: 780 }];
-    }
-    function test_detailCardsAndFieldsFit(data) {
-        const panel = makePanel();
-        panel.width = data.width;
-        panel.height = data.height;
-        const c = panel.controller;
-        const state = displayState();
-        state.outputs[1].description = "A long manufacturer display description that must not widen the information card";
-        state.outputs[1].serial = "TEST-12345678901234567890";
-        c.applyDisplayPolicy(state);
-        c.openDetails();
-        tryVerify(function () { return findChild(panel, "displayModeCard") !== null; });
-        verify(waitForRendering(panel));
-        const pane = findChild(panel, "displayDetails");
-        verify(pane.leftMargin > 0 && pane.rightMargin > 0, "details use shared inset spacing");
-        const tabs = findChild(panel, "displayDetailsTabs");
-        const footerBottom = tabs.mapToItem(panel, 0, tabs.height).y;
-        for (const group of [
-            { card: "displayModeCard", fields: ["displayResolution", "displayRefreshRate", "displayScale", "displayRotation"] },
-            { card: "displayPositionCard", fields: ["displayX", "displayY", "displayPositionReference", "displayPlace-left", "displayPlace-right"] }
-        ]) {
-            const card = findChild(panel, group.card);
-            verify(card.height > 0);
-            compare(card.title.length > 0, true);
-            for (const name of group.fields) {
-                const field = findChild(card, name);
-                verify(field !== null, name);
-                const position = field.mapToItem(card, 0, 0);
-                verify(position.x >= card.contentPadding - 1, name + " respects left padding");
-                verify(position.x + field.width <= card.width - card.contentPadding + 1, name + " respects right padding");
-                verify(position.y + field.height <= card.height - card.verticalContentPadding + 1, name + " fits its content-sized card");
-            }
-        }
-        const modeFields = findChild(panel, "displayModeFields");
-        compare(modeFields.columns, modeFields.width >= 300 ? 2 : 1,
-            "small settings cards stack controls instead of truncating their values");
-        const resolution = findChild(panel, "displayResolution");
-        const scale = findChild(panel, "displayScale");
-        fuzzyCompare(resolution.width, scale.width, 1, "settings columns align");
-        tabs.selected("information");
-        verify(waitForRendering(panel));
-        for (const name of ["displayStatusCard", "displayIdentityCard"]) {
-            const card = findChild(panel, name);
-            const grid = findChild(card, name + "Fields");
-            verify(card.visible);
-            compare(grid.columns, grid.width >= 360 ? 2 : 1);
-            for (const field of grid.children) {
-                if (field.label === undefined) continue;
-                const position = field.mapToItem(card, 0, 0);
-                verify(position.x + field.width <= card.width - card.contentPadding + 1, "information fields stay inside the card");
-                verify(position.y + field.height <= card.height - card.verticalContentPadding + 1, "information cards grow with their rows");
-            }
-        }
-        compare(tabs.mapToItem(panel, 0, tabs.height).y, footerBottom, "tab footer stays fixed across pages");
-        compare(calls.length, 0, "appearance and tab changes never configure physical displays");
-    }
-
     function test_groupedSettingsRemainDraftOnly() {
         const panel = makePanel();
         const c = panel.controller;
@@ -252,34 +160,6 @@ TestCase {
         compare(c.detailActions.filter(a => a.visible && a.presentation.group === "toolbar").length, 2);
         compare(calls.length, 0);
     }
-    function test_listRightExpansionAndActionHierarchy() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.uiActive = true;
-        const list = findChild(panel, "displayList");
-        list.focusTop();
-        keyClick(Qt.Key_Right);
-        verify(c.detailsOpen);
-        tryVerify(function () { return findChild(panel, "displayDetails") !== null; });
-        const pane = findChild(panel, "displayDetails");
-        const primary = pane.actions.filter(a => a.visible && a.presentation.group === "primary");
-        const secondary = pane.actions.filter(a => a.visible && a.presentation.group === "toolbar");
-        compare(primary.length, 1);
-        compare(primary[0].label, "Preview changes");
-        compare(secondary.length, 3);
-        verify(pane.mapToItem(panel, 0, 0).x >= list.width, "details expand beside the list");
-        verify(!c.triggerDetailAction("preview"));
-        c.edit("DP-1", "scale", 2);
-        verify(pane.actions.find(a => a.id === "preview").enabled);
-        compare(calls.length, 0);
-        c.reloadDraft();
-        panel.width = 390;
-        verify(waitForRendering(panel));
-        verify(!list.visible, "small outputs show a navigable single details pane");
-        findChild(panel, "backToDisplayList").clicked();
-        tryVerify(function () { return list.visible; });
-        verify(!c.detailsOpen);
-    }
     function test_sharedSelectionSearchAndDraftRetention() {
         const c = makePanel().controller;
         compare(c.filteredResults.length, 2);
@@ -319,7 +199,7 @@ TestCase {
         const results = provider.resultsForOutputs(c.outputs);
         compare(results.length, 2);
         compare(results[0].key, "displays::eDP-1");
-        verify(results[0].subtitle.indexOf("Disabled") >= 0);
+        verify(results[0].subtitle.indexOf("Off · External display preferred") >= 0);
         verify(results[1].keywords.indexOf("DP-1") >= 0);
         const internalActions = provider.actionsFor(results[0]);
         verify(!internalActions.find(a => a.id === "toggle-enabled").visible);
@@ -338,22 +218,65 @@ TestCase {
         compare(provider.actionsFor(results[1]).length, 0, "stale output identity is rejected");
         verify(!provider.execute({ result: results[1], actionId: "toggle-enabled" }));
     }
-    function test_policyIsAcknowledgedAndDisplayOnly() {
+    function test_dockingChoiceWaitsForAcknowledgementAndCanRetry() {
         const panel = makePanel();
         const c = panel.controller;
-        verify(c.setPreferExternal(false));
+        c.uiActive = true;
+        c.selectOutput("eDP-1");
+        c.openDetails();
+        tryVerify(function () { return findChild(panel, "dockedLaptopBehavior") !== null; });
+        verify(waitForRendering(panel));
+        const choice = findChild(panel, "dockedLaptopBehavior");
+        const status = findChild(panel, "dockingSaveStatus");
+        choice.forceActiveFocus();
+        keyClick(Qt.Key_Up); // Exercise ComboBox activation, not just the signal.
         compare(calls.length, 1);
         compare(calls[0].method, "displayPolicy.set");
         compare(calls[0].params.prefer_external, false);
-        verify(c.displayPolicyState.policy.prefer_external);
-        verify(!c.setPreferExternal(false));
-        c.requestFailed(calls[0].id, "disk full");
-        compare(c.displayPolicyError, "disk full");
-        verify(c.canChange);
-        c.transportFailed("disconnected");
-        verify(!c.canChange);
-        c.applyDisplayPolicy(displayState());
-        verify(c.canChange);
+        compare(choice.value, "auto-off");
+        compare(choice.currentIndex, 1, "do not optimistically display an unacknowledged choice");
+        compare(status.text, "Saving preference…");
+        verify(!choice.interactive);
+        c.requestFailed(calls[0].id, "Could not save preference");
+        verify(choice.interactive);
+        compare(choice.value, "auto-off");
+        compare(choice.currentIndex, 1);
+        verify(c.statusMessage.indexOf("Could not save") >= 0);
+        choice.forceActiveFocus();
+        keyClick(Qt.Key_Up);
+        compare(calls.length, 2);
+        const saved = displayState();
+        saved.policy.prefer_external = false;
+        saved.status = "all-displays";
+        saved.outputs[0].disabled = false;
+        c.applyDisplayPolicy(saved);
+        c.requestFinished(calls[1].id);
+        compare(choice.value, "keep-on");
+        compare(choice.currentIndex, 0);
+        verify(!c.dirty && !c.trial, "docking saves independently of the layout preview");
+        compare(c.displayPolicyError, "");
+        verify(calls.every(call => call.method === "displayPolicy.set"));
+    }
+    function test_dockingPreferenceIsLockedDuringLayoutEdits() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.selectOutput("eDP-1");
+        c.openDetails();
+        tryVerify(function () { return findChild(panel, "dockedLaptopBehavior") !== null; });
+        const choice = findChild(panel, "dockedLaptopBehavior");
+        c.edit("DP-1", "x", 1600);
+        verify(!choice.interactive);
+        verify(findChild(panel, "dockingSaveStatus").text.indexOf("Finish or discard") >= 0);
+        choice.selected("keep-on");
+        compare(calls.length, 0);
+        c.reloadDraft();
+        verify(choice.interactive);
+        const state = displayState();
+        state.layout.trial = {id: "trial", expires_at: Date.now() / 1000 + 20};
+        c.applyDisplayPolicy(state);
+        verify(!choice.interactive);
+        choice.selected("keep-on");
+        compare(calls.length, 0);
     }
     function test_listSummaryAndWorkspaceKeyboard() {
         const panel = makePanel();
@@ -362,9 +285,8 @@ TestCase {
         verify(c.draft[0].enabled, "preview retains laptop fallback");
         verify(findChild(panel, "displayList") !== null);
         verify(!findChild(panel, "chooserPowerToggle").visible);
-        c.displaySettingsOpen = true;
-        verify(findChild(panel, "preferExternalDisplay").Accessible.name.length > 0);
-        c.displaySettingsOpen = false;
+        compare(findChild(panel, "displayList").searchActionIcon, "", "no separate settings gear");
+        compare(findChild(panel, "displayList").listOptionsComponent, null);
         c.uiActive = true;
         c.selectOutput("DP-1");
         c.openDetails();
@@ -493,24 +415,6 @@ TestCase {
         c.clock = Date.now() + 30000;
         verify(!c.displayLayoutAction("confirm", { id: "token" }));
         verify(c.displayLayoutAction("revert", { id: "token" }));
-    }
-    function test_desktopOnlyAndUnavailableStates() {
-        const panel = makePanel();
-        const c = panel.controller;
-        const value = displayState();
-        value.outputs.shift();
-        c.applyDisplayPolicy(value);
-        c.displaySettingsOpen = true;
-        verify(!findChild(panel, "displayPolicyCard").visible);
-        c.edit("DP-1", "enabled", false);
-        verify(!c.canPreview, "desktop cannot disable its last output");
-        c.reloadDraft();
-        c.edit("DP-1", "x", "1536");
-        verify(!c.dirty, "equivalent numeric field edits are not changes");
-        value.available = false;
-        c.applyDisplayPolicy(value);
-        verify(!c.canChange);
-        verify(c.statusMessage.indexOf("programs.shelllist.displays.enable") >= 0);
     }
     function test_trialTokensAndHiddenPreviewRevert() {
         const c = makePanel().controller;

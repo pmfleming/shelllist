@@ -14,6 +14,7 @@ Ui.ProviderChooserController {
     filterRefreshDelay: 75
     scheduledRefreshDelay: 90
 
+    property string detailsTab: "data"
     property string status: "Loading clipboard history…"
     property string sessionId: ""
     actionInFlight: false
@@ -69,6 +70,11 @@ Ui.ProviderChooserController {
     })
     readonly property bool backgroundOperationInFlight: activeAction === "annotate" && activeOperationId.length > 0
     signal hideRequested
+
+    function cycleDetailsTab(): bool {
+        detailsTab = detailsTab === "data" ? "info" : "data";
+        return true;
+    }
 
     function activateUi(workspaceId) {
         activateUiState(workspaceId);

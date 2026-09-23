@@ -103,10 +103,10 @@ Bluetooth, Clipboard, Battery, and Time & Weather):
   rather than leaving space or manually adjusting sibling positions.
 
 `tst_detail_layout.qml` checks the shared message/column/layout/loader contract;
-`tst_application_page_layout.qml` covers empty, populated, hidden, and scrolled
-launcher transitions; `tst_detail_pages.qml` exercises the other detail pages
-at multiple widths with layout warnings treated as failures. Battery's tab and
-footer geometry remains covered by `tst_battery_tabs.qml`.
+`tst_application_page_layout.qml` covers empty, populated and hidden launcher
+transitions. The later test-pruning pass removed repeated per-page layout and
+fixed tab-placement checks; see `tests/README.md` for current coverage owners.
+Shared layout contracts and domain-specific recovery tests remain.
 
 ## Quality gates
 

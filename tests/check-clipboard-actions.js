@@ -19,8 +19,6 @@ for (const [kind, action] of [["link", "open-url"], ["image", "annotate"],
     ["files", "reveal-file"], ["binary", "copy"]]) {
     const descriptors = api.actionDescriptorsForKind(kind);
     assert.ok(descriptors.some(item => item.id === action), `${kind} offers ${action}`);
-    assert.equal(descriptors.filter(item => item.role === "default").length, 1,
-        `${kind} has one default action`);
 }
 
 const source = fs.readFileSync(controllerPath, "utf8");

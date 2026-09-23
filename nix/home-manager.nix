@@ -4,7 +4,7 @@ let
   cfg = config.programs.shelllist;
   system = pkgs.stdenv.hostPlatform.system;
   environment = lib.mapAttrsToList (name: value: "${name}=${value}") cfg.systemd.environment;
-  managedHypridle = import ./hypridle-ready.nix config.services.hypridle.package;
+  managedHypridle = self.inputs.bar-daemon.lib.mkManagedHypridle config.services.hypridle.package;
 in
 {
   imports = [

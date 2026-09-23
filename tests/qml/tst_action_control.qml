@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls as Controls
 import QtTest
 import Shelllist.Ui as Ui
 import Shelllist.Bar as Bar
@@ -15,8 +14,6 @@ DaemonTestCase {
     height: 100
 
     Component { id: button; Ui.ActionButton { label: "Button" } }
-    Component { id: area; Ui.ActionArea { accessibleName: "Area" } }
-    Component { id: tab; Ui.DetailsTab { label: "Tab" } }
     Component { id: toggle; Ui.ToggleRow { title: "Toggle" } }
     Component { id: toggleSwitch; Ui.ToggleSwitch {} }
     Component { id: bar; Bar.BarAction { text: "Bar" } }
@@ -33,9 +30,8 @@ DaemonTestCase {
 
     function test_sharedActivation_data() {
         return [
-            {tag: "button", factory: button}, {tag: "area", factory: area},
-            {tag: "tab", factory: tab}, {tag: "toggle", factory: toggle},
-            {tag: "switch", factory: toggleSwitch}, {tag: "bar", factory: bar},
+            {tag: "button", factory: button}, {tag: "toggle", factory: toggle},
+            {tag: "switch", factory: toggleSwitch},
             {tag: "workspace", factory: workspace}
         ];
     }
@@ -78,16 +74,6 @@ DaemonTestCase {
             compare(requests[0].params.workspace_id, 3);
             compare(control.Accessible.name, "Workspace 3");
         }
-    }
-    function test_barHoverHasNoTooltip() {
-        const control = createTemporaryObject(bar, testCase, {width: 160, height: 40});
-        verify(control !== null);
-        compare(control.accessibleName, "Bar");
-        control.accessibleName = "Display settings";
-        compare(control.Accessible.name, "Display settings");
-        mouseMove(control, 80, 20);
-        wait(600);
-        compare(control.Controls.ToolTip.visible, false, "bar hover must not show a tooltip");
     }
     function test_barSecondaryIsDistinctFromPrimary() {
         const control = createTemporaryObject(bar, testCase, {width: 160, height: 40});

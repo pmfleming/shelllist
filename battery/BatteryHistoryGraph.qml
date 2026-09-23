@@ -119,14 +119,6 @@ Item {
                 Ui.ChartDrawing.series(context, [points], inset + plotHeight, Ui.Theme.withAlpha(color, 0.28), true);
             });
 
-            // Explicit observation boundaries (suspend/restart/clock gaps), not
-            // charging-mode changes. Downtime occupies no observed-time width.
-            context.strokeStyle = Ui.Theme.resourceCpu;
-            context.lineWidth = 1;
-            graph.series.breaks.forEach(function (position) {
-                Ui.ChartDrawing.dashed(context, x(position), inset, x(position), inset + plotHeight, 4, 4);
-            });
-
             context.strokeStyle = graph.lineColor;
             context.fillStyle = graph.lineColor;
             context.lineWidth = 2;
@@ -139,6 +131,14 @@ Item {
                 return segment.map(function (point) { return { x: x(point.x), y: y(point.value) }; });
             });
             Ui.ChartDrawing.series(context, segments, inset + plotHeight, fill, true);
+
+            // Show only the charge change across each observation gap, not a
+            // full-height boundary. Downtime occupies no observed-time width.
+            context.lineWidth = 1;
+            graph.series.breaks.forEach(function (gap) {
+                Ui.ChartDrawing.dashed(context, x(gap.from.x), y(gap.from.value), x(gap.to.x), y(gap.to.value), 4, 4);
+            });
+            context.lineWidth = 2;
             if (graph.currentPercentage >= 0 && graph.currentPercentage <= 100) {
                 context.beginPath();
                 context.arc(nowX, y(graph.currentPercentage), 3, 0, Math.PI * 2);

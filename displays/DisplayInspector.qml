@@ -106,11 +106,19 @@ ColumnLayout {
         Ui.ThemeText {
             objectName: "displayEnablementStatus"
             Layout.fillWidth: true
-            text: Model.internal(inspector.output.name) ? qsTr("Laptop fallback is managed by the display-wide docking preference.") : (inspector.draft.enabled ? qsTr("Enabled in the draft") : qsTr("Disabled in the draft"))
+            text: Model.internal(inspector.output.name) ? qsTr("Laptop screen behaviour is set below under When docked.") : (inspector.draft.enabled ? qsTr("Enabled in the draft") : qsTr("Disabled in the draft"))
             wrapMode: Text.Wrap
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.fontSizeSmall
         }
+    }
+
+    DisplayPolicyPane {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.preferredHeight: implicitHeight
+        visible: Model.internal(inspector.output.name)
+        controller: inspector.controller
     }
 
     Ui.DetailColumnCard {

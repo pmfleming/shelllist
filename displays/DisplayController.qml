@@ -24,7 +24,6 @@ Ui.ProviderChooserController {
     property string identifyName: ""
     property string detailsTab: "settings"
     property bool arrangementOpen: false
-    property bool displaySettingsOpen: false
     readonly property DisplayProvider displayProvider: DisplayProvider { controller: controller }
     property bool layoutDragging: false
     property double clock: Date.now()
@@ -42,7 +41,6 @@ Ui.ProviderChooserController {
     readonly property var selectedDraft: draft.find(function (o) { return o.name === selectedName; }) || null
     readonly property int selectedNumber: outputs.findIndex(function (o) { return o.name === selectedName; }) + 1
     readonly property int activeCount: outputs.filter(function (o) { return !o.disabled; }).length
-    readonly property bool hasInternal: outputs.some(function (o) { return Model.internal(o.name); })
     readonly property int secondsLeft: trial ? Math.max(0, Math.ceil(trial.expires_at - clock / 1000)) : 0
     readonly property string statusMessage: displayPolicyError || displayPolicyState.error ||
         (!stateReady ? qsTr("Connecting…") : !displayPolicyState.available ? qsTr("Enable programs.shelllist.displays.enable to manage displays") :
@@ -268,7 +266,6 @@ Ui.ProviderChooserController {
         if (discardPrompt) { discardPrompt = false; editorFocusRequested(); return true; }
         if (trial) { displayLayoutAction("revert", { id: trial.id }); return true; }
         if (actionInFlight) return true;
-        if (displaySettingsOpen) { displaySettingsOpen = false; focusSearchRequested(); return true; }
         return dismissNavigationHelp() || dismissDetailsOrWindow();
     }
 

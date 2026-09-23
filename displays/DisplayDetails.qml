@@ -52,7 +52,7 @@ Ui.ActionDetailsPane {
             }
             Ui.ThemeText {
                 Layout.fillWidth: true
-                text: pane.controller.statusMessage || (pane.controller.dirty ? qsTr("Unsaved · Preview changes affects the whole layout") : qsTr("Changes are drafted · Preview the whole layout before keeping"))
+                text: pane.controller.statusMessage || (pane.controller.dirty ? qsTr("Unsaved · Preview changes affects the whole layout") : qsTr("Layout changes are drafted · Preview the whole layout before keeping"))
                 wrapMode: Text.Wrap
                 font.pixelSize: Ui.Theme.fontSizeSmall
                 color: pane.controller.statusMessage ? Ui.Theme.warning : Ui.Theme.mutedText

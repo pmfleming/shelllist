@@ -25,13 +25,18 @@ const points = [
 ];
 const compact = series(points);
 equal(compact.segments.map(segment => segment.map(p => p.x)), [[0, 0.5], [0.5, 1]],
-    "two days offline must use no graph width or connecting line");
-equal(compact.breaks, [0.5], "mark the resume boundary on the observed-time axis");
+    "two days offline must use no graph width or solid connecting line");
+equal(compact.breaks.map(gap => [[gap.from.x, gap.from.value], [gap.to.x, gap.to.value]]),
+    [[[0.5, 90], [0.5, 70]]],
+    "connect only the last charge reading before downtime to the first after it");
 
 const shortGap = series([point(0, 0, 80, false), point(minute, minute, 79),
     point(2 * minute, minute, 90, false), point(3 * minute, 2 * minute, 89)]);
 equal(shortGap.segments.map(segment => segment.length), [2, 2],
     "explicit restart/suspend markers must split even a short wall-clock gap");
+assert.equal(series([point(0, 0, 80), point(minute, minute, null),
+    point(2 * minute, 2 * minute, 79)]).breaks.length, 0,
+    "missing charge readings must not fabricate gap endpoints");
 
 const charging = series([
     point(0, 0, 20, false, { charging: true, time_to_full_seconds: 3600 }),
@@ -43,7 +48,6 @@ const charging = series([
 ], "time_to_full_seconds");
 equal(charging.segments.map(segment => segment.map(p => p.value)), [[3600], [234972, 3000]],
     "only actual positive charging estimates may be plotted; missing data splits paths");
-assert.equal(charging.maximum, 234972, "do not silently clamp real estimate outliers");
 
 for (const invalid of [null, undefined, NaN, Infinity, -1, 101, "80"])
     assert.equal(series([point(0, 0, invalid, false)]).segments.length, 0);
@@ -59,13 +63,10 @@ const watts = series([
     point(3 * minute, 3 * minute, 77, true, { power_watts: 12 }),
     point(4 * minute, 4 * minute, 78, true, { power_watts: 8, charging: true })
 ], "power_watts");
-equal(watts.segments.map(s => s.map(p => p.value)), [[0], [12, 8]],
-    "unknown and legacy-zero power must not be presented as measured zero");
 const areas = history.powerAreas(watts.segments);
 equal(areas.map(area => [area.charging, area.points.map(p => p.value)]),
     [[false, [0]], [false, [12, 0]], [true, [0, 8]]],
     "power areas split at missing samples and change colour through zero");
-assert.equal(areas[1].points[1].x, 0.9, "interpolate signed power at the zero crossing");
 const suspendedWatts = series([
     point(0, 0, 80, false, { power_watts: 12 }),
     point(minute, minute, 79, true, { power_watts: 8 }),

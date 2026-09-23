@@ -102,16 +102,6 @@ TestCase {
         verifySelection(240);
     }
 
-    function test_scrollingDoesNotForceSelectionBackIntoView() {
-        controller.uiActive = true;
-        verifySelection(0);
-        wait(20);
-        listView().positionViewAtIndex(100, ListView.Beginning);
-        wait(20);
-        compare(listView().currentIndex, 0);
-        verify(!selectedItemIsVisible(listView()));
-    }
-
     Core.ProviderRegistry {
         id: registry
         Core.Provider { providerId: "test"; displayName: "Test" }

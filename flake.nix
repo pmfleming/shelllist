@@ -616,11 +616,11 @@
 
           hypridleReadiness = pkgs.runCommand "shelllist-hypridle-readiness"
             { nativeBuildInputs = [ pkgs.stdenv.cc pkgs.python3 ]; } ''
-            cp ${./nix/hypridle-ready.hpp} readiness.hpp
+            cp ${inputs.bar-daemon}/packaging/hypridle/hypridle-ready.hpp readiness.hpp
             printf '#include "readiness.hpp"\nint main() { return shelllistNotifyReady() ? 0 : 1; }\n' > probe.cpp
             c++ -std=c++20 probe.cpp -o probe
             python3 ${./tests/check-hypridle-readiness.py} \
-              ${import ./nix/hypridle-ready.nix pkgs.hypridle}/bin/hypridle ./probe
+              ${inputs.bar-daemon.packages.${system}.managedHypridle}/bin/hypridle ./probe
             touch $out
           '';
 
@@ -800,7 +800,6 @@
             } ''
             node ${./tests/check-battery-controls.js} \
               ${./battery/BatteryController.qml} \
-              ${./battery/BatteryBackend.qml} \
               ${./battery/BatteryFlow.js} \
               ${./battery/BatteryPresentation.js}
             touch $out
@@ -961,9 +960,7 @@
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
             node ${./tests/check-bluetooth-lifecycle.js} \
-              ${./bluetooth/BluetoothFlow.js} \
-              ${./bluetooth/BtApi.js} \
-              ${./bluetooth/BtProtocol.generated.js}
+              ${./bluetooth/BluetoothFlow.js}
             touch $out
           '';
 
@@ -998,7 +995,7 @@
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             } ''
-            node ${./tests/check-bluetooth-battery.js} ${./bluetooth/BluetoothBattery.js} ${./bluetooth}
+            node ${./tests/check-bluetooth-battery.js} ${./bluetooth/BluetoothBattery.js}
             touch $out
           '';
 

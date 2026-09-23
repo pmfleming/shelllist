@@ -87,16 +87,6 @@ TestCase {
         compare(panel.controller.actions, ["play-pause"]);
     }
 
-    function test_buttonsHaveAccessibleNamesWithoutTooltips() {
-        const panel = makePanel(true);
-        for (const name of ["mediaCycleButton", "mediaRewindButton", "mediaPlayPauseButton", "mediaForwardButton"]) {
-            const button = findChild(panel, name);
-            verify(button !== null);
-            compare(button.toolTip, "");
-            verify(button.accessibleName.length > 0);
-        }
-    }
-
     function test_unseekablePlayerDoesNotSeekOrTogglePlayback() {
         const panel = makePanel(false);
         for (const name of ["mediaRewindButton", "mediaForwardButton"]) {

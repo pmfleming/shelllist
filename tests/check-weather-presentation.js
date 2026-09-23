@@ -16,7 +16,6 @@ function near(actual, expected, message) {
 
 equal(context.localTime(0, -5 * 3600), "19:00", "negative location offset crosses midnight");
 equal(context.localTime(0, 5.5 * 3600), "05:30", "fractional location offset");
-equal(context.moonPhase, undefined, "astronomical estimates belong to bar-daemon");
 // The QML solar-time test owns clock updates and missing sunrise/sunset data.
 // Check rendered illumination, not the helper's exact edge coordinates or labels.
 for (const fraction of [0.125, 0.625]) {

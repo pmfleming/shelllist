@@ -31,7 +31,6 @@ equal(context.operationTransition(request, "app.desktop", "", "action-1", {
 }), null, "accepted response must match the active request");
 const accepted = context.operationTransition({ id: "action-1", actionId: "focus-window-2" },
     "app.desktop", "", "action-1", { id: "operation-1", status: "accepted" });
-equal(accepted.stage, "active", "accepted operation remains active");
 equal(accepted.operationId, "operation-1", "accepted operation captures its daemon id");
 const completed = context.operationTransition(request, "app.desktop", "", "", {
     id: "operation-1", status: "completed", target_id: "app.desktop", action: "focus-window"

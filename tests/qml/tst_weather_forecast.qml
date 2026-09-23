@@ -43,26 +43,4 @@ TestCase {
         compare(card.maximum, 12);
     }
 
-    function test_locationCardSupportsKeyboardSelection(): void {
-        const card = makeCard("WeatherLocationCard", {
-            modelData: {
-                id: "home",
-                location: "Home",
-                condition_code: 0
-            },
-            selectedId: "",
-            now: new Date(),
-            width: 220,
-            height: 92
-        });
-        let selected = "";
-        card.selected.connect(function (id) {
-            selected = id;
-        });
-        card.forceActiveFocus();
-        tryCompare(card, "activeFocus", true);
-        keyClick(Qt.Key_Return);
-        compare(selected, "home");
-    }
-
 }

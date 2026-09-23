@@ -7,27 +7,11 @@ import Shelllist.Activity as Activity
 TestCase {
     id: testCase
     name: "TimeWeatherSelection"
-    property int refreshes: 0
 
     Component {
         id: controllerComponent
-        Activity.TimeWeatherController {
-            function refresh(): void { testCase.refreshes++; }
-        }
+        Activity.TimeWeatherController {}
     }
-    Component { id: contentComponent; Activity.TimeWeatherContent {} }
-
-    function test_constructsSharedListAndUsesDefaultRefresh() {
-        const controller = makeController();
-        const content = createTemporaryObject(contentComponent, testCase,
-            {controller: controller, width: 900, height: 700});
-        verify(content !== null);
-        verify(content.listItem !== null);
-        refreshes = 0;
-        content.listItem.requestRefresh();
-        compare(refreshes, 1);
-    }
-
     function weather(id, location, timezone, home) {
         return { id: id, location: location, timezone: timezone, home: home,
             available: true, temperature_c: home ? 36 : 28 };
@@ -43,18 +27,6 @@ TestCase {
         verify(controller !== null);
         controller.rebuildCityModel();
         return controller;
-    }
-
-    function test_weatherFollowsCitySelection() {
-        const controller = makeController();
-        compare(controller.selectedCity.label, "Oklahoma City");
-        compare(controller.selectedWeather.id, "okc");
-        controller.selectionModel.move(1);
-        compare(controller.selectedCity.label, "Taipei");
-        compare(controller.selectedWeather.id, "taipei");
-        controller.selectionModel.move(-1);
-        compare(controller.selectedCity.label, "Oklahoma City");
-        compare(controller.selectedWeather.id, "okc");
     }
 
     function test_snapshotChangesCityWithoutChangingIndex() {

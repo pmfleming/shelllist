@@ -5,14 +5,12 @@ import Shelllist.Ui as Ui
 TestCase {
     id: tests
 
-    function test_segmentsDoNotBridgeMissingMeasurements(data) {
+    function test_segmentsDoNotBridgeMissingMeasurements() {
         if (Screen.devicePixelRatio !== 1) {
             skip("QtTest grabImage crops to logical bounds on high-DPI screens");
             return;
         }
-        const plot = createTemporaryObject(plotFactory, tests, {
-            isolatedDots: data.isolatedDots
-        });
+        const plot = createTemporaryObject(plotFactory, tests);
         verify(waitForRendering(plot));
         tryVerify(function () {
             const image = grabImage(plot);
@@ -21,20 +19,7 @@ TestCase {
         const image = grabImage(plot);
         compare(image.green(35, 30), 255, "missing data must remain unfilled");
         compare(image.green(65, 10), 255, "separate segments must not be connected");
-        verify(data.isolatedDots ? image.green(50, 10) < 50 : image.green(50, 10) > 200);
-    }
-
-    function test_segmentsDoNotBridgeMissingMeasurements_data() {
-        return [
-            {
-                tag: "battery-dots",
-                isolatedDots: true
-            },
-            {
-                tag: "application-lines",
-                isolatedDots: false
-            }
-        ];
+        verify(image.green(50, 10) < 50, "isolated measurements remain visible");
     }
 
     height: 60
@@ -47,8 +32,6 @@ TestCase {
         id: plotFactory
 
         Canvas {
-            property bool isolatedDots: true
-
             height: 60
             width: 100
 
@@ -83,7 +66,7 @@ TestCase {
                             x: 98,
                             y: 10
                         }
-                    ]], 50, "red", isolatedDots);
+                    ]], 50, "red", true);
             }
         }
     }
