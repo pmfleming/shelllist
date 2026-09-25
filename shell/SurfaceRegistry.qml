@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import Quickshell
 import QtQuick
+import Shelllist.Core as Core
 import Shelllist.Ui as Ui
 import Shelllist.Wifi as Wifi
 import Shelllist.Bluetooth as Bluetooth
@@ -67,13 +68,10 @@ Item {
         })
     property var openedSurfaces: ({})
     property string currentId: "applications"
-    property string pendingActivitySection: ""
-    property string pendingTimeWeatherTab: ""
-    property var pendingNotificationRequest: null
     readonly property alias notificationState: sharedNotifications
-    readonly property var notificationController: {
-        const bundle = bundleFor("notifications");
-        return bundle ? bundle.controller : null;
+
+    Core.DraftStore {
+        id: pendingActions
     }
 
     Activity.NotificationState {
@@ -82,24 +80,13 @@ Item {
         historyEnabled: uiActive
     }
 
-    readonly property SurfaceBundle currentBundle: bundleFor(currentId)
-    readonly property Ui.ChooserController currentController: currentBundle ? currentBundle.controller : null
-    readonly property var wifiController: {
-        const bundle = bundleFor("wifi");
-        return bundle ? bundle.controller : null;
-    }
-    readonly property var bluetoothController: {
-        const bundle = bundleFor("bluetooth");
-        return bundle ? bundle.controller : null;
-    }
-    readonly property var displayController: {
-        const bundle = bundleFor("displays");
-        return bundle ? bundle.controller : null;
-    }
-    readonly property var activityController: {
-        const bundle = bundleFor("activity");
-        return bundle ? bundle.controller : null;
-    }
+    readonly property var currentDescriptor: descriptorFor(currentId)
+    readonly property Ui.ChooserController currentController: controllerFor(currentId)
+    readonly property var wifiController: controllerFor("wifi")
+    readonly property var bluetoothController: controllerFor("bluetooth")
+    readonly property var displayController: controllerFor("displays")
+    readonly property var activityController: controllerFor("activity")
+    readonly property var notificationController: controllerFor("notifications")
 
     signal surfaceRequested(string surfaceId)
     signal surfaceReady(string surfaceId)
@@ -140,18 +127,17 @@ Item {
     }
 
     function bundleFor(surfaceId: string): SurfaceBundle {
-        const bundles = ({
-                applications: applicationBundle.item,
-                wifi: wifiBundle.item,
-                bluetooth: bluetoothBundle.item,
-                clipboard: clipboardBundle.item,
-                battery: batteryBundle.item,
-                displays: displayBundle.item,
-                activity: activityBundle.item,
-                notifications: notificationBundle.item,
-                "time-weather": timeWeatherBundle.item
-            });
-        return bundles[surfaceId] || null;
+        for (let index = 0; index < children.length; ++index) {
+            const slot = children[index] as SurfaceSlot;
+            if (slot && slot.surfaceId === surfaceId)
+                return slot.bundle;
+        }
+        return null;
+    }
+
+    function controllerFor(surfaceId: string): Ui.ChooserController {
+        const bundle = bundleFor(surfaceId);
+        return bundle ? bundle.controller : null;
     }
 
     function ensureLoaded(surfaceId: string): bool {
@@ -171,36 +157,28 @@ Item {
         return true;
     }
 
-    function requestActivitySection(section: string): void {
-        if (section === "notifications") {
-            openNotifications("", "active", "");
-            return;
-        }
-        pendingActivitySection = section;
-        ensureLoaded("activity");
-        applyPendingActivitySection();
+    // Runs action(controller) once the surface's controller exists, replacing
+    // any earlier request for the same surface.
+    function whenReady(surfaceId: string, action: var): void {
+        pendingActions.put(surfaceId, action);
+        ensureLoaded(surfaceId);
+        applyPending(surfaceId);
     }
 
-    function applyPendingActivitySection(): void {
-        if (pendingActivitySection.length === 0 || !activityController)
+    function applyPending(surfaceId: string): void {
+        const action = pendingActions.draft(surfaceId);
+        const controller = controllerFor(surfaceId);
+        if (!action || !controller)
             return;
-        activityController.openSection(pendingActivitySection);
-        pendingActivitySection = "";
+        pendingActions.put(surfaceId, null);
+        action(controller);
     }
 
     function requestTimeWeatherTab(tab: string): void {
-        pendingTimeWeatherTab = tab === "weather" ? "weather" : "time";
-        ensureLoaded("time-weather");
-        applyPendingTimeWeatherTab();
-    }
-
-    function applyPendingTimeWeatherTab(): void {
-        const bundle = bundleFor("time-weather");
-        const timeWeatherController = bundle ? bundle.controller : null;
-        if (pendingTimeWeatherTab.length === 0 || !timeWeatherController)
-            return;
-        timeWeatherController.setDetailsTab(pendingTimeWeatherTab);
-        pendingTimeWeatherTab = "";
+        const target = tab === "weather" ? "weather" : "time";
+        whenReady("time-weather", function (controller) {
+            controller.setDetailsTab(target);
+        });
     }
 
     function openTimeWeather(tab: string): void {
@@ -209,35 +187,14 @@ Item {
     }
 
     function openNotifications(groupKey: string, tab: string, origin: string): void {
-        pendingNotificationRequest = {
-            key: groupKey || "",
-            tab: tab || "active",
-            origin: origin || ""
-        };
-        ensureLoaded("notifications");
-        applyPendingNotifications();
+        whenReady("notifications", function (controller) {
+            controller.openNotifications(groupKey || "", tab || "active", origin || "");
+        });
         surfaceRequested("notifications");
     }
 
-    function applyPendingNotifications(): void {
-        if (!pendingNotificationRequest || !notificationController)
-            return;
-        const request = pendingNotificationRequest;
-        pendingNotificationRequest = null;
-        notificationController.openNotifications(request.key, request.tab, request.origin);
-    }
-
-    function openDisplays(): void {
-        surfaceRequested("displays");
-    }
-
     function notifySurfaceReady(surfaceId: string): void {
-        if (surfaceId === "activity")
-            applyPendingActivitySection();
-        else if (surfaceId === "time-weather")
-            applyPendingTimeWeatherTab();
-        else if (surfaceId === "notifications")
-            applyPendingNotifications();
+        applyPending(surfaceId);
         surfaceReady(surfaceId);
     }
 
@@ -251,16 +208,11 @@ Item {
             select(initial);
     }
 
-    Loader {
-        id: applicationBundle
-        active: registry.isLoaded("applications")
-        asynchronous: true
-        onLoaded: registry.notifySurfaceReady("applications")
+    SurfaceSlot {
+        surfaceId: "applications"
+        owner: registry
         sourceComponent: Component {
             SurfaceBundle {
-                surfaceId: "applications"
-                displayName: "Applications"
-                icon: "󰀻"
                 controller: applicationController
                 content: Component {
                     Launcher.ApplicationContent {
@@ -274,16 +226,11 @@ Item {
         }
     }
 
-    Loader {
-        id: wifiBundle
-        active: registry.isLoaded("wifi")
-        asynchronous: true
-        onLoaded: registry.notifySurfaceReady("wifi")
+    SurfaceSlot {
+        surfaceId: "wifi"
+        owner: registry
         sourceComponent: Component {
             SurfaceBundle {
-                surfaceId: "wifi"
-                displayName: "Wi-Fi"
-                icon: "󰖩"
                 controller: wifiController
                 content: Component {
                     Wifi.WifiContent {
@@ -302,16 +249,11 @@ Item {
         }
     }
 
-    Loader {
-        id: bluetoothBundle
-        active: registry.isLoaded("bluetooth")
-        asynchronous: true
-        onLoaded: registry.notifySurfaceReady("bluetooth")
+    SurfaceSlot {
+        surfaceId: "bluetooth"
+        owner: registry
         sourceComponent: Component {
             SurfaceBundle {
-                surfaceId: "bluetooth"
-                displayName: "Bluetooth"
-                icon: "󰂯"
                 controller: bluetoothController
                 content: Component {
                     Bluetooth.BluetoothContent {
@@ -326,16 +268,11 @@ Item {
         }
     }
 
-    Loader {
-        id: displayBundle
-        active: registry.isLoaded("displays")
-        asynchronous: true
-        onLoaded: registry.notifySurfaceReady("displays")
+    SurfaceSlot {
+        surfaceId: "displays"
+        owner: registry
         sourceComponent: Component {
             SurfaceBundle {
-                surfaceId: "displays"
-                displayName: "Displays"
-                icon: "󰍹"
                 controller: displayController
                 content: Component {
                     Displays.DisplayContent { controller: displayController }
@@ -345,16 +282,11 @@ Item {
         }
     }
 
-    Loader {
-        id: batteryBundle
-        active: registry.isLoaded("battery")
-        asynchronous: true
-        onLoaded: registry.notifySurfaceReady("battery")
+    SurfaceSlot {
+        surfaceId: "battery"
+        owner: registry
         sourceComponent: Component {
             SurfaceBundle {
-                surfaceId: "battery"
-                displayName: "Battery"
-                icon: "󰂂"
                 controller: batteryController
                 content: Component {
                     Battery.BatteryContent {
@@ -368,16 +300,11 @@ Item {
         }
     }
 
-    Loader {
-        id: activityBundle
-        active: registry.isLoaded("activity")
-        asynchronous: true
-        onLoaded: registry.notifySurfaceReady("activity")
+    SurfaceSlot {
+        surfaceId: "activity"
+        owner: registry
         sourceComponent: Component {
             SurfaceBundle {
-                surfaceId: "activity"
-                displayName: "Activity"
-                icon: "󰃭"
                 controller: activityController
                 content: Component {
                     Activity.ActivityContent {
@@ -398,16 +325,11 @@ Item {
         }
     }
 
-    Loader {
-        id: notificationBundle
-        active: registry.isLoaded("notifications")
-        asynchronous: true
-        onLoaded: registry.notifySurfaceReady("notifications")
+    SurfaceSlot {
+        surfaceId: "notifications"
+        owner: registry
         sourceComponent: Component {
             SurfaceBundle {
-                surfaceId: "notifications"
-                displayName: "Notifications"
-                icon: ""
                 controller: notificationController
                 content: Component {
                     Activity.NotificationContent {
@@ -423,16 +345,11 @@ Item {
         }
     }
 
-    Loader {
-        id: timeWeatherBundle
-        active: registry.isLoaded("time-weather")
-        asynchronous: true
-        onLoaded: registry.notifySurfaceReady("time-weather")
+    SurfaceSlot {
+        surfaceId: "time-weather"
+        owner: registry
         sourceComponent: Component {
             SurfaceBundle {
-                surfaceId: "time-weather"
-                displayName: "Time & Weather"
-                icon: "󰅐"
                 controller: timeWeatherController
                 content: Component {
                     Activity.TimeWeatherContent {
@@ -446,16 +363,11 @@ Item {
         }
     }
 
-    Loader {
-        id: clipboardBundle
-        active: registry.isLoaded("clipboard")
-        asynchronous: true
-        onLoaded: registry.notifySurfaceReady("clipboard")
+    SurfaceSlot {
+        surfaceId: "clipboard"
+        owner: registry
         sourceComponent: Component {
             SurfaceBundle {
-                surfaceId: "clipboard"
-                displayName: "Clipboard"
-                icon: "󰅇"
                 controller: clipboardController
                 content: Component {
                     Clipboard.ClipboardContent {

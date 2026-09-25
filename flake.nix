@@ -929,6 +929,7 @@
             ln -s ${./wifi} test-root/wifi
             ln -s ${./bluetooth} test-root/bluetooth
             ln -s ${./launcher} test-root/launcher
+            ln -s ${./shell} test-root/shell
             export HOME=$TMPDIR
             export XDG_CACHE_HOME=$TMPDIR/cache
             QT_QPA_PLATFORM=offscreen qmltestrunner \

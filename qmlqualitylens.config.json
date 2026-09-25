@@ -34,6 +34,7 @@
     "tests/qml/tst_search_action.qml",
     "tests/qml/tst_segmented_navigation.qml",
     "tests/qml/tst_settings_controls.qml",
+    "tests/qml/tst_surface_registry.qml",
     "tests/qml/tst_time_weather_selection.qml",
     "tests/qml/tst_weather_forecast.qml",
     "tests/qml/tst_wifi_casting.qml",

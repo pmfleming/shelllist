@@ -30,7 +30,7 @@ Item {
 
         Ui.PulsingLabel {
             anchors.centerIn: parent
-            text: "Loading " + (content.registry.currentBundle ? content.registry.currentBundle.displayName : "surface") + "…"
+            text: "Loading " + (content.registry.currentDescriptor ? content.registry.currentDescriptor.name : "surface") + "…"
             color: Ui.Theme.mutedText
             font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeBody
