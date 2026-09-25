@@ -65,14 +65,15 @@ function metricCapability(metric) {
 function historicalMetricAvailable(point, metric) {
     const capability = metricCapability(metric);
     // Legacy-record normalization belongs to app-daemon, not the chart.
-    return !!point && typeof point[metric] === "number" && isFinite(point[metric])
+    const value = point ? point[metric] : undefined;
+    return !!point && typeof value === "number" && isFinite(value)
         && !!point.availability && point.availability[capability] === true;
 }
 function currentMetricAvailable(resource, metric) {
     const measurement = resource.measurement || ({});
     switch (metricCapability(metric)) {
         case "cpu": return Number(measurement.coverage) > 0;
-        case "memory": return ["pss", "rss-fallback"].includes(measurement.memory_source);
+        case "memory": return ["pss", "rss-fallback"].includes(String(measurement.memory_source));
         case "disk_space": return measurement.disk_space_scope === "identified-app-directories";
         case "energy": return resource.energy_source === "rapl";
         default: return measurement[metricCapability(metric) + "_available"] === true;
@@ -82,7 +83,7 @@ function currentMetadataBadges(application) {
     const measurement = application.measurement || ({});
     const badges = [
         { text: text(measurement.attribution_method, "Unknown attribution"), tone: "accent" },
-        { text: ratioPercent(measurement.coverage) + " coverage", tone: measurement.coverage < 0.8 ? "warning" : "normal" },
+        { text: ratioPercent(measurement.coverage) + " coverage", tone: Number(measurement.coverage) < 0.8 ? "warning" : "normal" },
         { text: duration(measurement.sample_interval_ms) + " samples", tone: "normal" },
         { text: text(measurement.memory_source, "Unknown memory").toUpperCase() + " memory", tone: "normal" },
         { text: "Energy " + text(application.energy_confidence).toLowerCase(), tone: application.energy_confidence === "low" ? "warning" : "normal" }
@@ -94,7 +95,7 @@ function currentMetadataBadges(application) {
 function historicalMetadataBadges(latestPoint) {
     return [
         { text: "Retained history", tone: "accent" },
-        { text: ratioPercent(latestPoint.coverage) + " coverage", tone: latestPoint.coverage < 0.8 ? "warning" : "normal" },
+        { text: ratioPercent(latestPoint.coverage) + " coverage", tone: Number(latestPoint.coverage) < 0.8 ? "warning" : "normal" },
         { text: integer(latestPoint.sample_count) + " samples", tone: "normal" },
         { text: "Energy " + text(latestPoint.energy_confidence).toLowerCase(), tone: latestPoint.energy_confidence === "low" ? "warning" : "normal" }
     ];

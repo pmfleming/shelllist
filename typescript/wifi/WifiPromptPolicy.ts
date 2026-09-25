@@ -1,3 +1,22 @@
+interface PromptField {
+    key: string;
+    label: string;
+    required: boolean;
+    password: boolean;
+    value: string;
+}
+type PromptValues = Record<string, string>;
+interface ConnectPrompt {
+    enterprise_defaults?: Record<string, unknown> & { eap?: string[] };
+    required_fields?: string[];
+    optional_fields?: string[];
+}
+interface SecretRequest {
+    secret_keys?: string[];
+    primary_secret_key?: string;
+    setting_name?: string;
+}
+
 const hiddenSecurityModes = ["open", "owe", "wpa-psk", "sae", "wep-key", "wep-phrase", "wpa-eap"];
 const passwordSecurityModes = ["wpa-psk", "sae", "wep-key", "wep-phrase"];
 const keyManagement: Record<string, string> = {
@@ -22,7 +41,7 @@ const secretLabels: Record<string, string> = {
     "password": "Password", "private-key-password": "Private key password", "pin": "PIN"
 };
 
-function field(key: any, label: any, required: any, password: any, value: any) {
+function field(key: string, label: string, required: boolean, password: boolean, value: string): PromptField {
     return { key: key, label: label, required: required, password: password, value: value || "" };
 }
 
@@ -39,39 +58,39 @@ function hiddenFields() {
     ];
 }
 
-function initialValues(fields: any) {
-    const values: Record<string, any> = ({});
-    fields.forEach(function (item: any) { values[item.key] = item.value || ""; });
+function initialValues(fields: PromptField[]) {
+    const values: PromptValues = ({});
+    fields.forEach(function (item: PromptField) { values[item.key] = item.value || ""; });
     return values;
 }
 
-function enterpriseLabel(key: any) {
+function enterpriseLabel(key: string) {
     return enterpriseLabels[key] || key.replace(/^enterprise\./, "").replace(/_/g, " ");
 }
 
-function enterpriseDefault(key: any, defaults: any) {
+function enterpriseDefault(key: string, defaults: NonNullable<ConnectPrompt["enterprise_defaults"]>) {
     const name = key.replace(/^enterprise\./, "");
     if (key === "enterprise.eap")
         return (defaults.eap || ["peap"]).join(",");
     return defaults[name] === undefined || defaults[name] === null ? "" : String(defaults[name]);
 }
 
-function enterpriseSecret(key: any) { return key === "password" || key.includes("password") || key === "enterprise.pin"; }
+function enterpriseSecret(key: string) { return key === "password" || key.includes("password") || key === "enterprise.pin"; }
 
-function enterpriseFields(ap: any) {
-    const prompt = ap.connect_prompt || ({});
+function enterpriseFields(ap: { connect_prompt?: ConnectPrompt | null }) {
+    const prompt: ConnectPrompt = ap.connect_prompt || ({});
     const defaults = prompt.enterprise_defaults || ({});
     const required = prompt.required_fields || ["enterprise.eap", "enterprise.identity"];
     const keys = required.concat(prompt.optional_fields || ["password"])
-        .filter(function (key: any, index: any, values: any) { return values.indexOf(key) === index; });
-    return keys.map(function (key: any) {
+        .filter(function (key: string, index: number, values: string[]) { return values.indexOf(key) === index; });
+    return keys.map(function (key: string) {
         return field(key, enterpriseLabel(key), required.includes(key),
             enterpriseSecret(key), enterpriseDefault(key, defaults));
     });
 }
 
-function forgetCopy(networkName: any, active: any, profiles: any) {
-    const names = (profiles || []).map(function (profile: any) { return profile.id; });
+function forgetCopy(networkName: string, active: boolean, profiles: { id: string }[] | null | undefined) {
+    const names = (profiles || []).map(function (profile: { id: string }) { return profile.id; });
     const profileText = names.length === 0 ? "no saved profile is currently listed"
         : names.length + " saved profile" + (names.length === 1 ? "" : "s") + ": " + names.join(", ");
     return {
@@ -81,34 +100,34 @@ function forgetCopy(networkName: any, active: any, profiles: any) {
     };
 }
 
-function secretLabel(key: any) {
+function secretLabel(key: string) {
     return secretLabels[key] || (key ? key.replace(/-/g, " ") : "Secret");
 }
 
-function daemonSecretSpec(event: any) {
+function daemonSecretSpec(event: SecretRequest) {
     const keys = event.secret_keys && event.secret_keys.length > 0
         ? event.secret_keys : [event.primary_secret_key || "password"];
     const setting = event.setting_name ? " for " + event.setting_name : "";
     return {
         detail: "NetworkManager requested " + keys.map(secretLabel).join(", ") + setting + ".",
-        fields: keys.map(function (key: any) { return field(key, secretLabel(key), true, key !== "pin", ""); })
+        fields: keys.map(function (key: string) { return field(key, secretLabel(key), true, key !== "pin", ""); })
     };
 }
 
-function enterpriseObject(values: any) {
-    const enterprise: Record<string, any> = ({});
-    Object.keys(values).filter(function (key: any) {
+function enterpriseObject(values: PromptValues) {
+    const enterprise: Record<string, string | string[]> = ({});
+    Object.keys(values).filter(function (key: string) {
         return key.indexOf("enterprise.") === 0 && String(values[key]).length > 0;
-    }).forEach(function (key: any) {
+    }).forEach(function (key: string) {
         const name = key.slice("enterprise.".length);
         enterprise[name] = name === "eap"
-            ? String(values[key]).split(",").map(function (item: any) { return item.trim(); }).filter(Boolean)
+            ? String(values[key]).split(",").map(function (item: string) { return item.trim(); }).filter(Boolean)
             : values[key];
     });
     return enterprise;
 }
 
-function hiddenValidationError(values: any) {
+function hiddenValidationError(values: PromptValues) {
     const security = String(values.security || "").toLowerCase();
     if (!hiddenSecurityModes.includes(security))
         return "Choose a supported hidden-network security value.";
@@ -119,8 +138,8 @@ function hiddenValidationError(values: any) {
     return "";
 }
 
-function validationError(mode: any, fields: any, values: any) {
-    const missing = fields.find(function (item: any) {
+function validationError(mode: string, fields: PromptField[], values: PromptValues) {
+    const missing = fields.find(function (item: PromptField) {
         return item.required && !String(values[item.key] || "").trim();
     });
     if (missing)
@@ -128,14 +147,14 @@ function validationError(mode: any, fields: any, values: any) {
     return mode === "hidden" ? hiddenValidationError(values) : "";
 }
 
-function hiddenSecurityLabel(security: any) {
+function hiddenSecurityLabel(security: string) {
     return security === "open" ? "--" : (security === "owe" ? "OWE" : "WPA2/3");
 }
-function wepKeyType(security: any) {
+function wepKeyType(security: string) {
     return security === "wep-phrase" ? "phrase" : (security === "wep-key" ? "key" : null);
 }
 
-function connectionRequest(mode: any, network: any, values: any) {
+function connectionRequest(mode: string, network: unknown, values: PromptValues) {
     const security = String(values.security || "").toLowerCase();
     const enterprise = mode === "enterprise" || security === "wpa-eap" ? enterpriseObject(values) : null;
     if (mode === "enterprise")

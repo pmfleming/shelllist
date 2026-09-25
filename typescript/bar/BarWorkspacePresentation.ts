@@ -1,36 +1,56 @@
-function workspaceIds(state: any, monitorName: any) {
+interface Workspace {
+    id: number;
+    monitor?: string;
+}
+interface Monitor {
+    name?: string;
+    active_workspace_id: number;
+}
+interface ActiveWindow {
+    initial_class?: string;
+    class_name?: string;
+}
+interface WorkspaceState {
+    workspaces?: Workspace[];
+    monitors?: Monitor[];
+    focused_monitor?: string;
+    active_window?: ActiveWindow | null;
+}
+type Maybe<T> = T | null | undefined;
+
+function workspaceIds(state: Maybe<WorkspaceState>, monitorName: string) {
     const ids = [1, 2, 3, 4, 5];
     const seen: Record<number, boolean> = ({ 1: true, 2: true, 3: true, 4: true, 5: true });
     const workspaces = state && Array.isArray(state.workspaces) ? state.workspaces : [];
-    workspaces.forEach(function (workspace: any) {
+    workspaces.forEach(function (workspace: Workspace) {
         if (workspace.id > 0 && workspace.monitor === monitorName && !seen[workspace.id]) {
             seen[workspace.id] = true;
             ids.push(workspace.id);
         }
     });
-    return ids.sort(function (left: any, right: any) { return left - right; });
+    return ids.sort(function (left: number, right: number) { return left - right; });
 }
 
-function workspaceFor(state: any, workspaceId: any) {
+function workspaceFor(state: Maybe<WorkspaceState>, workspaceId: number) {
     const workspaces = state && Array.isArray(state.workspaces) ? state.workspaces : [];
-    return workspaces.find(function (workspace: any) { return workspace.id === workspaceId; }) || null;
+    return workspaces.find(function (workspace: Workspace) { return workspace.id === workspaceId; }) || null;
 }
 
-function activeWorkspaceId(state: any, monitorName: any) {
+function activeWorkspaceId(state: Maybe<WorkspaceState>, monitorName: string) {
     const monitors = state && Array.isArray(state.monitors) ? state.monitors : [];
-    const monitor = monitors.find(function (candidate: any) { return candidate.name === monitorName; });
+    const monitor = monitors.find(function (candidate: Monitor) { return candidate.name === monitorName; });
     return monitor ? monitor.active_workspace_id : 0;
 }
 
-function activeWorkspaceIndex(state: any, monitorName: any) {
+function activeWorkspaceIndex(state: Maybe<WorkspaceState>, monitorName: string) {
     return workspaceIds(state, monitorName).indexOf(activeWorkspaceId(state, monitorName));
 }
 
-function workspaceGlyph(workspaceId: any) {
+function workspaceGlyph(workspaceId: number) {
     return workspaceId === 1 ? "󰊠" : workspaceId > 5 ? String(workspaceId) : "";
 }
 
-function workspaceIconName(workspaceId: any) {
+function workspaceIconName(workspaceId: number) {
     const icons: Record<number, string> = {
         2: "zen",
         3: "vscode",
@@ -40,7 +60,7 @@ function workspaceIconName(workspaceId: any) {
     return icons[workspaceId] || "";
 }
 
-function activeWindowFor(state: any, monitorName: any) {
+function activeWindowFor(state: Maybe<WorkspaceState>, monitorName: string) {
     if (!state || !state.active_window)
         return null;
     const focusedMonitor = String(state.focused_monitor || "");
@@ -48,7 +68,7 @@ function activeWindowFor(state: any, monitorName: any) {
         ? state.active_window : null;
 }
 
-function windowIconName(window: any) {
+function windowIconName(window: Maybe<ActiveWindow>) {
     if (!window)
         return "application-x-executable";
     const value = String(window.initial_class || window.class_name || "").trim();

@@ -1,25 +1,48 @@
-function finite(value: any) {
+interface Measurement {
+    coverage?: number;
+    memory_source?: string;
+    disk_space_scope?: string;
+    attribution_method?: string;
+    sample_interval_ms?: number;
+    resources_shared?: boolean;
+    [capabilityAvailable: string]: unknown;
+}
+interface ResourcePoint {
+    availability?: Readonly<Record<string, boolean>>;
+    coverage?: number;
+    sample_count?: number;
+    energy_confidence?: string;
+    [metric: string]: unknown;
+}
+interface ApplicationResource {
+    running?: boolean;
+    measurement?: Measurement;
+    energy_source?: string;
+    energy_confidence?: string;
+}
+
+function finite(value: unknown) {
     const number = Number(value);
     return isFinite(number) ? number : 0;
 }
 
-function decimal(value: any, digits: any) {
+function decimal(value: unknown, digits?: number) {
     return finite(value).toFixed(digits === undefined ? 1 : digits);
 }
 
-function integer(value: any) {
+function integer(value: unknown) {
     return Math.round(finite(value)).toLocaleString();
 }
 
-function percent(value: any) {
+function percent(value: unknown) {
     return decimal(value, 1) + "%";
 }
 
-function ratioPercent(value: any) {
+function ratioPercent(value: unknown) {
     return decimal(finite(value) * 100, 1) + "%";
 }
 
-function bytes(value: any) {
+function bytes(value: unknown) {
     const amount = Math.max(0, finite(value));
     const units = ["B", "KiB", "MiB", "GiB", "TiB"];
     let scaled = amount;
@@ -32,20 +55,20 @@ function bytes(value: any) {
     return scaled.toFixed(digits) + " " + units[unit];
 }
 
-function rate(value: any) {
+function rate(value: unknown) {
     return bytes(value) + "/s";
 }
 
-function power(value: any) {
+function power(value: unknown) {
     return decimal(value, 2) + " W";
 }
 
-function duration(value: any) {
+function duration(value: unknown) {
     const milliseconds = Math.max(0, finite(value));
     return milliseconds >= 1000 ? decimal(milliseconds / 1000, 1) + " s" : integer(milliseconds) + " ms";
 }
 
-function text(value: any, fallback?: any) {
+function text(value: unknown, fallback?: string) {
     const result = String(value === undefined || value === null ? "" : value).trim();
     return result || fallback || "Unavailable";
 }
@@ -62,29 +85,30 @@ function metricCapability(metric: string): string {
     return "storage";
 }
 
-function historicalMetricAvailable(point: any, metric: string): boolean {
+function historicalMetricAvailable(point: ResourcePoint | null | undefined, metric: string): boolean {
     const capability = metricCapability(metric);
     // Legacy-record normalization belongs to app-daemon, not the chart.
-    return !!point && typeof point[metric] === "number" && isFinite(point[metric])
+    const value = point ? point[metric] : undefined;
+    return !!point && typeof value === "number" && isFinite(value)
         && !!point.availability && point.availability[capability] === true;
 }
 
-function currentMetricAvailable(resource: any, metric: string): boolean {
-    const measurement = resource.measurement || ({});
+function currentMetricAvailable(resource: ApplicationResource, metric: string): boolean {
+    const measurement: Measurement = resource.measurement || ({});
     switch (metricCapability(metric)) {
     case "cpu": return Number(measurement.coverage) > 0;
-    case "memory": return ["pss", "rss-fallback"].includes(measurement.memory_source);
+    case "memory": return ["pss", "rss-fallback"].includes(String(measurement.memory_source));
     case "disk_space": return measurement.disk_space_scope === "identified-app-directories";
     case "energy": return resource.energy_source === "rapl";
     default: return measurement[metricCapability(metric) + "_available"] === true;
     }
 }
 
-function currentMetadataBadges(application: any) {
-    const measurement = application.measurement || ({});
+function currentMetadataBadges(application: ApplicationResource) {
+    const measurement: Measurement = application.measurement || ({});
     const badges = [
         { text: text(measurement.attribution_method, "Unknown attribution"), tone: "accent" },
-        { text: ratioPercent(measurement.coverage) + " coverage", tone: measurement.coverage < 0.8 ? "warning" : "normal" },
+        { text: ratioPercent(measurement.coverage) + " coverage", tone: Number(measurement.coverage) < 0.8 ? "warning" : "normal" },
         { text: duration(measurement.sample_interval_ms) + " samples", tone: "normal" },
         { text: text(measurement.memory_source, "Unknown memory").toUpperCase() + " memory", tone: "normal" },
         { text: "Energy " + text(application.energy_confidence).toLowerCase(), tone: application.energy_confidence === "low" ? "warning" : "normal" }
@@ -94,16 +118,16 @@ function currentMetadataBadges(application: any) {
     return badges;
 }
 
-function historicalMetadataBadges(latestPoint: any) {
+function historicalMetadataBadges(latestPoint: ResourcePoint) {
     return [
         { text: "Retained history", tone: "accent" },
-        { text: ratioPercent(latestPoint.coverage) + " coverage", tone: latestPoint.coverage < 0.8 ? "warning" : "normal" },
+        { text: ratioPercent(latestPoint.coverage) + " coverage", tone: Number(latestPoint.coverage) < 0.8 ? "warning" : "normal" },
         { text: integer(latestPoint.sample_count) + " samples", tone: "normal" },
         { text: "Energy " + text(latestPoint.energy_confidence).toLowerCase(), tone: latestPoint.energy_confidence === "low" ? "warning" : "normal" }
     ];
 }
 
-function metadataBadges(application: any, latestPoint: any) {
+function metadataBadges(application: ApplicationResource | null | undefined, latestPoint: ResourcePoint | null | undefined) {
     if (application && application.running)
         return currentMetadataBadges(application);
     return latestPoint ? historicalMetadataBadges(latestPoint) : [];

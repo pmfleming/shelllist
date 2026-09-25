@@ -2,17 +2,23 @@ var Invalid = 0;
 var Intermediate = 1;
 var Acceptable = 2;
 
-function normalizedFamily(family: any) {
+interface Ipv6Measure {
+    valid: boolean;
+    units: number;
+    incomplete: boolean;
+}
+
+function normalizedFamily(family: unknown) {
     return String(family || "").toLowerCase() === "ipv6" ? "ipv6" : "ipv4";
 }
 
-function ipv4PartState(part: any, finalPart: any) {
+function ipv4PartState(part: string, finalPart: boolean) {
     if (part.length === 0)
         return finalPart ? Intermediate : Invalid;
     return /^\d{1,3}$/.test(part) && Number(part) <= 255 ? Acceptable : Invalid;
 }
 
-function ipv4State(value: any) {
+function ipv4State(value: unknown) {
     const address = String(value || "").trim();
     if (address.length === 0)
         return Intermediate;
@@ -29,11 +35,11 @@ function ipv4State(value: any) {
     return parts.length === 4 ? Acceptable : Intermediate;
 }
 
-function isIpv4(value: any) {
+function isIpv4(value: unknown) {
     return ipv4State(value) === Acceptable;
 }
 
-function ipv6PartResult(part: any, finalPart: any, allowPartial: any) {
+function ipv6PartResult(part: string, finalPart: boolean, allowPartial: boolean): Ipv6Measure {
     if (part.length === 0)
         return { valid: false, units: 0, incomplete: false };
     if (part.indexOf(".") < 0)
@@ -44,8 +50,8 @@ function ipv6PartResult(part: any, finalPart: any, allowPartial: any) {
     return { valid: allowPartial ? state !== Invalid : state === Acceptable, units: 2, incomplete: state === Intermediate };
 }
 
-function measureIpv6Parts(parts: any, allowPartial: any) {
-    let result = { valid: true, units: 0, incomplete: false };
+function measureIpv6Parts(parts: string[], allowPartial: boolean) {
+    let result: Ipv6Measure = { valid: true, units: 0, incomplete: false };
     for (let index = 0; index < parts.length; ++index) {
         const part = ipv6PartResult(parts[index], index === parts.length - 1, allowPartial);
         if (!part.valid)
@@ -56,13 +62,13 @@ function measureIpv6Parts(parts: any, allowPartial: any) {
     return result;
 }
 
-function ipv6UnitCount(parts: any) {
+function ipv6UnitCount(parts: string[]) {
     const result = measureIpv6Parts(parts, false);
     return result.valid ? result.units : -1;
 }
 
-function splitNonEmpty(value: any) { return value.length > 0 ? value.split(":") : []; }
-function splitIpv6(address: any) {
+function splitNonEmpty(value: string) { return value.length > 0 ? value.split(":") : []; }
+function splitIpv6(address: string) {
     const compression = address.indexOf("::");
     if (compression < 0)
         return { compressed: false, parts: address.split(":") };
@@ -71,15 +77,15 @@ function splitIpv6(address: any) {
         parts: splitNonEmpty(address.slice(0, compression)).concat(splitNonEmpty(address.slice(compression + 2)))
     };
 }
-function hasRepeatedCompression(address: any) {
+function hasRepeatedCompression(address: string) {
     const compression = address.indexOf("::");
     return compression >= 0 && address.indexOf("::", compression + 2) >= 0;
 }
-function hasMalformedEmbeddedIpv4(address: any) {
+function hasMalformedEmbeddedIpv4(address: string) {
     return address.indexOf(".") >= 0 && !/\d{1,3}(?:\.\d{1,3}){3}$/.test(address);
 }
 
-function isIpv6Complete(value: any) {
+function isIpv6Complete(value: unknown) {
     const address = String(value || "").trim();
     if (address.length === 0 || address.indexOf("%") >= 0 || hasRepeatedCompression(address) || hasMalformedEmbeddedIpv4(address))
         return false;
@@ -90,16 +96,16 @@ function isIpv6Complete(value: any) {
     return address[0] !== ":" && address[address.length - 1] !== ":" && units === 8;
 }
 
-function partialIpv6Units(parts: any) { return measureIpv6Parts(parts, true); }
+function partialIpv6Units(parts: string[]) { return measureIpv6Parts(parts, true); }
 
-function invalidPartialIpv6Syntax(address: any) {
+function invalidPartialIpv6Syntax(address: string) {
     return !/^[0-9a-fA-F:.]+$/.test(address)
         || address.indexOf("%") >= 0
         || address.indexOf(":::") >= 0
         || hasRepeatedCompression(address);
 }
 
-function partialIpv6State(result: any, compressed: any, trailingSeparator: any) {
+function partialIpv6State(result: Ipv6Measure, compressed: boolean, trailingSeparator: boolean) {
     if (!result.valid)
         return Invalid;
     if (compressed)
@@ -109,7 +115,7 @@ function partialIpv6State(result: any, compressed: any, trailingSeparator: any) 
     return result.incomplete || result.units < 8 ? Intermediate : Invalid;
 }
 
-function ipv6State(value: any) {
+function ipv6State(value: unknown) {
     const address = String(value || "").trim();
     if (address.length === 0 || address === ":")
         return Intermediate;
@@ -125,26 +131,26 @@ function ipv6State(value: any) {
     return partialIpv6State(partialIpv6Units(parsed.parts), parsed.compressed, trailingSeparator);
 }
 
-function isIpv6(value: any) {
+function isIpv6(value: unknown) {
     return ipv6State(value) === Acceptable;
 }
 
-function addressState(value: any, family: any) {
+function addressState(value: unknown, family: unknown) {
     return normalizedFamily(family) === "ipv6" ? ipv6State(value) : ipv4State(value);
 }
 
-function isAddress(value: any, family: any) {
+function isAddress(value: unknown, family: unknown) {
     return addressState(value, family) === Acceptable;
 }
 
-function groupedAddressState(value: any, family: any, finalAddress: any) {
+function groupedAddressState(value: unknown, family: unknown, finalAddress: boolean) {
     const state = addressState(value, family);
     if (state === Invalid)
         return Invalid;
     return finalAddress || state === Acceptable ? state : Invalid;
 }
 
-function addressGroupState(group: any, family: any, finalGroup: any) {
+function addressGroupState(group: string, family: unknown, finalGroup: boolean) {
     if (group.length === 0)
         return finalGroup ? Intermediate : Invalid;
     const addresses = group.split(/\s+/);
@@ -157,7 +163,7 @@ function addressGroupState(group: any, family: any, finalGroup: any) {
     return Acceptable;
 }
 
-function addressInputState(value: any, family: any, multiple: any, allowEmpty: any) {
+function addressInputState(value: unknown, family: unknown, multiple: boolean, allowEmpty: boolean) {
     const input = String(value || "").trim();
     if (input.length === 0)
         return allowEmpty ? Acceptable : Intermediate;
@@ -174,11 +180,11 @@ function addressInputState(value: any, family: any, multiple: any, allowEmpty: a
     return Acceptable;
 }
 
-function isAddressInput(value: any, family: any, multiple: any, allowEmpty: any) {
+function isAddressInput(value: unknown, family: unknown, multiple: boolean, allowEmpty: boolean) {
     return addressInputState(value, family, multiple, allowEmpty) === Acceptable;
 }
 
-function prefixState(value: any, family: any, allowEmpty: any) {
+function prefixState(value: unknown, family: unknown, allowEmpty: boolean) {
     const input = String(value || "").trim();
     if (input.length === 0)
         return allowEmpty ? Acceptable : Intermediate;
@@ -188,6 +194,6 @@ function prefixState(value: any, family: any, allowEmpty: any) {
     return Number(input) <= maximum ? Acceptable : Invalid;
 }
 
-function isPrefix(value: any, family: any, allowEmpty: any) {
+function isPrefix(value: unknown, family: unknown, allowEmpty: boolean) {
     return prefixState(value, family, allowEmpty) === Acceptable;
 }

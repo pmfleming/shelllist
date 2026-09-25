@@ -1,23 +1,67 @@
-function clamp(value: any, minimum: any, maximum: any) {
+interface AudioState {
+    available?: boolean;
+    muted?: boolean;
+    volume_percent?: number;
+    input_muted?: boolean;
+    sink_name?: string;
+    sink_description?: string;
+    source_name?: string;
+    source_description?: string;
+}
+interface PowerProfileState {
+    available?: boolean;
+    profile?: string;
+}
+interface PowerSuspendState {
+    available?: boolean;
+    inhibitors?: { what?: string }[];
+}
+interface HardwareState {
+    available?: boolean;
+    camera_privacy?: boolean;
+    microphone_privacy?: boolean;
+    caps_lock?: boolean;
+    num_lock?: boolean;
+    keyboard_backlight_percent?: number | null;
+}
+interface WorkspaceMonitors {
+    available?: boolean;
+    monitors?: { name: string }[];
+}
+// A domain-event payload; which fields exist depends on the stream.
+type OsdDomain = AudioState & PowerProfileState & PowerSuspendState & HardwareState & WorkspaceMonitors;
+type OsdStreams = Readonly<Record<"powerProfile" | "audio" | "workspaces" | "powerSuspend" | "osdHardware", string>>;
+interface Osd {
+    kind: string;
+    icon: string;
+    label: string;
+    valueLabel: string;
+    percent: number;
+    progressVisible: boolean;
+    timeoutMs: number;
+}
+type Maybe<T> = T | null | undefined;
+
+function clamp(value: unknown, minimum: number, maximum: number) {
     return Math.max(minimum, Math.min(maximum, Number(value) || 0));
 }
 
-function audioIcon(audio: any) {
+function audioIcon(audio: Maybe<AudioState>) {
     if (!audio || audio.muted || !audio.available)
         return "󰝟";
     const percent = clamp(audio.volume_percent, 0, 100);
     return percent < 34 ? "" : percent < 67 ? "" : "";
 }
 
-function osdTimeout(kind: any) {
+function osdTimeout(kind: Maybe<string>) {
     const value = String(kind || "");
     if (value.indexOf("privacy") === 0 || value === "brightness-error") return 3000;
     if (["device", "power-profile", "idle-inhibitor"].includes(value)) return 2200;
     return 1400;
 }
 
-function outputOsd(audio: any) {
-    const value = audio || ({});
+function outputOsd(audio: Maybe<AudioState>): Osd {
+    const value: AudioState = audio || ({});
     const percent = clamp(value.volume_percent, 0, 100);
     return {
         kind: "audio",
@@ -30,8 +74,8 @@ function outputOsd(audio: any) {
     };
 }
 
-function inputOsd(audio: any) {
-    const value = audio || ({});
+function inputOsd(audio: Maybe<AudioState>): Osd {
+    const value: AudioState = audio || ({});
     const muted = !!value.input_muted;
     return {
         kind: "input",
@@ -44,8 +88,8 @@ function inputOsd(audio: any) {
     };
 }
 
-function brightnessOsd(brightness: any) {
-    const value = brightness || ({});
+function brightnessOsd(brightness: Maybe<{ percent?: number }>): Osd {
+    const value: { percent?: number } = brightness || ({});
     const percent = clamp(value.percent, 0, 100);
     return {
         kind: "brightness",
@@ -58,7 +102,7 @@ function brightnessOsd(brightness: any) {
     };
 }
 
-function brightnessErrorOsd() {
+function brightnessErrorOsd(): Osd {
     return {
         kind: "brightness-error",
         icon: "󰃠",
@@ -70,13 +114,13 @@ function brightnessErrorOsd() {
     };
 }
 
-function powerProfileIcon(profile: any) {
+function powerProfileIcon(profile: Maybe<PowerProfileState>) {
     const value = profile && profile.profile ? profile.profile : "";
     return value === "power-saver" ? "" : value === "balanced" ? "" : "";
 }
 
-function powerProfileOsd(profile: any) {
-    const value = profile || ({});
+function powerProfileOsd(profile: Maybe<PowerProfileState>): Osd {
+    const value: PowerProfileState = profile || ({});
     const name = value.profile || "unknown";
     const labels: Record<string, string> = { "power-saver": "Power saver", balanced: "Balanced", performance: "Performance" };
     return {
@@ -90,7 +134,7 @@ function powerProfileOsd(profile: any) {
     };
 }
 
-function lockKeyOsd(kind: any, enabled: any) {
+function lockKeyOsd(kind: string, enabled: boolean): Osd {
     const caps = kind === "caps-lock";
     return {
         kind: kind,
@@ -103,7 +147,7 @@ function lockKeyOsd(kind: any, enabled: any) {
     };
 }
 
-function keyboardBacklightOsd(percent: any) {
+function keyboardBacklightOsd(percent: unknown): Osd {
     const value = clamp(percent, 0, 100);
     return {
         kind: "keyboard-backlight",
@@ -116,7 +160,7 @@ function keyboardBacklightOsd(percent: any) {
     };
 }
 
-function privacyOsd(device: any, active: any) {
+function privacyOsd(device: string, active: boolean): Osd {
     const camera = device === "camera";
     return {
         kind: "privacy-" + device,
@@ -129,9 +173,9 @@ function privacyOsd(device: any, active: any) {
     };
 }
 
-function hardwareOsd(previous: any, current: any) {
-    const before = previous || ({});
-    const value = current || ({});
+function hardwareOsd(previous: Maybe<HardwareState>, current: Maybe<HardwareState>): Osd | null {
+    const before: HardwareState = previous || ({});
+    const value: HardwareState = current || ({});
     if (before.camera_privacy !== value.camera_privacy)
         return privacyOsd("camera", !!value.camera_privacy);
     if (before.microphone_privacy !== value.microphone_privacy)
@@ -147,14 +191,14 @@ function hardwareOsd(previous: any, current: any) {
     return null;
 }
 
-function idleInhibited(powerSuspend: any) {
+function idleInhibited(powerSuspend: Maybe<PowerSuspendState>) {
     return (powerSuspend && Array.isArray(powerSuspend.inhibitors) ? powerSuspend.inhibitors : [])
-        .some(function (inhibitor: any) {
+        .some(function (inhibitor: { what?: string }) {
             return String(inhibitor.what || "").split(":").includes("idle");
         });
 }
 
-function idleInhibitorOsd(powerSuspend: any) {
+function idleInhibitorOsd(powerSuspend: Maybe<PowerSuspendState>): Osd {
     const active = idleInhibited(powerSuspend);
     return {
         kind: "idle-inhibitor",
@@ -167,23 +211,24 @@ function idleInhibitorOsd(powerSuspend: any) {
     };
 }
 
-function changedPowerProfileOsd(previous: any, value: any) {
+function changedPowerProfileOsd(previous: Maybe<PowerProfileState>, value: PowerProfileState) {
     return previous && previous.available && previous.profile !== value.profile
         ? powerProfileOsd(value) : null;
 }
 
-function changedIdleInhibitorOsd(previous: any, value: any) {
+function changedIdleInhibitorOsd(previous: Maybe<PowerSuspendState>, value: PowerSuspendState) {
     return previous && previous.available
         && idleInhibited(previous) !== idleInhibited(value)
         ? idleInhibitorOsd(value) : null;
 }
 
-function availableDomainOsd(previous: any, value: any, renderer: any) {
+function availableDomainOsd(previous: Maybe<OsdDomain>, value: OsdDomain,
+    renderer: (previous: OsdDomain, value: OsdDomain) => Osd | null) {
     return previous && previous.available ? renderer(previous, value) : null;
 }
 
-function domainOsd(streams: any, stream: any, previous: any, value: any) {
-    const handlers: Record<string, () => any> = ({});
+function domainOsd(streams: OsdStreams, stream: string, previous: Maybe<OsdDomain>, value: OsdDomain) {
+    const handlers: Record<string, () => Osd | null> = ({});
     handlers[streams.powerProfile] = function () { return changedPowerProfileOsd(previous, value); };
     handlers[streams.audio] = function () { return availableDomainOsd(previous, value, audioDeviceOsd); };
     handlers[streams.workspaces] = function () { return availableDomainOsd(previous, value, displayOutputOsd); };
@@ -192,15 +237,15 @@ function domainOsd(streams: any, stream: any, previous: any, value: any) {
     return handlers[stream] ? handlers[stream]() : null;
 }
 
-function displayOutputOsd(previous: any, current: any) {
-    const before = (previous && previous.monitors || []).map(function (monitor: any) {
+function displayOutputOsd(previous: Maybe<WorkspaceMonitors>, current: Maybe<WorkspaceMonitors>): Osd | null {
+    const before = (previous && previous.monitors || []).map(function (monitor: { name: string }) {
         return monitor.name;
     });
-    const after = (current && current.monitors || []).map(function (monitor: any) {
+    const after = (current && current.monitors || []).map(function (monitor: { name: string }) {
         return monitor.name;
     });
-    const added = after.find(function (name: any) { return !before.includes(name); });
-    const removed = before.find(function (name: any) { return !after.includes(name); });
+    const added = after.find(function (name: string) { return !before.includes(name); });
+    const removed = before.find(function (name: string) { return !after.includes(name); });
     if (!added && !removed)
         return null;
     return {
@@ -214,9 +259,9 @@ function displayOutputOsd(previous: any, current: any) {
     };
 }
 
-function audioDeviceOsd(previous: any, current: any) {
-    const before = previous || ({});
-    const value = current || ({});
+function audioDeviceOsd(previous: Maybe<AudioState>, current: Maybe<AudioState>): Osd | null {
+    const before: AudioState = previous || ({});
+    const value: AudioState = current || ({});
     if (before.sink_name !== value.sink_name)
         return {
             kind: "device", icon: "󰓃", label: "Audio output",

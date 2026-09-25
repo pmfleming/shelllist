@@ -41,9 +41,9 @@ function pairingQueue(prompts, envelope) {
     const current = prompts || [];
     if (!prompt.request_id)
         return current;
-    if (["cancelled", "answered"].includes(event.event))
+    if (["cancelled", "answered"].includes(String(event.event)))
         return current.filter(function (item) { return item.request_id !== prompt.request_id; });
-    if (!["requested", "display"].includes(event.event))
+    if (!["requested", "display"].includes(String(event.event)))
         return current;
     const display = event.event === "display";
     const index = current.findIndex(function (item) {
@@ -150,7 +150,7 @@ function scanCompletionStatus(scan, deviceCount, currentStatus) {
         cancelled: "Bluetooth scan stopped",
         failed: (scan.error && scan.error.message) || "Bluetooth scan failed"
     });
-    return messages[scan.state] || currentStatus;
+    return messages[String(scan.state)] || currentStatus;
 }
 function operationCompletionStatus(operation, deviceName) {
     if (operation.state === "completed")
