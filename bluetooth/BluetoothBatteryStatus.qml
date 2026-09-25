@@ -10,6 +10,9 @@ Item {
 
     required property var device
     readonly property var displayReports: BluetoothBattery.displayReports(device)
+    readonly property var overallReport: displayReports.some(function (report) { return report.component === "main"; })
+        ? null : BluetoothBattery.ordered(device.battery || []).find(function (report) { return report.component === "main"; }) || null
+    readonly property bool batteryLive: !!device.connected && !device.battery_last_known
     readonly property int indicatorHeight: 166
     readonly property int ringSize: displayReports.length === 1 ? 126 : 108
     readonly property int artworkSize: Math.round(ringSize * 0.68)
@@ -17,7 +20,21 @@ Item {
     readonly property real percentageBottom: percentageY + Math.ceil(percentageMetrics.height)
 
     visible: true
-    implicitHeight: indicatorHeight
+    implicitHeight: indicatorHeight + (overallReport ? overallPercentage.implicitHeight + Ui.Theme.spacingSm : 0)
+
+    Ui.ThemeText {
+        id: overallPercentage
+        objectName: "overallBatteryPercentage"
+        visible: !!root.overallReport
+        y: root.indicatorHeight
+        width: parent.width
+        text: root.overallReport ? root.overallReport.percentage + "%" : ""
+        horizontalAlignment: Text.AlignHCenter
+        font.pixelSize: Ui.Theme.fontSizeHeading
+        font.weight: Ui.Theme.fontWeightDemiBold
+        opacity: root.batteryLive ? 1.0 : Ui.Theme.disabledOpacity
+        Accessible.name: "Battery " + text
+    }
 
     TextMetrics {
         id: percentageMetrics
@@ -55,7 +72,8 @@ Item {
                 readonly property bool batteryAvailable: BluetoothBattery.isValid(modelData)
                 readonly property real percentage: batteryAvailable ? modelData.percentage : 0
                 readonly property bool charging: !!root.device.battery_live && modelData.charging === true
-                Accessible.name: BluetoothBattery.compactLabel(modelData) + " " + percentage + "%" + (charging ? " charging" : "")
+                Accessible.name: (BluetoothBattery.compactLabel(modelData) || "Battery") + " "
+                    + (batteryAvailable ? percentage + "%" : "unavailable") + (charging ? " charging" : "")
                 readonly property color statusColor: root.ringColor(percentage)
                 readonly property string imageSource: BluetoothBattery.imageFor(root.device, modelData)
                 readonly property int ringSize: root.ringSize
@@ -71,6 +89,7 @@ Item {
                     width: indicator.ringSize
                     height: indicator.ringSize
                     antialiasing: true
+                    opacity: root.batteryLive ? 1.0 : Ui.Theme.disabledOpacity
 
                     onWidthChanged: requestPaint()
                     onHeightChanged: requestPaint()
@@ -124,7 +143,7 @@ Item {
                     fillMode: Image.PreserveAspectFit
                     mipmap: true
                     visible: indicator.imageSource.length > 0
-                    opacity: root.device.battery_last_known ? 0.78 : 1.0
+                    opacity: root.device.connected ? 1.0 : 0.78
                 }
 
                 Text {
@@ -138,6 +157,7 @@ Item {
 
                 Rectangle {
                     visible: indicator.batteryAvailable
+                    opacity: root.batteryLive ? 1.0 : Ui.Theme.disabledOpacity
                     x: ring.x + Math.round((ring.width - width) / 2)
                     y: 0
                     width: 34
@@ -158,11 +178,11 @@ Item {
 
                 Ui.ThemeText {
                     objectName: "batteryPercentage-" + indicator.modelData.component
-                    visible: indicator.batteryAvailable
+                    opacity: root.batteryLive ? 1.0 : Ui.Theme.disabledOpacity
                     x: Math.round(Ui.Theme.spacingSm / 2)
                     y: root.percentageY
                     width: parent.width - Ui.Theme.spacingSm
-                    text: indicator.percentage + "%"
+                    text: indicator.batteryAvailable ? indicator.percentage + "%" : "—"
                     font.pixelSize: Ui.Theme.fontSizeHeading
                     font.weight: Ui.Theme.fontWeightDemiBold
                     horizontalAlignment: Text.AlignHCenter

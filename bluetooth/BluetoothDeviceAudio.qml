@@ -8,12 +8,20 @@ Ui.DetailColumnCard {
     required property BluetoothController controller
     readonly property var policy: controller.selectedDevice.policy || ({})
     readonly property bool hasAudio: !!controller.selectedAudio.device_key
-    readonly property bool audioDevice: hasAudio
-        || /headphone|headset|speaker|audio/i.test(controller.selectedDevice.device_type || "")
+    readonly property bool liveAudio: !!controller.selectedDevice.connected && hasAudio
+    readonly property var presentation: controller.selectedAudioPresentation
+    readonly property var profiles: presentation.profiles || []
+    readonly property string profileKey: (liveAudio ? controller.selectedAudio.active_profile_key : "")
+        || policy.preferred_audio_profile_key || presentation.active_profile_key || ""
+    readonly property var displayedProfile: profiles.find(function (profile) { return profile.key === card.profileKey; }) || ({})
+    readonly property bool audioDevice: hasAudio || !!presentation.device_key
+        || /earbud|headphone|headset|speaker|audio/i.test(controller.selectedDevice.device_type || "")
+        || /headphone|headset|speaker|audio/i.test(controller.selectedDevice.icon || "")
+        || (controller.selectedDevice.services || []).some(function (service) { return /audio sink|headset|handsfree/i.test(service.label || ""); })
         || !!((controller.selectedDevice.fast_pair || {}).multipoint || {}).supported
         || !!policy.preferred_audio_profile_key || policy.audio_route_on_connect === "switch"
-    readonly property var profileOptions: [{value: "", label: "Automatic on reconnect"}].concat(
-        controller.selectedAudioProfiles.map(function (profile) {
+    readonly property var profileOptions: [{value: "", label: "Automatic"}].concat(
+        profiles.map(function (profile) {
             return {value: profile.key, label: profile.label, enabled: profile.available !== false};
         }))
 
@@ -28,15 +36,17 @@ Ui.DetailColumnCard {
         objectName: "currentAudioProfile"
         Layout.fillWidth: true
         options: card.profileOptions
-        value: card.controller.selectedAudio.active_profile_key || card.policy.preferred_audio_profile_key || ""
-        placeholder: "Saved profile (currently unavailable)"
-        interactive: !card.controller.actionInFlight
+        value: card.profileKey
+        placeholder: card.profileKey || "—"
+        interactive: card.liveAudio && !card.controller.actionInFlight
         // Selecting the active profile also makes it the reconnect preference.
         onActivated: function (index) {
             if (optionEnabled(index) && String(options[index].value || "") === value)
                 selected(value);
         }
         onSelected: function (key) {
+            if (!interactive)
+                return;
             if (!key) {
                 card.controller.updateDevicePolicy({preferred_audio_profile_key: null});
                 return;
@@ -46,22 +56,15 @@ Ui.DetailColumnCard {
                 card.controller.setAudioProfile(profile);
         }
     }
-    Ui.ThemeText {
-        Layout.fillWidth: true
-        text: qsTr("Applied now and remembered for reconnects.")
-        color: Ui.Theme.mutedText
-        font.pixelSize: Ui.Theme.fontSizeSmall
-    }
-
     ColumnLayout {
         Layout.fillWidth: true
-        visible: card.hasAudio
         spacing: Ui.Theme.spacingSm
 
         Ui.ThemeText {
+            objectName: "audioCodec"
             Layout.fillWidth: true
-            visible: !!card.controller.activeAudioProfile.codec
-            text: "Codec: " + (card.controller.activeAudioProfile.codec || "")
+            text: "Codec: " + (card.displayedProfile.codec || "—")
+            opacity: card.liveAudio ? 1.0 : Ui.Theme.disabledOpacity
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.fontSizeSmall
         }
@@ -74,7 +77,7 @@ Ui.DetailColumnCard {
                 Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: card.controller.selectedSink.is_default ? "Default output" : "Use as output"
                 toolTip: card.controller.selectedSink.ready ? "" : "Audio output is not available"
-                enabled: !card.controller.actionInFlight && !!card.controller.selectedSink.ready && !card.controller.selectedSink.is_default
+                enabled: card.liveAudio && !card.controller.actionInFlight && !!card.controller.selectedSink.ready && !card.controller.selectedSink.is_default
                 onClicked: card.controller.setAudioDefault(card.controller.selectedSink)
             }
             Ui.ActionButton {
@@ -83,7 +86,7 @@ Ui.DetailColumnCard {
                 Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: card.controller.selectedSource.is_default ? "Default input" : "Use as input"
                 toolTip: card.controller.selectedSource.ready ? "" : "Audio input is not available"
-                enabled: !card.controller.actionInFlight && !!card.controller.selectedSource.ready && !card.controller.selectedSource.is_default
+                enabled: card.liveAudio && !card.controller.actionInFlight && !!card.controller.selectedSource.ready && !card.controller.selectedSource.is_default
                 onClicked: card.controller.setAudioDefault(card.controller.selectedSource)
             }
         }

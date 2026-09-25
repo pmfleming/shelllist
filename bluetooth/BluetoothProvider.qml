@@ -175,8 +175,7 @@ Core.Provider {
             return (operationError.message || "Last operation failed") + " · retry available";
         const batterySummary = BluetoothBattery.summary(device.battery || []);
         const battery = batterySummary ? " · " + batterySummary : "";
-        const lastKnown = battery && device.battery_last_known ? " · last known" : "";
-        return BluetoothFlow.deviceState(device) + battery + lastKnown;
+        return BluetoothFlow.deviceState(device) + battery;
     }
 
     function resultForDevice(device: var): var {

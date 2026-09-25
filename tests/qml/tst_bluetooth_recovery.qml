@@ -446,7 +446,7 @@ DaemonTestCase {
         compare(draft.value, "Keep on disconnect");
         verify(draft.dirty && !draft.pending && draft.error.length > 0);
     }
-    function test_audioPreferencesRemainEditableWithoutLiveAudio() {
+    function test_onlyReconnectToggleRemainsEditableWithoutLiveAudio() {
         const panel = makePanel();
         const controller = panel.controller;
         const device = Object.assign({}, controller.selectedDevice, {device_type: "Headphones",
@@ -459,19 +459,127 @@ DaemonTestCase {
         const profile = findChild(panel.page, "currentAudioProfile");
         verify(profile.visible);
         compare(profile.value, "saved-profile");
-        compare(profile.placeholder, "Saved profile (currently unavailable)");
-        verify(profile.interactive);
+        compare(profile.optionLabel(profile.currentIndex), "saved-profile");
+        verify(!profile.interactive);
         profile.selected("");
+        compare(calls.length, 0);
+        const output = findChild(panel.page, "audioOutputOnConnect");
+        verify(output.checked && output.interactive);
+        output.clicked();
         compare(calls.length, 1);
         compare(calls[0].method, "bluetooth.device.policy.update");
-        compare(calls[0].params.key, "buds");
-        compare(calls[0].params.preferred_audio_profile_key, null);
-        findChild(controller, "bluetoothBackend").pending = ({});
-        const output = findChild(panel.page, "audioOutputOnConnect");
-        verify(output.checked);
-        output.clicked();
-        compare(calls.length, 2);
-        compare(calls[1].params.audio_route_on_connect, "keep");
+        compare(calls[0].params.audio_route_on_connect, "keep");
+    }
+    function test_headsetAudioLayoutSurvivesDisconnect() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const audio = {device_key: "buds", active_profile_key: "sbc",
+            profiles: [{key: "sbc", label: "High fidelity", codec: "SBC"}],
+            sink: {key: "output", ready: true}, source: {key: "input", ready: true}};
+        controller.applyAudioSnapshot([audio]);
+        const card = findChild(panel.page, "deviceAudio");
+        const profile = findChild(panel.page, "currentAudioProfile");
+        const codec = findChild(panel.page, "audioCodec");
+        const output = findChild(panel.page, "useAudioOutput");
+        const input = findChild(panel.page, "useAudioInput");
+        wait(0);
+        const height = card.height;
+        const outputY = output.mapToItem(card, 0, 0).y;
+        verify(profile.interactive && output.enabled && input.enabled);
+        const connectedDevice = controller.selectedDevice;
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters,
+            devices: [Object.assign({}, connectedDevice, {connected: false})]});
+        // Even before the audio removal event, stale live routes cannot be used.
+        verify(!profile.interactive && !output.enabled && !input.enabled);
+        verify(!controller.setAudioDefault(audio.sink));
+        verify(!controller.setAudioProfile(audio.profiles[0]));
+        controller.applyAudioSnapshot([]);
+        wait(0);
+        verify(card.visible && profile.visible && codec.visible && output.visible && input.visible);
+        compare(card.height, height);
+        compare(output.mapToItem(card, 0, 0).y, outputY);
+        compare(profile.value, "sbc");
+        compare(profile.optionLabel(profile.currentIndex), "High fidelity");
+        compare(codec.text, "Codec: SBC");
+        verify(codec.opacity < 1);
+        compare(controller.selectedSink.key, undefined);
+        compare(controller.selectedSource.key, undefined);
+        verify(findChild(panel.page, "audioOutputOnConnect").interactive);
+        compare(calls.length, 0);
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: [connectedDevice]});
+        controller.applyAudioSnapshot([audio]);
+        verify(profile.interactive && output.enabled && input.enabled);
+        compare(codec.opacity, 1);
+        // A different device must not inherit this headset's profile or codec.
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters,
+            devices: [{key: "other", paired: true, device_type: "Earbuds", policy: {}}]});
+        controller.applyAudioSnapshot([]);
+        compare(profile.value, "");
+        compare(codec.text, "Codec: —");
+        compare(controller.audioPresentationByDevice.buds, undefined);
+    }
+    function test_disconnectedAudioDevicesHaveTheSameControls_data() {
+        return [
+            {tag: "headphones", device_type: "Headphones"},
+            {tag: "earbuds", device_type: "Earbuds"},
+            {tag: "headset", device_type: "Headset"},
+            {tag: "speaker", device_type: "Speaker"}
+        ];
+    }
+    function test_disconnectedAudioDevicesHaveTheSameControls(data) {
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.applyAudioSnapshot([]);
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters,
+            devices: [{key: "cold", name: "Headset", paired: true, connected: false,
+                device_type: data.device_type, policy: {}}]});
+        wait(0);
+        verify(findChild(panel.page, "deviceAudio").visible);
+        for (const name of ["currentAudioProfile", "useAudioOutput", "useAudioInput"]) {
+            const control = findChild(panel.page, name);
+            verify(control.visible && !control.enabled, name);
+        }
+        compare(findChild(panel.page, "audioCodec").text, "Codec: —");
+        verify(findChild(panel.page, "audioOutputOnConnect").interactive);
+    }
+    Component { id: batteryComponent; Bt.BluetoothBatteryStatus { width: 600; height: implicitHeight } }
+    function test_batteryReadingsRemainVisibleAndDimWithoutExtraText() {
+        const device = {device_type: "Earbuds", connected: true, battery_live: true,
+            components: ["left", "right", "case"], battery: [
+                {component: "left", percentage: 93}, {component: "case", percentage: 77},
+                {component: "right", percentage: 96}]};
+        const battery = createTemporaryObject(batteryComponent, testCase, {device: device});
+        verify(battery !== null);
+        const left = findChild(battery, "batteryPercentage-left");
+        verify(left.visible);
+        compare(left.text, "93%");
+        compare(left.opacity, 1);
+        const height = battery.height;
+        battery.device = Object.assign({}, device, {connected: false, battery_live: false, battery_last_known: true});
+        compare(left.text, "93%");
+        verify(left.visible && left.opacity < 1);
+        compare(battery.height, height);
+        const controller = makePanel().controller;
+        const subtitle = controller.provider.deviceSubtitle(battery.device, null, null);
+        verify(subtitle.includes("L 93%") && subtitle.includes("Case 77%"));
+        verify(!subtitle.includes("last known"));
+    }
+    function test_overallEarbudBatteryIsNotLostOrAssignedToEachEarbud() {
+        const battery = createTemporaryObject(batteryComponent, testCase, {device: {
+            device_type: "Earbuds", connected: true, battery: [{component: "main", percentage: 79}]}});
+        verify(battery !== null);
+        const overall = findChild(battery, "overallBatteryPercentage");
+        verify(overall.visible);
+        compare(overall.text, "79%");
+        for (const component of ["left", "right"]) {
+            verify(findChild(battery, "batteryArtwork-" + component).visible);
+            compare(findChild(battery, "batteryPercentage-" + component).text, "—");
+        }
+        battery.device = {device_type: "Headphones", connected: false, battery: []};
+        verify(!overall.visible);
+        const percentage = findChild(battery, "batteryPercentage-main");
+        verify(percentage.visible);
+        compare(percentage.text, "—");
     }
     Component {
         id: deviceDetailsComponent

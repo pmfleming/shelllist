@@ -28,6 +28,8 @@ Ui.ProviderChooserController {
     property var adapters: []
     property var allDevices: []
     property var audioDevices: []
+    // Presentation only: never reuse cached endpoints for audio operations.
+    property var audioPresentationByDevice: ({})
     property string audioStatus: ""
     property var pairingPrompts: []
     property var pairingInputs: ({})
@@ -47,6 +49,7 @@ Ui.ProviderChooserController {
         || adapters.find(function (adapter) { return adapter.key === selectedDevice.adapter_key; })
         || adapters[0] || ({})
     readonly property var selectedAudio: audioDevices.find(function (audio) { return audio.device_key === selectedDevice.key; }) || ({})
+    readonly property var selectedAudioPresentation: audioPresentationByDevice[selectedDevice.key] || ({})
     readonly property var selectedSink: selectedAudio.sink || ({})
     readonly property var selectedSource: selectedAudio.source || ({})
     readonly property var selectedAudioProfiles: selectedAudio.profiles || []
@@ -152,7 +155,20 @@ Ui.ProviderChooserController {
         }
         status = statusForSnapshot();
     }
-    function applyAudioSnapshot(devices) { audioDevices = devices || []; audioStatus = ""; }
+    function applyAudioSnapshot(devices) {
+        const presentation = Object.assign({}, audioPresentationByDevice);
+        for (const audio of devices || []) {
+            const previous = presentation[audio.device_key] || ({});
+            presentation[audio.device_key] = {
+                device_key: audio.device_key,
+                active_profile_key: audio.active_profile_key || previous.active_profile_key || "",
+                profiles: audio.profiles && audio.profiles.length > 0 ? audio.profiles : (previous.profiles || [])
+            };
+        }
+        audioPresentationByDevice = presentation;
+        audioDevices = devices || [];
+        audioStatus = "";
+    }
     function applyRequestSnapshot(requests: var): void {
         const state = BluetoothFlow.requestState(requests);
         operationState.restore(state.operations);
@@ -181,6 +197,12 @@ Ui.ProviderChooserController {
         const policyAdapter = management.preferred_adapter_key || preferredAdapterKey;
         preferredAdapterKey = BluetoothFlow.retainedAdapterKey(adapters, policyAdapter);
         allDevices = snapshot.devices || [];
+        const presentation = ({});
+        for (const device of allDevices) {
+            if (audioPresentationByDevice[device.key])
+                presentation[device.key] = audioPresentationByDevice[device.key];
+        }
+        audioPresentationByDevice = presentation;
         rebuildResults(false);
         if (BluetoothFlow.shouldStartScan(uiActive && searchAllDevices, powered, scanning, scanRequested)) {
             scanRequested = true;
@@ -317,7 +339,7 @@ Ui.ProviderChooserController {
         return backend.updateDevicePolicy(selectedDevice.key, values);
     }
     function setAudioDefault(endpoint) {
-        if (!hasSelection || actionInFlight || !endpoint || !endpoint.key || !endpoint.ready) return false;
+        if (!hasSelection || !selectedDevice.connected || !selectedAudio.device_key || actionInFlight || !endpoint || !endpoint.key || !endpoint.ready) return false;
         status = "Updating default Bluetooth audio route…";
         return backend.setAudioDefault(selectedDevice.key, endpoint.key);
     }
@@ -329,7 +351,7 @@ Ui.ProviderChooserController {
         return backend.deviceOperation("set-noise-control", selectedDevice, { mode: mode });
     }
     function setAudioProfile(profile) {
-        if (!hasSelection || !profile || !profile.key || profile.available === false || actionInFlight)
+        if (!hasSelection || !selectedDevice.connected || !selectedAudio.device_key || !profile || !profile.key || profile.available === false || actionInFlight)
             return false;
         status = "Switching Bluetooth audio to " + profile.label + "…";
         return backend.setAudioProfile(selectedDevice.key, profile.key);
