@@ -233,7 +233,7 @@ for (const reportedActive of [false, true]) {
     c.updateLevelEnabled("low", false);
     c.settingsOperationFinished("alert");
     c.updateLevelEnabled("low", true);
-    assert.equal(c.draftWarningProfile, "keep-current", "cannot enable unavailable profiles");
+    assert.equal(c.alertDraft.warning_profile, "keep-current", "cannot enable unavailable profiles");
     assert.equal(calls.at(-1).args[0].notify_warning, true, "notifications work without a profile service");
 }
 {

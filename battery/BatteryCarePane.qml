@@ -30,7 +30,7 @@ Column {
             Layout.fillWidth: true
             Layout.preferredHeight: 42
             title: chargeTarget < 100 ? qsTr("Notify at charge limit (%1%)").arg(chargeTarget) : qsTr("Notify at 100%")
-            checked: pane.controller.draftNotifyWhenFull
+            checked: pane.controller.alertDraft.notify_when_full
             interactive: !pane.controller.actionInFlight
             onClicked: pane.controller.updateNotifyWhenFull(!checked)
         }

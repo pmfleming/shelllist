@@ -184,6 +184,16 @@ function energy(milliwattHours) {
     return value >= 1000 ? (value / 1000).toFixed(2) + " Wh" : value.toFixed(value >= 100 ? 0 : 1) + " mWh";
 }
 
+function saveStatus(valid, invalidText, active, error, dirty) {
+    if (!valid)
+        return invalidText;
+    if (active)
+        return "Applying automatically…";
+    if (error)
+        return "Automatic apply failed";
+    return dirty ? "Waiting to apply…" : "Applied automatically";
+}
+
 function alertRangeValid(warningPercent, criticalPercent) {
     const warning = Number(warningPercent);
     const critical = Number(criticalPercent);

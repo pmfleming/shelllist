@@ -102,15 +102,10 @@ Ui.ChooserController {
     property bool draftProtectionEnabled: false
     property int draftStartPercent: 75
     property int draftEndPercent: 80
-    property int draftWarningPercent: 25
-    property int draftCriticalPercent: 12
-    property bool draftNotifyWhenFull: true
-    property bool draftNotifyWarning: true
-    property bool draftNotifyCritical: true
-    property string draftWarningProfile: "power-saver"
-    property string draftCriticalProfile: "power-saver"
-    property string lastWarningProfile: "power-saver"
-    property string lastCriticalProfile: "power-saver"
+    property var alertDraft: Flow.alertDraft({})
+
+    // The last real profile per level, restored when a level is re-enabled.
+    property var lastLevelProfiles: ({ low: "power-saver", critical: "power-saver" })
     property bool thresholdDraftDirty: false
     property bool alertDraftDirty: false
     property bool thresholdEditing: false
@@ -188,14 +183,11 @@ Ui.ChooserController {
     readonly property var batteryAutomation: powerProfile.battery_automation || ({})
     readonly property string automationStatus: Presentation.automationStatus(batteryAutomation, powerProfile.available)
     readonly property bool thresholdDraftValid: Presentation.thresholdRangeValid(draftStartPercent, draftEndPercent)
-    readonly property bool alertDraftValid: Presentation.alertRangeValid(draftWarningPercent, draftCriticalPercent)
+    readonly property bool alertDraftValid: Presentation.alertRangeValid(alertDraft.warning_percent, alertDraft.critical_percent)
     readonly property bool settingsOperationActive: thresholdOperationActive || alertOperationActive
-    readonly property string thresholdSaveStatus: !thresholdDraftValid ? "Choose a valid range" : (thresholdOperationActive ? "Applying automatically…" : (thresholdSaveError.length > 0 ? "Automatic apply failed" : (thresholdDraftDirty ? "Waiting to apply…" : "Applied automatically")))
-    readonly property string alertSaveStatus: !alertDraftValid ? "Choose valid battery levels" : (alertOperationActive ? "Applying automatically…" : (alertSaveError.length > 0 ? "Automatic apply failed" : (alertDraftDirty ? "Waiting to apply…" : "Applied automatically")))
-
-    function valueOr(value: var, fallback: var): var {
-        return value === null || value === undefined ? fallback : value;
-    }
+    readonly property string thresholdSaveStatus: Presentation.saveStatus(thresholdDraftValid, "Choose a valid range", thresholdOperationActive, thresholdSaveError, thresholdDraftDirty)
+    readonly property string alertSaveStatus: Presentation.saveStatus(alertDraftValid, "Choose valid battery levels", alertOperationActive, alertSaveError, alertDraftDirty)
+    readonly property var levelFields: Flow.levelFields
 
     function selectViewTab(tab: string): void {
         if (viewTabs.some(function (option) {
@@ -244,23 +236,15 @@ Ui.ChooserController {
             requestEnergyPeriod("last-charge", true);
         syncBatterySelection(selectedDevice ? selectedDevice.id : "");
         syncThresholdDraft();
-        if (!alertDraftDirty) {
-            draftWarningPercent = Number(valueOr(policy.warning_percent, 25));
-            draftCriticalPercent = Number(valueOr(policy.critical_percent, 12));
-            draftNotifyWhenFull = valueOr(policy.notify_when_full, true);
-            draftNotifyWarning = valueOr(policy.notify_warning, true);
-            draftNotifyCritical = valueOr(policy.notify_critical, true);
-            const legacyProfile = valueOr(policy.auto_power_saver, true) ? "power-saver" : "keep-current";
-            draftWarningProfile = valueOr(policy.warning_profile, legacyProfile);
-            draftCriticalProfile = valueOr(policy.critical_profile, legacyProfile);
-        }
+        if (!alertDraftDirty)
+            alertDraft = Flow.alertDraft(policy);
     }
 
     function syncThresholdDraft(): void {
         if (!thresholdDraftDirty) {
             draftProtectionEnabled = !!protection.desired_enabled;
-            draftStartPercent = Number(valueOr(protection.desired_start_percent, 75));
-            draftEndPercent = Number(valueOr(protection.desired_end_percent, 80));
+            draftStartPercent = Number(Flow.valueOr(protection.desired_start_percent, 75));
+            draftEndPercent = Number(Flow.valueOr(protection.desired_end_percent, 80));
         }
     }
 
@@ -302,27 +286,9 @@ Ui.ChooserController {
     function updateSuspendPolicy(profile: string, field: string, value: var): bool {
         if ((!suspendPolicyState.available && profile !== "critical_battery") || suspendPolicySaving || actionInFlight)
             return false;
-        const next = JSON.parse(JSON.stringify(suspendPolicyDraft));
-        if (profile === "critical_battery") {
-            if (field === "enabled" ? typeof value !== "boolean"
-                : !["percent", "grace_seconds"].includes(field) || !Number.isInteger(value)
-                    || (field === "percent" ? value < 1 || value > 20 : value < 30 || value > 300))
-                return false;
-            next.critical_battery = Object.assign({ enabled: false, percent: 5, grace_seconds: 60 }, next.critical_battery || {});
-            next.critical_battery[field] = value;
-        } else if (field === "same_profile") {
-            if (typeof value !== "boolean")
-                return false;
-            next.same_profile = value;
-        } else if (field === "lid_action") {
-            if (!["system", "ignore", "lock", "suspend", "hibernate", "profile"].includes(value))
-                return false;
-            next.lid_action = value;
-        } else {
-            if (!["battery", "plugged"].includes(profile) || !["sleep_minutes", "hibernate_minutes"].includes(field) || !Number.isInteger(value) || value < 0 || value > 10080)
-                return false;
-            next[profile][field] = value;
-        }
+        const next = Flow.editSuspendPolicy(suspendPolicyDraft, profile, field, value);
+        if (!next)
+            return false;
         suspendPolicyDraft = next;
         suspendPolicyCriticalOnly = profile === "critical_battery" && (!suspendPolicyDirty || suspendPolicyCriticalOnly);
         suspendPolicyDirty = true;
@@ -566,16 +532,19 @@ Ui.ChooserController {
             alertAutoSave.restart();
     }
 
+    function editAlert(changes: var, immediate: bool): void {
+        alertDraft = Object.assign({}, alertDraft, changes);
+        markAlertChanged(immediate);
+    }
+
     function updateWarningPercent(value: int, dragging: bool): void {
         alertEditing = dragging;
-        draftWarningPercent = value;
-        markAlertChanged(false);
+        editAlert({ warning_percent: value }, false);
     }
 
     function updateCriticalPercent(value: int, dragging: bool): void {
         alertEditing = dragging;
-        draftCriticalPercent = value;
-        markAlertChanged(false);
+        editAlert({ critical_percent: value }, false);
     }
 
     function finishAlertEditing(): void {
@@ -589,55 +558,35 @@ Ui.ChooserController {
     }
 
     function updateNotifyWhenFull(value: bool): void {
-        draftNotifyWhenFull = value;
-        markAlertChanged(true);
+        editAlert({ notify_when_full: value }, true);
     }
 
     function updateLevelNotification(level: string, value: bool): void {
-        if (level === "low")
-            draftNotifyWarning = value;
-        else if (level === "critical")
-            draftNotifyCritical = value;
-        else
-            return;
-        markAlertChanged(true);
+        const fields = levelFields[level];
+        if (fields)
+            editAlert({ [fields.notify]: value }, true);
     }
 
     function updateLevelEnabled(level: string, enabled: bool): void {
-        if (actionInFlight || (level !== "low" && level !== "critical"))
+        const fields = levelFields[level];
+        if (actionInFlight || !fields)
             return;
-        const current = level === "low" ? draftWarningProfile : draftCriticalProfile;
-        if (current !== "keep-current") {
-            if (level === "low")
-                lastWarningProfile = current;
-            else
-                lastCriticalProfile = current;
-        }
-        const previous = level === "low" ? lastWarningProfile : lastCriticalProfile;
+        const current = alertDraft[fields.profile];
+        if (current !== "keep-current")
+            lastLevelProfiles = Object.assign({}, lastLevelProfiles, { [level]: current });
+        const previous = lastLevelProfiles[level];
         const option = levelProfileOptions.find(function (option) { return option.value === previous && option.enabled; })
             || levelProfileOptions.find(function (option) { return option.enabled; });
         // Notifications remain available even without a power-profile service.
         const profile = enabled && option ? option.value : "keep-current";
-        if (level === "low") {
-            draftNotifyWarning = enabled;
-            draftWarningProfile = profile;
-        } else {
-            draftNotifyCritical = enabled;
-            draftCriticalProfile = profile;
-        }
-        markAlertChanged(true);
+        editAlert({ [fields.notify]: enabled, [fields.profile]: profile }, true);
     }
 
     function updateLevelProfile(level: string, value: string): void {
-        if (value !== "keep-current" && !levelProfileOptions.some(function (option) { return option.value === value && option.enabled !== false; }))
+        const fields = levelFields[level];
+        if (!fields || (value !== "keep-current" && !levelProfileOptions.some(function (option) { return option.value === value && option.enabled !== false; })))
             return;
-        if (level === "low")
-            draftWarningProfile = value;
-        else if (level === "critical")
-            draftCriticalProfile = value;
-        else
-            return;
-        markAlertChanged(true);
+        editAlert({ [fields.profile]: value }, true);
     }
 
     function setProtection(enabled: bool): bool {
@@ -691,15 +640,7 @@ Ui.ChooserController {
         alertOperationActive = true;
         alertSaveError = "";
         lastError = "";
-        if (backend.setAlertPolicy({
-            warning_percent: draftWarningPercent,
-            critical_percent: draftCriticalPercent,
-            notify_when_full: draftNotifyWhenFull,
-            notify_warning: draftNotifyWarning,
-            notify_critical: draftNotifyCritical,
-            warning_profile: draftWarningProfile,
-            critical_profile: draftCriticalProfile
-        }))
+        if (backend.setAlertPolicy(alertDraft))
             return true;
         alertOperationActive = false;
         alertSaveError = "Unable to send battery levels & actions";

@@ -24,7 +24,8 @@ Ui.DetailColumnCard {
             Layout.fillWidth: true
             spacing: Ui.Theme.spacingSm
 
-            readonly property bool active: low ? pane.controller.draftNotifyWarning : pane.controller.draftNotifyCritical
+            readonly property var fields: pane.controller.levelFields[modelData]
+            readonly property bool active: pane.controller.alertDraft[fields.notify]
 
             RowLayout {
                 Layout.fillWidth: true
@@ -36,7 +37,7 @@ Ui.DetailColumnCard {
                     label: level.low ? qsTr("Low battery") : qsTr("Critical battery")
                     labelWidth: 120
                     valueWidth: 40
-                    value: level.low ? pane.controller.draftWarningPercent : pane.controller.draftCriticalPercent
+                    value: pane.controller.alertDraft[level.fields.percent]
                     enabled: level.active && !pane.controller.actionInFlight
                     onEdited: function (dragging) {
                         if (level.low)
@@ -75,7 +76,7 @@ Ui.DetailColumnCard {
                     Layout.preferredHeight: implicitHeight
                     accessibleName: level.low ? qsTr("Low battery power profile") : qsTr("Critical battery power profile")
                     options: pane.controller.levelProfileOptions
-                    value: level.low ? pane.controller.draftWarningProfile : pane.controller.draftCriticalProfile
+                    value: pane.controller.alertDraft[level.fields.profile]
                     interactive: level.active && !pane.controller.actionInFlight
                     onSelected: function (value) {
                         pane.controller.updateLevelProfile(level.modelData, value);
