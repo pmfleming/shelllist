@@ -58,6 +58,8 @@ Item {
     }
     function refresh() {
     }
+    function cycleDetailsTab() {
+    }
     function setPower() {
     }
     function setDetailsTab(tab: string): void {

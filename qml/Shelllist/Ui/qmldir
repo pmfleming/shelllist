@@ -16,6 +16,7 @@ ChooserHeader 1.0 ChooserHeader.qml
 internal ChooserListBody ChooserListBody.qml
 ChooserListPane 1.0 ChooserListPane.qml
 ChooserShortcuts 1.0 ChooserShortcuts.qml
+SurfaceShortcut 1.0 SurfaceShortcut.qml
 ProviderChooserController 1.0 ProviderChooserController.qml
 ProviderChooserSurface 1.0 ProviderChooserSurface.qml
 ChooserSurface 1.0 ChooserSurface.qml

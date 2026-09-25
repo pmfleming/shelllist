@@ -11,22 +11,11 @@ Ui.ProviderChooserSurface {
     surfaceName: "Applications"
     refreshEnabled: !content.controller.operationBlocked && navigationEnabled
     detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection && refreshEnabled
-    helpEntries: [
-        {
-            keys: "Shift+Enter",
-            action: "Launch a new application instance"
-        },
-        {
-            keys: "F5",
-            action: "Refresh applications and windows"
-        },
-        {
-            keys: "Ctrl+Tab",
-            action: "Cycle detail tabs"
-        }
-    ]
-    onRefreshRequested: content.controller.refresh(true)
-    onDetailsTabRequested: content.controller.cycleDetailsTab()
+    refreshHelp: "Refresh applications and windows"
+
+    function refresh(): void {
+        content.controller.refresh(true);
+    }
 
     listComponent: Component {
         ApplicationListPane {
@@ -40,8 +29,9 @@ Ui.ProviderChooserSurface {
         }
     }
 
-    Shortcut {
+    Ui.SurfaceShortcut {
         sequence: "Shift+Return"
+        help: "Launch a new application instance"
         enabled: content.controller.uiActive && content.controller.hasSelection && !content.controller.operationBlocked && content.navigationEnabled && (content.controller.selectedApplication || ({})).kind === "desktop-application"
         onActivated: content.controller.launchSelected()
     }

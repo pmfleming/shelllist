@@ -22,18 +22,10 @@ Ui.ProviderChooserSurface {
         {
             keys: "Left",
             action: "Return to the city list"
-        },
-        {
-            keys: "Ctrl+Tab",
-            action: "Switch Time and Weather"
-        },
-        {
-            keys: "F5",
-            action: "Refresh time and weather"
         }
     ]
-    onRefreshRequested: controller.refresh()
-    onDetailsTabRequested: controller.cycleDetailsTab()
+    refreshHelp: "Refresh time and weather"
+    detailsTabHelp: "Switch Time and Weather"
 
     listComponent: Component {
         TimeWeatherListPane {

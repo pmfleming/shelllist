@@ -13,18 +13,11 @@ Ui.ProviderChooserSurface {
     navigationEnabled: !controller.modalPromptOpen && !controller.navigationHelpOpen && !editingDetails
     refreshEnabled: controller.powered && !controller.refreshInFlight && !controller.actionInFlight && navigationEnabled
     helpEnabled: controller.uiActive && !controller.modalPromptOpen && !editingDetails
-    helpEntries: [
-        {
-            keys: "F5",
-            action: "Refresh devices or toggle discovery"
-        },
-        {
-            keys: "Ctrl+Tab",
-            action: "Cycle detail tabs"
-        }
-    ]
-    onRefreshRequested: controller.toggleScan()
-    onDetailsTabRequested: controller.cycleDetailsTab()
+    refreshHelp: "Refresh devices or toggle discovery"
+
+    function refresh(): void {
+        controller.toggleScan();
+    }
 
     listComponent: Component {
         BluetoothDeviceListPane {

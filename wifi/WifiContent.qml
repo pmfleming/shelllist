@@ -14,30 +14,8 @@ ProviderChooserSurface {
     refreshEnabled: content.controller.powered && navigationEnabled && !content.controller.actionInFlight
     refreshAutoRepeat: false
     helpEnabled: content.controller.uiActive && !content.controller.promptActive
-    helpEntries: [
-        {
-            keys: "F5",
-            action: "Refresh and scan for networks"
-        },
-        {
-            keys: "F6",
-            action: "Connect to a hidden network"
-        },
-        {
-            keys: "F7",
-            action: "Open Security & Privacy"
-        },
-        {
-            keys: "F8",
-            action: "Open IP & DNS"
-        },
-        {
-            keys: "Ctrl+Tab",
-            action: "Cycle detail tabs"
-        }
-    ]
-    onRefreshRequested: content.controller.refresh()
-    onDetailsTabRequested: content.controller.cycleDetailsTab()
+    refreshHelp: "Refresh and scan for networks"
+    readonly property bool pageShortcutsEnabled: content.controller.uiActive && content.controller.powered && content.navigationEnabled && !content.controller.advanced.open
 
     function cancelPrompt(): void {
         content.controller.cancelPrompt("user");
@@ -54,20 +32,23 @@ ProviderChooserSurface {
         }
     }
 
-    Shortcut {
+    SurfaceShortcut {
         sequence: "F6"
-        enabled: content.controller.uiActive && content.controller.powered && content.navigationEnabled && !content.controller.advanced.open
+        help: "Connect to a hidden network"
+        enabled: content.pageShortcutsEnabled
         autoRepeat: false
         onActivated: content.controller.openHiddenNetworkPrompt()
     }
-    Shortcut {
+    SurfaceShortcut {
         sequence: "F7"
-        enabled: content.controller.uiActive && content.controller.powered && content.navigationEnabled && !content.controller.advanced.open
+        help: "Open Security & Privacy"
+        enabled: content.pageShortcutsEnabled
         onActivated: content.controller.advanced.openSettings("security")
     }
-    Shortcut {
+    SurfaceShortcut {
         sequence: "F8"
-        enabled: content.controller.uiActive && content.controller.powered && content.navigationEnabled && !content.controller.advanced.open
+        help: "Open IP & DNS"
+        enabled: content.pageShortcutsEnabled
         onActivated: content.controller.advanced.openSettings("hardware")
     }
 

@@ -13,19 +13,16 @@ Ui.ProviderChooserSurface {
     refreshEnabled: !controller.actionInFlight && !controller.trial && navigationEnabled
     detailsTabEnabled: navigationEnabled && controller.detailsOpen && controller.hasSelection && !controller.trial && !controller.actionInFlight
     helpEnabled: controller.uiActive && !controller.discardPrompt && !controller.trial
-    helpEntries: [
-        { keys: "Right", action: qsTr("Expand selected display") },
-        { keys: "Ctrl+Tab", action: qsTr("Switch Settings / Information") },
-        { keys: "Ctrl+Enter", action: qsTr("Preview the whole layout · keep within 20 seconds") }
-    ]
-    onRefreshRequested: controller.refresh()
-    onDetailsTabRequested: controller.cycleDetailsTab()
+    helpEntries: [{ keys: "Right", action: qsTr("Expand selected display") }]
+    refreshHelp: qsTr("Refresh displays")
+    detailsTabHelp: qsTr("Switch Settings / Information")
 
     listComponent: Component { DisplayListPane { controller: content.controller } }
     detailsComponent: Component { DisplayDetails { controller: content.controller; uiScale: content.uiScale } }
 
-    Shortcut {
+    Ui.SurfaceShortcut {
         sequence: "Ctrl+Return"
+        help: qsTr("Preview the whole layout · keep within 20 seconds")
         enabled: content.controller.uiActive && content.controller.detailsOpen && content.controller.canPreview && !content.controller.discardPrompt && !content.controller.navigationHelpOpen
         autoRepeat: false
         onActivated: content.controller.preview()

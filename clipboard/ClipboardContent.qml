@@ -13,30 +13,7 @@ Ui.ProviderChooserSurface {
     readonly property bool actionsEnabled: content.controller.uiActive && content.controller.hasSelection && !content.controller.multiSelectMode && !content.controller.deleteMenuOpen && !content.controller.actionInFlight && !content.controller.wipeChallenge && !content.controller.navigationHelpOpen
     detailsTabEnabled: content.actionsEnabled && content.controller.detailsOpen
     helpEnabled: content.controller.uiActive && !content.controller.multiSelectMode && !content.controller.deleteMenuOpen && !content.controller.detailState.editorFocused && !content.controller.deleteConfirmationOpen && !content.controller.bulkDeleteConfirmationOpen && !content.controller.wipeChallenge
-    helpEntries: [
-        {
-            keys: "Ctrl+Enter",
-            action: "Copy without pasting"
-        },
-        {
-            keys: "Shift+Enter",
-            action: "Paste an image as a file"
-        },
-        {
-            keys: "Delete",
-            action: "Delete the selected entry"
-        },
-        {
-            keys: "Ctrl+A",
-            action: "Select all in multi-select mode"
-        },
-        {
-            keys: "F5",
-            action: "Refresh clipboard history"
-        }
-    ]
-    onRefreshRequested: content.controller.refresh()
-    onDetailsTabRequested: content.controller.cycleDetailsTab()
+    refreshHelp: "Refresh clipboard history"
 
     listComponent: Component {
         ClipboardListPane {
@@ -50,23 +27,26 @@ Ui.ProviderChooserSurface {
         }
     }
 
-    Shortcut {
+    Ui.SurfaceShortcut {
         sequence: "Return"
         enabled: content.actionsEnabled && content.selectedEntry.kind !== "binary" && !content.controller.detailState.editorFocused
         onActivated: content.controller.pasteSelected()
     }
-    Shortcut {
+    Ui.SurfaceShortcut {
         sequence: "Ctrl+Return"
+        help: "Copy without pasting"
         enabled: content.actionsEnabled
         onActivated: content.controller.copySelected()
     }
-    Shortcut {
+    Ui.SurfaceShortcut {
         sequence: "Shift+Return"
+        help: "Paste an image as a file"
         enabled: content.actionsEnabled && content.selectedEntry.kind === "image"
         onActivated: content.controller.pasteImageAsFile()
     }
-    Shortcut {
+    Ui.SurfaceShortcut {
         sequence: "Delete"
+        help: "Delete the selected entry"
         enabled: content.controller.uiActive && !content.controller.actionInFlight && !content.controller.deleteMenuOpen && (content.controller.multiSelectMode ? content.controller.multiSelectedCount > 0 : content.controller.hasSelection)
         onActivated: {
             if (content.controller.multiSelectMode)
@@ -75,8 +55,9 @@ Ui.ProviderChooserSurface {
                 content.controller.requestDelete();
         }
     }
-    Shortcut {
+    Ui.SurfaceShortcut {
         sequence: "Ctrl+A"
+        help: "Select all in multi-select mode"
         enabled: content.controller.uiActive && content.controller.multiSelectMode && !content.controller.actionInFlight
         onActivated: content.controller.selectAllVisible()
     }
