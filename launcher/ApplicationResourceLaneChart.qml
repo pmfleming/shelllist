@@ -102,28 +102,31 @@ Rectangle {
                         }
                         return height - 3 - fraction * Math.max(1, height - 6);
                     }
+                    function sampleAt(pointIndex, descriptor, descriptorIndex, maximum) {
+                        const point = chart.points[pointIndex];
+                        const timestamp = chart.timestamps[pointIndex];
+                        const value = Number(point[descriptor.metric]);
+                        const inRange = timestamp >= chart.rangeStartMilliseconds && timestamp <= chart.rangeEndMilliseconds;
+                        if (!inRange || !isFinite(value) || value < 0 || !Resources.historicalMetricAvailable(point, descriptor.metric))
+                            return null;
+                        return {
+                            timestamp: timestamp,
+                            x: xFor(timestamp),
+                            y: yFor(value, descriptorIndex, maximum)
+                        };
+                    }
+                    // Unavailable samples and gaps longer than maximumGapMilliseconds break the line.
                     function validSegments(descriptor, descriptorIndex, maximum) {
                         const segments = [];
-                        let segment = [];
-                        let previousTimestamp = 0;
-                        chart.points.forEach(function (point, pointIndex) {
-                            const timestamp = chart.timestamps[pointIndex];
-                            const value = Number(point[descriptor.metric]);
-                            const valid = Resources.historicalMetricAvailable(point, descriptor.metric) && isFinite(value) && value >= 0 && timestamp >= chart.rangeStartMilliseconds && timestamp <= chart.rangeEndMilliseconds;
-                            if (!valid || (previousTimestamp > 0 && timestamp - previousTimestamp > chart.maximumGapMilliseconds)) {
-                                if (segment.length > 0)
-                                    segments.push(segment);
-                                segment = [];
-                            }
-                            if (valid)
-                                segment.push({
-                                    x: xFor(timestamp),
-                                    y: yFor(value, descriptorIndex, maximum)
-                                });
-                            previousTimestamp = valid ? timestamp : 0;
+                        let previous = null;
+                        chart.points.forEach(function (_point, pointIndex) {
+                            const sample = sampleAt(pointIndex, descriptor, descriptorIndex, maximum);
+                            if (sample && previous && sample.timestamp - previous.timestamp <= chart.maximumGapMilliseconds)
+                                segments[segments.length - 1].push(sample);
+                            else if (sample)
+                                segments.push([sample]);
+                            previous = sample;
                         });
-                        if (segment.length > 0)
-                            segments.push(segment);
                         return segments;
                     }
                     function dimRegion(context, left, right) {

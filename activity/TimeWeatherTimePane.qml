@@ -20,18 +20,19 @@ Ui.DetailFlickable {
     readonly property real sunProgress: hasSunTimes ? Math.max(0, Math.min(1, (now.getTime() - sunrise) / (sunset - sunrise))) : 0
     readonly property var moon: city.lunar || null
 
+    readonly property var moonNames: ({
+            "new-moon": qsTr("New moon"),
+            "waxing-crescent": qsTr("Waxing crescent"),
+            "first-quarter": qsTr("First quarter"),
+            "waxing-gibbous": qsTr("Waxing gibbous"),
+            "full-moon": qsTr("Full moon"),
+            "waning-gibbous": qsTr("Waning gibbous"),
+            "last-quarter": qsTr("Last quarter"),
+            "waning-crescent": qsTr("Waning crescent")
+        })
+
     function moonName(phase: string): string {
-        switch (phase) {
-        case "new-moon": return qsTr("New moon");
-        case "waxing-crescent": return qsTr("Waxing crescent");
-        case "first-quarter": return qsTr("First quarter");
-        case "waxing-gibbous": return qsTr("Waxing gibbous");
-        case "full-moon": return qsTr("Full moon");
-        case "waning-gibbous": return qsTr("Waning gibbous");
-        case "last-quarter": return qsTr("Last quarter");
-        case "waning-crescent": return qsTr("Waning crescent");
-        default: return qsTr("Unavailable");
-        }
+        return moonNames[phase] || qsTr("Unavailable");
     }
 
     function time(value: var): string {
@@ -121,7 +122,7 @@ Ui.DetailFlickable {
                     {
                         daylight: false,
                         label: "Moon",
-                        value: pane.moon ? pane.moonName(pane.moon.phase) : qsTr("Unavailable"),
+                        value: pane.moonName((pane.moon || ({})).phase || ""),
                         fraction: pane.moon ? pane.moon.fraction : 0,
                         available: !!pane.moon,
                         detail: pane.moon ? qsTr("Approx. %1% illuminated").arg(pane.moon.illumination_percent) : qsTr("Lunar estimate unavailable")

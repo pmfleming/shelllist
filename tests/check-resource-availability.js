@@ -22,13 +22,13 @@ assert.equal(Resources.currentMetricAvailable({ energy_source: "battery" }, "ave
 // Exercise the actual Canvas segmentation function: unavailable buckets break
 // the line even when the gap threshold alone would join their neighbours.
 const source = fs.readFileSync(path.join(launcher, "ApplicationResourceLaneChart.qml"), "utf8");
-const match = source.match(/                    function validSegments\((.*?)\) \{([\s\S]*?)\n                    \}/);
+const lift = name => source.match(new RegExp("^                    function " + name + "\\([\\s\\S]*?\\n                    \\}", "m"))[0];
 const points = [idle, unavailable, { ...idle, timestamp_ms: 45000, gpu_busy_percent: 70 }];
 const context = { Resources, chart: { points, timestamps: points.map(p => p.timestamp_ms),
     rangeStartMilliseconds: 0, rangeEndMilliseconds: 60000, maximumGapMilliseconds: 30000 },
     xFor: x => x, yFor: y => y };
 vm.createContext(context);
-vm.runInContext("function validSegments(" + match[1] + ") {" + match[2] + "\n}", context);
+vm.runInContext(lift("sampleAt") + "\n" + lift("validSegments"), context);
 const segments = context.validSegments({ metric: "gpu_busy_percent" }, 0, 100);
 assert.equal(segments.length, 2);
 assert.equal(segments[0][0].y, 0);

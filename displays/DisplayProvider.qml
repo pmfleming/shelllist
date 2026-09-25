@@ -11,18 +11,19 @@ Core.Provider {
     prefixes: ["displays:"]
     capabilities: ({ query: false, actions: true, preview: true, subscriptions: true })
 
+    function stateLabel(output: var): string {
+        if (Model.dockedOff(output, controller.displayPolicyState))
+            return qsTr("Off · External display preferred");
+        return output.disabled ? qsTr("Disabled") : qsTr("Enabled");
+    }
     function resultsForOutputs(outputs: var): var {
         return outputs.map(function (output) {
-            const dockedOff = output.disabled && Model.internal(output.name)
-                && controller.displayPolicyState.available && controller.displayPolicyState.status === "external"
-                && (controller.displayPolicyState.policy || {}).prefer_external;
             return Core.Model.result({
                 providerId: providerId,
                 providerPriority: priority,
                 id: output.name,
                 title: Model.title(output),
-                subtitle: output.name + " · " + (dockedOff ? qsTr("Off · External display preferred") : output.disabled ? qsTr("Disabled") : qsTr("Enabled")) +
-                    (output.width > 0 && output.height > 0 ? " · " + output.width + "×" + output.height + " · " + Number(output.refreshRate).toFixed(2) + " Hz" : ""),
+                subtitle: [output.name, stateLabel(output), Model.modeSummary(output)].filter(Boolean).join(" · "),
                 icon: Model.internal(output.name) ? "󰌢" : "󰍹",
                 keywords: [output.name, output.description || "", output.make || "", output.model || "", output.serial || ""],
                 score: output.disabled ? 0 : 10,

@@ -27,6 +27,11 @@ for (const [key, value] of [["x", NaN], ["y", Infinity], ["x", ""], ["x", 32769]
 const desktop = [outputs[1]];
 assert.notEqual(model.validate([{ ...draft[1], enabled: false }], desktop), "", "last output protected");
 assert.notEqual(model.validate([{ ...draft[0], enabled: false }, draft[1]], outputs), "", "internal fallback protected");
+const docked = { available: true, status: "external", policy: { prefer_external: true } };
+assert.equal(model.dockedOff(outputs[0], docked), true, "a laptop switched off by the docking policy is reported");
+assert.equal(model.dockedOff(outputs[0], { ...docked, policy: {} }), false, "a manually disabled laptop is not docked off");
+assert.equal(model.modeSummary(outputs[1]), "3840×2160 · 59.94 Hz");
+assert.equal(model.modeSummary({ ...outputs[1], width: 0 }), "", "unknown geometry has no mode summary");
 // Displays' controller tests own stale configuration/topology rejection, rather
 // than prescribing how the model fingerprints a snapshot.
 console.log("display model: exact modes, mixed-DPI/rotation geometry, invalid inputs and fallback validation passed");

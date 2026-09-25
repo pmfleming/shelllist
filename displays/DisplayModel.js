@@ -8,6 +8,15 @@ function outputs(state) {
     });
 }
 function title(output) { return internal(output.name) ? "Laptop" : (output.description || output.name || ""); }
+// The laptop panel was switched off because the policy prefers an external display.
+function dockedOff(output, policyState) {
+    return output.disabled && internal(output.name) && policyState.available && policyState.status === "external"
+        && !!(policyState.policy || {}).prefer_external;
+}
+function modeSummary(output) {
+    return output.width > 0 && output.height > 0
+        ? output.width + "×" + output.height + " · " + Number(output.refreshRate).toFixed(2) + " Hz" : "";
+}
 function parseMode(value) {
     const match = /^(\d+)x(\d+)@(\d+(?:\.\d+)?)(?:Hz)?$/.exec(String(value));
     if (!match) return null;

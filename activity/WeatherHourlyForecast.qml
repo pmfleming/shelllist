@@ -4,9 +4,8 @@ import QtQuick
 import Shelllist.Ui as Ui
 import "WeatherVisuals.js" as Visuals
 
-Rectangle {
+WeatherForecastCard {
     id: hourlyCard
-    required property var weather
     required property date now
     readonly property var points: Visuals.futureHours(weather.hourly || [], now.getTime())
     readonly property real minimum: Visuals.collectionMinimum(points, "temperature_c")
@@ -17,22 +16,9 @@ Rectangle {
     function hourY(value: var): real {
         return Visuals.temperatureY(value, minimum, maximum);
     }
-    width: parent.width
     height: 232
-    radius: Ui.Theme.panelRadius
-    color: Ui.Theme.surface
-    border.color: Ui.Theme.border
-
-    Ui.ThemeText {
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.leftMargin: Ui.Theme.spacingMd
-        anchors.topMargin: 8
-        text: "12H"
-        color: Ui.Theme.mutedText
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        font.weight: Ui.Theme.fontWeightDemiBold
-    }
+    label: "12H"
+    labelTopMargin: 8
 
     Canvas {
         id: hourlyChart

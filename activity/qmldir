@@ -13,6 +13,7 @@ internal WeatherIcon WeatherIcon.qml
 internal WeatherLocationCard WeatherLocationCard.qml
 internal WeatherLocationRail WeatherLocationRail.qml
 internal WeatherHero WeatherHero.qml
+internal WeatherForecastCard WeatherForecastCard.qml
 internal WeatherHourlyForecast WeatherHourlyForecast.qml
 internal WeatherDailyForecast WeatherDailyForecast.qml
 internal ActivityTodoSection ActivityTodoSection.qml

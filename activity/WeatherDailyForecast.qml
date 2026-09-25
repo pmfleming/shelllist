@@ -4,28 +4,14 @@ import QtQuick
 import Shelllist.Ui as Ui
 import "WeatherVisuals.js" as Visuals
 
-Rectangle {
+WeatherForecastCard {
     id: forecast
-    required property var weather
     readonly property var days: (weather.daily || []).slice(0, 7)
     readonly property real minimum: Visuals.collectionMinimum(days, "low_c")
     readonly property real maximum: Visuals.collectionMaximum(days, "high_c")
-    width: parent.width
     height: 43 + forecast.days.length * 43
-    radius: Ui.Theme.panelRadius
-    color: Ui.Theme.surface
-    border.color: Ui.Theme.border
-
-    Ui.ThemeText {
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.leftMargin: Ui.Theme.spacingMd
-        anchors.topMargin: 10
-        text: "7D"
-        color: Ui.Theme.mutedText
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        font.weight: Ui.Theme.fontWeightDemiBold
-    }
+    label: "7D"
+    labelTopMargin: 10
 
     Column {
         anchors.left: parent.left
