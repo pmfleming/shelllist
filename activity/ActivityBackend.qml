@@ -41,11 +41,14 @@ Io.DaemonBackend {
             id: todoId
         });
     }
+    readonly property list<string> rangeChangingRequests: ["activity-refresh", "todo-create", "todo-complete", "todo-delete"]
+
     function finish(id: string, envelope: var, transportError: string): void {
+        const kind = requestKind(id);
         const error = responseError(envelope, transportError, "Activity operation failed");
         if (error.length > 0) {
             controller.lastError = error;
-            if (id.startsWith("activity-range"))
+            if (kind === "activity-range")
                 controller.rangeLoading = false;
             return;
         }
@@ -57,7 +60,7 @@ Io.DaemonBackend {
             controller.activity = data.activity;
         if (data.activity_range)
             controller.applyRange(data.activity_range);
-        if (id.startsWith("todo-") || id.startsWith("activity-refresh"))
+        if (rangeChangingRequests.includes(kind))
             controller.scheduleRangeQuery();
     }
 

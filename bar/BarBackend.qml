@@ -108,8 +108,23 @@ Io.DaemonBackend {
         });
     }
 
+    readonly property var osdByRequestKind: ({
+            "audio-adjust": function (data) {
+                controller.showOutputOsd(data.audio || controller.audio);
+            },
+            "audio-muted": function (data) {
+                controller.showOutputOsd(data.audio || controller.audio);
+            },
+            "audio-input-muted": function (data) {
+                controller.showInputOsd(data.audio || controller.audio);
+            },
+            "brightness-adjust": function (data) {
+                controller.showBrightnessOsd(data.brightness || controller.brightness);
+            }
+        })
+
     function showRequestFailure(id: string): void {
-        if (id.startsWith("brightness-adjust-"))
+        if (requestKind(id) === "brightness-adjust")
             controller.showBrightnessErrorOsd();
     }
 
@@ -122,12 +137,9 @@ Io.DaemonBackend {
         }
         const data = envelope.data || ({});
         controller.applyResponse(data);
-        if (id.startsWith("audio-adjust-") || id.startsWith("audio-muted-"))
-            controller.showOutputOsd(data.audio || controller.audio);
-        else if (id.startsWith("audio-input-muted-"))
-            controller.showInputOsd(data.audio || controller.audio);
-        else if (id.startsWith("brightness-adjust-"))
-            controller.showBrightnessOsd(data.brightness || controller.brightness);
+        const showOsd = osdByRequestKind[requestKind(id)];
+        if (showOsd)
+            showOsd(data);
     }
 
     onResponseReceived: function (id, envelope, transportError) {
@@ -144,7 +156,7 @@ Io.DaemonBackend {
     onTransportFailed: function (message, lostRequestIds) {
         console.error("shelllist bar transport failed error=" + message);
         const brightnessRequest = (lostRequestIds || []).find(function (id) {
-            return id.startsWith("brightness-adjust-");
+            return requestKind(id) === "brightness-adjust";
         });
         if (brightnessRequest)
             showRequestFailure(brightnessRequest);

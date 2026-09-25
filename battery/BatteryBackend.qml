@@ -116,15 +116,14 @@ Io.DaemonBackend {
         return callSequenced("battery-alerts", BatteryApi.methods.setAlertPolicy, policy);
     }
 
+    readonly property var settingsDomainByKind: ({
+            "battery-protection": "threshold",
+            "battery-thresholds": "threshold",
+            "battery-alerts": "alert"
+        })
+
     function isBackgroundRequest(id: string): bool {
-        return id.startsWith("battery-snapshot-") || id.startsWith("battery-history-");
-    }
-    function settingsDomain(id: string): string {
-        if (id.startsWith("battery-protection-") || id.startsWith("battery-thresholds-"))
-            return "threshold";
-        if (id.startsWith("battery-alerts-"))
-            return "alert";
-        return "";
+        return ["battery-snapshot", "battery-history"].includes(requestKind(id));
     }
     function applyData(data: var): void {
         const values = Object.assign({}, data.snapshot || ({}), data);
@@ -140,22 +139,24 @@ Io.DaemonBackend {
                 handlers[key](values[key]);
         });
     }
-    function rejectRequest(id: string, background: bool, error: string): void {
-        const domain = settingsDomain(id);
-        if (id.startsWith("suspend-policy-"))
+    function rejectRequest(id: string, error: string): void {
+        const kind = requestKind(id);
+        const domain = settingsDomainByKind[kind] || "";
+        if (kind === "suspend-policy")
             controller.suspendPolicyFailed(error);
-        else if (background)
+        else if (isBackgroundRequest(id))
             controller.refreshFailed(id, error);
         else if (domain.length > 0)
             controller.settingsOperationFailed(domain, error);
         else
             controller.operationFailed(id, error);
     }
-    function acceptRequest(id: string, background: bool): void {
-        const domain = settingsDomain(id);
-        if (id.startsWith("suspend-policy-"))
+    function acceptRequest(id: string): void {
+        const kind = requestKind(id);
+        const domain = settingsDomainByKind[kind] || "";
+        if (kind === "suspend-policy")
             controller.suspendPolicyFinished();
-        else if (background)
+        else if (isBackgroundRequest(id))
             controller.refreshFinished(id);
         else if (domain.length > 0)
             controller.settingsOperationFinished(domain);
@@ -163,13 +164,12 @@ Io.DaemonBackend {
             controller.operationFinished(id);
     }
     function finish(id: string, envelope: var, transportError: string): void {
-        const background = isBackgroundRequest(id);
-        const error = responseError(envelope, transportError, background ? "Battery refresh failed" : "Battery operation failed");
+        const error = responseError(envelope, transportError, isBackgroundRequest(id) ? "Battery refresh failed" : "Battery operation failed");
         if (error.length > 0) {
-            rejectRequest(id, background, error);
+            rejectRequest(id, error);
             return;
         }
-        acceptRequest(id, background);
+        acceptRequest(id);
         applyData(envelope.data || ({}));
     }
 
@@ -181,17 +181,7 @@ Io.DaemonBackend {
         controller.handleEvent(event);
     }
     onSendFailed: function (id, message) {
-        if (id.startsWith("suspend-policy-"))
-            controller.suspendPolicyFailed(message);
-        else if (isBackgroundRequest(id))
-            controller.refreshFailed(id, message);
-        else {
-            const domain = settingsDomain(id);
-            if (domain.length > 0)
-                controller.settingsOperationFailed(domain, message);
-            else
-                controller.operationFailed(id, message);
-        }
+        rejectRequest(id, message);
     }
     onTransportFailed: function (message) {
         controller.transportFailed(message);

@@ -17,7 +17,8 @@ Io.DaemonBackend {
     readonly property bool listRunning: isPending("networks")
     readonly property bool scanRunning: isPending("scan-start") || controller.scan.requestId.length > 0
     readonly property bool connectStarting: isPending("connect-start")
-    readonly property bool nonConnectRunning: isPending("status-recovery") || isPending("power") || isPending("disconnect") || isPending("profile") || isPending("advanced-load") || isPending("advanced-save") || isPending("advanced-secret") || isPending("band-status") || isPending("band-set") || isPending("secret-provide") || isPending("secret-cancel") || isPending("qr-parse") || isPending("qr-connect") || isPending("hotspot-capabilities") || isPending("hotspot-status") || isPending("hotspot-start") || isPending("hotspot-stop") || isPending("vpn-list") || isPending("vpn-status") || isPending("vpn-connect") || isPending("vpn-disconnect") || isPending("inventory") || isPending("network-status") || isPending("activate-profile") || isPending("deactivate-connection") || isPending("statistics-watch")
+    // List refreshes, scans and sharing may overlap a connection attempt.
+    readonly property bool nonConnectRunning: hasPendingOtherThan(["networks", "scan-start", "connect-start", "share"])
     readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
     readonly property var responseHandlerById: ({
             "status-recovery": function (value) {
