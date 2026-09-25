@@ -1,20 +1,11 @@
 import QtQuick
+import Shelllist.Core as Core
 
-Item {
+Core.DraftStore {
     required property BluetoothController controller
     required property BluetoothBackend backend
-    property var drafts: ({})
     property var finishedRequests: []
 
-    function draft(key: string): var { return drafts[key] || null; }
-    function put(key: string, value: var): void {
-        const next = Object.assign({}, drafts);
-        if (value)
-            next[key] = value;
-        else
-            delete next[key];
-        drafts = next;
-    }
     function edit(key: string, value: string): void {
         if (!key || (draft(key) || {}).pending)
             return;
@@ -44,7 +35,7 @@ Item {
         const current = draft(key);
         if (!current || current.pending)
             return false;
-        put(key, Object.assign({}, current, {error: ""}));
+        patch(key, {error: ""});
         return save(key);
     }
     function discard(key: string): void {
@@ -54,7 +45,7 @@ Item {
     function rejected(key: string, message: string): void {
         const current = draft(key);
         if (current && current.pending)
-            put(key, Object.assign({}, current, {pending: false, dirty: true, error: message, requestId: ""}));
+            patch(key, {pending: false, dirty: true, error: message, requestId: ""});
     }
     function observe(operation: var): void {
         if (!operation || operation.operation !== "set-alias" || finishedRequests.includes(operation.request_id))
@@ -66,7 +57,7 @@ Item {
         if (!current || !current.pending || (current.requestId && current.requestId !== operation.request_id))
             return;
         if (operation.state === "queued" || operation.state === "running") {
-            put(key, Object.assign({}, current, {requestId: operation.request_id}));
+            patch(key, {requestId: operation.request_id});
         } else if (operation.state === "completed") {
             put(key, null);
         } else {

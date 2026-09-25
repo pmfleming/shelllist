@@ -1,20 +1,12 @@
 import QtQuick
+import Shelllist.Core as Core
 
-Item {
+Core.DraftStore {
     required property BluetoothController controller
     required property BluetoothBackend backend
-    property var drafts: ({})
     readonly property var operations: ({alias: "set-alias", discoverableTimeout: "set-discoverable-timeout", pairableTimeout: "set-pairable-timeout"})
 
-    function draft(key: string): var { return drafts[key] || {fields: {}, error: "", pendingField: ""}; }
-    function put(key: string, value: var): void {
-        const next = Object.assign({}, drafts);
-        if (value)
-            next[key] = value;
-        else
-            delete next[key];
-        drafts = next;
-    }
+    function draft(key: var): var { return drafts[key] || {fields: {}, error: "", pendingField: ""}; }
     function edit(key: string, field: string, value: var): void {
         if (!key || draft(key).pendingField)
             return;
@@ -42,7 +34,7 @@ Item {
         const value = field === "alias" ? String(current.fields[field]).trim() : Math.round(Number(current.fields[field]) || 0);
         if (field === "alias" && !value)
             return false;
-        put(key, Object.assign({}, current, {pendingField: field, pendingValue: value}));
+        patch(key, {pendingField: field, pendingValue: value});
         const values = field === "alias" ? {alias: value} : {timeout: value};
         if (backend.adapterOperation(operations[field], adapter, values))
             return true;
@@ -53,7 +45,7 @@ Item {
         const current = draft(key);
         if (current.pendingField)
             return false;
-        put(key, Object.assign({}, current, {error: ""}));
+        patch(key, {error: ""});
         return saveNext(key);
     }
     function finish(key: string, operation: string, error: string): void {
@@ -62,7 +54,7 @@ Item {
         if (!field || operations[field] !== operation)
             return;
         if (error) {
-            put(key, Object.assign({}, current, {pendingField: "", error: error}));
+            patch(key, {pendingField: "", error: error});
             return;
         }
         const fields = Object.assign({}, current.fields);

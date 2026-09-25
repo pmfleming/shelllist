@@ -1,4 +1,5 @@
 import QtQuick
+import Shelllist.Core as Core
 import Shelllist.Ui as Ui
 
 // Shared by Activity and the notification callout. Drafts and history outlive views.
@@ -26,7 +27,7 @@ Item {
     property bool historyDirty: false
     property string lastError: ""
     property string historyError: ""
-    property var drafts: ({})
+    readonly property alias drafts: replyDrafts.drafts
     property var replies: ({})
     property var expandedGroups: ({})
     readonly property var activeNotifications: notificationActive.notifications || []
@@ -58,12 +59,7 @@ Item {
         expandedGroups = next;
     }
     function setDraft(id: int, text: string): void {
-        const next = Object.assign({}, drafts);
-        if (text.length > 0)
-            next[id] = text;
-        else
-            delete next[id];
-        drafts = next;
+        replyDrafts.put(id, text);
     }
     function setReplyState(id: int, pending: bool, error: string): void {
         const next = Object.assign({}, replies);
@@ -175,5 +171,9 @@ Item {
     NotificationBackend {
         id: notificationBackend
         store: notificationState
+    }
+
+    Core.DraftStore {
+        id: replyDrafts
     }
 }

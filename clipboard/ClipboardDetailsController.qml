@@ -1,4 +1,5 @@
 import QtQuick
+import Shelllist.Core as Core
 
 Item {
     id: detailsController
@@ -23,7 +24,7 @@ Item {
     property var editTarget: null
     property var editPreview: null
     property bool retryingEdit: false
-    property var failedDrafts: ({})
+    readonly property alias failedDrafts: failedDraftStore.drafts
     property var pendingCommit: null
     property int sequence
     property string entryId
@@ -69,16 +70,12 @@ Item {
     function rememberFailedDraft(): void {
         if (!editTarget || !editDirty || editError.length === 0)
             return;
-        const next = Object.assign({}, failedDrafts);
-        next[editTarget.id] = {target: editTarget, preview: editPreview, draft: editDraft, error: editError, direct: editIsDirect};
-        failedDrafts = next;
+        failedDraftStore.put(editTarget.id, {target: editTarget, preview: editPreview, draft: editDraft, error: editError, direct: editIsDirect});
     }
     function forgetFailedDraft(): void {
         if (!editTarget)
             return;
-        const next = Object.assign({}, failedDrafts);
-        delete next[editTarget.id];
-        failedDrafts = next;
+        failedDraftStore.put(editTarget.id, null);
     }
     function restoreFailedDraft(entry: var): bool {
         const saved = failedDrafts[entry.id];
@@ -242,9 +239,7 @@ Item {
         const sent = pendingCommit;
         pendingCommit = null;
         if (sent && sent.target && (!editTarget || editTarget.id !== sent.target.id)) {
-            const next = Object.assign({}, failedDrafts);
-            delete next[sent.target.id];
-            failedDrafts = next;
+            failedDraftStore.put(sent.target.id, null);
             if (controller.activeAction === "edit") {
                 controller.actionInFlight = false;
                 controller.activeAction = "";
@@ -425,9 +420,7 @@ Item {
         const sent = pendingCommit;
         pendingCommit = null;
         if (sent && sent.target && (!editTarget || editTarget.id !== sent.target.id)) {
-            const next = Object.assign({}, failedDrafts);
-            next[sent.target.id] = {target: sent.target, preview: sent.preview, draft: sent.draft, error: message, direct: sent.direct};
-            failedDrafts = next;
+            failedDraftStore.put(sent.target.id, {target: sent.target, preview: sent.preview, draft: sent.draft, error: message, direct: sent.direct});
             scheduleLoad();
             return;
         }
@@ -476,5 +469,9 @@ Item {
         interval: 650
         repeat: false
         onTriggered: detailsController.commitEdit()
+    }
+    // Edits that failed after the editor moved on, restored on reselection.
+    Core.DraftStore {
+        id: failedDraftStore
     }
 }
