@@ -124,8 +124,7 @@ node tests/check-resource-availability.js
 node tests/check-application-resources.js launcher/ApplicationResources.js \
   contracts/app-resource-ui-contract.fixture.json
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
-bash tests/check-app-api-contract.sh ../app-daemon/target/debug/app-daemon \
-  contracts/app-api-ui-contract.fixture.json launcher/AppApi.js
+nix build .#checks.x86_64-linux.appDaemonContract
 tests/run-qml-tests.sh
 ```
 

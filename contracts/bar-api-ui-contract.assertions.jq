@@ -1,0 +1,54 @@
+(.protocol == "bar-api") and
+(.version == 1) and
+(.snapshot.activity.event_count | type == "number") and
+(.snapshot.activity.incomplete_todo_count | type == "number") and
+(.snapshot.activity.lunar.fraction | type == "number") and
+(.snapshot.activity.lunar.approximate == true) and
+(.snapshot.activity.lunar.time_basis == "utc") and
+(.snapshot.activity.weather.solar_noon.unix_ms | type == "number") and
+(.snapshot.activity.weather.solar_noon.approximate == true) and
+(.snapshot.activity.weather.solar_noon.timezone == .snapshot.activity.weather.timezone) and
+(.snapshot.activity.weather.condition_code | type == "number") and
+(.snapshot.activity.weather.is_day | type == "boolean") and
+(.snapshot.activity.weather.precipitation_mm | type == "number") and
+(.snapshot.activity.weather.latitude | type == "number") and
+(.snapshot.activity.weather.longitude | type == "number") and
+(.snapshot.activity.weather.wind_direction_degrees | type == "number") and
+(.snapshot.activity.weather.hourly[0].condition_code | type == "number") and
+(.snapshot.activity.weather.daily[0].condition_code | type == "number") and
+(.snapshot.workspaces.monitors[0].active_workspace_id | type == "number") and
+(.snapshot.media.players[0].playback_status | type == "string") and
+(.snapshot.media.players[0].can_seek | type == "boolean") and
+(.snapshot.audio.volume_percent | type == "number") and
+(.snapshot.audio.input_available | type == "boolean") and
+(.snapshot.audio.input_muted | type == "boolean") and
+(.snapshot.brightness.percent | type == "number") and
+(.snapshot.battery.percentage | type == "number") and
+(.snapshot.battery.devices | type == "array") and
+(.snapshot.battery.policy.warning_percent | type == "number") and
+(.snapshot.battery.protection.supported | type == "boolean") and
+(.snapshot.battery.protection.managed | type == "boolean") and
+(.snapshot.battery.protection.charge_once_active | type == "boolean") and
+(.snapshot.power_profile.profile | type == "string") and
+(.snapshot.power_sleep.diagnostics.hibernate_issues | type == "array") and
+(.snapshot.power_sleep.keep_awake | type == "boolean") and
+(.snapshot.display_policy.policy.prefer_external | type == "boolean") and
+(.snapshot.display_policy.outputs | type == "array") and
+(.snapshot.display_policy.layout.saved.outputs | type == "array") and
+(.snapshot.sleep_policy.policy.same_profile | type == "boolean") and
+(.snapshot.sleep_policy.policy.battery.sleep_minutes | type == "number") and
+(.snapshot.sleep_policy.policy.plugged.hibernate_minutes | type == "number") and
+(.snapshot.osd_hardware.caps_lock | type == "boolean") and
+(.snapshot.osd_hardware.num_lock | type == "boolean") and
+(.snapshot.notifications.count | type == "number") and
+(.snapshot.notifications.backend | type == "string") and
+(.snapshot.notifications.dnd_until_unix_ms | type == "number" or . == null) and
+(.snapshot.notification_active.notifications | type == "array") and
+(.snapshot.notification_active.notifications[0].group_key | type == "string") and
+(.snapshot.notification_active.notifications[0].source_monitor | type == "string") and
+(.snapshot.updates.ready | type == "boolean") and
+(.snapshot.updates.jobs | type == "array") and
+(.snapshot.activity.weather.timezone_region_ids | type == "array") and
+(.snapshot.activity.world_clocks[0].timezone_region_ids | type == "array") and
+(.snapshot.timezone.utc_offset_seconds | type == "number") and
+(.snapshot.timezone.timezone_region_ids | type == "array")

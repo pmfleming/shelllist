@@ -586,6 +586,22 @@
           clipDaemon = inputs."clip-daemon".packages.${system}.default;
           appDaemon = inputs."app-daemon".packages.${system}.default;
           barDaemon = inputs."bar-daemon".packages.${system}.default;
+          nodeCheck = name: commands: pkgs.runCommand "shelllist-${name}"
+            { nativeBuildInputs = [ pkgs.nodejs ]; } ''
+            ${pkgs.lib.concatMapStringsSep "\n"
+              (command: "node ${pkgs.lib.escapeShellArgs (map (arg: "${arg}") command)}") commands}
+            touch $out
+          '';
+          apiContract = label: daemon: coverage: apiFiles:
+            pkgs.runCommand "shelllist-${label}-daemon-contract"
+              { nativeBuildInputs = [ pkgs.diffutils pkgs.jq ]; } ''
+              ${pkgs.bash}/bin/bash ${./tests/check-api-contract.sh} ${label}-api \
+                ${daemon}/bin/${label}-daemon \
+                ${./contracts + "/${label}-api-ui-contract.fixture.json"} \
+                ${./contracts + "/${label}-api-ui-contract.assertions.jq"} \
+                ${pkgs.lib.escapeShellArgs ([ coverage ] ++ map (file: "${file}") apiFiles)}
+              touch $out
+            '';
         in
         {
           # Flake checks do not recurse into inputs. Keep the shared framework
@@ -624,38 +640,11 @@
             touch $out
           '';
 
-          appDaemonContract = pkgs.runCommand "shelllist-app-daemon-contract"
-            {
-              nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
-            } ''
-            ${pkgs.bash}/bin/bash ${./tests/check-app-api-contract.sh} \
-              ${appDaemon}/bin/app-daemon \
-              ${./contracts/app-api-ui-contract.fixture.json} \
-              ${./launcher/AppApi.js}
-            touch $out
-          '';
+          appDaemonContract = apiContract "app" appDaemon "registry" [ ./launcher/AppApi.js ];
 
-          clipDaemonContract = pkgs.runCommand "shelllist-clip-daemon-contract"
-            {
-              nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
-            } ''
-            ${pkgs.bash}/bin/bash ${./tests/check-clip-api-contract.sh} \
-              ${clipDaemon}/bin/clip-daemon \
-              ${./contracts/clip-api-ui-contract.fixture.json} \
-              ${./clipboard/ClipApi.js}
-            touch $out
-          '';
+          clipDaemonContract = apiContract "clip" clipDaemon "registry" [ ./clipboard/ClipApi.js ];
 
-          btDaemonContract = pkgs.runCommand "shelllist-bt-daemon-contract"
-            {
-              nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
-            } ''
-            ${pkgs.bash}/bin/bash ${./tests/check-bt-api-contract.sh} \
-              ${btDaemon}/bin/bt-daemon \
-              ${./contracts/bt-api-ui-contract.fixture.json} \
-              ${./bluetooth/BtApi.js}
-            touch $out
-          '';
+          btDaemonContract = apiContract "bt" btDaemon "api:bluetooth|pairing" [ ./bluetooth/BtApi.js ];
 
           nmDaemonContract = pkgs.runCommand "shelllist-nm-daemon-contract"
             {
@@ -668,19 +657,14 @@
             touch $out
           '';
 
-          barDaemonContract = pkgs.runCommand "shelllist-bar-daemon-contract"
-            {
-              nativeBuildInputs = [ pkgs.diffutils pkgs.jq ];
-            } ''
-            ${pkgs.bash}/bin/bash ${./tests/check-bar-api-contract.sh} \
-              ${barDaemon}/bin/bar-daemon \
-              ${./contracts/bar-api-ui-contract.fixture.json} \
-              ${./bar/BarApi.js} \
-              ${./activity/ActivityApi.js} \
-              ${./battery/BatteryApi.js} \
-              ${./displays/DisplayApi.js}
-            touch $out
-          '';
+          barDaemonContract = apiContract "bar" barDaemon
+            "api:bar|activity|todos|workspace|media|audio|brightness|battery|powerProfile|powerSleep|displayPolicy|displayLayout|display-policy|power-profile|power-sleep|sleep-policy|osd-hardware|notifications|updates|timezone"
+            [
+              ./bar/BarApi.js
+              ./activity/ActivityApi.js
+              ./battery/BatteryApi.js
+              ./displays/DisplayApi.js
+            ];
 
           qmlLint = pkgs.runCommand "shelllist-qml-lint"
             {
@@ -730,26 +714,23 @@
             touch $out
           '';
 
-          barPresentation = pkgs.runCommand "shelllist-bar-presentation"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-bar-presentation.js} \
-              ${./bar/BarWorkspacePresentation.js} \
-              ${./bar/BarMediaPresentation.js} \
-              ${./bar/BarOsdPresentation.js} \
-              ${./bar/BarStatusPresentation.js} \
-              ${./qml/Shelllist/Core/Duration.js}
-            touch $out
-          '';
+          barPresentation = nodeCheck "bar-presentation" [
+            [
+              ./tests/check-bar-presentation.js
+              ./bar/BarWorkspacePresentation.js
+              ./bar/BarMediaPresentation.js
+              ./bar/BarOsdPresentation.js
+              ./bar/BarStatusPresentation.js
+              ./qml/Shelllist/Core/Duration.js
+            ]
+          ];
 
-          barSurfaceRecovery = pkgs.runCommand "shelllist-bar-surface-recovery"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-bar-surface-recovery.js} ${./shell/BarSurfaceRecovery.js}
-            touch $out
-          '';
+          barSurfaceRecovery = nodeCheck "bar-surface-recovery" [
+            [
+              ./tests/check-bar-surface-recovery.js
+              ./shell/BarSurfaceRecovery.js
+            ]
+          ];
 
           typescript = pkgs.runCommand "shelllist-typescript-current"
             {
@@ -760,13 +741,12 @@
             touch $out
           '';
 
-          weatherPresentation = pkgs.runCommand "shelllist-weather-presentation"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-weather-presentation.js} ${./activity/WeatherVisuals.js}
-            touch $out
-          '';
+          weatherPresentation = nodeCheck "weather-presentation" [
+            [
+              ./tests/check-weather-presentation.js
+              ./activity/WeatherVisuals.js
+            ]
+          ];
 
           timezoneAssets = pkgs.runCommand "shelllist-timezone-assets-current"
             {
@@ -778,32 +758,30 @@
             touch $out
           '';
 
-          displayModel = pkgs.runCommand "shelllist-display-model"
-            { nativeBuildInputs = [ pkgs.nodejs ]; } ''
-            node ${./tests/check-display-model.js} ${./displays/DisplayModel.js}
-            touch $out
-          '';
+          displayModel = nodeCheck "display-model" [
+            [
+              ./tests/check-display-model.js
+              ./displays/DisplayModel.js
+            ]
+          ];
 
-          batteryPresentation = pkgs.runCommand "shelllist-battery-presentation"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-battery-presentation.js} \
-              ${./battery/BatteryPresentation.js} ${./qml/Shelllist/Core/Duration.js}
-            node ${./tests/check-battery-history.js} ${./battery/BatteryHistory.js}
-            touch $out
-          '';
+          batteryPresentation = nodeCheck "battery-presentation" [
+            [
+              ./tests/check-battery-presentation.js
+              ./battery/BatteryPresentation.js
+              ./qml/Shelllist/Core/Duration.js
+            ]
+            [ ./tests/check-battery-history.js ./battery/BatteryHistory.js ]
+          ];
 
-          batteryAutoSave = pkgs.runCommand "shelllist-battery-auto-save"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-battery-controls.js} \
-              ${./battery/BatteryController.qml} \
-              ${./battery/BatteryFlow.js} \
-              ${./battery/BatteryPresentation.js}
-            touch $out
-          '';
+          batteryAutoSave = nodeCheck "battery-auto-save" [
+            [
+              ./tests/check-battery-controls.js
+              ./battery/BatteryController.qml
+              ./battery/BatteryFlow.js
+              ./battery/BatteryPresentation.js
+            ]
+          ];
 
           moduleEvaluation =
             let
@@ -853,33 +831,28 @@
               touch $out
             '';
 
-          packagedImports = pkgs.runCommand "shelllist-packaged-imports"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-packaged-imports.js} \
-              ${self.packages.${system}.shelllistConfig}/share/shelllist
-            touch $out
-          '';
+          packagedImports = nodeCheck "packaged-imports" [
+            [
+              ./tests/check-packaged-imports.js
+              "${self.packages.${system}.shelllistConfig}/share/shelllist"
+            ]
+          ];
 
-          applicationPresentation = pkgs.runCommand "shelllist-application-presentation"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-application-presentation.js} ${./launcher/ApplicationPresentation.js}
-            touch $out
-          '';
+          applicationPresentation = nodeCheck "application-presentation" [
+            [
+              ./tests/check-application-presentation.js
+              ./launcher/ApplicationPresentation.js
+            ]
+          ];
 
-          applicationResources = pkgs.runCommand "shelllist-application-resources"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-application-resources.js} \
-              ${./launcher/ApplicationResources.js} \
-              ${./contracts/app-resource-ui-contract.fixture.json}
-            node ${./tests/check-resource-availability.js} ${./launcher}
-            touch $out
-          '';
+          applicationResources = nodeCheck "application-resources" [
+            [
+              ./tests/check-application-resources.js
+              ./launcher/ApplicationResources.js
+              ./contracts/app-resource-ui-contract.fixture.json
+            ]
+            [ ./tests/check-resource-availability.js ./launcher ]
+          ];
 
           performanceBenchmarks = pkgs.runCommand "shelllist-performance-benchmarks"
             {
@@ -895,74 +868,50 @@
               $out/qmlbench.json)" -ge 10
           '';
 
-          applicationLifecycle = pkgs.runCommand "shelllist-application-lifecycle"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-application-lifecycle.js} ${./launcher/ApplicationLifecycle.js}
-            node ${./tests/check-application-history.js} ${./launcher}
-            touch $out
-          '';
+          applicationLifecycle = nodeCheck "application-lifecycle" [
+            [ ./tests/check-application-lifecycle.js ./launcher/ApplicationLifecycle.js ]
+            [ ./tests/check-application-history.js ./launcher ]
+          ];
 
-          flowPolicies = pkgs.runCommand "shelllist-flow-policies"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-flow-policies.js} \
-              ${./battery/BatteryFlow.js} \
-              ${./clipboard/ClipboardFlow.js}
-            touch $out
-          '';
+          flowPolicies = nodeCheck "flow-policies" [
+            [
+              ./tests/check-flow-policies.js
+              ./battery/BatteryFlow.js
+              ./clipboard/ClipboardFlow.js
+            ]
+          ];
 
-          ipValidation = pkgs.runCommand "shelllist-ip-validation"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-ip-validation.js} ${./wifi/networkinput/IpValidation.js}
-            touch $out
-          '';
+          ipValidation = nodeCheck "ip-validation" [
+            [
+              ./tests/check-ip-validation.js
+              ./wifi/networkinput/IpValidation.js
+            ]
+          ];
 
-          daemonBoundary = pkgs.runCommand "shelllist-daemon-boundary"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-daemon-boundary.js} ${./.}
-            touch $out
-          '';
+          daemonBoundary = nodeCheck "daemon-boundary" [ [ ./tests/check-daemon-boundary.js ./. ] ];
 
-          notificationPresentation = pkgs.runCommand "shelllist-notification-presentation"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-notification-presentation.js} \
-              ${./qml/Shelllist/Ui/NotificationPresentation.js}
-            touch $out
-          '';
+          notificationPresentation = nodeCheck "notification-presentation" [
+            [
+              ./tests/check-notification-presentation.js
+              ./qml/Shelllist/Ui/NotificationPresentation.js
+            ]
+          ];
 
-          wifiIcons = pkgs.runCommand "shelllist-wifi-icons"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-wifi-icons.js} ${./wifi/WifiIcons.js}
-            touch $out
-          '';
+          wifiIcons = nodeCheck "wifi-icons" [ [ ./tests/check-wifi-icons.js ./wifi/WifiIcons.js ] ];
 
-          networkHealth = pkgs.runCommand "shelllist-network-health"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-network-health.js} ${./wifi/NetworkHealth.js}
-            touch $out
-          '';
+          networkHealth = nodeCheck "network-health" [
+            [
+              ./tests/check-network-health.js
+              ./wifi/NetworkHealth.js
+            ]
+          ];
 
-          bluetoothLifecycle = pkgs.runCommand "shelllist-bluetooth-lifecycle"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-bluetooth-lifecycle.js} \
-              ${./bluetooth/BluetoothFlow.js}
-            touch $out
-          '';
+          bluetoothLifecycle = nodeCheck "bluetooth-lifecycle" [
+            [
+              ./tests/check-bluetooth-lifecycle.js
+              ./bluetooth/BluetoothFlow.js
+            ]
+          ];
 
           qmlTests = pkgs.runCommand "shelllist-qml-tests"
             {
@@ -991,43 +940,38 @@
             touch $out
           '';
 
-          bluetoothBattery = pkgs.runCommand "shelllist-bluetooth-battery"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-bluetooth-battery.js} ${./bluetooth/BluetoothBattery.js}
-            touch $out
-          '';
+          bluetoothBattery = nodeCheck "bluetooth-battery" [
+            [
+              ./tests/check-bluetooth-battery.js
+              ./bluetooth/BluetoothBattery.js
+            ]
+          ];
 
-          bluetoothNoiseControl = pkgs.runCommand "shelllist-bluetooth-noise-control"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-bluetooth-noise-control.js} ${./bluetooth/BluetoothNoiseControl.js}
-            touch $out
-          '';
+          bluetoothNoiseControl = nodeCheck "bluetooth-noise-control" [
+            [
+              ./tests/check-bluetooth-noise-control.js
+              ./bluetooth/BluetoothNoiseControl.js
+            ]
+          ];
 
-          clipboardActions = pkgs.runCommand "shelllist-clipboard-actions"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-clipboard-actions.js} \
-              ${./clipboard/ClipApi.js} \
-              ${./clipboard/ClipProtocol.generated.js} \
-              ${./clipboard/ClipboardController.qml} \
-              ${./clipboard/ClipboardBackend.qml}
-            touch $out
-          '';
+          clipboardActions = nodeCheck "clipboard-actions" [
+            [
+              ./tests/check-clipboard-actions.js
+              ./clipboard/ClipApi.js
+              ./clipboard/ClipProtocol.generated.js
+              ./clipboard/ClipboardController.qml
+              ./clipboard/ClipboardBackend.qml
+            ]
+          ];
 
           fuzzySearch = self.packages.${system}.shelllistSearch;
 
-          providerModel = pkgs.runCommand "shelllist-provider-model"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            } ''
-            node ${./tests/check-provider-model.js} ${./qml/Shelllist/Core/Model.js}
-            touch $out
-          '';
+          providerModel = nodeCheck "provider-model" [
+            [
+              ./tests/check-provider-model.js
+              ./qml/Shelllist/Core/Model.js
+            ]
+          ];
         });
 
       apps = forAllSystems (system: pkgs: {

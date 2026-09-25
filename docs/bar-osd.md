@@ -89,9 +89,7 @@ Focused validation:
 ```sh
 node tests/check-bar-presentation.js bar/Bar{Workspace,Media,Osd,Status}Presentation.js \
   qml/Shelllist/Core/Duration.js
-tests/check-bar-api-contract.sh ../bar-daemon/target/debug/bar-daemon \
-  contracts/bar-api-ui-contract.fixture.json bar/BarApi.js \
-  activity/ActivityApi.js qml/Shelllist/Battery/BatteryApi.js
+nix build .#checks.x86_64-linux.barDaemonContract
 shelllist-qmllint bar/*.qml
 nix flake check
 ```
