@@ -5,45 +5,13 @@ import QtTest
 import Shelllist.Battery as Battery
 import Shelllist.Io as Io
 
-TestCase {
+DaemonTestCase {
     id: testCase
     name: "BatterySuspend"
     when: windowShown
     visible: true
     width: 420
     height: 760
-    property var originalFactory
-    property var originalSessions
-    property var calls: []
-
-    Component {
-        id: clientFactory
-        QtObject {
-            property string daemonName
-            property var streams: []
-            property bool active: false
-            property bool ready: true
-            property bool recoverProtocolErrors: false
-            signal response(string id, var envelope, string transportError, var route)
-            signal eventReceived(var event, var route)
-            signal transportFailed(string message)
-            function call(id, method, params, route) { testCase.calls = testCase.calls.concat([{ id: id, method: method, params: params, route: route }]); }
-            function subscribeExtra(id, streams, route) {}
-            function cancel(id, requestId, route) {}
-            function release(id, route) {}
-        }
-    }
-    function initTestCase() {
-        originalFactory = Io.DaemonSessions.clientFactory;
-        originalSessions = Io.DaemonSessions.sessions;
-        Io.DaemonSessions.sessions = ({});
-        Io.DaemonSessions.clientFactory = clientFactory;
-    }
-    function cleanupTestCase() {
-        for (const session of Object.values(Io.DaemonSessions.sessions)) session.client.destroy();
-        Io.DaemonSessions.sessions = originalSessions;
-        Io.DaemonSessions.clientFactory = originalFactory;
-    }
 
     Component {
         id: panelComponent
