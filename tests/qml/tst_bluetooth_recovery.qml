@@ -482,7 +482,8 @@ DaemonTestCase {
         const codec = findChild(panel.page, "audioCodec");
         const output = findChild(panel.page, "useAudioOutput");
         const input = findChild(panel.page, "useAudioInput");
-        wait(0);
+        // Geometry assertions must wait for nested layouts, not just queued events.
+        verify(waitForPolish(panel.Window.window));
         const height = card.height;
         const outputY = output.mapToItem(card, 0, 0).y;
         verify(profile.interactive && output.enabled && input.enabled);
@@ -494,7 +495,7 @@ DaemonTestCase {
         verify(!controller.setAudioDefault(audio.sink));
         verify(!controller.setAudioProfile(audio.profiles[0]));
         controller.applyAudioSnapshot([]);
-        wait(0);
+        verify(waitForPolish(panel.Window.window));
         verify(card.visible && profile.visible && codec.visible && output.visible && input.visible);
         compare(card.height, height);
         compare(output.mapToItem(card, 0, 0).y, outputY);
