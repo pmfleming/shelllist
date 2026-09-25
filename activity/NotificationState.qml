@@ -30,7 +30,6 @@ Item {
     property var replies: ({})
     property var expandedGroups: ({})
     readonly property var activeNotifications: notificationActive.notifications || []
-    readonly property var activeGroups: Ui.NotificationPresentation.groupRecords(Ui.NotificationPresentation.newestFirst(activeNotifications))
     readonly property var recentNotifications: Ui.NotificationPresentation.recentRecords(activeNotifications, history)
     readonly property int draftCount: Object.keys(drafts).filter(function (key) {
         return String(notificationState.drafts[key] || "").length > 0;

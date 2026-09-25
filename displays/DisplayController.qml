@@ -27,7 +27,6 @@ Ui.ProviderChooserController {
     readonly property DisplayProvider displayProvider: DisplayProvider { controller: controller }
     property bool layoutDragging: false
     property double clock: Date.now()
-    readonly property bool displayPolicySaving: actionInFlight
     readonly property var outputs: Model.outputs(displayPolicyState)
     readonly property var trial: (displayPolicyState.layout || {}).trial || null
     readonly property DisplayBackend backend: displayBackend

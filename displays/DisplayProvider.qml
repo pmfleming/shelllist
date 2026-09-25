@@ -2,7 +2,6 @@ import Shelllist.Core as Core
 import "DisplayModel.js" as Model
 
 Core.Provider {
-    id: provider
     required property DisplayController controller
 
     providerId: "displays"

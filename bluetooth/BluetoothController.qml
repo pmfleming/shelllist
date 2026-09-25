@@ -53,7 +53,6 @@ Ui.ProviderChooserController {
     readonly property var selectedSink: selectedAudio.sink || ({})
     readonly property var selectedSource: selectedAudio.source || ({})
     readonly property var selectedAudioProfiles: selectedAudio.profiles || []
-    readonly property var activeAudioProfile: selectedAudioProfiles.find(function (profile) { return profile.key === selectedAudio.active_profile_key; }) || ({})
     readonly property var selectedOperation: operationForDevice(selectedDevice.key)
     readonly property var selectedOperationError: operationErrorForDevice(selectedDevice.key)
     readonly property bool selectedDeviceBusy: !!selectedOperation
