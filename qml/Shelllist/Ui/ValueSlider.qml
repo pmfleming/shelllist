@@ -57,12 +57,8 @@ Controls.Slider {
         border.width: slider.activeFocus ? 3 : 2
         border.color: slider.activeFocus ? Theme.text : Theme.window
 
-        Behavior on x {
-            enabled: !slider.pressed && !Theme.noAnimations
-            NumberAnimation {
-                duration: Theme.animationInteractive
-                easing.type: Theme.easingResponsive
-            }
+        InteractiveBehavior on x {
+            animate: !slider.pressed
         }
     }
 }

@@ -7,11 +7,7 @@ function supported(name) {
     return /^(eDP-|LVDS-|DSI-|DP-|HDMI-A-)[A-Za-z0-9-]+$/.test(name) && name.length <= 64;
 }
 function outputs(state) {
-    return (state.outputs || []).filter(function (o) {
-        return supported(o.name);
-    }).slice().sort(function (a, b) {
-        return Number(internal(b.name)) - Number(internal(a.name)) || a.name.localeCompare(b.name);
-    });
+    return (state.outputs || []).filter(o => supported(o.name)).sort((a, b) => Number(internal(b.name)) - Number(internal(a.name)) || a.name.localeCompare(b.name));
 }
 function title(output) {
     return internal(output.name) ? "Laptop" : (output.description || output.name || "");
@@ -41,15 +37,11 @@ function currentMode(output) {
         const m = parseMode(value);
         return m && m.width === output.width && m.height === output.height && Math.abs(m.rate - output.refreshRate) < 0.1;
     });
-    matching.sort(function (a, b) {
-        return Math.abs(parseMode(a).rate - output.refreshRate) - Math.abs(parseMode(b).rate - output.refreshRate);
-    });
+    matching.sort((a, b) => Math.abs(parseMode(a).rate - output.refreshRate) - Math.abs(parseMode(b).rate - output.refreshRate));
     return matching[0] || observed;
 }
 function modes(output) {
-    const values = (output.availableModes || []).filter(function (v) {
-        return !!parseMode(v);
-    });
+    const values = (output.availableModes || []).filter(v => !!parseMode(v));
     const current = currentMode(output);
     return values.includes(current) ? values : [current].concat(values);
 }
@@ -67,14 +59,10 @@ function draft(outputs) {
     });
 }
 function topology(outputs) {
-    return JSON.stringify(outputs.map(function (o) {
-        return [o.name, o.id];
-    }));
+    return JSON.stringify(outputs.map(o => [o.name, o.id]));
 }
 function fingerprint(outputs) {
-    return JSON.stringify(outputs.map(function (o) {
-        return [o.name, o.id, currentMode(o), o.scale, o.transform || 0, o.x || 0, o.y || 0, !!o.disabled, o.availableModes || []];
-    }));
+    return JSON.stringify(outputs.map(o => [o.name, o.id, currentMode(o), o.scale, o.transform || 0, o.x || 0, o.y || 0, !!o.disabled, o.availableModes || []]));
 }
 function payload(draft) {
     return draft.map(function (d) {
@@ -92,6 +80,9 @@ function payload(draft) {
 function number(value) {
     return String(value).trim().length > 0 && Number.isFinite(Number(value));
 }
+function inRange(value, minimum, maximum, whole) {
+    return number(value) && Number(value) >= minimum && Number(value) <= maximum && (!whole || Number.isInteger(Number(value)));
+}
 function validate(draft, outputs) {
     if (!draft.length || draft.length > 16)
         return "Connect between one and sixteen supported displays";
@@ -99,27 +90,22 @@ function validate(draft, outputs) {
         return "Displays changed · reload the layout";
     const seen = [];
     for (const d of draft) {
-        const o = outputs.find(function (v) {
-            return v.name === d.name;
-        });
+        const o = outputs.find(v => v.name === d.name);
         if (!o || seen.includes(d.name))
             return "Displays changed · reload the layout";
         seen.push(d.name);
-        if (!number(d.x) || !number(d.y) || !Number.isInteger(Number(d.x)) || !Number.isInteger(Number(d.y)) || Math.abs(Number(d.x)) > 32768 || Math.abs(Number(d.y)) > 32768)
+        if (!inRange(d.x, -32768, 32768, true) || !inRange(d.y, -32768, 32768, true))
             return "Position must be a whole number between −32768 and 32768";
-        if (!number(d.scale) || Number(d.scale) < 0.5 || Number(d.scale) > 4)
+        if (!inRange(d.scale, 0.5, 4, false))
             return "Scale must be between 50% and 400%";
-        if (!number(d.transform) || !Number.isInteger(Number(d.transform)) || Number(d.transform) < 0 || Number(d.transform) > 7)
+        if (!inRange(d.transform, 0, 7, true))
             return "Choose a supported rotation";
         if (typeof d.enabled !== "boolean" || (internal(d.name) && !d.enabled))
             return "Laptop fallback is managed by the external-display preference";
-        const m = parseMode(d.mode);
-        if (!m || m.width < 1 || m.height < 1 || m.width > 16384 || m.height > 16384 || m.rate < 1 || m.rate > 1000 || (d.enabled && !modes(o).includes(d.mode)))
+        if (!parseMode(d.mode) || (d.enabled && !modes(o).includes(d.mode)))
             return "Choose an advertised display mode";
     }
-    return draft.some(function (d) {
-        return d.enabled;
-    }) ? "" : "Keep at least one display enabled";
+    return draft.some(d => d.enabled) ? "" : "Keep at least one display enabled";
 }
 function rect(output) {
     const m = parseMode(output.mode) || {
@@ -144,57 +130,44 @@ function bounds(values) {
             height: 1080
         };
     const r = values.map(rect);
-    const x = Math.min.apply(null, r.map(function (v) {
-        return v.x;
-    }));
-    const y = Math.min.apply(null, r.map(function (v) {
-        return v.y;
-    }));
+    const x = Math.min(...r.map(v => v.x));
+    const y = Math.min(...r.map(v => v.y));
     return {
         x: x,
         y: y,
-        width: Math.max(1, Math.max.apply(null, r.map(function (v) {
-            return v.x + v.width;
-        })) - x),
-        height: Math.max(1, Math.max.apply(null, r.map(function (v) {
-            return v.y + v.height;
-        })) - y)
+        width: Math.max(1, Math.max(...r.map(v => v.x + v.width)) - x),
+        height: Math.max(1, Math.max(...r.map(v => v.y + v.height)) - y)
     };
 }
 function snap(values, name, x, y, threshold) {
-    const own = values.find(function (o) {
-        return o.name === name;
-    });
+    const own = values.find(o => o.name === name);
     if (!own)
         return {
             x: x,
             y: y
         };
     const r = rect(own);
-    let bestX = threshold, bestY = threshold, result = {
-        x: x,
-        y: y
-    };
+    const horizontal = [], vertical = [];
     for (const o of values) {
         if (o.name === name || o.enabled === false)
             continue;
         const other = rect(o);
-        for (const edge of [other.x, other.x + other.width]) {
-            for (const offset of [0, r.width]) {
-                const distance = Math.abs(edge - offset - x);
-                if (distance < bestX) {
-                    bestX = distance;
-                    result.x = edge - offset;
-                }
-            }
-        }
-        for (const edge of [other.y, other.y + other.height]) {
-            for (const offset of [0, r.height]) {
-                const distance = Math.abs(edge - offset - y);
-                if (distance < bestY) {
-                    bestY = distance;
-                    result.y = edge - offset;
-                }
+        horizontal.push(other.x, other.x + other.width);
+        vertical.push(other.y, other.y + other.height);
+    }
+    return {
+        x: snapCoordinate(x, r.width, horizontal, threshold),
+        y: snapCoordinate(y, r.height, vertical, threshold)
+    };
+}
+function snapCoordinate(position, size, edges, threshold) {
+    let result = position;
+    for (const edge of edges) {
+        for (const offset of [0, size]) {
+            const distance = Math.abs(edge - offset - position);
+            if (distance < threshold) {
+                threshold = distance;
+                result = edge - offset;
             }
         }
     }

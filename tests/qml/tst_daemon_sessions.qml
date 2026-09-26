@@ -58,6 +58,42 @@ TestCase {
         }
     }
 
+    Component {
+        id: screenshotFactory
+        Io.ClipboardScreenshotCapture {
+            active: true
+        }
+    }
+
+    function test_screenshotStatusLifetime() {
+        const capture = createTemporaryObject(screenshotFactory, testCase);
+        const expiry = findChild(capture, "screenshotStatusExpiry");
+        expiry.interval = 20;
+        verify(capture.captureRegion(1, 2, 100, 200));
+        compare(capture.statusMessage, capture.startMessage);
+        verify(!capture.captureRegion(1, 2, 100, 200));
+        const client = Io.DaemonSessions.sessions["clip-daemon"].client;
+        client.response(client.lastId, {}, "Capture failed", client.lastRoute);
+        compare(capture.statusMessage, "Capture failed");
+        verify(expiry.running);
+        verify(capture.captureRegion(1, 2, 100, 200));
+        verify(!expiry.running, "an earlier result must not clear an in-flight status");
+        client.response(client.lastId, {
+            protocol: "clip-api",
+            version: 1,
+            ok: true,
+            data: {
+                operation: {
+                    action: "screenshot",
+                    status: "completed"
+                }
+            }
+        }, "", client.lastRoute);
+        compare(capture.statusMessage, "Screenshot copied to the clipboard");
+        tryCompare(capture, "statusMessage", "");
+        verify(!capture.inFlight);
+    }
+
     QtObject {
         id: consumer
         property string daemonName: "stress-daemon"

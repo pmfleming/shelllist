@@ -8,8 +8,22 @@ Item {
     property bool blocked: false
     property bool inFlight: false
     property string startMessage: "Capturing window…"
+    property string statusMessage: ""
 
     signal statusChanged(string message)
+    onStatusChanged: function (message) {
+        statusMessage = message;
+        statusExpiry.running = !inFlight;
+        if (!inFlight)
+            statusExpiry.restart();
+    }
+
+    Timer {
+        id: statusExpiry
+        objectName: "screenshotStatusExpiry"
+        interval: 2500
+        onTriggered: capture.statusMessage = ""
+    }
 
     function captureRegion(x: real, y: real, width: real, height: real): bool {
         if (!active || blocked || inFlight || width < 1 || height < 1)

@@ -26,13 +26,14 @@ function controller() {
         Flow: library(flowPath), Presentation: library(presentationPath),
         uiActive: false, actionInFlight: false, sendSucceeds: true, backendReady: true,
         thresholdAutoSave: timer(), alertAutoSave: timer(),
+        screenshotCapture: { statusMessage: "", inFlight: false },
         batteryBackend: new Proxy({}, { get: (_, method) => method === "ready" ? context.backendReady : (...args) => {
             calls.push({ method, args });
             return context.sendSucceeds;
         } })
     });
     // Execute the actual controller methods and property expressions, with only
-    // its transport and Qt timers replaced. No hardware or D-Bus calls are made.
+    // its transport, screenshot helper and Qt timers replaced. No hardware or D-Bus calls are made.
     for (const match of source.matchAll(/^    (readonly )?property \w+ (\w+): ([\s\S]*?)(?=\n    (?:readonly property|property|function)|\n\n)/gm)) {
         const [, readonly, name, expression] = match;
         if (readonly)

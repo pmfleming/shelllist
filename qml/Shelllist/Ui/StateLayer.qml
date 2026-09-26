@@ -33,13 +33,7 @@ Item {
         color: root.stateColor
         opacity: root.showStateBackground ? (root.pressed ? root.pressedOpacity : (root.hovered ? root.hoverOpacity : 0)) : 0
 
-        Behavior on opacity {
-            enabled: !Theme.noAnimations
-            NumberAnimation {
-                duration: Theme.animationInteractive
-                easing.type: Theme.easingResponsive
-            }
-        }
+        InteractiveBehavior on opacity {}
     }
 
     Rectangle {

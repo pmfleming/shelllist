@@ -47,7 +47,7 @@ Ui.ChooserController {
     property date loadedTo
     property string detailSection: "schedule"
     property string weatherLocationId: ""
-    property string screenshotStatus: ""
+    property alias screenshotStatus: screenshotCapture.statusMessage
     property string screenshotStartMessage: "Capturing Activity panel…"
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
 
@@ -267,17 +267,5 @@ Ui.ChooserController {
         id: screenshotCapture
         active: controller.uiActive
         startMessage: controller.screenshotStartMessage
-        onStatusChanged: function (message) {
-            controller.screenshotStatus = message;
-            if (!inFlight)
-                screenshotStatusTimer.restart();
-        }
-    }
-
-    Timer {
-        id: screenshotStatusTimer
-        interval: 2500
-        repeat: false
-        onTriggered: controller.screenshotStatus = ""
     }
 }

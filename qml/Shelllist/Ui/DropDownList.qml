@@ -85,13 +85,7 @@ Controls.ComboBox {
         font.pixelSize: Theme.iconSizeSmall
         rotation: control.popup.visible ? 180 : 0
 
-        Behavior on rotation {
-            enabled: !Theme.noAnimations
-            NumberAnimation {
-                duration: Theme.animationInteractive
-                easing.type: Theme.easingResponsive
-            }
-        }
+        InteractiveBehavior on rotation {}
     }
 
     background: Rectangle {

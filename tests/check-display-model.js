@@ -24,6 +24,15 @@ for (const [key, value] of [["x", NaN], ["y", Infinity], ["x", ""], ["x", 32769]
     const rect = model.rect(changed[1]);
     assert.ok(Object.values(rect).every(Number.isFinite), "invalid drafts cannot poison canvas geometry");
 }
+for (const [key, values] of Object.entries({ x: [-32768, 32768, "0"], y: [-32768, 32768], scale: [0.5, 4], transform: [0, 7] })) {
+    for (const value of values) assert.equal(model.validate(draft.map(d => ({ ...d, [key]: value })), outputs), "", `${key}=${value} is valid`);
+}
+const tile = { name: "DP-1", mode: "100x100@60", scale: 1, x: 200, y: 300, enabled: true };
+const layout = [{ ...tile, name: "HDMI-A-1" }, tile];
+assert.deepEqual(plain(model.snap(layout, "HDMI-A-1", 101, 199, 10)), { x: 100, y: 200 });
+assert.deepEqual(plain(model.snap(layout, "HDMI-A-1", 150, 250, 50)), { x: 150, y: 250 }, "threshold is exclusive");
+assert.deepEqual(plain(model.snap(layout, "HDMI-A-1", 150, 250, 51)), { x: 200, y: 300 }, "equal distances retain the first edge");
+assert.deepEqual(plain(model.snap([{ ...tile, enabled: false }, layout[0]], "HDMI-A-1", 101, 199, 10)), { x: 101, y: 199 });
 const desktop = [outputs[1]];
 assert.notEqual(model.validate([{ ...draft[1], enabled: false }], desktop), "", "last output protected");
 assert.notEqual(model.validate([{ ...draft[0], enabled: false }, draft[1]], outputs), "", "internal fallback protected");

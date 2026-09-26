@@ -15,7 +15,7 @@ Ui.ChooserController {
     property string pendingGroupKey: ""
     property string selectedGroupKey: ""
     property double nowMs: Date.now()
-    property string screenshotStatus: ""
+    property alias screenshotStatus: screenshotCapture.statusMessage
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
     readonly property alias groupModel: groups
     readonly property var visibleGroups: Ui.NotificationPresentation.groupRecords(Ui.NotificationPresentation.filterRecords(tab === "active" ? Ui.NotificationPresentation.newestFirst(notificationState.activeNotifications) : notificationState.history, filterText))
@@ -114,16 +114,6 @@ Ui.ChooserController {
         id: screenshotCapture
         active: controller.uiActive
         startMessage: "Capturing Notifications panel…"
-        onStatusChanged: function (message) {
-            controller.screenshotStatus = message;
-            if (!inFlight)
-                screenshotStatusTimer.restart();
-        }
-    }
-    Timer {
-        id: screenshotStatusTimer
-        interval: 2500
-        onTriggered: controller.screenshotStatus = ""
     }
 
     onVisibleGroupsChanged: rebuildGroups()

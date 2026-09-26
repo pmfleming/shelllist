@@ -144,11 +144,5 @@ Item {
         closeEnabled: root.navigationCloseEnabled
     }
 
-    Behavior on detailsExpansionProgress {
-        enabled: !Theme.noAnimations
-        NumberAnimation {
-            duration: Theme.animationInteractive
-            easing.type: Theme.easingResponsive
-        }
-    }
+    InteractiveBehavior on detailsExpansionProgress {}
 }

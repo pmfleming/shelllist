@@ -19,12 +19,6 @@ DaemonTestCase {
         Clip.ClipboardDetailCards {}
     }
     Component {
-        id: detailsFactory
-        Clip.ClipboardDetails {
-            uiScale: 1
-        }
-    }
-    Component {
         id: paneFactory
         Clip.ClipboardListPane {}
     }

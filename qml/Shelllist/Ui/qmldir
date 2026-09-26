@@ -44,6 +44,7 @@ singleton Format 1.0 Format.qml
 GlyphLabel 1.0 GlyphLabel.qml
 GroupCountBadge 1.0 GroupCountBadge.qml
 IconTile 1.0 IconTile.qml
+internal InteractiveBehavior InteractiveBehavior.qml
 LabeledValueSlider 1.0 LabeledValueSlider.qml
 PercentageSlider 1.0 PercentageSlider.qml
 LiveClock 1.0 LiveClock.qml

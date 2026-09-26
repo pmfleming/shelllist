@@ -21,12 +21,6 @@ Rectangle {
         y: 3
         color: pill.handleColor
 
-        Behavior on x {
-            enabled: !Theme.noAnimations
-            NumberAnimation {
-                duration: Theme.animationInteractive
-                easing.type: Theme.easingResponsive
-            }
-        }
+        InteractiveBehavior on x {}
     }
 }

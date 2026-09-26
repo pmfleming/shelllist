@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import Quickshell
 import Shelllist.Ui as Ui
 
 TestCase {
@@ -24,6 +25,32 @@ TestCase {
     SignalSpy {
         id: finished
         signalName: "editingFinished"
+    }
+
+    function test_sliderMotionPolicy(): void {
+        try {
+            Quickshell.environment = {
+                SHELLLIST_NO_ANIMATIONS: "false"
+            };
+            const slider = createTemporaryObject(sliderFactory, this);
+            const input = findChild(slider, "labeledValueSliderInput");
+            waitForRendering(input);
+            const start = input.handle.x;
+            input.value = input.to;
+            compare(input.handle.x, start, "keyboard changes animate rather than jump");
+            tryVerify(() => input.handle.x > start);
+            input.pressed = true;
+            input.value = input.from;
+            compare(input.handle.x, input.leftPadding, "dragging bypasses animation");
+            input.pressed = false;
+            Quickshell.environment = {
+                SHELLLIST_NO_ANIMATIONS: "true"
+            };
+            input.value = input.to;
+            compare(input.handle.x, input.leftPadding + input.availableWidth - input.handle.width);
+        } finally {
+            Quickshell.environment = ({});
+        }
     }
 
     function test_percentageKeyboardAndAccessibleLabel(): void {

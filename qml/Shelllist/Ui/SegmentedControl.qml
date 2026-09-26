@@ -80,13 +80,7 @@ Rectangle {
             }
         }
 
-        Behavior on selectedPosition {
-            enabled: !Theme.noAnimations
-            NumberAnimation {
-                duration: Theme.animationInteractive
-                easing.type: Theme.easingResponsive
-            }
-        }
+        InteractiveBehavior on selectedPosition {}
     }
 
     Row {

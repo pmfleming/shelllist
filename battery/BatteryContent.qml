@@ -10,7 +10,6 @@ Ui.ChooserSurface {
     required property BatteryController controller
     readonly property var battery: controller.battery || ({})
     readonly property var protection: controller.protection
-    readonly property var policy: controller.policy
     readonly property var device: controller.primaryDevice || ({})
     readonly property string policyError: protection.error || ""
     readonly property string errorMessage: controller.lastError.length > 0 ? controller.lastError : (controller.transportError.length > 0 ? controller.transportError : (controller.refreshError.length > 0 ? controller.refreshError : policyError))

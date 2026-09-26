@@ -87,7 +87,7 @@ Ui.ChooserController {
     property string lastError: ""
     property string refreshError: ""
     property string transportError: ""
-    property string screenshotStatus: ""
+    property alias screenshotStatus: screenshotCapture.statusMessage
     readonly property var viewTabs: [
         {
             value: "overview",
@@ -833,18 +833,6 @@ Ui.ChooserController {
         active: controller.uiActive
         blocked: controller.actionInFlight || controller.settingsOperationActive
         startMessage: "Capturing Battery & Power panel…"
-        onStatusChanged: function (message) {
-            controller.screenshotStatus = message;
-            if (!inFlight)
-                screenshotStatusTimer.restart();
-        }
-    }
-
-    Timer {
-        id: screenshotStatusTimer
-        interval: 2500
-        repeat: false
-        onTriggered: controller.screenshotStatus = ""
     }
 
     Timer {
