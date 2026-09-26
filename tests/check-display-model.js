@@ -27,6 +27,30 @@ for (const [key, value] of [["x", NaN], ["y", Infinity], ["x", ""], ["x", 32769]
 for (const [key, values] of Object.entries({ x: [-32768, 32768, "0"], y: [-32768, 32768], scale: [0.5, 4], transform: [0, 7] })) {
     for (const value of values) assert.equal(model.validate(draft.map(d => ({ ...d, [key]: value })), outputs), "", `${key}=${value} is valid`);
 }
+// Preserve the first useful error when several fields (or later identities) fail.
+const invalidFields = [
+    ["x", 0.5, "Position must be a whole number between −32768 and 32768"],
+    ["scale", 0, "Scale must be between 50% and 400%"],
+    ["transform", 8, "Choose a supported rotation"],
+    ["enabled", null, "Choose whether this display is enabled"],
+    ["mirror_of", null, "Choose a supported mirror source"],
+    ["mirror_of", "DP-1", "Choose a different supported display to mirror"],
+    ["mirror_of", "DP-99", "Mirror source must be an enabled extended display"],
+    ["mode", "invalid", "Choose an advertised display mode"]
+];
+for (const [index, [key, value, message]] of invalidFields.entries()) {
+    const invalid = { ...draft[1], [key]: value };
+    assert.equal(model.validate([draft[0], invalid], outputs), message);
+    for (const [laterKey, laterValue] of invalidFields.slice(index + 1)) {
+        if (laterKey !== key)
+            assert.equal(model.validate([draft[0], { ...invalid, [laterKey]: laterValue }], outputs), message);
+    }
+}
+assert.equal(model.validate([], []), "Connect between one and sixteen supported displays");
+assert.equal(model.validate(Array(17).fill(draft[0]), outputs), "Connect between one and sixteen supported displays");
+assert.equal(model.validate([draft[0]], outputs), "Displays changed · reload the layout");
+assert.equal(model.validate([draft[0], draft[0]], outputs), "Displays changed · reload the layout");
+assert.equal(model.validate([{ ...draft[0], x: 0.5 }, draft[0]], outputs), invalidFields[0][2]);
 const tile = { name: "DP-1", mode: "100x100@60", scale: 1, x: 200, y: 300, enabled: true };
 const layout = [{ ...tile, name: "HDMI-A-1" }, tile];
 assert.deepEqual(plain(model.snap(layout, "HDMI-A-1", 101, 199, 10)), { x: 100, y: 200 });

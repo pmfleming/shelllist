@@ -83,6 +83,13 @@ thresholds, exclude difficult files or add suppressions to claim improvement.
   shared component has no controller/daemon dependency. Strict lint, 202 Qt
   passes and offscreen smoke pass; added tests exercise keyboard/pointer signals,
   disabled activation, focus transfer and hidden-reply layout.
+- Display validation: split per-output field checks from layout identity/order
+  checks and shared the independent-output predicate with mirror/extend helpers.
+  `validate` drops from cyclomatic/cognitive/effort 28/57/178 to 9/13/51;
+  the extracted field validator is 19/18/79. Production function effort falls
+  even including helpers. Node boundary/error-precedence tests, 80,000 seeded
+  before/after comparisons, strict lint and 202 Qt passes succeed. No daemon
+  validation, preview/revert or acknowledgement policy was changed.
 
 ## Baseline execution evidence
 

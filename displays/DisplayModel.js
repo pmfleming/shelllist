@@ -54,22 +54,31 @@ function mirrorSource(output, outputs) {
     const source = outputs.find(o => o.name === String(reference) || (o.id !== undefined && String(o.id) === String(reference)));
     return source ? source.name : String(reference);
 }
+function isIndependent(output) {
+    return output.enabled && !output.mirror_of;
+}
 function mirrorSources(draft, name) {
     // A source with dependents must remain independent; no chains or cycles.
     if (draft.some(o => o.enabled && o.mirror_of === name))
         return [];
-    return draft.filter(o => o.name !== name && o.enabled && !o.mirror_of);
+    return draft.filter(o => o.name !== name && isIndependent(o));
 }
 function extend(draft, name) {
     const own = draft.find(o => o.name === name);
     if (!own || !own.mirror_of)
         return draft;
-    const others = draft.filter(o => o.name !== name && o.enabled && !o.mirror_of);
+    const others = draft.filter(o => o.name !== name && isIndependent(o));
     const right = others.length ? Math.max(...others.map(o => rect(o).x + rect(o).width)) : Number(own.x);
-    return draft.map(o => o.name === name ? Object.assign({}, o, {mirror_of: "", x: Math.round(right)}) : o);
+    return draft.map(o => o.name === name ? Object.assign({}, o, {
+            mirror_of: "",
+            x: Math.round(right)
+        }) : o);
 }
 function setEnabled(draft, name, enabled) {
-    let next = draft.map(o => o.name === name ? Object.assign({}, o, {enabled: enabled, mirror_of: enabled ? (o.mirror_of || "") : ""}) : o);
+    let next = draft.map(o => o.name === name ? Object.assign({}, o, {
+            enabled: enabled,
+            mirror_of: enabled ? (o.mirror_of || "") : ""
+        }) : o);
     if (!enabled) {
         // Promote the mirrors before their source is disabled by the daemon.
         for (const mirror of next.filter(o => o.enabled && o.mirror_of === name))
@@ -117,6 +126,26 @@ function number(value) {
 function inRange(value, minimum, maximum, whole) {
     return number(value) && Number(value) >= minimum && Number(value) <= maximum && (!whole || Number.isInteger(Number(value)));
 }
+function validateOutput(d, output, draft) {
+    if (!inRange(d.x, -32768, 32768, true) || !inRange(d.y, -32768, 32768, true))
+        return "Position must be a whole number between −32768 and 32768";
+    if (!inRange(d.scale, 0.5, 4, false))
+        return "Scale must be between 50% and 400%";
+    if (!inRange(d.transform, 0, 7, true))
+        return "Choose a supported rotation";
+    if (typeof d.enabled !== "boolean")
+        return "Choose whether this display is enabled";
+    if (d.mirror_of !== undefined && typeof d.mirror_of !== "string")
+        return "Choose a supported mirror source";
+    const source = d.mirror_of || "";
+    if (source && (!supported(source) || source === d.name))
+        return "Choose a different supported display to mirror";
+    if (d.enabled && source && !draft.some(v => v.name === source && isIndependent(v)))
+        return "Mirror source must be an enabled extended display";
+    if (!parseMode(d.mode) || (d.enabled && !modes(output).includes(d.mode)))
+        return "Choose an advertised display mode";
+    return "";
+}
 function validate(draft, outputs) {
     if (!draft.length || draft.length > 16)
         return "Connect between one and sixteen supported displays";
@@ -124,29 +153,15 @@ function validate(draft, outputs) {
         return "Displays changed · reload the layout";
     const seen = [];
     for (const d of draft) {
-        const o = outputs.find(v => v.name === d.name);
-        if (!o || seen.includes(d.name))
+        const output = outputs.find(v => v.name === d.name);
+        if (!output || seen.includes(d.name))
             return "Displays changed · reload the layout";
         seen.push(d.name);
-        if (!inRange(d.x, -32768, 32768, true) || !inRange(d.y, -32768, 32768, true))
-            return "Position must be a whole number between −32768 and 32768";
-        if (!inRange(d.scale, 0.5, 4, false))
-            return "Scale must be between 50% and 400%";
-        if (!inRange(d.transform, 0, 7, true))
-            return "Choose a supported rotation";
-        if (typeof d.enabled !== "boolean")
-            return "Choose whether this display is enabled";
-        if (d.mirror_of !== undefined && typeof d.mirror_of !== "string")
-            return "Choose a supported mirror source";
-        const source = d.mirror_of || "";
-        if (source && (!supported(source) || source === d.name))
-            return "Choose a different supported display to mirror";
-        if (d.enabled && source && !draft.some(v => v.name === source && v.enabled && !v.mirror_of))
-            return "Mirror source must be an enabled extended display";
-        if (!parseMode(d.mode) || (d.enabled && !modes(o).includes(d.mode)))
-            return "Choose an advertised display mode";
+        const error = validateOutput(d, output, draft);
+        if (error)
+            return error;
     }
-    return draft.some(d => d.enabled && !d.mirror_of) ? "" : "Keep at least one independent display enabled";
+    return draft.some(isIndependent) ? "" : "Keep at least one independent display enabled";
 }
 function rect(output) {
     const m = parseMode(output.mode) || {
