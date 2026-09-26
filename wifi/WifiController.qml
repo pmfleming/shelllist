@@ -119,9 +119,6 @@ ProviderChooserController {
     function launchQrScanner() {
         return qr.launchScanner(true);
     }
-    function inspectQrScanner() {
-        return qr.launchScanner(false);
-    }
     function applyShareResponse(response, errorText) {
         services.share.applyResponse(response, errorText);
     }
@@ -172,23 +169,8 @@ ProviderChooserController {
     function disconnectVpn(profile) {
         return vpn.disconnect(profile);
     }
-    function openNetworkInventory() {
-        inventory.open();
-    }
-    function closeNetworkInventory() {
-        inventory.close();
-    }
-    function activateConnection(profile, device) {
-        return inventory.activate(profile, device);
-    }
     function deactivateConnection(activeConnection) {
         return inventory.deactivate(activeConnection);
-    }
-    function watchNetworkStatistics(device, intervalMs) {
-        return statistics.start(device, intervalMs);
-    }
-    function stopNetworkStatistics() {
-        return statistics.stop();
     }
 
     function dismissNavigation(): bool {

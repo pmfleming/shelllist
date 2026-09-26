@@ -156,13 +156,3 @@ function notificationMonitor(notification, focusedMonitor, monitorNames) {
         return focusedMonitor;
     return available.length > 0 ? available[0] : "";
 }
-
-function dndLabel(notifications, nowMs) {
-    if (!notifications || !notifications.dnd)
-        return "DND off";
-    const until = Number(notifications.dnd_until_unix_ms || 0);
-    if (until <= 0)
-        return "DND on";
-    const minutes = Math.max(1, Math.ceil((until - nowMs) / 60000));
-    return minutes >= 60 ? "DND " + Math.ceil(minutes / 60) + "h" : "DND " + minutes + "m";
-}

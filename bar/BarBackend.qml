@@ -66,10 +66,6 @@ Io.DaemonBackend {
         });
     }
 
-    function toggleNotifications(): bool {
-        return callSequenced("notifications-panel", BarApi.methods.notificationsTogglePanel, {});
-    }
-
     function toggleDnd(): bool {
         return callSequenced("notifications-dnd", BarApi.methods.notificationsToggleDnd, {});
     }

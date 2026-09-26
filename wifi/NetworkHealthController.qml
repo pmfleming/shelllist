@@ -16,10 +16,6 @@ Item {
 
     readonly property string lastFailureMessage: lastFailure ? Health.message(lastFailure) : ""
 
-    function clearFailure() {
-        lastFailure = null;
-    }
-
     function handleEvent(event) {
         if (event.event === "subscribed")
             return;

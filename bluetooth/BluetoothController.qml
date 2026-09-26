@@ -377,16 +377,6 @@ Ui.ProviderChooserController {
         status = "Updating default Bluetooth audio route…";
         return backend.setAudioDefault(selectedDevice.key, endpoint.key);
     }
-    function setNoiseControl(mode) {
-        const caps = selectedDevice.capabilities || ({});
-        const control = (selectedDevice.fast_pair || {}).noise_control || ({});
-        if (!hasSelection || actionInFlight || !caps.can_set_noise_control || !(control.settable_modes || []).includes(mode))
-            return false;
-        status = "Updating sound isolation…";
-        return backend.deviceOperation("set-noise-control", selectedDevice, {
-            mode: mode
-        });
-    }
     function setAudioProfile(profile) {
         if (!hasSelection || !selectedDevice.connected || !selectedAudio.device_key || !profile || !profile.key || profile.available === false || actionInFlight)
             return false;

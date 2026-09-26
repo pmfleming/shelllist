@@ -32,7 +32,7 @@ ColumnLayout {
         };
         controller.adapterEdits.edit(displayedAdapterKey, field, values[field]);
     }
-    function syncAdapterFields(force: bool): void {
+    function syncAdapterFields(): void {
         const adapter = controller.selectedAdapter;
         const nextKey = adapter.key || "";
         if (nextKey !== displayedAdapterKey)
@@ -55,8 +55,8 @@ ColumnLayout {
         controller.adapterEdits.saveNext(displayedAdapterKey);
     }
 
-    Component.onCompleted: Qt.callLater(section.syncAdapterFields, true)
-    onDraftChanged: Qt.callLater(section.syncAdapterFields, false)
+    Component.onCompleted: Qt.callLater(section.syncAdapterFields)
+    onDraftChanged: Qt.callLater(section.syncAdapterFields)
     Component.onDestruction: if (hasDirtyFields && !draft.pendingField && !draft.error)
         section.saveDirtyFields()
 
@@ -70,7 +70,7 @@ ColumnLayout {
     Connections {
         target: section.controller
         function onSelectedAdapterChanged() {
-            section.syncAdapterFields(section.displayedAdapterKey !== (section.controller.selectedAdapter.key || ""));
+            section.syncAdapterFields();
         }
         function onActionInFlightChanged() {
             if (!section.controller.globalRequestInFlight && section.hasDirtyFields && !section.draft.error)

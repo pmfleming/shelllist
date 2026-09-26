@@ -201,16 +201,6 @@ Ui.ChooserController {
         }))
             weatherLocationId = locationId;
     }
-    function cycleWeatherLocation(delta: int): void {
-        if (weatherLocations.length < 2)
-            return;
-        const selectedId = selectedWeather.id;
-        const current = weatherLocations.findIndex(function (weather) {
-            return weather.id === selectedId;
-        });
-        const next = (Math.max(0, current) + delta + weatherLocations.length) % weatherLocations.length;
-        weatherLocationId = weatherLocations[next].id;
-    }
 
     function requestTimeWeather(tab: string): void {
         timeWeatherRequested(tab === "time" ? "time" : "weather");

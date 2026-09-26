@@ -42,18 +42,6 @@ Item {
         backend.loadNetworkState();
     }
 
-    function devicesOfType(typeName) {
-        return devices.filter(function (device) {
-            return device.type_name === typeName;
-        });
-    }
-
-    function connectionsOfType(typeName) {
-        return connections.filter(function (profile) {
-            return profile.type_name === typeName;
-        });
-    }
-
     function activate(profile, device) {
         if (!profile || (!profile.uuid && !profile.path)) {
             controller.status = "Could not activate the connection: no profile selected.";

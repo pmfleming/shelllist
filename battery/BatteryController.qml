@@ -584,14 +584,6 @@ Ui.ChooserController {
         }, true);
     }
 
-    function updateLevelNotification(level: string, value: bool): void {
-        const fields = levelFields[level];
-        if (fields)
-            editAlert({
-                [fields.notify]: value
-            }, true);
-    }
-
     function updateLevelEnabled(level: string, enabled: bool): void {
         const fields = levelFields[level];
         if (actionInFlight || !fields)
