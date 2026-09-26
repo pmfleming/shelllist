@@ -90,6 +90,14 @@ thresholds, exclude difficult files or add suppressions to claim improvement.
   even including helpers. Node boundary/error-precedence tests, 80,000 seeded
   before/after comparisons, strict lint and 202 Qt passes succeed. No daemon
   validation, preview/revert or acknowledgement policy was changed.
+- Notification models: replaced the second hand-written reconciliation algorithm
+  with a small `SerializedListModel` specialization of `Core.KeyedListModel`.
+  Serialization stays beside the model to preserve nested action arrays; this
+  specialization always reconciles synchronously without resets/chunks so live
+  reply delegates survive large updates. Group scroll capture/update signals
+  retain their original order. Strict lint, 203 Qt passes, Node notification
+  checks and offscreen smoke pass, including a 205-record burst while editing
+  a reply and equal-payload/no-rewrite checks.
 
 ## Baseline execution evidence
 

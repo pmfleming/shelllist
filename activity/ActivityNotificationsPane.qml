@@ -55,8 +55,8 @@ Rectangle {
         activeFocusOnTab: true
         keyNavigationEnabled: false
         delegate: NotificationHistoryGroup {
-            required property string payload
-            group: JSON.parse(payload)
+            required property var resultData
+            group: JSON.parse(resultData.payload)
             controller: pane.controller
         }
         Keys.onDownPressed: pane.controller.moveGroup(1)

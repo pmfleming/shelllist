@@ -22,6 +22,38 @@ TestCase {
         }
     }
 
+    Core.SerializedListModel {
+        id: serialized
+    }
+    SignalSpy {
+        id: updates
+        target: serialized
+        signalName: "dataChanged"
+    }
+
+    function test_serializedRowsStaySynchronousAndKeepNestedArrays(): void {
+        const values = rows(205).map(row => ({
+                    key: row.key,
+                    payload: {
+                        actions: [
+                            {
+                                key: "reply"
+                            }
+                        ]
+                    }
+                }));
+        serialized.rows = values;
+        compare(serialized.count, 205, "no deferred pages for live editors");
+        const payload = JSON.parse(serialized.get(0).resultData.payload);
+        verify(Array.isArray(payload.actions));
+        compare(payload.actions[0].key, "reply");
+        updates.clear();
+        serialized.rows = JSON.parse(JSON.stringify(values));
+        compare(updates.count, 0, "equal JSON does not rewrite delegate data");
+        serialized.rows = [];
+        compare(serialized.count, 0);
+    }
+
     function init() {
         model.values = [];
         model.maximumIncrementalOrderChanges = 32;

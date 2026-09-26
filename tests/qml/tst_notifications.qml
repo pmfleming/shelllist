@@ -212,6 +212,18 @@ TestCase {
         compare(findChild(content, "notificationHistoryRow-100"), row);
         verify(field.inputActiveFocus);
         compare(field.text, "Draftt");
+        // More than the generic model's reorder/chunk thresholds: live reply
+        // editors still move with their stable identity, never a reset.
+        const burst = Array.from({
+            length: 205
+        }, (_, index) => notification(index + 1000));
+        state.notificationActive = {
+            notifications: burst.concat([notification(100), notification(1)])
+        };
+        wait(50);
+        compare(findChild(content, "notificationHistoryRow-100"), row);
+        verify(field.inputActiveFocus);
+        compare(field.text, "Draftt");
         content.destroy();
         wait(50);
     }

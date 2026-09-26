@@ -103,35 +103,6 @@ function mergeHistory(existing, incoming) {
     });
 }
 
-// Reconcile QML ListModels without resetting existing delegates and their focus.
-function syncKeyedModel(model, rows) {
-    for (let i = 0; i < rows.length; ++i) {
-        // Store JSON as a scalar role: ListModel otherwise converts nested action
-        // arrays into QQmlListModels, breaking Array.isArray/filter in delegates.
-        const row = {
-            key: rows[i].key,
-            payload: JSON.stringify(rows[i].payload)
-        };
-        let found = -1;
-        for (let j = i; j < model.count; ++j) {
-            if (model.get(j).key === row.key) {
-                found = j;
-                break;
-            }
-        }
-        if (found < 0)
-            model.insert(i, row);
-        else {
-            if (found !== i)
-                model.move(found, i, 1);
-            if (model.get(i).payload !== row.payload)
-                model.setProperty(i, "payload", row.payload);
-        }
-    }
-    if (model.count > rows.length)
-        model.remove(rows.length, model.count - rows.length);
-}
-
 function filterRecords(records, query) {
     const needle = String(query || "").trim().toLowerCase();
     return (records || []).filter(function (record) {

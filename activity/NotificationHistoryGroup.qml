@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
+import Shelllist.Core as Core
 
 Rectangle {
     id: stack
@@ -23,20 +24,12 @@ Rectangle {
     border.width: 1
     border.color: controller.selectedGroupKey === group.key && ListView.view && ListView.view.activeFocus ? Ui.Theme.accent : expanded && multiple ? Ui.Theme.border : "transparent"
 
-    function rebuildRecords(): void {
-        Ui.NotificationPresentation.syncKeyedModel(recordsModel, visibleRecords.map(function (record) {
-            const notification = Ui.NotificationPresentation.notificationFor(record);
-            return {
-                key: record.history_id !== undefined ? "history:" + record.history_id : "active:" + notification.id,
-                payload: record
-            };
-        }));
-    }
-    onVisibleRecordsChanged: rebuildRecords()
-    Component.onCompleted: rebuildRecords()
-    ListModel {
+    Core.SerializedListModel {
         id: recordsModel
-        dynamicRoles: true
+        rows: stack.visibleRecords.map(record => ({
+                    key: record.history_id !== undefined ? "history:" + record.history_id : "active:" + Ui.NotificationPresentation.notificationFor(record).id,
+                    payload: record
+                }))
     }
 
     Behavior on implicitHeight {
@@ -90,8 +83,8 @@ Rectangle {
         Repeater {
             model: recordsModel
             NotificationHistoryRow {
-                required property string payload
-                record: JSON.parse(payload)
+                required property var resultData
+                record: JSON.parse(resultData.payload)
                 controller: stack.controller
                 width: content.width
                 groupCount: stack.group.records.length

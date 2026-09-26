@@ -1,6 +1,7 @@
 import QtQuick
 import Shelllist.Ui as Ui
 import Shelllist.Io as Io
+import Shelllist.Core as Core
 
 Ui.ChooserController {
     id: controller
@@ -63,12 +64,10 @@ Ui.ChooserController {
     }
     function rebuildGroups(): void {
         groupsAboutToChange();
-        Ui.NotificationPresentation.syncKeyedModel(groups, visibleGroups.map(function (group) {
-            return {
-                key: group.key,
-                payload: group
-            };
-        }));
+        groups.rows = visibleGroups.map(group => ({
+                    key: group.key,
+                    payload: group
+                }));
         if (!visibleGroups.some(function (group) {
             return group.key === controller.selectedGroupKey;
         }))
@@ -117,9 +116,8 @@ Ui.ChooserController {
     }
 
     onVisibleGroupsChanged: rebuildGroups()
-    ListModel {
+    Core.SerializedListModel {
         id: groups
-        dynamicRoles: true
     }
     Timer {
         interval: 30000

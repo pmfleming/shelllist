@@ -6,7 +6,7 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 The [2026-09-27 maintenance review](reviews/lens-maintenance-2026-09-27.md)
 records the current Lens baseline, cleanup candidates and proposed refactoring
-slices. It is a review checkpoint, not a completed implementation. Earlier
+slices, completed refactors and their validation. Earlier
 [commonality work](reviews/commonality-2026-09-20.md) and the
 [presentation/controller refactor](reviews/lens-refactor-2026-09-26.md) retain
 their historical before/after measurements. Native lint is warning-fatal and
@@ -32,7 +32,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - `ProviderChooserSurface` composes chooser shortcuts, split layout, density, and default navigation/refresh/detail policy once for Wi-Fi, Bluetooth, Clipboard, and Applications. Domain action bindings use Qt `Shortcut` directly; there is no navigation-help overlay or shortcut-help wrapper.
 - `ChooserShortcuts` centralizes Escape, refresh, and details-tab shortcuts.
 - `ChooserListPane` derives its own density instead of requiring every domain wrapper to forward presentation state.
-- `KeyedListModel` owns persistent model reconciliation and chunking for `ResultStore` and the bar; selection and ranking remain in `ResultStore`.
+- `KeyedListModel` owns persistent model reconciliation and chunking for `ResultStore` and the bar; selection and ranking remain in `ResultStore`. Its `SerializedListModel` specialization keeps notification action arrays encoded and uses synchronous, reset-free reconciliation to preserve live reply editors.
 - `ActionControl` shares keyboard/accessibility activation and busy-focus policy across chooser controls and bar actions. `FocusRing` provides an immediate, inset indicator independent of decorative animation; fields, icon tiles and result rows also use it. No hover tooltip or automatic focus label is rendered; legacy tooltip strings retained during migration supply nonvisual accessible descriptions where appropriate.
 - Providers resolve dynamic actions at use time rather than copying actions into recurring snapshots.
 - `BarContent` renders normalized status descriptors through one delegate.
@@ -40,7 +40,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - Activity, battery, power, and OSD views are split into cohesive panes rather than one large object tree.
 - `LiveClock`, `PulsingLabel`, `NotificationReplyRow`, and `BarOverlayWindow` centralize repeated presentation behavior.
 - `ChartDrawing` shares gap-preserving Canvas paths between battery and application history; `ChartValueRail` keeps their label geometry and styling consistent. Availability, axes, and telemetry policy stay with their existing owners.
-- `NotificationPresentation`, `NotificationStackHeader`, and `RemovalAnimation` keep grouping, routing, stack headers, and transient removal behavior common between active and historical notifications.
+- `NotificationPresentation`, `NotificationStackHeader`, `NotificationQuickActions`, and `RemovalAnimation` share grouping, routing, stack headers, action rendering/focus tracking and transient removal behavior. Notification quick actions emit intent only; toast/history owners retain their distinct dismissal and reply lifecycles.
 - Every OSD family uses one normalized descriptor, one `BarOsdContent` frame, and one dismissal timer; pure transition and timeout policy stays in `BarOsdPresentation.js`.
 - `StateLayer` and `Elevation` centralize interaction feedback and depth.
 - UI operation-state transitions are kept in small testable JavaScript helpers. Authoritative operation lifecycle policy, validation, leases and effects belong in the owning Rust daemon.
