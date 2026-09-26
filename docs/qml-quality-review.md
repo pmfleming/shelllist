@@ -4,10 +4,13 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
-The [2026-09-20 commonality review](reviews/commonality-2026-09-20.md) records the
-current before/after measurements, shared model/activation refactors, dead-code
-removal and remaining findings. The complete worktree gate now passes. Native
-lint is warning-fatal and preserves the source tree's relative import layout.
+The [2026-09-27 maintenance review](reviews/lens-maintenance-2026-09-27.md)
+records the current Lens baseline, cleanup candidates and proposed refactoring
+slices. It is a review checkpoint, not a completed implementation. Earlier
+[commonality work](reviews/commonality-2026-09-20.md) and the
+[presentation/controller refactor](reviews/lens-refactor-2026-09-26.md) retain
+their historical before/after measurements. Native lint is warning-fatal and
+preserves the source tree's relative import layout.
 
 ## Current structure
 
