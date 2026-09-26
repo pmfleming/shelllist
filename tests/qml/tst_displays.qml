@@ -37,6 +37,13 @@ DaemonTestCase {
         calls = [];
         return panel;
     }
+    function waitForDetails(panel) {
+        // The asynchronous Loader exposes children before their bindings and
+        // nested Repeaters finish initializing. Object names alone aren't ready signals.
+        tryVerify(function () { return panel.detailsItem !== null; });
+        tryCompare(panel.detailsItem.parent, "status", Loader.Ready);
+        verify(waitForPolish(panel.Window.window));
+    }
     function focusState() {
         const state = displayState();
         state.outputs[0].disabled = false;
@@ -54,7 +61,7 @@ DaemonTestCase {
         c.applyDisplayPolicy(focusState());
         c.openDetails();
         c.detailsTab = "focus";
-        tryVerify(function () { return findChild(panel, "displayFocusedMonitor") !== null; });
+        waitForDetails(panel);
         const label = findChild(panel, "displayFocusedMonitor");
         verify(label.text.indexOf("DP-1") >= 0);
         c.edit("DP-1", "scale", 2);
@@ -80,9 +87,7 @@ DaemonTestCase {
         c.openDetails();
         c.cycleDetailsTab();
         compare(c.detailsTab, "focus");
-        // The asynchronous details Loader can expose the page before its
-        // nested Repeaters have finished creating the settings controls.
-        tryVerify(function () { return findChild(panel, "focusSetting-cursor:warp_back_after_non_mouse_input") !== null; });
+        waitForDetails(panel);
         const choice = findChild(panel, "focusSetting-misc:mouse_move_focuses_monitor");
         verify(choice !== null && choice.interactive);
         compare(choice.value, "true");
@@ -128,7 +133,7 @@ DaemonTestCase {
         c.applyDisplayPolicy(focusState());
         c.openDetails();
         c.detailsTab = "focus";
-        tryVerify(function () { return findChild(panel, "focusNumber-input:follow_mouse_threshold") !== null; });
+        waitForDetails(panel);
         const number = findChild(panel, "focusNumber-input:follow_mouse_threshold");
         number.edited("");
         verify(!number.inputValid);
@@ -157,7 +162,8 @@ DaemonTestCase {
         verify(c.canSetFocus);
         panel.width = 390;
         panel.height = 600;
-        verify(waitForRendering(panel));
+        // A rendered frame can precede the nested layout's resize/polish pass.
+        verify(waitForPolish(panel.Window.window));
         const page = findChild(panel, "displayFocusPane");
         verify(page.width > 0 && page.width <= panel.width);
         number.focusInput(false);

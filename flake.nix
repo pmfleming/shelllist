@@ -748,6 +748,7 @@
             [
               ./tests/check-display-model.js
               ./displays/DisplayModel.js
+              ./displays/DisplayFocusModel.js
             ]
           ];
 

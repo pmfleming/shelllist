@@ -2,6 +2,7 @@
 const fs = require("node:fs");
 const vm = require("node:vm");
 const assert = require("node:assert/strict");
+assert.ok(process.argv[2] && process.argv[3], "usage: check-display-model.js <DisplayModel.js> <DisplayFocusModel.js>");
 const model = {};
 vm.createContext(model);
 vm.runInContext(fs.readFileSync(process.argv[2], "utf8").replace(/^\.pragma library\s*/m, ""), model);
@@ -63,7 +64,7 @@ assert.equal(model.validate(sourceOff, mirroredOutputs), "");
 // than prescribing how the model fingerprints a snapshot.
 const focus = {};
 vm.createContext(focus);
-vm.runInContext(fs.readFileSync(require("node:path").join(require("node:path").dirname(process.argv[2]), "DisplayFocusModel.js"), "utf8").replace(/^\.pragma library\s*/m, ""), focus);
+vm.runInContext(fs.readFileSync(process.argv[3], "utf8").replace(/^\.pragma library\s*/m, ""), focus);
 const controls = focus.groups().flatMap(group => group.settings);
 assert.equal(controls.length, 26);
 assert.equal(new Set(controls.map(item => item.key)).size, controls.length);
