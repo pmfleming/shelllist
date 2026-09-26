@@ -98,7 +98,9 @@ ShellRoot {
         }
     }
 
-    Displays.DisplayIdentifyOverlay { controller: surfaces.displayController }
+    Displays.DisplayIdentifyOverlay {
+        controller: surfaces.displayController
+    }
 
     Bar.BarController {
         id: barController

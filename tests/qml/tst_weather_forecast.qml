@@ -42,5 +42,4 @@ TestCase {
         compare(card.minimum, 11);
         compare(card.maximum, 12);
     }
-
 }

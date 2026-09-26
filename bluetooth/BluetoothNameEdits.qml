@@ -9,13 +9,20 @@ Core.DraftStore {
     function edit(key: string, value: string): void {
         if (!key || (draft(key) || {}).pending)
             return;
-        put(key, {value: value, dirty: true, pending: false, error: "", requestId: ""});
+        put(key, {
+            value: value,
+            dirty: true,
+            pending: false,
+            error: "",
+            requestId: ""
+        });
     }
     function save(key: string): bool {
         const current = draft(key);
-        const device = controller.allDevices.find(function (entry) { return entry.key === key; });
-        if (!current || !current.dirty || current.pending || current.error || !device
-            || !controller.backendAvailable || controller.globalRequestInFlight || controller.screenshotInFlight || controller.deviceBusy(key))
+        const device = controller.allDevices.find(function (entry) {
+            return entry.key === key;
+        });
+        if (!current || !current.dirty || current.pending || current.error || !device || !controller.backendAvailable || controller.globalRequestInFlight || controller.screenshotInFlight || controller.deviceBusy(key))
             return false;
         const value = current.value.trim();
         if (!value || !(device.capabilities || {}).can_rename)
@@ -24,9 +31,17 @@ Core.DraftStore {
             put(key, null);
             return false;
         }
-        put(key, {value: value, dirty: true, pending: true, error: "", requestId: ""});
+        put(key, {
+            value: value,
+            dirty: true,
+            pending: true,
+            error: "",
+            requestId: ""
+        });
         controller.status = "Renaming " + device.name + "…";
-        if (backend.deviceOperation("set-alias", device, {alias: value}))
+        if (backend.deviceOperation("set-alias", device, {
+            alias: value
+        }))
             return true;
         rejected(key, "Could not send the device rename");
         return false;
@@ -35,7 +50,9 @@ Core.DraftStore {
         const current = draft(key);
         if (!current || current.pending)
             return false;
-        patch(key, {error: ""});
+        patch(key, {
+            error: ""
+        });
         return save(key);
     }
     function discard(key: string): void {
@@ -45,7 +62,12 @@ Core.DraftStore {
     function rejected(key: string, message: string): void {
         const current = draft(key);
         if (current && current.pending)
-            patch(key, {pending: false, dirty: true, error: message, requestId: ""});
+            patch(key, {
+                pending: false,
+                dirty: true,
+                error: message,
+                requestId: ""
+            });
     }
     function observe(operation: var): void {
         if (!operation || operation.operation !== "set-alias" || finishedRequests.includes(operation.request_id))
@@ -57,7 +79,9 @@ Core.DraftStore {
         if (!current || !current.pending || (current.requestId && current.requestId !== operation.request_id))
             return;
         if (operation.state === "queued" || operation.state === "running") {
-            patch(key, {requestId: operation.request_id});
+            patch(key, {
+                requestId: operation.request_id
+            });
         } else if (operation.state === "completed") {
             put(key, null);
         } else {

@@ -9,7 +9,9 @@ TestCase {
     name: "KeyedListModel"
     property int creations: 0
 
-    Core.KeyedListModel { id: model }
+    Core.KeyedListModel {
+        id: model
+    }
     Repeater {
         id: delegates
         model: model
@@ -28,8 +30,13 @@ TestCase {
         creations = 0;
     }
     function rows(count, prefix) {
-        return Array.from({length: count}, function (_, index) {
-            return {key: (prefix || "row-") + index, title: "Row " + index};
+        return Array.from({
+            length: count
+        }, function (_, index) {
+            return {
+                key: (prefix || "row-") + index,
+                title: "Row " + index
+            };
         });
     }
     function test_preservesDelegatesThroughMoveInsertRemoveAndUpdate() {
@@ -37,7 +44,18 @@ TestCase {
         const first = delegates.itemAt(0);
         const last = delegates.itemAt(2);
         compare(creations, 3);
-        model.values = [{key: "row-2", title: "Changed"}, {key: "new"}, {key: "row-0"}];
+        model.values = [
+            {
+                key: "row-2",
+                title: "Changed"
+            },
+            {
+                key: "new"
+            },
+            {
+                key: "row-0"
+            }
+        ];
         compare(model.count, 3);
         compare(delegates.itemAt(0), last);
         compare(delegates.itemAt(2), first);
@@ -48,7 +66,11 @@ TestCase {
         const keys = ["__proto__", "constructor", "toString", "", "a", "b"];
         for (let index = 0; index < 30; index++) {
             keys.push(keys.shift());
-            model.values = keys.slice(0, index % keys.length + 1).map(function (key) { return {key: key}; });
+            model.values = keys.slice(0, index % keys.length + 1).map(function (key) {
+                return {
+                    key: key
+                };
+            });
             compare(model.count, model.values.length);
             for (let row = 0; row < model.count; row++)
                 compare(model.get(row).resultKey, model.values[row].key);
@@ -65,7 +87,11 @@ TestCase {
         compare(creations, 400, "only new page delegates are created");
         model.values = rows(800);
         compare(delegates.itemAt(0), first);
-        model.values = [{key: "latest"}];
+        model.values = [
+            {
+                key: "latest"
+            }
+        ];
         wait(0);
         compare(model.count, 1, "superseding an append cancels its queued chunks");
         compare(model.get(0).resultKey, "latest");
@@ -79,7 +105,11 @@ TestCase {
         tryCompare(model, "count", 12);
         model.values = rows(20, "replacement-");
         compare(model.count, 2);
-        model.values = [{key: "latest"}];
+        model.values = [
+            {
+                key: "latest"
+            }
+        ];
         wait(0);
         compare(model.count, 1);
         compare(model.get(0).resultKey, "latest");

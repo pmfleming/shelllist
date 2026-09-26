@@ -31,9 +31,30 @@ TestCase {
 
     function test_searchAction_data() {
         return [
-            {tag: "return", key: Qt.Key_Return, modifiers: Qt.AltModifier, icon: "", enabled: true, expected: 1},
-            {tag: "disabled", key: Qt.Key_Return, modifiers: Qt.AltModifier, icon: "", enabled: false, expected: 0},
-            {tag: "absent", key: Qt.Key_Return, modifiers: Qt.AltModifier, icon: "", enabled: true, expected: 0}
+            {
+                tag: "return",
+                key: Qt.Key_Return,
+                modifiers: Qt.AltModifier,
+                icon: "",
+                enabled: true,
+                expected: 1
+            },
+            {
+                tag: "disabled",
+                key: Qt.Key_Return,
+                modifiers: Qt.AltModifier,
+                icon: "",
+                enabled: false,
+                expected: 0
+            },
+            {
+                tag: "absent",
+                key: Qt.Key_Return,
+                modifiers: Qt.AltModifier,
+                icon: "",
+                enabled: true,
+                expected: 0
+            }
         ];
     }
 

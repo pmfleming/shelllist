@@ -124,10 +124,20 @@ Ui.ActionDetailsPane {
             sectionSpacing: pane.sectionSpacing
             selectedValue: pane.controller.detailsTab
             tabs: [
-                { value: "data", label: qsTr("Data"), icon: "󰆏" },
-                { value: "info", label: qsTr("Info"), icon: "󰋼" }
+                {
+                    value: "data",
+                    label: qsTr("Data"),
+                    icon: "󰆏"
+                },
+                {
+                    value: "info",
+                    label: qsTr("Info"),
+                    icon: "󰋼"
+                }
             ]
-            onSelected: function (value) { pane.controller.detailsTab = value; }
+            onSelected: function (value) {
+                pane.controller.detailsTab = value;
+            }
 
             ClipboardDetailCards {
                 anchors.fill: parent

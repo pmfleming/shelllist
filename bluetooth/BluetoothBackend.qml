@@ -83,7 +83,8 @@ Io.DaemonBackend {
         if (audioProfile) {
             controller.status = "Remembering Bluetooth audio profile…";
             if (!call("audio-profile-policy", BtApi.methods.devicePolicyUpdate, {
-                key: audioProfile.deviceKey, preferred_audio_profile_key: audioProfile.profileKey
+                key: audioProfile.deviceKey,
+                preferred_audio_profile_key: audioProfile.profileKey
             }))
                 controller.status = "Audio profile applied, but could not remember it";
         } else if (id === "audio-profile-policy") {
@@ -99,8 +100,7 @@ Io.DaemonBackend {
         if (error.length > 0) {
             finishAdapterRequest(id, error);
             console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
-            controller.status = id === "audio-profile-policy"
-                ? "Audio profile applied, but could not remember it: " + error : error;
+            controller.status = id === "audio-profile-policy" ? "Audio profile applied, but could not remember it: " + error : error;
             return;
         }
         if (id.startsWith("cancel-operation-")) {
@@ -221,7 +221,10 @@ Io.DaemonBackend {
         if (isPending("audio-set-profile") || isPending("audio-profile-policy"))
             return false;
         // Capture the device now: selection can change before the reply arrives.
-        pendingAudioProfile = {deviceKey: deviceKey, profileKey: profileKey};
+        pendingAudioProfile = {
+            deviceKey: deviceKey,
+            profileKey: profileKey
+        };
         const sent = call("audio-set-profile", BtApi.methods.audioSetProfile, {
             device_key: deviceKey,
             profile_key: profileKey

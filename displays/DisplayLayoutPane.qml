@@ -44,7 +44,10 @@ Ui.DetailFlickable {
                     icon: "󰅖"
                     accessibleName: qsTr("Hide arrangement canvas")
                     toolTip: accessibleName
-                    onClicked: { workspace.controller.arrangementOpen = false; inspector.focusFirstControl(); }
+                    onClicked: {
+                        workspace.controller.arrangementOpen = false;
+                        inspector.focusFirstControl();
+                    }
                 }
             }
         }
@@ -59,10 +62,14 @@ Ui.DetailFlickable {
     Connections {
         target: workspace.controller
         function onEditorFocusRequested(): void {
-            if (!workspace.visible) return;
-            if (workspace.controller.arrangementOpen) diagram.forceActiveFocus();
-            else inspector.focusFirstControl();
+            if (!workspace.visible)
+                return;
+            if (workspace.controller.arrangementOpen)
+                diagram.forceActiveFocus();
+            else
+                inspector.focusFirstControl();
         }
     }
-    Component.onCompleted: if (controller.uiActive && controller.arrangementOpen && visible) diagram.forceActiveFocus()
+    Component.onCompleted: if (controller.uiActive && controller.arrangementOpen && visible)
+        diagram.forceActiveFocus()
 }

@@ -16,8 +16,14 @@ Ui.DetailColumnCard {
         Layout.fillWidth: true
         Layout.preferredHeight: Ui.Theme.compactControlHeight
         options: [
-            {value: "mine", label: "My Devices"},
-            {value: "all", label: "All Devices"}
+            {
+                value: "mine",
+                label: "My Devices"
+            },
+            {
+                value: "all",
+                label: "All Devices"
+            }
         ]
         value: options.controller.searchScope
         interactive: !options.controller.globalRequestInFlight
@@ -32,7 +38,9 @@ Ui.DetailColumnCard {
         subtitle: qsTr("Include devices so they can be unblocked")
         checked: !!options.controller.management.show_blocked_devices
         interactive: !options.controller.globalRequestInFlight
-        onClicked: options.controller.updateManagement({show_blocked_devices: !checked})
+        onClicked: options.controller.updateManagement({
+            show_blocked_devices: !checked
+        })
     }
     Ui.ToggleRow {
         objectName: "showRecentDevices"
@@ -41,6 +49,8 @@ Ui.DetailColumnCard {
         subtitle: qsTr("Include cached devices in All Devices")
         checked: !!options.controller.management.show_recent_devices
         interactive: !options.controller.globalRequestInFlight
-        onClicked: options.controller.updateManagement({show_recent_devices: !checked})
+        onClicked: options.controller.updateManagement({
+            show_recent_devices: !checked
+        })
     }
 }

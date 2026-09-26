@@ -13,13 +13,27 @@ Ui.ProviderChooserSurface {
     refreshEnabled: !controller.actionInFlight && !controller.trial && navigationEnabled
     detailsTabEnabled: navigationEnabled && controller.detailsOpen && controller.hasSelection && !controller.trial && !controller.actionInFlight
     helpEnabled: controller.uiActive && !controller.discardPrompt && !controller.trial
-    helpEntries: [{ keys: "Right", action: qsTr("Expand selected display") }]
+    helpEntries: [
+        {
+            keys: "Right",
+            action: qsTr("Expand selected display")
+        }
+    ]
     refreshHelp: qsTr("Refresh displays")
     detailsTabHelp: qsTr("Switch Settings / Information")
     helpShortcuts: [previewShortcut]
 
-    listComponent: Component { DisplayListPane { controller: content.controller } }
-    detailsComponent: Component { DisplayDetails { controller: content.controller; uiScale: content.uiScale } }
+    listComponent: Component {
+        DisplayListPane {
+            controller: content.controller
+        }
+    }
+    detailsComponent: Component {
+        DisplayDetails {
+            controller: content.controller
+            uiScale: content.uiScale
+        }
+    }
 
     Ui.SurfaceShortcut {
         id: previewShortcut
@@ -29,7 +43,9 @@ Ui.ProviderChooserSurface {
         autoRepeat: false
         onActivated: content.controller.preview()
     }
-    DisplayTrialDialog { controller: content.controller }
+    DisplayTrialDialog {
+        controller: content.controller
+    }
     Ui.PromptDialog {
         objectName: "discardDisplayDraft"
         visible: content.controller.discardPrompt

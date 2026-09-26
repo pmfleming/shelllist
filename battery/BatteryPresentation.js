@@ -58,14 +58,22 @@ function automationStatus(automation, available) {
     const value = automation || ({});
     const level = value.level === "critical" ? "Critical battery" : "Low battery";
     switch (value.status) {
-    case "paused": return "Automatic switching paused · manual profile selected";
-    case "active": return level + " · requesting " + profileName(value.profile);
-    case "keep-current": return level + " · keep current profile";
-    case "blocked": return "Waiting for another application's profile request to finish";
-    case "unavailable": return "Automatic switching unavailable · battery or configured profile is unavailable";
-    case "error": return "Automatic switching failed · " + (value.error || "Unknown error");
-    case "waiting": return "Automatic switching ready · waiting for a battery level";
-    default: return "Automatic switching status unavailable";
+    case "paused":
+        return "Automatic switching paused · manual profile selected";
+    case "active":
+        return level + " · requesting " + profileName(value.profile);
+    case "keep-current":
+        return level + " · keep current profile";
+    case "blocked":
+        return "Waiting for another application's profile request to finish";
+    case "unavailable":
+        return "Automatic switching unavailable · battery or configured profile is unavailable";
+    case "error":
+        return "Automatic switching failed · " + (value.error || "Unknown error");
+    case "waiting":
+        return "Automatic switching ready · waiting for a battery level";
+    default:
+        return "Automatic switching status unavailable";
     }
 }
 
@@ -115,22 +123,33 @@ function suspendCapabilityDescription(state, action) {
         return "Turn off Keep awake before " + transition;
     const capability = action === "suspend" ? state.can_suspend : state.can_hibernate;
     switch (capability) {
-    case "yes": return "Available · locks before " + transition;
-    case "challenge": return "Authorisation required · configure system policy before " + transition;
+    case "yes":
+        return "Available · locks before " + transition;
+    case "challenge":
+        return "Authorisation required · configure system policy before " + transition;
     case "inhibited":
-    case "inhibitor-blocked": return "Temporarily blocked by an application’s suspend inhibitor";
-    case "challenge-inhibitor-blocked": return "Suspend is inhibited and also requires authorisation";
-    case "na": {
-        const issues = action === "hibernate" ? ((state.diagnostics || {}).hibernate_issues || []) : [];
-        return issues.length > 0 ? issues.join(" ") : "Not supported by the system";
-    }
-    case "no": return "Disabled or not permitted by system policy";
-    default: return "Capability unavailable";
+    case "inhibitor-blocked":
+        return "Temporarily blocked by an application’s suspend inhibitor";
+    case "challenge-inhibitor-blocked":
+        return "Suspend is inhibited and also requires authorisation";
+    case "na":
+        {
+            const issues = action === "hibernate" ? ((state.diagnostics || {}).hibernate_issues || []) : [];
+            return issues.length > 0 ? issues.join(" ") : "Not supported by the system";
+        }
+    case "no":
+        return "Disabled or not permitted by system policy";
+    default:
+        return "Capability unavailable";
     }
 }
 
 function suspendActionName(action) {
-    return ({ lock: "Lock", suspend: "Suspend", hibernate: "Hibernate" })[action] || "Suspend";
+    return ({
+            lock: "Lock",
+            suspend: "Suspend",
+            hibernate: "Hibernate"
+        })[action] || "Suspend";
 }
 
 function suspendStatus(state, pendingAction, retryAction, error) {

@@ -62,7 +62,10 @@ function series(points, metric, minimumMaximum, positiveOnly) {
         };
         if (!segment || !continuousAfter(previous, point)) {
             if (previous !== null)
-                breaks.push({ from: segment[segment.length - 1], to: sample });
+                breaks.push({
+                    from: segment[segment.length - 1],
+                    to: sample
+                });
             segment = [];
             segments.push(segment);
         }
@@ -86,7 +89,10 @@ function powerAreas(segments) {
     segments.forEach(function (segment) {
         if (!segment.length)
             return;
-        let area = { charging: segment[0].charging, points: [segment[0]] };
+        let area = {
+            charging: segment[0].charging,
+            points: [segment[0]]
+        };
         areas.push(area);
         for (let index = 1; index < segment.length; ++index) {
             const previous = segment[index - 1];
@@ -94,9 +100,15 @@ function powerAreas(segments) {
             if (point.charging !== previous.charging) {
                 const total = previous.value + point.value;
                 const fraction = total > 0 ? previous.value / total : 0.5;
-                const zero = { x: previous.x + (point.x - previous.x) * fraction, value: 0 };
+                const zero = {
+                    x: previous.x + (point.x - previous.x) * fraction,
+                    value: 0
+                };
                 area.points.push(zero);
-                area = { charging: point.charging, points: [zero] };
+                area = {
+                    charging: point.charging,
+                    points: [zero]
+                };
                 areas.push(area);
             }
             area.points.push(point);
@@ -115,7 +127,9 @@ function windowPoints(points, hours, currentPoint) {
         samples.push(currentPoint);
     const timeline = activeTimeline(samples);
     const cutoff = timeline.first + timeline.duration - hours * 3600000;
-    return samples.filter(function (point) { return point.active_time_ms >= cutoff; });
+    return samples.filter(function (point) {
+        return point.active_time_ms >= cutoff;
+    });
 }
 function forecastLabel(battery) {
     const forecast = battery.forecast || {};

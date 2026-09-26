@@ -25,8 +25,7 @@ Column {
 
         Ui.ToggleRow {
             objectName: "batteryChargeNotificationToggle"
-            readonly property int chargeTarget: pane.protection.enabled && !pane.protection.charge_once_active
-                ? Number(pane.protection.end_percent ?? 100) : 100
+            readonly property int chargeTarget: pane.protection.enabled && !pane.protection.charge_once_active ? Number(pane.protection.end_percent ?? 100) : 100
             Layout.fillWidth: true
             Layout.preferredHeight: 42
             title: chargeTarget < 100 ? qsTr("Notify at charge limit (%1%)").arg(chargeTarget) : qsTr("Notify at 100%")

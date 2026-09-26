@@ -13,7 +13,9 @@ Item {
         PanelWindow { // qmllint disable uncreatable-type
             id: window
             required property var modelData
-            readonly property int outputIndex: root.controller ? root.controller.outputs.findIndex(function (o) { return o.name === window.modelData.name && !o.disabled; }) : -1
+            readonly property int outputIndex: root.controller ? root.controller.outputs.findIndex(function (o) {
+                return o.name === window.modelData.name && !o.disabled;
+            }) : -1
             screen: modelData
             visible: outputIndex >= 0 && (!root.controller.identifyName || root.controller.identifyName === modelData.name)
             color: "transparent"
@@ -24,8 +26,16 @@ Item {
             WlrLayershell.namespace: "shelllist-display-identify"
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-            anchors { top: true; left: true }
-            margins { top: 72; left: 24 } // qmllint disable unresolved-type unqualified
+            anchors {
+                top: true
+                left: true
+            }
+            // qmllint disable unresolved-type unqualified
+            margins {
+                top: 72
+                left: 24
+            }
+            // qmllint enable unresolved-type unqualified
             Rectangle {
                 anchors.fill: parent
                 color: Ui.Theme.window
@@ -42,7 +52,10 @@ Item {
                         font.weight: Ui.Theme.fontWeightBold
                         color: Ui.Theme.accent
                     }
-                    Ui.ThemeText { anchors.horizontalCenter: parent.horizontalCenter; text: window.modelData.name }
+                    Ui.ThemeText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: window.modelData.name
+                    }
                 }
             }
         }

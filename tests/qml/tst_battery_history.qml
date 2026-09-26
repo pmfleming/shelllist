@@ -14,17 +14,63 @@ TestCase {
         id: historyCard
         Battery.BatteryHistoryCard {
             width: 500
-            battery: ({ available: true, percentage: 89, charging: false })
-            history: ({ energy: { bars: [{ x0: 0, x1: 0.5, value: 2.5, observedMs: 900000 }], totalWh: 2.5, maximum: 2.5, intervalMs: 900000, activeDurationMs: 1800000 }, points: [
-                { timestamp_ms: 1788046659368, active_time_ms: 0,
-                    continuous: false, percentage: 100, charging: false, plugged: false, power_watts: 8 },
-                { timestamp_ms: 1788047559368, active_time_ms: 900000,
-                    continuous: true, percentage: 0, charging: false, plugged: false, power_watts: 12 },
-                { timestamp_ms: 1788646507951, active_time_ms: 900000,
-                    continuous: false, percentage: 89, charging: true, time_to_full_seconds: 717 },
-                { timestamp_ms: 1788647407951, active_time_ms: 1800000,
-                    continuous: true, percentage: 100, charging: true, time_to_full_seconds: 234972 }
-            ] })
+            battery: ({
+                    available: true,
+                    percentage: 89,
+                    charging: false
+                })
+            history: ({
+                    energy: {
+                        bars: [
+                            {
+                                x0: 0,
+                                x1: 0.5,
+                                value: 2.5,
+                                observedMs: 900000
+                            }
+                        ],
+                        totalWh: 2.5,
+                        maximum: 2.5,
+                        intervalMs: 900000,
+                        activeDurationMs: 1800000
+                    },
+                    points: [
+                        {
+                            timestamp_ms: 1788046659368,
+                            active_time_ms: 0,
+                            continuous: false,
+                            percentage: 100,
+                            charging: false,
+                            plugged: false,
+                            power_watts: 8
+                        },
+                        {
+                            timestamp_ms: 1788047559368,
+                            active_time_ms: 900000,
+                            continuous: true,
+                            percentage: 0,
+                            charging: false,
+                            plugged: false,
+                            power_watts: 12
+                        },
+                        {
+                            timestamp_ms: 1788646507951,
+                            active_time_ms: 900000,
+                            continuous: false,
+                            percentage: 89,
+                            charging: true,
+                            time_to_full_seconds: 717
+                        },
+                        {
+                            timestamp_ms: 1788647407951,
+                            active_time_ms: 1800000,
+                            continuous: true,
+                            percentage: 100,
+                            charging: true,
+                            time_to_full_seconds: 234972
+                        }
+                    ]
+                })
         }
     }
 
@@ -35,8 +81,18 @@ TestCase {
             height: graphHeight
             lineColor: "#ff0000"
             points: [
-                { timestamp_ms: 1000, active_time_ms: 0, percentage: 100, continuous: false },
-                { timestamp_ms: 61000, active_time_ms: 60000, percentage: 0, continuous: false }
+                {
+                    timestamp_ms: 1000,
+                    active_time_ms: 0,
+                    percentage: 100,
+                    continuous: false
+                },
+                {
+                    timestamp_ms: 61000,
+                    active_time_ms: 60000,
+                    percentage: 0,
+                    continuous: false
+                }
             ]
         }
     }
@@ -44,8 +100,7 @@ TestCase {
     function hasRed(image, left, top, right, bottom) {
         for (let y = top; y < bottom; ++y) {
             for (let x = left; x < right; ++x) {
-                if (image.red(x, y) > image.green(x, y) + 80
-                        && image.red(x, y) > image.blue(x, y) + 80)
+                if (image.red(x, y) > image.green(x, y) + 80 && image.red(x, y) > image.blue(x, y) + 80)
                     return true;
             }
         }
@@ -68,8 +123,7 @@ TestCase {
             const top = Math.floor(origin.y);
             const right = Math.ceil(origin.x + plot.width);
             const bottom = Math.ceil(origin.y + plot.height);
-            return hasRed(image, left, top, left + 6, top + 6)
-                && hasRed(image, right - 6, bottom - 6, right, bottom);
+            return hasRed(image, left, top, left + 6, top + 6) && hasRed(image, right - 6, bottom - 6, right, bottom);
         });
     }
 
@@ -81,10 +135,30 @@ TestCase {
         for (const levels of [[40, 70], [70, 40]]) {
             const graph = createTemporaryObject(edgeGraph, testCase);
             graph.points = [
-                { timestamp_ms: 1000, active_time_ms: 0, percentage: levels[0], continuous: false },
-                { timestamp_ms: 61000, active_time_ms: 60000, percentage: levels[0], continuous: true },
-                { timestamp_ms: 121000, active_time_ms: 60000, percentage: levels[1], continuous: false },
-                { timestamp_ms: 181000, active_time_ms: 120000, percentage: levels[1], continuous: true }
+                {
+                    timestamp_ms: 1000,
+                    active_time_ms: 0,
+                    percentage: levels[0],
+                    continuous: false
+                },
+                {
+                    timestamp_ms: 61000,
+                    active_time_ms: 60000,
+                    percentage: levels[0],
+                    continuous: true
+                },
+                {
+                    timestamp_ms: 121000,
+                    active_time_ms: 60000,
+                    percentage: levels[1],
+                    continuous: false
+                },
+                {
+                    timestamp_ms: 181000,
+                    active_time_ms: 120000,
+                    percentage: levels[1],
+                    continuous: true
+                }
             ];
             verify(waitForRendering(graph));
             const plot = findChild(graph, "batteryHistoryPlot");
@@ -95,9 +169,7 @@ TestCase {
                 const middle = Math.round(origin.x + plot.width / 2);
                 const top = origin.y + 3;
                 const height = plot.height - 6;
-                return hasRed(image, middle - 2, Math.ceil(top + height * 0.35), middle + 3, Math.floor(top + height * 0.55))
-                    && !hasRed(image, middle - 2, Math.ceil(top), middle + 3, Math.floor(top + height * 0.25))
-                    && !hasRed(image, middle - 2, Math.ceil(top + height * 0.65), middle + 3, Math.floor(top + height));
+                return hasRed(image, middle - 2, Math.ceil(top + height * 0.35), middle + 3, Math.floor(top + height * 0.55)) && !hasRed(image, middle - 2, Math.ceil(top), middle + 3, Math.floor(top + height * 0.25)) && !hasRed(image, middle - 2, Math.ceil(top + height * 0.65), middle + 3, Math.floor(top + height));
             }, 5000, "gap dashes stay between the old and new charge levels");
             graph.destroy();
         }
@@ -105,8 +177,18 @@ TestCase {
 
     function test_forecastAndHoverFollowPowerSource() {
         const card = createTemporaryObject(historyCard, testCase, {
-            battery: { available: true, percentage: 60, charging: true, plugged: true,
-                forecast: { limit: 80, target: 80, percentage: 60, seconds: 1800 } }
+            battery: {
+                available: true,
+                percentage: 60,
+                charging: true,
+                plugged: true,
+                forecast: {
+                    limit: 80,
+                    target: 80,
+                    percentage: 60,
+                    seconds: 1800
+                }
+            }
         });
         verify(waitForRendering(card));
         const graph = findChild(card, "batteryTimelineGraph");
@@ -119,28 +201,79 @@ TestCase {
         verify(graph.hoverText.indexOf("W") > 0);
         graph.hovered(0.75);
         verify(graph.hoverText.indexOf("Estimated") === 0);
-        card.battery = { available: true, percentage: 85, plugged: false,
-            forecast: { limit: 80, target: 0, percentage: 85, seconds: 12600 } };
+        card.battery = {
+            available: true,
+            percentage: 85,
+            plugged: false,
+            forecast: {
+                limit: 80,
+                target: 0,
+                percentage: 85,
+                seconds: 12600
+            }
+        };
         compare(graph.forecast.target, 0);
         compare(card.estimateText, "to empty");
         verify(graph.hoverText.indexOf("to empty") > 0);
-        card.battery = { available: true, percentage: 80, plugged: true,
-            forecast: { limit: 80, target: 80, percentage: 80, seconds: 0, status: "limit-reached" } };
+        card.battery = {
+            available: true,
+            percentage: 80,
+            plugged: true,
+            forecast: {
+                limit: 80,
+                target: 80,
+                percentage: 80,
+                seconds: 0,
+                status: "limit-reached"
+            }
+        };
         compare(graph.historyFraction, 1);
         compare(card.estimateText, "Charge limit reached");
-        card.battery = { available: true, percentage: 60, charging: true, plugged: true,
-            forecast: { limit: null, target: 100, percentage: 60, seconds: 0, estimating: true } };
+        card.battery = {
+            available: true,
+            percentage: 60,
+            charging: true,
+            plugged: true,
+            forecast: {
+                limit: null,
+                target: 100,
+                percentage: 60,
+                seconds: 0,
+                estimating: true
+            }
+        };
         compare(card.estimateText, "Estimating…");
         compare(graph.historyFraction, 1);
     }
 
     function test_rangeSelectionAndMissingPower() {
         const card = createTemporaryObject(historyCard, testCase, {
-            history: { points: [
-                { timestamp_ms: 1000, active_time_ms: 0, percentage: 100, power_watts: 20, power_valid: true },
-                { timestamp_ms: 25201000, active_time_ms: 25200000, percentage: 80, power_watts: 0, power_valid: false },
-                { timestamp_ms: 28801000, active_time_ms: 28800000, percentage: 60, power_watts: 0, power_valid: true, continuous: true }
-            ] }
+            history: {
+                points: [
+                    {
+                        timestamp_ms: 1000,
+                        active_time_ms: 0,
+                        percentage: 100,
+                        power_watts: 20,
+                        power_valid: true
+                    },
+                    {
+                        timestamp_ms: 25201000,
+                        active_time_ms: 25200000,
+                        percentage: 80,
+                        power_watts: 0,
+                        power_valid: false
+                    },
+                    {
+                        timestamp_ms: 28801000,
+                        active_time_ms: 28800000,
+                        percentage: 60,
+                        power_watts: 0,
+                        power_valid: true,
+                        continuous: true
+                    }
+                ]
+            }
         });
         verify(waitForRendering(card));
         const graph = findChild(card, "batteryTimelineGraph");
@@ -155,11 +288,21 @@ TestCase {
         compare(graph.powerSeries.segments.length, 2);
         ranges.choose(0);
         compare(graph.points.length, 2);
-        card.battery = { available: true, percentage: 59, history: { current_point:
-            { timestamp_ms: 28831000, active_time_ms: 28830000, percentage: 59,
-                power_watts: 10, power_valid: true, continuous: true } } };
+        card.battery = {
+            available: true,
+            percentage: 59,
+            history: {
+                current_point: {
+                    timestamp_ms: 28831000,
+                    active_time_ms: 28830000,
+                    percentage: 59,
+                    power_watts: 10,
+                    power_valid: true,
+                    continuous: true
+                }
+            }
+        };
         compare(graph.points.length, 3);
         compare(graph.series.segments[0][2].value, 59, "live charge must reach the Now marker");
     }
-
 }

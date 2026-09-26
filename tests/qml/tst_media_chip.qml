@@ -48,9 +48,17 @@ TestCase {
             available: true,
             active_player: "spotify",
             players: [
-                { id: "browser", identity: "Browser" },
-                { id: "spotify", title: "Track", playback_status: "playing",
-                    can_control: true, can_seek: canSeek }
+                {
+                    id: "browser",
+                    identity: "Browser"
+                },
+                {
+                    id: "spotify",
+                    title: "Track",
+                    playback_status: "playing",
+                    can_control: true,
+                    can_seek: canSeek
+                }
             ]
         };
         const component = Qt.createComponent("../../qml/Shelllist/Bar/MediaChip.qml");
@@ -68,12 +76,7 @@ TestCase {
 
     function test_buttonsReceiveTheirOwnClicks() {
         const panel = makePanel(true);
-        const cases = [
-            ["mediaCycleButton", "cycle"],
-            ["mediaRewindButton", -15],
-            ["mediaPlayPauseButton", "play-pause"],
-            ["mediaForwardButton", 30]
-        ];
+        const cases = [["mediaCycleButton", "cycle"], ["mediaRewindButton", -15], ["mediaPlayPauseButton", "play-pause"], ["mediaForwardButton", 30]];
         for (const entry of cases) {
             panel.controller.actions = [];
             const button = findChild(panel, entry[0]);

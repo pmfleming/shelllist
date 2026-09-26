@@ -22,8 +22,14 @@ Ui.DetailColumnCard {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         options: [
-            { value: "keep-on", label: qsTr("Keep laptop screen on") },
-            { value: "auto-off", label: qsTr("Turn off automatically") }
+            {
+                value: "keep-on",
+                label: qsTr("Keep laptop screen on")
+            },
+            {
+                value: "auto-off",
+                label: qsTr("Turn off automatically")
+            }
         ]
         value: (pane.controller.displayPolicyState.policy || {}).prefer_external ? "auto-off" : "keep-on"
         interactive: pane.controller.canSetPolicy
@@ -33,7 +39,9 @@ Ui.DetailColumnCard {
             pane.controller.setPreferExternal(value === "auto-off");
             // ComboBox changes its index on activation; show the acknowledged
             // preference until the daemon confirms the save, including failures.
-            currentIndex = Qt.binding(function () { return preference.optionIndex(preference.value); });
+            currentIndex = Qt.binding(function () {
+                return preference.optionIndex(preference.value);
+            });
         }
     }
     Ui.ThemeText {
@@ -46,9 +54,7 @@ Ui.DetailColumnCard {
     Ui.ThemeText {
         objectName: "dockingSaveStatus"
         Layout.fillWidth: true
-        text: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…")
-            : pane.controller.dirty || pane.controller.trial ? qsTr("Finish or discard layout changes before changing this preference.")
-            : qsTr("Saved automatically · no preview needed")
+        text: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : pane.controller.dirty || pane.controller.trial ? qsTr("Finish or discard layout changes before changing this preference.") : qsTr("Saved automatically · no preview needed")
         wrapMode: Text.Wrap
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeCaption

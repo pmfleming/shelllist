@@ -10,7 +10,11 @@ Ui.DetailColumnCard {
     required property BatteryController controller
     readonly property bool interactive: controller.suspendPolicyState.available && !controller.suspendPolicySaving && !controller.actionInFlight
     readonly property bool criticalInteractive: controller.backend.ready && !controller.suspendPolicySaving && !controller.actionInFlight
-    readonly property var criticalPolicy: controller.suspendPolicyDraft.critical_battery || ({ enabled: false, percent: 5, grace_seconds: 60 })
+    readonly property var criticalPolicy: controller.suspendPolicyDraft.critical_battery || ({
+            enabled: false,
+            percent: 5,
+            grace_seconds: 60
+        })
     readonly property var criticalState: controller.suspendPolicyState.critical_battery || ({})
     objectName: "automaticSuspendCard"
     title: qsTr("Automatic suspend & hibernate")
@@ -22,7 +26,9 @@ Ui.DetailColumnCard {
         const minutes = [0, 5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240, 360, 480, 720, 1440];
         if (!minutes.includes(current)) {
             minutes.push(current);
-            minutes.sort(function (a, b) { return a - b; });
+            minutes.sort(function (a, b) {
+                return a - b;
+            });
         }
         return minutes.map(function (value) {
             return {
@@ -41,17 +47,42 @@ Ui.DetailColumnCard {
         objectName: "lidCloseAction"
         Layout.fillWidth: true
         options: [
-            { value: "system", label: qsTr("System default") },
-            { value: "ignore", label: qsTr("Do nothing"), enabled: !!(pane.controller.suspendPolicyState.lid || {}).available },
-            { value: "lock", label: qsTr("Lock screen"), enabled: !!(pane.controller.suspendPolicyState.lid || {}).available },
-            { value: "suspend", label: qsTr("Suspend"), enabled: !!(pane.controller.suspendPolicyState.lid || {}).available },
-            { value: "hibernate", label: qsTr("Hibernate immediately"), enabled: !!(pane.controller.suspendPolicyState.lid || {}).available && ["yes", "challenge", "inhibited", "inhibitor-blocked", "challenge-inhibitor-blocked"].includes(pane.controller.powerSuspend.can_hibernate) },
-            { value: "profile", label: qsTr("Suspend, then hibernate using profile"), enabled: !!(pane.controller.suspendPolicyState.lid || {}).available }
+            {
+                value: "system",
+                label: qsTr("System default")
+            },
+            {
+                value: "ignore",
+                label: qsTr("Do nothing"),
+                enabled: !!(pane.controller.suspendPolicyState.lid || {}).available
+            },
+            {
+                value: "lock",
+                label: qsTr("Lock screen"),
+                enabled: !!(pane.controller.suspendPolicyState.lid || {}).available
+            },
+            {
+                value: "suspend",
+                label: qsTr("Suspend"),
+                enabled: !!(pane.controller.suspendPolicyState.lid || {}).available
+            },
+            {
+                value: "hibernate",
+                label: qsTr("Hibernate immediately"),
+                enabled: !!(pane.controller.suspendPolicyState.lid || {}).available && ["yes", "challenge", "inhibited", "inhibitor-blocked", "challenge-inhibitor-blocked"].includes(pane.controller.powerSuspend.can_hibernate)
+            },
+            {
+                value: "profile",
+                label: qsTr("Suspend, then hibernate using profile"),
+                enabled: !!(pane.controller.suspendPolicyState.lid || {}).available
+            }
         ]
         value: pane.controller.suspendPolicyDraft.lid_action || "system"
         interactive: pane.interactive
         Accessible.name: qsTr("Action when the laptop lid is closed")
-        onSelected: function (value) { pane.controller.updateSuspendPolicy("", "lid_action", value); }
+        onSelected: function (value) {
+            pane.controller.updateSuspendPolicy("", "lid_action", value);
+        }
     }
 
     Ui.FieldLabel {
@@ -130,7 +161,9 @@ Ui.DetailColumnCard {
                     objectName: "hibernateDelay-" + profile.modelData
                     Layout.preferredWidth: 116
                     options: pane.delayOptions(profile.settings.hibernate_minutes).map(function (option) {
-                        return Object.assign({}, option, { enabled: option.value === "0" || !!pane.controller.suspendPolicyState.hibernate_available });
+                        return Object.assign({}, option, {
+                            enabled: option.value === "0" || !!pane.controller.suspendPolicyState.hibernate_available
+                        });
                     })
                     value: String(profile.settings.hibernate_minutes)
                     interactive: pane.interactive && (profile.settings.sleep_minutes > 0 || pane.controller.suspendPolicyDraft.lid_action === "profile")
@@ -172,38 +205,60 @@ Ui.DetailColumnCard {
 
     RowLayout {
         Layout.fillWidth: true
-        Ui.FieldLabel { Layout.fillWidth: true; text: qsTr("Hibernate at or below") }
+        Ui.FieldLabel {
+            Layout.fillWidth: true
+            text: qsTr("Hibernate at or below")
+        }
         Ui.DropDownList {
             objectName: "criticalBatteryPercent"
             Layout.preferredWidth: 116
-            options: Array.from({ length: 20 }, function (_, i) { return { value: String(i + 1), label: String(i + 1) + "%" }; })
+            options: Array.from({
+                length: 20
+            }, function (_, i) {
+                return {
+                    value: String(i + 1),
+                    label: String(i + 1) + "%"
+                };
+            })
             value: String(pane.criticalPolicy.percent)
             interactive: pane.criticalInteractive && pane.criticalPolicy.enabled
             Accessible.name: qsTr("Critical-battery hibernation threshold")
-            onSelected: function (value) { pane.controller.updateSuspendPolicy("critical_battery", "percent", Number(value)); }
+            onSelected: function (value) {
+                pane.controller.updateSuspendPolicy("critical_battery", "percent", Number(value));
+            }
         }
     }
 
     RowLayout {
         Layout.fillWidth: true
-        Ui.FieldLabel { Layout.fillWidth: true; text: qsTr("Warning period") }
+        Ui.FieldLabel {
+            Layout.fillWidth: true
+            text: qsTr("Warning period")
+        }
         Ui.DropDownList {
             objectName: "criticalBatteryGrace"
             Layout.preferredWidth: 116
-            options: Array.from(new Set([30, 60, 90, 120, 180, 300, pane.criticalPolicy.grace_seconds])).sort(function (a, b) { return a - b; }).map(function (seconds) { return { value: String(seconds), label: qsTr("%1 s").arg(seconds) }; })
+            options: Array.from(new Set([30, 60, 90, 120, 180, 300, pane.criticalPolicy.grace_seconds])).sort(function (a, b) {
+                return a - b;
+            }).map(function (seconds) {
+                return {
+                    value: String(seconds),
+                    label: qsTr("%1 s").arg(seconds)
+                };
+            })
             value: String(pane.criticalPolicy.grace_seconds)
             interactive: pane.criticalInteractive && pane.criticalPolicy.enabled
             Accessible.name: qsTr("Critical-battery warning period")
-            onSelected: function (value) { pane.controller.updateSuspendPolicy("critical_battery", "grace_seconds", Number(value)); }
+            onSelected: function (value) {
+                pane.controller.updateSuspendPolicy("critical_battery", "grace_seconds", Number(value));
+            }
         }
     }
 
     Ui.FieldLabel {
         objectName: "criticalBatteryStatus"
         Layout.fillWidth: true
-        text: pane.criticalState.error || (pane.criticalState.phase === "countdown"
-            ? qsTr("Hibernation in %1 seconds unless AC connects or you cancel.").arg(pane.criticalState.remaining_seconds)
-            : qsTr("State: %1. Requires working hibernation. Locking and inhibitors remain enforced; failures are not retried automatically.").arg(pane.criticalState.phase || "disabled"))
+        text: pane.criticalState.error || (pane.criticalState.phase === "countdown" ? qsTr("Hibernation in %1 seconds unless AC connects or you cancel.").arg(pane.criticalState.remaining_seconds) : qsTr("State: %1. Requires working hibernation. Locking and inhibitors remain enforced; failures are not retried automatically.").arg(pane.criticalState.phase || "disabled"))
         color: pane.criticalState.error ? Ui.Theme.warning : Ui.Theme.mutedText
         wrapMode: Text.Wrap
         elide: Text.ElideNone

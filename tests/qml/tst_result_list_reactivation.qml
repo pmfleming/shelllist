@@ -14,8 +14,13 @@ TestCase {
     function values(prefix, count) {
         const results = [];
         for (let index = 0; index < count; index++)
-            results.push({ providerId: "test", id: prefix + index,
-                title: "Entry " + index, score: count - index, actions: [] });
+            results.push({
+                providerId: "test",
+                id: prefix + index,
+                title: "Entry " + index,
+                score: count - index,
+                actions: []
+            });
         return results;
     }
 
@@ -33,15 +38,16 @@ TestCase {
 
     function selectedItemIsVisible(list) {
         const item = list.itemAtIndex(store.selectedIndex);
-        return !!item && item.y >= list.contentY
-            && item.y + item.height <= list.contentY + list.height;
+        return !!item && item.y >= list.contentY && item.y + item.height <= list.contentY + list.height;
     }
 
     function verifySelection(index) {
         const list = listView();
         compare(store.selectedIndex, index);
         tryCompare(list, "currentIndex", index);
-        tryVerify(function () { return selectedItemIsVisible(list); });
+        tryVerify(function () {
+            return selectedItemIsVisible(list);
+        });
     }
 
     function test_reactivationRevealsSelection() {
@@ -60,8 +66,16 @@ TestCase {
     function test_replacementKeepsLogicalSelection_data() {
         // Cover both lifecycle orderings without a position × timing cross-product.
         return [
-            { tag: "hidden-refresh", index: 0, reopenFirst: false },
-            { tag: "later-page-refresh-on-reopen", index: 240, reopenFirst: true }
+            {
+                tag: "hidden-refresh",
+                index: 0,
+                reopenFirst: false
+            },
+            {
+                tag: "later-page-refresh-on-reopen",
+                index: 240,
+                reopenFirst: true
+            }
         ];
     }
 
@@ -104,10 +118,20 @@ TestCase {
 
     Core.ProviderRegistry {
         id: registry
-        Core.Provider { providerId: "test"; displayName: "Test" }
+        Core.Provider {
+            providerId: "test"
+            displayName: "Test"
+        }
     }
-    Core.ResultStore { id: store; registry: registry; rankRequestsEnabled: false }
-    Ui.ChooserController { id: controller; selectionModel: store }
+    Core.ResultStore {
+        id: store
+        registry: registry
+        rankRequestsEnabled: false
+    }
+    Ui.ChooserController {
+        id: controller
+        selectionModel: store
+    }
     Ui.ResultListFrame {
         id: frame
         anchors.fill: parent

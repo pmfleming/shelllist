@@ -20,27 +20,55 @@ DaemonTestCase {
             width: testCase.width
             height: testCase.height
             property alias controller: controller
-            Battery.BatteryController { id: controller }
-            Battery.BatteryContent { controller: panel.controller }
+            Battery.BatteryController {
+                id: controller
+            }
+            Battery.BatteryContent {
+                controller: panel.controller
+            }
         }
     }
 
     Component {
         id: closeSpyComponent
-        SignalSpy { signalName: "closeWindowRequested" }
+        SignalSpy {
+            signalName: "closeWindowRequested"
+        }
     }
 
     function suspendState(inhibitors) {
-        return { available: true, can_suspend: "yes", can_hibernate: "na",
-            lock_before_sleep: true, keep_awake: false, preparing_for_sleep: false, inhibitors: inhibitors || [] };
+        return {
+            available: true,
+            can_suspend: "yes",
+            can_hibernate: "na",
+            lock_before_sleep: true,
+            keep_awake: false,
+            preparing_for_sleep: false,
+            inhibitors: inhibitors || []
+        };
     }
 
     function makePanel(inhibitors) {
         const panel = createTemporaryObject(panelComponent, testCase);
         verify(panel !== null);
-        panel.controller.applyPowerProfile({ available: true, profile: "balanced",
-            profiles: [{ name: "power-saver" }, { name: "balanced" }, { name: "performance" }],
-            battery_automation: { status: "waiting" } });
+        panel.controller.applyPowerProfile({
+            available: true,
+            profile: "balanced",
+            profiles: [
+                {
+                    name: "power-saver"
+                },
+                {
+                    name: "balanced"
+                },
+                {
+                    name: "performance"
+                }
+            ],
+            battery_automation: {
+                status: "waiting"
+            }
+        });
         panel.controller.applyPowerSuspend(suspendState(inhibitors));
         panel.controller.selectViewTab("power");
         verify(waitForRendering(panel));
@@ -51,12 +79,25 @@ DaemonTestCase {
     }
 
     function test_onlyRealBlockersWarnAndProgressErrorsStayLocal() {
-        const panel = makePanel([{ what: "shutdown:sleep", mode: "block", who: "Editor", why: "Saving document" }]);
+        const panel = makePanel([
+            {
+                what: "shutdown:sleep",
+                mode: "block",
+                who: "Editor",
+                why: "Saving document"
+            }
+        ]);
         const controller = panel.controller;
         const status = findChild(panel, "suspendStatusText");
         verify(findChild(panel, "suspendStatusRow").visible);
         compare(status.text, "Suspend blocked");
-        controller.applyPowerSuspend(suspendState([{ what: "sleep", mode: "delay", who: "NetworkManager" }]));
+        controller.applyPowerSuspend(suspendState([
+            {
+                what: "sleep",
+                mode: "delay",
+                who: "NetworkManager"
+            }
+        ]));
         verify(!findChild(panel, "suspendStatusRow").visible);
         controller.suspendPendingAction = "suspend";
         controller.suspendRetryAction = "suspend";
@@ -64,7 +105,9 @@ DaemonTestCase {
         compare(status.text, "Locking…");
         for (const action of ["lock", "suspend", "hibernate"])
             verify(!findChild(panel, "suspendAction-" + action).enabled);
-        controller.applyPowerSuspend(Object.assign(suspendState(), { preparing_for_sleep: true }));
+        controller.applyPowerSuspend(Object.assign(suspendState(), {
+            preparing_for_sleep: true
+        }));
         compare(status.text, "Preparing suspend…");
         controller.applyPowerSuspend(suspendState());
         controller.operationFailed("power-suspend-suspend-1", "Screen lock was not confirmed");
@@ -94,7 +137,10 @@ DaemonTestCase {
         verify(!button.Accessible.checked);
         verify(button.toolTip.indexOf("locking and screen blanking continue") >= 0);
         verify(button.mapToItem(card, button.width, 0).x <= card.width - card.contentPadding);
-        controller.applyPowerSuspend(Object.assign(suspendState(), { keep_awake: true, can_hibernate: "yes" }));
+        controller.applyPowerSuspend(Object.assign(suspendState(), {
+            keep_awake: true,
+            can_hibernate: "yes"
+        }));
         verify(button.Accessible.checked);
         compare(button.tone, "accent");
         verify(button.enabled, "must be able to turn it off");
@@ -127,7 +173,11 @@ DaemonTestCase {
         const controller = panel.controller;
         const button = findChild(panel, "keepAwakeButton");
         const client = Io.DaemonSessions.sessions["bar-daemon"].client;
-        controller.applyPowerSuspend({ available: false, keep_awake: false, preparing_for_sleep: true });
+        controller.applyPowerSuspend({
+            available: false,
+            keep_awake: false,
+            preparing_for_sleep: true
+        });
         verify(button.enabled, "even a default false snapshot must allow releasing an existing FD");
         verify(button.toolTip.indexOf("turn off Keep awake") >= 0);
         calls = [];
@@ -157,12 +207,24 @@ DaemonTestCase {
     function test_sharedAndSeparateAutomaticSuspendControls() {
         const panel = makePanel();
         const state = {
-            available: true, active_profile: "battery", hibernate_available: true,
-            lid: { available: true, managed: false, error: null },
+            available: true,
+            active_profile: "battery",
+            hibernate_available: true,
+            lid: {
+                available: true,
+                managed: false,
+                error: null
+            },
             policy: {
                 same_profile: false,
-                battery: { sleep_minutes: 15, hibernate_minutes: 60 },
-                plugged: { sleep_minutes: 45, hibernate_minutes: 180 }
+                battery: {
+                    sleep_minutes: 15,
+                    hibernate_minutes: 60
+                },
+                plugged: {
+                    sleep_minutes: 45,
+                    hibernate_minutes: 180
+                }
             }
         };
         panel.controller.applySuspendPolicy(state);
@@ -200,7 +262,9 @@ DaemonTestCase {
         state.hibernate_available = false;
         panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
         const hibernate = findChild(panel, "hibernateDelay-battery");
-        verify(hibernate.options.every(function (option) { return option.enabled === (option.value === "0"); }));
+        verify(hibernate.options.every(function (option) {
+            return option.enabled === (option.value === "0");
+        }));
         state.available = false;
         panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
         verify(!findChild(panel, "suspendDelay-battery").enabled);
@@ -209,20 +273,46 @@ DaemonTestCase {
 
     function test_criticalProtectionControlsAndUnknownOutcome() {
         const panel = makePanel();
-        const state = { available: false, policy: {
-            same_profile: true, battery: { sleep_minutes: 30, hibernate_minutes: 0 },
-            plugged: { sleep_minutes: 30, hibernate_minutes: 0 },
-            critical_battery: { enabled: false, percent: 5, grace_seconds: 60 }
-        }, critical_battery: { phase: "disabled", remaining_seconds: 0 } };
+        const state = {
+            available: false,
+            policy: {
+                same_profile: true,
+                battery: {
+                    sleep_minutes: 30,
+                    hibernate_minutes: 0
+                },
+                plugged: {
+                    sleep_minutes: 30,
+                    hibernate_minutes: 0
+                },
+                critical_battery: {
+                    enabled: false,
+                    percent: 5,
+                    grace_seconds: 60
+                }
+            },
+            critical_battery: {
+                phase: "disabled",
+                remaining_seconds: 0
+            }
+        };
         panel.controller.applySuspendPolicy(state);
         verify(!findChild(panel, "criticalBatteryEnabled").checked);
         compare(findChild(panel, "criticalBatteryPercent").value, "5");
         state.policy.critical_battery.enabled = true;
-        state.critical_battery = { phase: "countdown", remaining_seconds: 45 };
+        state.critical_battery = {
+            phase: "countdown",
+            remaining_seconds: 45
+        };
         panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
         verify(findChild(panel, "criticalBatteryStatus").text.includes("45"));
         verify(findChild(panel, "criticalBatteryCancel").visible);
-        panel.controller.applyPowerSuspend(Object.assign(suspendState(), { operation: { phase: "unknown", error: "reply lost" } }));
+        panel.controller.applyPowerSuspend(Object.assign(suspendState(), {
+            operation: {
+                phase: "unknown",
+                error: "reply lost"
+            }
+        }));
         panel.controller.suspendError = "reply lost";
         verify(!findChild(panel, "suspendRetryButton").visible);
         verify(findChild(panel, "suspendStatusText").text.includes("outcome unknown"));
@@ -232,14 +322,28 @@ DaemonTestCase {
         const panel = makePanel();
         const controller = panel.controller;
         const backend = controller.backend;
-        const state = { available: true, policy: {
-            same_profile: true,
-            battery: { sleep_minutes: 30, hibernate_minutes: 60 },
-            plugged: { sleep_minutes: 45, hibernate_minutes: 180 }
-        } };
+        const state = {
+            available: true,
+            policy: {
+                same_profile: true,
+                battery: {
+                    sleep_minutes: 30,
+                    hibernate_minutes: 60
+                },
+                plugged: {
+                    sleep_minutes: 45,
+                    hibernate_minutes: 180
+                }
+            }
+        };
         verify(backend.streams.includes("power-sleep.changed"));
         verify(backend.streams.includes("sleep-policy.changed"));
-        backend.applyData({ snapshot: { power_sleep: suspendState(), sleep_policy: state } });
+        backend.applyData({
+            snapshot: {
+                power_sleep: suspendState(),
+                sleep_policy: state
+            }
+        });
         verify(controller.powerSuspend.available);
         compare(controller.suspendPolicyDraft.battery.sleep_minutes, 30);
         calls = [];
@@ -251,16 +355,32 @@ DaemonTestCase {
         compare(calls[0].params.plugged.hibernate_minutes, 180);
         verify(controller.suspendPolicySaving);
         Io.DaemonSessions.sessions["bar-daemon"].client.response(calls[0].id, {
-            protocol: backend.expectedProtocol, version: backend.expectedVersion,
-            ok: true, data: { sleep_policy: { available: true, policy: calls[0].params } }
+            protocol: backend.expectedProtocol,
+            version: backend.expectedVersion,
+            ok: true,
+            data: {
+                sleep_policy: {
+                    available: true,
+                    policy: calls[0].params
+                }
+            }
         }, "", calls[0].route);
         verify(!controller.suspendPolicySaving);
         verify(!controller.suspendPolicyDirty);
         compare(controller.suspendPolicyDraft.battery.sleep_minutes, 15);
-        controller.handleEvent({ event: "changed", stream: "power-sleep.changed",
-            data: Object.assign(suspendState(), { keep_awake: true }) });
+        controller.handleEvent({
+            event: "changed",
+            stream: "power-sleep.changed",
+            data: Object.assign(suspendState(), {
+                keep_awake: true
+            })
+        });
         verify(controller.keepAwake);
-        controller.handleEvent({ event: "changed", stream: "sleep-policy.changed", data: state });
+        controller.handleEvent({
+            event: "changed",
+            stream: "sleep-policy.changed",
+            data: state
+        });
         compare(controller.suspendPolicyDraft.battery.sleep_minutes, 30);
     }
 
@@ -268,7 +388,9 @@ DaemonTestCase {
         const panel = makePanel();
         panel.controller.backend.active = false;
         panel.controller.uiActive = true;
-        const closeSpy = createTemporaryObject(closeSpyComponent, testCase, { target: panel.controller });
+        const closeSpy = createTemporaryObject(closeSpyComponent, testCase, {
+            target: panel.controller
+        });
         findChild(panel, "suspendAction-lock").forceActiveFocus();
         keyClick(Qt.Key_Tab, Qt.ControlModifier);
         compare(panel.controller.viewTab, "overview");

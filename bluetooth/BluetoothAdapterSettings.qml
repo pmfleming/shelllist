@@ -10,10 +10,10 @@ ColumnLayout {
     property string displayedAdapterKey: ""
     readonly property var draft: controller.adapterEdits.draft(displayedAdapterKey)
     readonly property var dirtyFields: ({
-        alias: draft.fields.alias !== undefined,
-        discoverableTimeout: draft.fields.discoverableTimeout !== undefined,
-        pairableTimeout: draft.fields.pairableTimeout !== undefined
-    })
+            alias: draft.fields.alias !== undefined,
+            discoverableTimeout: draft.fields.discoverableTimeout !== undefined,
+            pairableTimeout: draft.fields.pairableTimeout !== undefined
+        })
     readonly property bool hasDirtyFields: dirtyFields.alias || dirtyFields.discoverableTimeout || dirtyFields.pairableTimeout
     readonly property bool aliasValid: adapterAliasInput.text.trim().length > 0
 
@@ -25,7 +25,11 @@ ColumnLayout {
             controller.adapterEdits.clearField(displayedAdapterKey, field);
             return;
         }
-        const values = {alias: adapterAliasInput.text, discoverableTimeout: discoverableTimeoutRow.value, pairableTimeout: pairableTimeoutRow.value};
+        const values = {
+            alias: adapterAliasInput.text,
+            discoverableTimeout: discoverableTimeoutRow.value,
+            pairableTimeout: pairableTimeoutRow.value
+        };
         controller.adapterEdits.edit(displayedAdapterKey, field, values[field]);
     }
     function syncAdapterFields(force: bool): void {
@@ -139,28 +143,39 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: 38
             title: qsTr("Radio power")
-            subtitle: section.controller.radio.hard_blocked ? "Hardware blocked"
-                : section.controller.radio.soft_blocked ? "Software blocked"
-                : section.controller.selectedAdapter.powered ? "On · selected adapter" : "Off · selected adapter"
+            subtitle: section.controller.radio.hard_blocked ? "Hardware blocked" : section.controller.radio.soft_blocked ? "Software blocked" : section.controller.selectedAdapter.powered ? "On · selected adapter" : "Off · selected adapter"
             checked: !!section.controller.selectedAdapter.powered
             interactive: !!section.controller.selectedAdapter.key && !section.controller.globalRequestInFlight && !section.controller.radio.hard_blocked
             onClicked: section.controller.setAdapterPower(section.controller.selectedAdapter, !section.controller.selectedAdapter.powered)
         }
 
-        Ui.FieldLabel { text: qsTr("Bluetooth state on login") }
+        Ui.FieldLabel {
+            text: qsTr("Bluetooth state on login")
+        }
         Ui.SegmentedControl {
             objectName: "bluetoothLoginState"
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             options: [
-                {value: "remember", label: "Restore"},
-                {value: "enable", label: "Enable"},
-                {value: "disable", label: "Disable"}
+                {
+                    value: "remember",
+                    label: "Restore"
+                },
+                {
+                    value: "enable",
+                    label: "Enable"
+                },
+                {
+                    value: "disable",
+                    label: "Disable"
+                }
             ]
             value: section.controller.management.launch_state || "remember"
             interactive: !section.controller.globalRequestInFlight
             onSelected: function (value) {
-                section.controller.updateManagement({launch_state: value});
+                section.controller.updateManagement({
+                    launch_state: value
+                });
             }
         }
     }
@@ -196,7 +211,9 @@ ColumnLayout {
         visible: section.controller.adapterSettingsTab === "pairing"
         title: qsTr("Visibility and pairing")
 
-        Ui.FieldLabel { text: qsTr("Computer’s Bluetooth name") }
+        Ui.FieldLabel {
+            text: qsTr("Computer’s Bluetooth name")
+        }
         Ui.TextField {
             id: adapterAliasInput
             objectName: "adapterNameInput"
@@ -256,7 +273,9 @@ ColumnLayout {
             subtitle: qsTr("Devices active before suspend")
             checked: section.controller.management.reconnect_on_resume !== false
             interactive: !section.controller.globalRequestInFlight
-            onClicked: section.controller.updateManagement({reconnect_on_resume: !checked})
+            onClicked: section.controller.updateManagement({
+                reconnect_on_resume: !checked
+            })
         }
         Ui.ThemeText {
             Layout.fillWidth: true

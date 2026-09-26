@@ -28,7 +28,8 @@ TestCase {
             }
             function subscribeExtra(id: string, streams: var): void {
             }
-            function release(id: string, route: var): void {}
+            function release(id: string, route: var): void {
+            }
             function cancel(id: string, requestId: string): void {
             }
         }
@@ -98,11 +99,20 @@ TestCase {
             city: {
                 label: "Test",
                 utc_offset_seconds: 0,
-                lunar: { phase: "waning-gibbous", fraction: 0.6, illumination_percent: 90, approximate: true },
+                lunar: {
+                    phase: "waning-gibbous",
+                    fraction: 0.6,
+                    illumination_percent: 90,
+                    approximate: true
+                },
                 weather: {
                     sunrise_unix_ms: sunrise,
                     sunset_unix_ms: sunset,
-                    solar_noon: { unix_ms: sunrise + 7 * 3600000, utc_offset_seconds: 0, approximate: true }
+                    solar_noon: {
+                        unix_ms: sunrise + 7 * 3600000,
+                        utc_offset_seconds: 0,
+                        approximate: true
+                    }
                 }
             },
             now: new Date((sunrise + sunset) / 2)

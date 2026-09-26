@@ -61,11 +61,28 @@ TestCase {
     function test_suspendTelemetryKeepsResumeAndOsdRouting() {
         const panel = makePanel();
         const controller = panel.controller;
-        controller.applySnapshot({ power_sleep: { available: true, inhibitors: [], resume_generation: 2 } });
+        controller.applySnapshot({
+            power_sleep: {
+                available: true,
+                inhibitors: [],
+                resume_generation: 2
+            }
+        });
         compare(controller.powerSuspend.resume_generation, 2);
-        controller.handleEvent({ event: "changed", stream: "power-sleep.changed", data: {
-            available: true, inhibitors: [{ what: "idle", mode: "block" }], resume_generation: 3
-        } });
+        controller.handleEvent({
+            event: "changed",
+            stream: "power-sleep.changed",
+            data: {
+                available: true,
+                inhibitors: [
+                    {
+                        what: "idle",
+                        mode: "block"
+                    }
+                ],
+                resume_generation: 3
+            }
+        });
         compare(controller.powerSuspend.resume_generation, 3);
         compare(controller.osd.kind, "idle-inhibitor");
         compare(controller.osd.valueLabel, "Active");
@@ -89,24 +106,44 @@ TestCase {
 
     function test_brightnessFailure_data() {
         return [
-            { tag: "backend", kind: "backend" },
-            { tag: "response-transport", kind: "response-transport" },
-            { tag: "send", kind: "send" },
-            { tag: "lost-pending-request", kind: "lost-pending-request" }
+            {
+                tag: "backend",
+                kind: "backend"
+            },
+            {
+                tag: "response-transport",
+                kind: "response-transport"
+            },
+            {
+                tag: "send",
+                kind: "send"
+            },
+            {
+                tag: "lost-pending-request",
+                kind: "lost-pending-request"
+            }
         ];
     }
 
     function test_brightnessFailure(data) {
         const panel = makePanel();
         const controller = panel.controller;
-        controller.brightness = { available: true, percent: 65 };
+        controller.brightness = {
+            available: true,
+            percent: 65
+        };
         controller.showBrightnessOsd(controller.brightness);
         const backend = controller.backend;
         const id = "brightness-adjust-1";
         if (data.kind === "backend") {
             backend.finish(id, {
-                protocol: "bar-api", version: 1, ok: false,
-                error: { code: "brightness-operation-failed", message: "Permission denied" }
+                protocol: "bar-api",
+                version: 1,
+                ok: false,
+                error: {
+                    code: "brightness-operation-failed",
+                    message: "Permission denied"
+                }
             }, "");
         } else if (data.kind === "response-transport") {
             backend.finish(id, {}, "Transport lost");
@@ -123,8 +160,15 @@ TestCase {
         compare(controller.osd.timeoutMs, 3000);
         compare(controller.brightness.percent, 65, "failure must preserve confirmed state");
         backend.finish("brightness-adjust-2", {
-            protocol: "bar-api", version: 1, ok: true,
-            data: { brightness: { available: true, percent: 70 } }
+            protocol: "bar-api",
+            version: 1,
+            ok: true,
+            data: {
+                brightness: {
+                    available: true,
+                    percent: 70
+                }
+            }
         }, "");
         compare(controller.osd.kind, "brightness");
         compare(controller.osd.valueLabel, "70%");

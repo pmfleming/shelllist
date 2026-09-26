@@ -40,7 +40,10 @@ Item {
             available: false,
             percent: 0
         })
-    property var displays: ({ available: false, outputs: [] })
+    property var displays: ({
+            available: false,
+            outputs: []
+        })
     property var battery: ({
             available: false,
             percentage: 0

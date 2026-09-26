@@ -11,19 +11,25 @@ Ui.DetailColumnCard {
     readonly property bool liveAudio: !!controller.selectedDevice.connected && hasAudio
     readonly property var presentation: controller.selectedAudioPresentation
     readonly property var profiles: presentation.profiles || []
-    readonly property string profileKey: (liveAudio ? controller.selectedAudio.active_profile_key : "")
-        || policy.preferred_audio_profile_key || presentation.active_profile_key || ""
-    readonly property var displayedProfile: profiles.find(function (profile) { return profile.key === card.profileKey; }) || ({})
-    readonly property bool audioDevice: hasAudio || !!presentation.device_key
-        || /earbud|headphone|headset|speaker|audio/i.test(controller.selectedDevice.device_type || "")
-        || /headphone|headset|speaker|audio/i.test(controller.selectedDevice.icon || "")
-        || (controller.selectedDevice.services || []).some(function (service) { return /audio sink|headset|handsfree/i.test(service.label || ""); })
-        || !!((controller.selectedDevice.fast_pair || {}).multipoint || {}).supported
-        || !!policy.preferred_audio_profile_key || policy.audio_route_on_connect === "switch"
-    readonly property var profileOptions: [{value: "", label: "Automatic"}].concat(
-        profiles.map(function (profile) {
-            return {value: profile.key, label: profile.label, enabled: profile.available !== false};
-        }))
+    readonly property string profileKey: (liveAudio ? controller.selectedAudio.active_profile_key : "") || policy.preferred_audio_profile_key || presentation.active_profile_key || ""
+    readonly property var displayedProfile: profiles.find(function (profile) {
+        return profile.key === card.profileKey;
+    }) || ({})
+    readonly property bool audioDevice: hasAudio || !!presentation.device_key || /earbud|headphone|headset|speaker|audio/i.test(controller.selectedDevice.device_type || "") || /headphone|headset|speaker|audio/i.test(controller.selectedDevice.icon || "") || (controller.selectedDevice.services || []).some(function (service) {
+        return /audio sink|headset|handsfree/i.test(service.label || "");
+    }) || !!((controller.selectedDevice.fast_pair || {}).multipoint || {}).supported || !!policy.preferred_audio_profile_key || policy.audio_route_on_connect === "switch"
+    readonly property var profileOptions: [
+        {
+            value: "",
+            label: "Automatic"
+        }
+    ].concat(profiles.map(function (profile) {
+        return {
+            value: profile.key,
+            label: profile.label,
+            enabled: profile.available !== false
+        };
+    }))
 
     objectName: "deviceAudio"
     title: qsTr("Audio")
@@ -31,7 +37,9 @@ Ui.DetailColumnCard {
     height: visible ? implicitHeight : 0
     contentSpacing: Ui.Theme.spacingMd
 
-    Ui.FieldLabel { text: qsTr("Audio profile") }
+    Ui.FieldLabel {
+        text: qsTr("Audio profile")
+    }
     Ui.DropDownList {
         objectName: "currentAudioProfile"
         Layout.fillWidth: true
@@ -48,10 +56,14 @@ Ui.DetailColumnCard {
             if (!interactive)
                 return;
             if (!key) {
-                card.controller.updateDevicePolicy({preferred_audio_profile_key: null});
+                card.controller.updateDevicePolicy({
+                    preferred_audio_profile_key: null
+                });
                 return;
             }
-            const profile = card.controller.selectedAudioProfiles.find(function (entry) { return entry.key === key; });
+            const profile = card.controller.selectedAudioProfiles.find(function (entry) {
+                return entry.key === key;
+            });
             if (profile)
                 card.controller.setAudioProfile(profile);
         }
@@ -99,16 +111,22 @@ Ui.DetailColumnCard {
         actions: card.controller.detailActions.filter(function (action) {
             return action.visible !== false && action.id === "multipoint";
         })
-        onTriggered: function (actionId) { card.controller.triggerDetailAction(actionId); }
+        onTriggered: function (actionId) {
+            card.controller.triggerDetailAction(actionId);
+        }
     }
 
-    Ui.FieldLabel { text: qsTr("On connection") }
+    Ui.FieldLabel {
+        text: qsTr("On connection")
+    }
     Ui.ToggleRow {
         objectName: "audioOutputOnConnect"
         Layout.fillWidth: true
         title: qsTr("Make default output")
         checked: card.policy.audio_route_on_connect === "switch"
         interactive: !card.controller.actionInFlight
-        onClicked: card.controller.updateDevicePolicy({audio_route_on_connect: checked ? "keep" : "switch"})
+        onClicked: card.controller.updateDevicePolicy({
+            audio_route_on_connect: checked ? "keep" : "switch"
+        })
     }
 }

@@ -51,12 +51,21 @@ Rectangle {
             return;
         }
         if (!editing && [Qt.Key_Return, Qt.Key_Enter, Qt.Key_Space].includes(event.key)) {
-            if (!event.isAutoRepeat) controller.openDetails();
+            if (!event.isAutoRepeat)
+                controller.openDetails();
             event.accepted = true;
             return;
         }
-        const delta = ({ [Qt.Key_Left]: [-1, 0], [Qt.Key_H]: [-1, 0], [Qt.Key_Right]: [1, 0], [Qt.Key_L]: [1, 0],
-            [Qt.Key_Up]: [0, -1], [Qt.Key_K]: [0, -1], [Qt.Key_Down]: [0, 1], [Qt.Key_J]: [0, 1] })[event.key];
+        const delta = ({
+                [Qt.Key_Left]: [-1, 0],
+                [Qt.Key_H]: [-1, 0],
+                [Qt.Key_Right]: [1, 0],
+                [Qt.Key_L]: [1, 0],
+                [Qt.Key_Up]: [0, -1],
+                [Qt.Key_K]: [0, -1],
+                [Qt.Key_Down]: [0, 1],
+                [Qt.Key_J]: [0, 1]
+            })[event.key];
         if (editing && delta) {
             const step = event.modifiers & Qt.ShiftModifier ? 1 : event.modifiers & Qt.ControlModifier ? 64 : 16;
             controller.moveSelected(delta[0] * step, delta[1] * step);
@@ -90,7 +99,11 @@ Rectangle {
             Accessible.onPressAction: canvas.controller.selectOutput(output.name)
 
             Rectangle {
-                x: 6; y: 6; width: 24; height: 24; radius: 12
+                x: 6
+                y: 6
+                width: 24
+                height: 24
+                radius: 12
                 color: screenRect.selected ? Ui.Theme.accent : Ui.Theme.border
                 Ui.ThemeText {
                     anchors.centerIn: parent
@@ -123,23 +136,27 @@ Rectangle {
                 onPressed: function (mouse) {
                     canvas.controller.selectOutput(screenRect.output.name);
                     canvas.forceActiveFocus();
-                    if (!canvas.interactive) return;
+                    if (!canvas.interactive)
+                        return;
                     const p = mapToItem(canvas, mouse.x, mouse.y);
                     canvas.frozenBounds = Model.bounds(canvas.values);
-                    canvas.pressX = p.x; canvas.pressY = p.y;
-                    canvas.dragX = screenRect.geometry.x; canvas.dragY = screenRect.geometry.y;
+                    canvas.pressX = p.x;
+                    canvas.pressY = p.y;
+                    canvas.dragX = screenRect.geometry.x;
+                    canvas.dragY = screenRect.geometry.y;
                     canvas.dragName = screenRect.output.name;
                     canvas.dragging = true;
                 }
                 onPositionChanged: function (mouse) {
-                    if (!pressed || !canvas.dragging || !canvas.interactive) return;
+                    if (!pressed || !canvas.dragging || !canvas.interactive)
+                        return;
                     const p = mapToItem(canvas, mouse.x, mouse.y);
-                    canvas.controller.moveTo(canvas.dragName, canvas.dragX + (p.x - canvas.pressX) / canvas.factor,
-                        canvas.dragY + (p.y - canvas.pressY) / canvas.factor, mouse.modifiers & Qt.AltModifier ? 0 : 10 / canvas.factor);
+                    canvas.controller.moveTo(canvas.dragName, canvas.dragX + (p.x - canvas.pressX) / canvas.factor, canvas.dragY + (p.y - canvas.pressY) / canvas.factor, mouse.modifiers & Qt.AltModifier ? 0 : 10 / canvas.factor);
                 }
                 onReleased: canvas.finishDrag(false)
                 onCanceled: canvas.finishDrag(true)
-                onDoubleClicked: if (!canvas.editing) canvas.controller.openDetails()
+                onDoubleClicked: if (!canvas.editing)
+                    canvas.controller.openDetails()
             }
         }
     }

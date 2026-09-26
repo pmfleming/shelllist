@@ -10,8 +10,11 @@ Item {
 
     required property var device
     readonly property var displayReports: BluetoothBattery.displayReports(device)
-    readonly property var overallReport: displayReports.some(function (report) { return report.component === "main"; })
-        ? null : BluetoothBattery.ordered(device.battery || []).find(function (report) { return report.component === "main"; }) || null
+    readonly property var overallReport: displayReports.some(function (report) {
+        return report.component === "main";
+    }) ? null : BluetoothBattery.ordered(device.battery || []).find(function (report) {
+        return report.component === "main";
+    }) || null
     readonly property bool batteryLive: !!device.connected && !device.battery_last_known
     readonly property int indicatorHeight: 166
     readonly property int ringSize: displayReports.length === 1 ? 126 : 108
@@ -72,8 +75,7 @@ Item {
                 readonly property bool batteryAvailable: BluetoothBattery.isValid(modelData)
                 readonly property real percentage: batteryAvailable ? modelData.percentage : 0
                 readonly property bool charging: !!root.device.battery_live && modelData.charging === true
-                Accessible.name: (BluetoothBattery.compactLabel(modelData) || "Battery") + " "
-                    + (batteryAvailable ? percentage + "%" : "unavailable") + (charging ? " charging" : "")
+                Accessible.name: (BluetoothBattery.compactLabel(modelData) || "Battery") + " " + (batteryAvailable ? percentage + "%" : "unavailable") + (charging ? " charging" : "")
                 readonly property color statusColor: root.ringColor(percentage)
                 readonly property string imageSource: BluetoothBattery.imageFor(root.device, modelData)
                 readonly property int ringSize: root.ringSize

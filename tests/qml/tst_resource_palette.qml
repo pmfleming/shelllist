@@ -42,9 +42,17 @@ TestCase {
                 }
             }
         ];
-        history.controller.resourceHistorySummary = { metrics: {
-            cpu_percent_of_machine: { available: true, mean: 17.5, peak: 40, observed_ms: 4000, coverage: 1 }
-        }};
+        history.controller.resourceHistorySummary = {
+            metrics: {
+                cpu_percent_of_machine: {
+                    available: true,
+                    mean: 17.5,
+                    peak: 40,
+                    observed_ms: 4000,
+                    coverage: 1
+                }
+            }
+        };
         compare(history.average("cpu_percent_of_machine"), 17.5, "consume the daemon's weighted mean, not a sample mean");
         compare(history.peak("cpu_percent_of_machine", false), 40);
         compare(history.peak("cpu_percent_of_machine", true), 40);

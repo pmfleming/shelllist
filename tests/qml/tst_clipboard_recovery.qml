@@ -10,20 +10,39 @@ DaemonTestCase {
     width: 650
     height: 900
     property var views: []
-    Component { id: controllerFactory; Clip.ClipboardController {} }
-    Component { id: cardsFactory; Clip.ClipboardDetailCards {} }
-    Component { id: detailsFactory; Clip.ClipboardDetails { uiScale: 1 } }
-    Component { id: paneFactory; Clip.ClipboardListPane {} }
+    Component {
+        id: controllerFactory
+        Clip.ClipboardController {}
+    }
+    Component {
+        id: cardsFactory
+        Clip.ClipboardDetailCards {}
+    }
+    Component {
+        id: detailsFactory
+        Clip.ClipboardDetails {
+            uiScale: 1
+        }
+    }
+    Component {
+        id: paneFactory
+        Clip.ClipboardListPane {}
+    }
     function init() {
         failOnWarning(/.*(TypeError|Binding loop|invalid context).*/);
     }
     function cleanup() {
-        for (const view of views) view.destroy();
+        for (const view of views)
+            view.destroy();
         views = [];
         wait(0);
     }
     function makeCards(controller) {
-        const cards = createTemporaryObject(cardsFactory, testCase, {controller: controller, width: 600, height: 800});
+        const cards = createTemporaryObject(cardsFactory, testCase, {
+            controller: controller,
+            width: 600,
+            height: 800
+        });
         views = views.concat([cards]);
         return cards;
     }
@@ -33,22 +52,46 @@ DaemonTestCase {
         controller.uiActive = true;
         wait(0);
         findChild(controller, "clipboardBackend").pending = ({});
-        const entries = [{id: "first", revision: 1, kind: "text", preview: "Original", byte_size: 8}];
+        const entries = [
+            {
+                id: "first",
+                revision: 1,
+                kind: "text",
+                preview: "Original",
+                byte_size: 8
+            }
+        ];
         controller.replaceProviderResults(controller.provider.resultsForEntries(entries), true);
         controller.detailState.entryId = "first";
         controller.detailState.entryRevision = 1;
-        controller.detailState.value = {entry: entries[0], text: "Original", files: []};
+        controller.detailState.value = {
+            entry: entries[0],
+            text: "Original",
+            files: []
+        };
         calls = [];
         return controller;
     }
     function reply(controller, id, data, error) {
-        findChild(controller, "clipboardBackend").acceptSharedResponse(id,
-            {protocol: "clip-api", version: 1, ok: !error, data: data || {}, error: error ? {message: error} : undefined}, "");
+        findChild(controller, "clipboardBackend").acceptSharedResponse(id, {
+            protocol: "clip-api",
+            version: 1,
+            ok: !error,
+            data: data || {},
+            error: error ? {
+                message: error
+            } : undefined
+        }, "");
     }
     function failEdit(controller) {
         const details = controller.detailState;
         verify(details.beginEdit());
-        reply(controller, "edit-begin", {edit: {id: "lease-1", value: "Original"}});
+        reply(controller, "edit-begin", {
+            edit: {
+                id: "lease-1",
+                value: "Original"
+            }
+        });
         details.updateEditDraft("Keep this draft");
         verify(details.commitEdit());
         reply(controller, "edit-commit", {}, "Disk full");
@@ -61,7 +104,12 @@ DaemonTestCase {
         const details = controller.detailState;
         const backend = findChild(controller, "clipboardBackend");
         verify(details.beginEdit());
-        reply(controller, "edit-begin", {edit: {id: "lease-1", value: "Original"}});
+        reply(controller, "edit-begin", {
+            edit: {
+                id: "lease-1",
+                value: "Original"
+            }
+        });
         details.updateEditDraft("Draft at disconnect");
         verify(details.commitEdit());
         backend.failSharedTransport("Disconnected");
@@ -76,9 +124,30 @@ DaemonTestCase {
         verify(calls.some(call => call.method === "clipboard.settings.get"));
         verify(calls.some(call => call.method === "clipboard.history.query"));
         verify(!calls.some(call => call.method === "clipboard.entry.edit.commit"));
-        reply(controller, "session-begin", {session: {id: "new-session", state: "active"}});
+        reply(controller, "session-begin", {
+            session: {
+                id: "new-session",
+                state: "active"
+            }
+        });
         const queryId = controller.activeHistoryQueryId;
-        reply(controller, queryId, {history: {revision: 2, snapshot_revision: "2", total: 1, entries: [{id: "first", revision: 1, kind: "text", preview: "Original", byte_size: 8}], has_more: false}});
+        reply(controller, queryId, {
+            history: {
+                revision: 2,
+                snapshot_revision: "2",
+                total: 1,
+                entries: [
+                    {
+                        id: "first",
+                        revision: 1,
+                        kind: "text",
+                        preview: "Original",
+                        byte_size: 8
+                    }
+                ],
+                has_more: false
+            }
+        });
         compare(controller.sessionId, "new-session");
         compare(controller.filteredResults.length, 1);
         details.load();
@@ -89,8 +158,26 @@ DaemonTestCase {
         const controller = makeController();
         controller.refresh();
         const firstId = controller.activeHistoryQueryId;
-        const entries = Array.from({length: 200}, function (_, index) { return { id: "row-" + index, revision: 1, kind: "text", preview: "Row " + index }; });
-        reply(controller, firstId, {history: {snapshot_revision: "123", total: 201, offset: 0, entries: entries, next_cursor: "opaque-next", has_more: true}});
+        const entries = Array.from({
+            length: 200
+        }, function (_, index) {
+            return {
+                id: "row-" + index,
+                revision: 1,
+                kind: "text",
+                preview: "Row " + index
+            };
+        });
+        reply(controller, firstId, {
+            history: {
+                snapshot_revision: "123",
+                total: 201,
+                offset: 0,
+                entries: entries,
+                next_cursor: "opaque-next",
+                has_more: true
+            }
+        });
         wait(0);
         compare(controller.filteredResults.length, 200);
         compare(calls.filter(call => call.method === "clipboard.history.query").length, 1, "do not eagerly fetch the catalog");
@@ -100,33 +187,71 @@ DaemonTestCase {
         compare(pageCall.params.cursor, "opaque-next");
         compare(pageCall.params.fuzzy, true);
         compare(pageCall.params.offset, undefined);
-        reply(controller, pageId, {history: {snapshot_revision: "123", total: 201, offset: 200, entries: [{id: "last", revision: 1, kind: "text", preview: "Last"}], has_more: false}});
+        reply(controller, pageId, {
+            history: {
+                snapshot_revision: "123",
+                total: 201,
+                offset: 200,
+                entries: [
+                    {
+                        id: "last",
+                        revision: 1,
+                        kind: "text",
+                        preview: "Last"
+                    }
+                ],
+                has_more: false
+            }
+        });
         compare(controller.filteredResults.length, 201);
         compare(controller.filteredResults[200].id, "last");
         controller.filterText = "cafee";
-        tryVerify(function () { return controller.activeHistoryQueryId.length > 0; });
+        tryVerify(function () {
+            return controller.activeHistoryQueryId.length > 0;
+        });
         const query = calls.filter(call => call.method === "clipboard.history.query").slice(-1)[0];
         compare(query.params.query, "cafee");
         compare(query.params.cursor, null);
-        controller.applyHistory(pageId, {snapshot_revision: "old", entries: []});
+        controller.applyHistory(pageId, {
+            snapshot_revision: "old",
+            entries: []
+        });
         compare(controller.historyRevision, "123", "a superseded page must not replace the current view");
     }
 
     function pagedController() {
         const controller = makeController();
         controller.refresh();
-        const entries = Array.from({length: 200}, function (_, index) {
-            return {id: "row-" + index, revision: 1, kind: "text", preview: "Row " + index, favorite: false};
+        const entries = Array.from({
+            length: 200
+        }, function (_, index) {
+            return {
+                id: "row-" + index,
+                revision: 1,
+                kind: "text",
+                preview: "Row " + index,
+                favorite: false
+            };
         });
-        reply(controller, controller.activeHistoryQueryId, {history: {
-            snapshot_revision: "123", total: 400, offset: 0, entries: entries, next_cursor: "next-page"
-        }});
+        reply(controller, controller.activeHistoryQueryId, {
+            history: {
+                snapshot_revision: "123",
+                total: 400,
+                offset: 0,
+                entries: entries,
+                next_cursor: "next-page"
+            }
+        });
         wait(0);
         calls = [];
         return controller;
     }
     function makePane(controller) {
-        const pane = createTemporaryObject(paneFactory, testCase, {controller: controller, width: 600, height: 600});
+        const pane = createTemporaryObject(paneFactory, testCase, {
+            controller: controller,
+            width: 600,
+            height: 600
+        });
         verify(pane !== null);
         views = views.concat([pane]);
         verify(waitForRendering(pane));
@@ -152,12 +277,25 @@ DaemonTestCase {
         verify(list.footerItem.height > 0, "show loading feedback at the bottom");
         controller.loadMoreHistory();
         compare(historyCalls().length, 1, "coalesce requests in flight");
-        const entries = Array.from({length: 200}, function (_, index) {
-            return {id: "row-" + (200 + index), revision: 1, kind: "text", preview: "More " + index, favorite: false};
+        const entries = Array.from({
+            length: 200
+        }, function (_, index) {
+            return {
+                id: "row-" + (200 + index),
+                revision: 1,
+                kind: "text",
+                preview: "More " + index,
+                favorite: false
+            };
         });
-        reply(controller, controller.activeHistoryQueryId, {history: {
-            snapshot_revision: "123", total: 400, offset: 200, entries: entries
-        }});
+        reply(controller, controller.activeHistoryQueryId, {
+            history: {
+                snapshot_revision: "123",
+                total: 400,
+                offset: 200,
+                entries: entries
+            }
+        });
         tryCompare(list, "count", 400);
         wait(0);
         compare(controller.selectedIndex, 0);
@@ -190,10 +328,22 @@ DaemonTestCase {
         compare(historyCalls()[1].params.cursor, "next-page");
         compare(controller.historyPageError, "");
         verify(controller.loadingMoreHistory);
-        reply(controller, controller.activeHistoryQueryId, {history: {
-            snapshot_revision: "123", total: 201, offset: 200,
-            entries: [{id: "last", revision: 1, kind: "text", preview: "Last", favorite: false}]
-        }});
+        reply(controller, controller.activeHistoryQueryId, {
+            history: {
+                snapshot_revision: "123",
+                total: 201,
+                offset: 200,
+                entries: [
+                    {
+                        id: "last",
+                        revision: 1,
+                        kind: "text",
+                        preview: "Last",
+                        favorite: false
+                    }
+                ]
+            }
+        });
         wait(0);
         compare(controller.filteredResults.length, 201);
         compare(controller.selectedIndex, 199);
@@ -221,7 +371,10 @@ DaemonTestCase {
         verify(controller.revisionRequestId.length > 0);
         controller.loadMoreHistory();
         compare(historyCalls().length, 0, "validate the cached snapshot before paging");
-        reply(controller, controller.revisionRequestId, {revision: {}, snapshot_revision: "123"});
+        reply(controller, controller.revisionRequestId, {
+            revision: {},
+            snapshot_revision: "123"
+        });
         controller.loadMoreHistory();
         compare(historyCalls().length, 1);
         compare(historyCalls()[0].params.cursor, "next-page");
@@ -233,7 +386,9 @@ DaemonTestCase {
         controller.filterText = "new search";
         controller.loadMoreHistory();
         compare(historyCalls().length, 1, "never retry the old query after search changes");
-        tryVerify(function () { return historyCalls().length === 2; });
+        tryVerify(function () {
+            return historyCalls().length === 2;
+        });
         compare(controller.historyPageError, "");
         compare(controller.historyCursor, "");
         compare(historyCalls()[1].params.query, "new search");
@@ -245,7 +400,9 @@ DaemonTestCase {
         reply(controller, controller.activeHistoryQueryId, {}, "stale-cursor: history changed");
         compare(controller.historyCursor, "");
         compare(controller.historyPageError, "");
-        tryVerify(function () { return historyCalls().length === 2; });
+        tryVerify(function () {
+            return historyCalls().length === 2;
+        });
         compare(historyCalls()[1].params.cursor, null);
     }
 
@@ -292,11 +449,26 @@ DaemonTestCase {
         compare(calls[calls.length - 1].params.entry_id, "first");
         compare(calls[calls.length - 1].params.revision, 1);
         verify(!details.retryEdit());
-        reply(controller, "edit-begin", {edit: {id: "lease-2", value: "Original"}});
+        reply(controller, "edit-begin", {
+            edit: {
+                id: "lease-2",
+                value: "Original"
+            }
+        });
         compare(calls[calls.length - 1].method, "clipboard.entry.edit.commit");
         compare(calls[calls.length - 1].params.edit_id, "lease-2");
         compare(calls[calls.length - 1].params.value, "Updated failed draft");
-        reply(controller, "edit-commit", {entry: {entry: {id: "replacement", revision: 2, kind: "text"}, text: "Updated failed draft", files: []}});
+        reply(controller, "edit-commit", {
+            entry: {
+                entry: {
+                    id: "replacement",
+                    revision: 2,
+                    kind: "text"
+                },
+                text: "Updated failed draft",
+                files: []
+            }
+        });
         compare(details.editError, "");
         compare(Object.keys(details.failedDrafts).length, 0);
         compare(editor.text, "Updated failed draft");
@@ -306,7 +478,12 @@ DaemonTestCase {
         const controller = makeController();
         const details = controller.detailState;
         verify(details.beginEdit());
-        reply(controller, "edit-begin", {edit: {id: "lease-1", value: "Original"}});
+        reply(controller, "edit-begin", {
+            edit: {
+                id: "lease-1",
+                value: "Original"
+            }
+        });
         details.updateEditDraft("Draft sent before leaving");
         verify(details.commitEdit());
         details.clear();

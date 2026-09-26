@@ -14,13 +14,20 @@ TestCase {
         verify(!Routing.shouldRecoverFailure("protocol-error", false));
 
         const outcome = Routing.responseOutcome({
-            id: "request-1", ok: true,
-            response: { protocol: "test-api", version: 1, ok: true, data: { value: 9 } }
+            id: "request-1",
+            ok: true,
+            response: {
+                protocol: "test-api",
+                version: 1,
+                ok: true,
+                data: {
+                    value: 9
+                }
+            }
         }, "test-daemon");
         compare(outcome.id, "request-1");
         compare(outcome.envelope.data.value, 9);
         compare(outcome.error, "");
         verify(!outcome.recover);
     }
-
 }

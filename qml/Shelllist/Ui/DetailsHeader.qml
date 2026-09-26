@@ -95,7 +95,9 @@ Column {
         group: "primary"
         fillActions: true
         controlHeight: header.controlHeight
-        onTriggered: function (actionId) { header.actionTriggered(actionId); }
+        onTriggered: function (actionId) {
+            header.actionTriggered(actionId);
+        }
     }
 
     ActionToolbar {

@@ -175,7 +175,10 @@ Rectangle {
                     }
                     function descriptorValues(descriptor) {
                         const summary = chart.summaries[descriptor.metric] || {};
-                        return { average: Number(summary.mean || 0), peak: Number(summary.peak || 0) };
+                        return {
+                            average: Number(summary.mean || 0),
+                            peak: Number(summary.peak || 0)
+                        };
                     }
                     function drawReferences(context, descriptor, descriptorIndex, maximum) {
                         const values = descriptorValues(descriptor);

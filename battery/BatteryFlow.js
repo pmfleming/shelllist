@@ -60,9 +60,17 @@ function valueOr(value, fallback) {
 
 // Alert policy fields per battery level, in the daemon's setAlertPolicy names.
 var levelFields = ({
-    low: { percent: "warning_percent", notify: "notify_warning", profile: "warning_profile" },
-    critical: { percent: "critical_percent", notify: "notify_critical", profile: "critical_profile" }
-});
+        low: {
+            percent: "warning_percent",
+            notify: "notify_warning",
+            profile: "warning_profile"
+        },
+        critical: {
+            percent: "critical_percent",
+            notify: "notify_critical",
+            profile: "critical_profile"
+        }
+    });
 
 // The editable alert policy, which is also the setAlertPolicy payload.
 function alertDraft(policy) {
@@ -83,15 +91,17 @@ function validSuspendPolicyValue(profile, field, value) {
     if (profile === "critical_battery") {
         if (field === "enabled")
             return typeof value === "boolean";
-        const range = { percent: [1, 20], grace_seconds: [30, 300] }[field];
+        const range = {
+            percent: [1, 20],
+            grace_seconds: [30, 300]
+        }[field];
         return !!range && Number.isInteger(value) && value >= range[0] && value <= range[1];
     }
     if (field === "same_profile")
         return typeof value === "boolean";
     if (field === "lid_action")
         return ["system", "ignore", "lock", "suspend", "hibernate", "profile"].includes(value);
-    return ["battery", "plugged"].includes(profile) && ["sleep_minutes", "hibernate_minutes"].includes(field)
-        && Number.isInteger(value) && value >= 0 && value <= 10080;
+    return ["battery", "plugged"].includes(profile) && ["sleep_minutes", "hibernate_minutes"].includes(field) && Number.isInteger(value) && value >= 0 && value <= 10080;
 }
 
 // The suspend policy with one field changed, or null when the change is invalid.
@@ -100,7 +110,11 @@ function editSuspendPolicy(draft, profile, field, value) {
         return null;
     const next = JSON.parse(JSON.stringify(draft));
     if (profile === "critical_battery") {
-        next.critical_battery = Object.assign({ enabled: false, percent: 5, grace_seconds: 60 }, next.critical_battery || {});
+        next.critical_battery = Object.assign({
+            enabled: false,
+            percent: 5,
+            grace_seconds: 60
+        }, next.critical_battery || {});
         next.critical_battery[field] = value;
     } else if (field === "same_profile" || field === "lid_action") {
         next[field] = value;

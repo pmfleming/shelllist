@@ -31,13 +31,19 @@ Io.DaemonBackend {
         applyData(envelope.data || {});
         controller.requestFinished(id);
     }
-    onResponseReceived: function (id, envelope, transportError) { finish(id, envelope, transportError); }
+    onResponseReceived: function (id, envelope, transportError) {
+        finish(id, envelope, transportError);
+    }
     onEventReceived: function (event) {
         if (event.stream === Api.stream && ["changed", "subscribed"].includes(event.event))
             controller.applyDisplayPolicy(event.data || {});
     }
     onEventGapDetected: controller.refresh()
-    onSendFailed: function (id, message) { controller.requestFailed(id, message); }
-    onTransportFailed: function (message) { controller.transportFailed(message); }
+    onSendFailed: function (id, message) {
+        controller.requestFailed(id, message);
+    }
+    onTransportFailed: function (message) {
+        controller.transportFailed(message);
+    }
     onTransportReady: snapshot()
 }

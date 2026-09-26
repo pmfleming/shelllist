@@ -68,7 +68,9 @@ Ui.DetailColumnCard {
             RowLayout {
                 Layout.fillWidth: true
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
 
                 BatteryProfileSelector {
                     objectName: level.low ? "batteryLowProfile" : "batteryCriticalProfile"

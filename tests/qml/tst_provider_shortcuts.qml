@@ -18,9 +18,15 @@ TestCase {
             height: 400
             property int activations: 0
             property alias shortcut: actionShortcut
-            chooserController: Ui.ChooserController { uiActive: true }
-            listComponent: Component { Item {} }
-            detailsComponent: Component { Item {} }
+            chooserController: Ui.ChooserController {
+                uiActive: true
+            }
+            listComponent: Component {
+                Item {}
+            }
+            detailsComponent: Component {
+                Item {}
+            }
             detailsTabHelp: ""
             helpShortcuts: [actionShortcut]
             Ui.SurfaceShortcut {

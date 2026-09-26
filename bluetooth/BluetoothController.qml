@@ -7,11 +7,16 @@ import "BluetoothFlow.js" as BluetoothFlow
 Ui.ProviderChooserController {
     id: bluetoothController
 
-    provider: BluetoothProvider { id: bluetoothProvider; controller: bluetoothController }
+    provider: BluetoothProvider {
+        id: bluetoothProvider
+        controller: bluetoothController
+    }
     sharedScreenshotEnabled: true
     sharedScreenshotBlocked: anyActionInFlight || modalPromptOpen
     sharedScreenshotStartMessage: "Capturing Bluetooth window…"
-    onSharedScreenshotStatusChanged: function (message) { status = message; }
+    onSharedScreenshotStatusChanged: function (message) {
+        status = message;
+    }
 
     readonly property alias nameEdits: nameEditState
     readonly property alias adapterEdits: adapterEditState
@@ -21,9 +26,14 @@ Ui.ProviderChooserController {
     property var pendingConfirmationAction
     property bool scanRequested: false
     property var radio: BluetoothFlow.emptyRadio()
-    property var management: ({ launch_state: "remember", reconnect_on_resume: true,
-        trust_after_pair: true, preferred_adapter_key: "", show_blocked_devices: false,
-        show_recent_devices: false })
+    property var management: ({
+            launch_state: "remember",
+            reconnect_on_resume: true,
+            trust_after_pair: true,
+            preferred_adapter_key: "",
+            show_blocked_devices: false,
+            show_recent_devices: false
+        })
     property bool backendAvailable: false
     property var adapters: []
     property var allDevices: []
@@ -45,10 +55,14 @@ Ui.ProviderChooserController {
     readonly property bool screenshotInFlight: sharedScreenshotInFlight
     readonly property var selectedDevice: selectedResult ? selectedResult.payload : ({})
     navigationBlocked: modalPromptOpen
-    readonly property var selectedAdapter: adapters.find(function (adapter) { return adapter.key === preferredAdapterKey; })
-        || adapters.find(function (adapter) { return adapter.key === selectedDevice.adapter_key; })
-        || adapters[0] || ({})
-    readonly property var selectedAudio: audioDevices.find(function (audio) { return audio.device_key === selectedDevice.key; }) || ({})
+    readonly property var selectedAdapter: adapters.find(function (adapter) {
+        return adapter.key === preferredAdapterKey;
+    }) || adapters.find(function (adapter) {
+        return adapter.key === selectedDevice.adapter_key;
+    }) || adapters[0] || ({})
+    readonly property var selectedAudio: audioDevices.find(function (audio) {
+        return audio.device_key === selectedDevice.key;
+    }) || ({})
     readonly property var selectedAudioPresentation: audioPresentationByDevice[selectedDevice.key] || ({})
     readonly property var selectedSink: selectedAudio.sink || ({})
     readonly property var selectedSource: selectedAudio.source || ({})
@@ -72,15 +86,20 @@ Ui.ProviderChooserController {
 
     Settings {
         id: scopeSettings
-        location: "file://" + (Quickshell.env("XDG_CONFIG_HOME")
-            || Quickshell.env("HOME") + "/.config") + "/shelllist.ini"
+        location: "file://" + (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/shelllist.ini"
         category: "Bluetooth"
         property string searchScope: "mine"
     }
 
-    function operationForDevice(deviceKey) { return operationState.forDevice(deviceKey); }
-    function operationErrorForDevice(deviceKey) { return operationState.errorForDevice(deviceKey); }
-    function deviceBusy(deviceKey) { return !!operationState.forDevice(deviceKey); }
+    function operationForDevice(deviceKey) {
+        return operationState.forDevice(deviceKey);
+    }
+    function operationErrorForDevice(deviceKey) {
+        return operationState.errorForDevice(deviceKey);
+    }
+    function deviceBusy(deviceKey) {
+        return !!operationState.forDevice(deviceKey);
+    }
     function devicesForView() {
         return BluetoothFlow.devicesForView(allDevices, searchScope, management);
     }
@@ -177,9 +196,7 @@ Ui.ProviderChooserController {
         if (!backend.isPending("pairing-response"))
             respondingPairingId = "";
         if (pairingPrompt) {
-            status = pairingPrompt.response_required
-                ? "Recovered Bluetooth pairing confirmation"
-                : "Recovered active Bluetooth pairing";
+            status = pairingPrompt.response_required ? "Recovered Bluetooth pairing confirmation" : "Recovered active Bluetooth pairing";
             pairingInteractionRequested();
         } else if (state.operations.length > 0) {
             status = "Recovered active Bluetooth operation";
@@ -188,7 +205,11 @@ Ui.ProviderChooserController {
     function applySnapshot(snapshot) {
         const recovering = !backendAvailable;
         backendAvailable = true;
-        if (recovering) Qt.callLater(function () { backend.recoverRequests(); backend.refreshAudio(); });
+        if (recovering)
+            Qt.callLater(function () {
+                backend.recoverRequests();
+                backend.refreshAudio();
+            });
         radio = BluetoothFlow.radioForSnapshot(snapshot);
         adapters = snapshot.adapters || [];
         management = snapshot.management || management;
@@ -227,8 +248,7 @@ Ui.ProviderChooserController {
     function setAdapterPower(adapter, value) {
         if (!adapter || !adapter.key || backend.requestRunning)
             return false;
-        status = (value ? "Turning on " : "Turning off ")
-            + BluetoothFlow.adapterLabel(adapter) + "…";
+        status = (value ? "Turning on " : "Turning off ") + BluetoothFlow.adapterLabel(adapter) + "…";
         return backend.setPowered(!!value, adapter.key);
     }
     function toggleScan() {
@@ -241,8 +261,7 @@ Ui.ProviderChooserController {
         backend.setScanning(!scanning, selectedAdapter.key);
     }
     function handleScanEvent(scan) {
-        const transition = BluetoothFlow.scanTransition(
-            activeScan, scan, filteredResults.length, status);
+        const transition = BluetoothFlow.scanTransition(activeScan, scan, filteredResults.length, status);
         if (!transition)
             return;
         activeScan = transition.activeScan;
@@ -260,11 +279,15 @@ Ui.ProviderChooserController {
         if (!key || key === preferredAdapterKey)
             return;
         preferredAdapterKey = key;
-        updateManagement({ preferred_adapter_key: key });
+        updateManagement({
+            preferred_adapter_key: key
+        });
     }
     function setTrustAfterPair(value) {
         trustAfterPair = !!value;
-        updateManagement({ trust_after_pair: trustAfterPair });
+        updateManagement({
+            trust_after_pair: trustAfterPair
+        });
     }
     function handleOperationAccepted(operation) {
         operationState.accept(operation);
@@ -284,7 +307,8 @@ Ui.ProviderChooserController {
         return dismissDetailsOrWindow();
     }
     function cancelActiveOperation() {
-        if (!canCancelOperation) return false;
+        if (!canCancelOperation)
+            return false;
         status = "Cancelling Bluetooth operation…";
         return backend.cancelOperation(selectedOperation.request_id);
     }
@@ -304,22 +328,33 @@ Ui.ProviderChooserController {
         replacePairingPrompts(BluetoothFlow.pairingQueue(pairingPrompts, event));
         const nextId = pairingPrompt ? pairingPrompt.request_id : "";
         status = BluetoothFlow.pairingStatus(pairingPrompt, event) || status;
-        if (nextId && previousId !== nextId) pairingInteractionRequested();
+        if (nextId && previousId !== nextId)
+            pairingInteractionRequested();
     }
     function closePairingForDevice(deviceKey) {
-        replacePairingPrompts(pairingPrompts.filter(function (prompt) { return prompt.device_key !== deviceKey; }));
+        replacePairingPrompts(pairingPrompts.filter(function (prompt) {
+            return prompt.device_key !== deviceKey;
+        }));
     }
     function finishPairingResponse(success) {
         const requestId = respondingPairingId;
         respondingPairingId = "";
-        if (success) handlePairingEvent({ event: "answered", data: { request_id: requestId } });
+        if (success)
+            handlePairingEvent({
+                event: "answered",
+                data: {
+                    request_id: requestId
+                }
+            });
     }
     function respondPairing(accept) {
-        if (!pairingPromptOpen || !pairingPrompt.response_required || pairingResponsePending) return false;
+        if (!pairingPromptOpen || !pairingPrompt.response_required || pairingResponsePending)
+            return false;
         const requestId = pairingPrompt.request_id;
         respondingPairingId = requestId;
         const sent = backend.respondPairing(requestId, accept, pairingInput);
-        if (!sent) respondingPairingId = "";
+        if (!sent)
+            respondingPairingId = "";
         // Keep the prompt/input until the backend accepts the response, so a
         // validation or transport error does not strand the pending request.
         return sent;
@@ -333,21 +368,26 @@ Ui.ProviderChooserController {
         return backend.adapterOperation(operation, selectedAdapter, values || ({}));
     }
     function updateDevicePolicy(values) {
-        if (!hasSelection || actionInFlight) return false;
+        if (!hasSelection || actionInFlight)
+            return false;
         status = "Saving device policy…";
         return backend.updateDevicePolicy(selectedDevice.key, values);
     }
     function setAudioDefault(endpoint) {
-        if (!hasSelection || !selectedDevice.connected || !selectedAudio.device_key || actionInFlight || !endpoint || !endpoint.key || !endpoint.ready) return false;
+        if (!hasSelection || !selectedDevice.connected || !selectedAudio.device_key || actionInFlight || !endpoint || !endpoint.key || !endpoint.ready)
+            return false;
         status = "Updating default Bluetooth audio route…";
         return backend.setAudioDefault(selectedDevice.key, endpoint.key);
     }
     function setNoiseControl(mode) {
         const caps = selectedDevice.capabilities || ({});
         const control = (selectedDevice.fast_pair || {}).noise_control || ({});
-        if (!hasSelection || actionInFlight || !caps.can_set_noise_control || !(control.settable_modes || []).includes(mode)) return false;
+        if (!hasSelection || actionInFlight || !caps.can_set_noise_control || !(control.settable_modes || []).includes(mode))
+            return false;
         status = "Updating sound isolation…";
-        return backend.deviceOperation("set-noise-control", selectedDevice, { mode: mode });
+        return backend.deviceOperation("set-noise-control", selectedDevice, {
+            mode: mode
+        });
     }
     function setAudioProfile(profile) {
         if (!hasSelection || !selectedDevice.connected || !selectedAudio.device_key || !profile || !profile.key || profile.available === false || actionInFlight)
@@ -362,7 +402,8 @@ Ui.ProviderChooserController {
         return nameEditState.save(selectedDevice.key);
     }
     function resetSelectedName() {
-        if (!hasSelection || selectedDeviceBusy) return false;
+        if (!hasSelection || selectedDeviceBusy)
+            return false;
         status = "Resetting Bluetooth device name…";
         return backend.deviceOperation("reset-alias", selectedDevice, {});
     }
@@ -377,7 +418,8 @@ Ui.ProviderChooserController {
             openBluetoothSettings();
     }
     function openDetails() {
-        if (!hasSelection) return;
+        if (!hasSelection)
+            return;
         if (detailsTab === "adapter")
             detailsTab = "device";
         detailsOpen = true;
@@ -392,20 +434,26 @@ Ui.ProviderChooserController {
         closeDetails()
 
     function cycleDetailsTab() {
-        if (!detailsOpen) return false;
+        if (!detailsOpen)
+            return false;
         if (detailsTab === "adapter") {
             adapterSettingsTab = adapterSettingsTab === "general" ? "pairing" : "general";
             return true;
         }
-        if (!hasSelection) return false;
+        if (!hasSelection)
+            return false;
         const tabs = ["device", "settings", "information"];
         const currentIndex = Math.max(0, tabs.indexOf(detailsTab));
         detailsTab = tabs[(currentIndex + 1) % tabs.length];
         return true;
     }
-    function primarySelected() { return hasSelection && executeSelected(""); }
+    function primarySelected() {
+        return hasSelection && executeSelected("");
+    }
     function enabledDetailAction(id: string): var {
-        const action = detailActions.find(function (candidate) { return candidate.id === id; });
+        const action = detailActions.find(function (candidate) {
+            return candidate.id === id;
+        });
         return action && action.visible !== false && action.enabled !== false ? action : null;
     }
     function triggerDetailAction(id) {
@@ -419,32 +467,57 @@ Ui.ProviderChooserController {
         pendingConfirmationAction = action;
         return true;
     }
-    function cancelPendingConfirmation() { pendingConfirmationAction = null; }
+    function cancelPendingConfirmation() {
+        pendingConfirmationAction = null;
+    }
     function confirmPendingAction() {
-        if (!pendingConfirmationAction) return false;
+        if (!pendingConfirmationAction)
+            return false;
         const actionId = pendingConfirmationAction.id;
         pendingConfirmationAction = null;
         return hasSelection && executeSelected(actionId);
     }
     function executeDeviceAction(actionId, device) {
-        if (deviceBusy(device.key) || backend.requestRunning) return false;
+        if (deviceBusy(device.key) || backend.requestRunning)
+            return false;
         if (actionId === "reset-policy") {
             status = "Saving device policy…";
-            return backend.updateDevicePolicy(device.key, { reconnect_on_resume: null, trust_after_pair: null,
-                power_on_connect: null, wait_for_services: null, fast_pair_controls_enabled: null,
-                audio_route_on_connect: null, preferred_audio_profile_key: null });
+            return backend.updateDevicePolicy(device.key, {
+                reconnect_on_resume: null,
+                trust_after_pair: null,
+                power_on_connect: null,
+                wait_for_services: null,
+                fast_pair_controls_enabled: null,
+                audio_route_on_connect: null,
+                preferred_audio_profile_key: null
+            });
         }
         const request = BluetoothFlow.deviceActionRequest(actionId, device, trustAfterPair);
-        if (!request) return false;
-        if (request.status) status = request.status;
+        if (!request)
+            return false;
+        if (request.status)
+            status = request.status;
         return backend.deviceOperation(request.operation, device, request.values);
     }
-    onModalPromptOpenChanged: if (!modalPromptOpen) Qt.callLater(focusSearchRequested)
+    onModalPromptOpenChanged: if (!modalPromptOpen)
+        Qt.callLater(focusSearchRequested)
     onSelectedResultChanged: pendingConfirmationAction = null
 
-    BluetoothBackend { id: backend; objectName: "bluetoothBackend"; controller: bluetoothController }
-    BluetoothNameEdits { id: nameEditState; controller: bluetoothController; backend: backend }
-    BluetoothAdapterEdits { id: adapterEditState; controller: bluetoothController; backend: backend }
+    BluetoothBackend {
+        id: backend
+        objectName: "bluetoothBackend"
+        controller: bluetoothController
+    }
+    BluetoothNameEdits {
+        id: nameEditState
+        controller: bluetoothController
+        backend: backend
+    }
+    BluetoothAdapterEdits {
+        id: adapterEditState
+        controller: bluetoothController
+        backend: backend
+    }
     BluetoothOperationController {
         id: operationState
         controller: bluetoothController

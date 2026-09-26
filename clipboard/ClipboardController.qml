@@ -48,9 +48,7 @@ Ui.ProviderChooserController {
     property bool appendingHistory: false
     property string historyPageError: ""
     readonly property bool loadingMoreHistory: appendingHistory && activeHistoryQueryId.length > 0
-    readonly property bool canAutoLoadMoreHistory: uiActive && historyCursor.length > 0
-        && !activeHistoryQueryId.length && !revisionRequestId.length
-        && !historyPageError.length && historyQueryText === filterText
+    readonly property bool canAutoLoadMoreHistory: uiActive && historyCursor.length > 0 && !activeHistoryQueryId.length && !revisionRequestId.length && !historyPageError.length && historyQueryText === filterText
     property int historyPageNumber: 0
     readonly property int historyPageSize: 200
     readonly property alias detailState: detailsModel
@@ -235,12 +233,19 @@ Ui.ProviderChooserController {
         const results = clipboardProvider.resultsForEntries(entries, history.offset || 0);
         activeHistoryQueryId = "";
         if (appendingHistory)
-            selectionModel.applyNormalizedBatch({ providerId: "clipboard", queryId: historyQueryId, replace: false, results: results });
+            selectionModel.applyNormalizedBatch({
+                providerId: "clipboard",
+                queryId: historyQueryId,
+                replace: false,
+                results: results
+            });
         else
             applyProviderQuery(historyQueryId, results);
         appendingHistory = false;
         historyPageError = "";
-        reconcileMultiSelection(filteredResults.map(function (result) { return result.payload; }));
+        reconcileMultiSelection(filteredResults.map(function (result) {
+            return result.payload;
+        }));
         selectCurrentEntry(history.current || null);
         status = filteredResults.length + " of " + history.total + " clipboard entries" + (history.search_limited ? " · search limited to recent entries" : "");
         detailState.scheduleLoad();

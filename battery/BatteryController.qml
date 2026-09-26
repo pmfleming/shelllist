@@ -51,12 +51,20 @@ Ui.ChooserController {
             lock_before_sleep: true,
             inhibitors: []
         })
-    property var suspendPolicyState: ({ available: false })
+    property var suspendPolicyState: ({
+            available: false
+        })
     property var suspendPolicyDraft: ({
             lid_action: "system",
             same_profile: true,
-            battery: { sleep_minutes: 30, hibernate_minutes: 0 },
-            plugged: { sleep_minutes: 30, hibernate_minutes: 0 }
+            battery: {
+                sleep_minutes: 30,
+                hibernate_minutes: 0
+            },
+            plugged: {
+                sleep_minutes: 30,
+                hibernate_minutes: 0
+            }
         })
     property bool suspendPolicyDirty: false
     property bool suspendPolicySaving: false
@@ -105,7 +113,10 @@ Ui.ChooserController {
     property var alertDraft: Flow.alertDraft({})
 
     // The last real profile per level, restored when a level is re-enabled.
-    property var lastLevelProfiles: ({ low: "power-saver", critical: "power-saver" })
+    property var lastLevelProfiles: ({
+            low: "power-saver",
+            critical: "power-saver"
+        })
     property bool thresholdDraftDirty: false
     property bool alertDraftDirty: false
     property bool thresholdEditing: false
@@ -177,7 +188,9 @@ Ui.ChooserController {
         return {
             value: name,
             label: Presentation.profileName(name),
-            enabled: powerProfile.available && profileOptions.some(function (option) { return option.value === name; })
+            enabled: powerProfile.available && profileOptions.some(function (option) {
+                return option.value === name;
+            })
         };
     })
     readonly property var batteryAutomation: powerProfile.battery_automation || ({})
@@ -278,7 +291,9 @@ Ui.ChooserController {
     }
 
     function applySuspendPolicy(value: var): void {
-        suspendPolicyState = value || ({ available: false });
+        suspendPolicyState = value || ({
+                available: false
+            });
         if (value && value.policy && !suspendPolicyDirty && !suspendPolicySaving)
             suspendPolicyDraft = JSON.parse(JSON.stringify(value.policy));
     }
@@ -446,7 +461,9 @@ Ui.ChooserController {
 
     function transportFailed(message: string): void {
         transportError = message;
-        powerSuspend = Object.assign({}, powerSuspend, { available: false });
+        powerSuspend = Object.assign({}, powerSuspend, {
+            available: false
+        });
         if (keepAwakePending) {
             keepAwakePending = false;
             keepAwakeError = "Connection lost; Keep awake state is unknown until reconnected. " + message;
@@ -539,12 +556,16 @@ Ui.ChooserController {
 
     function updateWarningPercent(value: int, dragging: bool): void {
         alertEditing = dragging;
-        editAlert({ warning_percent: value }, false);
+        editAlert({
+            warning_percent: value
+        }, false);
     }
 
     function updateCriticalPercent(value: int, dragging: bool): void {
         alertEditing = dragging;
-        editAlert({ critical_percent: value }, false);
+        editAlert({
+            critical_percent: value
+        }, false);
     }
 
     function finishAlertEditing(): void {
@@ -558,13 +579,17 @@ Ui.ChooserController {
     }
 
     function updateNotifyWhenFull(value: bool): void {
-        editAlert({ notify_when_full: value }, true);
+        editAlert({
+            notify_when_full: value
+        }, true);
     }
 
     function updateLevelNotification(level: string, value: bool): void {
         const fields = levelFields[level];
         if (fields)
-            editAlert({ [fields.notify]: value }, true);
+            editAlert({
+                [fields.notify]: value
+            }, true);
     }
 
     function updateLevelEnabled(level: string, enabled: bool): void {
@@ -573,20 +598,32 @@ Ui.ChooserController {
             return;
         const current = alertDraft[fields.profile];
         if (current !== "keep-current")
-            lastLevelProfiles = Object.assign({}, lastLevelProfiles, { [level]: current });
+            lastLevelProfiles = Object.assign({}, lastLevelProfiles, {
+                [level]: current
+            });
         const previous = lastLevelProfiles[level];
-        const option = levelProfileOptions.find(function (option) { return option.value === previous && option.enabled; })
-            || levelProfileOptions.find(function (option) { return option.enabled; });
+        const option = levelProfileOptions.find(function (option) {
+            return option.value === previous && option.enabled;
+        }) || levelProfileOptions.find(function (option) {
+            return option.enabled;
+        });
         // Notifications remain available even without a power-profile service.
         const profile = enabled && option ? option.value : "keep-current";
-        editAlert({ [fields.notify]: enabled, [fields.profile]: profile }, true);
+        editAlert({
+            [fields.notify]: enabled,
+            [fields.profile]: profile
+        }, true);
     }
 
     function updateLevelProfile(level: string, value: string): void {
         const fields = levelFields[level];
-        if (!fields || (value !== "keep-current" && !levelProfileOptions.some(function (option) { return option.value === value && option.enabled !== false; })))
+        if (!fields || (value !== "keep-current" && !levelProfileOptions.some(function (option) {
+                return option.value === value && option.enabled !== false;
+            })))
             return;
-        editAlert({ [fields.profile]: value }, true);
+        editAlert({
+            [fields.profile]: value
+        }, true);
     }
 
     function setProtection(enabled: bool): bool {

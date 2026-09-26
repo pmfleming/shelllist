@@ -36,7 +36,8 @@ Ui.ChooserListPane {
 
     preserveViewportOnAppend: true
     readonly property bool shouldLoadMore: visible && listNearEnd && controller.canAutoLoadMoreHistory
-    onShouldLoadMoreChanged: if (shouldLoadMore) Qt.callLater(loadNextPage)
+    onShouldLoadMoreChanged: if (shouldLoadMore)
+        Qt.callLater(loadNextPage)
 
     function loadNextPage(): void {
         if (shouldLoadMore)
@@ -48,8 +49,7 @@ Ui.ChooserListPane {
             id: footer
             objectName: "clipboardPagingFooter"
             width: ListView.view ? ListView.view.width : 0
-            height: pane.controller.loadingMoreHistory || pane.controller.historyPageError.length > 0
-                ? Ui.Theme.controlHeight + Ui.Theme.spacingMd : 0
+            height: pane.controller.loadingMoreHistory || pane.controller.historyPageError.length > 0 ? Ui.Theme.controlHeight + Ui.Theme.spacingMd : 0
             visible: height > 0
 
             Text {

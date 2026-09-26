@@ -12,11 +12,14 @@ Rectangle {
     required property var history
     required property var battery
     property string range: "6"
-    readonly property var forecast: battery.forecast || ({ limit: null, target: 100, seconds: 0 })
+    readonly property var forecast: battery.forecast || ({
+            limit: null,
+            target: 100,
+            seconds: 0
+        })
     readonly property string estimateText: History.forecastLabel(battery)
     readonly property var points: History.windowPoints(history.points || [], Number(range), (battery.history || {}).current_point || history.current_point)
-    readonly property bool powerAvailable: battery.available && battery.power_available === true
-        && History.nonnegative(battery.power_watts)
+    readonly property bool powerAvailable: battery.available && battery.power_available === true && History.nonnegative(battery.power_watts)
 
     width: parent ? parent.width : 0
     implicitHeight: content.implicitHeight + 2 * Ui.Theme.spacingMd
@@ -94,9 +97,24 @@ Rectangle {
             Ui.SegmentedControl {
                 objectName: "batteryHistoryRange"
                 Layout.preferredWidth: Math.min(168, content.width * 0.55)
-                options: [{ value: "6", label: "6h" }, { value: "24", label: "24h" }, { value: "168", label: "7d" }]
+                options: [
+                    {
+                        value: "6",
+                        label: "6h"
+                    },
+                    {
+                        value: "24",
+                        label: "24h"
+                    },
+                    {
+                        value: "168",
+                        label: "7d"
+                    }
+                ]
                 value: card.range
-                onSelected: function (value) { card.range = value; }
+                onSelected: function (value) {
+                    card.range = value;
+                }
             }
         }
 

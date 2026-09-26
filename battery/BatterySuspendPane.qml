@@ -35,16 +35,9 @@ Ui.DetailColumnCard {
             Accessible.role: Accessible.CheckBox
             Accessible.checkable: true
             Accessible.checked: pane.controller.keepAwake
-            Accessible.onToggleAction: if (enabled) pane.controller.toggleKeepAwake()
-            toolTip: pane.controller.powerSuspend.keep_awake === undefined
-                ? qsTr("Keep awake requires an updated bar-daemon")
-                : (!pane.controller.backend.ready
-                    ? qsTr("Reconnect to the power service to change Keep awake")
-                    : (pane.controller.keepAwakeReleaseOnly
-                        ? qsTr("Suspend status unavailable · turn off Keep awake")
-                        : (pane.controller.keepAwake
-                            ? qsTr("Turn off Keep awake · allow suspend and hibernate again")
-                            : qsTr("Keep awake · block suspend, hibernate and lid suspend; locking and screen blanking continue"))))
+            Accessible.onToggleAction: if (enabled)
+                pane.controller.toggleKeepAwake()
+            toolTip: pane.controller.powerSuspend.keep_awake === undefined ? qsTr("Keep awake requires an updated bar-daemon") : (!pane.controller.backend.ready ? qsTr("Reconnect to the power service to change Keep awake") : (pane.controller.keepAwakeReleaseOnly ? qsTr("Suspend status unavailable · turn off Keep awake") : (pane.controller.keepAwake ? qsTr("Turn off Keep awake · allow suspend and hibernate again") : qsTr("Keep awake · block suspend, hibernate and lid suspend; locking and screen blanking continue"))))
             enabled: pane.controller.canSetKeepAwake
             onClicked: pane.controller.toggleKeepAwake()
         }

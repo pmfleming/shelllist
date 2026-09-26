@@ -76,7 +76,8 @@ Ui.DetailFlickable {
             font.pixelSize: Ui.Theme.fontSizeBody
             readOnly: !cards.detailState.editing || cards.detailState.saveInFlight || cards.detailState.editBeginPending
             selectByMouse: true
-            onVisibleChanged: if (!visible) focus = false
+            onVisibleChanged: if (!visible)
+                focus = false
             onActiveFocusChanged: if (cards.directTextEdit)
                 cards.detailState.setEditorFocused(activeFocus)
             onTextChanged: if (cards.detailState.editing && activeFocus) {

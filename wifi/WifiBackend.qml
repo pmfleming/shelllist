@@ -147,7 +147,9 @@ Io.DaemonBackend {
         return call("profile", NmApi.methods.wifi_profile_operation, operation);
     }
     function renderShare(payload) {
-        return call("share", NmApi.methods.wifi_qr_render, { payload: payload });
+        return call("share", NmApi.methods.wifi_qr_render, {
+            payload: payload
+        });
     }
     function share(path) {
         return call("share", NmApi.methods.wifi_profile_operation, {

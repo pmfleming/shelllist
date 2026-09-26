@@ -24,6 +24,8 @@ Ui.ChooserListPane {
     iconAccessibleName: qsTr("Identify all enabled displays")
     onIconClicked: controller.identify()
     rowDelegate: Component {
-        DisplayListRow { listPane: pane }
+        DisplayListRow {
+            listPane: pane
+        }
     }
 }

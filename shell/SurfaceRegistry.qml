@@ -275,9 +275,13 @@ Item {
             SurfaceBundle {
                 controller: displayController
                 content: Component {
-                    Displays.DisplayContent { controller: displayController }
+                    Displays.DisplayContent {
+                        controller: displayController
+                    }
                 }
-                Displays.DisplayController { id: displayController }
+                Displays.DisplayController {
+                    id: displayController
+                }
             }
         }
     }

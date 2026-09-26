@@ -53,8 +53,7 @@ Item {
         showSelected();
     }
     function isCurrent() {
-        return controller.qr.open && controller.qr.generation === requestGeneration
-            && controller.detailAp && controller.detailAp.key === requestKey;
+        return controller.qr.open && controller.qr.generation === requestGeneration && controller.detailAp && controller.detailAp.key === requestKey;
     }
     function applyResponse(response, errorText) {
         if (!isCurrent())

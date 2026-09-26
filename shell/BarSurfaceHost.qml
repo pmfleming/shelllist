@@ -95,7 +95,9 @@ Item {
 
     Connections {
         target: root.controller
-        function onPowerSuspendChanged(): void { root.observeSuspendState(); }
+        function onPowerSuspendChanged(): void {
+            root.observeSuspendState();
+        }
     }
 
     Timer {

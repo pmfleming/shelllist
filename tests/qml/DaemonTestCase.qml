@@ -26,11 +26,21 @@ TestCase {
             signal eventReceived(var event, var route)
             signal transportFailed(string message)
             function call(id, method, params, route) {
-                testCase.calls = testCase.calls.concat([{id: id, method: method, params: params, route: route}]);
+                testCase.calls = testCase.calls.concat([
+                    {
+                        id: id,
+                        method: method,
+                        params: params,
+                        route: route
+                    }
+                ]);
             }
-            function subscribeExtra(id, streams, route) {}
-            function cancel(id, requestId, route) {}
-            function release(id, route) {}
+            function subscribeExtra(id, streams, route) {
+            }
+            function cancel(id, requestId, route) {
+            }
+            function release(id, route) {
+            }
         }
     }
 

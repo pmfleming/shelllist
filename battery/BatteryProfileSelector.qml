@@ -31,7 +31,9 @@ Item {
     function move(delta: int): void {
         if (!interactive || !enabled || (delta !== -1 && delta !== 1))
             return;
-        let index = options.findIndex(function (option) { return option.value === selector.value; });
+        let index = options.findIndex(function (option) {
+            return option.value === selector.value;
+        });
         if (index < 0)
             index = delta > 0 ? -1 : options.length;
         for (index += delta; index >= 0 && index < options.length; index += delta) {

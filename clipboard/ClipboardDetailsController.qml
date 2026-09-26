@@ -70,7 +70,13 @@ Item {
     function rememberFailedDraft(): void {
         if (!editTarget || !editDirty || editError.length === 0)
             return;
-        failedDraftStore.put(editTarget.id, {target: editTarget, preview: editPreview, draft: editDraft, error: editError, direct: editIsDirect});
+        failedDraftStore.put(editTarget.id, {
+            target: editTarget,
+            preview: editPreview,
+            draft: editDraft,
+            error: editError,
+            direct: editIsDirect
+        });
     }
     function forgetFailedDraft(): void {
         if (!editTarget)
@@ -142,7 +148,12 @@ Item {
         autoSaveTimer.stop();
         committedDraft = editDraft;
         savingDirectEdit = editIsDirect;
-        pendingCommit = {target: editTarget, preview: editPreview, draft: committedDraft, direct: editIsDirect};
+        pendingCommit = {
+            target: editTarget,
+            preview: editPreview,
+            draft: committedDraft,
+            direct: editIsDirect
+        };
         saveInFlight = true;
         editDirty = false;
         controller.actionInFlight = true;
@@ -420,7 +431,13 @@ Item {
         const sent = pendingCommit;
         pendingCommit = null;
         if (sent && sent.target && (!editTarget || editTarget.id !== sent.target.id)) {
-            failedDraftStore.put(sent.target.id, {target: sent.target, preview: sent.preview, draft: sent.draft, error: message, direct: sent.direct});
+            failedDraftStore.put(sent.target.id, {
+                target: sent.target,
+                preview: sent.preview,
+                draft: sent.draft,
+                error: message,
+                direct: sent.direct
+            });
             scheduleLoad();
             return;
         }

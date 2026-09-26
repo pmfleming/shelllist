@@ -13,30 +13,72 @@ DaemonTestCase {
     width: 200
     height: 100
 
-    Component { id: button; Ui.ActionButton { label: "Button" } }
-    Component { id: toggle; Ui.ToggleRow { title: "Toggle" } }
-    Component { id: toggleSwitch; Ui.ToggleSwitch {} }
-    Component { id: bar; Bar.BarAction { text: "Bar" } }
+    Component {
+        id: button
+        Ui.ActionButton {
+            label: "Button"
+        }
+    }
+    Component {
+        id: toggle
+        Ui.ToggleRow {
+            title: "Toggle"
+        }
+    }
+    Component {
+        id: toggleSwitch
+        Ui.ToggleSwitch {}
+    }
+    Component {
+        id: bar
+        Bar.BarAction {
+            text: "Bar"
+        }
+    }
     Component {
         id: workspace
         Bar.WorkspaceButton {
             workspaceId: 3
             screenName: "test"
-            controller: Bar.BarController { surfaceRegistry: null }
+            controller: Bar.BarController {
+                surfaceRegistry: null
+            }
         }
     }
-    SignalSpy { id: clicks; signalName: "clicked" }
-    SignalSpy { id: secondary; signalName: "secondaryTriggered" }
+    SignalSpy {
+        id: clicks
+        signalName: "clicked"
+    }
+    SignalSpy {
+        id: secondary
+        signalName: "secondaryTriggered"
+    }
 
     function test_sharedActivation_data() {
         return [
-            {tag: "button", factory: button}, {tag: "toggle", factory: toggle},
-            {tag: "switch", factory: toggleSwitch},
-            {tag: "workspace", factory: workspace}
+            {
+                tag: "button",
+                factory: button
+            },
+            {
+                tag: "toggle",
+                factory: toggle
+            },
+            {
+                tag: "switch",
+                factory: toggleSwitch
+            },
+            {
+                tag: "workspace",
+                factory: workspace
+            }
         ];
     }
     function test_sharedActivation(data) {
-        const control = createTemporaryObject(data.factory, testCase, {width: 160, height: 40});
+        const control = createTemporaryObject(data.factory, testCase, {
+            width: 160,
+            height: 40
+        });
         verify(control !== null);
         clicks.target = control;
         clicks.clear();
@@ -76,7 +118,10 @@ DaemonTestCase {
         }
     }
     function test_barSecondaryIsDistinctFromPrimary() {
-        const control = createTemporaryObject(bar, testCase, {width: 160, height: 40});
+        const control = createTemporaryObject(bar, testCase, {
+            width: 160,
+            height: 40
+        });
         clicks.target = control;
         secondary.target = control;
         clicks.clear();

@@ -10,9 +10,18 @@ TestCase {
     visible: true
     when: windowShown
 
-    Component { id: stateComponent; Activity.NotificationState {} }
-    Component { id: controllerComponent; Activity.NotificationController {} }
-    Component { id: contentComponent; Activity.NotificationContent {} }
+    Component {
+        id: stateComponent
+        Activity.NotificationState {}
+    }
+    Component {
+        id: controllerComponent
+        Activity.NotificationController {}
+    }
+    Component {
+        id: contentComponent
+        Activity.NotificationContent {}
+    }
     Component {
         id: fakeBackendComponent
         Activity.NotificationBackend {
@@ -33,7 +42,9 @@ TestCase {
                 requestedRefresh = refresh;
                 return true;
             }
-            function reply(id: int, text: string): bool { return true; }
+            function reply(id: int, text: string): bool {
+                return true;
+            }
         }
     }
 
@@ -41,24 +52,50 @@ TestCase {
         failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop).*/);
     }
     function notification(id, app) {
-        return { id: id, app_name: app || "Chat", group_key: app || "chat",
-            summary: "Message " + id, body: "Body " + id, created_unix_ms: id * 1000,
-            actions: [{ key: "reply", label: "Reply" }, { key: "open", label: "Open" }] };
+        return {
+            id: id,
+            app_name: app || "Chat",
+            group_key: app || "chat",
+            summary: "Message " + id,
+            body: "Body " + id,
+            created_unix_ms: id * 1000,
+            actions: [
+                {
+                    key: "reply",
+                    label: "Reply"
+                },
+                {
+                    key: "open",
+                    label: "Open"
+                }
+            ]
+        };
     }
     function record(id, app) {
-        return { history_id: id, notification: notification(id, app) };
+        return {
+            history_id: id,
+            notification: notification(id, app)
+        };
     }
     function makeState() {
         const state = createTemporaryObject(stateComponent, testCase);
         verify(state !== null);
-        state.notifications = { available: true, count: 2, dnd: false };
-        state.notificationActive = { notifications: [notification(1), notification(100)] };
+        state.notifications = {
+            available: true,
+            count: 2,
+            dnd: false
+        };
+        state.notificationActive = {
+            notifications: [notification(1), notification(100)]
+        };
         state.history = [record(3), record(2), record(1)];
         return state;
     }
     function makeController(state) {
         const controller = createTemporaryObject(controllerComponent, state, {
-            notificationState: state, width: testCase.width, height: testCase.height
+            notificationState: state,
+            width: testCase.width,
+            height: testCase.height
         });
         verify(controller !== null);
         controller.rebuildGroups();
@@ -66,7 +103,9 @@ TestCase {
     }
     function test_dndToggleAndDurationCycle() {
         const state = makeState();
-        state.backend = createTemporaryObject(fakeBackendComponent, state, { store: state });
+        state.backend = createTemporaryObject(fakeBackendComponent, state, {
+            store: state
+        });
         compare(state.dndDurationMinutes, 30);
         state.cycleDndDuration();
         compare(state.dndDurationMinutes, 60);
@@ -76,7 +115,10 @@ TestCase {
         verify(state.backend.requestedDnd);
         verify(state.backend.requestedUntil >= now + 3600000);
         verify(!state.notifications.dnd, "daemon owns acknowledged DND state");
-        state.notifications = { available: true, dnd: true };
+        state.notifications = {
+            available: true,
+            dnd: true
+        };
         state.cycleDndDuration();
         compare(state.dndDurationMinutes, 0);
         verify(state.backend.requestedDnd);
@@ -104,23 +146,29 @@ TestCase {
     }
     function test_refreshCatchesUpAcrossMissingPages() {
         const state = makeState();
-        state.backend = createTemporaryObject(fakeBackendComponent, state, { store: state });
+        state.backend = createTemporaryObject(fakeBackendComponent, state, {
+            store: state
+        });
         const page = [];
-        for (let id = 100; id > 50; --id) page.push(record(id));
+        for (let id = 100; id > 50; --id)
+            page.push(record(id));
         state.historyLoading = true;
         state.applyHistory(page, true);
         compare(state.backend.requestedCursor, 51);
         verify(state.backend.requestedRefresh);
         verify(state.historyLoading);
         const rest = [];
-        for (let id = 50; id >= 3; --id) rest.push(record(id));
+        for (let id = 50; id >= 3; --id)
+            rest.push(record(id));
         state.applyHistory(rest, true);
         compare(state.history.length, 100);
         verify(!state.historyLoading);
     }
     function test_replyAcknowledgementAndFailure() {
         const state = makeState();
-        state.backend = createTemporaryObject(fakeBackendComponent, state, { store: state });
+        state.backend = createTemporaryObject(fakeBackendComponent, state, {
+            store: state
+        });
         state.setDraft(100, "Hello");
         verify(state.replyNotification(100, "Hello"));
         compare(state.drafts[100], "Hello");
@@ -149,8 +197,11 @@ TestCase {
         const controller = makeController(state);
         state.setExpanded("chat", true);
         state.setDraft(100, "Draft");
-        const content = createTemporaryObject(contentComponent, controller,
-            { controller: controller, width: 453, height: 600 });
+        const content = createTemporaryObject(contentComponent, controller, {
+            controller: controller,
+            width: 453,
+            height: 600
+        });
         verify(content !== null);
         wait(50);
         const row = findChild(content, "notificationHistoryRow-100");
@@ -161,7 +212,9 @@ TestCase {
         keyClick(Qt.Key_End);
         keyClick(Qt.Key_T);
         compare(state.drafts[100], "Draftt");
-        state.notificationActive = { notifications: [notification(101), notification(100), notification(1)] };
+        state.notificationActive = {
+            notifications: [notification(101), notification(100), notification(1)]
+        };
         wait(50);
         compare(findChild(content, "notificationHistoryRow-100"), row);
         verify(field.inputActiveFocus);
@@ -172,8 +225,11 @@ TestCase {
     function test_collapsedStackPeeksBeneathNewestCard() {
         const state = makeState();
         const controller = makeController(state);
-        const content = createTemporaryObject(contentComponent, controller,
-            { controller: controller, width: 453, height: 600 });
+        const content = createTemporaryObject(contentComponent, controller, {
+            controller: controller,
+            width: 453,
+            height: 600
+        });
         wait(50);
         const peek = findChild(content, "notificationStackPeek");
         verify(peek !== null);
@@ -194,7 +250,14 @@ TestCase {
         state.setDraft(100, "Keep");
         state.setReplyState(100, true, "");
         state.backend.requests = {
-            history: { history: true, refresh: true }, reply: { replyId: 100, text: "Keep" }
+            history: {
+                history: true,
+                refresh: true
+            },
+            reply: {
+                replyId: 100,
+                text: "Keep"
+            }
         };
         state.backend.finish("history", {}, "Transport lost");
         verify(!state.historyLoading);
@@ -209,7 +272,9 @@ TestCase {
         const controller = makeController(state);
         controller.openNotifications("Later", "active", "activity");
         compare(controller.pendingGroupKey, "Later");
-        state.notificationActive = { notifications: [notification(200, "Later")] };
+        state.notificationActive = {
+            notifications: [notification(200, "Later")]
+        };
         compare(controller.pendingGroupKey, "");
         compare(controller.selectedGroupKey, "Later");
         compare(controller.returnSurface, "activity");

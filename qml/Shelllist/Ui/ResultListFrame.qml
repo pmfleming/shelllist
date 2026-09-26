@@ -8,8 +8,7 @@ Rectangle {
     property var resultModel: null
     property Component footerComponent: null
     property bool preserveViewportOnAppend: false
-    readonly property bool nearEnd: list.count > 0 && list.height > 0
-        && list.contentHeight - (list.contentY - list.originY + list.height) <= 4 * delegateHeight
+    readonly property bool nearEnd: list.count > 0 && list.height > 0 && list.contentHeight - (list.contentY - list.originY + list.height) <= 4 * delegateHeight
     property int selectedIndex: 0
     property real uiScale: 1
     property string emptyText: ""

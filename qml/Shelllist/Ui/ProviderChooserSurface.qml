@@ -24,13 +24,17 @@ ChooserSurface {
     readonly property real uiScale: Theme.densityScale(height, chooserController.contentVerticalMargin)
     readonly property ChooserListPane listItem: chooser.listItem
     readonly property Item detailsItem: chooser.detailsItem
-    readonly property var allHelpEntries: helpEntries.concat(shortcutHelpEntries(), refreshHelp ? [{
+    readonly property var allHelpEntries: helpEntries.concat(shortcutHelpEntries(), refreshHelp ? [
+        {
             keys: "F5",
             action: refreshHelp
-        }] : [], detailsTabHelp ? [{
+        }
+    ] : [], detailsTabHelp ? [
+        {
             keys: "Ctrl+Tab",
             action: detailsTabHelp
-        }] : [])
+        }
+    ] : [])
 
     function refresh(): void {
         chooserController.refresh();

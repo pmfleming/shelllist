@@ -46,7 +46,10 @@ Ui.ModalFrame {
                 label: qsTr("Revert")
                 icon: "󰕍"
                 enabled: dialog.controller.backend.ready && !dialog.controller.actionInFlight
-                onClicked: if (dialog.controller.trial) dialog.controller.displayLayoutAction("revert", { id: dialog.controller.trial.id })
+                onClicked: if (dialog.controller.trial)
+                    dialog.controller.displayLayoutAction("revert", {
+                        id: dialog.controller.trial.id
+                    })
             }
             Ui.ActionButton {
                 objectName: "confirmDisplayLayout"
@@ -55,11 +58,19 @@ Ui.ModalFrame {
                 icon: "󰄬"
                 tone: "accent"
                 enabled: dialog.controller.backend.ready && !dialog.controller.actionInFlight && !dialog.controller.stale && dialog.controller.secondsLeft > 0
-                onClicked: if (dialog.controller.trial) dialog.controller.displayLayoutAction("confirm", { id: dialog.controller.trial.id })
+                onClicked: if (dialog.controller.trial)
+                    dialog.controller.displayLayoutAction("confirm", {
+                        id: dialog.controller.trial.id
+                    })
             }
         }
     }
-    function focusRevert(): void { if (visible) revert.forceActiveFocus(); }
-    onVisibleChanged: if (visible) Qt.callLater(focusRevert)
-    Component.onCompleted: if (visible) Qt.callLater(focusRevert)
+    function focusRevert(): void {
+        if (visible)
+            revert.forceActiveFocus();
+    }
+    onVisibleChanged: if (visible)
+        Qt.callLater(focusRevert)
+    Component.onCompleted: if (visible)
+        Qt.callLater(focusRevert)
 }

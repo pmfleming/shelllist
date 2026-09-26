@@ -55,7 +55,9 @@ RowLayout {
         Controls.ToolTip.visible: iconHover.hovered && header.iconAccessibleName.length > 0
         Controls.ToolTip.text: header.iconAccessibleName
         Controls.ToolTip.delay: 450
-        HoverHandler { id: iconHover }
+        HoverHandler {
+            id: iconHover
+        }
         Layout.preferredWidth: header.scaled(Theme.controlHeight)
         Layout.preferredHeight: header.scaled(Theme.controlHeight)
         Layout.alignment: Qt.AlignVCenter
@@ -100,8 +102,7 @@ RowLayout {
             header.filterEdited(text);
         }
         onKeyPressed: function (event) {
-            if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
-                    && (event.modifiers & ~Qt.KeypadModifier) === Qt.AltModifier) {
+            if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && (event.modifiers & ~Qt.KeypadModifier) === Qt.AltModifier) {
                 // Never fall through to the selected result's primary action.
                 event.accepted = true;
                 if (header.searchActionIcon.length > 0 && header.searchActionEnabled)

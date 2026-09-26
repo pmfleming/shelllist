@@ -11,8 +11,7 @@ function mergeNetworkChanges(currentNetworks, event) {
         if (!byKey.has(network.key))
             byKey.set(network.key, network);
     }
-    const retained = currentNetworks.filter(network => !removedKeys.has(network.key))
-        .map(network => byKey.get(network.key) || network);
+    const retained = currentNetworks.filter(network => !removedKeys.has(network.key)).map(network => byKey.get(network.key) || network);
     const retainedKeys = new Set(retained.map(network => network.key));
     for (const network of replacements) {
         if (network.key && retainedKeys.has(network.key))

@@ -11,7 +11,11 @@ Item {
     id: graph
 
     required property var points
-    property var forecast: ({ limit: null, target: 100, seconds: 0 })
+    property var forecast: ({
+            limit: null,
+            target: 100,
+            seconds: 0
+        })
     property real currentPercentage: -1
     property color lineColor: Ui.Theme.resourceCpu
     property real hoverPosition: -1
@@ -24,13 +28,12 @@ Item {
     readonly property real historicalPosition: hoverPosition / historyFraction
     readonly property var hoveredSample: hoverPosition >= 0 && historicalPosition <= 1 ? History.nearestSample(series.segments, historicalPosition) : null
     readonly property var hoveredPower: hoverPosition >= 0 && historicalPosition <= 1 ? History.nearestSample(powerSeries.segments, historicalPosition) : null
-    readonly property string hoverText: historicalPosition > 1
-        ? "Estimated · ~" + Presentation.duration(forecast.seconds) + (forecast.target === 0 ? " to empty" : " to " + forecast.target + "%")
-        : (hoveredSample ? new Date(hoveredSample.timestamp_ms).toLocaleString() + " · " + hoveredSample.value + "%" : "No charge sample")
-          + (hoveredPower ? "\n" + (hoveredPower.charging ? "+" : "") + hoveredPower.value.toFixed(1) + " W · nearest measurement" : "\nNo power measurement")
+    readonly property string hoverText: historicalPosition > 1 ? "Estimated · ~" + Presentation.duration(forecast.seconds) + (forecast.target === 0 ? " to empty" : " to " + forecast.target + "%") : (hoveredSample ? new Date(hoveredSample.timestamp_ms).toLocaleString() + " · " + hoveredSample.value + "%" : "No charge sample") + (hoveredPower ? "\n" + (hoveredPower.charging ? "+" : "") + hoveredPower.value.toFixed(1) + " W · nearest measurement" : "\nNo power measurement")
 
     signal hovered(real position)
-    onHovered: function (position) { hoverPosition = position; }
+    onHovered: function (position) {
+        hoverPosition = position;
+    }
     Layout.fillWidth: true
     Layout.preferredHeight: graphHeight
     implicitHeight: graphHeight
@@ -85,8 +88,12 @@ Item {
             const plotWidth = Math.max(0, width - 2 * inset);
             const plotHeight = Math.max(0, height - 2 * inset);
             const nowX = inset + graph.historyFraction * plotWidth;
-            function y(value) { return inset + (1 - value / 100) * plotHeight; }
-            function x(value) { return inset + value * graph.historyFraction * plotWidth; }
+            function y(value) {
+                return inset + (1 - value / 100) * plotHeight;
+            }
+            function x(value) {
+                return inset + value * graph.historyFraction * plotWidth;
+            }
             if (graph.historyFraction < 1) {
                 context.fillStyle = Ui.Theme.withAlpha(graph.lineColor, 0.06);
                 context.fillRect(nowX, inset, plotWidth * (1 - graph.historyFraction), plotHeight);
@@ -114,7 +121,10 @@ Item {
                 context.strokeStyle = color;
                 context.fillStyle = color;
                 const points = area.points.map(function (point) {
-                    return { x: x(point.x), y: inset + (1 - point.value / graph.powerMaximum) * plotHeight };
+                    return {
+                        x: x(point.x),
+                        y: inset + (1 - point.value / graph.powerMaximum) * plotHeight
+                    };
                 });
                 Ui.ChartDrawing.series(context, [points], inset + plotHeight, Ui.Theme.withAlpha(color, 0.28), true);
             });
@@ -128,7 +138,12 @@ Item {
             fill.addColorStop(0, Ui.Theme.withAlpha(graph.lineColor, 0.15));
             fill.addColorStop(1, Ui.Theme.withAlpha(graph.lineColor, 0.015));
             const segments = graph.series.segments.map(function (segment) {
-                return segment.map(function (point) { return { x: x(point.x), y: y(point.value) }; });
+                return segment.map(function (point) {
+                    return {
+                        x: x(point.x),
+                        y: y(point.value)
+                    };
+                });
             });
             Ui.ChartDrawing.series(context, segments, inset + plotHeight, fill, true);
 

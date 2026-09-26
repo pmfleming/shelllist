@@ -33,7 +33,12 @@ TestCase {
             function call(id, method, params, route) {
                 lastId = id;
                 lastRoute = route;
-                calls = calls.concat([{ id: id, route: route }]);
+                calls = calls.concat([
+                    {
+                        id: id,
+                        route: route
+                    }
+                ]);
             }
             function subscribeExtra(id, streams, route) {
             }

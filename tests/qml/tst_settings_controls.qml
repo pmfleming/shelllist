@@ -57,5 +57,4 @@ TestCase {
         edited.target = null;
         finished.target = null;
     }
-
 }
