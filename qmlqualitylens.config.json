@@ -23,6 +23,7 @@
     "tests/qml/tst_hyprland_dispatch.qml",
     "tests/qml/tst_ip_settings_state.qml",
     "tests/qml/tst_keyed_list_model.qml",
+    "tests/qml/tst_material_palette.qml",
     "tests/qml/tst_media_chip.qml",
     "tests/qml/tst_notification_actions.qml",
     "tests/qml/tst_notifications.qml",

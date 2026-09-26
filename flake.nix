@@ -85,6 +85,8 @@
 
           inherit shelllistSearch shelllistTimezoneAssets;
 
+          materialColors = import ./nix/material-colors.nix { inherit pkgs; };
+
           shelllistApplication = pkgs.writeShellApplication {
             name = "shelllist";
             meta = mkMeta "Single-host Shelllist desktop action center" "shelllist";
@@ -718,6 +720,15 @@
             ]
           ];
 
+          materialColors = pkgs.runCommand "shelllist-material-colors-current"
+            { nativeBuildInputs = [ pkgs.nodejs pkgs.diffutils ]; } ''
+            generated=${self.packages.${system}.materialColors}
+            diff -u "$generated/MaterialColors.generated.js" ${./qml/Shelllist/Ui/MaterialColors.generated.js}
+            cmp "$generated/material-color-utilities.LICENSE" ${./qml/Shelllist/Ui/material-color-utilities.LICENSE}
+            node ${./tests/check-material-colors.js} "$generated/MaterialColors.generated.js"
+            touch $out
+          '';
+
           typescript = pkgs.runCommand "shelllist-typescript-current"
             {
               nativeBuildInputs = [ pkgs.nodejs pkgs.typescript ];
@@ -972,6 +983,7 @@
             pkgs.nixpkgs-fmt
             pkgs.nodejs
             pkgs.typescript
+            pkgs.esbuild
             pkgs.qt6.qtdeclarative # qmlformat, qmllint
             pkgs.qt6.qtsvg # QtTest loads real weather/timezone SVG assets
             pkgs.tzdata
