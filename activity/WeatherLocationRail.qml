@@ -41,13 +41,7 @@ Rectangle {
         flickableDirection: Flickable.HorizontalFlick
         interactive: contentWidth > width
 
-        Behavior on contentX {
-            enabled: !Ui.Theme.noAnimations
-            NumberAnimation {
-                duration: Ui.Theme.animationInteractive
-                easing.type: Ui.Theme.easingResponsive
-            }
-        }
+        Ui.InteractiveBehavior on contentX {}
 
         Row {
             id: locationRow

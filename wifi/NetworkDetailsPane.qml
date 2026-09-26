@@ -55,13 +55,7 @@ ActionDetailsPane {
         height: Math.max(0, parent.height - pane.footerHeight - pane.sectionSpacing)
         clip: true
 
-        Behavior on advancedTransitionProgress {
-            enabled: !Theme.noAnimations
-            NumberAnimation {
-                duration: Theme.animationInteractive
-                easing.type: Theme.easingResponsive
-            }
-        }
+        InteractiveBehavior on advancedTransitionProgress {}
 
         NetworkDetailCards {
             enabled: !pane.controller.advanced.open || advancedLoader.status !== Loader.Ready
