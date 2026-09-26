@@ -19,8 +19,9 @@ DaemonTestCase {
             width: testCase.width
             height: testCase.height
             property alias controller: controller
+            readonly property Item detailsItem: content.detailsItem
             Displays.DisplayController { id: controller }
-            Displays.DisplayContent { controller: panel.controller }
+            Displays.DisplayContent { id: content; controller: panel.controller }
         }
     }
     function displayState() {
@@ -40,7 +41,10 @@ DaemonTestCase {
         const panel = makePanel();
         const c = panel.controller;
         c.openDetails();
-        tryVerify(function () { return findChild(panel, "displayModeCard") !== null; });
+        // The details Loader is asynchronous: an early child can exist before
+        // the inspector's Repeater delegates have finished being created.
+        tryVerify(function () { return panel.detailsItem !== null; });
+        verify(findChild(panel, "displayModeCard") !== null);
         findChild(panel, "displayScale").selected("2");
         findChild(panel, "displayRotation").selected("1");
         findChild(panel, "displayX").edited("-200");
@@ -332,13 +336,17 @@ DaemonTestCase {
         c.uiActive = true;
         c.selectOutput("DP-1");
         c.openDetails();
-        verify(waitForRendering(panel));
-        tryVerify(function () { return findChild(panel, "displayY") !== null; });
+        tryVerify(function () { return panel.detailsItem !== null; });
         verify(c.triggerDetailAction("arrange"));
         const page = findChild(panel, "displayLayoutWorkspace");
         const fieldY = findChild(panel, "displayY");
-        verify(waitForRendering(panel));
+        const canvas = findChild(panel, "displayWorkspaceCanvas");
+        // Arrange queues canvas focus; let it finish before focusing the field,
+        // and settle the stacked layout before checking focus-driven scrolling.
+        tryCompare(canvas, "activeFocus", true);
+        verify(waitForPolish(panel.Window.window));
         fieldY.focusInput(false);
+        tryCompare(fieldY, "inputActiveFocus", true);
         tryVerify(function () { return page.contentY > 0; });
         const position = fieldY.mapToItem(page, 0, 0);
         verify(position.y >= 0);
