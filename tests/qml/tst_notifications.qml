@@ -37,6 +37,9 @@ TestCase {
         }
     }
 
+    function init() {
+        failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop).*/);
+    }
     function notification(id, app) {
         return { id: id, app_name: app || "Chat", group_key: app || "chat",
             summary: "Message " + id, body: "Body " + id, created_unix_ms: id * 1000,
@@ -180,6 +183,9 @@ TestCase {
         state.setExpanded("chat", true);
         wait(50);
         compare(findChild(content, "notificationStackPeek"), null);
+        // Destroy dependent delegates before QtTest retires their controller/state.
+        content.destroy();
+        wait(50);
     }
     function test_backendFailuresRetireLoadingAndPreserveDraft() {
         const state = makeState();

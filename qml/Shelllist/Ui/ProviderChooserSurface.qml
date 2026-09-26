@@ -12,6 +12,8 @@ ChooserSurface {
     property alias minimumSplitDetailsWidth: chooser.minimumSplitDetailsWidth
     // Hints for keys handled outside SurfaceShortcut, e.g. list navigation.
     property var helpEntries: []
+    // Replace this array when membership changes; Item.resources is not notifiable.
+    property var helpShortcuts: []
     property string refreshHelp: ""
     property string detailsTabHelp: qsTr("Cycle detail tabs")
     property bool navigationEnabled: !chooserController.navigationHelpOpen
@@ -38,8 +40,8 @@ ChooserSurface {
     }
     function shortcutHelpEntries(): var {
         const entries = [];
-        for (let index = 0; index < resources.length; ++index) {
-            const shortcut = resources[index] as SurfaceShortcut;
+        for (let index = 0; index < helpShortcuts.length; ++index) {
+            const shortcut = helpShortcuts[index] as SurfaceShortcut;
             if (shortcut && shortcut.help)
                 entries.push({
                     keys: shortcut.keys,

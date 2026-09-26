@@ -16,11 +16,13 @@ Ui.ProviderChooserSurface {
     helpEntries: [{ keys: "Right", action: qsTr("Expand selected display") }]
     refreshHelp: qsTr("Refresh displays")
     detailsTabHelp: qsTr("Switch Settings / Information")
+    helpShortcuts: [previewShortcut]
 
     listComponent: Component { DisplayListPane { controller: content.controller } }
     detailsComponent: Component { DisplayDetails { controller: content.controller; uiScale: content.uiScale } }
 
     Ui.SurfaceShortcut {
+        id: previewShortcut
         sequence: "Ctrl+Return"
         help: qsTr("Preview the whole layout · keep within 20 seconds")
         enabled: content.controller.uiActive && content.controller.detailsOpen && content.controller.canPreview && !content.controller.discardPrompt && !content.controller.navigationHelpOpen

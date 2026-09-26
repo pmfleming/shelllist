@@ -14,6 +14,7 @@ Ui.ProviderChooserSurface {
     detailsTabEnabled: content.actionsEnabled && content.controller.detailsOpen
     helpEnabled: content.controller.uiActive && !content.controller.multiSelectMode && !content.controller.deleteMenuOpen && !content.controller.detailState.editorFocused && !content.controller.deleteConfirmationOpen && !content.controller.bulkDeleteConfirmationOpen && !content.controller.wipeChallenge
     refreshHelp: "Refresh clipboard history"
+    helpShortcuts: [pasteShortcut, copyShortcut, imageShortcut, deleteShortcut, selectAllShortcut]
 
     listComponent: Component {
         ClipboardListPane {
@@ -28,23 +29,27 @@ Ui.ProviderChooserSurface {
     }
 
     Ui.SurfaceShortcut {
+        id: pasteShortcut
         sequence: "Return"
         enabled: content.actionsEnabled && content.selectedEntry.kind !== "binary" && !content.controller.detailState.editorFocused
         onActivated: content.controller.pasteSelected()
     }
     Ui.SurfaceShortcut {
+        id: copyShortcut
         sequence: "Ctrl+Return"
         help: "Copy without pasting"
         enabled: content.actionsEnabled
         onActivated: content.controller.copySelected()
     }
     Ui.SurfaceShortcut {
+        id: imageShortcut
         sequence: "Shift+Return"
         help: "Paste an image as a file"
         enabled: content.actionsEnabled && content.selectedEntry.kind === "image"
         onActivated: content.controller.pasteImageAsFile()
     }
     Ui.SurfaceShortcut {
+        id: deleteShortcut
         sequence: "Delete"
         help: "Delete the selected entry"
         enabled: content.controller.uiActive && !content.controller.actionInFlight && !content.controller.deleteMenuOpen && (content.controller.multiSelectMode ? content.controller.multiSelectedCount > 0 : content.controller.hasSelection)
@@ -56,6 +61,7 @@ Ui.ProviderChooserSurface {
         }
     }
     Ui.SurfaceShortcut {
+        id: selectAllShortcut
         sequence: "Ctrl+A"
         help: "Select all in multi-select mode"
         enabled: content.controller.uiActive && content.controller.multiSelectMode && !content.controller.actionInFlight

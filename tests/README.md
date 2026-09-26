@@ -4,6 +4,26 @@ Keep tests at the narrowest **behavioral boundary** that catches a meaningful
 failure. Prefer representative scenarios over repeated fixtures. Do not mirror
 implementation tables or freeze visual choices unnecessarily.
 
+## QML validation environment and warning regressions
+
+Run `tests/run-qml-tests.sh` from `nix develop`. The development shell and Nix
+`qmlTests` check provide matching Qt SVG image plugins and a timezone database;
+both QML runner scripts use the same offscreen/software, UTC setup. Refresh an
+already-open development shell after changing `flake.nix`.
+
+- `tst_image_assets.qml` checks that representative weather and timezone SVGs
+  actually reach `Image.Ready`, rather than passing while Qt logs decode failures.
+- `tst_provider_shortcuts.qml` checks keyboard activation and reactive help updates
+  when a shortcut's sequence/help or the explicit `helpShortcuts` list changes.
+  Consumers list their shortcuts in `ProviderChooserSurface.helpShortcuts`; do not
+  bind help generation to non-notifiable `Item.resources`.
+- Notification view tests destroy their content before its controller/state, and
+  reject unexpected JavaScript/binding warnings during the lifecycle.
+
+These are additional regression checks, not a revision of the historical pruning
+baseline below. Expected negative-test application error logs are distinct from
+QML engine warnings and remain allowed.
+
 ## Current pruning inventory
 
 Baseline: the incoming worktree at `4d5ff24`, **including its existing uncommitted

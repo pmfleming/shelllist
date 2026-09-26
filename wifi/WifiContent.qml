@@ -15,6 +15,7 @@ ProviderChooserSurface {
     refreshAutoRepeat: false
     helpEnabled: content.controller.uiActive && !content.controller.promptActive
     refreshHelp: "Refresh and scan for networks"
+    helpShortcuts: [hiddenNetworkShortcut, securityShortcut, ipShortcut]
     readonly property bool pageShortcutsEnabled: content.controller.uiActive && content.controller.powered && content.navigationEnabled && !content.controller.advanced.open
 
     function cancelPrompt(): void {
@@ -33,6 +34,7 @@ ProviderChooserSurface {
     }
 
     SurfaceShortcut {
+        id: hiddenNetworkShortcut
         sequence: "F6"
         help: "Connect to a hidden network"
         enabled: content.pageShortcutsEnabled
@@ -40,12 +42,14 @@ ProviderChooserSurface {
         onActivated: content.controller.openHiddenNetworkPrompt()
     }
     SurfaceShortcut {
+        id: securityShortcut
         sequence: "F7"
         help: "Open Security & Privacy"
         enabled: content.pageShortcutsEnabled
         onActivated: content.controller.advanced.openSettings("security")
     }
     SurfaceShortcut {
+        id: ipShortcut
         sequence: "F8"
         help: "Open IP & DNS"
         enabled: content.pageShortcutsEnabled

@@ -915,7 +915,7 @@
 
           qmlTests = pkgs.runCommand "shelllist-qml-tests"
             {
-              nativeBuildInputs = [ pkgs.qt6.qtdeclarative ];
+              nativeBuildInputs = [ pkgs.qt6.qtdeclarative pkgs.qt6.qtsvg ];
             } ''
             mkdir -p test-root/tests
             cp -r ${./tests/qml} test-root/tests/qml
@@ -932,7 +932,10 @@
             ln -s ${./shell} test-root/shell
             export HOME=$TMPDIR
             export XDG_CACHE_HOME=$TMPDIR/cache
-            QT_QPA_PLATFORM=offscreen qmltestrunner \
+            export QT_PLUGIN_PATH=${pkgs.qt6.qtsvg}/lib/qt-6/plugins
+            export TZDIR=${pkgs.tzdata}/share/zoneinfo
+            export TZ=UTC
+            QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software qmltestrunner \
               -input test-root/tests/qml \
               -import test-root/tests/qml/imports \
               -import test-root/qml \
@@ -990,11 +993,17 @@
 
       devShells = forAllSystems (system: pkgs: {
         default = pkgs.mkShell {
+          shellHook = ''
+            export QT_PLUGIN_PATH="${pkgs.qt6.qtsvg}/lib/qt-6/plugins''${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
+            export TZDIR="${pkgs.tzdata}/share/zoneinfo"
+          '';
           packages = [
             pkgs.nixpkgs-fmt
             pkgs.nodejs
             pkgs.typescript
             pkgs.qt6.qtdeclarative # qmlformat, qmllint
+            pkgs.qt6.qtsvg # QtTest loads real weather/timezone SVG assets
+            pkgs.tzdata
             pkgs.quickshell
             pkgs.shellcheck
             (pkgs.writeShellApplication {
