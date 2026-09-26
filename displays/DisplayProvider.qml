@@ -24,29 +24,30 @@ Core.Provider {
         const source = Model.mirrorSource(output, controller.outputs);
         return source ? qsTr("Mirrors %1").arg(source) : qsTr("Extended");
     }
-    function resultsForOutputs(outputs: var): var {
-        return outputs.map(function (output) {
-            return Core.Model.result({
-                providerId: providerId,
-                providerPriority: priority,
-                id: output.name,
-                title: Model.title(output),
-                subtitle: [output.name, stateLabel(output), Model.modeSummary(output)].filter(Boolean).join(" · "),
-                icon: Model.internal(output.name) ? "󰌢" : "󰍹",
-                keywords: [output.name, output.description || "", output.make || "", output.model || "", output.serial || ""],
-                score: output.disabled ? 0 : 10,
-                primaryActionId: "preview",
-                preview: {
-                    kind: "display",
-                    available: true
-                },
-                state: {
-                    active: !output.disabled,
-                    busy: controller.actionInFlight
-                },
-                payload: output
-            });
+    function resultForOutput(output: var): var {
+        return Core.Model.result({
+            providerId: providerId,
+            providerPriority: priority,
+            id: output.name,
+            title: Model.title(output),
+            subtitle: [output.name, stateLabel(output), Model.modeSummary(output)].filter(Boolean).join(" · "),
+            icon: Model.internal(output.name) ? "󰌢" : "󰍹",
+            keywords: [output.name, output.description || "", output.make || "", output.model || "", output.serial || ""],
+            score: output.disabled ? 0 : 10,
+            primaryActionId: "preview",
+            preview: {
+                kind: "display",
+                available: true
+            },
+            state: {
+                active: !output.disabled,
+                busy: controller.actionInFlight
+            },
+            payload: output
         });
+    }
+    function resultsForOutputs(outputs: var): var {
+        return outputs.map(resultForOutput);
     }
     function liveOutput(result: var): var {
         if (!result || !result.payload)

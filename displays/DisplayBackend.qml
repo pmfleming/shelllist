@@ -3,7 +3,7 @@ import Shelllist.Io as Io
 import "DisplayApi.js" as Api
 
 Io.DaemonBackend {
-    required property var controller
+    required property DisplayController controller
     daemonName: "bar-daemon"
     expectedProtocol: Api.protocol
     expectedVersion: Api.version

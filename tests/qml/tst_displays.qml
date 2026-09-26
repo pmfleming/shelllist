@@ -54,6 +54,24 @@ DaemonTestCase {
         } };
         return state;
     }
+    function test_editsNormalizeOnlyTheTargetAndRetainInvalidInput() {
+        const c = makePanel().controller;
+        const untouched = c.draft[0];
+        for (const field of ["x", "y", "scale", "transform"]) {
+            c.edit("DP-1", field, "2");
+            compare(c.draft[1][field], 2);
+            compare(c.draft[0], untouched);
+        }
+        c.edit("DP-1", "scale", "");
+        compare(c.draft[1].scale, "", "invalid input remains available for validation");
+        c.edit("DP-1", "mode", "3840x2160@60.00Hz");
+        compare(c.draft[1].mode, "3840x2160@60.00Hz");
+        const before = JSON.stringify(c.draft);
+        c.edit("missing", "scale", 3);
+        c.edit("DP-1", "unknown-field", 3);
+        compare(JSON.stringify(c.draft), before);
+        compare(calls.length, 0, "edits never bypass preview");
+    }
     function test_focusTelemetryDoesNotInvalidateLayoutDrafts() {
         const panel = makePanel();
         const c = panel.controller;

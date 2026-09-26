@@ -178,13 +178,8 @@ Ui.ProviderChooserController {
         }
         if (["x", "y"].includes(key) && draft.some(o => o.name === name && !!o.mirror_of))
             return;
-        draft = draft.map(function (o) {
-            if (o.name !== name)
-                return o;
-            const next = Object.assign({}, o);
-            next[key] = ["x", "y", "scale", "transform"].includes(key) && Model.number(value) ? Number(value) : value;
-            return next;
-        });
+        const normalized = ["x", "y", "scale", "transform"].includes(key) && Model.number(value) ? Number(value) : value;
+        draft = draft.map(o => o.name === name ? Object.assign({}, o, {[key]: normalized}) : o);
     }
     function moveTo(name: string, x: real, y: real, snapDistance: real): void {
         if (!canEdit || draft.some(o => o.name === name && !!o.mirror_of))
