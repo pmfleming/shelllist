@@ -35,6 +35,10 @@
 (.snapshot.display_policy.policy.prefer_external | type == "boolean") and
 (.snapshot.display_policy.outputs | type == "array") and
 (.snapshot.display_policy.layout.saved.outputs | type == "array") and
+(any(.registry.methods[]; .name == "displayLayout.preview" and (.params.outputs[0].mirror_of | type == "string"))) and
+(.snapshot.display_policy.focus.available | type == "boolean") and
+(.snapshot.display_policy.focus.values | type == "object") and
+(.snapshot.display_policy.focus.saved | type == "object") and
 (.snapshot.sleep_policy.policy.same_profile | type == "boolean") and
 (.snapshot.sleep_policy.policy.battery.sleep_minutes | type == "number") and
 (.snapshot.sleep_policy.policy.plugged.hibernate_minutes | type == "number") and

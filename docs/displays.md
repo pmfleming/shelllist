@@ -30,18 +30,21 @@ secondary buttons below it:
   enables a disabled screen or takes focus. The monitor icon beside search
   identifies all enabled screens.
 - **Arrange** switches to Settings and reveals the logical-size layout canvas.
-- **Enable / Disable** changes the selected external screen's draft only. Internal
-  enablement remains owned by docking policy, so this button is omitted for it.
+- **Enable / Disable** changes any selected screen's draft, including the laptop.
+  The last enabled display is protected. Confirmed manual enablement overrides
+  docking policy until that preference is set again.
 
-**Settings** contains resolution/refresh, scale, rotation/reflection, X/Y position,
-and relative placement. Controls preserve advertised backend mode strings. The
+**Settings** contains mirror/extend content selection, resolution/refresh, scale,
+rotation/reflection, X/Y position, and relative placement. Controls preserve advertised backend mode strings. The
 optional canvas stacks above the inspector below 740 logical pixels; it can be
 hidden without discarding edits. **Information** is read-only observed state,
 including connector, available identity metadata, mode, logical size, scale and
-position. Missing metadata is omitted. Ctrl+Tab cycles the two tabs. Switching
+position and whether it is the active monitor. Missing metadata is omitted.
+**Focus** contains global focus behaviour controls (see below).
+Ctrl+Tab cycles Settings, Focus and Information. Switching
 displays or tabs retains the complete layout draft.
 
-Both tabs use the same inset detail layout, themed cards, typography and fixed
+All tabs use the same inset detail layout, themed cards, typography and fixed
 footer as the other chooser surfaces. Settings groups individually labelled
 controls into **Display settings** and **Position** cards. Information groups
 observed values into **Display status** and **Display information** cards, with
@@ -52,6 +55,33 @@ contents; the page scrolls without moving the tabs.
 **whole layout**, not just the selected screen. Unsaved/stale/error status and
 Discard/Reload remain above the tabs. Narrow headers stack the primary button
 above the secondary row, and settings scroll while tab controls stay visible.
+
+## Mirror or extend content
+
+Select an enabled screen and open **Settings → Display content**. Choose:
+
+- **Extend desktop** for independent content and an independently positioned desktop.
+- **Mirror <display>** to duplicate that enabled, extended source's content.
+
+Changes remain draft-only until **Preview changes → Keep**. You can mirror two
+screens while a third extends, or attach several mirrors to one source. A mirror
+cannot itself be a source; stop its copies first before making a source mirror
+another display. Each physical screen can retain its own supported resolution,
+refresh rate, scale and rotation. Different aspect ratios are fitted with black
+bars rather than requiring identical modes.
+
+Mirrors share the source's desktop, so their position controls are disabled and
+the canvas labels copies on the source tile instead of showing duplicate movable
+workspaces. Selecting Extend again places the screen beside the other extended
+displays. Observed mirror relationships appear in the list and Information tab.
+
+Disabling a source promotes its copies to extended displays; the daemon applies
+those independent replacements before disabling the source. Source disconnection
+also promotes surviving copies during recovery, while retaining the saved mirror
+relationship for reconnect. Automatic docking cannot disable an active mirror
+source or treat its copy as an independent fallback. Rollback and confirmation
+verify mirror relationships as well as modes; simply accepting a command is not
+proof that mirroring worked.
 
 ## Laptop docking settings
 
@@ -68,6 +98,44 @@ preferred**. The docking section is absent from external monitors' settings and
 from desktop-only setups. It is locked while a layout draft or trial is pending,
 with a reminder to finish or discard layout changes first. Resolution, scale,
 rotation and position retain their existing Preview/Keep workflow.
+
+## Monitor and window focus
+
+Open any display's **Focus** tab for 26 global controls, grouped into:
+
+- **Mouse and monitor focus:** click/follow/detached/separate focus, monitor
+  activation on pointer crossing, refocus thresholds/dead zones, floating-window,
+  drag-and-drop, layer and special-workspace exceptions.
+- **Keyboard navigation and history:** cross-monitor directional navigation,
+  history versus shared-edge target selection, fullscreen/group cycling, and
+  workspace back-and-forth/history.
+- **Applications and window lifecycle:** activation requests, focus after closing,
+  focus behind fullscreen, and launch-workspace tracking.
+- **Cursor movement:** suppress or remember warps, workspace/special-workspace
+  warps, cursor destinations, and restoration after non-mouse input.
+
+The page shows the currently active monitor and the focused window's monitor
+separately, independent of the selected display. Live workspace telemetry makes
+it clear when pointer-selected monitor and keyboard-focused window differ.
+These settings apply to **all** monitors. Choices save immediately after daemon
+verification, not through layout Preview. Numeric values require Enter or Apply.
+Only reported compositor capabilities are editable; unsupported options are
+labelled unavailable. Controls are locked during layout drafts/trials or loss of
+transport, and a failed save keeps the acknowledged choice visible for retry.
+
+Only explicitly edited settings become persistent overrides. They survive daemon
+restart and compositor config reload without repeatedly rewriting working values.
+**Restore previous focus settings** removes the overrides and restores values
+captured before their first edits. Future config reloads follow your Hyprland
+configuration again; Restore is not a factory-defaults operation.
+
+For keyboard-led monitor selection, choose **Click to focus** and turn off
+**Moving the pointer activates a monitor**, then review floating/drag exceptions.
+Disabling pointer monitor activation alone does not prevent window focus from
+activating another monitor. Explicit **last-window** and **focus-monitor** shortcuts
+can still cross monitors: directional-navigation restrictions do not alter those
+commands. This page does not rewrite keybindings or per-window rules, and does not
+claim to lock all focus to one screen.
 
 ## Layout safety and keyboard controls
 
@@ -92,8 +160,8 @@ layout journals and `monitors.lua` are preserved. Display settings never change
 lid actions, suspend policy or DPMS. Battery & Power no longer owns display state,
 requests, subscriptions or controls.
 
-No mirroring, named profiles, workspace assignment, HDR/VRR or competing display
-manager is introduced. Those require separate backend capability/transaction work.
+No named profiles, workspace assignment, HDR/VRR or competing display manager
+is introduced. Those require separate backend capability/transaction work.
 
 ## Searchable chooser validation
 

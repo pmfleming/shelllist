@@ -38,6 +38,8 @@ var methods = ({
     "powerSleep.cancelCritical": "powerSleep.cancelCritical",
     "powerSleep.setCriticalPolicy": "powerSleep.setCriticalPolicy",
     "displayPolicy.set": "displayPolicy.set",
+    "displayFocus.set": "displayFocus.set",
+    "displayFocus.reset": "displayFocus.reset",
     "displayLayout.preview": "displayLayout.preview",
     "displayLayout.confirm": "displayLayout.confirm",
     "displayLayout.revert": "displayLayout.revert",

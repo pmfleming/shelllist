@@ -28,6 +28,45 @@ ColumnLayout {
     }
 
     Ui.DetailColumnCard {
+        objectName: "displayContentCard"
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.preferredHeight: implicitHeight
+        title: qsTr("Display content")
+        contentSpacing: Ui.Theme.spacingSm
+        Ui.DropDownList {
+            objectName: "displayContentMode"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            options: [{value: "", label: qsTr("Extend desktop")}].concat(Model.mirrorSources(inspector.controller.draft, inspector.output.name).map(function (source) {
+                const output = inspector.controller.outputs.find(o => o.name === source.name) || source;
+                return {value: source.name, label: qsTr("Mirror %1 (%2)").arg(Model.title(output)).arg(source.name)};
+            }))
+            value: inspector.draft.mirror_of || ""
+            interactive: inspector.controller.canEdit && !!inspector.draft.enabled
+            Accessible.name: qsTr("Extend desktop or mirror another display")
+            onSelected: function (value) {
+                inspector.controller.setDisplayContent(inspector.output.name, value);
+            }
+        }
+        Ui.ThemeText {
+            Layout.fillWidth: true
+            text: !inspector.draft.enabled ? qsTr("Enable this display to choose its content.") : inspector.draft.mirror_of ? qsTr("Duplicates %1. Position follows the source; differing resolutions are scaled with black bars if needed.").arg(inspector.draft.mirror_of) : qsTr("Extends the desktop with independent content. Choose another enabled extended display above to mirror it instead.")
+            wrapMode: Text.Wrap
+            color: Ui.Theme.mutedText
+            font.pixelSize: Ui.Theme.fontSizeSmall
+        }
+        Ui.ThemeText {
+            Layout.fillWidth: true
+            visible: inspector.controller.draft.some(o => o.enabled && o.mirror_of === inspector.output.name)
+            text: qsTr("This display is a mirror source. Its copies must extend first before it can mirror another display. Disabling the source promotes its copies to extended displays.")
+            wrapMode: Text.Wrap
+            color: Ui.Theme.mutedText
+            font.pixelSize: Ui.Theme.fontSizeSmall
+        }
+    }
+
+    Ui.DetailColumnCard {
         objectName: "displayModeCard"
         Layout.fillWidth: true
         Layout.minimumWidth: 0
@@ -167,6 +206,7 @@ ColumnLayout {
 
     Ui.DetailColumnCard {
         objectName: "displayPositionCard"
+        enabled: !inspector.draft.mirror_of
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         Layout.preferredHeight: implicitHeight
@@ -230,8 +270,8 @@ ColumnLayout {
                 objectName: "displayPositionReference"
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                options: inspector.controller.outputs.filter(function (o) {
-                    return o.name !== inspector.output.name;
+                options: inspector.controller.draft.filter(function (o) {
+                    return o.name !== inspector.output.name && !o.mirror_of;
                 }).map(function (o) {
                     return {
                         value: o.name,

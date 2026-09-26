@@ -19,7 +19,10 @@ Core.Provider {
     function stateLabel(output: var): string {
         if (Model.dockedOff(output, controller.displayPolicyState))
             return qsTr("Off · External display preferred");
-        return output.disabled ? qsTr("Disabled") : qsTr("Enabled");
+        if (output.disabled)
+            return qsTr("Disabled");
+        const source = Model.mirrorSource(output, controller.outputs);
+        return source ? qsTr("Mirrors %1").arg(source) : qsTr("Extended");
     }
     function resultsForOutputs(outputs: var): var {
         return outputs.map(function (output) {

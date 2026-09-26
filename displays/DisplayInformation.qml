@@ -19,6 +19,14 @@ Ui.DetailFlickable {
             valueBold: !output.disabled
         },
         {
+            label: qsTr("Monitor focus"),
+            value: output.focused === undefined ? null : output.focused ? qsTr("Active monitor") : qsTr("Inactive monitor")
+        },
+        {
+            label: qsTr("Display content"),
+            value: Model.mirrorSource(output, controller.outputs) ? qsTr("Mirrors %1").arg(Model.mirrorSource(output, controller.outputs)) : qsTr("Extended desktop")
+        },
+        {
             label: qsTr("Current mode"),
             value: output.width > 0 && output.height > 0 ? Model.currentMode(output) : null
         },

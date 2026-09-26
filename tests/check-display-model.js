@@ -36,6 +36,45 @@ assert.notEqual(model.validate([{ ...draft[1], enabled: false }], desktop), "", 
 assert.equal(model.validate([{ ...draft[0], enabled: false }, draft[1]], outputs), "", "laptop can be disabled with an active external display");
 assert.equal(model.validate([{ ...draft[0], enabled: true }, { ...draft[1], enabled: false }], outputs), "", "external display can be disabled with an active laptop");
 assert.notEqual(model.validate(draft.map(d => ({ ...d, enabled: false })), outputs), "", "all-off layout rejected");
+const mirroredOutputs = outputs.map(o => ({ ...o, disabled: false }));
+mirroredOutputs[1].mirrorOf = "0";
+const mirrored = model.draft(mirroredOutputs);
+assert.equal(mirrored[1].mirror_of, "eDP-1", "compositor IDs resolve to connector identities");
+assert.equal(model.validate(mirrored, mirroredOutputs), "", "different physical modes can mirror");
+assert.equal(model.payload(mirrored)[1].mirror_of, "eDP-1");
+assert.equal(model.mirrorSource({ ...mirroredOutputs[1], mirrorOf: 0 }, mirroredOutputs), "eDP-1");
+assert.equal(model.mirrorSource({ ...mirroredOutputs[1], mirrorOf: "none" }, mirroredOutputs), "");
+for (const source of ["DP-1", "DP-99", "eDP-1\";evil", false, 0, null]) {
+    const invalid = plain(mirrored); invalid[1].mirror_of = source;
+    assert.notEqual(model.validate(invalid, mirroredOutputs), "");
+}
+const cycle = plain(mirrored); cycle[0].mirror_of = "DP-1";
+assert.notEqual(model.validate(cycle, mirroredOutputs), "", "mirror cycles are rejected");
+const disabledSource = plain(mirrored); disabledSource[0].enabled = false;
+assert.notEqual(model.validate(disabledSource, mirroredOutputs), "", "mirrors require an enabled source");
+assert.equal(model.mirrorSources(mirrored, "eDP-1").length, 0, "sources cannot create chains");
+const extended = model.extend(mirrored, "DP-1");
+assert.equal(extended[1].mirror_of, "");
+assert.ok(extended[1].x >= model.rect(extended[0]).x + model.rect(extended[0]).width - 0.5, "extend places the screen beside the source");
+const sourceOff = model.setEnabled(mirrored, "eDP-1", false);
+assert.equal(sourceOff[1].mirror_of, "", "disabling a source promotes its mirrors");
+assert.equal(model.validate(sourceOff, mirroredOutputs), "");
 // Displays' controller tests own stale configuration/topology rejection, rather
 // than prescribing how the model fingerprints a snapshot.
-console.log("display model: exact modes, mixed-DPI/rotation geometry, invalid inputs and fallback validation passed");
+const focus = {};
+vm.createContext(focus);
+vm.runInContext(fs.readFileSync(require("node:path").join(require("node:path").dirname(process.argv[2]), "DisplayFocusModel.js"), "utf8").replace(/^\.pragma library\s*/m, ""), focus);
+const controls = focus.groups().flatMap(group => group.settings);
+assert.equal(controls.length, 26);
+assert.equal(new Set(controls.map(item => item.key)).size, controls.length);
+for (const item of controls) {
+    assert.ok(item.title && item.help);
+    for (const choice of item.choices) assert.equal(typeof focus.value(item, choice.value), item.boolean ? "boolean" : "number");
+    if (!item.choices.length) {
+        for (const invalid of ["", " ", "bad", "NaN", "Infinity", -1, item.maximum + 1]) assert.equal(focus.validNumber(item, invalid), false);
+        assert.equal(focus.validNumber(item, 0), true);
+        assert.equal(focus.validNumber(item, item.maximum), true);
+        assert.equal(focus.validNumber(item, 0.5), !item.whole);
+    }
+}
+console.log("display model: modes, geometry, mirroring, last-output safety and 26 focus controls passed");

@@ -14,6 +14,10 @@ The repository README is the user-facing overview and installation guide. These 
 | [`qml-quality-review.md`](qml-quality-review.md) | QML structure, maintenance decisions, and quality gates |
 | [`reviews/commonality-2026-09-20.md`](reviews/commonality-2026-09-20.md) | Measured shared frontend refactor, validation, and remaining debt |
 
+## Proposals
+
+- [`proposals/material-expressive.md`](proposals/material-expressive.md): proposed keyboard-first Material 3 Expressive adoption, custom-control ownership, phased rollout and acceptance criteria. This is a plan, not current behavior.
+
 ## Sources of truth
 
 When documentation and generated evidence differ, use this order:

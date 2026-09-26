@@ -93,6 +93,11 @@ Ui.ActionDetailsPane {
                     icon: "󰒓"
                 },
                 {
+                    value: "focus",
+                    label: qsTr("Focus"),
+                    icon: "󰁔"
+                },
+                {
                     value: "information",
                     label: qsTr("Information"),
                     icon: "󰋼"
@@ -105,6 +110,11 @@ Ui.ActionDetailsPane {
             DisplayLayoutPane {
                 anchors.fill: parent
                 visible: pane.controller.detailsTab === "settings"
+                controller: pane.controller
+            }
+            DisplayFocusPane {
+                anchors.fill: parent
+                visible: pane.controller.detailsTab === "focus"
                 controller: pane.controller
             }
             DisplayInformation {

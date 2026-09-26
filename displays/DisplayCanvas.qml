@@ -8,7 +8,10 @@ Rectangle {
     id: canvas
     required property DisplayController controller
     property bool editing: false
-    readonly property var values: editing ? controller.draft : controller.outputs
+    readonly property var allValues: editing ? controller.draft : controller.outputs
+    // Mirrors share the source's desktop, not another movable workspace tile.
+    readonly property var values: allValues.filter(o => !Model.mirrorSource(o, allValues))
+    readonly property string selectedSource: Model.mirrorSource(allValues.find(o => o.name === controller.selectedName) || ({}), allValues)
     readonly property bool interactive: editing && controller.canEdit
     property var frozenBounds: null
     readonly property var extent: frozenBounds || Model.bounds(values)
@@ -78,9 +81,11 @@ Rectangle {
         delegate: Rectangle {
             id: screenRect
             required property int index
+            readonly property int outputNumber: canvas.controller.outputs.findIndex(o => o.name === output.name) + 1
             readonly property var output: canvas.values[index] || ({})
             readonly property var geometry: Model.rect(output)
-            readonly property bool selected: output.name === canvas.controller.selectedName
+            readonly property bool selected: output.name === canvas.controller.selectedName || output.name === canvas.selectedSource
+            readonly property string copies: canvas.allValues.filter(o => Model.mirrorSource(o, canvas.allValues) === output.name && o.enabled !== false && !o.disabled).map(o => o.name).join(", ")
             readonly property bool outputEnabled: canvas.editing ? output.enabled : !output.disabled
             x: canvas.originX + geometry.x * canvas.factor
             y: canvas.originY + geometry.y * canvas.factor
@@ -94,7 +99,7 @@ Rectangle {
             opacity: outputEnabled ? 1 : 0.5
             clip: true
             Accessible.role: Accessible.Button
-            Accessible.name: (index + 1) + ". " + Model.title(output) + (outputEnabled ? qsTr(". On") : qsTr(". Off"))
+            Accessible.name: outputNumber + ". " + Model.title(output) + (outputEnabled ? qsTr(". On") : qsTr(". Off")) + (copies ? qsTr(". Mirrored on ") + copies : "")
             Accessible.selected: selected
             Accessible.onPressAction: canvas.controller.selectOutput(output.name)
 
@@ -107,7 +112,7 @@ Rectangle {
                 color: screenRect.selected ? Ui.Theme.accent : Ui.Theme.border
                 Ui.ThemeText {
                     anchors.centerIn: parent
-                    text: screenRect.index + 1
+                    text: screenRect.outputNumber
                     font.weight: Ui.Theme.fontWeightBold
                     color: screenRect.selected ? Ui.Theme.accentText : Ui.Theme.text
                 }
@@ -125,7 +130,7 @@ Rectangle {
                 width: parent.width - 12
                 x: 6
                 horizontalAlignment: Text.AlignHCenter
-                text: canvas.editing ? screenRect.output.name : Model.title(screenRect.output)
+                text: (canvas.editing ? screenRect.output.name : Model.title(screenRect.output)) + (screenRect.copies ? " → " + screenRect.copies : "")
                 elide: Text.ElideRight
                 font.pixelSize: Ui.Theme.fontSizeSmall
                 visible: screenRect.height > 95

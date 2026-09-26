@@ -8,6 +8,7 @@ Ui.ProviderChooserController {
     property var displayPolicyState: ({
             available: false
         })
+    property var workspaceState: ({available: false})
     property bool stateReady: false
     property string displayPolicyError: ""
     property string pendingAction: ""
@@ -38,6 +39,8 @@ Ui.ProviderChooserController {
     readonly property bool canChange: stateReady && displayPolicyState.available && backend.ready && !actionInFlight && !trial
     readonly property bool canEdit: canChange && !stale
     readonly property bool canSetPolicy: canChange && !dirty
+    readonly property var focusState: displayPolicyState.focus || ({available: false})
+    readonly property bool canSetFocus: canSetPolicy && !!focusState.available
     readonly property string validationError: Model.validate(draft, outputs)
     readonly property bool canPreview: canEdit && dirty && validationError.length === 0
     readonly property var selectedOutput: outputs.find(function (o) {
@@ -125,6 +128,16 @@ Ui.ProviderChooserController {
             prefer_external: value
         });
     }
+    function setFocusSetting(key: string, value: var): bool {
+        if (!canSetFocus || (focusState.values || {})[key] === undefined)
+            return false;
+        const values = {};
+        values[key] = value;
+        return send("focus", {values: values});
+    }
+    function resetFocusSettings(): bool {
+        return canSetFocus && Object.keys(focusState.saved || {}).length > 0 && send("focusReset", {});
+    }
     function displayLayoutAction(action: string, params: var): bool {
         if (!["preview", "confirm", "revert"].includes(action) || !stateReady || !displayPolicyState.available)
             return false;
@@ -143,10 +156,27 @@ Ui.ProviderChooserController {
         const output = draft.find(o => o.name === name);
         return canEdit && !!output && (!output.enabled || draft.some(o => o.name !== name && o.enabled));
     }
+    function setDisplayContent(name: string, source: string): void {
+        const output = draft.find(o => o.name === name);
+        if (!canEdit || !output || !output.enabled)
+            return;
+        if (!source) {
+            draft = Model.extend(draft, name);
+        } else if (Model.mirrorSources(draft, name).some(o => o.name === source)) {
+            draft = draft.map(o => o.name === name ? Object.assign({}, o, {mirror_of: source}) : o);
+        }
+        updateReference();
+    }
     function edit(name: string, key: string, value: var): void {
         if (!canEdit || !["mode", "x", "y", "scale", "transform", "enabled"].includes(key))
             return;
-        if (key === "enabled" && value === false && !canToggleEnabled(name))
+        if (key === "enabled") {
+            if (value === false && !canToggleEnabled(name))
+                return;
+            draft = Model.setEnabled(draft, name, value);
+            return;
+        }
+        if (["x", "y"].includes(key) && draft.some(o => o.name === name && !!o.mirror_of))
             return;
         draft = draft.map(function (o) {
             if (o.name !== name)
@@ -157,7 +187,7 @@ Ui.ProviderChooserController {
         });
     }
     function moveTo(name: string, x: real, y: real, snapDistance: real): void {
-        if (!canEdit)
+        if (!canEdit || draft.some(o => o.name === name && !!o.mirror_of))
             return;
         const position = Model.snap(draft, name, x, y, snapDistance);
         draft = draft.map(function (o) {
@@ -175,17 +205,17 @@ Ui.ProviderChooserController {
         const reference = draft.find(function (o) {
             return o.name === referenceName;
         });
-        if (!selectedDraft || !reference || !["left", "right", "above", "below"].includes(side))
+        if (!selectedDraft || selectedDraft.mirror_of || !reference || reference.mirror_of || !["left", "right", "above", "below"].includes(side))
             return;
         const position = Model.adjacent(selectedDraft, reference, side);
         moveTo(selectedName, position.x, position.y, 0);
     }
     function updateReference(): void {
-        if (!outputs.some(function (o) {
-            return o.name === referenceName && o.name !== selectedName;
+        if (!draft.some(function (o) {
+            return o.name === referenceName && o.name !== selectedName && !o.mirror_of;
         }))
-            referenceName = (outputs.find(function (o) {
-                    return o.name !== selectedName;
+            referenceName = (draft.find(function (o) {
+                    return o.name !== selectedName && !o.mirror_of;
                 }) || {}).name || "";
     }
     function selectOutput(name: string): void {
@@ -208,7 +238,8 @@ Ui.ProviderChooserController {
         return !navigationBlocked && executeSelected(actionId);
     }
     function cycleDetailsTab(): void {
-        detailsTab = detailsTab === "settings" ? "information" : "settings";
+        const tabs = ["settings", "focus", "information"];
+        detailsTab = tabs[(tabs.indexOf(detailsTab) + 1) % tabs.length];
     }
     function cycleOutput(delta: int): void {
         if (!outputs.length)
@@ -287,6 +318,7 @@ Ui.ProviderChooserController {
         displayPolicyError = message;
     }
     function transportFailed(message: string): void {
+        workspaceState = ({available: false});
         stateReady = false;
         actionInFlight = false;
         pendingAction = "";

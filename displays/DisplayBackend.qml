@@ -20,6 +20,9 @@ Io.DaemonBackend {
         const value = data.display_policy || (data.snapshot || {}).display_policy;
         if (value)
             controller.applyDisplayPolicy(value);
+        const workspaces = data.workspaces || (data.snapshot || {}).workspaces;
+        if (workspaces)
+            controller.workspaceState = workspaces;
     }
     function finish(id: string, envelope: var, transportError: string): void {
         const message = responseError(envelope, transportError, "Display request failed");
@@ -35,8 +38,12 @@ Io.DaemonBackend {
         finish(id, envelope, transportError);
     }
     onEventReceived: function (event) {
-        if (event.stream === Api.stream && ["changed", "subscribed"].includes(event.event))
+        if (!["changed", "subscribed"].includes(event.event))
+            return;
+        if (event.stream === Api.stream)
             controller.applyDisplayPolicy(event.data || {});
+        else if (event.stream === Api.workspaceStream)
+            controller.workspaceState = event.data || ({available: false});
     }
     onEventGapDetected: controller.refresh()
     onSendFailed: function (id, message) {

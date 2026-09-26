@@ -45,6 +45,38 @@ function modes(output) {
     const current = currentMode(output);
     return values.includes(current) ? values : [current].concat(values);
 }
+function mirrorSource(output, outputs) {
+    if (typeof output.mirror_of === "string")
+        return output.mirror_of;
+    const reference = output.mirrorOf;
+    if (reference === undefined || reference === null || reference === "" || reference === "none" || String(reference) === "-1")
+        return "";
+    const source = outputs.find(o => o.name === String(reference) || (o.id !== undefined && String(o.id) === String(reference)));
+    return source ? source.name : String(reference);
+}
+function mirrorSources(draft, name) {
+    // A source with dependents must remain independent; no chains or cycles.
+    if (draft.some(o => o.enabled && o.mirror_of === name))
+        return [];
+    return draft.filter(o => o.name !== name && o.enabled && !o.mirror_of);
+}
+function extend(draft, name) {
+    const own = draft.find(o => o.name === name);
+    if (!own || !own.mirror_of)
+        return draft;
+    const others = draft.filter(o => o.name !== name && o.enabled && !o.mirror_of);
+    const right = others.length ? Math.max(...others.map(o => rect(o).x + rect(o).width)) : Number(own.x);
+    return draft.map(o => o.name === name ? Object.assign({}, o, {mirror_of: "", x: Math.round(right)}) : o);
+}
+function setEnabled(draft, name, enabled) {
+    let next = draft.map(o => o.name === name ? Object.assign({}, o, {enabled: enabled, mirror_of: enabled ? (o.mirror_of || "") : ""}) : o);
+    if (!enabled) {
+        // Promote the mirrors before their source is disabled by the daemon.
+        for (const mirror of next.filter(o => o.enabled && o.mirror_of === name))
+            next = extend(next, mirror.name);
+    }
+    return next;
+}
 function draft(outputs) {
     return outputs.map(function (o) {
         return {
@@ -54,7 +86,8 @@ function draft(outputs) {
             y: o.y || 0,
             scale: o.scale,
             transform: o.transform || 0,
-            enabled: !o.disabled
+            enabled: !o.disabled,
+            mirror_of: o.disabled ? "" : mirrorSource(o, outputs)
         };
     });
 }
@@ -62,7 +95,7 @@ function topology(outputs) {
     return JSON.stringify(outputs.map(o => [o.name, o.id]));
 }
 function fingerprint(outputs) {
-    return JSON.stringify(outputs.map(o => [o.name, o.id, currentMode(o), o.scale, o.transform || 0, o.x || 0, o.y || 0, !!o.disabled, o.availableModes || []]));
+    return JSON.stringify(outputs.map(o => [o.name, o.id, currentMode(o), o.scale, o.transform || 0, o.x || 0, o.y || 0, !!o.disabled, mirrorSource(o, outputs), o.availableModes || []]));
 }
 function payload(draft) {
     return draft.map(function (d) {
@@ -73,7 +106,8 @@ function payload(draft) {
             y: Number(d.y),
             scale: Number(d.scale),
             transform: Number(d.transform),
-            enabled: d.enabled
+            enabled: d.enabled,
+            mirror_of: d.mirror_of || ""
         };
     });
 }
@@ -102,10 +136,17 @@ function validate(draft, outputs) {
             return "Choose a supported rotation";
         if (typeof d.enabled !== "boolean")
             return "Choose whether this display is enabled";
+        if (d.mirror_of !== undefined && typeof d.mirror_of !== "string")
+            return "Choose a supported mirror source";
+        const source = d.mirror_of || "";
+        if (source && (!supported(source) || source === d.name))
+            return "Choose a different supported display to mirror";
+        if (d.enabled && source && !draft.some(v => v.name === source && v.enabled && !v.mirror_of))
+            return "Mirror source must be an enabled extended display";
         if (!parseMode(d.mode) || (d.enabled && !modes(o).includes(d.mode)))
             return "Choose an advertised display mode";
     }
-    return draft.some(d => d.enabled) ? "" : "Keep at least one display enabled";
+    return draft.some(d => d.enabled && !d.mirror_of) ? "" : "Keep at least one independent display enabled";
 }
 function rect(output) {
     const m = parseMode(output.mode) || {
@@ -149,7 +190,7 @@ function snap(values, name, x, y, threshold) {
     const r = rect(own);
     const horizontal = [], vertical = [];
     for (const o of values) {
-        if (o.name === name || o.enabled === false)
+        if (o.name === name || o.enabled === false || o.mirror_of)
             continue;
         const other = rect(o);
         horizontal.push(other.x, other.x + other.width);
