@@ -1,194 +1,222 @@
-# Proposal: keyboard-first Material 3 Expressive
+# Keyboard-first Material 3 Expressive: agreed design and implementation plan
 
-Status: proposed; no UI implementation changes in this document.
+Status: design decisions accepted through the owner interview; implementation is incremental. This document describes the **target**, not a claim that every rule is implemented. The implementation ledger below records delivered slices. It supersedes the earlier proposal wherever they differ.
 
-## Recommendation
+## 1. Purpose and authority
 
-Adopt **Material 3 Expressive principles, adapted to a keyboard-first desktop shell**, not a pixel-for-pixel Android interface. Build custom controls **inside the Shelllist repository first**, evolving the existing `Shelllist.Ui` controls. Establish a portable-controls boundary, but extract an external package only when a second real consumer justifies it.
+Shelllist is primarily for its owner's daily desktop, as keyboard-operated as possible. It is not being designed around onboarding a general audience.
 
-The outcome should be a more legible, deliberate and responsive Shelllist: obvious keyboard focus, clear primary actions, stronger grouping, richer but controlled color, and motion that explains transitions. Preserve fast search, dense result lists, existing shortcuts and daemon ownership.
+Priority order:
 
-## 1. Starting point
+1. Visual polish and a distinctive, recognizably **Material 3 Expressive** appearance.
+2. One coherent design and interaction system across surfaces.
+3. Complete, predictable keyboard workflows.
 
-Shelllist already has much of the foundation:
+Material's visual discipline is a constraint, not merely inspiration. Departures require a concrete usability reason. Existing layouts, bindings, components, configuration conventions and APIs are not sacred: break compatibility where it obstructs these goals. Data integrity, valid backend operations and safe system-action handling remain requirements.
 
-- `qml/Shelllist/Ui/Theme.qml`: centralized colors, typography, geometry, density and motion; authoritative environment overrides with `SystemPalette` fallback.
-- `ActionControl.qml`: shared Return/Enter/Space and accessibility activation, including busy-focus retention and duplicate-activation protection.
-- `StateLayer.qml`, `Elevation.qml`, `InteractiveBehavior.qml`: shared feedback, depth and motion, with an existing `Theme.noAnimations` policy.
-- `ActionButton`, `FlatIconButton`, `ToggleSwitch`, `TextField`, `ValueSlider`, `DropDownList` and `SegmentedControl`: existing custom or Qt-backed controls to evolve rather than duplicate.
-- `ResultRow`, `ResultNavigation`, `ChooserShortcuts`, `DetailsTabBar`, `ScrollableListView`: established chooser behavior.
-- Behavioral Qt tests, strict lint, runtime smoke, packaging checks and resident/responsiveness benchmarks.
+Use visuals rather than prose. Text is appropriate only where it conveys necessary information that the visual treatment cannot: for example identifiable result names, editable content, precise time/date, or a meaningful error. Do not infer that all existing text is necessary.
 
-Specific improvement opportunities visible in the code:
+## 2. Visual language
 
-- Focus styling is distributed across controls and often a one-pixel border. Selection, hover and focus can look similar.
-- `StateLayer` gets its pressed/ripple feedback from pointer input; keyboard activation does not have equivalent shared feedback.
-- Theme colors are mostly blends of a small palette rather than explicit surface/container/on-color roles. `Theme.luminance()` is not a WCAG contrast calculation.
-- Most shapes derive from one radius. There is little distinction between action emphasis, grouped controls and surface hierarchy.
-- Existing semantic actions and recovery behavior must survive visual changes; a visual redesign is not permission to change acknowledgement or draft semantics.
+| Area | Agreed direction |
+| --- | --- |
+| Color source | Generate a coherent Material scheme from the **desktop accent**; do not blindly inherit every desktop palette color. |
+| Light/dark | Follow the desktop automatically. |
+| Surface | Blurred, translucent outer popover shell; solid Material controls and sufficient containment for predictable contrast. |
+| Typeface | Dedicated Material-oriented typeface, not the desktop font. Exact family awaits visual samples. |
+| Density | Deliberate contrast: relatively compact results/repeated data; more breathing room for settings, details and primary actions. |
+| Actions | Primarily icon-only. No automatic labels on focus or hover. |
+| Status | Pictorial states rather than battery percentages or notification counts in the bar. Exact data can be read in the corresponding surface. |
+| Time/date | Readable numerical information is an explicit exception to the text-minimal rule. Exact formatting remains to be chosen. |
+| Hover | Subtle visual state feedback only. **No hover tooltips anywhere**, including charts, controls and tray presentation owned by Shelllist. |
+| Help | **No F1 help, contextual-help overlay, or automatic explanatory labels.** No replacement help shortcut is requested. Accessibility names remain nonvisual metadata. |
+| Motion | Expressive, spring-like transitions and control feedback. Interruptible; never delay input, activation or logical state. |
+| Focus motion | Focus indication snaps immediately to its target. Supporting decoration may animate, but must not trail or obscure the actual keyboard target. |
 
-## 2. What to adopt—and what not to adopt
+Necessary information must not disappear with tooltips. Move any essential explanation/value into an explicit details view, error state or required-input dialog, not another automatic popup. Do not manufacture meaningless icons to remove essential text.
 
-| Expressive idea | Shelllist application | Guardrail |
-| --- | --- | --- |
-| Color and contrast guide attention | Tonal selected rows, differentiated containers, a clear primary action | Selection, focus, success and error must remain distinct; never rely on color alone |
-| Shape communicates relationships | Coherent grouped settings, related button groups, stronger selected-segment shape | Do not turn every row into a large pill or nest cards unnecessarily |
-| Typography establishes hierarchy | Clear surface title, section heading, body, supporting text and shortcut roles | Keep dense results; preserve font overrides and test larger text |
-| Size communicates importance | Emphasize the next meaningful action, such as Connect or Preview changes | No oversized mobile-style actions that displace useful results |
-| Motion explains change | Short detail transitions, selection feedback, expand/collapse and progress | State and activation are immediate; no waiting for animations |
-| Containment makes structure readable | Group related settings and separate editable state from observed information | Preserve predictable layout and navigation order |
+## 3. Shared popover geometry
 
-Do not add a floating action button, bottom navigation, gesture-only actions, decorative bouncing lists or a constantly animated bar merely to resemble Material examples. Keep the 51 px bar and current list density as the starting baseline. Use expression most strongly at the current selection, primary action and meaningful state change; keep surrounding content calm.
+Shelllist stays a focused popover, not a large-screen dashboard.
 
-Keep Noto Sans and current icon compatibility initially. Evaluate Material Symbols separately for legibility, fallback and packaging; do not bundle an icon/font migration into control behavior changes. Wallpaper-derived dynamic color is optional future work, not a prerequisite.
+Large screens and laptops use the **same split layout and navigation model**. A laptop tightens margins, padding and gaps; it does not automatically shrink text/control heights or replace results with details. Secondary text may truncate where necessary.
 
-## 3. Where the custom controls belong
+The earlier suggestion to replace results with details on narrow screens was explicitly superseded during the interview.
 
-### Options
+```text
+Closed                              Details explicitly requested
+       ┌────────────┐                      ┌────────────┬──────────────────┐
+       │ Results    │           →          │ Results    │ Details          │
+       │            │                      │            │ [tab] tab tab    │
+       └────────────┘                      └────────────┴──────────────────┘
+       Same left edge                      List stays anchored
+```
 
-| Option | Benefits | Costs | Decision |
-| --- | --- | --- | --- |
-| Evolve `Shelllist.Ui` in this repo | Atomic changes with consumers/tests; existing Nix packaging; immediate real-world feedback | Generic controls can accumulate shell dependencies | **Start here**, with explicit boundaries |
-| Separate QML module in the same repo | Enforced imports and standalone gallery; easier eventual extraction | Migration and theme-adapter work | Introduce when the pilot establishes a useful portable subset |
-| External repo immediately | Independent releases and reuse | Premature API commitment, coordinated releases, Qt/import/package compatibility and additional co-development tooling | Not justified by the currently identified consumer |
-| Apply Qt Quick Controls Material style globally | Useful existing Qt styling and behavior | Does not automatically restyle custom Rectangles or supply all desired Expressive behavior | Evaluate as a reference, not the migration strategy |
+- Use one shared placement rule for all lists.
+- Initial list may be left of center, but keep it as close to center as practical while reserving space for rightward expansion.
+- The reserved area remains normal desktop, not an empty rendered panel or input-intercepting window region.
+- Details expand to the right; do not recenter/move the original list.
+- List height is stable through search, filtering and live updates. Adapt the frame to the work area, not result count.
+- Rich details use multiple tabs. Keep the tab bar out of the Up/Down-addressable content sequence.
+- Bounds/minimum supported logical work area and overflow handling still require a measured implementation decision. Do not silently restore the rejected single-pane laptop design or clip controls.
 
-### Boundary to establish
+## 4. Keyboard model
 
-The eventual portable subset should contain tokens/style data, focus indication, interaction feedback, labels, buttons, switches, fields, sliders, segmented controls and menus. It should depend on Qt Quick/Controls only, not Quickshell, daemon protocols or Shelllist provider types.
+The critical distinction is **browsing versus editing**. Right means “more information/functionality” while browsing. Inside an editor, arrows retain their normal editing meaning.
 
-Keep these in Shelllist:
+### Search and results
 
-- Environment/system-theme resolution and existing `SHELLLIST_*` compatibility.
-- Window hosting, compositor integration, monitor routing and surface shortcuts.
-- Chooser navigation, provider/result models, `ResultRow`'s chooser integration and domain workflows.
-- Action policy, asynchronous operation state, validation and draft/recovery ownership.
+```text
+Search:  Left/Right move the cursor
+         Down enters results
 
-Today `Theme.qml` imports Quickshell, and `Shelllist.Ui` combines generic controls with chooser/window types. Moving that entire directory to another repo would export Shelllist coupling, not create a reusable toolkit.
+Results: Up/Down move selection
+         Up from first result returns to search
+         Enter performs primary action
+         Right explicitly opens/enters details
+         Typing returns to search and continues the query at its saved cursor
+```
 
-During the pilot, evolve the existing files and keep portable rendering free of new shell dependencies. If the subset proves coherent, create `qml/Shelllist/Controls/` (`Shelllist.Controls`) in a separate, behavior-preserving change. Supply resolved style values through an explicit Qt-only style object; keep the environment/theme adapter in `Shelllist.Ui`. Controls emit user intent; consumers own application state. Compatibility wrappers are temporary API bridges, not a second independently implemented control set.
+- Search is an ordinary text editor; there is no mandatory Ctrl+L query-edit mode.
+- Printable keys, including J/K, are search characters, not list navigation hotkeys.
+- Typing from results preserves the existing query/cursor instead of replacing the query.
+- Do not open first-time details merely because a result is selected. Per-item restoration is the deliberate exception described below.
+- Most tasks should be achievable from the list alone: launch an app, connect headphones, etc. Details add information and extra functionality.
 
-Use Qt-backed controls/templates where they reduce the burden of text input, IME, slider, popup and accessibility behavior. Preserve the existing tested `ActionControl` semantics unless a focused prototype proves a replacement equivalent. Avoid a blanket rewrite into either raw Rectangles or Qt templates.
+### Details and controls
 
-### External extraction gate
+- Opening new details places focus in the **content**, not on the tab selector.
+- Up/Down browse the content. Ctrl+Tab cycles detail tabs.
+- Tab cycles visible major regions: Search → Results → Details → Search. Shift+Tab reverses. It does not visit every control in the whole popover.
+- Right on an editable setting enters its editor. Arrow browsing must not accidentally mutate settings.
+- Simple settings edit **in place**, not in a separate editor screen.
+- Sliders, switches and other controls remain visually present while browsing; they are not replaced by plain value summaries. Inactive editing does not mean the control looks disabled.
+- Browse focus highlights the row; edit focus clearly identifies the active control.
+- Ordinary setting changes apply while editing. Leaving the editor does not undo them. Retain appropriate coalescing, acknowledgement, pending/error handling and duplicate-request protection.
+- Safety-critical preview/revert flows, including display configuration, are not converted into unsafe immediate commits.
 
-Revisit an external repository only when:
+### Exit and surface toggles
 
-1. A second independently deployed application needs the same controls.
-2. That application can consume the subset without Shelllist/Quickshell/provider imports.
-3. The API has survived use in the pilot and several Shelllist surfaces without consumer-specific flags.
-4. A standalone gallery, keyboard/accessibility tests, supported Qt versions and Nix package exist.
-5. Someone owns compatibility, releases, licensing and downstream upgrades.
+```text
+Editor ── Escape → Details ── Escape → Results ── Escape → Desktop
+```
 
-Then move the Qt-only module with its tests, version its API, package its QML imports once, and extend local worktree/build tooling for co-development. Do not vendor a second copy. Independent version pinning belongs to reproducible releases, not stale local-development snapshots.
+- Escape retreats one level and restores the preceding selection/focus.
+- Left backs out of details while browsing; inside an editor it edits normally.
+- The invocation binding is a whole-surface toggle: Super+Space opens Applications and closes it again, even from details/an editor. This is different from Escape's one-level retreat.
+- Invoking the surface again restores the prior ordinary query, selection, tab, scroll and editing focus, subject to current valid backend state.
 
-## 4. Keyboard and accessibility contract
+### Modal required-input exception
 
-Make this contract the acceptance criterion before visual work:
+Passwords, pairing codes and similar input required for an explicitly requested action use a focused Material dialog over the existing list. This is not unsolicited optional details.
 
-- Opening a chooser makes search usable immediately. Reopening preserves the existing logical selection and reveals it without resetting it.
-- Preserve Up/Down, list-context J/K, Enter, Left/Right for details, Ctrl+Tab, surface switching, refresh and contextual help.
-- Printable text belongs to the active editor. J/K, Space, `?`, arrow keys and IME composition must not be stolen by chooser shortcuts while editing.
-- Tab/Shift+Tab traverse meaningful controls in a stable order. Composite lists and segmented controls use internal arrow navigation rather than requiring a Tab stop for every item; retain access to row secondary actions.
-- Enter/Space activate focused controls once. Auto-repeat must not repeat destructive/system actions. Busy controls retain focus but reject duplicate activation.
-- Sliders preserve arrows and Home/End, expose values accessibly, and keep existing edit/commit semantics. Visual feedback must not accidentally increase daemon writes.
-- Escape closes the innermost popup/modal/details layer before the surface. Existing domain cancellation/revert rules take precedence, particularly display previews and credential prompts.
-- Opening/closing details, menus and modals has explicit focus destinations and restoration. Restore by stable logical identity after model changes, with a deterministic fallback when the item disappears.
-- No essential action or status explanation is hover-only. Show concise contextual shortcut hints and retain F1/help; do not add permanent hint clutter to every row.
-- Keep keyboard focus visually distinct from selection, hover, pressed, checked, error and busy states. Selected results remain identifiable while focus is in search or details.
-- Focus indicators must not be clipped by rounded containers, list bounds or modal overlays. Keyboard and assistive activation get equivalent immediate feedback without stealing focus.
-- Audit accessible roles, names, checked/selected state, values, error descriptions and pending state. Verify real assistive-technology behavior on the supported Linux session; attached QML properties alone are not sufficient evidence.
+- Focus the first input immediately.
+- Inside dialogs, Tab/Shift+Tab traverse fields and buttons conventionally. This is an explicit exception to region-level Tab in the ordinary surface.
+- Text arrows edit normally; no extra Right press before typing into each field.
+- Enter submits when valid; Escape cancels and restores previous focus. Nested popup handling must still be safe.
+- Closing the whole surface **cancels sensitive prompts and clears sensitive input**. Do not restore their credentials/dialogs on the next invocation or resurrect expired daemon requests.
 
-This is keyboard-first, not keyboard-only. Preserve the [list interaction contract](../list-interaction-contract.md): native wheel/touchpad/touch scrolling, wheel pass-through and stable keyed delegates. Bar restyling must not cause the resident layer-shell window to steal keyboard focus; essential bar functions must remain available through existing keyboard-opened surfaces/shortcuts, and any gaps should be recorded explicitly.
+## 5. Session and per-result UI memory
 
-## 5. Token and control design
+Each individual result has its own remembered presentation state, retained until the Shelllist process restarts. Memory is not just per surface.
 
-### Tokens
+```text
+Headphones previously inspected → select again → restore its details/tab/scroll
+Keyboard never inspected        → select       → list-only
+Headphones                      → select again → restore its previous view
+```
 
-Extend `Theme.qml` with semantic roles before replacing values throughout views:
+- Remember details-open state, active tab, scroll and editing location by stable result identity, not row index.
+- Returning to an inspected item may reveal details without a new Right press: restoration of a prior explicit choice is intentional.
+- **Restoring an item through list selection does not steal keyboard focus.** Keep focus in results; Right enters its remembered details/editor location. The next arrow must not accidentally adjust a remembered slider.
+- Reopening the whole surface can restore ordinary focus exactly; this is distinct from browsing between results.
+- Explicitly closing details changes the item's remembered open state.
+- Do not reset view memory simply because the surface closes, selection changes or a daemon reconnects. Sensitive prompts are excluded.
+- UI memory does not freeze telemetry, bypass capability validation, replay effects or preserve expired operation tokens. Missing-item/changed-capability fallbacks still need precise implementation contracts.
 
-- Color: primary/on-primary, primary-container/on-primary-container, secondary roles where needed, surface/container levels, on-surface/on-surface-variant, outline, error and Shelllist-specific success/warning.
-- Interaction: focus ring color/width/inset, selected-container roles and separate hover/pressed/disabled state-layer values.
-- Shape: a small set of surface, group, control and emphasized-action shapes; map existing radius configuration compatibly.
-- Typography: semantic roles mapped initially to existing font settings; tune headings and supporting text without inflating every result row.
-- Density: compact desktop default and a comfortable option, independent of typography where practical. Derive interactive target areas without overlap and preserve native touch operation.
-- Motion: feedback, spatial transition and emphasis roles, with reduced/no-motion equivalents. Retain `SHELLLIST_NO_ANIMATIONS`; do not add another conflicting animation switch.
+## 6. Outcomes, errors and pointer interaction
 
-Keep old token names as migration aliases where possible. Existing environment overrides remain authoritative. Start with reviewed light/dark palettes and compatibility mappings; simple RGB blending is not a Material tonal-palette algorithm. If generated tonal palettes become necessary, evaluate Material Color Utilities and a supported integration separately rather than writing an approximate color-science implementation in QML.
+- Successful handoffs (launching an app, pasting elsewhere) close the popover.
+- Successful in-place actions (connecting, changing a setting) leave it open with updated status.
+- Ordinary failures are **inline**; do not steal focus or automatically open a recovery screen. Retrying and deeper inspection are explicit actions.
+- Required input is handled by the modal exception above, not by disguising a prompt as an ordinary failure.
+- Hover never selects a result, changes keyboard focus, or restores a different item's details. Clicking selects; primary pointer-action gestures beyond this remain to be specified where needed.
+- Preserve mouse-wheel, touchpad and touch list behavior from the [list interaction contract](../list-interaction-contract.md).
+- Icon-only presentation does not remove accessible roles, names, checked/selected state or values.
 
-Validate contrast using linearized sRGB relative luminance and actual composited backgrounds: target at least 4.5:1 for normal text, 3:1 for large text and 3:1 for meaningful control boundaries/focus indicators. Arbitrary user overrides cannot guarantee these ratios; preserve overrides and report/document problematic combinations rather than silently rewriting them.
+## 7. Bar and new keyboard destinations
 
-### First control changes
+The bar is for awareness and pointer access, not a new keyboard-focus mode. Keyboard actions go through direct shortcuts and dedicated lists.
 
-1. Add a reusable focus indicator and integrate it into representative existing controls.
-2. Extend shared interaction feedback to keyboard/assistive activation without duplicating activation paths or mixing persistent focus with transient press state.
-3. Give buttons explicit emphasis variants (filled, tonal, outlined, text) separate from semantic tone (normal, danger, etc.). Keep signal contracts and shortcut labels.
-4. Update search/text fields with clear focus/error states, persistent labels where needed and supporting/error text that does not depend on placeholders.
-5. Improve result selection, secondary-action discoverability, segmented indicators and settings grouping.
-6. Update switches, sliders, dropdowns and dialogs after shared keyboard behavior is proven.
+- One continuous, softly rounded bar; grouping happens inside it, not through floating islands.
+- Persistent groups, in the supplied priority order: **Workspaces, Media, Network, Bluetooth, Battery, Notifications, Tray, Clock/date**.
+- Remove the separate **Focused application** and **Audio** groups, rather than merely collapsing them on laptops.
+- Application awareness comes through workspaces. Audio remains accessible through shortcuts, OSD and its own list.
+- Battery and notifications use pictorial states, not persistent percentages/counts. Clock/date remain readable numerical data.
+- Provide separate **Audio, Media and Tray lists**, each with its own invocation shortcut and the common list/state model—not one combined Controls list.
+- All essential bar/tray actions need an explicit keyboard route. Do not remove a route before its replacement exists.
+- Detailed content/bindings of these new lists, urgent-state behavior, overflow priorities within groups, bar translucency and workspace presentation still need specification/prototype validation.
 
-Shape changes may animate inside fixed geometry; they must not move neighboring targets. Selection/focus state updates synchronously even when decoration interpolates. Prototype interruptible spring-like spatial motion only where useful and supported by the packaged Qt version; there is no need to reproduce Android animation internals. Reduced motion keeps all information and removes nonessential spatial effects, ripples and pulsing. Avoid adding per-row effects or idle animation work.
+### Media
 
-## 6. Phased delivery
+```text
+[Artwork]   [Back]   [Play/Pause]   [Forward]
+```
 
-### Phase 0 — establish evidence and interaction baseline
+The labels above are schematic. The bar shows **artwork and icons, no persistent track/artist/player text**.
 
-- Capture current Applications, a settings-heavy surface, a prompt, the bar and OSD in light/dark themes, narrow layouts and larger text.
-- Record key sequences, visible-result count, focus destinations and cold/warm responsiveness for representative tasks.
-- Inventory control variants, direct color/geometry usage and keyboard-only gaps. Produce an annotated before/after design for Applications and one settings panel.
-- Build a small development-only control gallery with fake data, showing focused, selected, hovered, pressed, disabled, busy, invalid and long-label states. Keep it out of production startup.
-- Compare existing-control evolution with a small Qt Material/Qt-template spike under Shelllist's actual Qt version. Verify focus, IME, imports, sizing and reduced motion before choosing implementations.
+- Music: previous/next song.
+- Podcasts and video: seek 30 seconds backward/forward. The interview interpreted 30 seconds symmetrically; no different backward interval was requested.
+- Unknown content type: default to ±30-second seeking.
+- Provide a mode override in Media details, remembered for that player. Preference lifetime/storage and reliable classification need a backend implementation decision.
+- Use visibly different icons for track versus seek actions; never claim unsupported actions work.
+- Follow the most recently started playback automatically until the user explicitly selects a player.
+- An explicit selection pins the player until the user requests automatic selection again or that player exits.
+- Progress presentation and the exact artwork-click gesture were not settled by the interview; do not interpret “art + controls” as approval for additional text or controls.
 
-**Exit:** agreed visual direction, keyboard contract and baseline; no production behavior change.
+## 8. Engineering direction and remaining decisions
 
-### Phase 1 — tokens and interaction foundation
+The following is an **implementation recommendation**, not an additional owner-approved product requirement:
 
-- Add semantic tokens with compatibility aliases and light/dark contrast tests.
-- Implement shared focus indication and keyboard feedback using a button, field and result row as representatives.
-- Extend existing activation/navigation tests for focus restoration, shortcut/editor conflicts and interrupted/reduced motion.
-- Add gallery/theme matrix coverage and preserve current consumer APIs.
+- Evolve the existing shared controls inside the Shelllist repo first. Keep generic control/rendering logic free of new Quickshell/provider/daemon dependencies where practical.
+- Extract an in-repo Qt-only `Shelllist.Controls` module only when it provides a real boundary. Do not start a separate external controls repository without another real consumer and a supported API/testing/packaging story.
+- Do not put QML controls in `daemon-framework`. It owns Rust infrastructure/platform adapters; Shelllist owns presentation, navigation and transient view memory.
+- Use Qt-backed inputs/templates where helpful. Do not reinvent IME, text selection, accessible activation or popup behavior to achieve a visual effect.
+- Material-derived tonal generation needs a real supported color implementation, not approximate RGB blending advertised as Material color science. Test composited contrast over the translucent shell.
+- Keep known safety, asynchronous ownership, daemon acknowledgement and stable-model behavior. Domain policy belongs to daemons even where new Audio/Media routes require protocol work.
 
-**Exit:** foundational controls pass keyboard, accessibility, theme and runtime checks; no domain/controller refactor.
+Still open (not blockers for independent foundation work): exact typeface/icon family and assets; token values; blur/elevation strengths; animation tuning; minimum work area; monitor routing; tab-state and missing-item fallbacks; precise new surface contents/bindings; bar overflow/urgent-state rules; media classification/preference persistence; icon-only equivalents for specialized actions; nonvisual accessibility verification and reduced-motion integration. Resolve these through visual samples or focused technical work rather than inventing interview answers.
 
-### Phase 2 — Applications vertical slice
+## 9. Implementation sequence
 
-- Migrate the search header, result row, details tabs, primary/secondary actions and application settings.
-- Use Applications to validate search density, live keyed updates, details transitions, busy actions and warm reopen behavior.
-- Keep surface-specific composition opt-in until reviewed. Changes to shared primitives must be checked against all consumers even during the pilot.
-- Compare task completion and key counts with the baseline; adjust rather than accepting regressions as the price of redesign.
+This replaces the compatibility-first sequence in the original proposal.
 
-**Exit:** a convincing end-to-end keyboard-first surface, with no extra mandatory key presses for established tasks and no measurable responsiveness regression beyond baseline noise.
+1. **Remove rejected affordances and establish focus foundations.** Eliminate hover tooltips, F1/automatic help and stale documentation; retain necessary accessible metadata and explicit information routes. Add shared, immediate visible focus with behavioral tests. Do not globally erase text before suitable icons/explicit detail routes exist.
+2. **Material visual foundation.** Choose typeface/icon assets with samples; implement desktop-accent/light-dark semantic palette, typography, solid controls, translucent shell and interruptible motion. Build a development-only gallery, not a second production toolkit.
+3. **Shared list/editor interaction.** Implement search/list key ownership, region Tab, content-first details, explicit in-place editing, dialog exceptions and safe toggle semantics. Exercise this in Applications and a settings-heavy surface.
+4. **Per-item session memory and anchored geometry.** Stable identities, per-tab scroll/edit locations, non-focus-stealing restoration, stable height and one bounded left-of-center placement rule across laptop/large screen.
+5. **Domain migration and outcomes.** Migrate Wi-Fi, Bluetooth, Clipboard, Displays, Battery, Activity, Notifications and Time & Weather; preserve required-input cancellation, drafts, async outcomes and safety previews.
+6. **New lists and bar.** Deliver Audio/Media/Tray keyboard routes before removing old routes; implement the agreed continuous pictorial bar, media semantics/selection and numerical clock/date.
+7. **Full acceptance.** Test real keyboard journeys, theme/geometry matrices, accessibility, GPU/compositor blur and performance. Remove transitional APIs once all consumers are migrated.
 
-### Phase 3 — settings and recovery workflows
+### Implementation ledger
 
-- Migrate Wi-Fi and Bluetooth: toggles, dropdowns, fields, credential/pairing dialogs and acknowledged settings.
-- Migrate Clipboard: editor, confirmations and failed-draft recovery.
-- Migrate Displays and Battery: segmented controls, sliders, preview/revert, pending operations and grouped settings. Coordinate with concurrent Displays work rather than mixing changes.
-- Preserve draft identity, acknowledgement, retry/discard and daemon write coalescing. Do not change daemon protocols to support styling.
-- At this point, decide whether the proven generic subset warrants an in-repo `Shelllist.Controls` module; separation is a dedicated change, not a prerequisite for finishing the visual rollout.
+- Design interview recorded; no redesign implementation is claimed by this checkpoint.
+- Next slice: remove hover/help affordances and establish shared immediate-focus feedback.
 
-**Exit:** keyboard-only completion of high-risk settings/recovery journeys and no policy/contract changes.
+## 10. Validation
 
-### Phase 4 — remaining surfaces and cleanup
+Prefer executable behavior tests at shared boundaries, with representative domain recovery tests. Do not preserve contradictory snapshots just because the old design had them.
 
-- Apply the language to Activity, Notifications and Time & Weather, preserving reply drafts, calendar navigation and readable chart/status information.
-- Restyle bar and OSD last: restrained surfaces, clear active states and bounded local motion; no new idle animation or frame-driven decoration.
-- Remove obsolete token aliases/temporary compatibility paths only after consumers migrate. Update documentation, packaged imports and Lens dynamic-entry metadata where needed.
+- Search cursor behavior versus result navigation; J/K/text ownership; query/cursor restoration; Up to search; region traversal; content-first detail focus; Ctrl+Tab; nested Escape and whole-surface toggles.
+- Two result identities with different detail/tab/edit states; reorder/filter/remove/reconnect; restored visual state never redirects the next list key into a control.
+- Browse versus edit; immediate/coalesced setting changes; inline failures; no duplicate activation; sensitive prompt cancellation and secret clearing.
+- No hover tooltips, automatic labels or F1 help. Necessary information remains available explicitly and through nonvisual semantics.
+- Both screen classes retain the split model, anchored left edge and stable list frame; larger text/long names do not produce clipped or unreachable controls.
+- Desktop accent and light/dark changes, transparent composition, focus contrast, and reduced/no-motion end states. Text should meet 4.5:1 contrast (3:1 for large text), with meaningful controls/focus distinguishable at 3:1.
+- Keyboard-only routes for all bar actions; media type/capability fallback; pinned-player lifetime; no auto-focus stealing by the bar.
 
-**Exit:** coherent UI across all surfaces, validated performance and one maintained implementation per control.
-
-## 7. Validation and release criteria
-
-Extend existing behavioral owners rather than adding a test for every visual wrapper:
-
-- `tst_action_control.qml`, `tst_settings_controls.qml`, `tst_segmented_navigation.qml`: activation, disabled/busy state, focus, slider semantics and accessibility.
-- `tst_provider_shortcuts.qml`, `tst_search_action.qml`, `tst_result_list_reactivation.qml`: shortcut scope, search, selection identity, navigation and warm reopen.
-- Existing domain tests: prompts, clipboard failure recovery, notifications/replies, display preview/revert and battery settings.
-- Add focused coverage for token contrast, focus-indicator visibility and reduced-motion end states. Review gallery screenshots rather than freezing every pixel of every screen.
-
-Manual matrix: light/dark/custom themes, no animations, narrow outputs, multi-monitor/fractional scale, larger fonts, long labels, keyboard-only, mouse/touchpad/touch, and supported screen-reader integration. Test real GPU/compositor rendering as well as software/offscreen Qt tests.
-
-Run from the Shelllist development environment:
+Run from Shelllist's development environment:
 
 ```sh
 tests/run-qml-tests.sh
@@ -198,21 +226,13 @@ tests/run-performance-benchmarks.sh
 tests/check-sibling-boundary.sh
 ```
 
-Follow the current [quality-gate documentation](../qml-quality-review.md) for worktree/new-file handling and reproducible release validation. Run `tests/benchmark-resident.py --duration 20 --check` with Shelllist hidden and `tests/benchmark-responsiveness.py --check` in a deliberate live-session test; the latter opens surfaces. Record baseline and post-change results on the same machine, plus sustained arrow navigation through a large result list. Never mask existing failures or loosen budgets to make the redesign pass.
+Use the current [quality gate documentation](../qml-quality-review.md). New files must be included in the tracked local-build snapshot; do not validate against stale sibling pins. Record pre-existing failures, never relax checks to hide them. Live resident/responsiveness measurements are deliberate session tests, not permission to restart/deploy services automatically.
 
-Release criteria:
+## 11. References
 
-- Established keyboard tasks take no additional mandatory key presses; all new actions have keyboard access.
-- Focus is visible, predictable and restored correctly; editing and IME are not intercepted by navigation shortcuts.
-- Default themes meet the documented contrast targets; larger text and narrow layouts remain usable.
-- Pointer scrolling, stable models, drafts, daemon acknowledgement and preview/revert behavior are unchanged.
-- Existing performance budgets pass; no new idle timers/animation work, delayed activation or substantial loss of visible results.
-- Reviewers can identify the current selection, focused control, primary action and pending/error state without relying on color alone.
+- [Material 3](https://m3.material.io/)
+- [Building with M3 Expressive](https://m3.material.io/blog/building-with-m3-expressive)
+- [Google Design: research behind Expressive](https://design.google/library/expressive-material-design-google-research)
+- [Qt Quick Controls Material style](https://doc.qt.io/qt-6/qtquickcontrols-material.html)
 
-## 8. Sources and interpretation
-
-- [Material 3](https://m3.material.io/) and [Building with M3 Expressive](https://m3.material.io/blog/building-with-m3-expressive): design-system direction and component guidance.
-- [Google Design: the research behind Expressive](https://design.google/library/expressive-material-design-google-research): color, shape, size, motion and containment should improve usability; preserving familiar patterns and labels matters.
-- [Qt Quick Controls Material style](https://doc.qt.io/qt-6/qtquickcontrols-material.html): existing Qt styling, including a dense desktop variant. Check the packaged Qt version; the online reference alone does not establish complete Expressive support.
-
-The Material site is JavaScript-rendered; its detailed component specifications were not verified from the fetched HTML during this planning pass. Validate the current component specs/design kit in Phase 0 before assigning exact token values. The desktop adaptations and implementation choices above are Shelllist recommendations, not claims of Material conformance. Google's reported study results are not evidence of a speed improvement in Shelllist; measure the actual keyboard workflows.
+Exact current component specifications and the packaged Qt version must be checked during implementation. Qt Material styling alone does not restyle Shelllist's custom Rectangles or establish full Expressive support. The desktop adaptations above are explicit product decisions, not a claim of formal Material conformance.

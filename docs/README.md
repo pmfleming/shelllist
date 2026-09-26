@@ -16,7 +16,7 @@ The repository README is the user-facing overview and installation guide. These 
 
 ## Proposals
 
-- [`proposals/material-expressive.md`](proposals/material-expressive.md): proposed keyboard-first Material 3 Expressive adoption, custom-control ownership, phased rollout and acceptance criteria. This is a plan, not current behavior.
+- [`proposals/material-expressive.md`](proposals/material-expressive.md): accepted owner-interview decisions for keyboard-first Material 3 Expressive, remaining design questions, implementation sequence and progress ledger. This defines the target; the ledger distinguishes delivered changes from planned behavior.
 
 ## Sources of truth
 
