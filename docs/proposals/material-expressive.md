@@ -201,8 +201,11 @@ This replaces the compatibility-first sequence in the original proposal.
 
 ### Implementation ledger
 
-- Design interview recorded; no redesign implementation is claimed by this checkpoint.
-- Next slice: remove hover/help affordances and establish shared immediate-focus feedback.
+- Design interview recorded and published in `bba757e` before implementation began.
+- Foundation slice: removed hover tooltips and the F1/question-mark help overlay, its state and help-only shortcut wrapper. Nonvisual names/descriptions remain. Battery chart values now require explicit click/keyboard inspection rather than hover; Escape leaves that inspection before dismissing the surface.
+- Shared `FocusRing` now provides immediate inset focus feedback for action controls, text fields, icon tiles and result rows. It has no animation or input handlers, does not change geometry, and leaves selection distinct from focus/hover.
+- Validation: strict QML lint, all 201 Qt test passes (including lifecycle hooks), and offscreen shared-UI smoke pass in the current local-build development environment. A stale cached dev shell initially lacked the SVG plugin; rerunning in the current environment resolved those unrelated asset failures. No live desktop deployment or compositor visual review was performed.
+- Still pending: Material palette/type/icon assets, broad icon-only migration, spring motion, new keyboard/editor model, per-result memory/anchored geometry, and the new surfaces/bar. Do not mistake the foundation slice for the completed redesign.
 
 ## 10. Validation
 

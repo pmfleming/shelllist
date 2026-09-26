@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls as Controls
 
 Rectangle {
     id: field
@@ -41,13 +40,19 @@ Rectangle {
     implicitHeight: Theme.compactControlHeight
     radius: Theme.controlRadius
     color: Theme.input
-    border.color: !inputValid ? Theme.danger : (input.activeFocus ? Theme.strongBorder : Theme.border)
+    border.color: !inputValid ? Theme.danger : Theme.border
     opacity: enabled ? (readOnly ? Theme.readOnlyOpacity : 1.0) : Theme.disabledOpacity
 
     function focusInput(selectContents) {
         input.forceActiveFocus();
         if (selectContents)
             input.selectAll();
+    }
+
+    FocusRing {
+        active: input.activeFocus
+        cornerRadius: field.radius
+        ringColor: Theme.inputText
     }
 
     TextInput {
@@ -101,13 +106,6 @@ Rectangle {
         Accessible.role: Accessible.Button
         Accessible.name: field.passwordRevealed ? "Hide password" : "Show password"
         Accessible.onPressAction: field.passwordRevealed = !field.passwordRevealed
-
-        HoverHandler {
-            id: passwordButtonHover
-        }
-        Controls.ToolTip.visible: passwordButtonHover.hovered
-        Controls.ToolTip.text: field.passwordRevealed ? "Hide password" : "Show password"
-        Controls.ToolTip.delay: 450
     }
 
     IconTile {
@@ -130,12 +128,5 @@ Rectangle {
         Accessible.name: field.trailingActionToolTip
         Accessible.onPressAction: if (field.trailingActionEnabled)
             field.trailingActionRequested()
-
-        HoverHandler {
-            id: trailingActionHover
-        }
-        Controls.ToolTip.visible: trailingActionHover.hovered && field.trailingActionToolTip.length > 0
-        Controls.ToolTip.text: field.trailingActionToolTip
-        Controls.ToolTip.delay: 450
     }
 }

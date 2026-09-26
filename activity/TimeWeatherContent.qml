@@ -10,22 +10,8 @@ Ui.ProviderChooserSurface {
     readonly property alias now: liveClock.now
 
     chooserController: controller
-    surfaceName: "Time & Weather"
-    navigationEnabled: !controller.navigationHelpOpen && !controller.screenshotInFlight
+    navigationEnabled: !controller.screenshotInFlight
     refreshEnabled: !controller.activity.syncing && !controller.screenshotInFlight
-    helpEnabled: controller.uiActive
-    helpEntries: [
-        {
-            keys: "Right",
-            action: "Expand the selected city"
-        },
-        {
-            keys: "Left",
-            action: "Return to the city list"
-        }
-    ]
-    refreshHelp: "Refresh time and weather"
-    detailsTabHelp: "Switch Time and Weather"
 
     listComponent: Component {
         TimeWeatherListPane {

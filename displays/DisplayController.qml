@@ -357,7 +357,7 @@ Ui.ProviderChooserController {
         }
         if (actionInFlight)
             return true;
-        return dismissNavigationHelp() || dismissDetailsOrWindow();
+        return dismissDetailsOrWindow();
     }
 
     Timer {

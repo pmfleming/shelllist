@@ -192,8 +192,6 @@ ProviderChooserController {
     }
 
     function dismissNavigation(): bool {
-        if (dismissNavigationHelp())
-            return true;
         if (promptActive)
             return false;
         if (advanced.open) {

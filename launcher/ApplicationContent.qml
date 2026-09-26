@@ -8,11 +8,8 @@ Ui.ProviderChooserSurface {
 
     required property ApplicationController controller
     chooserController: controller
-    surfaceName: "Applications"
     refreshEnabled: !content.controller.operationBlocked && navigationEnabled
     detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection && refreshEnabled
-    refreshHelp: "Refresh applications and windows"
-    helpShortcuts: [launchShortcut]
 
     function refresh(): void {
         content.controller.refresh(true);
@@ -30,10 +27,8 @@ Ui.ProviderChooserSurface {
         }
     }
 
-    Ui.SurfaceShortcut {
-        id: launchShortcut
+    Shortcut {
         sequence: "Shift+Return"
-        help: "Launch a new application instance"
         enabled: content.controller.uiActive && content.controller.hasSelection && !content.controller.operationBlocked && content.navigationEnabled && (content.controller.selectedApplication || ({})).kind === "desktop-application"
         onActivated: content.controller.launchSelected()
     }

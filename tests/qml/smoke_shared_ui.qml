@@ -15,7 +15,6 @@ ShellRoot {
         Ui.ProviderChooserSurface {
             anchors.fill: parent
             chooserController: controller
-            surfaceName: "Smoke test"
             listComponent: Component {
                 Item {}
             }

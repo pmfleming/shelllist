@@ -16,7 +16,6 @@ ChooserHeader 1.0 ChooserHeader.qml
 internal ChooserListBody ChooserListBody.qml
 ChooserListPane 1.0 ChooserListPane.qml
 ChooserShortcuts 1.0 ChooserShortcuts.qml
-SurfaceShortcut 1.0 SurfaceShortcut.qml
 ProviderChooserController 1.0 ProviderChooserController.qml
 ProviderChooserSurface 1.0 ProviderChooserSurface.qml
 ChooserSurface 1.0 ChooserSurface.qml
@@ -40,6 +39,7 @@ internal DropDownOptionDelegate DropDownOptionDelegate.qml
 Elevation 1.0 Elevation.qml
 FieldLabel 1.0 FieldLabel.qml
 FlatIconButton 1.0 FlatIconButton.qml
+FocusRing 1.0 FocusRing.qml
 singleton Format 1.0 Format.qml
 GlyphLabel 1.0 GlyphLabel.qml
 GroupCountBadge 1.0 GroupCountBadge.qml
@@ -49,7 +49,6 @@ LabeledValueSlider 1.0 LabeledValueSlider.qml
 PercentageSlider 1.0 PercentageSlider.qml
 LiveClock 1.0 LiveClock.qml
 ModalFrame 1.0 ModalFrame.qml
-NavigationHelpDialog 1.0 NavigationHelpDialog.qml
 NotificationActionList 1.0 NotificationActionList.qml
 NotificationAppIcon 1.0 NotificationAppIcon.qml
 NotificationReplyRow 1.0 NotificationReplyRow.qml

@@ -2,6 +2,9 @@ import QtQuick
 
 // Presentation-free activation shared by buttons, tabs, toggles and bar actions.
 Rectangle {
+    id: control
+
+    property color focusRingColor: Theme.text
     property string accessibleName: ""
     property bool interactive: true
     signal clicked
@@ -16,6 +19,12 @@ Rectangle {
     function activate(): void {
         if (enabled && interactive)
             clicked();
+    }
+
+    FocusRing {
+        active: control.activeFocus
+        cornerRadius: control.radius
+        ringColor: control.focusRingColor
     }
 
     Keys.onPressed: function (event) {

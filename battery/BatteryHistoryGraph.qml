@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls as Controls
 import Shelllist.Ui as Ui
 import "BatteryHistory.js" as History
 import "BatteryPresentation.js" as Presentation
@@ -19,21 +18,74 @@ Item {
     property real currentPercentage: -1
     property color lineColor: Ui.Theme.resourceCpu
     property real hoverPosition: -1
+    property bool inspecting: false
+    property real inspectionPosition: 1
     readonly property int graphHeight: 246
     readonly property var series: History.series(points, "percentage", 100, false)
     readonly property var powerSeries: History.series(points, "power_watts", 0, false)
     readonly property var powerAreas: History.powerAreas(powerSeries.segments)
     readonly property real powerMaximum: Math.max(10, Math.ceil(powerSeries.maximum / 10) * 10)
     readonly property real historyFraction: forecast.seconds > 0 ? Math.max(60000, series.activeDurationMs) / (Math.max(60000, series.activeDurationMs) + forecast.seconds * 1000) : 1
-    readonly property real historicalPosition: hoverPosition / historyFraction
-    readonly property var hoveredSample: hoverPosition >= 0 && historicalPosition <= 1 ? History.nearestSample(series.segments, historicalPosition) : null
-    readonly property var hoveredPower: hoverPosition >= 0 && historicalPosition <= 1 ? History.nearestSample(powerSeries.segments, historicalPosition) : null
-    readonly property string hoverText: historicalPosition > 1 ? "Estimated · ~" + Presentation.duration(forecast.seconds) + (forecast.target === 0 ? " to empty" : " to " + forecast.target + "%") : (hoveredSample ? new Date(hoveredSample.timestamp_ms).toLocaleString() + " · " + hoveredSample.value + "%" : "No charge sample") + (hoveredPower ? "\n" + (hoveredPower.charging ? "+" : "") + hoveredPower.value.toFixed(1) + " W · nearest measurement" : "\nNo power measurement")
+    readonly property real historicalPosition: inspectionPosition / historyFraction
+    readonly property var inspectedSample: historicalPosition <= 1 ? History.nearestSample(series.segments, historicalPosition) : null
+    readonly property var inspectedPower: historicalPosition <= 1 ? History.nearestSample(powerSeries.segments, historicalPosition) : null
+    readonly property string inspectionText: historicalPosition > 1 ? "Estimated · ~" + Presentation.duration(forecast.seconds) + (forecast.target === 0 ? " to empty" : " to " + forecast.target + "%") : (inspectedSample ? new Date(inspectedSample.timestamp_ms).toLocaleString() + " · " + inspectedSample.value + "%" : "No charge sample") + (inspectedPower ? " · " + (inspectedPower.charging ? "+" : "") + inspectedPower.value.toFixed(1) + " W · nearest measurement" : " · No power measurement")
 
     signal hovered(real position)
     onHovered: function (position) {
         hoverPosition = position;
     }
+    activeFocusOnTab: enabled
+    Accessible.role: Accessible.Graphic
+    Accessible.name: qsTr("Battery history")
+    Accessible.description: inspecting ? inspectionText : ""
+
+    function inspect(position: real): void {
+        inspectionPosition = Math.max(0, Math.min(1, position));
+        inspecting = true;
+    }
+
+    // Escape leaves this explicit inspection before the surface's shortcut runs.
+    Keys.onShortcutOverride: function (event) {
+        if (graph.inspecting && event.key === Qt.Key_Escape && event.modifiers === Qt.NoModifier)
+            event.accepted = true;
+    }
+    Keys.onPressed: function (event) {
+        event.accepted = false;
+        if (event.modifiers !== Qt.NoModifier)
+            return;
+        if (!graph.inspecting && [Qt.Key_Right, Qt.Key_Return, Qt.Key_Enter].includes(event.key)) {
+            graph.inspect(graph.inspectionPosition);
+        } else if (graph.inspecting && [Qt.Key_Escape, Qt.Key_Return, Qt.Key_Enter].includes(event.key)) {
+            graph.inspecting = false;
+        } else if (graph.inspecting && [Qt.Key_Left, Qt.Key_Right].includes(event.key)) {
+            graph.inspect(graph.inspectionPosition + (event.key === Qt.Key_Right ? 0.025 : -0.025));
+        } else if (graph.inspecting && [Qt.Key_Home, Qt.Key_End].includes(event.key)) {
+            graph.inspect(event.key === Qt.Key_Home ? 0 : 1);
+        } else {
+            return;
+        }
+        event.accepted = true;
+    }
+
+    Ui.FocusRing {
+        active: graph.activeFocus
+    }
+    Ui.ThemeText {
+        objectName: "batteryHistoryInspection"
+        anchors.left: chart.left
+        anchors.right: chart.right
+        anchors.top: parent.top
+        height: 40
+        visible: graph.inspecting
+        text: graph.inspectionText
+        wrapMode: Text.Wrap
+        elide: Text.ElideRight
+        maximumLineCount: 2
+        color: Ui.Theme.text
+        font.pixelSize: Ui.Theme.fontSizeCaption
+    }
+
     Layout.fillWidth: true
     Layout.preferredHeight: graphHeight
     implicitHeight: graphHeight
@@ -44,6 +96,8 @@ Item {
     onCurrentPercentageChanged: chart.requestPaint()
     onHistoryFractionChanged: chart.requestPaint()
     onHoverPositionChanged: chart.requestPaint()
+    onInspectionPositionChanged: chart.requestPaint()
+    onInspectingChanged: chart.requestPaint()
     onLineColorChanged: chart.requestPaint()
 
     Repeater {
@@ -75,7 +129,7 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: 38
         anchors.rightMargin: 28
-        anchors.topMargin: 26
+        anchors.topMargin: 42
         anchors.bottomMargin: 32
         antialiasing: true
         onWidthChanged: requestPaint()
@@ -173,9 +227,10 @@ Item {
             if (graph.forecast.limit !== null && graph.forecast.limit !== undefined)
                 Ui.ChartDrawing.dashed(context, inset, y(graph.forecast.limit), inset + plotWidth, y(graph.forecast.limit), 3, 5);
             Ui.ChartDrawing.dashed(context, nowX, inset, nowX, inset + plotHeight, 3, 4);
-            if (graph.hoverPosition >= 0) {
+            const cursorPosition = graph.inspecting ? graph.inspectionPosition : graph.hoverPosition;
+            if (cursorPosition >= 0) {
                 context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.text, 0.6);
-                const hoverX = inset + graph.hoverPosition * plotWidth;
+                const hoverX = inset + cursorPosition * plotWidth;
                 Ui.ChartDrawing.dashed(context, hoverX, inset, hoverX, inset + plotHeight, 2, 3);
             }
         }
@@ -183,13 +238,15 @@ Item {
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
-            acceptedButtons: Qt.NoButton
+            acceptedButtons: Qt.LeftButton
             onPositionChanged: function (mouse) {
                 graph.hovered(Math.max(0, Math.min(1, (mouse.x - 3) / Math.max(1, width - 6))));
             }
             onExited: graph.hovered(-1)
-            Controls.ToolTip.visible: containsMouse
-            Controls.ToolTip.text: graph.hoverText
+            onClicked: function (mouse) {
+                graph.forceActiveFocus();
+                graph.inspect((mouse.x - 3) / Math.max(1, width - 6));
+            }
         }
     }
 
@@ -242,7 +299,7 @@ Item {
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
     Ui.ThemeText {
-        visible: graph.forecast.seconds > 0 && (1 - graph.historyFraction) * chart.width > implicitWidth + 8
+        visible: !graph.inspecting && graph.forecast.seconds > 0 && (1 - graph.historyFraction) * chart.width > implicitWidth + 8
         anchors.right: chart.right
         anchors.top: parent.top
         text: "Estimated"

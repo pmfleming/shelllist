@@ -298,8 +298,6 @@ Ui.ProviderChooserController {
         nameEditState.observe(operation);
     }
     function dismissNavigation(): bool {
-        if (dismissNavigationHelp())
-            return true;
         if (modalPromptOpen)
             return false;
         if (canCancelOperation)

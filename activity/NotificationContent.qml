@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls as Controls
 import Shelllist.Ui as Ui
 
 Ui.ChooserSurface {
@@ -107,16 +106,7 @@ Ui.ChooserSurface {
                     rightPadding: Ui.Theme.spacingSm
                     spacing: Ui.Theme.spacingXs
                     Accessible.role: Accessible.StaticText
-                    Accessible.name: draftTip.text
-                    Controls.ToolTip {
-                        id: draftTip
-                        visible: draftHover.hovered
-                        delay: 450
-                        text: toolbar.notificationState.draftCount === 1 ? "1 unsent reply draft" : toolbar.notificationState.draftCount + " unsent reply drafts"
-                    }
-                    HoverHandler {
-                        id: draftHover
-                    }
+                    Accessible.name: toolbar.notificationState.draftCount === 1 ? "1 unsent reply draft" : toolbar.notificationState.draftCount + " unsent reply drafts"
                     Ui.GlyphLabel {
                         anchors.verticalCenter: parent.verticalCenter
                         glyph: "󰏫"

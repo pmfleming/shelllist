@@ -13,10 +13,14 @@ already-open development shell after changing `flake.nix`.
 
 - `tst_image_assets.qml` checks that representative weather and timezone SVGs
   actually reach `Image.Ready`, rather than passing while Qt logs decode failures.
-- `tst_provider_shortcuts.qml` checks keyboard activation and reactive help updates
-  when a shortcut's sequence/help or the explicit `helpShortcuts` list changes.
-  Consumers list their shortcuts in `ProviderChooserSurface.helpShortcuts`; do not
-  bind help generation to non-notifiable `Item.resources`.
+- `tst_provider_shortcuts.qml` checks live shortcut changes/disabled guards and
+  verifies that F1/question marks cannot summon a help overlay, steal editor
+  focus or insert an extra Escape layer. Domain bindings use Qt `Shortcut`.
+- `tst_focus_feedback.qml` checks immediate focus transfer, retained busy focus,
+  inset bounds, selection versus focus, non-selecting hover and tooltip absence.
+- `tst_battery_history.qml` also checks explicit keyboard/pointer inspection:
+  hover/focus alone reveal no values, and editor Escape wins over the shared
+  surface shortcut before the next Escape dismisses the surface.
 - Notification view tests destroy their content before its controller/state, and
   reject unexpected JavaScript/binding warnings during the lifecycle.
 

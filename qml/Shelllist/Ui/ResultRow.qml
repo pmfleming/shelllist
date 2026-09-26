@@ -44,8 +44,10 @@ Rectangle {
     height: rowHeight
     radius: selected ? Theme.cardRadius : 0
     color: selected ? Theme.selected : (pointerPressed ? Theme.pressed : (pointerHovered ? Theme.hover : "transparent"))
-    border.color: selected && selectionFocused ? Theme.strongBorder : "transparent"
-    border.width: selected && selectionFocused ? 1 : 0
+    FocusRing {
+        active: row.selected && row.selectionFocused
+        cornerRadius: row.radius
+    }
     Accessible.role: Accessible.ListItem
     Accessible.name: accessibleName
     Accessible.selected: selected

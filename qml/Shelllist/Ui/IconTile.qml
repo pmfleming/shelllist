@@ -17,7 +17,7 @@ Rectangle {
     implicitHeight: Theme.controlHeight
     radius: Theme.controlRadius
     color: !clickable ? backgroundColor : (area.pressed ? Theme.mix(backgroundColor, iconColor, 0.14) : (area.containsMouse ? Theme.mix(backgroundColor, iconColor, 0.08) : backgroundColor))
-    border.color: activeFocus ? Theme.strongBorder : borderColor
+    border.color: borderColor
     opacity: enabled ? 1.0 : Theme.disabledOpacity
     activeFocusOnTab: clickable && enabled
 
@@ -32,6 +32,12 @@ Rectangle {
     Keys.onSpacePressed: function (event) {
         tile.clicked();
         event.accepted = true;
+    }
+
+    FocusRing {
+        active: tile.activeFocus && tile.clickable
+        cornerRadius: tile.radius
+        ringColor: tile.iconColor
     }
 
     Text {

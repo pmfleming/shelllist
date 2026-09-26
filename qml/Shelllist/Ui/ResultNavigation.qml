@@ -83,14 +83,14 @@ Item {
     }
 
     function handleSearchKey(event) {
-        if (blocked || controller.navigationHelpOpen)
+        if (blocked)
             return;
         if (handlePrimary(event) || handleClose(event))
             return;
         handleSearchDirection(event);
     }
     function handleListKey(event) {
-        if (blocked || controller.navigationHelpOpen)
+        if (blocked)
             return;
         if (handlePrimary(event) || handleDetailHotkey(event) || handleClose(event))
             return;

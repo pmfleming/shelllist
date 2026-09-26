@@ -12,7 +12,6 @@ Item {
     property bool actionInFlight: false
     property bool navigationPrimaryEnabled: true
     property bool navigationCloseEnabled: true
-    property bool navigationHelpOpen: false
     property real detailsExpansionProgress: detailsOpen ? 1 : 0
     property real availableScreenWidth: 0
     property real closedWidthFraction: 0
@@ -75,23 +74,6 @@ Item {
 
     function deactivateUiState() {
         uiActive = false;
-        navigationHelpOpen = false;
-    }
-
-    function openNavigationHelp() {
-        navigationHelpOpen = true;
-    }
-    function closeNavigationHelp() {
-        navigationHelpOpen = false;
-    }
-    function toggleNavigationHelp() {
-        navigationHelpOpen ? closeNavigationHelp() : openNavigationHelp();
-    }
-    function dismissNavigationHelp(): bool {
-        if (!navigationHelpOpen)
-            return false;
-        closeNavigationHelp();
-        return true;
     }
     function dismissDetailsOrWindow(): bool {
         if (detailsOpen)
@@ -101,7 +83,7 @@ Item {
         return true;
     }
     function dismissNavigation(): bool {
-        return dismissNavigationHelp() || dismissDetailsOrWindow();
+        return dismissDetailsOrWindow();
     }
 
     function moveSelection(delta) {

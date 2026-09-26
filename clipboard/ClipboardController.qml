@@ -148,7 +148,7 @@ Ui.ProviderChooserController {
         return true;
     }
     function dismissNavigation(): bool {
-        if (dismissNavigationHelp() || dismissEditor() || dismissClipboardOperation())
+        if (dismissEditor() || dismissClipboardOperation())
             return true;
         if (deleteMenuOpen) {
             closeDeleteMenu();

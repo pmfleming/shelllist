@@ -74,7 +74,7 @@ ShellRoot {
     }
 
     function cycleSurface(direction: int): void {
-        if (!windowHost.uiActive || !activeController || activeController.navigationBlocked || activeController.navigationHelpOpen)
+        if (!windowHost.uiActive || !activeController || activeController.navigationBlocked)
             return;
         const ids = surfaces.descriptors.map(function (descriptor) {
             return descriptor.id;

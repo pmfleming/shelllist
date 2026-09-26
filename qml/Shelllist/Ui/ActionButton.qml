@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls as Controls
 
 ActionControl {
     id: control
@@ -9,7 +8,9 @@ ActionControl {
     property string icon: ""
     property int iconSize: Theme.iconSizeSmall
     property string hotkey: ""
+    // Transitional nonvisual metadata; no tooltip or focus label is rendered.
     property string toolTip: ""
+    Accessible.description: toolTip
     property string tone: "normal"
     property color backgroundColor: tone === "accent" ? Theme.accent : (tone === "active" ? Theme.active : (tone === "danger" ? Theme.danger : (tone === "warning" ? Theme.warning : Theme.controlBackground)))
     property color borderColor: tone === "normal" ? Theme.controlBorder : backgroundColor
@@ -23,7 +24,8 @@ ActionControl {
     implicitHeight: Theme.controlHeight
     radius: Theme.controlRadius
     color: interactionState === "pressed" ? pressedBackgroundColor : (interactionState === "highlighted" ? hoverBackgroundColor : backgroundColor)
-    border.color: activeFocus ? Theme.strongBorder : borderColor
+    border.color: borderColor
+    focusRingColor: labelColor
     border.width: 1
     opacity: enabled && interactive ? 1.0 : Theme.disabledOpacity
     ControlLabel {
@@ -45,8 +47,4 @@ ActionControl {
         showStateBackground: false
         onClicked: control.activate()
     }
-
-    Controls.ToolTip.visible: area.containsMouse && control.toolTip.length > 0
-    Controls.ToolTip.text: control.toolTip
-    Controls.ToolTip.delay: 450
 }

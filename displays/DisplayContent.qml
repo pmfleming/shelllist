@@ -7,21 +7,10 @@ Ui.ProviderChooserSurface {
     id: content
     required property DisplayController controller
     chooserController: controller
-    surfaceName: qsTr("Displays")
     minimumSplitDetailsWidth: 350
-    navigationEnabled: !controller.discardPrompt && !controller.layoutDragging && !controller.navigationHelpOpen
+    navigationEnabled: !controller.discardPrompt && !controller.layoutDragging
     refreshEnabled: !controller.actionInFlight && !controller.trial && navigationEnabled
     detailsTabEnabled: navigationEnabled && controller.detailsOpen && controller.hasSelection && !controller.trial && !controller.actionInFlight
-    helpEnabled: controller.uiActive && !controller.discardPrompt && !controller.trial
-    helpEntries: [
-        {
-            keys: "Right",
-            action: qsTr("Expand selected display")
-        }
-    ]
-    refreshHelp: qsTr("Refresh displays")
-    detailsTabHelp: qsTr("Switch Settings / Information")
-    helpShortcuts: [previewShortcut]
 
     listComponent: Component {
         DisplayListPane {
@@ -35,11 +24,9 @@ Ui.ProviderChooserSurface {
         }
     }
 
-    Ui.SurfaceShortcut {
-        id: previewShortcut
+    Shortcut {
         sequence: "Ctrl+Return"
-        help: qsTr("Preview the whole layout · keep within 20 seconds")
-        enabled: content.controller.uiActive && content.controller.detailsOpen && content.controller.canPreview && !content.controller.discardPrompt && !content.controller.navigationHelpOpen
+        enabled: content.controller.uiActive && content.controller.detailsOpen && content.controller.canPreview && !content.controller.discardPrompt
         autoRepeat: false
         onActivated: content.controller.preview()
     }

@@ -95,6 +95,9 @@ Item {
     readonly property int iconSize: 18
     readonly property int iconSizeLarge: 24
 
+    readonly property int focusRingWidth: 2
+    readonly property int focusRingInset: 2
+
     readonly property real disabledOpacity: 0.45
     readonly property real readOnlyOpacity: 0.72
     readonly property int animationFast: 170

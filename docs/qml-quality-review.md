@@ -26,11 +26,11 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 
 - One `shell/shell.qml` host replaces per-surface Quickshell processes.
 - Wi-Fi and Bluetooth load eagerly; Applications and Clipboard load on demand and remain warm.
-- `ProviderChooserSurface` composes chooser shortcuts, split layout, density, default navigation/refresh/detail policy, and navigation help once for Wi-Fi, Bluetooth, Clipboard, and Applications.
+- `ProviderChooserSurface` composes chooser shortcuts, split layout, density, and default navigation/refresh/detail policy once for Wi-Fi, Bluetooth, Clipboard, and Applications. Domain action bindings use Qt `Shortcut` directly; there is no navigation-help overlay or shortcut-help wrapper.
 - `ChooserShortcuts` centralizes Escape, refresh, and details-tab shortcuts.
 - `ChooserListPane` derives its own density instead of requiring every domain wrapper to forward presentation state.
 - `KeyedListModel` owns persistent model reconciliation and chunking for `ResultStore` and the bar; selection and ranking remain in `ResultStore`.
-- `ActionControl` shares keyboard/accessibility activation and busy-focus policy across chooser controls and bar actions.
+- `ActionControl` shares keyboard/accessibility activation and busy-focus policy across chooser controls and bar actions. `FocusRing` provides an immediate, inset indicator independent of decorative animation; fields, icon tiles and result rows also use it. No hover tooltip or automatic focus label is rendered; legacy tooltip strings retained during migration supply nonvisual accessible descriptions where appropriate.
 - Providers resolve dynamic actions at use time rather than copying actions into recurring snapshots.
 - `BarContent` renders normalized status descriptors through one delegate.
 - Workspace, focused-window, media, tray, and OSD presentation are isolated components.
