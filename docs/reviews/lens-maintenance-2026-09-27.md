@@ -77,6 +77,12 @@ thresholds, exclude difficult files or add suppressions to claim improvement.
   is an in-repository implementation, not a supported external toolkit API.
   Strict lint, all 201 Qt passes (including hooks), and offscreen shared-UI smoke
   pass. No runtime behavior, protocol or daemon source was changed.
+- Notification quick actions: shared reply/snooze/dismiss rendering and focus
+  containment between history and toast cards. Callers retain visibility,
+  grouping, reply state and immediate-versus-animated dismissal policy. The
+  shared component has no controller/daemon dependency. Strict lint, 202 Qt
+  passes and offscreen smoke pass; added tests exercise keyboard/pointer signals,
+  disabled activation, focus transfer and hidden-reply layout.
 
 ## Baseline execution evidence
 

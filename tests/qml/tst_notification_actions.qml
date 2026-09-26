@@ -22,20 +22,67 @@ TestCase {
         signalName: "triggered"
     }
 
-    property var toastGroups: [{
-            records: [{
-                    actions: [{
+    Component {
+        id: quickActionsFactory
+        Ui.NotificationQuickActions {
+            showReply: true
+        }
+    }
+    SignalSpy {
+        id: quickSignal
+        signalName: "replyRequested"
+    }
+
+    function test_quickActionsKeyboardPointerAndDisabledState(): void {
+        const controls = createTemporaryObject(quickActionsFactory, this);
+        quickSignal.target = controls;
+        for (const action of ["Reply", "Snooze", "Dismiss"]) {
+            const button = findChild(controls, "notificationQuick" + action);
+            verify(button !== null);
+            quickSignal.signalName = action.toLowerCase() + "Requested";
+            quickSignal.clear();
+            button.forceActiveFocus();
+            verify(controls.activeFocusInside);
+            keyClick(Qt.Key_Return);
+            compare(quickSignal.count, 1);
+            mouseClick(button);
+            compare(quickSignal.count, 2);
+            controls.enabled = false;
+            keyClick(Qt.Key_Return);
+            mouseClick(button);
+            compare(quickSignal.count, 2);
+            controls.enabled = true;
+        }
+        controls.showReply = false;
+        verify(!findChild(controls, "notificationQuickReply").visible);
+        tryCompare(controls, "implicitWidth", 54); // Hidden reply leaves no empty slot.
+        testCase.forceActiveFocus();
+        verify(!controls.activeFocusInside);
+        quickSignal.target = null;
+    }
+
+    property var toastGroups: [
+        {
+            records: [
+                {
+                    actions: [
+                        {
                             key: "default",
                             label: "Open"
-                        }, {
+                        },
+                        {
                             key: "archive",
                             label: "Archive"
-                        }, {
+                        },
+                        {
                             key: "reply",
                             label: "Reply"
-                        }]
-                }]
-        }]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
     component ToastGroup: Item {
         required property var modelData
     }
@@ -81,5 +128,4 @@ TestCase {
         compare(triggered.count, 1);
         triggered.target = null;
     }
-
 }

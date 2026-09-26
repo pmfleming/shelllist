@@ -106,47 +106,20 @@ Rectangle {
                     spacing: 2
 
                     // Hidden by opacity only, so keyboard focus can still reach them.
-                    Row {
+                    Ui.NotificationQuickActions {
                         id: hoverControls
-                        readonly property bool activeFocusInside: replyButton.activeFocus || snoozeButton.activeFocus || dismissButton.activeFocus
-                        spacing: 2
                         visible: row.active
                         opacity: row.controlsRevealed ? 1 : 0
+                        showReply: row.replyAction !== null && !row.replyVisible
+                        onReplyRequested: row.replyOpen = true
+                        onSnoozeRequested: row.notificationState.snoozeNotification(row.notification.id, 15)
+                        onDismissRequested: row.notificationState.dismissNotification(row.notification.id)
 
                         Behavior on opacity {
                             enabled: !Ui.Theme.noAnimations
                             NumberAnimation {
                                 duration: Ui.Theme.animationFast
                             }
-                        }
-
-                        Ui.FlatIconButton {
-                            id: replyButton
-                            visible: row.replyAction !== null && !row.replyVisible
-                            width: 26
-                            height: 26
-                            icon: "󰑚"
-                            accessibleName: "Reply"
-                            toolTip: accessibleName
-                            onClicked: row.replyOpen = true
-                        }
-                        Ui.FlatIconButton {
-                            id: snoozeButton
-                            width: 26
-                            height: 26
-                            icon: "󰒲"
-                            accessibleName: "Snooze for 15 minutes"
-                            toolTip: accessibleName
-                            onClicked: row.notificationState.snoozeNotification(row.notification.id, 15)
-                        }
-                        Ui.FlatIconButton {
-                            id: dismissButton
-                            width: 26
-                            height: 26
-                            icon: "󰅖"
-                            accessibleName: "Dismiss"
-                            toolTip: accessibleName
-                            onClicked: row.notificationState.dismissNotification(row.notification.id)
                         }
                     }
                     Ui.FlatIconButton {

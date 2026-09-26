@@ -143,30 +143,11 @@ Rectangle {
                             toolTip: accessibleName
                             onClicked: card.breakoutRequested()
                         }
-                        Ui.FlatIconButton {
-                            visible: card.replyAction !== null && !card.replyVisible
-                            width: 26
-                            height: 26
-                            icon: "󰑚"
-                            accessibleName: "Reply"
-                            toolTip: accessibleName
-                            onClicked: card.replyOpen = true
-                        }
-                        Ui.FlatIconButton {
-                            width: 26
-                            height: 26
-                            icon: "󰒲"
-                            accessibleName: "Snooze for 15 minutes"
-                            toolTip: accessibleName
-                            onClicked: card.controller.snoozeNotification(card.notification.id, 15)
-                        }
-                        Ui.FlatIconButton {
-                            width: 26
-                            height: 26
-                            icon: "󰅖"
-                            accessibleName: "Dismiss"
-                            toolTip: accessibleName
-                            onClicked: card.removing = true
+                        Ui.NotificationQuickActions {
+                            showReply: card.replyAction !== null && !card.replyVisible
+                            onReplyRequested: card.replyOpen = true
+                            onSnoozeRequested: card.controller.snoozeNotification(card.notification.id, 15)
+                            onDismissRequested: card.removing = true
                         }
                     }
                 }
