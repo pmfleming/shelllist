@@ -251,15 +251,26 @@ bindel = , XF86MonBrightnessDown, global, shelllist:brightness-down
 
 ## Theme and motion
 
-The Qt/system palette is the fallback. Environment variables supplied to the resident process are authoritative:
+The desktop accent seeds a Material Tonal Spot scheme through Google's Material
+Color Utilities. Light/dark follows Qt's desktop color-scheme setting, falling
+back to the system window palette when the platform supplies no preference.
+Controls are opaque; the chooser shell uses a provisional 94% opacity.
+Compositor blur and final Expressive shape/motion tuning are still pending.
+
+Supported environment inputs:
 
 ```text
-SHELLLIST_BG             SHELLLIST_SURFACE      SHELLLIST_TEXT
-SHELLLIST_SUBTEXT        SHELLLIST_BORDER       SHELLLIST_STRONG_BORDER
-SHELLLIST_ACCENT         SHELLLIST_SELECTED     SHELLLIST_SUCCESS
-SHELLLIST_DANGER         SHELLLIST_WARNING      SHELLLIST_RADIUS
+SHELLLIST_ACCENT         # Optional seed override, not an exact primary-role color
+SHELLLIST_RADIUS
 SHELLLIST_FONT           SHELLLIST_ICON_FONT    SHELLLIST_NO_ANIMATIONS
 ```
+
+**Migration:** `BG`, `SURFACE`, `TEXT`, `SUBTEXT`, `BORDER`,
+`STRONG_BORDER`, `SELECTED`, `SUCCESS`, `DANGER` and `WARNING` (each with the
+`SHELLLIST_` prefix) no longer override individual semantic roles. This prevents
+incoherent foreground/background pairs. Resource-series color overrides remain
+separate. The production font/icon defaults are unchanged pending visual review.
+See the [visual foundation and development gallery](docs/material-visual-foundation.md).
 
 Animations default on under Hyprland and off elsewhere. Set `SHELLLIST_NO_ANIMATIONS=1` or `0` to override that behavior.
 

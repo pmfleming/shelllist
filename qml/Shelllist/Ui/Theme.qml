@@ -4,39 +4,49 @@ import Quickshell
 import QtQuick
 
 Item {
+    id: theme
+
     readonly property bool hyprland: !!Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
     readonly property var noAnimationsOverride: envBoolOrNull("SHELLLIST_NO_ANIMATIONS")
     readonly property bool noAnimations: noAnimationsOverride === null ? !hyprland : noAnimationsOverride
-    readonly property bool dark: luminance(window) < 0.5
+    // Only the development gallery/tests set this; the resident host follows desktop.
+    property int previewColorScheme: Qt.Unknown
+    readonly property int resolvedColorScheme: previewColorScheme === Qt.Unknown ? Application.styleHints.colorScheme : previewColorScheme
+    readonly property bool dark: resolvedColorScheme === Qt.Unknown ? luminance(systemPalette.window) < 0.5 : resolvedColorScheme === Qt.Dark
+    readonly property color desktopAccent: envColor("SHELLLIST_ACCENT", systemPalette.accent)
+    readonly property alias materialPalette: material
 
-    // Nix/Home Manager environment values are authoritative. SystemPalette is the portable
-    // fallback, avoiding a second asynchronous theme source through compositor-private IPC.
-    readonly property color window: envColor("SHELLLIST_BG", systemPalette.window)
-    readonly property color surface: envColor("SHELLLIST_SURFACE", mix(systemPalette.window, systemPalette.base, 0.32))
-    readonly property color surfaceRaised: mix(surface, window, dark ? 0.26 : 0.12)
-    readonly property color input: mix(surface, window, dark ? 0.34 : 0.16)
-    readonly property color text: envColor("SHELLLIST_TEXT", systemPalette.windowText)
+    // A desktop accent seeds one coherent scheme; individual desktop colors
+    // cannot override foreground/background pairs and invalidate their contrast.
+    readonly property color window: material.surface
+    readonly property color surface: material.surfaceContainerLow
+    readonly property color surfaceRaised: material.surfaceContainerHigh
+    readonly property color input: material.surfaceContainerHighest
+    readonly property color text: material.surfaceText
     readonly property color inputText: text
-    readonly property color mutedText: envColor("SHELLLIST_SUBTEXT", mix(text, surface, 0.48))
-    readonly property color subtleText: mix(mutedText, surface, 0.32)
-    readonly property color border: envColor("SHELLLIST_BORDER", mix(systemPalette.mid, surface, 0.35))
-    readonly property color strongBorder: envColor("SHELLLIST_STRONG_BORDER", systemPalette.highlight)
-    readonly property color accent: envColor("SHELLLIST_ACCENT", systemPalette.highlight)
-    readonly property color accentText: readableOn(accent)
-    readonly property color selected: envColor("SHELLLIST_SELECTED", withAlpha(accent, dark ? 0.30 : 0.18))
-    readonly property color hover: withAlpha(accent, dark ? 0.16 : 0.10)
-    readonly property color pressed: withAlpha(accent, dark ? 0.24 : 0.16)
-    readonly property color active: envColor("SHELLLIST_SUCCESS", dark ? "#22c55e" : "#15803d")
-    readonly property color activeText: readableOn(active)
-    readonly property color danger: envColor("SHELLLIST_DANGER", dark ? "#ef4444" : "#dc2626")
-    readonly property color dangerText: readableOn(danger)
-    readonly property color dangerBackground: withAlpha(danger, dark ? 0.18 : 0.12)
-    readonly property color warning: envColor("SHELLLIST_WARNING", dark ? "#fbbf24" : "#b45309")
-    readonly property color warningText: readableOn(warning)
+    readonly property color mutedText: material.surfaceVariantText
+    readonly property color subtleText: mutedText
+    readonly property color border: material.outlineVariant
+    readonly property color strongBorder: material.primary
+    readonly property color accent: material.primary
+    readonly property color accentText: material.primaryText
+    readonly property color selected: material.secondaryContainer
+    readonly property color selectedText: material.secondaryContainerText
+    readonly property color hover: withAlpha(text, 0.08)
+    readonly property color pressed: withAlpha(text, 0.12)
+    readonly property color active: material.success
+    readonly property color activeText: material.successText
+    readonly property color danger: material.error
+    readonly property color dangerText: material.errorText
+    readonly property color dangerBackground: material.errorContainer
+    readonly property color warning: material.warning
+    readonly property color warningText: material.warningText
     readonly property color disabledText: mix(text, surface, 0.62)
-    readonly property color overlay: dark ? "#99000000" : "#66ffffff"
+    readonly property color overlay: "#66000000"
     readonly property color controlBackground: surfaceRaised
-    readonly property color controlBorder: mix(border, text, 0.16)
+    readonly property color controlBorder: material.outline
+    readonly property real shellOpacity: 0.94
+    readonly property color shellColor: withAlpha(window, shellOpacity)
 
     // Resource series remain distinguishable independently of the interactive accent.
     readonly property color resourceCpu: envColor("SHELLLIST_RESOURCE_CPU", dark ? "#60a5fa" : "#2563eb")
@@ -178,6 +188,12 @@ Item {
     }
     function readableOn(color) {
         return luminance(color) > 0.58 ? "#111827" : "#f8fafc";
+    }
+
+    MaterialPalette {
+        id: material
+        seedColor: theme.desktopAccent
+        dark: theme.dark
     }
 
     SystemPalette {

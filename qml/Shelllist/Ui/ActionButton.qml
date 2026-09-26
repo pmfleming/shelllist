@@ -23,7 +23,8 @@ ActionControl {
 
     implicitHeight: Theme.controlHeight
     radius: Theme.controlRadius
-    color: interactionState === "pressed" ? pressedBackgroundColor : (interactionState === "highlighted" ? hoverBackgroundColor : backgroundColor)
+    readonly property color stateBackgroundColor: interactionState === "pressed" ? pressedBackgroundColor : (interactionState === "highlighted" ? hoverBackgroundColor : backgroundColor)
+    color: stateBackgroundColor
     border.color: borderColor
     focusRingColor: labelColor
     border.width: 1

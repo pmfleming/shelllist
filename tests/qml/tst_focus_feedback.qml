@@ -105,6 +105,20 @@ TestCase {
         return indicator;
     }
 
+    function test_flatButtonFocusCannotWaitForHoverAnimation() {
+        const scene = createTemporaryObject(buttons, testCase);
+        scene.second.forceActiveFocus();
+        mouseMove(scene.second, 20, 20);
+        mouseMove(scene.first, 20, 20);
+        wait(20);
+        scene.first.forceActiveFocus();
+        verify(ring(scene.first).visible);
+        compare(String(scene.first.color), String(scene.first.highlightedBackgroundColor), "focus foreground needs its matching background immediately");
+        scene.first.interactive = false;
+        verify(scene.first.activeFocus);
+        compare(String(scene.first.color), String(scene.first.highlightedBackgroundColor));
+    }
+
     function test_focusMovesImmediatelyAndSurvivesBusyState() {
         const scene = createTemporaryObject(buttons, testCase);
         verify(scene !== null);

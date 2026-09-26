@@ -5,6 +5,11 @@ ActionButton {
     property color highlightedBackgroundColor: Theme.accent
     property color highlightedIconColor: Theme.accentText
     property color pressedColor: Theme.mix(highlightedBackgroundColor, Theme.window, 0.18)
+    property color animatedBackgroundColor: stateBackgroundColor
+
+    // Focus bypasses decoration, including a hover animation already running.
+    // Keep the matching foreground/background pair even while busy.
+    color: activeFocus ? (pressed ? pressedBackgroundColor : highlightedBackgroundColor) : animatedBackgroundColor
 
     label: ""
     tone: "normal"
@@ -15,7 +20,7 @@ ActionButton {
     hoverBackgroundColor: highlightedBackgroundColor
     pressedBackgroundColor: pressedColor
 
-    Behavior on color {
+    Behavior on animatedBackgroundColor {
         enabled: !Theme.noAnimations
         ColorAnimation {
             duration: Theme.animationFast

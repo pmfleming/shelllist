@@ -11,6 +11,12 @@ Run `tests/run-qml-tests.sh` from `nix develop`. The development shell and Nix
 both QML runner scripts use the same offscreen/software, UTC setup. Refresh an
 already-open development shell after changing `flake.nix`.
 
+- `tst_material_palette.qml` checks live seed/mode changes, the reported desktop
+  preference, deterministic preview modes, exact foreground bindings, opaque
+  control fills and retirement of conflicting per-role overrides.
+  `check-material-colors.js` checks upstream vectors and contrast in 150 seed/mode
+  combinations. Nix checks also rebuild/compare the generated bundle/license and
+  launch the development gallery offscreen with its two candidate fonts.
 - `tst_image_assets.qml` checks that representative weather and timezone SVGs
   actually reach `Image.Ready`, rather than passing while Qt logs decode failures.
 - `tst_provider_shortcuts.qml` checks live shortcut changes/disabled guards and

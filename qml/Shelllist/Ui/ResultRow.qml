@@ -107,8 +107,6 @@ Rectangle {
         icon: row.selected && row.detailsOpen ? "󰅁" : "󰅂"
         iconSize: Math.max(Theme.iconSizeSmall, row.scaled(Theme.iconSize))
         flatIconColor: row.selected ? Theme.accent : Theme.mutedText
-        highlightedBackgroundColor: row.selected ? Theme.mix(Theme.selected, Theme.accent, 0.36) : Theme.selected
-        highlightedIconColor: Theme.accent
         accessibleName: row.selected && row.detailsOpen ? "Collapse details" : "Expand details"
         toolTip: row.selected && row.detailsOpen ? "Collapse details" : "Expand details"
         onClicked: row.detailsToggled(row.index)

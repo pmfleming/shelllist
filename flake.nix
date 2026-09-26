@@ -87,6 +87,20 @@
 
           materialColors = import ./nix/material-colors.nix { inherit pkgs; };
 
+          # Development-only: never part of the resident host or installed bar.
+          materialGallery = pkgs.writeShellApplication {
+            name = "shelllist-material-gallery";
+            runtimeInputs = [ pkgs.quickshell ];
+            text = ''
+              export FONTCONFIG_FILE=${pkgs.makeFontsConf {
+                fontDirectories = [ pkgs.roboto-flex pkgs.noto-fonts pkgs.nerd-fonts.jetbrains-mono ];
+              }}
+              export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml
+              export QML2_IMPORT_PATH="$QML_IMPORT_PATH"
+              exec quickshell --no-color --path ${./dev/material-gallery.qml} "$@"
+            '';
+          };
+
           shelllistApplication = pkgs.writeShellApplication {
             name = "shelllist";
             meta = mkMeta "Single-host Shelllist desktop action center" "shelllist";
@@ -693,6 +707,7 @@
               ${./.}/wifi/networkinput/*.qml
               ${./.}/wifi/process/*.qml
               ${./.}/tests/qml/*.qml
+              ${./.}/dev/*.qml
             )
             strict_sources=()
             for source in "''${sources[@]}"; do
@@ -719,6 +734,25 @@
               ./qml/Shelllist/Core/Duration.js
             ]
           ];
+
+          materialGallery = pkgs.runCommand "shelllist-material-gallery-smoke" { } ''
+            export HOME="$TMPDIR/home"
+            export XDG_RUNTIME_DIR="$TMPDIR/runtime"
+            mkdir -p "$HOME" "$XDG_RUNTIME_DIR"
+            chmod 700 "$XDG_RUNTIME_DIR"
+            export QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software WAYLAND_DISPLAY=
+            export SHELLLIST_GALLERY_SMOKE=1
+            for scheme in light dark; do
+              status=0
+              SHELLLIST_GALLERY_SCHEME="$scheme" timeout 30 ${self.packages.${system}.materialGallery}/bin/shelllist-material-gallery > log 2>&1 || status=$?
+              cat log
+              if [ "$status" -ne 0 ]; then exit "$status"; fi
+              if grep -Ei 'TypeError|ReferenceError|Binding loop|failed to load|WARN|ERROR' log; then
+                exit 1
+              fi
+            done
+            touch $out
+          '';
 
           materialColors = pkgs.runCommand "shelllist-material-colors-current"
             { nativeBuildInputs = [ pkgs.nodejs pkgs.diffutils ]; } ''

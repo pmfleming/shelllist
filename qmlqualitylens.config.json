@@ -1,9 +1,10 @@
 {
   "project_name": "shelllist",
   "project_root": ".",
-  "source_roots": ["bar", "shell", "wifi", "bluetooth", "clipboard", "launcher", "activity", "displays", "qml", "tests/qml"],
+  "source_roots": ["bar", "shell", "wifi", "bluetooth", "clipboard", "launcher", "activity", "displays", "qml", "dev", "tests/qml"],
   "entrypoints": [
     "shell/shell.qml",
+    "dev/material-gallery.qml",
     "tests/qml/smoke_shared_ui.qml",
     "tests/qml/tst_action_control.qml",
     "tests/qml/tst_activity_keyboard.qml",

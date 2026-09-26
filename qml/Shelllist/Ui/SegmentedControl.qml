@@ -69,16 +69,7 @@ Rectangle {
         border.width: 1
         border.color: Theme.mix(Theme.border, Theme.accent, 0.48)
 
-        gradient: Gradient {
-            GradientStop {
-                position: 0
-                color: Theme.mix(Theme.input, Theme.accent, Theme.dark ? 0.42 : 0.34)
-            }
-            GradientStop {
-                position: 1
-                color: Theme.mix(Theme.input, Theme.accent, Theme.dark ? 0.32 : 0.26)
-            }
-        }
+        color: Theme.selected
 
         InteractiveBehavior on selectedPosition {}
     }
@@ -112,7 +103,7 @@ Rectangle {
                     leftPadding: 6
                     rightPadding: 6
                     text: segment.modelData.label || segment.modelData.value || ""
-                    color: segment.selected ? Theme.accentText : Theme.mix(Theme.mutedText, Theme.text, 0.28)
+                    color: segment.selected ? Theme.selectedText : Theme.text
                     font.pixelSize: Theme.fontSizeSmall
                     font.weight: segment.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
                     horizontalAlignment: Text.AlignHCenter

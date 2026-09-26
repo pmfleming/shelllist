@@ -18,6 +18,7 @@ mapfile -t sources < <(find \
   "$repo_root/displays" \
   "$repo_root/wifi" \
   "$repo_root/tests/qml" \
+  "$repo_root/dev" \
   -type f -name '*.qml' | sort)
 
 cd "$workdir"
