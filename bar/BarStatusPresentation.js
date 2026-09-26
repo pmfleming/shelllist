@@ -1,20 +1,12 @@
 .pragma library
 .import "../Core/Duration.js" as Duration
+.import "BarIndicators.js" as Indicators
 
 "use strict";
-function clamp(value, minimum, maximum) {
-    return Math.max(minimum, Math.min(maximum, Number(value) || 0));
-}
-function audioIcon(audio) {
-    if (!audio || audio.muted || !audio.available)
-        return "󰝟";
-    const percent = clamp(audio.volume_percent, 0, 100);
-    return percent < 34 ? "" : percent < 67 ? "" : "";
-}
 function batteryIcon(battery) {
     if (!battery)
         return "󰂑";
-    const level = Math.round(clamp(battery.percentage, 0, 100) / 10);
+    const level = Math.round(Indicators.percent(battery.percentage) / 10);
     const discharging = ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"];
     const charging = ["󰢟", "󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"];
     return (battery.charging ? charging : discharging)[level];
@@ -34,10 +26,6 @@ function batteryTooltip(battery) {
         + "\n" + Number(battery.power_watts || 0).toFixed(1) + " W"
         + "\nHealth " + health + " • " + cycles + " cycles"
         + "\nLeft click: open battery & power settings";
-}
-function powerProfileIcon(profile) {
-    const value = profile && profile.profile ? profile.profile : "";
-    return value === "power-saver" ? "" : value === "balanced" ? "" : "";
 }
 function orderedPowerProfiles(profile) {
     const preferred = ["power-saver", "balanced", "performance"];
@@ -70,7 +58,7 @@ function networkTooltip(status) {
     if (kind === "ethernet")
         return (status.device_iface || "Ethernet") + "\nLeft: Wi-Fi popover\nRight: manual portal fallback";
     const ap = status.access_point || status.network || ({});
-    return (ap.ssid || "Wi-Fi") + " " + clamp(ap.strength, 0, 100) + "%"
+    return (ap.ssid || "Wi-Fi") + " " + Indicators.percent(ap.strength) + "%"
         + "\nLeft: Wi-Fi popover\nRight: manual portal fallback";
 }
 function bluetoothTooltip(controller) {
@@ -166,7 +154,7 @@ function audioModule(audio) {
         ? (audio.sink_description || "Audio") + ": " + audio.volume_percent + "%"
             + (audio.muted ? " (muted)" : "")
         : "Audio unavailable";
-    return statusModule("audio", audioIcon(audio), tooltip, {
+    return statusModule("audio", Indicators.audioIcon(audio), tooltip, {
         maxDensity: 2, tone: audio && audio.muted ? "muted" : "text",
         primary: "audio-mixer", secondary: "audio-mute",
         wheelUp: "audio-up", wheelDown: "audio-down"
@@ -194,7 +182,7 @@ function batteryModule(battery) {
     });
 }
 function powerModule(profile) {
-    return statusModule("power", powerProfileIcon(profile), "Power profile: " + (profile.profile || "")
+    return statusModule("power", Indicators.powerProfileIcon(profile), "Power profile: " + (profile.profile || "")
         + "\nLeft click: cycle power mode"
         + "\nDriver: " + (profile.driver || "unknown"), {
         visible: !!profile.available, maxDensity: 1, interactive: true,

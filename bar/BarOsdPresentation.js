@@ -1,15 +1,7 @@
 .pragma library
+.import "BarIndicators.js" as Indicators
 
 "use strict";
-function clamp(value, minimum, maximum) {
-    return Math.max(minimum, Math.min(maximum, Number(value) || 0));
-}
-function audioIcon(audio) {
-    if (!audio || audio.muted || !audio.available)
-        return "󰝟";
-    const percent = clamp(audio.volume_percent, 0, 100);
-    return percent < 34 ? "" : percent < 67 ? "" : "";
-}
 function osdTimeout(kind) {
     const value = String(kind || "");
     if (value.indexOf("privacy") === 0 || value === "brightness-error")
@@ -20,10 +12,10 @@ function osdTimeout(kind) {
 }
 function outputOsd(audio) {
     const value = audio || ({});
-    const percent = clamp(value.volume_percent, 0, 100);
+    const percent = Indicators.percent(value.volume_percent);
     return {
         kind: "audio",
-        icon: audioIcon(value),
+        icon: Indicators.audioIcon(value),
         label: value.sink_description || "Volume",
         valueLabel: value.muted ? "Muted" : percent + "%",
         percent: percent,
@@ -46,7 +38,7 @@ function inputOsd(audio) {
 }
 function brightnessOsd(brightness) {
     const value = brightness || ({});
-    const percent = clamp(value.percent, 0, 100);
+    const percent = Indicators.percent(value.percent);
     return {
         kind: "brightness",
         icon: "󰃠",
@@ -68,17 +60,13 @@ function brightnessErrorOsd() {
         timeoutMs: osdTimeout("brightness-error")
     };
 }
-function powerProfileIcon(profile) {
-    const value = profile && profile.profile ? profile.profile : "";
-    return value === "power-saver" ? "" : value === "balanced" ? "" : "";
-}
 function powerProfileOsd(profile) {
     const value = profile || ({});
     const name = value.profile || "unknown";
     const labels = { "power-saver": "Power saver", balanced: "Balanced", performance: "Performance" };
     return {
         kind: "power-profile",
-        icon: powerProfileIcon(value),
+        icon: Indicators.powerProfileIcon(value),
         label: "Power profile",
         valueLabel: labels[name] || name,
         percent: 0,
@@ -99,7 +87,7 @@ function lockKeyOsd(kind, enabled) {
     };
 }
 function keyboardBacklightOsd(percent) {
-    const value = clamp(percent, 0, 100);
+    const value = Indicators.percent(percent);
     return {
         kind: "keyboard-backlight",
         icon: "󰌌",

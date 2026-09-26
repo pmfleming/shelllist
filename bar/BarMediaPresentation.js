@@ -1,9 +1,7 @@
 .pragma library
+.import "BarIndicators.js" as Indicators
 
 "use strict";
-function clamp(value, minimum, maximum) {
-    return Math.max(minimum, Math.min(maximum, Number(value) || 0));
-}
 function playerFor(media) {
     const players = media && Array.isArray(media.players) ? media.players : [];
     return players.find(function (player) { return player.id === media.active_player; }) || null;
@@ -34,5 +32,5 @@ function mediaPositionPercent(player, nowMs) {
         const rate = Math.max(0, Number(player.playback_rate) || 1);
         position += elapsedMs * 1000 * rate;
     }
-    return clamp(position / length * 100, 0, 100);
+    return Indicators.percent(position / length * 100);
 }

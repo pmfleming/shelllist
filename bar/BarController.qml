@@ -2,6 +2,7 @@ import Quickshell
 import QtQuick
 import Shelllist.Ui as Ui
 import "BarApi.js" as BarApi
+import "BarIndicators.js" as Indicators
 import "BarMediaPresentation.js" as MediaPresentation
 import "BarOsdPresentation.js" as OsdPresentation
 import "BarStatusPresentation.js" as StatusPresentation
@@ -242,7 +243,7 @@ Item {
             progressVisible: false,
             timeoutMs: 1400
         }, descriptor);
-        value.percent = OsdPresentation.clamp(value.percent, 0, 100);
+        value.percent = Indicators.percent(value.percent);
         value.progressVisible = !!value.progressVisible;
         value.timeoutMs = Math.max(400, Number(value.timeoutMs) || 1400);
         controller.osd = value;

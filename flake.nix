@@ -732,6 +732,7 @@
               ./bar/BarOsdPresentation.js
               ./bar/BarStatusPresentation.js
               ./qml/Shelllist/Core/Duration.js
+              ./bar/BarIndicators.js
             ]
           ];
 
