@@ -42,16 +42,11 @@ interface Osd {
 }
 type Maybe<T> = T | null | undefined;
 
-function clamp(value: unknown, minimum: number, maximum: number) {
-    return Math.max(minimum, Math.min(maximum, Number(value) || 0));
-}
-
-function audioIcon(audio: Maybe<AudioState>) {
-    if (!audio || audio.muted || !audio.available)
-        return "󰝟";
-    const percent = clamp(audio.volume_percent, 0, 100);
-    return percent < 34 ? "" : percent < 67 ? "" : "";
-}
+declare const Indicators: {
+    percent(value: unknown): number;
+    audioIcon(audio: Maybe<AudioState>): string;
+    powerProfileIcon(profile: Maybe<PowerProfileState>): string;
+};
 
 function osdTimeout(kind: Maybe<string>) {
     const value = String(kind || "");
@@ -62,10 +57,10 @@ function osdTimeout(kind: Maybe<string>) {
 
 function outputOsd(audio: Maybe<AudioState>): Osd {
     const value: AudioState = audio || ({});
-    const percent = clamp(value.volume_percent, 0, 100);
+    const percent = Indicators.percent(value.volume_percent);
     return {
         kind: "audio",
-        icon: audioIcon(value),
+        icon: Indicators.audioIcon(value),
         label: value.sink_description || "Volume",
         valueLabel: value.muted ? "Muted" : percent + "%",
         percent: percent,
@@ -90,7 +85,7 @@ function inputOsd(audio: Maybe<AudioState>): Osd {
 
 function brightnessOsd(brightness: Maybe<{ percent?: number }>): Osd {
     const value: { percent?: number } = brightness || ({});
-    const percent = clamp(value.percent, 0, 100);
+    const percent = Indicators.percent(value.percent);
     return {
         kind: "brightness",
         icon: "󰃠",
@@ -114,18 +109,13 @@ function brightnessErrorOsd(): Osd {
     };
 }
 
-function powerProfileIcon(profile: Maybe<PowerProfileState>) {
-    const value = profile && profile.profile ? profile.profile : "";
-    return value === "power-saver" ? "" : value === "balanced" ? "" : "";
-}
-
 function powerProfileOsd(profile: Maybe<PowerProfileState>): Osd {
     const value: PowerProfileState = profile || ({});
     const name = value.profile || "unknown";
     const labels: Record<string, string> = { "power-saver": "Power saver", balanced: "Balanced", performance: "Performance" };
     return {
         kind: "power-profile",
-        icon: powerProfileIcon(value),
+        icon: Indicators.powerProfileIcon(value),
         label: "Power profile",
         valueLabel: labels[name] || name,
         percent: 0,
@@ -148,7 +138,7 @@ function lockKeyOsd(kind: string, enabled: boolean): Osd {
 }
 
 function keyboardBacklightOsd(percent: unknown): Osd {
-    const value = clamp(percent, 0, 100);
+    const value = Indicators.percent(percent);
     return {
         kind: "keyboard-backlight",
         icon: "󰌌",

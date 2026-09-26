@@ -13,9 +13,7 @@ interface MediaState {
 }
 type Maybe<T> = T | null | undefined;
 
-function clamp(value: unknown, minimum: number, maximum: number) {
-    return Math.max(minimum, Math.min(maximum, Number(value) || 0));
-}
+declare const Indicators: { percent(value: unknown): number };
 
 function playerFor(media: Maybe<MediaState>) {
     const players = media && Array.isArray(media.players) ? media.players : [];
@@ -51,5 +49,5 @@ function mediaPositionPercent(player: Maybe<MediaPlayer>, nowMs: unknown) {
         const rate = Math.max(0, Number(player.playback_rate) || 1);
         position += elapsedMs * 1000 * rate;
     }
-    return clamp(position / length * 100, 0, 100);
+    return Indicators.percent(position / length * 100);
 }

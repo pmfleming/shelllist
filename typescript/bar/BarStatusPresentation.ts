@@ -90,21 +90,16 @@ interface StatusState {
 }
 type Maybe<T> = T | null | undefined;
 
-function clamp(value: unknown, minimum: number, maximum: number) {
-    return Math.max(minimum, Math.min(maximum, Number(value) || 0));
-}
-
-function audioIcon(audio: Maybe<AudioState>) {
-    if (!audio || audio.muted || !audio.available)
-        return "󰝟";
-    const percent = clamp(audio.volume_percent, 0, 100);
-    return percent < 34 ? "" : percent < 67 ? "" : "";
-}
+declare const Indicators: {
+    percent(value: unknown): number;
+    audioIcon(audio: Maybe<AudioState>): string;
+    powerProfileIcon(profile: Maybe<PowerProfileState>): string;
+};
 
 function batteryIcon(battery: Maybe<BatteryState>) {
     if (!battery)
         return "󰂑";
-    const level = Math.round(clamp(battery.percentage, 0, 100) / 10);
+    const level = Math.round(Indicators.percent(battery.percentage) / 10);
     const discharging = ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"];
     const charging = ["󰢟", "󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"];
     return (battery.charging ? charging : discharging)[level];
@@ -127,11 +122,6 @@ function batteryTooltip(battery: Maybe<BatteryState>) {
         + "\n" + Number(battery.power_watts || 0).toFixed(1) + " W"
         + "\nHealth " + health + " • " + cycles + " cycles"
         + "\nLeft click: open battery & power settings";
-}
-
-function powerProfileIcon(profile: Maybe<PowerProfileState>) {
-    const value = profile && profile.profile ? profile.profile : "";
-    return value === "power-saver" ? "" : value === "balanced" ? "" : "";
 }
 
 function orderedPowerProfiles(profile: Maybe<PowerProfileState>): string[] {
@@ -169,7 +159,7 @@ function networkTooltip(status: Maybe<NetworkStatus>) {
     if (kind === "ethernet")
         return (status!.device_iface || "Ethernet") + "\nLeft: Wi-Fi popover\nRight: manual portal fallback";
     const ap: AccessPoint = status!.access_point || status!.network || ({});
-    return (ap.ssid || "Wi-Fi") + " " + clamp(ap.strength, 0, 100) + "%"
+    return (ap.ssid || "Wi-Fi") + " " + Indicators.percent(ap.strength) + "%"
         + "\nLeft: Wi-Fi popover\nRight: manual portal fallback";
 }
 
@@ -288,7 +278,7 @@ function audioModule(audio: Maybe<AudioState>) {
         ? (audio!.sink_description || "Audio") + ": " + audio!.volume_percent + "%"
             + (audio!.muted ? " (muted)" : "")
         : "Audio unavailable";
-    return statusModule("audio", audioIcon(audio), tooltip, {
+    return statusModule("audio", Indicators.audioIcon(audio), tooltip, {
         maxDensity: 2, tone: audio && audio.muted ? "muted" : "text",
         primary: "audio-mixer", secondary: "audio-mute",
         wheelUp: "audio-up", wheelDown: "audio-down"
@@ -320,7 +310,7 @@ function batteryModule(battery: Maybe<BatteryState>) {
 }
 
 function powerModule(profile: PowerProfileState) {
-    return statusModule("power", powerProfileIcon(profile), "Power profile: " + (profile.profile || "")
+    return statusModule("power", Indicators.powerProfileIcon(profile), "Power profile: " + (profile.profile || "")
         + "\nLeft click: cycle power mode"
         + "\nDriver: " + (profile.driver || "unknown"), {
         visible: !!profile.available, maxDensity: 1, interactive: true,

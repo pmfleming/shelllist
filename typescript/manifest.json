@@ -24,18 +24,25 @@
     "output": "bar/BarWorkspacePresentation.js"
   },
   {
+    "source": "typescript/bar/BarIndicators.ts",
+    "output": "bar/BarIndicators.js"
+  },
+  {
     "source": "typescript/bar/BarMediaPresentation.ts",
-    "output": "bar/BarMediaPresentation.js"
+    "output": "bar/BarMediaPresentation.js",
+    "imports": [".import \"BarIndicators.js\" as Indicators"]
   },
   {
     "source": "typescript/bar/BarOsdPresentation.ts",
-    "output": "bar/BarOsdPresentation.js"
+    "output": "bar/BarOsdPresentation.js",
+    "imports": [".import \"BarIndicators.js\" as Indicators"]
   },
   {
     "source": "typescript/bar/BarStatusPresentation.ts",
     "output": "bar/BarStatusPresentation.js",
     "imports": [
-      ".import \"../Core/Duration.js\" as Duration"
+      ".import \"../Core/Duration.js\" as Duration",
+      ".import \"BarIndicators.js\" as Indicators"
     ]
   }
 ]
