@@ -4,9 +4,12 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
-The [2026-09-27 maintenance review](reviews/lens-maintenance-2026-09-27.md)
-records comparable Lens results, cleanup decisions, completed refactors and
-validation, including the essentially unchanged locality/clone aggregates. Earlier
+The [post-Material maintenance review](reviews/lens-post-material-2026-09-27.md)
+records the latest comparable Lens results: dead entry-point removal, shared bar
+indicators, simpler display editing and transition reuse. Complexity, effort,
+clones and code LOC fall; aggregate locality/leverage remain essentially flat.
+The [earlier 2026-09-27 review](reviews/lens-maintenance-2026-09-27.md) records the
+pre-Material maintenance baseline and its validation. Earlier
 [commonality work](reviews/commonality-2026-09-20.md) and the
 [presentation/controller refactor](reviews/lens-refactor-2026-09-26.md) retain
 their historical before/after measurements. Native lint is warning-fatal and
