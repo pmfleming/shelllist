@@ -150,7 +150,7 @@ ColumnLayout {
         Ui.ThemeText {
             objectName: "displayEnablementStatus"
             Layout.fillWidth: true
-            text: Model.internal(inspector.output.name) ? qsTr("Laptop screen behaviour is set below under When docked.") : (inspector.draft.enabled ? qsTr("Enabled in the draft") : qsTr("Disabled in the draft"))
+            text: inspector.draft.enabled ? qsTr("Enabled in the draft") : qsTr("Disabled in the draft")
             wrapMode: Text.Wrap
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.fontSizeSmall

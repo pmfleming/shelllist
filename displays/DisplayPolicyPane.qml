@@ -46,7 +46,7 @@ Ui.DetailColumnCard {
     }
     Ui.ThemeText {
         Layout.fillWidth: true
-        text: qsTr("The laptop screen returns automatically if external displays disconnect.")
+        text: qsTr("Manual display enable/disable changes override this preference until you change it again. The laptop screen returns if no other display remains active.")
         wrapMode: Text.Wrap
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeSmall

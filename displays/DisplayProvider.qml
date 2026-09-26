@@ -83,8 +83,8 @@ Core.Provider {
                 }
             }), Core.Model.keepOpenAction("toggle-enabled", draft && draft.enabled ? qsTr("Disable") : qsTr("Enable"), {
                 icon: "󰐥",
-                visible: !Model.internal(output.name),
-                enabled: browsing && controller.canEdit && !!draft,
+                visible: true,
+                enabled: browsing && controller.canToggleEnabled(output.name),
                 presentation: {
                     group: "toolbar"
                 }

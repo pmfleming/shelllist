@@ -38,7 +38,7 @@ function currentMode(output) {
         return m && m.width === output.width && m.height === output.height && Math.abs(m.rate - output.refreshRate) < 0.1;
     });
     matching.sort((a, b) => Math.abs(parseMode(a).rate - output.refreshRate) - Math.abs(parseMode(b).rate - output.refreshRate));
-    return matching[0] || observed;
+    return matching[0] || (output.disabled && !parseMode(observed) ? (output.availableModes || []).find(v => !!parseMode(v)) : "") || observed;
 }
 function modes(output) {
     const values = (output.availableModes || []).filter(v => !!parseMode(v));
@@ -54,7 +54,7 @@ function draft(outputs) {
             y: o.y || 0,
             scale: o.scale,
             transform: o.transform || 0,
-            enabled: internal(o.name) || !o.disabled
+            enabled: !o.disabled
         };
     });
 }
@@ -100,8 +100,8 @@ function validate(draft, outputs) {
             return "Scale must be between 50% and 400%";
         if (!inRange(d.transform, 0, 7, true))
             return "Choose a supported rotation";
-        if (typeof d.enabled !== "boolean" || (internal(d.name) && !d.enabled))
-            return "Laptop fallback is managed by the external-display preference";
+        if (typeof d.enabled !== "boolean")
+            return "Choose whether this display is enabled";
         if (!parseMode(d.mode) || (d.enabled && !modes(o).includes(d.mode)))
             return "Choose an advertised display mode";
     }

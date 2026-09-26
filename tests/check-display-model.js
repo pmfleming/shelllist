@@ -11,7 +11,8 @@ const outputs = [
     { id: 1, name: "DP-1", description: "Desk", width: 3840, height: 2160, refreshRate: 59.94, scale: 1.5, x: 0, y: 0, transform: 0, disabled: false, availableModes: ["3840x2160@59.940Hz", "3840x2160@60.00Hz", "2560x1440@120.00Hz"] }
 ];
 const draft = model.draft(outputs);
-assert.equal(draft[0].enabled, true, "preview safety does not copy the observed disabled laptop");
+assert.equal(draft[0].enabled, false, "draft preserves the observed disabled laptop");
+assert.equal(model.currentMode({ ...outputs[0], width: 0, height: 0, refreshRate: 0 }), "1920x1200@60.000Hz", "disabled displays use an advertised mode when current geometry is absent");
 assert.equal(draft[1].mode, "3840x2160@59.940Hz", "exact advertised refresh string survives");
 assert.equal(model.currentMode({ ...outputs[1], refreshRate: 60 }), "3840x2160@60.00Hz", "59.94 and 60 Hz are not interchangeable in the picker");
 assert.deepEqual(plain(model.rect({ ...draft[1], transform: 1 })), { x: 0, y: 0, width: 1440, height: 2560 });
@@ -32,7 +33,9 @@ assert.deepEqual(plain(model.snap(layout, "HDMI-A-1", 150, 250, 50)), { x: 150, 
 assert.deepEqual(plain(model.snap(layout, "HDMI-A-1", 150, 250, 51)), { x: 200, y: 300 }, "equal distances retain the first edge");
 const desktop = [outputs[1]];
 assert.notEqual(model.validate([{ ...draft[1], enabled: false }], desktop), "", "last output protected");
-assert.notEqual(model.validate([{ ...draft[0], enabled: false }, draft[1]], outputs), "", "internal fallback protected");
+assert.equal(model.validate([{ ...draft[0], enabled: false }, draft[1]], outputs), "", "laptop can be disabled with an active external display");
+assert.equal(model.validate([{ ...draft[0], enabled: true }, { ...draft[1], enabled: false }], outputs), "", "external display can be disabled with an active laptop");
+assert.notEqual(model.validate(draft.map(d => ({ ...d, enabled: false })), outputs), "", "all-off layout rejected");
 // Displays' controller tests own stale configuration/topology rejection, rather
 // than prescribing how the model fingerprints a snapshot.
 console.log("display model: exact modes, mixed-DPI/rotation geometry, invalid inputs and fallback validation passed");

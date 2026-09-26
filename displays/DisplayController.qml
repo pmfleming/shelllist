@@ -139,10 +139,14 @@ Ui.ProviderChooserController {
             outputs: Model.payload(draft)
         });
     }
+    function canToggleEnabled(name: string): bool {
+        const output = draft.find(o => o.name === name);
+        return canEdit && !!output && (!output.enabled || draft.some(o => o.name !== name && o.enabled));
+    }
     function edit(name: string, key: string, value: var): void {
         if (!canEdit || !["mode", "x", "y", "scale", "transform", "enabled"].includes(key))
             return;
-        if (key === "enabled" && Model.internal(name))
+        if (key === "enabled" && value === false && !canToggleEnabled(name))
             return;
         draft = draft.map(function (o) {
             if (o.name !== name)
@@ -254,7 +258,7 @@ Ui.ProviderChooserController {
             Qt.callLater(editorFocusRequested);
             return true;
         }
-        if (actionId === "toggle-enabled" && selectedDraft && canEdit) {
+        if (actionId === "toggle-enabled" && selectedDraft && canToggleEnabled(name)) {
             edit(name, "enabled", !selectedDraft.enabled);
             return true;
         }
