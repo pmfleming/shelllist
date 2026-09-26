@@ -15,8 +15,6 @@ assert.equal(draft[0].enabled, true, "preview safety does not copy the observed 
 assert.equal(draft[1].mode, "3840x2160@59.940Hz", "exact advertised refresh string survives");
 assert.equal(model.currentMode({ ...outputs[1], refreshRate: 60 }), "3840x2160@60.00Hz", "59.94 and 60 Hz are not interchangeable in the picker");
 assert.deepEqual(plain(model.rect({ ...draft[1], transform: 1 })), { x: 0, y: 0, width: 1440, height: 2560 });
-assert.deepEqual(plain(model.bounds(draft)), { x: -1536, y: 0, width: 4096, height: 1440 });
-assert.equal(model.parseMode("0x2160@60"), null);
 assert.equal(model.parseMode("3840x2160@60;exec"), null);
 for (const [key, value] of [["x", NaN], ["y", Infinity], ["x", ""], ["x", 32769], ["x", 1.5], ["scale", 0], ["scale", 4.1], ["scale", "bad"], ["transform", 8], ["mode", "3840x2160@75"]]) {
     const changed = plain(draft); changed[1][key] = value;
@@ -32,15 +30,9 @@ const layout = [{ ...tile, name: "HDMI-A-1" }, tile];
 assert.deepEqual(plain(model.snap(layout, "HDMI-A-1", 101, 199, 10)), { x: 100, y: 200 });
 assert.deepEqual(plain(model.snap(layout, "HDMI-A-1", 150, 250, 50)), { x: 150, y: 250 }, "threshold is exclusive");
 assert.deepEqual(plain(model.snap(layout, "HDMI-A-1", 150, 250, 51)), { x: 200, y: 300 }, "equal distances retain the first edge");
-assert.deepEqual(plain(model.snap([{ ...tile, enabled: false }, layout[0]], "HDMI-A-1", 101, 199, 10)), { x: 101, y: 199 });
 const desktop = [outputs[1]];
 assert.notEqual(model.validate([{ ...draft[1], enabled: false }], desktop), "", "last output protected");
 assert.notEqual(model.validate([{ ...draft[0], enabled: false }, draft[1]], outputs), "", "internal fallback protected");
-const docked = { available: true, status: "external", policy: { prefer_external: true } };
-assert.equal(model.dockedOff(outputs[0], docked), true, "a laptop switched off by the docking policy is reported");
-assert.equal(model.dockedOff(outputs[0], { ...docked, policy: {} }), false, "a manually disabled laptop is not docked off");
-assert.equal(model.modeSummary(outputs[1]), "3840×2160 · 59.94 Hz");
-assert.equal(model.modeSummary({ ...outputs[1], width: 0 }), "", "unknown geometry has no mode summary");
 // Displays' controller tests own stale configuration/topology rejection, rather
 // than prescribing how the model fingerprints a snapshot.
 console.log("display model: exact modes, mixed-DPI/rotation geometry, invalid inputs and fallback validation passed");

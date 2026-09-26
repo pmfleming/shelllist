@@ -14,13 +14,6 @@ const api = { Protocol };
 vm.createContext(api);
 vm.runInContext(apiSource.replace(/^\.(pragma|import).*$/gm, ""), api);
 
-// Keep distinct action capabilities, not every text subtype or exact UI labels.
-for (const [kind, action] of [["link", "open-url"], ["image", "annotate"],
-    ["files", "reveal-file"], ["binary", "copy"]]) {
-    const descriptors = api.actionDescriptorsForKind(kind);
-    assert.ok(descriptors.some(item => item.id === action), `${kind} offers ${action}`);
-}
-
 const source = fs.readFileSync(controllerPath, "utf8");
 const backendSource = fs.readFileSync(backendPath, "utf8");
 function install(context, text, names) {
@@ -76,4 +69,4 @@ function install(context, text, names) {
         entries: [{ entry_id: "one", revision: 4 }, { entry_id: "two", revision: 9 }]
     });
 }
-console.log("clipboard actions: capabilities, background annotation and revision-checked bulk deletion passed");
+console.log("clipboard actions: background annotation and revision-checked bulk deletion passed");

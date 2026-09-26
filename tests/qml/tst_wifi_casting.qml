@@ -191,22 +191,4 @@ DaemonTestCase {
         compare(calls[2].params.settings.advanced.casting_enabled, false);
     }
 
-    function test_unavailableWhileLoadingOrSavingAndResetsWithProfile() {
-        const panel = makePanel(true);
-        const toggle = findChild(panel, "castingToggle");
-        for (const id of ["advanced-load", "advanced-save"]) {
-            panel.controller.backend.setPending(id, true);
-            verify(!toggle.enabled);
-            panel.page.setCastingEnabled(false);
-            verify(panel.page.castingEnabled);
-            verify(!panel.page.securityDirty);
-            panel.controller.backend.setPending(id, false);
-        }
-        panel.controller.advanced.profile = ({});
-        verify(!toggle.enabled);
-        verify(!toggle.checked);
-        panel.page.setCastingEnabled(true);
-        verify(!panel.page.securityDirty);
-        compare(calls.length, 0);
-    }
 }

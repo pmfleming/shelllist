@@ -185,13 +185,6 @@ TestCase {
         state.finishReply(100, "Older draft", "");
         compare(state.drafts[100], "Newer draft");
     }
-    function test_inactiveReplyRetainsDraft() {
-        const state = makeState();
-        state.setDraft(2, "Retain this");
-        verify(!state.replyNotification(2, "Retain this"));
-        compare(state.drafts[2], "Retain this");
-        verify(state.replies[2].error.length > 0);
-    }
     function test_liveUpdateRetainsReplyDelegateAndFocus() {
         const state = makeState();
         const controller = makeController(state);
@@ -219,27 +212,6 @@ TestCase {
         compare(findChild(content, "notificationHistoryRow-100"), row);
         verify(field.inputActiveFocus);
         compare(field.text, "Draftt");
-        content.destroy();
-        wait(50);
-    }
-    function test_collapsedStackPeeksBeneathNewestCard() {
-        const state = makeState();
-        const controller = makeController(state);
-        const content = createTemporaryObject(contentComponent, controller, {
-            controller: controller,
-            width: 453,
-            height: 600
-        });
-        wait(50);
-        const peek = findChild(content, "notificationStackPeek");
-        verify(peek !== null);
-        const row = findChild(content, "notificationHistoryRow-100");
-        verify(peek.visible);
-        verify(peek.y + peek.height > row.height);
-        state.setExpanded("chat", true);
-        wait(50);
-        compare(findChild(content, "notificationStackPeek"), null);
-        // Destroy dependent delegates before QtTest retires their controller/state.
         content.destroy();
         wait(50);
     }

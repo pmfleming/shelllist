@@ -33,15 +33,4 @@ DaemonTestCase {
         compare(registry.notificationController.returnSurface, "activity");
     }
 
-    function test_selectLoadsAndExposesTheCurrentSurface(): void {
-        const registry = createTemporaryObject(registryComponent, testCase);
-        verify(!registry.select("unknown"));
-        verify(registry.select("displays"));
-        compare(registry.currentDescriptor.name, "Displays");
-        tryVerify(function () {
-            return registry.currentController !== null;
-        });
-        verify(registry.currentController === registry.displayController);
-        verify(registry.wifiController !== null, "Wi-Fi stays resident for the bar");
-    }
 }

@@ -34,7 +34,8 @@ rust = sum(len(re.findall(r"^\s*#\[test\]", source(name), re.M)) for name in nam
            if name.startswith("rust/") and name.endswith(".rs"))
 python = sum(len(re.findall(r"^\s*def test_\w+\(", source(name), re.M)) for name in names
              if re.fullmatch(r"tests/test_.*\.py", name))
-contracts = len(re.findall(r"^\s+\w+DaemonContract = pkgs\.runCommand", source("flake.nix"), re.M))
+# Contract declarations may use the shared apiContract builder or an inline derivation.
+contracts = len(re.findall(r"^\s+\w+DaemonContract = (?:pkgs\.runCommand|apiContract)\b", source("flake.nix"), re.M))
 log = args.qml_log.read_text()
 totals = re.findall(r"Totals: (\d+) passed, (\d+) failed, (\d+) skipped, (\d+) blacklisted", log)
 if len(totals) != 1 or any(int(value) for value in totals[0][1:]):

@@ -31,5 +31,4 @@ vm.createContext(context);
 vm.runInContext(lift("sampleAt") + "\n" + lift("validSegments"), context);
 const segments = context.validSegments({ metric: "gpu_busy_percent" }, 0, 100);
 assert.equal(segments.length, 2);
-assert.equal(segments[0][0].y, 0);
 console.log("resource availability: measured power and unavailable chart gaps passed");

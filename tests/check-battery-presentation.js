@@ -30,18 +30,10 @@ const suspend = { available: true, can_suspend: "yes", can_hibernate: "na", inhi
     { what: "idle", mode: "delay", who: "Player" }
 ] };
 equal(context.suspendInhibitors(suspend, "block").length, 2, "only suspend blockers are relevant");
-// BatterySuspend owns visible status and capability messages; BatteryController
-// owns dispatch rejection. Only diagnosis precedence needs a separate oracle.
-const diagnosed = { ...suspend, diagnostics: { hibernate_issues: ["No active disk-backed swap; zram alone cannot store a hibernation image."] } };
-equal(context.suspendCapabilityDescription(diagnosed, "hibernate"), diagnosed.diagnostics.hibernate_issues[0], "daemon evidence explains the unavailable hibernate action");
-equal(context.suspendCapabilityDescription({ ...diagnosed, can_hibernate: "no" }, "hibernate"), "Disabled or not permitted by system policy", "hardware evidence does not mislabel policy denial");
+// Qt's BatterySuspend and controller guards own action availability; avoid
+// mirroring the entire message table here.
 for (const unknown of [undefined, "other", "constructor", "toString", "__proto__"]) {
     equal(context.automationStatus({ status: unknown }, true), "Automatic switching status unavailable", "unknown automation token");
     equal(context.suspendCapabilityDescription({ available: true, can_suspend: unknown }, "suspend"), "Capability unavailable", "unknown capability token");
 }
-for (const token of ["inhibited", "inhibitor-blocked"]) equal(context.suspendCapabilityDescription({ available: true, can_suspend: token }, "suspend"), "Temporarily blocked by an application’s suspend inhibitor", token);
-equal(context.automationStatus({ status: "active", level: "critical", profile: "power-saver" }, true), "Critical battery · requesting Power saver", "active automation");
-equal(context.automationStatus({ status: "error" }, true), "Automatic switching failed · Unknown error", "missing error detail");
-equal(context.suspendCapabilityDescription({ ...diagnosed, keep_awake: true }, "hibernate"), "Turn off Keep awake before hibernating", "keep-awake precedence");
-equal(context.suspendCapabilityDescription({ ...diagnosed, keep_awake: true }, "lock"), "Lock the current session", "lock bypasses keep-awake");
 console.log("battery presentation: policy validation, suspend filtering and capability explanations passed");

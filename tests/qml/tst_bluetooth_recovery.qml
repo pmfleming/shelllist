@@ -114,69 +114,6 @@ DaemonTestCase {
             }
         }
     }
-    Component {
-        id: contentComponent
-        Bt.BluetoothContent {}
-    }
-    Component {
-        id: spyComponent
-        SignalSpy {}
-    }
-    function test_headerScreenshotAndSearchSettingsAreSeparate() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        controller.uiActive = true;
-        const content = createTemporaryObject(contentComponent, panel, {
-            controller: controller,
-            width: 720,
-            height: 1000
-        });
-        verify(content !== null);
-        tryVerify(() => content.listItem !== null);
-        const pane = content.listItem;
-        const spy = createTemporaryObject(spyComponent, panel, {
-            target: controller,
-            signalName: "screenshotRequested"
-        });
-        const button = findChild(pane, "chooserIconButton");
-        verify(button !== null && button.clickable);
-        compare(button.Accessible.name, "Take a screenshot");
-        button.forceActiveFocus();
-        keyClick(Qt.Key_Space);
-        compare(spy.count, 1);
-        verify(!controller.detailsOpen);
-        const scope = controller.searchScope;
-        pane.searchActionRequested();
-        verify(controller.detailsOpen);
-        compare(controller.detailsTab, "adapter");
-        compare(controller.searchScope, scope);
-        compare(spy.count, 1);
-        verify(findChild(pane, "bluetoothOptionsPopup") === null);
-        verify(content.navigationEnabled);
-        pane.searchActionRequested();
-        verify(!controller.detailsOpen);
-        controller.openDetails();
-        compare(controller.detailsTab, "device");
-        pane.searchActionRequested();
-        verify(controller.detailsOpen);
-        compare(controller.detailsTab, "adapter");
-        pane.focusSearch();
-        keyClick(Qt.Key_Escape);
-        tryCompare(controller, "detailsOpen", false);
-        controller.handlePairingEvent({
-            event: "requested",
-            data: {
-                request_id: "pair",
-                device_key: "buds",
-                response_required: true
-            }
-        });
-        verify(!pane.iconActionEnabled && !pane.searchActionEnabled);
-        pane.iconClicked();
-        pane.searchActionRequested();
-        compare(spy.count, 1);
-        verify(!controller.detailsOpen);
-    }
     function test_listOptionsPersistAndReflectAcknowledgedSettings() {
         const panel = makePanel();
         const controller = panel.controller;
@@ -300,49 +237,6 @@ DaemonTestCase {
             uiScale: 1
         }
     }
-    function test_openDetailsFollowPowerCycleEvents() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const details = createTemporaryObject(detailsComponent, panel, {
-            controller: controller,
-            width: 600,
-            height: 900
-        });
-        verify(details !== null);
-        controller.detailsOpen = true;
-        compare(details.subtitle, "Connected");
-        const original = controller.selectedDevice;
-        const backend = findChild(controller, "bluetoothBackend");
-        for (const connected of [false, true, false, true]) {
-            const device = Object.assign({}, original, {
-                connected: connected,
-                battery_live: connected,
-                battery: connected ? [
-                    {
-                        component: "left",
-                        percentage: 75
-                    }
-                ] : [],
-                fast_pair: connected ? original.fast_pair : null
-            });
-            backend.handleEvent({
-                stream: "bluetooth.changed",
-                event: "changed",
-                data: {
-                    snapshot: {
-                        radio: controller.radio,
-                        adapters: controller.adapters,
-                        devices: [device]
-                    }
-                }
-            });
-            compare(controller.selectedDevice.connected, connected);
-            compare(details.subtitle, connected ? "Connected" : "Paired");
-            compare(controller.selectedDevice.battery_live, connected);
-            verify(controller.detailsOpen);
-            wait(0);
-        }
-    }
     Component {
         id: adapterPageComponent
         Bt.BluetoothAdapterPage {}
@@ -429,13 +323,6 @@ DaemonTestCase {
             ready: true
         }));
         compare(calls.length, 0);
-    }
-    function test_audioUnavailableDoesNotLeaveStaleRoutes() {
-        const panel = makePanel();
-        panel.controller.invalidateAudio("PipeWire unavailable");
-        compare(panel.controller.audioDevices.length, 0);
-        verify(panel.controller.backendAvailable);
-        verify(panel.controller.hasSelection);
     }
     function test_pairingInputSurvivesUnrelatedOperationsAndQueueRecovery() {
         const controller = makePanel().controller;
@@ -975,102 +862,12 @@ DaemonTestCase {
         compare(codec.text, "Codec: —");
         compare(controller.audioPresentationByDevice.buds, undefined);
     }
-    function test_disconnectedAudioDevicesHaveTheSameControls_data() {
-        return [
-            {
-                tag: "headphones",
-                device_type: "Headphones"
-            },
-            {
-                tag: "earbuds",
-                device_type: "Earbuds"
-            },
-            {
-                tag: "headset",
-                device_type: "Headset"
-            },
-            {
-                tag: "speaker",
-                device_type: "Speaker"
-            }
-        ];
-    }
-    function test_disconnectedAudioDevicesHaveTheSameControls(data) {
-        const panel = makePanel();
-        const controller = panel.controller;
-        controller.applyAudioSnapshot([]);
-        controller.applySnapshot({
-            radio: controller.radio,
-            adapters: controller.adapters,
-            devices: [
-                {
-                    key: "cold",
-                    name: "Headset",
-                    paired: true,
-                    connected: false,
-                    device_type: data.device_type,
-                    policy: {}
-                }
-            ]
-        });
-        wait(0);
-        verify(findChild(panel.page, "deviceAudio").visible);
-        for (const name of ["currentAudioProfile", "useAudioOutput", "useAudioInput"]) {
-            const control = findChild(panel.page, name);
-            verify(control.visible && !control.enabled, name);
-        }
-        compare(findChild(panel.page, "audioCodec").text, "Codec: —");
-        verify(findChild(panel.page, "audioOutputOnConnect").interactive);
-    }
     Component {
         id: batteryComponent
         Bt.BluetoothBatteryStatus {
             width: 600
             height: implicitHeight
         }
-    }
-    function test_batteryReadingsRemainVisibleAndDimWithoutExtraText() {
-        const device = {
-            device_type: "Earbuds",
-            connected: true,
-            battery_live: true,
-            components: ["left", "right", "case"],
-            battery: [
-                {
-                    component: "left",
-                    percentage: 93
-                },
-                {
-                    component: "case",
-                    percentage: 77
-                },
-                {
-                    component: "right",
-                    percentage: 96
-                }
-            ]
-        };
-        const battery = createTemporaryObject(batteryComponent, testCase, {
-            device: device
-        });
-        verify(battery !== null);
-        const left = findChild(battery, "batteryPercentage-left");
-        verify(left.visible);
-        compare(left.text, "93%");
-        compare(left.opacity, 1);
-        const height = battery.height;
-        battery.device = Object.assign({}, device, {
-            connected: false,
-            battery_live: false,
-            battery_last_known: true
-        });
-        compare(left.text, "93%");
-        verify(left.visible && left.opacity < 1);
-        compare(battery.height, height);
-        const controller = makePanel().controller;
-        const subtitle = controller.provider.deviceSubtitle(battery.device, null, null);
-        verify(subtitle.includes("L 93%") && subtitle.includes("Case 77%"));
-        verify(!subtitle.includes("last known"));
     }
     function test_overallEarbudBatteryIsNotLostOrAssignedToEachEarbud() {
         const battery = createTemporaryObject(batteryComponent, testCase, {

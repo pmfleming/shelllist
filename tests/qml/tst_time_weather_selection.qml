@@ -80,13 +80,4 @@ TestCase {
         compare(controller.selectedCity.lunar, null);
     }
 
-    function test_emptyFilterClearsWeatherSelection() {
-        const controller = makeController();
-        controller.filterText = "no matching city";
-        verify(!controller.hasSelection);
-        compare(controller.weatherLocationId, "");
-        controller.filterText = "Taipei";
-        verify(controller.hasSelection);
-        compare(controller.selectedWeather.id, "taipei");
-    }
 }

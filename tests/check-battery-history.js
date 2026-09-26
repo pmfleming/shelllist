@@ -24,16 +24,10 @@ const points = [
     point(2 * day + 15 * minute, 30 * minute, 60)
 ];
 const compact = series(points);
-equal(compact.segments.map(segment => segment.map(p => p.x)), [[0, 0.5], [0.5, 1]],
-    "two days offline must use no graph width or solid connecting line");
 equal(compact.breaks.map(gap => [[gap.from.x, gap.from.value], [gap.to.x, gap.to.value]]),
     [[[0.5, 90], [0.5, 70]]],
     "connect only the last charge reading before downtime to the first after it");
 
-const shortGap = series([point(0, 0, 80, false), point(minute, minute, 79),
-    point(2 * minute, minute, 90, false), point(3 * minute, 2 * minute, 89)]);
-equal(shortGap.segments.map(segment => segment.length), [2, 2],
-    "explicit restart/suspend markers must split even a short wall-clock gap");
 assert.equal(series([point(0, 0, 80), point(minute, minute, null),
     point(2 * minute, 2 * minute, 79)]).breaks.length, 0,
     "missing charge readings must not fabricate gap endpoints");
@@ -67,22 +61,14 @@ const areas = history.powerAreas(watts.segments);
 equal(areas.map(area => [area.charging, area.points.map(p => p.value)]),
     [[false, [0]], [false, [12, 0]], [true, [0, 8]]],
     "power areas split at missing samples and change colour through zero");
-const suspendedWatts = series([
-    point(0, 0, 80, false, { power_watts: 12 }),
-    point(minute, minute, 79, true, { power_watts: 8 }),
-    point(day, minute, 60, false, { power_watts: 20 }),
-    point(day + minute, 2 * minute, 59, true, { power_watts: 10 })
-], "power_watts");
-equal(history.powerAreas(suspendedWatts.segments).map(area => area.points.map(p => p.value)),
-    [[12, 8], [20, 10]], "same-direction areas must not connect across suspend");
 const zeroTransition = series([
     point(0, 0, 80, false, { power_watts: 0, power_valid: true }),
     point(minute, minute, 80, true, { power_watts: 0, power_valid: true, charging: true })
 ], "power_watts");
 const zeroAreas = history.powerAreas(zeroTransition.segments);
 assert.equal(zeroAreas[0].points[1].x, 0.5, "zero-to-zero mode changes remain finite");
-// Qt's BatteryHistory suite owns visible isolated samples, range selection and
-// appending live observations. Keep duplicate/late cache handling below.
+// Qt's BatteryHistory suite owns visible isolated samples and gap rendering.
+// Keep duplicate/late cache handling below.
 const live = point(2 * day + 16 * minute, 31 * minute, 59);
 const extended = history.windowPoints(points, 6, live);
 assert.equal(history.windowPoints(extended, 6, live).length, 5, "do not duplicate a persisted/live point");

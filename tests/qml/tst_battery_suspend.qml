@@ -29,13 +29,6 @@ DaemonTestCase {
         }
     }
 
-    Component {
-        id: closeSpyComponent
-        SignalSpy {
-            signalName: "closeWindowRequested"
-        }
-    }
-
     function suspendState(inhibitors) {
         return {
             available: true,
@@ -76,54 +69,6 @@ DaemonTestCase {
         page.contentY = Math.max(0, page.contentHeight - page.height);
         verify(waitForRendering(panel));
         return panel;
-    }
-
-    function test_onlyRealBlockersWarnAndProgressErrorsStayLocal() {
-        const panel = makePanel([
-            {
-                what: "shutdown:sleep",
-                mode: "block",
-                who: "Editor",
-                why: "Saving document"
-            }
-        ]);
-        const controller = panel.controller;
-        const status = findChild(panel, "suspendStatusText");
-        verify(findChild(panel, "suspendStatusRow").visible);
-        compare(status.text, "Suspend blocked");
-        controller.applyPowerSuspend(suspendState([
-            {
-                what: "sleep",
-                mode: "delay",
-                who: "NetworkManager"
-            }
-        ]));
-        verify(!findChild(panel, "suspendStatusRow").visible);
-        controller.suspendPendingAction = "suspend";
-        controller.suspendRetryAction = "suspend";
-        controller.actionInFlight = true;
-        compare(status.text, "Locking…");
-        for (const action of ["lock", "suspend", "hibernate"])
-            verify(!findChild(panel, "suspendAction-" + action).enabled);
-        controller.applyPowerSuspend(Object.assign(suspendState(), {
-            preparing_for_sleep: true
-        }));
-        compare(status.text, "Preparing suspend…");
-        controller.applyPowerSuspend(suspendState());
-        controller.operationFailed("power-suspend-suspend-1", "Screen lock was not confirmed");
-        compare(status.text, "Suspend failed");
-        const reason = findChild(panel, "suspendFailureReason");
-        verify(reason.visible);
-        compare(reason.text, "Screen lock was not confirmed");
-        compare(reason.elide, Text.ElideNone);
-        compare(controller.lastError, "");
-        const retry = findChild(panel, "suspendRetryButton");
-        verify(retry.visible && retry.enabled);
-        compare(retry.Accessible.name, "Retry Suspend");
-        controller.operationFinished("power-suspend-suspend-2");
-        verify(!reason.visible);
-        verify(!retry.visible);
-        verify(!findChild(panel, "suspendStatusRow").visible);
     }
 
     function test_keepAwakeIsAccessibleAndOnlyDisablesSuspend() {
@@ -202,73 +147,6 @@ DaemonTestCase {
         button.Accessible.toggleAction();
         compare(calls.length, 1);
         compare(calls[0].params.enabled, true, "healthy telemetry restores ordinary toggling");
-    }
-
-    function test_sharedAndSeparateAutomaticSuspendControls() {
-        const panel = makePanel();
-        const state = {
-            available: true,
-            active_profile: "battery",
-            hibernate_available: true,
-            lid: {
-                available: true,
-                managed: false,
-                error: null
-            },
-            policy: {
-                same_profile: false,
-                battery: {
-                    sleep_minutes: 15,
-                    hibernate_minutes: 60
-                },
-                plugged: {
-                    sleep_minutes: 45,
-                    hibernate_minutes: 180
-                }
-            }
-        };
-        panel.controller.applySuspendPolicy(state);
-        verify(waitForRendering(panel));
-        compare(findChild(panel, "suspendDelay-battery").value, "15");
-        compare(findChild(panel, "hibernateDelay-battery").value, "60");
-        compare(findChild(panel, "suspendDelay-plugged").value, "45");
-        compare(findChild(panel, "hibernateDelay-plugged").value, "180");
-        const lid = findChild(panel, "lidCloseAction");
-        compare(lid.value, "system", "older policies retain logind behavior");
-        verify(lid.Accessible.name.length > 0);
-        compare(lid.options.length, 6);
-        const card = findChild(panel, "automaticSuspendCard");
-        for (const name of ["suspendDelay-battery", "hibernateDelay-battery", "suspendDelay-plugged", "hibernateDelay-plugged"]) {
-            const control = findChild(panel, name);
-            verify(control.enabled);
-            verify(control.Accessible.name.length > 0);
-            verify(control.mapToItem(card, control.width, 0).x <= card.width - card.contentPadding);
-        }
-        state.policy.same_profile = true;
-        state.policy.battery.sleep_minutes = 0;
-        panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
-        verify(waitForRendering(panel));
-        verify(findChild(panel, "suspendDelay-plugged") === null);
-        compare(findChild(panel, "suspendDelay-battery").value, "0");
-        verify(!findChild(panel, "hibernateDelay-battery").enabled);
-        state.policy.lid_action = "profile";
-        panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
-        compare(lid.value, "profile");
-        verify(findChild(panel, "hibernateDelay-battery").enabled, "lid profile works with Never idle suspend");
-        state.lid.error = "Lid action failed: lock was not confirmed";
-        panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
-        compare(findChild(panel, "lidCloseStatus").text, state.lid.error);
-        state.policy.battery.sleep_minutes = 15;
-        state.hibernate_available = false;
-        panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
-        const hibernate = findChild(panel, "hibernateDelay-battery");
-        verify(hibernate.options.every(function (option) {
-            return option.enabled === (option.value === "0");
-        }));
-        state.available = false;
-        panel.controller.applySuspendPolicy(JSON.parse(JSON.stringify(state)));
-        verify(!findChild(panel, "suspendDelay-battery").enabled);
-        verify(!findChild(panel, "suspendSameProfile").interactive);
     }
 
     function test_criticalProtectionControlsAndUnknownOutcome() {
@@ -384,17 +262,4 @@ DaemonTestCase {
         compare(controller.suspendPolicyDraft.battery.sleep_minutes, 30);
     }
 
-    function test_keyboardNavigationAndEscapeRemainAvailable() {
-        const panel = makePanel();
-        panel.controller.backend.active = false;
-        panel.controller.uiActive = true;
-        const closeSpy = createTemporaryObject(closeSpyComponent, testCase, {
-            target: panel.controller
-        });
-        findChild(panel, "suspendAction-lock").forceActiveFocus();
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(panel.controller.viewTab, "overview");
-        keyClick(Qt.Key_Escape);
-        compare(closeSpy.count, 1, "Escape dismisses the battery panel directly");
-    }
 }

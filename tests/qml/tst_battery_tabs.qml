@@ -231,40 +231,4 @@ TestCase {
         compare(spy.count, count, "busy controls cannot dispatch profile changes");
     }
 
-    function test_deviceSelectionStaysWithCareSettings() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        controller.applyBattery({
-            available: true,
-            percentage: 60,
-            devices: [device("BAT0", 80, 80)]
-        });
-        controller.selectViewTab("care");
-        const card = findChild(panel, "batteryDeviceCard");
-        const selector = findChild(panel, "batteryDeviceSelector");
-        const health = findChild(panel, "batteryHealthCard");
-        verify(!card.visible, "single-battery systems need no device selector");
-        controller.applyBattery({
-            available: true,
-            percentage: 60,
-            devices: [device("BAT0", 80, 80), device("BAT1", 90, 85)]
-        });
-        verify(card.visible);
-        verify(card.height >= 100, "the selector must not collapse to a boolean height");
-        selector.selected("BAT1");
-        compare(controller.primaryDevice.id, "BAT1");
-        compare(controller.draftEndPercent, 85);
-        compare(health.entries[0].value, "90%");
-        controller.selectViewTab("overview");
-        controller.selectViewTab("care");
-        compare(selector.value, "BAT1", "tab changes retain device selection");
-        controller.applyBattery({
-            available: true,
-            percentage: 60,
-            devices: [device("BAT0", 80, 80)]
-        });
-        verify(!card.visible);
-        compare(controller.primaryDevice.id, "BAT0");
-        compare(health.entries[0].value, "80%");
-    }
 }

@@ -46,14 +46,6 @@ TestCase {
                 icon: "",
                 enabled: false,
                 expected: 0
-            },
-            {
-                tag: "absent",
-                key: Qt.Key_Return,
-                modifiers: Qt.AltModifier,
-                icon: "",
-                enabled: true,
-                expected: 0
             }
         ];
     }

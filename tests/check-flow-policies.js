@@ -19,12 +19,6 @@ assert.equal(battery.energyRequest("week", false, 120000, 100000, 0), null,
     "fresh energy request is cached");
 assert.ok(battery.energyRequest("week", true, 120000, 100000, 0),
     "explicit refresh bypasses the cache");
-assert.equal(battery.alertDraft({ auto_power_saver: false }).warning_profile, "keep-current",
-    "pre-profile daemons that disabled power saver keep the current profile");
-assert.equal(battery.editSuspendPolicy({ critical_battery: null }, "critical_battery", "percent", 21), null,
-    "out-of-range critical battery levels are rejected");
-assert.equal(battery.editSuspendPolicy({ critical_battery: null }, "critical_battery", "percent", 8).critical_battery.grace_seconds, 60,
-    "a first critical-battery edit fills the remaining defaults");
 
 const clipboard = load(process.argv[3]);
 const first = clipboard.rememberTerminal({ id: "op-1", status: "completed" }, {}, 64);

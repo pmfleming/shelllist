@@ -117,7 +117,6 @@ The current launcher is not an omni-launcher. It does not provide arbitrary comm
 The checked frontend fixture is `contracts/app-api-ui-contract.fixture.json`. Relevant checks include:
 
 ```sh
-node tests/check-application-presentation.js launcher/ApplicationPresentation.js
 node tests/check-application-lifecycle.js launcher/ApplicationLifecycle.js
 node tests/check-application-history.js
 node tests/check-resource-availability.js

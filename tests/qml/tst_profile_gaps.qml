@@ -1,6 +1,5 @@
 import QtQuick
 import QtTest
-import Shelllist.Bluetooth as Bluetooth
 import Shelllist.Io as Io
 
 TestCase {
@@ -49,45 +48,12 @@ TestCase {
         Io.DaemonSessions.clientFactory = originalFactory;
     }
 
-    Component {
-        id: bluetoothFactory
-        Bluetooth.BluetoothController {}
-    }
-
     function createView(file: string, properties: var): var {
         const component = Qt.createComponent("../../qml/Shelllist/" + file);
         compare(component.status, Component.Ready, component.errorString());
         const view = createTemporaryObject(component, tests, properties);
         verify(view !== null);
         return view;
-    }
-
-    function test_adapterSwitchClearsDrafts(): void {
-        const controller = createTemporaryObject(bluetoothFactory, tests);
-        controller.adapters = [
-            {
-                key: "first",
-                alias: "First"
-            },
-            {
-                key: "second",
-                alias: "Second"
-            }
-        ];
-        controller.preferredAdapterKey = "first";
-        const view = createView("Bluetooth/BluetoothAdapterSettings.qml", {
-            controller: controller,
-            width: 700
-        });
-        wait(0);
-        view.setDirty("alias", true);
-        verify(view.hasDirtyFields);
-        controller.preferredAdapterKey = "second";
-        view.syncAdapterFields(false);
-        compare(view.displayedAdapterKey, "second");
-        verify(!view.hasDirtyFields);
-        verify(view.aliasValid);
-        view.destroy();
     }
 
     function test_solarProgressTracksClockAndMissingData(): void {

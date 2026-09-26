@@ -15,27 +15,15 @@ function equal(actual, expected, message) {
 
 equal(context.expectedRevision(15592525670148626000), null,
     "unsafe daemon revision disables stale-state validation");
-equal(context.expectedRevision(9007199254740991), 9007199254740991,
-    "largest JavaScript-safe revision is retained");
 
 const request = { actionId: "focus-window-2" };
 equal(context.operationMatches(request, "app.desktop", {
     target_id: "other.desktop", action: "focus-window"
 }), false, "another target is rejected");
-equal(context.operationMatches(request, "app.desktop", {
-    target_id: "app.desktop", action: "activate"
-}), false, "another action is rejected");
 
 equal(context.operationTransition(request, "app.desktop", "", "action-1", {
     id: "operation-1", status: "accepted"
 }), null, "accepted response must match the active request");
-const accepted = context.operationTransition({ id: "action-1", actionId: "focus-window-2" },
-    "app.desktop", "", "action-1", { id: "operation-1", status: "accepted" });
-equal(accepted.operationId, "operation-1", "accepted operation captures its daemon id");
-const completed = context.operationTransition(request, "app.desktop", "", "", {
-    id: "operation-1", status: "completed", target_id: "app.desktop", action: "focus-window"
-});
-equal(completed.stage, "terminal", "matching completion is terminal");
 equal(context.operationTransition(request, "app.desktop", "operation-1", "", {
     id: "operation-2", status: "running"
 }), null, "events from another operation are rejected");

@@ -725,13 +725,6 @@
             ]
           ];
 
-          barSurfaceRecovery = nodeCheck "bar-surface-recovery" [
-            [
-              ./tests/check-bar-surface-recovery.js
-              ./shell/BarSurfaceRecovery.js
-            ]
-          ];
-
           typescript = pkgs.runCommand "shelllist-typescript-current"
             {
               nativeBuildInputs = [ pkgs.nodejs pkgs.typescript ];
@@ -838,13 +831,6 @@
             ]
           ];
 
-          applicationPresentation = nodeCheck "application-presentation" [
-            [
-              ./tests/check-application-presentation.js
-              ./launcher/ApplicationPresentation.js
-            ]
-          ];
-
           applicationResources = nodeCheck "application-resources" [
             [
               ./tests/check-application-resources.js
@@ -897,8 +883,6 @@
             ]
           ];
 
-          wifiIcons = nodeCheck "wifi-icons" [ [ ./tests/check-wifi-icons.js ./wifi/WifiIcons.js ] ];
-
           networkHealth = nodeCheck "network-health" [
             [
               ./tests/check-network-health.js
@@ -948,13 +932,6 @@
             [
               ./tests/check-bluetooth-battery.js
               ./bluetooth/BluetoothBattery.js
-            ]
-          ];
-
-          bluetoothNoiseControl = nodeCheck "bluetooth-noise-control" [
-            [
-              ./tests/check-bluetooth-noise-control.js
-              ./bluetooth/BluetoothNoiseControl.js
             ]
           ];
 

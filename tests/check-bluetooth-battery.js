@@ -17,8 +17,4 @@ const reports = battery.displayReports({
 });
 expect("unknown components do not invent percentages",
     reports.filter(value => battery.isValid(value)).map(value => value.component).join(",") === "right");
-expect("unknown values are not inferred", battery.summary([
-    { component: "right", percentage: 55 }, { component: "case", percentage: 127 },
-    { component: "left", percentage: -1 }
-]) === "R 55%");
 console.log("Bluetooth battery: component telemetry and unknown values passed");

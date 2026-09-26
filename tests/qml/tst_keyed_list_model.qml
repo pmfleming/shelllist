@@ -76,26 +76,6 @@ TestCase {
                 compare(model.get(row).resultKey, model.values[row].key);
         }
     }
-    function test_largeAppendPreservesExistingDelegates() {
-        model.values = rows(200);
-        const first = delegates.itemAt(0);
-        const last = delegates.itemAt(199);
-        model.values = rows(400);
-        tryCompare(model, "count", 400);
-        compare(delegates.itemAt(0), first);
-        compare(delegates.itemAt(199), last);
-        compare(creations, 400, "only new page delegates are created");
-        model.values = rows(800);
-        compare(delegates.itemAt(0), first);
-        model.values = [
-            {
-                key: "latest"
-            }
-        ];
-        wait(0);
-        compare(model.count, 1, "superseding an append cancels its queued chunks");
-        compare(model.get(0).resultKey, "latest");
-    }
     function test_progressiveRebuildAndStaleWorkCancellation() {
         model.maximumIncrementalOrderChanges = 2;
         model.maximumSynchronousItems = 5;

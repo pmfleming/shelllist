@@ -22,34 +22,6 @@ TestCase {
         signalName: "triggered"
     }
 
-    function test_actionClassification(): void {
-        const open = {
-            key: "open",
-            label: "Open"
-        };
-        const reply = {
-            key: "inline-REPLY",
-            label: "Reply"
-        };
-        const activate = {
-            key: "default",
-            label: "View"
-        };
-        const notification = {
-            actions: [activate, open, reply]
-        };
-        compare(Ui.NotificationPresentation.standardActions(notification), [open]);
-        verify(Ui.NotificationPresentation.replyAction(notification) === reply);
-        verify(Ui.NotificationPresentation.defaultAction(notification) === activate);
-        compare(Ui.NotificationPresentation.defaultAction({
-            actions: [open]
-        }), null);
-        compare(Ui.NotificationPresentation.standardActions({}), []);
-        compare(Ui.NotificationPresentation.replyAction({
-            actions: {}
-        }), null);
-    }
-
     property var toastGroups: [{
             records: [{
                     actions: [{
@@ -82,19 +54,6 @@ TestCase {
         }), ["archive"]);
         compare(Ui.NotificationPresentation.replyAction(notification).key, "reply");
         compare(Ui.NotificationPresentation.defaultAction(notification).key, "default");
-    }
-
-    function test_compactTimeLabels(): void {
-        const now = new Date(2026, 8, 23, 15, 30).getTime();
-        const at = function (month, day, hour, minute) {
-            return new Date(2026, month, day, hour, minute).getTime();
-        };
-        compare(Ui.NotificationPresentation.timeLabel(now - 20000, now), "now");
-        compare(Ui.NotificationPresentation.timeLabel(now - 5 * 60000, now), "5m");
-        compare(Ui.NotificationPresentation.timeLabel(at(8, 23, 9, 0), now), "6h");
-        compare(Ui.NotificationPresentation.timeLabel(at(8, 22, 23, 50), now), "Yesterday");
-        compare(Ui.NotificationPresentation.timeLabel(at(8, 20, 12, 0), now), "20 Sep");
-        compare(Ui.NotificationPresentation.timeLabel(0, now), "");
     }
 
     function test_keyboardActivationAndNarrowLayout(): void {

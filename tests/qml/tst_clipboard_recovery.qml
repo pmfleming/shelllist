@@ -255,50 +255,6 @@ DaemonTestCase {
     function historyCalls() {
         return calls.filter(call => call.method === "clipboard.history.query");
     }
-    function test_scrollPrefetchPreservesViewportAndSelection() {
-        const controller = pagedController();
-        const pane = makePane(controller);
-        const list = findChild(pane, "resultListView");
-        tryCompare(list, "count", 200);
-        wait(0);
-        compare(historyCalls().length, 0, "opening must not fetch the whole catalog");
-        compare(pane.listOptionsComponent, null, "no top pagination toolbar");
-        list.positionViewAtIndex(195, ListView.Beginning);
-        tryCompare(controller, "loadingMoreHistory", true);
-        compare(historyCalls().length, 1);
-        compare(controller.selectedIndex, 0, "mouse scrolling need not change selection");
-        const scrollY = list.contentY;
-        verify(list.footerItem.height > 0, "show loading feedback at the bottom");
-        controller.loadMoreHistory();
-        compare(historyCalls().length, 1, "coalesce requests in flight");
-        const entries = Array.from({
-            length: 200
-        }, function (_, index) {
-            return {
-                id: "row-" + (200 + index),
-                revision: 1,
-                kind: "text",
-                preview: "More " + index,
-                favorite: false
-            };
-        });
-        reply(controller, controller.activeHistoryQueryId, {
-            history: {
-                snapshot_revision: "123",
-                total: 400,
-                offset: 200,
-                entries: entries
-            }
-        });
-        tryCompare(list, "count", 400);
-        wait(0);
-        compare(controller.selectedIndex, 0);
-        compare(list.contentY, scrollY, "appending must not jump back to the selected row");
-        compare(list.footerItem.height, 0);
-        list.positionViewAtEnd();
-        wait(0);
-        compare(historyCalls().length, 1, "stop at cursor exhaustion");
-    }
     function test_pageFailureOffersExplicitRetryWithoutLoop() {
         const controller = pagedController();
         const pane = makePane(controller);
@@ -344,19 +300,6 @@ DaemonTestCase {
         compare(list.footerItem.height, 0);
         compare(historyCalls().length, 2);
     }
-    function test_keyboardPrefetchAndHiddenGuard() {
-        const controller = pagedController();
-        controller.select(195);
-        wait(0);
-        compare(historyCalls().length, 0);
-        controller.select(196);
-        tryCompare(controller, "loadingMoreHistory", true);
-        compare(historyCalls().length, 1);
-        reply(controller, controller.activeHistoryQueryId, {}, "Temporary read failure");
-        controller.uiActive = false;
-        controller.loadMoreHistory();
-        compare(historyCalls().length, 1, "hidden surfaces must not page");
-    }
     function test_warmReopenRetainsCursorAfterRevisionCheck() {
         const controller = pagedController();
         controller.deactivateUi();
@@ -372,21 +315,6 @@ DaemonTestCase {
         controller.loadMoreHistory();
         compare(historyCalls().length, 1);
         compare(historyCalls()[0].params.cursor, "next-page");
-    }
-    function test_searchChangeClearsPageErrorAndOldCursor() {
-        const controller = pagedController();
-        controller.loadMoreHistory();
-        reply(controller, controller.activeHistoryQueryId, {}, "Temporary read failure");
-        controller.filterText = "new search";
-        controller.loadMoreHistory();
-        compare(historyCalls().length, 1, "never retry the old query after search changes");
-        tryVerify(function () {
-            return historyCalls().length === 2;
-        });
-        compare(controller.historyPageError, "");
-        compare(controller.historyCursor, "");
-        compare(historyCalls()[1].params.query, "new search");
-        compare(historyCalls()[1].params.cursor, null);
     }
     function test_stalePageRefreshesInsteadOfRetryingCursor() {
         const controller = pagedController();

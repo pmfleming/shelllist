@@ -93,78 +93,6 @@ DaemonTestCase {
         c.filterText = "";
         verify(c.hasSelection);
     }
-    function test_settingsInformationAndTextNavigation() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.uiActive = true;
-        const state = displayState();
-        state.outputs[1].make = "Dell";
-        state.outputs[1].model = "U2723QE";
-        state.outputs[1].serial = "TEST-123";
-        c.applyDisplayPolicy(state);
-        c.openDetails();
-        tryVerify(function () { return findChild(panel, "displayDetailsTabs") !== null; });
-        const tabs = findChild(panel, "displayDetailsTabs");
-        const info = findChild(panel, "displayInformation");
-        compare(tabs.tabs.length, 2);
-        compare(tabs.selectedValue, "settings");
-        const x = findChild(panel, "displayX");
-        x.focusInput(false);
-        x.cursorPosition = 2;
-        const before = c.selectedDraft.x;
-        keyClick(Qt.Key_Left);
-        compare(x.cursorPosition, 1);
-        verify(c.detailsOpen, "Left edits text rather than closing details");
-        compare(c.selectedDraft.x, before);
-        c.edit("DP-1", "scale", 2);
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(c.detailsTab, "information");
-        verify(info.visible);
-        compare(info.entries.find(e => e.label === "Scale").value, "150%", "Information shows observed state, not the draft");
-        compare(info.entries.find(e => e.label === "Manufacturer").value, "Dell");
-        verify(!findChild(panel, "displayLayoutWorkspace").visible);
-        verify(c.triggerDetailAction("arrange"));
-        compare(c.detailsTab, "settings");
-        compare(c.selectedDraft.scale, 2);
-        c.selectOutput("eDP-1");
-        c.cycleDetailsTab();
-        verify(!info.entries.some(e => e.label === "Serial number"), "missing metadata is omitted");
-        compare(c.detailActions.filter(a => a.visible && a.presentation.group === "toolbar").length, 2);
-        compare(calls.length, 0);
-    }
-    function test_sharedSelectionSearchAndDraftRetention() {
-        const c = makePanel().controller;
-        compare(c.filteredResults.length, 2);
-        compare(c.selectedName, "DP-1", "enabled displays sort first");
-        c.edit("DP-1", "scale", 2);
-        c.moveSelection(1);
-        compare(c.selectedName, "eDP-1");
-        verify(!c.navigationBlocked, "a draft does not prevent browsing displays");
-        c.openDetails();
-        verify(c.detailsOpen);
-        c.cycleDetailsTab();
-        compare(c.detailsTab, "information");
-        c.selectOutput("DP-1");
-        compare(c.selectedDraft.scale, 2);
-        c.applyDisplayPolicy(displayState());
-        compare(c.selectedName, "DP-1");
-        compare(c.selectedDraft.scale, 2);
-        const store = c.selectionModel;
-        store.rankRequestsEnabled = false;
-        c.filterText = "Laptop";
-        store.applyRustRanking(store.searchOwner, store.searchGeneration, ["displays::eDP-1"]);
-        compare(c.filteredResults.length, 1);
-        compare(c.selectedName, "eDP-1");
-        c.filterText = "not a display";
-        store.applyRustRanking(store.searchOwner, store.searchGeneration, []);
-        verify(!c.hasSelection);
-        verify(c.dirty, "zero search results must not discard the layout");
-        c.filterText = "";
-        c.selectOutput("DP-1");
-        compare(c.selectedDraft.scale, 2);
-        verify(c.triggerDetailAction("toggle-enabled"));
-        compare(calls.length, 0);
-    }
     function test_providerResultsAndLiveActions() {
         const c = makePanel().controller;
         const provider = c.displayProvider;
@@ -249,44 +177,6 @@ DaemonTestCase {
         verify(!choice.interactive);
         choice.selected("keep-on");
         compare(calls.length, 0);
-    }
-    function test_listSummaryAndWorkspaceKeyboard() {
-        const panel = makePanel();
-        const c = panel.controller;
-        compare(c.activeCount, 1, "summary shows actual state, not the fallback preview draft");
-        verify(c.draft[0].enabled, "preview retains laptop fallback");
-        verify(findChild(panel, "displayList") !== null);
-        verify(!findChild(panel, "chooserPowerToggle").visible);
-        compare(findChild(panel, "displayList").searchActionIcon, "", "no separate settings gear");
-        compare(findChild(panel, "displayList").listOptionsComponent, null);
-        c.uiActive = true;
-        c.selectOutput("DP-1");
-        c.openDetails();
-        verify(waitForRendering(panel));
-        tryVerify(function () { return findChild(panel, "displayWorkspaceCanvas") !== null; });
-        const canvas = findChild(panel, "displayWorkspaceCanvas");
-        verify(canvas !== null);
-        verify(!canvas.visible, "the canvas is not the initial details view");
-        verify(c.triggerDetailAction("arrange"));
-        tryVerify(function () { return canvas.visible; });
-        canvas.forceActiveFocus();
-        calls = [];
-        const before = c.selectedDraft.x;
-        keyClick(Qt.Key_Right);
-        compare(c.selectedDraft.x, before + 16);
-        keyClick(Qt.Key_Left, Qt.ShiftModifier);
-        compare(c.selectedDraft.x, before + 15);
-        compare(calls.length, 0, "moving is draft-only");
-        verify(c.canPreview);
-        verify(!c.canSetPolicy);
-        keyClick(Qt.Key_Tab);
-        verify(!canvas.activeFocus, "Tab exits the spatial composite");
-        c.closeDetails();
-        verify(c.discardPrompt);
-        c.dismissNavigation();
-        verify(c.detailsOpen && !c.discardPrompt);
-        c.discardAndClose();
-        verify(!c.dirty && !c.detailsOpen);
     }
     function test_draftSurvivesTelemetryAndUsesDaemonToken() {
         const panel = makePanel();

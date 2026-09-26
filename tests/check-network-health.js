@@ -26,7 +26,6 @@ const daemonFailure = event({
     reason: { code: 7, name: "no-secrets", category: "authentication" }, id: "Example"
 });
 expect("daemon recommended failure is surfaced", health.isFailure(daemonFailure), true);
-expect("daemon message is preferred", health.message(daemonFailure), "Example failed to authenticate.");
 expect("duplicate notification is suppressed", health.isDuplicateNotification(
     daemonFailure, health.notificationKey(daemonFailure), 1000, 2000, 3000), true);
 

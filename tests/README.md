@@ -24,11 +24,39 @@ These are additional regression checks, not a revision of the historical pruning
 baseline below. Expected negative-test application error logs are distinct from
 QML engine warnings and remain allowed.
 
-## Current pruning inventory
+## Current pruning inventory — 2026-09-26
 
-Baseline: the incoming worktree at `4d5ff24`, **including its existing uncommitted
-changes**. This supersedes the earlier 646 → 433 inventory; that historical
-baseline is not the baseline for this pass. Sibling repositories are not pruned.
+Baseline: clean `278ca0b`. Nearest-integer 67% target: **357 → 239** units
+(**33.05% removed**). Sibling repositories are not pruned.
+
+| Inventory unit | Before | After |
+| --- | ---: | ---: |
+| JavaScript assertion/helper sites | 195 | 111 |
+| Executed QML behavioral cases | 151 | 117 |
+| Rust tests | 4 | 4 |
+| Python tests | 2 | 2 |
+| Daemon contract suites | 5 | 5 |
+| **Combined inventory units** | **357** | **239** |
+
+This mixes assertion sites and runner cases, not independent scenarios or a
+coverage percentage. QML lifecycle hooks are excluded: **189 passes** include
+117 behavioral cases and 72 hooks. All 19 remaining behavioral JS scripts,
+Qt tests, four Rust tests and two Python tests pass.
+
+The counter now recognizes both `apiContract` and `pkgs.runCommand` declarations;
+the same corrected counter produces both inventories. Four existing daemon
+contracts were missed by its old syntax matcher; no contract was removed.
+
+Full Nix validation: **38/39 checks succeeded**. `nmDaemonContract` has an
+unchanged formatting-only failure reproduced at the baseline commit. It remains
+a failing gate, not an exclusion. See the [current review](../docs/reviews/test-pruning-2026-09-26.md)
+for decisions, coverage tradeoffs and reproduction commands.
+
+## Historical pruning inventory
+
+The remainder records the previous pass, not today's coverage or validation.
+Its baseline was the incoming worktree at `4d5ff24`, **including its existing
+uncommitted changes**. That pass superseded the earlier 646 → 433 inventory.
 
 Shelllist has ad-hoc JavaScript checks, QtTest, Rust and Python, not one
 runner-reported total. The existing counting convention and
@@ -83,7 +111,7 @@ The source and QML log must match. The inventory script rejects incomplete,
 failing, skipped or duplicate-case Qt logs; it does not infer a revision from
 logs. Do not count today's sources against the baseline log.
 
-## Removal decisions and remaining owners
+## Historical removal decisions and remaining owners
 
 | Removed or reduced | Remaining owner / rationale |
 | --- | --- |
@@ -108,7 +136,7 @@ quality threshold was changed by this pass. Flake test invocations dropped
 unused fixture arguments; the lens configuration dropped only the deleted
 `DetailPages` test entrypoint. Unrelated worktree edits remain untouched.
 
-## Validation
+## Historical validation
 
 - Baseline Qt: **184 behavioral cases**, zero failures/skips.
 - Retained Qt: **134 behavioral cases**, zero failures/skips (**202 passes**

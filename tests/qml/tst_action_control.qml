@@ -20,12 +20,6 @@ DaemonTestCase {
         }
     }
     Component {
-        id: toggle
-        Ui.ToggleRow {
-            title: "Toggle"
-        }
-    }
-    Component {
         id: toggleSwitch
         Ui.ToggleSwitch {}
     }
@@ -61,10 +55,6 @@ DaemonTestCase {
                 factory: button
             },
             {
-                tag: "toggle",
-                factory: toggle
-            },
-            {
                 tag: "switch",
                 factory: toggleSwitch
             },
@@ -92,7 +82,7 @@ DaemonTestCase {
         compare(clicks.count, 4, "pointer and keyboard share activation");
         control.Accessible.pressAction();
         compare(clicks.count, 5, "assistive press shares activation");
-        const checkable = data.tag === "toggle" || data.tag === "switch";
+        const checkable = data.tag === "switch";
         if (checkable)
             control.Accessible.toggleAction();
         const accepted = checkable ? 6 : 5;

@@ -13,11 +13,6 @@ vm.createContext(model);
 vm.runInContext(source, model, { filename: modelPath });
 
 let checks = 0;
-function expect(label, condition) {
-    ++checks;
-    if (!condition)
-        throw new Error(label);
-}
 function throws(label, action, fragment) {
     ++checks;
     try {
@@ -49,25 +44,9 @@ const terminal = model.result({
     actions: [launch],
     payload: { desktopFile: "/tmp/terminal.desktop" }
 });
-throws("primary action must exist", () => model.result({
-    providerId: "test", id: "one", title: "One", primaryActionId: "missing", actions: [launch]
-}), "does not reference");
 throws("duplicate actions are rejected", () => model.result({
     providerId: "test", id: "one", title: "One", actions: [launch, launch]
 }), "duplicate");
-
-const browser = model.result({
-    providerId: "desktop.applications",
-    id: "browser",
-    title: "Web Browser",
-    subtitle: "Browse the internet",
-    keywords: ["firefox"],
-    score: 100,
-    actions: [launch]
-});
-// ResultStore uses JS for baseline ordering; non-empty queries use Rust ranking.
-const ranked = model.rankResults([terminal, browser], "");
-expect("source score orders an empty query", ranked[0].key === browser.key);
 
 throws("cross-provider batches rejected", () => model.resultBatch({ providerId: "settings", results: [terminal] }), "does not match");
 
