@@ -17,7 +17,6 @@ TestCase {
     Component {
         id: buttons
         Item {
-            id: scene
             width: 480
             height: 200
             property alias first: first

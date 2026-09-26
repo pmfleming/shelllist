@@ -50,7 +50,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 
 `qmlqualitylens.config.json` declares the resident shell and QML test files as entrypoints. It also records dynamic component edges hidden behind `Component`, `Loader.sourceComponent`, and `SplitChooserLayout` factories. These edges are analysis metadata, not runtime dependencies. Keep them synchronized when a surface gains or removes dynamically instantiated content; prefer an explicit edge over a broad unused-component suppression.
 
-The current calibration reaches 295 of 298 components from 38 configured/discovered application and test roots. The remaining three (`ChartFrame`, `ChooserWindowHost`, `DisclosureSection`) are exported module API rather than confirmed dead code. Configured edges cover components instantiated through loaders; cleanup reports no unused components or IDs. Resolution has no unresolved imports; one internal test type (`Launcher.ApplicationSettingsPage`) remains unresolved by Lens, while native Qt lint is clean.
+The maintenance pass removes three unused in-repository exports (`ChartFrame`, `ChooserWindowHost`, `DisclosureSection`) after checking QML consumers throughout the workspace and configured dynamic edges. These were spare components, not a supported external toolkit contract. Do not retain unused exports merely because export reachability exempts them from cleanup findings. Configured edges still describe loader-created components; current measurements and analyzer limitations are recorded in the latest review.
 
 ## Focused declarative-state refactoring
 

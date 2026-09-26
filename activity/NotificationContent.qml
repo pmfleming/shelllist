@@ -131,7 +131,6 @@ Ui.ChooserSurface {
                     onClicked: toolbar.notificationState.clearNotifications()
                 }
                 Ui.FlatIconButton {
-                    id: closeButton
                     width: height
                     height: parent.height
                     icon: "󰅖"

@@ -164,7 +164,6 @@ ShellRoot {
 
     Connections {
         target: shell.activeController
-        ignoreUnknownSignals: true
 
         function onCloseWindowRequested() {
             windowHost.closeRequested();

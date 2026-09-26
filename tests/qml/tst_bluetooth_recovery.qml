@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtTest
 import "../../bluetooth" as Bt
 
 DaemonTestCase {

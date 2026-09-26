@@ -1,7 +1,8 @@
 # QML maintenance review: baseline checkpoint
 
 Application baseline: `ed08701`. Local QML Quality Lens: `80cb7a9` (0.5.0).
-This checkpoint records review evidence only; no refactors have been applied.
+The initial checkpoint recorded review evidence only. Implementation slices and
+validation are recorded below; the table retains the unchanged baseline.
 
 ## Comparable baseline
 
@@ -67,6 +68,15 @@ counts are review inventories, not counts of confirmed defects.
 Measure production totals including extracted helpers, not just smaller callers.
 Report test growth separately and count it in repository-wide LOC. Do not relax
 thresholds, exclude difficult files or add suppressions to claim improvement.
+
+## Implementation ledger
+
+- Cleanup: removed the four verified unused IDs, three unused test imports and
+  the shell's unnecessary unknown-signal suppression. Removed the three unused
+  UI exports after reviewing workspace consumers and dynamic edges: this module
+  is an in-repository implementation, not a supported external toolkit API.
+  Strict lint, all 201 Qt passes (including hooks), and offscreen shared-UI smoke
+  pass. No runtime behavior, protocol or daemon source was changed.
 
 ## Baseline execution evidence
 

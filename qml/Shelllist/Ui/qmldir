@@ -8,7 +8,6 @@ ActionDetailsPane 1.0 ActionDetailsPane.qml
 ActionToggleList 1.0 ActionToggleList.qml
 ActionToolbar 1.0 ActionToolbar.qml
 CenteredMessage 1.0 CenteredMessage.qml
-ChartFrame 1.0 ChartFrame.qml
 singleton ChartDrawing 1.0 ChartDrawing.qml
 ChartValueRail 1.0 ChartValueRail.qml
 ChooserController 1.0 ChooserController.qml
@@ -19,7 +18,6 @@ ChooserShortcuts 1.0 ChooserShortcuts.qml
 ProviderChooserController 1.0 ProviderChooserController.qml
 ProviderChooserSurface 1.0 ProviderChooserSurface.qml
 ChooserSurface 1.0 ChooserSurface.qml
-ChooserWindowHost 1.0 ChooserWindowHost.qml
 ConfirmationDialog 1.0 ConfirmationDialog.qml
 internal ControlLabel ControlLabel.qml
 ControlPointerArea 1.0 ControlPointerArea.qml
@@ -28,7 +26,6 @@ DetailColumnCard 1.0 DetailColumnCard.qml
 DetailField 1.0 DetailField.qml
 DetailFlickable 1.0 DetailFlickable.qml
 DetailGrid 1.0 DetailGrid.qml
-DisclosureSection 1.0 DisclosureSection.qml
 DetailsHeader 1.0 DetailsHeader.qml
 DetailsPane 1.0 DetailsPane.qml
 DestructiveIconButton 1.0 DestructiveIconButton.qml

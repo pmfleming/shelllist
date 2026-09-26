@@ -48,7 +48,6 @@ ColumnLayout {
         }
     }
     Ui.TextField {
-        id: numberField
         objectName: "focusNumber-" + setting.entry.key
         Layout.fillWidth: true
         visible: setting.entry.choices.length === 0

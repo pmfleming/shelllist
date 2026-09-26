@@ -150,7 +150,6 @@ Rectangle {
                         }
                     }
                     Ui.FlatIconButton {
-                        id: expandButton
                         visible: row.groupToggleVisible
                         width: 26
                         height: 26

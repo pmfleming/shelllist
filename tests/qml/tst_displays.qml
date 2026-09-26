@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtTest
 import Shelllist.Displays as Displays
 
 DaemonTestCase {
