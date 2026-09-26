@@ -21,8 +21,14 @@ already-open development shell after changing `flake.nix`.
 - `tst_battery_history.qml` also checks explicit keyboard/pointer inspection:
   hover/focus alone reveal no values, and editor Escape wins over the shared
   surface shortcut before the next Escape dismisses the surface.
-- Notification view tests destroy their content before its controller/state, and
-  reject unexpected JavaScript/binding warnings during the lifecycle.
+- `tst_notification_actions.qml` owns shared quick-action keyboard/pointer,
+  disabled activation, focus containment and hidden-reply layout behavior.
+- `tst_keyed_list_model.qml` checks serialized payloads retain native action
+  arrays, equal payloads avoid delegate rewrites, and updates are synchronous.
+  Notification view tests retain live reply focus through a 205-record burst,
+  destroy content before controller/state, and reject JavaScript/binding warnings.
+- `check-display-model.js` covers field-error precedence as well as mode,
+  geometry, mirror-source and independent-output safety constraints.
 
 These are additional regression checks, not a revision of the historical pruning
 baseline below. Expected negative-test application error logs are distinct from
