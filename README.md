@@ -168,7 +168,7 @@ See the [`docs/` index](docs/README.md), especially:
 
 ## Installation
 
-Keep `shelllist`, `daemon-framework`, `shelllist-hyprland`, and all five daemons in the same parent directory. The supported `local-build` commands snapshot these current worktrees together; local project revisions must not be deployment-pinned.
+Keep `shelllist`, `daemon-framework`, and all five daemons in the same parent directory. Hyprland IPC lives in `daemon-framework/crates/shelllist-hyprland`; no separate checkout is needed. The supported `local-build` commands snapshot these current worktrees together; local project revisions must not be deployment-pinned.
 
 Run directly:
 
@@ -280,8 +280,8 @@ tests/check-sibling-boundary.sh
 ```
 
 The sibling gate is the default **co-development compatibility check**. Every run
-uses the current local Git worktrees of all five daemons, `daemon-framework`, and
-`shelllist-hyprland`, rather than the revisions in `flake.lock`. It includes
+uses the current local Git worktrees of all five daemons and `daemon-framework`
+(including its `shelllist-hyprland` crate), rather than the revisions in `flake.lock`. It includes
 tracked uncommitted changes; Git-add new source files first. It does not fetch
 remote branches, update locks, or activate binaries/services.
 

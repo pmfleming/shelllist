@@ -10,10 +10,6 @@
       url = "git+file:../daemon-framework";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    shelllist-hyprland = {
-      url = "git+file:../shelllist-hyprland";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     nm-daemon = {
       url = "git+file:../nm-daemon";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -38,7 +34,6 @@
       url = "git+file:../bar-daemon";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.daemonFramework.follows = "daemon-framework";
-      inputs.hyprlandIpc.follows = "shelllist-hyprland";
     };
   };
 
@@ -615,8 +610,6 @@
           nmDaemonPackage = nmDaemon;
           otherSourceSnapshots = pkgs.runCommand "shelllist-other-source-snapshots"
             { nativeBuildInputs = [ pkgs.diffutils ]; } ''
-            diff -q ${inputs.shelllist-hyprland}/Cargo.toml ${inputs.app-daemon}/vendor/shelllist-hyprland/Cargo.toml
-            diff -qr ${inputs.shelllist-hyprland}/src ${inputs.app-daemon}/vendor/shelllist-hyprland/src
             diff -q ${./rust/shelllist-search}/Cargo.toml ${inputs.clip-daemon}/vendor/shelllist-search/Cargo.toml
             diff -qr ${./rust/shelllist-search}/src ${inputs.clip-daemon}/vendor/shelllist-search/src
             touch $out
