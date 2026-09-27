@@ -127,6 +127,20 @@ function keepOpenAction(id, label, options) {
     }));
 }
 
+// Shared presentation contract; capability checks and effects stay with providers.
+function settingToggle(id, label, checked, options) {
+    const source = objectOrEmpty(options);
+    return keepOpenAction(id, label, Object.assign({}, source, {
+        kind: "toggle",
+        state: {
+            checked: checked
+        },
+        presentation: Object.assign({
+            group: "settings"
+        }, objectOrEmpty(source.presentation))
+    }));
+}
+
 function actionList(values) {
     const result = (Array.isArray(values) ? values : []).map(action);
     ensureUnique(result, "id", "result.actions");

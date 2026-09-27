@@ -54,7 +54,7 @@ Item {
                 const latency = content.surfaceRequestStartedAtMs > 0 ? Math.max(0, Date.now() - content.surfaceRequestStartedAtMs) : -1;
                 content.surfaceContentReady(modelData.id, latency);
                 if (bundle && content.registry.currentId === modelData.id)
-                    Qt.callLater(bundle.controller.focusSearchRequested);
+                    Qt.callLater(bundle.controller.restoreUiFocus);
             }
         }
     }

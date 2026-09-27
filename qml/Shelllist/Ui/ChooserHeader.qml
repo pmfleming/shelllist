@@ -25,6 +25,7 @@ RowLayout {
     property string searchActionToolTip: ""
     property bool searchActionEnabled: true
 
+    signal querySelectionChanged
     signal filterEdited(string text)
     signal keyPressed(var event)
     signal iconClicked
@@ -42,6 +43,9 @@ RowLayout {
     function focusSearch() {
         search.focusInput(false);
     }
+
+    function selectionState(): var { return search.selectionState(); }
+    function restoreSelection(state: var): void { search.restoreSelection(state); }
 
     function insertSearchText(text: string): void {
         search.insertText(text);
@@ -96,6 +100,7 @@ RowLayout {
         trailingActionToolTip: header.searchActionToolTip
         trailingActionEnabled: header.searchActionEnabled
         trailingActionIconSize: Math.max(Theme.iconSize, header.scaled(Theme.iconSize))
+        onSelectionChanged: header.querySelectionChanged()
         onEdited: function (text) {
             header.filterEdited(text);
         }

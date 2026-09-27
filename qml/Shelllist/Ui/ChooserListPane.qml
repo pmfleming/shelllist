@@ -43,10 +43,13 @@ ColumnLayout {
     readonly property bool searchFocused: header.searchFocused
     readonly property int selectedIndex: chooserController.selectionModel ? chooserController.selectionModel.selectedIndex : 0
 
+    signal querySelectionChanged
     signal iconClicked
     signal searchActionRequested
 
     function applyFilter(text: string): void {
+        chooserController.navigationInteracted();
+        body.restoreViewport(null);
         if (chooserController.selectionModel)
             chooserController.selectionModel.queryText = text;
         chooserController.selectFirst();
@@ -58,6 +61,16 @@ ColumnLayout {
     Layout.fillWidth: true
     Layout.fillHeight: true
     spacing: Theme.verticalSpacing(Theme.spacingMd, densityScale)
+
+    function sessionState(): var {
+        return {selection: header.selectionState(), viewport: body.viewportState()};
+    }
+    function restoreSession(state: var): void {
+        if (!state)
+            return;
+        header.restoreSelection(state.selection);
+        body.restoreViewport(state.viewport);
+    }
 
     function focusSearch(): void {
         header.focusSearch();
@@ -97,10 +110,12 @@ ColumnLayout {
         searchActionIcon: pane.searchActionIcon
         searchActionToolTip: pane.searchActionToolTip
         searchActionEnabled: pane.searchActionEnabled
+        onQuerySelectionChanged: pane.querySelectionChanged()
         onFilterEdited: function (text) {
             pane.applyFilter(text);
         }
         onKeyPressed: function (event) {
+            pane.chooserController.navigationInteracted();
             pane.chooserController.navigation.handleSearchKey(event);
         }
         onIconClicked: pane.iconClicked()

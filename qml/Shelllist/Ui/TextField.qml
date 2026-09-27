@@ -26,6 +26,7 @@ FieldFrame {
     readonly property int embeddedActionCount: (showPasswordButton ? 1 : 0) + (trailingActionIcon.length > 0 ? 1 : 0)
     readonly property int effectiveRightPadding: embeddedActionCount > 0 ? Math.max(rightPadding, Theme.spacingXs + embeddedActionCount * embeddedActionWidth + (embeddedActionCount - 1) * Theme.spacingXs) : rightPadding
 
+    signal selectionChanged
     signal edited(string value)
     signal editingFinished
     signal accepted
@@ -47,6 +48,20 @@ FieldFrame {
         input.forceActiveFocus();
         if (selectContents)
             input.selectAll();
+    }
+
+    // Positions only: never retain text, preedit/IME state or password metadata.
+    function selectionState(): var {
+        if (password)
+            return null;
+        return {cursor: input.cursorPosition, anchor: input.cursorPosition === input.selectionStart ? input.selectionEnd : input.selectionStart};
+    }
+    function restoreSelection(state: var): void {
+        if (password || !state || !Number.isFinite(state.cursor) || !Number.isFinite(state.anchor))
+            return;
+        const cursor = Math.max(0, Math.min(input.text.length, state.cursor));
+        const anchor = Math.max(0, Math.min(input.text.length, state.anchor));
+        input.select(anchor, cursor);
     }
 
     // Continue an ordinary query after a printable key in the result region.
@@ -86,6 +101,9 @@ FieldFrame {
         font.family: Theme.fontFamily
         font.pixelSize: field.fontPixelSize
         verticalAlignment: TextInput.AlignVCenter
+        onCursorPositionChanged: field.selectionChanged()
+        onSelectionStartChanged: field.selectionChanged()
+        onSelectionEndChanged: field.selectionChanged()
         onTextEdited: field.edited(text)
         onEditingFinished: field.editingFinished()
         onAccepted: field.accepted()

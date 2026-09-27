@@ -11,6 +11,12 @@ ShellRoot {
     property real initialX: 0
     property int initialHeight: 0
     property int phase: 0
+    property int frames: 0
+
+    Connections {
+        target: visual.Window.window
+        function onFrameSwapped(): void { smoke.frames++; }
+    }
 
     Ui.ChooserController {
         id: controller
@@ -59,6 +65,11 @@ ShellRoot {
                     return;
                 }
                 controller.openDetails();
+                return;
+            }
+            if (smoke.frames === 0) {
+                console.error("Public visual window must deliver native frameSwapped");
+                Qt.exit(1);
                 return;
             }
             if (!Number.isFinite(controller.geometry.x) || controller.geometry.x !== smoke.initialX || visual.x !== 0 || window.height !== smoke.initialHeight || visual.width > window.width || visual.width !== controller.geometry.surfaceWidth) {

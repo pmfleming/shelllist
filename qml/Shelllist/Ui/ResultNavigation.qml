@@ -80,6 +80,7 @@ Item {
         handleSearchDirection(event);
     }
     function handleListKey(event) {
+        controller.navigationInteracted();
         if (blocked)
             return;
         if (handlePrimary(event) || handleClose(event) || handleSearchText(event))

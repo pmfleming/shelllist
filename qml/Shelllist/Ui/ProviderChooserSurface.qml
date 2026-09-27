@@ -11,6 +11,8 @@ ChooserSurface {
     property bool navigationEnabled: true
     // Incremental migration: native dialogs and unmigrated domains stay intact.
     property bool keyboardWorkflow: false
+    property bool sessionReady: true
+    property string sessionContext: chooserController.viewMemory ? JSON.stringify([chooserController.viewMemory.key, chooserController.viewMemory.tab]) : ""
     readonly property alias detailsNavigation: chooser.detailsNavigation
     property bool refreshEnabled: navigationEnabled && !chooserController.actionInFlight
     property bool detailsTabEnabled: navigationEnabled && chooserController.detailsOpen && chooserController.hasSelection
@@ -20,9 +22,11 @@ ChooserSurface {
     readonly property Item detailsItem: chooser.detailsItem
 
     function refresh(): void {
+        chooserController.navigationInteracted();
         chooserController.refresh();
     }
     function cycleDetailsTab(): void {
+        chooserController.navigationInteracted();
         if (chooserController.viewMemory)
             chooserController.viewMemory.synchronize();
         const restoreContent = keyboardWorkflow && detailsNavigation.activeFocus;
@@ -31,6 +35,7 @@ ChooserSurface {
             detailsNavigation.focusContent(true);
     }
     function cycleRegion(backwards: bool): void {
+        chooserController.navigationInteracted();
         if (chooserController.viewMemory)
             chooserController.viewMemory.synchronize();
         if (!listItem)
@@ -43,6 +48,7 @@ ChooserSurface {
         regions[next]();
     }
     function dismiss(): void {
+        chooserController.navigationInteracted();
         if (keyboardWorkflow && chooserController.detailsOpen && (detailsNavigation.activeFocus || detailsNavigation.popupOpen))
             detailsNavigation.retreat();
         else
@@ -83,6 +89,9 @@ ChooserSurface {
         id: chooser
         controller: surface.chooserController
         keyboardWorkflow: surface.keyboardWorkflow
+        navigationAllowed: surface.navigationEnabled
+        sessionContext: surface.sessionContext
+        sessionReady: surface.sessionReady
         listComponent: surface.listComponent
         detailsComponent: surface.detailsComponent
     }

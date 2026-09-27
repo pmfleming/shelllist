@@ -17,9 +17,6 @@ Core.Provider {
             subscriptions: true
         })
 
-    function connectingTo(ap) {
-        return controller.connection.isConnecting(ap);
-    }
     function primaryActions(ap, connecting) {
         return [Core.Model.keepOpenAction("connect", "Connect", {
                 icon: "󰖩",
@@ -80,37 +77,16 @@ Core.Provider {
             })];
     }
     function settingsActions(ap) {
-        return [Core.Model.keepOpenAction("autoconnect", "Auto-connect", {
-                kind: "toggle",
-                enabled: controller.actions.canProfileAction(ap, "can_toggle_autoconnect"),
-                state: {
-                    checked: controller.actions.autoconnectEnabled(ap)
-                },
-                presentation: {
-                    group: "settings"
-                }
-            }), Core.Model.keepOpenAction("randomized-mac", "Randomize MAC address", {
-                kind: "toggle",
-                enabled: controller.actions.canProfileAction(ap, "can_set_mac_randomization"),
-                state: {
-                    checked: controller.actions.randomizedMacEnabled(ap)
-                },
-                presentation: {
-                    group: "settings"
-                }
-            }), Core.Model.keepOpenAction("send-hostname", "Send device name", {
-                kind: "toggle",
-                enabled: controller.actions.canProfileAction(ap, "can_set_send_hostname"),
-                state: {
-                    checked: controller.actions.sendHostnameEnabled(ap)
-                },
-                presentation: {
-                    group: "settings"
-                }
+        return [Core.Model.settingToggle("autoconnect", "Auto-connect", controller.actions.autoconnectEnabled(ap), {
+                enabled: controller.actions.canProfileAction(ap, "can_toggle_autoconnect")
+            }), Core.Model.settingToggle("randomized-mac", "Randomize MAC address", controller.actions.randomizedMacEnabled(ap), {
+                enabled: controller.actions.canProfileAction(ap, "can_set_mac_randomization")
+            }), Core.Model.settingToggle("send-hostname", "Send device name", controller.actions.sendHostnameEnabled(ap), {
+                enabled: controller.actions.canProfileAction(ap, "can_set_send_hostname")
             })];
     }
     function actionsForNetwork(ap) {
-        return ap ? primaryActions(ap, connectingTo(ap)).concat(toolbarActions(ap), settingsActions(ap)) : [];
+        return ap ? primaryActions(ap, controller.connection.isConnecting(ap)).concat(toolbarActions(ap), settingsActions(ap)) : [];
     }
 
     function primaryActionId(ap) {

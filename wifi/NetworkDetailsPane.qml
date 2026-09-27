@@ -42,9 +42,6 @@ ActionDetailsPane {
     subtitleWeight: Theme.fontWeightMedium
     actions: controller.detailActions
     actionWidth: 156
-    onActionTriggered: function (actionId) {
-        controller.triggerDetailAction(actionId);
-    }
 
     Item {
         id: tabViewport
@@ -79,11 +76,9 @@ ActionDetailsPane {
             width: parent.width
             height: parent.height
             x: width * (1 - tabViewport.advancedTransitionProgress)
-            sourceComponent: Component {
-                AdvancedSettingsPage {
-                    controller: pane.controller
-                    sectionSpacing: pane.sectionSpacing
-                }
+            sourceComponent: AdvancedSettingsPage {
+                controller: pane.controller
+                sectionSpacing: pane.sectionSpacing
             }
         }
 

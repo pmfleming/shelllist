@@ -25,6 +25,9 @@ Item {
     readonly property real delegateHeight: listFrame.delegateHeight
     readonly property bool listFocused: listFrame.listFocused
 
+    function viewportState(): var { return listFrame.viewportState(); }
+    function restoreViewport(state: var): void { listFrame.restoreViewport(state); }
+
     function focusList(): void {
         listFrame.focusList();
     }

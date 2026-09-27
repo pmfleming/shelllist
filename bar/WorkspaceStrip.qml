@@ -23,9 +23,9 @@ Item {
         width: Math.max(0, parent.width - 8)
         height: 37
         radius: 0
-        color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.56)
+        color: Ui.Theme.barGroupBackground
         border.width: 1
-        border.color: Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72)
+        border.color: Ui.Theme.barGroupBorder
     }
 
     Rectangle {

@@ -27,6 +27,13 @@ ChooserController {
     selectionModel: results
     detailActions: providers.actionsFor(selectedResult)
 
+    function resultKeyAt(index: int): string {
+        return filteredResults[index] ? filteredResults[index].key : "";
+    }
+    function resultIndexForKey(key: string): int {
+        return filteredResults.findIndex(result => result.key === key);
+    }
+
     function beginProviderQuery(context: var, limit: int): var {
         return results.beginQuery(filterText, context || ({}), [provider.providerId], limit);
     }

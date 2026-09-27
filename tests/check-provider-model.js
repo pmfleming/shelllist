@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const assert = require("node:assert/strict");
 const fs = require("fs");
 const vm = require("vm");
 
@@ -49,6 +50,23 @@ throws("duplicate actions are rejected", () => model.result({
 }), "duplicate");
 
 throws("cross-provider batches rejected", () => model.resultBatch({ providerId: "settings", results: [terminal] }), "does not match");
+
+for (const checked of [true, false, undefined]) {
+    const options = { enabled: false, visible: false, presentation: { tone: "danger", width: 92 }, metadata: { disabledReason: "unsupported" } };
+    const before = JSON.stringify(options);
+    const expected = model.keepOpenAction("blocked", "Blocked", Object.assign({}, options, {
+        kind: "toggle", state: { checked }, presentation: { group: "settings", tone: "danger", width: 92 }
+    }));
+    assert.deepEqual(model.settingToggle("blocked", "Blocked", checked, options), expected);
+    assert.equal(JSON.stringify(options), before);
+    ++checks;
+}
+const toggle = model.settingToggle("trusted", "Trusted", true);
+assert.equal(toggle.presentation.group, "settings");
+assert.equal(toggle.presentation.tone, "normal");
+assert.equal(toggle.state.checked, true);
+assert.equal(toggle.closePolicy, "keep-open");
+++checks;
 
 // ProviderRegistry's Qt tests own dispatch routing and disabled-action rejection.
 

@@ -24,26 +24,20 @@ Ui.ActionDetailsPane {
     subtitle: selected.subtitle || ""
     actions: controller.detailActions || []
     actionWidth: 128
-    onActionTriggered: function (actionId) {
-        controller.triggerDetailAction(actionId);
-    }
 
     Ui.TabbedDetailsStack {
         anchors.fill: parent
         footerHeight: pane.footerHeight
         sectionSpacing: pane.sectionSpacing
         selectedValue: pane.controller.detailsTab
-        tabs: pane.application.kind === "desktop-shortcut" ? [
+        tabs: [
             {
                 value: "application",
                 icon: "󰀻",
-                label: "Shortcut"
-            }
-        ] : pane.application.kind === "desktop-application" ? [
-            {
-                value: "application",
-                icon: "󰀻",
-                label: "Application"
+                label: ({
+                        "desktop-shortcut": "Shortcut",
+                        "desktop-application": "Application"
+                    })[pane.application.kind] || "Window"
             },
             {
                 value: "resources",
@@ -55,18 +49,7 @@ Ui.ActionDetailsPane {
                 icon: "󰒓",
                 label: "Settings"
             }
-        ] : [
-            {
-                value: "application",
-                icon: "󰀻",
-                label: "Window"
-            },
-            {
-                value: "resources",
-                icon: "󰄪",
-                label: "Resources"
-            }
-        ]
+        ].filter(tab => pane.controller.availableDetailsTabs().includes(tab.value))
         onSelected: function (value) {
             pane.controller.selectDetailsTab(value);
         }
@@ -75,13 +58,11 @@ Ui.ActionDetailsPane {
             anchors.fill: parent
             active: pane.controller.detailsTab === "application"
             asynchronous: true
-            sourceComponent: Component {
-                ApplicationPage {
-                    controller: pane.controller
-                    application: pane.application
-                    uiScale: pane.uiScale
-                    actionHeight: pane.actionHeight
-                }
+            sourceComponent: ApplicationPage {
+                controller: pane.controller
+                application: pane.application
+                uiScale: pane.uiScale
+                actionHeight: pane.actionHeight
             }
         }
 
@@ -89,12 +70,10 @@ Ui.ActionDetailsPane {
             anchors.fill: parent
             active: pane.controller.detailsTab === "resources"
             asynchronous: true
-            sourceComponent: Component {
-                ApplicationResourcesPage {
-                    controller: pane.controller
-                    application: pane.application
-                    uiScale: pane.uiScale
-                }
+            sourceComponent: ApplicationResourcesPage {
+                controller: pane.controller
+                application: pane.application
+                uiScale: pane.uiScale
             }
         }
 
@@ -102,11 +81,9 @@ Ui.ActionDetailsPane {
             anchors.fill: parent
             active: pane.controller.detailsTab === "settings"
             asynchronous: true
-            sourceComponent: Component {
-                ApplicationSettingsPage {
-                    controller: pane.controller
-                    application: pane.application
-                }
+            sourceComponent: ApplicationSettingsPage {
+                controller: pane.controller
+                application: pane.application
             }
         }
     }

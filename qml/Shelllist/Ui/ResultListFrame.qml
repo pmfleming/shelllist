@@ -18,7 +18,34 @@ Rectangle {
     readonly property bool listFocused: list.activeFocus
     readonly property real delegateHeight: Theme.listRowHeight
 
+    property var viewportBookmark: null
+
     signal keyPressed(var event)
+
+    function viewportState(): var {
+        const index = list.indexAt(1, list.contentY + 1);
+        const item = list.itemAtIndex(index);
+        return item ? {key: controller.resultKeyAt(index), offset: list.contentY - item.y} : null;
+    }
+    function restoreViewport(state: var): void {
+        viewportBookmark = state && state.key ? state : null;
+        Qt.callLater(revealSelection);
+    }
+    function applyViewport(): bool {
+        if (!viewportBookmark)
+            return false;
+        const bookmark = viewportBookmark;
+        const index = controller.resultIndexForKey(bookmark.key);
+        if (index < 0) {
+            viewportBookmark = null;
+            return false;
+        }
+        if (index >= list.count)
+            return true; // Wait for the keyed model's remaining chunks.
+        list.positionViewAtIndex(index, ListView.Beginning);
+        list.contentY = Math.max(list.originY, Math.min(list.originY + Math.max(0, list.contentHeight - list.height), list.contentY + (Number(bookmark.offset) || 0)));
+        return true;
+    }
 
     function focusList() {
         list.forceActiveFocus();
@@ -29,20 +56,26 @@ Rectangle {
         // logical selection after model changes, never from that delegate.
         const index = frame.selectedIndex >= 0 && frame.selectedIndex < list.count ? frame.selectedIndex : -1;
         list.currentIndex = index;
-        if (index >= 0)
+        if (!applyViewport() && index >= 0)
             list.positionViewAtIndex(index, ListView.Contain);
     }
-    onSelectedIndexChanged: revealSelection()
+    onSelectedIndexChanged: {
+        viewportBookmark = null;
+        revealSelection();
+    }
     function focusTop() {
+        viewportBookmark = null;
         controller.selectFirst();
         focusList();
         list.positionViewAtBeginning();
     }
     function pick(rowIndex) {
+        viewportBookmark = null;
         controller.select(rowIndex);
         focusList();
     }
     function toggleDetails(rowIndex) {
+        viewportBookmark = null;
         controller.select(rowIndex);
         controller.toggleDetails();
         focusList();
@@ -71,6 +104,10 @@ Rectangle {
         }
         footer: frame.footerComponent
         activeFocusOnTab: true
+        onMovementStarted: {
+            frame.viewportBookmark = null;
+            frame.controller.navigationInteracted();
+        }
         Keys.onPressed: function (event) {
             frame.keyPressed(event);
         }
@@ -81,7 +118,7 @@ Rectangle {
     Connections {
         target: frame.controller
         function onUiActiveChanged() {
-            if (frame.controller.uiActive)
+            if (frame.controller.uiActive && !frame.controller.viewMemory)
                 Qt.callLater(frame.revealSelection);
         }
     }

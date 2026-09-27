@@ -8,13 +8,18 @@ RowLayout {
     required property Component listComponent
     required property Component detailsComponent
     property bool keyboardWorkflow: false
+    property bool navigationAllowed: true
+    property string sessionContext: ""
+    property bool sessionReady: true
     readonly property alias detailsNavigation: detailsNavigation
     readonly property ChooserListPane listItem: listLoader.item as ChooserListPane
     readonly property Item detailsItem: detailsLoader.item as Item
     readonly property real verticalDensity: Theme.densityScale(height, controller.contentVerticalMargin)
     readonly property int verticalMargin: Theme.verticalSpacing(controller.contentVerticalMargin, verticalDensity)
 
-    function focusSearch() {
+    function focusSearch(generation: int): void {
+        if (generation !== controller.uiGeneration || !controller.uiActive || controller.uiSuspending || !navigationAllowed)
+            return;
         if (listItem)
             listItem.focusSearch();
     }
@@ -41,19 +46,34 @@ RowLayout {
                 detailsNavigation.suspendView();
         }
         function onFocusSearchRequested() {
-            Qt.callLater(layout.focusSearch);
+            session.cancel();
+            Qt.callLater(layout.focusSearch, layout.controller.uiGeneration);
         }
         function onFocusListTopRequested() {
+            session.cancel();
             layout.focusTop();
         }
         function onFocusDetailsRequested() {
+            session.cancel();
             if (layout.keyboardWorkflow)
                 detailsNavigation.focusRememberedContent();
         }
         function onSearchTextRequested(text: string) {
+            session.cancel();
             if (layout.listItem)
                 layout.listItem.insertSearchText(text);
         }
+    }
+
+    ChooserSession {
+        id: session
+        enabled: layout.keyboardWorkflow && layout.controller.viewMemory !== null
+        controller: layout.controller
+        listItem: layout.listItem
+        navigation: detailsNavigation
+        navigationAllowed: layout.navigationAllowed
+        context: layout.sessionContext
+        ready: layout.sessionReady
     }
 
     Loader {
@@ -81,6 +101,7 @@ RowLayout {
         id: detailsNavigation
         contentItem: layout.keyboardWorkflow ? layout.detailsItem : null
         viewMemory: layout.keyboardWorkflow ? layout.controller.viewMemory : null
+        restorationAllowed: layout.controller.uiActive && !layout.controller.uiSuspending && layout.navigationAllowed
         onResultContextChanged: layout.focusList()
         onExitRequested: {
             layout.controller.closeDetails();

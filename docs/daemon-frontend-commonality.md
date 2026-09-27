@@ -47,7 +47,15 @@ Shared controls and the bar use `Ui.InteractiveBehavior` for decorative numeric
 and color interpolation with explicit timing overrides. Spring motion remains
 separate, and neither mechanism owns logical state or keyboard focus.
 
-See the [latest measured review](reviews/lens-keyboard-maintenance-2026-09-27.md),
+`Core.Model.settingToggle` shares normalized settings-toggle presentation for
+Wi-Fi and Bluetooth; providers retain live capability and checked-state ownership.
+`Ui.ActionDetailsPane.triggerAction` routes header intent to the chooser controller
+by default. Clipboard overrides that method for its specialized actions, rather
+than adding another dispatcher to the signal. Bar groups share theme color tokens
+without changing their layout or interaction policy.
+
+See the [latest measured review](reviews/lens-session-maintenance-2026-09-27.md),
+[earlier keyboard review](reviews/lens-keyboard-maintenance-2026-09-27.md),
 [previous endpoint review](reviews/lens-commonality-2026-09-27.md) and
 [original commonality review](reviews/commonality-2026-09-20.md) for evidence and limits.
 

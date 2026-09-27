@@ -37,6 +37,8 @@ ShellRoot {
         const previousController = surfaces.currentController;
         const warm = surfaces.wasOpened(requested);
         surfaceRequestStartedAtMs = Date.now();
+        if (windowHost.uiActive && previousId !== requested && previousController)
+            previousController.prepareUiDeactivation();
         if (!surfaces.select(requested))
             return false;
 
@@ -58,7 +60,7 @@ ShellRoot {
         if (windowHost.popoverMode && !windowHost.popoverVisible)
             windowHost.show();
         else if (activeController)
-            activeController.focusSearchRequested();
+            activeController.restoreUiFocus();
         return true;
     }
 
@@ -94,7 +96,7 @@ ShellRoot {
                 return;
             if (!surfaces.currentController.uiActive)
                 surfaces.currentController.activateUi(windowHost.shelllistWorkspaceId());
-            surfaces.currentController.focusSearchRequested();
+            surfaces.currentController.restoreUiFocus();
         }
     }
 
@@ -139,10 +141,12 @@ ShellRoot {
             if (shell.activeController)
                 shell.activeController.activateUi(workspaceId);
         }
+        onUiDeactivating: if (shell.activeController)
+            shell.activeController.prepareUiDeactivation()
         onUiDeactivated: if (shell.activeController)
             shell.activeController.deactivateUi()
         onFocusSearchRequested: if (shell.activeController)
-            shell.activeController.focusSearchRequested()
+            shell.activeController.restoreUiFocus()
     }
 
     Component {
@@ -180,7 +184,7 @@ ShellRoot {
             if (!controller)
                 return;
             const width = Math.round(windowHost.renderContentWidth);
-            const x = Math.round(windowHost.targetContentWindowX());
+            const x = Math.round(windowHost.targetWindowX());
             controller.captureScreenshot(x, windowHost.targetWindowY(), width, windowHost.currentWindowHeight);
         }
     }

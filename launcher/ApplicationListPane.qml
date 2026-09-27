@@ -32,7 +32,6 @@ Ui.ChooserListPane {
     searchActionEnabled: !controller.operationBlocked
     filterText: controller.filterText
     status: controller.status
-    focusOnCompleted: true
     onIconClicked: controller.screenshotRequested()
     onSearchActionRequested: controller.selectCategory(nextCategoryFilter.value)
 

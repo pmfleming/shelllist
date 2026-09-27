@@ -22,9 +22,6 @@ Ui.ActionDetailsPane {
     subtitleWeight: Ui.Theme.fontWeightMedium
     stackedPrimary: narrowDetails
     enabled: !controller.trial && !controller.discardPrompt && !controller.actionInFlight
-    onActionTriggered: function (actionId) {
-        controller.triggerDetailAction(actionId);
-    }
     Keys.onLeftPressed: function (event) {
         if (event.modifiers !== Qt.NoModifier)
             return;

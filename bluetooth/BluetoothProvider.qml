@@ -40,12 +40,6 @@ Core.Provider {
             width: 152
         };
     }
-    function settingPresentation(tone: string): var {
-        return {
-            group: "settings",
-            tone: tone || "normal"
-        };
-    }
 
     function connectionActions(device: var, caps: var): var {
         return [Core.Model.keepOpenAction("pair", "Pair", {
@@ -95,13 +89,8 @@ Core.Provider {
     }
 
     function trustAction(device: var, caps: var): var {
-        return Core.Model.keepOpenAction("trusted", "Trusted", {
-            kind: "toggle",
+        return Core.Model.settingToggle("trusted", "Trusted", !!device.trusted, {
             enabled: actionEnabled(caps.can_trust, device),
-            state: {
-                checked: !!device.trusted
-            },
-            presentation: settingPresentation("normal"),
             metadata: {
                 disabledReason: unsupported(caps, "trust")
             }
@@ -109,14 +98,9 @@ Core.Provider {
     }
     function wakeAction(device: var, caps: var): var {
         const supported = device.wake_allowed !== null && device.wake_allowed !== undefined;
-        return Core.Model.keepOpenAction("wake", "Allow device to wake computer", {
-            kind: "toggle",
+        return Core.Model.settingToggle("wake", "Allow device to wake computer", !!device.wake_allowed, {
             visible: supported,
             enabled: actionEnabled(caps.can_wake, device),
-            state: {
-                checked: !!device.wake_allowed
-            },
-            presentation: settingPresentation("normal"),
             metadata: {
                 disabledReason: unsupported(caps, "wake")
             }
@@ -124,27 +108,20 @@ Core.Provider {
     }
     function multipointAction(device: var, caps: var): var {
         const multipoint = (device.fast_pair && device.fast_pair.multipoint) || ({});
-        return Core.Model.keepOpenAction("multipoint", "Multipoint", {
-            kind: "toggle",
+        return Core.Model.settingToggle("multipoint", "Multipoint", !!multipoint.enabled, {
             visible: !!multipoint.supported,
             enabled: actionEnabled(caps.can_set_multipoint, device),
-            state: {
-                checked: !!multipoint.enabled
-            },
-            presentation: settingPresentation("normal"),
             metadata: {
                 disabledReason: unsupported(caps, "set_multipoint")
             }
         });
     }
     function blockAction(device: var, caps: var): var {
-        return Core.Model.keepOpenAction("blocked", "Blocked", {
-            kind: "toggle",
+        return Core.Model.settingToggle("blocked", "Blocked", !!device.blocked, {
             enabled: actionEnabled(caps.can_block, device),
-            state: {
-                checked: !!device.blocked
+            presentation: {
+                tone: "danger"
             },
-            presentation: settingPresentation("danger"),
             metadata: {
                 disabledReason: unsupported(caps, "block")
             }

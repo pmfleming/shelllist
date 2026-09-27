@@ -10,29 +10,60 @@ FocusScope {
     property bool pendingMemory: false
     property bool resumeEditor: false
     property bool applyingMemory: false
+    property bool restorationAllowed: !viewMemory || (viewMemory.controller.uiActive && !viewMemory.controller.uiSuspending)
+    property var sessionLocation: null
+    property var lastLocation: ({})
     readonly property list<Item> targets: collectTargets(contentItem)
     property Item currentTarget: null
     property bool awaitingContent: false
     property Item editorTarget: null
+    readonly property DetailFlickable currentPage: pageForTarget(currentTarget)
     readonly property Item focusedTarget: targetForFocus(Window.window ? Window.window.activeFocusItem : null)
     readonly property bool popupOpen: (currentTarget as DropDownList)?.popup.visible ?? false
     readonly property bool editing: editorTarget !== null && (activeFocus || popupOpen)
     readonly property bool browsing: browseCursor.activeFocus && !editing
 
+    signal nativeFocusChanged
+    signal interactionRequested
     signal exitRequested
     signal resultContextChanged
 
-    function rememberLocation(): void {
-        if (applyingMemory || pendingMemory || !viewMemory || !currentTarget)
-            return;
+    function locationState(): var {
         const field = currentTarget as TextField;
-        const key = field && field.password ? "" : currentTarget.objectName;
-        viewMemory.rememberPage(viewMemory.activeTab, {target: key, editing: key.length > 0 && editable(currentTarget) && editorTarget !== null});
+        const key = currentTarget && !(field && field.password) ? currentTarget.objectName : "";
+        return {target: key, editing: key.length > 0 && editable(currentTarget) && editorTarget === currentTarget,
+            selection: field && key ? field.selectionState() : null};
+    }
+    function rememberLocation(): void {
+        if (applyingMemory || pendingMemory || !currentTarget)
+            return;
+        lastLocation = locationState();
+        if (viewMemory)
+            viewMemory.rememberPage(viewMemory.activeTab, lastLocation);
+    }
+    Connections {
+        target: navigation.editorTarget as TextField
+        function onSelectionChanged(): void { navigation.rememberLocation(); }
+    }
+    function cancelSessionRestore(): void {
+        if (sessionLocation) {
+            sessionLocation = null;
+            pendingMemory = false;
+        }
+        resumeEditor = false;
+    }
+    function focusSessionLocation(location: var): void {
+        cancelSessionRestore();
+        sessionLocation = location || ({});
+        pendingMemory = true;
+        resumeEditor = !!sessionLocation.editing;
+        browseCursor.forceActiveFocus(Qt.OtherFocusReason);
+        Qt.callLater(restoreLocation);
     }
     function restoreLocation(): void {
-        if (!pendingMemory || !viewMemory || !viewMemory.current)
+        if (!pendingMemory || (!sessionLocation && (!viewMemory || !viewMemory.current)))
             return;
-        const saved = viewMemory.pageState(viewMemory.activeTab);
+        const saved = sessionLocation || viewMemory.pageState(viewMemory.activeTab);
         const matches = targets.filter(item => item.objectName && item.objectName === saved.target && !(item instanceof TextField && item.password));
         applyingMemory = true;
         editorTarget = null;
@@ -42,21 +73,29 @@ FocusScope {
             awaitingContent = false;
         }
         pendingMemory = awaitingContent;
-        if (activeFocus && viewMemory.controller.uiActive) {
+        if (activeFocus && restorationAllowed) {
             browseCursor.forceActiveFocus(Qt.OtherFocusReason);
             if (!pendingMemory && resumeEditor && saved.editing && matches.length === 1 && editable(currentTarget))
                 enterEditor();
+            const field = editorTarget as TextField;
+            if (field && field.inputActiveFocus)
+                field.restoreSelection(saved.selection);
+            if (sessionLocation)
+                revealTarget();
         }
         applyingMemory = false;
-        if (!pendingMemory)
+        if (!pendingMemory) {
+            sessionLocation = null;
             resumeEditor = false;
+        }
     }
     function suspendView(): void {
-        resumeEditor = false;
+        cancelSessionRestore();
         if (popupOpen)
             (currentTarget as DropDownList).popup.close();
     }
     function focusRememberedContent(): void {
+        cancelSessionRestore();
         if (!viewMemory || !viewMemory.enabled) {
             focusContent();
             return;
@@ -81,7 +120,8 @@ FocusScope {
             navigation.resumeEditor = false;
         }
         function onContextChanging(changedResult: bool): void {
-            if (changedResult && navigation.activeFocus)
+            navigation.cancelSessionRestore();
+            if (changedResult && navigation.activeFocus && navigation.restorationAllowed)
                 navigation.resultContextChanged();
         }
         function onContextRestored(): void {
@@ -137,8 +177,8 @@ FocusScope {
         awaitingContent = !currentTarget || isHeaderTarget(currentTarget);
     }
     function focusContent(reset: bool): void {
+        cancelSessionRestore();
         editorTarget = null;
-        resumeEditor = false;
         if (reset || targets.indexOf(currentTarget) < 0)
             selectContent();
         browseCursor.forceActiveFocus(Qt.OtherFocusReason);
@@ -170,6 +210,15 @@ FocusScope {
             return false;
         page.contentY = next;
         return true;
+    }
+    function pageForTarget(item: Item): DetailFlickable {
+        while (item && !(item instanceof DetailFlickable))
+            item = item.parent;
+        return item as DetailFlickable;
+    }
+    Connections {
+        target: navigation.currentPage
+        function onMovementStarted(): void { navigation.interactionRequested(); }
     }
     function revealTarget(): void {
         if (!currentTarget)
@@ -218,15 +267,17 @@ FocusScope {
         currentTarget = focusedTarget;
         editorTarget = focusedTarget;
         awaitingContent = false;
+        nativeFocusChanged();
         rememberLocation();
     }
     onActiveFocusChanged: if (!activeFocus && !popupOpen) {
         rememberLocation();
+        cancelSessionRestore();
         editorTarget = null;
     }
     onTargetsChanged: {
-        if (pendingMemory && viewMemory && viewMemory.enabled) {
-            restoreLocation();
+        if (pendingMemory && (sessionLocation || (viewMemory && viewMemory.enabled))) {
+            Qt.callLater(restoreLocation);
             return;
         }
         if (awaitingContent || targets.indexOf(currentTarget) < 0) {
@@ -248,6 +299,8 @@ FocusScope {
         Keys.onPressed: function (event) {
             if (event.modifiers !== Qt.NoModifier)
                 return;
+            navigation.interactionRequested();
+            navigation.cancelSessionRestore();
             if (event.key === Qt.Key_Up)
                 navigation.move(-1);
             else if (event.key === Qt.Key_Down)

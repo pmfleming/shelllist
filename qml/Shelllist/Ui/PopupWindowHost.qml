@@ -40,7 +40,7 @@ Item {
     readonly property bool popoverWindowVisible: popoverMode && popoverVisible
     readonly property bool uiActive: floatingMode || (popoverMode && popoverVisible)
     readonly property bool noAnimations: Theme.noAnimations
-    readonly property var placementScreen: floatingMode ? (floatingWindow && floatingWindow.screen ? floatingWindow.screen : null) : (popoverAnchor && popoverAnchor.screen ? popoverAnchor.screen : null)
+    readonly property ShellScreen placementScreen: floatingMode ? (floatingWindow && floatingWindow.screen ? floatingWindow.screen : null) : (popoverAnchor && popoverAnchor.screen ? popoverAnchor.screen : null)
     readonly property var workspaceArea: WorkArea.rectangle(screenGeometry(), Theme.hyprland ? workspaceClient.insets : null)
     readonly property real availableWindowWidth: workspaceArea.width
     readonly property real availableWindowHeight: workspaceArea.height
@@ -51,6 +51,7 @@ Item {
     readonly property real placementY: targetWindowY()
 
     signal uiActivated(string workspaceId)
+    signal uiDeactivating
     signal uiDeactivated
     signal focusSearchRequested
 
@@ -103,9 +104,6 @@ Item {
     }
     function targetWindowY() {
         return screenGeometry().y + targetLayerMarginY();
-    }
-    function targetContentWindowX() {
-        return targetWindowX();
     }
 
     function requestWindowPlacement() {
@@ -178,6 +176,8 @@ Item {
     function hidePopover() {
         if (!popoverMode)
             return;
+        // Snapshot before hide; keep domain cleanup after native focus loss.
+        uiDeactivating();
         popoverVisible = false;
         uiDeactivated();
     }
@@ -236,7 +236,6 @@ Item {
     }
     Connections {
         target: host.placementScreen
-        ignoreUnknownSignals: true
         function onWidthChanged(): void {
             workspaceClient.scheduleRefresh();
         }
@@ -318,12 +317,8 @@ Item {
     }
 
     Connections {
-        // ProxyWindowBase exposes its QQuickWindow only through this framework
-        // property; the backing window owns the actual frameSwapped signal.
-        // qmllint disable missing-property
-        target: popoverAnchor["_backingWindow"]
-        // qmllint enable missing-property
-        ignoreUnknownSignals: true
+        // The visual item's public attached window owns frameSwapped.
+        target: popoverVisualSurface.Window.window
         function onFrameSwapped(): void {
             host.recordFirstFrame();
         }

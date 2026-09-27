@@ -169,6 +169,130 @@ DaemonTestCase {
         id: contentComponent
         Bt.BluetoothContent {}
     }
+    function sessionContent(adapter, empty) {
+        const panel = makePanel();
+        panel.page.visible = false;
+        const controller = panel.controller;
+        controller.uiActive = true;
+        if (empty)
+            controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: []});
+        const content = createTemporaryObject(contentComponent, panel, {controller: controller, width: 1100, height: 900});
+        if (adapter) {
+            controller.openBluetoothSettings();
+            controller.adapterSettingsTab = "pairing";
+        } else {
+            controller.openDetails();
+            controller.detailsTab = "settings";
+        }
+        const name = adapter ? "adapterNameInput" : "deviceNameInput";
+        tryVerify(() => findChild(content, name) !== null);
+        content.detailsNavigation.currentTarget = findChild(content, name);
+        content.detailsNavigation.focusContent();
+        keyClick(Qt.Key_Right);
+        verify(content.detailsNavigation.editing);
+        findChild(content.detailsNavigation.currentTarget, "fieldInput").select(3, 1);
+        return content;
+    }
+    function closeSession(content) {
+        content.controller.prepareUiDeactivation();
+        content.visible = false;
+        testCase.forceActiveFocus();
+        content.controller.deactivateUi();
+        wait(0);
+    }
+    function startSession(content) {
+        content.visible = true;
+        content.controller.activateUi("");
+        content.controller.restoreUiFocus();
+        verify(!content.sessionReady);
+        tryVerify(() => content.detailsNavigation.browsing);
+        verify(!content.detailsNavigation.editing);
+    }
+    function finishSessionRefresh(content) {
+        const controller = content.controller;
+        findChild(controller, "bluetoothBackend").acceptSharedResponse("snapshot", {
+            protocol: "bt-api", version: 1, ok: true,
+            data: {snapshot: {radio: controller.radio, adapters: controller.adapters, devices: controller.allDevices}}
+        }, "");
+    }
+    function test_invocationWaitsForRefreshWithoutReplayingEdits_data() {
+        return [{tag: "device", adapter: false}, {tag: "adapter", adapter: true}, {tag: "adapter-empty", adapter: true, empty: true}];
+    }
+    function test_invocationWaitsForRefreshWithoutReplayingEdits(data) {
+        const content = sessionContent(data.adapter, data.empty);
+        closeSession(content);
+        calls = [];
+        startSession(content);
+        finishSessionRefresh(content);
+        tryVerify(() => content.detailsNavigation.editing);
+        compare(content.detailsNavigation.currentTarget.objectName, data.adapter ? "adapterNameInput" : "deviceNameInput");
+        const input = findChild(content.detailsNavigation.currentTarget, "fieldInput");
+        compare(input.cursorPosition, 1);
+        compare(input.selectionEnd, 3);
+        verify(calls.every(call => call.method === "bluetooth.snapshot"), "restoration performs no rename, policy or adapter write");
+        compare(content.controller.viewMemory.enabled, !data.adapter);
+    }
+    function test_changedAdapterCannotInheritAnInvocationEditor() {
+        const content = sessionContent(true);
+        const controller = content.controller;
+        closeSession(content);
+        controller.applySnapshot({radio: controller.radio, adapters: [{key: "usb", alias: "Other", powered: true}], devices: []});
+        content.visible = true;
+        controller.activateUi("");
+        controller.restoreUiFocus();
+        tryVerify(() => content.listItem.searchFocused);
+        finishSessionRefresh(content);
+        wait(0);
+        verify(content.listItem.searchFocused);
+        verify(!content.detailsNavigation.editing);
+        compare(controller.selectedAdapter.key, "usb");
+    }
+    function test_newNavigationWinsOverRefreshCompletion() {
+        const content = sessionContent(false);
+        closeSession(content);
+        startSession(content);
+        content.cycleRegion(false);
+        verify(content.listItem.searchFocused);
+        finishSessionRefresh(content);
+        content.controller.restoreUiFocus();
+        wait(0);
+        verify(content.listItem.searchFocused);
+        verify(!content.detailsNavigation.editing);
+    }
+    function test_pairingPromptCannotReplaceOrdinaryInvocationFocus() {
+        const content = sessionContent(false);
+        const controller = content.controller;
+        controller.handlePairingEvent({event: "requested", data: {
+            request_id: "focus-secret", device_key: "buds", kind: "pin-code", response_required: true
+        }});
+        controller.pairingInput = "private-value";
+        tryVerify(() => controller.pairingPromptOpen && !content.detailsNavigation.activeFocus);
+        calls = [];
+        closeSession(content);
+        compare(controller.pairingInput, "");
+        compare(controller.focusMemory.region, "details");
+        compare(controller.focusMemory.location.target, "deviceNameInput");
+        verify(controller.focusMemory.location.editing);
+        verify(!JSON.stringify(controller.focusMemory).includes("private-value"));
+        verify(!JSON.stringify(controller.focusMemory).includes("focus-secret"));
+        compare(calls.length, 1);
+        compare(calls[0].method, "bluetooth.pairing.respond");
+        compare(calls[0].params.accept, false);
+        compare(calls[0].params.value, undefined);
+        findChild(controller, "bluetoothBackend").acceptSharedResponse("pairing-cancel-focus-secret", {
+            protocol: "bt-api", version: 1, ok: true, data: {}
+        }, "");
+        startSession(content);
+        controller.replacePairingPrompts([{request_id: "focus-secret", response_required: true}]);
+        verify(!controller.pairingPromptOpen);
+        finishSessionRefresh(content);
+        tryVerify(() => content.detailsNavigation.editing);
+        compare(content.detailsNavigation.currentTarget.objectName, "deviceNameInput");
+        const input = findChild(content.detailsNavigation.currentTarget, "fieldInput");
+        compare(input.cursorPosition, 1);
+        compare(input.selectionEnd, 3);
+        verify(!controller.modalPromptOpen);
+    }
     function test_deviceViewMemorySurvivesOtherSelectionsAndSensitiveClosure() {
         const panel = makePanel();
         panel.page.visible = false;

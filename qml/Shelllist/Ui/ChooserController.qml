@@ -4,6 +4,14 @@ Item {
     id: root
     property bool uiActive: false
     property ChooserMemory viewMemory: null
+    property var focusMemory: ({})
+    property bool uiSuspending: false
+    property int uiGeneration: 0
+    onUiActiveChanged: {
+        uiGeneration++;
+        if (uiActive)
+            uiSuspending = false;
+    }
     property string currentWorkspaceId: ""
     property bool detailsOpen: false
     property bool hasSelection: false
@@ -40,6 +48,9 @@ Item {
     readonly property bool detailsRendered: detailsOpen || detailsExpansionProgress > detailsRenderCutoff
     readonly property int currentWindowWidth: Math.round(closedWindowWidth + detailsPaintProgress * (openWindowWidth - closedWindowWidth))
 
+    signal navigationInteracted
+    signal uiSuspensionRequested
+    signal restoreSessionFocusRequested
     signal closeWindowRequested
     signal focusSearchRequested
     signal focusListTopRequested
@@ -65,12 +76,33 @@ Item {
         return false;
     }
 
+    function restoreUiFocus(): void {
+        if (!uiActive || uiSuspending)
+            return;
+        if (viewMemory)
+            restoreSessionFocusRequested();
+        else
+            focusSearchRequested();
+    }
+    function prepareUiDeactivation(): void {
+        if (!uiActive || uiSuspending)
+            return;
+        if (viewMemory)
+            viewMemory.synchronize();
+        uiSuspending = true;
+        uiSuspensionRequested();
+    }
+    function resultKeyAt(index: int): string { return ""; }
+    function resultIndexForKey(key: string): int { return -1; }
+
     function activateUiState(workspaceId) {
+        uiSuspending = false;
         uiActive = true;
         currentWorkspaceId = workspaceId || "";
     }
 
     function deactivateUiState() {
+        prepareUiDeactivation();
         uiActive = false;
     }
     function dismissDetailsOrWindow(): bool {

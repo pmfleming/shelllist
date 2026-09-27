@@ -22,6 +22,30 @@ DaemonTestCase {
         id: paneFactory
         Clip.ClipboardListPane {}
     }
+    Component {
+        id: detailsFactory
+        Clip.ClipboardDetails {
+            uiScale: 1
+        }
+    }
+    function test_detailsKeepSpecializedClipboardRouting() {
+        const controller = makeController();
+        const pane = createTemporaryObject(detailsFactory, testCase, {
+            controller: controller,
+            width: 600,
+            height: 800
+        });
+        views = views.concat([pane]);
+        calls = [];
+        pane.actionTriggered("edit"); // Plain text is edited in its card, not an external image/link action.
+        pane.actionTriggered("paste-as-file");
+        compare(calls.length, 0);
+        pane.actionTriggered("copy");
+        compare(calls.length, 1);
+        compare(calls[0].params.action, "copy");
+        pane.actionTriggered("copy"); // Existing busy ownership still rejects replay.
+        compare(calls.length, 1);
+    }
     function init() {
         failOnWarning(/.*(TypeError|Binding loop|invalid context).*/);
     }

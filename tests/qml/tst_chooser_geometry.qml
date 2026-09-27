@@ -52,7 +52,6 @@ DaemonTestCase {
                 loadWhen: true
                 content: Component {
                     Ui.ProviderChooserSurface {
-                        id: surface
                         objectName: "geometrySurface"
                         chooserController: controller
                         keyboardWorkflow: true

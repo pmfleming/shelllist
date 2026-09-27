@@ -127,6 +127,7 @@ Ui.ProviderChooserController {
         refresh();
     }
     function deactivateUi() {
+        prepareUiDeactivation();
         cancelSensitivePrompts();
         pendingConfirmationAction = null;
         scanRequested = false;
@@ -506,8 +507,8 @@ Ui.ProviderChooserController {
             status = request.status;
         return backend.deviceOperation(request.operation, device, request.values);
     }
-    onModalPromptOpenChanged: if (!modalPromptOpen)
-        Qt.callLater(focusSearchRequested)
+    // ModalFrame restores valid preceding focus. Never enqueue a search-focus
+    // request here: it can outlive closure and overwrite the next invocation.
     onSelectedResultChanged: pendingConfirmationAction = null
 
     BluetoothBackend {

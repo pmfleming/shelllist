@@ -1,84 +1,132 @@
-# Per-result chooser memory
+# Chooser session memory
 
-This is the next step-4 slice of the
-[Material Expressive plan](proposals/material-expressive.md), after
-[anchored geometry](chooser-geometry.md). Applications and Bluetooth **device**
-details opt in. Other domains and Bluetooth's computer-wide adapter settings
-retain their existing presentation behavior.
+Delivered step-4 slices of the [Material Expressive plan](proposals/material-expressive.md),
+after [anchored geometry](chooser-geometry.md):
 
-## Delivered behavior
+- Applications and Bluetooth **device** details retain per-result presentation.
+- Applications and Bluetooth restore ordinary invocation focus, including the
+  currently open Bluetooth adapter-settings control.
+- Other domains retain their existing focus/presentation behavior. Adapter
+  settings do not yet have independent per-adapter/per-tab presentation records.
 
-- Each explicitly inspected result remembers whether details are open, its tab,
+## Per-result presentation
+
+- Each explicitly inspected result remembers details-open state, its valid tab,
   and each tab's scroll offset and ordinary browse/editor location. Identity is
   the provider-qualified `Result.key`, never a row index or display name.
-- Returning to an inspected result restores its presentation without moving focus
-  out of results/search. A new result is list-only. Hover does not select or restore.
-- **Right from results** enters the remembered location. If that location was an
-  editable control, it can resume editing directly, subject to current capability
-  checks. Region Tab and tab changes enter browse mode, not an editor.
+- Returning to an inspected result restores presentation **without moving focus
+  out of results/search**. A new result is list-only. Hover does not select.
+- **Right from results** enters the remembered location and can resume a valid
+  ordinary editor. Region Tab and tab changes enter browse mode instead.
+- Ordinary text editors retain cursor and selection direction, not their values.
+  Positions are clamped to the current text. Native selection changes are captured
+  before a pointer result switch can replace the current identity.
 - Escape from an editor records browse mode. Explicitly closing details changes
-  that result's remembered open state, without changing another result's state.
+  only that result's remembered open state.
 - Filtering, category/scope changes, reorder, refresh, temporary disappearance,
-  reconnect and whole-surface closure do not erase inspected-item records.
-  Records live in the retained controller until process exit, never on disk.
-- A missing selection closes the presentation without recording an explicit close.
-  Selection itself continues to follow `ResultStore`'s existing stable-key/clamp
-  policy; memory does not invent a selection or pin a missing backend object.
-- Applications resumes fresh resource-history reads when restored Resources
-  becomes visible, including after surface closure. UI memory does not freeze
-  telemetry or reinstate request IDs.
+  reconnect and closure do not erase inspected-item records. A missing selection
+  closes presentation without recording an explicit close. Selection continues
+  to follow `ResultStore`'s stable-key/clamp policy.
+- Restored Applications Resources immediately requests fresh history. Memory
+  neither freezes telemetry nor reinstates request IDs.
 
-## Fallbacks and asynchronous ownership
+## Invocation focus
 
-`Ui.ChooserMemory` stores only presentation primitives. Domain controllers supply
-current valid tabs and apply requested presentation changes. Selection changes
-settle together at the end of the Qt turn so a model reorder's intermediate row
-cannot overwrite the remembered item. Explicit navigation settles the current
-identity synchronously before deciding whether to open/close/cycle details.
+Closing or switching away snapshots ordinary focus **before** hiding content or
+cancelling sensitive prompts. The pre-hide hook leaves domain cleanup in its
+existing post-hide order; it freezes presentation and closes ordinary menus.
+Reopening restores Search, Results, or Details;
+a registered detail target can resume browsing or editing, subject to current
+identity, tab and capability checks. A first invocation defaults to search.
+Unregistered list/header controls fall back to search rather than inheriting an
+old detail editor.
 
-`DetailsNavigation` uses stable, unique control `objectName`s within a tab. It
-never restores by target index or localized label. Missing, unnamed or ambiguous
-targets fall back to the first available content browse stop. A visible but
-disabled/read-only control may retain its browse location but cannot resume
-editing. Invalid tabs fall back to the domain's first available tab.
+`Ui.ChooserSession` keeps a separate primitive snapshot in the retained
+controller's `focusMemory`. It includes:
 
-`DetailFlickable` restores pixel scroll offsets after asynchronous page creation
-and clamps them to the current content/viewport bounds. Data, layout and live
-capabilities remain authoritative. Entering a remembered control can reveal it
-at its new position. A changed result while details owns focus returns focus to
-results before replacing/closing the view; late loaders do not pull it back.
-Closing decoration cannot receive input.
+- the ordinary region and stable result/tab context (adapter identity and tab
+  for computer-wide Bluetooth settings);
+- an ordinary detail target and browse/edit mode;
+- query/editor cursor and selection positions;
+- the result viewport's top visible stable key and within-row pixel offset.
 
-Only registered ordinary controls participate. Password editor locations,
-password text, other control values, drafts, payloads, QObject references,
-operation IDs and popup-open state are not saved. Whole-surface closure explicitly
-closes ordinary menus. Bluetooth still clears/cancels sensitive pairing prompts
-and fences their request IDs through its existing recovery logic. Restoring focus
-never activates a button, chooses a menu option or dispatches a setting change;
-existing native editing, autosave and backend acknowledgement remain responsible
-for actual edits and drafts.
+The query and selected result remain controller-owned; restoration never reselects
+or writes query/control values. Viewport bookmarks survive visual-tree recreation
+and reorder, wait for keyed-model chunks, and clamp to current bounds. A missing
+bookmark or changed selected identity falls back to normal selection revelation.
+New selection, query editing or scrolling takes precedence over a bookmark.
+
+Host visibility, controller-ready and content-ready paths call `restoreUiFocus()`
+instead of issuing competing search-focus requests. Restoration is consumed once
+per activation. New navigation, native focus/input, modal prompts and closure
+cancel deferred restoration. Queued explicit-search and modal-fallback callbacks
+are fenced by the UI generation, including rapid close/reopen cycles.
+
+Bluetooth refreshes on activation. During that read, a remembered detail location
+is shown in browse mode; the editor resumes only after refresh and queued field
+reconciliation, if still valid and no newer interaction occurred. A changed
+result/adapter/tab falls back to results or search instead of editing another
+object. Disabled/read-only targets stay in browse mode. Ordinary menus reopen
+**collapsed**, and no sensitive dialog is a restoration target.
+
+## Fallbacks and ownership
+
+`Ui.ChooserMemory` stores presentation primitives. Domains supply valid tabs and
+apply presentation changes. Queued selection/tab changes settle together so a
+model reorder's intermediate row cannot overwrite a record. Explicit navigation
+and deactivation synchronize the current identity first.
+
+`DetailsNavigation` resolves unique control `objectName`s within the current tab,
+never indexes or localized labels. Missing, unnamed, ambiguous or password
+targets fall back to content browsing. Asynchronous pages may finish restoration
+only while their invocation/context still owns focus. `DetailFlickable` restores
+per-result pixel offsets after page creation and clamps them to current bounds;
+entering a remembered target reveals its current position.
+
+Neither cache stores text, password positions, control values, drafts, payloads,
+QObject references, operation IDs, IME preedit state or popup-open state. State
+is process-local and never written to disk. Native controls and domain-owned
+drafts remain responsible for editing, autosave, acknowledgement and recovery.
+Focus restoration cannot activate a button, select a menu option or dispatch a
+setting change.
+
+Bluetooth still clears/cancels sensitive pairing prompts and fences dismissed
+request IDs through its existing recovery logic. A modal preserves the preceding
+ordinary location, not the prompt's credentials or focus. Closing a prompt no
+longer queues an unconditional search-focus request that could outlive closure.
 
 ## Remaining boundary
 
-This is **per-result** presentation memory, not completion of all session behavior.
-The host still requests search focus when reopening a whole surface. Exact
-ordinary region/editor/caret restoration on invocation, explicit search/list
-viewport snapshots across view recreation, computer-wide settings memory and
-remaining domain migrations are subsequent slices. Result editor caret/selection
-positions are not serialized here. No sensitive dialog is a restoration target.
+This is not completion of all Material session work. Independent computer-wide
+settings presentation records, remaining domain keyboard/editor/memory migrations,
+and exact focus for unregistered controls remain pending. Adapter invocation
+focus is supported; its per-tab scroll history is not serialized. Native text
+horizontal scrolling follows Qt's caret revelation rather than a separate pixel
+snapshot. Disk persistence and restoring sensitive dialogs are deliberately out
+of scope.
 
 ## Validation
 
-`tst_chooser_memory.qml` covers independent result/tab state, asynchronous scroll,
-non-focus-stealing selection, explicit close, immediate row toggles, reorder,
-removal/reconnect, disabled/missing/password editors and invalid tabs. Real
-Applications cases exercise category menus, surface closure, capability changes,
-missing results and immediate resource-history refresh. Bluetooth recovery tests
-exercise its real name editor, result switching and sensitive closure together;
-existing pairing, acknowledgement and draft recovery tests remain unchanged.
+`tst_chooser_memory.qml` covers per-result/tab state, asynchronous pages,
+non-focus-stealing selection, close/reorder/removal/reconnect and capability
+fallbacks. Invocation tests exercise search/results/browse/editor focus, backwards
+selections, current-value clamping, keyed viewports, destroyed/recreated views,
+new-input cancellation, focus-loss context changes and stale queued callbacks.
+Real Applications tests cover collapsed-menu restoration and fresh history.
+Bluetooth tests cover device and adapter editors (including an empty device list),
+refresh readiness, changed adapters, newer navigation and sensitive-prompt
+cancellation without replaying edits. Existing acknowledgement/recovery checks
+remain intact.
 
-Strict lint, **151 behavioral cases / 227 Qt passes including hooks**, runtime
-smoke and the full sibling-aware gate validate the slice. Live compositor, IME
-and screen-reader acceptance remain separate; nothing is deployed or restarted.
-Logs: `/tmp/shelllist-memory-validation.log` and
-`/tmp/shelllist-memory-full-check.log`.
+Strict lint, **175 behavioral cases / 251 Qt passes including hooks**, runtime
+smoke and the full sibling-aware gate pass. Live compositor/input-mask, hardware
+IME and screen-reader acceptance remain separate. Nothing is deployed or restarted.
+Logs: `/tmp/shelllist-session-validation.log` and
+`/tmp/shelllist-session-full-check.log`. Both expanded memory and Bluetooth suites
+also passed three consecutive runs in `/tmp/shelllist-session-repeat.log`.
+
+One local run emitted Qt's intermittent “items in the process of being created
+at engine destruction” warning after Displays teardown. Isolated repetitions
+reproduced it at committed baseline `1a92090` and in this slice; the full gate
+was clean. This separate teardown issue remains unresolved, with no suppression
+added. Evidence: `/tmp/shelllist-session-displays-repeat.log`.

@@ -40,7 +40,7 @@ already-open development shell after changing `flake.nix`.
   and modal focus containment/restoration, with decorative animations enabled.
   Bluetooth recovery tests also cover its actual adapter-settings keyboard
   journey and clearing/fencing sensitive prompts on whole-surface closure.
-  The suite now has 151 behavioral cases (227 passes with hooks); the inventory
+  The suite now has 177 behavioral cases (253 passes with hooks); the inventory
   below is the completed pruning checkpoint, not a permanent cap on feature tests.
 - `tst_chooser_geometry.qml` covers anchored expansion, work-area bounds and
   fallback, stable frame/list/text/control sizes, minimum and emergency canvases,
@@ -48,16 +48,25 @@ already-open development shell after changing `flake.nix`.
   the actual Activity rail. Displays retains its safety
   tests with split overflow replacing the rejected narrow single-pane assertion.
   Runtime smoke also exercises the shared visual bounds in a native offscreen
-  floating window; live layer placement and input-mask acceptance are separate.
+  floating window, including native frame delivery through public `Window.window`;
+  live layer placement and input-mask acceptance are separate.
 - `tst_chooser_memory.qml` covers stable per-result/tab scroll and editor memory,
   focus-safe asynchronous restoration, explicit close, immediate row toggles,
   reorder/removal/reconnect, disabled/missing/password targets and invalid tabs.
-  Actual Applications tests exercise menu closure and fresh resource-history
-  reads; Bluetooth recovery adds device-editor restoration with sensitive closure.
-  Whole-surface ordinary-focus restoration is not implemented by this slice.
+  Invocation cases also cover ordinary region/editor focus, backward selections,
+  clamping without value restoration, keyed viewports, recreated visual trees,
+  newer input/menu cancellation, focus-loss context changes and stale callbacks.
+  Actual Applications tests exercise collapsed-menu restoration and fresh history;
+  Bluetooth recovery covers device/adapter editors, refresh readiness, an empty
+  device list, changed adapters and sensitive closure without replaying edits.
 - `tst_battery_history.qml` also checks explicit keyboard/pointer inspection:
   hover/focus alone reveal no values, and editor Escape wins over the shared
   surface shortcut before the next Escape dismisses the surface.
+- `tst_action_control.qml` also checks one-time default details routing and the
+  shared bar color tokens. `tst_clipboard_recovery.qml` verifies actual Clipboard
+  routing specialization, unsupported-kind guards and busy replay rejection.
+  `check-provider-model.js` covers shared settings-toggle defaults, overrides and
+  non-mutating normalization.
 - `tst_notification_actions.qml` owns shared quick-action keyboard/pointer,
   disabled activation, focus containment and hidden-reply layout behavior.
 - `tst_daemon_sessions.qml` checks default/explicit cancellation IDs and consumer

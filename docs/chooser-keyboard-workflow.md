@@ -5,8 +5,8 @@ Applications and Bluetooth opt into the shared region/browse/edit boundary.
 Other chooser domains receive printable-result-to-search routing, but retain
 their existing detail traversal until explicitly migrated. Subsequent step-4
 slices supply [anchored geometry](chooser-geometry.md) and
-[per-result presentation memory](chooser-session-memory.md) for Applications and
-Bluetooth device details.
+[session memory](chooser-session-memory.md): per-result presentation for
+Applications/Bluetooth devices and ordinary invocation focus for both surfaces.
 
 ## Current keys
 
@@ -65,7 +65,10 @@ leaves, rather than letting the next Escape accidentally dismiss details.
 Removed/hidden editors fall back to content without dispatching an edit. New
 content never pulls focus out of another region. The subsequent session-memory
 slice remembers ordinary locations by stable control ID, independently of this
-live editor ownership.
+live editor ownership. Invocation restoration now resumes the ordinary region and
+valid editor/caret, while per-result selection still leaves results/search focused.
+New navigation and activation generations fence delayed restoration; Bluetooth
+waits for its initial refresh before resuming an editor.
 
 `Ui.ModalFrame` traps conventional forward/reverse Tab among its visible,
 enabled inputs/actions and restores valid preceding focus on hide. Native
@@ -100,7 +103,8 @@ pre-existing Fontconfig default-config diagnostic (also present in the previous
 field-slice gate); there are no QML engine warnings or failing/skipped Qt cases.
 
 Hardware IME, screen-reader and live compositor acceptance remain outstanding.
-Per-result memory now ships for Applications/Bluetooth device details. Remaining
-domain migrations, whole-surface ordinary-focus restoration and visual asset
-choices remain separate work. Anchored geometry is also delivered. No live
+Per-result memory now ships for Applications/Bluetooth device details, and ordinary
+invocation focus/caret/viewport restoration ships for both surfaces. Remaining
+domain migrations, independent computer-wide presentation records and visual
+asset choices remain separate work. Anchored geometry is also delivered. No live
 service deployment is part of these tests.

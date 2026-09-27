@@ -26,6 +26,14 @@ DetailsPane {
 
     signal actionTriggered(string actionId)
 
+    // Domains with specialized routing override this method, not the signal.
+    function triggerAction(actionId: string): void {
+        chooserController.triggerDetailAction(actionId);
+    }
+    onActionTriggered: function (actionId) {
+        triggerAction(actionId);
+    }
+
     densityScale: uiScale
 
     DetailsHeader {

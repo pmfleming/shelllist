@@ -28,9 +28,6 @@ Ui.ActionDetailsPane {
     titlePixelSize: Math.round(Ui.Theme.fontSizeDisplay * uiScale)
     actions: deviceContext ? controller.detailActions : []
     secondaryVisible: deviceContext
-    onActionTriggered: function (actionId) {
-        controller.triggerDetailAction(actionId);
-    }
 
     Ui.TabbedDetailsStack {
         anchors.fill: parent
@@ -84,20 +81,16 @@ Ui.ActionDetailsPane {
                 anchors.fill: parent
                 active: pane.controller.hasSelection && (pane.controller.detailsTab === "device" || pane.controller.detailsTab === "settings")
                 asynchronous: true
-                sourceComponent: Component {
-                    BluetoothDevicePage {
-                        controller: pane.controller
-                    }
+                sourceComponent: BluetoothDevicePage {
+                    controller: pane.controller
                 }
             }
             Loader {
                 anchors.fill: parent
                 active: pane.controller.hasSelection && pane.controller.detailsTab === "information"
                 asynchronous: true
-                sourceComponent: Component {
-                    BluetoothInformationPage {
-                        controller: pane.controller
-                    }
+                sourceComponent: BluetoothInformationPage {
+                    controller: pane.controller
                 }
             }
             Loader {
@@ -105,10 +98,8 @@ Ui.ActionDetailsPane {
                 anchors.fill: parent
                 active: pane.controller.detailsTab === "adapter"
                 asynchronous: true
-                sourceComponent: Component {
-                    BluetoothAdapterPage {
-                        controller: pane.controller
-                    }
+                sourceComponent: BluetoothAdapterPage {
+                    controller: pane.controller
                 }
             }
         }

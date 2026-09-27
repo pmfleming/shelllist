@@ -39,6 +39,24 @@ DaemonTestCase {
             }
         }
     }
+    Component {
+        id: details
+        Ui.ActionDetailsPane {
+            uiScale: 1
+            chooserController: Ui.ChooserController {
+                property string routed: ""
+                function triggerDetailAction(actionId) {
+                    routed += actionId + ";";
+                }
+            }
+        }
+    }
+    function test_detailsRouteEachActionOnce() {
+        const pane = createTemporaryObject(details, testCase);
+        pane.actionTriggered("connect");
+        pane.actionTriggered("disconnect");
+        compare(pane.chooserController.routed, "connect;disconnect;");
+    }
     SignalSpy {
         id: clicks
         signalName: "clicked"
@@ -112,6 +130,8 @@ DaemonTestCase {
             width: 160,
             height: 40
         });
+        compare(control.backgroundColor, Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.56));
+        compare(control.borderColor, Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72));
         clicks.target = control;
         secondary.target = control;
         clicks.clear();

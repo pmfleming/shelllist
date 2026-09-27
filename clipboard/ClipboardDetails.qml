@@ -96,9 +96,6 @@ Ui.ActionDetailsPane {
     subtitle: selected.subtitle || ""
     actions: primaryActions.concat(secondaryActions)
     actionWidth: 112
-    onActionTriggered: function (actionId) {
-        triggerAction(actionId);
-    }
 
     Item {
         anchors.fill: parent

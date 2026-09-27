@@ -2,8 +2,8 @@
 
 This delivers the geometry slice of step 4 in the
 [Material Expressive plan](proposals/material-expressive.md).
-[Per-result memory](chooser-session-memory.md) is delivered by the following
-slice; exact ordinary-focus restoration on whole-surface invocation is pending.
+[Session memory](chooser-session-memory.md) is delivered by subsequent slices:
+per-result presentation and ordinary invocation focus for Applications/Bluetooth.
 
 ## Placement and bounds
 

@@ -4,7 +4,13 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
-The [current commonality review](reviews/lens-commonality-2026-09-27.md)
+The [latest session-maintenance review](reviews/lens-session-maintenance-2026-09-27.md)
+uses the preserved invocation-focus working tree as its baseline. It records
+shared settings descriptors and detail routing, public typed window signals,
+modest production metric improvements and the overall locality cost of new tests.
+The [keyboard maintenance review](reviews/lens-keyboard-maintenance-2026-09-27.md)
+records the earlier shared motion/search refactor against its clean baseline.
+The [preceding commonality review](reviews/lens-commonality-2026-09-27.md)
 records shared provider projection, corrected cancellation IDs, typed backend
 controllers and bounded cleanup. Production complexity/effort/LOC fall modestly;
 locality and production clones are unchanged, leverage barely changes, and total
@@ -41,7 +47,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - `ChooserListPane` derives its own density instead of requiring every domain wrapper to forward presentation state.
 - `KeyedListModel` owns persistent model reconciliation and chunking for `ResultStore` and the bar; selection and ranking remain in `ResultStore`. Its `SerializedListModel` specialization keeps notification action arrays encoded and uses synchronous, reset-free reconciliation to preserve live reply editors.
 - `ActionControl` shares keyboard/accessibility activation and busy-focus policy across chooser controls and bar actions. `FocusRing` provides an immediate, inset indicator independent of decorative animation; fields, icon tiles and result rows also use it. No hover tooltip or automatic focus label is rendered; legacy tooltip strings retained during migration supply nonvisual accessible descriptions where appropriate.
-- Providers resolve dynamic actions at use time rather than copying actions into recurring snapshots.
+- Providers resolve dynamic actions at use time rather than copying actions into recurring snapshots. `Core.Model.settingToggle` shares Wi-Fi/Bluetooth descriptor normalization without owning capabilities or effects. `ActionDetailsPane.triggerAction` supplies controller routing by default; Clipboard overrides the method for specialized actions.
 - `BarContent` renders normalized status descriptors through one delegate.
 - Workspace, focused-window, media, tray, and OSD presentation are isolated components.
 - Activity, battery, power, and OSD views are split into cohesive panes rather than one large object tree.

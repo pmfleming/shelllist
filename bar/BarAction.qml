@@ -6,8 +6,8 @@ Ui.ActionControl {
 
     required property string text
     property color foreground: Ui.Theme.text
-    property color backgroundColor: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.56)
-    property color borderColor: Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72)
+    property color backgroundColor: Ui.Theme.barGroupBackground
+    property color borderColor: Ui.Theme.barGroupBorder
     property int horizontalPadding: 10
     property int minimumWidth: 0
     accessibleName: text

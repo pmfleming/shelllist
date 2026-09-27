@@ -10,6 +10,9 @@ QtObject {
     function keepOpenAction(id, label, options) {
         return Implementation.keepOpenAction(id, label, options);
     }
+    function settingToggle(id, label, checked, options) {
+        return Implementation.settingToggle(id, label, checked, options);
+    }
     function result(value) {
         return Implementation.result(value);
     }
