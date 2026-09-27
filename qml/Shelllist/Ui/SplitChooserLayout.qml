@@ -7,13 +7,8 @@ RowLayout {
     required property ChooserController controller
     required property Component listComponent
     required property Component detailsComponent
-    // Opt in for surfaces that must fit small outputs without clipping details.
-    property real minimumSplitDetailsWidth: 0
     property bool keyboardWorkflow: false
     readonly property alias detailsNavigation: detailsNavigation
-    readonly property bool singlePane: minimumSplitDetailsWidth > 0 && width < controller.listPaneWidth + controller.detailsGapWidth + minimumSplitDetailsWidth
-    readonly property real listWidth: singlePane ? width : controller.listPaneWidth
-    readonly property real detailWidth: singlePane ? width : controller.detailsPaneWidth
     readonly property ChooserListPane listItem: listLoader.item as ChooserListPane
     readonly property Item detailsItem: detailsLoader.item as Item
     readonly property real verticalDensity: Theme.densityScale(height, controller.contentVerticalMargin)
@@ -60,17 +55,16 @@ RowLayout {
     Loader {
         id: listLoader
 
-        visible: !layout.singlePane || !layout.controller.detailsRendered
-        Layout.preferredWidth: layout.listWidth
-        Layout.minimumWidth: layout.listWidth
-        Layout.maximumWidth: layout.listWidth
+        Layout.preferredWidth: layout.controller.listPaneWidth
+        Layout.minimumWidth: layout.controller.listPaneWidth
+        Layout.maximumWidth: layout.controller.listPaneWidth
         Layout.fillHeight: true
         active: true
         sourceComponent: layout.listComponent
     }
 
     Item {
-        visible: layout.controller.detailsRendered && !layout.singlePane
+        visible: layout.controller.detailsRendered
         Layout.preferredWidth: layout.controller.detailsPaneGapWidth
         Layout.minimumWidth: layout.controller.detailsPaneGapWidth
         Layout.maximumWidth: layout.controller.detailsPaneGapWidth
@@ -87,9 +81,9 @@ RowLayout {
             layout.focusList();
         }
         visible: layout.controller.detailsRendered
-        Layout.preferredWidth: layout.detailWidth
-        Layout.minimumWidth: layout.detailWidth
-        Layout.maximumWidth: layout.detailWidth
+        Layout.preferredWidth: layout.controller.detailsPaneWidth
+        Layout.minimumWidth: layout.controller.detailsPaneWidth
+        Layout.maximumWidth: layout.controller.detailsPaneWidth
         Layout.fillHeight: true
         clip: true
 

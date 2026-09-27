@@ -41,6 +41,47 @@ TestCase {
             }
         }
     }
+    Component {
+        id: interpolation
+        Item {
+            property real number: 0
+            property color tint: "red"
+            property real referenceNumber: 0
+            property color referenceTint: "red"
+            Ui.InteractiveBehavior on number { duration: 120; easingType: Easing.Linear }
+            Ui.InteractiveBehavior on tint { duration: 120; easingType: Easing.Linear }
+            Behavior on referenceNumber {
+                enabled: !Ui.Theme.noAnimations
+                NumberAnimation { duration: 120 }
+            }
+            Behavior on referenceTint {
+                enabled: !Ui.Theme.noAnimations
+                ColorAnimation { duration: 120 }
+            }
+        }
+    }
+    function test_sharedInterpolationRetainsNumericAndColorBehavior() {
+        const scene = createTemporaryObject(interpolation, testCase);
+        scene.number = 100;
+        scene.tint = "blue";
+        // Independent native references, not bindings to animated values.
+        scene.referenceNumber = 100;
+        scene.referenceTint = "blue";
+        wait(40);
+        verify(scene.number > 0 && scene.number < 100);
+        fuzzyCompare(scene.number, scene.referenceNumber, 0.01);
+        fuzzyCompare(scene.tint.r, scene.referenceTint.r, 0.01);
+        scene.number = 0;
+        scene.tint = "red";
+        tryCompare(scene, "number", 0);
+        tryCompare(scene, "tint", Qt.color("red"));
+        noMotion(true);
+        scene.number = 50;
+        scene.tint = "green";
+        compare(scene.number, 50);
+        compare(scene.tint, Qt.color("green"));
+    }
+
     SignalSpy {
         id: clicks
         signalName: "clicked"

@@ -3,8 +3,9 @@
 This is the first step-3 slice of the [Material Expressive plan](proposals/material-expressive.md).
 Applications and Bluetooth opt into the shared region/browse/edit boundary.
 Other chooser domains receive printable-result-to-search routing, but retain
-their existing detail traversal until explicitly migrated. This does not
-implement per-result session memory or the new anchored geometry.
+their existing detail traversal until explicitly migrated. Per-result session
+memory is still pending. The subsequent [geometry slice](chooser-geometry.md)
+now supplies anchored expansion and bounded split overflow.
 
 ## Current keys
 
@@ -42,6 +43,11 @@ power and list options remain reachable in its adapter settings, including
 when the device list is empty. No help overlay or automatic label was added.
 
 ## Shared boundaries
+
+The subsequent geometry slice also routes native focused result delegates through
+`ResultNavigation`, just like the list view. Their old local key handlers could
+swallow printable spaces, bypass blocked-operation guards or open details without
+transferring browse focus. Native delegate regressions now cover that boundary.
 
 `Ui.DetailsNavigation` is a Qt-only focus scope around the existing details
 loader. It discovers visible shared input/action boundaries, treats composite
@@ -91,5 +97,5 @@ field-slice gate); there are no QML engine warnings or failing/skipped Qt cases.
 
 Hardware IME, screen-reader and live compositor acceptance remain outstanding.
 The remaining domain migrations, per-item focus/tab/scroll memory, whole-surface
-ordinary-focus restoration, geometry and visual asset decisions are separate
-work. No live service deployment is part of these tests.
+ordinary-focus restoration and visual asset decisions remain separate work.
+Anchored geometry has since shipped as an independent step-4 slice. No live service deployment is part of these tests.

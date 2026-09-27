@@ -16,7 +16,7 @@ Rectangle {
     property bool emptyVisible: list.count === 0
     readonly property int count: list.count
     readonly property bool listFocused: list.activeFocus
-    readonly property real delegateHeight: Theme.listDelegateHeight(height)
+    readonly property real delegateHeight: Theme.listRowHeight
 
     signal keyPressed(var event)
 
@@ -108,11 +108,9 @@ Rectangle {
             }
         }
 
-        Behavior on opacity {
-            enabled: !Theme.noAnimations
-            NumberAnimation {
-                duration: Theme.animationFast
-            }
+        InteractiveBehavior on opacity {
+            duration: Theme.animationFast
+            easingType: Easing.Linear
         }
     }
 
@@ -135,11 +133,9 @@ Rectangle {
             }
         }
 
-        Behavior on opacity {
-            enabled: !Theme.noAnimations
-            NumberAnimation {
-                duration: Theme.animationFast
-            }
+        InteractiveBehavior on opacity {
+            duration: Theme.animationFast
+            easingType: Easing.Linear
         }
     }
 

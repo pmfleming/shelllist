@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+import Shelllist.Io as Io
 
 Item {
     id: service
@@ -9,10 +10,8 @@ Item {
     property var queuedRequests: []
     property var catalogs: ({})
     property int rankDebounceMs: 35
-    // Loader.item is dynamically resolved as the process-boundary adapter.
-    // qmllint disable missing-property
-    readonly property bool ready: processLoader.item ? !!processLoader.item["ready"] : false
-    // qmllint enable missing-property
+    readonly property Io.SearchProcess process: processLoader.item as Io.SearchProcess
+    readonly property bool ready: process?.ready ?? false
 
     signal ranked(string owner, int generation, var keys)
 
@@ -35,11 +34,8 @@ Item {
     }
 
     function writeMessage(message: var): void {
-        if (!processLoader.item)
-            return;
-        // qmllint disable missing-property
-        processLoader.item["write"](JSON.stringify(message) + "\n");
-        // qmllint enable missing-property
+        if (process)
+            process.write(JSON.stringify(message) + "\n");
     }
 
     function updateCatalog(owner: string, items: var): void {
@@ -84,20 +80,18 @@ Item {
     }
 
     function start(): void {
-        // qmllint disable missing-property
-        if (!processLoader.item || processLoader.item["running"] || restartTimer.running)
+        if (!process || process.running || restartTimer.running)
             return;
         try {
-            processLoader.item["start"]();
+            process.start();
         } catch (error) {
             console.error("shelllist fuzzy search failed to start: " + error);
             restartTimer.restart();
         }
-        // qmllint enable missing-property
     }
 
     function flush(): void {
-        if (!processLoader.item)
+        if (!process)
             return;
         const requests = queuedRequests;
         queuedRequests = [];
@@ -126,8 +120,7 @@ Item {
     }
 
     Connections {
-        target: processLoader.item
-        ignoreUnknownSignals: true
+        target: service.process
         function onProcessReady(): void {
             service.sendCatalogs();
             if (!rankDebounce.running)

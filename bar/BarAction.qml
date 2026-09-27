@@ -48,11 +48,9 @@ Ui.ActionControl {
         border.width: 1
         border.color: root.activeFocus ? Ui.Theme.strongBorder : root.borderColor
 
-        Behavior on color {
-            enabled: !Ui.Theme.noAnimations
-            ColorAnimation {
-                duration: Ui.Theme.animationFast
-            }
+        Ui.InteractiveBehavior on color {
+            duration: Ui.Theme.animationFast
+            easingType: Easing.Linear
         }
     }
 
@@ -70,11 +68,9 @@ Ui.ActionControl {
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideNone
 
-        Behavior on color {
-            enabled: !Ui.Theme.noAnimations
-            ColorAnimation {
-                duration: Ui.Theme.animationFast
-            }
+        Ui.InteractiveBehavior on color {
+            duration: Ui.Theme.animationFast
+            easingType: Easing.Linear
         }
     }
 

@@ -80,7 +80,7 @@ ColumnLayout {
 
     ChooserHeader {
         id: header
-        uiScale: pane.densityScale
+        uiScale: 1
         placeholder: pane.placeholder
         icon: pane.headerIcon
         signalIcon: pane.signalIcon
@@ -122,7 +122,6 @@ ColumnLayout {
         Layout.fillHeight: true
         chooserController: pane.chooserController
         rowDelegate: pane.rowDelegate
-        densityScale: pane.densityScale
         resultModel: pane.resultModel
         listFooterComponent: pane.listFooterComponent
         preserveViewportOnAppend: pane.preserveViewportOnAppend

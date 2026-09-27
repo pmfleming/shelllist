@@ -122,10 +122,7 @@ Item {
     readonly property int easingResponsive: Easing.OutCubic
     readonly property int easingGentle: Easing.InOutSine
 
-    readonly property int listRowMinHeight: 42
     readonly property int listRowHeight: 52
-    readonly property int listRowMaxHeight: 58
-    readonly property int listVisibleRowTarget: 15
     readonly property real listDensityMinimum: 0.86
     readonly property real listDensityMaximum: 1.08
 
@@ -174,10 +171,6 @@ Item {
         const boundedDensity = Math.max(densityMinimum, Math.min(1, density));
         const compression = (boundedDensity - densityMinimum) / (1 - densityMinimum);
         return Math.round(minimumVerticalSpacing + (preferred - minimumVerticalSpacing) * compression);
-    }
-
-    function listDelegateHeight(availableHeight) {
-        return Math.max(listRowMinHeight, Math.min(listRowMaxHeight, availableHeight / listVisibleRowTarget));
     }
 
     function luminance(color) {

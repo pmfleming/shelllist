@@ -56,6 +56,7 @@ NotificationQuickActions 1.0 NotificationQuickActions.qml
 NotificationReplyRow 1.0 NotificationReplyRow.qml
 NotificationStackHeader 1.0 NotificationStackHeader.qml
 NotificationPresentation 1.0 NotificationPresentation.js
+PopoverGeometry 1.0 PopoverGeometry.qml
 PopupWindowHost 1.0 PopupWindowHost.qml
 PromptDialog 1.0 PromptDialog.qml
 PulsingLabel 1.0 PulsingLabel.qml
@@ -72,6 +73,7 @@ SegmentedControl 1.0 SegmentedControl.qml
 ShelllistGlobalShortcut 1.0 ShelllistGlobalShortcut.qml
 SignalIcon 1.0 SignalIcon.qml
 SplitChooserLayout 1.0 SplitChooserLayout.qml
+SurfaceViewport 1.0 SurfaceViewport.qml
 StatusPanel 1.0 StatusPanel.qml
 StateLayer 1.0 StateLayer.qml
 TabbedDetailsStack 1.0 TabbedDetailsStack.qml

@@ -50,11 +50,9 @@ Item {
             smooth: true
             opacity: status === Image.Ready ? 1 : 0
 
-            Behavior on opacity {
-                enabled: !Ui.Theme.noAnimations
-                NumberAnimation {
-                    duration: Ui.Theme.animationNormal
-                }
+            Ui.InteractiveBehavior on opacity {
+                duration: Ui.Theme.animationNormal
+                easingType: Easing.Linear
             }
         }
 
@@ -84,85 +82,13 @@ Item {
         font.weight: Ui.Theme.fontWeightDemiBold
     }
 
-    Row {
+    MediaControls {
         id: mediaControls
-
+        controller: root.controller
+        multiplePlayers: root.playerCount > 1
         anchors.right: parent.right
         anchors.rightMargin: 6
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 1
-
-        Ui.FlatIconButton {
-            objectName: "mediaCycleButton"
-            width: 26
-            height: 26
-            icon: "󰑖"
-            iconSize: 13
-            backgroundColor: "transparent"
-            radius: 0
-            border.width: 0
-            flatIconColor: Ui.Theme.mutedText
-            highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
-            highlightedIconColor: Ui.Theme.accent
-            pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
-            visible: root.playerCount > 1
-            accessibleName: qsTr("Show next media player")
-            onClicked: root.controller.cycleMediaPlayer()
-        }
-
-        Ui.FlatIconButton {
-            objectName: "mediaRewindButton"
-            width: 26
-            height: 26
-            icon: ""
-            iconSize: 12
-            backgroundColor: "transparent"
-            radius: 0
-            border.width: 0
-            flatIconColor: Ui.Theme.mutedText
-            highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
-            highlightedIconColor: Ui.Theme.accent
-            pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
-            enabled: !!root.player && !!root.player.can_seek
-            accessibleName: qsTr("Rewind 15 seconds")
-            onClicked: root.controller.seekMedia(-15)
-        }
-
-        Ui.FlatIconButton {
-            objectName: "mediaPlayPauseButton"
-            width: 28
-            height: 28
-            icon: Presentation.playPauseActionIcon(root.player)
-            iconSize: 13
-            backgroundColor: "transparent"
-            radius: 0
-            border.width: 0
-            flatIconColor: Ui.Theme.mutedText
-            highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
-            highlightedIconColor: Ui.Theme.accent
-            pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
-            enabled: !!root.player && (!!root.player.can_control || !!root.player.can_play || !!root.player.can_pause)
-            accessibleName: qsTr("Play/pause")
-            onClicked: root.controller.mediaOperation("play-pause")
-        }
-
-        Ui.FlatIconButton {
-            objectName: "mediaForwardButton"
-            width: 26
-            height: 26
-            icon: ""
-            iconSize: 12
-            backgroundColor: "transparent"
-            radius: 0
-            border.width: 0
-            flatIconColor: Ui.Theme.mutedText
-            highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
-            highlightedIconColor: Ui.Theme.accent
-            pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
-            enabled: !!root.player && !!root.player.can_seek
-            accessibleName: qsTr("Fast-forward 30 seconds")
-            onClicked: root.controller.seekMedia(30)
-        }
     }
 
     Rectangle {
@@ -182,12 +108,9 @@ Item {
             radius: 0
             color: Ui.Theme.accent
 
-            Behavior on width {
-                enabled: !Ui.Theme.noAnimations
-                NumberAnimation {
-                    duration: 500
-                    easing.type: Easing.Linear
-                }
+            Ui.InteractiveBehavior on width {
+                duration: 500
+                easingType: Easing.Linear
             }
         }
     }

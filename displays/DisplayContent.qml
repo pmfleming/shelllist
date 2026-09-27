@@ -7,7 +7,6 @@ Ui.ProviderChooserSurface {
     id: content
     required property DisplayController controller
     chooserController: controller
-    minimumSplitDetailsWidth: 350
     navigationEnabled: !controller.discardPrompt && !controller.layoutDragging
     refreshEnabled: !controller.actionInFlight && !controller.trial && navigationEnabled
     detailsTabEnabled: navigationEnabled && controller.detailsOpen && controller.hasSelection && !controller.trial && !controller.actionInFlight

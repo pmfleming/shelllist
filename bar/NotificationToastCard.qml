@@ -40,12 +40,9 @@ Rectangle {
     border.color: urgency >= 2 ? Ui.Theme.danger : Ui.Theme.border
     opacity: 1 - Math.max(0, x) / width * 0.7
 
-    Behavior on x {
-        enabled: !Ui.Theme.noAnimations && !swipe.drag.active
-        NumberAnimation {
-            duration: Ui.Theme.animationNormal
-            easing.type: Ui.Theme.easingResponsive
-        }
+    Ui.InteractiveBehavior on x {
+        animate: !swipe.drag.active
+        duration: Ui.Theme.animationNormal
     }
 
     Ui.Elevation {
@@ -127,11 +124,9 @@ Rectangle {
                         visible: opacity > 0
                         opacity: card.controlsRevealed ? 1 : 0
 
-                        Behavior on opacity {
-                            enabled: !Ui.Theme.noAnimations
-                            NumberAnimation {
-                                duration: Ui.Theme.animationFast
-                            }
+                        Ui.InteractiveBehavior on opacity {
+                            duration: Ui.Theme.animationFast
+                            easingType: Easing.Linear
                         }
 
                         Ui.FlatIconButton {

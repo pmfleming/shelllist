@@ -14,18 +14,12 @@ RectangularShadow {
     spread: -depth * 0.22
     offset.y: Math.max(1, depth * 0.55)
 
-    Behavior on blur {
-        enabled: !Theme.noAnimations
-        NumberAnimation {
-            duration: Theme.animationNormal
-            easing.type: Theme.easingGentle
-        }
+    InteractiveBehavior on blur {
+        duration: Theme.animationNormal
+        easingType: Theme.easingGentle
     }
-    Behavior on offset.y {
-        enabled: !Theme.noAnimations
-        NumberAnimation {
-            duration: Theme.animationNormal
-            easing.type: Theme.easingGentle
-        }
+    InteractiveBehavior on offset.y {
+        duration: Theme.animationNormal
+        easingType: Theme.easingGentle
     }
 }

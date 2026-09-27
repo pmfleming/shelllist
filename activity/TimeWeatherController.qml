@@ -1,5 +1,4 @@
 import QtQuick
-import Shelllist.Ui as Ui
 
 ActivityController {
     id: controller
@@ -18,15 +17,6 @@ ActivityController {
     selectionModel: citySelection
     detailSection: "weather"
     weatherLocationId: selectedCity.weather ? String(selectedCity.weather.id || "") : ""
-    closedWidthFraction: 0
-    openWidthFraction: 0
-    minimumClosedWindowWidth: Ui.Theme.popupClosedWidth
-    maximumClosedWindowWidth: Ui.Theme.popupClosedWidth
-    minimumOpenWindowWidth: Ui.Theme.popupOpenWidth
-    maximumOpenWindowWidth: Ui.Theme.popupOpenWidth
-    surfaceHeightRatio: Ui.Theme.popupHeightRatio
-    surfaceFitsWorkspace: false
-    surfaceAlignment: "center"
 
     function clocksByTimezone(clocks: var): var {
         const indexed = ({});

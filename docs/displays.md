@@ -14,8 +14,10 @@ the shared Rust matcher over names, connectors and reported manufacturer/model o
 serial metadata; it does not discover disconnected or wireless displays.
 
 Up/Down selects a row; **Right** or its chevron expands that display's options
-beside the list. The compact diagram is replaced by this list. On narrow outputs,
-details occupy the available width and **Back to displays** returns to the list.
+beside the list, keeping its left edge anchored. Narrow outputs retain this split
+layout; below the supported canvas size, explicit scrolling and focus revelation
+keep controls reachable. **Back to displays** closes details without discarding
+layout drafts. See [shared geometry](chooser-geometry.md) for bounds and limits.
 Left closes details when not consumed by an editor, canvas or tab control; Left
 inside a position field moves its cursor. Returning to the list restores search
 focus. Empty searches and disconnected displays have distinct messages, and Back

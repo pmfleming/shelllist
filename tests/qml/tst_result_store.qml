@@ -52,6 +52,7 @@ TestCase {
         const normalized = testProvider.makeResult(payload);
         compare(normalized.providerId, "test");
         compare(normalized.providerPriority, 7);
+        compare(testProvider.descriptor().prefixes, ["test:", "t:"], "typed prefixes retain the provider wire shape");
         compare(payload.providerId, "wrong");
         compare(payload.providerPriority, 999);
         const projected = testProvider.resultsFor([payload,
@@ -74,6 +75,7 @@ TestCase {
             providerId: "test"
             displayName: "Test"
             priority: 7
+            prefixes: ["test:", "t:"]
             function resultFor(payload: var): var {
                 return makeResult({
                     id: payload.id,

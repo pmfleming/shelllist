@@ -40,7 +40,16 @@ wheel actions remain distinct. `ChooserListPane.requestRefresh()` and
 Domain overrides keep Bluetooth discovery, clipboard deletion/multi-selection
 and application force-refresh behavior local.
 
-See the [current measured review](reviews/lens-commonality-2026-09-27.md) and [original commonality review](reviews/commonality-2026-09-20.md) for evidence and limits.
+`Core.SearchService` shares one lazy, typed `Io.SearchProcess` boundary for the
+provider choosers. Provider prefixes are typed string lists and become ordinary
+JavaScript arrays at descriptor normalization; JSON domain payloads remain dynamic.
+Shared controls and the bar use `Ui.InteractiveBehavior` for decorative numeric
+and color interpolation with explicit timing overrides. Spring motion remains
+separate, and neither mechanism owns logical state or keyboard focus.
+
+See the [latest measured review](reviews/lens-keyboard-maintenance-2026-09-27.md),
+[previous endpoint review](reviews/lens-commonality-2026-09-27.md) and
+[original commonality review](reviews/commonality-2026-09-20.md) for evidence and limits.
 
 ## Deliberate domain differences
 

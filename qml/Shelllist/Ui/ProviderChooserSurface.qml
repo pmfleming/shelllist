@@ -8,7 +8,6 @@ ChooserSurface {
     required property ChooserController chooserController
     required property Component listComponent
     required property Component detailsComponent
-    property alias minimumSplitDetailsWidth: chooser.minimumSplitDetailsWidth
     property bool navigationEnabled: true
     // Incremental migration: native dialogs and unmigrated domains stay intact.
     property bool keyboardWorkflow: false
@@ -16,7 +15,7 @@ ChooserSurface {
     property bool refreshEnabled: navigationEnabled && !chooserController.actionInFlight
     property bool detailsTabEnabled: navigationEnabled && chooserController.detailsOpen && chooserController.hasSelection
     property bool refreshAutoRepeat: true
-    readonly property real uiScale: Theme.densityScale(height, chooserController.contentVerticalMargin)
+    readonly property real uiScale: 1
     readonly property ChooserListPane listItem: chooser.listItem
     readonly property Item detailsItem: chooser.detailsItem
 
@@ -32,27 +31,12 @@ ChooserSurface {
     function cycleRegion(backwards: bool): void {
         if (!listItem)
             return;
-        const inDetails = detailsNavigation.activeFocus;
-        const inResults = listItem.listFocused;
-        if (backwards) {
-            if (inDetails)
-                listItem.focusList();
-            else if (inResults)
-                listItem.focusSearch();
-            else if (chooserController.detailsOpen)
-                detailsNavigation.focusContent();
-            else
-                listItem.focusList();
-        } else {
-            if (inDetails)
-                listItem.focusSearch();
-            else if (inResults && chooserController.detailsOpen)
-                detailsNavigation.focusContent();
-            else if (inResults)
-                listItem.focusSearch();
-            else
-                listItem.focusList();
-        }
+        const regions = [listItem.focusSearch, listItem.focusList];
+        if (chooserController.detailsOpen)
+            regions.push(detailsNavigation.focusContent);
+        const current = listItem.listFocused ? 1 : 0;
+        const next = detailsNavigation.activeFocus ? (backwards ? 1 : 0) : (current + (backwards ? -1 : 1) + regions.length) % regions.length;
+        regions[next]();
     }
     function dismiss(): void {
         if (keyboardWorkflow && chooserController.detailsOpen && (detailsNavigation.activeFocus || detailsNavigation.popupOpen))

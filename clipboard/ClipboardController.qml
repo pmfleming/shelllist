@@ -515,12 +515,6 @@ Ui.ProviderChooserController {
         detailsOpen = true;
         detailState.load();
     }
-    function closeDetails() {
-        detailsOpen = false;
-    }
-    function toggleDetails() {
-        detailsOpen ? closeDetails() : openDetails();
-    }
     function isActionRequest(id) {
         return id.indexOf("action-") === 0 || id.indexOf("wipe-") === 0 || id.indexOf("delete-many-") === 0 || id.indexOf("edit-") === 0 || id === "capture-screenshot";
     }

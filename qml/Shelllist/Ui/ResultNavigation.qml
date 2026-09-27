@@ -1,8 +1,6 @@
 import QtQuick
 
 Item {
-    id: navigation
-
     required property ChooserController controller
     property bool blocked: false
     property bool primaryEnabled: true

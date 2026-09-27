@@ -20,12 +20,7 @@ Core.Provider {
         return Core.Model.action(Object.assign({
             id: id,
             label: label,
-            closePolicy: "close",
-            presentation: {
-                group: "overflow",
-                tone: "normal",
-                width: 120
-            }
+            closePolicy: "close"
         }, options || ({})));
     }
 
@@ -37,7 +32,6 @@ Core.Provider {
                 role: "default",
                 enabled: !busy,
                 presentation: {
-                    group: "primary",
                     tone: "active",
                     width: 128
                 },
@@ -52,7 +46,6 @@ Core.Provider {
                 enabled: !busy,
                 presentation: {
                     group: "toolbar",
-                    tone: "normal",
                     width: 120
                 },
                 metadata: {
@@ -85,9 +78,7 @@ Core.Provider {
                 icon: "󰖲",
                 enabled: !busy,
                 presentation: {
-                    group: "overflow",
-                    tone: window.focused ? "active" : "normal",
-                    width: 0
+                    tone: window.focused ? "active" : "normal"
                 },
                 metadata: {
                     operation: "focus-window",
@@ -98,9 +89,7 @@ Core.Provider {
                 icon: "󰅖",
                 enabled: !busy,
                 presentation: {
-                    group: "overflow",
-                    tone: "danger",
-                    width: 0
+                    tone: "danger"
                 },
                 metadata: {
                     operation: "close-window",
@@ -116,11 +105,6 @@ Core.Provider {
             return action("desktop-action-" + index, desktopAction.name || "Application action", {
                 icon: desktopAction.icon || "󰐕",
                 enabled: !busy,
-                presentation: {
-                    group: "overflow",
-                    tone: "normal",
-                    width: 0
-                },
                 metadata: {
                     operation: "desktop-action",
                     desktopActionId: desktopAction.id

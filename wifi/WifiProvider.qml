@@ -27,7 +27,6 @@ Core.Provider {
                 enabled: controller.actions.canConnect(ap),
                 visible: !controller.isActive(ap) && !connecting,
                 presentation: {
-                    group: "primary",
                     tone: "active",
                     width: 152
                 }
@@ -38,7 +37,6 @@ Core.Provider {
                 visible: connecting,
                 presentation: {
                     group: "primary",
-                    tone: "danger",
                     width: 152
                 }
             }), Core.Model.keepOpenAction("disconnect", "Disconnect", {
@@ -48,7 +46,6 @@ Core.Provider {
                 visible: controller.isActive(ap) && !connecting,
                 presentation: {
                     group: "primary",
-                    tone: "danger",
                     width: 152
                 }
             })];
@@ -71,7 +68,6 @@ Core.Provider {
                 icon: "󰏌",
                 presentation: {
                     group: "toolbar",
-                    tone: "normal",
                     width: 100
                 }
             }), Core.Model.keepOpenAction("share", "Share", {
@@ -79,7 +75,6 @@ Core.Provider {
                 enabled: controller.actions.canShare(ap),
                 presentation: {
                     group: "toolbar",
-                    tone: "normal",
                     width: 92
                 }
             })];

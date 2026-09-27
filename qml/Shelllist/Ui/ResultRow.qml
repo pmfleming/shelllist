@@ -7,7 +7,7 @@ Rectangle {
     required property int index
     required property ChooserListPane listPane
     property real rowHeight: listPane.delegateHeight
-    property real uiScale: listPane.densityScale
+    property real uiScale: 1
     property int selectedIndex: listPane.selectedIndex
     property bool selectionFocused: listPane.listFocused
     property bool detailsOpen: listPane.chooserController.detailsOpen
@@ -53,26 +53,10 @@ Rectangle {
     Accessible.selected: selected
     Accessible.onPressAction: row.picked(row.index)
 
-    Keys.onReturnPressed: function (event) {
-        row.primaryRequested();
-        event.accepted = true;
-    }
-    Keys.onEnterPressed: function (event) {
-        row.primaryRequested();
-        event.accepted = true;
-    }
-    Keys.onSpacePressed: function (event) {
-        row.picked(row.index);
-        event.accepted = true;
-    }
-    Keys.onLeftPressed: function (event) {
-        row.listPane.chooserController.closeDetails();
-        event.accepted = true;
-    }
-    Keys.onRightPressed: function (event) {
-        row.picked(row.index);
-        row.listPane.chooserController.openDetails();
-        event.accepted = true;
+    // ListView can give its current delegate native focus. Use the same route
+    // as the view, including printable query text, guards and detail focus.
+    Keys.onPressed: function (event) {
+        row.listPane.chooserController.navigation.handleListKey(event);
     }
 
     Rectangle {

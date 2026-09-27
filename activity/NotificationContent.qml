@@ -6,11 +6,11 @@ import Shelllist.Ui as Ui
 Ui.ChooserSurface {
     id: content
     required property NotificationController controller
-    readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
+    readonly property real uiScale: 1
 
     Column {
         anchors.fill: parent
-        anchors.margins: Ui.Theme.contentMargin
+        anchors.margins: content.controller.contentMargin
         spacing: Ui.Theme.spacingMd
 
         Ui.ChooserHeader {

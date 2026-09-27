@@ -86,11 +86,8 @@ Item {
         onClicked: root.controller.openSurface("applications")
     }
 
-    Behavior on width {
-        enabled: !Ui.Theme.noAnimations
-        NumberAnimation {
-            duration: Ui.Theme.animationNormal
-            easing.type: Ui.Theme.easingStandard
-        }
+    Ui.InteractiveBehavior on width {
+        duration: Ui.Theme.animationNormal
+        easingType: Ui.Theme.easingStandard
     }
 }

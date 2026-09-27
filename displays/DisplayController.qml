@@ -62,11 +62,6 @@ Ui.ProviderChooserController {
     provider: displayProvider
     navigationBlocked: discardPrompt || layoutDragging || actionInFlight || !!trial
     onSelectedNameChanged: updateReference()
-    // Use the common expansion animation, but clamp both widths to this output.
-    closedWidthFraction: 1
-    openWidthFraction: 1
-    minimumClosedWindowWidth: Math.min(Ui.Theme.popupClosedWidth, availableScreenWidth || Ui.Theme.popupClosedWidth)
-    minimumOpenWindowWidth: Math.min(Ui.Theme.popupOpenWidth, availableScreenWidth || Ui.Theme.popupOpenWidth)
 
     signal editorFocusRequested
     signal compactFocusRequested

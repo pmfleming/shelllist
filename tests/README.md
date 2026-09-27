@@ -25,7 +25,9 @@ already-open development shell after changing `flake.nix`.
   inset bounds, selection versus focus, non-selecting hover and tooltip absence.
 - `tst_expressive_controls.qml` covers press/reversal while activation and focus
   remain immediate, busy/focus-loss cleanup and stopping in-flight springs when
-  motion is disabled. These feature regressions were added after pruning.
+  motion is disabled. It also compares shared numeric/color interpolation with
+  native Qt references and checks reversal/no-motion endpoints. These feature
+  regressions were added after pruning.
 - `tst_settings_controls.qml` checks immediate slider value/focus feedback,
   native pointer mapping in horizontal/mirrored/vertical layouts, keyboard edits
   and segmented radio semantics, disabled guards and mirrored navigation.
@@ -38,8 +40,15 @@ already-open development shell after changing `flake.nix`.
   and modal focus containment/restoration, with decorative animations enabled.
   Bluetooth recovery tests also cover its actual adapter-settings keyboard
   journey and clearing/fencing sensitive prompts on whole-surface closure.
-  The suite now has 127 behavioral cases (199 passes with hooks); the inventory
+  The suite now has 141 behavioral cases (215 passes with hooks); the inventory
   below is the completed pruning checkpoint, not a permanent cap on feature tests.
+- `tst_chooser_geometry.qml` covers anchored expansion, work-area bounds and
+  fallback, stable frame/list/text/control sizes, minimum and emergency canvases,
+  focused-delegate query/guard/detail routing, keyboard overflow revelation and
+  the actual Activity rail. Displays retains its safety
+  tests with split overflow replacing the rejected narrow single-pane assertion.
+  Runtime smoke also exercises the shared visual bounds in a native offscreen
+  floating window; live layer placement and input-mask acceptance are separate.
 - `tst_battery_history.qml` also checks explicit keyboard/pointer inspection:
   hover/focus alone reveal no values, and editor Escape wins over the shared
   surface shortcut before the next Escape dismisses the surface.
@@ -48,7 +57,8 @@ already-open development shell after changing `flake.nix`.
 - `tst_daemon_sessions.qml` checks default/explicit cancellation IDs and consumer
   routing, including Qt's omitted typed-string argument conversion.
   `tst_result_store.qml` also checks provider-owned identity, non-mutating
-  normalization and shared batch projection through a domain override.
+  normalization, typed prefix descriptors and shared batch projection through
+  a domain override.
 - `tst_keyed_list_model.qml` checks arbitrary string identities and cancellation
   of stale queued updates. Notification view tests own native action-array
   rendering and live reply focus through a 205-record burst, destroy content

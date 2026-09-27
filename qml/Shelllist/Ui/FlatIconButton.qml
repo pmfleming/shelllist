@@ -20,10 +20,8 @@ ActionButton {
     hoverBackgroundColor: highlightedBackgroundColor
     pressedBackgroundColor: pressedColor
 
-    Behavior on animatedBackgroundColor {
-        enabled: !Theme.noAnimations
-        ColorAnimation {
-            duration: Theme.animationFast
-        }
+    InteractiveBehavior on animatedBackgroundColor {
+        duration: Theme.animationFast
+        easingType: Easing.Linear
     }
 }

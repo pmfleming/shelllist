@@ -112,17 +112,18 @@ ShellRoot {
         controller: barController
     }
 
+    Ui.PopoverGeometry {
+        id: initialGeometry
+        availableWidth: windowHost.availableWindowWidth
+        availableHeight: windowHost.availableWindowHeight
+    }
+
     Ui.PopupWindowHost {
         id: windowHost
 
         content: shellContentComponent
-        surfaceWindowWidth: shell.activeController ? shell.activeController.surfaceWindowWidth : Ui.Theme.popupOpenWidth
+        geometry: shell.activeController ? shell.activeController.geometry : initialGeometry
         currentWindowWidth: shell.activeController ? shell.activeController.currentWindowWidth : Ui.Theme.popupClosedWidth
-        windowHeightRatio: shell.activeController ? shell.activeController.surfaceHeightRatio : Ui.Theme.popupHeightRatio
-        windowTopInset: shell.activeController ? shell.activeController.surfaceTopInset : 0
-        windowBottomInset: shell.activeController ? shell.activeController.surfaceBottomInset : 0
-        fitToWorkspace: shell.activeController ? shell.activeController.surfaceFitsWorkspace : false
-        contentAlignment: shell.activeController ? shell.activeController.surfaceAlignment : "center"
         modeEnvironment: "SHELLLIST_MODE"
         ipcTarget: "shelllist-window"
         ipcEnabled: false
@@ -159,6 +160,12 @@ ShellRoot {
         target: shell.activeController
         property: "availableScreenWidth"
         value: windowHost.availableWindowWidth
+        when: shell.activeController !== null
+    }
+    Binding {
+        target: shell.activeController
+        property: "availableScreenHeight"
+        value: windowHost.availableWindowHeight
         when: shell.activeController !== null
     }
 

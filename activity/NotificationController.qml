@@ -22,14 +22,7 @@ Ui.ChooserController {
     readonly property var visibleGroups: Ui.NotificationPresentation.groupRecords(Ui.NotificationPresentation.filterRecords(tab === "active" ? Ui.NotificationPresentation.newestFirst(notificationState.activeNotifications) : notificationState.history, filterText))
 
     navigationPrimaryEnabled: false
-    closedWidthFraction: 0.4
-    openWidthFraction: closedWidthFraction
-    minimumClosedWindowWidth: 453
-    maximumClosedWindowWidth: 640
-    minimumOpenWindowWidth: minimumClosedWindowWidth
-    maximumOpenWindowWidth: maximumClosedWindowWidth
-    surfaceHeightRatio: Ui.Theme.popupHeightRatio
-    surfaceAlignment: "center"
+    expandable: false
 
     signal backRequested
     signal groupsAboutToChange

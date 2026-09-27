@@ -37,22 +37,16 @@ Rectangle {
         color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.72)
     }
 
-    Behavior on opacity {
+    Ui.InteractiveBehavior on opacity {
         id: opacityBehavior
         // Base this on the incoming value, not another property's binding
         // update order. A new key must also interrupt an in-flight dismissal.
-        enabled: !Ui.Theme.noAnimations && opacityBehavior.targetValue === 0
-        NumberAnimation {
-            duration: Ui.Theme.animationFast
-            easing.type: Ui.Theme.easingStandard
-        }
+        animate: opacityBehavior.targetValue === 0
+        duration: Ui.Theme.animationFast
+        easingType: Ui.Theme.easingStandard
     }
-    Behavior on y {
-        enabled: !Ui.Theme.noAnimations
-        NumberAnimation {
-            duration: Ui.Theme.animationFast
-            easing.type: Easing.OutCubic
-        }
+    Ui.InteractiveBehavior on y {
+        duration: Ui.Theme.animationFast
     }
 
     Row {

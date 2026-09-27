@@ -8,11 +8,11 @@ Ui.ChooserSurface {
 
     required property ActivityController controller
     readonly property alias now: liveClock.now
-    readonly property real uiScale: Ui.Theme.densityScale(height, controller.contentVerticalMargin)
+    readonly property real uiScale: 1
 
     Column {
         anchors.fill: parent
-        anchors.margins: Ui.Theme.contentMargin
+        anchors.margins: content.controller.contentMargin
         spacing: Ui.Theme.spacingMd
 
         Row {
@@ -85,14 +85,12 @@ Ui.ChooserSurface {
             height: parent.height - y
             spacing: 0
 
-            Loader {
-                visible: content.controller.detailsRendered
-                width: content.controller.detailsPaneWidth
+            ActivityGlancePane {
+                objectName: "activityGlancePane"
+                width: content.controller.listPaneWidth
                 height: parent.height
-                clip: true
-                active: content.controller.detailsRendered
-                asynchronous: true
-                sourceComponent: scheduleComponent
+                controller: content.controller
+                now: content.now
             }
 
             Item {
@@ -102,11 +100,14 @@ Ui.ChooserSurface {
                 Ui.VerticalDivider {}
             }
 
-            ActivityGlancePane {
-                width: content.controller.listPaneWidth
+            Loader {
+                visible: content.controller.detailsRendered
+                width: content.controller.detailsPaneWidth
                 height: parent.height
-                controller: content.controller
-                now: content.now
+                clip: true
+                active: content.controller.detailsRendered
+                asynchronous: true
+                sourceComponent: scheduleComponent
             }
         }
     }

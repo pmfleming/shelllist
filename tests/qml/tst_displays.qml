@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Displays as Displays
+import Shelllist.Ui as Ui
 
 DaemonTestCase {
     id: testCase
@@ -19,8 +20,20 @@ DaemonTestCase {
             height: testCase.height
             property alias controller: controller
             readonly property Item detailsItem: content.detailsItem
-            Displays.DisplayController { id: controller }
-            Displays.DisplayContent { id: content; controller: panel.controller }
+            property alias viewport: viewport
+            readonly property bool listVisible: content.listItem.visible
+            Displays.DisplayController {
+                id: controller
+                availableScreenWidth: panel.width
+                availableScreenHeight: panel.height
+            }
+            Ui.SurfaceViewport {
+                id: viewport
+                width: Math.min(panel.width, controller.currentWindowWidth)
+                height: panel.height
+                canvasWidth: controller.currentWindowWidth
+                Displays.DisplayContent { id: content; controller: panel.controller }
+            }
         }
     }
     function displayState() {
@@ -182,11 +195,16 @@ DaemonTestCase {
         // A rendered frame can precede the nested layout's resize/polish pass.
         verify(waitForPolish(panel.Window.window));
         const page = findChild(panel, "displayFocusPane");
-        verify(page.width > 0 && page.width <= panel.width);
+        verify(page.width > 0 && panel.detailsItem.width >= 495 && panel.listVisible, "small outputs retain the split canvas, not a replacement pane");
+        verify(panel.viewport.contentWidth > panel.viewport.width);
         number.focusInput(false);
         tryVerify(function () {
             const position = number.mapToItem(page, 0, 0);
             return position.y >= 0 && position.y + number.height <= page.height;
+        });
+        tryVerify(function () {
+            const position = number.mapToItem(panel.viewport, 0, 0);
+            return panel.viewport.contentX > 0 && position.x >= 0 && position.x < panel.viewport.width;
         });
     }
     function test_mirrorAndExtendRemainDraftOnlyAndUseTheLayoutPreview() {

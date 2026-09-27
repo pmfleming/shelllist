@@ -9,7 +9,7 @@ Item {
     property string icon: ""
     property real priority: 0
     property bool providerEnabled: true
-    property var prefixes: []
+    property list<string> prefixes: []
     property var capabilities: ({
             query: true,
             actions: true,
@@ -24,7 +24,7 @@ Item {
             icon: icon,
             priority: priority,
             enabled: providerEnabled,
-            prefixes: prefixes,
+            prefixes: Array.from(prefixes),
             capabilities: capabilities
         });
     }

@@ -8,7 +8,6 @@ Item {
 
     required property ChooserController chooserController
     required property Component rowDelegate
-    required property real densityScale
     property var resultModel: null
     property Component listFooterComponent: null
     property bool preserveViewportOnAppend: false
@@ -48,7 +47,7 @@ Item {
             id: listFrame
             Layout.fillWidth: true
             Layout.fillHeight: true
-            uiScale: body.densityScale
+            uiScale: 1
             controller: body.chooserController
             resultModel: body.resultModel
             footerComponent: body.listFooterComponent
@@ -64,7 +63,7 @@ Item {
 
         StatusPanel {
             Layout.fillWidth: true
-            uiScale: body.densityScale
+            uiScale: 1
             status: body.status
             icon: body.icon
             signalIcon: body.signalIcon

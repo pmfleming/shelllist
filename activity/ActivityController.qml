@@ -52,15 +52,6 @@ Ui.ChooserController {
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
 
     detailsOpen: false
-    closedWidthFraction: 0.285
-    openWidthFraction: 0.66
-    minimumClosedWindowWidth: 460
-    maximumClosedWindowWidth: 760
-    minimumOpenWindowWidth: 1040
-    maximumOpenWindowWidth: 1840
-    surfaceHeightRatio: 1
-    surfaceFitsWorkspace: true
-    surfaceAlignment: "right"
     navigationPrimaryEnabled: false
     readonly property ActivityBackend backend: activityBackend
     readonly property string selectedDateKey: dateKey(selectedDate)

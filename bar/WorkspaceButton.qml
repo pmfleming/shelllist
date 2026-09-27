@@ -32,17 +32,13 @@ Ui.ActionControl {
         border.width: button.workspace && button.workspace.urgent ? 2 : 0
         border.color: Ui.Theme.danger
 
-        Behavior on color {
-            enabled: !Ui.Theme.noAnimations
-            ColorAnimation {
-                duration: Ui.Theme.animationFast
-            }
+        Ui.InteractiveBehavior on color {
+            duration: Ui.Theme.animationFast
+            easingType: Easing.Linear
         }
-        Behavior on opacity {
-            enabled: !Ui.Theme.noAnimations
-            NumberAnimation {
-                duration: Ui.Theme.animationFast
-            }
+        Ui.InteractiveBehavior on opacity {
+            duration: Ui.Theme.animationFast
+            easingType: Easing.Linear
         }
 
         IconImage {
@@ -52,12 +48,9 @@ Ui.ActionControl {
             source: Quickshell.iconPath(button.iconName, "application-x-executable")
             scale: button.active ? 1.08 : 0.94
 
-            Behavior on scale {
-                enabled: !Ui.Theme.noAnimations
-                NumberAnimation {
-                    duration: Ui.Theme.animationNormal
-                    easing.type: Easing.OutBack
-                }
+            Ui.InteractiveBehavior on scale {
+                duration: Ui.Theme.animationNormal
+                easingType: Easing.OutBack
             }
         }
 
@@ -70,11 +63,9 @@ Ui.ActionControl {
             font.pixelSize: Ui.Theme.fontSizeLabel
             font.weight: Ui.Theme.fontWeightBold
 
-            Behavior on color {
-                enabled: !Ui.Theme.noAnimations
-                ColorAnimation {
-                    duration: Ui.Theme.animationFast
-                }
+            Ui.InteractiveBehavior on color {
+                duration: Ui.Theme.animationFast
+                easingType: Easing.Linear
             }
         }
     }

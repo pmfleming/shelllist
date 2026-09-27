@@ -3,15 +3,15 @@ import QtQuick
 Item {
     id: surface
 
-    required property real surfaceWidth
     required property real contentWidth
+    property real canvasWidth: contentWidth
+    property real minimumContentHeight: 0
     required property bool loadWhen
     required property Component content
-    property string horizontalAlignment: "center"
     property bool retainLoaded: false
     property bool loadedOnce: false
 
-    x: horizontalAlignment === "right" ? Math.round(surfaceWidth - contentWidth) : horizontalAlignment === "left" ? 0 : Math.round((surfaceWidth - contentWidth) / 2)
+    x: 0
     width: contentWidth
     height: parent ? parent.height : 0
     clip: true
@@ -21,9 +21,17 @@ Item {
     Component.onCompleted: if (loadWhen)
         loadedOnce = true
 
-    Loader {
+    SurfaceViewport {
+        id: viewport
         anchors.fill: parent
-        active: surface.loadWhen || (surface.retainLoaded && surface.loadedOnce)
-        sourceComponent: surface.content
+        canvasWidth: surface.canvasWidth
+        canvasHeight: Math.max(height, surface.minimumContentHeight)
+
+        Loader {
+            width: viewport.contentWidth
+            height: viewport.contentHeight
+            active: surface.loadWhen || (surface.retainLoaded && surface.loadedOnce)
+            sourceComponent: surface.content
+        }
     }
 }

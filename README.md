@@ -7,7 +7,7 @@ Rust daemons handle system integration and policy. Shelllist handles windows, la
 ## What it provides
 
 - A 51 px adaptive top bar on every monitor.
-- One adaptive popover host: chooser surfaces are centered, while Activity uses a right-edge glance panel that expands inward.
+- One bounded popover host: lists stay anchored while details expand right. Laptop margins tighten without replacing the list; undersized work areas get explicit scrolling. See [chooser geometry](docs/chooser-geometry.md).
 - A one-shot floating mode for development and fallback use.
 - One shared OSD frame for volume, microphone, brightness, power profile, lock keys, idle inhibition, keyboard backlight, privacy indicators, audio-device changes, and display-output changes. Now-playing state stays in the top bar instead of appearing as an OSD.
 - Global shortcuts and one IPC/CLI entry point.

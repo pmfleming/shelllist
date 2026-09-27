@@ -14,28 +14,23 @@ Item {
     property bool navigationCloseEnabled: true
     property real detailsExpansionProgress: detailsOpen ? 1 : 0
     property real availableScreenWidth: 0
-    property real closedWidthFraction: 0
-    property real openWidthFraction: 0
-    property int minimumClosedWindowWidth: Theme.popupClosedWidth
-    property int maximumClosedWindowWidth: Theme.popupClosedWidth
-    property int minimumOpenWindowWidth: Theme.popupOpenWidth
-    property int maximumOpenWindowWidth: Theme.popupOpenWidth
-    property real surfaceHeightRatio: Theme.popupHeightRatio
-    property int surfaceTopInset: 0
-    property int surfaceBottomInset: 0
-    property bool surfaceFitsWorkspace: false
-    property string surfaceAlignment: "center"
+    property real availableScreenHeight: 0
+    property bool expandable: true
+    readonly property PopoverGeometry geometry: PopoverGeometry {
+        availableWidth: root.availableScreenWidth > 0 ? root.availableScreenWidth : 1280
+        availableHeight: root.availableScreenHeight > 0 ? root.availableScreenHeight : 960
+        expandable: root.expandable
+    }
     property double lastSearchRankLatencyMs: -1
     property double lastCatalogToModelLatencyMs: -1
     readonly property alias navigation: navigationModel
 
-    readonly property int closedWindowWidth: closedWidthFraction > 0 && availableScreenWidth > 0 ? Math.round(Math.max(minimumClosedWindowWidth, Math.min(maximumClosedWindowWidth, availableScreenWidth * closedWidthFraction))) : Theme.popupClosedWidth
-    readonly property int openWindowWidth: openWidthFraction > 0 && availableScreenWidth > 0 ? Math.round(Math.max(minimumOpenWindowWidth, Math.min(maximumOpenWindowWidth, availableScreenWidth * openWidthFraction))) : Theme.popupOpenWidth
-    readonly property int surfaceWindowWidth: openWindowWidth
-    readonly property int contentMargin: Theme.contentMargin
+    readonly property int closedWindowWidth: geometry.closedWidth
+    readonly property int openWindowWidth: geometry.openWidth
+    readonly property int contentMargin: geometry.contentMargin
     readonly property int contentVerticalMargin: Theme.contentVerticalMargin
     readonly property int listPaneWidth: closedWindowWidth - 2 * contentMargin
-    readonly property int detailsGapWidth: Theme.detailsGapWidth
+    readonly property int detailsGapWidth: geometry.detailsGap
     readonly property real detailsRenderCutoff: 0.025
     readonly property real detailsPaintProgress: !detailsOpen && detailsExpansionProgress <= detailsRenderCutoff ? 0 : detailsExpansionProgress
     readonly property real detailsPaneFullWidth: openWindowWidth - closedWindowWidth - detailsGapWidth

@@ -39,25 +39,16 @@ Item {
         border.color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.68)
         opacity: root.activeWorkspaceIndex >= 0 ? 1 : 0
 
-        Behavior on x {
-            enabled: !Ui.Theme.noAnimations
-            NumberAnimation {
-                duration: Ui.Theme.animationNormal
-                easing.type: Easing.OutCubic
-            }
+        Ui.InteractiveBehavior on x {
+            duration: Ui.Theme.animationNormal
         }
-        Behavior on width {
-            enabled: !Ui.Theme.noAnimations
-            NumberAnimation {
-                duration: Ui.Theme.animationFast
-                easing.type: Ui.Theme.easingStandard
-            }
+        Ui.InteractiveBehavior on width {
+            duration: Ui.Theme.animationFast
+            easingType: Ui.Theme.easingStandard
         }
-        Behavior on opacity {
-            enabled: !Ui.Theme.noAnimations
-            NumberAnimation {
-                duration: Ui.Theme.animationFast
-            }
+        Ui.InteractiveBehavior on opacity {
+            duration: Ui.Theme.animationFast
+            easingType: Easing.Linear
         }
     }
 

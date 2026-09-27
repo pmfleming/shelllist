@@ -6,7 +6,7 @@ FocusScope {
     id: navigation
 
     property Item contentItem: null
-    readonly property var targets: collectTargets(contentItem)
+    readonly property list<Item> targets: collectTargets(contentItem)
     property Item currentTarget: null
     property bool awaitingContent: false
     property Item editorTarget: null
@@ -21,7 +21,7 @@ FocusScope {
         if (!item || !item.visible || item instanceof DetailsTabBar)
             return [];
         // Composite inputs are one browsing stop, not their internal buttons.
-        if (item instanceof TextField || item instanceof DropDownList || item instanceof SegmentedControl || item instanceof ValueSlider || item instanceof LabeledValueSlider || item instanceof ActionControl || item.activeFocusOnTab)
+        if (editable(item) || item instanceof ActionControl || item.activeFocusOnTab)
             return [item];
         let result = [];
         let headers = [];
@@ -93,12 +93,13 @@ FocusScope {
         if (!currentTarget)
             return;
         let ancestor = currentTarget.parent;
-        while (ancestor && ancestor !== navigation) {
+        while (ancestor) {
             const page = ancestor as DetailFlickable;
-            if (page) {
+            const viewport = ancestor as SurfaceViewport;
+            if (page)
                 page.revealItem(currentTarget);
-                return;
-            }
+            if (viewport)
+                viewport.revealItem(currentTarget);
             ancestor = ancestor.parent;
         }
     }

@@ -47,11 +47,6 @@ Item {
         if (!sent)
             fail("Could not request Wi-Fi sharing");
     }
-    function copySelected() {
-        // Fetch credentials only following explicit intent; copying is then an
-        // explicit action in the share dialog, not from an availability cache.
-        showSelected();
-    }
     function isCurrent() {
         return controller.qr.open && controller.qr.generation === requestGeneration && controller.detailAp && controller.detailAp.key === requestKey;
     }
