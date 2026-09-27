@@ -88,6 +88,7 @@ ShellRoot {
 
     SurfaceRegistry {
         id: surfaces
+        barController: barState
         onSurfaceRequested: function (surfaceId) {
             shell.openSurface(surfaceId);
         }
@@ -105,13 +106,13 @@ ShellRoot {
     }
 
     Bar.BarController {
-        id: barController
+        id: barState
         surfaceRegistry: surfaces
     }
 
     BarSurfaceHost {
         barsEnabled: windowHost.popoverMode
-        controller: barController
+        controller: barState
     }
 
     Ui.PopoverGeometry {
@@ -237,6 +238,9 @@ ShellRoot {
         }
     }
 
+    Ui.ShelllistGlobalShortcut { shortcutName: "audio"; description: "Toggle Shelllist Audio"; onTriggered: shell.toggleSurface("audio") }
+    Ui.ShelllistGlobalShortcut { shortcutName: "media"; description: "Toggle Shelllist Media"; onTriggered: shell.toggleSurface("media") }
+    Ui.ShelllistGlobalShortcut { shortcutName: "tray"; description: "Toggle Shelllist Tray"; onTriggered: shell.toggleSurface("tray") }
     Ui.ShelllistGlobalShortcut {
         shortcutName: "applications"
         description: "Toggle Shelllist Applications"
@@ -285,32 +289,32 @@ ShellRoot {
     Ui.ShelllistGlobalShortcut {
         shortcutName: "volume-up"
         description: "Raise Output Volume"
-        onTriggered: barController.adjustAudio(5)
+        onTriggered: barState.adjustAudio(5)
     }
     Ui.ShelllistGlobalShortcut {
         shortcutName: "volume-down"
         description: "Lower Output Volume"
-        onTriggered: barController.adjustAudio(-5)
+        onTriggered: barState.adjustAudio(-5)
     }
     Ui.ShelllistGlobalShortcut {
         shortcutName: "volume-mute"
         description: "Toggle Output Mute"
-        onTriggered: barController.toggleMuted()
+        onTriggered: barState.toggleMuted()
     }
     Ui.ShelllistGlobalShortcut {
         shortcutName: "microphone-mute"
         description: "Toggle Microphone Mute"
-        onTriggered: barController.toggleInputMuted()
+        onTriggered: barState.toggleInputMuted()
     }
     Ui.ShelllistGlobalShortcut {
         shortcutName: "brightness-up"
         description: "Raise Display Brightness"
-        onTriggered: barController.adjustBrightness(5)
+        onTriggered: barState.adjustBrightness(5)
     }
     Ui.ShelllistGlobalShortcut {
         shortcutName: "brightness-down"
         description: "Lower Display Brightness"
-        onTriggered: barController.adjustBrightness(-5)
+        onTriggered: barState.adjustBrightness(-5)
     }
 
     Shortcut {

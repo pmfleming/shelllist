@@ -29,6 +29,22 @@ in
       description = "Hyprland modifiers and key for opening Notifications directly. Set null to disable.";
     };
 
+    audioShortcut = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = "SUPER SHIFT, A";
+      description = "Hyprland modifiers and key for Audio. Set null to disable.";
+    };
+    mediaShortcut = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = "SUPER SHIFT, M";
+      description = "Hyprland modifiers and key for Media. Set null to disable.";
+    };
+    trayShortcut = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = "SUPER SHIFT, T";
+      description = "Hyprland modifiers and key for Tray. Set null to disable.";
+    };
+
     suspend.enable = lib.mkOption {
       type = lib.types.bool;
       default = config.services.hypridle.enable && config.services.hypridle.package != null && cfg.systemd.enable && cfg.systemd.startBarDaemon;
@@ -86,8 +102,11 @@ in
     };
 
     wayland.windowManager.hyprland.settings.bind = lib.mkIf
-      (config.wayland.windowManager.hyprland.enable && cfg.notificationsShortcut != null)
-      [ "${cfg.notificationsShortcut}, exec, ${cfg.package}/bin/shelllist notifications open" ];
+      config.wayland.windowManager.hyprland.enable
+      (lib.concatMap (surface:
+        lib.optional (cfg.${surface + "Shortcut"} != null)
+          "${cfg.${surface + "Shortcut"}}, exec, ${cfg.package}/bin/shelllist ${surface} open"
+      ) [ "notifications" "audio" "media" "tray" ]);
 
     systemd.user.services = lib.mkIf cfg.systemd.enable {
       hypridle = lib.mkIf cfg.suspend.enable {

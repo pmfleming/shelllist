@@ -147,7 +147,7 @@
                 shelllist daemon                  Ensure the resident host is running
                 shelllist run                     Run the resident host in the foreground
 
-              Surfaces: applications, wifi, bluetooth, clipboard, displays, battery, activity, notifications, time-weather
+              Surfaces: applications, wifi, bluetooth, clipboard, displays, battery, activity, notifications, time-weather, audio, media, tray
 
               Clipboard settings:
                 shelllist clipboard pause
@@ -159,7 +159,7 @@
 
               valid_surface() {
                 case "$1" in
-                  applications|wifi|bluetooth|clipboard|battery|displays|activity|notifications|time-weather) return 0 ;;
+                  applications|wifi|bluetooth|clipboard|battery|displays|activity|notifications|time-weather|audio|media|tray) return 0 ;;
                   *) return 1 ;;
                 esac
               }
@@ -353,7 +353,7 @@
                     *) usage >&2; exit 2 ;;
                   esac
                   ;;
-                applications|wifi|bluetooth|displays|battery|activity|notifications|time-weather)
+                applications|wifi|bluetooth|displays|battery|activity|notifications|time-weather|audio|media|tray)
                   action=''${2:-toggle}
                   [ "$#" -le 2 ] || { usage >&2; exit 2; }
                   case "$action" in open|toggle) surface_call "$action" "$command" ;; *) usage >&2; exit 2 ;; esac

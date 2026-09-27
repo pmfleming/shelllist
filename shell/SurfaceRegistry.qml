@@ -11,10 +11,12 @@ import Shelllist.Launcher as Launcher
 import Shelllist.Activity as Activity
 import Shelllist.Battery as Battery
 import Shelllist.Displays as Displays
+import Shelllist.Bar as Bar
 
 Item {
     id: registry
 
+    property Bar.BarController barController: null
     readonly property var descriptors: [
         {
             id: "applications",
@@ -60,7 +62,10 @@ Item {
             id: "time-weather",
             name: "Time & Weather",
             icon: "󰅐"
-        }
+        },
+        {id: "audio", name: "Audio", icon: "󰕾"},
+        {id: "media", name: "Media", icon: "󰎆"},
+        {id: "tray", name: "Tray", icon: "󰀻"}
     ]
     property var loadedSurfaces: ({
             wifi: true,
@@ -207,6 +212,23 @@ Item {
         if (initial.length > 0)
             select(initial);
     }
+
+    component SystemSlot: SurfaceSlot {
+        id: systemSlot
+        owner: registry
+        sourceComponent: SurfaceBundle {
+            controller: systemController
+            content: Bar.SystemChooserContent { controller: systemController }
+            Bar.SystemChooserController {
+                id: systemController
+                kind: systemSlot.surfaceId
+                barController: registry.barController
+            }
+        }
+    }
+    SystemSlot { surfaceId: "audio" }
+    SystemSlot { surfaceId: "media" }
+    SystemSlot { surfaceId: "tray" }
 
     SurfaceSlot {
         surfaceId: "applications"

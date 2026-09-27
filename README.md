@@ -253,6 +253,22 @@ bindel = , XF86MonBrightnessUp, global, shelllist:brightness-up
 bindel = , XF86MonBrightnessDown, global, shelllist:brightness-down
 ```
 
+## Audio, Media and Tray lists
+
+`audio`, `media` and `tray` are independent surfaces accepted by `open`, `toggle`
+and `floating`, and by `shelllist audio open` (and corresponding domain commands).
+Global shortcut names are `shelllist:audio`, `shelllist:media`, `shelllist:tray`.
+Home Manager adds configurable Super+Shift+A/M/T bindings; set `audioShortcut`,
+`mediaShortcut` or `trayShortcut` to null to disable a binding.
+
+Audio lists the current default output/input, acknowledged mute state, 5% output
+volume commands and the full mixer. Media lists players with capability-guarded
+operations explicitly targeting the inspected player. Tray provides explicit
+activation, native menu, secondary activation and scroll commands; ambiguous
+tray IDs cannot dispatch an effect. All three use shared keyboard navigation and
+process-local presentation/focus memory; restoration never opens a tray menu or
+replays an action. Existing shortcuts and mixer routes remain available.
+
 ## Theme and motion
 
 The desktop accent seeds a Material Tonal Spot scheme through Google's Material

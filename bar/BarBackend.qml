@@ -4,6 +4,7 @@ import "BarApi.js" as BarApi
 
 Io.DaemonBackend {
     required property BarController controller
+    property string operationError: ""
     daemonName: "bar-daemon"
     expectedProtocol: BarApi.protocol
     expectedVersion: BarApi.version
@@ -22,18 +23,18 @@ Io.DaemonBackend {
     }
 
     function mediaOperation(operation: string): bool {
-        return callSequenced("media-" + operation, BarApi.methods.mediaOperation, {
-            operation: operation,
-            player_id: controller.activePlayerId || null
-        });
+        return mediaOperationFor(controller.activePlayerId, operation, null);
     }
 
     function seekMedia(offsetSeconds: int): bool {
-        return callSequenced("media-seek", BarApi.methods.mediaOperation, {
-            operation: "seek",
-            player_id: controller.activePlayerId || null,
-            offset_seconds: offsetSeconds
-        });
+        return mediaOperationFor(controller.activePlayerId, "seek", offsetSeconds);
+    }
+
+    function mediaOperationFor(playerId: string, operation: string, offsetSeconds: var): bool {
+        const params = {operation: operation, player_id: playerId || null};
+        if (operation === "seek")
+            params.offset_seconds = offsetSeconds;
+        return callSequenced("media-" + operation, BarApi.methods.mediaOperation, params);
     }
 
     function adjustAudio(deltaPercent: int): bool {
@@ -126,6 +127,7 @@ Io.DaemonBackend {
 
     function finish(id: string, envelope: var, transportError: string): void {
         const error = responseError(envelope, transportError, "Bar operation failed");
+        operationError = error;
         if (error.length > 0) {
             console.error("shelllist bar request failed id=" + id + " error=" + error);
             showRequestFailure(id);
@@ -146,10 +148,12 @@ Io.DaemonBackend {
         controller.handleEvent(event);
     }
     onSendFailed: function (id, message) {
+        operationError = message;
         console.error("shelllist bar send failed id=" + id + " error=" + message);
         showRequestFailure(id);
     }
     onTransportFailed: function (message, lostRequestIds) {
+        operationError = message;
         console.error("shelllist bar transport failed error=" + message);
         const brightnessRequest = (lostRequestIds || []).find(function (id) {
             return requestKind(id) === "brightness-adjust";

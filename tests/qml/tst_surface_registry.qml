@@ -16,6 +16,18 @@ DaemonTestCase {
         Shell.SurfaceRegistry {}
     }
 
+    function test_audioMediaAndTrayHaveIndependentLazyControllers(): void {
+        const registry = createTemporaryObject(registryComponent, testCase);
+        for (const kind of ["audio", "media", "tray"]) {
+            compare(registry.controllerFor(kind), null);
+            verify(registry.select(kind));
+            tryVerify(() => registry.controllerFor(kind) !== null);
+            compare(registry.controllerFor(kind).kind, kind);
+            verify(registry.controllerFor(kind).viewMemory !== null);
+        }
+        verify(registry.controllerFor("audio") !== registry.controllerFor("media"));
+    }
+
     function test_requestsQueuedBeforeLoadApplyOnceTheControllerExists(): void {
         const registry = createTemporaryObject(registryComponent, testCase);
         compare(registry.bundleFor("time-weather"), null, "surfaces load lazily");
