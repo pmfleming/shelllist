@@ -3,6 +3,9 @@ import Shelllist.Ui as Ui
 
 Ui.DetailFlickable {
     id: page
+    objectName: "applicationPage"
+    viewMemory: controller.viewMemory
+    memoryTab: "application"
 
     required property ApplicationController controller
     required property var application

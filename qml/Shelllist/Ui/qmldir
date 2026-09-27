@@ -13,6 +13,7 @@ singleton ChartDrawing 1.0 ChartDrawing.qml
 ChartValueRail 1.0 ChartValueRail.qml
 ChooserController 1.0 ChooserController.qml
 ChooserHeader 1.0 ChooserHeader.qml
+ChooserMemory 1.0 ChooserMemory.qml
 internal ChooserListBody ChooserListBody.qml
 ChooserListPane 1.0 ChooserListPane.qml
 ChooserShortcuts 1.0 ChooserShortcuts.qml

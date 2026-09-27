@@ -3,9 +3,10 @@
 This is the first step-3 slice of the [Material Expressive plan](proposals/material-expressive.md).
 Applications and Bluetooth opt into the shared region/browse/edit boundary.
 Other chooser domains receive printable-result-to-search routing, but retain
-their existing detail traversal until explicitly migrated. Per-result session
-memory is still pending. The subsequent [geometry slice](chooser-geometry.md)
-now supplies anchored expansion and bounded split overflow.
+their existing detail traversal until explicitly migrated. Subsequent step-4
+slices supply [anchored geometry](chooser-geometry.md) and
+[per-result presentation memory](chooser-session-memory.md) for Applications and
+Bluetooth device details.
 
 ## Current keys
 
@@ -15,7 +16,9 @@ now supplies anchored expansion and bounded split overflow.
   at its retained cursor/selection. They no longer invoke result navigation or
   plain-letter detail actions. Command chords remain shortcuts.
 - Enter in results runs the primary action; Right explicitly opens and enters
-  details. Selecting a result alone does not initiate a new detail view.
+  details. First-time selection is list-only; returning to an inspected result
+  restores its remembered view without stealing focus. Right can then resume its
+  remembered ordinary editor, while region Tab enters browse mode.
 - In Applications/Bluetooth, Tab cycles Search → Results → Details → Search,
   omitting closed details. Shift+Tab reverses. Region traversal preserves the
   result selection; it neither opens details nor visits header buttons.
@@ -60,8 +63,9 @@ Busy inputs can lose native Qt focus when their owner disables them. The scope
 retains editor ownership and an immediate outline until the user explicitly
 leaves, rather than letting the next Escape accidentally dismiss details.
 Removed/hidden editors fall back to content without dispatching an edit. New
-content never pulls focus out of another region. This is transient focus state,
-not per-result session memory.
+content never pulls focus out of another region. The subsequent session-memory
+slice remembers ordinary locations by stable control ID, independently of this
+live editor ownership.
 
 `Ui.ModalFrame` traps conventional forward/reverse Tab among its visible,
 enabled inputs/actions and restores valid preceding focus on hide. Native
@@ -96,6 +100,7 @@ pre-existing Fontconfig default-config diagnostic (also present in the previous
 field-slice gate); there are no QML engine warnings or failing/skipped Qt cases.
 
 Hardware IME, screen-reader and live compositor acceptance remain outstanding.
-The remaining domain migrations, per-item focus/tab/scroll memory, whole-surface
-ordinary-focus restoration and visual asset decisions remain separate work.
-Anchored geometry has since shipped as an independent step-4 slice. No live service deployment is part of these tests.
+Per-result memory now ships for Applications/Bluetooth device details. Remaining
+domain migrations, whole-surface ordinary-focus restoration and visual asset
+choices remain separate work. Anchored geometry is also delivered. No live
+service deployment is part of these tests.

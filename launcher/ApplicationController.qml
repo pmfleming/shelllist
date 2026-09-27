@@ -13,7 +13,6 @@ Ui.ProviderChooserController {
     // Keep the complete catalog local; Shelllist's Rust matcher ranks each edit.
     filterRefreshDelay: 0
     scheduledRefreshDelay: 120
-    closeDetailsWithoutSelection: true
     sharedScreenshotEnabled: true
     sharedScreenshotBlocked: operationBlocked
     sharedScreenshotStartMessage: "Capturing Applications window…"
@@ -24,6 +23,17 @@ Ui.ProviderChooserController {
     property string status: "Loading applications…"
     readonly property int applicationSearchLimit: 1000
     property string detailsTab: "application"
+    viewMemory: Ui.ChooserMemory {
+        controller: controller
+        key: controller.selectedResult ? controller.selectedResult.key : ""
+        tab: controller.detailsTab
+        tabs: controller.availableDetailsTabs()
+        onContextRestored: Qt.callLater(controller.requestResourceHistory)
+        onRestoreRequested: function (open, tab) {
+            controller.detailsTab = tab;
+            controller.detailsOpen = open;
+        }
+    }
     property string categoryFilter: ""
     actionInFlight: false
     property string activeTargetId: ""
@@ -103,7 +113,6 @@ Ui.ProviderChooserController {
         clearActiveAction();
         clearResourceHistory();
         activeSettingsRequestId = "";
-        detailsOpen = false;
     }
     function refresh(explicitRefresh: var): void {
         forceRefresh = explicitRefresh === true;
@@ -116,7 +125,6 @@ Ui.ProviderChooserController {
         if (categoryFilter === value)
             return;
         categoryFilter = value;
-        detailsOpen = false;
         refresh(false);
     }
     function availableDetailsTabs(): var {
@@ -361,18 +369,12 @@ Ui.ProviderChooserController {
         return canActOnSelection() && executeSelected(actionId);
     }
 
-    onDetailsOpenChanged: {
-        if (detailsOpen)
-            detailsTab = "application";
-        else
-            clearResourceHistory();
-    }
-    onDetailsTabChanged: if (detailsTab === "resources")
-        requestResourceHistory()
+    onDetailsOpenChanged: if (!detailsOpen)
+        clearResourceHistory()
+    onResourcesVisibleChanged: if (resourcesVisible)
+        Qt.callLater(requestResourceHistory)
     onSelectedResultChanged: {
-        if (!availableDetailsTabs().includes(detailsTab))
-            detailsTab = "application";
-        else if (resourcesVisible)
+        if (viewMemory.current && resourcesVisible && availableDetailsTabs().includes(detailsTab))
             requestResourceHistory();
     }
 

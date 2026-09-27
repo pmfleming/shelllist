@@ -169,6 +169,51 @@ DaemonTestCase {
         id: contentComponent
         Bt.BluetoothContent {}
     }
+    function test_deviceViewMemorySurvivesOtherSelectionsAndSensitiveClosure() {
+        const panel = makePanel();
+        panel.page.visible = false;
+        const controller = panel.controller;
+        controller.uiActive = true;
+        controller.allDevices = controller.allDevices.concat([{
+            key: "keyboard", name: "Keyboard", paired: true, connected: false,
+            adapter_key: "adapter", capabilities: {}, battery: [], services: [], policy: {}
+        }]);
+        controller.rebuildResults(false);
+        const content = createTemporaryObject(contentComponent, panel, {
+            controller: controller, width: 1100, height: 900
+        });
+        wait(0);
+        content.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        controller.detailsTab = "settings";
+        tryCompare(controller.viewMemory, "activeTab", "settings");
+        tryVerify(() => findChild(content, "deviceNameInput") !== null);
+        content.detailsNavigation.currentTarget = findChild(content, "deviceNameInput");
+        content.detailsNavigation.focusContent();
+        keyClick(Qt.Key_Right);
+        verify(content.detailsNavigation.editing);
+        content.listItem.focusList();
+        controller.select(controller.filteredResults.findIndex(result => result.payload.key === "keyboard"));
+        tryCompare(controller, "detailsOpen", false);
+        controller.select(controller.filteredResults.findIndex(result => result.payload.key === "buds"));
+        tryCompare(controller, "detailsOpen", true);
+        compare(controller.detailsTab, "settings");
+        verify(content.listItem.listFocused);
+        calls = [];
+        keyClick(Qt.Key_Right);
+        tryVerify(() => content.detailsNavigation.editing);
+        compare(content.detailsNavigation.currentTarget.objectName, "deviceNameInput");
+        compare(calls.length, 0, "focus restoration must not rename or apply policy");
+        controller.handlePairingEvent({event: "requested", data: {
+            request_id: "memory-secret", device_key: "buds", kind: "pin-code", response_required: true
+        }});
+        controller.pairingInput = "sensitive-value";
+        controller.deactivateUi();
+        compare(controller.pairingInput, "");
+        verify(!JSON.stringify(controller.viewMemory.records).includes("sensitive-value"));
+        verify(controller.detailsOpen);
+        compare(controller.detailsTab, "settings");
+    }
     function test_settingsUseBrowseEditRegionsAndContentFirstTabs() {
         const panel = makePanel();
         panel.page.visible = false;

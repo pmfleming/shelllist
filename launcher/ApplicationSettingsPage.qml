@@ -7,6 +7,9 @@ import "ApplicationPreferences.js" as Preferences
 
 Ui.DetailFlickable {
     id: page
+    objectName: "applicationSettingsPage"
+    viewMemory: controller.viewMemory
+    memoryTab: "settings"
 
     required property ApplicationController controller
     required property var application
@@ -36,6 +39,7 @@ Ui.DetailFlickable {
         contentSpacing: Ui.Theme.spacingSm
 
         Ui.DropDownList {
+            objectName: "applicationCategory"
             Accessible.name: qsTr("Category and default workspace")
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight

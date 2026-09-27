@@ -28,6 +28,7 @@ RowLayout {
 
         delegate: ActionButton {
             required property var modelData
+            objectName: "detailAction:" + modelData.id
 
             Layout.fillWidth: toolbar.fillActions
             Layout.preferredWidth: toolbar.fillActions ? -1 : (Number((modelData.presentation || {}).width) || 104)

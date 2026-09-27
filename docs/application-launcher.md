@@ -8,7 +8,10 @@ The launcher presents standards-visible desktop applications and live Hyprland w
 
 - `Enter` focuses the most-recent running instance or launches a non-running application.
 - `Shift+Enter` launches another instance of a desktop application.
-- `Right` opens application details and enters content browse focus, not the tab selector.
+- `Right` opens first-time details in content browse focus, not the tab selector.
+  Previously inspected applications restore their tab/scroll without stealing
+  list focus; Right enters their remembered ordinary location. See
+  [session memory](chooser-session-memory.md) for fallbacks and remaining work.
 - `Ctrl+Tab` cycles Application, Resources and (for desktop applications) Settings.
 - `Tab` / `Shift+Tab` cycle Search, Results and open Details; selection is retained.
 - Up/Down browse detail controls; Right enters an editor. Native arrows edit there, and Escape leaves the editor before closing details. Category settings still wait for daemon acknowledgement.

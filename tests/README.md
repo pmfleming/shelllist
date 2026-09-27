@@ -40,7 +40,7 @@ already-open development shell after changing `flake.nix`.
   and modal focus containment/restoration, with decorative animations enabled.
   Bluetooth recovery tests also cover its actual adapter-settings keyboard
   journey and clearing/fencing sensitive prompts on whole-surface closure.
-  The suite now has 141 behavioral cases (215 passes with hooks); the inventory
+  The suite now has 151 behavioral cases (227 passes with hooks); the inventory
   below is the completed pruning checkpoint, not a permanent cap on feature tests.
 - `tst_chooser_geometry.qml` covers anchored expansion, work-area bounds and
   fallback, stable frame/list/text/control sizes, minimum and emergency canvases,
@@ -49,6 +49,12 @@ already-open development shell after changing `flake.nix`.
   tests with split overflow replacing the rejected narrow single-pane assertion.
   Runtime smoke also exercises the shared visual bounds in a native offscreen
   floating window; live layer placement and input-mask acceptance are separate.
+- `tst_chooser_memory.qml` covers stable per-result/tab scroll and editor memory,
+  focus-safe asynchronous restoration, explicit close, immediate row toggles,
+  reorder/removal/reconnect, disabled/missing/password targets and invalid tabs.
+  Actual Applications tests exercise menu closure and fresh resource-history
+  reads; Bluetooth recovery adds device-editor restoration with sensitive closure.
+  Whole-surface ordinary-focus restoration is not implemented by this slice.
 - `tst_battery_history.qml` also checks explicit keyboard/pointer inspection:
   hover/focus alone reveal no values, and editor Escape wins over the shared
   surface shortcut before the next Escape dismisses the surface.

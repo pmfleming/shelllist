@@ -36,6 +36,10 @@ RowLayout {
 
     Connections {
         target: layout.controller
+        function onUiActiveChanged() {
+            if (!layout.controller.uiActive)
+                detailsNavigation.suspendView();
+        }
         function onFocusSearchRequested() {
             Qt.callLater(layout.focusSearch);
         }
@@ -44,7 +48,7 @@ RowLayout {
         }
         function onFocusDetailsRequested() {
             if (layout.keyboardWorkflow)
-                detailsNavigation.focusContent();
+                detailsNavigation.focusRememberedContent();
         }
         function onSearchTextRequested(text: string) {
             if (layout.listItem)
@@ -76,11 +80,14 @@ RowLayout {
     DetailsNavigation {
         id: detailsNavigation
         contentItem: layout.keyboardWorkflow ? layout.detailsItem : null
+        viewMemory: layout.keyboardWorkflow ? layout.controller.viewMemory : null
+        onResultContextChanged: layout.focusList()
         onExitRequested: {
             layout.controller.closeDetails();
             layout.focusList();
         }
         visible: layout.controller.detailsRendered
+        enabled: layout.controller.detailsOpen
         Layout.preferredWidth: layout.controller.detailsPaneWidth
         Layout.minimumWidth: layout.controller.detailsPaneWidth
         Layout.maximumWidth: layout.controller.detailsPaneWidth

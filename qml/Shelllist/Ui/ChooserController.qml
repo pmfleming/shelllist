@@ -3,6 +3,7 @@ import QtQuick
 Item {
     id: root
     property bool uiActive: false
+    property ChooserMemory viewMemory: null
     property string currentWorkspaceId: ""
     property bool detailsOpen: false
     property bool hasSelection: false
@@ -73,6 +74,8 @@ Item {
         uiActive = false;
     }
     function dismissDetailsOrWindow(): bool {
+        if (viewMemory)
+            viewMemory.synchronize();
         if (detailsOpen)
             closeDetails();
         else
@@ -99,13 +102,19 @@ Item {
             selectionModel.selectedIndex = index;
     }
     function openDetails() {
+        if (viewMemory)
+            viewMemory.synchronize();
         if (hasSelection)
             detailsOpen = true;
     }
     function closeDetails() {
+        if (viewMemory)
+            viewMemory.synchronize();
         detailsOpen = false;
     }
     function toggleDetails() {
+        if (viewMemory)
+            viewMemory.synchronize();
         detailsOpen ? closeDetails() : openDetails();
     }
     function primarySelected() {

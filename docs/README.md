@@ -10,6 +10,7 @@ The repository README is the user-facing overview and installation guide. These 
 | [`displays.md`](displays.md) | Dedicated Displays callout, layout workspace, keyboard controls and daemon-owned recovery |
 | [`daemon-frontend-commonality.md`](daemon-frontend-commonality.md) | Common daemon endpoint, recovery, sequencing, and chooser integration contracts |
 | [`material-visual-foundation.md`](material-visual-foundation.md) | Material palette generation, theme migration, development gallery and open visual choices |
+| [`chooser-session-memory.md`](chooser-session-memory.md) | Per-result open/tab/scroll/editor memory, safe restoration and remaining session boundaries |
 | [`chooser-geometry.md`](chooser-geometry.md) | Anchored rightward expansion, work-area bounds, split overflow and live acceptance limits |
 | [`chooser-keyboard-workflow.md`](chooser-keyboard-workflow.md) | Shared query routing, Applications/Bluetooth region traversal, browse/edit focus and modal safety |
 | [`list-interaction-contract.md`](list-interaction-contract.md) | Mouse-wheel, precision-touchpad, and touch scrolling requirements |

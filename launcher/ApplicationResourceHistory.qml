@@ -199,6 +199,7 @@ ColumnLayout {
         }
 
         Ui.SegmentedControl {
+            objectName: "applicationHistoryRange"
             Layout.preferredWidth: Math.round(164 * history.uiScale)
             Layout.preferredHeight: Math.round(32 * history.uiScale)
             options: [

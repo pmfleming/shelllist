@@ -21,6 +21,19 @@ Ui.ProviderChooserController {
     readonly property alias nameEdits: nameEditState
     readonly property alias adapterEdits: adapterEditState
     property string detailsTab: "device"
+    viewMemory: Ui.ChooserMemory {
+        controller: bluetoothController
+        enabled: bluetoothController.detailsTab !== "adapter"
+        key: bluetoothController.selectedResult ? bluetoothController.selectedResult.key : ""
+        tab: bluetoothController.detailsTab
+        tabs: ["device", "settings", "information"]
+        onRestoreRequested: function (open, tab) {
+            bluetoothController.detailsTab = tab;
+            bluetoothController.detailsOpen = open;
+        }
+        onKeyChanged: if (key && !enabled && !bluetoothController.detailsOpen)
+            bluetoothController.detailsTab = "device"
+    }
     property string adapterSettingsTab: "general"
     property alias searchScope: scopeSettings.searchScope
     property var pendingConfirmationAction
@@ -163,8 +176,6 @@ Ui.ProviderChooserController {
         activeScan = null;
         scanRequested = false;
         searchScope = scope;
-        if (detailsTab !== "adapter")
-            detailsOpen = false;
         rebuildResults(true);
         if (searchAllDevices && powered) {
             scanRequested = true;
@@ -419,17 +430,16 @@ Ui.ProviderChooserController {
             return;
         if (detailsTab === "adapter")
             detailsTab = "device";
+        viewMemory.synchronize();
         detailsOpen = true;
     }
     function toggleDetails() {
+        viewMemory.synchronize();
         if (detailsTab === "adapter")
             openDetails();
         else
             detailsOpen ? closeDetails() : openDetails();
     }
-    onHasSelectionChanged: if (!hasSelection && detailsOpen && detailsTab !== "adapter")
-        closeDetails()
-
     function cycleDetailsTab() {
         if (!detailsOpen)
             return false;

@@ -4,17 +4,13 @@ import Shelllist.Ui as Ui
 
 Ui.DetailFlickable {
     id: page
+    objectName: "bluetoothDevicePage"
+    viewMemory: controller.viewMemory
+    memoryTab: selectedTab
 
     required property BluetoothController controller
     readonly property alias editingName: settings.editingName
     readonly property string selectedTab: controller.detailsTab
-
-    onSelectedTabChanged: {
-        if (page.editingName)
-            page.forceActiveFocus();
-        page.cancelFlick();
-        page.contentY = 0;
-    }
 
     Item {
         visible: page.selectedTab === "device"

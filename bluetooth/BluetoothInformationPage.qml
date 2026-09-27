@@ -5,6 +5,9 @@ import "BluetoothFlow.js" as BluetoothFlow
 
 Ui.DetailFlickable {
     id: page
+    objectName: "bluetoothInformationPage"
+    viewMemory: controller.viewMemory
+    memoryTab: "information"
 
     required property BluetoothController controller
     readonly property var deviceAdapter: controller.adapters.find(function (adapter) {

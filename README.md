@@ -230,7 +230,9 @@ Surface-specific additions include `Shift+Enter` for a new application instance;
 
 **Applications and Bluetooth** now use region-level `Tab` / `Shift+Tab` (Search ↔ Results ↔ open Details). In details, Up/Down browse without changing settings; Right enters an editor and native arrows edit. Escape closes a menu, then leaves editing, then returns to results. Ctrl+Tab enters the new tab's content rather than its selector. Required-input dialogs retain conventional, contained Tab traversal. `Alt+Enter` in search invokes its trailing action; `Ctrl+Shift+S` captures either migrated surface. See the [keyboard workflow](docs/chooser-keyboard-workflow.md) for scope and remaining work.
 
-The [Material Expressive design decisions](docs/proposals/material-expressive.md) describe the target and implementation progress. Other domains' detail navigation, per-result session memory and the layout redesign are not yet migrated.
+Applications and Bluetooth device details also retain per-result open/tab/scroll/editor locations until process exit. Returning to an inspected result restores its view without stealing list focus; Right enters its remembered ordinary location. See [session memory](docs/chooser-session-memory.md) for safety and capability fallbacks.
+
+The [Material Expressive design decisions](docs/proposals/material-expressive.md) distinguish delivered slices from the target. Anchored geometry is shared; other domains' keyboard/memory migration, exact whole-surface focus restoration, and the remaining visual/bar redesign are pending.
 
 Suggested Hyprland bindings:
 

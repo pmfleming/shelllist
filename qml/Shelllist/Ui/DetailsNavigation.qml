@@ -6,6 +6,10 @@ FocusScope {
     id: navigation
 
     property Item contentItem: null
+    property ChooserMemory viewMemory: null
+    property bool pendingMemory: false
+    property bool resumeEditor: false
+    property bool applyingMemory: false
     readonly property list<Item> targets: collectTargets(contentItem)
     property Item currentTarget: null
     property bool awaitingContent: false
@@ -16,6 +20,76 @@ FocusScope {
     readonly property bool browsing: browseCursor.activeFocus && !editing
 
     signal exitRequested
+    signal resultContextChanged
+
+    function rememberLocation(): void {
+        if (applyingMemory || pendingMemory || !viewMemory || !currentTarget)
+            return;
+        const field = currentTarget as TextField;
+        const key = field && field.password ? "" : currentTarget.objectName;
+        viewMemory.rememberPage(viewMemory.activeTab, {target: key, editing: key.length > 0 && editable(currentTarget) && editorTarget !== null});
+    }
+    function restoreLocation(): void {
+        if (!pendingMemory || !viewMemory || !viewMemory.current)
+            return;
+        const saved = viewMemory.pageState(viewMemory.activeTab);
+        const matches = targets.filter(item => item.objectName && item.objectName === saved.target && !(item instanceof TextField && item.password));
+        applyingMemory = true;
+        editorTarget = null;
+        selectContent();
+        if (matches.length === 1) {
+            currentTarget = matches[0];
+            awaitingContent = false;
+        }
+        pendingMemory = awaitingContent;
+        if (activeFocus && viewMemory.controller.uiActive) {
+            browseCursor.forceActiveFocus(Qt.OtherFocusReason);
+            if (!pendingMemory && resumeEditor && saved.editing && matches.length === 1 && editable(currentTarget))
+                enterEditor();
+        }
+        applyingMemory = false;
+        if (!pendingMemory)
+            resumeEditor = false;
+    }
+    function suspendView(): void {
+        resumeEditor = false;
+        if (popupOpen)
+            (currentTarget as DropDownList).popup.close();
+    }
+    function focusRememberedContent(): void {
+        if (!viewMemory || !viewMemory.enabled) {
+            focusContent();
+            return;
+        }
+        viewMemory.synchronize();
+        pendingMemory = true;
+        resumeEditor = true;
+        browseCursor.forceActiveFocus(Qt.OtherFocusReason);
+        restoreLocation();
+        revealTarget();
+    }
+    onCurrentTargetChanged: if (activeFocus)
+        rememberLocation()
+    onContentItemChanged: if (viewMemory && viewMemory.enabled) {
+        pendingMemory = true;
+        Qt.callLater(restoreLocation);
+    }
+    Connections {
+        target: navigation.viewMemory
+        function onEnabledChanged(): void {
+            navigation.pendingMemory = navigation.viewMemory.enabled;
+            navigation.resumeEditor = false;
+        }
+        function onContextChanging(changedResult: bool): void {
+            if (changedResult && navigation.activeFocus)
+                navigation.resultContextChanged();
+        }
+        function onContextRestored(): void {
+            navigation.resumeEditor = false;
+            navigation.pendingMemory = true;
+            navigation.restoreLocation();
+        }
+    }
 
     function collectTargets(item: Item): var {
         if (!item || !item.visible || item instanceof DetailsTabBar)
@@ -64,13 +138,21 @@ FocusScope {
     }
     function focusContent(reset: bool): void {
         editorTarget = null;
+        resumeEditor = false;
         if (reset || targets.indexOf(currentTarget) < 0)
             selectContent();
         browseCursor.forceActiveFocus(Qt.OtherFocusReason);
+        if (viewMemory && viewMemory.enabled && reset) {
+            viewMemory.synchronize();
+            pendingMemory = true;
+        }
+        restoreLocation();
+        rememberLocation();
         revealTarget();
     }
     function move(delta: int): void {
         awaitingContent = false;
+        pendingMemory = false;
         if (targets.length === 0)
             return;
         if (scrollPage(delta * Theme.controlHeight))
@@ -121,6 +203,7 @@ FocusScope {
             labeled.focusInput();
         else
             item.forceActiveFocus(Qt.OtherFocusReason);
+        rememberLocation();
     }
     function retreat(): void {
         if (popupOpen) {
@@ -135,10 +218,17 @@ FocusScope {
         currentTarget = focusedTarget;
         editorTarget = focusedTarget;
         awaitingContent = false;
+        rememberLocation();
     }
-    onActiveFocusChanged: if (!activeFocus && !popupOpen)
-        editorTarget = null
+    onActiveFocusChanged: if (!activeFocus && !popupOpen) {
+        rememberLocation();
+        editorTarget = null;
+    }
     onTargetsChanged: {
+        if (pendingMemory && viewMemory && viewMemory.enabled) {
+            restoreLocation();
+            return;
+        }
         if (awaitingContent || targets.indexOf(currentTarget) < 0) {
             editorTarget = null;
             selectContent();

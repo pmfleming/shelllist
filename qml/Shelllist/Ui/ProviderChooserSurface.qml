@@ -23,12 +23,16 @@ ChooserSurface {
         chooserController.refresh();
     }
     function cycleDetailsTab(): void {
+        if (chooserController.viewMemory)
+            chooserController.viewMemory.synchronize();
         const restoreContent = keyboardWorkflow && detailsNavigation.activeFocus;
         chooserController.cycleDetailsTab();
         if (restoreContent)
             detailsNavigation.focusContent(true);
     }
     function cycleRegion(backwards: bool): void {
+        if (chooserController.viewMemory)
+            chooserController.viewMemory.synchronize();
         if (!listItem)
             return;
         const regions = [listItem.focusSearch, listItem.focusList];

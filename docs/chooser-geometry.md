@@ -1,8 +1,9 @@
 # Anchored chooser geometry
 
 This delivers the geometry slice of step 4 in the
-[Material Expressive plan](proposals/material-expressive.md). Per-result session
-memory and ordinary-focus restoration are still separate work.
+[Material Expressive plan](proposals/material-expressive.md).
+[Per-result memory](chooser-session-memory.md) is delivered by the following
+slice; exact ordinary-focus restoration on whole-surface invocation is pending.
 
 ## Placement and bounds
 
