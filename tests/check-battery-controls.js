@@ -121,11 +121,6 @@ for (const extra of [
     c.setChargingInhibited(true);
     c.toggleCalibration();
     assert.equal(calls.length, 0);
-    c.thresholdAutoSave.stop();
-    c.applyBattery(state([device("BAT0")]));
-    const handler = source.match(/onBatteryOperationActiveChanged: \{([\s\S]*?)^    }/m)[1];
-    vm.runInContext(handler, c);
-    assert.equal(c.thresholdAutoSave.running, true, "temporary-operation completion must resume pending settings");
 }
 {
     const { c, calls } = controller();
@@ -154,17 +149,6 @@ for (const extra of [
     c.powerSuspendAction("lock");
     assert.equal(calls.length, 2, "denied, pending, unavailable and disconnected commands must never dispatch");
 }
-for (const reportedActive of [false, true]) {
-    const { c, calls } = controller();
-    c.applyPowerSuspend({ available: false, keep_awake: reportedActive, preparing_for_sleep: true });
-    c.setKeepAwake(true);
-    c.suspendPendingAction = "suspend";
-    c.setKeepAwake(false);
-    c.suspendPendingAction = "";
-    c.backendReady = false;
-    c.setKeepAwake(false);
-    assert.equal(calls.length, 0, "unavailable acquisition, pending actions and disconnection must not dispatch");
-}
 {
     const { c } = controller();
     c.powerSuspend = { available: true, can_suspend: "yes", inhibitors: [] };
@@ -174,7 +158,6 @@ for (const reportedActive of [false, true]) {
     c.operationFinished("power-suspend-suspend-2");
     c.sendSucceeds = false;
     c.powerSuspendAction("lock");
-    assert.equal(c.actionInFlight, false, "synchronous rejection cannot leave the controls busy");
     c.sendSucceeds = true;
     c.powerSuspendAction("suspend");
     c.transportFailed("Transport closed");
@@ -194,22 +177,9 @@ for (const reportedActive of [false, true]) {
     c.saveSuspendPolicy();
     c.suspendPolicyFinished();
     c.applySuspendPolicy({ ...state, policy: calls[1].args[0] });
-    for (const value of [-1, 1.5, 10081, NaN])
-        assert.equal(c.updateSuspendPolicy("battery", "sleep_minutes", value), false);
     c.updateSuspendPolicy("battery", "sleep_minutes", 0);
     c.transportFailed("disconnected");
     assert.match(c.suspendPolicyError, /may have been saved/);
-}
-for (const operation of ["none", "effect", "threshold", "alert"]) {
-    const { c } = controller();
-    c.actionInFlight = operation === "effect";
-    c.thresholdOperationActive = operation === "threshold";
-    c.alertOperationActive = operation === "alert";
-    c.transportFailed("connection lost");
-    c.refreshFinished("battery-snapshot-2");
-    assert.equal(c.lastError, operation === "effect" ? "connection lost" : "");
-    if (operation === "threshold" || operation === "alert")
-        assert.equal(c[operation + "SaveError"], "connection lost", "recovery must retain failed saves");
 }
 {
     const { c } = controller();

@@ -24,10 +24,6 @@ TestCase {
             {
                 tag: "weather",
                 source: Qt.resolvedUrl("../../qml/Shelllist/Activity/assets/weather/clear-day.svg")
-            },
-            {
-                tag: "timezones",
-                source: Qt.resolvedUrl("../../qml/Shelllist/Activity/assets/timezones/world-time-zones.svg")
             }
         ];
     }

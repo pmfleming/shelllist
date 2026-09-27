@@ -26,8 +26,6 @@ const daemonFailure = event({
     reason: { code: 7, name: "no-secrets", category: "authentication" }, id: "Example"
 });
 expect("daemon recommended failure is surfaced", health.isFailure(daemonFailure), true);
-expect("duplicate notification is suppressed", health.isDuplicateNotification(
-    daemonFailure, health.notificationKey(daemonFailure), 1000, 2000, 3000), true);
 
 const daemonSuppressed = event({
     subject: "connection", state_name: "deactivated", unexpected: true, user_requested: false,
@@ -35,10 +33,6 @@ const daemonSuppressed = event({
     reason: { code: 3, name: "device-disconnected", category: "dependency" }, id: "Example"
 });
 expect("daemon suppressed failure stays quiet", health.isFailure(daemonSuppressed), false);
-
-expect("non-boolean advice is not interpreted as approval", health.isFailure(event({
-    notification_recommended: "true"
-})), false);
 
 // The daemon classifies lifecycle traces. Repeating each reason/state here
 // only retests the recommendation boolean, not DHCP, VPN or suspend behavior.

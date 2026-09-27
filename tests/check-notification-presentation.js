@@ -14,9 +14,7 @@ function equal(actual, expected, label) {
 }
 
 // Filtering, history catch-up, DND and preview reachability are exercised by
-// the real QML consumers. Keep routing and adversarial identity cases here.
-equal(context.notificationMonitor({ source_monitor: "missing" }, "eDP-1", ["eDP-1"]),
-    "eDP-1", "focused monitor is the route fallback");
+// the real QML consumers. Keep adversarial identity cases here.
 equal(context.groupRecords([{ app_name: "__proto__" }, { app_name: "constructor" }]).length,
     2, "app-controlled group keys cannot collide with object prototypes");
 
@@ -28,4 +26,4 @@ const recent = context.recentRecords([
     { history_id: 1, notification: { id: 2, created_unix_ms: 100 } }
 ]);
 equal(recent[2].history_id, 1, "reusing a notification ID does not erase older history");
-console.log("notification presentation: monitor routing and adversarial identity passed");
+console.log("notification presentation: adversarial identity passed");

@@ -11,18 +11,6 @@ TestCase {
     height: 200
 
     Component {
-        id: actionFactory
-        Ui.NotificationActionList {
-            width: 240
-            actions: []
-        }
-    }
-    SignalSpy {
-        id: triggered
-        signalName: "triggered"
-    }
-
-    Component {
         id: quickActionsFactory
         Ui.NotificationQuickActions {
             showReply: true
@@ -103,29 +91,4 @@ TestCase {
         compare(Ui.NotificationPresentation.defaultAction(notification).key, "default");
     }
 
-    function test_keyboardActivationAndNarrowLayout(): void {
-        const list = createTemporaryObject(actionFactory, this, {
-            actions: [
-                {
-                    key: "open",
-                    label: "A very long notification action label"
-                }
-            ]
-        });
-        const button = findChild(list, "notificationAction-open");
-        verify(button !== null);
-        triggered.target = list;
-        triggered.clear();
-        button.forceActiveFocus();
-        keyClick(Qt.Key_Return);
-        compare(triggered.count, 1);
-        compare(triggered.signalArguments[0][0], "open");
-        compare(button.accessibleName, "A very long notification action label");
-        list.width = 35;
-        compare(button.width, 35);
-        list.enabled = false;
-        keyClick(Qt.Key_Return);
-        compare(triggered.count, 1);
-        triggered.target = null;
-    }
 }

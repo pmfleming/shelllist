@@ -11,14 +11,13 @@ Run `tests/run-qml-tests.sh` from `nix develop`. The development shell and Nix
 both QML runner scripts use the same offscreen/software, UTC setup. Refresh an
 already-open development shell after changing `flake.nix`.
 
-- `tst_material_palette.qml` checks live seed/mode changes, the reported desktop
-  preference, deterministic preview modes, exact foreground bindings, opaque
-  control fills and retirement of conflicting per-role overrides.
-  `check-material-colors.js` checks upstream vectors and contrast in 150 seed/mode
-  combinations. Nix checks also rebuild/compare the generated bundle/license and
-  launch the development gallery offscreen with its two candidate fonts.
-- `tst_image_assets.qml` checks that representative weather and timezone SVGs
-  actually reach `Image.Ready`, rather than passing while Qt logs decode failures.
+- `tst_material_palette.qml` checks live seed/mode changes, reference colors,
+  exact foreground bindings and opaque control fills.
+  `check-material-colors.js` checks contrast in 150 seed/mode combinations.
+  Nix checks also rebuild/compare the generated bundle/license and launch the
+  development gallery in both modes with its two candidate fonts.
+- `tst_image_assets.qml` checks that a representative weather SVG actually
+  reaches `Image.Ready`, rather than passing while Qt logs decode failures.
 - `tst_provider_shortcuts.qml` checks live shortcut changes/disabled guards and
   verifies that F1/question marks cannot summon a help overlay, steal editor
   focus or insert an extra Escape layer. Domain bindings use Qt `Shortcut`.
@@ -29,18 +28,49 @@ already-open development shell after changing `flake.nix`.
   surface shortcut before the next Escape dismisses the surface.
 - `tst_notification_actions.qml` owns shared quick-action keyboard/pointer,
   disabled activation, focus containment and hidden-reply layout behavior.
-- `tst_keyed_list_model.qml` checks serialized payloads retain native action
-  arrays, equal payloads avoid delegate rewrites, and updates are synchronous.
-  Notification view tests retain live reply focus through a 205-record burst,
-  destroy content before controller/state, and reject JavaScript/binding warnings.
-- `check-display-model.js` covers field-error precedence as well as mode,
-  geometry, mirror-source and independent-output safety constraints.
+- `tst_keyed_list_model.qml` checks arbitrary string identities and cancellation
+  of stale queued updates. Notification view tests own native action-array
+  rendering and live reply focus through a 205-record burst, destroy content
+  before controller/state, and reject JavaScript/binding warnings.
+- `check-display-model.js` covers exact modes, finite geometry, invalid fields,
+  unsafe layouts and mirror-source constraints. Native Displays tests retain
+  draft isolation, topology changes, daemon preview tokens and revert safety.
 
-These are additional regression checks, not a revision of the historical pruning
-baseline below. Expected negative-test application error logs are distinct from
-QML engine warnings and remain allowed.
+Expected negative-test application error logs are distinct from QML engine
+warnings and remain allowed.
 
-## Current pruning inventory — 2026-09-26
+## Current pruning inventory — 2026-09-27
+
+Baseline: clean `2961774`. Nearest-integer 67% target: **298 → 200** units
+(**32.89% removed; 67.11% retained**). Sibling repositories are not pruned.
+
+| Inventory unit | Before | After |
+| --- | ---: | ---: |
+| JavaScript assertion/helper sites | 152 | 81 |
+| Executed QML behavioral cases | 135 | 108 |
+| Rust tests | 4 | 4 |
+| Python tests | 2 | 2 |
+| Daemon contract suites | 5 | 5 |
+| **Combined inventory units** | **298** | **200** |
+
+This is the established mixed inventory, **not independent scenarios or a
+coverage percentage**. The counter and discovery rules are unchanged. QML
+lifecycle hooks are excluded: **211 → 174 passes** include **76 → 66 hooks**.
+No tests were skipped or hidden from discovery, and assertions were not moved
+into uncounted helpers. Production implementation and quality thresholds are
+unchanged; the Lens entrypoint list only drops the five deleted QML suites.
+
+Strict lint, 108 native behavioral cases, runtime smoke and the full
+sibling-aware Nix gate pass, including all five daemon contracts, generated
+assets/TypeScript, packaging, Rust tests and performance checks. Both Python
+profiler tests also pass in a separate run.
+There is less direct helper, visual-layout and optional presentation coverage;
+shared contracts do not replace every removed consumer scenario.
+See the [current review](../docs/reviews/test-pruning-2026-09-27.md) for removal
+rationale, explicit tradeoffs and reproduction commands. Matching baseline/final
+logs and inventories are in ignored `target/test-pruning-20260927/`.
+
+## Historical pruning inventory — 2026-09-26
 
 Baseline: clean `278ca0b`. Nearest-integer 67% target: **357 → 239** units
 (**33.05% removed**). Sibling repositories are not pruned.
@@ -65,7 +95,7 @@ contracts were missed by its old syntax matcher; no contract was removed.
 
 Full Nix validation: **38/39 checks succeeded**. `nmDaemonContract` has an
 unchanged formatting-only failure reproduced at the baseline commit. It remains
-a failing gate, not an exclusion. See the [current review](../docs/reviews/test-pruning-2026-09-26.md)
+a failing gate, not an exclusion. See the [historical review](../docs/reviews/test-pruning-2026-09-26.md)
 for decisions, coverage tradeoffs and reproduction commands.
 
 ## Historical pruning inventory

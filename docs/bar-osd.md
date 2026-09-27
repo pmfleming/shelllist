@@ -87,8 +87,7 @@ Shelllist owns transition detection, text, icons, progress visibility, timeout c
 Focused validation:
 
 ```sh
-node tests/check-bar-presentation.js bar/Bar{Workspace,Media,Osd,Status}Presentation.js \
-  qml/Shelllist/Core/Duration.js
+tests/run-qml-tests.sh # Includes native OSD responsiveness and failure cases.
 nix build .#checks.x86_64-linux.barDaemonContract
 shelllist-qmllint bar/*.qml
 nix flake check

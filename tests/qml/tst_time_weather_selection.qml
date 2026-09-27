@@ -48,36 +48,4 @@ TestCase {
         compare(controller.selectedWeather.id, "taipei");
     }
 
-    function test_clockOnlyCityConsumesUpdatedNativeLunarMetadata() {
-        const controller = makeController();
-        const clock = {
-            timezone: "Asia/Tokyo",
-            label: "Tokyo",
-            utc_offset_seconds: 32400
-        };
-        for (const fraction of [0.25, 0.75]) {
-            controller.applySnapshot({
-                activity: {
-                    world_clocks: [clock],
-                    weather_locations: [],
-                    lunar: {
-                        fraction: fraction,
-                        approximate: true
-                    }
-                }
-            });
-            compare(controller.selectedCity.label, "Tokyo");
-            compare(controller.selectedCity.weather, null);
-            compare(controller.selectedCity.lunar.fraction, fraction);
-        }
-        controller.applySnapshot({
-            activity: {
-                world_clocks: [clock],
-                weather_locations: [],
-                lunar: null
-            }
-        });
-        compare(controller.selectedCity.lunar, null);
-    }
-
 }

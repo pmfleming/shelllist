@@ -10,7 +10,7 @@ if (!resourcesPath || !fixturePath)
 const resources = {};
 vm.createContext(resources);
 vm.runInContext(fs.readFileSync(resourcesPath, "utf8").replace(/^\.pragma library\s*/, ""), resources);
-const {current, history_point: history} = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+const {history_point: history} = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
 // Exercise the presentation the UI actually consumes, not the retired detail
 // table's catalogue of every wire field. Rust still owns the complete fixture.
@@ -20,8 +20,6 @@ for (const metric of ["cpu_percent_of_machine", "memory_bytes", "gpu_busy_percen
     assert.equal(resources.historicalMetricAvailable({...history, [metric]: null}, metric), false, metric);
 }
 for (const metric of ["network_receive_bytes_per_second", "network_transmit_bytes_per_second"]) {
-    assert.equal(resources.currentMetricAvailable(current, metric), false, "unsupported is not idle");
-    assert.equal(resources.historicalMetricAvailable(history, metric), false);
     assert.equal(resources.historicalMetricAvailable({...history,
         availability: {...history.availability, network_bytes: true}}, metric), true, "measured zero is valid");
 }

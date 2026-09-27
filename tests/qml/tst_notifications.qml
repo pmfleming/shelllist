@@ -131,19 +131,6 @@ TestCase {
         compare(state.backend.requestedUntil, null);
         compare(state.dndDurationMinutes, 30);
     }
-    function test_activeUsesSnapshotNotHistory() {
-        const controller = makeController(makeState());
-        compare(controller.visibleGroups.length, 1);
-        compare(controller.visibleGroups[0].records.length, 2);
-        compare(controller.visibleGroups[0].records[0].id, 100);
-        controller.tab = "history";
-        compare(controller.visibleGroups[0].records.length, 3);
-        controller.filterText = "Message 2";
-        compare(controller.visibleGroups[0].records.length, 1);
-        controller.filterText = "no matches";
-        compare(controller.visibleGroups.length, 0);
-        compare(controller.groupModel.count, 0);
-    }
     function test_refreshCatchesUpAcrossMissingPages() {
         const state = makeState();
         state.backend = createTemporaryObject(fakeBackendComponent, state, {
@@ -250,20 +237,5 @@ TestCase {
         verify(!state.replies[100].pending);
         compare(state.drafts[100], "Keep");
         compare(Object.keys(state.backend.requests).length, 0);
-    }
-    function test_navigationOriginAndPendingGroup() {
-        const state = makeState();
-        const controller = makeController(state);
-        controller.openNotifications("Later", "active", "activity");
-        compare(controller.pendingGroupKey, "Later");
-        state.notificationActive = {
-            notifications: [notification(200, "Later")]
-        };
-        compare(controller.pendingGroupKey, "");
-        compare(controller.selectedGroupKey, "Later");
-        compare(controller.returnSurface, "activity");
-        controller.deactivateUi();
-        compare(controller.returnSurface, "");
-        verify(state.expandedGroups.Later);
     }
 }

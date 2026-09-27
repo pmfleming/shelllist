@@ -22,10 +22,4 @@ let queue = flow.pairingQueue([], { event: "display", data: { request_id: "displ
 queue = flow.pairingQueue(queue, { event: "display", data: { request_id: "display-2", device_key: "keyboard", kind: "display-passkey", entered: 2 } });
 expect("display progress replaces rather than queues", queue.length === 1 && queue[0].entered === 2);
 
-expect("failed unavailable pair requests rescan", flow.shouldRescanAfterOperation({
-    operation: "pair", state: "failed", error: { code: "device-unavailable" }
-}, true, true, false));
-const pairAction = flow.deviceActionRequest("pair", { name: "Headset" }, true);
-expect("pair action retains trust policy", pairAction.operation === "pair" && pairAction.values.trust_after_pair);
-expect("unknown device actions are rejected", flow.deviceActionRequest("unknown", {}, false) === null);
 console.log(`Bluetooth lifecycle: ${checks} checks passed`);

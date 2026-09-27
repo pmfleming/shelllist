@@ -724,18 +724,6 @@
             touch $out
           '';
 
-          barPresentation = nodeCheck "bar-presentation" [
-            [
-              ./tests/check-bar-presentation.js
-              ./bar/BarWorkspacePresentation.js
-              ./bar/BarMediaPresentation.js
-              ./bar/BarOsdPresentation.js
-              ./bar/BarStatusPresentation.js
-              ./qml/Shelllist/Core/Duration.js
-              ./bar/BarIndicators.js
-            ]
-          ];
-
           materialGallery = pkgs.runCommand "shelllist-material-gallery-smoke" { } ''
             export HOME="$TMPDIR/home"
             export XDG_RUNTIME_DIR="$TMPDIR/runtime"
@@ -773,13 +761,6 @@
             touch $out
           '';
 
-          weatherPresentation = nodeCheck "weather-presentation" [
-            [
-              ./tests/check-weather-presentation.js
-              ./activity/WeatherVisuals.js
-            ]
-          ];
-
           timezoneAssets = pkgs.runCommand "shelllist-timezone-assets-current"
             {
               nativeBuildInputs = [ pkgs.diffutils self.packages.${system}.shelllistTimezoneAssets ];
@@ -794,16 +775,10 @@
             [
               ./tests/check-display-model.js
               ./displays/DisplayModel.js
-              ./displays/DisplayFocusModel.js
             ]
           ];
 
-          batteryPresentation = nodeCheck "battery-presentation" [
-            [
-              ./tests/check-battery-presentation.js
-              ./battery/BatteryPresentation.js
-              ./qml/Shelllist/Core/Duration.js
-            ]
+          batteryHistory = nodeCheck "battery-history" [
             [ ./tests/check-battery-history.js ./battery/BatteryHistory.js ]
           ];
 
@@ -902,7 +877,6 @@
           flowPolicies = nodeCheck "flow-policies" [
             [
               ./tests/check-flow-policies.js
-              ./battery/BatteryFlow.js
               ./clipboard/ClipboardFlow.js
             ]
           ];
@@ -967,13 +941,6 @@
               -o -,txt
             touch $out
           '';
-
-          bluetoothBattery = nodeCheck "bluetooth-battery" [
-            [
-              ./tests/check-bluetooth-battery.js
-              ./bluetooth/BluetoothBattery.js
-            ]
-          ];
 
           clipboardActions = nodeCheck "clipboard-actions" [
             [

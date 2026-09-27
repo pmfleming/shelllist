@@ -108,11 +108,11 @@ Bluetooth, Clipboard, Battery, and Time & Weather):
   Battery panel's enclosing layout). Hide inactive sections with `visible`,
   rather than leaving space or manually adjusting sibling positions.
 
-`tst_detail_layout.qml` checks the shared message/column/layout/loader contract;
-`tst_application_page_layout.qml` covers empty, populated and hidden launcher
-transitions. The later test-pruning pass removed repeated per-page layout and
-fixed tab-placement checks; see `tests/README.md` for current coverage owners.
-Shared layout contracts and domain-specific recovery tests remain.
+The 2026-09-27 pruning pass removed the dedicated shared-detail and launcher
+layout suites, alongside repeated per-page geometry checks. These layout rules
+remain review guidance, not a claim of dedicated automated coverage.
+Domain-specific recovery, immediate focus, shared activation and selected-row
+visibility regressions remain; see `tests/README.md` for current coverage owners.
 
 ## Quality gates
 
@@ -136,9 +136,7 @@ shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml activity/*.qml \
   bar/*.qml battery/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml \
   wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
-node tests/check-bar-presentation.js bar/Bar{Workspace,Media,Osd,Status}Presentation.js \
-  qml/Shelllist/Core/Duration.js
-node tests/check-flow-policies.js battery/BatteryFlow.js clipboard/ClipboardFlow.js
+node tests/check-flow-policies.js clipboard/ClipboardFlow.js
 tests/run-qml-tests.sh
 tests/run-runtime-smoke.sh
 tests/run-performance-benchmarks.sh

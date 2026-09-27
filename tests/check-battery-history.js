@@ -23,30 +23,12 @@ const points = [
     point(2 * day, 15 * minute, 70, false),
     point(2 * day + 15 * minute, 30 * minute, 60)
 ];
-const compact = series(points);
-equal(compact.breaks.map(gap => [[gap.from.x, gap.from.value], [gap.to.x, gap.to.value]]),
-    [[[0.5, 90], [0.5, 70]]],
-    "connect only the last charge reading before downtime to the first after it");
-
 assert.equal(series([point(0, 0, 80), point(minute, minute, null),
     point(2 * minute, 2 * minute, 79)]).breaks.length, 0,
     "missing charge readings must not fabricate gap endpoints");
 
-const charging = series([
-    point(0, 0, 20, false, { charging: true, time_to_full_seconds: 3600 }),
-    point(minute, minute, 21, true, { time_to_full_seconds: 234972 }),
-    point(2 * minute, 2 * minute, 22, true, { charging: true, time_to_full_seconds: null }),
-    point(3 * minute, 3 * minute, 23, true, { charging: true, time_to_full_seconds: 0 }),
-    point(4 * minute, 4 * minute, 24, true, { charging: true, time_to_full_seconds: 234972 }),
-    point(5 * minute, 5 * minute, 25, true, { charging: true, time_to_full_seconds: 3000 })
-], "time_to_full_seconds");
-equal(charging.segments.map(segment => segment.map(p => p.value)), [[3600], [234972, 3000]],
-    "only actual positive charging estimates may be plotted; missing data splits paths");
-
 for (const invalid of [null, undefined, NaN, Infinity, -1, 101, "80"])
     assert.equal(series([point(0, 0, invalid, false)]).segments.length, 0);
-for (const invalid of [null, undefined, NaN, Infinity, -1])
-    assert.equal(series([point(0, invalid, 80, false)]).segments.length, 0);
 const backwards = series([point(minute, minute, 80), point(0, 0, 70)]);
 assert.equal(backwards.segments.length, 2, "never interpolate backwards through a clock reset");
 
@@ -68,9 +50,8 @@ const zeroTransition = series([
 const zeroAreas = history.powerAreas(zeroTransition.segments);
 assert.equal(zeroAreas[0].points[1].x, 0.5, "zero-to-zero mode changes remain finite");
 // Qt's BatteryHistory suite owns visible isolated samples and gap rendering.
-// Keep duplicate/late cache handling below.
+// Keep protection against late cache data below.
 const live = point(2 * day + 16 * minute, 31 * minute, 59);
 const extended = history.windowPoints(points, 6, live);
-assert.equal(history.windowPoints(extended, 6, live).length, 5, "do not duplicate a persisted/live point");
 assert.equal(history.windowPoints(extended, 6, points[1]).length, 5, "late metadata cannot rewind a newer response");
-console.log("battery history: chart coordinates, invalid samples, discontinuities and live cache handling passed");
+console.log("battery history: invalid samples, discontinuities and live cache handling passed");

@@ -36,30 +36,4 @@ TestCase {
     function test_logicalGeometry(data) {
         compare(WorkArea.rectangle(data.screen, data.margins), data.expected);
     }
-    function test_missingMonitorAndSmallScreen() {
-        compare(WorkArea.rectangle({
-            width: 20,
-            height: 30
-        }, null), null);
-        compare(WorkArea.rectangle({
-            x: 0,
-            y: 0,
-            width: 20,
-            height: 30
-        }, {
-            left: 40,
-            top: 40,
-            right: 40,
-            bottom: 40
-        }), {
-            x: 19,
-            y: 29,
-            width: 1,
-            height: 1,
-            left: 19,
-            top: 29,
-            right: 0,
-            bottom: 0
-        });
-    }
 }

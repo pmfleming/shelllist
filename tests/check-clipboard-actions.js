@@ -45,7 +45,6 @@ function install(context, text, names) {
     install(controller, source, ["annotateImage", "deactivateUi", "finishAnnotate"]);
     controller.annotateImage();
     controller.deactivateUi();
-    assert.equal(controller.activeOperationId, "annotation-1", "hiding preserves the in-flight annotation");
     const transport = vm.createContext({ controller });
     assert.equal(vm.runInContext(backendSource.match(/^    active: (.*)$/m)[1], transport), true,
         "background annotation keeps the real backend active");

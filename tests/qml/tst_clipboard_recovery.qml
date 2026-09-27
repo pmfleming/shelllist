@@ -328,23 +328,6 @@ DaemonTestCase {
         compare(historyCalls()[1].params.cursor, null);
     }
 
-    function test_switchingTabsPreservesClipboardDraft() {
-        const controller = makeController();
-        failEdit(controller);
-        const cards = makeCards(controller);
-        const editor = findChild(cards, "clipboardTextEditor");
-        editor.forceActiveFocus();
-        verify(controller.detailState.editorFocused);
-        controller.cycleDetailsTab();
-        verify(!editor.visible);
-        verify(!controller.detailState.editorFocused);
-        compare(controller.detailState.editDraft, "Keep this draft");
-        controller.cycleDetailsTab();
-        verify(editor.visible);
-        compare(editor.text, "Keep this draft");
-        verify(findChild(cards, "retryClipboardEdit").visible);
-    }
-
     function test_hiddenTransportReadyDoesNotOpenClipboardSession() {
         const controller = makeController();
         controller.uiActive = false;

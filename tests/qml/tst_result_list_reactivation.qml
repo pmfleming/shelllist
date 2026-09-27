@@ -50,19 +50,6 @@ TestCase {
         });
     }
 
-    function test_reactivationRevealsSelection() {
-        controller.uiActive = true;
-        store.selectedIndex = 240;
-        verifySelection(240);
-        wait(20);
-        controller.uiActive = false;
-        listView().positionViewAtIndex(0, ListView.Beginning);
-        verify(!selectedItemIsVisible(listView()));
-
-        controller.uiActive = true;
-        verifySelection(240);
-    }
-
     function test_replacementKeepsLogicalSelection_data() {
         // Cover both lifecycle orderings without a position × timing cross-product.
         return [

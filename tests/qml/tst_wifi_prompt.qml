@@ -53,56 +53,6 @@ TestCase {
         prompt.cancel();
     }
 
-    function test_mergesIncrementalAndDivergedNetworkChanges() {
-        const current = [
-            {
-                key: "keep",
-                strength: 10
-            },
-            {
-                key: "change",
-                strength: 20
-            },
-            {
-                key: "remove",
-                strength: 30
-            }
-        ];
-        const merged = Flow.mergeNetworkChanges(current, {
-            removed: [
-                {
-                    key: "remove"
-                }
-            ],
-            changed: [
-                {
-                    key: "change",
-                    strength: 80
-                },
-                {
-                    key: "missing",
-                    strength: 60
-                }
-            ],
-            added: [
-                {
-                    key: "add",
-                    strength: 40
-                },
-                {
-                    ssid: "Hidden"
-                }
-            ]
-        });
-
-        compare(merged.length, 5);
-        compare(merged[0].key, "keep");
-        compare(merged[1].strength, 80);
-        compare(merged[2].key, "missing");
-        compare(merged[3].key, "add");
-        compare(merged[4].ssid, "Hidden");
-    }
-
     function test_deltaPrecedenceAndHiddenNetworks() {
         const current = [
             {

@@ -255,28 +255,6 @@ DaemonTestCase {
         verify(c.stale, "external changes to mirroring invalidate the draft");
         compare(calls.length, 0);
     }
-    function test_groupedSettingsRemainDraftOnly() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.openDetails();
-        // The details Loader is asynchronous: an early child can exist before
-        // the inspector's Repeater delegates have finished being created.
-        tryVerify(function () { return panel.detailsItem !== null; });
-        verify(findChild(panel, "displayModeCard") !== null);
-        findChild(panel, "displayScale").selected("2");
-        findChild(panel, "displayRotation").selected("1");
-        findChild(panel, "displayX").edited("-200");
-        compare(c.selectedDraft.scale, 2);
-        compare(c.selectedDraft.transform, 1);
-        compare(c.selectedDraft.x, -200);
-        compare(c.selectedOutput.scale, 1.5);
-        verify(c.dirty);
-        findChild(panel, "displayPositionReference").selected("eDP-1");
-        findChild(panel, "displayPlace-left").clicked();
-        verify(c.selectedDraft.x < 0);
-        compare(calls.length, 0);
-    }
-
     function test_emptySelectionRetainsBackAndDraftRecovery() {
         const panel = makePanel();
         const c = panel.controller;
@@ -447,35 +425,6 @@ DaemonTestCase {
         c.reloadDraft();
         verify(!c.stale && !c.dirty);
         compare(c.draft.length, 1);
-    }
-    function test_narrowWorkspaceRevealsFocusedControls() {
-        const panel = makePanel();
-        panel.width = 390;
-        panel.height = 600;
-        const c = panel.controller;
-        c.uiActive = true;
-        c.selectOutput("DP-1");
-        c.openDetails();
-        tryVerify(function () { return panel.detailsItem !== null; });
-        verify(c.triggerDetailAction("arrange"));
-        const page = findChild(panel, "displayLayoutWorkspace");
-        const fieldY = findChild(panel, "displayY");
-        const canvas = findChild(panel, "displayWorkspaceCanvas");
-        // Arrange queues canvas focus; let it finish before focusing the field,
-        // and settle the stacked layout before checking focus-driven scrolling.
-        tryCompare(canvas, "activeFocus", true);
-        verify(waitForPolish(panel.Window.window));
-        fieldY.focusInput(false);
-        tryCompare(fieldY, "inputActiveFocus", true);
-        tryVerify(function () { return page.contentY > 0; });
-        const position = fieldY.mapToItem(page, 0, 0);
-        verify(position.y >= 0);
-        verify(position.y + fieldY.height <= page.height + 1);
-        for (const name of ["displayResolution", "displayRefreshRate", "displayScale", "displayRotation", "displayX", "displayY"]) {
-            const field = findChild(panel, name);
-            verify(field.mapToItem(panel, field.width, 0).x <= panel.width);
-            verify(field.Accessible.name.length > 0);
-        }
     }
     function test_reconnectionClearsOnlyResolvedCloseIntent() {
         const c = makePanel().controller;

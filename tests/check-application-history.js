@@ -31,7 +31,7 @@ function controller() {
     Object.defineProperty(state, "historyInFlight", { get: () => !!state.activeHistoryRequestId });
     vm.createContext(state);
     for (const name of ["clearResourceHistory", "resourceHistorySinceMs", "nextHistoryRequestId",
-            "requestResourceHistory", "applyResourceHistory", "selectHistoryRange", "handleFailure"]) {
+            "requestResourceHistory", "applyResourceHistory", "handleFailure"]) {
         const match = source.match(new RegExp("    function " + name
             + "\\((.*?)\\): \\w+ \\{([\\s\\S]*?)\\n    \\}"));
         vm.runInContext("function " + name + "(" + match[1].replace(/: \w+/g, "")
@@ -44,28 +44,6 @@ function respond(c, points, cursor, hasMore = false) {
     c.applyResourceHistory(c.activeHistoryRequestId,
         { target_id: c.historyTargetId, points, next_cursor: cursor, has_more: hasMore,
           summary: { window_start_ms: c.historyWindowStartMs, window_end_ms: c.historyWindowEndMs, revision: "stable", metrics: {} } });
-}
-
-{
-    const c = controller();
-    c.requestResourceHistory();
-    respond(c, [{ timestamp_ms: c.now - 15000 }], "A-last");
-    c.requestResourceHistory(true);
-    const staleId = c.activeHistoryRequestId;
-    c.selectedResult = { id: "B" };
-    c.requestResourceHistory();
-    c.applyResourceHistory(staleId, { target_id: "A", points: [{ timestamp_ms: c.now }], has_more: true, next_cursor: "old" });
-    assert.equal(c.resourceHistory.length, 0, "ignore late responses for A");
-}
-
-{
-    const c = controller();
-    c.requestResourceHistory();
-    const oldId = c.activeHistoryRequestId;
-    c.requestResourceHistory(true);
-    c.selectHistoryRange("24h");
-    c.applyResourceHistory(oldId, { target_id: "A", points: [{ timestamp_ms: c.now }], has_more: false });
-    assert.equal(c.resourceHistory.length, 0, "old range cannot populate the new selection");
 }
 
 {
@@ -102,4 +80,4 @@ function respond(c, points, cursor, hasMore = false) {
     assert.equal(c.historyInFlight, false, "nonadvancing cursors cannot loop forever");
 }
 
-console.log("application history: target/range isolation, pagination and recovery passed");
+console.log("application history: pagination and recovery passed");

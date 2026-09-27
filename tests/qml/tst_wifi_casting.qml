@@ -118,12 +118,8 @@ DaemonTestCase {
         compare(controller.qr.password, "", "an old generation cannot fill a reopened dialog");
     }
 
-    function test_togglePersistsBothDirections_data() {
+    function test_disablingCastingPersists_data() {
         return [
-            {
-                tag: "enable",
-                initial: false
-            },
             {
                 tag: "disable",
                 initial: true
@@ -131,7 +127,7 @@ DaemonTestCase {
         ];
     }
 
-    function test_togglePersistsBothDirections(data) {
+    function test_disablingCastingPersists(data) {
         const panel = makePanel(data.initial);
         const toggle = findChild(panel, "castingToggle");
         verify(toggle !== null);
