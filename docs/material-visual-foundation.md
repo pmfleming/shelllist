@@ -84,8 +84,8 @@ outline; on uses primary with its paired foreground. Tone-specific rows retain
 matching foregrounds. Toggle rows now reserve a full 42px control height, and
 standalone switches have a 64px-wide hit region. Explicitly constrained switch
 sizes fit their parent; normal desktop/laptop layouts do not reduce these sizes.
-`SHELLLIST_RADIUS` continues to affect legacy fields/cards/surfaces, not these
-component-specific button/switch shapes.
+`SHELLLIST_RADIUS` continues to affect unmigrated controls/cards/surfaces, not
+these component-specific shapes.
 
 `ExpressiveMotion` is a small Qt-only numeric spring shared by radius, thumb
 position and thumb size. Qt parameters (spring 4.5, damping 0.8) are provisional
@@ -158,6 +158,53 @@ and [outlined segmented-button tokens](https://github.com/androidx/androidx/blob
 Per-corner Rectangle radii are supported by the packaged Qt 6.11.1 and were
 validated in the actual engine, including the software-rendered gallery.
 
+## Outlined text fields and dropdowns
+
+`TextField` and the dropdown background now share an internal `FieldFrame`:
+opaque surface fill, **4px corners**, a 1px neutral/error outline and the common
+immediate 2px inset focus ring in primary/error. The normal outline is hidden
+while the ring is visible, rather than drawing competing borders. Error/focus
+changes do not animate or move content. The **42px desktop default** retains
+single-line density instead of adopting the 56px mobile outlined-field token.
+The inset ring deliberately follows the established clipped-container keyboard
+focus convention rather than Material's outside-edge focus outline.
+
+No floating labels or automatic explanations appear on focus/hover. Existing
+external labels, placeholders, explicit errors and accessible names remain.
+Qt `TextInput` still owns cursor movement, selection, read-only behavior,
+password echo and IME. Names/descriptions are forwarded to that native input;
+text is clipped to the field and placeholders are hidden during nonempty IME
+preedit. Password visibility still resets on hide. Reveal/trailing actions use
+shared `FlatIconButton` activation, including disabled assistive-action guards,
+without modifying the text. Secret cancellation/clearing remains with domain
+controllers; this visual slice does not change prompt lifetime.
+
+Dropdown fields remain solid while hovered/pressed. Menu surfaces use raised
+Material containment with 12px outer/8px row corners; rows fit inside popup
+padding. Selected and keyboard-highlighted options have their correct paired
+foregrounds. Popup opacity transitions are removed so newly focused content is
+immediately visible; only the chevron uses decorative spring motion.
+
+Qt ComboBox treats its delegate's `hovered` state as a request to move keyboard
+highlight. The custom delegate now observes hover through a passive
+`HoverHandler` instead, leaving activation to the native button. Merely passing
+the pointer over another option cannot redirect Enter. Qt still owns popup key
+navigation, scrolling, activation and Escape handling; this is not the future
+browse-versus-edit model or a rewrite of native option traversal.
+
+Native `currentIndex` can represent a proposed choice before a daemon confirms
+it. The field label and selected-row semantics now derive from the owner's
+`value` through `selectedIndex`; the native keyboard candidate remains separate.
+Activation only emits intent and is guarded against disabled/unavailable/busy
+states. Synchronous owner updates still display immediately; pending/rejected
+requests do not masquerade as acknowledged values.
+
+The [Material outlined-field tokens](https://github.com/androidx/androidx/blob/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/OutlinedTextFieldTokens.kt)
+and Qt 6.11.1 ComboBox implementation were checked. Desktop dimensions, inset
+focus and absent floating labels are deliberate usability adaptations, not a
+claim of exact mobile component conformance. Real input-method and screen-reader
+acceptance remain outstanding despite retaining the native input boundary.
+
 ## Development gallery
 
 ```sh
@@ -170,7 +217,9 @@ focus, capsule button shapes and on/off/disabled Material switches; and
 **Roboto Flex versus Noto Sans** samples. Hold Space or the pointer on a button
 to inspect its press shape. The slider samples include live, disabled, mirrored
 and vertical states; the segmented group includes an unavailable choice.
-Its package supplies these fonts, and the offscreen check verifies both are available. The gallery does not
+The field grid shows normal, error, password, read-only, disabled and dropdown
+states with equal-width columns. Its package supplies the candidate fonts, and
+the offscreen check verifies both are available. The gallery does not
 choose a production font or change system font configuration. Icon-family
 comparison is still pending; current Nerd Font glyphs are retained.
 
@@ -185,6 +234,8 @@ For an offscreen image, set `QT_QPA_PLATFORM=offscreen`,
 `QT_QUICK_BACKEND=software`, `SHELLLIST_GALLERY_SMOKE=1` and
 `SHELLLIST_GALLERY_CAPTURE=/absolute/path/gallery.png` before the command above.
 Set `SHELLLIST_GALLERY_SCHEME=light` or `dark` to choose the preview mode.
+Set `SHELLLIST_GALLERY_POPUP=1` to open the sample dropdown explicitly for review
+or capture. These controls affect only this development window.
 The capture mode uses a taller viewport and exits after saving. The Nix
 `materialGallery` check launches both modes offscreen, verifies the mode and
 fonts, rejects warnings and errors, and exits without deploying or restarting
@@ -209,7 +260,7 @@ captures were inspected at `/tmp/shelllist-expressive-{light,dark}.png`; detaile
 logs are `/tmp/shelllist-expressive-controls-tests.log` and
 `/tmp/shelllist-expressive-controls-full-check.log`.
 
-The settings-control slice passes strict lint, **114 Qt behavioral cases / 182
+The settings-control slice passed strict lint, **114 Qt behavioral cases / 182
 passes including hooks**, runtime smoke and the full sibling-aware gate. Tests
 exercise actual Qt input in horizontal, mirrored and vertical sliders, immediate
 feedback, segmented radio semantics, skipped unavailable options and busy/disabled
@@ -218,6 +269,17 @@ captures were inspected at `/tmp/shelllist-material-settings-{light,dark}.png`;
 logs are `/tmp/shelllist-material-settings-tests.log` and
 `/tmp/shelllist-material-settings-full-check.log`. No live deployment, compositor
 or screen-reader acceptance was performed.
+
+The field slice passes strict lint, **116 Qt behavioral cases / 186 passes
+including hooks**, runtime smoke and the full sibling-aware gate. New native
+cases cover editing, masking, focus/error roles, guarded embedded actions,
+hover-independent popup navigation, acknowledgement and cancellation. Four
+captures (both modes, closed/open menu) were reviewed at
+`/tmp/shelllist-material-fields-{light,dark}-{0,1}.png`. That visual review caught
+an unequal-column gallery layout, fixed with uniform grid widths. Logs are
+`/tmp/shelllist-material-fields-tests.log` and
+`/tmp/shelllist-material-fields-full-check.log`. No live deployment or hardware
+IME/screen-reader acceptance was performed.
 
 Typeface/icon selection, broader shape/motion migration and final spring tuning,
 compositor blur and real-desktop visual acceptance remain open. Contrast

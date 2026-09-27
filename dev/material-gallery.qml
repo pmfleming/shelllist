@@ -16,6 +16,11 @@ ShellRoot {
         const scheme = Quickshell.env("SHELLLIST_GALLERY_SCHEME");
         if (scheme === "light" || scheme === "dark")
             Ui.Theme.previewColorScheme = scheme === "dark" ? Qt.Dark : Qt.Light;
+        if (Quickshell.env("SHELLLIST_GALLERY_POPUP") === "1")
+            Qt.callLater(function () {
+                galleryChoice.forceActiveFocus();
+                galleryChoice.popup.open();
+            });
     }
 
     component Swatch: Rectangle {
@@ -84,7 +89,7 @@ ShellRoot {
         id: window
         title: "Shelllist · Material development gallery"
         width: 1080
-        height: Quickshell.env("SHELLLIST_GALLERY_CAPTURE") ? 1260 : 860
+        height: Quickshell.env("SHELLLIST_GALLERY_CAPTURE") ? 1380 : 860
         visible: true
         onClosing: Qt.quit()
 
@@ -223,10 +228,57 @@ ShellRoot {
                         accessibleName: "Preview disabled switch"
                     }
                 }
-                Ui.TextField {
+                Ui.ThemeText {
+                    text: "Outlined fields · error / password / read-only / disabled"
+                    font.pixelSize: 18
+                }
+                GridLayout {
                     Layout.fillWidth: true
-                    placeholder: "Normal text editing / immediate focus"
-                    Accessible.name: "Preview text field"
+                    columns: window.width < 850 ? 2 : 3
+                    uniformCellWidths: true
+                    columnSpacing: 12
+                    rowSpacing: 12
+                    Ui.TextField {
+                        Layout.fillWidth: true
+                        placeholder: "Normal text editing"
+                        Accessible.name: "Preview text field"
+                    }
+                    Ui.TextField {
+                        Layout.fillWidth: true
+                        text: "Invalid value"
+                        inputValid: false
+                        Accessible.name: "Preview invalid field"
+                    }
+                    Ui.TextField {
+                        Layout.fillWidth: true
+                        text: "Preview only"
+                        password: true
+                        Accessible.name: "Preview password field"
+                    }
+                    Ui.TextField {
+                        Layout.fillWidth: true
+                        text: "Read only"
+                        readOnly: true
+                        Accessible.name: "Preview read-only field"
+                    }
+                    Ui.TextField {
+                        Layout.fillWidth: true
+                        text: "Disabled"
+                        enabled: false
+                        Accessible.name: "Preview disabled field"
+                    }
+                    Ui.DropDownList {
+                        id: galleryChoice
+                        Layout.fillWidth: true
+                        value: "automatic"
+                        options: [
+                            { value: "automatic", label: "Automatic" },
+                            { value: "unavailable", label: "Unavailable", enabled: false },
+                            { value: "manual", label: "Manual" }
+                        ]
+                        Accessible.name: "Preview choice field"
+                        onSelected: function (next) { value = next; }
+                    }
                 }
                 Ui.ThemeText {
                     text: "Sliders · immediate value position · disabled / mirrored / vertical"

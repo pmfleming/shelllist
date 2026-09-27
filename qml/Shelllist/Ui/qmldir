@@ -35,6 +35,7 @@ DetailsTabBar 1.0 DetailsTabBar.qml
 DropDownList 1.0 DropDownList.qml
 internal DropDownOptionDelegate DropDownOptionDelegate.qml
 Elevation 1.0 Elevation.qml
+internal FieldFrame FieldFrame.qml
 FieldLabel 1.0 FieldLabel.qml
 FlatIconButton 1.0 FlatIconButton.qml
 ExpressiveMotion 1.0 ExpressiveMotion.qml

@@ -257,15 +257,16 @@ back to the system window palette when the platform supplies no preference.
 Controls are opaque; the chooser shell uses a provisional 94% opacity.
 Shared buttons now morph from capsules to rounded pressed shapes; switches use
 Material tracks/thumbs with interruptible springs. Sliders use split tracks and
-slim handles; segmented choices use outlined capsules. Focus, selection and
-slider positions update immediately. Compositor blur and broader Expressive
-styling are still pending.
+slim handles; segmented choices use outlined capsules. Text fields and dropdowns
+share outlined Material frames and immediate focus/error feedback. Dropdown
+hover is decorative, and pending choices are not displayed as confirmed values.
+Compositor blur and broader Expressive styling are still pending.
 
 Supported environment inputs:
 
 ```text
 SHELLLIST_ACCENT         # Optional seed override, not an exact primary-role color
-SHELLLIST_RADIUS         # Legacy surfaces/fields; not migrated Material control shapes
+SHELLLIST_RADIUS         # Legacy surfaces and unmigrated controls
 SHELLLIST_FONT           SHELLLIST_ICON_FONT    SHELLLIST_NO_ANIMATIONS
 ```
 

@@ -1,6 +1,6 @@
 import QtQuick
 
-Rectangle {
+FieldFrame {
     id: field
 
     property alias text: input.text
@@ -37,10 +37,10 @@ Rectangle {
     onVisibleChanged: if (!visible)
         passwordRevealed = false
 
-    implicitHeight: Theme.compactControlHeight
-    radius: Theme.controlRadius
-    color: Theme.input
-    border.color: !inputValid ? Theme.danger : Theme.border
+    implicitHeight: Theme.controlHeight
+    focused: input.activeFocus
+    invalid: !inputValid
+    hovered: hover.hovered
     opacity: enabled ? (readOnly ? Theme.readOnlyOpacity : 1.0) : Theme.disabledOpacity
 
     function focusInput(selectContents) {
@@ -49,16 +49,19 @@ Rectangle {
             input.selectAll();
     }
 
-    FocusRing {
-        active: input.activeFocus
-        cornerRadius: field.radius
-        ringColor: Theme.inputText
+    HoverHandler {
+        id: hover
+        enabled: field.enabled
     }
 
     TextInput {
         id: input
+        objectName: "fieldInput"
+        Accessible.name: field.Accessible.name || field.placeholder
+        Accessible.description: field.Accessible.description
 
         anchors.fill: parent
+        clip: true
         leftPadding: field.leftPadding
         rightPadding: field.effectiveRightPadding
         readOnly: field.readOnly
@@ -83,14 +86,15 @@ Rectangle {
             leftPadding: input.leftPadding
             rightPadding: input.rightPadding
             verticalAlignment: Text.AlignVCenter
-            visible: input.text.length === 0
+            visible: input.text.length === 0 && input.preeditText.length === 0
             text: field.placeholder
             color: Theme.subtleText
             font.pixelSize: field.fontPixelSize
         }
     }
 
-    IconTile {
+    FlatIconButton {
+        objectName: "passwordVisibilityAction"
         visible: field.showPasswordButton
         anchors.right: trailingAction.visible ? trailingAction.left : parent.right
         anchors.rightMargin: Theme.spacingXs
@@ -98,18 +102,15 @@ Rectangle {
         width: field.embeddedActionWidth
         height: width
         icon: field.passwordRevealed ? "󰈉" : "󰈈"
-        iconColor: Theme.text
+        flatIconColor: Theme.text
         iconSize: Theme.iconSize
-        clickable: true
+        accessibleName: field.passwordRevealed ? "Hide password" : "Show password"
         onClicked: field.passwordRevealed = !field.passwordRevealed
-
-        Accessible.role: Accessible.Button
-        Accessible.name: field.passwordRevealed ? "Hide password" : "Show password"
-        Accessible.onPressAction: field.passwordRevealed = !field.passwordRevealed
     }
 
-    IconTile {
+    FlatIconButton {
         id: trailingAction
+        objectName: "fieldTrailingAction"
 
         visible: field.trailingActionIcon.length > 0
         anchors.right: parent.right
@@ -118,15 +119,10 @@ Rectangle {
         width: field.embeddedActionWidth
         height: width
         icon: field.trailingActionIcon
-        iconColor: field.trailingActionEnabled ? Theme.text : Theme.disabledText
+        flatIconColor: Theme.text
         iconSize: field.trailingActionIconSize
-        clickable: field.trailingActionEnabled
         enabled: field.trailingActionEnabled
+        accessibleName: field.trailingActionToolTip
         onClicked: field.trailingActionRequested()
-
-        Accessible.role: Accessible.Button
-        Accessible.name: field.trailingActionToolTip
-        Accessible.onPressAction: if (field.trailingActionEnabled)
-            field.trailingActionRequested()
     }
 }

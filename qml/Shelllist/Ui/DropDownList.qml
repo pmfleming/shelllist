@@ -10,16 +10,17 @@ Controls.ComboBox {
     property string value: ""
     property bool interactive: true
     property string placeholder: "Select an option"
+    readonly property int selectedIndex: optionIndex(value)
 
     signal selected(string value)
 
     model: options
     textRole: "label"
     valueRole: "value"
-    currentIndex: optionIndex(value)
-    implicitHeight: Theme.compactControlHeight
-    leftPadding: Theme.spacingMd
-    rightPadding: Theme.spacingLg + Theme.iconSizeSmall
+    currentIndex: selectedIndex
+    implicitHeight: Theme.controlHeight
+    leftPadding: mirrored ? Theme.spacingLg + Theme.iconSizeSmall : Theme.spacingMd
+    rightPadding: mirrored ? Theme.spacingMd : Theme.spacingLg + Theme.iconSizeSmall
     hoverEnabled: true
     enabled: interactive
     activeFocusOnTab: enabled
@@ -44,22 +45,8 @@ Controls.ComboBox {
     function optionText(option) {
         return option.label || option.value || "";
     }
-    function delegateTextColor(highlighted) {
-        return highlighted ? Theme.accentText : Theme.text;
-    }
-    function delegateWeight(selected) {
-        return selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular;
-    }
-    function delegateBackground(highlighted, selected, hovered) {
-        if (highlighted)
-            return Theme.accent;
-        if (selected)
-            return Theme.selected;
-        return hovered ? Theme.hover : "transparent";
-    }
-
     onActivated: function (index) {
-        if (!optionEnabled(index))
+        if (!enabled || !interactive || !optionEnabled(index))
             return;
         const nextValue = String(options[index].value || "");
         if (nextValue !== value)
@@ -69,30 +56,32 @@ Controls.ComboBox {
     contentItem: ThemeText {
         leftPadding: 0
         rightPadding: 0
-        text: control.optionLabel(control.currentIndex)
-        color: control.currentIndex >= 0 ? Theme.inputText : Theme.subtleText
+        // Native currentIndex may be a proposed choice awaiting acknowledgement.
+        text: control.optionLabel(control.selectedIndex)
+        color: control.selectedIndex >= 0 ? Theme.inputText : Theme.subtleText
         font.weight: Theme.fontWeightMedium
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
     }
 
     indicator: Text {
-        x: control.width - width - Theme.spacingMd
+        x: control.mirrored ? Theme.spacingMd : control.width - width - Theme.spacingMd
         y: Math.round((control.height - height) / 2)
         text: "󰅀"
         color: control.popup.visible || control.activeFocus ? Theme.accent : Theme.mutedText
         font.family: Theme.iconFontFamily
         font.pixelSize: Theme.iconSizeSmall
-        rotation: control.popup.visible ? 180 : 0
+        rotation: indicatorMotion.value
 
-        InteractiveBehavior on rotation {}
+        ExpressiveMotion {
+            id: indicatorMotion
+            target: control.popup.visible ? 180 : 0
+        }
     }
 
-    background: Rectangle {
-        radius: Theme.controlRadius
-        color: control.pressed ? Theme.pressed : (control.hovered ? Theme.hover : Theme.input)
-        border.width: 1
-        border.color: control.activeFocus || control.popup.visible ? Theme.strongBorder : Theme.border
+    background: FieldFrame {
+        focused: control.activeFocus || control.popup.visible
+        hovered: control.hovered
     }
 
     delegate: DropDownOptionDelegate {
@@ -102,8 +91,8 @@ Controls.ComboBox {
     popup: Controls.Popup {
         y: control.height + Theme.spacingXs
         width: control.width
-        padding: Theme.spacingXs
-        height: Math.min(control.options.length * Theme.compactControlHeight + topPadding + bottomPadding, Theme.compactControlHeight * 6 + topPadding + bottomPadding)
+        padding: Theme.spacingSm
+        height: Math.min(control.options.length, 6) * Theme.controlHeight + topPadding + bottomPadding
 
         contentItem: ScrollableListView {
             clip: true
@@ -114,29 +103,14 @@ Controls.ComboBox {
         }
 
         background: Rectangle {
-            radius: Theme.controlRadius
+            radius: 12
             color: Theme.surfaceRaised
             border.width: 1
-            border.color: Theme.strongBorder
+            border.color: Theme.border
         }
 
-        enter: Transition {
-            NumberAnimation {
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: Theme.noAnimations ? 0 : Theme.animationInteractive
-                easing.type: Theme.easingResponsive
-            }
-        }
-        exit: Transition {
-            NumberAnimation {
-                property: "opacity"
-                from: 1
-                to: 0
-                duration: Theme.noAnimations ? 0 : Theme.animationInteractive
-                easing.type: Theme.easingResponsive
-            }
-        }
+        // The newly focused option must never wait behind a fade.
+        enter: null
+        exit: null
     }
 }

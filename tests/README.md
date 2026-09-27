@@ -29,7 +29,10 @@ already-open development shell after changing `flake.nix`.
 - `tst_settings_controls.qml` checks immediate slider value/focus feedback,
   native pointer mapping in horizontal/mirrored/vertical layouts, keyboard edits
   and segmented radio semantics, disabled guards and mirrored navigation.
-  The suite now has 114 behavioral cases (182 passes with hooks); the inventory
+- `tst_material_fields.qml` checks native editing/read-only behavior, masking and
+  guarded embedded actions, immediate focus/error roles, hover-independent menu
+  navigation, acknowledged selection, Escape cancellation and disabled guards.
+  The suite now has 116 behavioral cases (186 passes with hooks); the inventory
   below is the completed pruning checkpoint, not a permanent cap on feature tests.
 - `tst_battery_history.qml` also checks explicit keyboard/pointer inspection:
   hover/focus alone reveal no values, and editor Escape wins over the shared
