@@ -13,7 +13,7 @@ ActionControl {
     property bool showSubtitle: true
 
     width: parent ? parent.width : 0
-    implicitHeight: showSubtitle && subtitle.length > 0 ? 40 : 30
+    implicitHeight: Theme.controlHeight
     radius: Theme.controlRadius
     color: area.pressed ? Theme.pressed : (area.containsMouse ? Theme.hover : "transparent")
     border.color: activeFocus ? Theme.strongBorder : "transparent"
@@ -54,11 +54,13 @@ ActionControl {
         }
 
         TogglePill {
-            Layout.preferredWidth: 42
-            Layout.preferredHeight: 24
+            Layout.preferredWidth: implicitWidth
+            Layout.preferredHeight: implicitHeight
             Layout.alignment: Qt.AlignVCenter
             checked: row.checked
+            pressed: row.enabled && row.interactive && (area.pressed || row.keyboardPressed)
             checkedColor: row.tone === "danger" ? Theme.danger : (row.tone === "active" ? Theme.active : (row.tone === "warning" ? Theme.warning : Theme.accent))
+            handleColor: !checked ? Theme.controlBorder : (row.tone === "danger" ? Theme.dangerText : (row.tone === "active" ? Theme.activeText : (row.tone === "warning" ? Theme.warningText : Theme.accentText)))
         }
     }
 

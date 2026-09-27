@@ -8,6 +8,7 @@ import Shelllist.Ui as Ui
 ShellRoot {
     id: gallery
     property bool checked: true
+    property bool secondaryChecked: false
     property string segment: "first"
     readonly property var fontFamilies: Qt.fontFamilies()
 
@@ -165,7 +166,7 @@ ShellRoot {
                     }
                 }
                 Ui.ThemeText {
-                    text: "Shared controls · current desktop-seeded scheme"
+                    text: "Expressive controls · hold Space or the pointer to inspect press shapes"
                     font.pixelSize: 18
                 }
                 Flow {
@@ -204,10 +205,22 @@ ShellRoot {
                     }
                     Ui.ToggleSwitch {
                         checked: gallery.checked
-                        accessibleName: "Preview switch"
+                        accessibleName: "Preview selected switch"
                         onToggled: function (value) {
                             gallery.checked = value;
                         }
+                    }
+                    Ui.ToggleSwitch {
+                        checked: gallery.secondaryChecked
+                        accessibleName: "Preview unselected switch"
+                        onToggled: function (value) {
+                            gallery.secondaryChecked = value;
+                        }
+                    }
+                    Ui.ToggleSwitch {
+                        checked: true
+                        enabled: false
+                        accessibleName: "Preview disabled switch"
                     }
                 }
                 Ui.TextField {

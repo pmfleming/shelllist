@@ -113,6 +113,10 @@ Item {
     readonly property int animationFast: 170
     readonly property int animationInteractive: 170
     readonly property int animationNormal: 220
+    // Qt spring parameters, provisionally tuned for small decorative controls.
+    readonly property real motionSpring: 4.5
+    readonly property real motionDamping: 0.8
+    readonly property int pressedCornerRadius: 8
     readonly property int spinnerDuration: 900
     readonly property int easingStandard: Easing.InOutCubic
     readonly property int easingResponsive: Easing.OutCubic

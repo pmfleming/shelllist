@@ -23,6 +23,11 @@ already-open development shell after changing `flake.nix`.
   focus or insert an extra Escape layer. Domain bindings use Qt `Shortcut`.
 - `tst_focus_feedback.qml` checks immediate focus transfer, retained busy focus,
   inset bounds, selection versus focus, non-selecting hover and tooltip absence.
+- `tst_expressive_controls.qml` covers press/reversal while activation and focus
+  remain immediate, busy/focus-loss cleanup and stopping in-flight springs when
+  motion is disabled. Two new feature regressions bring the post-pruning suite
+  to 110 behavioral cases (178 passes with hooks); the inventory below records
+  the completed pruning checkpoint, not a permanent cap on feature tests.
 - `tst_battery_history.qml` also checks explicit keyboard/pointer inspection:
   hover/focus alone reveal no values, and editor Escape wins over the shared
   surface shortcut before the next Escape dismisses the surface.
@@ -39,7 +44,7 @@ already-open development shell after changing `flake.nix`.
 Expected negative-test application error logs are distinct from QML engine
 warnings and remain allowed.
 
-## Current pruning inventory — 2026-09-27
+## Latest pruning checkpoint — 2026-09-27
 
 Baseline: clean `2961774`. Nearest-integer 67% target: **298 → 200** units
 (**32.89% removed; 67.11% retained**). Sibling repositories are not pruned.

@@ -5,17 +5,17 @@ ActionControl {
 
     property bool checked: false
     property color checkedColor: Theme.accent
-    property color uncheckedColor: Theme.border
+    property color uncheckedColor: Theme.input
 
     signal toggled(bool checked)
 
-    implicitWidth: 56
+    implicitWidth: 64
     implicitHeight: Theme.controlHeight
-    radius: Theme.controlRadius
+    radius: Math.min(width, height) / 2
     color: area.pressed ? Theme.pressed : (area.containsMouse ? Theme.hover : "transparent")
     border.color: activeFocus ? Theme.strongBorder : "transparent"
     border.width: 1
-    opacity: enabled ? 1.0 : Theme.disabledOpacity
+    opacity: enabled && interactive ? 1.0 : Theme.disabledOpacity
     accessibleName: checked ? qsTr("Turn off") : qsTr("Turn on")
     Accessible.role: Accessible.CheckBox
     Accessible.checked: checked
@@ -23,12 +23,11 @@ ActionControl {
     onClicked: toggled(!checked)
 
     TogglePill {
-        readonly property real visualScale: Math.min(control.width / 56, control.height / Theme.controlHeight)
-
         anchors.centerIn: parent
-        width: Math.round(42 * visualScale)
-        height: Math.round(24 * visualScale)
+        width: Math.min(implicitWidth, control.width)
+        height: Math.min(implicitHeight, control.height, width * 32 / 52)
         checked: control.checked
+        pressed: control.enabled && control.interactive && (area.pressed || control.keyboardPressed)
         checkedColor: control.checkedColor
         uncheckedColor: control.uncheckedColor
     }
@@ -36,6 +35,7 @@ ActionControl {
     ControlPointerArea {
         id: area
         focusTarget: control
+        enabled: control.enabled && control.interactive
         onClicked: control.activate()
     }
 }

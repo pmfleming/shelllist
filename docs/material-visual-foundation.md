@@ -20,8 +20,8 @@ All role colors are opaque. Seed alpha does not make controls translucent.
 `tools/material-colors.mjs` is the authored adapter. The generated QML JavaScript
 bundle and upstream Apache-2.0 license are checked in so a normal source checkout
 requires no npm install or runtime dependency download. The Nix `materialColors`
-check rebuilds and compares both artifacts, then tests reference vectors and
-WCAG contrast for 150 seed/mode combinations. Generated upstream source adds
+check rebuilds and compares both artifacts, then tests WCAG contrast for 150
+seed/mode combinations. Native Qt tests retain reference colors. Generated upstream source adds
 code volume; it is not hand-maintained application logic.
 
 Qt compatibility is tested with the actual QML engine, not only Node. The
@@ -68,6 +68,53 @@ containers remain solid. Contrast tests include the composited shell over black
 and white backgrounds. This adds transparency, **not compositor blur**; live blur
 integration and visual validation remain separate work.
 
+## Expressive buttons and switches
+
+Shared `ActionButton` (including `FlatIconButton`) now rests as a capsule/circle
+and morphs to an **8px pressed corner**, bounded by the available size. This
+follows the small Expressive button's full/CornerSmall shape pairing. Existing
+42px desktop control height is retained rather than resizing every consumer to
+the 40px mobile button token. Width, height, hit regions and text never animate.
+The old unbounded button ripple is replaced by solid state color and shape
+feedback; other `StateLayer` consumers are unchanged.
+
+Both switch presentations share a **52×32** track, **16px off / 24px on** thumb
+and **28px pressed** thumb. Off uses a solid surface-container fill with a 2px
+outline; on uses primary with its paired foreground. Tone-specific rows retain
+matching foregrounds. Toggle rows now reserve a full 42px control height, and
+standalone switches have a 64px-wide hit region. Explicitly constrained switch
+sizes fit their parent; normal desktop/laptop layouts do not reduce these sizes.
+`SHELLLIST_RADIUS` continues to affect legacy fields/cards/surfaces, not these
+component-specific button/switch shapes.
+
+`ExpressiveMotion` is a small Qt-only numeric spring shared by radius, thumb
+position and thumb size. Qt parameters (spring 4.5, damping 0.8) are provisional
+control tuning, not a claim to implement Material's physics constants. New
+input retargets the running spring rather than queuing transitions. Pointer and
+keyboard press feedback share the same visual state; keyboard activation still
+occurs immediately on key-down, with no auto-repeat activation. Release, focus
+loss or becoming busy clears held-key decoration. Switch `checked` and
+accessibility state follow the authoritative value immediately; decoration does
+not acknowledge settings or dispatch operations.
+
+Focus rings are never animated between controls. The existing flat-button
+foreground/background bypass remains intact. Setting `Theme.noAnimations` to
+true immediately stops the new springs at their latest target, including a
+spring already running. In
+Qt 6.11.1, disabling `Behavior` alone does not stop an active spring, and spring
+duration is unbounded. The helper writes its owned scalar *after the Behavior
+itself becomes disabled*, avoiding binding-update ordering races; re-enabling
+motion does not replay old targets. Existing environment/default motion policy
+is unchanged; desktop reduced-motion integration remains open.
+
+Reference implementations checked for this slice:
+[Material small button tokens](https://github.com/androidx/androidx/blob/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ButtonSmallTokens.kt),
+[Material switch tokens](https://github.com/material-components/material-web/blob/main/tokens/versions/v0_192/_md-comp-switch.scss),
+and [Qt SpringAnimation](https://doc.qt.io/qt-6/qml-qtquick-springanimation.html).
+The installed Qt 6.11.1 types and corresponding Behavior/SpringAnimation
+implementation were checked as well. This is an incremental desktop adaptation,
+not full Material conformance or completed control-system migration.
+
 ## Development gallery
 
 ```sh
@@ -76,7 +123,9 @@ python3 ../daemon-framework/tools/local-build.py run --attr materialGallery .
 
 The separate gallery uses the shared production controls. It shows light/dark
 swatches for the desktop, purple and teal seeds; real controls with keyboard
-focus; and **Roboto Flex versus Noto Sans** samples. Its package supplies these
+focus, capsule button shapes and on/off/disabled Material switches; and
+**Roboto Flex versus Noto Sans** samples. Hold Space or the pointer on a button
+to inspect its press shape. Its package supplies these
 fonts, and the offscreen check verifies both are available. The gallery does not
 choose a production font or change system font configuration. Icon-family
 comparison is still pending; current Nerd Font glyphs are retained.
@@ -97,16 +146,27 @@ The capture mode uses a taller viewport and exits after saving. The Nix
 fonts, rejects warnings and errors, and exits without deploying or restarting
 anything.
 
-## Validation checkpoint
+## Validation checkpoints
 
-Strict lint, **210 Qt passes** (including lifecycle hooks), the generated-color
+The original palette/gallery slice passed strict lint, **210 Qt passes**
+(including lifecycle hooks), the generated-color
 reproducibility/contrast check, both offscreen gallery modes, shared-UI smoke
 and the full sibling-aware `local-build.py check . --keep-going
---print-build-logs` gate pass. Offscreen light/dark captures were inspected;
+--print-build-logs` gate. Offscreen light/dark captures were inspected;
 local samples are `/tmp/shelllist-material-{light,dark}.png`. No live deployment,
 compositor blur, hardware latency or screen-reader acceptance was performed.
 
-Typeface/icon selection, shape and spring tuning, compositor blur and
-real-desktop visual acceptance remain open. Contrast calculations are evidence
-about color pairs and compositing, not a substitute for checking every rendered
+The subsequent button/switch slice passes strict lint, **110 Qt behavioral
+cases / 178 passes including hooks**, runtime smoke and the full sibling-aware
+gate. Two new shared-boundary tests cover immediate activation/focus through
+press/reversal/busy transitions and stopping running springs when motion is
+disabled. The native domain recovery tests remain intact. Light/dark offscreen
+captures were inspected at `/tmp/shelllist-expressive-{light,dark}.png`; detailed
+logs are `/tmp/shelllist-expressive-controls-tests.log` and
+`/tmp/shelllist-expressive-controls-full-check.log`.
+
+Typeface/icon selection, broader shape/motion migration and final spring tuning,
+compositor blur and real-desktop visual acceptance remain open. Contrast
+calculations are evidence about color pairs and compositing, not a substitute for
+checking every rendered
 text treatment, disabled state or live blur.

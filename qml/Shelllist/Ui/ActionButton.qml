@@ -18,11 +18,11 @@ ActionControl {
     property color pressedBackgroundColor: Theme.mix(backgroundColor, labelColor, 0.14)
     property color labelColor: tone === "accent" ? Theme.accentText : (tone === "active" ? Theme.activeText : (tone === "danger" ? Theme.dangerText : (tone === "warning" ? Theme.warningText : Theme.text)))
     readonly property bool hovered: area.containsMouse
-    readonly property bool pressed: area.pressed
+    readonly property bool pressed: enabled && interactive && (area.pressed || keyboardPressed)
     readonly property string interactionState: !enabled || !interactive ? "disabled" : (pressed ? "pressed" : (hovered || activeFocus ? "highlighted" : "flat"))
 
     implicitHeight: Theme.controlHeight
-    radius: Theme.controlRadius
+    radius: Math.max(0, Math.min(Math.min(width, height) / 2, shape.value))
     readonly property color stateBackgroundColor: interactionState === "pressed" ? pressedBackgroundColor : (interactionState === "highlighted" ? hoverBackgroundColor : backgroundColor)
     color: stateBackgroundColor
     border.color: borderColor
@@ -39,13 +39,17 @@ ActionControl {
         labelColor: control.labelColor
     }
 
-    StateLayer {
+    ExpressiveMotion {
+        id: shape
+        target: control.pressed ? Math.min(Theme.pressedCornerRadius, Math.min(control.width, control.height) / 2) : Math.min(control.width, control.height) / 2
+    }
+
+    // Shape and solid state color replace the unbounded decorative ripple.
+    // Neither changes the pointer target or delays activation.
+    ControlPointerArea {
         id: area
         focusTarget: control
-        interactive: control.interactive
-        radius: control.radius
-        stateColor: control.labelColor
-        showStateBackground: false
+        enabled: control.enabled && control.interactive
         onClicked: control.activate()
     }
 }

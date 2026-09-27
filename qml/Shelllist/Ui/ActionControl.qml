@@ -7,6 +7,7 @@ Rectangle {
     property color focusRingColor: Theme.text
     property string accessibleName: ""
     property bool interactive: true
+    property bool keyboardPressed: false
     signal clicked
 
     color: "transparent"
@@ -27,11 +28,24 @@ Rectangle {
         ringColor: control.focusRingColor
     }
 
-    Keys.onPressed: function (event) {
+    onActiveFocusChanged: if (!activeFocus) keyboardPressed = false
+    onEnabledChanged: if (!enabled) keyboardPressed = false
+    onInteractiveChanged: if (!interactive) keyboardPressed = false
+
+    Keys.onReleased: function (event) {
         if (![Qt.Key_Return, Qt.Key_Enter, Qt.Key_Space].includes(event.key))
             return;
         if (!event.isAutoRepeat)
+            keyboardPressed = false;
+        event.accepted = true;
+    }
+    Keys.onPressed: function (event) {
+        if (![Qt.Key_Return, Qt.Key_Enter, Qt.Key_Space].includes(event.key))
+            return;
+        if (!event.isAutoRepeat) {
+            keyboardPressed = enabled && interactive;
             activate();
+        }
         event.accepted = true;
     }
 }

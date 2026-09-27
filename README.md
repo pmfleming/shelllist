@@ -255,13 +255,15 @@ The desktop accent seeds a Material Tonal Spot scheme through Google's Material
 Color Utilities. Light/dark follows Qt's desktop color-scheme setting, falling
 back to the system window palette when the platform supplies no preference.
 Controls are opaque; the chooser shell uses a provisional 94% opacity.
-Compositor blur and final Expressive shape/motion tuning are still pending.
+Shared buttons now morph from capsules to rounded pressed shapes; switches use
+Material tracks/thumbs with interruptible springs. Focus and activation remain
+immediate. Compositor blur and broader Expressive styling are still pending.
 
 Supported environment inputs:
 
 ```text
 SHELLLIST_ACCENT         # Optional seed override, not an exact primary-role color
-SHELLLIST_RADIUS
+SHELLLIST_RADIUS         # Legacy surfaces/fields; not expressive button/switch shapes
 SHELLLIST_FONT           SHELLLIST_ICON_FONT    SHELLLIST_NO_ANIMATIONS
 ```
 

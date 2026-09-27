@@ -37,6 +37,7 @@ internal DropDownOptionDelegate DropDownOptionDelegate.qml
 Elevation 1.0 Elevation.qml
 FieldLabel 1.0 FieldLabel.qml
 FlatIconButton 1.0 FlatIconButton.qml
+ExpressiveMotion 1.0 ExpressiveMotion.qml
 FocusRing 1.0 FocusRing.qml
 singleton Format 1.0 Format.qml
 GlyphLabel 1.0 GlyphLabel.qml
