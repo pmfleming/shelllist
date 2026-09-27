@@ -62,10 +62,6 @@ Io.DaemonBackend {
         });
     }
 
-    function cancelRequest(requestId: string): bool {
-        return cancel(requestId, "cancel-" + requestId);
-    }
-
     onResponseReceived: function (id, envelope, transportError) {
         finish(id, envelope, transportError);
     }

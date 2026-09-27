@@ -102,7 +102,13 @@ Item {
         }
     }
 
-    function cancel(requestId: string, cancellationId: string): bool {
+    // Missing typed string arguments become "undefined" in QML. Keep the
+    // default-ID entry point separate from callers supplying an explicit ID.
+    function cancel(requestId: string): bool {
+        return cancelWithId(requestId, "cancel-" + requestId);
+    }
+
+    function cancelWithId(requestId: string, cancellationId: string): bool {
         if (!requestId)
             return false;
         try {

@@ -27,6 +27,7 @@ TestCase {
             property string lastId: ""
             property var lastRoute: null
             property var calls: []
+            property var cancellation: null
             signal response(string id, var envelope, string transportError, var route)
             signal eventReceived(var event, var route)
             signal transportFailed(string message)
@@ -43,6 +44,11 @@ TestCase {
             function subscribeExtra(id, streams, route) {
             }
             function cancel(id, requestId, route) {
+                cancellation = {
+                    id: id,
+                    requestId: requestId,
+                    route: route
+                };
             }
             function release(id, route) {
             }
@@ -104,6 +110,21 @@ TestCase {
         session.client.ready = false;
         session.client.ready = true;
         compare(session.client.calls.length, 2, "reconnect still refreshes the attached backend");
+    }
+
+    function test_sharedCancellationPreservesRequestAndConsumerIdentity() {
+        const backend = createTemporaryObject(backendFactory, testCase);
+        const client = Io.DaemonSessions.sessions[consumer.daemonName].client;
+        client.cancellation = null;
+        verify(!backend.cancel(""));
+        compare(client.cancellation, null);
+        verify(backend.cancel("history-7"));
+        compare(client.cancellation.requestId, "history-7");
+        compare(client.cancellation.route.consumerId, backend.sharedConsumerId);
+        compare(client.cancellation.route.localId, "cancel-history-7");
+        verify(backend.cancelWithId("operation-9", "cancel-operation-9"));
+        compare(client.cancellation.requestId, "operation-9");
+        compare(client.cancellation.route.localId, "cancel-operation-9");
     }
 
     function test_paginatedRequestChurn() {

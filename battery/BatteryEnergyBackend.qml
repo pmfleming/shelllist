@@ -2,7 +2,7 @@ import Shelllist.Io as Io
 import Shelllist.Launcher as Launcher
 
 Io.DaemonBackend {
-    required property var controller
+    required property BatteryController controller
     daemonName: "app-daemon"
     expectedProtocol: Launcher.AppApi.protocol
     expectedVersion: Launcher.AppApi.version

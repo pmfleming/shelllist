@@ -3,7 +3,7 @@ import Shelllist.Io as Io
 import "ActivityApi.js" as ActivityApi
 
 Io.DaemonBackend {
-    required property var controller
+    required property ActivityController controller
     daemonName: "bar-daemon"
     expectedProtocol: ActivityApi.protocol
     expectedVersion: ActivityApi.version

@@ -191,7 +191,7 @@ Ui.ProviderChooserController {
             const previousRequestId = activeHistoryRequestId;
             clearResourceHistory();
             if (previousRequestId)
-                backend.cancelRequest(previousRequestId);
+                backend.cancel(previousRequestId);
         }
         historyTargetId = targetId;
         historyRequestRange = historyRange;
@@ -240,7 +240,7 @@ Ui.ProviderChooserController {
         pendingHistoryCursor = "";
     }
     function cancelQuery(requestId: string): void {
-        backend.cancelRequest(requestId);
+        backend.cancel(requestId);
     }
     function applyRevision(id: string, revision: var): void {
         if (id !== revisionRequestId)
@@ -254,7 +254,7 @@ Ui.ProviderChooserController {
     }
     function applyApplications(id: string, page: var): void {
         catalogRevision = Number(page.revision);
-        applyProviderQuery(id, applicationProvider.resultsForApplications(page.applications || []));
+        applyProviderQuery(id, applicationProvider.resultsFor(page.applications));
         if (detailsOpen && detailsTab === "resources" && selectedResult && selectedResult.id !== historyTargetId)
             requestResourceHistory();
         status = Presentation.pageStatus(page);
@@ -302,7 +302,7 @@ Ui.ProviderChooserController {
         const next = filteredResults.map(function (result) {
             if (result.id !== targetId)
                 return result;
-            return applicationProvider.resultForApplication(Presentation.withoutClosedInstances(result.payload, action, windowId));
+            return applicationProvider.resultFor(Presentation.withoutClosedInstances(result.payload, action, windowId));
         });
         replaceProviderResults(next, false);
     }

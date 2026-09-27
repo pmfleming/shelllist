@@ -104,7 +104,7 @@ Ui.ProviderChooserController {
         return BluetoothFlow.devicesForView(allDevices, searchScope, management);
     }
     function rebuildResults(resetSelection) {
-        replaceProviderResults(bluetoothProvider.resultsForDevices(devicesForView()), !!resetSelection);
+        replaceProviderResults(bluetoothProvider.resultsFor(devicesForView()), !!resetSelection);
     }
     function activateUi(workspaceId) {
         activateUiState(workspaceId);
@@ -141,10 +141,6 @@ Ui.ProviderChooserController {
         nameEditState.transportFailed(message);
         adapterEditState.transportFailed(message);
         invalidateBluetooth(message);
-        scanRequested = false;
-        operationState.reset();
-        activeScan = null;
-        status = message;
     }
     function refresh() {
         status = scanning ? "Scanning for Bluetooth devices…" : "Refreshing Bluetooth devices…";
@@ -176,12 +172,7 @@ Ui.ProviderChooserController {
     function applyAudioSnapshot(devices) {
         const presentation = Object.assign({}, audioPresentationByDevice);
         for (const audio of devices || []) {
-            const previous = presentation[audio.device_key] || ({});
-            presentation[audio.device_key] = {
-                device_key: audio.device_key,
-                active_profile_key: audio.active_profile_key || previous.active_profile_key || "",
-                profiles: audio.profiles && audio.profiles.length > 0 ? audio.profiles : (previous.profiles || [])
-            };
+            presentation[audio.device_key] = BluetoothFlow.audioPresentation(audio, presentation[audio.device_key]);
         }
         audioPresentationByDevice = presentation;
         audioDevices = devices || [];

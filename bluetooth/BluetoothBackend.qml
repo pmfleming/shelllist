@@ -201,7 +201,7 @@ Io.DaemonBackend {
             console.warn("shelllist bluetooth " + kind + " cancellation rejected request_id=" + (requestId || "") + " reason=not-active");
             return false;
         }
-        const accepted = cancel(requestId, "cancel-" + kind + "-" + requestId);
+        const accepted = cancelWithId(requestId, "cancel-" + kind + "-" + requestId);
         if (accepted)
             console.info("shelllist bluetooth " + kind + " cancellation requested request_id=" + requestId);
         return accepted;
@@ -247,7 +247,7 @@ Io.DaemonBackend {
     function setScanning(enabled, adapterKey) {
         if (!enabled && controller.activeScan && controller.activeScan.request_id) {
             const requestId = controller.activeScan.request_id;
-            const accepted = cancel(requestId, "cancel-scan-" + requestId);
+            const accepted = cancelWithId(requestId, "cancel-scan-" + requestId);
             if (accepted)
                 console.info("shelllist bluetooth scan cancellation requested request_id=" + requestId);
             return accepted;

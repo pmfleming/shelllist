@@ -24,10 +24,8 @@ Core.Provider {
         const source = Model.mirrorSource(output, controller.outputs);
         return source ? qsTr("Mirrors %1").arg(source) : qsTr("Extended");
     }
-    function resultForOutput(output: var): var {
-        return Core.Model.result({
-            providerId: providerId,
-            providerPriority: priority,
+    function resultFor(output: var): var {
+        return makeResult({
             id: output.name,
             title: Model.title(output),
             subtitle: [output.name, stateLabel(output), Model.modeSummary(output)].filter(Boolean).join(" · "),
@@ -45,9 +43,6 @@ Core.Provider {
             },
             payload: output
         });
-    }
-    function resultsForOutputs(outputs: var): var {
-        return outputs.map(resultForOutput);
     }
     function liveOutput(result: var): var {
         if (!result || !result.payload)

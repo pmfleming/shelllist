@@ -189,7 +189,7 @@ Ui.ProviderChooserController {
     function cancelQuery(requestId) {
         if (requestId === historyQueryId) {
             if (activeHistoryQueryId.length)
-                backend.cancelRequest(activeHistoryQueryId);
+                backend.cancel(activeHistoryQueryId);
             activeHistoryQueryId = "";
             historyCursor = "";
         }

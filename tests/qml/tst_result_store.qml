@@ -42,11 +42,44 @@ TestCase {
         compare(store.visibleModel.get(0).resultData.id, "second");
     }
 
+    function test_providerProjectionOwnsIdentityWithoutMutatingPayload() {
+        const payload = {
+            id: "one",
+            title: "One",
+            providerId: "wrong",
+            providerPriority: 999
+        };
+        const normalized = testProvider.makeResult(payload);
+        compare(normalized.providerId, "test");
+        compare(normalized.providerPriority, 7);
+        compare(payload.providerId, "wrong");
+        compare(payload.providerPriority, 999);
+        const projected = testProvider.resultsFor([payload,
+            {
+                id: "two",
+                title: "Two"
+            }
+        ]);
+        compare(projected.length, 2);
+        compare(projected[0].key, "test::one");
+        compare(projected[0].title, "Projected One");
+        compare(projected[1].key, "test::two");
+        compare(testProvider.resultsFor(null).length, 0);
+    }
+
     Core.ProviderRegistry {
         id: providerRegistry
         Core.Provider {
+            id: testProvider
             providerId: "test"
             displayName: "Test"
+            priority: 7
+            function resultFor(payload: var): var {
+                return makeResult({
+                    id: payload.id,
+                    title: "Projected " + payload.title
+                });
+            }
         }
     }
     Core.ResultStore {

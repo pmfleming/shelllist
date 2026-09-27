@@ -284,6 +284,22 @@ function deviceActionRequest(actionId: string, device: Device, trustAfterPair: b
         || (actionId === "multipoint" ? multipointActionRequest(device) : null);
 }
 
+interface AudioPresentation {
+    device_key: string;
+    active_profile_key?: string;
+    profiles?: unknown[];
+}
+
+// Keep presentation while a headset reconnects; live routes stay in the snapshot.
+function audioPresentation(audio: AudioPresentation, previous: Maybe<Partial<AudioPresentation>>): AudioPresentation {
+    const retained = previous || ({});
+    return {
+        device_key: audio.device_key,
+        active_profile_key: audio.active_profile_key || retained.active_profile_key || "",
+        profiles: audio.profiles && audio.profiles.length > 0 ? audio.profiles : (retained.profiles || [])
+    };
+}
+
 function audioSwitchStatus(event: Maybe<{ reason?: string; target?: string }>): string {
     if (!event) return "No switch reported";
     const activity = event.reason === "call" ? "Call" : (event.reason === "media" ? "Media" : "Audio");

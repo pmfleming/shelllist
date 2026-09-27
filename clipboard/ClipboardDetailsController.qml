@@ -278,9 +278,9 @@ Item {
     }
     function cancelPreviewRequests(): void {
         if (requestId.length > 0)
-            daemonBackend.cancelRequest(requestId);
+            daemonBackend.cancel(requestId);
         if (thumbnailRequestId.length > 0)
-            daemonBackend.cancelRequest(thumbnailRequestId);
+            daemonBackend.cancel(thumbnailRequestId);
         requestId = "";
         thumbnailRequestId = "";
     }

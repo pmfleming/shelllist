@@ -3,8 +3,6 @@ import Shelllist.Core as Core
 import "WifiPresentation.js" as Presentation
 
 Core.Provider {
-    id: wifiProvider
-
     required property WifiController controller
 
     providerId: "wifi"
@@ -135,12 +133,10 @@ Core.Provider {
         return controller.isActive(ap) ? "disconnect" : "connect";
     }
 
-    function resultForNetwork(network) {
+    function resultFor(network: var): var {
         const security = Presentation.securityLabel(network.security);
         const strength = Math.max(0, Math.min(100, Number(network.strength) || 0));
-        return Core.Model.result({
-            providerId: providerId,
-            providerPriority: priority,
+        return makeResult({
             id: network.key || network.bssid || Presentation.networkName(network),
             title: Presentation.networkName(network),
             subtitle: strength + "% · " + security,
@@ -160,12 +156,6 @@ Core.Provider {
                 busy: controller.connection.isConnecting(network)
             },
             payload: network
-        });
-    }
-
-    function resultsForNetworks(networks) {
-        return (networks || []).map(function (network) {
-            return wifiProvider.resultForNetwork(network);
         });
     }
 

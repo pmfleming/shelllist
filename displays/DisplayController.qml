@@ -88,7 +88,7 @@ Ui.ProviderChooserController {
         displayPolicyState = Object.assign({}, value || ({
                 available: false
             }));
-        replaceProviderResults(displayProvider.resultsForOutputs(outputs), false);
+        replaceProviderResults(displayProvider.resultsFor(outputs), false);
         observedTrialId = trial ? trial.id : "";
         if (!trial && pendingAction !== "preview")
             revertOnArrival = false;

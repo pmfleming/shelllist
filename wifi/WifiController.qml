@@ -384,7 +384,7 @@ ProviderChooserController {
         visibleNetworks = networks || [];
         if (snapshot)
             networkSnapshot = snapshot;
-        replaceProviderResults(wifiProvider.resultsForNetworks(visibleNetworks), resetSelection);
+        replaceProviderResults(wifiProvider.resultsFor(visibleNetworks), resetSelection);
     }
 
     function openHiddenNetworkPrompt() {

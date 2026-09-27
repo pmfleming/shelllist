@@ -2,8 +2,6 @@ import Shelllist.Core as Core
 import "ApplicationLifecycle.js" as Lifecycle
 
 Core.Provider {
-    id: provider
-
     required property ApplicationController controller
 
     providerId: "applications"
@@ -157,10 +155,8 @@ Core.Provider {
         return application.running ? ["running"] : [];
     }
 
-    function resultForApplication(application: var): var {
-        return Core.Model.result({
-            providerId: providerId,
-            providerPriority: priority,
+    function resultFor(application: var): var {
+        return makeResult({
             id: application.id,
             title: application.name,
             subtitle: subtitleFor(application),
@@ -182,11 +178,6 @@ Core.Provider {
         });
     }
 
-    function resultsForApplications(applications: var): var {
-        return (applications || []).map(function (application) {
-            return provider.resultForApplication(application);
-        });
-    }
     function query(request: var): void {
         controller.requestApplications(request.id, request.text, request.generation, request.limit);
     }

@@ -4,8 +4,6 @@ import "BluetoothFlow.js" as BluetoothFlow
 import "BluetoothGlyphs.js" as BluetoothGlyphs
 
 Core.Provider {
-    id: provider
-
     required property BluetoothController controller
 
     providerId: "bluetooth"
@@ -178,12 +176,10 @@ Core.Provider {
         return BluetoothFlow.deviceState(device) + battery;
     }
 
-    function resultForDevice(device: var): var {
+    function resultFor(device: var): var {
         const operation = controller.operationForDevice(device.key);
         const operationError = controller.operationErrorForDevice(device.key);
-        return Core.Model.result({
-            providerId: providerId,
-            providerPriority: priority,
+        return makeResult({
             id: device.key,
             title: BluetoothFlow.deviceDisplayName(device, controller.allDevices, controller.adapters),
             subtitle: deviceSubtitle(device, operation, operationError),
@@ -203,11 +199,6 @@ Core.Provider {
                 error: !!operationError
             },
             payload: device
-        });
-    }
-    function resultsForDevices(devices: var): var {
-        return (devices || []).map(function (device) {
-            return provider.resultForDevice(device);
         });
     }
     function actionsFor(result: var): var {

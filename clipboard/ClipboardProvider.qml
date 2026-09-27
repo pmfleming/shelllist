@@ -43,9 +43,7 @@ Core.Provider {
     function resultForEntry(entry, historyScore) {
         const kind = entry.kind || "binary";
         const preview = entry.preview || labelFor(kind) + " clipboard entry";
-        return Core.Model.result({
-            providerId: providerId,
-            providerPriority: priority,
+        return makeResult({
             id: entry.id,
             title: preview,
             subtitle: labelFor(kind) + " · " + (entry.mime || "unknown") + " · " + entry.byte_size + " bytes",

@@ -292,7 +292,7 @@ DaemonTestCase {
     function test_providerResultsAndLiveActions() {
         const c = makePanel().controller;
         const provider = c.displayProvider;
-        const results = provider.resultsForOutputs(c.outputs);
+        const results = provider.resultsFor(c.outputs);
         compare(results.length, 2);
         compare(results[0].key, "displays::eDP-1");
         verify(results[0].subtitle.indexOf("Off · External display preferred") >= 0);

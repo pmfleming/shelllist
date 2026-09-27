@@ -12,9 +12,7 @@ var methods = {
     audioSetMuted: Protocol.methods["audio.setMuted"],
     audioSetInputMuted: Protocol.methods["audio.setInputMuted"],
     brightnessAdjust: Protocol.methods["brightness.adjust"],
-    brightnessSet: Protocol.methods["brightness.set"],
     powerProfileSet: Protocol.methods["powerProfile.set"],
-    notificationsTogglePanel: Protocol.methods["notifications.togglePanel"],
     notificationsToggleDnd: Protocol.methods["notifications.toggleDnd"],
     notificationsDismiss: Protocol.methods["notifications.dismiss"],
     notificationsClearGroup: Protocol.methods["notifications.clearGroup"],
@@ -45,20 +43,9 @@ var subscribedStreams = Object.keys(streams).map(function (name) {
 });
 
 var propertyByStream = {};
-propertyByStream[streams.activity] = "activity";
-propertyByStream[streams.workspaces] = "workspaces";
-propertyByStream[streams.media] = "media";
-propertyByStream[streams.audio] = "audio";
-propertyByStream[streams.brightness] = "brightness";
-propertyByStream[streams.displays] = "displays";
-propertyByStream[streams.battery] = "battery";
-propertyByStream[streams.powerProfile] = "powerProfile";
-propertyByStream[streams.powerSuspend] = "powerSuspend";
-propertyByStream[streams.osdHardware] = "osdHardware";
-propertyByStream[streams.notifications] = "notifications";
-propertyByStream[streams.notificationActive] = "notificationActive";
-propertyByStream[streams.updates] = "updates";
-propertyByStream[streams.timezone] = "timezone";
+Object.keys(streams).forEach(function (property) {
+    propertyByStream[streams[property]] = property;
+});
 
 var propertyByPayload = {
     activity: "activity",

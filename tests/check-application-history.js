@@ -24,7 +24,7 @@ function controller() {
         backend: {
             nextRequestId: () => "history-" + (++sequence),
             history: (...args) => { calls.push(args); return true; },
-            cancelRequest() {}
+            cancel() {}
         }
     };
     state.Date = { now: () => state.now };

@@ -161,11 +161,8 @@ Io.DaemonBackend {
             response: "WIPE"
         });
     }
-    function cancelRequest(requestId: string): bool {
-        return cancel(requestId, "cancel-" + requestId);
-    }
     function cancelOperation(operationId: string): bool {
-        return cancel(operationId, "cancel-operation-" + operationId);
+        return cancelWithId(operationId, "cancel-operation-" + operationId);
     }
 
     onResponseReceived: function (id, envelope, transportError) {

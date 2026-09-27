@@ -195,6 +195,15 @@ function deviceActionRequest(actionId, device, trustAfterPair) {
         || toggleActionRequest(actionId, device)
         || (actionId === "multipoint" ? multipointActionRequest(device) : null);
 }
+// Keep presentation while a headset reconnects; live routes stay in the snapshot.
+function audioPresentation(audio, previous) {
+    const retained = previous || ({});
+    return {
+        device_key: audio.device_key,
+        active_profile_key: audio.active_profile_key || retained.active_profile_key || "",
+        profiles: audio.profiles && audio.profiles.length > 0 ? audio.profiles : (retained.profiles || [])
+    };
+}
 function audioSwitchStatus(event) {
     if (!event)
         return "No switch reported";

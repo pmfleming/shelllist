@@ -2,6 +2,8 @@ import QtQuick
 import "Model.js" as Model
 
 Item {
+    id: root
+
     required property string providerId
     required property string displayName
     property string icon: ""
@@ -24,6 +26,22 @@ Item {
             enabled: providerEnabled,
             prefixes: prefixes,
             capabilities: capabilities
+        });
+    }
+
+    // Identity belongs to the provider; projections own only domain fields.
+    function makeResult(fields: var): var {
+        return Model.result(Object.assign({}, fields, {
+            providerId: providerId,
+            providerPriority: priority
+        }));
+    }
+    function resultFor(payload: var): var {
+        return makeResult(payload);
+    }
+    function resultsFor(values: var): var {
+        return (values || []).map(function (value) {
+            return root.resultFor(value);
         });
     }
 

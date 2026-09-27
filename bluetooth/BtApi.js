@@ -59,7 +59,6 @@ function lifecycleState(item, activeItems, finishedItems, state, terminalStates)
 }
 
 var methods = {
-    protocolDescribe: Protocol.methods["bluetooth.protocol.describe"],
     snapshot: Protocol.methods["bluetooth.snapshot"],
     setPowered: Protocol.methods["bluetooth.setPowered"],
     scan: Protocol.methods["bluetooth.scan"],

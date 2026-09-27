@@ -3,7 +3,7 @@ import Shelllist.Io as Io
 import "BatteryApi.js" as BatteryApi
 
 Io.DaemonBackend {
-    required property var controller
+    required property BatteryController controller
     daemonName: "bar-daemon"
     expectedProtocol: BatteryApi.protocol
     expectedVersion: BatteryApi.version
