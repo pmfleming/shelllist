@@ -105,6 +105,18 @@ Ui.ChooserController {
             label: "Suspend"
         }
     ]
+    viewMemory: Ui.ChooserMemory {
+        controller: controller
+        key: "battery::settings"
+        tab: controller.viewTab
+        initialTab: controller.viewTab
+        tabs: controller.viewTabs.map(item => item.value)
+        presentationOpen: true
+        onRestoreRequested: function (open, tab) { controller.viewTab = tab; }
+    }
+    function cycleDetailsTab() {
+        cycleViewTab();
+    }
     property string viewTab: "overview"
     property int selectedDeviceIndex: 0
     property bool draftProtectionEnabled: false

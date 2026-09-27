@@ -9,6 +9,8 @@ Ui.DetailFlickable {
     id: page
     required property DisplayController controller
     objectName: "displayInformation"
+    viewMemory: controller.viewMemory
+    memoryTab: "information"
     readonly property var output: controller.selectedOutput || ({})
     readonly property var geometry: Model.rect(output)
     readonly property var statusEntries: availableEntries([

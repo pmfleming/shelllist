@@ -105,7 +105,8 @@ RowLayout {
         onResultContextChanged: layout.focusList()
         onExitRequested: {
             layout.controller.closeDetails();
-            layout.focusList();
+            if (!layout.controller.detailsOpen && layout.navigationAllowed)
+                layout.focusList();
         }
         visible: layout.controller.detailsRendered
         enabled: layout.controller.detailsOpen

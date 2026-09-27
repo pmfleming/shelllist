@@ -18,7 +18,6 @@ Ui.ChooserListPane {
     busy: controller.actionInFlight
     enabled: !controller.navigationBlocked
     refreshEnabled: !controller.actionInFlight && !controller.trial
-    focusOnCompleted: controller.uiActive
     status: controller.statusMessage || qsTr("%1 active · %2 connected").arg(controller.activeCount).arg(controller.outputs.length)
     iconActionEnabled: controller.activeCount > 0
     iconAccessibleName: qsTr("Identify all enabled displays")

@@ -9,6 +9,8 @@ ProviderChooserSurface {
 
     required property WifiController controller
     chooserController: controller
+    keyboardWorkflow: true
+    sessionReady: !controller.advanced.loading
     navigationEnabled: !content.controller.promptActive
     refreshEnabled: content.controller.powered && navigationEnabled && !content.controller.actionInFlight
     refreshAutoRepeat: false

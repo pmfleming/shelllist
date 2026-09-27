@@ -5,8 +5,11 @@ import QtQuick
 Item {
     id: memory
     required property ChooserController controller
+    property bool presentationOpen: controller.detailsOpen
+    onPresentationOpenChanged: rememberPresentation()
     property string key: ""
     property string tab: ""
+    property string initialTab: ""
     property list<string> tabs: []
     property string activeKey: ""
     property string activeTab: ""
@@ -22,10 +25,10 @@ Item {
         return tabs.indexOf(value) >= 0 ? value : (tabs[0] || "");
     }
     function rememberPresentation(): void {
-        if (!current || !controller.uiActive || (!controller.detailsOpen && !records[key]))
+        if (!current || !controller.uiActive || (!presentationOpen && !records[key]))
             return;
         const record = records[key] || {pages: Object.create(null)};
-        record.open = controller.detailsOpen;
+        record.open = presentationOpen;
         record.tab = activeTab;
         records[key] = record;
     }
@@ -34,14 +37,14 @@ Item {
             return;
         const changed = activeKey !== key;
         const record = records[key];
-        const nextTab = validTab(changed ? (record ? record.tab : "") : tab);
+        const nextTab = validTab(changed ? (record ? record.tab : initialTab) : tab);
         if (!changed && nextTab === activeTab)
             return;
         contextChanging(changed);
         restoring = true;
         activeKey = key;
         activeTab = nextTab;
-        restoreRequested(changed ? !!record && record.open : controller.detailsOpen, nextTab);
+        restoreRequested(changed ? !!record && record.open : presentationOpen, nextTab);
         restoring = false;
         rememberPresentation();
         contextRestored(changed);
@@ -51,7 +54,7 @@ Item {
         return record && record.pages[pageTab] ? record.pages[pageTab] : ({});
     }
     function rememberPage(pageTab: string, values: var): void {
-        if (!current || !controller.uiActive || !controller.detailsOpen || pageTab !== activeTab || !records[activeKey])
+        if (!current || !controller.uiActive || !presentationOpen || pageTab !== activeTab || !records[activeKey])
             return;
         const pages = records[activeKey].pages;
         pages[pageTab] = Object.assign({}, pages[pageTab] || ({}), values);
@@ -68,8 +71,4 @@ Item {
         }
     }
     Component.onCompleted: Qt.callLater(synchronize)
-    Connections {
-        target: memory.controller
-        function onDetailsOpenChanged(): void { memory.rememberPresentation(); }
-    }
 }

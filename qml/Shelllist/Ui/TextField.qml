@@ -3,6 +3,7 @@ import QtQuick
 FieldFrame {
     id: field
 
+    property string focusKey: objectName
     property alias text: input.text
     property alias horizontalAlignment: input.horizontalAlignment
     property alias cursorPosition: input.cursorPosition

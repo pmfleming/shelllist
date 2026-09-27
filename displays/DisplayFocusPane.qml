@@ -9,6 +9,8 @@ Ui.DetailFlickable {
     id: page
     required property DisplayController controller
     objectName: "displayFocusPane"
+    viewMemory: controller.viewMemory
+    memoryTab: "focus"
     revealFocusedControl: true
     // Nested delegates and narrow layouts can change geometry after focus moves.
     onContentHeightChanged: Qt.callLater(revealFocus)

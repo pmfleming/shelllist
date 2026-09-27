@@ -1,8 +1,25 @@
 import QtQuick
+import Shelllist.Ui as Ui
 
 ActivityController {
     id: controller
 
+    viewMemory: Ui.ChooserMemory {
+        controller: controller
+        key: controller.selectedCity.id ? "time-weather::" + controller.selectedCity.id : ""
+        tab: controller.detailsTab
+        tabs: ["time", "weather"]
+        onRestoreRequested: function (open, tab) {
+            controller.detailsTab = tab;
+            controller.detailsOpen = open && controller.hasSelection;
+        }
+    }
+    function resultKeyAt(index: int): string {
+        return filteredCities[index] ? "time-weather::" + filteredCities[index].id : "";
+    }
+    function resultIndexForKey(key: string): int {
+        return filteredCities.findIndex(city => "time-weather::" + city.id === key);
+    }
     property string detailsTab: "time"
     property string filterText: ""
     property double currentTimeMs: 0
@@ -183,8 +200,6 @@ ActivityController {
 
     function deactivateUi(): void {
         deactivateUiState();
-        detailsOpen = false;
-        filterText = "";
         screenshotStatus = "";
     }
 

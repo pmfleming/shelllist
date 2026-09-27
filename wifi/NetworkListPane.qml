@@ -23,7 +23,6 @@ ChooserListPane {
     searchActionIcon: "󰐲"
     searchActionToolTip: "Scan a Wi-Fi QR code"
     searchActionEnabled: !controller.actionInFlight
-    focusOnCompleted: true
     filterText: controller.filterText
     status: controller.status
     listInset: Math.round(12 * densityScale)

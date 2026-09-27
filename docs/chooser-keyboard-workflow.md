@@ -1,9 +1,10 @@
 # Chooser keyboard workflow
 
 This is the first step-3 slice of the [Material Expressive plan](proposals/material-expressive.md).
-Applications and Bluetooth opt into the shared region/browse/edit boundary.
-Other chooser domains receive printable-result-to-search routing, but retain
-their existing detail traversal until explicitly migrated. Subsequent step-4
+Applications, Bluetooth, Wi-Fi, Clipboard, Displays, Time & Weather and Notifications
+opt into the shared region/browse/edit boundary. Notifications uses groups as
+results and exposes messages/replies in its explicit inspector. Battery and Activity
+use the single-panel adapter (Activity cycles its overview/details regions). Subsequent step-4
 slices supply [anchored geometry](chooser-geometry.md) and
 [session memory](chooser-session-memory.md): per-result presentation for
 Applications/Bluetooth devices and ordinary invocation focus for both surfaces.
@@ -19,7 +20,7 @@ Applications/Bluetooth devices and ordinary invocation focus for both surfaces.
   details. First-time selection is list-only; returning to an inspected result
   restores its remembered view without stealing focus. Right can then resume its
   remembered ordinary editor, while region Tab enters browse mode.
-- In Applications/Bluetooth, Tab cycles Search → Results → Details → Search,
+- In provider choosers, Tab cycles Search → Results → Details → Search,
   omitting closed details. Shift+Tab reverses. Region traversal preserves the
   result selection; it neither opens details nor visits header buttons.
 - In details, Up/Down browse visible shared controls without focusing their

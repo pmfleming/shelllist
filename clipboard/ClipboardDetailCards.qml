@@ -15,7 +15,8 @@ Ui.DetailFlickable {
     readonly property var imageFacts: detailState.value ? detailState.value.image : null
     readonly property bool directTextEdit: entry.kind === "text"
     readonly property string selectedTab: controller.detailsTab
-    onSelectedTabChanged: contentY = 0
+    viewMemory: controller.viewMemory
+    memoryTab: selectedTab
 
     Ui.DetailColumnCard {
         visible: cards.selectedTab === "data" && cards.detailState.editError.length > 0
@@ -64,14 +65,15 @@ Ui.DetailFlickable {
             sourceSize.height: height
             source: cards.detailState.thumbnail ? "file://" + cards.detailState.thumbnail.path : ""
         }
-        TextEdit {
+        Ui.TextEditor {
             objectName: "clipboardTextEditor"
+            editingAllowed: cards.directTextEdit && !cards.detailState.saveInFlight && !cards.detailState.editBeginPending
             visible: !cards.detailState.thumbnail && cards.detailState.value && cards.detailState.value.text !== null
             anchors.fill: parent
             text: cards.detailState.editing ? cards.detailState.editDraft : (cards.detailState.value ? (cards.detailState.value.text || "") : "")
             color: Ui.Theme.text
             selectionColor: Ui.Theme.selected
-            selectedTextColor: Ui.Theme.text
+            selectedTextColor: Ui.Theme.selectedText
             font.family: Ui.Theme.fontFamily
             font.pixelSize: Ui.Theme.fontSizeBody
             readOnly: !cards.detailState.editing || cards.detailState.saveInFlight || cards.detailState.editBeginPending

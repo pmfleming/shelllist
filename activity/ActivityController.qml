@@ -45,12 +45,22 @@ Ui.ChooserController {
     property bool rangeLoading: false
     property date loadedFrom
     property date loadedTo
+    property string todoDraft: ""
     property string detailSection: "schedule"
     property string weatherLocationId: ""
     property alias screenshotStatus: screenshotCapture.statusMessage
     property string screenshotStartMessage: "Capturing Activity panel…"
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
 
+    viewMemory: Ui.ChooserMemory {
+        controller: controller
+        key: "activity::overview"
+        tab: controller.detailSection
+        initialTab: controller.detailSection
+        tabs: ["schedule", "weather"]
+        presentationOpen: true
+        onRestoreRequested: function (open, tab) { controller.detailSection = tab; }
+    }
     detailsOpen: false
     navigationPrimaryEnabled: false
     readonly property ActivityBackend backend: activityBackend
@@ -223,8 +233,6 @@ Ui.ChooserController {
 
     function deactivateUi() {
         deactivateUiState();
-        if (!preserveNavigationOnDeactivate)
-            closeSection();
         preserveNavigationOnDeactivate = false;
         screenshotStatus = "";
     }

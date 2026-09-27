@@ -50,6 +50,10 @@ already-open development shell after changing `flake.nix`.
   Runtime smoke also exercises the shared visual bounds in a native offscreen
   floating window, including native frame delivery through public `Window.window`;
   live layer placement and input-mask acceptance are separate.
+- `tst_domain_workflows.qml` covers the panel adapter, native multiline arrows and
+  layered Escape, value-free editor selection restoration, and ordinary Activity
+  typing without the former letter shortcuts. Notifications' live-reply test now
+  explicitly opens its inspector before verifying stable delegates and drafts.
 - `tst_chooser_memory.qml` covers stable per-result/tab scroll and editor memory,
   focus-safe asynchronous restoration, explicit close, immediate row toggles,
   reorder/removal/reconnect, disabled/missing/password targets and invalid tabs.

@@ -28,11 +28,16 @@ FocusScope {
     signal exitRequested
     signal resultContextChanged
 
+    function targetKey(item: Item): string {
+        const field = item as TextField;
+        return field ? (field.password ? "" : field.focusKey) : item ? item.objectName : "";
+    }
     function locationState(): var {
         const field = currentTarget as TextField;
-        const key = currentTarget && !(field && field.password) ? currentTarget.objectName : "";
+        const editor = currentTarget as TextEditor;
+        const key = targetKey(currentTarget);
         return {target: key, editing: key.length > 0 && editable(currentTarget) && editorTarget === currentTarget,
-            selection: field && key ? field.selectionState() : null};
+            selection: field && key ? field.selectionState() : editor ? editor.selectionState() : null};
     }
     function rememberLocation(): void {
         if (applyingMemory || pendingMemory || !currentTarget)
@@ -43,6 +48,10 @@ FocusScope {
     }
     Connections {
         target: navigation.editorTarget as TextField
+        function onSelectionChanged(): void { navigation.rememberLocation(); }
+    }
+    Connections {
+        target: navigation.editorTarget as TextEditor
         function onSelectionChanged(): void { navigation.rememberLocation(); }
     }
     function cancelSessionRestore(): void {
@@ -64,7 +73,7 @@ FocusScope {
         if (!pendingMemory || (!sessionLocation && (!viewMemory || !viewMemory.current)))
             return;
         const saved = sessionLocation || viewMemory.pageState(viewMemory.activeTab);
-        const matches = targets.filter(item => item.objectName && item.objectName === saved.target && !(item instanceof TextField && item.password));
+        const matches = targets.filter(item => targetKey(item) && targetKey(item) === saved.target);
         applyingMemory = true;
         editorTarget = null;
         selectContent();
@@ -80,6 +89,9 @@ FocusScope {
             const field = editorTarget as TextField;
             if (field && field.inputActiveFocus)
                 field.restoreSelection(saved.selection);
+            const editor = editorTarget as TextEditor;
+            if (editor && editor.activeFocus)
+                editor.restoreSelection(saved.selection);
             if (sessionLocation)
                 revealTarget();
         }
@@ -109,7 +121,7 @@ FocusScope {
     }
     onCurrentTargetChanged: if (activeFocus)
         rememberLocation()
-    onContentItemChanged: if (viewMemory && viewMemory.enabled) {
+    onContentItemChanged: if (viewMemory && viewMemory.enabled && !focusedTarget) {
         pendingMemory = true;
         Qt.callLater(restoreLocation);
     }
@@ -162,7 +174,7 @@ FocusScope {
         return null;
     }
     function editable(item: Item): bool {
-        return item instanceof TextField || item instanceof DropDownList || item instanceof SegmentedControl || item instanceof ValueSlider || item instanceof LabeledValueSlider || item instanceof ToggleRow || item instanceof ToggleSwitch;
+        return item instanceof TextField || item instanceof TextEditor || item instanceof DropDownList || item instanceof SegmentedControl || item instanceof ValueSlider || item instanceof LabeledValueSlider || item instanceof ToggleRow || item instanceof ToggleSwitch;
     }
     function isHeaderTarget(item: Item): bool {
         while (item && item !== navigation) {
@@ -240,10 +252,11 @@ FocusScope {
         if (!item || !item.enabled || item instanceof DetailFlickable)
             return;
         const field = item as TextField;
+        const editor = item as TextEditor;
         const labeled = item as LabeledValueSlider;
         const action = item as ActionControl;
         const segments = item as SegmentedControl;
-        if ((field && field.readOnly) || (action && !action.interactive) || (segments && !segments.interactive))
+        if ((field && field.readOnly) || (editor && !editor.editingAllowed) || (action && !action.interactive) || (segments && !segments.interactive))
             return;
         editorTarget = item;
         if (field)
@@ -264,6 +277,12 @@ FocusScope {
         }
     }
     onFocusedTargetChanged: if (focusedTarget) {
+        // A pointer/native editor interaction supersedes queued presentation
+        // restoration just as explicit key navigation does.
+        if (!applyingMemory) {
+            cancelSessionRestore();
+            pendingMemory = false;
+        }
         currentTarget = focusedTarget;
         editorTarget = focusedTarget;
         awaitingContent = false;

@@ -8,6 +8,9 @@ Ui.ProviderChooserSurface {
 
     required property ClipboardController controller
     chooserController: controller
+    keyboardWorkflow: true
+    navigationEnabled: !controller.deleteMenuOpen && !controller.deleteConfirmationOpen && !controller.bulkDeleteConfirmationOpen && !controller.wipeChallenge
+    sessionReady: !controller.refreshInFlight && !controller.revisionRequestId && !controller.detailState.editBeginPending
     readonly property var selectedEntry: content.controller.selectedEntry || ({})
     readonly property bool actionsEnabled: content.controller.uiActive && content.controller.hasSelection && !content.controller.multiSelectMode && !content.controller.deleteMenuOpen && !content.controller.actionInFlight && !content.controller.wipeChallenge
     detailsTabEnabled: content.actionsEnabled && content.controller.detailsOpen
@@ -26,7 +29,7 @@ Ui.ProviderChooserSurface {
 
     Shortcut {
         sequence: "Return"
-        enabled: content.actionsEnabled && content.selectedEntry.kind !== "binary" && !content.controller.detailState.editorFocused
+        enabled: content.actionsEnabled && content.selectedEntry.kind !== "binary" && !content.controller.detailState.editorFocused && !content.detailsNavigation.activeFocus
         onActivated: content.controller.pasteSelected()
     }
     Shortcut {
@@ -41,7 +44,7 @@ Ui.ProviderChooserSurface {
     }
     Shortcut {
         sequence: "Delete"
-        enabled: content.controller.uiActive && !content.controller.actionInFlight && !content.controller.deleteMenuOpen && (content.controller.multiSelectMode ? content.controller.multiSelectedCount > 0 : content.controller.hasSelection)
+        enabled: content.controller.uiActive && content.navigationEnabled && !!content.listItem && content.listItem.listFocused && !content.controller.actionInFlight && (content.controller.multiSelectMode ? content.controller.multiSelectedCount > 0 : content.controller.hasSelection)
         onActivated: {
             if (content.controller.multiSelectMode)
                 content.controller.requestBulkDelete();

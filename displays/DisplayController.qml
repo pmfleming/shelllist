@@ -5,6 +5,16 @@ import "DisplayModel.js" as Model
 Ui.ProviderChooserController {
     id: controller
 
+    viewMemory: Ui.ChooserMemory {
+        controller: controller
+        key: controller.selectedResult ? controller.selectedResult.key : ""
+        tab: controller.detailsTab
+        tabs: ["settings", "focus", "information"]
+        onRestoreRequested: function (open, tab) {
+            controller.detailsTab = tab;
+            controller.detailsOpen = open && controller.hasSelection;
+        }
+    }
     property var displayPolicyState: ({
             available: false
         })
@@ -237,11 +247,13 @@ Ui.ProviderChooserController {
         selectOutput(outputs[(Math.max(0, selectedNumber - 1) + delta + outputs.length) % outputs.length].name);
     }
     function openDetails() {
+        viewMemory.synchronize();
         if (!hasSelection || navigationBlocked)
             return;
         detailsOpen = true;
     }
     function closeDetails() {
+        viewMemory.synchronize();
         if (trial || actionInFlight)
             return;
         if (dirty) {

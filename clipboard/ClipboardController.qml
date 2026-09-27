@@ -14,6 +14,16 @@ Ui.ProviderChooserController {
     filterRefreshDelay: 75
     scheduledRefreshDelay: 90
 
+    viewMemory: Ui.ChooserMemory {
+        controller: clipboardController
+        key: clipboardController.selectedResult ? clipboardController.selectedResult.key : ""
+        tab: clipboardController.detailsTab
+        tabs: ["data", "info"]
+        onRestoreRequested: function (open, tab) {
+            clipboardController.detailsTab = tab;
+            clipboardController.detailsOpen = open && clipboardController.hasSelection;
+        }
+    }
     property string detailsTab: "data"
     property string status: "Loading clipboard history…"
     property string sessionId: ""

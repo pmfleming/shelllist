@@ -3,171 +3,89 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 
-Ui.ChooserSurface {
+Ui.ProviderChooserSurface {
     id: content
     required property NotificationController controller
-    readonly property real uiScale: 1
+    chooserController: controller
+    keyboardWorkflow: true
+    detailsTabEnabled: false
 
-    Column {
-        anchors.fill: parent
-        anchors.margins: content.controller.contentMargin
-        spacing: Ui.Theme.spacingMd
-
-        Ui.ChooserHeader {
-            id: header
-            objectName: "notificationHeader"
+    listComponent: Ui.ChooserListPane {
+        id: pane
+        chooserController: content.controller
+        resultModel: content.controller.groupModel
+        filterText: content.controller.filterText
+        icon: ""
+        iconActionEnabled: !content.controller.screenshotInFlight
+        iconAccessibleName: qsTr("Copy Notifications panel screenshot")
+        onIconClicked: content.controller.screenshotRequested()
+        placeholder: content.controller.tab === "history" ? qsTr("Search loaded history…") : qsTr("Search notifications…")
+        powered: content.controller.notificationState.notifications.dnd
+        powerEnabled: content.controller.notificationState.notifications.available
+        powerAccessory: NotificationDndDuration { notificationState: content.controller.notificationState }
+        refreshing: content.controller.notificationState.historyLoading
+        status: content.controller.notificationState.lastError || (content.controller.tab === "history" ? content.controller.notificationState.historyError : "") || content.controller.screenshotStatus || (content.controller.notificationState.draftCount ? content.controller.notificationState.draftCount + qsTr(" unsent reply drafts") : "")
+        emptyText: qsTr("No notifications")
+        emptyIcon: "󰂚"
+        preserveViewportOnAppend: true
+        readonly property bool loadMore: listNearEnd && content.controller.tab === "history" && content.controller.notificationState.historyHasMore && !refreshing && !content.controller.notificationState.historyError
+        onLoadMoreChanged: if (loadMore) Qt.callLater(content.controller.notificationState.loadMoreHistory)
+        listOptionsComponent: Row {
             width: parent.width
-            height: scaled(Ui.Theme.headerHeight)
-            uiScale: content.uiScale
-            icon: ""
-            iconActionEnabled: !content.controller.screenshotInFlight
-            iconAccessibleName: "Copy Notifications panel screenshot"
-            filterText: content.controller.filterText
-            placeholder: content.controller.tab === "history" ? "Search loaded history…" : "Search notifications…"
-            powered: content.controller.notificationState.notifications.dnd
-            powerEnabled: content.controller.notificationState.notifications.available
-            powerAccessibleName: "Do not disturb"
-            powerAccessory: Component {
-                NotificationDndDuration {
-                    notificationState: content.controller.notificationState
-                }
-            }
-            refreshing: content.controller.notificationState.historyLoading
-            refreshEnabled: !refreshing && !content.controller.screenshotInFlight
-            onIconClicked: content.controller.screenshotRequested()
-            onFilterEdited: function (text) {
-                content.controller.filterText = text;
-            }
-            onPowerRequested: content.controller.notificationState.setDndEnabled(!powered)
-            onRefreshRequested: content.controller.refresh()
-            onKeyPressed: function (event) {
-                if (event.key === Qt.Key_Down) {
-                    notifications.focusList();
-                    event.accepted = true;
-                }
-            }
-        }
-        Row {
-            id: toolbar
-            readonly property NotificationState notificationState: content.controller.notificationState
-            readonly property int activeCount: notificationState.activeNotifications.length
-            width: parent.width
-            height: Ui.Theme.compactControlHeight
+            height: Ui.Theme.controlHeight
             spacing: Ui.Theme.spacingSm
-
             Ui.FlatIconButton {
-                id: backButton
-                visible: content.controller.returnSurface === "activity"
-                width: visible ? height : 0
+                width: height
                 height: parent.height
+                visible: content.controller.returnSurface === "activity"
                 icon: "󰁍"
-                accessibleName: "Back to agenda"
-                toolTip: accessibleName
+                accessibleName: qsTr("Back to agenda")
                 onClicked: content.controller.goBack()
             }
             Ui.SegmentedControl {
-                id: tabs
                 objectName: "notificationTabs"
-                width: Math.min(220, parent.width - backButton.width - trailing.width - parent.spacing * 2)
-                height: parent.height
+                width: 240
                 value: content.controller.tab
-                options: [
-                    {
-                        value: "active",
-                        label: toolbar.activeCount > 0 ? "Active  " + toolbar.activeCount : "Active"
-                    },
-                    {
-                        value: "history",
-                        label: "History"
-                    }
-                ]
-                onSelected: function (value) {
-                    content.controller.tab = value;
-                }
+                options: [{value: "active", label: qsTr("Active")}, {value: "history", label: qsTr("History")}]
+                onSelected: function (value) { content.controller.tab = value; }
             }
-            Ui.ThemeText {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - backButton.width - tabs.width - trailing.width - parent.spacing * 3
-                text: content.controller.screenshotStatus
-                elide: Text.ElideRight
-                horizontalAlignment: Text.AlignRight
-                color: Ui.Theme.mutedText
-                font.pixelSize: Ui.Theme.fontSizeCaption
-            }
-            Row {
-                id: trailing
+            Ui.FlatIconButton {
+                objectName: "notificationClearAll"
+                width: height
                 height: parent.height
-                spacing: 2
-
-                Row {
-                    objectName: "notificationDraftIndicator"
-                    visible: toolbar.notificationState.draftCount > 0
-                    height: parent.height
-                    rightPadding: Ui.Theme.spacingSm
-                    spacing: Ui.Theme.spacingXs
-                    Accessible.role: Accessible.StaticText
-                    Accessible.name: toolbar.notificationState.draftCount === 1 ? "1 unsent reply draft" : toolbar.notificationState.draftCount + " unsent reply drafts"
-                    Ui.GlyphLabel {
-                        anchors.verticalCenter: parent.verticalCenter
-                        glyph: "󰏫"
-                        font.pixelSize: Ui.Theme.iconSizeSmall
-                    }
-                    Ui.ThemeText {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: String(toolbar.notificationState.draftCount)
-                        color: Ui.Theme.mutedText
-                        font.pixelSize: Ui.Theme.fontSizeSmall
-                    }
-                }
-                Ui.FlatIconButton {
-                    objectName: "notificationClearAll"
-                    visible: content.controller.tab === "active"
-                    width: visible ? height : 0
-                    height: parent.height
-                    icon: "󰎟"
-                    enabled: toolbar.activeCount > 0
-                    accessibleName: "Dismiss all active notifications"
-                    toolTip: accessibleName
-                    onClicked: toolbar.notificationState.clearNotifications()
-                }
-                Ui.FlatIconButton {
-                    width: height
-                    height: parent.height
-                    icon: "󰅖"
-                    accessibleName: "Close"
-                    toolTip: accessibleName
-                    onClicked: content.controller.closeWindowRequested()
-                }
+                icon: "󰎟"
+                accessibleName: qsTr("Dismiss all active notifications")
+                enabled: content.controller.notificationState.activeNotifications.length > 0
+                onClicked: content.controller.notificationState.clearNotifications()
             }
         }
-        ActivityNotificationsPane {
-            id: notifications
+        rowDelegate: Ui.ResultRow {
+            id: row
+            required property var resultData
+            readonly property var group: JSON.parse(resultData.payload)
+            listPane: pane
+            rowHeight: pane.delegateHeight
+            Ui.ResultLabel {
+                title: row.group.appName || qsTr("Notifications")
+                subtitle: String(row.group.records.length)
+            }
+        }
+    }
+    detailsComponent: Ui.DetailFlickable {
+        viewMemory: content.controller.viewMemory
+        memoryTab: "messages"
+        NotificationHistoryGroup {
             width: parent.width
-            height: parent.height - y
             controller: content.controller
+            group: content.controller.selectedGroup || {key: "", records: [], appName: ""}
         }
-    }
-
-    Connections {
-        target: content.controller
-        function onFocusSearchRequested(): void {
-            header.focusSearch();
-        }
-    }
-    // No printable single-key shortcuts: replies and search own their typing.
-    Shortcut {
-        sequence: "Escape"
-        enabled: content.controller.uiActive
-        onActivated: content.controller.goBack()
-    }
-    Shortcut {
-        sequence: "F5"
-        enabled: content.controller.uiActive && !content.controller.screenshotInFlight
-        onActivated: content.controller.refresh()
     }
     Shortcut {
         sequence: "Ctrl+Tab"
-        enabled: content.controller.uiActive
-        onActivated: content.controller.tab = content.controller.tab === "active" ? "history" : "active"
+        enabled: content.controller.uiActive && !content.detailsNavigation.popupOpen
+        onActivated: {
+            content.controller.navigationInteracted();
+            content.controller.tab = content.controller.tab === "active" ? "history" : "active";
+        }
     }
 }

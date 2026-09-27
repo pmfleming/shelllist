@@ -6,6 +6,8 @@ DetailFlickable {
     id: cards
 
     required property WifiController controller
+    viewMemory: controller.viewMemory
+    memoryTab: "network"
     required property var accessPoint
     required property real sectionSpacing
     required property real connectionCardHeight

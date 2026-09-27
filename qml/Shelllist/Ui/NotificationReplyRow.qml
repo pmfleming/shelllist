@@ -33,6 +33,7 @@ Column {
         TextField {
             id: field
             objectName: "notificationReplyInput"
+            focusKey: "notification::" + reply.notificationId + "::reply"
             width: parent.width - sendButton.width - parent.spacing
             height: reply.controlHeight
             placeholder: "Reply…"

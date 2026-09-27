@@ -5,7 +5,7 @@ import Shelllist.Activity as Activity
 TestCase {
     id: testCase
     name: "Notifications"
-    width: 453
+    width: 1100
     height: 650
     visible: true
     when: windowShown
@@ -175,7 +175,7 @@ TestCase {
     function test_liveUpdateRetainsReplyDelegateAndFocus() {
         const state = makeState();
         const controller = makeController(state);
-        state.setExpanded("chat", true);
+        controller.openDetails();
         state.setDraft(100, "Draft");
         const content = createTemporaryObject(contentComponent, controller, {
             controller: controller,

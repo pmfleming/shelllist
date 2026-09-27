@@ -80,7 +80,7 @@ Removal animation is presentation-only. Dismiss, clear-group, clear-all, snooze,
 | `activity/TimeWeatherTimePane.qml` | Local time, sun position, moon, and timezone detail |
 | `activity/ActivityWeatherPane.qml` | Reusable local weather and forecast detail |
 | `activity/ActivitySchedulePane.qml` | Calendar, selected-day agenda, and todo detail |
-| `activity/ActivityNotificationsPane.qml` | Active/history list, search, DND and pagination controls |
+| `activity/NotificationContent.qml` | Shared group chooser, active/history filtering, DND, pagination and explicit message inspector |
 | `activity/NotificationHistoryGroup.qml` | Expandable active and historical groups |
 | `bar/NotificationToastStack.qml` | Monitor-local active groups |
 | `qml/Shelllist/Ui/NotificationPresentation.js` | Shared grouping, routing, and DND labels |

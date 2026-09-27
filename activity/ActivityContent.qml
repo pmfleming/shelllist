@@ -3,10 +3,25 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 
-Ui.ChooserSurface {
+Ui.PanelSurface {
     id: content
 
     required property ActivityController controller
+    chooserController: controller
+    navigationContent: region === 0 || !controller.detailsOpen ? glance : (sectionLoader.item as Item)
+    function cycleRegion(backwards: bool): void {
+        controller.navigationInteracted();
+        region = controller.detailsOpen ? 1 - region : 0;
+        detailsNavigation.focusContent(true);
+    }
+    Connections {
+        target: content.controller
+        function onDetailsOpenChanged(): void {
+            content.region = content.controller.detailsOpen ? 1 : 0;
+            if (content.controller.uiActive && !content.controller.uiSuspending)
+                content.detailsNavigation.focusContent(true);
+        }
+    }
     readonly property alias now: liveClock.now
     readonly property real uiScale: 1
 
@@ -86,6 +101,7 @@ Ui.ChooserSurface {
             spacing: 0
 
             ActivityGlancePane {
+                id: glance
                 objectName: "activityGlancePane"
                 width: content.controller.listPaneWidth
                 height: parent.height
@@ -101,6 +117,7 @@ Ui.ChooserSurface {
             }
 
             Loader {
+                id: sectionLoader
                 visible: content.controller.detailsRendered
                 width: content.controller.detailsPaneWidth
                 height: parent.height
@@ -126,47 +143,42 @@ Ui.ChooserSurface {
     }
 
     Shortcut {
-        sequence: "Escape"
-        enabled: content.controller.uiActive
-        onActivated: content.controller.dismissNavigation()
-    }
-    Shortcut {
-        sequence: "Left"
+        sequence: "Ctrl+Left"
         enabled: content.controller.uiActive && content.controller.detailsOpen && content.controller.detailSection === "schedule"
         onActivated: content.controller.selectDate(new Date(content.controller.selectedDate.getFullYear(), content.controller.selectedDate.getMonth(), content.controller.selectedDate.getDate() - 1))
     }
     Shortcut {
-        sequence: "Right"
+        sequence: "Ctrl+Right"
         enabled: content.controller.uiActive && content.controller.detailsOpen && content.controller.detailSection === "schedule"
         onActivated: content.controller.selectDate(new Date(content.controller.selectedDate.getFullYear(), content.controller.selectedDate.getMonth(), content.controller.selectedDate.getDate() + 1))
     }
     Shortcut {
-        sequence: "PageUp"
+        sequence: "Ctrl+PageUp"
         enabled: content.controller.uiActive && content.controller.detailSection === "schedule"
         onActivated: content.controller.shiftMonth(-1)
     }
     Shortcut {
-        sequence: "PageDown"
+        sequence: "Ctrl+PageDown"
         enabled: content.controller.uiActive && content.controller.detailSection === "schedule"
         onActivated: content.controller.shiftMonth(1)
     }
     Shortcut {
-        sequence: "1"
+        sequence: "Ctrl+1"
         enabled: content.controller.uiActive
         onActivated: content.controller.requestTimeWeather("weather")
     }
     Shortcut {
-        sequence: "2"
+        sequence: "Ctrl+2"
         enabled: content.controller.uiActive
         onActivated: content.controller.openSection("schedule")
     }
     Shortcut {
-        sequence: "3"
+        sequence: "Ctrl+3"
         enabled: content.controller.uiActive
         onActivated: content.controller.requestNotifications("", "active")
     }
     Shortcut {
-        sequence: "T"
+        sequence: "Ctrl+T"
         enabled: content.controller.uiActive
         onActivated: content.controller.goToToday()
     }

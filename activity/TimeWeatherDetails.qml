@@ -47,6 +47,8 @@ Ui.ActionDetailsPane {
             asynchronous: true
             sourceComponent: Component {
                 TimeWeatherTimePane {
+                    viewMemory: pane.controller.viewMemory
+                    memoryTab: "time"
                     city: pane.city
                     now: pane.now
                 }
@@ -64,6 +66,8 @@ Ui.ActionDetailsPane {
     Component {
         id: weatherComponent
         ActivityWeatherPane {
+            viewMemory: pane.controller.viewMemory
+            memoryTab: "weather"
             controller: pane.controller
             now: pane.now
             showLocationRail: false

@@ -4,29 +4,26 @@ import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
-Ui.ChooserSurface {
+Ui.PanelSurface {
     id: content
 
     required property BatteryController controller
+    chooserController: controller
     readonly property var battery: controller.battery || ({})
     readonly property var protection: controller.protection
     readonly property var device: controller.primaryDevice || ({})
     readonly property string policyError: protection.error || ""
     readonly property string errorMessage: controller.lastError.length > 0 ? controller.lastError : (controller.transportError.length > 0 ? controller.transportError : (controller.refreshError.length > 0 ? controller.refreshError : policyError))
 
-    Ui.ChooserShortcuts {
-        controller: content.controller
-        refreshEnabled: !content.controller.actionInFlight
-        detailsTabEnabled: true
-        onRefreshRequested: content.controller.refreshAll()
-        onDetailsTabRequested: content.controller.cycleViewTab()
+    Shortcut {
+        sequence: "F5"
+        enabled: content.controller.uiActive && !content.controller.actionInFlight
+        onActivated: content.controller.refreshAll()
     }
-
-    Connections {
-        target: content.controller
-        function onViewTabChanged(): void {
-            detailPage.contentY = 0;
-        }
+    Shortcut {
+        sequence: "Ctrl+Tab"
+        enabled: content.controller.uiActive && !content.detailsNavigation.popupOpen
+        onActivated: content.changeTab()
     }
 
     ColumnLayout {
@@ -89,6 +86,8 @@ Ui.ChooserSurface {
         Ui.DetailFlickable {
             id: detailPage
             objectName: "batteryDetailPage"
+            viewMemory: content.controller.viewMemory
+            memoryTab: content.controller.viewTab
             Layout.fillWidth: true
             Layout.fillHeight: true
 

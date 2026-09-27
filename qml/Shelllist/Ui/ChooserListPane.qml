@@ -24,6 +24,7 @@ ColumnLayout {
     property bool refreshing: false
     property bool busy: false
     property bool powerEnabled: true
+    property alias powerAccessory: header.powerAccessory
     property bool powerVisible: true
     property bool refreshEnabled: true
     property string refreshIcon: "󰑐"

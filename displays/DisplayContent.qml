@@ -7,7 +7,9 @@ Ui.ProviderChooserSurface {
     id: content
     required property DisplayController controller
     chooserController: controller
-    navigationEnabled: !controller.discardPrompt && !controller.layoutDragging
+    keyboardWorkflow: true
+    sessionReady: controller.stateReady && !controller.actionInFlight
+    navigationEnabled: !controller.discardPrompt && !controller.layoutDragging && !controller.trial
     refreshEnabled: !controller.actionInFlight && !controller.trial && navigationEnabled
     detailsTabEnabled: navigationEnabled && controller.detailsOpen && controller.hasSelection && !controller.trial && !controller.actionInFlight
 

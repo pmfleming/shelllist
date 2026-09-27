@@ -3,11 +3,13 @@
 Delivered step-4 slices of the [Material Expressive plan](proposals/material-expressive.md),
 after [anchored geometry](chooser-geometry.md):
 
-- Applications and Bluetooth **device** details retain per-result presentation.
-- Applications and Bluetooth restore ordinary invocation focus, including the
-  currently open Bluetooth adapter-settings control.
-- Other domains retain their existing focus/presentation behavior. Adapter
-  settings do not yet have independent per-adapter/per-tab presentation records.
+- Applications, Bluetooth devices, Wi-Fi, Clipboard, Displays, Time & Weather
+  and notification groups use per-result presentation and ordinary invocation focus.
+- Battery and Activity use the single-panel focus adapter; Activity's todo draft
+  remains controller-owned. Notifications retains its existing reply draft owner.
+- Computer-wide Bluetooth settings, Wi-Fi advanced scroll, and custom controls
+  still need the independent-record/registration slice. Missing targets always
+  fall back to browsing rather than restoring values or dispatching changes.
 
 ## Per-result presentation
 

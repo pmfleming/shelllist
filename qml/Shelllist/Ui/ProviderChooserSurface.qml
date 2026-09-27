@@ -13,7 +13,7 @@ ChooserSurface {
     property bool keyboardWorkflow: false
     property bool sessionReady: true
     property string sessionContext: chooserController.viewMemory ? JSON.stringify([chooserController.viewMemory.key, chooserController.viewMemory.tab]) : ""
-    readonly property alias detailsNavigation: chooser.detailsNavigation
+    readonly property DetailsNavigation detailsNavigation: chooser.detailsNavigation
     property bool refreshEnabled: navigationEnabled && !chooserController.actionInFlight
     property bool detailsTabEnabled: navigationEnabled && chooserController.detailsOpen && chooserController.hasSelection
     property bool refreshAutoRepeat: true

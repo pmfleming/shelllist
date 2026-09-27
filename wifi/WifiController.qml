@@ -10,6 +10,17 @@ import Shelllist.Ui
 ProviderChooserController {
     id: wifi
 
+    viewMemory: ChooserMemory {
+        controller: wifi
+        key: wifi.selectedResult ? (wifi.selectedResult.key || "") : ""
+        tab: wifi.detailsTab
+        tabs: wifi.profileFor(wifi.detailAp) ? ["network", "security", "hardware"] : ["network"]
+        onRestoreRequested: function (open, tab) {
+            wifi.detailsOpen = open && wifi.hasSelection && wifi.powered;
+            if (wifi.detailsOpen)
+                wifi.selectDetailsTab(tab);
+        }
+    }
     required property WifiPromptController prompt
     provider: WifiProvider {
         id: wifiProvider
@@ -437,17 +448,6 @@ ProviderChooserController {
         }
     }
 
-    Connections {
-        target: wifi.prompt
-        function onOpenChanged() {
-            if (!wifi.promptActive)
-                Qt.callLater(wifi.navigation.focusSearch);
-        }
-        function onCredentialOpenChanged() {
-            if (!wifi.promptActive)
-                Qt.callLater(wifi.navigation.focusSearch);
-        }
-    }
     Io.ClipboardPublisher {
         id: clipboardPublisher
         onFinished: function (succeeded, message) {

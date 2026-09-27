@@ -8,6 +8,8 @@ Ui.DetailFlickable {
     id: workspace
     required property DisplayController controller
     objectName: "displayLayoutWorkspace"
+    viewMemory: controller.viewMemory
+    memoryTab: "settings"
     revealFocusedControl: true
     GridLayout {
         width: workspace.width

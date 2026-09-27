@@ -21,6 +21,7 @@ ChooserShortcuts 1.0 ChooserShortcuts.qml
 ProviderChooserController 1.0 ProviderChooserController.qml
 ProviderChooserSurface 1.0 ProviderChooserSurface.qml
 ChooserSurface 1.0 ChooserSurface.qml
+PanelSurface 1.0 PanelSurface.qml
 ConfirmationDialog 1.0 ConfirmationDialog.qml
 internal ControlLabel ControlLabel.qml
 ControlPointerArea 1.0 ControlPointerArea.qml
@@ -80,6 +81,7 @@ StatusPanel 1.0 StatusPanel.qml
 StateLayer 1.0 StateLayer.qml
 TabbedDetailsStack 1.0 TabbedDetailsStack.qml
 TextField 1.0 TextField.qml
+TextEditor 1.0 TextEditor.qml
 TogglePill 1.0 TogglePill.qml
 ToggleRow 1.0 ToggleRow.qml
 ToggleSwitch 1.0 ToggleSwitch.qml
