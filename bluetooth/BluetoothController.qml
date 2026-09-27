@@ -43,6 +43,8 @@ Ui.ProviderChooserController {
     property string audioStatus: ""
     property var pairingPrompts: []
     property var pairingInputs: ({})
+    // Closed sensitive prompts must not be restored by a late event/snapshot.
+    property var dismissedPairingIds: ({})
     readonly property var pairingPrompt: pairingPrompts.length > 0 ? pairingPrompts[0] : null
     property string respondingPairingId: ""
     readonly property bool pairingResponsePending: backend.isPending("pairing-response") || (!!pairingPrompt && respondingPairingId === pairingPrompt.request_id)
@@ -112,6 +114,7 @@ Ui.ProviderChooserController {
         refresh();
     }
     function deactivateUi() {
+        cancelSensitivePrompts();
         pendingConfirmationAction = null;
         scanRequested = false;
         if (activeScan)
@@ -301,7 +304,22 @@ Ui.ProviderChooserController {
         status = "Cancelling Bluetooth operation…";
         return backend.cancelOperation(selectedOperation.request_id);
     }
+    function cancelSensitivePrompts(): void {
+        const dismissed = Object.assign(Object.create(null), dismissedPairingIds);
+        for (const prompt of pairingPrompts) {
+            dismissed[prompt.request_id] = true;
+            // A submitted response already owns its request; never replace its
+            // identity or race it with a second contradictory response.
+            if (prompt.response_required && prompt.request_id !== respondingPairingId)
+                backend.cancelPairingPrompt(prompt.request_id);
+        }
+        dismissedPairingIds = dismissed;
+        replacePairingPrompts([]);
+    }
     function replacePairingPrompts(prompts) {
+        prompts = prompts.filter(function (prompt) {
+            return !Object.prototype.hasOwnProperty.call(dismissedPairingIds, prompt.request_id);
+        });
         const inputs = Object.assign({}, pairingInputs);
         if (pairingPrompt)
             inputs[pairingPrompt.request_id] = pairingInput;

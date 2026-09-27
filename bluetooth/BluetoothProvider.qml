@@ -50,21 +50,18 @@ Core.Provider {
     function connectionActions(device: var, caps: var): var {
         return [Core.Model.keepOpenAction("pair", "Pair", {
                 icon: "󰌾",
-                shortcut: "P",
                 role: "default",
                 visible: !device.paired,
                 enabled: actionEnabled(caps.can_pair, device),
                 presentation: primaryPresentation("active")
             }), Core.Model.keepOpenAction("connect", "Connect", {
                 icon: "󰂱",
-                shortcut: "C",
                 role: "default",
                 visible: !device.connected && device.paired,
                 enabled: actionEnabled(caps.can_connect, device),
                 presentation: primaryPresentation("active")
             }), Core.Model.keepOpenAction("disconnect", "Disconnect", {
                 icon: "󰂲",
-                shortcut: "D",
                 role: "destructive",
                 visible: !!device.connected,
                 enabled: actionEnabled(caps.can_disconnect, device),
@@ -79,7 +76,6 @@ Core.Provider {
                 }
             }), Core.Model.keepOpenAction("forget", "Forget", {
                 icon: "󰆴",
-                shortcut: "F",
                 role: "destructive",
                 enabled: actionEnabled(caps.can_remove, device),
                 confirmation: {
@@ -100,7 +96,6 @@ Core.Provider {
 
     function trustAction(device: var, caps: var): var {
         return Core.Model.keepOpenAction("trusted", "Trusted", {
-            shortcut: "T",
             kind: "toggle",
             enabled: actionEnabled(caps.can_trust, device),
             state: {
@@ -115,7 +110,6 @@ Core.Provider {
     function wakeAction(device: var, caps: var): var {
         const supported = device.wake_allowed !== null && device.wake_allowed !== undefined;
         return Core.Model.keepOpenAction("wake", "Allow device to wake computer", {
-            shortcut: "W",
             kind: "toggle",
             visible: supported,
             enabled: actionEnabled(caps.can_wake, device),
@@ -131,7 +125,6 @@ Core.Provider {
     function multipointAction(device: var, caps: var): var {
         const multipoint = (device.fast_pair && device.fast_pair.multipoint) || ({});
         return Core.Model.keepOpenAction("multipoint", "Multipoint", {
-            shortcut: "M",
             kind: "toggle",
             visible: !!multipoint.supported,
             enabled: actionEnabled(caps.can_set_multipoint, device),
@@ -146,7 +139,6 @@ Core.Provider {
     }
     function blockAction(device: var, caps: var): var {
         return Core.Model.keepOpenAction("blocked", "Blocked", {
-            shortcut: "B",
             kind: "toggle",
             enabled: actionEnabled(caps.can_block, device),
             state: {

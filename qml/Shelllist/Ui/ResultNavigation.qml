@@ -1,5 +1,4 @@
 import QtQuick
-import "NavigationKeys.js" as NavigationKeys
 
 Item {
     id: navigation
@@ -15,9 +14,6 @@ Item {
     }
     function isEnter(key) {
         return key === Qt.Key_Return || key === Qt.Key_Enter;
-    }
-    function isPlainHotkey(event, hotkey) {
-        return hotkey && event.key === String(hotkey).charCodeAt(0) && (event.modifiers === Qt.NoModifier || event.modifiers === Qt.ShiftModifier);
     }
     function focusListTop() {
         controller.selectFirst();
@@ -45,17 +41,18 @@ Item {
         accept(event, controller.dismissNavigation);
         return true;
     }
-    function handleDetailHotkey(event) {
-        if (!controller.detailsOpen)
+    function enterDetails() {
+        controller.openDetails();
+        if (controller.detailsOpen)
+            controller.focusDetailsRequested();
+    }
+    function handleSearchText(event) {
+        // Printable keys belong to the query, never to result/action hotkeys.
+        // GroupSwitch (AltGr) text is supplied by Qt; command chords stay free.
+        if (!event.text || event.text.charCodeAt(0) < 32 || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
             return false;
-        const action = controller.detailActions.find(function (item) {
-            return navigation.isPlainHotkey(event, item.shortcut) && item.visible !== false && item.enabled !== false;
-        });
-        if (!action)
-            return false;
-        accept(event, function () {
-            controller.triggerDetailAction(action.id);
-        });
+        controller.searchTextRequested(event.text);
+        event.accepted = true;
         return true;
     }
     function handleSearchDirection(event) {
@@ -68,18 +65,13 @@ Item {
     function handleListDirection(event) {
         const actions = ({});
         actions[Qt.Key_Left] = controller.closeDetails;
-        actions[Qt.Key_Right] = controller.openDetails;
+        actions[Qt.Key_Right] = enterDetails;
         actions[Qt.Key_Up] = controller.selectionAtStart() ? focusSearch : moveUp;
         actions[Qt.Key_Down] = moveDown;
         if (actions[event.key]) {
             accept(event, actions[event.key]);
             return;
         }
-        const direction = NavigationKeys.listDirection(event.text, event.modifiers, Qt.NoModifier, Qt.ShiftModifier);
-        if (direction > 0)
-            accept(event, moveDown);
-        else if (direction < 0)
-            accept(event, moveUp);
     }
 
     function handleSearchKey(event) {
@@ -92,7 +84,7 @@ Item {
     function handleListKey(event) {
         if (blocked)
             return;
-        if (handlePrimary(event) || handleDetailHotkey(event) || handleClose(event))
+        if (handlePrimary(event) || handleClose(event) || handleSearchText(event))
             return;
         handleListDirection(event);
     }

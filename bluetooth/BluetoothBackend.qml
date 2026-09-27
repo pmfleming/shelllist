@@ -281,6 +281,15 @@ Io.DaemonBackend {
     function cancelOperation(requestId) {
         return cancelActive("operation", requestId, operations);
     }
+    function cancelPairingPrompt(requestId: string): bool {
+        const id = "pairing-cancel-" + requestId;
+        if (isPending(id))
+            return false;
+        return call(id, BtApi.methods.pairingRespond, {
+            request_id: requestId,
+            accept: false
+        });
+    }
     function respondPairing(requestId, accept, value) {
         const params = {
             request_id: requestId,

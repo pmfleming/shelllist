@@ -33,8 +33,11 @@ Ui.ChooserListPane {
     }
     onIconClicked: if (iconActionEnabled)
         controller.screenshotRequested()
-    onSearchActionRequested: if (searchActionEnabled)
-        controller.toggleBluetoothSettings()
+    onSearchActionRequested: if (searchActionEnabled) {
+        controller.toggleBluetoothSettings();
+        if (controller.detailsOpen)
+            controller.focusDetailsRequested();
+    }
 
     rowDelegate: Component {
         BluetoothDeviceListRow {

@@ -32,7 +32,13 @@ already-open development shell after changing `flake.nix`.
 - `tst_material_fields.qml` checks native editing/read-only behavior, masking and
   guarded embedded actions, immediate focus/error roles, hover-independent menu
   navigation, acknowledged selection, Escape cancellation and disabled guards.
-  The suite now has 118 behavioral cases (188 passes with hooks); the inventory
+- `tst_chooser_keyboard.qml` exercises saved-cursor result typing, region Tab,
+  content-first tabs, browse/edit separation, native menu Escape, pending editor
+  ownership, actual Applications settings, read-only scrolling, removed editors
+  and modal focus containment/restoration, with decorative animations enabled.
+  Bluetooth recovery tests also cover its actual adapter-settings keyboard
+  journey and clearing/fencing sensitive prompts on whole-surface closure.
+  The suite now has 127 behavioral cases (199 passes with hooks); the inventory
   below is the completed pruning checkpoint, not a permanent cap on feature tests.
 - `tst_battery_history.qml` also checks explicit keyboard/pointer inspection:
   hover/focus alone reveal no values, and editor Escape wins over the shared

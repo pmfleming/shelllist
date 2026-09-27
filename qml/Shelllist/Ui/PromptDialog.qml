@@ -32,6 +32,8 @@ ModalFrame {
     function focusInput() {
         if (inputVisible)
             promptInput.focusInput(true);
+        else
+            moveFocus(false);
     }
 
     onVisibleChanged: if (visible)

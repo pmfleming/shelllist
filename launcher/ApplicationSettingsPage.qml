@@ -36,6 +36,7 @@ Ui.DetailFlickable {
         contentSpacing: Ui.Theme.spacingSm
 
         Ui.DropDownList {
+            Accessible.name: qsTr("Category and default workspace")
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             options: page.categoryOptions

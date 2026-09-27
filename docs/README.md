@@ -10,6 +10,7 @@ The repository README is the user-facing overview and installation guide. These 
 | [`displays.md`](displays.md) | Dedicated Displays callout, layout workspace, keyboard controls and daemon-owned recovery |
 | [`daemon-frontend-commonality.md`](daemon-frontend-commonality.md) | Common daemon endpoint, recovery, sequencing, and chooser integration contracts |
 | [`material-visual-foundation.md`](material-visual-foundation.md) | Material palette generation, theme migration, development gallery and open visual choices |
+| [`chooser-keyboard-workflow.md`](chooser-keyboard-workflow.md) | Shared query routing, Applications/Bluetooth region traversal, browse/edit focus and modal safety |
 | [`list-interaction-contract.md`](list-interaction-contract.md) | Mouse-wheel, precision-touchpad, and touch scrolling requirements |
 | [`provider-model.md`](provider-model.md) | Shared provider, result, query, and action value contracts |
 | [`qml-quality-review.md`](qml-quality-review.md) | QML structure, maintenance decisions, and quality gates |

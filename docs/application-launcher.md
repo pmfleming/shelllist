@@ -8,10 +8,14 @@ The launcher presents standards-visible desktop applications and live Hyprland w
 
 - `Enter` focuses the most-recent running instance or launches a non-running application.
 - `Shift+Enter` launches another instance of a desktop application.
-- `Right` opens application details, running instances, close actions, and desktop actions.
-- `Ctrl+Tab` switches between Application and Resources details.
+- `Right` opens application details and enters content browse focus, not the tab selector.
+- `Ctrl+Tab` cycles Application, Resources and (for desktop applications) Settings.
+- `Tab` / `Shift+Tab` cycle Search, Results and open Details; selection is retained.
+- Up/Down browse detail controls; Right enters an editor. Native arrows edit there, and Escape leaves the editor before closing details. Category settings still wait for daemon acknowledgement.
+- Typing in results, including J/K, continues the query at its retained cursor.
+- `Ctrl+Shift+S` requests a screenshot. See the [shared keyboard workflow](chooser-keyboard-workflow.md).
 - `F5` refreshes the catalog and current windows.
-- The icon inside the search field cycles **All → Shell → Browser → Code → Media → Text → All**.
+- The icon inside the search field (or `Alt+Enter` while editing search) cycles **All → Shell → Browser → Code → Media → Text → All**.
 - Launch-only desktop entries remain shortcuts without runtime state or resource attribution.
 
 Empty queries put focused and running applications before launch-only results. Typed queries use daemon match scores and the shared provider model. Selection is retained by stable result key when snapshots change.

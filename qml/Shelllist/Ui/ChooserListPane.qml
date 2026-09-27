@@ -40,6 +40,7 @@ ColumnLayout {
     property int bodySpacing: Theme.verticalSpacing(Theme.spacingSm, densityScale)
     readonly property real delegateHeight: body.delegateHeight
     readonly property bool listFocused: body.listFocused
+    readonly property bool searchFocused: header.searchFocused
     readonly property int selectedIndex: chooserController.selectionModel ? chooserController.selectionModel.selectedIndex : 0
 
     signal iconClicked
@@ -60,6 +61,12 @@ ColumnLayout {
 
     function focusSearch(): void {
         header.focusSearch();
+    }
+    function insertSearchText(text: string): void {
+        header.insertSearchText(text);
+    }
+    function focusList(): void {
+        body.focusList();
     }
     function focusTop(): void {
         body.focusTop();

@@ -12,6 +12,47 @@ Rectangle {
     property real verticalCardPadding: compact ? Theme.minimumVerticalSpacing : Theme.spacingLg
     property real bodySpacing: compact ? Theme.minimumVerticalSpacing : Theme.spacingMd
     default property alias body: bodyColumn.data
+    property Item precedingFocus: null
+    readonly property bool ownsKeyboardFocus: containsItem(Window.window ? Window.window.activeFocusItem : null)
+
+    function containsItem(item: Item): bool {
+        while (item && item !== frame)
+            item = item.parent;
+        return item === frame;
+    }
+    function moveFocus(backwards: bool): void {
+        const start = Window.window ? Window.window.activeFocusItem : frame;
+        let candidate = start;
+        const visited = [];
+        while (candidate && visited.indexOf(candidate) < 0) {
+            visited.push(candidate);
+            candidate = candidate.nextItemInFocusChain(!backwards);
+            if (containsItem(candidate) && candidate.visible && candidate.enabled && (candidate.activeFocusOnTab || candidate instanceof TextInput)) {
+                candidate.forceActiveFocus(backwards ? Qt.BacktabFocusReason : Qt.TabFocusReason);
+                return;
+            }
+        }
+    }
+    onVisibleChanged: {
+        if (visible) {
+            precedingFocus = Window.window ? Window.window.activeFocusItem : null;
+        } else {
+            if (precedingFocus && precedingFocus.visible && precedingFocus.enabled)
+                precedingFocus.forceActiveFocus(Qt.OtherFocusReason);
+            precedingFocus = null;
+        }
+    }
+
+    Shortcut {
+        sequence: "Tab"
+        enabled: frame.visible && frame.ownsKeyboardFocus
+        onActivated: frame.moveFocus(false)
+    }
+    Shortcut {
+        sequence: "Shift+Tab"
+        enabled: frame.visible && frame.ownsKeyboardFocus
+        onActivated: frame.moveFocus(true)
+    }
 
     anchors.fill: parent
     z: 10

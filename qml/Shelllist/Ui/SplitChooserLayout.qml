@@ -9,6 +9,8 @@ RowLayout {
     required property Component detailsComponent
     // Opt in for surfaces that must fit small outputs without clipping details.
     property real minimumSplitDetailsWidth: 0
+    property bool keyboardWorkflow: false
+    readonly property alias detailsNavigation: detailsNavigation
     readonly property bool singlePane: minimumSplitDetailsWidth > 0 && width < controller.listPaneWidth + controller.detailsGapWidth + minimumSplitDetailsWidth
     readonly property real listWidth: singlePane ? width : controller.listPaneWidth
     readonly property real detailWidth: singlePane ? width : controller.detailsPaneWidth
@@ -20,6 +22,10 @@ RowLayout {
     function focusSearch() {
         if (listItem)
             listItem.focusSearch();
+    }
+    function focusList() {
+        if (listItem)
+            listItem.focusList();
     }
     function focusTop() {
         if (listItem)
@@ -39,7 +45,15 @@ RowLayout {
             Qt.callLater(layout.focusSearch);
         }
         function onFocusListTopRequested() {
-            Qt.callLater(layout.focusTop);
+            layout.focusTop();
+        }
+        function onFocusDetailsRequested() {
+            if (layout.keyboardWorkflow)
+                detailsNavigation.focusContent();
+        }
+        function onSearchTextRequested(text: string) {
+            if (layout.listItem)
+                layout.listItem.insertSearchText(text);
         }
     }
 
@@ -65,7 +79,13 @@ RowLayout {
         VerticalDivider {}
     }
 
-    Item {
+    DetailsNavigation {
+        id: detailsNavigation
+        contentItem: layout.keyboardWorkflow ? layout.detailsItem : null
+        onExitRequested: {
+            layout.controller.closeDetails();
+            layout.focusList();
+        }
         visible: layout.controller.detailsRendered
         Layout.preferredWidth: layout.detailWidth
         Layout.minimumWidth: layout.detailWidth

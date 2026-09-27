@@ -47,6 +47,8 @@ Item {
     signal closeWindowRequested
     signal focusSearchRequested
     signal focusListTopRequested
+    signal focusDetailsRequested
+    signal searchTextRequested(string text)
     signal screenshotRequested
 
     function activateUi(workspaceId) {

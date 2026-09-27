@@ -165,6 +165,97 @@ DaemonTestCase {
         verify(controller.cycleDetailsTab());
         compare(controller.adapterSettingsTab, "pairing");
     }
+    Component {
+        id: contentComponent
+        Bt.BluetoothContent {}
+    }
+    function test_settingsUseBrowseEditRegionsAndContentFirstTabs() {
+        const panel = makePanel();
+        panel.page.visible = false;
+        panel.controller.uiActive = true;
+        const content = createTemporaryObject(contentComponent, panel, {
+            controller: panel.controller, width: 1100, height: 900
+        });
+        content.listItem.focusSearch();
+        keyClick(Qt.Key_Return, Qt.AltModifier);
+        tryVerify(() => content.detailsNavigation.currentTarget !== null);
+        verify(content.detailsNavigation.browsing);
+        compare(panel.controller.detailsTab, "adapter");
+        let steps = 0;
+        while (content.detailsNavigation.currentTarget.objectName !== "bluetoothLoginState" && steps++ < content.detailsNavigation.targets.length)
+            keyClick(Qt.Key_Down);
+        compare(content.detailsNavigation.currentTarget.objectName, "bluetoothLoginState");
+        calls = [];
+        keyClick(Qt.Key_Up);
+        keyClick(Qt.Key_Down);
+        compare(calls.length, 0, "browsing settings dispatches no changes");
+        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Right);
+        compare(calls.length, 1);
+        compare(calls[0].method, "bluetooth.management.update");
+        compare(calls[0].params.launch_state, "enable");
+        keyClick(Qt.Key_Escape);
+        verify(content.detailsNavigation.browsing);
+        findChild(panel.controller, "bluetoothBackend").pending = ({});
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        compare(panel.controller.adapterSettingsTab, "pairing");
+        tryCompare(content.detailsNavigation.currentTarget, "objectName", "adapterNameInput");
+        verify(content.detailsNavigation.browsing);
+        keyClick(Qt.Key_Right);
+        verify(content.editingDetails);
+        keyClick(Qt.Key_Left);
+        verify(content.editingDetails);
+        keyClick(Qt.Key_Escape);
+        verify(content.detailsNavigation.browsing);
+        keyClick(Qt.Key_Escape);
+        verify(content.listItem.listFocused);
+        verify(!panel.controller.detailsOpen);
+    }
+    function test_surfaceCloseClearsSecretsAndFencesLatePairingRecovery() {
+        const panel = makePanel();
+        const controller = panel.controller;
+        controller.uiActive = true;
+        controller.handlePairingEvent({event: "requested", data: {
+            request_id: "secret-a", device_key: "buds", kind: "pin-code", response_required: true
+        }});
+        controller.pairingInput = "123456";
+        controller.handlePairingEvent({event: "requested", data: {
+            request_id: "secret-b", device_key: "buds", kind: "passkey", response_required: true
+        }});
+        calls = [];
+        controller.deactivateUi();
+        compare(controller.pairingInput, "");
+        compare(Object.keys(controller.pairingInputs).length, 0);
+        compare(controller.pairingPrompts.length, 0);
+        compare(calls.length, 2);
+        for (const call of calls) {
+            compare(call.method, "bluetooth.pairing.respond");
+            compare(call.params.accept, false);
+            verify(call.params.value === undefined, "cancellation must not send a credential");
+        }
+        const rejectedIds = calls.map(call => call.params.request_id);
+        verify(rejectedIds.includes("secret-a") && rejectedIds.includes("secret-b"));
+        controller.replacePairingPrompts([
+            {request_id: "secret-a", response_required: true},
+            {request_id: "secret-b", response_required: true}
+        ]);
+        verify(!controller.pairingPromptOpen, "late recovery cannot resurrect closed prompts");
+        controller.handlePairingEvent({event: "requested", data: {
+            request_id: "fresh", device_key: "buds", kind: "pin-code", response_required: true
+        }});
+        compare(controller.pairingPrompt.request_id, "fresh");
+        compare(controller.pairingInput, "");
+        controller.pairingInput = "2222";
+        verify(controller.respondPairing(true));
+        calls = [];
+        controller.deactivateUi();
+        compare(calls.length, 0, "an in-flight response must not be sent twice or contradicted");
+        compare(controller.respondingPairingId, "fresh", "retain response ownership until completion");
+        compare(controller.pairingInput, "");
+        controller.finishPairingResponse(false);
+        controller.replacePairingPrompts([{request_id: "fresh", response_required: true}]);
+        verify(!controller.pairingPromptOpen, "a late failure cannot restore the closed credential prompt");
+    }
     function test_unavailableInvalidatesCapabilitiesAndSelection() {
         const panel = makePanel();
         const controller = panel.controller;

@@ -23,7 +23,6 @@ Core.Provider {
     function primaryActions(ap, connecting) {
         return [Core.Model.keepOpenAction("connect", "Connect", {
                 icon: "󰖩",
-                shortcut: "C",
                 role: "default",
                 enabled: controller.actions.canConnect(ap),
                 visible: !controller.isActive(ap) && !connecting,
@@ -34,7 +33,6 @@ Core.Provider {
                 }
             }), Core.Model.keepOpenAction("cancel-connect", "Cancel", {
                 icon: "󰜺",
-                shortcut: "C",
                 role: "destructive",
                 enabled: controller.connection.requestId.length > 0,
                 visible: connecting,
@@ -45,7 +43,6 @@ Core.Provider {
                 }
             }), Core.Model.keepOpenAction("disconnect", "Disconnect", {
                 icon: "󰤭",
-                shortcut: "D",
                 role: "destructive",
                 enabled: controller.actions.canDisconnect(ap),
                 visible: controller.isActive(ap) && !connecting,
@@ -59,7 +56,6 @@ Core.Provider {
     function toolbarActions(ap) {
         return [Core.Model.keepOpenAction("forget", "Forget", {
                 icon: "󰆴",
-                shortcut: "F",
                 role: "destructive",
                 enabled: controller.actions.canForget(ap),
                 confirmation: {
@@ -73,7 +69,6 @@ Core.Provider {
                 }
             }), Core.Model.keepOpenAction("portal", "Sign in", {
                 icon: "󰏌",
-                shortcut: "I",
                 presentation: {
                     group: "toolbar",
                     tone: "normal",
@@ -81,7 +76,6 @@ Core.Provider {
                 }
             }), Core.Model.keepOpenAction("share", "Share", {
                 icon: "󰒖",
-                shortcut: "S",
                 enabled: controller.actions.canShare(ap),
                 presentation: {
                     group: "toolbar",
@@ -92,7 +86,6 @@ Core.Provider {
     }
     function settingsActions(ap) {
         return [Core.Model.keepOpenAction("autoconnect", "Auto-connect", {
-                shortcut: "A",
                 kind: "toggle",
                 enabled: controller.actions.canProfileAction(ap, "can_toggle_autoconnect"),
                 state: {
@@ -102,7 +95,6 @@ Core.Provider {
                     group: "settings"
                 }
             }), Core.Model.keepOpenAction("randomized-mac", "Randomize MAC address", {
-                shortcut: "R",
                 kind: "toggle",
                 enabled: controller.actions.canProfileAction(ap, "can_set_mac_randomization"),
                 state: {
@@ -112,7 +104,6 @@ Core.Provider {
                     group: "settings"
                 }
             }), Core.Model.keepOpenAction("send-hostname", "Send device name", {
-                shortcut: "N",
                 kind: "toggle",
                 enabled: controller.actions.canProfileAction(ap, "can_set_send_hostname"),
                 state: {

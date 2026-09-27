@@ -6,6 +6,7 @@ RowLayout {
 
     required property real uiScale
     property string filterText: ""
+    readonly property bool searchFocused: search.inputActiveFocus
     property string placeholder: "Search…"
     property string icon: ""
     property bool signalIcon: false
@@ -40,6 +41,10 @@ RowLayout {
     }
     function focusSearch() {
         search.focusInput(false);
+    }
+
+    function insertSearchText(text: string): void {
+        search.insertText(text);
     }
 
     Component.onCompleted: if (focusOnCompleted)

@@ -26,6 +26,9 @@ Item {
     readonly property real delegateHeight: listFrame.delegateHeight
     readonly property bool listFocused: listFrame.listFocused
 
+    function focusList(): void {
+        listFrame.focusList();
+    }
     function focusTop(): void {
         listFrame.focusTop();
     }

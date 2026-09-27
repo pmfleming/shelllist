@@ -11,12 +11,15 @@ Item {
 
     signal refreshRequested
     signal detailsTabRequested
+    function dismiss(): void {
+        controller.dismissNavigation();
+    }
 
     Shortcut {
         sequence: "Escape"
         enabled: shortcuts.controller.uiActive && shortcuts.navigationEnabled
         autoRepeat: false
-        onActivated: shortcuts.controller.dismissNavigation()
+        onActivated: shortcuts.dismiss()
     }
     Shortcut {
         sequence: "F5"

@@ -49,6 +49,18 @@ FieldFrame {
             input.selectAll();
     }
 
+    // Continue an ordinary query after a printable key in the result region.
+    // Native insert retains cursor/selection semantics and maximumLength.
+    function insertText(value: string): void {
+        if (!enabled || readOnly)
+            return;
+        focusInput(false);
+        const position = input.selectionStart;
+        input.remove(input.selectionStart, input.selectionEnd);
+        input.insert(position, value);
+        field.edited(input.text);
+    }
+
     HoverHandler {
         id: hover
         enabled: field.enabled

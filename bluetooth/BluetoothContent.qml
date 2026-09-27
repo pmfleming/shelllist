@@ -9,8 +9,10 @@ Ui.ProviderChooserSurface {
     required property BluetoothController controller
     chooserController: controller
     readonly property bool editingDetails: (detailsItem as BluetoothDeviceDetails)?.editingText ?? false
-    navigationEnabled: !controller.modalPromptOpen && !editingDetails
-    refreshEnabled: controller.powered && !controller.refreshInFlight && !controller.actionInFlight && navigationEnabled
+    keyboardWorkflow: true
+    navigationEnabled: !controller.modalPromptOpen
+    detailsTabEnabled: navigationEnabled && controller.detailsOpen && (controller.hasSelection || controller.detailsTab === "adapter")
+    refreshEnabled: controller.powered && !controller.refreshInFlight && !controller.actionInFlight && navigationEnabled && !editingDetails
 
     function refresh(): void {
         controller.toggleScan();

@@ -217,8 +217,8 @@ Common chooser keys:
 
 | Key | Action |
 | --- | --- |
-| Type | Filter visible results |
-| `Up` / `Down`, `K` / `J` | Move selection |
+| Type | Edit the query; typing in results returns to its saved cursor (including J/K) |
+| `Up` / `Down` | Move selection; Up from the first result returns to search |
 | `Enter` | Run the primary action |
 | `Right` / `Left` | Open or close details |
 | `Ctrl+Tab` | Cycle detail tabs |
@@ -228,7 +228,9 @@ Common chooser keys:
 
 Surface-specific additions include `Shift+Enter` for a new application instance; `F6`–`F8` for hidden-network, security, and IP settings; and Clipboard copy/paste/delete combinations. There is no F1/contextual-help overlay, hover tooltip, or automatic action label. Question marks remain ordinary search text. Shared action controls, fields and result rows use immediate, inset focus rings; decorative animation does not delay focus feedback.
 
-The [Material Expressive design decisions](docs/proposals/material-expressive.md) describe the target and implementation progress. The remaining keyboard/layout redesign is not yet fully implemented; the keys above describe current behavior.
+**Applications and Bluetooth** now use region-level `Tab` / `Shift+Tab` (Search ↔ Results ↔ open Details). In details, Up/Down browse without changing settings; Right enters an editor and native arrows edit. Escape closes a menu, then leaves editing, then returns to results. Ctrl+Tab enters the new tab's content rather than its selector. Required-input dialogs retain conventional, contained Tab traversal. `Alt+Enter` in search invokes its trailing action; `Ctrl+Shift+S` captures either migrated surface. See the [keyboard workflow](docs/chooser-keyboard-workflow.md) for scope and remaining work.
+
+The [Material Expressive design decisions](docs/proposals/material-expressive.md) describe the target and implementation progress. Other domains' detail navigation, per-result session memory and the layout redesign are not yet migrated.
 
 Suggested Hyprland bindings:
 
