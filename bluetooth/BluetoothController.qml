@@ -21,7 +21,20 @@ Ui.ProviderChooserController {
     readonly property alias nameEdits: nameEditState
     readonly property alias adapterEdits: adapterEditState
     property string detailsTab: "device"
-    viewMemory: Ui.ChooserMemory {
+    viewMemory: detailsTab === "adapter" ? adapterMemory : deviceMemory
+    readonly property Ui.ChooserMemory adapterMemory: Ui.ChooserMemory {
+        controller: bluetoothController
+        enabled: bluetoothController.detailsTab === "adapter"
+        key: "bluetooth-settings::" + (bluetoothController.selectedAdapter.key || "global")
+        tab: bluetoothController.adapterSettingsTab
+        tabs: ["general", "pairing"]
+        onRestoreRequested: function (open, tab) {
+            // Selecting a radio is explicit settings navigation, not a request
+            // to close the inspector. Only its presentation tab/scroll changes.
+            bluetoothController.adapterSettingsTab = tab;
+        }
+    }
+    readonly property Ui.ChooserMemory deviceMemory: Ui.ChooserMemory {
         controller: bluetoothController
         enabled: bluetoothController.detailsTab !== "adapter"
         key: bluetoothController.selectedResult ? bluetoothController.selectedResult.key : ""
@@ -417,7 +430,9 @@ Ui.ProviderChooserController {
         return backend.deviceOperation("reset-alias", selectedDevice, {});
     }
     function openBluetoothSettings() {
+        viewMemory.synchronize();
         detailsTab = "adapter";
+        viewMemory.synchronize();
         detailsOpen = true;
     }
     function toggleBluetoothSettings() {

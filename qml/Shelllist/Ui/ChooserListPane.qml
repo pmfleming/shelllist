@@ -44,6 +44,10 @@ ColumnLayout {
     readonly property bool searchFocused: header.searchFocused
     readonly property int selectedIndex: chooserController.selectionModel ? chooserController.selectionModel.selectedIndex : 0
 
+    readonly property var controlLocation: FocusLocations.capture(pane, Window.window ? Window.window.activeFocusItem : null)
+    property var lastControlLocation: null
+    onControlLocationChanged: if (controlLocation) lastControlLocation = controlLocation
+
     signal querySelectionChanged
     signal iconClicked
     signal searchActionRequested
@@ -64,7 +68,7 @@ ColumnLayout {
     spacing: Theme.verticalSpacing(Theme.spacingMd, densityScale)
 
     function sessionState(): var {
-        return {selection: header.selectionState(), viewport: body.viewportState()};
+        return {selection: header.selectionState(), viewport: body.viewportState(), control: lastControlLocation};
     }
     function restoreSession(state: var): void {
         if (!state)
@@ -73,6 +77,7 @@ ColumnLayout {
         body.restoreViewport(state.viewport);
     }
 
+    function restoreControl(state: var): bool { return FocusLocations.restore(pane, state); }
     function focusSearch(): void {
         header.focusSearch();
     }

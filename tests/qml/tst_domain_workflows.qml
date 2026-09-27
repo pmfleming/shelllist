@@ -76,6 +76,17 @@ DaemonTestCase {
         verify(panel.detailsNavigation.browsing);
         compare(editor.text, "line one\nline two");
     }
+    function test_revealedSensitiveFieldsNeverHaveRestorableLocations() {
+        const panel = createTemporaryObject(panelFactory, testCase);
+        const field = findChild(panel, "ordinary");
+        field.sensitive = true;
+        field.password = false;
+        field.focusInput(false);
+        compare(field.selectionState(), null);
+        compare(Ui.FocusLocations.capture(panel, findChild(field, "fieldInput")), null);
+        panel.detailsNavigation.currentTarget = field;
+        compare(panel.detailsNavigation.locationState().target, "");
+    }
     function test_activityTypingDoesNotInvokeFormerLetterShortcuts() {
         const panel = createTemporaryObject(activityFactory, testCase);
         panel.controller.uiActive = true;

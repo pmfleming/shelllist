@@ -41,8 +41,6 @@ Item {
     readonly property string displayedDns: currentAutoDns && currentActiveIp.dns && currentActiveIp.dns.length > 0 ? currentActiveIp.dns.join(", ") : currentIp.dns
 
     clip: true
-    focus: visible && controller.advanced.open
-    Keys.onEscapePressed: controller.advanced.closeSettings()
 
     function showSection(nextSection: string, animate: bool): void {
         sectionTransition.stop();

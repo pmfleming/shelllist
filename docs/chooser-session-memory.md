@@ -7,9 +7,12 @@ after [anchored geometry](chooser-geometry.md):
   and notification groups use per-result presentation and ordinary invocation focus.
 - Battery and Activity use the single-panel focus adapter; Activity's todo draft
   remains controller-owned. Notifications retains its existing reply draft owner.
-- Computer-wide Bluetooth settings, Wi-Fi advanced scroll, and custom controls
-  still need the independent-record/registration slice. Missing targets always
-  fall back to browsing rather than restoring values or dispatching changes.
+- Bluetooth settings have a separate per-adapter cache with per-tab scroll;
+  Battery settings have their own computer-wide record. Wi-Fi advanced pages
+  now use the shared scroll boundary and ordinary settings have stable keys.
+- Unique named list/header controls can restore focus without activation; removed,
+  ambiguous or disabled targets fall back to search. Custom unnamed controls still
+  fall back safely rather than guessing an identity.
 
 ## Per-result presentation
 
@@ -40,7 +43,8 @@ existing post-hide order; it freezes presentation and closes ordinary menus.
 Reopening restores Search, Results, or Details;
 a registered detail target can resume browsing or editing, subject to current
 identity, tab and capability checks. A first invocation defaults to search.
-Unregistered list/header controls fall back to search rather than inheriting an
+Unique registered list/header controls restore through `FocusLocations`; unknown,
+ambiguous or unavailable controls fall back to search rather than inheriting an
 old detail editor.
 
 `Ui.ChooserSession` keeps a separate primitive snapshot in the retained
@@ -99,10 +103,10 @@ longer queues an unconditional search-focus request that could outlive closure.
 
 ## Remaining boundary
 
-This is not completion of all Material session work. Independent computer-wide
-settings presentation records, remaining domain keyboard/editor/memory migrations,
-and exact focus for unregistered controls remain pending. Adapter invocation
-focus is supported; its per-tab scroll history is not serialized. Native text
+This is not a guarantee of exact focus for arbitrary custom controls. Independent
+Bluetooth adapter/tab and Battery settings records are delivered. Unknown or
+ambiguous targets still deliberately fall back. Revealed Wi-Fi password fields
+remain classified sensitive independently of their visual echo mode. Native text
 horizontal scrolling follows Qt's caret revelation rather than a separate pixel
 snapshot. Disk persistence and restoring sensitive dialogs are deliberately out
 of scope.

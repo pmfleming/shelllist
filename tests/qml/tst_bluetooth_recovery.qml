@@ -230,7 +230,34 @@ DaemonTestCase {
         compare(input.cursorPosition, 1);
         compare(input.selectionEnd, 3);
         verify(calls.every(call => call.method === "bluetooth.snapshot"), "restoration performs no rename, policy or adapter write");
-        compare(content.controller.viewMemory.enabled, !data.adapter);
+        verify(content.controller.viewMemory.enabled);
+        compare(content.controller.viewMemory, data.adapter ? content.controller.adapterMemory : content.controller.deviceMemory);
+    }
+    function test_adapterPresentationRecordsAreIndependent() {
+        const content = sessionContent(true);
+        const controller = content.controller;
+        const first = controller.selectedAdapter.key;
+        const second = Object.assign({}, controller.selectedAdapter, {key: "usb", alias: "Second"});
+        controller.adapters = controller.adapters.concat([second]);
+        controller.viewMemory.synchronize();
+        controller.viewMemory.rememberPage("pairing", {scroll: 42});
+        controller.adapterSettingsTab = "general";
+        controller.viewMemory.synchronize();
+        controller.preferredAdapterKey = "usb";
+        controller.viewMemory.synchronize();
+        compare(controller.adapterSettingsTab, "general");
+        controller.adapterSettingsTab = "pairing";
+        controller.viewMemory.synchronize();
+        controller.viewMemory.rememberPage("pairing", {scroll: 17});
+        controller.preferredAdapterKey = first;
+        controller.viewMemory.synchronize();
+        compare(controller.adapterSettingsTab, "general");
+        compare(controller.viewMemory.pageState("pairing").scroll, 42);
+        controller.preferredAdapterKey = "usb";
+        controller.viewMemory.synchronize();
+        compare(controller.adapterSettingsTab, "pairing");
+        compare(controller.viewMemory.pageState("pairing").scroll, 17);
+        verify(controller.detailsOpen);
     }
     function test_changedAdapterCannotInheritAnInvocationEditor() {
         const content = sessionContent(true);

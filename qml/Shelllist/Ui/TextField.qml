@@ -12,6 +12,8 @@ FieldFrame {
     readonly property alias inputActiveFocus: input.activeFocus
     property string placeholder: ""
     property bool password: false
+    // Classification is independent of whether an explicit reveal is visible.
+    property bool sensitive: password
     property bool passwordRevealed: false
     property bool showPasswordButton: password
     property bool readOnly: false
@@ -53,12 +55,12 @@ FieldFrame {
 
     // Positions only: never retain text, preedit/IME state or password metadata.
     function selectionState(): var {
-        if (password)
+        if (sensitive)
             return null;
         return {cursor: input.cursorPosition, anchor: input.cursorPosition === input.selectionStart ? input.selectionEnd : input.selectionStart};
     }
     function restoreSelection(state: var): void {
-        if (password || !state || !Number.isFinite(state.cursor) || !Number.isFinite(state.anchor))
+        if (sensitive || !state || !Number.isFinite(state.cursor) || !Number.isFinite(state.anchor))
             return;
         const cursor = Math.max(0, Math.min(input.text.length, state.cursor));
         const anchor = Math.max(0, Math.min(input.text.length, state.anchor));

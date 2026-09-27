@@ -23,6 +23,7 @@ RowLayout {
 
     SegmentedControl {
         id: control
+        objectName: row.objectName
         Layout.fillWidth: true
         Layout.fillHeight: true
         onSelected: function (value) {

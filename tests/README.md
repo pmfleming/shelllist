@@ -52,7 +52,9 @@ already-open development shell after changing `flake.nix`.
   live layer placement and input-mask acceptance are separate.
 - `tst_domain_workflows.qml` covers the panel adapter, native multiline arrows and
   layered Escape, value-free editor selection restoration, and ordinary Activity
-  typing without the former letter shortcuts. Notifications' live-reply test now
+  typing without the former letter shortcuts, and exclusion of revealed sensitive
+  inputs. Memory tests cover named list controls plus disabled/removed fallbacks;
+  Bluetooth tests cover independent adapter/tab records. Notifications' live-reply test now
   explicitly opens its inspector before verifying stable delegates and drafts.
 - `tst_chooser_memory.qml` covers stable per-result/tab scroll and editor memory,
   focus-safe asynchronous restoration, explicit close, immediate row toggles,

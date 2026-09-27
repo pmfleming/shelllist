@@ -30,7 +30,7 @@ FocusScope {
 
     function targetKey(item: Item): string {
         const field = item as TextField;
-        return field ? (field.password ? "" : field.focusKey) : item ? item.objectName : "";
+        return field ? (field.sensitive ? "" : field.focusKey) : item ? item.objectName : "";
     }
     function locationState(): var {
         const field = currentTarget as TextField;

@@ -1,10 +1,8 @@
 import QtQuick
+import Shelllist.Ui
 
-Flickable {
+// Keep the existing page-owned column/extent, with shared scroll memory and
+// keyboard target revelation rather than a separate unregistered viewport.
+DetailFlickable {
     anchors.fill: parent
-    contentWidth: width
-    boundsBehavior: Flickable.StopAtBounds
-    flickableDirection: Flickable.VerticalFlick
-    interactive: contentHeight > height
-    clip: true
 }

@@ -15,7 +15,7 @@ Item {
     property bool restoring: false
     property string lastRegion: "search"
     property string lastContext: ""
-    readonly property string region: listItem && listItem.searchFocused ? "search" : listItem && listItem.listFocused ? "results" : navigation.activeFocus || navigation.popupOpen ? "details" : insideList(Window.window ? Window.window.activeFocusItem : null) ? "search" : ""
+    readonly property string region: listItem && listItem.searchFocused ? "search" : listItem && listItem.listFocused ? "results" : listItem && listItem.controlLocation ? "list-control" : navigation.activeFocus || navigation.popupOpen ? "details" : insideList(Window.window ? Window.window.activeFocusItem : null) ? "search" : ""
     readonly property string selectedKey: controller.resultKeyAt(controller.selectionModel ? controller.selectionModel.selectedIndex : 0)
 
     function insideList(item: Item): bool {
@@ -74,7 +74,7 @@ Item {
             navigation.focusSessionLocation(pending ? Object.assign({}, saved.location || ({}), {editing: false}) : saved.location);
         } else if (saved.region === "results" || (saved.region === "details" && controller.hasSelection)) {
             listItem.focusList();
-        } else {
+        } else if (saved.region !== "list-control" || !listItem.restoreControl(saved.list ? saved.list.control : null)) {
             listItem.focusSearch();
         }
         rememberRegion();

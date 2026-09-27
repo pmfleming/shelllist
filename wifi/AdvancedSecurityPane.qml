@@ -9,6 +9,8 @@ AdvancedSettingsFlickable {
     id: securityFlick
 
     required property AdvancedSettingsPage settings
+    viewMemory: settings.controller.viewMemory
+    memoryTab: "security"
 
     contentHeight: securityCards.implicitHeight
 
@@ -70,6 +72,7 @@ AdvancedSettingsFlickable {
                     visible: !!securityFlick.settings.bandStatus.path
                     height: visible ? 40 : 0
                     enabled: !securityFlick.settings.controller.actionInFlight
+                    objectName: "wifiBand"
                     label: "Wi-Fi band"
                     value: securityFlick.settings.bandStatus.selected || "auto"
                     options: [
@@ -100,6 +103,7 @@ AdvancedSettingsFlickable {
 
                 AdvancedSegmentedRow {
                     height: 40
+                    objectName: "wifiMacPolicy"
                     label: "Address policy"
                     value: securityFlick.settings.macPolicy
                     options: [
@@ -169,6 +173,7 @@ AdvancedSettingsFlickable {
                     }
 
                     TextField {
+                        sensitive: true
                         width: securityControls.width
                         height: 40
                         readOnly: !securityFlick.settings.personalSecurity

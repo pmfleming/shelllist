@@ -335,7 +335,10 @@ DaemonTestCase {
         wait(0);
         verify(surface.listItem.listFocused, "a duplicate invocation request must not steal new focus");
     }
-    function test_nonRegionListControlFallsBackToSearch() {
+    function test_namedListControlRestoration_data() {
+        return [{tag: "valid"}, {tag: "disabled"}, {tag: "removed"}];
+    }
+    function test_namedListControlRestoration(data) {
         const surface = makeSurface();
         open(surface);
         keyClick(Qt.Key_Right);
@@ -343,9 +346,16 @@ DaemonTestCase {
         tryVerify(() => findChild(surface, "listOption") !== null);
         findChild(surface, "listOption").forceActiveFocus();
         closeInvocation(surface);
-        compare(surface.chooserController.focusMemory.region, "search");
+        compare(surface.chooserController.focusMemory.region, "list-control");
+        if (data.tag === "disabled")
+            findChild(surface, "listOption").enabled = false;
+        if (data.tag === "removed")
+            surface.listItem.listOptionsComponent = null;
         reopenInvocation(surface);
-        tryVerify(() => surface.listItem.searchFocused);
+        if (data.tag === "valid")
+            tryVerify(() => findChild(surface, "listOption").activeFocus);
+        else
+            tryVerify(() => surface.listItem.searchFocused);
         verify(!surface.detailsNavigation.editing);
     }
     function test_contextChangedAfterFocusLossCannotInheritAnEditor() {

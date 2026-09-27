@@ -10,6 +10,8 @@ AdvancedSettingsFlickable {
     id: hardwareFlick
 
     required property AdvancedSettingsPage settings
+    viewMemory: settings.controller.viewMemory
+    memoryTab: "hardware"
 
     contentHeight: hardwareCards.implicitHeight
 
@@ -28,6 +30,7 @@ AdvancedSettingsFlickable {
                 spacing: 10
 
                 AdvancedSegmentedRow {
+                    objectName: "wifiIpFamily"
                     label: "Address family"
                     value: hardwareFlick.settings.ipFamily
                     options: [
@@ -48,6 +51,7 @@ AdvancedSettingsFlickable {
                 ToggleRow {
                     width: parent.width
                     height: 44
+                    objectName: "wifiIpEnabled"
                     title: hardwareFlick.settings.ipFamily === "ipv4" ? "Enable IPv4" : "Enable IPv6"
                     showSubtitle: false
                     checked: hardwareFlick.settings.currentFamilyEnabled
@@ -57,6 +61,7 @@ AdvancedSettingsFlickable {
                 ToggleRow {
                     width: parent.width
                     height: 44
+                    objectName: "wifiIpAutomatic"
                     title: qsTr("Automatic addressing")
                     showSubtitle: false
                     checked: hardwareFlick.settings.currentMethod === "auto"
@@ -67,6 +72,7 @@ AdvancedSettingsFlickable {
                 ToggleRow {
                     width: parent.width
                     height: 44
+                    objectName: "wifiDnsAutomatic"
                     title: qsTr("Automatic DNS")
                     showSubtitle: false
                     checked: hardwareFlick.settings.currentAutoDns
@@ -90,6 +96,7 @@ AdvancedSettingsFlickable {
                         family: hardwareFlick.settings.ipFamily
                         allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
                         readOnly: hardwareFlick.settings.currentMethod !== "manual"
+                        objectName: "wifiIpAddress"
                         text: hardwareFlick.settings.displayedAddress
                         onEdited: function (value) {
                             hardwareFlick.settings.currentIp.address = value;
@@ -107,6 +114,7 @@ AdvancedSettingsFlickable {
                         family: hardwareFlick.settings.ipFamily
                         allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
                         readOnly: hardwareFlick.settings.currentMethod !== "manual"
+                        objectName: "wifiIpPrefix"
                         text: hardwareFlick.settings.displayedPrefix
                         onEdited: function (value) {
                             hardwareFlick.settings.currentIp.prefix = value;
@@ -123,6 +131,7 @@ AdvancedSettingsFlickable {
                         Layout.fillWidth: true
                         family: hardwareFlick.settings.ipFamily
                         readOnly: hardwareFlick.settings.currentMethod !== "manual"
+                        objectName: "wifiIpGateway"
                         text: hardwareFlick.settings.displayedGateway
                         onEdited: function (value) {
                             hardwareFlick.settings.currentIp.gateway = value;
@@ -140,6 +149,7 @@ AdvancedSettingsFlickable {
                         family: hardwareFlick.settings.ipFamily
                         multiple: true
                         readOnly: !hardwareFlick.settings.currentFamilyEnabled || hardwareFlick.settings.currentAutoDns
+                        objectName: "wifiDnsServers"
                         text: hardwareFlick.settings.displayedDns
                         onEdited: function (value) {
                             hardwareFlick.settings.currentIp.dns = value;
@@ -155,6 +165,7 @@ AdvancedSettingsFlickable {
                     TextField {
                         Layout.fillWidth: true
                         readOnly: !hardwareFlick.settings.currentFamilyEnabled
+                        objectName: "wifiDnsSearch"
                         text: hardwareFlick.settings.currentIp.search
                         placeholder: "Optional, comma-separated"
                         onEdited: function (value) {

@@ -9,10 +9,8 @@ Ui.DetailFlickable {
     readonly property alias editing: settings.editing
     readonly property string selectedTab: controller.adapterSettingsTab
 
-    onSelectedTabChanged: {
-        page.cancelFlick();
-        page.contentY = 0;
-    }
+    viewMemory: controller.adapterMemory
+    memoryTab: selectedTab
 
     ColumnLayout {
         width: parent.width
