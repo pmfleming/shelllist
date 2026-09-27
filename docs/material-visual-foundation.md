@@ -115,6 +115,49 @@ The installed Qt 6.11.1 types and corresponding Behavior/SpringAnimation
 implementation were checked as well. This is an incremental desktop adaptation,
 not full Material conformance or completed control-system migration.
 
+## Material sliders and segmented choices
+
+`ValueSlider` keeps Qt's native `Controls.Slider` as the input/accessibility
+boundary. Its new paint uses **16px split tracks**, **4×44px handles**, rounded
+outer ends, smaller inner corners and 4px endpoint markers. A 6px gap is reserved
+around the fixed handle footprint. Active/inactive tracks use primary and
+secondary-container roles. The default horizontal control is now 44px high;
+vertical geometry is transposed and horizontal mirroring follows Qt's visual
+position. Existing labels and explicit value readouts remain; no hover/focus
+value bubbles were introduced.
+
+Handle *position* and track fill follow the native value immediately, whether
+changed by dragging, keys or authoritative state. Only the painted handle
+thickness springs from 4px to 2px under focus/press; its native footprint stays
+fixed, so decoration cannot change drag mapping. The shared inset focus ring
+also appears immediately. The previous animated keyboard-position test was a
+constraint on the wrong behavior and is now replaced with immediate-position
+assertions. Home/End, stepped keyboard edits, live edits and completion signals
+retain their existing contract.
+
+`SegmentedControl` now has a solid, outlined capsule with joined options,
+secondary-container selection and its paired text color. Selection fill, text,
+accessible checked state and the selected option's inset focus ring update
+together. There is no sliding background behind text that already changed
+foreground. A group remains one Tab stop; Left/Right skip unavailable options
+and follow the mirrored visual order. Options expose named radio-button states
+and guarded assistive press/toggle actions. Becoming busy preserves current
+focus; disabled/busy controls cannot dispatch through direct or assistive paths.
+A group with no selected value retains a visible group-level focus ring.
+
+The group uses the existing 42px desktop action height rather than the 40px
+Material token, and 14px option labels instead of the old 12px labels. A separate
+selected check glyph is omitted to preserve room for identifying option text in
+compact settings rows; selected color/weight and nonvisual checked state remain.
+End-cap shapes no longer depend on the legacy radius override. These component
+changes do **not** implement the future region traversal/browse-versus-edit model.
+
+Reference implementations checked:
+[Material slider tokens](https://github.com/androidx/androidx/blob/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/SliderTokens.kt)
+and [outlined segmented-button tokens](https://github.com/androidx/androidx/blob/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/OutlinedSegmentedButtonTokens.kt).
+Per-corner Rectangle radii are supported by the packaged Qt 6.11.1 and were
+validated in the actual engine, including the software-rendered gallery.
+
 ## Development gallery
 
 ```sh
@@ -125,8 +168,9 @@ The separate gallery uses the shared production controls. It shows light/dark
 swatches for the desktop, purple and teal seeds; real controls with keyboard
 focus, capsule button shapes and on/off/disabled Material switches; and
 **Roboto Flex versus Noto Sans** samples. Hold Space or the pointer on a button
-to inspect its press shape. Its package supplies these
-fonts, and the offscreen check verifies both are available. The gallery does not
+to inspect its press shape. The slider samples include live, disabled, mirrored
+and vertical states; the segmented group includes an unavailable choice.
+Its package supplies these fonts, and the offscreen check verifies both are available. The gallery does not
 choose a production font or change system font configuration. Icon-family
 comparison is still pending; current Nerd Font glyphs are retained.
 
@@ -156,7 +200,7 @@ and the full sibling-aware `local-build.py check . --keep-going
 local samples are `/tmp/shelllist-material-{light,dark}.png`. No live deployment,
 compositor blur, hardware latency or screen-reader acceptance was performed.
 
-The subsequent button/switch slice passes strict lint, **110 Qt behavioral
+The subsequent button/switch slice passed strict lint, **110 Qt behavioral
 cases / 178 passes including hooks**, runtime smoke and the full sibling-aware
 gate. Two new shared-boundary tests cover immediate activation/focus through
 press/reversal/busy transitions and stopping running springs when motion is
@@ -164,6 +208,16 @@ disabled. The native domain recovery tests remain intact. Light/dark offscreen
 captures were inspected at `/tmp/shelllist-expressive-{light,dark}.png`; detailed
 logs are `/tmp/shelllist-expressive-controls-tests.log` and
 `/tmp/shelllist-expressive-controls-full-check.log`.
+
+The settings-control slice passes strict lint, **114 Qt behavioral cases / 182
+passes including hooks**, runtime smoke and the full sibling-aware gate. Tests
+exercise actual Qt input in horizontal, mirrored and vertical sliders, immediate
+feedback, segmented radio semantics, skipped unavailable options and busy/disabled
+activation guards. Existing domain recovery tests remain intact. Light/dark
+captures were inspected at `/tmp/shelllist-material-settings-{light,dark}.png`;
+logs are `/tmp/shelllist-material-settings-tests.log` and
+`/tmp/shelllist-material-settings-full-check.log`. No live deployment, compositor
+or screen-reader acceptance was performed.
 
 Typeface/icon selection, broader shape/motion migration and final spring tuning,
 compositor blur and real-desktop visual acceptance remain open. Contrast

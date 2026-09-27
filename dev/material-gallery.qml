@@ -84,7 +84,7 @@ ShellRoot {
         id: window
         title: "Shelllist · Material development gallery"
         width: 1080
-        height: Quickshell.env("SHELLLIST_GALLERY_CAPTURE") ? 1120 : 860
+        height: Quickshell.env("SHELLLIST_GALLERY_CAPTURE") ? 1260 : 860
         visible: true
         onClosing: Qt.quit()
 
@@ -228,13 +228,51 @@ ShellRoot {
                     placeholder: "Normal text editing / immediate focus"
                     Accessible.name: "Preview text field"
                 }
-                Ui.ValueSlider {
+                Ui.ThemeText {
+                    text: "Sliders · immediate value position · disabled / mirrored / vertical"
+                    font.pixelSize: 18
+                }
+                RowLayout {
                     Layout.fillWidth: true
-                    from: 0
-                    to: 100
-                    value: 50
-                    stepSize: 1
-                    Accessible.name: "Preview slider"
+                    spacing: 20
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Ui.ValueSlider {
+                                id: sampleSlider
+                                Layout.fillWidth: true
+                                from: 0
+                                to: 100
+                                value: 50
+                                stepSize: 1
+                                Accessible.name: "Preview slider"
+                            }
+                            Ui.ThemeText {
+                                Layout.preferredWidth: 42
+                                text: Math.round(sampleSlider.value) + "%"
+                                horizontalAlignment: Text.AlignRight
+                            }
+                        }
+                        Ui.ValueSlider {
+                            Layout.fillWidth: true
+                            value: 0.65
+                            enabled: false
+                            Accessible.name: "Preview disabled slider"
+                        }
+                        Ui.ValueSlider {
+                            Layout.fillWidth: true
+                            LayoutMirroring.enabled: true
+                            value: 0.25
+                            Accessible.name: "Preview mirrored slider"
+                        }
+                    }
+                    Ui.ValueSlider {
+                        Layout.preferredHeight: 140
+                        orientation: Qt.Vertical
+                        value: 0.5
+                        Accessible.name: "Preview vertical slider"
+                    }
                 }
                 Ui.SegmentedControl {
                     Layout.fillWidth: true
@@ -242,6 +280,11 @@ ShellRoot {
                         {
                             value: "first",
                             label: "First"
+                        },
+                        {
+                            value: "unavailable",
+                            label: "Unavailable",
+                            enabled: false
                         },
                         {
                             value: "second",
