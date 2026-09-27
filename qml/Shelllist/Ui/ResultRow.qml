@@ -42,7 +42,11 @@ Rectangle {
 
     width: ListView.view.width
     height: rowHeight
-    radius: selected ? Theme.cardRadius : 0
+    radius: selectionShape.value
+    ExpressiveMotion {
+        id: selectionShape
+        target: row.selected ? Theme.cardRadius : 0
+    }
     color: selected ? Theme.selected : (pointerPressed ? Theme.pressed : (pointerHovered ? Theme.hover : "transparent"))
     FocusRing {
         active: row.selected && row.selectionFocused

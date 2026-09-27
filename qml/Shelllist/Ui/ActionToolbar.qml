@@ -31,7 +31,7 @@ RowLayout {
             objectName: "detailAction:" + modelData.id
 
             Layout.fillWidth: toolbar.fillActions
-            Layout.preferredWidth: toolbar.fillActions ? -1 : (Number((modelData.presentation || {}).width) || 104)
+            Layout.preferredWidth: toolbar.fillActions ? -1 : (iconOnly ? toolbar.controlHeight : (Number((modelData.presentation || {}).width) || 104))
             Layout.preferredHeight: toolbar.controlHeight
             label: modelData.label || ""
             icon: modelData.icon || ""

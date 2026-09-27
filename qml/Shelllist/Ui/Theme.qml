@@ -2,13 +2,19 @@ pragma Singleton
 
 import Quickshell
 import QtQuick
+import Shelllist.Io as Io
 
 Item {
     id: theme
 
     readonly property bool hyprland: !!Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
     readonly property var noAnimationsOverride: envBoolOrNull("SHELLLIST_NO_ANIMATIONS")
-    readonly property bool noAnimations: noAnimationsOverride === null ? !hyprland : noAnimationsOverride
+    readonly property bool noAnimations: noAnimationsOverride === null ? (!hyprland || compositorMotion.reduced) : noAnimationsOverride
+    readonly property bool blurEnabled: envBoolOrNull("SHELLLIST_BLUR") !== false
+    Io.CompositorMotion {
+        id: compositorMotion
+        active: theme.hyprland && theme.noAnimationsOverride === null
+    }
     // Only the development gallery/tests set this; the resident host follows desktop.
     property int previewColorScheme: Qt.Unknown
     readonly property int resolvedColorScheme: previewColorScheme === Qt.Unknown ? Application.styleHints.colorScheme : previewColorScheme
@@ -68,7 +74,8 @@ Item {
     readonly property color weatherHeroBorder: Qt.rgba(1, 1, 1, 0.12)
     readonly property color weatherPrecipitation: Qt.rgba(47 / 255, 140 / 255, 1, 0.22)
 
-    readonly property string fontFamily: envText("SHELLLIST_FONT") || "Noto Sans"
+    readonly property string fontFamily: envText("SHELLLIST_FONT") || "Roboto Flex"
+    readonly property string symbolFontFamily: "Material Symbols Rounded"
     readonly property string iconFontFamily: envText("SHELLLIST_ICON_FONT") || "JetBrainsMono Nerd Font"
 
     readonly property int spacingXs: 4
@@ -129,9 +136,9 @@ Item {
     readonly property real listDensityMaximum: 1.08
 
     readonly property int baseRadius: envInt("SHELLLIST_RADIUS", 10)
-    readonly property int windowRadius: Math.max(0, baseRadius + 8)
-    readonly property int panelRadius: Math.max(0, baseRadius + 2)
-    readonly property int cardRadius: Math.max(0, baseRadius)
+    readonly property int windowRadius: 28
+    readonly property int panelRadius: 20
+    readonly property int cardRadius: 16
     readonly property int controlRadius: Math.max(0, Math.round(baseRadius * 0.8))
 
     function envText(name) {

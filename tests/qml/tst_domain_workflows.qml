@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
 import Shelllist.Activity as Activity
+import "../../qml/Shelllist/Io/HyprlandSettings.js" as CompositorSettings
 
 DaemonTestCase {
     id: testCase
@@ -38,6 +39,28 @@ DaemonTestCase {
         Activity.ActivityContent { controller: Activity.ActivityController {} }
     }
     function init() { failOnWarning(/.*/); }
+    Component {
+        id: iconActionFactory
+        Ui.ActionButton { label: "Settings"; icon: "󰒓"; width: 42; height: 42 }
+    }
+    function test_iconActionsKeepTheirNonvisualName() {
+        const button = createTemporaryObject(iconActionFactory, testCase);
+        compare(button.Accessible.name, "Settings");
+        compare(findChild(button, "actionLabel").label, "");
+        button.iconOnly = false;
+        compare(findChild(button, "actionLabel").label, "Settings");
+    }
+    function test_compositorPreferenceAndScopedBlurCommand() {
+        verify(CompositorSettings.motionDisabled({int: 0}));
+        verify(!CompositorSettings.motionDisabled({int: 1}));
+        const command = CompositorSettings.layerStyle("shelllist.test", true, true);
+        compare(command[0], "hyprctl");
+        compare(command[1], "eval");
+        verify(command[2].includes("blur = true"));
+        verify(command[2].includes("no_anim = true"));
+        verify(command[2].includes("ignore_alpha = 0.01"));
+        verify(command[2].includes("^shelllist\\\\.test$"), "scope is a literal namespace, not an arbitrary regex");
+    }
     function test_panelRestoresEditorButNeverItsValue() {
         const panel = createTemporaryObject(panelFactory, testCase);
         const owner = panel.chooserController;

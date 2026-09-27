@@ -6,6 +6,7 @@ ActionControl {
     property string label: ""
     accessibleName: label
     property string icon: ""
+    property bool iconOnly: icon.length > 0
     property int iconSize: Theme.iconSizeSmall
     property string hotkey: ""
     // Transitional nonvisual metadata; no tooltip or focus label is rendered.
@@ -30,8 +31,9 @@ ActionControl {
     border.width: 1
     opacity: enabled && interactive ? 1.0 : Theme.disabledOpacity
     ControlLabel {
+        objectName: "actionLabel"
         anchors.centerIn: parent
-        label: control.label
+        label: control.iconOnly ? "" : control.label
         icon: control.icon
         hotkey: control.hotkey
         iconColor: control.labelColor

@@ -264,13 +264,21 @@ Material tracks/thumbs with interruptible springs. Sliders use split tracks and
 slim handles; segmented choices use outlined capsules. Text fields and dropdowns
 share outlined Material frames and immediate focus/error feedback. Dropdown
 hover is decorative, and pending choices are not displayed as confirmed values.
-Compositor blur and broader Expressive styling are still pending.
+Production typography uses packaged Roboto Flex, with Material Symbols Rounded
+for shared semantic icons and a packaged Nerd Font fallback for specialist glyphs.
+Icon-bearing actions/tabs hide their visual labels but retain accessible names;
+text-only and explicit confirmation actions keep meaningful text. Chooser/card
+shapes now use 28/20/16px surface radii. Lua Hyprland receives a namespace-scoped
+blur rule excluding transparent reserved space. Without an explicit motion
+override, Hyprland's animation preference is read on startup/config reload; there
+is no polling. Live blur, final spring feel and accessibility acceptance remain.
 
 Supported environment inputs:
 
 ```text
 SHELLLIST_ACCENT         # Optional seed override, not an exact primary-role color
-SHELLLIST_RADIUS         # Legacy surfaces and unmigrated controls
+SHELLLIST_RADIUS         # Remaining legacy controls
+SHELLLIST_BLUR           # false disables Shelllist's Lua Hyprland blur rule
 SHELLLIST_FONT           SHELLLIST_ICON_FONT    SHELLLIST_NO_ANIMATIONS
 ```
 

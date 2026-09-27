@@ -13,15 +13,15 @@ Row {
     property int labelWeight: Theme.fontWeightRegular
 
     spacing: Theme.spacingSm
-    Text {
+    GlyphLabel {
         visible: controlLabel.icon.length > 0
         anchors.verticalCenter: parent.verticalCenter
-        text: controlLabel.icon
+        glyph: controlLabel.icon
         color: controlLabel.iconColor
-        font.family: Theme.iconFontFamily
         font.pixelSize: controlLabel.iconSize
     }
     ThemeText {
+        visible: controlLabel.label.length > 0
         anchors.verticalCenter: parent.verticalCenter
         text: UiText.highlightHotkey(controlLabel.label, controlLabel.hotkey)
         textFormat: Text.RichText

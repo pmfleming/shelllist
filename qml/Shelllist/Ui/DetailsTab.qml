@@ -10,6 +10,7 @@ ActionControl {
 
     accessibleName: label
     Accessible.selected: selected
+    Accessible.role: Accessible.PageTab
 
     color: selected ? Theme.selected : (enabled && area.pressed ? Theme.pressed : (enabled && area.containsMouse ? Theme.hover : "transparent"))
     border.color: activeFocus ? Theme.strongBorder : "transparent"
@@ -30,7 +31,7 @@ ActionControl {
 
     ControlLabel {
         anchors.centerIn: parent
-        label: tab.label
+        label: tab.icon ? "" : tab.label
         icon: tab.icon
         hotkey: tab.hotkey
         iconColor: tab.selected ? Theme.accent : Theme.mutedText

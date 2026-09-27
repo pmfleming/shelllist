@@ -93,7 +93,7 @@
             runtimeInputs = [ pkgs.quickshell ];
             text = ''
               export FONTCONFIG_FILE=${pkgs.makeFontsConf {
-                fontDirectories = [ pkgs.roboto-flex pkgs.noto-fonts pkgs.nerd-fonts.jetbrains-mono ];
+                fontDirectories = [ pkgs.roboto-flex pkgs.material-symbols pkgs.noto-fonts pkgs.nerd-fonts.jetbrains-mono ];
               }}
               export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml
               export QML2_IMPORT_PATH="$QML_IMPORT_PATH"
@@ -123,6 +123,9 @@
             ];
             text = ''
               config_path=${self.packages.${system}.shelllistConfig}/share/shelllist/shell
+              export FONTCONFIG_FILE=${pkgs.makeFontsConf {
+                fontDirectories = [ pkgs.roboto-flex pkgs.material-symbols pkgs.noto-fonts pkgs.nerd-fonts.jetbrains-mono ];
+              }}
               export QML_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}
               export QML2_IMPORT_PATH=${self.packages.${system}.shelllistConfig}/share/shelllist/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}
 

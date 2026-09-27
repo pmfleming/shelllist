@@ -3,20 +3,23 @@ import Quickshell.Io
 
 Item {
     id: client
-    property string pendingRule: ""
-    function apply(rule) {
+    property list<string> pendingCommand: []
+    function apply(rule: string): void {
+        applyCommand(["hyprctl", "keyword", "layerrule", rule]);
+    }
+    function applyCommand(command: var): void {
         if (process.running) {
-            pendingRule = rule;
+            pendingCommand = command;
             return;
         }
-        process.exec(["hyprctl", "keyword", "layerrule", rule]);
+        process.exec(command);
     }
-    function applyPending() {
-        if (pendingRule.length === 0)
+    function applyPending(): void {
+        if (!pendingCommand.length)
             return;
-        const rule = pendingRule;
-        pendingRule = "";
-        apply(rule);
+        const command = Array.from(pendingCommand);
+        pendingCommand = [];
+        applyCommand(command);
     }
     Process {
         id: process

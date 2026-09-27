@@ -3,6 +3,39 @@
 This is step 2 of the [agreed design](proposals/material-expressive.md), not a
 claim of a finished Material 3 Expressive interface.
 
+## Current visual-system decisions
+
+The production wrapper now packages **Roboto Flex**, **Material Symbols Rounded**,
+Noto fallback and JetBrainsMono Nerd Font. Common semantic glyphs map to Material
+symbols; specialized unmapped glyphs deliberately retain the Nerd Font rather
+than acquiring an invented meaning. `SHELLLIST_FONT` still overrides typography;
+`SHELLLIST_ICON_FONT` controls the specialist fallback. Existing symbol mappings
+are in `Ui/MaterialIcons.js`.
+
+Icon-bearing actions and detail tabs are visually icon-only; their full accessible
+names remain. A label remains when no meaningful icon exists, including explicit
+confirmation text. Shell/panel/card radii are 28/20/16px; field outlines remain 4px
+and buttons retain their expressive capsule/pressed treatment. Selected result
+corners use the interruptible spring without changing hit geometry or focus timing.
+
+On Lua Hyprland, a named, literal-namespace layer rule enables blur and ignores
+alpha below 0.01, so reserved transparent host space does not blur the desktop.
+`SHELLLIST_BLUR=false` opts out. Rules update on opening rather than assuming a
+compositor reload preserved them. Legacy/non-Hyprland platforms retain the
+translucent fallback; no unsupported blur API is claimed.
+
+With no explicit `SHELLLIST_NO_ANIMATIONS` override, the compositor's
+`animations:enabled` preference is read at startup and on `configreloaded`.
+Reads time out after 1.5 seconds; failed reads retain the last known preference.
+There is no polling. Existing springs stop at their latest target when reduced
+motion becomes active. Qt 6.11's accessibility hints expose contrast, not a
+portable reduced-motion setting; this integration is specifically Hyprland.
+
+Final live spring tuning, blur/GPU behavior and screen-reader acceptance still
+require the separate acceptance stage. The sections below record the foundation
+and earlier incremental decisions, not an assertion that those earlier defaults
+remain the production choices.
+
 ## Color implementation
 
 `Ui.MaterialPalette` is a Qt-only, reactive palette taking `seedColor` and `dark`.

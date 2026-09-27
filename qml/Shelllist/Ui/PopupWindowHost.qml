@@ -8,6 +8,7 @@ import Quickshell.Wayland
 import QtQuick
 import "HyprlandDispatch.js" as HyprlandDispatch
 import "../Io/HyprlandWorkArea.js" as WorkArea
+import "../Io/HyprlandSettings.js" as CompositorSettings
 
 Item {
     id: host
@@ -32,7 +33,6 @@ Item {
     property bool retainContentLoaded: false
     property bool ipcEnabled: true
     property bool shortcutEnabled: true
-    property int popoverNoAnimRuleState: -1
 
     readonly property string launchMode: (Quickshell.env(modeEnvironment) || defaultLaunchMode).toLowerCase()
     readonly property bool popoverMode: launchMode === "popover"
@@ -125,15 +125,14 @@ Item {
         Hyprland.dispatch(HyprlandDispatch.moveWindow(Hyprland.usingLua, selector, targetWindowX(), targetWindowY()));
     }
 
-    function popoverAnimationRuleReady(desiredState) {
-        return popoverMode && Theme.hyprland && popoverNoAnimRuleState !== desiredState;
-    }
     function syncPopoverAnimationRule() {
-        const desiredState = noAnimations ? 1 : 0;
-        if (!popoverAnimationRuleReady(desiredState))
+        if (!popoverMode || !Theme.hyprland)
             return;
-        layerRuleClient.apply(noAnimations ? "animation 0 " + layerNamespace : "animation unset " + layerNamespace);
-        popoverNoAnimRuleState = desiredState;
+        // Named Lua rules update idempotently, including after config reload.
+        if (Hyprland.usingLua)
+            layerRuleClient.applyCommand(CompositorSettings.layerStyle(layerNamespace, noAnimations, Theme.blurEnabled));
+        else
+            layerRuleClient.apply(noAnimations ? "animation 0 " + layerNamespace : "animation unset " + layerNamespace);
     }
     function applyCompositorWindowRules() {
         if (!floatingMode || !Theme.hyprland)
