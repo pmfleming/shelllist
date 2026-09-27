@@ -32,13 +32,17 @@ already-open development shell after changing `flake.nix`.
 - `tst_material_fields.qml` checks native editing/read-only behavior, masking and
   guarded embedded actions, immediate focus/error roles, hover-independent menu
   navigation, acknowledged selection, Escape cancellation and disabled guards.
-  The suite now has 116 behavioral cases (186 passes with hooks); the inventory
+  The suite now has 118 behavioral cases (188 passes with hooks); the inventory
   below is the completed pruning checkpoint, not a permanent cap on feature tests.
 - `tst_battery_history.qml` also checks explicit keyboard/pointer inspection:
   hover/focus alone reveal no values, and editor Escape wins over the shared
   surface shortcut before the next Escape dismisses the surface.
 - `tst_notification_actions.qml` owns shared quick-action keyboard/pointer,
   disabled activation, focus containment and hidden-reply layout behavior.
+- `tst_daemon_sessions.qml` checks default/explicit cancellation IDs and consumer
+  routing, including Qt's omitted typed-string argument conversion.
+  `tst_result_store.qml` also checks provider-owned identity, non-mutating
+  normalization and shared batch projection through a domain override.
 - `tst_keyed_list_model.qml` checks arbitrary string identities and cancellation
   of stale queued updates. Notification view tests own native action-array
   rendering and live reply focus through a 205-record burst, destroy content

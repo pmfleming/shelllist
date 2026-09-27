@@ -4,10 +4,14 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
-The [post-Material maintenance review](reviews/lens-post-material-2026-09-27.md)
-records the latest comparable Lens results: dead entry-point removal, shared bar
-indicators, simpler display editing and transition reuse. Complexity, effort,
-clones and code LOC fall; aggregate locality/leverage remain essentially flat.
+The [current commonality review](reviews/lens-commonality-2026-09-27.md)
+records shared provider projection, corrected cancellation IDs, typed backend
+controllers and bounded cleanup. Production complexity/effort/LOC fall modestly;
+locality and production clones are unchanged, leverage barely changes, and total
+tracked code grows with regression tests and canonical TypeScript.
+The [previous post-Material review](reviews/lens-post-material-2026-09-27.md)
+records dead entry-point removal, shared bar indicators, simpler display editing
+and transition reuse against its separate baseline.
 The [earlier 2026-09-27 review](reviews/lens-maintenance-2026-09-27.md) records the
 pre-Material maintenance baseline and its validation. Earlier
 [commonality work](reviews/commonality-2026-09-20.md) and the

@@ -11,13 +11,17 @@ Each domain API module exports the same endpoint fields:
 - `streams` provides semantic stream aliases;
 - `subscribedStreams` states the resident subscription policy for that surface.
 
-`DaemonBackend` consumes those fields through one endpoint descriptor and is the common transport-facing component. It owns shared-session attachment, pending request accounting, cancellation, generated request IDs, response compatibility checks, event-envelope validation, stream dispatch, and event-gap detection. Wi-Fi, Bluetooth, clipboard, applications, and the top bar therefore bind one `endpoint` instead of cloning four transport properties. Domain backends only provide request parameters, response application, and recovery actions.
+`DaemonBackend` is the common transport-facing component. Adapters bind typed `daemonName`, `expectedProtocol`, `expectedVersion`, and `streams` properties from their API modules; there is no untyped endpoint descriptor. It owns shared-session attachment, pending request accounting, cancellation, generated request IDs, response compatibility checks, event-envelope validation, stream dispatch, and event-gap detection. Domain backends provide request parameters, response application, and recovery actions.
+
+Use `cancel(requestId)` for the shared default cancellation identity and `cancelWithId(requestId, cancellationId)` for an explicit identity. Do not use an omitted typed string argument as an optional parameter: Qt converts it to the literal `"undefined"`. Clipboard/application query and detail cancellation use the shared default directly; Bluetooth and clipboard operation cancellation retain their domain-specific IDs.
 
 A daemon event with an incompatible identity or malformed stream/event shape is rejected once at this boundary. A `lagged` event or `data.resync_required` marker becomes `eventGapDetected`; each adapter then requests the cheapest authoritative domain snapshot. Event-before-response ordering remains a daemon transport guarantee rather than frontend recovery logic.
 
 ## Shared chooser composition
 
-Wi-Fi, Bluetooth, clipboard, and application surfaces use `ProviderChooserController` and the provider/result contracts. `ProviderChooserSurface` owns their default navigation, refresh, detail-tab, and help policy; a domain overrides only the constraints unique to its workflow. Wi-Fi, Bluetooth, and applications additionally opt into shared clipboard screenshot capture. Clipboard keeps its own screenshot operation because capture is part of its active domain operation and session state machine.
+Wi-Fi, Bluetooth, clipboard, and application surfaces use `ProviderChooserController` and the provider/result contracts. `ProviderChooserSurface` owns their default navigation, refresh, and detail-tab policy; a domain overrides only the constraints unique to its workflow. Wi-Fi, Bluetooth, and applications additionally opt into shared clipboard screenshot capture. Clipboard keeps its own screenshot operation because capture is part of its active domain operation and session state machine.
+
+`Core.Provider.makeResult(fields)` supplies provider identity/priority and common normalization without mutating the projection. Wi-Fi, Bluetooth, applications, displays and clipboard use it. `resultsFor(values)` maps through the overridable `resultFor(payload)` for the first four; clipboard retains its offset-aware history scoring. Actions, availability, payload fields and recovery stay domain-owned.
 
 The top bar and its Activity and Battery surfaces use the same `DaemonBackend` primitives even though they are not search providers. Their requests use common sequencing and share the single `bar-daemon` session.
 
@@ -36,7 +40,7 @@ wheel actions remain distinct. `ChooserListPane.requestRefresh()` and
 Domain overrides keep Bluetooth discovery, clipboard deletion/multi-selection
 and application force-refresh behavior local.
 
-See the [measured review](reviews/commonality-2026-09-20.md) for evidence and limits.
+See the [current measured review](reviews/lens-commonality-2026-09-27.md) and [original commonality review](reviews/commonality-2026-09-20.md) for evidence and limits.
 
 ## Deliberate domain differences
 
