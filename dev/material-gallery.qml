@@ -114,7 +114,7 @@ ShellRoot {
                 }
                 Ui.ThemeText {
                     Layout.fillWidth: true
-                    text: "Tonal Spot / spec 2021. Fonts below are candidates, not a chosen production face. Tab through real controls to inspect immediate focus; no tooltips."
+                    text: "Tonal Spot / spec 2021. Roboto Flex is the production face; Noto Sans is shown for fallback comparison. Tab through real controls to inspect immediate focus; no tooltips."
                     wrapMode: Text.Wrap
                     color: Ui.Theme.mutedText
                 }
@@ -349,7 +349,7 @@ ShellRoot {
                     }
                 }
                 Ui.ThemeText {
-                    text: "Typeface comparison · production choice still open"
+                    text: "Typeface comparison · production Roboto Flex and Noto fallback"
                     font.pixelSize: 18
                 }
                 Repeater {
@@ -388,7 +388,7 @@ ShellRoot {
                 Qt.exit(1);
                 return;
             }
-            for (const family of ["Roboto Flex", "Noto Sans"]) {
+            for (const family of ["Roboto Flex", "Noto Sans", "Material Symbols Rounded"]) {
                 if (gallery.fontFamilies.indexOf(family) < 0) {
                     console.error("Missing gallery font: " + family);
                     Qt.exit(1);

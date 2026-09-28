@@ -1,4 +1,5 @@
 .pragma library
+.import "BarMediaPresentation.js" as Media
 
 function action(id, label, icon, enabled) {
     return {id: id, label: label, icon: icon, enabled: !!enabled, closePolicy: "keep-open",
@@ -32,10 +33,10 @@ function media(players, busy) {
         const control = !!player.can_control && !busy;
         return entry(player.id, player.title || player.identity, [player.identity, player.artist, player.playback_status].filter(Boolean).join(" · "), "󰎆", [
             action("previous", "Previous track", "", control && player.can_previous),
-            action("play-pause", "Play/pause", "", control && (player.playback_status === "Playing" ? player.can_pause : player.can_play)),
+            action("play-pause", "Play/pause", "", !busy && Media.canPlayPause(player)),
             action("next", "Next track", "", control && player.can_next),
-            action("rewind", "Rewind 30 seconds", "󰕍", control && player.can_seek),
-            action("forward", "Fast-forward 30 seconds", "󰕏", control && player.can_seek)
+            action("rewind", "Rewind 30 seconds", "replay_30", control && player.can_seek),
+            action("forward", "Fast-forward 30 seconds", "forward_30", control && player.can_seek)
         ]);
     });
 }

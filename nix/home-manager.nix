@@ -29,6 +29,11 @@ in
       description = "Hyprland modifiers and key for opening Notifications directly. Set null to disable.";
     };
 
+    updateLogsShortcut = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = "SUPER SHIFT, U";
+      description = "Hyprland modifiers and key for update service logs. Set null to disable.";
+    };
     audioShortcut = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = "SUPER SHIFT, A";
@@ -106,7 +111,9 @@ in
       (lib.concatMap (surface:
         lib.optional (cfg.${surface + "Shortcut"} != null)
           "${cfg.${surface + "Shortcut"}}, exec, ${cfg.package}/bin/shelllist ${surface} open"
-      ) [ "notifications" "audio" "media" "tray" ]);
+      ) [ "notifications" "audio" "media" "tray" ]
+      ++ lib.optional (cfg.updateLogsShortcut != null)
+        "${cfg.updateLogsShortcut}, global, shelllist:update-logs");
 
     systemd.user.services = lib.mkIf cfg.systemd.enable {
       hypridle = lib.mkIf cfg.suspend.enable {

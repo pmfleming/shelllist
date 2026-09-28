@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Bar as Bar
 import Shelllist.Io as Io
+import "imports/Quickshell/Services/SystemTray" as TrayFixture
 import "../../qml/Shelllist/Bar/BarApi.js" as BarApi
 import "../../qml/Shelllist/Bar/SystemEntries.js" as Entries
 
@@ -24,7 +25,12 @@ DaemonTestCase {
             Bar.SystemChooserContent { id: content; anchors.fill: parent; controller: chooser }
         }
     }
+    Component {
+        id: trayFactory
+        TrayFixture.SystemTrayItem { hasMenu: true; menu: QtObject {} }
+    }
     function init(): void { calls = []; failOnWarning(/.*/); }
+    function cleanup(): void { clientReady = true; }
     function acknowledge(fixture, call, data): void {
         Io.DaemonSessions.sessions[fixture.desktop.backend.daemonName].client.response(call.id, {protocol: BarApi.protocol, version: BarApi.version, ok: true, data: data || {}}, "", call.route);
     }
@@ -63,6 +69,9 @@ DaemonTestCase {
         compare(calls.length, 1, "restoration does not activate playback");
         root.desktop.media = {available: true, active_player: "two", players: [player("two", true)]};
         verify(!root.chooser.perform("play-pause", "one"), "a disappeared player cannot fall through to the active one");
+        clientReady = false;
+        tryCompare(root.desktop.backend, "ready", false);
+        verify(!root.chooser.triggerDetailAction("play-pause"), "stale disconnected capabilities cannot dispatch");
     }
     function test_audioBrowseDoesNotMuteAndOnlyAcknowledgementUpdatesState(): void {
         const root = fixture();
@@ -84,6 +93,63 @@ DaemonTestCase {
         compare(root.desktop.audio.muted, false);
         acknowledge(root, calls[0], {audio: {available: true, sink_name: "speakers", sink_description: "Speakers", volume_percent: 50, muted: true}});
         compare(root.desktop.audio.muted, true);
+    }
+    function test_mediaPreferencesAreAcknowledgedAndDoNotReplayOnRestore(): void {
+        const root = fixture();
+        const p = Object.assign(player("one", true), {control_mode: "automatic", content_type: "unknown"});
+        root.desktop.media = {available: true, active_player: "one", pinned_player: null, players: [p]};
+        root.chooser.activateUi("");
+        verify(root.chooser.setMediaMode("tracks"));
+        compare(calls[0].params.operation, "set-mode");
+        compare(calls[0].params.player_id, "one");
+        compare(root.chooser.selectedPlayer.control_mode, "automatic");
+        const changed = Object.assign({}, p, {control_mode: "tracks"});
+        acknowledge(root, calls[0], {media: {available: true, active_player: "one", pinned_player: null, players: [changed]}});
+        compare(root.chooser.selectedPlayer.control_mode, "tracks");
+        verify(root.chooser.setMediaSelection(true));
+        compare(calls[1].params.operation, "select");
+        compare(root.chooser.playerPinned, false);
+        acknowledge(root, calls[1], {media: {available: true, active_player: "one", pinned_player: "one", players: [changed]}});
+        compare(root.chooser.playerPinned, true);
+        root.chooser.deactivateUi();
+        root.chooser.activateUi("");
+        root.chooser.restoreUiFocus();
+        wait(20);
+        compare(calls.length, 2);
+        verify(root.chooser.setMediaSelection(false));
+        compare(calls[2].params.operation, "automatic");
+    }
+    function test_nativeTrayMenuOwnsFocusAndCannotSurviveInvocation(): void {
+        const root = fixture();
+        root.chooser.kind = "tray";
+        root.chooser.activateUi("");
+        root.content.listItem.focusSearch();
+        const tray = createTemporaryObject(trayFactory, testCase);
+        root.chooser.trayMenuRequested(tray);
+        const menu = findChild(root, "systemTrayMenu");
+        verify(menu.visible);
+        verify(root.chooser.navigationBlocked);
+        menu.close();
+        verify(!root.chooser.navigationBlocked);
+        verify(root.content.listItem.searchFocused);
+        root.chooser.trayMenuRequested(tray);
+        root.chooser.deactivateUi();
+        verify(!menu.visible);
+        verify(!root.chooser.navigationBlocked);
+        root.chooser.activateUi("");
+        menu.opened(); // Late native completion after the previous invocation.
+        verify(!menu.visible);
+        verify(!root.chooser.navigationBlocked);
+    }
+    function test_missingNativeMenuReleasesItsGuard(): void {
+        const root = fixture();
+        root.chooser.kind = "tray";
+        root.chooser.activateUi("");
+        const tray = createTemporaryObject(trayFactory, testCase);
+        tray.menu = null;
+        root.chooser.trayMenuRequested(tray);
+        verify(root.chooser.navigationBlocked);
+        tryCompare(root.chooser, "navigationBlocked", false, 2500);
     }
     function test_trayProjectionNeverConfusesDuplicateOrPrototypeIdentities(): void {
         const values = Entries.tray([

@@ -238,6 +238,7 @@ ShellRoot {
         }
     }
 
+    Ui.ShelllistGlobalShortcut { shortcutName: "update-logs"; description: "Inspect update service logs"; onTriggered: barState.triggerModuleAction("updates") }
     Ui.ShelllistGlobalShortcut { shortcutName: "audio"; description: "Toggle Shelllist Audio"; onTriggered: shell.toggleSurface("audio") }
     Ui.ShelllistGlobalShortcut { shortcutName: "media"; description: "Toggle Shelllist Media"; onTriggered: shell.toggleSurface("media") }
     Ui.ShelllistGlobalShortcut { shortcutName: "tray"; description: "Toggle Shelllist Tray"; onTriggered: shell.toggleSurface("tray") }

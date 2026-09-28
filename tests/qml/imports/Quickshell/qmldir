@@ -1,2 +1,3 @@
 module Quickshell
+QsMenuAnchor 1.0 QsMenuAnchor.qml
 singleton Quickshell 1.0 Quickshell.qml

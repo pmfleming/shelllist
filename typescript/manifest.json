@@ -29,8 +29,7 @@
   },
   {
     "source": "typescript/bar/BarMediaPresentation.ts",
-    "output": "bar/BarMediaPresentation.js",
-    "imports": [".import \"BarIndicators.js\" as Indicators"]
+    "output": "bar/BarMediaPresentation.js"
   },
   {
     "source": "typescript/bar/BarOsdPresentation.ts",

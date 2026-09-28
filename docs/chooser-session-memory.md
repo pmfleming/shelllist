@@ -5,6 +5,9 @@ after [anchored geometry](chooser-geometry.md):
 
 - Applications, Bluetooth devices, Wi-Fi, Clipboard, Displays, Time & Weather
   and notification groups use per-result presentation and ordinary invocation focus.
+- Audio, Media and Tray use the same independent records. Media pins/control modes
+  are separate daemon-owned settings, never replayed from presentation memory;
+  native tray-menu handles and open state remain transient.
 - Battery and Activity use the single-panel focus adapter; Activity's todo draft
   remains controller-owned. Notifications retains its existing reply draft owner.
 - Bluetooth settings have a separate per-adapter cache with per-tab scroll;

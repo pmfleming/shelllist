@@ -4,7 +4,7 @@ Shelllist is the presentation client for the `bar-daemon` Activity domain. It do
 
 ## User behavior
 
-The Activity surface is opened from the top-bar Activity module, `shelllist activity open|toggle`, or the `activity` global shortcut. It combines:
+The Activity surface is opened by right-clicking the bar's Notifications group, `shelllist activity open|toggle`, or the `activity` global shortcut. It combines:
 
 - a time/weather callout that opens the separate Time & Weather city chooser;
 - a month calendar and selected-day agenda;
@@ -12,13 +12,13 @@ The Activity surface is opened from the top-bar Activity module, `shelllist acti
 - newest-first notification previews with app identity and relative time, filling the available height;
 - a DND on/off toggle, a shared 30 min / 60 min / ∞ duration cycling button, and a link to Notifications.
 
-Agenda and Notifications share one top-bar icon, which always opens the agenda. **Super+Shift+N** opens Notifications directly (installed by the Home Manager module when Hyprland is enabled; configurable with `programs.shelllist.notificationsShortcut`, or see the README binding). Changing the duration while DND is off only selects the next duration; while on it restarts DND with that duration. ∞ enables DND without an expiry.
+The bar bell opens Notifications; its right-click route opens Agenda. **Super+Shift+N** opens Notifications directly (installed by the Home Manager module when Hyprland is enabled; configurable with `programs.shelllist.notificationsShortcut`, or see the README binding). Changing the duration while DND is off only selects the next duration; while on it restarts DND with that duration. ∞ enables DND without an expiry.
 
 The Activity glyph in the panel header identifies the surface and acts as its screenshot control. Activating it captures the complete visible Activity panel through `clip-daemon` and copies the image into clipboard history.
 
 Active notifications appear in up to three compact notification stacks per monitor. A stacked toast shows only its newest record and a count badge; its chevron opens that group in the separate Notifications callout. Activity previews also open their specific group in Active or History. `shelllist notifications open|toggle` and the `notifications` global shortcut open the pane directly.
 
-The pane is a centered, responsive single-column surface with the standard screenshot / search / DND toggle / duration / refresh toolbar at the top. The bell captures the visible pane to clipboard history through `clip-daemon`. It provides **Active / History**, wrapped actions, expandable bodies, inline replies and 15-minute snooze. **Dismiss all active** and group dismissal retain history; the daemon's bulk dismissal also includes snoozed records. There is no history-deletion control.
+The surface uses a group chooser and explicit message/reply inspector, with screenshot / search / DND toggle / duration / refresh controls. The bell captures the visible pane to clipboard history through `clip-daemon`. It provides **Active / History**, wrapped actions, expandable bodies, inline replies and 15-minute snooze. **Dismiss all active** and group dismissal retain history; the daemon's bulk dismissal also includes snoozed records. There is no history-deletion control.
 
 When entered from Activity, Back or `Escape` restores Activity's calendar/detail state. Direct entry closes back to the desktop. The close button always closes. `Ctrl+Tab` switches Active/History; `F5` refreshes notifications. With the list focused, Up/Down selects a group and Right/Left expands/collapses it. Search and replies have no printable single-key shortcuts.
 
@@ -46,7 +46,7 @@ the event-driven daemon work-area stream; the frontend does not poll geometry.
 The rail stacks time/weather, schedule/todo, and as many recent notification
 previews as fit. Previews merge the active snapshot with loaded history, deduplicate active/history overlap, and sort newest first, so notifications remain visible after expiry or dismissal. Time/weather and notifications open separate callouts without widening Activity. Only Schedule expands a detail pane, preserving the glance rail. `1` opens Time & Weather, `2` expands schedule, and `3` opens Notifications. Within Activity, `Escape` returns to the glance panel before closing the surface.
 
-Time & Weather follows the same list/detail interaction as Wi-Fi and Bluetooth. The list combines configured weather locations and world clocks by timezone, showing city, current weather, and local time. `Right` expands the selected city. The detail pane has **Time** and **Weather** tabs; Time renders a world map that highlights every region sharing the selected current UTC offset and marks configured location coordinates, plus sun position, day length, and moon phase. Weather reuses the existing hourly, daily, and weather-metric presentation. The bar clock and timezone modules open this chooser directly.
+Time & Weather follows the same list/detail interaction as Wi-Fi and Bluetooth. The list combines configured weather locations and world clocks by timezone, showing city, current weather, and local time. `Right` expands the selected city. The detail pane has **Time** and **Weather** tabs; Time renders a world map that highlights every region sharing the selected current UTC offset and marks configured location coordinates, plus sun position, day length, and moon phase. Weather reuses the existing hourly, daily, and weather-metric presentation. The bar clock/date group opens this chooser directly.
 
 Shelllist requests only a buffered range around the visible month. A compact `activity.changed` event schedules a debounced range refresh rather than carrying the full range in every event. Weather locations—including which location is home, labels, coordinates, and timezones—come entirely from `bar-daemon/activity.json`; no city is compiled into the UI. `bar-daemon` refreshes configured Open-Meteo locations concurrently at most every 15 minutes and retains each last successful forecast through transient failures.
 

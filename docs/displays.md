@@ -1,7 +1,7 @@
 # Displays
 
-Displays is an independent, lazy-loaded Shelllist surface. Open it from the monitor
-control in the bar, the `displays` global shortcut, or
+Displays is an independent, lazy-loaded Shelllist surface. Open it with the
+`displays` global shortcut, the surface rail, or
 `shelllist open displays`. It uses the shared chooser host, theme, controls and
 resident bar-daemon transport; opening it does not initialize Battery.
 

@@ -1,13 +1,13 @@
 # Chooser keyboard workflow
 
 This is the first step-3 slice of the [Material Expressive plan](proposals/material-expressive.md).
-Applications, Bluetooth, Wi-Fi, Clipboard, Displays, Time & Weather and Notifications
-opt into the shared region/browse/edit boundary. Notifications uses groups as
+Applications, Bluetooth, Wi-Fi, Clipboard, Displays, Time & Weather, Notifications,
+Audio, Media and Tray opt into the shared region/browse/edit boundary. Notifications uses groups as
 results and exposes messages/replies in its explicit inspector. Battery and Activity
 use the single-panel adapter (Activity cycles its overview/details regions). Subsequent step-4
 slices supply [anchored geometry](chooser-geometry.md) and
-[session memory](chooser-session-memory.md): per-result presentation for
-Applications/Bluetooth devices and ordinary invocation focus for both surfaces.
+[session memory](chooser-session-memory.md): per-result or computer-wide
+presentation and ordinary invocation focus, without replaying effects.
 
 ## Current keys
 
@@ -104,8 +104,9 @@ pre-existing Fontconfig default-config diagnostic (also present in the previous
 field-slice gate); there are no QML engine warnings or failing/skipped Qt cases.
 
 Hardware IME, screen-reader and live compositor acceptance remain outstanding.
-Per-result memory now ships for Applications/Bluetooth device details, and ordinary
-invocation focus/caret/viewport restoration ships for both surfaces. Remaining
-domain migrations, independent computer-wide presentation records and visual
-asset choices remain separate work. Anchored geometry is also delivered. No live
-service deployment is part of these tests.
+Later slices extend region navigation and presentation/invocation memory across
+the registered domains, including independent Bluetooth adapter records and the
+new desktop lists. Production assets and the bar prototype are now delivered;
+arbitrary unnamed custom controls still fall back safely. See the proposal's
+current ledger and [bar acceptance limits](material-bar.md). No live service
+deployment is part of these tests.

@@ -130,8 +130,8 @@ DaemonTestCase {
             width: 160,
             height: 40
         });
-        compare(control.backgroundColor, Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.56));
-        compare(control.borderColor, Ui.Theme.withAlpha(Ui.Theme.controlBorder, 0.72));
+        compare(control.backgroundColor, "#00000000", "groups share the continuous bar surface");
+        compare(control.borderColor, "#00000000");
         clicks.target = control;
         secondary.target = control;
         clicks.clear();

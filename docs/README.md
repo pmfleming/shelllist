@@ -9,10 +9,11 @@ The repository README is the user-facing overview and installation guide. These 
 | [`bar-osd.md`](bar-osd.md) | Shared OSD descriptor, event sources, timeout policy, and extension rules |
 | [`displays.md`](displays.md) | Dedicated Displays callout, layout workspace, keyboard controls and daemon-owned recovery |
 | [`daemon-frontend-commonality.md`](daemon-frontend-commonality.md) | Common daemon endpoint, recovery, sequencing, and chooser integration contracts |
-| [`material-visual-foundation.md`](material-visual-foundation.md) | Material palette generation, theme migration, development gallery and open visual choices |
+| [`material-visual-foundation.md`](material-visual-foundation.md) | Material palette, production typography/icons, compositor preferences and development gallery |
+| [`material-bar.md`](material-bar.md) | Continuous bar, Audio/Media/Tray routes, daemon-owned media policy, prototype decisions and acceptance limits |
 | [`chooser-session-memory.md`](chooser-session-memory.md) | Per-result presentation and ordinary invocation focus/caret/viewport memory, safety and remaining boundaries |
 | [`chooser-geometry.md`](chooser-geometry.md) | Anchored rightward expansion, work-area bounds, split overflow and live acceptance limits |
-| [`chooser-keyboard-workflow.md`](chooser-keyboard-workflow.md) | Shared query routing, Applications/Bluetooth region traversal, browse/edit focus and modal safety |
+| [`chooser-keyboard-workflow.md`](chooser-keyboard-workflow.md) | Shared domain query/region navigation, browse/edit focus and modal safety |
 | [`list-interaction-contract.md`](list-interaction-contract.md) | Mouse-wheel, precision-touchpad, and touch scrolling requirements |
 | [`provider-model.md`](provider-model.md) | Shared provider, result, query, and action value contracts |
 | [`qml-quality-review.md`](qml-quality-review.md) | QML structure, maintenance decisions, and quality gates |

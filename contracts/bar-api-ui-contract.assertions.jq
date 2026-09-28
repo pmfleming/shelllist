@@ -19,6 +19,11 @@
 (.snapshot.workspaces.monitors[0].active_workspace_id | type == "number") and
 (.snapshot.media.players[0].playback_status | type == "string") and
 (.snapshot.media.players[0].can_seek | type == "boolean") and
+(.snapshot.media | has("pinned_player")) and
+(.snapshot.media.pinned_player | type == "string" or . == null) and
+(.snapshot.media.players[0].control_mode == "automatic") and
+(.snapshot.media.players[0].content_type == "music") and
+(any(.registry.methods[]; .name == "media.operation" and (.params | has("mode")))) and
 (.snapshot.audio.volume_percent | type == "number") and
 (.snapshot.audio.input_available | type == "boolean") and
 (.snapshot.audio.input_muted | type == "boolean") and

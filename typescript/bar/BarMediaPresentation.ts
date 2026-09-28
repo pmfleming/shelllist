@@ -1,53 +1,36 @@
 interface MediaPlayer {
     id?: string;
-    desktop_entry?: string;
     playback_status?: string;
-    length_us?: number;
-    position_us?: number;
-    position_observed_at_unix_ms?: number;
-    playback_rate?: number;
+    control_mode?: string;
+    content_type?: string;
+    can_control?: boolean;
+    can_play?: boolean;
+    can_pause?: boolean;
+    can_seek?: boolean;
+    can_next?: boolean;
+    can_previous?: boolean;
 }
-interface MediaState {
-    players?: MediaPlayer[];
-    active_player?: string;
-}
+interface MediaState { players?: MediaPlayer[]; active_player?: string }
 type Maybe<T> = T | null | undefined;
-
-declare const Indicators: { percent(value: unknown): number };
-
 function playerFor(media: Maybe<MediaState>) {
-    const players = media && Array.isArray(media.players) ? media.players : [];
-    return players.find(function (player: MediaPlayer) { return player.id === media!.active_player; }) || null;
+    return (media?.players || []).find(player => player.id === media?.active_player) || null;
 }
-
-function mediaPlayerOrdinal(media: Maybe<MediaState>, playerId: Maybe<string>) {
-    const players = media && Array.isArray(media.players) ? media.players : [];
-    const index = players.findIndex(function (player: MediaPlayer) { return player.id === playerId; });
-    return index < 0 ? "" : (index + 1) + "/" + players.length;
+function trackControls(player: Maybe<MediaPlayer>) {
+    return !!player && (player.control_mode === "tracks" || ((!player.control_mode || player.control_mode === "automatic") && player.content_type === "music"));
 }
-
-function playerIcon(player: Maybe<MediaPlayer>) {
-    return player && String(player.desktop_entry || "").toLowerCase().indexOf("spotify") >= 0 ? "" : "";
+function transportAction(player: Maybe<MediaPlayer>, forward: boolean) {
+    const tracks = trackControls(player);
+    return {
+        operation: tracks ? (forward ? "next" : "previous") : "seek",
+        offset: forward ? 30 : -30,
+        icon: tracks ? (forward ? "" : "") : (forward ? "forward_30" : "replay_30"),
+        label: tracks ? (forward ? "Next track" : "Previous track") : (forward ? "Fast-forward 30 seconds" : "Rewind 30 seconds"),
+        enabled: !!player && !!player.can_control && (tracks ? !!(forward ? player.can_next : player.can_previous) : !!player.can_seek)
+    };
 }
-
+function canPlayPause(player: Maybe<MediaPlayer>) {
+    return !!player && !!player.can_control && (String(player.playback_status || "").toLowerCase() === "playing" ? !!player.can_pause : !!player.can_play);
+}
 function playPauseActionIcon(player: Maybe<MediaPlayer>) {
-    const status = player ? String(player.playback_status || "").toLowerCase() : "stopped";
-    return status === "playing" ? "" : "";
-}
-
-function mediaPositionPercent(player: Maybe<MediaPlayer>, nowMs: unknown) {
-    if (!player)
-        return 0;
-    const length = Math.max(0, Number(player.length_us) || 0);
-    if (length <= 0)
-        return 0;
-    let position = Math.max(0, Number(player.position_us) || 0);
-    const status = String(player.playback_status || "").toLowerCase();
-    if (status === "playing") {
-        const observedAt = Math.max(0, Number(player.position_observed_at_unix_ms) || 0);
-        const elapsedMs = Math.max(0, (Number(nowMs) || 0) - observedAt);
-        const rate = Math.max(0, Number(player.playback_rate) || 1);
-        position += elapsedMs * 1000 * rate;
-    }
-    return Indicators.percent(position / length * 100);
+    return String(player?.playback_status || "").toLowerCase() === "playing" ? "" : "";
 }

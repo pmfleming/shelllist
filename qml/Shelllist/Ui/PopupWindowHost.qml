@@ -8,7 +8,6 @@ import Quickshell.Wayland
 import QtQuick
 import "HyprlandDispatch.js" as HyprlandDispatch
 import "../Io/HyprlandWorkArea.js" as WorkArea
-import "../Io/HyprlandSettings.js" as CompositorSettings
 
 Item {
     id: host
@@ -130,7 +129,7 @@ Item {
             return;
         // Named Lua rules update idempotently, including after config reload.
         if (Hyprland.usingLua)
-            layerRuleClient.applyCommand(CompositorSettings.layerStyle(layerNamespace, noAnimations, Theme.blurEnabled));
+            layerRuleClient.applyStyle(layerNamespace, noAnimations, Theme.blurEnabled);
         else
             layerRuleClient.apply(noAnimations ? "animation 0 " + layerNamespace : "animation unset " + layerNamespace);
     }

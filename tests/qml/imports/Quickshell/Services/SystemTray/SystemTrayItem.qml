@@ -5,6 +5,7 @@ QtObject {
     property string title: ""
     property string tooltipTitle: ""
     property string tooltipDescription: ""
+    property QtObject menu: null
     property bool hasMenu: false
     property bool onlyMenu: false
     property int activationCount: 0

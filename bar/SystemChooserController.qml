@@ -8,11 +8,16 @@ Ui.ProviderChooserController {
     id: chooser
     required property string kind
     property BarController barController: null
+    property bool trayMenuActive: false
+    navigationBlocked: trayMenuActive
     readonly property string title: kind === "audio" ? qsTr("Audio") : (kind === "media" ? qsTr("Media") : qsTr("Tray"))
     readonly property string detailsTab: "details"
     readonly property var trayItems: kind === "tray" ? SystemTray.items.values : []
     readonly property var sourceEntries: kind === "tray" ? Entries.tray(trayItems)
         : (!barController ? [] : (kind === "audio" ? Entries.audio(barController.audio, actionInFlight) : Entries.media(barController.media.players, actionInFlight)))
+    readonly property var selectedPlayer: kind === "media" && barController && selectedResult ? (barController.media.players || []).find(player => player.id === selectedResult.id) || null : null
+    readonly property bool mediaPreferencesSupported: !!selectedPlayer && selectedPlayer.control_mode !== undefined && barController.media.pinned_player !== undefined
+    readonly property bool playerPinned: !!selectedPlayer && barController.media.pinned_player === selectedPlayer.id
     readonly property string direction: selectedResult ? selectedResult.metadata.direction : ""
     readonly property bool muted: !!barController && (direction === "input" ? barController.audio.input_muted : barController.audio.muted)
     readonly property string statusText: barController && kind !== "tray" ? barController.backend.operationError : ""
@@ -65,6 +70,12 @@ Ui.ProviderChooserController {
         const matches = Array.from(trayItems).filter(item => item.id === id);
         return matches.length === 1 ? matches[0] : null;
     }
+    function setMediaSelection(pin: bool): bool {
+        return !actionInFlight && uiActive && mediaPreferencesSupported && barController.backend.mediaPreference(pin ? "select" : "automatic", pin ? selectedPlayer.id : "", "");
+    }
+    function setMediaMode(mode: string): bool {
+        return !actionInFlight && uiActive && mediaPreferencesSupported && ["automatic", "tracks", "seek"].includes(mode) && barController.backend.mediaPreference("set-mode", selectedPlayer.id, mode);
+    }
     function toggleAudioMuted(): bool {
         if (kind !== "audio" || !uiActive || actionInFlight || !selectedResult || !barController
                 || !sourceEntries.some(entry => entry.id === selectedResult.id))
@@ -72,7 +83,7 @@ Ui.ProviderChooserController {
         return direction === "input" ? barController.toggleInputMuted() : barController.toggleMuted();
     }
     function perform(actionId: string, id: string): bool {
-        if (!uiActive)
+        if (!uiActive || trayMenuActive)
             return false;
         const entry = sourceEntries.find(value => value.id === id);
         const action = entry && entry.actions.find(value => value.id === actionId && value.enabled !== false);

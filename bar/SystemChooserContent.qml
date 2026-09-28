@@ -8,6 +8,49 @@ Ui.ProviderChooserSurface {
     required property SystemChooserController controller
     chooserController: controller
     keyboardWorkflow: true
+    navigationEnabled: !controller.trayMenuActive
+    property Item menuReturnFocus: null
+    property int menuGeneration: -1
+    function finishMenu(): void {
+        menuDeadline.stop();
+        const target = menuReturnFocus;
+        const pending = controller && controller.trayMenuActive;
+        menuReturnFocus = null;
+        if (!controller)
+            return;
+        controller.trayMenuActive = false;
+        if (!pending || !controller.uiActive || controller.uiSuspending || controller.uiGeneration !== menuGeneration)
+            return;
+        if (target && target.visible && target.enabled)
+            target.forceActiveFocus();
+        else if (listItem)
+            listItem.focusSearch();
+    }
+    function cancelMenu(): void {
+        trayMenu.close();
+        trayMenu.menu = null;
+        finishMenu();
+    }
+    QsMenuAnchor {
+        id: trayMenu
+        objectName: "systemTrayMenu"
+        anchor.item: content.menuReturnFocus || content
+        onOpened: {
+            menuDeadline.stop();
+            if (!content.controller.uiActive || !content.controller.trayMenuActive || content.controller.uiGeneration !== content.menuGeneration)
+                content.cancelMenu();
+        }
+        onClosed: content.finishMenu()
+    }
+    Timer {
+        id: menuDeadline
+        interval: 1500
+        onTriggered: if (!trayMenu.visible) content.cancelMenu()
+    }
+    Component.onDestruction: {
+        menuGeneration = -1;
+        cancelMenu();
+    }
     sessionContext: controller.selectedResult ? controller.selectedResult.key : ""
     listComponent: Ui.ChooserListPane {
         id: pane
@@ -52,6 +95,41 @@ Ui.ProviderChooserSurface {
                     enabled: content.controller.hasSelection && !content.controller.actionInFlight
                     onClicked: content.controller.toggleAudioMuted()
                 }
+                Column {
+                    width: parent.width
+                    visible: content.controller.kind === "media"
+                    spacing: Ui.Theme.spacingMd
+                    Ui.ToggleRow {
+                        objectName: "mediaPlayerPin"
+                        title: qsTr("Pin this player")
+                        subtitle: qsTr("Automatic selection resumes when the pinned player exits")
+                        checked: content.controller.playerPinned
+                        enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
+                        onClicked: content.controller.setMediaSelection(!checked)
+                    }
+                    Ui.ActionButton {
+                        objectName: "mediaAutomatic"
+                        width: Ui.Theme.controlHeight
+                        height: width
+                        icon: "󰑓"
+                        label: qsTr("Resume automatic player selection")
+                        enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
+                        onClicked: content.controller.setMediaSelection(false)
+                    }
+                    Ui.ThemeText { text: qsTr("Bar controls for this player") }
+                    Ui.DropDownList {
+                        objectName: "mediaControlMode"
+                        width: parent.width
+                        value: content.controller.selectedPlayer ? content.controller.selectedPlayer.control_mode || "automatic" : "automatic"
+                        options: [
+                            {value: "automatic", label: qsTr("Automatic (unknown content seeks ±30 seconds)")},
+                            {value: "tracks", label: qsTr("Previous/next track")},
+                            {value: "seek", label: qsTr("Seek ±30 seconds")}
+                        ]
+                        enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
+                        onSelected: function (value) { content.controller.setMediaMode(value); }
+                    }
+                }
                 Ui.ThemeText {
                     width: parent.width
                     wrapMode: Text.WordWrap
@@ -65,9 +143,18 @@ Ui.ProviderChooserSurface {
     Connections {
         target: content.controller
         function onTrayMenuRequested(item): void {
-            // Native menus are opened only by an explicit action, never memory.
+            // Retain the layer surface before native menu focus can clear its grab.
             content.controller.navigationInteracted();
-            item.display(content.QsWindow.window, Math.round(content.width / 2), 0);
+            content.menuReturnFocus = content.Window.window ? content.Window.window.activeFocusItem : null;
+            content.menuGeneration = content.controller.uiGeneration;
+            content.controller.trayMenuActive = true;
+            trayMenu.menu = item.menu;
+            menuDeadline.restart();
+            trayMenu.open();
+        }
+        function onUiActiveChanged(): void {
+            if (!content.controller.uiActive)
+                content.cancelMenu();
         }
     }
 }

@@ -269,15 +269,11 @@ Item {
 
     function statusModules(now: date): var {
         return StatusPresentation.statusModules({
-            activity: activity,
             network: networkStatus,
             bluetooth: bluetoothController,
-            updates: updates,
-            audio: audio,
-            displays: displays,
             battery: battery,
-            powerProfile: powerProfile,
             notifications: notifications,
+            notificationActive: notificationActive,
             timezone: timezone
         }, now);
     }

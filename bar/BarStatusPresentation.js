@@ -4,48 +4,36 @@
 
 "use strict";
 function batteryIcon(battery) {
-    if (!battery)
+    if (!battery?.available)
         return "󰂑";
     const level = Math.round(Indicators.percent(battery.percentage) / 10);
     const discharging = ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"];
     const charging = ["󰢟", "󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"];
     return (battery.charging ? charging : discharging)[level];
 }
-function batterySeconds(battery) {
-    if (!battery)
-        return 0;
-    return battery.charging ? battery.time_to_full_seconds : battery.time_to_empty_seconds;
-}
-function duration(seconds) { return Duration.estimate(seconds); }
 function batteryTooltip(battery) {
-    if (!battery)
+    if (!battery?.available)
         return "Battery unavailable";
-    const health = battery.health_percent === null || battery.health_percent === undefined ? "—" : battery.health_percent + "%";
-    const cycles = battery.cycles === null || battery.cycles === undefined ? "—" : battery.cycles;
-    return battery.percentage + "% • " + duration(batterySeconds(battery))
+    const seconds = battery.charging ? battery.time_to_full_seconds : battery.time_to_empty_seconds;
+    return battery.percentage + "% · " + Duration.estimate(seconds)
         + "\n" + Number(battery.power_watts || 0).toFixed(1) + " W"
-        + "\nHealth " + health + " • " + cycles + " cycles"
-        + "\nLeft click: open battery & power settings";
+        + "\nHealth " + (battery.health_percent ?? "—") + "% · " + (battery.cycles ?? "—") + " cycles";
 }
 function orderedPowerProfiles(profile) {
     const preferred = ["power-saver", "balanced", "performance"];
-    const available = (profile && Array.isArray(profile.profiles) ? profile.profiles : [])
-        .map(function (entry) { return entry.name || ""; }).filter(Boolean);
-    return preferred.filter(function (name) { return available.includes(name); })
-        .concat(available.filter(function (name) { return !preferred.includes(name); }));
+    const available = (profile?.profiles || []).map(entry => entry.name || "").filter(Boolean);
+    return preferred.filter(name => available.includes(name)).concat(available.filter(name => !preferred.includes(name)));
 }
 function nextPowerProfile(profile) {
     const profiles = orderedPowerProfiles(profile);
     if (profiles.length < 2)
         return "";
-    const current = profiles.indexOf((profile && profile.profile) || "");
-    const index = current < 0 ? 0 : current;
-    return profiles[(index + 1) % profiles.length];
+    return profiles[(Math.max(0, profiles.indexOf(profile?.profile || "")) + 1) % profiles.length];
 }
 function networkKind(status) {
-    if (!status || !status.active)
+    if (!status?.active)
         return "disconnected";
-    return status.access_point || (status.network && status.network.ssid) ? "wifi" : "ethernet";
+    return status.access_point || status.network?.ssid ? "wifi" : "ethernet";
 }
 function networkIcon(status) {
     const kind = networkKind(status);
@@ -54,186 +42,78 @@ function networkIcon(status) {
 function networkTooltip(status) {
     const kind = networkKind(status);
     if (kind === "disconnected")
-        return "Disconnected\nLeft: Wi-Fi popover\nRight: manual portal fallback";
+        return "Disconnected";
     if (kind === "ethernet")
-        return (status.device_iface || "Ethernet") + "\nLeft: Wi-Fi popover\nRight: manual portal fallback";
-    const ap = status.access_point || status.network || ({});
-    return (ap.ssid || "Wi-Fi") + " " + Indicators.percent(ap.strength) + "%"
-        + "\nLeft: Wi-Fi popover\nRight: manual portal fallback";
+        return status?.device_iface || "Ethernet";
+    const ap = status?.access_point || status?.network || {};
+    return (ap.ssid || "Wi-Fi") + " " + Indicators.percent(ap.strength) + "%";
 }
 function bluetoothTooltip(controller) {
     if (!controller)
-        return "Bluetooth unavailable\nLeft: Bluetooth popover";
+        return "Bluetooth unavailable";
     if (!controller.powered)
-        return "Bluetooth off\nLeft: Bluetooth popover";
-    const devices = Array.isArray(controller.allDevices) ? controller.allDevices : [];
-    const connected = devices.filter(function (device) { return device.connected; });
-    return (connected.length > 0 ? connected.length + " connected" : "Bluetooth on")
-        + "\nLeft: Bluetooth popover";
+        return "Bluetooth off";
+    const count = (controller.allDevices || []).filter(device => device.connected).length;
+    return count ? count + " connected" : "Bluetooth on";
 }
 function utcOffset(seconds) {
-    const total = Number(seconds) || 0;
-    const sign = total < 0 ? "-" : "+";
-    const absolute = Math.abs(total);
-    const hours = Math.floor(absolute / 3600);
-    const minutes = Math.floor((absolute % 3600) / 60);
-    return sign + String(hours).padStart(2, "0") + String(minutes).padStart(2, "0");
+    const total = Number(seconds) || 0, absolute = Math.abs(total);
+    return (total < 0 ? "-" : "+") + String(Math.floor(absolute / 3600)).padStart(2, "0")
+        + String(Math.floor((absolute % 3600) / 60)).padStart(2, "0");
 }
 function statusModule(id, text, tooltip, options) {
-    return Object.assign({
-        id: id, key: id, text: text, compactText: text, tooltip: tooltip,
-        visible: true, maxDensity: 2, interactive: true,
-        tone: "text", weight: 400, primary: "", secondary: "", middle: "",
-        wheelUp: "", wheelDown: ""
-    }, options || ({}));
+    return Object.assign({ id, key: id, text, compactText: text, tooltip,
+        visible: true, maxDensity: 3, interactive: true, tone: "text", weight: 400,
+        primary: "", secondary: "", middle: "", wheelUp: "", wheelDown: "" }, options || {});
 }
 function layoutDensity(width) {
     const available = Number(width) || 0;
-    if (available >= 1800)
-        return 0;
-    if (available >= 1200)
-        return 1;
-    if (available >= 700)
-        return 2;
-    return 3;
-}
-function visibleStatusModules(modules, density) {
-    return (modules || []).filter(function (module) {
-        return module.visible && density <= (module.maxDensity === undefined ? 2 : module.maxDensity);
-    });
+    return available >= 1800 ? 0 : available >= 1200 ? 1 : available >= 700 ? 2 : 3;
 }
 function moduleText(module, density) {
-    return density > 0 && module.compactText !== undefined ? module.compactText : module.text;
+    return density > 0 ? module.compactText : module.text;
 }
 function statusModuleEqual(left, right) {
     if (!left || !right)
         return false;
-    const fields = ["id", "text", "compactText", "tooltip", "visible", "maxDensity",
-        "interactive", "tone", "weight", "primary", "secondary", "middle", "wheelUp",
-        "wheelDown"];
-    return fields.every(function (field) { return left[field] === right[field]; });
+    return Object.keys(left).every(key => left[key] === right[key]);
 }
 function nextMinuteDelay(nowMilliseconds) {
-    const remainder = Math.max(0, Number(nowMilliseconds) || 0) % 60000;
-    return Math.max(1, 60000 - remainder);
-}
-function networkModule(status) {
-    return statusModule("network", networkIcon(status), networkTooltip(status), {
-        maxDensity: 3, tone: networkKind(status) === "disconnected" ? "muted" : "text",
-        primary: "wifi", secondary: "portal"
-    });
-}
-function updateJobDescription(job) {
-    const names = { system: "NixOS", "ai-tools": "AI tools", "ai-tools-stale": "AI tools freshness" };
-    const name = names[job.name] || "Updates";
-    return name + ": " + (job.phase || job.status) + " · " + job.status + (job.error ? "\n" + job.error : "");
-}
-function updateModule(updates) {
-    const jobs = updates?.jobs ?? [];
-    const running = jobs.some(function (job) { return job.status === "running"; });
-    const problem = jobs.some(function (job) { return ["failed", "interrupted"].includes(job.status) || job.phase === "stale"; });
-    const lines = jobs.map(updateJobDescription);
-    const ready = !!updates?.ready;
-    if (ready)
-        lines.unshift("A checked and built NixOS update is waiting for automatic safety or manual approval");
-    lines.push("Click to inspect update service journals");
-    return statusModule("updates", "󰚰", lines.join("\n"), {
-        visible: !!updates?.available && (ready || running || problem), maxDensity: 3,
-        tone: problem ? "warning" : "accent", weight: 700, primary: "updates"
-    });
-}
-function bluetoothModule(bluetooth) {
-    return statusModule("bluetooth", "", bluetoothTooltip(bluetooth), {
-        maxDensity: 1, tone: bluetooth && bluetooth.powered ? "text" : "muted",
-        primary: "bluetooth"
-    });
-}
-function audioModule(audio) {
-    const available = audio && audio.available;
-    const tooltip = available
-        ? (audio.sink_description || "Audio") + ": " + audio.volume_percent + "%"
-            + (audio.muted ? " (muted)" : "")
-        : "Audio unavailable";
-    return statusModule("audio", Indicators.audioIcon(audio), tooltip, {
-        maxDensity: 2, tone: audio && audio.muted ? "muted" : "text",
-        primary: "audio-mixer", secondary: "audio-mute",
-        wheelUp: "audio-up", wheelDown: "audio-down"
-    });
-}
-function displaysModule(displays) {
-    const outputs = (displays && displays.outputs) || [];
-    const icon = outputs.length > 1 ? "󰍺" : "󰍹";
-    return statusModule("displays", icon, "Displays", {
-        maxDensity: 3, primary: "displays", interactive: true,
-        tone: displays && displays.error ? "warning" : "text"
-    });
+    return Math.max(1, 60000 - Math.max(0, Number(nowMilliseconds) || 0) % 60000);
 }
 function batteryTone(battery) {
-    if (battery && (battery.charging || battery.plugged))
-        return "success";
-    if (battery && battery.critical)
+    if (!battery?.available)
+        return "muted";
+    if (battery.critical)
         return "danger";
-    return battery && battery.warning ? "warning" : "text";
+    if (battery.charging || battery.plugged)
+        return "success";
+    return battery.warning ? "warning" : "text";
 }
-function batteryModule(battery) {
-    return statusModule("battery", batteryIcon(battery) + " " + ((battery && battery.percentage) || 0) + "%", batteryTooltip(battery), {
-        compactText: batteryIcon(battery), visible: !!(battery && battery.available),
-        maxDensity: 3, interactive: true, primary: "battery", tone: batteryTone(battery)
-    });
-}
-function powerModule(profile) {
-    return statusModule("power", Indicators.powerProfileIcon(profile), "Power profile: " + (profile.profile || "")
-        + "\nLeft click: cycle power mode"
-        + "\nDriver: " + (profile.driver || "unknown"), {
-        visible: !!profile.available, maxDensity: 1, interactive: true,
-        primary: "power-profile-next",
-        tone: profile.profile === "performance" ? "danger"
-            : profile.profile === "power-saver" ? "success" : "accent"
-    });
-}
-function nextEventTime(next) {
-    if (!next)
-        return "";
-    return next.all_day ? "All day"
-        : Qt.formatDateTime(new Date(next.start_unix_ms), "ddd HH:mm");
-}
-function activityModule(activity, notifications) {
-    const count = (notifications && notifications.count) || 0;
-    const dnd = !!(notifications && notifications.dnd);
-    const next = activity && activity.next_event;
-    const nextTitle = next ? (next.title || "Untitled event") : "No upcoming events";
-    const nextTime = nextEventTime(next);
-    return statusModule("activity", "󰃭", "Agenda · Notifications: " + count
-        + "\n" + nextTitle + (nextTime ? "\n" + nextTime : "")
-        + "\nTodos: " + ((activity && activity.incomplete_todo_count) || 0)
-        + (dnd ? "\nDo not disturb is on" : "") + "\nClick: open agenda", {
-        compactText: "󰃭", maxDensity: 3,
-        tone: dnd ? "muted" : count > 0 || next ? "accent" : "text",
-        primary: "activity", secondary: "activity", middle: "activity"
-    });
-}
-function timezoneModule(timezone) {
-    const city = (timezone && timezone.city) || "";
-    return statusModule("timezone", "󰅐 " + city, "Timezone city: " + city
-        + "\nTimezone is updated automatically from location"
-        + "\nLeft click: open Time & Weather", {
-        visible: !!(timezone && timezone.available), maxDensity: 0, primary: "timezone"
+function notificationsModule(state) {
+    const dnd = !!state.notifications?.dnd, count = state.notifications?.count || 0;
+    const urgent = (state.notificationActive?.notifications || []).some(item => item.urgency === "critical" || Number(item.urgency) >= 2);
+    return statusModule("notifications", dnd ? "󰂛" : count ? "" : "󰂚", "Notifications: " + count + (dnd ? ". Do not disturb" : "") + (urgent ? ". Urgent" : ""), {
+        primary: "notifications", secondary: "activity", middle: "notifications-dnd",
+        tone: urgent ? "danger" : dnd ? "muted" : count ? "accent" : "text"
     });
 }
 function clockModule(now, timezone) {
-    return statusModule("clock", Qt.formatDateTime(now, "ddd dd MMM  HH:mm"), Qt.formatDateTime(now, "yyyy-MM-dd") + " " + (timezone.abbreviation || "")
-        + " " + utcOffset(timezone.utc_offset_seconds)
-        + "\nLeft click: open Time & Weather", {
-        compactText: Qt.formatDateTime(now, "HH:mm"), maxDensity: 3,
-        primary: "time-weather"
+    return statusModule("clock", Qt.formatDateTime(now, "yyyy-MM-dd  HH:mm"), Qt.formatDateTime(now, "yyyy-MM-dd HH:mm") + " " + (timezone.abbreviation || "") + " " + utcOffset(timezone.utc_offset_seconds), {
+        compactText: Qt.formatDateTime(now, "MM-dd HH:mm"), primary: "time-weather"
     });
 }
 function statusModules(state, now) {
     return [
-        networkModule(state.network), updateModule(state.updates),
-        bluetoothModule(state.bluetooth), audioModule(state.audio),
-        displaysModule(state.displays), batteryModule(state.battery),
-        powerModule(state.powerProfile), activityModule(state.activity, state.notifications),
-        timezoneModule(state.timezone), clockModule(now, state.timezone)
+        statusModule("network", networkIcon(state.network), networkTooltip(state.network), {
+            tone: networkKind(state.network) === "disconnected" ? "muted" : "text", primary: "wifi", secondary: "portal"
+        }),
+        statusModule("bluetooth", "", bluetoothTooltip(state.bluetooth), {
+            tone: state.bluetooth?.powered ? "text" : "muted", primary: "bluetooth"
+        }),
+        statusModule("battery", batteryIcon(state.battery), batteryTooltip(state.battery), {
+            primary: "battery", tone: batteryTone(state.battery)
+        }),
+        notificationsModule(state), clockModule(now, state.timezone)
     ];
 }

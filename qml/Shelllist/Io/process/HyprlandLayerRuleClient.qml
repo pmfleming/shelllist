@@ -1,9 +1,13 @@
 import QtQuick
 import Quickshell.Io
+import "../HyprlandSettings.js" as Settings
 
 Item {
     id: client
     property list<string> pendingCommand: []
+    function applyStyle(namespace: string, noMotion: bool, blur: bool): void {
+        applyCommand(Settings.layerStyle(namespace, noMotion, blur));
+    }
     function apply(rule: string): void {
         applyCommand(["hyprctl", "keyword", "layerrule", rule]);
     }

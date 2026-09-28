@@ -422,6 +422,8 @@ DaemonTestCase {
         verify(!c.canEdit);
         verify(waitForRendering(panel));
         tryCompare(findChild(panel, "revertDisplayLayout"), "activeFocus", true);
+        compare(findChild(findChild(panel, "revertDisplayLayout"), "actionLabel").label, "Revert");
+        compare(findChild(findChild(panel, "confirmDisplayLayout"), "actionLabel").label, "Keep");
         findChild(panel, "confirmDisplayLayout").clicked();
         compare(calls[1].method, "displayLayout.confirm");
         compare(calls[1].params.id, "token");

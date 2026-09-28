@@ -1,164 +1,123 @@
 pragma ComponentBehavior: Bound
-
 import QtQuick
+import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import Shelllist.Core as Core
 import "BarStatusPresentation.js" as Presentation
 
 Item {
     id: root
-
     required property BarController controller
     required property string screenName
-    property date now
+    property date now: new Date()
+    readonly property alias visualSurface: barSurface
     readonly property int layoutDensity: Presentation.layoutDensity(width)
-    readonly property real leftExtent: activeWindowChip.visible ? activeWindowChip.x + activeWindowChip.width : workspaceCluster.width
-    readonly property real centerClearance: Math.max(0, 2 * Math.min(width / 2 - leftExtent - 8, width / 2 - statusCluster.width - 8))
-    readonly property var toneColors: ({
-            text: Ui.Theme.text,
-            muted: Ui.Theme.mutedText,
-            accent: Ui.Theme.accent,
-            success: Ui.Theme.active,
-            danger: Ui.Theme.danger,
-            warning: Ui.Theme.warning
-        })
-    readonly property var statusDescriptors: Presentation.visibleStatusModules(controller.statusModules(now), layoutDensity)
-
-    function moduleColor(tone: string): color {
-        return toneColors[tone] || Ui.Theme.text;
-    }
-    function neutralTone(tone: string): bool {
-        return ["text", "muted"].includes(tone);
-    }
-    function moduleBackground(tone: string): color {
-        const foreground = moduleColor(tone);
-        const base = Ui.Theme.mix(Ui.Theme.surfaceRaised, foreground, neutralTone(tone) ? 0.02 : 0.08);
-        return Ui.Theme.withAlpha(base, 0.62);
-    }
+    readonly property bool overflow: groups.implicitWidth > barSurface.width - 16
+    readonly property var statusDescriptors: controller.statusModules(now).filter(module => module.id !== "clock")
+    readonly property var toneColors: ({text: Ui.Theme.text, muted: Ui.Theme.mutedText,
+        accent: Ui.Theme.accent, success: Ui.Theme.active, danger: Ui.Theme.danger, warning: Ui.Theme.warning})
     function updateClock(): void {
         now = new Date();
         clockTimer.interval = Presentation.nextMinuteDelay(now.getTime());
         clockTimer.restart();
     }
-
     Rectangle {
+        id: barSurface
         anchors.fill: parent
-        color: Ui.Theme.withAlpha(Ui.Theme.window, 0.80)
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop {
-                position: 0
-                color: Ui.Theme.withAlpha(Ui.Theme.window, 0.88)
-            }
-            GradientStop {
-                position: 0.5
-                color: Ui.Theme.withAlpha(Ui.Theme.surface, 0.76)
-            }
-            GradientStop {
-                position: 1
-                color: Ui.Theme.withAlpha(Ui.Theme.window, 0.88)
-            }
-        }
-
-        Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: 1
-            color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.12)
-        }
-
-        Rectangle {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: 1
-            color: Ui.Theme.border
-        }
-    }
-
-    WorkspaceStrip {
-        id: workspaceCluster
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        controller: root.controller
-        screenName: root.screenName
-        layoutDensity: root.layoutDensity
-    }
-
-    ActiveWindowChip {
-        id: activeWindowChip
-
-        anchors.left: workspaceCluster.right
-        anchors.leftMargin: 6
-        anchors.verticalCenter: parent.verticalCenter
-        width: implicitWidth
-        controller: root.controller
-        screenName: root.screenName
-        layoutDensity: root.layoutDensity
-    }
-
-    MediaChip {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.topMargin: 7
-        anchors.bottomMargin: 7
-        visible: root.controller.activePlayer !== null && root.centerClearance >= 150
-        width: Math.min(implicitWidth, root.centerClearance)
-        controller: root.controller
-        layoutDensity: root.layoutDensity
-    }
-
-    Row {
-        id: statusCluster
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.topMargin: 7
-        anchors.bottomMargin: 7
-        spacing: root.layoutDensity === 0 ? 5 : 3
-
-        BarTray {
-            height: parent.height
-            layoutDensity: root.layoutDensity
-        }
-
-        Repeater {
-            model: Core.KeyedListModel {
-                values: root.statusDescriptors
-                function equivalent(left: var, right: var): bool {
-                    return Presentation.statusModuleEqual(left, right);
+        anchors.margins: 6
+        radius: 20
+        color: Ui.Theme.withAlpha(Ui.Theme.surface, 0.94)
+        border.width: 1
+        border.color: Ui.Theme.border
+        clip: true
+        Flickable {
+            id: viewport
+            objectName: "barOverflowViewport"
+            anchors.fill: parent
+            anchors.leftMargin: 8
+            anchors.rightMargin: root.overflow ? 26 : 8
+            contentWidth: Math.max(width, groups.implicitWidth)
+            contentHeight: height
+            flickableDirection: Flickable.HorizontalFlick
+            boundsBehavior: Flickable.StopAtBounds
+            interactive: contentWidth > width
+            clip: true
+            RowLayout {
+                id: groups
+                width: viewport.contentWidth
+                height: viewport.height
+                spacing: root.layoutDensity >= 2 ? 2 : 6
+                WorkspaceStrip {
+                    objectName: "barWorkspaces"
+                    Layout.preferredWidth: Math.max(32, Math.min(implicitWidth, root.width * 0.27))
+                    Layout.fillHeight: true
+                    controller: root.controller
+                    screenName: root.screenName
+                    layoutDensity: root.layoutDensity
+                }
+                MediaChip {
+                    objectName: "barMedia"
+                    Layout.preferredWidth: implicitWidth
+                    Layout.fillHeight: true
+                    controller: root.controller
+                    layoutDensity: root.layoutDensity
+                }
+                Item { Layout.fillWidth: true }
+                Repeater {
+                    model: Core.KeyedListModel {
+                        values: root.statusDescriptors
+                        function equivalent(left: var, right: var): bool { return Presentation.statusModuleEqual(left, right); }
+                    }
+                    delegate: BarAction {
+                        required property var resultData
+                        objectName: "bar:" + resultData.id
+                        Layout.preferredWidth: 32
+                        Layout.fillHeight: true
+                        text: resultData.text
+                        accessibleName: resultData.tooltip
+                        horizontalPadding: 4
+                        foreground: root.toneColors[resultData.tone] || Ui.Theme.text
+                        onPrimaryTriggered: root.controller.triggerModuleAction(resultData.primary)
+                        onSecondaryTriggered: root.controller.triggerModuleAction(resultData.secondary)
+                        onMiddleTriggered: root.controller.triggerModuleAction(resultData.middle)
+                    }
+                }
+                BarTray {
+                    objectName: "barTray"
+                    Layout.preferredWidth: implicitWidth
+                    Layout.fillHeight: true
+                    controller: root.controller
+                    layoutDensity: root.layoutDensity
+                }
+                BarAction {
+                    objectName: "barClock"
+                    readonly property var descriptor: Presentation.clockModule(root.now, root.controller.timezone)
+                    Layout.preferredWidth: implicitWidth
+                    Layout.fillHeight: true
+                    text: Presentation.moduleText(descriptor, root.layoutDensity)
+                    symbolic: false
+                    accessibleName: descriptor.tooltip
+                    horizontalPadding: 6
+                    onPrimaryTriggered: root.controller.openTimeWeather("time")
                 }
             }
-
-            delegate: BarAction {
-                required property var resultData
-                readonly property var descriptor: resultData
-
-                height: parent.height
-                text: Presentation.moduleText(descriptor, root.layoutDensity)
-                accessibleName: descriptor.tooltip
-                horizontalPadding: root.layoutDensity === 0 ? 10 : root.layoutDensity === 1 ? 7 : 5
-                foreground: root.moduleColor(descriptor.tone)
-                backgroundColor: root.moduleBackground(descriptor.tone)
-                borderColor: Ui.Theme.withAlpha(root.moduleColor(descriptor.tone), root.neutralTone(descriptor.tone) ? 0.16 : 0.34)
-                fontWeight: descriptor.weight
-                interactive: descriptor.interactive
-                onPrimaryTriggered: root.controller.triggerModuleAction(descriptor.primary)
-                onSecondaryTriggered: root.controller.triggerModuleAction(descriptor.secondary)
-                onMiddleTriggered: root.controller.triggerModuleAction(descriptor.middle)
-                onWheelUp: root.controller.triggerModuleAction(descriptor.wheelUp)
-                onWheelDown: root.controller.triggerModuleAction(descriptor.wheelDown)
-            }
         }
     }
-
-    Component.onCompleted: updateClock()
-    Timer {
-        id: clockTimer
-        repeat: false
-        onTriggered: root.updateClock()
+    Ui.FlatIconButton {
+        objectName: "barOverflowButton"
+        anchors.right: barSurface.right
+        anchors.rightMargin: 3
+        anchors.verticalCenter: barSurface.verticalCenter
+        width: 18
+        height: 30
+        visible: root.overflow
+        activeFocusOnTab: false
+        icon: viewport.atXEnd ? "󰁍" : "󰅂"
+        accessibleName: viewport.atXEnd ? qsTr("Scroll bar to beginning") : qsTr("Scroll bar forward")
+        backgroundColor: Ui.Theme.surface
+        border.width: 0
+        onClicked: viewport.contentX = viewport.atXEnd ? 0 : Math.min(viewport.contentWidth - viewport.width, viewport.contentX + viewport.width / 2)
     }
+    Component.onCompleted: updateClock()
+    Timer { id: clockTimer; repeat: false; onTriggered: root.updateClock() }
 }

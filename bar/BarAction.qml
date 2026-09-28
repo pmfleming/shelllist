@@ -6,8 +6,11 @@ Ui.ActionControl {
 
     required property string text
     property color foreground: Ui.Theme.text
-    property color backgroundColor: Ui.Theme.barGroupBackground
-    property color borderColor: Ui.Theme.barGroupBorder
+    property color backgroundColor: "transparent"
+    property color borderColor: "transparent"
+    property bool symbolic: true
+    activeFocusOnTab: false
+    radius: height / 2
     property int horizontalPadding: 10
     property int minimumWidth: 0
     accessibleName: text
@@ -43,7 +46,7 @@ Ui.ActionControl {
 
     Rectangle {
         anchors.fill: parent
-        radius: 0
+        radius: height / 2
         color: root.backgroundColor
         border.width: 1
         border.color: root.activeFocus ? Ui.Theme.strongBorder : root.borderColor
@@ -54,15 +57,15 @@ Ui.ActionControl {
         }
     }
 
-    Text {
+    Ui.GlyphLabel {
         id: label
         anchors.fill: parent
         anchors.leftMargin: root.horizontalPadding
         anchors.rightMargin: root.horizontalPadding
-        text: root.text
+        glyph: root.text
         color: root.foreground
-        font.family: Ui.Theme.iconFontFamily
-        font.pixelSize: Ui.Theme.fontSizeLabel
+        font.family: root.symbolic ? (symbol ? Ui.Theme.symbolFontFamily : Ui.Theme.iconFontFamily) : Ui.Theme.fontFamily
+        font.pixelSize: root.symbolic ? 20 : Ui.Theme.fontSizeLabel
         font.weight: Ui.Theme.fontWeightRegular
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter
@@ -76,14 +79,14 @@ Ui.ActionControl {
 
     Ui.StateLayer {
         focusTarget: root
-        radius: 0
+        radius: height / 2
         stateColor: root.foreground
         showStateBackground: true
         hoverOpacity: 0.09
         pressedOpacity: 0.15
         interactive: root.interactive
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-        consumeWheel: true
+        consumeWheel: false
         onClicked: function (mouse) {
             root.routeClick(mouse.button);
         }

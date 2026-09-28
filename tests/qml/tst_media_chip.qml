@@ -30,8 +30,8 @@ TestCase {
                     actions = actions.concat([operation]);
                     return true;
                 }
-                function cycleMediaPlayer(): bool {
-                    return mediaOperation("cycle");
+                function openSurface(surfaceId: string): void {
+                    actions = actions.concat(["open:" + surfaceId]);
                 }
                 function seekMedia(offsetSeconds: int): bool {
                     actions = actions.concat([offsetSeconds]);
@@ -57,6 +57,8 @@ TestCase {
                     title: "Track",
                     playback_status: "playing",
                     can_control: true,
+                    can_play: true,
+                    can_pause: true,
                     can_seek: canSeek
                 }
             ]
@@ -76,7 +78,7 @@ TestCase {
 
     function test_buttonsReceiveTheirOwnClicks() {
         const panel = makePanel(true);
-        const cases = [["mediaCycleButton", "cycle"], ["mediaRewindButton", -15], ["mediaPlayPauseButton", "play-pause"], ["mediaForwardButton", 30]];
+        const cases = [["mediaRewindButton", -30], ["mediaPlayPauseButton", "play-pause"], ["mediaForwardButton", 30]];
         for (const entry of cases) {
             panel.controller.actions = [];
             const button = findChild(panel, entry[0]);
@@ -86,8 +88,26 @@ TestCase {
             compare(panel.controller.actions, [entry[1]]);
         }
         panel.controller.actions = [];
-        mouseClick(panel.chip, 50, panel.chip.height / 2);
-        compare(panel.controller.actions, ["play-pause"]);
+        const artwork = findChild(panel, "mediaArtworkButton");
+        mouseClick(artwork, artwork.width / 2, artwork.height / 2);
+        compare(panel.controller.actions, ["open:media"]);
+    }
+
+    function test_musicAndOverridesHaveDistinctCapabilityGuardedActions() {
+        const panel = makePanel(true);
+        const player = Object.assign({}, panel.controller.activePlayer, {content_type: "music", control_mode: "automatic", can_next: true, can_previous: false});
+        panel.controller.media = {active_player: player.id, players: [player]};
+        const back = findChild(panel, "mediaRewindButton");
+        const next = findChild(panel, "mediaForwardButton");
+        compare(back.enabled, false);
+        compare(next.accessibleName, "Next track");
+        mouseClick(next, next.width / 2, next.height / 2);
+        compare(panel.controller.actions, ["next"]);
+        panel.controller.media = {active_player: player.id, players: [Object.assign({}, player, {control_mode: "seek"})]};
+        compare(back.enabled, true);
+        compare(back.accessibleName, "Rewind 30 seconds");
+        mouseClick(back, back.width / 2, back.height / 2);
+        compare(panel.controller.actions, ["next", -30]);
     }
 
     function test_unseekablePlayerDoesNotSeekOrTogglePlayback() {

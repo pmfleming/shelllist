@@ -1,6 +1,6 @@
 # Shelllist
 
-Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and nine keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, **Activity**, **Notifications**, **Time & Weather**, **Displays**, and **Battery**.
+Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and twelve keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, **Activity**, **Notifications**, **Time & Weather**, **Displays**, **Battery**, **Audio**, **Media**, and **Tray**.
 
 Rust daemons handle system integration and policy. Shelllist handles windows, layout, navigation, animation, and presentation.
 
@@ -15,31 +15,28 @@ Rust daemons handle system integration and policy. Shelllist handles windows, la
 
 ### Top bar
 
-The bar contains:
+One continuous rounded surface contains **Workspaces, Media, Network, Bluetooth,
+Battery, Notifications, Tray, Clock/date**, in that order. Battery and notification
+states are pictorial; detailed values remain in accessible metadata and choosers.
+There are no hover tooltips, floating status pods, focused-application group or
+separate Audio group. Narrow bars compact groups and expose horizontal overflow,
+without shrinking fonts or removing their keyboard routes.
 
-- monitor-local workspaces with themed application icons and an animated active indicator;
-- the focused application on the active monitor;
-- artwork, title, progress, rewind 15s/play-pause/forward 30s controls, and a player selector when multiple MPRIS players are available;
-- StatusNotifierItem tray icons and native DBusMenu menus;
-- network, update, Bluetooth, audio, displays, battery, power-profile, notification, timezone, and clock modules.
+Media shows artwork and three transport icons, not persistent track text or a
+progress strip. Music uses Previous/Next; podcasts, video and unknown content use
+symmetric ±30-second seeking. Media details can override that mode. The daemon
+follows recently started playback until explicitly pinned; pins and per-player
+mode overrides are session-local and expire when that player exits. Opening or
+restoring a result does not change playback or selection policy.
 
-Modules collapse progressively on narrow outputs. The bar uses flat controls, translucent status pods, and no hover tooltips.
+Common pointer routes: workspaces focus; artwork opens Media; network opens Wi-Fi
+(right-click portal fallback); Bluetooth/Battery open their choosers; the bell
+opens Notifications (right-click Activity, middle-click DND); Tray opens its list;
+clock/date open Time & Weather. Removed pods' destinations retain direct routes.
+Update logs use `shelllist:update-logs`, default Super+Shift+U in Home Manager.
 
-Common bar interactions:
-
-| Module | Left click | Right click | Wheel |
-| --- | --- | --- | --- |
-| Workspace | Focus workspace | — | — |
-| Focused application | Open Applications | — | — |
-| Media | Play/pause or use its three controls | — | — |
-| Network | Open Wi-Fi | Open captive-portal fallback | — |
-| Bluetooth | Open Bluetooth | — | — |
-| Audio | Open `pavucontrol` | Toggle mute | Adjust volume |
-| Displays | Open Displays | — | — |
-| Battery | Open Battery | — | — |
-| Activity | Open Activity | — | — |
-| Timezone / clock | Open Time & Weather | — | — |
-| Notifications | Open Notifications | Toggle DND | — |
+See [Material bar](docs/material-bar.md) for prototype choices, overflow policy,
+media backend semantics, native-menu safety and remaining live acceptance.
 
 `bar-daemon` supplies normalized bar state through `bar-api` v1. Wi-Fi and Bluetooth remain owned by their dedicated Shelllist controllers, while Quickshell owns tray rendering and menus.
 
@@ -77,7 +74,7 @@ The Activity surface combines a month calendar, selected-day agenda, persistent 
 
 ### Time & Weather
 
-Time & Weather lists every configured city with its current condition, high/low temperature, rain chance, and local time. `Right` expands the selected city; **Time** shows local date/time, a world map with every region sharing the selected UTC offset highlighted and the location marked, sun position, daylight length, and moon phase, while **Weather** reuses the hourly and seven-day forecast view. Open it from the Activity time/weather callout, the bar clock/timezone, `shelllist time-weather open`, or the `time-weather` global shortcut.
+Time & Weather lists every configured city with its current condition, high/low temperature, rain chance, and local time. `Right` expands the selected city; **Time** shows local date/time, a world map with every region sharing the selected UTC offset highlighted and the location marked, sun position, daylight length, and moon phase, while **Weather** reuses the hourly and seven-day forecast view. Open it from the Activity time/weather callout, the bar clock, `shelllist time-weather open`, or the `time-weather` global shortcut.
 
 ### Clipboard
 
@@ -232,7 +229,7 @@ Surface-specific additions include `Shift+Enter` for a new application instance;
 
 Applications and Bluetooth device details retain per-result open/tab/scroll/editor locations until process exit. Returning to an inspected result restores its view without stealing list focus; Right enters its remembered ordinary location. Reopening Applications or Bluetooth also restores ordinary region/editor focus, caret/selection and the keyed result viewport, without reopening menus or sensitive prompts. See [session memory](docs/chooser-session-memory.md) for safety and capability fallbacks.
 
-The [Material Expressive design decisions](docs/proposals/material-expressive.md) distinguish delivered slices from the target. Anchored geometry is shared; other domains' keyboard/memory migration, independent computer-wide settings presentation records, and the remaining visual/bar redesign are pending.
+The [Material Expressive design decisions](docs/proposals/material-expressive.md) distinguish delivered slices from the target. Shared navigation/memory, independent Bluetooth adapter records, production assets, dedicated desktop lists and the bar prototype are implemented. Arbitrary custom focus targets, prototype approval and live compositor/accessibility/hardware acceptance remain separate.
 
 Suggested Hyprland bindings:
 

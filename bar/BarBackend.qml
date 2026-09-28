@@ -37,6 +37,13 @@ Io.DaemonBackend {
         return callSequenced("media-" + operation, BarApi.methods.mediaOperation, params);
     }
 
+    function mediaPreference(operation: string, playerId: string, mode: string): bool {
+        const params = {operation: operation, player_id: playerId || null};
+        if (operation === "set-mode")
+            params.mode = mode;
+        return callSequenced("media-preference", BarApi.methods.mediaOperation, params);
+    }
+
     function adjustAudio(deltaPercent: int): bool {
         return callSequenced("audio-adjust", BarApi.methods.audioAdjust, {
             delta_percent: deltaPercent

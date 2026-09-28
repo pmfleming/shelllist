@@ -1,142 +1,46 @@
 import QtQuick
 import Shelllist.Ui as Ui
-import "BarMediaPresentation.js" as Presentation
 
 Item {
     id: root
-
     required property BarController controller
     required property int layoutDensity
-    property double nowMs: 0
     readonly property var player: controller.activePlayer
-    readonly property string title: player ? (player.title || player.identity || "Unknown track") : ""
-    readonly property int playerCount: controller.media && Array.isArray(controller.media.players) ? controller.media.players.length : 0
-    readonly property string playerOrdinal: Presentation.mediaPlayerOrdinal(controller.media, controller.activePlayerId)
-    readonly property string trackLabel: player && player.artist && layoutDensity === 0 ? title + " — " + player.artist : title
-    readonly property string labelText: playerCount > 1 ? playerOrdinal + " · " + trackLabel : trackLabel
-    readonly property real progress: Presentation.mediaPositionPercent(player, nowMs)
-
-    implicitWidth: Math.min(420, artFrame.width + titleLabel.implicitWidth + mediaControls.implicitWidth + 34)
+    readonly property bool compact: layoutDensity >= 3
+    implicitWidth: artworkButton.width + (mediaControls.visible ? mediaControls.implicitWidth + 4 : 0)
     implicitHeight: 37
 
-    Rectangle {
-        anchors.fill: parent
-        radius: 0
-        color: Ui.Theme.withAlpha(Ui.Theme.mix(Ui.Theme.surfaceRaised, Ui.Theme.accent, 0.08), 0.72)
-        border.width: 1
-        border.color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.42)
-    }
-
-    Rectangle {
-        id: artFrame
-
+    Ui.FlatIconButton {
+        id: artworkButton
+        objectName: "mediaArtworkButton"
         anchors.left: parent.left
-        anchors.leftMargin: 5
         anchors.verticalCenter: parent.verticalCenter
-        width: 27
-        height: 27
-        radius: 0
-        color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
-        clip: true
-
+        width: 34
+        height: 34
+        activeFocusOnTab: false
+        icon: artwork.status === Image.Ready ? "" : "󰎆"
+        accessibleName: qsTr("Open Media") + (root.player ? ". " + (root.player.title || root.player.identity || "") : "")
+        backgroundColor: "transparent"
+        border.width: 0
+        onClicked: root.controller.openSurface("media")
         Image {
             id: artwork
-
             anchors.fill: parent
+            anchors.margins: 4
             source: root.player ? root.player.art_url || "" : ""
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             cache: true
             smooth: true
-            opacity: status === Image.Ready ? 1 : 0
-
-            Ui.InteractiveBehavior on opacity {
-                duration: Ui.Theme.animationNormal
-                easingType: Easing.Linear
-            }
-        }
-
-        Text {
-            anchors.centerIn: parent
-            visible: artwork.status !== Image.Ready
-            text: Presentation.playerIcon(root.player)
-            color: Ui.Theme.accent
-            font.family: Ui.Theme.iconFontFamily
-            font.pixelSize: Ui.Theme.iconSizeSmall
+            visible: status === Image.Ready
         }
     }
-
-    Ui.PulsingLabel {
-        id: titleLabel
-
-        anchors.left: artFrame.right
-        anchors.leftMargin: 8
-        anchors.right: mediaControls.left
-        anchors.rightMargin: 7
-        anchors.verticalCenter: parent.verticalCenter
-        text: root.labelText
-        color: Ui.Theme.text
-        elide: Text.ElideRight
-        font.family: Ui.Theme.fontFamily
-        font.pixelSize: Ui.Theme.fontSizeSmall
-        font.weight: Ui.Theme.fontWeightDemiBold
-    }
-
     MediaControls {
         id: mediaControls
+        visible: !!root.player && !root.compact
         controller: root.controller
-        multiplePlayers: root.playerCount > 1
-        anchors.right: parent.right
-        anchors.rightMargin: 6
+        anchors.left: artworkButton.right
+        anchors.leftMargin: 4
         anchors.verticalCenter: parent.verticalCenter
-    }
-
-    Rectangle {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.leftMargin: 2
-        anchors.rightMargin: 2
-        anchors.bottom: parent.bottom
-        height: root.player && Number(root.player.length_us || 0) > 0 ? 3 : 0
-        radius: 0
-        color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.14)
-        clip: true
-
-        Rectangle {
-            width: parent.width * root.progress / 100
-            height: parent.height
-            radius: 0
-            color: Ui.Theme.accent
-
-            Ui.InteractiveBehavior on width {
-                duration: 500
-                easingType: Easing.Linear
-            }
-        }
-    }
-
-    Ui.StateLayer {
-        // StateLayer fills its parent by default; keep it off the controls.
-        anchors.fill: undefined
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.right: mediaControls.left
-        anchors.rightMargin: 2
-        focusTarget: root
-        radius: 0
-        stateColor: Ui.Theme.accent
-        showStateBackground: true
-        acceptedButtons: Qt.LeftButton
-        onClicked: root.controller.mediaOperation("play-pause")
-    }
-
-    Component.onCompleted: nowMs = Date.now()
-
-    Timer {
-        interval: 500
-        repeat: true
-        running: root.visible && root.player && String(root.player.playback_status || "").toLowerCase() === "playing"
-        onTriggered: root.nowMs = Date.now()
     }
 }

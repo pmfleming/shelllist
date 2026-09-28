@@ -45,6 +45,7 @@ Ui.ModalFrame {
                 Layout.fillWidth: true
                 label: qsTr("Revert")
                 icon: "󰕍"
+                iconOnly: false
                 enabled: dialog.controller.backend.ready && !dialog.controller.actionInFlight
                 onClicked: if (dialog.controller.trial)
                     dialog.controller.displayLayoutAction("revert", {
@@ -56,6 +57,7 @@ Ui.ModalFrame {
                 Layout.fillWidth: true
                 label: qsTr("Keep")
                 icon: "󰄬"
+                iconOnly: false
                 tone: "accent"
                 enabled: dialog.controller.backend.ready && !dialog.controller.actionInFlight && !dialog.controller.stale && dialog.controller.secondsLeft > 0
                 onClicked: if (dialog.controller.trial)

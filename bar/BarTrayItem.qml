@@ -10,6 +10,16 @@ Item {
     required property SystemTrayItem item
     implicitWidth: 26
     implicitHeight: 37
+    Accessible.role: Accessible.Button
+    Accessible.name: item.title || item.id
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 2
+        radius: width / 2
+        color: "transparent"
+        border.width: root.item.status === Status.NeedsAttention ? 2 : 0
+        border.color: Ui.Theme.danger
+    }
 
     function displayMenu(): void {
         if (item.hasMenu)
@@ -36,7 +46,7 @@ Item {
 
     Ui.StateLayer {
         focusTarget: root
-        radius: 0
+        radius: height / 2
         stateColor: Ui.Theme.text
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         consumeWheel: true

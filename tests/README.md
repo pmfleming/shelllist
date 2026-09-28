@@ -40,7 +40,7 @@ already-open development shell after changing `flake.nix`.
   and modal focus containment/restoration, with decorative animations enabled.
   Bluetooth recovery tests also cover its actual adapter-settings keyboard
   journey and clearing/fencing sensitive prompts on whole-surface closure.
-  The suite now has 177 behavioral cases (253 passes with hooks); the inventory
+  The suite now has 198 behavioral cases (280 passes with hooks); the inventory
   below is the completed pruning checkpoint, not a permanent cap on feature tests.
 - `tst_chooser_geometry.qml` covers anchored expansion, work-area bounds and
   fallback, stable frame/list/text/control sizes, minimum and emergency canvases,
@@ -50,6 +50,11 @@ already-open development shell after changing `flake.nix`.
   Runtime smoke also exercises the shared visual bounds in a native offscreen
   floating window, including native frame delivery through public `Window.window`;
   live layer placement and input-mask acceptance are separate.
+- `tst_system_choosers.qml` covers explicit media targeting, capability/disconnect
+  guards, acknowledged mute/pin/mode settings, no restoration replay, tray identity
+  ambiguity, and native-menu focus/lifetime through a recording platform boundary.
+- `tst_bar_material.qml` covers ordered continuous groups at normal/compact/emergency
+  widths, pictorial/nonvisual values, urgency, overflow access and mode capabilities.
 - `tst_domain_workflows.qml` covers the panel adapter, native multiline arrows and
   layered Escape, value-free editor selection restoration, and ordinary Activity
   typing without the former letter shortcuts, and exclusion of revealed sensitive

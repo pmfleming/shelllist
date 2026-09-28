@@ -51,8 +51,6 @@ Item {
     readonly property color overlay: "#66000000"
     readonly property color controlBackground: surfaceRaised
     readonly property color controlBorder: material.outline
-    readonly property color barGroupBackground: withAlpha(surfaceRaised, 0.56)
-    readonly property color barGroupBorder: withAlpha(controlBorder, 0.72)
     readonly property real shellOpacity: 0.94
     readonly property color shellColor: withAlpha(window, shellOpacity)
 

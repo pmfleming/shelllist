@@ -1,60 +1,53 @@
-pragma ComponentBehavior: Bound
-
 import QtQuick
 import Shelllist.Ui as Ui
 import "BarMediaPresentation.js" as Presentation
 
 Row {
     id: controls
-
     required property BarController controller
-    property bool multiplePlayers: false
-    readonly property bool canSeek: !!controller.activePlayer && !!controller.activePlayer.can_seek
-    spacing: 1
+    readonly property var back: Presentation.transportAction(controller.activePlayer, false)
+    readonly property var forward: Presentation.transportAction(controller.activePlayer, true)
+    spacing: 2
 
-    // One visual contract; capability checks and operations remain explicit.
-    component Button: Ui.FlatIconButton {
-        width: 26
-        height: width
-        iconSize: 12
-        backgroundColor: "transparent"
-        radius: 0
-        border.width: 0
-        flatIconColor: Ui.Theme.mutedText
-        highlightedBackgroundColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.18)
-        highlightedIconColor: Ui.Theme.accent
-        pressedColor: Ui.Theme.withAlpha(Ui.Theme.accent, 0.28)
+    function perform(action: var): void {
+        if (!action.enabled)
+            return;
+        if (action.operation === "seek")
+            controller.seekMedia(action.offset);
+        else
+            controller.mediaOperation(action.operation);
     }
-
-    Button {
-        objectName: "mediaCycleButton"
-        icon: "󰑖"
-        iconSize: 13
-        visible: controls.multiplePlayers
-        accessibleName: qsTr("Show next media player")
-        onClicked: controls.controller.cycleMediaPlayer()
+    component Button: Ui.FlatIconButton {
+        width: 30
+        height: 30
+        iconSize: 20
+        activeFocusOnTab: false
+        backgroundColor: "transparent"
+        border.width: 0
+        flatIconColor: Ui.Theme.text
+        highlightedBackgroundColor: Ui.Theme.hover
+        highlightedIconColor: Ui.Theme.text
+        pressedColor: Ui.Theme.pressed
     }
     Button {
         objectName: "mediaRewindButton"
-        icon: ""
-        enabled: controls.canSeek
-        accessibleName: qsTr("Rewind 15 seconds")
-        onClicked: controls.controller.seekMedia(-15)
+        icon: controls.back.icon
+        enabled: controls.back.enabled
+        accessibleName: controls.back.label
+        onClicked: controls.perform(controls.back)
     }
     Button {
         objectName: "mediaPlayPauseButton"
-        width: 28
         icon: Presentation.playPauseActionIcon(controls.controller.activePlayer)
-        iconSize: 13
-        enabled: !!controls.controller.activePlayer && (!!controls.controller.activePlayer.can_control || !!controls.controller.activePlayer.can_play || !!controls.controller.activePlayer.can_pause)
+        enabled: Presentation.canPlayPause(controls.controller.activePlayer)
         accessibleName: qsTr("Play/pause")
         onClicked: controls.controller.mediaOperation("play-pause")
     }
     Button {
         objectName: "mediaForwardButton"
-        icon: ""
-        enabled: controls.canSeek
-        accessibleName: qsTr("Fast-forward 30 seconds")
-        onClicked: controls.controller.seekMedia(30)
+        icon: controls.forward.icon
+        enabled: controls.forward.enabled
+        accessibleName: controls.forward.label
+        onClicked: controls.perform(controls.forward)
     }
 }

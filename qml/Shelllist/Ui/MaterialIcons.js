@@ -3,8 +3,9 @@
 // Existing semantic glyphs stay valid; unmapped specialist icons use the
 // packaged Nerd Font rather than being replaced with misleading symbols.
 const symbols = {
+    "󰅂": "chevron_right", "⋯": "more_horiz", "󰈀": "lan", "󰤮": "wifi_off",
     "󰕾": "volume_up", "󰖀": "volume_down", "󰍬": "mic", "󰎆": "music_note",
-    "󰕍": "replay_30", "󰕏": "forward_30",
+    "󰕍": "restore", "replay_30": "replay_30", "forward_30": "forward_30",
     "󰀻": "apps", "󰖩": "wifi", "": "wifi", "󰂯": "bluetooth", "": "bluetooth",
     "󰅇": "content_paste", "󰍹": "monitor", "󰃭": "calendar_month", "": "notifications",
     "󰅐": "schedule", "󰒓": "settings", "󰋜": "home", "󰆴": "delete", "󰅖": "close",
@@ -13,4 +14,4 @@ const symbols = {
     "": "play_arrow", "": "pause", "": "skip_previous", "": "skip_next",
     "󰄪": "monitoring", "󰂚": "notifications_none", "󰂛": "notifications_off"
 };
-function name(glyph) { return symbols[glyph] || ""; }
+function name(glyph) { return Object.prototype.hasOwnProperty.call(symbols, glyph) ? symbols[glyph] : ""; }
