@@ -1,84 +1,40 @@
 pragma ComponentBehavior: Bound
-
 import QtQuick
+import QtQuick.Layouts
 import "."
 import Shelllist.Ui
 import "WifiPresentation.js" as Presentation
 
 AdvancedSettingsFlickable {
     id: securityFlick
-
     required property AdvancedSettingsPage settings
     viewMemory: settings.controller.viewMemory
     memoryTab: "security"
-
     contentHeight: securityCards.implicitHeight
 
     Column {
         id: securityCards
-
         width: securityFlick.width
         spacing: securityFlick.settings.sectionSpacing
-
-        DetailCard {
-            height: 245
-            title: "Device"
-            entries: [
-                {
-                    label: "BSSID",
-                    value: securityFlick.settings.ap.bssid || "—"
-                },
-                {
-                    label: "Device MAC",
-                    value: ((securityFlick.settings.status.wireless || {}).mac_address || "—")
-                },
-                {
-                    label: "Profile path",
-                    value: securityFlick.settings.profile.path || "—"
-                },
-                {
-                    label: "Interface",
-                    value: securityFlick.settings.ap.device_iface || securityFlick.settings.status.device_iface || "—"
-                },
-                {
-                    label: "Mode",
-                    value: securityFlick.settings.ap.mode ? "Wi-Fi " + securityFlick.settings.ap.mode : "Infrastructure"
-                },
-                {
-                    label: "Band / frequency",
-                    value: (securityFlick.settings.ap.band || "—") + " / " + (securityFlick.settings.ap.frequency || "—") + " MHz"
-                },
-                {
-                    label: "Channel",
-                    value: securityFlick.settings.ap.channel === undefined ? "—" : String(securityFlick.settings.ap.channel)
-                },
-                {
-                    label: "Maximum bitrate",
-                    value: securityFlick.settings.ap.max_bitrate_mbps ? securityFlick.settings.ap.max_bitrate_mbps + " Mbps" : "—"
-                }
-            ]
-        }
-
-        DetailCard {
-            height: Math.max(365, securityFlick.height - 245 - securityCards.spacing)
-            title: "Security"
-
+        DetailColumnCard {
+            objectName: "wifiSecurityControls"
+            height: implicitHeight
+            title: qsTr("Security & privacy")
             Column {
                 id: securityControls
-                anchors.fill: parent
+                Layout.fillWidth: true
                 spacing: 10
-
                 AdvancedSegmentedRow {
                     visible: !!securityFlick.settings.bandStatus.path
                     height: visible ? 40 : 0
                     enabled: !securityFlick.settings.controller.actionInFlight
                     objectName: "wifiBand"
-                    label: "Wi-Fi band"
+                    label: qsTr("Wi-Fi band")
                     value: securityFlick.settings.bandStatus.selected || "auto"
                     options: [
                         {
                             value: "auto",
-                            label: "Auto"
+                            label: qsTr("Auto")
                         },
                         {
                             value: "2.4",
@@ -100,35 +56,33 @@ AdvancedSettingsFlickable {
                         securityFlick.settings.setBand(value);
                     }
                 }
-
                 AdvancedSegmentedRow {
                     height: 40
                     objectName: "wifiMacPolicy"
-                    label: "Address policy"
+                    label: qsTr("Address policy")
                     value: securityFlick.settings.macPolicy
                     options: [
                         {
                             value: "default",
-                            label: "Default"
+                            label: qsTr("Default")
                         },
                         {
                             value: "stable",
-                            label: "Stable"
+                            label: qsTr("Stable")
                         },
                         {
                             value: "random",
-                            label: "Random"
+                            label: qsTr("Random")
                         },
                         {
                             value: "permanent",
-                            label: "Permanent"
+                            label: qsTr("Permanent")
                         }
                     ]
                     onSelected: function (value) {
                         securityFlick.settings.setMacPolicy(value);
                     }
                 }
-
                 ToggleRow {
                     objectName: "castingToggle"
                     height: 40
@@ -137,41 +91,13 @@ AdvancedSettingsFlickable {
                     enabled: !!securityFlick.settings.profile.path && !securityFlick.settings.controller.actionInFlight
                     onClicked: securityFlick.settings.setCastingEnabled(!checked)
                 }
-
-                DetailGrid {
-                    width: parent.width
-                    height: 90
-                    entries: [
-                        {
-                            label: "DHCP server",
-                            value: securityFlick.settings.dhcpLease.server_identifier || "—"
-                        },
-                        {
-                            label: "Lease duration",
-                            value: Presentation.leaseDurationLabel(securityFlick.settings.dhcpLease.lease_time_seconds)
-                        },
-                        {
-                            label: "Lease domain",
-                            value: securityFlick.settings.dhcpLease.domain_name || "—"
-                        },
-                        {
-                            label: "Lease expires",
-                            value: Presentation.leaseExpiryLabel(securityFlick.settings.dhcpLease.expires_at_ms)
-                        }
-                    ]
-                }
-
                 Column {
                     width: parent.width
-                    height: 58
                     spacing: 5
-
                     FieldLabel {
                         width: parent.width
-                        height: 13
                         text: qsTr("Network password")
                     }
-
                     TextField {
                         sensitive: true
                         width: securityControls.width
@@ -180,9 +106,9 @@ AdvancedSettingsFlickable {
                         password: !securityFlick.settings.passwordRevealed
                         showPasswordButton: false
                         text: securityFlick.settings.passwordValue
-                        placeholder: securityFlick.settings.personalSecurity ? "Saved password" : "Unavailable for this security type"
+                        placeholder: securityFlick.settings.personalSecurity ? qsTr("Saved password") : qsTr("Unavailable for this security type")
                         trailingActionIcon: securityFlick.settings.personalSecurity ? (securityFlick.settings.passwordRevealed ? "󰈉" : "󰈈") : ""
-                        trailingActionToolTip: securityFlick.settings.controller.advanced.secretLoading ? "Loading password" : (securityFlick.settings.passwordRevealed ? "Hide password" : "Show password")
+                        trailingActionToolTip: securityFlick.settings.controller.advanced.secretLoading ? qsTr("Loading password") : (securityFlick.settings.passwordRevealed ? qsTr("Hide password") : qsTr("Show password"))
                         trailingActionEnabled: securityFlick.settings.personalSecurity && !securityFlick.settings.controller.advanced.secretLoading
                         onEdited: function (value) {
                             securityFlick.settings.passwordValue = value;
@@ -197,6 +123,65 @@ AdvancedSettingsFlickable {
                         }
                     }
                 }
+            }
+        }
+        DisclosureSection {
+            objectName: "wifiSecurityDiagnostics"
+            title: qsTr("Device & DHCP details")
+            DetailCard {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 350
+                title: qsTr("Technical details")
+                entries: [
+                    {
+                        label: "BSSID",
+                        value: securityFlick.settings.ap.bssid || "—"
+                    },
+                    {
+                        label: qsTr("Device MAC"),
+                        value: (securityFlick.settings.status.wireless || {}).mac_address || "—"
+                    },
+                    {
+                        label: qsTr("Profile path"),
+                        value: securityFlick.settings.profile.path || "—"
+                    },
+                    {
+                        label: qsTr("Interface"),
+                        value: securityFlick.settings.ap.device_iface || securityFlick.settings.status.device_iface || "—"
+                    },
+                    {
+                        label: qsTr("Mode"),
+                        value: securityFlick.settings.ap.mode ? "Wi-Fi " + securityFlick.settings.ap.mode : qsTr("Infrastructure")
+                    },
+                    {
+                        label: qsTr("Band / frequency"),
+                        value: (securityFlick.settings.ap.band || "—") + " / " + (securityFlick.settings.ap.frequency || "—") + " MHz"
+                    },
+                    {
+                        label: qsTr("Channel"),
+                        value: securityFlick.settings.ap.channel === undefined ? "—" : String(securityFlick.settings.ap.channel)
+                    },
+                    {
+                        label: qsTr("Maximum bitrate"),
+                        value: securityFlick.settings.ap.max_bitrate_mbps ? securityFlick.settings.ap.max_bitrate_mbps + " Mbps" : "—"
+                    },
+                    {
+                        label: qsTr("DHCP server"),
+                        value: securityFlick.settings.dhcpLease.server_identifier || "—"
+                    },
+                    {
+                        label: qsTr("Lease duration"),
+                        value: Presentation.leaseDurationLabel(securityFlick.settings.dhcpLease.lease_time_seconds)
+                    },
+                    {
+                        label: qsTr("Lease domain"),
+                        value: securityFlick.settings.dhcpLease.domain_name || "—"
+                    },
+                    {
+                        label: qsTr("Lease expires"),
+                        value: Presentation.leaseExpiryLabel(securityFlick.settings.dhcpLease.expires_at_ms)
+                    }
+                ]
             }
         }
     }

@@ -33,4 +33,10 @@ Implementation of the [2026-09-29 audit](material-surface-audit-2026-09-29.md), 
 - Added explicit dialog role, accessible title and description. Conventional forward/reverse Tab wraps actual visible/enabled dialog controls, including sensitive native inputs omitted by Qt's default focus chain; native popup/Escape boundaries remain unchanged.
 - Regression checks reachability in both directions, retained input text and accessible naming. Strict lint and the 292-pass native suite pass.
 
+## Wi-Fi
+
+- Profile settings now lead the ordinary detail body; connection/network diagnostics are explicitly disclosed. Connection/sign-in status remains in the header.
+- Security/band/address/discovery/password controls precede device identifiers and DHCP metadata. Diagnostics never fetch secrets, save settings or reset live drafts/reveal state.
+- Enterprise prompts, IP validation, acknowledgement and partial-save recovery are unchanged. Strict lint and 293 native passes, including the new disclosure/draft regression.
+
 Live compositor, screen-reader, IME, touch and large-text acceptance remain separate. No services are restarted or deployed by this work.
