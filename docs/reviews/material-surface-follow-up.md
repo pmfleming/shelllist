@@ -27,4 +27,10 @@ Implementation of the [2026-09-29 audit](material-surface-audit-2026-09-29.md), 
 - Preview and Identify have different symbols; Keep/Revert and timed rollback are unchanged. Docking retains its separately acknowledged immediate policy.
 - Native suite: 291 passes; fresh packaged-font offscreen captures are in `target/material-surface-follow-up-captures/`. In the same healthy fixture, default Power content is 631px (previously 1153px); default Display Focus is 338px (previously 3536px). These reductions use disclosure, not removal of capabilities or smaller text.
 
+## Shared dialogs
+
+- Reproduced long-content overflow with a 400×240 dialog fixture. The shared frame now scrolls its full, unelided title/instructions/body and reveals focused fields/actions rather than clipping them.
+- Added explicit dialog role, accessible title and description. Conventional forward/reverse Tab wraps actual visible/enabled dialog controls, including sensitive native inputs omitted by Qt's default focus chain; native popup/Escape boundaries remain unchanged.
+- Regression checks reachability in both directions, retained input text and accessible naming. Strict lint and the 292-pass native suite pass.
+
 Live compositor, screen-reader, IME, touch and large-text acceptance remain separate. No services are restarted or deployed by this work.

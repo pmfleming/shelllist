@@ -14,27 +14,41 @@ Rectangle {
     default property alias body: bodyColumn.data
     property Item precedingFocus: null
     readonly property bool ownsKeyboardFocus: containsItem(Window.window ? Window.window.activeFocusItem : null)
+    Accessible.role: Accessible.Dialog
+    Accessible.name: title
+    Accessible.description: detail
 
     function containsItem(item: Item): bool {
         while (item && item !== frame)
             item = item.parent;
         return item === frame;
     }
+    function focusTargets(item: Item): var {
+        if (!item.visible || !item.enabled)
+            return [];
+        // Native focus-chain enumeration can omit custom TextInputs and
+        // scrolled-out controls. Never omit sensitive inputs from dialog Tab.
+        if (item.activeFocusOnTab || item instanceof TextInput || item instanceof TextEdit)
+            return [item];
+        let targets = [];
+        for (const child of item.children)
+            targets = targets.concat(focusTargets(child));
+        return targets;
+    }
     function moveFocus(backwards: bool): void {
-        const start = Window.window ? Window.window.activeFocusItem : frame;
-        let candidate = start;
-        const visited = [];
-        while (candidate && visited.indexOf(candidate) < 0) {
-            visited.push(candidate);
-            candidate = candidate.nextItemInFocusChain(!backwards);
-            if (containsItem(candidate) && candidate.visible && candidate.enabled && (candidate.activeFocusOnTab || candidate instanceof TextInput)) {
-                candidate.forceActiveFocus(backwards ? Qt.BacktabFocusReason : Qt.TabFocusReason);
-                return;
-            }
-        }
+        const targets = focusTargets(bodyColumn);
+        if (!targets.length)
+            return;
+        let current = Window.window ? Window.window.activeFocusItem : null;
+        while (current && !targets.includes(current))
+            current = current.parent;
+        const index = targets.indexOf(current);
+        const next = index < 0 ? (backwards ? targets.length - 1 : 0) : (index + (backwards ? -1 : 1) + targets.length) % targets.length;
+        targets[next].forceActiveFocus(backwards ? Qt.BacktabFocusReason : Qt.TabFocusReason);
     }
     onVisibleChanged: {
         if (visible) {
+            viewport.contentY = 0;
             precedingFocus = Window.window ? Window.window.activeFocusItem : null;
         } else {
             if (precedingFocus && precedingFocus.visible && precedingFocus.enabled)
@@ -74,39 +88,46 @@ Rectangle {
         border.width: 1
         clip: true
 
-        Column {
-            id: contentColumn
-
-            x: frame.cardPadding
-            y: frame.verticalCardPadding
-            width: parent.width - 2 * frame.cardPadding
-            spacing: frame.bodySpacing
-
-            ThemeText {
-                width: parent.width
-                visible: frame.title.length > 0
-                text: frame.title
-                font.pixelSize: frame.compact ? Theme.fontSizeHeading : Theme.fontSizeDisplay
-                font.weight: Theme.fontWeightBold
-                elide: Text.ElideRight
-            }
-
-            ThemeText {
-                width: parent.width
-                visible: frame.detail.length > 0
-                text: frame.detail
-                color: Theme.mutedText
-                font.pixelSize: Theme.fontSizeLabel
-                wrapMode: Text.Wrap
-                maximumLineCount: frame.compact ? 3 : 5
-                elide: Text.ElideRight
-            }
+        DetailFlickable {
+            id: viewport
+            objectName: "modalViewport"
+            anchors.fill: parent
+            anchors.leftMargin: frame.cardPadding
+            anchors.rightMargin: frame.cardPadding
+            anchors.topMargin: frame.verticalCardPadding
+            anchors.bottomMargin: frame.verticalCardPadding
+            revealFocusedControl: true
+            cardSpacing: 0
 
             Column {
-                id: bodyColumn
-
-                width: parent.width
+                id: contentColumn
+                width: viewport.width
                 spacing: frame.bodySpacing
+
+                ThemeText {
+                    width: parent.width
+                    visible: frame.title.length > 0
+                    text: frame.title
+                    font.pixelSize: frame.compact ? Theme.fontSizeHeading : Theme.fontSizeDisplay
+                    font.weight: Theme.fontWeightBold
+                    wrapMode: Text.Wrap
+                }
+
+                ThemeText {
+                    width: parent.width
+                    visible: frame.detail.length > 0
+                    text: frame.detail
+                    color: Theme.mutedText
+                    font.pixelSize: Theme.fontSizeLabel
+                    wrapMode: Text.Wrap
+                }
+
+                Column {
+                    id: bodyColumn
+
+                    width: parent.width
+                    spacing: frame.bodySpacing
+                }
             }
         }
     }

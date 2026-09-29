@@ -428,6 +428,36 @@ DaemonTestCase {
         compare(surface.actionCalls, 1);
     }
 
+    Component {
+        id: tallModalFactory
+        Ui.ModalFrame {
+            anchors.fill: null
+            width: 400
+            height: 240
+            title: "Confirm service action"
+            detail: "Required instructions. ".repeat(60)
+            Ui.TextField { objectName: "modalFirst"; width: parent.width; text: "draft"; sensitive: true }
+            Item { width: parent.width; height: 450 }
+            Ui.ActionButton { objectName: "modalLast"; width: parent.width; label: "Cancel" }
+        }
+    }
+    function test_longModalScrollsFocusedInputsAndActionsIntoView() {
+        const modal = createTemporaryObject(tallModalFactory, testCase);
+        compare(modal.Accessible.role, Accessible.Dialog);
+        compare(modal.Accessible.name, "Confirm service action");
+        const first = findChild(modal, "modalFirst");
+        const last = findChild(modal, "modalLast");
+        const viewport = findChild(modal, "modalViewport");
+        first.focusInput(false);
+        tryVerify(() => viewport.contentHeight > viewport.height);
+        keyClick(Qt.Key_Tab);
+        tryVerify(() => last.activeFocus);
+        tryVerify(() => last.mapToItem(viewport, 0, 0).y >= 0 && last.mapToItem(viewport, 0, last.height).y <= viewport.height + 1);
+        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
+        tryVerify(() => first.inputActiveFocus);
+        tryVerify(() => first.mapToItem(viewport, 0, 0).y >= 0 && first.mapToItem(viewport, 0, first.height).y <= viewport.height + 1);
+        compare(first.text, "draft");
+    }
     function test_modalUsesConventionalTabAndOwnEscape() {
         const surface = makeSurface();
         enterDetails(surface);
