@@ -120,8 +120,9 @@ ColumnLayout {
             visible: section.controller.adapters.length > 1
             text: qsTr("Preferred radio")
         }
-        Ui.SegmentedControl {
+        Ui.DropDownList {
             objectName: "bluetoothRadioSelector"
+            Accessible.name: qsTr("Preferred Bluetooth radio")
             visible: section.controller.adapters.length > 1
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
@@ -180,7 +181,7 @@ ColumnLayout {
         }
     }
 
-    Ui.DetailColumnCard {
+    Ui.DisclosureSection {
         objectName: "adapterTechnicalDetails"
         Layout.fillWidth: true
         visible: section.controller.adapterSettingsTab === "general"
@@ -279,7 +280,7 @@ ColumnLayout {
         }
         Ui.ThemeText {
             Layout.fillWidth: true
-            text: qsTr("Pairing and connection defaults apply unless overridden in the device’s Settings tab.")
+            text: qsTr("Individual devices can override these defaults in Settings.")
             wrapMode: Text.WordWrap
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.fontSizeSmall

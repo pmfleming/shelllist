@@ -42,7 +42,7 @@ ColumnLayout {
     }
     Ui.ThemeText {
         Layout.fillWidth: true
-        text: qsTr("Values shown are effective for this device. Changes override defaults. Reset restores all device defaults, including audio preferences.")
+        text: qsTr("Overrides apply only to this device. Reset restores device and audio defaults.")
         wrapMode: Text.WordWrap
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeSmall

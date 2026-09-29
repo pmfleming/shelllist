@@ -71,4 +71,10 @@ Implementation of the [2026-09-29 audit](material-surface-audit-2026-09-29.md), 
 - Information omits absent image dimensions and empty file sections; its card sizes to content. Long filenames wrap in height-aware, virtualized rows instead of losing their middle/extension.
 - Ordinary editing, failed drafts and retry/discard are unchanged. Strict lint and 13 ClipboardRecovery Qt passes include metadata relevance, full filenames and no edit-lease dispatch from presentation.
 
+## Bluetooth
+
+- Adapter identifiers are explicitly disclosed; preferred-radio selection uses a scrollable dropdown rather than squeezing an arbitrary adapter list into segments.
+- Ownership prose is shorter while device/audio reset scope stays explicit. Pairing verification, radio blocking, drafts, trust/reconnect and recovery remain untouched.
+- Strict lint and 27 BluetoothRecovery Qt passes include named radio selection and effect-free technical disclosure.
+
 Live compositor, screen-reader, IME, touch and large-text acceptance remain separate. No services are restarted or deployed by this work.

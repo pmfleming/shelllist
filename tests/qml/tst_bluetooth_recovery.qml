@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Shelllist.Ui as Ui
 import "../../bluetooth" as Bt
 
 DaemonTestCase {
@@ -138,6 +139,14 @@ DaemonTestCase {
         wait(0);
         const selector = findChild(page, "bluetoothRadioSelector");
         verify(selector.visible && selector.interactive);
+        verify(selector instanceof Ui.DropDownList, "radio lists use a scrollable choice, not compressed segments");
+        compare(selector.Accessible.name, "Preferred Bluetooth radio");
+        const technical = findChild(page, "adapterTechnicalDetails");
+        verify(!technical.open);
+        const beforeDisclosure = calls.length;
+        technical.expanded = true;
+        technical.expanded = false;
+        compare(calls.length, beforeDisclosure);
         selector.selected("usb");
         compare(calls[calls.length - 1].method, "bluetooth.management.update");
         compare(calls[calls.length - 1].params.preferred_adapter_key, "usb");
