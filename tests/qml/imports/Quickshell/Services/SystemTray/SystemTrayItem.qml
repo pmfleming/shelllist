@@ -3,6 +3,7 @@ import QtQuick
 QtObject {
     property string id: ""
     property string title: ""
+    property string icon: ""
     property string tooltipTitle: ""
     property string tooltipDescription: ""
     property QtObject menu: null

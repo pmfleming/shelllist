@@ -4,6 +4,8 @@ Rectangle {
     id: tile
 
     property string icon: ""
+    property url iconSource: ""
+    readonly property bool hasImage: artwork.status === Image.Ready
     property color iconColor: Theme.text
     property color backgroundColor: "transparent"
     property color borderColor: "transparent"
@@ -42,7 +44,20 @@ Rectangle {
         ringColor: tile.iconColor
     }
 
+    Image {
+        id: artwork
+        anchors.centerIn: parent
+        width: tile.iconSize
+        height: tile.iconSize
+        sourceSize.width: width
+        sourceSize.height: height
+        source: tile.iconSource
+        asynchronous: true
+        fillMode: Image.PreserveAspectFit
+        visible: tile.hasImage
+    }
     Text {
+        visible: !tile.hasImage
         anchors.centerIn: parent
         text: tile.icon
         color: tile.iconColor

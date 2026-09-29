@@ -15,6 +15,7 @@ Ui.ProviderChooserController {
     readonly property var trayItems: kind === "tray" ? SystemTray.items.values : []
     readonly property var sourceEntries: kind === "tray" ? Entries.tray(trayItems)
         : (!barController ? [] : (kind === "audio" ? Entries.audio(barController.audio, actionInFlight) : Entries.media(barController.media.players, actionInFlight)))
+    readonly property SystemTrayItem selectedTrayItem: kind === "tray" && selectedResult ? uniqueTrayItem(selectedResult.id) : null
     readonly property var selectedPlayer: kind === "media" && barController && selectedResult ? (barController.media.players || []).find(player => player.id === selectedResult.id) || null : null
     readonly property bool mediaPreferencesSupported: !!selectedPlayer && selectedPlayer.control_mode !== undefined && barController.media.pinned_player !== undefined
     readonly property bool playerPinned: !!selectedPlayer && barController.media.pinned_player === selectedPlayer.id

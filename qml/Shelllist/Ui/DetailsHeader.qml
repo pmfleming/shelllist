@@ -6,6 +6,7 @@ Column {
 
     required property real uiScale
     property string icon: ""
+    property url iconSource: ""
     property bool signalIcon: false
     property color iconColor: Theme.mutedText
     property color iconBorderColor: Theme.strongBorder
@@ -43,10 +44,12 @@ Column {
         spacing: Math.max(Theme.spacingSm, Math.round(Theme.spacingMd * header.uiScale))
 
         IconTile {
+            objectName: "detailIdentityIcon"
             Layout.preferredWidth: Math.round(58 * header.uiScale)
             Layout.preferredHeight: Math.round(54 * header.uiScale)
             Layout.alignment: Qt.AlignVCenter
             icon: header.signalIcon ? "" : header.icon
+            iconSource: header.signalIcon ? "" : header.iconSource
             iconColor: header.iconColor
             iconSize: Math.max(Theme.iconSizeLarge, Math.round(Theme.iconSizeLarge * header.uiScale))
             backgroundColor: Theme.selected

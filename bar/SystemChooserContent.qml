@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Services.SystemTray
 import Shelllist.Ui as Ui
 import "BarMediaPresentation.js" as Media
 
@@ -69,6 +70,14 @@ Ui.ProviderChooserSurface {
             required property var resultData
             listPane: pane
             rowHeight: pane.delegateHeight
+            readonly property SystemTrayItem trayItem: content.controller.kind === "tray" ? content.controller.uniqueTrayItem(resultData.id) : null
+            Ui.IconTile {
+                visible: content.controller.kind === "tray"
+                Layout.preferredWidth: Ui.Theme.iconSizeLarge
+                Layout.preferredHeight: Ui.Theme.iconSizeLarge
+                icon: row.resultData.icon
+                iconSource: row.trayItem ? row.trayItem.icon : ""
+            }
             Ui.ResultLabel {
                 title: row.resultData.title
                 subtitle: row.resultData.subtitle
@@ -81,7 +90,8 @@ Ui.ProviderChooserSurface {
         title: content.controller.selectedPlayer ? content.controller.selectedPlayer.identity : content.controller.selectedResult ? content.controller.selectedResult.title : ""
         subtitle: content.controller.selectedPlayer ? content.controller.selectedPlayer.playback_status : content.controller.selectedResult ? content.controller.selectedResult.subtitle : ""
         icon: content.controller.selectedResult ? content.controller.selectedResult.icon : ""
-        actions: content.controller.kind === "media" ? [] : content.controller.detailActions.filter(action => action.id !== "inspect" && (content.controller.kind !== "audio" || !["quieter", "louder"].includes(action.id)))
+        iconSource: content.controller.selectedTrayItem ? content.controller.selectedTrayItem.icon : ""
+        actions: content.controller.kind !== "audio" ? [] : content.controller.detailActions.filter(action => action.id !== "inspect" && (content.controller.kind !== "audio" || !["quieter", "louder"].includes(action.id)))
         actionWidth: 0
         Ui.DetailFlickable {
             anchors.fill: parent
@@ -125,6 +135,44 @@ Ui.ProviderChooserSurface {
                     checked: content.controller.muted
                     enabled: content.controller.hasSelection && !content.controller.actionInFlight
                     onClicked: content.controller.toggleAudioMuted()
+                }
+                Ui.DetailColumnCard {
+                    objectName: "trayApplication"
+                    visible: content.controller.kind === "tray"
+                    height: implicitHeight
+                    title: qsTr("Application")
+                    Ui.ThemeText {
+                        Layout.fillWidth: true
+                        text: content.controller.selectedResult ? content.controller.selectedResult.subtitle : ""
+                        wrapMode: Text.Wrap
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Repeater {
+                            model: content.controller.kind === "tray" ? content.controller.detailActions.filter(action => ["activate", "menu"].includes(action.id)) : []
+                            delegate: Ui.ActionButton {
+                                required property var modelData
+                                objectName: "trayPrimary-" + modelData.id
+                                Layout.fillWidth: true
+                                icon: modelData.icon
+                                label: modelData.label
+                                iconOnly: false
+                                enabled: modelData.enabled
+                                onClicked: content.controller.triggerDetailAction(modelData.id)
+                            }
+                        }
+                    }
+                }
+                Ui.DisclosureSection {
+                    objectName: "trayOtherActions"
+                    title: qsTr("Other application actions")
+                    visible: content.controller.kind === "tray"
+                    Ui.ActionToolbar {
+                        Layout.fillWidth: true
+                        alignRight: false
+                        actions: content.controller.kind === "tray" ? content.controller.detailActions.filter(action => !["activate", "menu"].includes(action.id)) : []
+                        onTriggered: function (actionId) { content.controller.triggerDetailAction(actionId); }
+                    }
                 }
                 Ui.DetailColumnCard {
                     objectName: "mediaPlayback"

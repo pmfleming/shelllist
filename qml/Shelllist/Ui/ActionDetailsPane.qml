@@ -5,6 +5,7 @@ DetailsPane {
 
     required property real uiScale
     property alias icon: header.icon
+    property alias iconSource: header.iconSource
     property alias signalIcon: header.signalIcon
     property alias iconColor: header.iconColor
     property alias iconBorderColor: header.iconBorderColor

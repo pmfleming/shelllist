@@ -53,7 +53,7 @@ function tray(items) {
         const item = groups[id][0], unique = groups[id].length === 1;
         return entry(id, item.title || id, unique ? (item.tooltipDescription || item.tooltipTitle || id) : "Ambiguous tray identity; actions unavailable", "󰀻", [
             action("activate", "Activate application", "󰀻", unique && !item.onlyMenu),
-            action("menu", "Open application menu", "󰒓", unique && item.hasMenu),
+            action("menu", "Open application menu", "⋯", unique && item.hasMenu),
             action("secondary", "Secondary activation", "󰋜", unique && !item.onlyMenu),
             action("scroll-up", "Scroll application up", "󰁝", unique),
             action("scroll-down", "Scroll application down", "󰁅", unique)

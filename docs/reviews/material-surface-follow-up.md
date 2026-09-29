@@ -50,4 +50,10 @@ Implementation of the [2026-09-29 audit](material-surface-audit-2026-09-29.md), 
 - Automatic mode has a concise choice plus contextual behavior; pin/automatic selection remains daemon-owned and acknowledged. Every transport still targets the explicit selected player and revalidates capabilities.
 - Strict lint and 10 SystemChoosers Qt passes, including state/icon acknowledgement regression. The initially attempted `accent` action tone was rejected by the existing contract and corrected to supported `active`; the contract was not relaxed.
 
+## Tray
+
+- Supplied application icons now render in results and inspector identity, with the existing glyph as fallback. Primary activation/menu paths are labelled in the body; secondary/scroll actions are disclosed.
+- Duplicate identities still disable every vendor action; native menu invocation/generation/focus guards are unchanged. No vendor menu content is restyled or serialized.
+- Strict lint and 11 SystemChoosers Qt passes, including actual supplied-image loading, menu-only capability and native-menu cleanup. Added the real platform `icon` property to the test boundary mock.
+
 Live compositor, screen-reader, IME, touch and large-text acceptance remain separate. No services are restarted or deployed by this work.

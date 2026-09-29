@@ -30,7 +30,7 @@ DaemonTestCase {
         TrayFixture.SystemTrayItem { hasMenu: true; menu: QtObject {} }
     }
     function init(): void { calls = []; failOnWarning(/.*/); }
-    function cleanup(): void { clientReady = true; }
+    function cleanup(): void { clientReady = true; TrayFixture.SystemTray.items.values = []; }
     function acknowledge(fixture, call, data): void {
         Io.DaemonSessions.sessions[fixture.desktop.backend.daemonName].client.response(call.id, {protocol: BarApi.protocol, version: BarApi.version, ok: true, data: data || {}}, "", call.route);
     }
@@ -191,6 +191,27 @@ DaemonTestCase {
         root.chooser.trayMenuRequested(tray);
         verify(root.chooser.navigationBlocked);
         tryCompare(root.chooser, "navigationBlocked", false, 2500);
+    }
+    function test_trayInspectorUsesSuppliedIdentityAndGuardedMenuAction(): void {
+        const root = fixture();
+        const tray = createTemporaryObject(trayFactory, testCase, {id: "example", title: "Example application", onlyMenu: true, icon: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="red"/></svg>')});
+        TrayFixture.SystemTray.items.values = [tray];
+        root.chooser.kind = "tray";
+        root.chooser.activateUi("");
+        tryCompare(root.chooser, "hasSelection", true);
+        root.chooser.primarySelected();
+        tryVerify(() => root.content.detailsItem !== null);
+        compare(decodeURIComponent(String(root.content.detailsItem.iconSource)), decodeURIComponent(tray.icon));
+        tryCompare(findChild(root.content.detailsItem, "detailIdentityIcon"), "hasImage", true);
+        const menuAction = findChild(root, "trayPrimary-menu");
+        verify(menuAction.enabled);
+        verify(!findChild(root, "trayPrimary-activate").enabled);
+        verify(!findChild(root, "trayOtherActions").open);
+        menuAction.clicked();
+        verify(root.chooser.trayMenuActive);
+        verify(findChild(root, "systemTrayMenu").visible);
+        root.chooser.deactivateUi();
+        verify(!findChild(root, "systemTrayMenu").visible);
     }
     function test_trayProjectionNeverConfusesDuplicateOrPrototypeIdentities(): void {
         const values = Entries.tray([
