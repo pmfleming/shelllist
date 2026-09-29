@@ -81,8 +81,10 @@ waits for its initial refresh before resuming an editor.
 `Ui.ModalFrame` traps conventional forward/reverse Tab among its visible,
 enabled inputs/actions and restores valid preceding focus on hide. Native
 popup focus is outside that trap. Required-input prompts focus their input;
-input-free confirmations focus an action. Surface-level region shortcuts are
-disabled while the domain reports a modal prompt.
+input-free confirmations focus an action. Long dialog content scrolls and reveals
+focused controls; title/instructions are not elided, and the frame exposes its
+dialog role/name. Surface-level region shortcuts are disabled while the domain
+reports a modal prompt.
 
 Bluetooth surface closure now clears all queued pairing credentials and rejects
 unsubmitted response-required prompts with credential-free, request-specific

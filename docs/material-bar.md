@@ -65,15 +65,16 @@ state; neither those changes nor presentation restoration invokes playback.
 ## Routes and menu safety
 
 Audio/Media/Tray retain independent CLI, global shortcut and Home Manager routes.
-Audio contains current default devices, mute controls, volume commands and the
-full mixer; device routing still belongs to that mixer, not a fabricated daemon
+Audio contains current default devices, mute controls, an acknowledged output
+volume value with ±5% body actions, and the full mixer; device routing still belongs to that mixer, not a fabricated daemon
 API. Displays, Battery power profiles, Applications, Activity and Time & Weather
 retain their chooser routes. Workspace switching retains compositor shortcuts.
 Update journals have `shelllist:update-logs`, with configurable Super+Shift+U in
 Home Manager; no status pod is required to reach them.
 
-Tray provides explicit activation, secondary activation, scrolling and native
-menus. Duplicate IDs disable effects instead of choosing an arbitrary instance.
+Media puts now-playing/transport ahead of disclosed player preferences. Play/Pause
+names and icons reflect acknowledged playback. Tray uses supplied application icons
+and labelled activation/menu actions, with secondary activation/scrolling disclosed. Duplicate IDs disable effects instead of choosing an arbitrary instance.
 Native menus hold the chooser's focus-loss guard before opening, block competing
 chooser navigation, and restore an ordinary focus target only in the same live
 invocation. Missing/slow menus time out, deactivation cancels them, and late open
@@ -88,7 +89,7 @@ player targeting, acknowledged settings, no restoration replay, and native-menu
 lifecycle through a recording platform boundary. Rust tests cover conservative
 classification, recency/order independence, pin/automatic/exit behavior and
 mode lifetime; backend and frontend contract fixtures are regenerated and validated.
-The final sibling-aware gates pass: **280 Qt passes / 198 behavioral cases** in
+The original bar-implementation sibling-aware gates passed: **280 Qt passes / 198 behavioral cases** in
 Shelllist, **141 Rust unit tests plus two integration tests** in bar-daemon.
 Strict QML lint, TypeScript generation checks, runtime/gallery smoke and all
 sibling/contract gates pass. Logs: `/tmp/material-item5-shelllist-final-gate.log`

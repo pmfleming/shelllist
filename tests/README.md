@@ -42,7 +42,7 @@ already-open development shell after changing `flake.nix`.
   and modal focus containment/restoration, with decorative animations enabled.
   Bluetooth recovery tests also cover its actual adapter-settings keyboard
   journey and clearing/fencing sensitive prompts on whole-surface closure.
-  The suite now has 206 behavioral cases (288 passes with hooks); the inventory
+  The suite now has 218 behavioral cases (300 passes with hooks); the inventory
   below is the completed pruning checkpoint, not a permanent cap on feature tests.
 - `tst_chooser_geometry.qml` covers anchored expansion, work-area bounds and
   fallback, stable frame/list/text/control sizes, minimum and emergency canvases,
@@ -53,8 +53,9 @@ already-open development shell after changing `flake.nix`.
   floating window, including native frame delivery through public `Window.window`;
   live layer placement and input-mask acceptance are separate.
 - `tst_system_choosers.qml` covers explicit media targeting, capability/disconnect
-  guards, acknowledged mute/pin/mode settings, no restoration replay, tray identity
-  ambiguity, and native-menu focus/lifetime through a recording platform boundary.
+  guards, acknowledged volume/mute/pin/mode settings, playback action state, no
+  restoration replay, supplied tray icons, identity ambiguity, and native-menu
+  focus/lifetime through a recording platform boundary.
 - `tst_bar_material.qml` covers ordered continuous groups at normal/compact/emergency
   widths, pictorial/nonvisual values, urgency, overflow access and mode capabilities.
 - Activity regressions verify a schedule-only rail in overview and expanded mode,

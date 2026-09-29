@@ -89,4 +89,28 @@ Implementation of the [2026-09-29 audit](material-surface-audit-2026-09-29.md), 
 - OSD's concise confirmed-value presentation is retained; its low-priority decorative differences did not justify a redesign. Toast focus/accessibility was addressed in the Notifications commit. Update logs still open the external journal terminal.
 - Strict lint and 7 MaterialBar Qt passes cover normal/compact/300px overflow, edge clicking and non-overlap. This remains a compact desktop adaptation, not a mobile-target conformance claim.
 
-Live compositor, screen-reader, IME, touch and large-text acceptance remain separate. No services are restarted or deployed by this work.
+## Final validation and commit scope
+
+- Full sibling-aware gate: `python3 daemon-framework/tools/local-build.py check shelllist --keep-going --print-build-logs` — **all checks passed; 300 Qt passes = 218 behavioral cases + 82 hooks**. Evidence: `/tmp/material-surface-follow-up-full-gate.log`.
+- The full gate caught a direct test URL that worked only in the source checkout. `8ec410f` resolves the private time-pane fixture through the packaged QML path; no assertions or production exports were weakened.
+- Final packaged-font offscreen captures include dark/light Power, Displays and notification browse feedback under `target/material-surface-follow-up-captures/`; the capture probe passes all 3 cases (5 Qt passes with hooks). Log: `/tmp/material-follow-up-captures.log`. These are synthetic snapshots, not complete state matrices or live acceptance.
+- Existing Fontconfig and asynchronous engine-destruction diagnostics remain; no suppression was added. This work does not claim a fresh Quality Lens certification or score improvement.
+
+| Surface | Commit |
+|---|---|
+| Notifications / toasts | `673d3c2` |
+| Battery / Power | `2f102a0` |
+| Displays | `92f1dba` |
+| Shared dialogs | `fca7017` |
+| Wi-Fi | `aaaf264` |
+| Audio | `b5ffdcd` |
+| Media | `225a398` |
+| Tray | `a08ee48` |
+| Activity | `957c26a` |
+| Time & Weather | `6449f0b` |
+| Clipboard | `1ef0135` |
+| Bluetooth | `7c84ca1` |
+| Applications / compact headers | `0923f54` |
+| Bar targets | `c7bd567` |
+
+Live compositor, screen-reader, IME, touch, scaling/performance and full large-text acceptance remain separate. No push, service restart or deployment occurred. Unrelated `daemon-framework` edits were left untouched.

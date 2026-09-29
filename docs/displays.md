@@ -25,8 +25,8 @@ and draft recovery remain available even if the selected display disappears.
 
 ## Selected display options
 
-One prominent **Preview changes** button sits at the top, with two or three
-secondary buttons below it:
+Outside the global Focus tab, one prominent **Preview changes** button sits at
+the top, with distinct Preview/Identify symbols and two or three secondary actions:
 
 - **Identify** marks the selected enabled screen for three seconds. It never
   enables a disabled screen or takes focus. The monitor icon beside search
@@ -37,9 +37,10 @@ secondary buttons below it:
   docking policy until that preference is set again.
 
 **Settings** contains mirror/extend content selection, resolution/refresh, scale,
-rotation/reflection, X/Y position, and relative placement. Controls preserve advertised backend mode strings. The
-optional canvas stacks above the inspector below 740 logical pixels; it can be
-hidden without discarding edits. **Information** is read-only observed state,
+rotation/reflection, and an explicit **Precise position** disclosure for X/Y and
+relative placement. Controls preserve advertised backend mode strings. A compact
+multi-display map leads the settings. The editable Arrange canvas stacks above
+the inspector below 740 logical pixels; closing it never discards edits. **Information** is read-only observed state,
 including connector, available identity metadata, mode, logical size, scale and
 position and whether it is the active monitor. Missing metadata is omitted.
 **Focus** contains global focus behaviour controls (see below).
@@ -103,7 +104,9 @@ rotation and position retain their existing Preview/Keep workflow.
 
 ## Monitor and window focus
 
-Open any display's **Focus** tab for 26 global controls, grouped into:
+Open any display's **Focus · all monitors** tab for 26 global controls. Common
+pointer choices lead; booleans use switches, while advanced controls are disclosed
+in these groups:
 
 - **Mouse and monitor focus:** click/follow/detached/separate focus, monitor
   activation on pointer crossing, refocus thresholds/dead zones, floating-window,
@@ -116,8 +119,9 @@ Open any display's **Focus** tab for 26 global controls, grouped into:
 - **Cursor movement:** suppress or remember warps, workspace/special-workspace
   warps, cursor destinations, and restoration after non-mouse input.
 
-The page shows the currently active monitor and the focused window's monitor
-separately, independent of the selected display. Live workspace telemetry makes
+**Explanations & technical details** reveals per-setting help/raw compositor keys
+and the active monitor and focused window's monitor separately, independent of
+the selected display. Live workspace telemetry makes
 it clear when pointer-selected monitor and keyboard-focused window differ.
 These settings apply to **all** monitors. Choices save immediately after daemon
 verification, not through layout Preview. Numeric values require Enter or Apply.
