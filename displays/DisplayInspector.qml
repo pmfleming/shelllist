@@ -38,9 +38,17 @@ ColumnLayout {
             objectName: "displayContentMode"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            options: [{value: "", label: qsTr("Extend desktop")}].concat(Model.mirrorSources(inspector.controller.draft, inspector.output.name).map(function (source) {
+            options: [
+                {
+                    value: "",
+                    label: qsTr("Extend desktop")
+                }
+            ].concat(Model.mirrorSources(inspector.controller.draft, inspector.output.name).map(function (source) {
                 const output = inspector.controller.outputs.find(o => o.name === source.name) || source;
-                return {value: source.name, label: qsTr("Mirror %1 (%2)").arg(Model.title(output)).arg(source.name)};
+                return {
+                    value: source.name,
+                    label: qsTr("Mirror %1 (%2)").arg(Model.title(output)).arg(source.name)
+                };
             }))
             value: inspector.draft.mirror_of || ""
             interactive: inspector.controller.canEdit && !!inspector.draft.enabled
@@ -51,7 +59,8 @@ ColumnLayout {
         }
         Ui.ThemeText {
             Layout.fillWidth: true
-            text: !inspector.draft.enabled ? qsTr("Enable this display to choose its content.") : inspector.draft.mirror_of ? qsTr("Duplicates %1. Position follows the source; differing resolutions are scaled with black bars if needed.").arg(inspector.draft.mirror_of) : qsTr("Extends the desktop with independent content. Choose another enabled extended display above to mirror it instead.")
+            visible: text.length > 0
+            text: !inspector.draft.enabled ? qsTr("Enable this display to choose its content.") : inspector.draft.mirror_of ? qsTr("Mirrors %1 · position follows the source. Scaled to fit; black bars may appear.").arg(inspector.draft.mirror_of) : ""
             wrapMode: Text.Wrap
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.fontSizeSmall
@@ -59,7 +68,7 @@ ColumnLayout {
         Ui.ThemeText {
             Layout.fillWidth: true
             visible: inspector.controller.draft.some(o => o.enabled && o.mirror_of === inspector.output.name)
-            text: qsTr("This display is a mirror source. Its copies must extend first before it can mirror another display. Disabling the source promotes its copies to extended displays.")
+            text: qsTr("Copies must extend before this display can mirror another. Disabling it makes its copies extended displays.")
             wrapMode: Text.Wrap
             color: Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.fontSizeSmall
@@ -204,117 +213,122 @@ ColumnLayout {
         controller: inspector.controller
     }
 
-    Ui.DetailColumnCard {
-        objectName: "displayPositionCard"
-        enabled: !inspector.draft.mirror_of
+    Ui.DisclosureSection {
+        objectName: "displayPositionSection"
         Layout.fillWidth: true
-        Layout.minimumWidth: 0
-        Layout.preferredHeight: implicitHeight
-        title: qsTr("Position")
-        contentSpacing: Ui.Theme.spacingMd
+        title: qsTr("Precise position")
+        Ui.DetailColumnCard {
+            objectName: "displayPositionCard"
+            enabled: !inspector.draft.mirror_of
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            Layout.preferredHeight: implicitHeight
+            title: qsTr("Position")
+            contentSpacing: Ui.Theme.spacingMd
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: Ui.Theme.spacingSm
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                Layout.preferredWidth: 1
-                spacing: Ui.Theme.spacingXs
-                Ui.FieldLabel {
-                    text: qsTr("X · logical pixels")
-                }
-                Ui.TextField {
-                    objectName: "displayX"
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    text: String(inspector.draft.x)
-                    inputMethodHints: Qt.ImhFormattedNumbersOnly
-                    maximumLength: 8
-                    Accessible.name: qsTr("X position in logical pixels")
-                    onEdited: function (value) {
-                        inspector.controller.edit(inspector.output.name, "x", value);
-                    }
-                }
-            }
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                Layout.preferredWidth: 1
-                spacing: Ui.Theme.spacingXs
-                Ui.FieldLabel {
-                    text: qsTr("Y · logical pixels")
-                }
-                Ui.TextField {
-                    objectName: "displayY"
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    text: String(inspector.draft.y)
-                    inputMethodHints: Qt.ImhFormattedNumbersOnly
-                    maximumLength: 8
-                    Accessible.name: qsTr("Y position in logical pixels")
-                    onEdited: function (value) {
-                        inspector.controller.edit(inspector.output.name, "y", value);
-                    }
-                }
-            }
-        }
-        ColumnLayout {
-            visible: inspector.controller.outputs.length > 1
-            Layout.fillWidth: true
-            spacing: Ui.Theme.spacingSm
-            Ui.FieldLabel {
-                text: qsTr("Position relative to")
-            }
-            Ui.DropDownList {
-                objectName: "displayPositionReference"
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                options: inspector.controller.draft.filter(function (o) {
-                    return o.name !== inspector.output.name && !o.mirror_of;
-                }).map(function (o) {
-                    return {
-                        value: o.name,
-                        label: o.name
-                    };
-                })
-                value: inspector.controller.referenceName
-                Accessible.name: qsTr("Position relative to display")
-                onSelected: function (value) {
-                    inspector.controller.referenceName = value;
-                }
-            }
             RowLayout {
                 Layout.fillWidth: true
-                spacing: Ui.Theme.spacingXs
-                Repeater {
-                    model: [
-                        {
-                            side: "left",
-                            icon: "󰁍"
-                        },
-                        {
-                            side: "above",
-                            icon: "󰁝"
-                        },
-                        {
-                            side: "below",
-                            icon: "󰁅"
-                        },
-                        {
-                            side: "right",
-                            icon: "󰁔"
-                        }
-                    ]
-                    delegate: Ui.ActionButton {
-                        required property var modelData
-                        objectName: "displayPlace-" + modelData.side
+                spacing: Ui.Theme.spacingSm
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.preferredWidth: 1
+                    spacing: Ui.Theme.spacingXs
+                    Ui.FieldLabel {
+                        text: qsTr("X · logical pixels")
+                    }
+                    Ui.TextField {
+                        objectName: "displayX"
                         Layout.fillWidth: true
-                        Layout.preferredWidth: 1
-                        icon: modelData.icon
-                        accessibleName: qsTr("Place %1 of %2").arg(modelData.side).arg(inspector.controller.referenceName)
-                        toolTip: accessibleName
-                        onClicked: inspector.controller.placeSelected(modelData.side)
+                        Layout.minimumWidth: 0
+                        text: String(inspector.draft.x)
+                        inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        maximumLength: 8
+                        Accessible.name: qsTr("X position in logical pixels")
+                        onEdited: function (value) {
+                            inspector.controller.edit(inspector.output.name, "x", value);
+                        }
+                    }
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.preferredWidth: 1
+                    spacing: Ui.Theme.spacingXs
+                    Ui.FieldLabel {
+                        text: qsTr("Y · logical pixels")
+                    }
+                    Ui.TextField {
+                        objectName: "displayY"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        text: String(inspector.draft.y)
+                        inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        maximumLength: 8
+                        Accessible.name: qsTr("Y position in logical pixels")
+                        onEdited: function (value) {
+                            inspector.controller.edit(inspector.output.name, "y", value);
+                        }
+                    }
+                }
+            }
+            ColumnLayout {
+                visible: inspector.controller.outputs.length > 1
+                Layout.fillWidth: true
+                spacing: Ui.Theme.spacingSm
+                Ui.FieldLabel {
+                    text: qsTr("Position relative to")
+                }
+                Ui.DropDownList {
+                    objectName: "displayPositionReference"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    options: inspector.controller.draft.filter(function (o) {
+                        return o.name !== inspector.output.name && !o.mirror_of;
+                    }).map(function (o) {
+                        return {
+                            value: o.name,
+                            label: o.name
+                        };
+                    })
+                    value: inspector.controller.referenceName
+                    Accessible.name: qsTr("Position relative to display")
+                    onSelected: function (value) {
+                        inspector.controller.referenceName = value;
+                    }
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Ui.Theme.spacingXs
+                    Repeater {
+                        model: [
+                            {
+                                side: "left",
+                                icon: "󰁍"
+                            },
+                            {
+                                side: "above",
+                                icon: "󰁝"
+                            },
+                            {
+                                side: "below",
+                                icon: "󰁅"
+                            },
+                            {
+                                side: "right",
+                                icon: "󰁔"
+                            }
+                        ]
+                        delegate: Ui.ActionButton {
+                            required property var modelData
+                            objectName: "displayPlace-" + modelData.side
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            icon: modelData.icon
+                            accessibleName: qsTr("Place %1 of %2").arg(modelData.side).arg(inspector.controller.referenceName)
+                            toolTip: accessibleName
+                            onClicked: inspector.controller.placeSelected(modelData.side)
+                        }
                     }
                 }
             }

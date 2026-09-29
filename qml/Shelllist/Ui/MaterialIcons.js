@@ -9,6 +9,7 @@ const symbols = {
     "󰀻": "apps", "󰖩": "wifi", "": "wifi", "󰂯": "bluetooth", "": "bluetooth",
     "󰅇": "content_paste", "󰍹": "monitor", "󰃭": "calendar_month", "": "notifications",
     "󰅐": "schedule", "󰒓": "settings", "󰋜": "home", "󰆴": "delete", "󰅖": "close",
+    "filter_1": "filter_1",
     "expand_less": "expand_less", "expand_more": "expand_more",
     "󰑓": "refresh", "󰁍": "arrow_back", "󰅀": "expand_more", "󰏫": "edit",
     "󰒊": "send", "󰌾": "lock", "󰈈": "visibility", "󰈉": "visibility_off",

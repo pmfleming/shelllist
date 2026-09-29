@@ -46,7 +46,7 @@ Ui.DetailColumnCard {
     }
     Ui.ThemeText {
         Layout.fillWidth: true
-        text: qsTr("Manual display enable/disable changes override this preference until you change it again. The laptop screen returns if no other display remains active.")
+        text: qsTr("Manual changes override this preference. The laptop screen returns if no external display remains active.")
         wrapMode: Text.Wrap
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeSmall
@@ -54,7 +54,7 @@ Ui.DetailColumnCard {
     Ui.ThemeText {
         objectName: "dockingSaveStatus"
         Layout.fillWidth: true
-        text: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : pane.controller.dirty || pane.controller.trial ? qsTr("Finish or discard layout changes before changing this preference.") : qsTr("Saved automatically · no preview needed")
+        text: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : pane.controller.dirty || pane.controller.trial ? qsTr("Finish or discard layout changes before changing this preference.") : qsTr("All displays · saved automatically")
         wrapMode: Text.Wrap
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeCaption

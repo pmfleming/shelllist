@@ -11,9 +11,10 @@ ActionControl {
     property string tone: "normal"
     property bool checked: false
     property bool showSubtitle: true
+    property bool wrapTitle: false
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.controlHeight
+    implicitHeight: Math.max(Theme.controlHeight, labels.implicitHeight + Theme.spacingSm)
     radius: Theme.controlRadius
     color: area.pressed ? Theme.pressed : (area.containsMouse || highlighted ? Theme.hover : "transparent")
     border.width: 0
@@ -34,7 +35,8 @@ ActionControl {
 
             ThemeText {
                 width: labels.width
-                elide: Text.ElideRight
+                elide: row.wrapTitle ? Text.ElideNone : Text.ElideRight
+                wrapMode: row.wrapTitle ? Text.WordWrap : Text.NoWrap
                 text: UiText.highlightHotkey(row.title, row.hotkey)
                 textFormat: Text.RichText
                 color: row.tone === "danger" ? Theme.danger : (row.tone === "active" ? Theme.active : (row.tone === "warning" ? Theme.warning : Theme.text))

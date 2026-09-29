@@ -69,7 +69,7 @@ Core.Provider {
                     width: 170
                 }
             }), Core.Model.keepOpenAction("identify", qsTr("Identify"), {
-                icon: "󰈈",
+                icon: "filter_1",
                 enabled: browsing && !output.disabled && controller.stateReady,
                 presentation: {
                     group: "toolbar"

@@ -16,9 +16,9 @@ Ui.ActionDetailsPane {
     controlHeight: actionHeight
     icon: controller.selectedResult ? controller.selectedResult.icon : "󰍹"
     iconColor: controller.selectedOutput && !controller.selectedOutput.disabled ? Ui.Theme.active : Ui.Theme.mutedText
-    title: controller.selectedResult ? controller.selectedResult.title : qsTr("Displays")
-    subtitle: controller.selectedResult ? controller.selectedResult.subtitle : ""
-    actions: controller.detailActions
+    title: controller.detailsTab === "focus" ? qsTr("Focus · all monitors") : controller.selectedResult ? controller.selectedResult.title : qsTr("Displays")
+    subtitle: controller.detailsTab === "focus" ? qsTr("Keyboard and pointer") : controller.selectedResult ? controller.selectedResult.subtitle : ""
+    actions: controller.detailsTab === "focus" ? [] : controller.detailActions
     subtitleWeight: Ui.Theme.fontWeightMedium
     stackedPrimary: narrowDetails
     enabled: !controller.trial && !controller.discardPrompt && !controller.actionInFlight
@@ -38,6 +38,7 @@ Ui.ActionDetailsPane {
         anchors.fill: parent
         spacing: pane.sectionSpacing
         RowLayout {
+            visible: pane.controller.detailsTab === "settings" || pane.controller.statusMessage.length > 0
             Layout.fillWidth: true
             spacing: Ui.Theme.spacingSm
             Ui.FlatIconButton {
@@ -52,7 +53,7 @@ Ui.ActionDetailsPane {
             }
             Ui.ThemeText {
                 Layout.fillWidth: true
-                text: pane.controller.statusMessage || (pane.controller.dirty ? qsTr("Unsaved · Preview changes affects the whole layout") : qsTr("Layout changes are drafted · Preview the whole layout before keeping"))
+                text: pane.controller.statusMessage || (pane.controller.dirty ? qsTr("Unsaved layout · Preview changes") : "")
                 wrapMode: Text.Wrap
                 font.pixelSize: Ui.Theme.fontSizeSmall
                 color: pane.controller.statusMessage ? Ui.Theme.warning : Ui.Theme.mutedText

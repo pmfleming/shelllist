@@ -11,6 +11,13 @@ Ui.DetailFlickable {
     viewMemory: controller.viewMemory
     memoryTab: "settings"
     revealFocusedControl: true
+    DisplayCanvas {
+        objectName: "displayArrangementSummary"
+        width: parent.width
+        height: 150
+        visible: !workspace.controller.arrangementOpen && workspace.controller.outputs.length > 1
+        controller: workspace.controller
+    }
     GridLayout {
         width: workspace.width
         columns: workspace.controller.arrangementOpen && width >= 740 ? 2 : 1

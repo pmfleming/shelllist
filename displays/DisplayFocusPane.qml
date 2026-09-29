@@ -1,5 +1,4 @@
 pragma ComponentBehavior: Bound
-
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
@@ -12,24 +11,66 @@ Ui.DetailFlickable {
     viewMemory: controller.viewMemory
     memoryTab: "focus"
     revealFocusedControl: true
-    // Nested delegates and narrow layouts can change geometry after focus moves.
     onContentHeightChanged: Qt.callLater(revealFocus)
     onHeightChanged: Qt.callLater(revealFocus)
+    readonly property var commonKeys: ["input:follow_mouse", "misc:mouse_move_focuses_monitor", "input:mouse_refocus"]
     readonly property string focusedMonitor: controller.workspaceState.available ? controller.workspaceState.focused_monitor || "" : (controller.outputs.find(o => !!o.focused && !o.disabled) || {}).name || ""
     readonly property var activeWindow: controller.workspaceState.available ? controller.workspaceState.active_window : null
     readonly property string windowMonitor: activeWindow ? ((controller.workspaceState.workspaces || []).find(w => w.id === activeWindow.workspace_id) || {}).monitor || "" : ""
 
+    Ui.ThemeText {
+        objectName: "displayFocusStatus"
+        width: parent.width
+        text: page.controller.pendingAction === "focus" || page.controller.pendingAction === "focusReset" ? qsTr("Saving…") : page.controller.focusState.error || (!page.controller.focusState.available ? qsTr("Waiting for compositor capabilities") : page.controller.dirty || page.controller.trial ? qsTr("Finish or discard layout changes before changing focus behaviour.") : qsTr("All monitors · saved automatically"))
+        wrapMode: Text.Wrap
+        color: page.controller.focusState.error ? Ui.Theme.warning : Ui.Theme.mutedText
+    }
     Ui.DetailColumnCard {
-        objectName: "displayFocusScope"
         height: implicitHeight
-        title: qsTr("Focus behaviour · all monitors")
-        contentSpacing: Ui.Theme.spacingSm
+        title: qsTr("Pointer and window focus")
+        Repeater {
+            model: Focus.groups()[0].settings.filter(entry => page.commonKeys.includes(entry.key))
+            delegate: DisplayFocusSetting {
+                required property var modelData
+                Layout.fillWidth: true
+                controller: page.controller
+                entry: modelData
+                showDetails: technical.open
+            }
+        }
+    }
+    Ui.DisclosureSection {
+        objectName: "displayAdvancedFocus"
+        title: qsTr("Advanced focus behaviour")
+        Repeater {
+            model: Focus.groups()
+            delegate: Ui.DetailColumnCard {
+                id: groupCard
+                required property var modelData
+                Layout.fillWidth: true
+                title: modelData.title
+                Repeater {
+                    model: groupCard.modelData.settings.filter(entry => !page.commonKeys.includes(entry.key))
+                    delegate: DisplayFocusSetting {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        controller: page.controller
+                        entry: modelData
+                        showDetails: technical.open
+                    }
+                }
+            }
+        }
+    }
+    Ui.DisclosureSection {
+        id: technical
+        objectName: "displayFocusTechnical"
+        title: qsTr("Explanations & technical details")
         Ui.ThemeText {
             objectName: "displayFocusedMonitor"
             Layout.fillWidth: true
-            text: page.focusedMonitor ? qsTr("Currently active monitor: ") + page.focusedMonitor : qsTr("Currently active monitor: not reported")
+            text: qsTr("Active monitor: %1").arg(page.focusedMonitor || qsTr("Not reported"))
             wrapMode: Text.Wrap
-            font.bold: true
         }
         Ui.ThemeText {
             objectName: "displayFocusedWindow"
@@ -40,57 +81,26 @@ Ui.DetailFlickable {
         }
         Ui.ThemeText {
             Layout.fillWidth: true
-            text: qsTr("These settings are global, not specific to the selected display. Changes apply immediately and are saved after compositor confirmation. They survive restart and configuration reload; untouched settings stay under your Hyprland configuration.")
-            wrapMode: Text.Wrap
-        }
-        Ui.ThemeText {
-            Layout.fillWidth: true
-            text: qsTr("The active monitor normally follows the keyboard-focused window. A last-window shortcut can jump to a window on another monitor. Directional-navigation limits do not restrict explicit last-window or monitor shortcuts; this page does not rewrite your keybindings or per-window rules.")
+            text: qsTr("Changes persist after compositor confirmation. Unchanged settings remain under your Hyprland configuration. Directional limits do not restrict explicit monitor or last-window shortcuts.")
             wrapMode: Text.Wrap
             color: Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.fontSizeSmall
         }
+    }
+    Ui.DisclosureSection {
+        objectName: "displayFocusRestore"
+        title: qsTr("Restore previous focus settings")
+        visible: Object.keys(page.controller.focusState.saved || {}).length > 0
         Ui.ThemeText {
-            objectName: "displayFocusStatus"
             Layout.fillWidth: true
-            text: page.controller.pendingAction === "focus" || page.controller.pendingAction === "focusReset" ? qsTr("Saving focus settings…") : page.controller.focusState.error || (!page.controller.focusState.available ? qsTr("Focus settings are unavailable · waiting for compositor capabilities") : page.controller.dirty || page.controller.trial ? qsTr("Finish or discard layout changes before changing focus behaviour.") : qsTr("Saved automatically · no layout preview needed"))
+            text: qsTr("Removes Shelllist overrides and restores the values from before their first edit. Later reloads use your Hyprland configuration again.")
             wrapMode: Text.Wrap
-            color: page.controller.focusState.error ? Ui.Theme.warning : Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.fontSizeSmall
         }
         Ui.ActionButton {
             objectName: "resetDisplayFocus"
             Layout.fillWidth: true
-            label: qsTr("Restore previous focus settings")
+            label: qsTr("Restore")
             enabled: page.controller.canSetFocus && Object.keys(page.controller.focusState.saved || {}).length > 0
             onClicked: page.controller.resetFocusSettings()
-        }
-        Ui.ThemeText {
-            Layout.fillWidth: true
-            text: qsTr("Restore removes Shelllist's overrides and restores each setting's value from before its first edit. Later configuration reloads are controlled by your Hyprland configuration again.")
-            wrapMode: Text.Wrap
-            color: Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.fontSizeCaption
-        }
-    }
-    Repeater {
-        model: Focus.groups()
-        delegate: Ui.DetailColumnCard {
-            id: groupCard
-            required property var modelData
-            height: implicitHeight
-            title: modelData.title
-            contentSpacing: Ui.Theme.spacingMd
-            Repeater {
-                model: groupCard.modelData.settings
-                delegate: DisplayFocusSetting {
-                    required property var modelData
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    controller: page.controller
-                    entry: modelData
-                }
-            }
         }
     }
 }

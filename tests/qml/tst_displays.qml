@@ -85,6 +85,23 @@ DaemonTestCase {
         compare(JSON.stringify(c.draft), before);
         compare(calls.length, 0, "edits never bypass preview");
     }
+    function test_displayHierarchySeparatesLayoutAndGlobalFocus() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.applyDisplayPolicy(focusState());
+        c.openDetails();
+        waitForDetails(panel);
+        const actions = c.detailActions;
+        verify(actions.find(a => a.id === "preview").icon !== actions.find(a => a.id === "identify").icon);
+        verify(findChild(panel, "displayArrangementSummary").visible);
+        verify(!findChild(panel, "displayPositionSection").open);
+        c.detailsTab = "focus";
+        compare(panel.detailsItem.title, "Focus · all monitors");
+        compare(panel.detailsItem.actions.length, 0, "global focus does not expose selected-monitor layout actions");
+        verify(!findChild(panel, "displayAdvancedFocus").open);
+        verify(!findChild(panel, "displayFocusTechnical").open);
+        verify(findChild(panel, "displayFocusStatus").text.includes("saved automatically"));
+    }
     function test_focusTelemetryDoesNotInvalidateLayoutDrafts() {
         const panel = makePanel();
         const c = panel.controller;
@@ -120,27 +137,28 @@ DaemonTestCase {
         waitForDetails(panel);
         const choice = findChild(panel, "focusSetting-misc:mouse_move_focuses_monitor");
         verify(choice !== null && choice.interactive);
-        compare(choice.value, "true");
-        choice.selected("false");
+        verify(choice instanceof Ui.ToggleRow);
+        compare(choice.checked, true);
+        choice.clicked();
         compare(calls.length, 1);
         compare(calls[0].method, "displayFocus.set");
         compare(calls[0].params.values["misc:mouse_move_focuses_monitor"], false);
         compare(Object.keys(calls[0].params.values).length, 1, "only the chosen setting is overridden");
-        compare(choice.value, "true", "no optimistic setting change");
+        compare(choice.checked, true, "no optimistic setting change");
         verify(!choice.interactive);
         c.requestFailed(calls[0].id, "compositor refused focus settings");
         verify(choice.interactive);
-        compare(choice.value, "true");
-        choice.selected("false");
+        compare(choice.checked, true);
+        choice.clicked();
         const saved = focusState();
         saved.focus.values["misc:mouse_move_focuses_monitor"] = false;
         saved.focus.saved["misc:mouse_move_focuses_monitor"] = false;
         c.applyDisplayPolicy(saved);
         c.requestFinished(calls[1].id);
-        compare(choice.value, "false");
+        compare(choice.checked, false);
         verify(!c.dirty, "focus settings are not layout drafts");
         c.selectOutput("eDP-1");
-        compare(choice.value, "false", "changing selection does not change global focus settings");
+        compare(choice.checked, false, "changing selection does not change global focus settings");
         const unsupported = findChild(panel, "focusSetting-input:focus_on_close");
         verify(!unsupported.interactive);
         verify(!c.setFocusSetting("input:focus_on_close", 1));
@@ -150,7 +168,7 @@ DaemonTestCase {
         compare(calls[2].method, "displayFocus.reset");
         c.applyDisplayPolicy(focusState());
         c.requestFinished(calls[2].id);
-        compare(choice.value, "true");
+        compare(choice.checked, true);
         verify(!reset.enabled);
         c.cycleDetailsTab();
         compare(c.detailsTab, "information");
@@ -164,6 +182,7 @@ DaemonTestCase {
         c.openDetails();
         c.detailsTab = "focus";
         waitForDetails(panel);
+        findChild(panel, "displayAdvancedFocus").expanded = true;
         const number = findChild(panel, "focusNumber-input:follow_mouse_threshold");
         number.edited("");
         verify(!number.inputValid);

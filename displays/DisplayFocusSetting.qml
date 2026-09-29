@@ -1,5 +1,4 @@
 pragma ComponentBehavior: Bound
-
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
@@ -9,6 +8,7 @@ ColumnLayout {
     id: setting
     required property DisplayController controller
     required property var entry
+    property bool showDetails: false
     readonly property var values: controller.focusState.values || ({})
     readonly property bool supported: values[entry.key] !== undefined
     readonly property var observed: values[entry.key]
@@ -18,23 +18,30 @@ ColumnLayout {
     spacing: Ui.Theme.spacingXs
     onObservedChanged: numberDraft = null
 
+    Ui.ToggleRow {
+        objectName: setting.entry.boolean ? "focusSetting-" + setting.entry.key : ""
+        Layout.fillWidth: true
+        visible: !!setting.entry.boolean
+        title: setting.entry.title
+        wrapTitle: true
+        checked: setting.observed === true
+        interactive: setting.editable
+        Accessible.description: setting.entry.help
+        onClicked: setting.controller.setFocusSetting(setting.entry.key, !checked)
+    }
     Ui.FieldLabel {
         Layout.fillWidth: true
+        visible: !setting.entry.boolean
         text: setting.entry.title
-    }
-    Ui.ThemeText {
-        Layout.fillWidth: true
-        text: setting.entry.help
         wrapMode: Text.Wrap
-        color: Ui.Theme.mutedText
-        font.pixelSize: Ui.Theme.fontSizeSmall
+        elide: Text.ElideNone
     }
     Ui.DropDownList {
         id: choice
-        objectName: "focusSetting-" + setting.entry.key
+        objectName: !setting.entry.boolean ? "focusSetting-" + setting.entry.key : ""
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        visible: setting.entry.choices.length > 0
+        visible: !setting.entry.boolean && setting.entry.choices.length > 0
         options: setting.entry.choices
         value: setting.supported ? String(setting.observed) : ""
         interactive: setting.editable
@@ -73,9 +80,18 @@ ColumnLayout {
     }
     Ui.ThemeText {
         Layout.fillWidth: true
-        text: !setting.supported ? qsTr("Unavailable in this compositor version") : setting.entry.key + (setting.entry.choices.length === 0 ? qsTr(" · Current: ") + setting.observed : "") + ((setting.controller.focusState.saved || {})[setting.entry.key] !== undefined ? qsTr(" · Saved override") : "")
+        visible: setting.showDetails
+        text: setting.entry.help + "\n" + setting.entry.key + ((setting.controller.focusState.saved || {})[setting.entry.key] !== undefined ? qsTr(" · Saved override") : "")
         wrapMode: Text.Wrap
+        color: Ui.Theme.mutedText
+        font.pixelSize: Ui.Theme.fontSizeSmall
+    }
+    Ui.ThemeText {
+        Layout.fillWidth: true
+        visible: !setting.supported
+        text: qsTr("Unavailable in this compositor version")
+        wrapMode: Text.Wrap
+        color: Ui.Theme.warning
         font.pixelSize: Ui.Theme.fontSizeCaption
-        color: setting.supported ? Ui.Theme.subtleText : Ui.Theme.warning
     }
 }
