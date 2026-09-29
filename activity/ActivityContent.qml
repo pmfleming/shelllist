@@ -65,7 +65,9 @@ Ui.PanelSurface {
                     onTriggered: content.controller.closeSection()
                 }
                 ActivityHeaderButton {
+                    objectName: "activityOverviewToday"
                     activeFocusOnTab: false
+                    visible: !content.controller.detailsOpen
                     label: "Today"
                     onTriggered: content.controller.goToToday()
                 }

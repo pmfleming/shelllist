@@ -56,4 +56,9 @@ Implementation of the [2026-09-29 audit](material-surface-audit-2026-09-29.md), 
 - Duplicate identities still disable every vendor action; native menu invocation/generation/focus guards are unchanged. No vendor menu content is restyled or serialized.
 - Strict lint and 11 SystemChoosers Qt passes, including actual supplied-image loading, menu-only capability and native-menu cleanup. Added the real platform `icon` property to the test boundary mock.
 
+## Activity
+
+- Day arrows now have Previous day/Next day accessible names; expanded Schedule has only its local Today action (Ctrl+T remains available). Removed a redundant nested glance border without redesigning the calendar.
+- Date/todo drafts and calendar-only scope remain intact. Strict lint and all 9 DomainWorkflows Qt passes succeeded.
+
 Live compositor, screen-reader, IME, touch and large-text acceptance remain separate. No services are restarted or deployed by this work.

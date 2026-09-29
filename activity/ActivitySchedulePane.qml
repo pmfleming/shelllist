@@ -36,6 +36,8 @@ Column {
             spacing: Ui.Theme.spacingSm
             ActivityHeaderButton {
                 id: previousButton
+                objectName: "activityPreviousDay"
+                Accessible.name: qsTr("Previous day")
                 label: "‹"
                 onTriggered: pane.controller.selectDate(new Date(pane.controller.selectedDate.getFullYear(), pane.controller.selectedDate.getMonth(), pane.controller.selectedDate.getDate() - 1))
             }
@@ -50,6 +52,8 @@ Column {
             }
             ActivityHeaderButton {
                 id: nextWidth
+                objectName: "activityNextDay"
+                Accessible.name: qsTr("Next day")
                 label: "›"
                 onTriggered: pane.controller.selectDate(new Date(pane.controller.selectedDate.getFullYear(), pane.controller.selectedDate.getMonth(), pane.controller.selectedDate.getDate() + 1))
             }

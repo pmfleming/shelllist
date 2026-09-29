@@ -104,7 +104,7 @@ Rectangle {
             height: 49
             radius: Ui.Theme.controlRadius
             color: Ui.Theme.surfaceRaised
-            border.color: Ui.Theme.border
+            border.width: 0
             Rectangle {
                 width: 4
                 height: parent.height

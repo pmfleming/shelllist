@@ -143,6 +143,9 @@ DaemonTestCase {
         compare(glance.children.length, 1, "expanded Activity keeps the schedule-only rail");
         compare(panel.controller.selectedDateKey, "2026-09-10");
         compare(findChild(panel, "activityTodoDraft").text, "Retained draft");
+        compare(findChild(panel, "activityPreviousDay").Accessible.name, "Previous day");
+        compare(findChild(panel, "activityNextDay").Accessible.name, "Next day");
+        verify(!findChild(panel, "activityOverviewToday").visible, "Today is not duplicated in the expanded schedule");
         panel.controller.closeSection();
         verify(!panel.controller.detailsOpen);
         compare(panel.controller.todoDraft, "Retained draft");
