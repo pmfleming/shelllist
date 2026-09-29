@@ -1,5 +1,4 @@
 import QtQuick
-import "WifiPresentation.js" as Presentation
 import "WifiFlow.js" as Flow
 import "process"
 import "NmApi.js" as NmApi
@@ -95,9 +94,6 @@ ProviderChooserController {
     function activeNetworkKey() {
         return activeStatus && activeStatus.network ? (activeStatus.network.key || "") : "";
     }
-    function networkName(ap) {
-        return Presentation.networkName(ap);
-    }
     function isActive(ap) {
         return !!(ap && ap.active);
     }
@@ -111,12 +107,11 @@ ProviderChooserController {
             advanced.selectSection(tab);
     }
 
-    function cycleDetailsTab() {
+    function cycleDetailsTab(backwards: bool) {
         if (!detailsOpen)
             return;
         const tabs = profileFor(detailAp) ? ["network", "security", "hardware"] : ["network"];
-        const index = Math.max(0, tabs.indexOf(detailsTab));
-        selectDetailsTab(tabs[(index + 1) % tabs.length]);
+        selectDetailsTab(tabAfter(tabs, detailsTab, backwards));
     }
 
     function invalidateShareAvailabilityCache() {

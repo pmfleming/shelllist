@@ -17,6 +17,12 @@ names remain. A label remains when no meaningful icon exists, including explicit
 confirmation text. Shell/panel/card radii are 28/20/16px; field outlines remain 4px
 and buttons retain their expressive capsule/pressed treatment. Selected result
 corners use the interruptible spring without changing hit geometry or focus timing.
+Mouse-click, keyboard and browse focus now share an immediate rounded tonal
+highlight, without an extra rectangular ring. `FocusRing` retains its historical
+component name but paints a borderless 12%-alpha tint. Controls reuse that paint
+for browse focus rather than stacking a second overlay; workspace focus follows
+the circular disc, not its tall hit area. Hover remains non-selecting, and native
+caret/control editing, error borders and semantic selection remain distinct.
 
 On Lua Hyprland, a named, literal-namespace layer rule enables blur and ignores
 alpha below 0.01, so reserved transparent host space does not blur the desktop.
@@ -92,7 +98,7 @@ Action foregrounds use their matching `on…` role. Segmented selection uses a
 solid secondary container and its matching text role; result-row details actions
 use the regular primary/on-primary highlight pair rather than arbitrary blends.
 Flat icon buttons bypass their decorative hover animation while focused, so the
-focus foreground/ring immediately has the correct background even during an
+focus foreground/highlight immediately has the correct background even during an
 in-flight hover transition or busy state. Existing token names remain as migration
 aliases for domain views; this is not a wholesale component redesign.
 
@@ -130,7 +136,7 @@ loss or becoming busy clears held-key decoration. Switch `checked` and
 accessibility state follow the authoritative value immediately; decoration does
 not acknowledge settings or dispatch operations.
 
-Focus rings are never animated between controls. The existing flat-button
+Focus highlights are never animated between controls. The existing flat-button
 foreground/background bypass remains intact. Setting `Theme.noAnimations` to
 true immediately stops the new springs at their latest target, including a
 spring already running. In
@@ -162,7 +168,7 @@ value bubbles were introduced.
 Handle *position* and track fill follow the native value immediately, whether
 changed by dragging, keys or authoritative state. Only the painted handle
 thickness springs from 4px to 2px under focus/press; its native footprint stays
-fixed, so decoration cannot change drag mapping. The shared inset focus ring
+fixed, so decoration cannot change drag mapping. The shared tonal focus highlight
 also appears immediately. The previous animated keyboard-position test was a
 constraint on the wrong behavior and is now replaced with immediate-position
 assertions. Home/End, stepped keyboard edits, live edits and completion signals
@@ -170,13 +176,13 @@ retain their existing contract.
 
 `SegmentedControl` now has a solid, outlined capsule with joined options,
 secondary-container selection and its paired text color. Selection fill, text,
-accessible checked state and the selected option's inset focus ring update
+accessible checked state and the selected option's tonal focus highlight update
 together. There is no sliding background behind text that already changed
 foreground. A group remains one Tab stop; Left/Right skip unavailable options
 and follow the mirrored visual order. Options expose named radio-button states
 and guarded assistive press/toggle actions. Becoming busy preserves current
 focus; disabled/busy controls cannot dispatch through direct or assistive paths.
-A group with no selected value retains a visible group-level focus ring.
+A group with no selected value retains a visible group-level tonal highlight.
 
 The group uses the existing 42px desktop action height rather than the 40px
 Material token, and 14px option labels instead of the old 12px labels. A separate
@@ -194,13 +200,11 @@ validated in the actual engine, including the software-rendered gallery.
 ## Outlined text fields and dropdowns
 
 `TextField` and the dropdown background now share an internal `FieldFrame`:
-opaque surface fill, **4px corners**, a 1px neutral/error outline and the common
-immediate 2px inset focus ring in primary/error. The normal outline is hidden
-while the ring is visible, rather than drawing competing borders. Error/focus
-changes do not animate or move content. The **42px desktop default** retains
+opaque surface fill, **4px corners**, a single 1px neutral/primary/error outline
+and the common immediate primary/error tonal highlight. There is no additional
+focus border. Error/focus changes do not animate or move content. The **42px desktop default** retains
 single-line density instead of adopting the 56px mobile outlined-field token.
-The inset ring deliberately follows the established clipped-container keyboard
-focus convention rather than Material's outside-edge focus outline.
+The tonal treatment replaces the earlier 2px inset ring at the owner's request.
 
 No floating labels or automatic explanations appear on focus/hover. Existing
 external labels, placeholders, explicit errors and accessible names remain.

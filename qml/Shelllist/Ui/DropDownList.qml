@@ -9,6 +9,7 @@ Controls.ComboBox {
     property var options: []
     property string value: ""
     property bool interactive: true
+    property bool browseFocused: false
     property string placeholder: "Select an option"
     readonly property int selectedIndex: optionIndex(value)
 
@@ -68,7 +69,7 @@ Controls.ComboBox {
         x: control.mirrored ? Theme.spacingMd : control.width - width - Theme.spacingMd
         y: Math.round((control.height - height) / 2)
         text: "󰅀"
-        color: control.popup.visible || control.activeFocus ? Theme.accent : Theme.mutedText
+        color: control.popup.visible || control.activeFocus || control.browseFocused ? Theme.accent : Theme.mutedText
         font.family: Theme.iconFontFamily
         font.pixelSize: Theme.iconSizeSmall
         rotation: indicatorMotion.value
@@ -81,6 +82,7 @@ Controls.ComboBox {
 
     background: FieldFrame {
         focused: control.activeFocus || control.popup.visible
+        browseFocused: control.browseFocused
         hovered: control.hovered
     }
 

@@ -12,9 +12,8 @@ ActionControl {
     implicitWidth: 64
     implicitHeight: Theme.controlHeight
     radius: Math.min(width, height) / 2
-    color: area.pressed ? Theme.pressed : (area.containsMouse ? Theme.hover : "transparent")
-    border.color: activeFocus ? Theme.strongBorder : "transparent"
-    border.width: 1
+    color: area.pressed ? Theme.pressed : (area.containsMouse || highlighted ? Theme.hover : "transparent")
+    border.width: 0
     opacity: enabled && interactive ? 1.0 : Theme.disabledOpacity
     accessibleName: checked ? qsTr("Turn off") : qsTr("Turn on")
     Accessible.role: Accessible.CheckBox

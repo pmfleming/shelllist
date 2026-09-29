@@ -286,6 +286,11 @@ DaemonTestCase {
         keyClick(Qt.Key_Down);
         compare(surface.detailsNavigation.currentTarget.objectName, "geometryAction");
         keyClick(Qt.Key_Tab);
+        compare(surface.detailsNavigation.currentTarget.objectName, "geometryEditor");
+        verify(surface.detailsNavigation.browsing);
+        keyClick(Qt.Key_Escape);
+        verify(surface.listItem.listFocused);
+        keyClick(Qt.Key_Up);
         verify(surface.listItem.searchFocused);
         tryCompare(viewport, "contentX", 0);
         compare(fixture.edits, 0, "revealing focus never activates a setting/action");

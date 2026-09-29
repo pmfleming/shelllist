@@ -5,17 +5,19 @@ Rectangle {
     id: frame
 
     property bool focused: false
+    property bool browseFocused: false
+    readonly property bool highlighted: focused || browseFocused
     property bool invalid: false
     property bool hovered: false
 
     radius: 4
     color: Theme.surface
-    border.width: focused ? 0 : 1
-    border.color: invalid ? Theme.danger : (hovered ? Theme.text : Theme.controlBorder)
+    border.width: 1
+    border.color: invalid ? Theme.danger : (highlighted ? Theme.accent : (hovered ? Theme.text : Theme.controlBorder))
 
-    // Keep the same immediate, inset keyboard indicator as other controls.
+    // One native field boundary plus the shared tonal focus state.
     FocusRing {
-        active: frame.focused
+        active: frame.highlighted
         cornerRadius: frame.radius
         ringColor: frame.invalid ? Theme.danger : Theme.accent
     }

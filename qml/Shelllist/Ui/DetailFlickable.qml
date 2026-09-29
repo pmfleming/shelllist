@@ -57,6 +57,10 @@ Flickable {
             ancestor = ancestor.parent;
         if (!ancestor)
             return;
+        // Commit initial geometry/bookkeeping before a newer explicit reveal.
+        // Otherwise queued restoreScroll can overwrite an unrecorded movement.
+        cardColumn.forceLayout();
+        restoreScroll();
         const position = item.mapToItem(contentItem, 0, 0);
         if (position.y < contentY)
             contentY = Math.max(0, position.y - Theme.spacingSm);

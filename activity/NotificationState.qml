@@ -2,13 +2,13 @@ import QtQuick
 import Shelllist.Core as Core
 import Shelllist.Ui as Ui
 
-// Shared by Activity and the notification callout. Drafts and history outlive views.
+// Shared by notification callouts and toasts. Drafts and history outlive views.
 Item {
     id: notificationState
 
     property bool uiActive: false
     property bool historyEnabled: uiActive
-    // The duration selection is shared by the agenda and notification pane.
+    // DND duration is presentation state; opening Activity does not activate it.
     // Zero means indefinite; enabled/disabled is a separate daemon-owned state.
     property int dndDurationMinutes: 30
     property var notifications: ({

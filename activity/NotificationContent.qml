@@ -81,7 +81,7 @@ Ui.ProviderChooserSurface {
         }
     }
     Shortcut {
-        sequence: "Ctrl+Tab"
+        sequences: ["Ctrl+Tab", "Ctrl+Shift+Tab"]
         enabled: content.controller.uiActive && !content.detailsNavigation.popupOpen
         onActivated: {
             content.controller.navigationInteracted();

@@ -5,6 +5,7 @@ import QtQuick.Controls as Controls
 
 Controls.Slider {
     id: slider
+    property bool browseFocused: false
 
     signal edited(real value)
     signal editingFinished
@@ -102,7 +103,7 @@ Controls.Slider {
     }
 
     FocusRing {
-        active: slider.activeFocus
+        active: slider.activeFocus || slider.browseFocused
         cornerRadius: Theme.pressedCornerRadius
     }
 }

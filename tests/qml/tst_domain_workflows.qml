@@ -36,7 +36,14 @@ DaemonTestCase {
     }
     Component {
         id: activityFactory
-        Activity.ActivityContent { controller: Activity.ActivityController {} }
+        Activity.ActivityContent {
+            id: activity
+            property int unrelatedRequests: 0
+            controller: Activity.ActivityController {
+                onTimeWeatherRequested: activity.unrelatedRequests++
+                onNotificationsRequested: activity.unrelatedRequests++
+            }
+        }
     }
     function init() { failOnWarning(/.*/); }
     Component {
@@ -102,13 +109,43 @@ DaemonTestCase {
     function test_revealedSensitiveFieldsNeverHaveRestorableLocations() {
         const panel = createTemporaryObject(panelFactory, testCase);
         const field = findChild(panel, "ordinary");
+        compare(Ui.FocusLocations.key(null), "");
+        compare(Ui.FocusLocations.uniqueTarget([field], field.focusKey), field);
+        const duplicate = createTemporaryObject(iconActionFactory, panel, {objectName: field.objectName, enabled: false});
+        compare(Ui.FocusLocations.uniqueTarget([field, duplicate], field.focusKey), null);
         field.sensitive = true;
         field.password = false;
+        compare(Ui.FocusLocations.uniqueTarget([field], field.focusKey), null);
         field.focusInput(false);
         compare(field.selectionState(), null);
         compare(Ui.FocusLocations.capture(panel, findChild(field, "fieldInput")), null);
         panel.detailsNavigation.currentTarget = field;
         compare(panel.detailsNavigation.locationState().target, "");
+    }
+    function test_activityContainsOnlyCalendarAgendaAndTodos() {
+        const panel = createTemporaryObject(activityFactory, testCase);
+        panel.controller.uiActive = true;
+        panel.controller.selectDate(new Date(2026, 8, 10));
+        panel.controller.todoDraft = "Retained draft";
+        const glance = findChild(panel, "activityGlancePane");
+        verify(glance !== null);
+        compare(glance.children.length, 1);
+        compare(glance.children[0].objectName, "activityScheduleSummary");
+        compare(glance.children[0].y, 0, "calendar occupies the former weather position");
+        verify(!panel.controller.notificationState.historyEnabled);
+        compare(panel.controller.viewMemory.tabs, ["schedule"]);
+        panel.detailsNavigation.focusContent(true);
+        keyClick(Qt.Key_1, Qt.ControlModifier);
+        keyClick(Qt.Key_3, Qt.ControlModifier);
+        compare(panel.unrelatedRequests, 0, "removed sections have no Activity shortcuts");
+        keyClick(Qt.Key_2, Qt.ControlModifier);
+        tryVerify(() => findChild(panel, "activityTodoDraft") !== null);
+        compare(glance.children.length, 1, "expanded Activity keeps the schedule-only rail");
+        compare(panel.controller.selectedDateKey, "2026-09-10");
+        compare(findChild(panel, "activityTodoDraft").text, "Retained draft");
+        panel.controller.closeSection();
+        verify(!panel.controller.detailsOpen);
+        compare(panel.controller.todoDraft, "Retained draft");
     }
     function test_activityTypingDoesNotInvokeFormerLetterShortcuts() {
         const panel = createTemporaryObject(activityFactory, testCase);

@@ -19,6 +19,7 @@ Ui.ActionControl {
 
     readonly property bool iconAvailable: iconName.length > 0 && Quickshell.hasThemeIcon(iconName)
     activeFocusOnTab: false
+    focusSurface: workspaceDisc
     accessibleName: qsTr("Workspace %1").arg(workspaceId) + (workspace ? ". " + (workspace.last_window_title || "") + (workspace.urgent ? qsTr(". Urgent") : "") : "")
     onClicked: controller.focusWorkspace(workspaceId)
 
@@ -26,6 +27,8 @@ Ui.ActionControl {
     height: 51
 
     Rectangle {
+        id: workspaceDisc
+        objectName: "workspaceDisc"
         anchors.centerIn: parent
         width: button.compact ? 23 : 27
         height: width

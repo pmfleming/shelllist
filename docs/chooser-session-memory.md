@@ -19,6 +19,11 @@ after [anchored geometry](chooser-geometry.md):
 
 ## Per-result presentation
 
+Initial page layout is part of restoration readiness: a newly incubated control
+is not revealed against zero-height content. Explicit reveal commits scroll
+bookkeeping before moving, so a queued initial restore cannot undo it. New input
+and invocation/context cancellation still supersede pending restoration.
+
 - Each explicitly inspected result remembers details-open state, its valid tab,
   and each tab's scroll offset and ordinary browse/editor location. Identity is
   the provider-qualified `Result.key`, never a row index or display name.
@@ -48,7 +53,10 @@ a registered detail target can resume browsing or editing, subject to current
 identity, tab and capability checks. A first invocation defaults to search.
 Unique registered list/header controls restore through `FocusLocations`; unknown,
 ambiguous or unavailable controls fall back to search rather than inheriting an
-old detail editor.
+old detail editor. Expanded detail headers are no longer content browse targets;
+old header target records fall back to content. Tab/Shift+Tab stay in the current
+detail tab and supersede deferred restoration; header shortcuts never restore
+focus or replay effects.
 
 `Ui.ChooserSession` keeps a separate primitive snapshot in the retained
 controller's `focusMemory`. It includes:

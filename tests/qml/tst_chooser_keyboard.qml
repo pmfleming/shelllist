@@ -25,6 +25,9 @@ DaemonTestCase {
             property int settingEdits: 0
             property int actionCalls: 0
             property int tabChanges: 0
+            property int headerCalls: 0
+            property bool headerEnabled: true
+            property string lastHeaderAction: ""
             property bool modal: false
             navigationEnabled: !modal
             chooserController: Ui.ChooserController {
@@ -59,6 +62,16 @@ DaemonTestCase {
                     Column {
                         width: parent.width
                         spacing: 12
+                        Ui.DetailsHeader {
+                            uiScale: 1
+                            width: parent.width
+                            title: "Inspector"
+                            actions: [
+                                {id: "first", label: "First", icon: "x", presentation: {group: "primary"}},
+                                {id: "second", label: "Second", icon: "x", enabled: surface.headerEnabled, presentation: {group: "toolbar"}}
+                            ]
+                            onActionTriggered: function (id) { surface.headerCalls++; surface.lastHeaderAction = id; }
+                        }
                         Ui.LabeledValueSlider {
                             objectName: "settingRow"
                             width: parent.width
@@ -137,6 +150,10 @@ DaemonTestCase {
         compare(controller.detailsTab, "resources");
         keyClick(Qt.Key_Tab, Qt.ControlModifier);
         compare(controller.detailsTab, "settings");
+        keyClick(Qt.Key_Tab, Qt.ControlModifier | Qt.ShiftModifier);
+        compare(controller.detailsTab, "resources");
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        compare(controller.detailsTab, "settings");
         tryVerify(() => content.detailsNavigation.currentTarget && content.detailsNavigation.currentTarget instanceof Ui.DropDownList);
         verify(content.detailsNavigation.browsing);
         const choice = content.detailsNavigation.currentTarget;
@@ -155,7 +172,9 @@ DaemonTestCase {
         keyClick(Qt.Key_Escape);
         verify(content.detailsNavigation.browsing);
         keyClick(Qt.Key_Tab);
-        verify(content.listItem.searchFocused);
+        verify(content.detailsNavigation.browsing);
+        verify(!choice.enabled, "pending settings cannot be entered again");
+        compare(content.detailsNavigation.currentTarget.objectName, "applicationSettingsPage", "Tab stays in Settings with a scrollable fallback while its control is disabled");
         content.destroy();
         wait(0);
     }
@@ -254,7 +273,7 @@ DaemonTestCase {
         compare(surface.primaryActions, 1);
     }
 
-    function test_regionTraversalRetainsSelectionAndSkipsTabs() {
+    function test_tabTraversalWrapsInsideDetailsAndSkipsTabSelectors() {
         const surface = makeSurface();
         keyClick(Qt.Key_Tab);
         verify(surface.listItem.listFocused);
@@ -265,20 +284,82 @@ DaemonTestCase {
         enterDetails(surface);
         compare(surface.detailsNavigation.targets.length, 5, "tab selector is not content");
         compare(surface.detailsNavigation.currentTarget.objectName, "settingRow");
-        keyClick(Qt.Key_Tab);
-        verify(surface.listItem.searchFocused);
+        for (const name of ["editor", "choice", "toggle", "action", "settingRow"]) {
+            keyClick(Qt.Key_Tab);
+            verify(surface.detailsNavigation.browsing);
+            compare(surface.detailsNavigation.currentTarget.objectName, name);
+            verify(surface.detailsNavigation.highlightedControl.browseFocused, "browse uses the control's own focus paint");
+            compare(surface.chooserController.selectionModel.selectedIndex, 1);
+        }
         keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        verify(surface.detailsNavigation.browsing);
+        compare(surface.detailsNavigation.currentTarget.objectName, "action");
         keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        verify(surface.listItem.listFocused);
-        compare(surface.chooserController.selectionModel.selectedIndex, 1);
-        keyClick(Qt.Key_Tab);
-        verify(surface.detailsNavigation.browsing);
+        compare(surface.detailsNavigation.currentTarget.objectName, "toggle");
+        compare(surface.settingEdits, 0);
+        compare(surface.actionCalls, 0);
         keyClick(Qt.Key_Tab, Qt.ControlModifier);
         compare(surface.tabChanges, 1);
         verify(surface.detailsNavigation.browsing);
     }
 
+    function test_headerShortcutsDoNotEnterTheContentCycleOrStealFocus() {
+        const surface = makeSurface();
+        enterDetails(surface);
+        tryCompare(surface.detailsNavigation.headerButtons, "length", 2);
+        const first = surface.detailsNavigation.headerButtons[0];
+        verify(!first.activeFocusOnTab);
+        verify(first.Accessible.description.includes("Alt+1"));
+        keyClick(Qt.Key_1, Qt.AltModifier);
+        compare(surface.headerCalls, 1);
+        compare(surface.lastHeaderAction, "first");
+        verify(surface.detailsNavigation.browsing);
+        surface.headerEnabled = false;
+        keyClick(Qt.Key_2, Qt.AltModifier);
+        compare(surface.headerCalls, 1, "disabled actions keep their slot but cannot execute");
+        surface.headerEnabled = true;
+        keyClick(Qt.Key_2, Qt.AltModifier);
+        compare(surface.lastHeaderAction, "second");
+        compare(surface.headerCalls, 2);
+        keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Space);
+        const choice = findChild(surface.detailsItem, "choice");
+        tryCompare(choice.popup, "visible", true);
+        keyClick(Qt.Key_1, Qt.AltModifier);
+        compare(surface.headerCalls, 2, "a native menu blocks header actions");
+        keyClick(Qt.Key_Escape);
+        tryCompare(choice.popup, "visible", false);
+        surface.modal = true;
+        wait(0);
+        keyClick(Qt.Key_1, Qt.AltModifier);
+        compare(surface.headerCalls, 2, "a required-input modal owns its keys");
+        surface.modal = false;
+        wait(0);
+        surface.listItem.focusList();
+        surface.chooserController.closeDetails();
+        keyClick(Qt.Key_1, Qt.AltModifier);
+        compare(surface.headerCalls, 2, "closed details cannot dispatch shortcuts");
+    }
+    function test_tabLeavesEditorWithoutReplayingActivation() {
+        const surface = makeSurface();
+        enterDetails(surface);
+        keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_Return);
+        const editor = findChild(surface.detailsItem, "editor");
+        verify(editor.inputActiveFocus);
+        keyClick(Qt.Key_X);
+        const text = editor.text;
+        keyClick(Qt.Key_Tab);
+        verify(surface.detailsNavigation.browsing);
+        compare(surface.detailsNavigation.currentTarget.objectName, "choice");
+        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
+        compare(surface.detailsNavigation.currentTarget, editor);
+        verify(!editor.inputActiveFocus);
+        compare(editor.text, text);
+        compare(surface.settingEdits, 0);
+        compare(surface.actionCalls, 0);
+    }
     function test_browseEditAndEscapeNeverMutateWhileBrowsing() {
         const surface = makeSurface();
         enterDetails(surface);
@@ -287,8 +368,9 @@ DaemonTestCase {
         keyClick(Qt.Key_Up);
         compare(surface.settingEdits, 0);
         compare(row.value, 50);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         verify(row.inputActiveFocus);
+        compare(surface.settingEdits, 0, "entering a slider does not edit it");
         keyClick(Qt.Key_Right);
         compare(row.value, 60);
         compare(surface.settingEdits, 1);
@@ -296,8 +378,8 @@ DaemonTestCase {
         verify(surface.detailsNavigation.browsing);
         verify(surface.chooserController.detailsOpen);
         compare(row.value, 60, "leaving an editor does not undo applied settings");
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_Return);
         const editor = findChild(surface.detailsItem, "editor");
         verify(editor.inputActiveFocus);
         keyClick(Qt.Key_Left);
@@ -333,7 +415,8 @@ DaemonTestCase {
         keyClick(Qt.Key_Down);
         keyClick(Qt.Key_Space);
         compare(surface.settingEdits, 0, "browsing a switch does not activate it");
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
+        compare(surface.settingEdits, 0, "Enter focuses a browsed switch without toggling it");
         keyClick(Qt.Key_Space);
         compare(surface.settingEdits, 1);
         keyClick(Qt.Key_Escape);

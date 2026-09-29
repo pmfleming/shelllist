@@ -18,6 +18,7 @@ Column {
     property int titlePixelSize: Math.round(Theme.fontSizeTitle * uiScale)
     property var actions: []
     property int actionWidth: 170
+    readonly property int primaryActionCount: actions.filter(action => action.visible !== false && (action.presentation || {}).group === "primary").length
     property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     property int controlHeight: Math.max(Theme.compactControlHeight, Math.round(Theme.controlHeight * uiScale))
     property bool secondaryVisible: true
@@ -80,6 +81,8 @@ Column {
             Layout.preferredHeight: header.controlHeight
             actions: header.actions
             group: "primary"
+            tabFocusEnabled: false
+            shortcutOffset: 0
             controlHeight: header.controlHeight
             onTriggered: function (actionId) {
                 header.actionTriggered(actionId);
@@ -93,6 +96,8 @@ Column {
         height: header.controlHeight
         actions: header.actions
         group: "primary"
+        tabFocusEnabled: false
+        shortcutOffset: 0
         fillActions: true
         controlHeight: header.controlHeight
         onTriggered: function (actionId) {
@@ -106,6 +111,8 @@ Column {
         height: header.secondaryHeight
         actions: header.actions
         group: "toolbar"
+        tabFocusEnabled: false
+        shortcutOffset: header.primaryActionCount
         alignRight: true
         fillActions: header.stackedPrimary
         controlHeight: header.controlHeight

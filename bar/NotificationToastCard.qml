@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
+import Shelllist.Activity as Activity
 
 Rectangle {
     id: card
@@ -14,7 +15,7 @@ Rectangle {
     readonly property var replyAction: Ui.NotificationPresentation.replyAction(notification)
     readonly property var defaultAction: Ui.NotificationPresentation.defaultAction(notification)
     readonly property int urgency: Ui.NotificationPresentation.urgency(notification)
-    readonly property var replyState: controller.notificationState
+    readonly property Activity.NotificationState replyState: controller.notificationState
     readonly property var replyStatus: replyState ? replyState.replies[notification.id] || ({}) : ({})
     readonly property string draft: replyState ? String(replyState.drafts[notification.id] || "") : ""
     property bool replyOpen: false

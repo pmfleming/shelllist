@@ -3,7 +3,6 @@ import QtQuick
 // Process-local presentation only. Never holds payloads, credentials, operation
 // IDs, control values or QObject references. Domains validate the available tabs.
 Item {
-    id: memory
     required property ChooserController controller
     property bool presentationOpen: controller.detailsOpen
     onPresentationOpenChanged: rememberPresentation()

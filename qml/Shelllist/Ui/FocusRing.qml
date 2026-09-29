@@ -1,19 +1,18 @@
 import QtQuick
 
-// Focus is state, not decoration: no animation, input handlers or layout changes.
-// Draw inside the owner so clipped rows and rounded containers retain the ring.
+// Historical component name: focus now uses a tonal state layer, not an outline.
+// Pointer and keyboard focus share this immediate, input-transparent treatment.
 Rectangle {
     property bool active: false
     property real cornerRadius: Theme.controlRadius
-    property color ringColor: Theme.text
+    property color ringColor: Theme.accent
 
     objectName: "focusRing"
     anchors.fill: parent
     anchors.margins: Theme.focusRingInset
     radius: Math.max(0, cornerRadius - Theme.focusRingInset)
-    color: "transparent"
-    border.color: ringColor
-    border.width: Theme.focusRingWidth
+    color: Theme.withAlpha(ringColor, 0.12)
+    border.width: 0
     visible: active
     z: 100
     Accessible.ignored: true

@@ -403,6 +403,24 @@ DaemonTestCase {
         tryVerify(() => detailPage.contentY > 0, 5000, "the restored cursor is revealed");
         compare(surface.edits, 0);
     }
+    function test_revealBeforeInitialScrollRestoreIsRetained() {
+        const surface = makeSurface();
+        open(surface);
+        const detailPage = page(surface);
+        detailPage.contentY = 0;
+        detailPage.restoredKey = ""; // Newly created page, before queued scroll restoration.
+        detailPage.revealItem(findChild(detailPage, "level"));
+        verify(detailPage.contentY > 0);
+        detailPage.restoreScroll();
+        verify(detailPage.contentY > 0, "queued restoration must not undo the explicit reveal");
+        detailPage.contentHeight = 0; // Controls created, but initial layout not committed.
+        surface.detailsNavigation.focusSessionLocation({target: "level", editing: false});
+        wait(0);
+        verify(surface.detailsNavigation.pendingMemory);
+        detailPage.contentHeight = detailPage.navigationContent.implicitHeight;
+        tryCompare(surface.detailsNavigation, "pendingMemory", false);
+        verify(detailPage.contentY > 0, "layout readiness must finish the retained reveal");
+    }
     function test_invocationRevalidatesDisabledEditors() {
         const surface = makeSurface();
         inspectSecondTab(surface);

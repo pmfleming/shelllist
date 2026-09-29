@@ -13,9 +13,9 @@ The launcher presents standards-visible desktop applications and live Hyprland w
   list focus; Right enters their remembered ordinary location. See
   [session memory](chooser-session-memory.md) for fallbacks and remaining work.
 - Reopening restores the ordinary region/editor, query selection and result viewport. Menus stay collapsed; missing/disabled targets fall back safely without launching an app or changing settings.
-- `Ctrl+Tab` cycles Application, Resources and (for desktop applications) Settings.
-- `Tab` / `Shift+Tab` cycle Search, Results and open Details; selection is retained.
-- Up/Down browse detail controls; Right enters an editor. Native arrows edit there, and Escape leaves the editor before closing details. Category settings still wait for daemon acknowledgement.
+- `Ctrl+Tab` / `Ctrl+Shift+Tab` cycle Application, Resources and (for desktop applications) Settings forward/backward.
+- Outside details, `Tab` / `Shift+Tab` move between search/results and into already-open details; selection is retained.
+- Tab/Shift+Tab wrap among controls in the current detail tab; Up/Down also browse. Enter starts editing (Right remains an alias). Native arrows edit there, and Escape leaves the editor before closing details. Category settings still wait for daemon acknowledgement.
 - Typing in results, including J/K, continues the query at its retained cursor.
 - `Ctrl+Shift+S` requests a screenshot. See the [shared keyboard workflow](chooser-keyboard-workflow.md).
 - `F5` refreshes the catalog and current windows.

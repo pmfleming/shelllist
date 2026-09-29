@@ -9,6 +9,7 @@ Rectangle {
     property var options: []
     property string value: ""
     property bool interactive: true
+    property bool browseFocused: false
 
     signal selected(string value)
 
@@ -103,7 +104,7 @@ Rectangle {
                     topRightRadius: segment.topRightRadius
                     bottomRightRadius: segment.bottomRightRadius
                     color: segment.selected ? Theme.selectedText : Theme.text
-                    opacity: segmentMouse.pressed ? 0.12 : (segmentMouse.containsMouse ? 0.08 : 0)
+                    opacity: segmentMouse.pressed ? 0.12 : (segmentMouse.containsMouse && !control.activeFocus && !control.browseFocused ? 0.08 : 0)
                 }
                 ThemeText {
                     anchors.fill: parent
@@ -125,7 +126,7 @@ Rectangle {
                     color: Theme.controlBorder
                 }
                 FocusRing {
-                    active: control.activeFocus && segment.selected
+                    active: (control.activeFocus || control.browseFocused) && segment.selected
                     cornerRadius: segment.height / 2
                     ringColor: Theme.selectedText
                 }
@@ -139,7 +140,7 @@ Rectangle {
         }
     }
     FocusRing {
-        active: control.activeFocus && control.currentIndex < 0
+        active: (control.activeFocus || control.browseFocused) && control.currentIndex < 0
         cornerRadius: control.radius
     }
 }

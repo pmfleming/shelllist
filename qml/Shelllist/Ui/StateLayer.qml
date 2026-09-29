@@ -19,6 +19,7 @@ Item {
     readonly property bool containsMouse: pointer.containsMouse
     readonly property bool hovered: containsMouse
     readonly property bool pressed: pointer.pressed
+    readonly property bool focused: !!focusTarget && (focusTarget.activeFocus || ((focusTarget as ActionControl)?.browseFocused ?? false) || ((focusTarget as IconTile)?.browseFocused ?? false))
 
     signal clicked(var mouse)
     signal doubleClicked(var mouse)
@@ -31,7 +32,7 @@ Item {
         anchors.fill: parent
         radius: root.radius
         color: root.stateColor
-        opacity: root.showStateBackground ? (root.pressed ? root.pressedOpacity : (root.hovered ? root.hoverOpacity : 0)) : 0
+        opacity: root.showStateBackground ? (root.pressed ? root.pressedOpacity : (root.hovered && !root.focused ? root.hoverOpacity : 0)) : 0
 
         InteractiveBehavior on opacity {}
     }

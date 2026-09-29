@@ -9,11 +9,6 @@ Ui.PanelSurface {
     required property ActivityController controller
     chooserController: controller
     navigationContent: region === 0 || !controller.detailsOpen ? glance : (sectionLoader.item as Item)
-    function cycleRegion(backwards: bool): void {
-        controller.navigationInteracted();
-        region = controller.detailsOpen ? 1 - region : 0;
-        detailsNavigation.focusContent(true);
-    }
     Connections {
         target: content.controller
         function onDetailsOpenChanged(): void {
@@ -37,6 +32,7 @@ Ui.PanelSurface {
 
             Ui.FlatIconButton {
                 id: activityIcon
+                activeFocusOnTab: false
                 width: 34
                 height: 34
                 anchors.verticalCenter: parent.verticalCenter
@@ -63,15 +59,18 @@ Ui.PanelSurface {
                 height: parent.height
                 spacing: Ui.Theme.spacingSm
                 ActivityHeaderButton {
+                    activeFocusOnTab: false
                     visible: content.controller.detailsOpen
                     label: "Overview"
                     onTriggered: content.controller.closeSection()
                 }
                 ActivityHeaderButton {
+                    activeFocusOnTab: false
                     label: "Today"
                     onTriggered: content.controller.goToToday()
                 }
                 ActivityHeaderButton {
+                    activeFocusOnTab: false
                     label: content.controller.activity.syncing ? "Syncing…" : "Refresh"
                     onTriggered: content.controller.refresh()
                 }
@@ -163,24 +162,20 @@ Ui.PanelSurface {
         onActivated: content.controller.shiftMonth(1)
     }
     Shortcut {
-        sequence: "Ctrl+1"
-        enabled: content.controller.uiActive
-        onActivated: content.controller.requestTimeWeather("weather")
-    }
-    Shortcut {
         sequence: "Ctrl+2"
         enabled: content.controller.uiActive
         onActivated: content.controller.openSection("schedule")
     }
     Shortcut {
-        sequence: "Ctrl+3"
-        enabled: content.controller.uiActive
-        onActivated: content.controller.requestNotifications("", "active")
-    }
-    Shortcut {
         sequence: "Ctrl+T"
         enabled: content.controller.uiActive
         onActivated: content.controller.goToToday()
+    }
+    Shortcut {
+        sequence: "Ctrl+Shift+S"
+        enabled: content.controller.uiActive && activityIcon.enabled && !content.detailsNavigation.popupOpen
+        autoRepeat: false
+        onActivated: content.controller.screenshotRequested()
     }
     Shortcut {
         sequence: "F5"

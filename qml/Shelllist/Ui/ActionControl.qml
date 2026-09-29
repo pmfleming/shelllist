@@ -4,13 +4,17 @@ import QtQuick
 Rectangle {
     id: control
 
-    property color focusRingColor: Theme.text
+    property color focusRingColor: Theme.accent
+    property Rectangle focusSurface: control
+    property bool browseFocused: false
+    readonly property bool highlighted: activeFocus || browseFocused
     property string accessibleName: ""
     property bool interactive: true
     property bool keyboardPressed: false
     signal clicked
 
     color: "transparent"
+    radius: Theme.controlRadius
     // Busy controls may keep focus, but must not activate until ready again.
     activeFocusOnTab: enabled && (interactive || activeFocus)
     Accessible.role: Accessible.Button
@@ -23,8 +27,9 @@ Rectangle {
     }
 
     FocusRing {
-        active: control.activeFocus
-        cornerRadius: control.radius
+        parent: control.focusSurface
+        active: control.highlighted
+        cornerRadius: control.focusSurface.radius
         ringColor: control.focusRingColor
     }
 

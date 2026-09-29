@@ -81,17 +81,17 @@ Item {
 
     Activity.NotificationState {
         id: sharedNotifications
-        uiActive: (registry.activityController !== null && registry.activityController.uiActive) || (registry.notificationController !== null && registry.notificationController.uiActive)
+        uiActive: registry.notificationController !== null && registry.notificationController.uiActive
         historyEnabled: uiActive
     }
 
     readonly property var currentDescriptor: descriptorFor(currentId)
     readonly property Ui.ChooserController currentController: controllerFor(currentId)
-    readonly property var wifiController: controllerFor("wifi")
-    readonly property var bluetoothController: controllerFor("bluetooth")
-    readonly property var displayController: controllerFor("displays")
-    readonly property var activityController: controllerFor("activity")
-    readonly property var notificationController: controllerFor("notifications")
+    readonly property Wifi.WifiController wifiController: controllerFor("wifi") as Wifi.WifiController
+    readonly property Bluetooth.BluetoothController bluetoothController: controllerFor("bluetooth") as Bluetooth.BluetoothController
+    readonly property Displays.DisplayController displayController: controllerFor("displays") as Displays.DisplayController
+    readonly property Activity.ActivityController activityController: controllerFor("activity") as Activity.ActivityController
+    readonly property Activity.NotificationController notificationController: controllerFor("notifications") as Activity.NotificationController
 
     signal surfaceRequested(string surfaceId)
     signal surfaceReady(string surfaceId)

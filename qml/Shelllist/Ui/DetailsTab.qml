@@ -12,9 +12,9 @@ ActionControl {
     Accessible.selected: selected
     Accessible.role: Accessible.PageTab
 
-    color: selected ? Theme.selected : (enabled && area.pressed ? Theme.pressed : (enabled && area.containsMouse ? Theme.hover : "transparent"))
-    border.color: activeFocus ? Theme.strongBorder : "transparent"
-    border.width: 1
+    activeFocusOnTab: false
+    color: selected ? Theme.selected : (enabled && area.pressed ? Theme.pressed : (enabled && (area.containsMouse || activeFocus) ? Theme.hover : "transparent"))
+    border.width: 0
     opacity: enabled ? 1.0 : Theme.disabledOpacity
 
     Rectangle {

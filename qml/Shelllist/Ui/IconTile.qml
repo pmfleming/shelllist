@@ -10,13 +10,15 @@ Rectangle {
     property int iconSize: Theme.iconSize
     property real iconRotation: 0
     property bool clickable: false
+    property bool browseFocused: false
+    readonly property bool highlighted: activeFocus || browseFocused
 
     signal clicked
 
     implicitWidth: Theme.controlHeight
     implicitHeight: Theme.controlHeight
     radius: Theme.controlRadius
-    color: !clickable ? backgroundColor : (area.pressed ? Theme.mix(backgroundColor, iconColor, 0.14) : (area.containsMouse ? Theme.mix(backgroundColor, iconColor, 0.08) : backgroundColor))
+    color: !clickable ? backgroundColor : (area.pressed ? Theme.mix(backgroundColor, iconColor, 0.14) : (area.containsMouse || highlighted ? Theme.mix(backgroundColor, iconColor, 0.08) : backgroundColor))
     border.color: borderColor
     opacity: enabled ? 1.0 : Theme.disabledOpacity
     activeFocusOnTab: clickable && enabled
@@ -35,7 +37,7 @@ Rectangle {
     }
 
     FocusRing {
-        active: tile.activeFocus && tile.clickable
+        active: tile.highlighted && tile.clickable
         cornerRadius: tile.radius
         ringColor: tile.iconColor
     }

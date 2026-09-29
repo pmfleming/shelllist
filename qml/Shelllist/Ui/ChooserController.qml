@@ -66,7 +66,13 @@ Item {
     }
     function refresh() {
     }
-    function cycleDetailsTab() {
+    function cycleDetailsTab(backwards: bool) {
+    }
+    function tabAfter(tabs: var, current: string, backwards: bool): string {
+        const index = tabs.indexOf(current);
+        if (index < 0)
+            return tabs[backwards ? tabs.length - 1 : 0] || "";
+        return tabs[(index + (backwards ? -1 : 1) + tabs.length) % tabs.length] || "";
     }
     function setPower() {
     }

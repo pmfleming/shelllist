@@ -86,12 +86,12 @@ Results: Up/Down move selection
 ### Details and controls
 
 - Opening new details places focus in the **content**, not on the tab selector.
-- Up/Down browse the content. Ctrl+Tab cycles detail tabs.
-- Tab cycles visible major regions: Search → Results → Details → Search. Shift+Tab reverses. It does not visit every control in the whole popover.
-- Right on an editable setting enters its editor. Arrow browsing must not accidentally mutate settings.
+- Tab/Shift+Tab browse content within the current detail tab and wrap at either end. Up/Down also browse. Ctrl+Tab / Ctrl+Shift+Tab change detail tabs.
+- Header actions and tab selectors are excluded from Tab traversal. Expanded header actions use Alt+1…9 in displayed order; existing refresh/screenshot shortcuts remain.
+- Enter on an editable setting enters its editor (Right remains an alias). Tab leaves editing and browses the next/previous control. Browsing must not mutate settings.
 - Simple settings edit **in place**, not in a separate editor screen.
 - Sliders, switches and other controls remain visually present while browsing; they are not replaced by plain value summaries. Inactive editing does not mean the control looks disabled.
-- Browse focus highlights the row; edit focus clearly identifies the active control.
+- Mouse-click and keyboard/browse focus share an immediate rounded tonal highlight, without an extra rectangular focus ring. Native caret/control feedback identifies editing; hover does not move focus.
 - Ordinary setting changes apply while editing. Leaving the editor does not undo them. Retain appropriate coalescing, acknowledgement, pending/error handling and duplicate-request protection.
 - Safety-critical preview/revert flows, including display configuration, are not converted into unsafe immediate commits.
 
@@ -111,10 +111,13 @@ Editor ── Escape → Details ── Escape → Results ── Escape → Des
 Passwords, pairing codes and similar input required for an explicitly requested action use a focused Material dialog over the existing list. This is not unsolicited optional details.
 
 - Focus the first input immediately.
-- Inside dialogs, Tab/Shift+Tab traverse fields and buttons conventionally. This is an explicit exception to region-level Tab in the ordinary surface.
+- Inside dialogs, Tab/Shift+Tab traverse fields and buttons conventionally. This is an explicit exception to browse-then-Enter editing in ordinary details.
 - Text arrows edit normally; no extra Right press before typing into each field.
 - Enter submits when valid; Escape cancels and restores previous focus. Nested popup handling must still be safe.
 - Closing the whole surface **cancels sensitive prompts and clears sensitive input**. Do not restore their credentials/dialogs on the next invocation or resurrect expired daemon requests.
+
+The contained-Tab/Enter/tonal-focus rules above supersede the earlier region-Tab
+and inset-outline implementation recorded in the historical delivery ledger.
 
 ## 5. Session and per-result UI memory
 
@@ -193,7 +196,7 @@ This replaces the compatibility-first sequence in the original proposal.
 
 1. **Remove rejected affordances and establish focus foundations.** Eliminate hover tooltips, F1/automatic help and stale documentation; retain necessary accessible metadata and explicit information routes. Add shared, immediate visible focus with behavioral tests. Do not globally erase text before suitable icons/explicit detail routes exist.
 2. **Material visual foundation.** Choose typeface/icon assets with samples; implement desktop-accent/light-dark semantic palette, typography, solid controls, translucent shell and interruptible motion. Build a development-only gallery, not a second production toolkit.
-3. **Shared list/editor interaction.** Implement search/list key ownership, region Tab, content-first details, explicit in-place editing, dialog exceptions and safe toggle semantics. Exercise this in Applications and a settings-heavy surface.
+3. **Shared list/editor interaction.** Implement search/list key ownership, contained detail Tab, content-first details, explicit in-place editing, dialog exceptions and safe toggle semantics. Exercise this in Applications and a settings-heavy surface.
 4. **Per-item session memory and anchored geometry.** Stable identities, per-tab scroll/edit locations, non-focus-stealing restoration, stable height and one bounded left-of-center placement rule across laptop/large screen.
 5. **Domain migration and outcomes.** Migrate Wi-Fi, Bluetooth, Clipboard, Displays, Battery, Activity, Notifications and Time & Weather; preserve required-input cancellation, drafts, async outcomes and safety previews.
 6. **New lists and bar.** Deliver Audio/Media/Tray keyboard routes before removing old routes; implement the agreed continuous pictorial bar, media semantics/selection and numerical clock/date.

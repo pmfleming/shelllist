@@ -237,9 +237,9 @@ Ui.ProviderChooserController {
     function triggerDetailAction(actionId): bool {
         return !navigationBlocked && executeSelected(actionId);
     }
-    function cycleDetailsTab(): void {
+    function cycleDetailsTab(backwards: bool): void {
         const tabs = ["settings", "focus", "information"];
-        detailsTab = tabs[(tabs.indexOf(detailsTab) + 1) % tabs.length];
+        detailsTab = tabAfter(tabs, detailsTab, backwards);
     }
     function cycleOutput(delta: int): void {
         if (!outputs.length)

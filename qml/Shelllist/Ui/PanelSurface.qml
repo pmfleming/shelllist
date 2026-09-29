@@ -33,17 +33,18 @@ ChooserSurface {
     }
     function cycleRegion(backwards: bool): void {
         pendingFocus = false;
-        navigation.focusContent();
+        navigation.cycleFocus(backwards);
     }
-    function changeTab(): void {
+    function changeTab(backwards: bool): void {
         chooserController.navigationInteracted();
-        chooserController.cycleDetailsTab();
+        chooserController.cycleDetailsTab(backwards);
         navigation.focusContent(true);
     }
     DetailsNavigation {
         id: navigation
         anchors.fill: parent
         contentItem: surface.navigationContent
+        headerShortcutsEnabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked
         viewMemory: surface.chooserController.viewMemory
         onInteractionRequested: surface.pendingFocus = false
         onNativeFocusChanged: if (!applyingMemory) surface.pendingFocus = false
@@ -52,17 +53,17 @@ ChooserSurface {
     }
     Shortcut {
         sequence: "Escape"
-        enabled: surface.chooserController.uiActive
+        enabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked
         onActivated: navigation.retreat()
     }
     Shortcut {
         sequence: "Tab"
-        enabled: surface.chooserController.uiActive && !navigation.popupOpen
+        enabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked && !navigation.popupOpen
         onActivated: surface.cycleRegion(false)
     }
     Shortcut {
         sequence: "Shift+Tab"
-        enabled: surface.chooserController.uiActive && !navigation.popupOpen
+        enabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked && !navigation.popupOpen
         onActivated: surface.cycleRegion(true)
     }
     Connections {

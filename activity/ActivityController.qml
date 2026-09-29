@@ -23,9 +23,7 @@ Ui.ChooserController {
                 error: "Weather is not configured"
             }
         })
-    property NotificationState notificationState: NotificationState {
-        uiActive: controller.uiActive
-    }
+    property NotificationState notificationState: NotificationState {}
     readonly property var notifications: notificationState.notifications
     property bool preserveNavigationOnDeactivate: false
     property var timezone: ({
@@ -57,7 +55,7 @@ Ui.ChooserController {
         key: "activity::overview"
         tab: controller.detailSection
         initialTab: controller.detailSection
-        tabs: ["schedule", "weather"]
+        tabs: ["schedule"]
         presentationOpen: true
         onRestoreRequested: function (open, tab) { controller.detailSection = tab; }
     }

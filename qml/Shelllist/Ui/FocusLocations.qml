@@ -6,26 +6,33 @@ import QtQuick
 QtObject {
     function key(item: Item): string {
         const field = item as TextField;
-        return field ? (field.sensitive ? "" : field.focusKey) : item.objectName;
+        return field ? (field.sensitive ? "" : field.focusKey) : (item ? item.objectName : "");
     }
-    function targets(root: Item, name: string): var {
+    function registered(item: Item): bool {
+        return item instanceof ActionControl || item instanceof TextField || item instanceof IconTile;
+    }
+    function uniqueTarget(items: var, name: string): Item {
+        if (!name)
+            return null;
+        const matches = items.filter(item => key(item) === name);
+        return matches.length === 1 ? matches[0] : null;
+    }
+    function targets(root: Item): var {
         if (!root || !root.visible || (root as TextField)?.sensitive)
             return [];
-        let found = [];
-        if ((root instanceof ActionControl || root instanceof TextField || root instanceof IconTile) && key(root) === name)
-            found.push(root);
+        let found = registered(root) ? [root] : [];
         for (const child of root.children)
-            found = found.concat(targets(child, name));
+            found = found.concat(targets(child));
         return found;
     }
     function capture(root: Item, focus: Item): var {
         let target = null;
         while (focus && focus !== root) {
-            if (!target && (focus instanceof ActionControl || focus instanceof TextField || focus instanceof IconTile))
+            if (!target && registered(focus))
                 target = focus;
             focus = focus.parent;
         }
-        if (focus !== root || !target || !key(target) || targets(root, key(target)).length !== 1)
+        if (focus !== root || !target || uniqueTarget(targets(root), key(target)) !== target)
             return null;
         const field = target as TextField;
         return {target: key(target), selection: field ? field.selectionState() : null};
@@ -33,10 +40,9 @@ QtObject {
     function restore(root: Item, state: var): bool {
         if (!state || !state.target)
             return false;
-        const found = targets(root, state.target);
-        if (found.length !== 1 || !found[0].enabled)
+        const target = uniqueTarget(targets(root), state.target);
+        if (!target || !target.enabled)
             return false;
-        const target = found[0];
         const action = target as ActionControl;
         const field = target as TextField;
         const tile = target as IconTile;

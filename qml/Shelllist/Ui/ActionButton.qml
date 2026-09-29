@@ -20,7 +20,7 @@ ActionControl {
     property color labelColor: tone === "accent" ? Theme.accentText : (tone === "active" ? Theme.activeText : (tone === "danger" ? Theme.dangerText : (tone === "warning" ? Theme.warningText : Theme.text)))
     readonly property bool hovered: area.containsMouse
     readonly property bool pressed: enabled && interactive && (area.pressed || keyboardPressed)
-    readonly property string interactionState: !enabled || !interactive ? "disabled" : (pressed ? "pressed" : (hovered || activeFocus ? "highlighted" : "flat"))
+    readonly property string interactionState: !enabled || !interactive ? "disabled" : (pressed ? "pressed" : (hovered || highlighted ? "highlighted" : "flat"))
 
     implicitHeight: Theme.controlHeight
     radius: Math.max(0, Math.min(Math.min(width, height) / 2, shape.value))

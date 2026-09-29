@@ -74,10 +74,13 @@ TestCase {
         const height = field.height;
         field.inputValid = false;
         verify(input.activeFocus && ring.visible);
-        compare(String(ring.border.color), String(Ui.Theme.danger));
+        compare(ring.border.width, 0);
+        compare(String(ring.color), String(Ui.Theme.withAlpha(Ui.Theme.danger, 0.12)));
+        compare(String(field.border.color), String(Ui.Theme.danger));
         compare(field.height, height);
         field.inputValid = true;
-        compare(String(ring.border.color), String(Ui.Theme.accent));
+        compare(String(ring.color), String(Ui.Theme.withAlpha(Ui.Theme.accent, 0.12)));
+        compare(String(field.border.color), String(Ui.Theme.accent));
         field.readOnly = true;
         keyClick(Qt.Key_X);
         compare(edits.count, 1);

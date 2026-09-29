@@ -9,6 +9,7 @@ Item {
 
     required property string label
     property alias value: slider.value
+    property alias browseFocused: slider.browseFocused
     property alias from: slider.from
     property alias to: slider.to
     property alias stepSize: slider.stepSize

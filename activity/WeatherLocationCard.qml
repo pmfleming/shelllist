@@ -4,7 +4,7 @@ import QtQuick
 import Shelllist.Ui as Ui
 import "WeatherVisuals.js" as Visuals
 
-Rectangle {
+Ui.ActionControl {
     id: locationCard
 
     required property var modelData
@@ -15,15 +15,12 @@ Rectangle {
     activeFocusOnTab: true
     Accessible.role: Accessible.Button
     Accessible.name: qsTr("Weather for %1").arg(modelData.location || "")
-    Accessible.onPressAction: selected(modelData.id)
-    Keys.onReturnPressed: selected(modelData.id)
-    Keys.onEnterPressed: selected(modelData.id)
-    Keys.onSpacePressed: selected(modelData.id)
+    onClicked: selected(modelData.id)
 
     radius: Ui.Theme.controlRadius
     color: locationCard.selectedId === modelData.id ? Ui.Theme.selected : Ui.Theme.surfaceRaised
     border.width: locationCard.selectedId === modelData.id ? 2 : 1
-    border.color: activeFocus || locationCard.selectedId === modelData.id ? Ui.Theme.accent : Ui.Theme.border
+    border.color: locationCard.selectedId === modelData.id ? Ui.Theme.accent : Ui.Theme.border
 
     Ui.ThemeText {
         anchors.left: parent.left
@@ -103,7 +100,7 @@ Rectangle {
         cursorShape: Qt.PointingHandCursor
         onClicked: {
             locationCard.forceActiveFocus();
-            locationCard.selected(locationCard.modelData.id);
+            locationCard.activate();
         }
     }
 }

@@ -136,11 +136,11 @@ Ui.ProviderChooserController {
         if (availableDetailsTabs().includes(value))
             detailsTab = value;
     }
-    function cycleDetailsTab(): bool {
+    function cycleDetailsTab(backwards: bool): bool {
         if (!detailsOpen || !hasSelection)
             return false;
         const tabs = availableDetailsTabs();
-        detailsTab = tabs[(tabs.indexOf(detailsTab) + 1) % tabs.length];
+        detailsTab = tabAfter(tabs, detailsTab, backwards);
         return true;
     }
     function updateApplicationSettings(category: string): bool {

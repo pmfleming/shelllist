@@ -93,6 +93,9 @@ DaemonTestCase {
         compare(root.desktop.audio.muted, false);
         acknowledge(root, calls[0], {audio: {available: true, sink_name: "speakers", sink_description: "Speakers", volume_percent: 50, muted: true}});
         compare(root.desktop.audio.muted, true);
+        verify(root.desktop.triggerModuleAction("audio-mute"));
+        compare(calls.length, 2);
+        compare(calls[1].method, BarApi.methods.audioSetMuted);
     }
     function test_mediaPreferencesAreAcknowledgedAndDoNotReplayOnRestore(): void {
         const root = fixture();

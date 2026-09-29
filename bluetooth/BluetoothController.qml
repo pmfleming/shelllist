@@ -456,7 +456,7 @@ Ui.ProviderChooserController {
         else
             detailsOpen ? closeDetails() : openDetails();
     }
-    function cycleDetailsTab() {
+    function cycleDetailsTab(backwards: bool): bool {
         if (!detailsOpen)
             return false;
         if (detailsTab === "adapter") {
@@ -466,8 +466,7 @@ Ui.ProviderChooserController {
         if (!hasSelection)
             return false;
         const tabs = ["device", "settings", "information"];
-        const currentIndex = Math.max(0, tabs.indexOf(detailsTab));
-        detailsTab = tabs[(currentIndex + 1) % tabs.length];
+        detailsTab = tabAfter(tabs, detailsTab, backwards);
         return true;
     }
     function primarySelected() {

@@ -9,12 +9,19 @@ Ui.PanelSurface {
 
     required property BatteryController controller
     chooserController: controller
+    navigationContent: detailPage
     readonly property var battery: controller.battery || ({})
     readonly property var protection: controller.protection
     readonly property var device: controller.primaryDevice || ({})
     readonly property string policyError: protection.error || ""
     readonly property string errorMessage: controller.lastError.length > 0 ? controller.lastError : (controller.transportError.length > 0 ? controller.transportError : (controller.refreshError.length > 0 ? controller.refreshError : policyError))
 
+    Shortcut {
+        sequence: "Ctrl+Shift+S"
+        enabled: content.controller.uiActive && screenshotButton.enabled && !content.detailsNavigation.popupOpen
+        autoRepeat: false
+        onActivated: content.controller.screenshotRequested()
+    }
     Shortcut {
         sequence: "F5"
         enabled: content.controller.uiActive && !content.controller.actionInFlight
@@ -23,7 +30,12 @@ Ui.PanelSurface {
     Shortcut {
         sequence: "Ctrl+Tab"
         enabled: content.controller.uiActive && !content.detailsNavigation.popupOpen
-        onActivated: content.changeTab()
+        onActivated: content.changeTab(false)
+    }
+    Shortcut {
+        sequence: "Ctrl+Shift+Tab"
+        enabled: content.controller.uiActive && !content.detailsNavigation.popupOpen
+        onActivated: content.changeTab(true)
     }
 
     ColumnLayout {
@@ -37,6 +49,8 @@ Ui.PanelSurface {
             spacing: Ui.Theme.spacingMd
 
             Ui.FlatIconButton {
+                id: screenshotButton
+                activeFocusOnTab: false
                 Layout.preferredWidth: 34
                 Layout.preferredHeight: 34
                 Layout.alignment: Qt.AlignVCenter

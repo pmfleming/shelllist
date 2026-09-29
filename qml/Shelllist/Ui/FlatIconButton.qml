@@ -9,7 +9,7 @@ ActionButton {
 
     // Focus bypasses decoration, including a hover animation already running.
     // Keep the matching foreground/background pair even while busy.
-    color: activeFocus ? (pressed ? pressedBackgroundColor : highlightedBackgroundColor) : animatedBackgroundColor
+    color: highlighted ? (pressed ? pressedBackgroundColor : highlightedBackgroundColor) : animatedBackgroundColor
 
     label: ""
     tone: "normal"

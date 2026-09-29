@@ -114,8 +114,8 @@ Ui.ChooserController {
         presentationOpen: true
         onRestoreRequested: function (open, tab) { controller.viewTab = tab; }
     }
-    function cycleDetailsTab() {
-        cycleViewTab();
+    function cycleDetailsTab(backwards: bool) {
+        cycleViewTab(backwards);
     }
     property string viewTab: "overview"
     property int selectedDeviceIndex: 0
@@ -221,11 +221,8 @@ Ui.ChooserController {
             viewTab = tab;
     }
 
-    function cycleViewTab(): bool {
-        const index = viewTabs.findIndex(function (option) {
-            return option.value === viewTab;
-        });
-        viewTab = viewTabs[(index + 1) % viewTabs.length].value;
+    function cycleViewTab(backwards: bool): bool {
+        viewTab = tabAfter(viewTabs.map(option => option.value), viewTab, backwards);
         return true;
     }
 

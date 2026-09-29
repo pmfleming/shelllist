@@ -279,11 +279,13 @@ DaemonTestCase {
         closeSession(content);
         startSession(content);
         content.cycleRegion(false);
-        verify(content.listItem.searchFocused);
+        verify(content.detailsNavigation.browsing);
+        const target = content.detailsNavigation.currentTarget.objectName;
         finishSessionRefresh(content);
         content.controller.restoreUiFocus();
         wait(0);
-        verify(content.listItem.searchFocused);
+        verify(content.detailsNavigation.browsing);
+        compare(content.detailsNavigation.currentTarget.objectName, target);
         verify(!content.detailsNavigation.editing);
     }
     function test_pairingPromptCannotReplaceOrdinaryInvocationFocus() {

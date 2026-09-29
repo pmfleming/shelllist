@@ -5,6 +5,7 @@ import QtQuick.Controls as Controls
 import QtTest
 import Quickshell
 import Shelllist.Ui as Ui
+import Shelllist.Bar as Bar
 
 TestCase {
     id: testCase
@@ -85,6 +86,45 @@ TestCase {
                 detailsActionVisible: false
             }
         }
+    }
+
+    Component {
+        id: workspaceFactory
+        Bar.WorkspaceButton {
+            workspaceId: 1
+            screenName: "test"
+            controller: Bar.BarController { surfaceRegistry: null; backend.active: false }
+        }
+    }
+    function test_pointerAndKeyboardShareTonalFocusWithoutAnOutline() {
+        const scene = createTemporaryObject(buttons, testCase);
+        mouseClick(scene.first, 20, 20);
+        verify(scene.first.activeFocus);
+        const fill = scene.first.color;
+        const tint = ring(scene.first).color;
+        compare(ring(scene.first).border.width, 0);
+        verify(ring(scene.first).color.a > 0);
+        scene.second.forceActiveFocus();
+        mouseMove(scene, 400, 180);
+        scene.first.forceActiveFocus(Qt.TabFocusReason);
+        compare(scene.first.color, fill);
+        compare(ring(scene.first).color, tint);
+        scene.first.browseFocused = true;
+        scene.second.forceActiveFocus();
+        compare(scene.first.color, fill, "browse focus uses the same paint without entering the control");
+        compare(ring(scene.first).color, tint);
+        scene.first.browseFocused = false;
+        verify(!ring(scene.first).visible);
+    }
+    function test_workspaceFocusFollowsTheDiscNotTheTallHitArea() {
+        const button = createTemporaryObject(workspaceFactory, testCase);
+        button.forceActiveFocus(Qt.TabFocusReason);
+        const highlight = ring(button);
+        compare(highlight.parent, findChild(button, "workspaceDisc"));
+        compare(highlight.border.width, 0);
+        compare(highlight.width, highlight.height);
+        compare(highlight.radius, highlight.height / 2);
+        verify(highlight.height < button.height);
     }
 
     function init() {

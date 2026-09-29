@@ -10,7 +10,7 @@ Item {
     property bool refreshAutoRepeat: true
 
     signal refreshRequested
-    signal detailsTabRequested
+    signal detailsTabRequested(bool backwards)
     function dismiss(): void {
         controller.dismissNavigation();
     }
@@ -30,6 +30,11 @@ Item {
     Shortcut {
         sequence: "Ctrl+Tab"
         enabled: shortcuts.controller.uiActive && shortcuts.detailsTabEnabled
-        onActivated: shortcuts.detailsTabRequested()
+        onActivated: shortcuts.detailsTabRequested(false)
+    }
+    Shortcut {
+        sequence: "Ctrl+Shift+Tab"
+        enabled: shortcuts.controller.uiActive && shortcuts.detailsTabEnabled
+        onActivated: shortcuts.detailsTabRequested(true)
     }
 }

@@ -25,12 +25,12 @@ ChooserSurface {
         chooserController.navigationInteracted();
         chooserController.refresh();
     }
-    function cycleDetailsTab(): void {
+    function cycleDetailsTab(backwards: bool): void {
         chooserController.navigationInteracted();
         if (chooserController.viewMemory)
             chooserController.viewMemory.synchronize();
         const restoreContent = keyboardWorkflow && detailsNavigation.activeFocus;
-        chooserController.cycleDetailsTab();
+        chooserController.cycleDetailsTab(backwards);
         if (restoreContent)
             detailsNavigation.focusContent(true);
     }
@@ -38,6 +38,10 @@ ChooserSurface {
         chooserController.navigationInteracted();
         if (chooserController.viewMemory)
             chooserController.viewMemory.synchronize();
+        if (detailsNavigation.activeFocus) {
+            detailsNavigation.cycleFocus(backwards);
+            return;
+        }
         if (!listItem)
             return;
         const regions = [listItem.focusSearch, listItem.focusList];
@@ -62,7 +66,7 @@ ChooserSurface {
         detailsTabEnabled: surface.detailsTabEnabled && (!surface.keyboardWorkflow || !surface.detailsNavigation.popupOpen)
         refreshAutoRepeat: surface.refreshAutoRepeat
         onRefreshRequested: surface.refresh()
-        onDetailsTabRequested: surface.cycleDetailsTab()
+        onDetailsTabRequested: function (backwards) { surface.cycleDetailsTab(backwards); }
         function dismiss(): void {
             surface.dismiss();
         }
@@ -89,6 +93,7 @@ ChooserSurface {
         id: chooser
         controller: surface.chooserController
         keyboardWorkflow: surface.keyboardWorkflow
+        detailsNavigation.headerShortcutsEnabled: surface.keyboardWorkflow && surface.chooserController.uiActive && surface.chooserController.detailsOpen && surface.navigationEnabled
         navigationAllowed: surface.navigationEnabled
         sessionContext: surface.sessionContext
         sessionReady: surface.sessionReady

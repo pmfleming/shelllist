@@ -7,6 +7,7 @@ Rectangle {
 
     required property var notification
     property int count: 1
+    property real imageMargin: Math.round(width * 0.15)
     readonly property string source: resolveSource()
 
     function resolveSource(): string {
@@ -26,7 +27,7 @@ Rectangle {
 
     Image {
         anchors.fill: parent
-        anchors.margins: Math.round(tile.width * 0.15)
+        anchors.margins: tile.imageMargin
         source: tile.source
         sourceSize.width: width * 2
         sourceSize.height: height * 2

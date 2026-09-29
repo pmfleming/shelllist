@@ -1,6 +1,9 @@
 import Quickshell
 import QtQuick
 import Shelllist.Ui as Ui
+import Shelllist.Wifi as Wifi
+import Shelllist.Bluetooth as Bluetooth
+import Shelllist.Activity as Activity
 import "BarApi.js" as BarApi
 import "BarIndicators.js" as Indicators
 import "BarMediaPresentation.js" as MediaPresentation
@@ -99,8 +102,8 @@ Item {
             timeoutMs: 1400
         })
 
-    readonly property var wifiController: surfaceRegistry ? surfaceRegistry.wifiController : null
-    readonly property var bluetoothController: surfaceRegistry ? surfaceRegistry.bluetoothController : null
+    readonly property Wifi.WifiController wifiController: surfaceRegistry ? surfaceRegistry.wifiController : null
+    readonly property Bluetooth.BluetoothController bluetoothController: surfaceRegistry ? surfaceRegistry.bluetoothController : null
     readonly property var networkStatus: wifiController ? wifiController.activeStatus : null
     readonly property var activePlayer: MediaPresentation.playerFor(media)
     readonly property string activePlayerId: activePlayer ? activePlayer.id : ""
@@ -174,9 +177,6 @@ Item {
     function mediaOperation(operation: string): bool {
         return backend.mediaOperation(operation);
     }
-    function cycleMediaPlayer(): bool {
-        return (media.players || []).length > 1 && backend.mediaOperation("cycle");
-    }
     function seekMedia(offsetSeconds: int): bool {
         return !!activePlayer && !!activePlayer.can_seek && backend.seekMedia(offsetSeconds);
     }
@@ -210,7 +210,7 @@ Item {
     function invokeNotificationAction(notificationId: int, actionKey: string): bool {
         return backend.invokeNotificationAction(notificationId, actionKey);
     }
-    readonly property var notificationState: surfaceRegistry ? surfaceRegistry.notificationState : null
+    readonly property Activity.NotificationState notificationState: surfaceRegistry ? surfaceRegistry.notificationState : null
     onNotificationsChanged: if (notificationState)
         notificationState.notifications = notifications
     onNotificationActiveChanged: if (notificationState)
@@ -278,60 +278,40 @@ Item {
         }, now);
     }
     function triggerModuleAction(action: string): bool {
+        if (["wifi", "bluetooth", "displays", "battery", "activity"].includes(action)) {
+            openSurface(action);
+            return true;
+        }
         const actions = ({
-                wifi: function () {
-                    openSurface("wifi");
-                },
                 portal: function () {
                     Quickshell.execDetached(["shelllist-captive-portal", "--manual", "--fallback"]);
                 },
                 updates: function () {
                     Quickshell.execDetached(["ghostty", "-e", "bash", "-lc", "journalctl -u 'nixos-update-*.service' -u 'nixos-ai-tools-*.service' -n 150 --no-pager; read -r -p 'Press enter to close'"]);
                 },
-                bluetooth: function () {
-                    openSurface("bluetooth");
-                },
                 "audio-mixer": function () {
                     Quickshell.execDetached(["pavucontrol"]);
                 },
-                "audio-mute": function () {
-                    backend.toggleMuted();
-                },
+                "audio-mute": backend.toggleMuted,
                 "audio-up": function () {
                     backend.adjustAudio(5);
                 },
                 "audio-down": function () {
                     backend.adjustAudio(-5);
                 },
-                displays: function () {
-                    openSurface("displays");
-                },
-                battery: function () {
-                    openSurface("battery");
-                },
-                "power-profile-next": function () {
-                    cyclePowerProfile();
-                },
-                activity: function () {
-                    openSurface("activity");
-                },
+                "power-profile-next": cyclePowerProfile,
                 notifications: function () {
                     openNotificationCenter("");
                 },
-                "notifications-dnd": function () {
-                    backend.toggleDnd();
-                },
+                "notifications-dnd": backend.toggleDnd,
                 "time-weather": function () {
-                    openTimeWeather("time");
-                },
-                timezone: function () {
                     openTimeWeather("time");
                 }
             });
-        const handler = actions[action];
-        if (!handler)
+        const key = action === "timezone" ? "time-weather" : action;
+        if (!Object.prototype.hasOwnProperty.call(actions, key))
             return false;
-        handler();
+        actions[key]();
         return true;
     }
 

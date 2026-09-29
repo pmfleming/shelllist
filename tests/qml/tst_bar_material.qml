@@ -57,6 +57,11 @@ TestCase {
         bar.controller.notificationActive = {notifications: [{urgency: 2}]};
         tryCompare(findChild(bar, "bar:notifications"), "foreground", Ui.Theme.danger);
     }
+    function test_unknownRoutesCannotCallObjectPrototypeMethods(): void {
+        const bar = createTemporaryObject(barFactory, testCase, {width: 700});
+        for (const name of ["missing", "__proto__", "constructor", "toString"])
+            verify(!bar.controller.triggerModuleAction(name));
+    }
     function test_transportModesNeverInventCapabilities(): void {
         const p = {can_control: true, can_seek: true, can_play: true, can_pause: false, playback_status: "playing"};
         verify(!Media.canPlayPause(p));

@@ -49,7 +49,7 @@ Ui.ActionControl {
         radius: height / 2
         color: root.backgroundColor
         border.width: 1
-        border.color: root.activeFocus ? Ui.Theme.strongBorder : root.borderColor
+        border.color: root.borderColor
 
         Ui.InteractiveBehavior on color {
             duration: Ui.Theme.animationFast

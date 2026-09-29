@@ -2,27 +2,12 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Ui as Ui
-import Quickshell
 
 Rectangle {
     id: notificationCard
     required property ActivityController controller
     required property date now
 
-    function notificationForGroup(group: var): var {
-        const record = group && group.records && group.records.length > 0 ? group.records[0] : ({});
-        return record.notification || record;
-    }
-    function notificationIconSource(group: var): string {
-        const notification = notificationForGroup(group);
-        const hints = notification.hints || ({});
-        const candidate = String(hints.image_path || notification.app_icon || "");
-        if (candidate.startsWith("/"))
-            return "file://" + candidate;
-        if (candidate.startsWith("file://"))
-            return candidate;
-        return Quickshell.iconPath(candidate || "dialog-information", "dialog-information");
-    }
     objectName: "agendaNotificationCard"
 
     readonly property int previewLimit: Ui.NotificationPresentation.previewCapacity(height, Ui.Theme.spacingSm, Ui.Theme.spacingMd)
@@ -66,33 +51,34 @@ Rectangle {
 
         Repeater {
             model: notificationCard.previewGroups
-            delegate: Rectangle {
+            delegate: Ui.ActionControl {
                 id: notificationPreview
                 objectName: "agendaNotificationPreview"
                 required property var modelData
-                readonly property var notification: notificationCard.notificationForGroup(modelData)
+                readonly property var notification: Ui.NotificationPresentation.notificationFor(modelData.records[0])
 
                 width: parent.width
                 height: 48
                 radius: Ui.Theme.controlRadius
-                color: previewMouse.containsMouse || activeFocus ? Ui.Theme.selected : Ui.Theme.surfaceRaised
-                border.color: activeFocus ? Ui.Theme.accent : Ui.Theme.border
+                color: previewMouse.containsMouse || highlighted ? Ui.Theme.selected : Ui.Theme.surfaceRaised
+                border.color: Ui.Theme.border
                 activeFocusOnTab: true
                 Accessible.role: Accessible.Button
                 Accessible.name: "Open " + modelData.appName + " notifications: " + String(notification.summary || "")
                 function openGroup(): void {
                     notificationCard.controller.requestNotifications(modelData.key, modelData.tab);
                 }
-                Accessible.onPressAction: openGroup()
-                Keys.onReturnPressed: openGroup()
-                Keys.onSpacePressed: openGroup()
+                onClicked: openGroup()
 
                 MouseArea {
                     id: previewMouse
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: notificationPreview.openGroup()
+                    onClicked: {
+                        notificationPreview.forceActiveFocus(Qt.MouseFocusReason);
+                        notificationPreview.activate();
+                    }
                 }
 
                 Row {
@@ -100,17 +86,13 @@ Rectangle {
                     anchors.margins: 6
                     spacing: Ui.Theme.spacingSm
 
-                    Item {
+                    Ui.NotificationAppIcon {
                         width: 32
                         height: 32
                         anchors.verticalCenter: parent.verticalCenter
-                        Image {
-                            anchors.fill: parent
-                            anchors.margins: 2
-                            source: notificationCard.notificationIconSource(notificationPreview.modelData)
-                            fillMode: Image.PreserveAspectFit
-                            asynchronous: true
-                        }
+                        notification: notificationPreview.notification
+                        color: "transparent"
+                        imageMargin: 2
                     }
 
                     Column {
@@ -182,22 +164,24 @@ Rectangle {
         }
     }
 
-    Item {
+    Ui.ActionControl {
+        id: notificationHeading
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
         height: 28 + Ui.Theme.spacingMd
-        activeFocusOnTab: true
+        color: "transparent"
         Accessible.role: Accessible.Button
         Accessible.name: qsTr("Open notifications")
-        Accessible.onPressAction: notificationCard.controller.requestNotifications("", "active")
-        Keys.onReturnPressed: notificationCard.controller.requestNotifications("", "active")
-        Keys.onSpacePressed: notificationCard.controller.requestNotifications("", "active")
+        onClicked: notificationCard.controller.requestNotifications("", "active")
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: notificationCard.controller.requestNotifications("", "active")
+            onClicked: {
+                notificationHeading.forceActiveFocus(Qt.MouseFocusReason);
+                notificationHeading.activate();
+            }
         }
     }
 }

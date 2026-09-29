@@ -29,7 +29,8 @@ Rectangle {
     objectName: editing ? "displayWorkspaceCanvas" : "displayOverviewCanvas"
     radius: Ui.Theme.cardRadius
     color: Ui.Theme.input
-    border.color: activeFocus ? Ui.Theme.strongBorder : Ui.Theme.border
+    border.color: Ui.Theme.border
+    Ui.FocusRing { active: canvas.activeFocus; cornerRadius: canvas.radius }
     clip: true
     activeFocusOnTab: true
     Accessible.role: Accessible.Pane

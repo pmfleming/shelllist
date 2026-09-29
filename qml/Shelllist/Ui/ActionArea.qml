@@ -6,8 +6,7 @@ ActionControl {
     required accessibleName
     property real focusRadius: Theme.controlRadius
     radius: focusRadius
-    border.width: activeFocus ? 1 : 0
-    border.color: Theme.accent
+    border.width: 0
 
     ControlPointerArea {
         focusTarget: area

@@ -22,7 +22,8 @@ already-open development shell after changing `flake.nix`.
   verifies that F1/question marks cannot summon a help overlay, steal editor
   focus or insert an extra Escape layer. Domain bindings use Qt `Shortcut`.
 - `tst_focus_feedback.qml` checks immediate focus transfer, retained busy focus,
-  inset bounds, selection versus focus, non-selecting hover and tooltip absence.
+  tonal mouse/keyboard/browse parity, borderless inset bounds, circular workspace
+  highlights, selection versus focus, non-selecting hover and tooltip absence.
 - `tst_expressive_controls.qml` covers press/reversal while activation and focus
   remain immediate, busy/focus-loss cleanup and stopping in-flight springs when
   motion is disabled. It also compares shared numeric/color interpolation with
@@ -34,13 +35,14 @@ already-open development shell after changing `flake.nix`.
 - `tst_material_fields.qml` checks native editing/read-only behavior, masking and
   guarded embedded actions, immediate focus/error roles, hover-independent menu
   navigation, acknowledged selection, Escape cancellation and disabled guards.
-- `tst_chooser_keyboard.qml` exercises saved-cursor result typing, region Tab,
-  content-first tabs, browse/edit separation, native menu Escape, pending editor
+- `tst_chooser_keyboard.qml` exercises saved-cursor result typing, contained wrapping
+  Tab/Shift+Tab, forward/reverse Ctrl+Tab, Enter-to-edit, guarded Alt+number header
+  shortcuts, editor-to-browse traversal, native menu Escape, pending editor
   ownership, actual Applications settings, read-only scrolling, removed editors
   and modal focus containment/restoration, with decorative animations enabled.
   Bluetooth recovery tests also cover its actual adapter-settings keyboard
   journey and clearing/fencing sensitive prompts on whole-surface closure.
-  The suite now has 198 behavioral cases (280 passes with hooks); the inventory
+  The suite now has 206 behavioral cases (288 passes with hooks); the inventory
   below is the completed pruning checkpoint, not a permanent cap on feature tests.
 - `tst_chooser_geometry.qml` covers anchored expansion, work-area bounds and
   fallback, stable frame/list/text/control sizes, minimum and emergency canvases,
@@ -55,6 +57,9 @@ already-open development shell after changing `flake.nix`.
   ambiguity, and native-menu focus/lifetime through a recording platform boundary.
 - `tst_bar_material.qml` covers ordered continuous groups at normal/compact/emergency
   widths, pictorial/nonvisual values, urgency, overflow access and mode capabilities.
+- Activity regressions verify a schedule-only rail in overview and expanded mode,
+  removal of its weather/notification shortcuts, retained dates/todo drafts, and
+  notification-history activation only through the standalone Notifications surface.
 - `tst_domain_workflows.qml` covers the panel adapter, native multiline arrows and
   layered Escape, value-free editor selection restoration, and ordinary Activity
   typing without the former letter shortcuts, and exclusion of revealed sensitive

@@ -4,7 +4,14 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
-The [latest session-maintenance review](reviews/lens-session-maintenance-2026-09-27.md)
+The [latest Expressive maintenance review](reviews/lens-expressive-maintenance-2026-09-28.md)
+compares against `44584db`: shared focus resolution, nine typed QObject references,
+notification icon reuse, bounded cleanup and a baseline initial-layout restoration
+race fix. Complexity/effort/cloning improve modestly; total tracked code saves one
+line including regression tests. The full gate passes, while Lens remains incomplete
+due to the existing tray-mock formatter error. No thresholds or tests were relaxed.
+
+The [preceding session-maintenance review](reviews/lens-session-maintenance-2026-09-27.md)
 uses the preserved invocation-focus working tree as its baseline. It records
 shared settings descriptors and detail routing, public typed window signals,
 modest production metric improvements and the overall locality cost of new tests.
@@ -30,7 +37,8 @@ preserves the source tree's relative import layout.
 The UI is divided by ownership rather than by screen size:
 
 - `shell/` owns the resident host, surface registry, IPC, and monitor-local bar creation.
-- `bar/` owns bar, active notification, and OSD presentation only.
+- `bar/` owns bar, active notification, OSD and Audio/Media/Tray chooser presentation;
+  authoritative media/audio policy and effects remain daemon-owned.
 - `activity/`, `battery/`, `displays/`, `launcher/`, `wifi/`, `bluetooth/`, and `clipboard/` own domain-specific controllers and views.
 - `Shelllist.Core` owns provider contracts, normalization, ranking, and keyed result models.
 - `Shelllist.Io` owns daemon transport and process boundaries.
@@ -49,7 +57,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - `ActionControl` shares keyboard/accessibility activation and busy-focus policy across chooser controls and bar actions. `FocusRing` provides an immediate, inset indicator independent of decorative animation; fields, icon tiles and result rows also use it. No hover tooltip or automatic focus label is rendered; legacy tooltip strings retained during migration supply nonvisual accessible descriptions where appropriate.
 - Providers resolve dynamic actions at use time rather than copying actions into recurring snapshots. `Core.Model.settingToggle` shares Wi-Fi/Bluetooth descriptor normalization without owning capabilities or effects. `ActionDetailsPane.triggerAction` supplies controller routing by default; Clipboard overrides the method for specialized actions.
 - `BarContent` renders normalized status descriptors through one delegate.
-- Workspace, focused-window, media, tray, and OSD presentation are isolated components.
+- Workspace, media, tray, and OSD presentation are isolated components.
 - Activity, battery, power, and OSD views are split into cohesive panes rather than one large object tree.
 - `LiveClock`, `PulsingLabel`, `NotificationReplyRow`, and `BarOverlayWindow` centralize repeated presentation behavior.
 - `ChartDrawing` shares gap-preserving Canvas paths between battery and application history; `ChartValueRail` keeps their label geometry and styling consistent. Availability, axes, and telemetry policy stay with their existing owners.
