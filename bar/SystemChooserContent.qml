@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Shelllist.Ui as Ui
 
@@ -78,7 +79,7 @@ Ui.ProviderChooserSurface {
         title: content.controller.selectedResult ? content.controller.selectedResult.title : ""
         subtitle: content.controller.selectedResult ? content.controller.selectedResult.subtitle : ""
         icon: content.controller.selectedResult ? content.controller.selectedResult.icon : ""
-        actions: content.controller.detailActions.filter(action => action.id !== "inspect")
+        actions: content.controller.detailActions.filter(action => action.id !== "inspect" && (content.controller.kind !== "audio" || !["quieter", "louder"].includes(action.id)))
         actionWidth: 0
         Ui.DetailFlickable {
             anchors.fill: parent
@@ -87,6 +88,34 @@ Ui.ProviderChooserSurface {
             Column {
                 width: parent.width
                 spacing: Ui.Theme.spacingMd
+                Ui.DetailColumnCard {
+                    visible: content.controller.kind === "audio" && content.controller.direction === "output"
+                    height: implicitHeight
+                    title: qsTr("Output volume")
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Ui.ThemeText {
+                            objectName: "audioVolumeValue"
+                            Layout.fillWidth: true
+                            text: content.controller.barController && Number.isFinite(content.controller.barController.audio.volume_percent) ? content.controller.barController.audio.volume_percent + "%" : qsTr("Not reported")
+                            font.pixelSize: Ui.Theme.fontSizeHeading
+                            Accessible.name: qsTr("Volume: %1").arg(text)
+                        }
+                        Repeater {
+                            model: content.controller.kind === "audio" ? content.controller.detailActions.filter(action => ["quieter", "louder"].includes(action.id)) : []
+                            delegate: Ui.ActionButton {
+                                required property var modelData
+                                objectName: "audioVolume-" + modelData.id
+                                Layout.preferredWidth: Ui.Theme.controlHeight
+                                Layout.preferredHeight: Ui.Theme.controlHeight
+                                icon: modelData.icon
+                                label: modelData.label
+                                enabled: modelData.enabled
+                                onClicked: content.controller.triggerDetailAction(modelData.id)
+                            }
+                        }
+                    }
+                }
                 Ui.ToggleRow {
                     objectName: "audioMute"
                     visible: content.controller.kind === "audio"

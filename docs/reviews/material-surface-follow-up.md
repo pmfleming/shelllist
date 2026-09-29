@@ -39,4 +39,9 @@ Implementation of the [2026-09-29 audit](material-surface-audit-2026-09-29.md), 
 - Security/band/address/discovery/password controls precede device identifiers and DHCP metadata. Diagnostics never fetch secrets, save settings or reset live drafts/reveal state.
 - Enterprise prompts, IP validation, acknowledgement and partial-save recovery are unchanged. Strict lint and 293 native passes, including the new disclosure/draft regression.
 
+## Audio
+
+- Added an in-content confirmed output-volume value and ±5% actions; mute and full-mixer access remain available. No absolute slider setter or device inventory is invented.
+- Regression verifies delta routing, busy guards and acknowledged—not optimistic—volume. Strict lint and all 9 SystemChoosers Qt passes succeeded.
+
 Live compositor, screen-reader, IME, touch and large-text acceptance remain separate. No services are restarted or deployed by this work.

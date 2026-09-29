@@ -97,6 +97,25 @@ DaemonTestCase {
         compare(calls.length, 2);
         compare(calls[1].method, BarApi.methods.audioSetMuted);
     }
+    function test_audioVolumeUsesAcknowledgedDeltaControls(): void {
+        const root = fixture();
+        root.chooser.kind = "audio";
+        root.desktop.audio = {available: true, sink_name: "speakers", volume_percent: 50, muted: false};
+        root.chooser.activateUi("");
+        root.chooser.primarySelected();
+        tryVerify(() => findChild(root, "audioVolume-louder") !== null);
+        const louder = findChild(root, "audioVolume-louder");
+        const value = findChild(root, "audioVolumeValue");
+        compare(value.text, "50%");
+        louder.clicked();
+        compare(calls.length, 1);
+        compare(calls[0].method, BarApi.methods.audioAdjust);
+        compare(calls[0].params.delta_percent, 5);
+        compare(value.text, "50%", "no optimistic volume");
+        verify(!root.chooser.triggerDetailAction("louder"));
+        acknowledge(root, calls[0], {audio: {available: true, sink_name: "speakers", volume_percent: 55, muted: false}});
+        compare(value.text, "55%");
+    }
     function test_mediaPreferencesAreAcknowledgedAndDoNotReplayOnRestore(): void {
         const root = fixture();
         const p = Object.assign(player("one", true), {control_mode: "automatic", content_type: "unknown"});
