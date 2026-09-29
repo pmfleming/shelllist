@@ -97,7 +97,7 @@ WeatherForecastCard {
                 y: 184
                 text: Number(hourPoint.modelData.precipitation_probability || 0) > 0 ? Visuals.numberLabel(hourPoint.modelData.precipitation_probability, "%") : ""
                 color: Ui.Theme.accent
-                font.pixelSize: 9
+                font.pixelSize: Ui.Theme.fontSizeCaption
             }
             Ui.ThemeText {
                 anchors.horizontalCenter: parent.horizontalCenter

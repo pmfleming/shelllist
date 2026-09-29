@@ -43,8 +43,11 @@ Ui.DetailFlickable {
     onWidthChanged: sunCanvas.requestPaint()
 
     Rectangle {
+        id: timeHero
+        objectName: "timeHero"
+        readonly property bool stacked: width < 600
         width: parent.width
-        height: 194
+        height: Math.max(194, clockText.implicitHeight + 2 * Ui.Theme.spacingLg, heroTimeMetrics.y + heroTimeMetrics.implicitHeight + Ui.Theme.spacingLg)
         radius: Ui.Theme.panelRadius
         border.color: Ui.Theme.withAlpha(Ui.Theme.accent, 0.30)
         gradient: Gradient {
@@ -59,8 +62,10 @@ Ui.DetailFlickable {
         }
 
         Column {
-            anchors.fill: parent
-            anchors.margins: Ui.Theme.spacingLg
+            id: clockText
+            x: Ui.Theme.spacingLg
+            y: Ui.Theme.spacingLg
+            width: parent.width - 2 * Ui.Theme.spacingLg - (timeHero.stacked ? 0 : heroTimeMetrics.width + Ui.Theme.spacingMd)
             spacing: 2
 
             Row {
@@ -102,12 +107,11 @@ Ui.DetailFlickable {
 
         Row {
             id: heroTimeMetrics
-            anchors.right: parent.right
-            anchors.rightMargin: Ui.Theme.spacingLg
-            anchors.top: parent.top
-            anchors.topMargin: 56
-            width: Math.min(300, parent.width * 0.46)
-            height: 104
+            objectName: "timeHeroMetrics"
+            x: timeHero.stacked ? Ui.Theme.spacingLg : parent.width - width - Ui.Theme.spacingLg
+            y: timeHero.stacked ? clockText.y + clockText.implicitHeight + Ui.Theme.spacingMd : 56
+            width: timeHero.stacked ? parent.width - 2 * Ui.Theme.spacingLg : Math.min(300, parent.width * 0.46)
+            height: implicitHeight
 
             Repeater {
                 model: [
@@ -159,14 +163,15 @@ Ui.DetailFlickable {
                         font.weight: Ui.Theme.fontWeightDemiBold
                     }
                     Ui.ThemeText {
+                        objectName: "timeMetricDetail-" + (heroTimeMetric.modelData.daylight ? "daylight" : "moon")
                         visible: String(heroTimeMetric.modelData.detail || "").length > 0
                         width: parent.width - Ui.Theme.spacingSm
                         anchors.horizontalCenter: parent.horizontalCenter
                         horizontalAlignment: Text.AlignHCenter
                         text: heroTimeMetric.modelData.detail || ""
                         color: Ui.Theme.subtleText
-                        elide: Text.ElideRight
-                        font.pixelSize: 9
+                        wrapMode: Text.Wrap
+                        font.pixelSize: Ui.Theme.fontSizeCaption
                     }
                 }
             }

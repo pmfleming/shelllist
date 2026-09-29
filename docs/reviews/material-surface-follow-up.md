@@ -61,4 +61,9 @@ Implementation of the [2026-09-29 audit](material-surface-audit-2026-09-29.md), 
 - Day arrows now have Previous day/Next day accessible names; expanded Schedule has only its local Today action (Ctrl+T remains available). Removed a redundant nested glance border without redesigning the calendar.
 - Date/todo drafts and calendar-only scope remain intact. Strict lint and all 9 DomainWorkflows Qt passes succeeded.
 
+## Time & Weather
+
+- Replaced the two literal 9px metadata sizes with caption tokens. Lunar/solar supporting text wraps; the time hero grows to its content and stacks metrics at constrained widths rather than overlapping the clock.
+- Units, timezone, approximate illumination and unavailable-data states remain. Strict lint and 4 TimeWeatherSelection Qt passes include constrained/wide hero containment; this is not a full large-text forecast-chart acceptance claim.
+
 Live compositor, screen-reader, IME, touch and large-text acceptance remain separate. No services are restarted or deployed by this work.
