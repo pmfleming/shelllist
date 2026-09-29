@@ -8,6 +8,7 @@ RowLayout {
 
     property var actions: []
     property string group: "toolbar"
+    property bool includeAllGroups: false
     property bool alignRight: true
     property bool fillActions: false
     property bool tabFocusEnabled: true
@@ -25,7 +26,7 @@ RowLayout {
 
     Repeater {
         model: (toolbar.actions || []).filter(function (action) {
-            return action.visible !== false && ((action.presentation || {}).group || "toolbar") === toolbar.group;
+            return action.visible !== false && (toolbar.includeAllGroups || ((action.presentation || {}).group || "toolbar") === toolbar.group);
         })
 
         delegate: ActionButton {

@@ -77,4 +77,10 @@ Implementation of the [2026-09-29 audit](material-surface-audit-2026-09-29.md), 
 - Ownership prose is shorter while device/audio reset scope stays explicit. Pairing verification, radio blocking, drafts, trust/reconnect and recovery remain untouched.
 - Strict lint and 27 BluetoothRecovery Qt passes include named radio selection and effect-free technical disclosure.
 
+## Applications / header density
+
+- Applications opt into a single-row header for up to three icon actions at sufficient width; constrained headers retain separate rows. Primary/toolbar order, disabled slots, accessible Alt numbers and hotkey-only traversal are preserved.
+- A description is not repeated in the body when the header already shows that exact comment. Distinct supporting text, instances/actions, resource charts and retained-history notices remain.
+- Strict lint and the 300-pass native suite passed; header keyboard/modal/menu guards run against both layouts. Added application description/header geometry regression.
+
 Live compositor, screen-reader, IME, touch and large-text acceptance remain separate. No services are restarted or deployed by this work.

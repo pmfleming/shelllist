@@ -24,6 +24,7 @@ Ui.ActionDetailsPane {
     subtitle: selected.subtitle || ""
     actions: controller.detailActions || []
     actionWidth: 128
+    inlineActions: true
 
     Ui.TabbedDetailsStack {
         anchors.fill: parent

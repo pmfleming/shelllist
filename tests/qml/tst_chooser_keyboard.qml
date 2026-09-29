@@ -26,6 +26,7 @@ DaemonTestCase {
             property int actionCalls: 0
             property int tabChanges: 0
             property int headerCalls: 0
+            property bool compactHeader: false
             property bool headerEnabled: true
             property string lastHeaderAction: ""
             property bool modal: false
@@ -63,7 +64,9 @@ DaemonTestCase {
                         width: parent.width
                         spacing: 12
                         Ui.DetailsHeader {
+                            objectName: "testDetailsHeader"
                             uiScale: 1
+                            inlineActions: surface.compactHeader
                             width: parent.width
                             title: "Inspector"
                             actions: [
@@ -302,9 +305,14 @@ DaemonTestCase {
         verify(surface.detailsNavigation.browsing);
     }
 
-    function test_headerShortcutsDoNotEnterTheContentCycleOrStealFocus() {
+    function test_headerShortcutsDoNotEnterTheContentCycleOrStealFocus_data() {
+        return [{tag: "two-rows", inlineActions: false}, {tag: "inline", inlineActions: true}];
+    }
+    function test_headerShortcutsDoNotEnterTheContentCycleOrStealFocus(data) {
         const surface = makeSurface();
+        surface.compactHeader = data.inlineActions;
         enterDetails(surface);
+        tryCompare(findChild(surface, "testDetailsHeader"), "useInlineActions", data.inlineActions);
         tryCompare(surface.detailsNavigation.headerButtons, "length", 2);
         const first = surface.detailsNavigation.headerButtons[0];
         verify(!first.activeFocusOnTab);

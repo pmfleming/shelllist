@@ -685,6 +685,27 @@ DaemonTestCase {
         verify(!serialized.includes("This value"));
         compare(surface.edits, 0);
     }
+    function test_applicationHeaderUsesOneActionRowWithoutRepeatedDescription() {
+        const content = createTemporaryObject(applicationsFactory, testCase);
+        const controller = content.controller;
+        wait(0);
+        controller.uiActive = true;
+        const app = {id: "app.desktop", name: "App", comment: "Browse the web", kind: "desktop-application", running: false, instances: [], desktop_actions: []};
+        controller.replaceProviderResults([controller.provider.resultFor(app)], true);
+        open(content);
+        tryVerify(() => findChild(content, "applicationDescription") !== null);
+        verify(!findChild(content, "applicationDescription").visible);
+        const header = findChild(content.detailsItem, "detailIdentityIcon").parent.parent;
+        tryCompare(header, "useInlineActions", true);
+        compare(header.height, header.headerHeight);
+        compare(content.detailsNavigation.headerButtons.length, 3);
+        controller.replaceProviderResults([controller.provider.resultFor(Object.assign({}, app, {generic_name: "Browser"}))], true);
+        tryVerify(() => findChild(content, "applicationDescription").visible, 5000, "distinct supporting description remains visible");
+        header.width = 380;
+        verify(!header.useInlineActions, "constrained headers retain separate action rows");
+        verify(header.height > header.headerHeight);
+        compare(content.detailsNavigation.headerButtons.length, 3);
+    }
     function test_applicationInvocationRestoresAnEditorButNotItsMenu() {
         const content = createTemporaryObject(applicationsFactory, testCase);
         const controller = content.controller;

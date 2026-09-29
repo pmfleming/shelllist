@@ -13,7 +13,8 @@ Ui.DetailFlickable {
     required property int actionHeight
 
     Ui.ThemeText {
-        visible: !!page.application.comment
+        objectName: "applicationDescription"
+        visible: !!page.application.comment && page.application.comment !== (page.controller.selectedResult || {}).subtitle
         width: parent.width
         text: page.application.comment || ""
         color: Ui.Theme.mutedText
