@@ -20,7 +20,11 @@ Rectangle {
     readonly property string draft: replyState ? String(replyState.drafts[notification.id] || "") : ""
     property bool replyOpen: false
     readonly property bool replyVisible: replyAction !== null && (replyOpen || draft.length > 0 || replyStatus.pending === true || String(replyStatus.error || "").length > 0)
-    readonly property bool controlsRevealed: hover.hovered || replyVisible
+    readonly property bool controlsFocused: quickActions.focusInside || breakout.highlighted
+    readonly property bool controlsRevealed: hover.hovered || replyVisible || controlsFocused
+    Accessible.role: Accessible.Button
+    Accessible.name: notification.summary || notification.app_name || qsTr("Notification")
+    Accessible.onPressAction: if (!removing) activate()
     property double nowMs: Date.now()
     property bool removing: false
 
@@ -103,7 +107,7 @@ Rectangle {
 
                 Item {
                     width: parent.width
-                    height: 22
+                    height: 32
 
                     Ui.ThemeText {
                         anchors.left: parent.left
@@ -122,24 +126,26 @@ Rectangle {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 2
-                        visible: opacity > 0
                         opacity: card.controlsRevealed ? 1 : 0
 
                         Ui.InteractiveBehavior on opacity {
+                            animate: !card.controlsFocused
                             duration: Ui.Theme.animationFast
                             easingType: Easing.Linear
                         }
 
                         Ui.FlatIconButton {
+                            id: breakout
                             visible: card.breakoutVisible
-                            width: 26
-                            height: 26
+                            width: 32
+                            height: 32
                             icon: "󰅂"
                             accessibleName: "Show all " + card.groupCount + " in notification center"
                             toolTip: accessibleName
                             onClicked: card.breakoutRequested()
                         }
                         Ui.NotificationQuickActions {
+                            id: quickActions
                             showReply: card.replyAction !== null && !card.replyVisible
                             onReplyRequested: card.replyOpen = true
                             onSnoozeRequested: card.controller.snoozeNotification(card.notification.id, 15)

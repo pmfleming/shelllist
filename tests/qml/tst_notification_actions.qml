@@ -43,7 +43,7 @@ TestCase {
         }
         controls.showReply = false;
         verify(!findChild(controls, "notificationQuickReply").visible);
-        tryCompare(controls, "implicitWidth", 54); // Hidden reply leaves no empty slot.
+        tryCompare(controls, "implicitWidth", 66); // Hidden reply leaves no empty slot.
         testCase.forceActiveFocus();
         verify(!controls.activeFocusInside);
         quickSignal.target = null;

@@ -214,6 +214,25 @@ TestCase {
         content.destroy();
         wait(50);
     }
+    function test_browseQuickActionIsImmediatelyVisibleWithoutActivation() {
+        const state = makeState();
+        const controller = makeController(state);
+        controller.openDetails();
+        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 900, height: 600});
+        tryVerify(() => findChild(content, "notificationHistoryRow-100") !== null);
+        mouseMove(testCase, 1090, 640);
+        const row = findChild(content, "notificationHistoryRow-100");
+        const action = findChild(row, "notificationQuickSnooze");
+        content.detailsNavigation.focusContent(true);
+        content.detailsNavigation.currentTarget = action;
+        verify(action.browseFocused);
+        verify(!action.activeFocus);
+        compare(action.parent.opacity, 1, "browse reveal must not wait for animation or native editing focus");
+        compare(state.activeNotifications.length, 2, "browsing must not snooze or dismiss");
+        verify(row.controlsRevealed);
+        content.destroy();
+        wait(0);
+    }
     function test_backendFailuresRetireLoadingAndPreserveDraft() {
         const state = makeState();
         compare(state.backend.store, state);

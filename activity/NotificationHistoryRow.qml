@@ -23,7 +23,7 @@ Rectangle {
     readonly property var replyAction: Ui.NotificationPresentation.replyAction(notification)
     readonly property var defaultAction: active ? Ui.NotificationPresentation.defaultAction(notification) : null
     readonly property bool replyVisible: replyOpen || draft.length > 0 || replyStatus.pending === true || String(replyStatus.error || "").length > 0
-    readonly property bool controlsRevealed: hover.hovered || replyVisible || hoverControls.activeFocusInside
+    readonly property bool controlsRevealed: hover.hovered || replyVisible || hoverControls.focusInside
 
     signal groupToggled
 
@@ -39,10 +39,11 @@ Rectangle {
     }
 
     // Beneath the content: clicking the card activates the notification's default action.
-    MouseArea {
+    Ui.ActionArea {
+        objectName: "notificationOpen-" + row.notification.id
         anchors.fill: parent
-        enabled: row.defaultAction !== null
-        cursorShape: Qt.PointingHandCursor
+        visible: row.defaultAction !== null
+        accessibleName: qsTr("Open notification: %1").arg(row.notification.summary || row.notification.app_name || "")
         onClicked: row.notificationState.invokeNotificationAction(row.notification.id, row.defaultAction.key)
     }
 
@@ -71,7 +72,7 @@ Rectangle {
 
             Item {
                 width: parent.width
-                height: 22
+                height: 32
 
                 Row {
                     anchors.left: parent.left
@@ -116,7 +117,7 @@ Rectangle {
                         onDismissRequested: row.notificationState.dismissNotification(row.notification.id)
 
                         Behavior on opacity {
-                            enabled: !Ui.Theme.noAnimations
+                            enabled: !Ui.Theme.noAnimations && !hoverControls.focusInside
                             NumberAnimation {
                                 duration: Ui.Theme.animationFast
                             }
@@ -124,8 +125,8 @@ Rectangle {
                     }
                     Ui.FlatIconButton {
                         visible: row.groupToggleVisible
-                        width: 26
-                        height: 26
+                        width: 32
+                        height: 32
                         icon: "󰅀"
                         accessibleName: "Expand " + row.groupCount + " notifications"
                         toolTip: accessibleName

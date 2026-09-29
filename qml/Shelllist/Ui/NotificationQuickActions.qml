@@ -7,6 +7,7 @@ Row {
 
     required property bool showReply
     readonly property bool activeFocusInside: replyButton.activeFocus || snoozeButton.activeFocus || dismissButton.activeFocus
+    readonly property bool focusInside: replyButton.highlighted || snoozeButton.highlighted || dismissButton.highlighted
 
     signal replyRequested
     signal snoozeRequested
@@ -15,8 +16,8 @@ Row {
     spacing: 2
 
     component HeaderAction: FlatIconButton {
-        width: 26
-        height: 26
+        width: 32
+        height: 32
         toolTip: accessibleName
     }
 
