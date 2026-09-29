@@ -28,6 +28,29 @@ DaemonTestCase {
             uiScale: 1
         }
     }
+    function test_metadataOmitsIrrelevantFactsAndWrapsLongFileNames() {
+        const controller = makeController();
+        controller.detailsTab = "info";
+        const cards = makeCards(controller);
+        const metadata = findChild(cards, "clipboardMetadata");
+        compare(metadata.entries.length, 3);
+        verify(!findChild(cards, "clipboardFilesHeading").visible);
+        const name = "Long filename without losing its extension ".repeat(8) + ".txt";
+        controller.detailState.value = {
+            entry: {kind: "files", mime: "text/uri-list", byte_size: 120},
+            text: null,
+            image: {width: 1920, height: 1080},
+            files: [{display_name: name, exists: false, operation: "cut"}]
+        };
+        compare(metadata.entries.length, 4);
+        verify(findChild(cards, "clipboardFilesHeading").visible);
+        tryVerify(() => findChild(cards, "clipboardFileName") !== null);
+        const label = findChild(cards, "clipboardFileName");
+        compare(label.text, name);
+        tryVerify(() => label.lineCount > 1);
+        verify(label.height >= label.implicitHeight);
+        compare(calls.length, 0, "metadata changes do not acquire an edit lease");
+    }
     function test_detailsKeepSpecializedClipboardRouting() {
         const controller = makeController();
         const pane = createTemporaryObject(detailsFactory, testCase, {

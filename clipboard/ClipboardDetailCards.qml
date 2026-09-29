@@ -102,13 +102,14 @@ Ui.DetailFlickable {
         objectName: "clipboardInfoCard"
         visible: cards.selectedTab === "info"
         title: qsTr("Info")
-        height: Math.max(250, cards.height)
+        height: implicitHeight
 
         Item {
             Layout.fillWidth: true
             Layout.preferredHeight: 96
 
             Ui.DetailGrid {
+                objectName: "clipboardMetadata"
                 anchors.fill: parent
                 entries: [
                     {
@@ -127,38 +128,33 @@ Ui.DetailFlickable {
                         label: "Dimensions",
                         value: cards.imageFacts ? cards.imageFacts.width + " × " + cards.imageFacts.height : "—"
                     }
-                ]
+                ].filter((row, index) => index < 3 || !!cards.imageFacts)
             }
         }
 
         Rectangle {
+            visible: cards.files.length > 0
             Layout.fillWidth: true
             Layout.preferredHeight: 1
             color: Ui.Theme.border
         }
 
         Ui.ThemeText {
+            objectName: "clipboardFilesHeading"
+            visible: cards.files.length > 0
             Layout.fillWidth: true
-            text: "Files"
+            text: qsTr("Files")
             color: Ui.Theme.mutedText
         }
 
         Item {
+            visible: cards.files.length > 0
             Layout.fillWidth: true
-            Layout.fillHeight: true
-
-            Ui.ThemeText {
-                anchors.fill: parent
-                visible: cards.files.length === 0
-                text: qsTr("No associated files")
-                color: Ui.Theme.mutedText
-                font.pixelSize: Ui.Theme.fontSizeCaption
-                verticalAlignment: Text.AlignVCenter
-            }
+            Layout.preferredHeight: Math.min(360, Math.max(Ui.Theme.controlHeight, fileList.contentHeight))
 
             Ui.ScrollableListView {
                 id: fileList
-
+                objectName: "clipboardFileList"
                 anchors.fill: parent
                 visible: cards.files.length > 0
                 model: cards.files
@@ -170,14 +166,17 @@ Ui.DetailFlickable {
 
                     required property var modelData
                     width: fileList.width
-                    height: 34
+                    height: Math.max(Ui.Theme.controlHeight, fileName.implicitHeight + Ui.Theme.spacingSm)
                     spacing: Ui.Theme.spacingMd
 
                     Ui.ThemeText {
+                        id: fileName
+                        objectName: "clipboardFileName"
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         text: fileRow.modelData.display_name
                         color: fileRow.modelData.exists ? Ui.Theme.text : Ui.Theme.danger
-                        elide: Text.ElideMiddle
+                        wrapMode: Text.Wrap
                     }
                     Ui.ThemeText {
                         text: fileRow.modelData.operation === "cut" ? "Move" : "Copy"

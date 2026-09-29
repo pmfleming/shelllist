@@ -66,4 +66,9 @@ Implementation of the [2026-09-29 audit](material-surface-audit-2026-09-29.md), 
 - Replaced the two literal 9px metadata sizes with caption tokens. Lunar/solar supporting text wraps; the time hero grows to its content and stacks metrics at constrained widths rather than overlapping the clock.
 - Units, timezone, approximate illumination and unavailable-data states remain. Strict lint and 4 TimeWeatherSelection Qt passes include constrained/wide hero containment; this is not a full large-text forecast-chart acceptance claim.
 
+## Clipboard
+
+- Information omits absent image dimensions and empty file sections; its card sizes to content. Long filenames wrap in height-aware, virtualized rows instead of losing their middle/extension.
+- Ordinary editing, failed drafts and retry/discard are unchanged. Strict lint and 13 ClipboardRecovery Qt passes include metadata relevance, full filenames and no edit-lease dispatch from presentation.
+
 Live compositor, screen-reader, IME, touch and large-text acceptance remain separate. No services are restarted or deployed by this work.
