@@ -44,4 +44,10 @@ Implementation of the [2026-09-29 audit](material-surface-audit-2026-09-29.md), 
 - Added an in-content confirmed output-volume value and ±5% actions; mute and full-mixer access remain available. No absolute slider setter or device inventory is invented.
 - Regression verifies delta routing, busy guards and acknowledged—not optimistic—volume. Strict lint and all 9 SystemChoosers Qt passes succeeded.
 
+## Media
+
+- Now-playing title/artist/album and transport lead the body; preferences are a retained secondary section. Play/Pause label and glyph follow actual player state, with a prominent transport action.
+- Automatic mode has a concise choice plus contextual behavior; pin/automatic selection remains daemon-owned and acknowledged. Every transport still targets the explicit selected player and revalidates capabilities.
+- Strict lint and 10 SystemChoosers Qt passes, including state/icon acknowledgement regression. The initially attempted `accent` action tone was rejected by the existing contract and corrected to supported `active`; the contract was not relaxed.
+
 Live compositor, screen-reader, IME, touch and large-text acceptance remain separate. No services are restarted or deployed by this work.

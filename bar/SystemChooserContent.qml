@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Shelllist.Ui as Ui
+import "BarMediaPresentation.js" as Media
 
 Ui.ProviderChooserSurface {
     id: content
@@ -46,7 +47,8 @@ Ui.ProviderChooserSurface {
     Timer {
         id: menuDeadline
         interval: 1500
-        onTriggered: if (!trayMenu.visible) content.cancelMenu()
+        onTriggered: if (!trayMenu.visible)
+            content.cancelMenu()
     }
     Component.onDestruction: {
         menuGeneration = -1;
@@ -76,10 +78,10 @@ Ui.ProviderChooserSurface {
     detailsComponent: Ui.ActionDetailsPane {
         chooserController: content.controller
         uiScale: 1
-        title: content.controller.selectedResult ? content.controller.selectedResult.title : ""
-        subtitle: content.controller.selectedResult ? content.controller.selectedResult.subtitle : ""
+        title: content.controller.selectedPlayer ? content.controller.selectedPlayer.identity : content.controller.selectedResult ? content.controller.selectedResult.title : ""
+        subtitle: content.controller.selectedPlayer ? content.controller.selectedPlayer.playback_status : content.controller.selectedResult ? content.controller.selectedResult.subtitle : ""
         icon: content.controller.selectedResult ? content.controller.selectedResult.icon : ""
-        actions: content.controller.detailActions.filter(action => action.id !== "inspect" && (content.controller.kind !== "audio" || !["quieter", "louder"].includes(action.id)))
+        actions: content.controller.kind === "media" ? [] : content.controller.detailActions.filter(action => action.id !== "inspect" && (content.controller.kind !== "audio" || !["quieter", "louder"].includes(action.id)))
         actionWidth: 0
         Ui.DetailFlickable {
             anchors.fill: parent
@@ -124,39 +126,90 @@ Ui.ProviderChooserSurface {
                     enabled: content.controller.hasSelection && !content.controller.actionInFlight
                     onClicked: content.controller.toggleAudioMuted()
                 }
-                Column {
-                    width: parent.width
+                Ui.DetailColumnCard {
+                    objectName: "mediaPlayback"
+                    height: implicitHeight
                     visible: content.controller.kind === "media"
-                    spacing: Ui.Theme.spacingMd
-                    Ui.ToggleRow {
-                        objectName: "mediaPlayerPin"
-                        title: qsTr("Pin this player")
-                        subtitle: qsTr("Automatic selection resumes when the pinned player exits")
-                        checked: content.controller.playerPinned
-                        enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
-                        onClicked: content.controller.setMediaSelection(!checked)
+                    title: qsTr("Now playing")
+                    Ui.ThemeText {
+                        Layout.fillWidth: true
+                        text: content.controller.selectedPlayer ? content.controller.selectedPlayer.title || qsTr("No track title") : ""
+                        wrapMode: Text.WordWrap
+                        font.pixelSize: Ui.Theme.fontSizeHeading
                     }
-                    Ui.ActionButton {
-                        objectName: "mediaAutomatic"
-                        width: Ui.Theme.controlHeight
-                        height: width
-                        icon: "󰑓"
-                        label: qsTr("Resume automatic player selection")
-                        enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
-                        onClicked: content.controller.setMediaSelection(false)
+                    Ui.ThemeText {
+                        Layout.fillWidth: true
+                        text: content.controller.selectedPlayer ? [content.controller.selectedPlayer.artist, content.controller.selectedPlayer.album].filter(Boolean).join(" · ") : ""
+                        visible: text.length > 0
+                        wrapMode: Text.WordWrap
+                        color: Ui.Theme.mutedText
                     }
-                    Ui.ThemeText { text: qsTr("Bar controls for this player") }
-                    Ui.DropDownList {
-                        objectName: "mediaControlMode"
-                        width: parent.width
-                        value: content.controller.selectedPlayer ? content.controller.selectedPlayer.control_mode || "automatic" : "automatic"
-                        options: [
-                            {value: "automatic", label: qsTr("Automatic (unknown content seeks ±30 seconds)")},
-                            {value: "tracks", label: qsTr("Previous/next track")},
-                            {value: "seek", label: qsTr("Seek ±30 seconds")}
-                        ]
-                        enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
-                        onSelected: function (value) { content.controller.setMediaMode(value); }
+                    Ui.ActionToolbar {
+                        objectName: "mediaPlaybackActions"
+                        Layout.fillWidth: true
+                        alignRight: false
+                        actions: content.controller.kind === "media" ? content.controller.detailActions : []
+                        onTriggered: function (actionId) {
+                            content.controller.triggerDetailAction(actionId);
+                        }
+                    }
+                }
+                Ui.DisclosureSection {
+                    objectName: "mediaPreferences"
+                    visible: content.controller.kind === "media"
+                    title: qsTr("Player preferences")
+                    Column {
+                        Layout.fillWidth: true
+                        spacing: Ui.Theme.spacingMd
+                        Ui.ToggleRow {
+                            objectName: "mediaPlayerPin"
+                            title: qsTr("Pin this player")
+                            subtitle: checked ? qsTr("Automatic selection resumes when this player exits") : ""
+                            checked: content.controller.playerPinned
+                            enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
+                            onClicked: content.controller.setMediaSelection(!checked)
+                        }
+                        Ui.ActionButton {
+                            objectName: "mediaAutomatic"
+                            width: parent.width
+                            visible: content.controller.mediaPreferencesSupported && !!content.controller.barController.media.pinned_player
+                            label: qsTr("Resume automatic player selection")
+                            enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
+                            onClicked: content.controller.setMediaSelection(false)
+                        }
+                        Ui.ThemeText {
+                            text: qsTr("Bar controls for this player")
+                        }
+                        Ui.DropDownList {
+                            objectName: "mediaControlMode"
+                            width: parent.width
+                            value: content.controller.selectedPlayer ? content.controller.selectedPlayer.control_mode || "automatic" : "automatic"
+                            options: [
+                                {
+                                    value: "automatic",
+                                    label: qsTr("Automatic")
+                                },
+                                {
+                                    value: "tracks",
+                                    label: qsTr("Previous/next track")
+                                },
+                                {
+                                    value: "seek",
+                                    label: qsTr("Seek ±30 seconds")
+                                }
+                            ]
+                            enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
+                            onSelected: function (value) {
+                                content.controller.setMediaMode(value);
+                            }
+                        }
+                        Ui.ThemeText {
+                            width: parent.width
+                            visible: !!content.controller.selectedPlayer && content.controller.selectedPlayer.control_mode === "automatic"
+                            text: Media.trackControls(content.controller.selectedPlayer) ? qsTr("Music: previous/next track") : qsTr("Other or unknown content: seek ±30 seconds")
+                            wrapMode: Text.Wrap
+                            color: Ui.Theme.mutedText
+                        }
                     }
                 }
                 Ui.ThemeText {

@@ -1,9 +1,9 @@
 .pragma library
 .import "BarMediaPresentation.js" as Media
 
-function action(id, label, icon, enabled) {
+function action(id, label, icon, enabled, tone) {
     return {id: id, label: label, icon: icon, enabled: !!enabled, closePolicy: "keep-open",
-        presentation: {group: "toolbar"}};
+        presentation: {group: "toolbar", tone: tone || "normal"}};
 }
 function entry(id, title, subtitle, icon, actions, direction) {
     return {id: id, title: title, subtitle: subtitle, icon: icon, payload: id,
@@ -33,7 +33,7 @@ function media(players, busy) {
         const control = !!player.can_control && !busy;
         return entry(player.id, player.title || player.identity, [player.identity, player.artist, player.playback_status].filter(Boolean).join(" · "), "󰎆", [
             action("previous", "Previous track", "", control && player.can_previous),
-            action("play-pause", "Play/pause", "", !busy && Media.canPlayPause(player)),
+            action("play-pause", String(player.playback_status || "").toLowerCase() === "playing" ? "Pause" : "Play", Media.playPauseActionIcon(player), !busy && Media.canPlayPause(player), "active"),
             action("next", "Next track", "", control && player.can_next),
             action("rewind", "Rewind 30 seconds", "replay_30", control && player.can_seek),
             action("forward", "Fast-forward 30 seconds", "forward_30", control && player.can_seek)

@@ -141,6 +141,25 @@ DaemonTestCase {
         verify(root.chooser.setMediaSelection(false));
         compare(calls[2].params.operation, "automatic");
     }
+    function test_mediaPlaybackLeadsPreferencesAndReflectsAcknowledgedState(): void {
+        const root = fixture();
+        const p = Object.assign(player("one", true), {control_mode: "automatic", content_type: "unknown"});
+        root.desktop.media = {available: true, active_player: "one", pinned_player: null, players: [p]};
+        root.chooser.activateUi("");
+        root.chooser.primarySelected();
+        tryVerify(() => findChild(root, "mediaPlayback") !== null);
+        verify(!findChild(root, "mediaPreferences").open);
+        const pause = findChild(root, "detailAction:play-pause");
+        compare(pause.label, "Pause");
+        compare(pause.icon, "");
+        pause.clicked();
+        compare(calls[0].params.player_id, "one");
+        compare(pause.label, "Pause", "no optimistic playback state");
+        acknowledge(root, calls[0], {media: {available: true, active_player: "one", pinned_player: null, players: [Object.assign({}, p, {playback_status: "Paused"})]}});
+        const play = root.chooser.detailActions.find(action => action.id === "play-pause");
+        compare(play.label, "Play");
+        compare(play.icon, "");
+    }
     function test_nativeTrayMenuOwnsFocusAndCannotSurviveInvocation(): void {
         const root = fixture();
         root.chooser.kind = "tray";
