@@ -78,41 +78,53 @@ Column {
 
     Ui.DetailCard {
         objectName: "batteryHealthCard"
-        height: 240
-        title: qsTr("Health & hardware")
+        height: 110
+        title: qsTr("Battery health")
         entries: [
             {
-                label: "Health",
-                value: pane.device.health_percent === null || pane.device.health_percent === undefined ? "Unknown" : pane.device.health_percent + "%"
+                label: qsTr("Health"),
+                value: pane.device.health_percent == null ? qsTr("Unknown") : pane.device.health_percent + "%"
             },
             {
-                label: "Cycles",
-                value: pane.device.cycles === null || pane.device.cycles === undefined ? "Unknown" : String(pane.device.cycles)
-            },
-            {
-                label: "Energy now",
-                value: pane.device.energy_now_wh === null || pane.device.energy_now_wh === undefined ? "Unknown" : Number(pane.device.energy_now_wh).toFixed(1) + " Wh"
-            },
-            {
-                label: "Full capacity",
-                value: pane.device.energy_full_wh === null || pane.device.energy_full_wh === undefined ? "Unknown" : Number(pane.device.energy_full_wh).toFixed(1) + " Wh"
-            },
-            {
-                label: "Design capacity",
-                value: pane.device.energy_full_design_wh === null || pane.device.energy_full_design_wh === undefined ? "Unknown" : Number(pane.device.energy_full_design_wh).toFixed(1) + " Wh"
-            },
-            {
-                label: "Desired range",
-                value: Presentation.desiredRange(pane.protection)
-            },
-            {
-                label: "Kernel device",
-                value: pane.device.id || pane.battery.native_path || "Unknown"
-            },
-            {
-                label: "Serial",
-                value: pane.device.serial || "Unavailable"
+                label: qsTr("Cycles"),
+                value: pane.device.cycles == null ? qsTr("Unknown") : String(pane.device.cycles)
             }
         ]
+    }
+
+    Ui.DisclosureSection {
+        objectName: "batteryHardwareDetails"
+        title: qsTr("Hardware details")
+        Ui.DetailCard {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 200
+            title: qsTr("Hardware")
+            entries: [
+                {
+                    label: "Energy now",
+                    value: pane.device.energy_now_wh === null || pane.device.energy_now_wh === undefined ? "Unknown" : Number(pane.device.energy_now_wh).toFixed(1) + " Wh"
+                },
+                {
+                    label: "Full capacity",
+                    value: pane.device.energy_full_wh === null || pane.device.energy_full_wh === undefined ? "Unknown" : Number(pane.device.energy_full_wh).toFixed(1) + " Wh"
+                },
+                {
+                    label: "Design capacity",
+                    value: pane.device.energy_full_design_wh === null || pane.device.energy_full_design_wh === undefined ? "Unknown" : Number(pane.device.energy_full_design_wh).toFixed(1) + " Wh"
+                },
+                {
+                    label: "Desired range",
+                    value: Presentation.desiredRange(pane.protection)
+                },
+                {
+                    label: "Kernel device",
+                    value: pane.device.id || pane.battery.native_path || "Unknown"
+                },
+                {
+                    label: "Serial",
+                    value: pane.device.serial || "Unavailable"
+                }
+            ]
+        }
     }
 }

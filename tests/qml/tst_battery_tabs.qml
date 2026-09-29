@@ -64,6 +64,7 @@ TestCase {
             }
         });
         controller.selectViewTab("power");
+        findChild(panel, "batteryAutomationSection").expanded = true;
         const selector = findChild(panel, "batteryLowProfile");
         const toggle = findChild(panel, "batteryLowEnabled");
         const point = findChild(panel, "batteryLowPoint");
@@ -89,11 +90,12 @@ TestCase {
             }
         });
         verify(waitForRendering(panel));
-        const saver = findChild(selector, "profileOption-power-saver");
-        const balanced = findChild(selector, "profileOption-balanced");
-        const performance = findChild(selector, "profileOption-performance");
+        const saver = findChild(selector, "segment-power-saver");
+        const balanced = findChild(selector, "segment-balanced");
+        const performance = findChild(selector, "segment-performance");
         for (const button of [saver, balanced, performance]) {
-            verify(button.Accessible.name.indexOf("Low battery power profile") >= 0);
+            verify(button.Accessible.name.length > 0);
+            compare(selector.Accessible.name, "Low battery power profile");
             compare(button.Accessible.role, Accessible.RadioButton);
         }
         verify(saver.Accessible.checked);
@@ -101,16 +103,18 @@ TestCase {
         const spy = createTemporaryObject(profileSpyComponent, testCase, {
             target: selector
         });
+        findChild(panel, "batteryDetailPage").revealItem(selector);
+        wait(0);
         mouseClick(balanced);
         compare(spy.count, 1);
         compare(controller.alertDraft.warning_profile, "balanced");
         verify(balanced.Accessible.checked);
-        balanced.forceActiveFocus();
+        selector.forceActiveFocus();
         keyClick(Qt.Key_Right);
         compare(spy.count, 1, "keyboard skips unavailable Performance");
         keyClick(Qt.Key_Left);
         compare(controller.alertDraft.warning_profile, "power-saver");
-        verify(saver.activeFocus);
+        verify(selector.activeFocus);
         toggle.forceActiveFocus();
         keyClick(Qt.Key_Space);
         compare(controller.alertDraft.warning_profile, "keep-current");

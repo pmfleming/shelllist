@@ -31,7 +31,7 @@ Column {
 
         Ui.FieldLabel {
             Layout.fillWidth: true
-            text: !pane.controller.protectionSupported ? "Charge thresholds are not exposed by this battery" : (pane.protection.managed ? "Managed by bar-daemon · observed " + Presentation.protectionRange(pane.protection) : "Observed " + Presentation.protectionRange(pane.protection) + " · not managed yet")
+            text: !pane.controller.protectionSupported ? "Charge thresholds are not exposed by this battery" : (pane.protection.managed ? "Charge range · " + Presentation.protectionRange(pane.protection) : "Device range · " + Presentation.protectionRange(pane.protection))
             color: pane.controller.protectionSupported ? Ui.Theme.mutedText : Ui.Theme.warning
         }
 
@@ -108,9 +108,11 @@ Column {
             color: Ui.Theme.active
         }
 
-        RowLayout {
+        Ui.DisclosureSection {
+            objectName: "batteryMaintenance"
             Layout.fillWidth: true
-            spacing: Ui.Theme.spacingSm
+            title: qsTr("Charging maintenance")
+            attention: pane.controller.calibrating || pane.controller.chargingInhibited || !!pane.controller.batteryOperation.error
 
             Ui.ActionButton {
                 Layout.fillWidth: true

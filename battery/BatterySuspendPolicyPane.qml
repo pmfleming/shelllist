@@ -17,7 +17,7 @@ Ui.DetailColumnCard {
         })
     readonly property var criticalState: controller.suspendPolicyState.critical_battery || ({})
     objectName: "automaticSuspendCard"
-    title: qsTr("Automatic suspend & hibernate")
+    title: qsTr("Sleep policies")
     verticalContentPadding: Ui.Theme.spacingMd
     headingSpacing: Ui.Theme.spacingMd
     height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
@@ -88,7 +88,7 @@ Ui.DetailColumnCard {
     Ui.FieldLabel {
         objectName: "lidCloseStatus"
         Layout.fillWidth: true
-        text: (pane.controller.suspendPolicyState.lid || {}).error || qsTr("Managed lid actions ignore docked/external-display use. Profile uses the current power source’s hibernate delay, even when inactivity suspend is Never. System default restores logind’s policy.")
+        text: (pane.controller.suspendPolicyState.lid || {}).error || (pane.controller.suspendPolicyDraft.lid_action === "system" ? qsTr("Uses the system lid policy.") : pane.controller.suspendPolicyDraft.lid_action === "profile" ? qsTr("Uses this power source’s hibernate delay, even with inactivity set to Never. Ignored while docked.") : qsTr("Ignored while docked or using an external display."))
         color: (pane.controller.suspendPolicyState.lid || {}).error ? Ui.Theme.warning : Ui.Theme.mutedText
         wrapMode: Text.Wrap
         elide: Text.ElideNone
@@ -152,7 +152,7 @@ Ui.DetailColumnCard {
 
                 Ui.FieldLabel {
                     Layout.fillWidth: true
-                    text: qsTr("Then hibernate after")
+                    text: qsTr("Time suspended before hibernating")
                     wrapMode: Text.Wrap
                     elide: Text.ElideNone
                 }
@@ -178,7 +178,7 @@ Ui.DetailColumnCard {
 
     Ui.FieldLabel {
         Layout.fillWidth: true
-        text: qsTr("Hibernate delay is additional time suspended; waking cancels it. Never hibernate keeps ordinary suspend. Low battery may trigger hibernation sooner.")
+        text: qsTr("Waking cancels delayed hibernation. Low battery may hibernate sooner.")
         wrapMode: Text.Wrap
         elide: Text.ElideNone
     }
@@ -197,14 +197,23 @@ Ui.DetailColumnCard {
         Layout.fillWidth: true
         Layout.preferredHeight: 64
         title: qsTr("Critical-battery hibernation")
-        subtitle: qsTr("Opt-in awake protection · do not enable a second power manager")
+        subtitle: qsTr("Warn before hibernating")
         checked: pane.criticalPolicy.enabled
         interactive: pane.criticalInteractive
         onClicked: pane.controller.updateSuspendPolicy("critical_battery", "enabled", !checked)
     }
 
+    Ui.FieldLabel {
+        objectName: "criticalBatterySafety"
+        Layout.fillWidth: true
+        text: qsTr("Use only one automatic power manager. Requires working hibernation.")
+        wrapMode: Text.Wrap
+        elide: Text.ElideNone
+    }
+
     RowLayout {
         Layout.fillWidth: true
+        visible: pane.criticalPolicy.enabled
         Ui.FieldLabel {
             Layout.fillWidth: true
             text: qsTr("Hibernate at or below")
@@ -231,6 +240,7 @@ Ui.DetailColumnCard {
 
     RowLayout {
         Layout.fillWidth: true
+        visible: pane.criticalPolicy.enabled
         Ui.FieldLabel {
             Layout.fillWidth: true
             text: qsTr("Warning period")
@@ -258,7 +268,8 @@ Ui.DetailColumnCard {
     Ui.FieldLabel {
         objectName: "criticalBatteryStatus"
         Layout.fillWidth: true
-        text: pane.criticalState.error || (pane.criticalState.phase === "countdown" ? qsTr("Hibernation in %1 seconds unless AC connects or you cancel.").arg(pane.criticalState.remaining_seconds) : qsTr("State: %1. Requires working hibernation. Locking and inhibitors remain enforced; failures are not retried automatically.").arg(pane.criticalState.phase || "disabled"))
+        visible: text.length > 0
+        text: pane.criticalState.error || (pane.criticalState.phase === "countdown" ? qsTr("Hibernation in %1 seconds unless AC connects or you cancel.").arg(pane.criticalState.remaining_seconds) : (["disabled", "armed", "idle"].includes(pane.criticalState.phase || "disabled") ? "" : qsTr("Protection: %1 · locking and inhibitors remain enforced; failures are not retried automatically.").arg(pane.criticalState.phase)))
         color: pane.criticalState.error ? Ui.Theme.warning : Ui.Theme.mutedText
         wrapMode: Text.Wrap
         elide: Text.ElideNone
@@ -277,7 +288,8 @@ Ui.DetailColumnCard {
     Ui.FieldLabel {
         objectName: "suspendPolicyStatus"
         Layout.fillWidth: true
-        text: pane.controller.suspendPolicyError || pane.controller.suspendPolicyState.error || pane.controller.suspendPolicyState.last_error || (!pane.controller.suspendPolicyState.available ? qsTr("Automatic suspend requires the managed hypridle integration.") : (pane.controller.suspendPolicySaving ? qsTr("Saving…") : qsTr("Changes apply automatically. Only an altered suspend timeout resets its countdown; lock and display timers are preserved.")))
+        visible: text.length > 0
+        text: pane.controller.suspendPolicyError || pane.controller.suspendPolicyState.error || pane.controller.suspendPolicyState.last_error || (!pane.controller.suspendPolicyState.available ? qsTr("Automatic suspend requires the managed hypridle integration.") : (pane.controller.suspendPolicySaving ? qsTr("Saving…") : ""))
         color: pane.controller.suspendPolicyError.length > 0 || pane.controller.suspendPolicyState.error || pane.controller.suspendPolicyState.last_error ? Ui.Theme.warning : Ui.Theme.mutedText
         wrapMode: Text.Wrap
         elide: Text.ElideNone

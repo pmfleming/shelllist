@@ -15,12 +15,17 @@ Column {
     width: parent.width
     spacing: Ui.Theme.verticalSpacing(Ui.Theme.spacingMd, Ui.Theme.densityScale(height, 0))
 
+    BatteryHistoryCard {
+        history: pane.controller.batteryHistory
+        battery: pane.battery
+    }
+
     Ui.DetailColumnCard {
         objectName: "powerModeCard"
         verticalContentPadding: Ui.Theme.spacingMd
         height: contentImplicitHeight + 2 * verticalContentPadding
 
-        RowLayout {
+        ColumnLayout {
             Layout.fillWidth: true
             spacing: Ui.Theme.spacingMd
 
@@ -33,7 +38,7 @@ Column {
 
             BatteryProfileSelector {
                 objectName: "batteryPowerModeProfile"
-                Layout.preferredWidth: implicitWidth
+                Layout.fillWidth: true
                 Layout.preferredHeight: implicitHeight
                 accessibleName: qsTr("Power mode")
                 options: pane.controller.profileOptions
@@ -70,11 +75,6 @@ Column {
                 color: Ui.Theme.active
             }
         }
-    }
-
-    BatteryHistoryCard {
-        history: pane.controller.batteryHistory
-        battery: pane.battery
     }
 
     Ui.DetailColumnCard {

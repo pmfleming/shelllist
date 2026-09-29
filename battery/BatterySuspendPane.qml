@@ -26,8 +26,8 @@ Ui.DetailColumnCard {
 
         Ui.ActionButton {
             objectName: "keepAwakeButton"
-            Layout.preferredWidth: 36
-            Layout.preferredHeight: 36
+            Layout.preferredWidth: 42
+            Layout.preferredHeight: 42
             icon: "󰅶"
             iconSize: Ui.Theme.iconSizeLarge
             tone: pane.controller.keepAwake ? "accent" : "normal"
@@ -48,11 +48,11 @@ Ui.DetailColumnCard {
             delegate: Ui.ActionButton {
                 required property string modelData
                 objectName: "suspendAction-" + modelData
-                Layout.preferredWidth: 36
-                Layout.preferredHeight: 36
+                Layout.preferredWidth: 42
+                Layout.preferredHeight: 42
                 icon: modelData === "lock" ? "󰌾" : (modelData === "suspend" ? "󰖔" : "󰒲")
                 iconSize: Ui.Theme.iconSizeLarge
-                labelColor: modelData === "lock" ? Ui.Theme.accent : (modelData === "suspend" ? (Ui.Theme.dark ? "#a78bfa" : "#7c3aed") : Ui.Theme.warning)
+                labelColor: modelData === "lock" ? Ui.Theme.accent : (modelData === "suspend" ? Ui.Theme.accent : Ui.Theme.warning)
                 backgroundColor: Ui.Theme.input
                 borderColor: "transparent"
                 accessibleName: Presentation.suspendActionName(modelData)
