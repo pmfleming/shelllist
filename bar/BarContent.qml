@@ -35,7 +35,7 @@ Item {
             objectName: "barOverflowViewport"
             anchors.fill: parent
             anchors.leftMargin: 8
-            anchors.rightMargin: root.overflow ? 26 : 8
+            anchors.rightMargin: root.overflow ? overflowButton.width + 6 : 8
             contentWidth: Math.max(width, groups.implicitWidth)
             contentHeight: height
             flickableDirection: Flickable.HorizontalFlick
@@ -104,12 +104,13 @@ Item {
         }
     }
     Ui.FlatIconButton {
+        id: overflowButton
         objectName: "barOverflowButton"
         anchors.right: barSurface.right
         anchors.rightMargin: 3
         anchors.verticalCenter: barSurface.verticalCenter
-        width: 18
-        height: 30
+        width: 32
+        height: 32
         visible: root.overflow
         activeFocusOnTab: false
         icon: viewport.atXEnd ? "󰁍" : "󰅂"

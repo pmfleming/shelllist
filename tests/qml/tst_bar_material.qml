@@ -51,7 +51,9 @@ TestCase {
             verify(bar.overflow);
             const viewport = findChild(bar, "barOverflowViewport");
             const button = findChild(bar, "barOverflowButton");
-            mouseClick(button, button.width / 2, button.height / 2);
+            verify(button.width >= 32 && button.height >= 32);
+            verify(viewport.mapToItem(bar, viewport.width, 0).x <= button.x, "the wider hit target does not cover bar content");
+            mouseClick(button, 1, button.height / 2);
             verify(viewport.contentX > 0, "emergency overflow has an explicit pointer route");
         }
         bar.controller.notificationActive = {notifications: [{urgency: 2}]};

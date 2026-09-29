@@ -8,7 +8,7 @@ Item {
     id: root
 
     required property SystemTrayItem item
-    implicitWidth: 26
+    implicitWidth: 32
     implicitHeight: 37
     Accessible.role: Accessible.Button
     Accessible.name: item.title || item.id

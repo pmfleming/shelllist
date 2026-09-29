@@ -83,4 +83,10 @@ Implementation of the [2026-09-29 audit](material-surface-audit-2026-09-29.md), 
 - A description is not repeated in the body when the header already shows that exact comment. Distinct supporting text, instances/actions, resource charts and retained-history notices remain.
 - Strict lint and the 300-pass native suite passed; header keyboard/modal/menu guards run against both layouts. Added application description/header geometry regression.
 
+## Bar / overlays
+
+- Overflow has a 32×32 target with matching content clearance (formerly 18px wide); inline tray items now have 32px hit widths without enlarging their icons. Stable bar groups and icon-only media remain intact.
+- OSD's concise confirmed-value presentation is retained; its low-priority decorative differences did not justify a redesign. Toast focus/accessibility was addressed in the Notifications commit. Update logs still open the external journal terminal.
+- Strict lint and 7 MaterialBar Qt passes cover normal/compact/300px overflow, edge clicking and non-overlap. This remains a compact desktop adaptation, not a mobile-target conformance claim.
+
 Live compositor, screen-reader, IME, touch and large-text acceptance remain separate. No services are restarted or deployed by this work.
