@@ -6,7 +6,6 @@ Row {
     id: controls
 
     required property bool showReply
-    readonly property bool activeFocusInside: replyButton.activeFocus || snoozeButton.activeFocus || dismissButton.activeFocus
     readonly property bool focusInside: replyButton.highlighted || snoozeButton.highlighted || dismissButton.highlighted
 
     signal replyRequested

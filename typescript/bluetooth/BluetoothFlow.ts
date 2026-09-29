@@ -128,8 +128,9 @@ function pairingQueue(prompts: Maybe<PairingPrompt[]>, envelope: Maybe<Envelope<
         return item.request_id === prompt.request_id
             || (display && item.device_key === prompt.device_key && item.kind === prompt.kind);
     });
-    return index < 0 ? current.concat([prompt])
-        : current.map(function (item: PairingPrompt, i: number) { return i === index ? prompt : item; });
+    const next = current.slice();
+    next[index < 0 ? next.length : index] = prompt;
+    return next;
 }
 
 function isActiveOperation(operation: Maybe<Operation>) {
@@ -140,14 +141,6 @@ function shouldRescanAfterOperation(operation: Maybe<Operation>, uiActive: boole
     return !!operation && operation.operation === "pair" && operation.state === "failed"
         && !!operation.error && operation.error.code === "device-unavailable"
         && uiActive && powered && !scanning;
-}
-
-function isKnownDevice(device: Device) {
-    return !device.blocked && (device.paired || device.connected);
-}
-
-function isDiscoverableDevice(device: Device, showRecent: boolean) {
-    return device.blocked || device.paired || device.connected || device.present || showRecent;
 }
 
 function deviceBaseName(device: Device) {
@@ -170,14 +163,11 @@ function deviceDisplayName(device: Device, devices: Device[], adapters: Adapter[
 }
 
 function devicesForView(devices: Maybe<Device[]>, scope: string, policy: Maybe<DevicePolicy>) {
-    const showRecent = !!policy && !!policy.show_recent_devices;
-    const predicate = scope === "all"
-        ? function (device: Device) { return isDiscoverableDevice(device, showRecent); }
-        : isKnownDevice;
-    const showBlocked = !!policy && !!policy.show_blocked_devices;
+    const settings = policy || {};
     return (devices || []).filter(function (device: Device) {
-        if (device.blocked) return showBlocked && (scope === "all" || device.paired || device.connected);
-        return predicate(device);
+        if (device.blocked && !settings.show_blocked_devices) return false;
+        if (device.paired || device.connected) return true;
+        return scope === "all" && (device.blocked || device.present || settings.show_recent_devices);
     });
 }
 

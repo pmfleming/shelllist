@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Shelllist.Core as Core
 
 Column {
     id: header
@@ -19,21 +20,19 @@ Column {
     property int titlePixelSize: Math.round(Theme.fontSizeTitle * uiScale)
     property var actions: []
     property int actionWidth: 170
-    readonly property int primaryActionCount: actions.filter(action => action.visible !== false && (action.presentation || {}).group === "primary").length
+    readonly property var primaryActions: Core.Model.visibleActions(actions, "primary")
+    readonly property var secondaryActions: Core.Model.visibleActions(actions, "toolbar")
+    readonly property int primaryActionCount: primaryActions.length
     property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     property int controlHeight: Math.max(Theme.compactControlHeight, Math.round(Theme.controlHeight * uiScale))
     property bool secondaryVisible: true
     property bool stackedPrimary: false
     property bool inlineActions: false
-    readonly property var inlineActionItems: actions.filter(action => action.visible !== false && (action.presentation || {}).group === "primary").concat(secondaryVisible ? actions.filter(action => action.visible !== false && (action.presentation || {}).group === "toolbar") : [])
+    readonly property var inlineActionItems: primaryActions.concat(secondaryVisible ? secondaryActions : [])
     readonly property bool useInlineActions: inlineActions && !stackedPrimary && width >= 420 && inlineActionItems.length > 0 && inlineActionItems.length <= 3 && inlineActionItems.every(action => !!action.icon)
-    readonly property bool hasStackedPrimary: stackedPrimary && actions.some(function (action) {
-        return action.visible !== false && (action.presentation || {}).group === "primary";
-    })
+    readonly property bool hasStackedPrimary: stackedPrimary && primaryActionCount > 0
     property int sectionSpacing: Theme.verticalSpacing(Theme.spacingMd, uiScale)
-    readonly property bool hasSecondaryActions: secondaryVisible && actions.some(function (action) {
-        return action.visible !== false && (action.presentation || {}).group === "toolbar";
-    })
+    readonly property bool hasSecondaryActions: secondaryVisible && secondaryActions.length > 0
     readonly property int secondaryHeight: hasSecondaryActions && !useInlineActions ? controlHeight : 0
 
     signal actionTriggered(string actionId)

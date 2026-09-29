@@ -30,7 +30,8 @@ TestCase {
             quickSignal.signalName = action.toLowerCase() + "Requested";
             quickSignal.clear();
             button.forceActiveFocus();
-            verify(controls.activeFocusInside);
+            verify(button.activeFocus);
+            verify(controls.focusInside);
             keyClick(Qt.Key_Return);
             compare(quickSignal.count, 1);
             mouseClick(button);
@@ -45,7 +46,13 @@ TestCase {
         verify(!findChild(controls, "notificationQuickReply").visible);
         tryCompare(controls, "implicitWidth", 66); // Hidden reply leaves no empty slot.
         testCase.forceActiveFocus();
-        verify(!controls.activeFocusInside);
+        verify(!controls.focusInside);
+        const snooze = findChild(controls, "notificationQuickSnooze");
+        snooze.browseFocused = true;
+        verify(!snooze.activeFocus && controls.focusInside);
+        compare(quickSignal.count, 2, "browse feedback never activates an action");
+        snooze.browseFocused = false;
+        verify(!controls.focusInside);
         quickSignal.target = null;
     }
 

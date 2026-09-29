@@ -12,7 +12,7 @@ Ui.ProviderChooserController {
     navigationBlocked: trayMenuActive
     readonly property string title: kind === "audio" ? qsTr("Audio") : (kind === "media" ? qsTr("Media") : qsTr("Tray"))
     readonly property string detailsTab: "details"
-    readonly property var trayItems: kind === "tray" ? SystemTray.items.values : []
+    readonly property list<SystemTrayItem> trayItems: kind === "tray" ? SystemTray.items.values : []
     readonly property var sourceEntries: kind === "tray" ? Entries.tray(trayItems)
         : (!barController ? [] : (kind === "audio" ? Entries.audio(barController.audio, actionInFlight) : Entries.media(barController.media.players, actionInFlight)))
     readonly property SystemTrayItem selectedTrayItem: kind === "tray" && selectedResult ? uniqueTrayItem(selectedResult.id) : null

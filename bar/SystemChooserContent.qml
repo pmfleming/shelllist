@@ -91,7 +91,7 @@ Ui.ProviderChooserSurface {
         subtitle: content.controller.selectedPlayer ? content.controller.selectedPlayer.playback_status : content.controller.selectedResult ? content.controller.selectedResult.subtitle : ""
         icon: content.controller.selectedResult ? content.controller.selectedResult.icon : ""
         iconSource: content.controller.selectedTrayItem ? content.controller.selectedTrayItem.icon : ""
-        actions: content.controller.kind !== "audio" ? [] : content.controller.detailActions.filter(action => action.id !== "inspect" && (content.controller.kind !== "audio" || !["quieter", "louder"].includes(action.id)))
+        actions: content.controller.kind === "audio" ? content.controller.detailActions.filter(action => !["inspect", "quieter", "louder"].includes(action.id)) : []
         actionWidth: 0
         Ui.DetailFlickable {
             anchors.fill: parent
@@ -113,18 +113,11 @@ Ui.ProviderChooserSurface {
                             font.pixelSize: Ui.Theme.fontSizeHeading
                             Accessible.name: qsTr("Volume: %1").arg(text)
                         }
-                        Repeater {
-                            model: content.controller.kind === "audio" ? content.controller.detailActions.filter(action => ["quieter", "louder"].includes(action.id)) : []
-                            delegate: Ui.ActionButton {
-                                required property var modelData
-                                objectName: "audioVolume-" + modelData.id
-                                Layout.preferredWidth: Ui.Theme.controlHeight
-                                Layout.preferredHeight: Ui.Theme.controlHeight
-                                icon: modelData.icon
-                                label: modelData.label
-                                enabled: modelData.enabled
-                                onClicked: content.controller.triggerDetailAction(modelData.id)
-                            }
+                        Ui.ActionToolbar {
+                            actionNamePrefix: "audioVolume-"
+                            spacing: 5
+                            actions: content.controller.kind === "audio" ? content.controller.detailActions.filter(action => ["quieter", "louder"].includes(action.id)) : []
+                            onTriggered: function (actionId) { content.controller.triggerDetailAction(actionId); }
                         }
                     }
                 }
@@ -146,21 +139,14 @@ Ui.ProviderChooserSurface {
                         text: content.controller.selectedResult ? content.controller.selectedResult.subtitle : ""
                         wrapMode: Text.Wrap
                     }
-                    RowLayout {
+                    Ui.ActionToolbar {
                         Layout.fillWidth: true
-                        Repeater {
-                            model: content.controller.kind === "tray" ? content.controller.detailActions.filter(action => ["activate", "menu"].includes(action.id)) : []
-                            delegate: Ui.ActionButton {
-                                required property var modelData
-                                objectName: "trayPrimary-" + modelData.id
-                                Layout.fillWidth: true
-                                icon: modelData.icon
-                                label: modelData.label
-                                iconOnly: false
-                                enabled: modelData.enabled
-                                onClicked: content.controller.triggerDetailAction(modelData.id)
-                            }
-                        }
+                        actionNamePrefix: "trayPrimary-"
+                        fillActions: true
+                        showLabels: true
+                        spacing: 5
+                        actions: content.controller.kind === "tray" ? content.controller.detailActions.filter(action => ["activate", "menu"].includes(action.id)) : []
+                        onTriggered: function (actionId) { content.controller.triggerDetailAction(actionId); }
                     }
                 }
                 Ui.DisclosureSection {

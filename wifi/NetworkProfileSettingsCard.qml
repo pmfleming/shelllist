@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "."
 import Shelllist.Ui
+import Shelllist.Core as Core
 
 DetailCard {
     id: card
@@ -16,9 +17,7 @@ DetailCard {
         spacing: card.height < 155 ? 3 : 7
         distributeRows: true
         showDisabledReason: false
-        actions: card.controller.detailActions.filter(function (action) {
-            return action.presentation.group === "settings" && action.visible;
-        })
+        actions: Core.Model.visibleActions(card.controller.detailActions, "settings")
         onTriggered: function (actionId) {
             card.controller.triggerDetailAction(actionId);
         }

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
+import Shelllist.Core as Core
 
 ColumnLayout {
     id: section
@@ -148,9 +149,7 @@ ColumnLayout {
     Ui.ActionToggleList {
         Layout.fillWidth: true
         showDisabledReason: !section.controller.actionInFlight
-        actions: section.controller.detailActions.filter(function (action) {
-            return action.visible !== false && action.id !== "multipoint" && (action.presentation || {}).group === "settings";
-        })
+        actions: Core.Model.visibleActions(section.controller.detailActions, "settings").filter(action => action.id !== "multipoint")
         onTriggered: function (actionId) {
             section.controller.triggerDetailAction(actionId);
         }

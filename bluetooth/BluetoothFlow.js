@@ -50,8 +50,9 @@ function pairingQueue(prompts, envelope) {
         return item.request_id === prompt.request_id
             || (display && item.device_key === prompt.device_key && item.kind === prompt.kind);
     });
-    return index < 0 ? current.concat([prompt])
-        : current.map(function (item, i) { return i === index ? prompt : item; });
+    const next = current.slice();
+    next[index < 0 ? next.length : index] = prompt;
+    return next;
 }
 function isActiveOperation(operation) {
     return !!operation && ["queued", "running"].includes(operation.state);
@@ -60,12 +61,6 @@ function shouldRescanAfterOperation(operation, uiActive, powered, scanning) {
     return !!operation && operation.operation === "pair" && operation.state === "failed"
         && !!operation.error && operation.error.code === "device-unavailable"
         && uiActive && powered && !scanning;
-}
-function isKnownDevice(device) {
-    return !device.blocked && (device.paired || device.connected);
-}
-function isDiscoverableDevice(device, showRecent) {
-    return device.blocked || device.paired || device.connected || device.present || showRecent;
 }
 function deviceBaseName(device) {
     return [device.name, device.remote_name, "Bluetooth device"].find(Boolean);
@@ -86,15 +81,13 @@ function deviceDisplayName(device, devices, adapters) {
     return base + " · " + adapterDisplayName(adapter || ({}));
 }
 function devicesForView(devices, scope, policy) {
-    const showRecent = !!policy && !!policy.show_recent_devices;
-    const predicate = scope === "all"
-        ? function (device) { return isDiscoverableDevice(device, showRecent); }
-        : isKnownDevice;
-    const showBlocked = !!policy && !!policy.show_blocked_devices;
+    const settings = policy || {};
     return (devices || []).filter(function (device) {
-        if (device.blocked)
-            return showBlocked && (scope === "all" || device.paired || device.connected);
-        return predicate(device);
+        if (device.blocked && !settings.show_blocked_devices)
+            return false;
+        if (device.paired || device.connected)
+            return true;
+        return scope === "all" && (device.blocked || device.present || settings.show_recent_devices);
     });
 }
 function adapterLabel(adapter) {

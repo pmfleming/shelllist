@@ -13,6 +13,9 @@ QtObject {
     function settingToggle(id, label, checked, options) {
         return Implementation.settingToggle(id, label, checked, options);
     }
+    function visibleActions(actions, group, defaultGroup) {
+        return Implementation.visibleActions(actions, group, defaultGroup);
+    }
     function result(value) {
         return Implementation.result(value);
     }

@@ -1,9 +1,7 @@
 module Shelllist.Activity
 internal ActivityAgendaPane ActivityAgendaPane.qml
 internal ActivityGlancePane ActivityGlancePane.qml
-internal GlanceWeatherCard GlanceWeatherCard.qml
 internal GlanceScheduleCard GlanceScheduleCard.qml
-internal GlanceNotificationsCard GlanceNotificationsCard.qml
 internal ActivityHeaderButton ActivityHeaderButton.qml
 internal NotificationDndDuration NotificationDndDuration.qml
 internal ActivitySchedulePane ActivitySchedulePane.qml

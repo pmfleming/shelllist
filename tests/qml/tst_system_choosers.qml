@@ -107,6 +107,9 @@ DaemonTestCase {
         const louder = findChild(root, "audioVolume-louder");
         const value = findChild(root, "audioVolumeValue");
         compare(value.text, "50%");
+        tryVerify(() => louder.width > 0 && louder.height > 0);
+        compare(louder.objectName, "audioVolume-louder");
+        verify(louder.iconOnly);
         louder.clicked();
         compare(calls.length, 1);
         compare(calls[0].method, BarApi.methods.audioAdjust);
@@ -205,6 +208,8 @@ DaemonTestCase {
         tryCompare(findChild(root.content.detailsItem, "detailIdentityIcon"), "hasImage", true);
         const menuAction = findChild(root, "trayPrimary-menu");
         verify(menuAction.enabled);
+        verify(!menuAction.iconOnly, "labelled toolbar actions stay labelled");
+        compare(menuAction.Accessible.name, "Open application menu");
         verify(!findChild(root, "trayPrimary-activate").enabled);
         verify(!findChild(root, "trayOtherActions").open);
         menuAction.clicked();

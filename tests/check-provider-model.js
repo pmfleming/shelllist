@@ -68,6 +68,20 @@ assert.equal(toggle.state.checked, true);
 assert.equal(toggle.closePolicy, "keep-open");
 ++checks;
 
+// Presentation grouping preserves original objects, disabled slots and order.
+const grouped = Object.freeze([
+    Object.freeze({id: "first", presentation: {group: "primary"}}),
+    Object.freeze({id: "hidden", visible: false, presentation: {group: "primary"}}),
+    Object.freeze({id: "disabled", enabled: false, presentation: {group: "toolbar"}}),
+    Object.freeze({id: "implicit"})
+]);
+assert.deepEqual(model.visibleActions(grouped, "primary"), [grouped[0]]);
+assert.deepEqual(model.visibleActions(grouped, "toolbar"), [grouped[2]]);
+assert.deepEqual(model.visibleActions(grouped, "toolbar", "toolbar"), [grouped[2], grouped[3]]);
+assert.deepEqual(model.visibleActions(grouped), [grouped[0], grouped[2], grouped[3]]);
+assert.equal(model.visibleActions(null).length, 0);
+checks += 5;
+
 // ProviderRegistry's Qt tests own dispatch routing and disabled-action rejection.
 
 console.log(`Provider model: ${checks} checks passed`);

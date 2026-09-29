@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import Shelllist.Core as Core
 
 RowLayout {
     id: toolbar
@@ -11,6 +12,8 @@ RowLayout {
     property bool includeAllGroups: false
     property bool alignRight: true
     property bool fillActions: false
+    property bool showLabels: false
+    property string actionNamePrefix: "detailAction:"
     property bool tabFocusEnabled: true
     property int shortcutOffset: -1
     property int controlHeight: Theme.controlHeight
@@ -25,15 +28,13 @@ RowLayout {
     }
 
     Repeater {
-        model: (toolbar.actions || []).filter(function (action) {
-            return action.visible !== false && (toolbar.includeAllGroups || ((action.presentation || {}).group || "toolbar") === toolbar.group);
-        })
+        model: Core.Model.visibleActions(toolbar.actions, toolbar.includeAllGroups ? undefined : toolbar.group, "toolbar")
 
         delegate: ActionButton {
             required property var modelData
             required property int index
             Accessible.description: [toolTip, toolbar.shortcutOffset >= 0 ? qsTr("Shortcut Alt+%1").arg(toolbar.shortcutOffset + index + 1) : ""].filter(Boolean).join(". ")
-            objectName: "detailAction:" + modelData.id
+            objectName: toolbar.actionNamePrefix + modelData.id
             activeFocusOnTab: toolbar.tabFocusEnabled && enabled && (interactive || activeFocus)
 
             Layout.fillWidth: toolbar.fillActions
@@ -41,6 +42,7 @@ RowLayout {
             Layout.preferredHeight: toolbar.controlHeight
             label: modelData.label || ""
             icon: modelData.icon || ""
+            iconOnly: !toolbar.showLabels && icon.length > 0
             hotkey: modelData.shortcut || ""
             toolTip: (modelData.metadata || {}).toolTip || ""
             tone: (modelData.presentation || {}).tone || "normal"

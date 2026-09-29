@@ -141,12 +141,16 @@ function settingToggle(id, label, checked, options) {
     }));
 }
 
+// Select presentation only: disabled actions keep their order/shortcut slots.
+// Unnormalized toolbar descriptors may opt into a fallback group.
+function visibleActions(actions, group, defaultGroup) {
+    return (actions || []).filter(item => item.visible !== false && (group === undefined || ((item.presentation || {}).group || defaultGroup) === group));
+}
+
 function actionList(values) {
     const result = (Array.isArray(values) ? values : []).map(action);
     ensureUnique(result, "id", "result.actions");
-    const visiblePrimary = result.filter(function (item) {
-        return item.visible && item.presentation.group === "primary";
-    });
+    const visiblePrimary = visibleActions(result, "primary");
     if (visiblePrimary.length > 1)
         fail("result.actions", "must expose at most one visible primary action");
     return result;
