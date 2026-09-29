@@ -40,7 +40,7 @@ TestCase {
     }
 
     function test_timeHeroFitsReadableMetricDetailsAtNarrowWidths() {
-        const component = Qt.createComponent("../../activity/TimeWeatherTimePane.qml");
+        const component = Qt.createComponent("../../qml/Shelllist/Activity/TimeWeatherTimePane.qml");
         compare(component.status, Component.Ready, component.errorString());
         const pane = createTemporaryObject(component, testCase, {
             width: 400, height: 600,
