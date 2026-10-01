@@ -101,6 +101,10 @@ FieldFrame {
         color: Theme.inputText
         selectionColor: Theme.accent
         selectedTextColor: Theme.accentText
+        cursorDelegate: Rectangle {
+            width: 2
+            color: Theme.accent
+        }
         font.family: Theme.fontFamily
         font.pixelSize: field.fontPixelSize
         verticalAlignment: TextInput.AlignVCenter

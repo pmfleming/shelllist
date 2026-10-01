@@ -24,6 +24,7 @@ Item {
     property int bodySpacing: 0
     readonly property real delegateHeight: listFrame.delegateHeight
     readonly property bool listFocused: listFrame.listFocused
+    readonly property int resultCount: listFrame.count
 
     function viewportState(): var { return listFrame.viewportState(); }
     function restoreViewport(state: var): void { listFrame.restoreViewport(state); }
@@ -64,7 +65,9 @@ Item {
             }
         }
 
+        // Keep domain progress/errors; a result count cannot replace these.
         StatusPanel {
+            visible: body.status.length > 0
             Layout.fillWidth: true
             uiScale: 1
             status: body.status

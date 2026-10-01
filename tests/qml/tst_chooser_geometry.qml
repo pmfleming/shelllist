@@ -258,8 +258,9 @@ DaemonTestCase {
         for (const height of [600, 1080, 720]) {
             fixture.areaHeight = height;
             verify(waitForPolish(fixture.Window.window));
-            compare(search.parent.height, Ui.Theme.controlHeight);
-            compare(search.font.pixelSize, Ui.Theme.fontSizeLabel);
+            compare(surface.listItem.headerHeight, 56);
+            compare(search.parent.height, 48);
+            compare(search.font.pixelSize, 16);
             compare(surface.listItem.delegateHeight, Ui.Theme.listRowHeight);
             compare(findChild(surface, "geometryResult").height, Ui.Theme.listRowHeight);
             compare(findChild(surface, "geometryResultLabel").titlePixelSize, Ui.Theme.fontSizeLabel);

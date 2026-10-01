@@ -29,6 +29,44 @@ TestCase {
         }
     }
 
+    function test_searchBarRetainsEditorAndEmbeddedActions() {
+        const header = createTemporaryObject(headerComponent, testCase, {
+            width: 425, height: 56, resultCount: 12,
+            filterText: "query", iconActionEnabled: true, icon: "+"
+        });
+        verify(header !== null);
+        wait(0);
+        const field = findChild(header, "chooserSearchField");
+        const input = findChild(field, "fieldInput");
+        const leading = findChild(header, "searchLeadingIcon");
+        const count = findChild(header, "searchResultCount");
+        compare(header.radius, 28);
+        compare(field.border.width, 0);
+        compare(count.text, "12");
+        header.focusSearch();
+        compare(String(leading.color), String(Ui.Theme.accent));
+        verify(!findChild(field, "focusRing").visible);
+        header.restoreSelection({cursor: 2, anchor: 2});
+        keyClick(Qt.Key_Left);
+        compare(input.cursorPosition, 1);
+        header.insertSearchText("X");
+        compare(input.text, "qXuery");
+        const selection = header.selectionState();
+        compare(selection.cursor, 2);
+        const action = findChild(header, "fieldTrailingAction");
+        verify(action.x >= field.x + field.width);
+        mouseClick(action);
+        compare(header.actionCount, 1);
+        header.searchActionEnabled = false;
+        action.Accessible.pressAction();
+        compare(header.actionCount, 1);
+        header.resultCount = 0;
+        compare(count.text, "0");
+        const refresh = findChild(header, "chooserRefreshButton");
+        verify(refresh.mapToItem(header, refresh.width, 0).x <= header.width);
+        verify(field.width >= 48);
+    }
+
     function test_searchAction_data() {
         return [
             {

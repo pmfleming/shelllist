@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-RowLayout {
+Rectangle {
     id: header
 
     required property real uiScale
@@ -24,6 +24,7 @@ RowLayout {
     property string searchActionIcon: ""
     property string searchActionToolTip: ""
     property bool searchActionEnabled: true
+    property int resultCount: -1
 
     signal querySelectionChanged
     signal filterEdited(string text)
@@ -34,8 +35,10 @@ RowLayout {
     signal refreshRequested
 
     Layout.fillWidth: true
-    Layout.preferredHeight: scaled(Theme.headerHeight)
-    spacing: scaled(Theme.spacingSm)
+    Layout.preferredHeight: implicitHeight
+    implicitHeight: scaled(56)
+    radius: height / 2
+    color: Theme.surfaceRaised
 
     function scaled(value) {
         return Math.round(value * uiScale);
@@ -43,119 +46,116 @@ RowLayout {
     function focusSearch() {
         search.focusInput(false);
     }
-
     function selectionState(): var { return search.selectionState(); }
     function restoreSelection(state: var): void { search.restoreSelection(state); }
-
-    function insertSearchText(text: string): void {
-        search.insertText(text);
-    }
+    function insertSearchText(text: string): void { search.insertText(text); }
 
     Component.onCompleted: if (focusOnCompleted)
         Qt.callLater(focusSearch)
 
-    Item {
-        Layout.preferredWidth: header.scaled(2)
-    }
+    RowLayout {
+        anchors.fill: parent
+        anchors.leftMargin: header.scaled(16)
+        anchors.rightMargin: header.scaled(8)
+        spacing: header.scaled(4)
 
-    IconTile {
-        objectName: "chooserIconButton"
-        Layout.preferredWidth: header.scaled(Theme.controlHeight)
-        Layout.preferredHeight: header.scaled(Theme.controlHeight)
-        Layout.alignment: Qt.AlignVCenter
-        backgroundColor: Theme.selected
-        borderColor: Theme.mix(Theme.strongBorder, Theme.surface, 0.40)
-        icon: header.signalIcon ? "" : header.icon
-        iconColor: header.powered ? Theme.accent : Theme.mutedText
-        iconSize: Math.max(Theme.iconSize, header.scaled(Theme.iconSizeLarge))
-        Accessible.role: Accessible.Button
-        Accessible.name: header.iconAccessibleName
-        Accessible.onPressAction: if (header.iconActionEnabled)
-            header.iconClicked()
-        clickable: header.iconActionEnabled
-        onClicked: header.iconClicked()
-
-        SignalIcon {
-            visible: header.signalIcon
-            anchors.centerIn: parent
-            width: header.scaled(25)
-            height: header.scaled(22)
-            level: 3
-            iconColor: header.powered ? Theme.accent : Theme.mutedText
+        ThemeText {
+            objectName: "searchLeadingIcon"
+            Layout.preferredWidth: header.scaled(24)
+            Layout.preferredHeight: header.scaled(24)
+            text: "search"
+            font.family: Theme.symbolFontFamily
+            font.pixelSize: header.scaled(24)
+            color: header.searchFocused ? Theme.accent : Theme.mutedText
+            Accessible.ignored: true
         }
-    }
 
-    TextField {
-        id: search
-
-        Layout.fillWidth: true
-        Layout.preferredHeight: header.scaled(Theme.controlHeight)
-        Layout.alignment: Qt.AlignVCenter
-        leftPadding: header.scaled(43)
-        rightPadding: header.scaled(Theme.spacingMd)
-        fontPixelSize: Math.max(Theme.fontSizeSmall, header.scaled(Theme.fontSizeLabel))
-        text: header.filterText
-        placeholder: header.placeholder
-        trailingActionIcon: header.searchActionIcon
-        trailingActionToolTip: header.searchActionToolTip
-        trailingActionEnabled: header.searchActionEnabled
-        trailingActionIconSize: Math.max(Theme.iconSize, header.scaled(Theme.iconSize))
-        onSelectionChanged: header.querySelectionChanged()
-        onEdited: function (text) {
-            header.filterEdited(text);
-        }
-        onKeyPressed: function (event) {
-            if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && (event.modifiers & ~Qt.KeypadModifier) === Qt.AltModifier) {
-                // Never fall through to the selected result's primary action.
-                event.accepted = true;
-                if (header.searchActionIcon.length > 0 && header.searchActionEnabled)
-                    header.searchActionRequested();
-                return;
+        // Reuse the native editor/selection/IME boundary, not the form frame.
+        TextField {
+            id: search
+            objectName: "chooserSearchField"
+            Layout.fillWidth: true
+            Layout.minimumWidth: header.scaled(48)
+            Layout.preferredHeight: header.scaled(48)
+            leftPadding: header.scaled(8)
+            rightPadding: header.scaled(8)
+            color: "transparent"
+            border.width: 0
+            focused: false
+            fontPixelSize: header.scaled(16)
+            text: header.filterText
+            placeholder: header.placeholder
+            onSelectionChanged: header.querySelectionChanged()
+            onEdited: function (text) { header.filterEdited(text); }
+            onKeyPressed: function (event) {
+                if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && (event.modifiers & ~Qt.KeypadModifier) === Qt.AltModifier) {
+                    // Never fall through to the selected result's primary action.
+                    event.accepted = true;
+                    if (header.searchActionIcon.length > 0 && header.searchActionEnabled)
+                        header.searchActionRequested();
+                    return;
+                }
+                header.keyPressed(event);
             }
-            header.keyPressed(event);
         }
-        onTrailingActionRequested: header.searchActionRequested()
 
-        Text {
-            x: header.scaled(Theme.contentMargin)
-            anchors.verticalCenter: parent.verticalCenter
-            text: "󰍉"
+        ThemeText {
+            objectName: "searchResultCount"
+            visible: header.resultCount >= 0
+            text: String(header.resultCount)
+            Accessible.name: qsTr("%1 results").arg(header.resultCount)
             color: Theme.mutedText
-            font.family: Theme.iconFontFamily
-            font.pixelSize: Math.max(Theme.fontSizeLabel, header.scaled(Theme.iconSize))
+            font.pixelSize: Theme.fontSizeSmall
         }
-    }
 
-    ToggleSwitch {
-        objectName: "chooserPowerToggle"
-        visible: header.powerVisible
-        Accessible.role: Accessible.CheckBox
-        Accessible.name: header.powerAccessibleName
-        Accessible.checked: checked
-        Layout.preferredWidth: header.scaled(56)
-        Layout.preferredHeight: header.scaled(Theme.controlHeight)
-        Layout.alignment: Qt.AlignVCenter
-        checked: header.powered
-        enabled: header.powerEnabled
-        onToggled: header.powerRequested()
-    }
+        FlatIconButton {
+            objectName: "fieldTrailingAction"
+            visible: header.searchActionIcon.length > 0
+            Layout.preferredWidth: header.scaled(40)
+            Layout.preferredHeight: header.scaled(40)
+            icon: header.searchActionIcon
+            accessibleName: header.searchActionToolTip
+            enabled: header.searchActionEnabled
+            onClicked: header.searchActionRequested()
+        }
 
-    Loader {
-        visible: sourceComponent !== null
-        sourceComponent: header.powerAccessory
-        Layout.preferredWidth: (item as Item)?.implicitWidth ?? 0
-        Layout.preferredHeight: header.scaled(Theme.controlHeight)
-        Layout.alignment: Qt.AlignVCenter
-    }
+        FlatIconButton {
+            objectName: "chooserIconButton"
+            visible: header.iconActionEnabled
+            Layout.preferredWidth: header.scaled(40)
+            Layout.preferredHeight: header.scaled(40)
+            icon: header.icon
+            accessibleName: header.iconAccessibleName
+            onClicked: header.iconClicked()
+        }
 
-    RefreshTile {
-        Layout.preferredWidth: header.scaled(Theme.controlHeight)
-        Layout.preferredHeight: header.scaled(Theme.controlHeight)
-        Layout.alignment: Qt.AlignVCenter
-        refreshing: header.refreshing
-        refreshEnabled: header.refreshEnabled
-        icon: header.refreshIcon
-        iconSize: Math.max(Theme.iconSizeSmall, header.scaled(Theme.iconSize))
-        onClicked: header.refreshRequested()
+        ToggleSwitch {
+            objectName: "chooserPowerToggle"
+            visible: header.powerVisible
+            Accessible.name: header.powerAccessibleName
+            Layout.preferredWidth: header.scaled(52)
+            Layout.preferredHeight: header.scaled(40)
+            checked: header.powered
+            enabled: header.powerEnabled
+            onToggled: header.powerRequested()
+        }
+
+        Loader {
+            visible: sourceComponent !== null
+            sourceComponent: header.powerAccessory
+            Layout.preferredWidth: (item as Item)?.implicitWidth ?? 0
+            Layout.preferredHeight: header.scaled(40)
+        }
+
+        FlatIconButton {
+            objectName: "chooserRefreshButton"
+            Layout.preferredWidth: header.scaled(40)
+            Layout.preferredHeight: header.scaled(40)
+            icon: header.refreshIcon
+            accessibleName: qsTr("Refresh")
+            flatIconColor: header.refreshing ? Theme.accent : Theme.mutedText
+            enabled: header.refreshEnabled && !header.refreshing
+            onClicked: header.refreshRequested()
+        }
     }
 }
