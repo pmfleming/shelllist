@@ -55,7 +55,6 @@ ResultRow {
             anchors.fill: parent
             glyph: row.connecting ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length] : row.networkTypeIcon
             color: row.selected ? Theme.accentText : (row.connecting ? Theme.accent : (row.captivePortal ? Theme.warning : Theme.mutedText))
-            font.family: row.connecting ? Theme.fontFamily : Theme.iconFontFamily
             font.pixelSize: Math.round(Theme.fontSizeLabel * row.density)
         }
     }
