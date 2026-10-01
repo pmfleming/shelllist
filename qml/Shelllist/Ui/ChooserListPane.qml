@@ -39,6 +39,7 @@ ColumnLayout {
     property string status: ""
     property real listInset: 0
     property int bodySpacing: Theme.verticalSpacing(Theme.spacingSm, densityScale)
+    readonly property int resultCount: body.resultCount
     readonly property real delegateHeight: body.delegateHeight
     readonly property bool listFocused: body.listFocused
     readonly property bool searchFocused: header.searchFocused

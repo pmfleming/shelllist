@@ -128,7 +128,7 @@ Item {
     readonly property int easingResponsive: Easing.OutCubic
     readonly property int easingGentle: Easing.InOutSine
 
-    readonly property int listRowHeight: 52
+    readonly property int listRowHeight: 64
     readonly property real listDensityMinimum: 0.86
     readonly property real listDensityMaximum: 1.08
 

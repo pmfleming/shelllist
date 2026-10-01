@@ -263,7 +263,7 @@ DaemonTestCase {
             compare(search.font.pixelSize, 16);
             compare(surface.listItem.delegateHeight, Ui.Theme.listRowHeight);
             compare(findChild(surface, "geometryResult").height, Ui.Theme.listRowHeight);
-            compare(findChild(surface, "geometryResultLabel").titlePixelSize, Ui.Theme.fontSizeLabel);
+            compare(findChild(surface, "geometryResultLabel").titlePixelSize, Ui.Theme.fontSizeHeading);
             compare(surface.uiScale, 1);
         }
     }

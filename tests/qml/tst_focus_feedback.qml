@@ -96,6 +96,39 @@ TestCase {
             controller: Bar.BarController { surfaceRegistry: null; backend.active: false }
         }
     }
+    SignalSpy { id: pickedSpy; signalName: "picked" }
+
+    function test_segmentedRowsKeepPointerActionsAndSelectionSeparate() {
+        const scene = createTemporaryObject(rows, testCase);
+        const first = scene.first;
+        const second = scene.second;
+        first.detailsActionVisible = true;
+        second.detailsActionVisible = true;
+        first.primaryActionId = "connect";
+        first.listPane.chooserController.detailActions = [{id: "connect", icon: "+", enabled: true}];
+        const firstAvatar = findChild(first, "resultAvatar");
+        const secondAvatar = findChild(second, "resultAvatar");
+        compare(firstAvatar.width, 40);
+        compare(secondAvatar.width, 40);
+        tryCompare(firstAvatar, "radius", 20);
+        tryCompare(secondAvatar, "radius", 12);
+        verify(findChild(first, "resultDetailsAction").visible);
+        verify(!findChild(second, "resultDetailsAction").visible);
+        verify(findChild(first, "resultPrimaryCue").visible);
+        first.listPane.chooserController.detailActions = [{id: "connect", icon: "+", enabled: false}];
+        verify(!findChild(first, "resultPrimaryCue").visible);
+        pickedSpy.target = second;
+        pickedSpy.clear();
+        mouseClick(second, second.width - 5, second.height / 2);
+        compare(pickedSpy.count, 1, "the unselected trailing area still selects the row");
+        pickedSpy.target = null;
+        scene.selectedIndex = 1;
+        tryCompare(firstAvatar, "radius", 12);
+        tryCompare(secondAvatar, "radius", 20);
+        verify(!findChild(first, "resultDetailsAction").visible);
+        verify(findChild(second, "resultDetailsAction").visible);
+    }
+
     function test_pointerAndKeyboardShareTonalFocusWithoutAnOutline() {
         const scene = createTemporaryObject(buttons, testCase);
         mouseClick(scene.first, 20, 20);

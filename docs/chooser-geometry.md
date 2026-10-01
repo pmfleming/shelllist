@@ -24,7 +24,8 @@ Screenshots use that same content origin and the actual bounded visible size.
 - Normal outer/inner horizontal margins are 14px, with a 12px detail gap.
 - Below 1200px work-area width or 800px height, margins/gap tighten to 8px.
   Legacy automatic chooser font/control scaling is removed. Shared result rows
-  stay 52px high; a shorter viewport shows fewer rows, not smaller targets.
+  stay 64px high after the Material segmented-list pass; a shorter viewport
+  shows fewer rows, not smaller targets.
 - Expanded canvas width is 960–1040px. The inspector has at least 495px before
   its own padding. The list is not replaced by details on small outputs.
 - Frame height is 75% of work-area height, bounded to 360–900px and clamped to

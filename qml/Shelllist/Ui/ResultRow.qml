@@ -14,9 +14,16 @@ Rectangle {
     property bool pointerHovered: false
     property bool pointerPressed: false
     property string accessibleName: ""
-    property real trailingActionWidth: 0
     property bool primaryEnabled: true
     property bool detailsActionVisible: true
+    property string leadingIcon: "󰀻"
+    property url leadingIconSource: ""
+    property color leadingIconColor: Theme.mutedText
+    property Component avatarContent: null
+    property string primaryActionId: ""
+    readonly property var primaryAction: selected && primaryActionId ? listPane.chooserController.detailActions.find(action => action.id === primaryActionId) : null
+    readonly property bool showPrimaryCue: selected && primaryEnabled && listPane.chooserController.navigationPrimaryEnabled && !!primaryAction && primaryAction.enabled !== false
+    readonly property int detailSlotWidth: detailsActionVisible ? 72 : 0
     readonly property bool selected: index === selectedIndex
     default property alias content: rowContent.data
 
@@ -43,11 +50,15 @@ Rectangle {
     width: ListView.view.width
     height: rowHeight
     radius: selectionShape.value
+    topLeftRadius: selected || index === 0 ? Theme.panelRadius : radius
+    topRightRadius: topLeftRadius
+    bottomLeftRadius: selected || index === listPane.resultCount - 1 ? Theme.panelRadius : radius
+    bottomRightRadius: bottomLeftRadius
     ExpressiveMotion {
         id: selectionShape
-        target: row.selected ? Theme.cardRadius : 0
+        target: row.selected ? Theme.panelRadius : 4
     }
-    color: selected ? Theme.selected : (pointerPressed ? Theme.pressed : (pointerHovered ? Theme.hover : "transparent"))
+    color: selected ? Theme.selected : (pointerPressed ? Theme.mix(Theme.surface, Theme.text, 0.12) : (pointerHovered ? Theme.mix(Theme.surface, Theme.text, 0.08) : Theme.surface))
     FocusRing {
         active: row.selected && row.selectionFocused
         cornerRadius: row.radius
@@ -63,32 +74,75 @@ Rectangle {
         row.listPane.chooserController.navigation.handleListKey(event);
     }
 
-    Rectangle {
-        visible: !row.selected
+    IconTile {
+        id: avatar
+        objectName: "resultAvatar"
         anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: row.scaled(Theme.spacingLg)
-        anchors.rightMargin: row.scaled(Theme.spacingLg)
-        height: 1
-        color: Theme.mix(Theme.border, Theme.text, 0.14)
-        opacity: 0.85
+        anchors.leftMargin: 12
+        anchors.verticalCenter: parent.verticalCenter
+        width: 40
+        height: 40
+        radius: avatarShape.value
+        backgroundColor: row.selected ? Theme.accent : Theme.surfaceRaised
+        iconColor: row.selected ? Theme.accentText : row.leadingIconColor
+        iconSource: row.leadingIconSource
+        iconSize: Theme.iconSizeLarge
+        border.width: 0
+        ExpressiveMotion {
+            id: avatarShape
+            target: row.selected ? 20 : 12
+        }
+        GlyphLabel {
+            anchors.fill: parent
+            visible: !avatar.hasImage && !row.avatarContent
+            glyph: row.leadingIcon
+            color: avatar.iconColor
+            font.pixelSize: Theme.iconSizeLarge
+        }
+        Loader {
+            anchors.fill: parent
+            sourceComponent: row.avatarContent
+        }
     }
 
     RowLayout {
         id: rowContent
+        z: 1
 
         anchors.fill: parent
-        anchors.leftMargin: row.scaled(20)
-        anchors.rightMargin: row.scaled(44)
-        spacing: row.scaled(10)
+        anchors.leftMargin: 68
+        anchors.rightMargin: row.detailSlotWidth + 12
+        anchors.topMargin: 8
+        anchors.bottomMargin: 8
+        spacing: 12
+    }
+
+    Row {
+        objectName: "resultPrimaryCue"
+        visible: row.showPrimaryCue
+        anchors.right: detailsButton.left
+        anchors.rightMargin: 4
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 4
+        Accessible.ignored: true
+        GlyphLabel {
+            glyph: row.primaryAction ? row.primaryAction.icon || "" : ""
+            color: Theme.selectedText
+        }
+        ThemeText {
+            text: "↵"
+            color: Theme.selectedText
+            font.pixelSize: Theme.fontSizeLabel
+        }
     }
 
     FlatIconButton {
-        visible: row.detailsActionVisible
+        id: detailsButton
+        objectName: "resultDetailsAction"
+        visible: row.detailsActionVisible && row.selected
         z: 2
         anchors.right: parent.right
-        anchors.rightMargin: row.scaled(10)
+        anchors.rightMargin: 12
         anchors.verticalCenter: parent.verticalCenter
         width: row.scaled(30)
         height: row.scaled(30)
@@ -101,7 +155,7 @@ Rectangle {
     }
 
     StateLayer {
-        anchors.rightMargin: row.scaled(38) + row.trailingActionWidth
+        anchors.rightMargin: row.selected && row.detailsActionVisible ? 42 : 0
         focusTarget: row
         radius: row.radius
         stateColor: Theme.text

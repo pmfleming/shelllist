@@ -65,6 +65,9 @@ Ui.ProviderChooserSurface {
             readonly property var group: JSON.parse(resultData.payload)
             listPane: pane
             rowHeight: pane.delegateHeight
+            leadingIcon: "󰂚"
+            primaryActionId: resultData.primaryActionId || ""
+            accessibleName: (row.group.appName || qsTr("Notifications")) + ". " + row.group.records.length
             Ui.ResultLabel {
                 title: row.group.appName || qsTr("Notifications")
                 subtitle: String(row.group.records.length)

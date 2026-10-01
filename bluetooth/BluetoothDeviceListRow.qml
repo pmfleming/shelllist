@@ -36,13 +36,9 @@ Ui.ResultRow {
         opacity: row.signalLive ? 1 : 0.58
     }
 
-    Ui.GlyphLabel {
-        Layout.preferredWidth: row.scaled(28)
-        Layout.fillHeight: true
-        glyph: row.resultData.icon || "󰂯"
-        color: row.device.blocked ? Ui.Theme.danger : (row.device.connected ? Ui.Theme.active : Ui.Theme.mutedText)
-        font.pixelSize: Math.max(Ui.Theme.iconSize, row.scaled(Ui.Theme.fontSizeTitle))
-    }
+    leadingIcon: resultData.icon || "󰂯"
+    leadingIconColor: device.blocked ? Ui.Theme.danger : (device.connected ? Ui.Theme.active : Ui.Theme.mutedText)
+    primaryActionId: resultData.primaryActionId || ""
 
     Ui.ResultLabel {
         title: row.resultData.title

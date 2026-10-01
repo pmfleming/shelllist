@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui
@@ -46,21 +48,23 @@ ResultRow {
         }
     }
 
-    GlyphLabel {
-        Layout.preferredWidth: row.scaled(18)
-        Layout.fillHeight: true
-        glyph: row.connecting ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length] : row.networkTypeIcon
-        color: row.connecting ? Theme.accent : (row.captivePortal ? Theme.warning : Theme.mutedText)
-        font.family: row.connecting ? Theme.fontFamily : Theme.iconFontFamily
-        font.pixelSize: Math.round(Theme.fontSizeLabel * row.density)
+    primaryActionId: resultData.primaryActionId || ""
+    accessibleName: name + ". " + signalStrength + "%" + (connecting ? " Connecting" : "")
+    avatarContent: Component {
+        GlyphLabel {
+            anchors.fill: parent
+            glyph: row.connecting ? row.spinnerFrames[row.progressTick % row.spinnerFrames.length] : row.networkTypeIcon
+            color: row.selected ? Theme.accentText : (row.connecting ? Theme.accent : (row.captivePortal ? Theme.warning : Theme.mutedText))
+            font.family: row.connecting ? Theme.fontFamily : Theme.iconFontFamily
+            font.pixelSize: Math.round(Theme.fontSizeLabel * row.density)
+        }
     }
 
     ResultLabel {
         title: row.connecting ? row.name + " — connecting…" : row.name
         titleColor: row.connecting ? Theme.accent : Theme.text
-        titlePixelSize: Math.round(Theme.fontSizeBody * row.density)
+        subtitle: row.resultData.subtitle || ""
         titleWeight: row.active || row.connecting ? Theme.fontWeightBold : Theme.fontWeightRegular
         uiScale: row.density
-        singleLine: true
     }
 }

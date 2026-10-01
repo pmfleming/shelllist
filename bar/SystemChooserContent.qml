@@ -71,13 +71,10 @@ Ui.ProviderChooserSurface {
             listPane: pane
             rowHeight: pane.delegateHeight
             readonly property SystemTrayItem trayItem: content.controller.kind === "tray" ? content.controller.uniqueTrayItem(resultData.id) : null
-            Ui.IconTile {
-                visible: content.controller.kind === "tray"
-                Layout.preferredWidth: Ui.Theme.iconSizeLarge
-                Layout.preferredHeight: Ui.Theme.iconSizeLarge
-                icon: row.resultData.icon
-                iconSource: row.trayItem ? row.trayItem.icon : ""
-            }
+            leadingIcon: resultData.icon || "󰀻"
+            leadingIconSource: trayItem ? trayItem.icon : ""
+            primaryActionId: resultData.primaryActionId || ""
+            accessibleName: resultData.title + ". " + (resultData.subtitle || "")
             Ui.ResultLabel {
                 title: row.resultData.title
                 subtitle: row.resultData.subtitle

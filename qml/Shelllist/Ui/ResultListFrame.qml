@@ -82,8 +82,8 @@ Rectangle {
     }
 
     radius: Theme.panelRadius
-    color: Theme.surface
-    border.color: Theme.border
+    color: "transparent"
+    border.width: 0
     clip: true
 
     ScrollableListView {
@@ -93,6 +93,7 @@ Rectangle {
         anchors.fill: parent
         clip: true
         model: frame.resultModel
+        spacing: 2
         // Reconcile after a mutation batch; a binding alone does not undo
         // ListView's internal index changes when selectedIndex stays the same.
         property int previousCount: 0

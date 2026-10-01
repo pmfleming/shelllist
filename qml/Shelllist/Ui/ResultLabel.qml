@@ -14,8 +14,8 @@ ColumnLayout {
     property int titleWeight: Theme.fontWeightRegular
     property int subtitleWeight: Theme.fontWeightRegular
     property real uiScale: 1
-    property int titlePixelSize: Math.max(Theme.fontSizeSmall, Math.round(Theme.fontSizeLabel * uiScale))
-    property int subtitlePixelSize: Math.max(10, Math.round(Theme.fontSizeCaption * uiScale))
+    property int titlePixelSize: Math.round(Theme.fontSizeHeading * uiScale)
+    property int subtitlePixelSize: Math.round(Theme.fontSizeLabel * uiScale)
 
     Layout.fillWidth: true
     Layout.fillHeight: true
@@ -24,7 +24,7 @@ ColumnLayout {
     ThemeText {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        verticalAlignment: label.singleLine ? Text.AlignVCenter : Text.AlignBottom
+        verticalAlignment: label.singleLine || !label.subtitle ? Text.AlignVCenter : Text.AlignBottom
         text: label.title
         color: label.titleColor
         font.pixelSize: label.titlePixelSize
@@ -33,7 +33,7 @@ ColumnLayout {
     }
 
     RowLayout {
-        visible: !label.singleLine
+        visible: !label.singleLine && (label.subtitle.length > 0 || label.statusIndicatorVisible)
         Layout.fillWidth: true
         Layout.fillHeight: true
         spacing: Math.max(Theme.spacingXs, Math.round(Theme.spacingSm * label.uiScale))

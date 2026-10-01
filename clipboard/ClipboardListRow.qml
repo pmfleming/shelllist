@@ -9,7 +9,6 @@ Ui.ResultRow {
     required property var resultData
     readonly property var entry: resultData.payload || ({})
     readonly property bool bulkSelected: !!controller.multiSelectedIds[entry.id]
-    trailingActionWidth: scaled(40)
     primaryEnabled: !controller.multiSelectMode
     detailsActionVisible: !controller.multiSelectMode
     function pick(rowIndex: int): void {
@@ -19,19 +18,15 @@ Ui.ResultRow {
             listPane.pick(rowIndex);
     }
 
-    Ui.GlyphLabel {
-        Layout.preferredWidth: row.scaled(30)
-        Layout.fillHeight: true
-        glyph: row.resultData.icon
-        color: row.entry.current ? Ui.Theme.active : Ui.Theme.accent
-        font.pixelSize: Math.max(Ui.Theme.iconSize, row.scaled(Ui.Theme.fontSizeTitle))
-    }
+    leadingIcon: resultData.icon || "󰅍"
+    leadingIconColor: entry.current ? Ui.Theme.active : Ui.Theme.accent
+    primaryActionId: resultData.primaryActionId || ""
+    accessibleName: resultData.title
 
     Ui.ResultLabel {
         title: row.resultData.title
-        titlePixelSize: Math.max(Ui.Theme.fontSizeSmall, row.scaled(Ui.Theme.fontSizeLabel))
+        subtitle: row.resultData.subtitle || ""
         uiScale: row.uiScale
-        singleLine: true
     }
 
     Ui.ThemeText {

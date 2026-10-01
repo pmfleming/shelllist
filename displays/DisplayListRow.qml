@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
 Ui.ResultRow {
@@ -9,12 +8,8 @@ Ui.ResultRow {
     accessibleName: resultData.title + ". " + resultData.subtitle
     primaryEnabled: false
 
-    Ui.GlyphLabel {
-        Layout.preferredWidth: row.scaled(28)
-        Layout.fillHeight: true
-        glyph: row.resultData.icon
-        color: row.resultData.state.active ? Ui.Theme.active : Ui.Theme.mutedText
-    }
+    leadingIcon: resultData.icon || "󰍹"
+    leadingIconColor: resultData.state.active ? Ui.Theme.active : Ui.Theme.mutedText
     Ui.ResultLabel {
         title: row.resultData.title
         subtitle: row.resultData.subtitle

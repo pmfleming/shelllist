@@ -9,37 +9,17 @@ Ui.ResultRow {
 
     required property var resultData
     readonly property var application: resultData.payload || ({})
-    trailingActionWidth: application.running ? scaled(80) : 0
 
-    Item {
-        Layout.preferredWidth: row.scaled(34)
-        Layout.preferredHeight: row.scaled(34)
-
-        Image {
-            id: applicationIcon
-            anchors.fill: parent
-            source: Quickshell.iconPath(row.resultData.icon || "application-x-executable", "application-x-executable")
-            sourceSize.width: width
-            sourceSize.height: height
-            fillMode: Image.PreserveAspectFit
-            asynchronous: true
-        }
-
-        Ui.GlyphLabel {
-            anchors.fill: parent
-            visible: applicationIcon.status === Image.Error
-            glyph: "󰀻"
-            color: Ui.Theme.accent
-            font.pixelSize: row.scaled(Ui.Theme.iconSize)
-        }
-    }
+    leadingIcon: "󰀻"
+    leadingIconSource: Quickshell.iconPath(resultData.icon || "application-x-executable", "application-x-executable")
+    primaryActionId: resultData.primaryActionId || ""
+    accessibleName: resultData.title + ". " + (resultData.subtitle || "")
 
     Ui.ResultLabel {
         title: row.resultData.title
-        titlePixelSize: Math.max(Ui.Theme.fontSizeSmall, row.scaled(Ui.Theme.fontSizeLabel))
+        subtitle: row.resultData.subtitle || ""
         titleWeight: row.application.focused ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
         uiScale: row.uiScale
-        singleLine: true
     }
 
     Ui.FlatIconButton {

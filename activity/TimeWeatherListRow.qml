@@ -26,13 +26,9 @@ Ui.ResultRow {
         return Visuals.localTime(nowMs, Number(city.utc_offset_seconds || 0));
     }
 
-    Ui.GlyphLabel {
-        Layout.preferredWidth: row.scaled(24)
-        Layout.fillHeight: true
-        glyph: row.city.home ? "󰋜" : "󰍎"
-        color: row.city.home ? Ui.Theme.accent : Ui.Theme.mutedText
-        font.pixelSize: Math.max(Ui.Theme.iconSize, row.scaled(Ui.Theme.iconSizeLarge))
-    }
+    leadingIcon: city.home ? "󰋜" : "󰍎"
+    leadingIconColor: city.home ? Ui.Theme.accent : Ui.Theme.mutedText
+    primaryActionId: resultData.primaryActionId || ""
 
     Ui.ResultLabel {
         Layout.fillWidth: true
