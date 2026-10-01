@@ -16,16 +16,9 @@ Rectangle {
 
     width: parent ? parent.width : 0
     radius: Theme.cardRadius
-    color: Theme.withAlpha(Theme.surfaceRaised, 0.96)
-    border.color: Theme.mix(Theme.border, Theme.text, 0.12)
-    border.width: 1
-
-    Elevation {
-        anchors.fill: parent
-        radius: card.radius
-        level: 1
-        z: -1
-    }
+    // Opaque container tones establish hierarchy without nested outlines.
+    color: Theme.surface
+    border.width: 0
 
     Column {
         anchors.fill: parent
@@ -43,7 +36,7 @@ Rectangle {
             text: card.title
             elide: Text.ElideRight
             font.pixelSize: Theme.fontSizeHeading
-            font.weight: Theme.fontWeightBold
+            font.weight: Theme.fontWeightMedium
         }
 
         Item {

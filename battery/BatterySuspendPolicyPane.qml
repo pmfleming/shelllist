@@ -38,66 +38,58 @@ Ui.DetailColumnCard {
         });
     }
 
-    Ui.FieldLabel {
-        Layout.fillWidth: true
-        text: qsTr("When the lid is closed")
-    }
+    Ui.SettingRow {
+        title: qsTr("When the lid is closed")
+        subtitle: (pane.controller.suspendPolicyState.lid || {}).error || (pane.controller.suspendPolicyDraft.lid_action === "system" ? qsTr("Uses the system lid policy.") : pane.controller.suspendPolicyDraft.lid_action === "profile" ? qsTr("Uses this power source’s hibernate delay, even with inactivity set to Never. Ignored while docked.") : qsTr("Ignored while docked or using an external display."))
+        subtitleColor: (pane.controller.suspendPolicyState.lid || {}).error ? Ui.Theme.warning : Ui.Theme.mutedText
 
-    Ui.DropDownList {
-        objectName: "lidCloseAction"
-        Layout.fillWidth: true
-        options: [
-            {
-                value: "system",
-                label: qsTr("System default")
-            },
-            {
-                value: "ignore",
-                label: qsTr("Do nothing"),
-                enabled: !!(pane.controller.suspendPolicyState.lid || {}).available
-            },
-            {
-                value: "lock",
-                label: qsTr("Lock screen"),
-                enabled: !!(pane.controller.suspendPolicyState.lid || {}).available
-            },
-            {
-                value: "suspend",
-                label: qsTr("Suspend"),
-                enabled: !!(pane.controller.suspendPolicyState.lid || {}).available
-            },
-            {
-                value: "hibernate",
-                label: qsTr("Hibernate immediately"),
-                enabled: !!(pane.controller.suspendPolicyState.lid || {}).available && ["yes", "challenge", "inhibited", "inhibitor-blocked", "challenge-inhibitor-blocked"].includes(pane.controller.powerSuspend.can_hibernate)
-            },
-            {
-                value: "profile",
-                label: qsTr("Suspend, then hibernate using profile"),
-                enabled: !!(pane.controller.suspendPolicyState.lid || {}).available
+        Ui.DropDownList {
+            objectName: "lidCloseAction"
+            Layout.preferredWidth: 160
+            options: [
+                {
+                    value: "system",
+                    label: qsTr("System default")
+                },
+                {
+                    value: "ignore",
+                    label: qsTr("Do nothing"),
+                    enabled: !!(pane.controller.suspendPolicyState.lid || {}).available
+                },
+                {
+                    value: "lock",
+                    label: qsTr("Lock screen"),
+                    enabled: !!(pane.controller.suspendPolicyState.lid || {}).available
+                },
+                {
+                    value: "suspend",
+                    label: qsTr("Suspend"),
+                    enabled: !!(pane.controller.suspendPolicyState.lid || {}).available
+                },
+                {
+                    value: "hibernate",
+                    label: qsTr("Hibernate immediately"),
+                    enabled: !!(pane.controller.suspendPolicyState.lid || {}).available && ["yes", "challenge", "inhibited", "inhibitor-blocked", "challenge-inhibitor-blocked"].includes(pane.controller.powerSuspend.can_hibernate)
+                },
+                {
+                    value: "profile",
+                    label: qsTr("Suspend, then hibernate using profile"),
+                    enabled: !!(pane.controller.suspendPolicyState.lid || {}).available
+                }
+            ]
+            value: pane.controller.suspendPolicyDraft.lid_action || "system"
+            interactive: pane.interactive
+            Accessible.name: qsTr("Action when the laptop lid is closed")
+            onSelected: function (value) {
+                pane.controller.updateSuspendPolicy("", "lid_action", value);
             }
-        ]
-        value: pane.controller.suspendPolicyDraft.lid_action || "system"
-        interactive: pane.interactive
-        Accessible.name: qsTr("Action when the laptop lid is closed")
-        onSelected: function (value) {
-            pane.controller.updateSuspendPolicy("", "lid_action", value);
         }
-    }
-
-    Ui.FieldLabel {
-        objectName: "lidCloseStatus"
-        Layout.fillWidth: true
-        text: (pane.controller.suspendPolicyState.lid || {}).error || (pane.controller.suspendPolicyDraft.lid_action === "system" ? qsTr("Uses the system lid policy.") : pane.controller.suspendPolicyDraft.lid_action === "profile" ? qsTr("Uses this power source’s hibernate delay, even with inactivity set to Never. Ignored while docked.") : qsTr("Ignored while docked or using an external display."))
-        color: (pane.controller.suspendPolicyState.lid || {}).error ? Ui.Theme.warning : Ui.Theme.mutedText
-        wrapMode: Text.Wrap
-        elide: Text.ElideNone
     }
 
     Ui.ToggleRow {
         objectName: "suspendSameProfile"
         Layout.fillWidth: true
-        Layout.preferredHeight: 54
+        Layout.preferredHeight: implicitHeight
         title: qsTr("Use the same settings")
         subtitle: qsTr("On battery and plugged in")
         checked: pane.controller.suspendPolicyDraft.same_profile
@@ -122,16 +114,8 @@ Ui.DetailColumnCard {
                 color: pane.controller.suspendPolicyState.active_profile === profile.modelData ? Ui.Theme.accent : Ui.Theme.text
             }
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Ui.Theme.spacingSm
-
-                Ui.FieldLabel {
-                    Layout.fillWidth: true
-                    text: qsTr("Suspend after inactivity")
-                    wrapMode: Text.Wrap
-                    elide: Text.ElideNone
-                }
+            Ui.SettingRow {
+                title: qsTr("Suspend after inactivity")
 
                 Ui.DropDownList {
                     objectName: "suspendDelay-" + profile.modelData
@@ -146,16 +130,8 @@ Ui.DetailColumnCard {
                 }
             }
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Ui.Theme.spacingSm
-
-                Ui.FieldLabel {
-                    Layout.fillWidth: true
-                    text: qsTr("Time suspended before hibernating")
-                    wrapMode: Text.Wrap
-                    elide: Text.ElideNone
-                }
+            Ui.SettingRow {
+                title: qsTr("Time suspended before hibernating")
 
                 Ui.DropDownList {
                     objectName: "hibernateDelay-" + profile.modelData
@@ -211,13 +187,9 @@ Ui.DetailColumnCard {
         elide: Text.ElideNone
     }
 
-    RowLayout {
-        Layout.fillWidth: true
+    Ui.SettingRow {
+        title: qsTr("Hibernate at or below")
         visible: pane.criticalPolicy.enabled
-        Ui.FieldLabel {
-            Layout.fillWidth: true
-            text: qsTr("Hibernate at or below")
-        }
         Ui.DropDownList {
             objectName: "criticalBatteryPercent"
             Layout.preferredWidth: 116
@@ -238,13 +210,9 @@ Ui.DetailColumnCard {
         }
     }
 
-    RowLayout {
-        Layout.fillWidth: true
+    Ui.SettingRow {
+        title: qsTr("Warning period")
         visible: pane.criticalPolicy.enabled
-        Ui.FieldLabel {
-            Layout.fillWidth: true
-            text: qsTr("Warning period")
-        }
         Ui.DropDownList {
             objectName: "criticalBatteryGrace"
             Layout.preferredWidth: 116

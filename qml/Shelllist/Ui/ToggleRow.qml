@@ -14,7 +14,8 @@ ActionControl {
     property bool wrapTitle: false
 
     width: parent ? parent.width : 0
-    implicitHeight: Math.max(Theme.controlHeight, labels.implicitHeight + Theme.spacingSm)
+    implicitHeight: Math.max(56, labels.implicitHeight + 2 * Theme.spacingSm)
+    Layout.minimumHeight: 56
     radius: Theme.controlRadius
     color: area.pressed ? Theme.pressed : (area.containsMouse || highlighted ? Theme.hover : "transparent")
     border.width: 0
@@ -40,7 +41,7 @@ ActionControl {
                 text: UiText.highlightHotkey(row.title, row.hotkey)
                 textFormat: Text.RichText
                 color: row.tone === "danger" ? Theme.danger : (row.tone === "active" ? Theme.active : (row.tone === "warning" ? Theme.warning : Theme.text))
-                font.pixelSize: Theme.fontSizeLabel
+                font.pixelSize: Theme.fontSizeHeading
             }
 
             ThemeText {
@@ -49,7 +50,7 @@ ActionControl {
                 visible: row.showSubtitle && row.subtitle.length > 0
                 text: row.subtitle
                 color: Theme.subtleText
-                font.pixelSize: Theme.fontSizeCaption
+                font.pixelSize: Theme.fontSizeLabel
                 elide: Text.ElideRight
             }
         }

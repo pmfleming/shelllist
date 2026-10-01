@@ -28,3 +28,17 @@ Validation: strict lint and 302 Qt passes, including avatar/selection states,
 disabled action cues, unselected trailing-area pointer selection, keyboard
 navigation and domain workflows. The previously documented Displays engine
 teardown advisory appeared again; there were no failed or skipped cases.
+
+## Item 5 — tonal containment
+
+Detail cards now use opaque Surface Container Low without borders or shadows.
+Disclosures are full-width, minimum-56px list items with trailing expand icons;
+children/drafts stay alive and attention still forces content open. Shared toggle
+rows have a 56px minimum with larger labels/supporting text. A passive SettingRow
+places labels/supporting text beside native controls, with a faint within-card
+separator; Sleep policies adopts it without changing acknowledgement or safety
+behavior. Form inputs retain their outlines. Spacing tokens are 4/8/12/16/24/32.
+
+Validation: strict lint and 303 Qt passes, including light/dark opaque card tones,
+wrapped setting bounds, draft retention, attention disclosure and existing power
+policy/navigation tests.

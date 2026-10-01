@@ -26,6 +26,7 @@ Item {
     // cannot override foreground/background pairs and invalidate their contrast.
     readonly property color window: material.surface
     readonly property color surface: material.surfaceContainerLow
+    readonly property color surfaceContainer: material.surfaceContainer
     readonly property color surfaceRaised: material.surfaceContainerHigh
     readonly property color input: material.surfaceContainerHighest
     readonly property color text: material.surfaceText
@@ -79,7 +80,9 @@ Item {
     readonly property int spacingXs: 4
     readonly property int spacingSm: 8
     readonly property int spacingMd: 12
-    readonly property int spacingLg: 18
+    readonly property int spacingLg: 16
+    readonly property int spacingXl: 24
+    readonly property int spacingXxl: 32
     readonly property int minimumVerticalSpacing: Math.ceil(fontSizeLabel / 2)
     readonly property int contentMargin: 14
     readonly property int contentVerticalMargin: 24

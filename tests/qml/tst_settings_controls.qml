@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import QtTest
 import Quickshell
 import Shelllist.Ui as Ui
@@ -10,6 +11,29 @@ TestCase {
     width: 500
     height: 200
 
+    Component {
+        id: disclosureFactory
+        Ui.DisclosureSection {
+            objectName: "advanced"
+            width: 420
+            title: "Advanced settings"
+            Ui.DetailColumnCard {
+                objectName: "tonalCard"
+                Layout.fillWidth: true
+                title: "Settings"
+                Ui.SettingRow {
+                    objectName: "settingRow"
+                    title: "A setting with a long descriptive name"
+                    subtitle: "Supporting information remains visible when the label wraps."
+                    Ui.TextField {
+                        objectName: "retainedDraft"
+                        Layout.preferredWidth: 116
+                        text: "draft"
+                    }
+                }
+            }
+        }
+    }
     Component {
         id: sliderFactory
         Ui.PercentageSlider {
@@ -62,6 +86,41 @@ TestCase {
         finished.target = null;
         selection.target = null;
         Quickshell.environment = ({});
+        Ui.Theme.previewColorScheme = Qt.Unknown;
+    }
+    function test_tonalDisclosureRetainsDraftsAndRevealsAttention(): void {
+        const disclosure = createTemporaryObject(disclosureFactory, this);
+        const toggle = findChild(disclosure, "advancedToggle");
+        const card = findChild(disclosure, "tonalCard");
+        const row = findChild(disclosure, "settingRow");
+        const draft = findChild(disclosure, "retainedDraft");
+        verify(!draft.visible);
+        verify(toggle.height >= 56);
+        compare(toggle.border.width, 0);
+        toggle.forceActiveFocus();
+        keyClick(Qt.Key_Return);
+        verify(disclosure.open && draft.visible);
+        draft.text = "unsaved";
+        toggle.forceActiveFocus();
+        keyClick(Qt.Key_Return);
+        verify(!draft.visible);
+        disclosure.attention = true;
+        verify(disclosure.open && draft.visible);
+        toggle.Accessible.pressAction();
+        verify(disclosure.open);
+        compare(draft.text, "unsaved");
+        for (const scheme of [Qt.Light, Qt.Dark]) {
+            Ui.Theme.previewColorScheme = scheme;
+            compare(card.border.width, 0);
+            compare(card.color.a, 1);
+            compare(String(card.color), String(Ui.Theme.surface));
+            verify(String(card.color) !== String(Ui.Theme.window));
+        }
+        disclosure.width = 320;
+        wait(0);
+        verify(row.height >= 56);
+        verify(draft.mapToItem(row, draft.width, 0).x <= row.width);
+        verify(card.height >= row.height);
     }
     function test_sliderFeedbackDoesNotTrailItsValue(): void {
         const slider = createTemporaryObject(sliderFactory, this);
