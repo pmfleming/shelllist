@@ -59,6 +59,14 @@ ChooserSurface {
             chooserController.dismissNavigation();
     }
 
+    ShortcutHints {
+        objectName: "shortcutHints"
+        scope: surface
+        navigation: surface.detailsNavigation
+        enabled: surface.keyboardWorkflow && surface.chooserController.uiActive && !surface.chooserController.uiSuspending && surface.navigationEnabled && !surface.chooserController.navigationBlocked
+        tabsEnabled: surface.detailsTabEnabled
+    }
+
     ChooserShortcuts {
         controller: surface.chooserController
         navigationEnabled: surface.navigationEnabled

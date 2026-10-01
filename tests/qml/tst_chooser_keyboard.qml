@@ -349,6 +349,148 @@ DaemonTestCase {
         keyClick(Qt.Key_1, Qt.AltModifier);
         compare(surface.headerCalls, 2, "closed details cannot dispatch shortcuts");
     }
+    function test_modifierHintsRequireHoldAndFollowActualShortcutSlots_data() {
+        return [{tag: "two-rows", inlineActions: false}, {tag: "inline", inlineActions: true}];
+    }
+    function test_modifierHintsRequireHoldAndFollowActualShortcutSlots(data) {
+        const surface = makeSurface();
+        surface.compactHeader = data.inlineActions;
+        enterDetails(surface);
+        surface.listItem.focusSearch();
+        const hints = findChild(surface, "shortcutHints");
+        const input = findChild(surface.listItem, "fieldInput");
+        tryVerify(() => hints.listening);
+        tryCompare(findChild(surface, "testDetailsHeader"), "useInlineActions", data.inlineActions);
+        wait(0);
+        tryCompare(surface.detailsNavigation.headerButtons, "length", 2);
+        const first = surface.detailsNavigation.headerButtons[0];
+        const second = surface.detailsNavigation.headerButtons[1];
+        let firstBadge = findChild(first, "headerShortcutBadge");
+        let secondBadge = findChild(second, "headerShortcutBadge");
+        const tabBadge = findChild(surface.detailsItem, "tabShortcutBadge");
+        verify(firstBadge !== null && secondBadge !== null && tabBadge !== null);
+        verify(!firstBadge.visible && !tabBadge.visible);
+        compare(input.Keys.forwardTo.length, 1);
+        compare(input.Keys.forwardTo[0], hints);
+        keyPress(Qt.Key_Alt);
+        verify(hints.altDown, "Alt press is observed from the native editor");
+        wait(100);
+        verify(!firstBadge.visible);
+        keyRelease(Qt.Key_Alt);
+        wait(200);
+        verify(!firstBadge.visible, "a tap cannot queue a later reveal");
+        keyPress(Qt.Key_Alt);
+        tryCompare(firstBadge, "visible", true);
+        compare(firstBadge.text, "1");
+        compare(secondBadge.text, "2");
+        verify(input.activeFocus);
+        surface.headerEnabled = false;
+        wait(0);
+        firstBadge = findChild(surface.detailsNavigation.headerButtons[0], "headerShortcutBadge");
+        secondBadge = findChild(surface.detailsNavigation.headerButtons[1], "headerShortcutBadge");
+        verify(secondBadge.visible, "disabled actions retain their number");
+        compare(secondBadge.text, "2");
+        keyClick(Qt.Key_2, Qt.AltModifier);
+        compare(surface.headerCalls, 0);
+        keyRelease(Qt.Key_Alt);
+        verify(!firstBadge.visible);
+        surface.headerEnabled = true;
+        wait(0);
+        firstBadge = findChild(surface.detailsNavigation.headerButtons[0], "headerShortcutBadge");
+        keyPress(Qt.Key_Alt);
+        tryCompare(firstBadge, "visible", true);
+        keyClick(Qt.Key_1, Qt.AltModifier);
+        compare(surface.headerCalls, 1);
+        verify(input.activeFocus);
+        keyRelease(Qt.Key_Alt);
+        verify(!firstBadge.visible);
+
+        keyPress(Qt.Key_Control);
+        tryCompare(tabBadge, "visible", true);
+        compare(tabBadge.text, "Ctrl+Tab");
+        keyPress(Qt.Key_Shift, Qt.ControlModifier);
+        compare(tabBadge.text, "Ctrl+Shift+Tab");
+        keyRelease(Qt.Key_Shift, Qt.ControlModifier);
+        keyRelease(Qt.Key_Control);
+        verify(!tabBadge.visible);
+        keyClick(Qt.Key_X);
+        verify(input.text.includes("x"), "observing modifiers must not consume native editing");
+
+        keyPress(Qt.Key_Alt);
+        tryCompare(firstBadge, "visible", true);
+        const choice = findChild(surface.detailsItem, "choice");
+        choice.forceActiveFocus();
+        choice.popup.open();
+        tryCompare(choice.popup, "visible", true);
+        verify(!firstBadge.visible && !hints.altDown, "native menus clear modifier hints");
+        keyRelease(Qt.Key_Alt);
+        choice.popup.close();
+        surface.listItem.focusSearch();
+        keyPress(Qt.Key_Alt);
+        wait(100);
+        surface.chooserController.uiActive = false;
+        wait(300);
+        verify(!hints.altDown && !firstBadge.visible, "deactivation cancels the pending timer");
+        keyRelease(Qt.Key_Alt);
+        surface.chooserController.uiActive = true;
+        surface.listItem.focusSearch();
+        keyPress(Qt.Key_Alt);
+        tryCompare(firstBadge, "visible", true);
+        surface.modal = true;
+        verify(!firstBadge.visible);
+        keyRelease(Qt.Key_Alt);
+        surface.modal = false;
+        surface.listItem.focusSearch();
+        keyPress(Qt.Key_Alt);
+        keyPress(Qt.Key_Control, Qt.AltModifier);
+        wait(300);
+        verify(!firstBadge.visible && !tabBadge.visible, "Ctrl+Alt/AltGr is not an access-key request");
+        keyRelease(Qt.Key_Control, Qt.AltModifier);
+        keyRelease(Qt.Key_Alt);
+        keyPress(Qt.Key_Alt);
+        tryCompare(firstBadge, "visible", true);
+        testCase.forceActiveFocus();
+        verify(!firstBadge.visible && !hints.altDown);
+        compare(input.Keys.forwardTo.length, 0, "focus loss restores key forwarding");
+        keyRelease(Qt.Key_Alt);
+        surface.listItem.focusSearch();
+        wait(300);
+        verify(!firstBadge.visible);
+        surface.chooserController.closeDetails();
+        keyPress(Qt.Key_Alt);
+        wait(300);
+        verify(!hints.showActions && !hints.showTabs);
+        keyRelease(Qt.Key_Alt);
+    }
+
+    Component {
+        id: keyReceiverFactory
+        Item {
+            property int keys: 0
+            Keys.onPressed: function (event) {
+                if (event.key === Qt.Key_Z)
+                    keys++;
+                event.accepted = false;
+            }
+        }
+    }
+    function test_modifierObserverPreservesExistingForwarding() {
+        const surface = makeSurface();
+        const input = findChild(surface.listItem, "fieldInput");
+        const receiver = createTemporaryObject(keyReceiverFactory, testCase);
+        testCase.forceActiveFocus();
+        input.Keys.forwardTo = [receiver];
+        surface.listItem.focusSearch();
+        compare(input.Keys.forwardTo.length, 2);
+        compare(input.Keys.forwardTo[1], receiver);
+        keyClick(Qt.Key_Z);
+        compare(receiver.keys, 1);
+        verify(input.text.includes("z"));
+        testCase.forceActiveFocus();
+        compare(input.Keys.forwardTo.length, 1);
+        compare(input.Keys.forwardTo[0], receiver);
+    }
+
     function test_tabLeavesEditorWithoutReplayingActivation() {
         const surface = makeSurface();
         enterDetails(surface);

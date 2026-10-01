@@ -49,7 +49,15 @@ Other header routes remain: F5 refreshes, Alt+Enter in search invokes its traili
 action, and Ctrl+Shift+S captures Applications, Bluetooth, Battery or Activity.
 Activity's Today action uses Ctrl+T; Escape returns to its overview. Bluetooth radio
 power and list options remain reachable in its adapter settings, including
-when the device list is empty. No help overlay or automatic label was added.
+when the device list is empty.
+
+The owner-approved Material roadmap adds explicit modifier-held hints: hold Alt
+for 250ms to show Alt+1…9 numbers on the current header actions; hold Ctrl for
+250ms to show Ctrl+Tab at the existing tab bar (Ctrl+Shift+Tab while Shift is held).
+Disabled header actions keep their number. Release, focus/window loss, native
+menus, blocked navigation or surface deactivation clear the hints immediately.
+Ctrl+Alt/AltGr does not reveal them. Badges are decorative, take no focus and
+never appear on hover, focus or first open. No F1 or general help overlay is added.
 
 ## Shared boundaries
 

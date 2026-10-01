@@ -77,6 +77,8 @@ ScrollableListView 1.0 list/ScrollableListView.qml
 SegmentedControl 1.0 SegmentedControl.qml
 SettingRow 1.0 SettingRow.qml
 ShelllistGlobalShortcut 1.0 ShelllistGlobalShortcut.qml
+internal ShortcutBadge ShortcutBadge.qml
+internal ShortcutHints ShortcutHints.qml
 SignalIcon 1.0 SignalIcon.qml
 SplitChooserLayout 1.0 SplitChooserLayout.qml
 SurfaceViewport 1.0 SurfaceViewport.qml

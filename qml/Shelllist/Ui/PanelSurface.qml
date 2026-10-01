@@ -40,6 +40,13 @@ ChooserSurface {
         chooserController.cycleDetailsTab(backwards);
         navigation.focusContent(true);
     }
+    ShortcutHints {
+        objectName: "shortcutHints"
+        scope: surface
+        navigation: surface.detailsNavigation
+        enabled: surface.chooserController.uiActive && !surface.chooserController.uiSuspending && !surface.chooserController.navigationBlocked
+        tabsEnabled: true
+    }
     DetailsNavigation {
         id: navigation
         anchors.fill: parent

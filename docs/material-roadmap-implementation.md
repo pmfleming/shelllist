@@ -42,3 +42,23 @@ behavior. Form inputs retain their outlines. Spacing tokens are 4/8/12/16/24/32.
 Validation: strict lint and 303 Qt passes, including light/dark opaque card tones,
 wrapped setting bounds, draft retention, attention disclosure and existing power
 policy/navigation tests.
+
+## Item 8 — explicit modifier-held shortcut hints
+
+Hold Alt for 250ms to reveal numbered header keycaps; hold Ctrl for a tab-bar
+Ctrl+Tab cue, updated to Ctrl+Shift+Tab while Shift is held. Numbers come from the
+same ordered button list that dispatches Alt+1…9, including disabled slots.
+Keycaps are decorative and never steal focus or activate a control. Modifier
+observation preserves native editing and any existing key-forwarding targets.
+Release, focus/window loss, native menus, blocked navigation and deactivation
+clear hints; Ctrl+Alt/AltGr chords are excluded. Single-panel tab bars are covered
+as well as split inspectors. No hover/focus/open-triggered labels or F1 help.
+
+Validation: 307 Qt passes, strict QML lint, native runtime smoke and the full
+sibling-aware co-development gate pass. Tests cover short/long holds, inline and
+two-row action numbering, disabled slots, native text input, existing forwarding,
+menus/modals, timer cancellation, focus loss and Battery's bottom tab bar.
+Logs: `/tmp/material-item8-focused.txt`, `/tmp/material-roadmap-smoke.txt` and
+`/tmp/material-roadmap-full-gate.txt`. The offscreen window-mask advisory and the
+intermittent, previously documented Displays teardown advisory remain separate
+from live compositor/IME/screen-reader acceptance. No service was deployed.

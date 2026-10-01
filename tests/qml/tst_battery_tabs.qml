@@ -4,13 +4,15 @@ import QtQuick
 import QtTest
 import Shelllist.Battery as Battery
 
-TestCase {
+DaemonTestCase {
     id: testCase
     name: "BatteryTabs"
     when: windowShown
     visible: true
     width: 560
     height: 760
+
+    function init(): void { failOnWarning(/.*/); }
 
     Component {
         id: panelComponent
@@ -40,6 +42,25 @@ TestCase {
         verify(panel !== null);
         verify(waitForRendering(panel));
         return panel;
+    }
+
+    function test_panelTabHintsStayAtTheBottomBar() {
+        const panel = makePanel();
+        panel.controller.uiActive = true;
+        const tabs = findChild(panel, "batteryViewTabs");
+        const badge = findChild(tabs, "tabShortcutBadge");
+        verify(badge !== null);
+        verify(!badge.visible);
+        tabs.forceActiveFocus();
+        keyPress(Qt.Key_Control);
+        tryCompare(badge, "visible", true);
+        compare(badge.text, "Ctrl+Tab");
+        const before = panel.controller.viewTab;
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        verify(panel.controller.viewTab !== before);
+        keyRelease(Qt.Key_Control);
+        verify(!badge.visible);
+        panel.controller.uiActive = false;
     }
 
     function test_profileSelectionSupportsKeyboardAndAccessibility() {
