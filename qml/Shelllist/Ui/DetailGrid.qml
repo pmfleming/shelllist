@@ -14,7 +14,6 @@ Grid {
     rowSpacing: Theme.spacingMd
 
     Repeater {
-        id: fieldRepeater
 
         model: grid.entries
 

@@ -102,7 +102,6 @@ Ui.DetailFlickable {
         objectName: "clipboardInfoCard"
         visible: cards.selectedTab === "info"
         title: qsTr("Info")
-        height: implicitHeight
 
         Ui.DetailGrid {
             objectName: "clipboardMetadata"

@@ -18,9 +18,6 @@ Ui.DetailColumnCard {
     readonly property var criticalState: controller.suspendPolicyState.critical_battery || ({})
     objectName: "automaticSuspendCard"
     title: qsTr("Sleep policies")
-    verticalContentPadding: Ui.Theme.spacingMd
-    headingSpacing: Ui.Theme.spacingMd
-    height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
 
     function delayOptions(current: int): var {
         const minutes = [0, 5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240, 360, 480, 720, 1440];

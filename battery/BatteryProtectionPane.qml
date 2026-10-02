@@ -19,9 +19,6 @@ Column {
 
     Ui.DetailColumnCard {
         objectName: "batteryProtectionCard"
-        verticalContentPadding: Ui.Theme.spacingMd
-        headingSpacing: Ui.Theme.spacingMd
-        height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
         title: qsTr("Charging & protection")
 
         Ui.FieldLabel {

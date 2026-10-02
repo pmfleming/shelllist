@@ -9,7 +9,6 @@ Rectangle {
     readonly property bool searchFocused: search.inputActiveFocus
     property string placeholder: "Search…"
     property string icon: ""
-    property bool signalIcon: false
     property bool powered: false
     property bool refreshing: false
     property bool powerEnabled: true

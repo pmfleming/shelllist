@@ -9,9 +9,6 @@ Ui.DetailColumnCard {
 
     required property BatteryController controller
     objectName: "batteryLevelsCard"
-    verticalContentPadding: Ui.Theme.spacingMd
-    headingSpacing: Ui.Theme.spacingMd
-    height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
     title: qsTr("Battery levels & actions")
 
     Repeater {

@@ -10,8 +10,6 @@ Ui.DetailColumnCard {
 
     required property BatteryController controller
     objectName: "powerSuspendCard"
-    verticalContentPadding: Ui.Theme.spacingMd
-    height: contentImplicitHeight + 2 * verticalContentPadding
 
     RowLayout {
         Layout.fillWidth: true

@@ -41,7 +41,6 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailColumnCard {
-        height: implicitHeight
         visible: page.selectedTab === "settings"
         title: qsTr("Device settings")
         BluetoothDeviceActions {
@@ -53,7 +52,6 @@ Ui.DetailFlickable {
 
     Ui.DetailColumnCard {
         objectName: "devicePolicy"
-        height: implicitHeight
         visible: page.selectedTab === "settings"
         title: qsTr("Connection and pairing")
         BluetoothDevicePolicy {

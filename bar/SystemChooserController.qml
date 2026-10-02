@@ -100,16 +100,25 @@ Ui.ProviderChooserController {
             return barController.adjustAudio(actionId === "quieter" ? -5 : 5);
         }
         if (kind === "media") {
-            const seek = actionId === "rewind" || actionId === "forward";
-            return barController.backend.mediaOperationFor(id, seek ? "seek" : actionId, seek ? (actionId === "rewind" ? -30 : 30) : null);
+            const offset = actionId === "rewind" ? -30 : actionId === "forward" ? 30 : null;
+            return barController.backend.mediaOperationFor(id, offset === null ? actionId : "seek", offset);
         }
         const item = uniqueTrayItem(id);
         if (!item)
             return false;
-        if (actionId === "menu") trayMenuRequested(item);
-        else if (actionId === "activate") item.activate();
-        else if (actionId === "secondary") item.secondaryActivate();
-        else item.scroll(actionId === "scroll-up" ? 15 : -15, false);
+        switch (actionId) {
+        case "menu":
+            trayMenuRequested(item);
+            break;
+        case "activate":
+            item.activate();
+            break;
+        case "secondary":
+            item.secondaryActivate();
+            break;
+        default:
+            item.scroll(actionId === "scroll-up" ? 15 : -15, false);
+        }
         return true;
     }
 }

@@ -18,7 +18,6 @@ AdvancedSettingsFlickable {
         spacing: securityFlick.settings.sectionSpacing
         DetailColumnCard {
             objectName: "wifiSecurityControls"
-            height: implicitHeight
             title: qsTr("Security & privacy")
             Column {
                 id: securityControls

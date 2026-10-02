@@ -115,7 +115,6 @@ Rectangle {
     }
 
     FlatIconButton {
-        id: detailsButton
         objectName: "resultDetailsAction"
         visible: row.detailsActionVisible && row.selected
         z: 2

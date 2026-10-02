@@ -98,7 +98,6 @@ Ui.ProviderChooserSurface {
                 spacing: Ui.Theme.spacingMd
                 Ui.DetailColumnCard {
                     visible: content.controller.kind === "audio" && content.controller.direction === "output"
-                    height: implicitHeight
                     title: qsTr("Output volume")
                     RowLayout {
                         Layout.fillWidth: true
@@ -128,7 +127,6 @@ Ui.ProviderChooserSurface {
                 Ui.DetailColumnCard {
                     objectName: "trayApplication"
                     visible: content.controller.kind === "tray"
-                    height: implicitHeight
                     title: qsTr("Application")
                     Ui.ThemeText {
                         Layout.fillWidth: true
@@ -158,7 +156,6 @@ Ui.ProviderChooserSurface {
                 }
                 Ui.DetailColumnCard {
                     objectName: "mediaPlayback"
-                    height: implicitHeight
                     visible: content.controller.kind === "media"
                     title: qsTr("Now playing")
                     Ui.ThemeText {

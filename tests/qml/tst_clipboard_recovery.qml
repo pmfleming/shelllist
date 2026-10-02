@@ -99,6 +99,7 @@ DaemonTestCase {
         calls = [];
         pane.actionTriggered("edit"); // Plain text is edited in its card, not an external image/link action.
         pane.actionTriggered("paste-as-file");
+        pane.actionTriggered("unknown");
         compare(calls.length, 0);
         pane.actionTriggered("copy");
         compare(calls.length, 1);

@@ -15,7 +15,6 @@ ColumnLayout {
     spacing: Theme.spacingSm
 
     Repeater {
-        id: actionRepeater
         model: list.actions
 
         delegate: ToggleRow {

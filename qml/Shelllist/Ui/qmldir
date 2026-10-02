@@ -66,7 +66,6 @@ PopoverGeometry 1.0 PopoverGeometry.qml
 PopupWindowHost 1.0 PopupWindowHost.qml
 PromptDialog 1.0 PromptDialog.qml
 PulsingLabel 1.0 PulsingLabel.qml
-RefreshTile 1.0 RefreshTile.qml
 ResultLabel 1.0 ResultLabel.qml
 ResultListFrame 1.0 ResultListFrame.qml
 ResultNavigation 1.0 ResultNavigation.qml

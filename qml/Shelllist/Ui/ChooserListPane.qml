@@ -18,7 +18,6 @@ ColumnLayout {
     property string emptyIcon: ""
     property string placeholder: "Search…"
     property string icon: ""
-    property string headerIcon: icon
     property bool signalIcon: false
     property bool powered: false
     property bool refreshing: false
@@ -102,8 +101,7 @@ ColumnLayout {
         id: header
         uiScale: 1
         placeholder: pane.placeholder
-        icon: pane.headerIcon
-        signalIcon: pane.signalIcon
+        icon: pane.icon
         filterText: pane.filterText
         powered: pane.powered
         refreshing: pane.refreshing

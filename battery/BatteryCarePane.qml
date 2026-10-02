@@ -18,9 +18,6 @@ Column {
 
     Ui.DetailColumnCard {
         objectName: "batteryChargeNotificationCard"
-        verticalContentPadding: Ui.Theme.spacingMd
-        headingSpacing: Ui.Theme.spacingMd
-        height: contentImplicitHeight + headingHeight + headingSpacing + 2 * verticalContentPadding
         title: qsTr("Charge notification")
 
         Ui.ToggleRow {

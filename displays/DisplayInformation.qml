@@ -101,7 +101,6 @@ Ui.DetailFlickable {
             required property var modelData
             objectName: modelData.name
             title: modelData.title
-            height: implicitHeight
             visible: modelData.entries.length > 0
 
             GridLayout {

@@ -26,7 +26,7 @@ Item {
     // the previous keyed model (or the unfiltered baseline for the first edit)
     // instead of ranking the same catalog synchronously on the UI thread.
     readonly property var visibleResults: fuzzyQuery ? appliedSearchGeneration === searchGeneration ? rustRankedResults : rustRankedResults.length > 0 ? rustRankedResults : baselineResults : baselineResults
-    readonly property var visibleModel: visibleListModel
+    readonly property KeyedListModel visibleModel: visibleListModel
     readonly property int count: visibleResults.length
 
     signal staleBatchIgnored(string providerId, string queryId)

@@ -18,7 +18,7 @@ ChooserController {
 
     readonly property bool sharedScreenshotInFlight: sharedScreenshotCapture.inFlight
     readonly property var filteredResults: results.visibleResults
-    readonly property var filteredResultsModel: results.visibleModel
+    readonly property Core.KeyedListModel filteredResultsModel: results.visibleModel
     readonly property var selectedResult: results.selected()
     lastSearchRankLatencyMs: results.lastSearchRankLatencyMs
     lastCatalogToModelLatencyMs: results.lastCatalogToModelLatencyMs

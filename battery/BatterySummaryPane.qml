@@ -22,8 +22,6 @@ Column {
 
     Ui.DetailColumnCard {
         objectName: "powerModeCard"
-        verticalContentPadding: Ui.Theme.spacingMd
-        height: contentImplicitHeight + 2 * verticalContentPadding
 
         ColumnLayout {
             Layout.fillWidth: true

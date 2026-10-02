@@ -70,17 +70,23 @@ Ui.ActionDetailsPane {
         }
     ]
 
-    function triggerAction(actionId) {
-        if (actionId === "paste") {
+    function triggerAction(actionId: string): void {
+        switch (actionId) {
+        case "paste":
             controller.pasteSelected();
-        } else if (actionId === "copy") {
+            break;
+        case "copy":
             controller.copySelected();
-        } else if (actionId === "paste-as-file" && image) {
-            controller.pasteImageAsFile();
-        } else if (actionId === "edit" && image) {
-            controller.annotateImage();
-        } else if (actionId === "edit" && link) {
-            controller.openUrl();
+            break;
+        case "paste-as-file":
+            if (image)
+                controller.pasteImageAsFile();
+            break;
+        case "edit":
+            if (image)
+                controller.annotateImage();
+            else if (link)
+                controller.openUrl();
         }
     }
 

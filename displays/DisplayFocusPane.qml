@@ -26,7 +26,6 @@ Ui.DetailFlickable {
         color: page.controller.focusState.error ? Ui.Theme.warning : Ui.Theme.mutedText
     }
     Ui.DetailColumnCard {
-        height: implicitHeight
         title: qsTr("Pointer and window focus")
         Repeater {
             model: Focus.groups()[0].settings.filter(entry => page.commonKeys.includes(entry.key))
