@@ -12,9 +12,9 @@ Item {
     readonly property var primaryActions: Core.Model.visibleActions(actions, "primary")
     readonly property var secondaryActions: secondaryVisible ? Core.Model.visibleActions(actions, "toolbar") : []
     readonly property var primaryAction: primaryActions.length ? primaryActions[0] : null
-    readonly property int controlHeight: Math.round(Theme.controlHeight * uiScale)
+    readonly property int controlHeight: Math.round(Theme.secondaryActionHeight * uiScale)
     readonly property int gap: Math.round(Theme.spacingSm * uiScale)
-    readonly property int primaryWidth: primaryAction ? Math.min(Math.round(180 * uiScale), Math.max(0, width - (secondaryActions.length ? controlHeight + gap : 0))) : 0
+    readonly property int primaryWidth: primaryAction ? Math.min(Math.max(Theme.primaryActionMinWidth * uiScale, primaryButton.implicitWidth), Theme.primaryActionMaxWidth * uiScale, Math.max(0, width - (secondaryActions.length ? controlHeight + gap : 0))) : 0
     readonly property int shownSecondaryCount: fittingSecondaryCount()
     readonly property var shownSecondary: secondaryActions.slice(0, shownSecondaryCount)
     readonly property var overflowActions: secondaryActions.slice(shownSecondaryCount)
@@ -29,11 +29,20 @@ Item {
         return result;
     }
     signal triggered(string actionId)
-    implicitHeight: primaryAction || secondaryActions.length ? controlHeight : 0
+    implicitHeight: primaryAction ? Math.round(Theme.primaryActionHeight * uiScale) : secondaryActions.length ? controlHeight : 0
     height: implicitHeight
 
+    FontMetrics {
+        id: labelMetrics
+        font.family: Theme.fontFamily
+        font.pixelSize: Math.round(Theme.fontSizeBody * row.uiScale)
+    }
     function secondaryWidth(action): real {
-        return action.icon ? controlHeight : Math.round(104 * uiScale);
+        return action.icon ? controlHeight : Math.ceil(Math.min(Theme.secondaryActionMaxWidth * uiScale, Math.max(controlHeight, labelMetrics.advanceWidth(action.label || "") + Theme.actionHorizontalPadding * 2 * uiScale)));
+    }
+    function actionTone(action, primary): string {
+        const tone = (action.presentation || {}).tone || (action.role === "destructive" ? "danger" : "normal");
+        return tone === "danger" || tone === "warning" ? tone : primary ? "accent" : "normal";
     }
     function fittingSecondaryCount(): int {
         let used = primaryWidth;
@@ -62,14 +71,17 @@ Item {
             objectName: "detailAction:" + (row.primaryAction ? row.primaryAction.id : "")
             visible: !!row.primaryAction
             width: row.primaryWidth
-            height: row.controlHeight
+            height: implicitHeight
+            sizeRole: "primary"
+            uiScale: row.uiScale
+            iconSize: Math.round(Theme.iconSizeSmall * uiScale)
             anchors.verticalCenter: parent.verticalCenter
             activeFocusOnTab: false
             label: row.primaryAction ? row.primaryAction.label : ""
             icon: row.primaryAction ? row.primaryAction.icon || "" : ""
             iconOnly: false
             enabled: !!row.primaryAction && row.primaryAction.enabled !== false
-            tone: row.primaryAction ? (row.primaryAction.presentation || {}).tone || "normal" : "normal"
+            tone: row.primaryAction ? row.actionTone(row.primaryAction, true) : "normal"
             onClicked: row.triggered(row.primaryAction.id)
         }
         Repeater {
@@ -80,12 +92,15 @@ Item {
                 objectName: "detailAction:" + modelData.id
                 width: row.secondaryWidth(modelData)
                 height: row.controlHeight
+                sizeRole: "secondary"
+                uiScale: row.uiScale
+                iconSize: Math.round(Theme.iconSizeSmall * uiScale)
                 anchors.verticalCenter: actionLine.verticalCenter
                 activeFocusOnTab: false
                 label: modelData.label || ""
                 icon: modelData.icon || ""
                 enabled: modelData.enabled !== false
-                tone: (modelData.presentation || {}).tone || "normal"
+                tone: row.actionTone(modelData, false)
                 onClicked: row.triggered(modelData.id)
             }
         }
@@ -98,6 +113,8 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             activeFocusOnTab: false
             label: qsTr("More actions")
+            sizeRole: "secondary"
+            uiScale: row.uiScale
             icon: "more_horiz"
             onClicked: overflowMenu.open()
             Controls.Menu {

@@ -9,6 +9,11 @@ ActionControl {
     property bool iconOnly: icon.length > 0
     property int iconSize: Theme.iconSizeSmall
     property string hotkey: ""
+    // Opt-in surface hierarchy; ordinary content buttons keep their sizing.
+    property string sizeRole: "normal"
+    property real uiScale: 1
+    readonly property int labelPixelSize: Math.round(Theme.fontSizeBody * uiScale)
+    readonly property int horizontalPadding: Math.round(Theme.actionHorizontalPadding * uiScale)
     // Transitional nonvisual metadata; no tooltip or focus label is rendered.
     property string toolTip: ""
     Accessible.description: toolTip
@@ -22,7 +27,15 @@ ActionControl {
     readonly property bool pressed: enabled && interactive && (area.pressed || keyboardPressed)
     readonly property string interactionState: !enabled || !interactive ? "disabled" : (pressed ? "pressed" : (hovered || highlighted ? "highlighted" : "flat"))
 
-    implicitHeight: Theme.controlHeight
+    implicitHeight: Math.round((sizeRole === "primary" ? Theme.primaryActionHeight : sizeRole === "secondary" ? Theme.secondaryActionHeight : Theme.controlHeight) * uiScale)
+    implicitWidth: iconOnly ? implicitHeight : Math.ceil(labelMetrics.advanceWidth) + horizontalPadding * 2 + (icon.length ? iconSize + Theme.spacingSm : 0)
+    TextMetrics {
+        id: labelMetrics
+        text: control.label
+        font.family: Theme.fontFamily
+        font.pixelSize: control.labelPixelSize
+        font.weight: control.sizeRole === "primary" ? Theme.fontWeightMedium : Theme.fontWeightRegular
+    }
     radius: Math.max(0, Math.min(Math.min(width, height) / 2, shape.value))
     readonly property color stateBackgroundColor: interactionState === "pressed" ? pressedBackgroundColor : (interactionState === "highlighted" ? hoverBackgroundColor : backgroundColor)
     color: stateBackgroundColor
@@ -39,6 +52,9 @@ ActionControl {
         iconColor: control.labelColor
         iconSize: control.iconSize
         labelColor: control.labelColor
+        labelPixelSize: control.labelPixelSize
+        labelWeight: control.sizeRole === "primary" ? Theme.fontWeightMedium : Theme.fontWeightRegular
+        maximumWidth: control.sizeRole === "normal" ? -1 : Math.max(0, control.width - control.horizontalPadding * 2)
     }
 
     ExpressiveMotion {

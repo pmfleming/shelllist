@@ -31,7 +31,11 @@ TestCase {
         const secondary = findChild(row, "detailAction:share");
         compare(primary.mapToItem(row, 0, primary.height / 2).y, secondary.mapToItem(row, 0, secondary.height / 2).y);
         verify(primary.x < secondary.x);
-        row.width = 240;
+        verify(primary.height > secondary.height);
+        compare(primary.tone, "accent");
+        compare(secondary.tone, "normal");
+        verify(!primary.iconOnly);
+        row.width = 180;
         tryCompare(row, "shownSecondaryCount", 0);
         compare(row.buttons.length, 2);
         const more = findChild(row, "surfaceActionMore");

@@ -96,6 +96,12 @@ Item {
 
     readonly property int compactControlHeight: 38
     readonly property int controlHeight: 42
+    readonly property int primaryActionHeight: 48
+    readonly property int secondaryActionHeight: 38
+    readonly property int primaryActionMinWidth: 112
+    readonly property int primaryActionMaxWidth: 260
+    readonly property int secondaryActionMaxWidth: 160
+    readonly property int actionHorizontalPadding: 16
     readonly property int headerHeight: 48
     readonly property int statusHeight: 38
 
