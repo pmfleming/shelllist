@@ -14,8 +14,8 @@ Ui.ActionDetailsPane {
     contentAvailable: true
     headerHeight: Math.max(56, Math.round(64 * uiScale))
     controlHeight: actionHeight
-    icon: controller.globalSettingsOpen ? "settings" : controller.selectedResult ? controller.selectedResult.icon : "󰍹"
-    iconColor: controller.selectedOutput && !controller.selectedOutput.disabled ? Ui.Theme.active : Ui.Theme.mutedText
+    icon: controller.globalSettingsOpen ? "󰒓" : controller.selectedResult ? controller.selectedResult.icon : "󰍹"
+    iconColor: controller.globalSettingsOpen ? Ui.Theme.accent : controller.selectedOutput && !controller.selectedOutput.disabled ? Ui.Theme.active : Ui.Theme.mutedText
     title: controller.globalSettingsOpen ? qsTr("Display settings") : controller.selectedResult ? controller.selectedResult.title : qsTr("Displays")
     subtitle: controller.globalSettingsOpen ? qsTr("Focus · all monitors") : controller.selectedResult ? controller.selectedResult.subtitle : ""
     actions: controller.globalSettingsOpen ? [] : controller.detailActions

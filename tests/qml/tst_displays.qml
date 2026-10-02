@@ -4,6 +4,7 @@ import QtQuick
 import Shelllist.Displays as Displays
 import Shelllist.Ui as Ui
 import "../../displays/DisplayFocusModel.js" as Focus
+import "../../qml/Shelllist/Ui/MaterialIcons.js" as Icons
 
 DaemonTestCase {
     id: testCase
@@ -218,6 +219,8 @@ DaemonTestCase {
         c.applyDisplayPolicy(focusState());
         c.openDetails();
         waitForDetails(panel);
+        for (const glyph of ["settings", "help_outline", "chevron_right", "info"].concat(Focus.groups().map(group => group.icon)))
+            verify(Icons.name(glyph).length > 0, glyph + " uses the Material font, not literal fallback text");
         const actions = c.detailActions;
         verify(actions.find(a => a.id === "preview").icon !== actions.find(a => a.id === "identify").icon);
         verify(findChild(panel, "displayArrangementSummary").visible);
