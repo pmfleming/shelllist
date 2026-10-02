@@ -20,7 +20,6 @@ Ui.ActionDetailsPane {
     subtitle: controller.globalSettingsOpen ? qsTr("Focus · all monitors") : controller.selectedResult ? controller.selectedResult.subtitle : ""
     actions: controller.globalSettingsOpen ? [] : controller.detailActions
     subtitleWeight: Ui.Theme.fontWeightMedium
-    stackedPrimary: narrowDetails
     enabled: !controller.trial && !controller.discardPrompt && !controller.actionInFlight
     Keys.onLeftPressed: function (event) {
         if (event.modifiers !== Qt.NoModifier)

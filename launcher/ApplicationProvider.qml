@@ -27,6 +27,7 @@ Core.Provider {
     function primaryActions(application: var, busy: bool): var {
         const running = !!application.running;
         const actions = [action("activate", running ? "Focus" : "Launch", {
+                accessKey: "A",
                 icon: running ? "󰖯" : "󰐕",
                 shortcut: "Enter",
                 role: "default",
@@ -41,6 +42,7 @@ Core.Provider {
             })];
         if (application.kind === "desktop-application")
             actions.push(action("launch", "New tile", {
+                accessKey: "N",
                 icon: "󰖲",
                 shortcut: "Shift+Enter",
                 enabled: !busy,
@@ -57,6 +59,7 @@ Core.Provider {
 
     function closeAction(application: var, busy: bool): var {
         return action("close", "Close", {
+            accessKey: "C",
             icon: "󰅖",
             role: "destructive",
             enabled: !!application.running && !busy,

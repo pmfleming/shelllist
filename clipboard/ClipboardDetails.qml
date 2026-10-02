@@ -17,6 +17,7 @@ Ui.ActionDetailsPane {
     readonly property var primaryActions: [
         {
             id: binary ? "copy" : "paste",
+            accessKey: binary ? "C" : "P",
             label: binary ? "Copy" : "Paste",
             icon: binary ? "󰆏" : "󰆒",
             shortcut: "Enter",
@@ -31,6 +32,7 @@ Ui.ActionDetailsPane {
     readonly property var secondaryActions: [
         {
             id: "copy",
+            accessKey: "C",
             label: "Copy",
             icon: "󰆏",
             shortcut: "Ctrl+↵",
@@ -44,6 +46,7 @@ Ui.ActionDetailsPane {
         },
         {
             id: "paste-as-file",
+            accessKey: "F",
             label: "Paste as file",
             icon: "󰈔",
             shortcut: "Shift+↵",
@@ -57,6 +60,7 @@ Ui.ActionDetailsPane {
         },
         {
             id: "edit",
+            accessKey: "E",
             label: link ? "Open" : "Edit",
             icon: link ? "󰌷" : "󰏫",
             shortcut: "",
@@ -101,7 +105,6 @@ Ui.ActionDetailsPane {
     title: selected.title || "Clipboard entry"
     subtitle: selected.subtitle || ""
     actions: primaryActions.concat(secondaryActions)
-    actionWidth: 112
 
     Item {
         anchors.fill: parent

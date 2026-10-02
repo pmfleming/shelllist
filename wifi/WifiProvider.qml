@@ -19,6 +19,7 @@ Core.Provider {
 
     function primaryActions(ap, connecting) {
         return [Core.Model.keepOpenAction("connect", "Connect", {
+                accessKey: "C",
                 icon: "󰖩",
                 role: "default",
                 enabled: controller.actions.canConnect(ap),
@@ -28,6 +29,7 @@ Core.Provider {
                     width: 152
                 }
             }), Core.Model.keepOpenAction("cancel-connect", "Cancel", {
+                accessKey: "X",
                 icon: "󰜺",
                 role: "destructive",
                 enabled: controller.connection.requestId.length > 0,
@@ -37,6 +39,7 @@ Core.Provider {
                     width: 152
                 }
             }), Core.Model.keepOpenAction("disconnect", "Disconnect", {
+                accessKey: "D",
                 icon: "󰤭",
                 role: "destructive",
                 enabled: controller.actions.canDisconnect(ap),
@@ -49,6 +52,7 @@ Core.Provider {
     }
     function toolbarActions(ap) {
         return [Core.Model.keepOpenAction("forget", "Forget", {
+                accessKey: "F",
                 icon: "󰆴",
                 role: "destructive",
                 enabled: controller.actions.canForget(ap),
@@ -62,12 +66,14 @@ Core.Provider {
                     width: 92
                 }
             }), Core.Model.keepOpenAction("portal", "Sign in", {
+                accessKey: "I",
                 icon: "󰏌",
                 presentation: {
                     group: "toolbar",
                     width: 100
                 }
             }), Core.Model.keepOpenAction("share", "Share", {
+                accessKey: "H",
                 icon: "󰒖",
                 enabled: controller.actions.canShare(ap),
                 presentation: {

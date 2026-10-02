@@ -40,7 +40,6 @@ ActionDetailsPane {
     titlePixelSize: Math.round(22 * uiScale)
     subtitleWeight: Theme.fontWeightMedium
     actions: controller.detailActions
-    actionWidth: 156
 
     Item {
         id: tabViewport

@@ -2,7 +2,9 @@
 .import "BarMediaPresentation.js" as Media
 
 function action(id, label, icon, enabled, tone) {
-    return {id: id, label: label, icon: icon, enabled: !!enabled, closePolicy: "keep-open",
+    const keys = {mixer: "A", previous: "B", "play-pause": "P", next: "N", rewind: "R", forward: "F",
+        activate: "A", menu: "O", secondary: "C", "scroll-up": "U", "scroll-down": "D"};
+    return {id: id, label: label, icon: icon, accessKey: keys[id] || "", enabled: !!enabled, closePolicy: "keep-open",
         presentation: {group: "toolbar", tone: tone || "normal"}};
 }
 function entry(id, title, subtitle, icon, actions, direction) {

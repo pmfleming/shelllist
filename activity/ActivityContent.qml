@@ -25,42 +25,26 @@ Ui.PanelSurface {
         anchors.margins: content.controller.contentMargin
         spacing: Ui.Theme.spacingMd
 
-        Row {
+        Ui.ThemeText {
             width: parent.width
             height: 42
-            spacing: Ui.Theme.spacingSm
-
-            Ui.ThemeText {
-                width: parent.width - headerActions.width - parent.spacing
-                anchors.verticalCenter: parent.verticalCenter
-                text: content.controller.detailsOpen ? "Activity  /  " + content.sectionTitle(content.controller.detailSection) : "Activity"
-                elide: Text.ElideRight
-                font.pixelSize: Ui.Theme.fontSizeTitle
-                font.weight: Ui.Theme.fontWeightBold
-            }
-
-            Row {
-                id: headerActions
-                height: parent.height
-                spacing: Ui.Theme.spacingSm
-                ActivityHeaderButton {
-                    activeFocusOnTab: false
-                    visible: content.controller.detailsOpen
-                    label: "Overview"
-                    onTriggered: content.controller.closeSection()
-                }
-                ActivityHeaderButton {
-                    objectName: "activityOverviewToday"
-                    activeFocusOnTab: false
-                    visible: !content.controller.detailsOpen
-                    label: "Today"
-                    onTriggered: content.controller.goToToday()
-                }
-                ActivityHeaderButton {
-                    activeFocusOnTab: false
-                    label: content.controller.activity.syncing ? "Syncing…" : "Refresh"
-                    onTriggered: content.controller.refresh()
-                }
+            verticalAlignment: Text.AlignVCenter
+            text: content.controller.detailsOpen ? "Activity  /  " + content.sectionTitle(content.controller.detailSection) : "Activity"
+            elide: Text.ElideRight
+            font.pixelSize: Ui.Theme.fontSizeTitle
+            font.weight: Ui.Theme.fontWeightBold
+        }
+        Ui.SurfaceActionRow {
+            width: parent.width
+            actions: [
+                {id: "today", label: qsTr("Today"), icon: "today", accessKey: "T", visible: !content.controller.detailsOpen, presentation: {group: "primary"}},
+                {id: "overview", label: qsTr("Overview"), icon: "arrow_back", accessKey: "O", visible: content.controller.detailsOpen, presentation: {group: "toolbar"}},
+                {id: "refresh", label: content.controller.activity.syncing ? qsTr("Syncing…") : qsTr("Refresh"), icon: "refresh", accessKey: "R", enabled: !content.controller.activity.syncing, presentation: {group: "toolbar"}}
+            ]
+            onTriggered: function(actionId) {
+                if (actionId === "today") content.controller.goToToday();
+                else if (actionId === "overview") content.controller.closeSection();
+                else if (actionId === "refresh") content.controller.refresh();
             }
         }
 

@@ -60,6 +60,7 @@ Core.Provider {
         });
         const browsing = !controller.actionInFlight && !controller.trial && !controller.discardPrompt;
         return [Core.Model.keepOpenAction("preview", qsTr("Preview changes"), {
+                accessKey: "P",
                 icon: "󰈈",
                 role: "default",
                 enabled: controller.canPreview && browsing,
@@ -69,12 +70,14 @@ Core.Provider {
                     width: 170
                 }
             }), Core.Model.keepOpenAction("identify", qsTr("Identify"), {
+                accessKey: "I",
                 icon: "filter_1",
                 enabled: browsing && !output.disabled && controller.stateReady,
                 presentation: {
                     group: "toolbar"
                 }
             }), Core.Model.keepOpenAction("toggle-enabled", draft && draft.enabled ? qsTr("Disable") : qsTr("Enable"), {
+                accessKey: "E",
                 icon: "󰐥",
                 visible: true,
                 enabled: browsing && controller.canToggleEnabled(output.name),

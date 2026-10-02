@@ -30,7 +30,7 @@ Item {
         return result;
     }
     signal triggered(string actionId)
-    implicitHeight: primaryAction ? Math.round(Theme.primaryActionHeight * uiScale) : secondaryActions.length ? controlHeight : 0
+    implicitHeight: primaryAction || secondaryActions.length ? Math.round(Theme.primaryActionHeight * uiScale) : 0
     height: implicitHeight
 
     FontMetrics {

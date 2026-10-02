@@ -31,10 +31,10 @@ ActionControl {
     readonly property string interactionState: !enabled || !interactive ? "disabled" : (pressed ? "pressed" : (hovered || highlighted ? "highlighted" : "flat"))
 
     implicitHeight: Math.round((sizeRole === "primary" ? Theme.primaryActionHeight : sizeRole === "secondary" ? Theme.secondaryActionHeight : Theme.controlHeight) * uiScale)
-    implicitWidth: iconOnly ? implicitHeight : Math.ceil(labelMetrics.advanceWidth) + horizontalPadding * 2 + (icon.length ? iconSize + Theme.spacingSm : 0)
+    implicitWidth: sizeRole === "normal" ? 0 : iconOnly ? implicitHeight : Math.ceil(labelMetrics.advanceWidth) + horizontalPadding * 2 + (icon.length ? iconSize + Theme.spacingSm : 0)
     TextMetrics {
         id: labelMetrics
-        text: control.label
+        text: control.sizeRole === "normal" ? "" : control.label
         font.family: Theme.fontFamily
         font.pixelSize: control.labelPixelSize
         font.weight: control.sizeRole === "primary" ? Theme.fontWeightMedium : Theme.fontWeightRegular

@@ -87,8 +87,11 @@ Ui.ProviderChooserSurface {
         subtitle: content.controller.selectedPlayer ? content.controller.selectedPlayer.playback_status : content.controller.selectedResult ? content.controller.selectedResult.subtitle : ""
         icon: content.controller.selectedResult ? content.controller.selectedResult.icon : ""
         iconSource: content.controller.selectedTrayItem ? content.controller.selectedTrayItem.icon : ""
-        actions: content.controller.kind === "audio" ? content.controller.detailActions.filter(action => !["inspect", "quieter", "louder"].includes(action.id)) : []
-        actionWidth: 0
+        actions: content.controller.detailActions.filter(action => !["inspect", "quieter", "louder"].includes(action.id)).map(action => Object.assign({}, action, {
+            presentation: Object.assign({}, action.presentation, {
+                group: action.id === (content.controller.kind === "media" ? "play-pause" : "activate") ? "primary" : "toolbar"
+            })
+        }))
         Ui.DetailFlickable {
             anchors.fill: parent
             viewMemory: content.controller.viewMemory
@@ -133,26 +136,6 @@ Ui.ProviderChooserSurface {
                         text: content.controller.selectedResult ? content.controller.selectedResult.subtitle : ""
                         wrapMode: Text.Wrap
                     }
-                    Ui.ActionToolbar {
-                        Layout.fillWidth: true
-                        actionNamePrefix: "trayPrimary-"
-                        fillActions: true
-                        showLabels: true
-                        spacing: 5
-                        actions: content.controller.kind === "tray" ? content.controller.detailActions.filter(action => ["activate", "menu"].includes(action.id)) : []
-                        onTriggered: function (actionId) { content.controller.triggerDetailAction(actionId); }
-                    }
-                }
-                Ui.DetailSection {
-                    objectName: "trayOtherActions"
-                    title: qsTr("Other application actions")
-                    visible: content.controller.kind === "tray"
-                    Ui.ActionToolbar {
-                        Layout.fillWidth: true
-                        alignRight: false
-                        actions: content.controller.kind === "tray" ? content.controller.detailActions.filter(action => !["activate", "menu"].includes(action.id)) : []
-                        onTriggered: function (actionId) { content.controller.triggerDetailAction(actionId); }
-                    }
                 }
                 Ui.DetailColumnCard {
                     objectName: "mediaPlayback"
@@ -170,15 +153,6 @@ Ui.ProviderChooserSurface {
                         visible: text.length > 0
                         wrapMode: Text.WordWrap
                         color: Ui.Theme.mutedText
-                    }
-                    Ui.ActionToolbar {
-                        objectName: "mediaPlaybackActions"
-                        Layout.fillWidth: true
-                        alignRight: false
-                        actions: content.controller.kind === "media" ? content.controller.detailActions : []
-                        onTriggered: function (actionId) {
-                            content.controller.triggerDetailAction(actionId);
-                        }
                     }
                 }
                 Ui.DetailSection {

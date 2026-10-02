@@ -43,24 +43,28 @@ Core.Provider {
 
     function connectionActions(device: var, caps: var): var {
         return [Core.Model.keepOpenAction("pair", "Pair", {
+                accessKey: "P",
                 icon: "󰌾",
                 role: "default",
                 visible: !device.paired,
                 enabled: actionEnabled(caps.can_pair, device),
                 presentation: primaryPresentation("active")
             }), Core.Model.keepOpenAction("connect", "Connect", {
+                accessKey: "C",
                 icon: "󰂱",
                 role: "default",
                 visible: !device.connected && device.paired,
                 enabled: actionEnabled(caps.can_connect, device),
                 presentation: primaryPresentation("active")
             }), Core.Model.keepOpenAction("disconnect", "Disconnect", {
+                accessKey: "D",
                 icon: "󰂲",
                 role: "destructive",
                 visible: !!device.connected,
                 enabled: actionEnabled(caps.can_disconnect, device),
                 presentation: primaryPresentation("danger")
             }), Core.Model.keepOpenAction("reset-policy", "Reset", {
+                accessKey: "R",
                 icon: "󰑓",
                 enabled: actionEnabled(true, device),
                 presentation: {
@@ -69,6 +73,7 @@ Core.Provider {
                     width: 92
                 }
             }), Core.Model.keepOpenAction("forget", "Forget", {
+                accessKey: "F",
                 icon: "󰆴",
                 role: "destructive",
                 enabled: actionEnabled(caps.can_remove, device),
