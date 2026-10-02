@@ -44,8 +44,15 @@ presentation and ordinary invocation focus, without replaying effects.
   does not undo ordinary settings. Domain acknowledgement, debounce and retry
   policies are unchanged.
 
-Expanded `DetailsHeader` actions use Alt+1…9 in displayed order (primary actions
-then toolbar actions). Disabled actions retain their number but cannot execute;
+Surface header actions use explicit Alt+letter shortcuts (for example Connect C,
+Disconnect D, Forget F). A single right-aligned row below the title/status shows
+a larger labelled primary and compact secondary commands. The same row is used
+by custom panel headers, including Activity. Narrow rows move trailing secondary
+commands into More (Alt+M); those commands have no header chord while overflowed.
+The menu supports arrows/Tab, Enter/Space and Escape, skips disabled entries, and
+restores prior focus. Numeric header shortcuts are removed. The
+[full action/key map](proposals/surface-action-row.md) reserves S for screenshots.
+Disabled actions retain their letter but cannot execute;
 closed inspectors, native menus and required-input modals block these shortcuts.
 They do not move focus, and their accessible descriptions expose the shortcut.
 Other header routes remain: F5 refreshes, Alt+Enter in search invokes its trailing
@@ -56,11 +63,13 @@ power and list options remain reachable in its adapter settings, including
 when the device list is empty.
 
 The owner-approved Material roadmap adds explicit modifier-held hints: hold Alt
-for 250ms to show Alt+1…9 numbers on the current header actions; hold Ctrl for
+for 250ms to show letter badges on the current header actions; hold Ctrl for
 250ms to show Ctrl+Tab at the existing tab bar (Ctrl+Shift+Tab while Shift is held).
-Disabled header actions keep their number. Release, focus/window loss, native
+Disabled header actions keep their letter. Release, focus/window loss, native
 menus, blocked navigation or surface deactivation clear the hints immediately.
-Ctrl+Alt/AltGr does not reveal them. Badges are decorative, take no focus and
+Ctrl+Alt/AltGr does not reveal them. Duplicate or invalid action letters fail
+closed rather than being reassigned. Hints, dispatch and accessible descriptions
+use the same displayed-button mapping. Badges are decorative, take no focus and
 never appear on hover, focus or first open. No F1 or general help overlay is added.
 
 ## Shared boundaries

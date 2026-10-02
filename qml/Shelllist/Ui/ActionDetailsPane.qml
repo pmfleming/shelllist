@@ -17,12 +17,10 @@ DetailsPane {
     property alias subtitleWeight: header.subtitleWeight
     property alias titlePixelSize: header.titlePixelSize
     property alias actions: header.actions
-    property alias actionWidth: header.actionWidth
     property alias headerHeight: header.headerHeight
-    property alias controlHeight: header.controlHeight
+    // Content/footer sizing is independent of the standard surface action row.
+    property int controlHeight: Theme.controlHeight
     property alias secondaryVisible: header.secondaryVisible
-    property alias stackedPrimary: header.stackedPrimary
-    property alias inlineActions: header.inlineActions
     readonly property real bodyHeight: body.height
     default property alias bodyContent: body.data
 

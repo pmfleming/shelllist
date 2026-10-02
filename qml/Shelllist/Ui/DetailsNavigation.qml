@@ -194,7 +194,7 @@ FocusScope {
     }
     function shortcutFor(item: Item): string {
         const button = item as ActionButton;
-        if (!button || !button.accessKey || headerButtons.filter(other => (other as ActionButton)?.accessKey === button.accessKey).length !== 1)
+        if (!button || headerButtons.indexOf(button) < 0 || !button.accessKey || headerButtons.filter(other => (other as ActionButton)?.accessKey === button.accessKey).length !== 1)
             return "";
         return "Alt+" + button.accessKey;
     }
@@ -401,12 +401,6 @@ FocusScope {
             required property Item modelData
             required property int index
             readonly property string sequence: navigation.shortcutFor(modelData)
-            Binding {
-                target: shortcutSlot.modelData
-                property: "surfaceShortcut"
-                value: shortcutSlot.sequence
-                restoreMode: Binding.RestoreBindingOrValue
-            }
             Shortcut {
                 sequence: shortcutSlot.sequence
                 enabled: !!shortcutSlot.sequence && navigation.headerShortcutsEnabled && !navigation.popupOpen

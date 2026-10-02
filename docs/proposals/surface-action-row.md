@@ -56,6 +56,43 @@ Existing Enter, F5, Ctrl+T, Ctrl+Tab and domain command shortcuts remain intact.
 
 Each step is committed separately. Existing uncommitted display work is excluded.
 
+## Delivery and validation
+
+All six steps are implemented. Layout exceptions have been removed; content/footer
+control sizing remains independent of the surface row. The shared row reserves the
+same height when a primary disappears, avoiding Activity content jumps. Navigation
+tracks actual delegate additions/removals rather than assuming Repeater.count means
+all buttons exist. Badges, activation and accessible descriptions resolve the same
+live key mapping without restoring stale bindings onto surviving buttons.
+
+Overflow uses a styled, modal Popup with menu accessibility roles, arrow/Tab
+navigation, Enter/Space activation, disabled-item skipping and prior-focus
+restoration. Qt's standard Menu dismissed itself on Alt and exposed the underlying
+header chord; regression tests now cover that failure. Header commands are blocked
+while overflow is open, and overflow closes on resizing, model changes or blocked
+navigation/deactivation.
+
+Validation commands (from `nix develop --no-write-lock-file`):
+
+- `tests/run-qmllint.sh`: passed, zero lint warnings.
+- `tests/run-qml-tests.sh`: **333 passes including lifecycle hooks, 0 failures,
+  0 skipped**. Includes seven new surface-action cases, migrated keyboard hints,
+  Activity custom-header activation and Media/Tray integration.
+- `node tests/check-provider-model.js qml/Shelllist/Core/Model.js`: 12 checks passed.
+- `tests/run-runtime-smoke.sh`: both native offscreen configurations loaded.
+- `git diff --check`: passed.
+
+Logs: `/tmp/surface-actions-final-qml.log` and
+`/tmp/surface-actions-final-checks.log`. The full run emitted an intermittent Qt
+engine-teardown diagnostic about seven items still being created; the earlier
+layout-only run also emitted this diagnostic (six items). No behavioral cases
+failed. Offscreen smoke reports the platform's unsupported window-mask warning.
+The full sibling-aware Nix gate was not run for this change.
+
+Manual acceptance still required: inspect real compositor placement at normal and
+HiDPI scales, hardware AltGr/WM shortcut interaction, screen-reader announcements
+and contrast in the deployed theme. No live session was restarted or deployed.
+
 ## Acceptance
 
 - Right-aligned, vertically centred single row at compact/wide widths and scale.

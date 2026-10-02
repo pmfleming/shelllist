@@ -87,7 +87,7 @@ Results: Up/Down move selection
 
 - Opening new details places focus in the **content**, not on the tab selector.
 - Tab/Shift+Tab browse content within the current detail tab and wrap at either end. Up/Down also browse. Ctrl+Tab / Ctrl+Shift+Tab change detail tabs.
-- Header actions and tab selectors are excluded from Tab traversal. Expanded header actions use Alt+1…9 in displayed order; existing refresh/screenshot shortcuts remain.
+- Header actions and tab selectors are excluded from Tab traversal. Expanded header actions use explicit Alt+letter access keys in the [standard surface action row](surface-action-row.md), superseding the original Alt+1…9 proposal; existing refresh/screenshot shortcuts remain.
 - Enter on an editable setting enters its editor (Right remains an alias). Tab leaves editing and browses the next/previous control. Browsing must not mutate settings.
 - Simple settings edit **in place**, not in a separate editor screen.
 - Sliders, switches and other controls remain visually present while browsing; they are not replaced by plain value summaries. Inactive editing does not mean the control looks disabled.

@@ -27,7 +27,7 @@ DaemonTestCase {
             property int actionCalls: 0
             property int tabChanges: 0
             property int headerCalls: 0
-            property bool compactHeader: false
+            property int headerTestWidth: 500
             property bool headerEnabled: true
             property string lastHeaderAction: ""
             property bool modal: false
@@ -67,12 +67,11 @@ DaemonTestCase {
                         Ui.DetailsHeader {
                             objectName: "testDetailsHeader"
                             uiScale: 1
-                            inlineActions: surface.compactHeader
-                            width: parent.width
+                            width: Math.min(parent.width, surface.headerTestWidth)
                             title: "Inspector"
                             actions: [
-                                {id: "first", label: "First", icon: "x", presentation: {group: "primary"}},
-                                {id: "second", label: "Second", icon: "x", enabled: surface.headerEnabled, presentation: {group: "toolbar"}}
+                                {id: "first", label: "First", icon: "x", accessKey: "F", presentation: {group: "primary"}},
+                                {id: "second", label: "Other", icon: "x", accessKey: "O", enabled: surface.headerEnabled, presentation: {group: "toolbar"}}
                             ]
                             onActionTriggered: function (id) { surface.headerCalls++; surface.lastHeaderAction = id; }
                         }
@@ -333,26 +332,27 @@ DaemonTestCase {
     }
 
     function test_headerShortcutsDoNotEnterTheContentCycleOrStealFocus_data() {
-        return [{tag: "two-rows", inlineActions: false}, {tag: "inline", inlineActions: true}];
+        return [{tag: "wide", width: 500}, {tag: "compact", width: 320}];
     }
     function test_headerShortcutsDoNotEnterTheContentCycleOrStealFocus(data) {
         const surface = makeSurface();
-        surface.compactHeader = data.inlineActions;
+        surface.headerTestWidth = data.width;
         enterDetails(surface);
-        tryCompare(findChild(surface, "testDetailsHeader"), "useInlineActions", data.inlineActions);
         tryCompare(surface.detailsNavigation.headerButtons, "length", 2);
         const first = surface.detailsNavigation.headerButtons[0];
         verify(!first.activeFocusOnTab);
-        verify(first.Accessible.description.includes("Alt+1"));
+        verify(first.Accessible.description.includes("Alt+F"));
         keyClick(Qt.Key_1, Qt.AltModifier);
+        compare(surface.headerCalls, 0, "numeric header shortcuts are removed");
+        keyClick(Qt.Key_F, Qt.AltModifier);
         compare(surface.headerCalls, 1);
         compare(surface.lastHeaderAction, "first");
         verify(surface.detailsNavigation.browsing);
         surface.headerEnabled = false;
-        keyClick(Qt.Key_2, Qt.AltModifier);
+        keyClick(Qt.Key_O, Qt.AltModifier);
         compare(surface.headerCalls, 1, "disabled actions keep their slot but cannot execute");
         surface.headerEnabled = true;
-        keyClick(Qt.Key_2, Qt.AltModifier);
+        keyClick(Qt.Key_O, Qt.AltModifier);
         compare(surface.lastHeaderAction, "second");
         compare(surface.headerCalls, 2);
         keyClick(Qt.Key_Tab);
@@ -361,33 +361,32 @@ DaemonTestCase {
         keyClick(Qt.Key_Space);
         const choice = findChild(surface.detailsItem, "choice");
         tryCompare(choice.popup, "visible", true);
-        keyClick(Qt.Key_1, Qt.AltModifier);
+        keyClick(Qt.Key_F, Qt.AltModifier);
         compare(surface.headerCalls, 2, "a native menu blocks header actions");
         keyClick(Qt.Key_Escape);
         tryCompare(choice.popup, "visible", false);
         surface.modal = true;
         wait(0);
-        keyClick(Qt.Key_1, Qt.AltModifier);
+        keyClick(Qt.Key_F, Qt.AltModifier);
         compare(surface.headerCalls, 2, "a required-input modal owns its keys");
         surface.modal = false;
         wait(0);
         surface.listItem.focusList();
         surface.chooserController.closeDetails();
-        keyClick(Qt.Key_1, Qt.AltModifier);
+        keyClick(Qt.Key_F, Qt.AltModifier);
         compare(surface.headerCalls, 2, "closed details cannot dispatch shortcuts");
     }
     function test_modifierHintsRequireHoldAndFollowActualShortcutSlots_data() {
-        return [{tag: "two-rows", inlineActions: false}, {tag: "inline", inlineActions: true}];
+        return [{tag: "wide", width: 500}, {tag: "compact", width: 320}];
     }
     function test_modifierHintsRequireHoldAndFollowActualShortcutSlots(data) {
         const surface = makeSurface();
-        surface.compactHeader = data.inlineActions;
+        surface.headerTestWidth = data.width;
         enterDetails(surface);
         surface.listItem.focusSearch();
         const hints = findChild(surface, "shortcutHints");
         const input = findChild(surface.listItem, "fieldInput");
         tryVerify(() => hints.listening);
-        tryCompare(findChild(surface, "testDetailsHeader"), "useInlineActions", data.inlineActions);
         wait(0);
         tryCompare(surface.detailsNavigation.headerButtons, "length", 2);
         const first = surface.detailsNavigation.headerButtons[0];
@@ -408,16 +407,16 @@ DaemonTestCase {
         verify(!firstBadge.visible, "a tap cannot queue a later reveal");
         keyPress(Qt.Key_Alt);
         tryCompare(firstBadge, "visible", true);
-        compare(firstBadge.text, "1");
-        compare(secondBadge.text, "2");
+        compare(firstBadge.text, "F");
+        compare(secondBadge.text, "O");
         verify(input.activeFocus);
         surface.headerEnabled = false;
         wait(0);
         firstBadge = findChild(surface.detailsNavigation.headerButtons[0], "headerShortcutBadge");
         secondBadge = findChild(surface.detailsNavigation.headerButtons[1], "headerShortcutBadge");
-        verify(secondBadge.visible, "disabled actions retain their number");
-        compare(secondBadge.text, "2");
-        keyClick(Qt.Key_2, Qt.AltModifier);
+        verify(secondBadge.visible, "disabled actions retain their letter");
+        compare(secondBadge.text, "O");
+        keyClick(Qt.Key_O, Qt.AltModifier);
         compare(surface.headerCalls, 0);
         keyRelease(Qt.Key_Alt);
         verify(!firstBadge.visible);
@@ -426,7 +425,7 @@ DaemonTestCase {
         firstBadge = findChild(surface.detailsNavigation.headerButtons[0], "headerShortcutBadge");
         keyPress(Qt.Key_Alt);
         tryCompare(firstBadge, "visible", true);
-        keyClick(Qt.Key_1, Qt.AltModifier);
+        keyClick(Qt.Key_F, Qt.AltModifier);
         compare(surface.headerCalls, 1);
         verify(input.activeFocus);
         keyRelease(Qt.Key_Alt);

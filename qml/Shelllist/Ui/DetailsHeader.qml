@@ -17,11 +17,6 @@ Column {
     property int subtitleWeight: Theme.fontWeightRegular
     property int titlePixelSize: Math.round(Theme.fontSizeTitle * uiScale)
     property var actions: []
-    // Transitional aliases for consumers migrated in the surface rollout.
-    property int actionWidth: 170
-    property int controlHeight: Theme.controlHeight
-    property bool stackedPrimary: false
-    property bool inlineActions: false
     property bool secondaryVisible: true
     property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     property int sectionSpacing: Theme.verticalSpacing(Theme.spacingMd, uiScale)

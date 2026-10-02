@@ -45,9 +45,11 @@ policy/navigation tests.
 
 ## Item 8 — explicit modifier-held shortcut hints
 
-Hold Alt for 250ms to reveal numbered header keycaps; hold Ctrl for a tab-bar
-Ctrl+Tab cue, updated to Ctrl+Shift+Tab while Shift is held. Numbers come from the
-same ordered button list that dispatches Alt+1…9, including disabled slots.
+Hold Alt for 250ms to reveal header keycaps; hold Ctrl for a tab-bar
+Ctrl+Tab cue, updated to Ctrl+Shift+Tab while Shift is held. The initial numbered
+implementation has been superseded by explicit letters and a standard action row;
+see [surface action contract](proposals/surface-action-row.md). Keys come from the
+same displayed-button mapping used for dispatch, including disabled buttons.
 Keycaps are decorative and never steal focus or activate a control. Modifier
 observation preserves native editing and any existing key-forwarding targets.
 Release, focus/window loss, native menus, blocked navigation and deactivation

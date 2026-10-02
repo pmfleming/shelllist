@@ -145,7 +145,10 @@ DaemonTestCase {
         compare(findChild(panel, "activityTodoDraft").text, "Retained draft");
         compare(findChild(panel, "activityPreviousDay").Accessible.name, "Previous day");
         compare(findChild(panel, "activityNextDay").Accessible.name, "Next day");
-        verify(!findChild(panel, "activityOverviewToday").visible, "Today is not duplicated in the expanded schedule");
+        verify(!panel.detailsNavigation.headerButtons.some(button => button.accessKey === "T"), "Today is not duplicated in the expanded schedule");
+        tryVerify(() => panel.detailsNavigation.headerButtons.some(button => button.surfaceShortcut === "Alt+O"));
+        keyClick(Qt.Key_O, Qt.AltModifier);
+        verify(!panel.controller.detailsOpen, "the custom header participates in shared letter shortcuts");
         panel.controller.closeSection();
         verify(!panel.controller.detailsOpen);
         compare(panel.controller.todoDraft, "Retained draft");

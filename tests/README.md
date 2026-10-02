@@ -40,7 +40,7 @@ already-open development shell after changing `flake.nix`.
   navigation, acknowledged selection, Escape cancellation and disabled guards.
 - `tst_chooser_keyboard.qml` exercises saved-cursor result typing, contained wrapping
   Tab/Shift+Tab excluding extra information while retaining additional controls,
-  forward/reverse Ctrl+Tab, Enter-to-edit, guarded Alt+number header
+  forward/reverse Ctrl+Tab, Enter-to-edit, guarded Alt+letter header
   shortcuts, editor-to-browse traversal, native menu Escape, pending editor
   ownership, actual Applications settings, read-only scrolling, removed editors
   and modal focus containment/restoration, with decorative animations enabled.
@@ -83,6 +83,10 @@ already-open development shell after changing `flake.nix`.
 - `tst_battery_history.qml` also checks explicit keyboard/pointer inspection:
   hover/focus alone reveal no values, and editor Escape wins over the shared
   surface shortcut before the next Escape dismisses the surface.
+- `tst_surface_actions.qml` covers single-line alignment, larger labelled primary,
+  compact/danger secondary styling, scaled long labels, overflow keyboard/pointer
+  access and focus restoration, explicit letters, disabled/duplicate/reserved keys,
+  reorder/state changes, removed numeric chords and modal/deactivation guards.
 - `tst_action_control.qml` also checks one-time default details routing and the
   shared bar color tokens. `tst_clipboard_recovery.qml` verifies actual Clipboard
   routing specialization, unsupported-kind guards and busy replay rejection.

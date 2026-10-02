@@ -85,6 +85,7 @@ Providers with dynamic state normally leave `actions` empty and implement `actio
   label: "Launch",
   icon: "…",
   shortcut: "Enter",
+  accessKey: "A", // Explicit surface-header Alt+letter; independent of shortcut.
   role: "default",             // default | secondary | destructive
   kind: "command",             // command | toggle
   enabled: true,

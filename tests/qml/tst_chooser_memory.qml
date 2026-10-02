@@ -696,14 +696,14 @@ DaemonTestCase {
         tryVerify(() => findChild(content, "applicationDescription") !== null);
         verify(!findChild(content, "applicationDescription").visible);
         const header = findChild(content.detailsItem, "detailIdentityIcon").parent.parent;
-        tryCompare(header, "useInlineActions", true);
-        compare(header.height, header.headerHeight);
+        const row = findChild(header, "surfaceActionRow");
+        compare(header.height, header.headerHeight + header.sectionSpacing + row.height);
         compare(content.detailsNavigation.headerButtons.length, 3);
         controller.replaceProviderResults([controller.provider.resultFor(Object.assign({}, app, {generic_name: "Browser"}))], true);
         tryVerify(() => findChild(content, "applicationDescription").visible, 5000, "distinct supporting description remains visible");
         header.width = 380;
-        verify(!header.useInlineActions, "constrained headers retain separate action rows");
-        verify(header.height > header.headerHeight);
+        compare(row.shownSecondaryCount, 2, "compact headers keep a single action line");
+        compare(header.height, header.headerHeight + header.sectionSpacing + row.height);
         compare(content.detailsNavigation.headerButtons.length, 3);
     }
     function test_applicationInvocationRestoresAnEditorButNotItsMenu() {

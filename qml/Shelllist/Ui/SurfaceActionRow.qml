@@ -20,15 +20,11 @@ Item {
     readonly property var shownSecondary: secondaryActions.slice(0, shownSecondaryCount)
     readonly property var overflowActions: secondaryActions.slice(shownSecondaryCount)
     readonly property bool popupOpen: overflowMenu.visible
-    readonly property var buttons: {
-        let result = primaryAction ? [primaryButton] : [];
-        for (let i = 0; i < secondaryRepeater.count; ++i) {
-            const button = secondaryRepeater.itemAt(i);
-            if (button) result.push(button);
-        }
-        if (overflowActions.length) result.push(moreButton);
-        return result;
-    }
+    readonly property Item focusedItem: Window.window ? Window.window.activeFocusItem : null
+    // count can change before Repeater has instantiated its delegates. Track
+    // actual additions/removals so navigation never caches an incomplete list.
+    property var secondaryButtons: []
+    readonly property var buttons: (primaryAction ? [primaryButton] : []).concat(secondaryButtons, overflowActions.length ? [moreButton] : [])
     signal triggered(string actionId)
     implicitHeight: primaryAction || secondaryActions.length ? Math.round(Theme.primaryActionHeight * uiScale) : 0
     height: implicitHeight
@@ -94,6 +90,14 @@ Item {
         Repeater {
             id: secondaryRepeater
             model: row.shownSecondary
+            onItemAdded: function(index, item) {
+                const buttons = row.secondaryButtons.slice();
+                buttons.splice(index, 0, item);
+                row.secondaryButtons = buttons;
+            }
+            onItemRemoved: function(index, item) {
+                row.secondaryButtons = row.secondaryButtons.filter(button => button !== item);
+            }
             delegate: ActionButton {
                 required property var modelData
                 objectName: "detailAction:" + modelData.id
@@ -141,10 +145,10 @@ Item {
                 enter: null
                 exit: null
                 property Item savedFocus: null
-                onAboutToShow: savedFocus = row.Window.window ? row.Window.window.activeFocusItem : null
+                onAboutToShow: savedFocus = row.focusedItem
                 onOpened: {
                     menuList.currentIndex = -1;
-                    menuList.move(1);
+                    menuList.moveSelection(1);
                     menuList.forceActiveFocus();
                 }
                 onClosed: {
@@ -164,7 +168,7 @@ Item {
                     boundsBehavior: Flickable.StopAtBounds
                     Accessible.role: Accessible.PopupMenu
                     Accessible.name: qsTr("More actions")
-                    function move(delta): void {
+                    function moveSelection(delta): void {
                         for (let n = 1; n <= count; ++n) {
                             const next = (currentIndex + delta * n + count) % count;
                             if (row.overflowActions[next].enabled !== false) {
@@ -184,7 +188,7 @@ Item {
                         if (event.modifiers & (Qt.AltModifier | Qt.ControlModifier)) {
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Up || event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
-                            move(event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier) ? -1 : 1);
+                            moveSelection(event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier) ? -1 : 1);
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
                             if (!event.isAutoRepeat) trigger(currentIndex);
@@ -201,6 +205,7 @@ Item {
                         highlighted: menuList.currentIndex === index
                         focusPolicy: Qt.NoFocus
                         Accessible.role: Accessible.MenuItem
+                        Accessible.focused: menuList.activeFocus && highlighted
                         Accessible.onPressAction: menuList.trigger(index)
                         onClicked: menuList.trigger(index)
                     }

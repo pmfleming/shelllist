@@ -10,8 +10,17 @@ ActionControl {
     property int iconSize: Theme.iconSizeSmall
     property string hotkey: ""
     property string accessKey: ""
-    // Assigned by the owning navigation boundary, shared by hints and activation.
-    property string surfaceShortcut: ""
+    // Read the owning boundary directly; delegate recreation must not restore
+    // an obsolete shortcut binding onto a surviving primary button.
+    readonly property DetailsNavigation shortcutNavigation: accessKey ? owningNavigation(parent) : null
+    readonly property string surfaceShortcut: shortcutNavigation ? shortcutNavigation.shortcutFor(control) : ""
+    function owningNavigation(item: Item): DetailsNavigation {
+        while (item) {
+            if (item instanceof DetailsNavigation) return item as DetailsNavigation;
+            item = item.parent;
+        }
+        return null;
+    }
     // Opt-in surface hierarchy; ordinary content buttons keep their sizing.
     property string sizeRole: "normal"
     property real uiScale: 1

@@ -31,8 +31,14 @@ const launch = model.action({
     label: "Launch",
     role: "default",
     shortcut: "Enter",
+    accessKey: " l ",
     presentation: { group: "primary", tone: "active", width: 140 }
 });
+
+assert.equal(launch.accessKey, "L");
+assert.equal(launch.shortcut, "Enter", "header access key must not replace the result command");
+assert.equal(model.action({id: "plain", label: "Plain"}).accessKey, "");
+++checks;
 
 const terminal = model.result({
     providerId: "desktop.applications",
