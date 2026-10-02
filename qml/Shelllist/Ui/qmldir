@@ -8,6 +8,7 @@ ActionArea 1.0 ActionArea.qml
 ActionDetailsPane 1.0 ActionDetailsPane.qml
 ActionToggleList 1.0 ActionToggleList.qml
 ActionToolbar 1.0 ActionToolbar.qml
+SurfaceActionRow 1.0 SurfaceActionRow.qml
 CenteredMessage 1.0 CenteredMessage.qml
 singleton ChartDrawing 1.0 ChartDrawing.qml
 ChartValueRail 1.0 ChartValueRail.qml
