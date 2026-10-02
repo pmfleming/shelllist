@@ -12,6 +12,7 @@ internal DisplayDetails DisplayDetails.qml
 internal DisplayInformation DisplayInformation.qml
 internal DisplayFocusPane DisplayFocusPane.qml
 internal DisplayFocusSetting DisplayFocusSetting.qml
+internal DisplaySettingsLink DisplaySettingsLink.qml
 internal DisplayCanvas DisplayCanvas.qml
 internal DisplayInspector DisplayInspector.qml
 internal DisplayTrialDialog DisplayTrialDialog.qml

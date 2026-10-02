@@ -100,9 +100,22 @@ DaemonTestCase {
         compare(panel.detailsItem.subtitle, "Focus · all monitors");
         compare(panel.detailsItem.actions.length, 0, "global focus does not expose selected-monitor layout actions");
         verify(findChild(panel, "displayAdvancedFocus").visible);
-        verify(findChild(panel, "displayFocusedMonitor").visible);
+        verify(!findChild(panel, "displayFocusedMonitor").visible);
         verify(findChild(panel, "displayFocusTechnical").informationOnly);
-        verify(findChild(panel, "displayFocusStatus").text.includes("saved automatically"));
+        verify(findChild(panel, "displayFocusStatus").text.includes("saves automatically"));
+        const help = findChild(panel, "focusHelpText-input:follow_mouse");
+        verify(!help.visible);
+        findChild(panel, "focusHelp-input:follow_mouse").clicked();
+        verify(help.visible);
+        verify(!help.text.includes("input:follow_mouse"), "raw compositor keys stay in Diagnostics");
+        findChild(panel, "focusCategory-keyboard").clicked();
+        verify(!findChild(panel, "displayCommonFocus").visible);
+        verify(findChild(panel, "focusSetting-binds:window_direction_monitor_fallback").visible);
+        c.closeDetails();
+        verify(c.detailsOpen && c.detailsTab === "focus", "Back returns from a category to Focus");
+        findChild(panel, "focusDiagnosticsLink").clicked();
+        verify(findChild(panel, "displayFocusedMonitor").visible);
+        compare(calls.length, 0, "navigation and help do not save settings");
     }
     function test_persistentMapUsesDraftWithoutKeyboardFocus() {
         const panel = makePanel();
@@ -177,6 +190,7 @@ DaemonTestCase {
         c.applyDisplayPolicy(focusState());
         c.openGlobalSettings();
         waitForDetails(panel);
+        c.selectFocusPage("focus-diagnostics");
         const label = findChild(panel, "displayFocusedMonitor");
         verify(label.text.indexOf("DP-1") >= 0);
         c.edit("DP-1", "scale", 2);
@@ -229,6 +243,7 @@ DaemonTestCase {
         const unsupported = findChild(panel, "focusSetting-input:focus_on_close");
         verify(!unsupported.interactive);
         verify(!c.setFocusSetting("input:focus_on_close", 1));
+        c.selectFocusPage("focus-diagnostics");
         const reset = findChild(panel, "resetDisplayFocus");
         verify(reset.enabled);
         reset.clicked();
@@ -249,6 +264,7 @@ DaemonTestCase {
         c.applyDisplayPolicy(focusState());
         c.openGlobalSettings();
         waitForDetails(panel);
+        c.selectFocusPage("focus-pointer");
         const number = findChild(panel, "focusNumber-input:follow_mouse_threshold");
         number.edited("");
         verify(!number.inputValid);

@@ -12,7 +12,7 @@ Ui.ProviderChooserController {
         controller: controller
         key: controller.globalSettingsOpen ? "display-global-settings" : controller.selectedResult ? controller.selectedResult.key : ""
         tab: controller.detailsTab
-        tabs: controller.globalSettingsOpen ? ["focus"] : ["settings", "information"]
+        tabs: controller.globalSettingsOpen ? controller.focusTabs : ["settings", "information"]
         onRestoreRequested: function (open, tab) {
             controller.detailsTab = tab;
             if (!controller.changingDetailsContext)
@@ -40,6 +40,7 @@ Ui.ProviderChooserController {
     property bool identifyActive: false
     property string identifyName: ""
     property bool changingDetailsContext: false
+    readonly property var focusTabs: ["focus", "focus-pointer", "focus-keyboard", "focus-applications", "focus-cursor", "focus-diagnostics"]
     property bool globalSettingsOpen: false
     property string detailsTab: "settings"
     readonly property DisplayProvider displayProvider: DisplayProvider {
@@ -248,6 +249,14 @@ Ui.ProviderChooserController {
         const tabs = ["settings", "information"];
         detailsTab = tabAfter(tabs, detailsTab, backwards);
     }
+    function selectFocusPage(tab: string): void {
+        if (!globalSettingsOpen || navigationBlocked || !focusTabs.includes(tab))
+            return;
+        viewMemory.synchronize();
+        detailsTab = tab;
+        viewMemory.synchronize();
+        focusDetailsRequested();
+    }
     function openGlobalSettings(): void {
         if (navigationBlocked)
             return;
@@ -274,6 +283,10 @@ Ui.ProviderChooserController {
         viewMemory.synchronize();
         if (trial || actionInFlight)
             return;
+        if (globalSettingsOpen && detailsTab !== "focus") {
+            selectFocusPage("focus");
+            return;
+        }
         if (dirty) {
             discardPrompt = true;
             return;

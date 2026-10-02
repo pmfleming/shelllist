@@ -46,7 +46,7 @@ Ui.ActionDetailsPane {
                 Layout.preferredWidth: Ui.Theme.controlHeight
                 Layout.preferredHeight: Ui.Theme.controlHeight
                 icon: "󰅁"
-                accessibleName: qsTr("Back to displays")
+                accessibleName: pane.controller.globalSettingsOpen && pane.controller.detailsTab !== "focus" ? qsTr("Back to focus settings") : qsTr("Back to displays")
                 toolTip: accessibleName
                 onClicked: pane.controller.closeDetails()
             }
