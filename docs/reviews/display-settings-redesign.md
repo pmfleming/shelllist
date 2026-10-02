@@ -25,4 +25,13 @@
 - Existing capability, numeric validation, acknowledgement and retry guards remain intact.
 - Validation: strict QML lint passed; Displays Qt suite: 21 passes, zero failures (including hooks). Help/category navigation sends no daemon mutations. The runner reports its existing asynchronous engine-destruction diagnostic.
 
+## Step 4 — regression matrix
+
+- Added real-key coverage for the search gear, category navigation, numeric editing, layered Escape, contextual help, Tab traversal and return-to-search focus.
+- Covered 320×360, 390×600, 1040×480 and 1040×780 canvases, non-scrolling map placement, control containment, hotplug without selection and invocation focus restoration.
+- Numeric drafts survive category navigation; map and settings navigation never mutate the daemon. Existing preview/token/rollback tests remain in the suite.
+- Displays: 27 passes. Pure display model checks passed.
+- Concurrent shared-header edits made the live full suite fail (318 passes / 6 failures, all in shared header cases) and introduced SurfaceActionRow lint/runtime warnings. Those files were not changed here.
+- Revalidated an isolated archive of `e9d5b43` plus this step's tests: strict QML lint passed; complete native suite **324 passed, zero failed**. Evidence: `/tmp/display-step4-isolated-{lint,full}.txt`.
+
 No service reload or hardware mutation is part of these tests.

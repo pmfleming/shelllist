@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Displays as Displays
 import Shelllist.Ui as Ui
+import "../../displays/DisplayFocusModel.js" as Focus
 
 DaemonTestCase {
     id: testCase
@@ -21,6 +22,8 @@ DaemonTestCase {
             property alias controller: controller
             readonly property Item detailsItem: content.detailsItem
             property alias viewport: viewport
+            readonly property Ui.DetailsNavigation navigation: content.detailsNavigation
+            readonly property Ui.ChooserListPane list: content.listItem
             readonly property bool listVisible: content.listItem.visible
             Displays.DisplayController {
                 id: controller
@@ -66,6 +69,130 @@ DaemonTestCase {
             "cursor:no_warps": false, "input:follow_mouse_threshold": 0
         } };
         return state;
+    }
+    function completeFocusState() {
+        const state = focusState();
+        for (const group of Focus.groups())
+            for (const entry of group.settings)
+                state.focus.values[entry.key] = entry.boolean ? false : 0;
+        return state;
+    }
+    function test_focusGeometry_data() {
+        return [
+            {tag: "emergency-short", width: 320, height: 360},
+            {tag: "narrow", width: 390, height: 600},
+            {tag: "wide-short", width: 1040, height: 480},
+            {tag: "wide", width: 1040, height: 780}
+        ];
+    }
+    function test_focusGeometry(data) {
+        const panel = makePanel();
+        panel.width = data.width;
+        panel.height = data.height;
+        const c = panel.controller;
+        c.uiActive = true;
+        c.applyDisplayPolicy(completeFocusState());
+        c.openGlobalSettings();
+        waitForDetails(panel);
+        const map = findChild(panel, "displayArrangementSummary");
+        const top = map.mapToItem(panel.list, 0, 0).y;
+        verify(map.height >= 96 && map.height <= 150);
+        verify(top >= panel.list.headerHeight && top + map.height < panel.list.height);
+        for (const tab of c.focusTabs) {
+            c.selectFocusPage(tab);
+            verify(waitForPolish(panel.Window.window));
+            const page = findChild(panel, "displayFocusPane");
+            verify(page.height > 0 && page.width > 0);
+            for (const target of panel.navigation.targets) {
+                if (!target.visible || target instanceof Ui.DetailFlickable)
+                    continue;
+                const point = target.mapToItem(panel.detailsItem, 0, 0);
+                verify(target.width > 0 && target.height > 0, target.objectName + " has usable dimensions");
+                verify(point.x >= 0 && point.x + target.width <= panel.detailsItem.width + 1,
+                    target.objectName + " fits the detail canvas horizontally");
+            }
+            page.contentY = Math.max(0, page.contentHeight - page.height);
+            compare(map.mapToItem(panel.list, 0, 0).y, top, "detail scrolling never moves the map");
+            compare(panel.navigation.collectTargets(map, true).length, 0, "graphic has no browse targets");
+        }
+        compare(calls.length, 0);
+    }
+    function test_keyboardCategoryHelpAndReturnWithoutMutations() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        c.applyDisplayPolicy(completeFocusState());
+        panel.list.focusSearch();
+        keyClick(Qt.Key_Return, Qt.AltModifier);
+        waitForDetails(panel);
+        verify(c.globalSettingsOpen);
+        tryVerify(() => panel.navigation.activeFocus);
+        const navigation = panel.navigation;
+        const link = findChild(panel, "focusCategory-pointer");
+        navigation.currentTarget = link;
+        navigation.focusContent();
+        keyClick(Qt.Key_Return);
+        compare(c.detailsTab, "focus-pointer");
+        const number = findChild(panel, "focusNumber-input:follow_mouse_threshold");
+        navigation.currentTarget = number;
+        navigation.focusContent();
+        keyClick(Qt.Key_Return);
+        tryVerify(() => number.inputActiveFocus);
+        number.edited("invalid");
+        keyClick(Qt.Key_Escape);
+        tryVerify(() => navigation.browsing);
+        keyClick(Qt.Key_Escape);
+        compare(c.detailsTab, "focus");
+        verify(c.detailsOpen);
+        c.selectFocusPage("focus-pointer");
+        compare(number.text, "invalid", "subpage switches preserve numeric drafts");
+        const help = findChild(panel, "focusHelp-input:follow_mouse_threshold");
+        navigation.currentTarget = help;
+        navigation.focusContent();
+        keyClick(Qt.Key_Return);
+        verify(findChild(panel, "focusHelpText-input:follow_mouse_threshold").visible);
+        navigation.focusContent();
+        const names = [];
+        for (let i = 0; i < navigation.targets.length + 2; ++i) {
+            keyClick(Qt.Key_Tab);
+            verify(navigation.currentTarget !== null && navigation.currentTarget.visible);
+            names.push(navigation.currentTarget.objectName);
+        }
+        verify(names.includes(number.objectName) && names.includes(help.objectName));
+        verify(!names.includes("displayArrangementSummary"));
+        c.closeDetails();
+        c.closeDetails();
+        tryVerify(() => panel.list.searchFocused);
+        verify(!c.detailsOpen);
+        compare(calls.length, 0);
+    }
+    function test_globalFocusSurvivesHotplugAndRestoresInvocationFocus() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        c.applyDisplayPolicy(completeFocusState());
+        c.openGlobalSettings();
+        waitForDetails(panel);
+        c.selectFocusPage("focus-cursor");
+        const target = findChild(panel, "focusSetting-cursor:no_warps");
+        panel.navigation.currentTarget = target;
+        panel.navigation.focusContent();
+        const unplugged = completeFocusState();
+        unplugged.outputs = [];
+        c.applyDisplayPolicy(unplugged);
+        verify(!c.hasSelection && c.detailsOpen);
+        compare(c.detailsTab, "focus-cursor");
+        verify(target.visible && target.interactive);
+        c.prepareUiDeactivation();
+        compare(c.focusMemory.region, "details");
+        c.deactivateUi();
+        c.activateUiState("");
+        c.restoreUiFocus();
+        tryVerify(() => panel.navigation.currentTarget === target && panel.navigation.activeFocus);
+        c.applyDisplayPolicy(completeFocusState());
+        compare(c.detailsTab, "focus-cursor");
+        verify(target.visible);
+        compare(calls.length, 0, "hotplug/restoration does not replay settings");
     }
     function test_editsNormalizeOnlyTheTargetAndRetainInvalidInput() {
         const c = makePanel().controller;
