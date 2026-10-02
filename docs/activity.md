@@ -15,11 +15,11 @@ bar, their commands and global shortcuts.
 
 The bar bell opens Notifications; its right-click route opens Agenda. **Super+Shift+N** opens Notifications directly (installed by the Home Manager module when Hyprland is enabled; configurable with `programs.shelllist.notificationsShortcut`, or see the README binding). Changing the duration while DND is off only selects the next duration; while on it restarts DND with that duration. ∞ enables DND without an expiry.
 
-The Activity glyph in the panel header identifies the surface and acts as its screenshot control. Activating it captures the complete visible Activity panel through `clip-daemon` and copies the image into clipboard history.
+Alt+S captures the complete visible Activity panel through `clip-daemon` and copies the image to the clipboard and clipboard history, just as in every other Shelllist surface.
 
 Active notifications appear in up to three compact notification stacks per monitor. A stacked toast shows only its newest record and a count badge; its chevron opens that group in the separate Notifications callout. `shelllist notifications open|toggle` and the `notifications` global shortcut open the pane directly.
 
-The surface uses a group chooser and explicit message/reply inspector, with screenshot / search / DND toggle / duration / refresh controls. The bell captures the visible pane to clipboard history through `clip-daemon`. It provides **Active / History**, wrapped actions, expandable bodies, inline replies and 15-minute snooze. **Dismiss all active** and group dismissal retain history; the daemon's bulk dismissal also includes snoozed records. There is no history-deletion control.
+The surface uses a group chooser and explicit message/reply inspector, with search / DND toggle / duration / refresh controls. Alt+S copies a screenshot of the current view to the clipboard through `clip-daemon`. It provides **Active / History**, wrapped actions, expandable bodies, inline replies and 15-minute snooze. **Dismiss all active** and group dismissal retain history; the daemon's bulk dismissal also includes snoozed records. There is no history-deletion control.
 
 When entered from Activity, Back or `Escape` restores Activity's calendar/detail state. Direct entry closes back to the desktop. The close button always closes. `Ctrl+Tab` switches Active/History; `F5` refreshes notifications. With the list focused, Up/Down selects a group and Right/Left expands/collapses it. Search and replies have no printable single-key shortcuts.
 

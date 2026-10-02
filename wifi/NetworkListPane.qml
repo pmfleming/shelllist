@@ -19,14 +19,12 @@ ChooserListPane {
     busy: controller.actionInFlight
     powerEnabled: !controller.actionInFlight && !controller.promptActive
     refreshEnabled: controller.powered && !controller.actionInFlight
-    iconActionEnabled: !controller.screenshotInFlight && !controller.actionInFlight && !controller.promptActive
     searchActionIcon: "󰐲"
     searchActionToolTip: "Scan a Wi-Fi QR code"
     searchActionEnabled: !controller.actionInFlight
     filterText: controller.filterText
     status: controller.status
     listInset: Math.round(12 * densityScale)
-    onIconClicked: controller.screenshotRequested()
     onSearchActionRequested: controller.launchQrScanner()
     rowDelegate: Component {
         NetworkListRow {

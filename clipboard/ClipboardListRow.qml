@@ -20,7 +20,6 @@ Ui.ResultRow {
 
     leadingIcon: resultData.icon || "󰅍"
     leadingIconColor: entry.current ? Ui.Theme.active : Ui.Theme.accent
-    primaryActionId: resultData.primaryActionId || ""
     accessibleName: resultData.title
 
     Ui.ResultLabel {
@@ -62,6 +61,7 @@ Ui.ResultRow {
     }
 
     Ui.DestructiveIconButton {
+        objectName: "clipboardDeleteAction"
         visible: !row.controller.multiSelectMode
         z: 2
         Layout.preferredWidth: row.scaled(30)

@@ -18,6 +18,7 @@ ChooserSession 1.0 ChooserSession.qml
 internal ChooserListBody ChooserListBody.qml
 ChooserListPane 1.0 ChooserListPane.qml
 ChooserShortcuts 1.0 ChooserShortcuts.qml
+ScreenshotShortcut 1.0 ScreenshotShortcut.qml
 ProviderChooserController 1.0 ProviderChooserController.qml
 ProviderChooserSurface 1.0 ProviderChooserSurface.qml
 ChooserSurface 1.0 ChooserSurface.qml
@@ -30,7 +31,7 @@ DetailColumnCard 1.0 DetailColumnCard.qml
 DetailField 1.0 DetailField.qml
 DetailFlickable 1.0 DetailFlickable.qml
 DetailGrid 1.0 DetailGrid.qml
-DisclosureSection 1.0 DisclosureSection.qml
+DetailSection 1.0 DetailSection.qml
 DetailsHeader 1.0 DetailsHeader.qml
 DetailsPane 1.0 DetailsPane.qml
 DetailsNavigation 1.0 DetailsNavigation.qml

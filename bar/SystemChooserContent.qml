@@ -73,7 +73,6 @@ Ui.ProviderChooserSurface {
             readonly property SystemTrayItem trayItem: content.controller.kind === "tray" ? content.controller.uniqueTrayItem(resultData.id) : null
             leadingIcon: resultData.icon || "󰀻"
             leadingIconSource: trayItem ? trayItem.icon : ""
-            primaryActionId: resultData.primaryActionId || ""
             accessibleName: resultData.title + ". " + (resultData.subtitle || "")
             Ui.ResultLabel {
                 title: row.resultData.title
@@ -146,7 +145,7 @@ Ui.ProviderChooserSurface {
                         onTriggered: function (actionId) { content.controller.triggerDetailAction(actionId); }
                     }
                 }
-                Ui.DisclosureSection {
+                Ui.DetailSection {
                     objectName: "trayOtherActions"
                     title: qsTr("Other application actions")
                     visible: content.controller.kind === "tray"
@@ -185,7 +184,7 @@ Ui.ProviderChooserSurface {
                         }
                     }
                 }
-                Ui.DisclosureSection {
+                Ui.DetailSection {
                     objectName: "mediaPreferences"
                     visible: content.controller.kind === "media"
                     title: qsTr("Player preferences")

@@ -24,7 +24,10 @@ presentation and ordinary invocation focus, without replaying effects.
   details; it never opens details implicitly or changes the result selection.
 - Once in details, Tab/Shift+Tab cycle enabled content controls in the current
   tab, wrapping last → first / first → last. They leave editing in browse mode,
-  without undoing drafts or settings. Header buttons and tab selectors are excluded.
+  without undoing drafts or settings. Header buttons, tab selectors and read-only
+  extra-information sections are excluded. Extra information is always shown;
+  there are no expand/collapse buttons. Editable settings in additional sections
+  remain keyboard-accessible.
 - Enter enters the selected editor; Right remains an alias. Native arrows then
   edit normally. Up/Down also browse without changing settings. Enter/Space
   activate a browsed action button; Space does not toggle a browsed setting.
@@ -46,7 +49,8 @@ then toolbar actions). Disabled actions retain their number but cannot execute;
 closed inspectors, native menus and required-input modals block these shortcuts.
 They do not move focus, and their accessible descriptions expose the shortcut.
 Other header routes remain: F5 refreshes, Alt+Enter in search invokes its trailing
-action, and Ctrl+Shift+S captures Applications, Bluetooth, Battery or Activity.
+action, and Alt+S copies a screenshot of the complete current view to the clipboard
+in every Shelllist surface. Screenshot buttons are not shown.
 Activity's Today action uses Ctrl+T; Escape returns to its overview. Bluetooth radio
 power and list options remain reachable in its adapter settings, including
 when the device list is empty.

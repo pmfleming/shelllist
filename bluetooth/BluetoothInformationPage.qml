@@ -25,7 +25,6 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailCard {
-        height: 190
         title: qsTr("Device status")
         entries: [
             {
@@ -59,7 +58,6 @@ Ui.DetailFlickable {
 
     Ui.DetailCard {
         visible: page.hasAudio
-        height: visible ? 150 : 0
         title: qsTr("Audio diagnostics")
         entries: [
             {
@@ -83,7 +81,6 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailCard {
-        height: 190
         title: qsTr("Device information")
         entries: [
             {

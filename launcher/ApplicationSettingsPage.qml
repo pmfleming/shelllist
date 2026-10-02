@@ -34,7 +34,6 @@ Ui.DetailFlickable {
     }
 
     Ui.DetailColumnCard {
-        height: 150
         title: qsTr("Category & default workspace")
         contentSpacing: Ui.Theme.spacingSm
 

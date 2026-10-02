@@ -81,12 +81,6 @@ ChooserSurface {
     }
 
     Shortcut {
-        sequence: "Ctrl+Shift+S"
-        enabled: surface.keyboardWorkflow && surface.chooserController.uiActive && surface.navigationEnabled && !surface.chooserController.actionInFlight
-        autoRepeat: false
-        onActivated: surface.chooserController.screenshotRequested()
-    }
-    Shortcut {
         sequence: "Tab"
         enabled: surface.keyboardWorkflow && surface.chooserController.uiActive && surface.navigationEnabled && !surface.detailsNavigation.popupOpen
         onActivated: surface.cycleRegion(false)

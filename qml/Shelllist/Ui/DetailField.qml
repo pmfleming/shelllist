@@ -13,6 +13,8 @@ Column {
     spacing: Theme.spacingXs
 
     ThemeText {
+        width: field.width
+        wrapMode: Text.WordWrap
         text: field.label
         color: Theme.mutedText
     }

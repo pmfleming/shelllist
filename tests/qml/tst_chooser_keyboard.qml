@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Shelllist.Ui as Ui
 import "../../launcher" as Apps
@@ -91,6 +92,22 @@ DaemonTestCase {
                             width: parent.width
                             text: "name"
                         }
+                        Ui.DetailSection {
+                            objectName: "extraInformation"
+                            informationOnly: true
+                            title: "Extra information"
+                            Ui.DetailFlickable {
+                                objectName: "informationPage"
+                                implicitHeight: 44
+                                Ui.TextField {
+                                    objectName: "informationValue"
+                                    width: parent.width
+                                    text: "Read-only information"
+                                    readOnly: true
+                                    activeFocusOnTab: false
+                                }
+                            }
+                        }
                         Ui.DropDownList {
                             objectName: "choice"
                             width: parent.width
@@ -104,11 +121,14 @@ DaemonTestCase {
                             title: "Enabled"
                             onClicked: surface.settingEdits++
                         }
-                        Ui.ActionButton {
-                            objectName: "action"
-                            width: parent.width
-                            label: "Apply"
-                            onClicked: surface.actionCalls++
+                        Ui.DetailSection {
+                            title: "Additional actions"
+                            Ui.ActionButton {
+                                objectName: "action"
+                                Layout.fillWidth: true
+                                label: "Apply"
+                                onClicked: surface.actionCalls++
+                            }
                         }
                         Ui.DetailsTabBar {
                             width: parent.width
@@ -276,7 +296,7 @@ DaemonTestCase {
         compare(surface.primaryActions, 1);
     }
 
-    function test_tabTraversalWrapsInsideDetailsAndSkipsTabSelectors() {
+    function test_tabTraversalWrapsInsideDetailsAndSkipsInformationAndTabSelectors() {
         const surface = makeSurface();
         keyClick(Qt.Key_Tab);
         verify(surface.listItem.listFocused);
@@ -285,7 +305,10 @@ DaemonTestCase {
         verify(surface.listItem.searchFocused);
         verify(!surface.chooserController.detailsOpen, "Tab does not implicitly open details");
         enterDetails(surface);
-        compare(surface.detailsNavigation.targets.length, 5, "tab selector is not content");
+        compare(surface.detailsNavigation.targets.length, 5, "information sections and tab selectors are not browsing stops");
+        const information = findChild(surface, "informationValue");
+        verify(information.visible);
+        compare(Ui.FocusLocations.targets(surface.detailsItem).indexOf(information), -1, "information cannot be restored as an editor");
         compare(surface.detailsNavigation.currentTarget.objectName, "settingRow");
         for (const name of ["editor", "choice", "toggle", "action", "settingRow"]) {
             keyClick(Qt.Key_Tab);
@@ -298,6 +321,10 @@ DaemonTestCase {
         compare(surface.detailsNavigation.currentTarget.objectName, "action");
         keyClick(Qt.Key_Tab, Qt.ShiftModifier);
         compare(surface.detailsNavigation.currentTarget.objectName, "toggle");
+        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
+        compare(surface.detailsNavigation.currentTarget.objectName, "choice");
+        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
+        compare(surface.detailsNavigation.currentTarget.objectName, "editor", "reverse traversal also skips information");
         compare(surface.settingEdits, 0);
         compare(surface.actionCalls, 0);
         keyClick(Qt.Key_Tab, Qt.ControlModifier);

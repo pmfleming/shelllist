@@ -104,32 +104,27 @@ Ui.DetailFlickable {
         title: qsTr("Info")
         height: implicitHeight
 
-        Item {
+        Ui.DetailGrid {
+            objectName: "clipboardMetadata"
             Layout.fillWidth: true
-            Layout.preferredHeight: 96
-
-            Ui.DetailGrid {
-                objectName: "clipboardMetadata"
-                anchors.fill: parent
-                entries: [
-                    {
-                        label: "Type",
-                        value: cards.entry.kind || "—"
-                    },
-                    {
-                        label: "MIME",
-                        value: cards.entry.mime || "—"
-                    },
-                    {
-                        label: "Size",
-                        value: Ui.Format.bytes(cards.entry.byte_size)
-                    },
-                    {
-                        label: "Dimensions",
-                        value: cards.imageFacts ? cards.imageFacts.width + " × " + cards.imageFacts.height : "—"
-                    }
-                ].filter((row, index) => index < 3 || !!cards.imageFacts)
-            }
+            entries: [
+                {
+                    label: "Type",
+                    value: cards.entry.kind || "—"
+                },
+                {
+                    label: "MIME",
+                    value: cards.entry.mime || "—"
+                },
+                {
+                    label: "Size",
+                    value: Ui.Format.bytes(cards.entry.byte_size)
+                },
+                {
+                    label: "Dimensions",
+                    value: cards.imageFacts ? cards.imageFacts.width + " × " + cards.imageFacts.height : "—"
+                }
+            ].filter((row, index) => index < 3 || !!cards.imageFacts)
         }
 
         Rectangle {

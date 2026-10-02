@@ -24,7 +24,6 @@ Rectangle {
     property string searchActionIcon: ""
     property string searchActionToolTip: ""
     property bool searchActionEnabled: true
-    property int resultCount: -1
 
     signal querySelectionChanged
     signal filterEdited(string text)
@@ -97,15 +96,6 @@ Rectangle {
                 }
                 header.keyPressed(event);
             }
-        }
-
-        ThemeText {
-            objectName: "searchResultCount"
-            visible: header.resultCount >= 0
-            text: String(header.resultCount)
-            Accessible.name: qsTr("%1 results").arg(header.resultCount)
-            color: Theme.mutedText
-            font.pixelSize: Theme.fontSizeSmall
         }
 
         FlatIconButton {

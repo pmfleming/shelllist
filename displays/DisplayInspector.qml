@@ -213,7 +213,7 @@ ColumnLayout {
         controller: inspector.controller
     }
 
-    Ui.DisclosureSection {
+    Ui.DetailSection {
         objectName: "displayPositionSection"
         Layout.fillWidth: true
         title: qsTr("Precise position")

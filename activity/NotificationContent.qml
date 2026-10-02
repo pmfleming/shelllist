@@ -16,9 +16,6 @@ Ui.ProviderChooserSurface {
         resultModel: content.controller.groupModel
         filterText: content.controller.filterText
         icon: ""
-        iconActionEnabled: !content.controller.screenshotInFlight
-        iconAccessibleName: qsTr("Copy Notifications panel screenshot")
-        onIconClicked: content.controller.screenshotRequested()
         placeholder: content.controller.tab === "history" ? qsTr("Search loaded history…") : qsTr("Search notifications…")
         powered: content.controller.notificationState.notifications.dnd
         powerEnabled: content.controller.notificationState.notifications.available
@@ -66,7 +63,6 @@ Ui.ProviderChooserSurface {
             listPane: pane
             rowHeight: pane.delegateHeight
             leadingIcon: "󰂚"
-            primaryActionId: resultData.primaryActionId || ""
             accessibleName: (row.group.appName || qsTr("Notifications")) + ". " + row.group.records.length
             Ui.ResultLabel {
                 title: row.group.appName || qsTr("Notifications")

@@ -17,11 +17,9 @@ Ui.ChooserListPane {
     busy: controller.activity.syncing || controller.screenshotInFlight
     powerEnabled: false
     refreshEnabled: !controller.activity.syncing && !controller.screenshotInFlight
-    iconActionEnabled: !controller.screenshotInFlight
     filterText: controller.filterText
     status: controller.screenshotStatus.length > 0 ? controller.screenshotStatus : (controller.activity.syncing ? "Updating time and weather…" : controller.cities.length + (controller.cities.length === 1 ? " city" : " cities"))
     listInset: Math.round(12 * densityScale)
-    onIconClicked: controller.screenshotRequested()
 
     rowDelegate: Component {
         TimeWeatherListRow {

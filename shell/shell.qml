@@ -155,6 +155,9 @@ ShellRoot {
         ShellContent {
             registry: surfaces
             surfaceRequestStartedAtMs: shell.surfaceRequestStartedAtMs
+            Ui.ScreenshotShortcut {
+                controller: shell.activeController
+            }
             onSurfaceContentReady: function (surfaceId, latencyMs) {
                 shell.recordSurfaceContent(surfaceId, latencyMs, false);
             }

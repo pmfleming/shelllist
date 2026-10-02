@@ -28,7 +28,6 @@ Ui.ResultRow {
 
     leadingIcon: city.home ? "󰋜" : "󰍎"
     leadingIconColor: city.home ? Ui.Theme.accent : Ui.Theme.mutedText
-    primaryActionId: resultData.primaryActionId || ""
 
     Ui.ResultLabel {
         Layout.fillWidth: true

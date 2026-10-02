@@ -17,12 +17,6 @@ Ui.PanelSurface {
     readonly property string errorMessage: controller.lastError.length > 0 ? controller.lastError : (controller.transportError.length > 0 ? controller.transportError : (controller.refreshError.length > 0 ? controller.refreshError : policyError))
 
     Shortcut {
-        sequence: "Ctrl+Shift+S"
-        enabled: content.controller.uiActive && screenshotButton.enabled && !content.detailsNavigation.popupOpen
-        autoRepeat: false
-        onActivated: content.controller.screenshotRequested()
-    }
-    Shortcut {
         sequence: "F5"
         enabled: content.controller.uiActive && !content.controller.actionInFlight
         onActivated: content.controller.refreshAll()
@@ -47,21 +41,6 @@ Ui.PanelSurface {
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.headerHeight
             spacing: Ui.Theme.spacingMd
-
-            Ui.FlatIconButton {
-                id: screenshotButton
-                activeFocusOnTab: false
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 34
-                Layout.alignment: Qt.AlignVCenter
-                icon: "󰂂"
-                iconSize: Ui.Theme.iconSizeLarge
-                flatIconColor: Ui.Theme.accent
-                enabled: !content.controller.screenshotInFlight && !content.controller.actionInFlight && !content.controller.settingsOperationActive
-                accessibleName: "Copy Battery & Power panel screenshot"
-                toolTip: content.controller.screenshotStatus.length > 0 ? content.controller.screenshotStatus : "Battery & Power · click to copy a screenshot"
-                onClicked: content.controller.screenshotRequested()
-            }
 
             Ui.ThemeText {
                 Layout.fillWidth: true

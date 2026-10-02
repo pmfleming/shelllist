@@ -48,7 +48,6 @@ ResultRow {
         }
     }
 
-    primaryActionId: resultData.primaryActionId || ""
     accessibleName: name + ". " + signalStrength + "%" + (connecting ? " Connecting" : "")
     avatarContent: Component {
         GlyphLabel {

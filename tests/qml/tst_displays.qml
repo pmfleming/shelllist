@@ -94,12 +94,13 @@ DaemonTestCase {
         const actions = c.detailActions;
         verify(actions.find(a => a.id === "preview").icon !== actions.find(a => a.id === "identify").icon);
         verify(findChild(panel, "displayArrangementSummary").visible);
-        verify(!findChild(panel, "displayPositionSection").open);
+        verify(findChild(panel, "displayX").visible);
         c.detailsTab = "focus";
         compare(panel.detailsItem.title, "Focus · all monitors");
         compare(panel.detailsItem.actions.length, 0, "global focus does not expose selected-monitor layout actions");
-        verify(!findChild(panel, "displayAdvancedFocus").open);
-        verify(!findChild(panel, "displayFocusTechnical").open);
+        verify(findChild(panel, "displayAdvancedFocus").visible);
+        verify(findChild(panel, "displayFocusedMonitor").visible);
+        verify(findChild(panel, "displayFocusTechnical").informationOnly);
         verify(findChild(panel, "displayFocusStatus").text.includes("saved automatically"));
     }
     function test_focusTelemetryDoesNotInvalidateLayoutDrafts() {
@@ -182,7 +183,6 @@ DaemonTestCase {
         c.openDetails();
         c.detailsTab = "focus";
         waitForDetails(panel);
-        findChild(panel, "displayAdvancedFocus").expanded = true;
         const number = findChild(panel, "focusNumber-input:follow_mouse_threshold");
         number.edited("");
         verify(!number.inputValid);

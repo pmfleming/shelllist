@@ -35,11 +35,11 @@ Ui.DetailFlickable {
                 Layout.fillWidth: true
                 controller: page.controller
                 entry: modelData
-                showDetails: technical.open
+                showDetails: true
             }
         }
     }
-    Ui.DisclosureSection {
+    Ui.DetailSection {
         objectName: "displayAdvancedFocus"
         title: qsTr("Advanced focus behaviour")
         Repeater {
@@ -56,14 +56,14 @@ Ui.DetailFlickable {
                         Layout.fillWidth: true
                         controller: page.controller
                         entry: modelData
-                        showDetails: technical.open
+                        showDetails: true
                     }
                 }
             }
         }
     }
-    Ui.DisclosureSection {
-        id: technical
+    Ui.DetailSection {
+        informationOnly: true
         objectName: "displayFocusTechnical"
         title: qsTr("Explanations & technical details")
         Ui.ThemeText {
@@ -86,7 +86,7 @@ Ui.DetailFlickable {
             color: Ui.Theme.mutedText
         }
     }
-    Ui.DisclosureSection {
+    Ui.DetailSection {
         objectName: "displayFocusRestore"
         title: qsTr("Restore previous focus settings")
         visible: Object.keys(page.controller.focusState.saved || {}).length > 0

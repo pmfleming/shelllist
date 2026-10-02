@@ -123,14 +123,15 @@ DaemonTestCase {
         const primary = findChild(panel, "wifiSecurityControls");
         const technical = findChild(panel, "wifiSecurityDiagnostics");
         tryCompare(primary, "y", 0);
-        verify(!technical.open);
+        verify(technical.visible && technical.informationOnly);
+        verify(technical.content[0].visible);
         panel.page.passwordValue = "Retained test draft";
         panel.page.passwordRevealed = true;
-        technical.expanded = true;
-        technical.expanded = false;
+        panel.width = 500;
+        wait(0);
         compare(panel.page.passwordValue, "Retained test draft");
         verify(panel.page.passwordRevealed);
-        compare(calls.length, 0, "technical disclosure cannot load a secret or save settings");
+        compare(calls.length, 0, "showing technical information cannot load a secret or save settings");
     }
     function test_disablingCastingPersists_data() {
         return [

@@ -78,7 +78,6 @@ Column {
     }
 
     Ui.DetailColumnCard {
-        height: 152 + Math.min(8, (pane.controller.energyOverview.applications || []).length) * 42
         title: qsTr("Application energy")
 
         Ui.SegmentedControl {

@@ -20,10 +20,7 @@ Rectangle {
     property url leadingIconSource: ""
     property color leadingIconColor: Theme.mutedText
     property Component avatarContent: null
-    property string primaryActionId: ""
-    readonly property var primaryAction: selected && primaryActionId ? listPane.chooserController.detailActions.find(action => action.id === primaryActionId) : null
-    readonly property bool showPrimaryCue: selected && primaryEnabled && listPane.chooserController.navigationPrimaryEnabled && !!primaryAction && primaryAction.enabled !== false
-    readonly property int detailSlotWidth: detailsActionVisible ? 72 : 0
+    readonly property int detailSlotWidth: detailsActionVisible ? scaled(30) + 6 : 0
     readonly property bool selected: index === selectedIndex
     default property alias content: rowContent.data
 
@@ -115,25 +112,6 @@ Rectangle {
         anchors.topMargin: 8
         anchors.bottomMargin: 8
         spacing: 12
-    }
-
-    Row {
-        objectName: "resultPrimaryCue"
-        visible: row.showPrimaryCue
-        anchors.right: detailsButton.left
-        anchors.rightMargin: 4
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: 4
-        Accessible.ignored: true
-        GlyphLabel {
-            glyph: row.primaryAction ? row.primaryAction.icon || "" : ""
-            color: Theme.selectedText
-        }
-        ThemeText {
-            text: "↵"
-            color: Theme.selectedText
-            font.pixelSize: Theme.fontSizeLabel
-        }
     }
 
     FlatIconButton {

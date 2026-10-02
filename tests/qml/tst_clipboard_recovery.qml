@@ -28,6 +28,43 @@ DaemonTestCase {
             uiScale: 1
         }
     }
+    function test_deleteSitsBesideDetailsArrowAndKeepsConfirmation() {
+        const controller = makeController();
+        const pane = createTemporaryObject(paneFactory, testCase, {
+            controller: controller,
+            width: 425,
+            height: 800
+        });
+        views = views.concat([pane]);
+        tryVerify(() => findChild(pane, "clipboardDeleteAction") !== null);
+        const remove = findChild(pane, "clipboardDeleteAction");
+        const details = findChild(pane, "resultDetailsAction");
+        verify(details.visible);
+        for (const width of [425, 360]) {
+            pane.width = width;
+            wait(0);
+            const deleteEdge = remove.mapToItem(pane, remove.width, remove.height / 2);
+            const arrowEdge = details.mapToItem(pane, 0, details.height / 2);
+            verify(arrowEdge.x - deleteEdge.x >= 0 && arrowEdge.x - deleteEdge.x <= 8,
+                "delete stays next to the arrow without overlap");
+            compare(deleteEdge.y, arrowEdge.y);
+        }
+        calls = [];
+        mouseClick(remove);
+        verify(controller.deleteConfirmationOpen);
+        verify(!controller.detailsOpen, "delete must not toggle the adjacent details action");
+        compare(calls.length, 0, "delete still requires confirmation");
+        controller.cancelDelete();
+        controller.actionInFlight = true;
+        verify(!remove.enabled);
+        remove.Accessible.pressAction();
+        verify(!controller.deleteConfirmationOpen);
+        controller.actionInFlight = false;
+        controller.multiSelectMode = true;
+        verify(!remove.visible);
+        verify(!details.visible);
+    }
+
     function test_metadataOmitsIrrelevantFactsAndWrapsLongFileNames() {
         const controller = makeController();
         controller.detailsTab = "info";
@@ -99,6 +136,7 @@ DaemonTestCase {
                 revision: 1,
                 kind: "text",
                 preview: "Original",
+                favorite: false,
                 byte_size: 8
             }
         ];

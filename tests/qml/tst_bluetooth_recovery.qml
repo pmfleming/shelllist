@@ -142,11 +142,9 @@ DaemonTestCase {
         verify(selector instanceof Ui.DropDownList, "radio lists use a scrollable choice, not compressed segments");
         compare(selector.Accessible.name, "Preferred Bluetooth radio");
         const technical = findChild(page, "adapterTechnicalDetails");
-        verify(!technical.open);
-        const beforeDisclosure = calls.length;
-        technical.expanded = true;
-        technical.expanded = false;
-        compare(calls.length, beforeDisclosure);
+        verify(technical.informationOnly);
+        verify(findChild(technical, "adapterAddress").visible);
+        compare(findChild(technical, "adapterTechnicalDetailsToggle"), null);
         selector.selected("usb");
         compare(calls[calls.length - 1].method, "bluetooth.management.update");
         compare(calls[calls.length - 1].params.preferred_adapter_key, "usb");

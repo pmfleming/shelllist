@@ -37,7 +37,7 @@ the top, with distinct Preview/Identify symbols and two or three secondary actio
   docking policy until that preference is set again.
 
 **Settings** contains mirror/extend content selection, resolution/refresh, scale,
-rotation/reflection, and an explicit **Precise position** disclosure for X/Y and
+rotation/reflection, and an always-visible **Precise position** section for X/Y and
 relative placement. Controls preserve advertised backend mode strings. A compact
 multi-display map leads the settings. The editable Arrange canvas stacks above
 the inspector below 740 logical pixels; closing it never discards edits. **Information** is read-only observed state,
@@ -105,7 +105,7 @@ rotation and position retain their existing Preview/Keep workflow.
 ## Monitor and window focus
 
 Open any display's **Focus · all monitors** tab for 26 global controls. Common
-pointer choices lead; booleans use switches, while advanced controls are disclosed
+pointer choices lead; booleans use switches, while advanced controls are shown
 in these groups:
 
 - **Mouse and monitor focus:** click/follow/detached/separate focus, monitor

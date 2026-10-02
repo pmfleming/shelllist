@@ -19,7 +19,7 @@ A daemon event with an incompatible identity or malformed stream/event shape is 
 
 ## Shared chooser composition
 
-Wi-Fi, Bluetooth, clipboard, and application surfaces use `ProviderChooserController` and the provider/result contracts. `ProviderChooserSurface` owns their default navigation, refresh, and detail-tab policy; a domain overrides only the constraints unique to its workflow. Wi-Fi, Bluetooth, and applications additionally opt into shared clipboard screenshot capture. Clipboard keeps its own screenshot operation because capture is part of its active domain operation and session state machine.
+Wi-Fi, Bluetooth, clipboard, and application surfaces use `ProviderChooserController` and the provider/result contracts. `ProviderChooserSurface` owns their default navigation, refresh, and detail-tab policy; a domain overrides only the constraints unique to its workflow. Wi-Fi, Bluetooth, applications, Displays, Audio, Media, and Tray additionally opt into shared clipboard screenshot capture. Clipboard keeps its own screenshot operation because capture is part of its active domain operation and session state machine.
 
 `Core.Provider.makeResult(fields)` supplies provider identity/priority and common normalization without mutating the projection. Wi-Fi, Bluetooth, applications, displays and clipboard use it. `resultsFor(values)` maps through the overridable `resultFor(payload)` for the first four; clipboard retains its offset-aware history scoring. Actions, availability, payload fields and recovery stay domain-owned.
 

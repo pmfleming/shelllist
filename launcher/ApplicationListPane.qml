@@ -26,13 +26,11 @@ Ui.ChooserListPane {
     function requestRefresh(): void {
         controller.refresh(true);
     }
-    iconActionEnabled: !controller.operationBlocked
     searchActionIcon: activeCategoryFilter.icon
     searchActionToolTip: "Category: " + activeCategoryFilter.label + " · Click for " + nextCategoryFilter.label
     searchActionEnabled: !controller.operationBlocked
     filterText: controller.filterText
     status: controller.status
-    onIconClicked: controller.screenshotRequested()
     onSearchActionRequested: controller.selectCategory(nextCategoryFilter.value)
 
     rowDelegate: Component {

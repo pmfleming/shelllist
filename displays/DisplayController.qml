@@ -5,6 +5,9 @@ import "DisplayModel.js" as Model
 Ui.ProviderChooserController {
     id: controller
 
+    sharedScreenshotEnabled: true
+    sharedScreenshotStartMessage: "Capturing Displays window…"
+
     viewMemory: Ui.ChooserMemory {
         controller: controller
         key: controller.selectedResult ? controller.selectedResult.key : ""

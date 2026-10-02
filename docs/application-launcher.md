@@ -17,7 +17,7 @@ The launcher presents standards-visible desktop applications and live Hyprland w
 - Outside details, `Tab` / `Shift+Tab` move between search/results and into already-open details; selection is retained.
 - Tab/Shift+Tab wrap among controls in the current detail tab; Up/Down also browse. Enter starts editing (Right remains an alias). Native arrows edit there, and Escape leaves the editor before closing details. Category settings still wait for daemon acknowledgement.
 - Typing in results, including J/K, continues the query at its retained cursor.
-- `Ctrl+Shift+S` requests a screenshot. See the [shared keyboard workflow](chooser-keyboard-workflow.md).
+- `Alt+S` copies a screenshot of the current view to the clipboard. See the [shared keyboard workflow](chooser-keyboard-workflow.md).
 - `F5` refreshes the catalog and current windows.
 - The icon inside the search field (or `Alt+Enter` while editing search) cycles **All → Shell → Browser → Code → Media → Text → All**.
 - Launch-only desktop entries remain shortcuts without runtime state or resource attribution.

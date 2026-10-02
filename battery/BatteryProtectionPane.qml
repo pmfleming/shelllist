@@ -108,11 +108,10 @@ Column {
             color: Ui.Theme.active
         }
 
-        Ui.DisclosureSection {
+        Ui.DetailSection {
             objectName: "batteryMaintenance"
             Layout.fillWidth: true
             title: qsTr("Charging maintenance")
-            attention: pane.controller.calibrating || pane.controller.chargingInhibited || !!pane.controller.batteryOperation.error
 
             Ui.ActionButton {
                 Layout.fillWidth: true

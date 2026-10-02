@@ -30,23 +30,8 @@ Ui.PanelSurface {
             height: 42
             spacing: Ui.Theme.spacingSm
 
-            Ui.FlatIconButton {
-                id: activityIcon
-                activeFocusOnTab: false
-                width: 34
-                height: 34
-                anchors.verticalCenter: parent.verticalCenter
-                icon: "󰃭"
-                iconSize: Ui.Theme.iconSizeLarge
-                flatIconColor: Ui.Theme.accent
-                enabled: !content.controller.screenshotInFlight
-                accessibleName: "Copy Activity panel screenshot"
-                toolTip: content.controller.screenshotStatus.length > 0 ? content.controller.screenshotStatus : "Activity · click to copy a screenshot"
-                onClicked: content.controller.screenshotRequested()
-            }
-
             Ui.ThemeText {
-                width: parent.width - activityIcon.width - headerActions.width - parent.spacing * 2
+                width: parent.width - headerActions.width - parent.spacing
                 anchors.verticalCenter: parent.verticalCenter
                 text: content.controller.detailsOpen ? "Activity  /  " + content.sectionTitle(content.controller.detailSection) : "Activity"
                 elide: Text.ElideRight
@@ -172,12 +157,6 @@ Ui.PanelSurface {
         sequence: "Ctrl+T"
         enabled: content.controller.uiActive
         onActivated: content.controller.goToToday()
-    }
-    Shortcut {
-        sequence: "Ctrl+Shift+S"
-        enabled: content.controller.uiActive && activityIcon.enabled && !content.detailsNavigation.popupOpen
-        autoRepeat: false
-        onActivated: content.controller.screenshotRequested()
     }
     Shortcut {
         sequence: "F5"

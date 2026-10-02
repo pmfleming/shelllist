@@ -152,7 +152,7 @@ FocusScope {
     }
 
     function collectTargets(item: Item, includeHeaders: bool): var {
-        if (!item || !item.visible || item instanceof DetailsTabBar || (!includeHeaders && item instanceof DetailsHeader))
+        if (!item || !item.visible || (item as DetailSection)?.informationOnly || item instanceof DetailsTabBar || (!includeHeaders && item instanceof DetailsHeader))
             return [];
         // Composite inputs are one browsing stop, not their internal buttons.
         if (editable(item) || item instanceof ActionControl || item.activeFocusOnTab)
@@ -179,7 +179,7 @@ FocusScope {
         return item instanceof TextField || item instanceof TextEditor || item instanceof DropDownList || item instanceof SegmentedControl || item instanceof ValueSlider || item instanceof LabeledValueSlider || item instanceof ToggleRow || item instanceof ToggleSwitch;
     }
     function collectHeaderButtons(item: Item): var {
-        if (!item || !item.visible)
+        if (!item || !item.visible || (item as DetailSection)?.informationOnly)
             return [];
         if (item instanceof DetailsHeader)
             return collectTargets(item, true);

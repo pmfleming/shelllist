@@ -13,15 +13,14 @@ DetailFlickable {
     required property real sectionSpacing
     required property real connectionCardHeight
     required property real networkCardHeight
-    required property real profileCardHeight
     cardSpacing: sectionSpacing
 
     NetworkProfileSettingsCard {
         objectName: "wifiPrimarySettings"
         controller: cards.controller
-        height: cards.profileCardHeight
     }
-    DisclosureSection {
+    DetailSection {
+        informationOnly: true
         objectName: "wifiNetworkDiagnostics"
         title: qsTr("Connection & network details")
         DetailCard {

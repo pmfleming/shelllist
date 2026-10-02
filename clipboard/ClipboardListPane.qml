@@ -24,7 +24,6 @@ Ui.ChooserListPane {
         else
             pane.controller.openDeleteMenu();
     }
-    iconActionEnabled: !controller.multiSelectMode && !controller.screenshotInFlight && !controller.actionInFlight
     searchActionIcon: controller.multiSelectMode ? "󰒆" : ""
     searchActionToolTip: "Select all visible entries"
     searchActionEnabled: controller.multiSelectMode && !controller.allVisibleSelected
@@ -32,7 +31,6 @@ Ui.ChooserListPane {
     status: controller.multiSelectMode ? controller.multiSelectedCount + " selected · Esc to finish" : controller.status
     onSearchActionRequested: controller.selectAllVisible()
     bodySpacing: Math.round(Ui.Theme.spacingMd * densityScale)
-    onIconClicked: controller.screenshotRequested()
 
     preserveViewportOnAppend: true
     readonly property bool shouldLoadMore: visible && listNearEnd && controller.canAutoLoadMoreHistory

@@ -85,7 +85,6 @@ DaemonTestCase {
             }
         });
         controller.selectViewTab("power");
-        findChild(panel, "batteryAutomationSection").expanded = true;
         const selector = findChild(panel, "batteryLowProfile");
         const toggle = findChild(panel, "batteryLowEnabled");
         const point = findChild(panel, "batteryLowPoint");

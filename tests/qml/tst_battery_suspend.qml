@@ -75,7 +75,7 @@ DaemonTestCase {
         const panel = makePanel();
         const c = panel.controller;
         compare(findChild(panel, "powerSuspendCard").y, 0);
-        verify(!findChild(panel, "batteryAutomationSection").open);
+        verify(findChild(panel, "batteryLevelsCard").visible);
         const safety = findChild(panel, "criticalBatterySafety");
         compare(safety.elide, Text.ElideNone);
         compare(safety.wrapMode, Text.Wrap);
@@ -95,7 +95,7 @@ DaemonTestCase {
         compare(selector.value, "balanced", "only acknowledgement changes the selected mode");
         c.alertSaveError = "Save failed";
         c.selectViewTab("power");
-        verify(findChild(panel, "batteryAutomationSection").open, "secondary errors must reveal their recovery controls");
+        verify(findChild(panel, "batteryLevelsCard").visible, "secondary recovery controls remain visible");
     }
     function test_keepAwakeIsAccessibleAndOnlyDisablesSuspend() {
         const panel = makePanel();

@@ -16,6 +16,7 @@
     "tests/qml/tst_chart_drawing.qml",
     "tests/qml/tst_clipboard_recovery.qml",
     "tests/qml/tst_daemon_sessions.qml",
+    "tests/qml/tst_detail_layout.qml",
     "tests/qml/tst_displays.qml",
     "tests/qml/tst_domain_workflows.qml",
     "tests/qml/tst_expressive_controls.qml",

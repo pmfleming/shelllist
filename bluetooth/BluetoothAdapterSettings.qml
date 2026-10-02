@@ -181,7 +181,8 @@ ColumnLayout {
         }
     }
 
-    Ui.DisclosureSection {
+    Ui.DetailSection {
+        informationOnly: true
         objectName: "adapterTechnicalDetails"
         Layout.fillWidth: true
         visible: section.controller.adapterSettingsTab === "general"

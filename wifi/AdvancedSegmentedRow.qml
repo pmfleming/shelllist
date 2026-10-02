@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui
 
-RowLayout {
+GridLayout {
     id: row
 
     required property string label
@@ -12,12 +12,13 @@ RowLayout {
     signal selected(string value)
 
     width: parent.width
-    height: 38
-    spacing: 12
+    columns: width >= 480 ? 2 : 1
+    columnSpacing: Theme.spacingMd
+    rowSpacing: Theme.spacingSm
 
     FieldLabel {
         Layout.preferredWidth: 150
-        Layout.fillHeight: true
+        Layout.fillWidth: row.columns === 1
         text: row.label
     }
 
@@ -25,7 +26,7 @@ RowLayout {
         id: control
         objectName: row.objectName
         Layout.fillWidth: true
-        Layout.fillHeight: true
+        Layout.preferredHeight: implicitHeight
         onSelected: function (value) {
             row.selected(value);
         }

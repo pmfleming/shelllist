@@ -6,6 +6,8 @@ import "SystemEntries.js" as Entries
 
 Ui.ProviderChooserController {
     id: chooser
+    sharedScreenshotEnabled: true
+    sharedScreenshotStartMessage: "Capturing " + title + " window…"
     required property string kind
     property BarController barController: null
     property bool trayMenuActive: false

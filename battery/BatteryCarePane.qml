@@ -48,7 +48,6 @@ Column {
     Ui.DetailColumnCard {
         objectName: "batteryDeviceCard"
         visible: (pane.battery.devices || []).length > 1
-        height: 100
         title: qsTr("Battery device")
 
         Ui.SegmentedControl {
@@ -78,7 +77,6 @@ Column {
 
     Ui.DetailCard {
         objectName: "batteryHealthCard"
-        height: 110
         title: qsTr("Battery health")
         entries: [
             {
@@ -92,7 +90,8 @@ Column {
         ]
     }
 
-    Ui.DisclosureSection {
+    Ui.DetailSection {
+        informationOnly: true
         objectName: "batteryHardwareDetails"
         title: qsTr("Hardware details")
         Ui.DetailCard {

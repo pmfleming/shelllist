@@ -14,14 +14,11 @@ Ui.ChooserListPane {
     emptyIcon: controller.radio.hard_blocked || controller.radio.soft_blocked || (controller.radio.available && Number(controller.radio.adapter_count || 0) > 0 && !controller.radio.powered) ? BluetoothGlyphs.glyphs.blocked : ""
     placeholder: controller.searchAllDevices ? "Search All Devices" : "Search My Devices"
     icon: "󰂯"
-    headerIcon: "󰄀"
     powered: controller.powered
     refreshing: controller.refreshInFlight
     busy: controller.anyActionInFlight
     powerEnabled: !controller.globalRequestInFlight && !controller.radio.hard_blocked
     refreshEnabled: controller.powered && !controller.globalRequestInFlight
-    iconActionEnabled: !controller.anyActionInFlight && !controller.modalPromptOpen
-    iconAccessibleName: qsTr("Take a screenshot")
     searchActionIcon: "󰒓"
     searchActionToolTip: qsTr("Bluetooth settings")
     searchActionEnabled: !controller.modalPromptOpen
@@ -31,8 +28,6 @@ Ui.ChooserListPane {
     function requestRefresh(): void {
         controller.refreshList();
     }
-    onIconClicked: if (iconActionEnabled)
-        controller.screenshotRequested()
     onSearchActionRequested: if (searchActionEnabled) {
         controller.toggleBluetoothSettings();
         if (controller.detailsOpen)

@@ -50,6 +50,23 @@ longer switches to a detail-only layout. Domain settings, recovery, preview/reve
 and prompt policies are unchanged. Activity's content and the remaining domains'
 keyboard models still await their own migration.
 
+## Detail content sizing
+
+Settings cards grow from their content, not a fraction of the viewport height.
+Toggle rows retain their natural height (at least 56px); wrapped labels can grow
+further. Short viewports scroll rather than compressing controls into the next
+card. This applies to Wi-Fi profile/IP settings and the shared card layouts used
+by Bluetooth, Battery, Applications and Clipboard.
+
+Diagnostic grids switch to one column when two 160px fields no longer fit.
+Their natural height includes wrapped labels and spacing; containing cards and
+always-visible sections reserve that height. Wi-Fi segmented/IP fields also stack their
+labels above controls at narrow widths.
+
+`tst_detail_layout.qml` exercises compact/wide settings, live content growth,
+always-visible information sections and diagnostic-grid resizing. These are offscreen geometry
+checks, not an exhaustive live screenshot review of every surface/state.
+
 ## Validation
 
 `tst_chooser_geometry.qml` covers minimum/laptop/desktop/ultrawide and emergency

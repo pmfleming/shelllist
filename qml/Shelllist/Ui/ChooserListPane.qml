@@ -105,7 +105,6 @@ ColumnLayout {
         icon: pane.headerIcon
         signalIcon: pane.signalIcon
         filterText: pane.filterText
-        resultCount: body.resultCount
         powered: pane.powered
         refreshing: pane.refreshing
         powerEnabled: pane.powerEnabled

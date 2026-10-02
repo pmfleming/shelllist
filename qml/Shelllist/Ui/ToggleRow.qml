@@ -15,7 +15,7 @@ ActionControl {
 
     width: parent ? parent.width : 0
     implicitHeight: Math.max(56, labels.implicitHeight + 2 * Theme.spacingSm)
-    Layout.minimumHeight: 56
+    Layout.minimumHeight: implicitHeight
     radius: Theme.controlRadius
     color: area.pressed ? Theme.pressed : (area.containsMouse || highlighted ? Theme.hover : "transparent")
     border.width: 0

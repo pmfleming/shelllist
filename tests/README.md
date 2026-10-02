@@ -29,6 +29,9 @@ already-open development shell after changing `flake.nix`.
   motion is disabled. It also compares shared numeric/color interpolation with
   native Qt references and checks reversal/no-motion endpoints. These feature
   regressions were added after pruning.
+- `tst_detail_layout.qml` checks containment and non-overlap for Wi-Fi profile,
+  IP/DNS and security settings at compact/wide sizes, dynamically added toggles,
+  always-visible information sections, wrapped settings and responsive diagnostic grids.
 - `tst_settings_controls.qml` checks immediate slider value/focus feedback,
   native pointer mapping in horizontal/mirrored/vertical layouts, keyboard edits
   and segmented radio semantics, disabled guards and mirrored navigation.
@@ -36,7 +39,8 @@ already-open development shell after changing `flake.nix`.
   guarded embedded actions, immediate focus/error roles, hover-independent menu
   navigation, acknowledged selection, Escape cancellation and disabled guards.
 - `tst_chooser_keyboard.qml` exercises saved-cursor result typing, contained wrapping
-  Tab/Shift+Tab, forward/reverse Ctrl+Tab, Enter-to-edit, guarded Alt+number header
+  Tab/Shift+Tab excluding extra information while retaining additional controls,
+  forward/reverse Ctrl+Tab, Enter-to-edit, guarded Alt+number header
   shortcuts, editor-to-browse traversal, native menu Escape, pending editor
   ownership, actual Applications settings, read-only scrolling, removed editors
   and modal focus containment/restoration, with decorative animations enabled.

@@ -104,7 +104,6 @@ TestCase {
         const second = scene.second;
         first.detailsActionVisible = true;
         second.detailsActionVisible = true;
-        first.primaryActionId = "connect";
         first.listPane.chooserController.detailActions = [{id: "connect", icon: "+", enabled: true}];
         const firstAvatar = findChild(first, "resultAvatar");
         const secondAvatar = findChild(second, "resultAvatar");
@@ -114,9 +113,7 @@ TestCase {
         tryCompare(secondAvatar, "radius", 12);
         verify(findChild(first, "resultDetailsAction").visible);
         verify(!findChild(second, "resultDetailsAction").visible);
-        verify(findChild(first, "resultPrimaryCue").visible);
-        first.listPane.chooserController.detailActions = [{id: "connect", icon: "+", enabled: false}];
-        verify(!findChild(first, "resultPrimaryCue").visible);
+        compare(findChild(first, "resultPrimaryCue"), null, "list rows do not show Enter indicators");
         pickedSpy.target = second;
         pickedSpy.clear();
         mouseClick(second, second.width - 5, second.height / 2);

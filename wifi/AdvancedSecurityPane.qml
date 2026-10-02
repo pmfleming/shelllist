@@ -26,7 +26,6 @@ AdvancedSettingsFlickable {
                 spacing: 10
                 AdvancedSegmentedRow {
                     visible: !!securityFlick.settings.bandStatus.path
-                    height: visible ? 40 : 0
                     enabled: !securityFlick.settings.controller.actionInFlight
                     objectName: "wifiBand"
                     label: qsTr("Wi-Fi band")
@@ -57,7 +56,6 @@ AdvancedSettingsFlickable {
                     }
                 }
                 AdvancedSegmentedRow {
-                    height: 40
                     objectName: "wifiMacPolicy"
                     label: qsTr("Address policy")
                     value: securityFlick.settings.macPolicy
@@ -85,7 +83,6 @@ AdvancedSettingsFlickable {
                 }
                 ToggleRow {
                     objectName: "castingToggle"
-                    height: 40
                     title: qsTr("Cast discovery")
                     checked: securityFlick.settings.castingEnabled
                     enabled: !!securityFlick.settings.profile.path && !securityFlick.settings.controller.actionInFlight
@@ -125,7 +122,8 @@ AdvancedSettingsFlickable {
                 }
             }
         }
-        DisclosureSection {
+        DetailSection {
+            informationOnly: true
             objectName: "wifiSecurityDiagnostics"
             title: qsTr("Device & DHCP details")
             DetailCard {

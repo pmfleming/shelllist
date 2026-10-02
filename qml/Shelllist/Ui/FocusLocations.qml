@@ -18,7 +18,7 @@ QtObject {
         return matches.length === 1 ? matches[0] : null;
     }
     function targets(root: Item): var {
-        if (!root || !root.visible || (root as TextField)?.sensitive)
+        if (!root || !root.visible || (root as DetailSection)?.informationOnly || (root as TextField)?.sensitive)
             return [];
         let found = registered(root) ? [root] : [];
         for (const child of root.children)

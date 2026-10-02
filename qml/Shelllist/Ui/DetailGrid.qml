@@ -6,19 +6,12 @@ Grid {
     id: grid
 
     property var entries: []
-    property real densityScale: Math.max(Theme.densityMinimum, Math.min(1, height / 220))
-    readonly property int rowCount: Math.max(1, Math.ceil(entries.length / 2))
-    readonly property real fieldWidth: Math.max(160, (width - columnSpacing) / 2)
-    readonly property real fieldHeight: {
-        const firstField = fieldRepeater.itemAt(0);
-        return firstField ? firstField.implicitHeight : 0;
-    }
+    readonly property real fieldWidth: Math.max(0, (width - columnSpacing * (columns - 1)) / columns)
 
     width: parent ? parent.width : 0
-    height: parent ? parent.height : implicitHeight
-    columns: 2
+    columns: width >= 320 + columnSpacing ? 2 : 1
     columnSpacing: Math.max(24, Math.min(48, width * 0.08))
-    rowSpacing: rowCount > 1 ? Math.max(Theme.minimumVerticalSpacing, Math.min(Theme.verticalSpacing(Theme.spacingMd, densityScale), (height - rowCount * fieldHeight) / (rowCount - 1))) : 0
+    rowSpacing: Theme.spacingMd
 
     Repeater {
         id: fieldRepeater
@@ -33,7 +26,7 @@ Grid {
             value: modelData.value
             valueColor: modelData.valueColor || Theme.text
             valueBold: !!modelData.valueBold
-            valueWidth: modelData.valueWidth || width
+            valueWidth: Math.min(width, modelData.valueWidth || width)
         }
     }
 }

@@ -12,8 +12,8 @@ TestCase {
     height: 200
 
     Component {
-        id: disclosureFactory
-        Ui.DisclosureSection {
+        id: sectionFactory
+        Ui.DetailSection {
             objectName: "advanced"
             width: 420
             title: "Advanced settings"
@@ -88,27 +88,14 @@ TestCase {
         Quickshell.environment = ({});
         Ui.Theme.previewColorScheme = Qt.Unknown;
     }
-    function test_tonalDisclosureRetainsDraftsAndRevealsAttention(): void {
-        const disclosure = createTemporaryObject(disclosureFactory, this);
-        const toggle = findChild(disclosure, "advancedToggle");
-        const card = findChild(disclosure, "tonalCard");
-        const row = findChild(disclosure, "settingRow");
-        const draft = findChild(disclosure, "retainedDraft");
-        verify(!draft.visible);
-        verify(toggle.height >= 56);
-        compare(toggle.border.width, 0);
-        toggle.forceActiveFocus();
-        keyClick(Qt.Key_Return);
-        verify(disclosure.open && draft.visible);
+    function test_tonalSectionAlwaysShowsContentAndRetainsDrafts(): void {
+        const section = createTemporaryObject(sectionFactory, this);
+        compare(findChild(section, "advancedToggle"), null);
+        const card = findChild(section, "tonalCard");
+        const row = findChild(section, "settingRow");
+        const draft = findChild(section, "retainedDraft");
+        verify(draft.visible);
         draft.text = "unsaved";
-        toggle.forceActiveFocus();
-        keyClick(Qt.Key_Return);
-        verify(!draft.visible);
-        disclosure.attention = true;
-        verify(disclosure.open && draft.visible);
-        toggle.Accessible.pressAction();
-        verify(disclosure.open);
-        compare(draft.text, "unsaved");
         for (const scheme of [Qt.Light, Qt.Dark]) {
             Ui.Theme.previewColorScheme = scheme;
             compare(card.border.width, 0);
@@ -116,8 +103,10 @@ TestCase {
             compare(String(card.color), String(Ui.Theme.surface));
             verify(String(card.color) !== String(Ui.Theme.window));
         }
-        disclosure.width = 320;
+        section.width = 320;
         wait(0);
+        verify(draft.visible);
+        compare(draft.text, "unsaved");
         verify(row.height >= 56);
         verify(draft.mapToItem(row, draft.width, 0).x <= row.width);
         verify(card.height >= row.height);

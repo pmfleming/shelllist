@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 
 Rectangle {
     id: card
@@ -9,9 +10,11 @@ Rectangle {
     // Horizontal padding must not depend on height: wrapped content can own
     // the card's height, so height -> padding -> text width creates a loop.
     property real contentPadding: Theme.spacingMd
-    readonly property real verticalDensity: Math.max(Theme.densityMinimum, Math.min(1, height / 260))
-    property real verticalContentPadding: Theme.verticalSpacing(Theme.spacingMd, verticalDensity)
-    property real headingSpacing: title.length > 0 ? Theme.verticalSpacing(Theme.spacingMd, verticalDensity) : 0
+    // Stable in both axes: content-sized grids must not feed height back into padding.
+    property real verticalContentPadding: Theme.spacingMd
+    property real headingSpacing: title.length > 0 ? Theme.spacingMd : 0
+    implicitHeight: (entries !== null ? entryGrid.implicitHeight : 0) + headingHeight + headingSpacing + 2 * verticalContentPadding
+    Layout.minimumHeight: implicitHeight
     default property alias content: contentSlot.data
 
     width: parent ? parent.width : 0
@@ -46,9 +49,9 @@ Rectangle {
             height: Math.max(0, parent.height - card.headingHeight - card.headingSpacing)
 
             DetailGrid {
+                id: entryGrid
                 visible: card.entries !== null
                 entries: card.entries || []
-                densityScale: card.verticalDensity
             }
         }
     }

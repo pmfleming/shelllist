@@ -31,7 +31,7 @@ TestCase {
 
     function test_searchBarRetainsEditorAndEmbeddedActions() {
         const header = createTemporaryObject(headerComponent, testCase, {
-            width: 425, height: 56, resultCount: 12,
+            width: 425, height: 56,
             filterText: "query", iconActionEnabled: true, icon: "+"
         });
         verify(header !== null);
@@ -39,10 +39,9 @@ TestCase {
         const field = findChild(header, "chooserSearchField");
         const input = findChild(field, "fieldInput");
         const leading = findChild(header, "searchLeadingIcon");
-        const count = findChild(header, "searchResultCount");
+        compare(findChild(header, "searchResultCount"), null, "counts belong in the status bar, not search");
         compare(header.radius, 28);
         compare(field.border.width, 0);
-        compare(count.text, "12");
         header.focusSearch();
         compare(String(leading.color), String(Ui.Theme.accent));
         verify(!findChild(field, "focusRing").visible);
@@ -60,8 +59,6 @@ TestCase {
         header.searchActionEnabled = false;
         action.Accessible.pressAction();
         compare(header.actionCount, 1);
-        header.resultCount = 0;
-        compare(count.text, "0");
         const refresh = findChild(header, "chooserRefreshButton");
         verify(refresh.mapToItem(header, refresh.width, 0).x <= header.width);
         verify(field.width >= 48);

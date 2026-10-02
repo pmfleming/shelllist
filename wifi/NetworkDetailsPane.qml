@@ -18,7 +18,6 @@ ActionDetailsPane {
     readonly property real cardBudget: Math.max(420, bodyHeight - footerHeight - 3 * sectionSpacing - 2)
     readonly property real connectionCardHeight: Math.max(220, Math.round(cardBudget * 0.44))
     readonly property real networkCardHeight: Math.max(130, Math.round(cardBudget * 0.255))
-    readonly property real profileCardHeight: Math.max(150, cardBudget - connectionCardHeight - networkCardHeight)
 
     chooserController: controller
     uiScale: Theme.densityScale(height, 0)
@@ -64,7 +63,6 @@ ActionDetailsPane {
             sectionSpacing: pane.sectionSpacing
             connectionCardHeight: pane.connectionCardHeight
             networkCardHeight: pane.networkCardHeight
-            profileCardHeight: pane.profileCardHeight
         }
 
         Loader {

@@ -72,9 +72,9 @@ retain their chooser routes. Workspace switching retains compositor shortcuts.
 Update journals have `shelllist:update-logs`, with configurable Super+Shift+U in
 Home Manager; no status pod is required to reach them.
 
-Media puts now-playing/transport ahead of disclosed player preferences. Play/Pause
+Media puts now-playing/transport ahead of always-visible player preferences. Play/Pause
 names and icons reflect acknowledged playback. Tray uses supplied application icons
-and labelled activation/menu actions, with secondary activation/scrolling disclosed. Duplicate IDs disable effects instead of choosing an arbitrary instance.
+and labelled activation/menu actions, with secondary activation/scrolling shown below. Duplicate IDs disable effects instead of choosing an arbitrary instance.
 Native menus hold the chooser's focus-loss guard before opening, block competing
 chooser navigation, and restore an ordinary focus target only in the same live
 invocation. Missing/slow menus time out, deactivation cancels them, and late open

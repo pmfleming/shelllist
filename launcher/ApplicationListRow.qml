@@ -12,7 +12,6 @@ Ui.ResultRow {
 
     leadingIcon: "󰀻"
     leadingIconSource: Quickshell.iconPath(resultData.icon || "application-x-executable", "application-x-executable")
-    primaryActionId: resultData.primaryActionId || ""
     accessibleName: resultData.title + ". " + (resultData.subtitle || "")
 
     Ui.ResultLabel {

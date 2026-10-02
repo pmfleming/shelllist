@@ -7,8 +7,7 @@ ColumnLayout {
     id: list
 
     property var actions: []
-    property int rowHeight: 36
-    property bool distributeRows: false
+    property int rowHeight: 56
     property bool showDisabledReason: true
 
     signal triggered(string actionId)
@@ -24,7 +23,7 @@ ColumnLayout {
             objectName: "detailSetting:" + modelData.id
 
             Layout.fillWidth: true
-            Layout.preferredHeight: list.distributeRows ? Math.max(30, (list.height - list.spacing * Math.max(0, actionRepeater.count - 1)) / Math.max(1, actionRepeater.count)) : list.rowHeight
+            Layout.preferredHeight: Math.max(implicitHeight, list.rowHeight)
             title: modelData.label || ""
             hotkey: modelData.shortcut || ""
             checked: !!(modelData.state && modelData.state.checked)

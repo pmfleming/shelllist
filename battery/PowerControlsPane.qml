@@ -18,10 +18,9 @@ Column {
         controller: pane.controller
     }
 
-    Ui.DisclosureSection {
+    Ui.DetailSection {
         objectName: "batteryAutomationSection"
         title: qsTr("Battery levels & hardware tuning")
-        attention: pane.controller.alertSaveError.length > 0 || ["paused", "blocked", "unavailable", "error"].includes(pane.controller.batteryAutomation.status)
         BatteryLevelsPane {
             Layout.fillWidth: true
             controller: pane.controller

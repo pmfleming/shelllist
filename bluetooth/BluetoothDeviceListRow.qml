@@ -38,7 +38,6 @@ Ui.ResultRow {
 
     leadingIcon: resultData.icon || "󰂯"
     leadingIconColor: device.blocked ? Ui.Theme.danger : (device.connected ? Ui.Theme.active : Ui.Theme.mutedText)
-    primaryActionId: resultData.primaryActionId || ""
 
     Ui.ResultLabel {
         title: row.resultData.title

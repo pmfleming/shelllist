@@ -151,7 +151,7 @@ DaemonTestCase {
         root.chooser.activateUi("");
         root.chooser.primarySelected();
         tryVerify(() => findChild(root, "mediaPlayback") !== null);
-        verify(!findChild(root, "mediaPreferences").open);
+        verify(findChild(root, "mediaPlayerPin").visible);
         const pause = findChild(root, "detailAction:play-pause");
         compare(pause.label, "Pause");
         compare(pause.icon, "");
@@ -211,7 +211,8 @@ DaemonTestCase {
         verify(!menuAction.iconOnly, "labelled toolbar actions stay labelled");
         compare(menuAction.Accessible.name, "Open application menu");
         verify(!findChild(root, "trayPrimary-activate").enabled);
-        verify(!findChild(root, "trayOtherActions").open);
+        verify(findChild(root, "trayOtherActions").visible);
+        compare(findChild(root, "trayOtherActionsToggle"), null);
         menuAction.clicked();
         verify(root.chooser.trayMenuActive);
         verify(findChild(root, "systemTrayMenu").visible);

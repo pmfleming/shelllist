@@ -21,15 +21,16 @@ AdvancedSettingsFlickable {
         width: hardwareFlick.width
         spacing: hardwareFlick.settings.sectionSpacing
 
-        DetailCard {
-            height: Math.max(500, hardwareFlick.height)
+        DetailColumnCard {
+            objectName: "wifiIpSettingsCard"
             title: qsTr("IP & DNS")
 
-            Column {
-                anchors.fill: parent
+            ColumnLayout {
+                Layout.fillWidth: true
                 spacing: 10
 
                 AdvancedSegmentedRow {
+                    Layout.fillWidth: true
                     objectName: "wifiIpFamily"
                     label: "Address family"
                     value: hardwareFlick.settings.ipFamily
@@ -49,8 +50,7 @@ AdvancedSettingsFlickable {
                 }
 
                 ToggleRow {
-                    width: parent.width
-                    height: 44
+                    Layout.fillWidth: true
                     objectName: "wifiIpEnabled"
                     title: hardwareFlick.settings.ipFamily === "ipv4" ? "Enable IPv4" : "Enable IPv6"
                     showSubtitle: false
@@ -59,8 +59,7 @@ AdvancedSettingsFlickable {
                 }
 
                 ToggleRow {
-                    width: parent.width
-                    height: 44
+                    Layout.fillWidth: true
                     objectName: "wifiIpAutomatic"
                     title: qsTr("Automatic addressing")
                     showSubtitle: false
@@ -70,8 +69,7 @@ AdvancedSettingsFlickable {
                 }
 
                 ToggleRow {
-                    width: parent.width
-                    height: 44
+                    Layout.fillWidth: true
                     objectName: "wifiDnsAutomatic"
                     title: qsTr("Automatic DNS")
                     showSubtitle: false
@@ -81,8 +79,8 @@ AdvancedSettingsFlickable {
                 }
 
                 GridLayout {
-                    width: parent.width
-                    columns: 2
+                    Layout.fillWidth: true
+                    columns: width >= 480 ? 2 : 1
                     columnSpacing: 12
                     rowSpacing: 8
 
