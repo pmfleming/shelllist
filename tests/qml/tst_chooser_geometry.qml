@@ -203,7 +203,11 @@ DaemonTestCase {
         keyClick(Qt.Key_Right);
         for (let frame = 0; frame < 12; ++frame) {
             wait(20);
-            compare(surface.listItem.mapToItem(fixture, 0, 0).x, left);
+            compare(surface.listItem.mapToItem(fixture, 0, 0).x, left,
+                "progress=" + fixture.controller.detailsExpansionProgress
+                + " canvas=" + fixture.controller.currentWindowWidth
+                + " listLoader.x=" + surface.listItem.parent.x
+                + " viewport.contentX=" + fixture.visual.children[0].contentX);
             compare(surface.listItem.y, top);
             compare(surface.listItem.height, listHeight);
             compare(fixture.controller.geometry.x, anchor);
@@ -227,6 +231,29 @@ DaemonTestCase {
         compare(fixture.visual.x, 0);
         compare(fixture.height, frameHeight);
         compare(fixture.edits, 0);
+    }
+    function test_fractionalExpansionKeepsListAnchored() {
+        // Check fractional geometry in both directions as well as the live
+        // animation above, without relaxing the exact list-anchor assertion.
+        Quickshell.environment = {SHELLLIST_NO_ANIMATIONS: "true"};
+        const fixture = createTemporaryObject(fixtureFactory, testCase);
+        const surface = surfaceFor(fixture);
+        verify(waitForPolish(fixture.Window.window));
+        const left = surface.listItem.mapToItem(fixture, 0, 0).x;
+        fixture.controller.detailsOpen = true;
+        tryVerify(() => surface.detailsItem !== null);
+        const samples = [0, 0.03, 0.1, 0.3922279666191737, 0.5, 0.75, 0.999, 1];
+        for (const progress of samples.concat(samples.slice().reverse())) {
+            fixture.controller.detailsExpansionProgress = progress;
+            compare(fixture.controller.detailsExpansionProgress, progress);
+            wait(0);
+            verify(waitForPolish(fixture.Window.window));
+            compare(surface.listItem.mapToItem(fixture, 0, 0).x, left,
+                "list anchor at expansion progress " + progress);
+            compare(surface.listItem.width, fixture.controller.listPaneWidth);
+            if (progress > 0)
+                compare(surface.detailsItem.width, fixture.controller.detailsPaneWidth);
+        }
     }
     function test_focusedDelegateUsesSharedQueryGuardsAndDetailFocus() {
         const fixture = createTemporaryObject(fixtureFactory, testCase);

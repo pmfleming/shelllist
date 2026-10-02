@@ -1,7 +1,9 @@
 import QtQuick
-import QtQuick.Layouts
 
-RowLayout {
+// These panes have explicit animated widths. A RowLayout can redistribute
+// transient rounding slack and move the fixed list by a pixel mid-animation.
+// Anchor the list and place the expanding panes directly instead.
+Item {
     id: layout
 
     required property ChooserController controller
@@ -37,7 +39,6 @@ RowLayout {
     anchors.rightMargin: controller.contentMargin
     anchors.topMargin: layout.verticalMargin
     anchors.bottomMargin: layout.verticalMargin
-    spacing: 0
 
     Connections {
         target: layout.controller
@@ -79,20 +80,21 @@ RowLayout {
     Loader {
         id: listLoader
 
-        Layout.preferredWidth: layout.controller.listPaneWidth
-        Layout.minimumWidth: layout.controller.listPaneWidth
-        Layout.maximumWidth: layout.controller.listPaneWidth
-        Layout.fillHeight: true
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: layout.controller.listPaneWidth
         active: true
         sourceComponent: layout.listComponent
     }
 
     Item {
+        id: detailsGap
         visible: layout.controller.detailsRendered
-        Layout.preferredWidth: layout.controller.detailsPaneGapWidth
-        Layout.minimumWidth: layout.controller.detailsPaneGapWidth
-        Layout.maximumWidth: layout.controller.detailsPaneGapWidth
-        Layout.fillHeight: true
+        anchors.left: listLoader.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: layout.controller.detailsPaneGapWidth
 
         VerticalDivider {}
     }
@@ -110,10 +112,10 @@ RowLayout {
         }
         visible: layout.controller.detailsRendered
         enabled: layout.controller.detailsOpen
-        Layout.preferredWidth: layout.controller.detailsPaneWidth
-        Layout.minimumWidth: layout.controller.detailsPaneWidth
-        Layout.maximumWidth: layout.controller.detailsPaneWidth
-        Layout.fillHeight: true
+        anchors.left: detailsGap.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: layout.controller.detailsPaneWidth
         clip: true
 
         PulsingLabel {
