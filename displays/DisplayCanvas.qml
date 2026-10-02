@@ -7,15 +7,14 @@ import "DisplayModel.js" as Model
 Rectangle {
     id: canvas
     required property DisplayController controller
-    property bool editing: false
-    readonly property var allValues: editing ? controller.draft : controller.outputs
+    readonly property var allValues: controller.draft
     // Mirrors share the source's desktop, not another movable workspace tile.
     readonly property var values: allValues.filter(o => !Model.mirrorSource(o, allValues))
     readonly property string selectedSource: Model.mirrorSource(allValues.find(o => o.name === controller.selectedName) || ({}), allValues)
-    readonly property bool interactive: editing && controller.canEdit
+    readonly property bool interactive: controller.canEdit && !controller.discardPrompt
     property var frozenBounds: null
     readonly property var extent: frozenBounds || Model.bounds(values)
-    readonly property real factor: Math.max(0.001, Math.min(Math.max(1, width - 64) / extent.width, Math.max(1, height - 64) / extent.height))
+    readonly property real factor: Math.max(0.001, Math.min(Math.max(1, width - 32) / extent.width, Math.max(1, height - 32) / extent.height))
     readonly property real originX: (width - extent.width * factor) / 2 - extent.x * factor
     readonly property real originY: (height - extent.height * factor) / 2 - extent.y * factor
     property bool dragging: false
@@ -26,16 +25,14 @@ Rectangle {
     property real dragY: 0
     property real pressX: 0
     property real pressY: 0
-    objectName: editing ? "displayWorkspaceCanvas" : "displayOverviewCanvas"
+    objectName: "displayArrangementSummary"
     radius: Ui.Theme.cardRadius
     color: Ui.Theme.input
-    border.color: Ui.Theme.border
-    Ui.FocusRing { active: canvas.activeFocus; cornerRadius: canvas.radius }
     clip: true
-    activeFocusOnTab: true
-    Accessible.role: Accessible.Pane
-    Accessible.name: editing ? qsTr("Display arrangement") : qsTr("Current displays")
-    Accessible.description: controller.selectedName + (editing ? qsTr(". Brackets select a display; arrows move it; Shift moves one pixel; Control moves 64 pixels.") : qsTr(". Enter opens the layout workspace."))
+    activeFocusOnTab: false
+    Accessible.role: Accessible.Graphic
+    Accessible.name: qsTr("Display layout")
+    Accessible.description: allValues.map(o => qsTr("%1: %2, position %3, %4%5").arg(o.name).arg(o.enabled ? qsTr("on") : qsTr("off")).arg(o.x).arg(o.y).arg(o.mirror_of ? qsTr(", mirrors %1").arg(o.mirror_of) : "")).join("; ")
 
     function finishDrag(cancelled: bool): void {
         if (dragging && cancelled)
@@ -43,38 +40,11 @@ Rectangle {
         dragging = false;
         frozenBounds = null;
     }
-    Keys.onPressed: function (event) {
-        if (event.key === Qt.Key_Escape && dragging) {
-            finishDrag(true);
-            event.accepted = true;
-            return;
-        }
-        if (event.key === Qt.Key_BracketLeft || event.key === Qt.Key_BracketRight) {
-            controller.cycleOutput(event.key === Qt.Key_BracketLeft ? -1 : 1);
-            event.accepted = true;
-            return;
-        }
-        if (!editing && [Qt.Key_Return, Qt.Key_Enter, Qt.Key_Space].includes(event.key)) {
-            if (!event.isAutoRepeat)
-                controller.openDetails();
-            event.accepted = true;
-            return;
-        }
-        const delta = ({
-                [Qt.Key_Left]: [-1, 0],
-                [Qt.Key_H]: [-1, 0],
-                [Qt.Key_Right]: [1, 0],
-                [Qt.Key_L]: [1, 0],
-                [Qt.Key_Up]: [0, -1],
-                [Qt.Key_K]: [0, -1],
-                [Qt.Key_Down]: [0, 1],
-                [Qt.Key_J]: [0, 1]
-            })[event.key];
-        if (editing && delta) {
-            const step = event.modifiers & Qt.ShiftModifier ? 1 : event.modifiers & Qt.ControlModifier ? 64 : 16;
-            controller.moveSelected(delta[0] * step, delta[1] * step);
-            event.accepted = true;
-        }
+    // Escape cancels a pointer drag without putting the graphic in the focus chain.
+    Shortcut {
+        sequence: "Escape"
+        enabled: canvas.controller.uiActive && canvas.dragging
+        onActivated: canvas.finishDrag(true)
     }
     Repeater {
         // A count model keeps delegates and their pointer grabs alive while a draft changes.
@@ -86,8 +56,7 @@ Rectangle {
             readonly property var output: canvas.values[index] || ({})
             readonly property var geometry: Model.rect(output)
             readonly property bool selected: output.name === canvas.controller.selectedName || output.name === canvas.selectedSource
-            readonly property string copies: canvas.allValues.filter(o => Model.mirrorSource(o, canvas.allValues) === output.name && o.enabled !== false && !o.disabled).map(o => o.name).join(", ")
-            readonly property bool outputEnabled: canvas.editing ? output.enabled : !output.disabled
+            readonly property string copies: canvas.allValues.filter(o => Model.mirrorSource(o, canvas.allValues) === output.name && o.enabled !== false).map(o => o.name).join(", ")
             x: canvas.originX + geometry.x * canvas.factor
             y: canvas.originY + geometry.y * canvas.factor
             width: Math.max(8, geometry.width * canvas.factor)
@@ -97,12 +66,9 @@ Rectangle {
             color: selected ? Ui.Theme.selected : Ui.Theme.surfaceRaised
             border.width: selected ? 2 : 1
             border.color: selected ? Ui.Theme.accent : Ui.Theme.mutedText
-            opacity: outputEnabled ? 1 : 0.5
+            opacity: output.enabled ? 1 : 0.5
             clip: true
-            Accessible.role: Accessible.Button
-            Accessible.name: outputNumber + ". " + Model.title(output) + (outputEnabled ? qsTr(". On") : qsTr(". Off")) + (copies ? qsTr(". Mirrored on ") + copies : "")
-            Accessible.selected: selected
-            Accessible.onPressAction: canvas.controller.selectOutput(output.name)
+            Accessible.ignored: true
 
             Rectangle {
                 x: 6
@@ -120,10 +86,10 @@ Rectangle {
             }
             Ui.GlyphLabel {
                 anchors.centerIn: parent
-                glyph: screenRect.outputEnabled ? (Model.internal(screenRect.output.name) ? "󰌢" : "󰍹") : "󰶐"
+                glyph: screenRect.output.enabled ? (Model.internal(screenRect.output.name) ? "󰌢" : "󰍹") : "󰶐"
                 font.pixelSize: Math.min(32, screenRect.height / 3)
                 color: screenRect.selected ? Ui.Theme.accent : Ui.Theme.mutedText
-                visible: screenRect.height > 55
+                visible: screenRect.height > 75
             }
             Ui.ThemeText {
                 anchors.bottom: parent.bottom
@@ -131,17 +97,18 @@ Rectangle {
                 width: parent.width - 12
                 x: 6
                 horizontalAlignment: Text.AlignHCenter
-                text: (canvas.editing ? screenRect.output.name : Model.title(screenRect.output)) + (screenRect.copies ? " → " + screenRect.copies : "")
+                text: screenRect.output.name + (screenRect.copies ? " → " + screenRect.copies : "")
                 elide: Text.ElideRight
                 font.pixelSize: Ui.Theme.fontSizeSmall
                 visible: screenRect.height > 95
             }
             MouseArea {
+                objectName: "displayMapPointer-" + screenRect.output.name
                 anchors.fill: parent
+                enabled: !canvas.controller.actionInFlight && !canvas.controller.trial && !canvas.controller.discardPrompt
                 cursorShape: canvas.interactive ? Qt.SizeAllCursor : Qt.PointingHandCursor
                 onPressed: function (mouse) {
                     canvas.controller.selectOutput(screenRect.output.name);
-                    canvas.forceActiveFocus();
                     if (!canvas.interactive)
                         return;
                     const p = mapToItem(canvas, mouse.x, mouse.y);
@@ -161,8 +128,7 @@ Rectangle {
                 }
                 onReleased: canvas.finishDrag(false)
                 onCanceled: canvas.finishDrag(true)
-                onDoubleClicked: if (!canvas.editing)
-                    canvas.controller.openDetails()
+                onDoubleClicked: canvas.controller.openDetails()
             }
         }
     }

@@ -29,7 +29,7 @@ Ui.ActionDetailsPane {
         event.accepted = true;
     }
     function focusNarrowDetails(): void {
-        if (narrowDetails && controller.uiActive && !controller.arrangementOpen)
+        if (narrowDetails && controller.uiActive)
             backButton.forceActiveFocus();
     }
     Component.onCompleted: Qt.callLater(focusNarrowDetails)

@@ -104,6 +104,40 @@ DaemonTestCase {
         verify(findChild(panel, "displayFocusTechnical").informationOnly);
         verify(findChild(panel, "displayFocusStatus").text.includes("saved automatically"));
     }
+    function test_persistentMapUsesDraftWithoutKeyboardFocus() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        const map = findChild(panel, "displayArrangementSummary");
+        verify(map.visible);
+        verify(!map.activeFocusOnTab);
+        c.openDetails();
+        waitForDetails(panel);
+        c.edit("DP-1", "x", 1700);
+        compare(map.allValues.find(o => o.name === "DP-1").x, 1700);
+        verify(findChild(panel, "displayLayoutPreviewLabel").text.includes("not applied"));
+        c.detailsTab = "information";
+        verify(map.visible);
+        c.openGlobalSettings();
+        verify(map.visible);
+        c.reloadDraft();
+        c.closeDetails();
+        const state = displayState();
+        state.outputs = [state.outputs[1]];
+        c.applyDisplayPolicy(state);
+        verify(map.visible && map.values.length === 1, "single-screen map remains visible");
+        findChild(panel, "displayList").focusSearch();
+        const pointer = findChild(panel, "displayMapPointer-DP-1");
+        mousePress(pointer, pointer.width / 2, pointer.height / 2);
+        verify(c.layoutDragging, "drag must not disable its own pointer area");
+        mouseMove(pointer, pointer.width / 2 + 12, pointer.height / 2 + 4);
+        mouseRelease(pointer, pointer.width / 2, pointer.height / 2);
+        verify(!map.activeFocus && !c.layoutDragging);
+        c.edit("DP-1", "x", 99);
+        c.dismissNavigation();
+        verify(c.discardPrompt, "compact-map edits retain discard protection");
+        compare(calls.length, 0, "map changes are draft-only");
+    }
     function test_globalSettingsWithoutSelectionAndIndependentMemory() {
         const panel = makePanel();
         const c = panel.controller;
@@ -277,8 +311,7 @@ DaemonTestCase {
         c.edit("DP-1", "x", 9999);
         c.moveSelected(16, 0);
         compare(c.selectedDraft.x, oldX, "mirrors cannot be positioned independently");
-        c.arrangementOpen = true;
-        compare(findChild(panel, "displayWorkspaceCanvas").values.length, 1, "a mirror is not a second desktop tile");
+        compare(findChild(panel, "displayArrangementSummary").values.length, 1, "a mirror is not a second desktop tile");
         compare(calls.length, 0);
         content.selected("");
         compare(c.selectedDraft.mirror_of, "");

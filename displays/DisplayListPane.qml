@@ -16,7 +16,7 @@ Ui.ChooserListPane {
     powered: controller.activeCount > 0
     powerVisible: false
     busy: controller.actionInFlight
-    enabled: !controller.navigationBlocked
+    enabled: !controller.discardPrompt && !controller.actionInFlight && !controller.trial
     refreshEnabled: !controller.actionInFlight && !controller.trial
     status: controller.statusMessage || qsTr("%1 active · %2 connected").arg(controller.activeCount).arg(controller.outputs.length)
     iconActionEnabled: controller.activeCount > 0
@@ -26,6 +26,25 @@ Ui.ChooserListPane {
     searchActionToolTip: qsTr("Display settings")
     searchActionEnabled: !controller.navigationBlocked
     onSearchActionRequested: controller.openGlobalSettings()
+    listOptionsComponent: Component {
+        Column {
+            width: parent.width
+            spacing: Ui.Theme.spacingXs
+            DisplayCanvas {
+                width: parent.width
+                height: Math.max(96, Math.min(150, pane.height * 0.23))
+                controller: pane.controller
+            }
+            Ui.ThemeText {
+                objectName: "displayLayoutPreviewLabel"
+                width: parent.width
+                text: pane.controller.stale ? qsTr("Layout changed · reload") : pane.controller.dirty ? qsTr("Preview layout · not applied") : qsTr("Display layout")
+                color: pane.controller.stale ? Ui.Theme.warning : Ui.Theme.mutedText
+                font.pixelSize: Ui.Theme.fontSizeSmall
+                wrapMode: Text.Wrap
+            }
+        }
+    }
     rowDelegate: Component {
         DisplayListRow {
             listPane: pane

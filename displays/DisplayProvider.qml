@@ -74,12 +74,6 @@ Core.Provider {
                 presentation: {
                     group: "toolbar"
                 }
-            }), Core.Model.keepOpenAction("arrange", qsTr("Arrange"), {
-                icon: "󰍹",
-                enabled: browsing,
-                presentation: {
-                    group: "toolbar"
-                }
             }), Core.Model.keepOpenAction("toggle-enabled", draft && draft.enabled ? qsTr("Disable") : qsTr("Enable"), {
                 icon: "󰐥",
                 visible: true,

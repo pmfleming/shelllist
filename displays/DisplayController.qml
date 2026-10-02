@@ -42,7 +42,6 @@ Ui.ProviderChooserController {
     property bool changingDetailsContext: false
     property bool globalSettingsOpen: false
     property string detailsTab: "settings"
-    property bool arrangementOpen: false
     readonly property DisplayProvider displayProvider: DisplayProvider {
         controller: controller
     }
@@ -249,11 +248,6 @@ Ui.ProviderChooserController {
         const tabs = ["settings", "information"];
         detailsTab = tabAfter(tabs, detailsTab, backwards);
     }
-    function cycleOutput(delta: int): void {
-        if (!outputs.length)
-            return;
-        selectOutput(outputs[(Math.max(0, selectedNumber - 1) + delta + outputs.length) % outputs.length].name);
-    }
     function openGlobalSettings(): void {
         if (navigationBlocked)
             return;
@@ -306,13 +300,6 @@ Ui.ProviderChooserController {
             identifyName = name;
             identifyActive = true;
             identifyTimer.restart();
-            return true;
-        }
-        if (actionId === "arrange") {
-            detailsTab = "settings";
-            arrangementOpen = true;
-            openDetails();
-            Qt.callLater(editorFocusRequested);
             return true;
         }
         if (actionId === "toggle-enabled" && selectedDraft && canToggleEnabled(name)) {
@@ -383,6 +370,10 @@ Ui.ProviderChooserController {
         }
         if (actionInFlight)
             return true;
+        if (!detailsOpen && dirty) {
+            discardPrompt = true;
+            return true;
+        }
         return dismissDetailsOrWindow();
     }
 
