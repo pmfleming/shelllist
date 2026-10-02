@@ -22,6 +22,10 @@ Ui.ChooserListPane {
     iconActionEnabled: controller.activeCount > 0
     iconAccessibleName: qsTr("Identify all enabled displays")
     onIconClicked: controller.identify()
+    searchActionIcon: "settings"
+    searchActionToolTip: qsTr("Display settings")
+    searchActionEnabled: !controller.navigationBlocked
+    onSearchActionRequested: controller.openGlobalSettings()
     rowDelegate: Component {
         DisplayListRow {
             listPane: pane

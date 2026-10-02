@@ -10,12 +10,13 @@ Ui.ProviderChooserController {
 
     viewMemory: Ui.ChooserMemory {
         controller: controller
-        key: controller.selectedResult ? controller.selectedResult.key : ""
+        key: controller.globalSettingsOpen ? "display-global-settings" : controller.selectedResult ? controller.selectedResult.key : ""
         tab: controller.detailsTab
-        tabs: ["settings", "focus", "information"]
+        tabs: controller.globalSettingsOpen ? ["focus"] : ["settings", "information"]
         onRestoreRequested: function (open, tab) {
             controller.detailsTab = tab;
-            controller.detailsOpen = open && controller.hasSelection;
+            if (!controller.changingDetailsContext)
+                controller.detailsOpen = open && (controller.globalSettingsOpen || controller.hasSelection);
         }
     }
     property var displayPolicyState: ({
@@ -38,6 +39,8 @@ Ui.ProviderChooserController {
     property bool discardPrompt: false
     property bool identifyActive: false
     property string identifyName: ""
+    property bool changingDetailsContext: false
+    property bool globalSettingsOpen: false
     property string detailsTab: "settings"
     property bool arrangementOpen: false
     readonly property DisplayProvider displayProvider: DisplayProvider {
@@ -241,7 +244,9 @@ Ui.ProviderChooserController {
         return !navigationBlocked && executeSelected(actionId);
     }
     function cycleDetailsTab(backwards: bool): void {
-        const tabs = ["settings", "focus", "information"];
+        if (globalSettingsOpen)
+            return;
+        const tabs = ["settings", "information"];
         detailsTab = tabAfter(tabs, detailsTab, backwards);
     }
     function cycleOutput(delta: int): void {
@@ -249,10 +254,26 @@ Ui.ProviderChooserController {
             return;
         selectOutput(outputs[(Math.max(0, selectedNumber - 1) + delta + outputs.length) % outputs.length].name);
     }
-    function openDetails() {
+    function openGlobalSettings(): void {
+        if (navigationBlocked)
+            return;
         viewMemory.synchronize();
+        changingDetailsContext = true;
+        globalSettingsOpen = true;
+        viewMemory.synchronize();
+        changingDetailsContext = false;
+        detailsTab = "focus";
+        detailsOpen = true;
+        focusDetailsRequested();
+    }
+    function openDetails() {
         if (!hasSelection || navigationBlocked)
             return;
+        viewMemory.synchronize();
+        changingDetailsContext = true;
+        globalSettingsOpen = false;
+        viewMemory.synchronize();
+        changingDetailsContext = false;
         detailsOpen = true;
     }
     function closeDetails() {

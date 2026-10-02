@@ -11,7 +11,7 @@ Ui.ProviderChooserSurface {
     sessionReady: controller.stateReady && !controller.actionInFlight
     navigationEnabled: !controller.discardPrompt && !controller.layoutDragging && !controller.trial
     refreshEnabled: !controller.actionInFlight && !controller.trial && navigationEnabled
-    detailsTabEnabled: navigationEnabled && controller.detailsOpen && controller.hasSelection && !controller.trial && !controller.actionInFlight
+    detailsTabEnabled: navigationEnabled && controller.detailsOpen && !controller.globalSettingsOpen && controller.hasSelection && !controller.trial && !controller.actionInFlight
 
     listComponent: Component {
         DisplayListPane {
@@ -27,7 +27,7 @@ Ui.ProviderChooserSurface {
 
     Shortcut {
         sequence: "Ctrl+Return"
-        enabled: content.controller.uiActive && content.controller.detailsOpen && content.controller.canPreview && !content.controller.discardPrompt
+        enabled: content.controller.uiActive && content.controller.detailsOpen && !content.controller.globalSettingsOpen && content.controller.canPreview && !content.controller.discardPrompt
         autoRepeat: false
         onActivated: content.controller.preview()
     }

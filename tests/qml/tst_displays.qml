@@ -95,20 +95,53 @@ DaemonTestCase {
         verify(actions.find(a => a.id === "preview").icon !== actions.find(a => a.id === "identify").icon);
         verify(findChild(panel, "displayArrangementSummary").visible);
         verify(findChild(panel, "displayX").visible);
-        c.detailsTab = "focus";
-        compare(panel.detailsItem.title, "Focus · all monitors");
+        c.openGlobalSettings();
+        compare(panel.detailsItem.title, "Display settings");
+        compare(panel.detailsItem.subtitle, "Focus · all monitors");
         compare(panel.detailsItem.actions.length, 0, "global focus does not expose selected-monitor layout actions");
         verify(findChild(panel, "displayAdvancedFocus").visible);
         verify(findChild(panel, "displayFocusedMonitor").visible);
         verify(findChild(panel, "displayFocusTechnical").informationOnly);
         verify(findChild(panel, "displayFocusStatus").text.includes("saved automatically"));
     }
+    function test_globalSettingsWithoutSelectionAndIndependentMemory() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        c.applyDisplayPolicy(focusState());
+        c.openDetails();
+        c.detailsTab = "information";
+        c.viewMemory.synchronize();
+        findChild(panel, "fieldTrailingAction").clicked();
+        waitForDetails(panel);
+        compare(c.viewMemory.key, "display-global-settings");
+        c.selectionModel.rankRequestsEnabled = false;
+        c.filterText = "no-such-monitor";
+        const store = c.selectionModel;
+        store.applyRustRanking(store.searchOwner, store.searchGeneration, []);
+        tryCompare(c, "hasSelection", false);
+        verify(c.detailsOpen && c.globalSettingsOpen);
+        verify(findChild(panel, "displayFocusPane").visible);
+        c.closeDetails();
+        c.openGlobalSettings();
+        verify(c.detailsOpen, "gear works without any search results");
+        c.filterText = "";
+        tryCompare(c, "hasSelection", true);
+        c.openDetails();
+        compare(c.detailsTab, "information", "monitor page memory survives global settings");
+        c.closeDetails();
+        const state = focusState();
+        state.outputs = [];
+        c.applyDisplayPolicy(state);
+        c.openGlobalSettings();
+        verify(c.detailsOpen && c.globalSettingsOpen, "global settings do not require a connected display");
+        compare(calls.length, 0);
+    }
     function test_focusTelemetryDoesNotInvalidateLayoutDrafts() {
         const panel = makePanel();
         const c = panel.controller;
         c.applyDisplayPolicy(focusState());
-        c.openDetails();
-        c.detailsTab = "focus";
+        c.openGlobalSettings();
         waitForDetails(panel);
         const label = findChild(panel, "displayFocusedMonitor");
         verify(label.text.indexOf("DP-1") >= 0);
@@ -132,8 +165,7 @@ DaemonTestCase {
         const panel = makePanel();
         const c = panel.controller;
         c.applyDisplayPolicy(focusState());
-        c.openDetails();
-        c.cycleDetailsTab();
+        c.openGlobalSettings();
         compare(c.detailsTab, "focus");
         waitForDetails(panel);
         const choice = findChild(panel, "focusSetting-misc:mouse_move_focuses_monitor");
@@ -171,6 +203,7 @@ DaemonTestCase {
         c.requestFinished(calls[2].id);
         compare(choice.checked, true);
         verify(!reset.enabled);
+        c.openDetails();
         c.cycleDetailsTab();
         compare(c.detailsTab, "information");
         c.cycleDetailsTab();
@@ -180,8 +213,7 @@ DaemonTestCase {
         const panel = makePanel();
         const c = panel.controller;
         c.applyDisplayPolicy(focusState());
-        c.openDetails();
-        c.detailsTab = "focus";
+        c.openGlobalSettings();
         waitForDetails(panel);
         const number = findChild(panel, "focusNumber-input:follow_mouse_threshold");
         number.edited("");

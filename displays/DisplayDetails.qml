@@ -14,11 +14,11 @@ Ui.ActionDetailsPane {
     contentAvailable: true
     headerHeight: Math.max(56, Math.round(64 * uiScale))
     controlHeight: actionHeight
-    icon: controller.selectedResult ? controller.selectedResult.icon : "󰍹"
+    icon: controller.globalSettingsOpen ? "settings" : controller.selectedResult ? controller.selectedResult.icon : "󰍹"
     iconColor: controller.selectedOutput && !controller.selectedOutput.disabled ? Ui.Theme.active : Ui.Theme.mutedText
-    title: controller.detailsTab === "focus" ? qsTr("Focus · all monitors") : controller.selectedResult ? controller.selectedResult.title : qsTr("Displays")
-    subtitle: controller.detailsTab === "focus" ? qsTr("Keyboard and pointer") : controller.selectedResult ? controller.selectedResult.subtitle : ""
-    actions: controller.detailsTab === "focus" ? [] : controller.detailActions
+    title: controller.globalSettingsOpen ? qsTr("Display settings") : controller.selectedResult ? controller.selectedResult.title : qsTr("Displays")
+    subtitle: controller.globalSettingsOpen ? qsTr("Focus · all monitors") : controller.selectedResult ? controller.selectedResult.subtitle : ""
+    actions: controller.globalSettingsOpen ? [] : controller.detailActions
     subtitleWeight: Ui.Theme.fontWeightMedium
     stackedPrimary: narrowDetails
     enabled: !controller.trial && !controller.discardPrompt && !controller.actionInFlight
@@ -38,7 +38,6 @@ Ui.ActionDetailsPane {
         anchors.fill: parent
         spacing: pane.sectionSpacing
         RowLayout {
-            visible: pane.controller.detailsTab === "settings" || pane.controller.statusMessage.length > 0
             Layout.fillWidth: true
             spacing: Ui.Theme.spacingSm
             Ui.FlatIconButton {
@@ -53,13 +52,14 @@ Ui.ActionDetailsPane {
             }
             Ui.ThemeText {
                 Layout.fillWidth: true
-                text: pane.controller.statusMessage || (pane.controller.dirty ? qsTr("Unsaved layout · Preview changes") : "")
+                text: pane.controller.statusMessage || (!pane.controller.globalSettingsOpen && pane.controller.dirty ? qsTr("Unsaved layout · Preview changes") : "")
                 wrapMode: Text.Wrap
                 font.pixelSize: Ui.Theme.fontSizeSmall
                 color: pane.controller.statusMessage ? Ui.Theme.warning : Ui.Theme.mutedText
             }
             Ui.FlatIconButton {
                 objectName: "reloadDisplayLayout"
+                visible: !pane.controller.globalSettingsOpen
                 Layout.preferredWidth: Ui.Theme.controlHeight
                 Layout.preferredHeight: Ui.Theme.controlHeight
                 icon: "󰕍"
@@ -73,12 +73,18 @@ Ui.ActionDetailsPane {
             objectName: "displayEmptyDetails"
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: !pane.controller.selectedOutput
+            visible: !pane.controller.globalSettingsOpen && !pane.controller.selectedOutput
             text: qsTr("No display selected · go back to the list or clear search")
+        }
+        DisplayFocusPane {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: pane.controller.globalSettingsOpen
+            controller: pane.controller
         }
         Ui.TabbedDetailsStack {
             objectName: "displayDetailsTabs"
-            visible: !!pane.controller.selectedOutput
+            visible: !pane.controller.globalSettingsOpen && !!pane.controller.selectedOutput
             Layout.fillWidth: true
             Layout.fillHeight: true
             footerHeight: pane.controlHeight
@@ -89,11 +95,6 @@ Ui.ActionDetailsPane {
                     value: "settings",
                     label: qsTr("Settings"),
                     icon: "󰒓"
-                },
-                {
-                    value: "focus",
-                    label: qsTr("Focus"),
-                    icon: "󰁔"
                 },
                 {
                     value: "information",
@@ -108,11 +109,6 @@ Ui.ActionDetailsPane {
             DisplayLayoutPane {
                 anchors.fill: parent
                 visible: pane.controller.detailsTab === "settings"
-                controller: pane.controller
-            }
-            DisplayFocusPane {
-                anchors.fill: parent
-                visible: pane.controller.detailsTab === "focus"
                 controller: pane.controller
             }
             DisplayInformation {
