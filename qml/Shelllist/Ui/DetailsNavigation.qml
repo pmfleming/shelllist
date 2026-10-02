@@ -8,7 +8,9 @@ FocusScope {
 
     property Item contentItem: null
     property bool headerShortcutsEnabled: false
-    readonly property list<Item> headerButtons: collectHeaderButtons(contentItem)
+    property Item headerContentItem: contentItem
+    readonly property var actionRows: collectActionRows(headerContentItem)
+    readonly property list<Item> headerButtons: actionRows.reduce((buttons, row) => buttons.concat(row.buttons), [])
     property ChooserMemory viewMemory: null
     property bool pendingMemory: false
     property bool resumeEditor: false
@@ -22,7 +24,7 @@ FocusScope {
     property Item editorTarget: null
     readonly property DetailFlickable currentPage: pageForTarget(currentTarget)
     readonly property Item focusedTarget: targetForFocus(Window.window ? Window.window.activeFocusItem : null)
-    readonly property bool popupOpen: (currentTarget as DropDownList)?.popup.visible ?? false
+    readonly property bool popupOpen: ((currentTarget as DropDownList)?.popup.visible ?? false) || actionRows.some(row => row.popupOpen)
     readonly property bool editing: editorTarget !== null && (activeFocus || popupOpen)
     readonly property bool browsing: browseCursor.activeFocus && !editing
     readonly property Item highlightedControl: currentTarget instanceof ActionControl || currentTarget instanceof IconTile || editable(currentTarget) ? currentTarget : null
@@ -111,8 +113,10 @@ FocusScope {
     }
     function suspendView(): void {
         cancelSessionRestore();
-        if (popupOpen)
-            (currentTarget as DropDownList).popup.close();
+        for (const row of actionRows) row.closePopup();
+        const dropdown = currentTarget as DropDownList;
+        if (dropdown && dropdown.popup.visible)
+            dropdown.popup.close();
     }
     function focusRememberedContent(): void {
         cancelSessionRestore();
@@ -152,7 +156,7 @@ FocusScope {
     }
 
     function collectTargets(item: Item, includeHeaders: bool): var {
-        if (!item || !item.visible || (item as DetailSection)?.informationOnly || item instanceof DetailsTabBar || (!includeHeaders && item instanceof DetailsHeader))
+        if (!item || !item.visible || (item as DetailSection)?.informationOnly || item instanceof DetailsTabBar || (!includeHeaders && (item instanceof DetailsHeader || item instanceof SurfaceActionRow)))
             return [];
         // Composite inputs are one browsing stop, not their internal buttons.
         if (editable(item) || item instanceof ActionControl || item.activeFocusOnTab)
@@ -178,15 +182,24 @@ FocusScope {
     function editable(item: Item): bool {
         return item instanceof TextField || item instanceof TextEditor || item instanceof DropDownList || item instanceof SegmentedControl || item instanceof ValueSlider || item instanceof LabeledValueSlider || item instanceof ToggleRow || item instanceof ToggleSwitch;
     }
-    function collectHeaderButtons(item: Item): var {
+    function collectActionRows(item: Item): var {
         if (!item || !item.visible || (item as DetailSection)?.informationOnly)
             return [];
-        if (item instanceof DetailsHeader)
-            return collectTargets(item, true);
+        if (item instanceof SurfaceActionRow)
+            return [item];
         let result = [];
         for (const child of item.children)
-            result = result.concat(collectHeaderButtons(child));
+            result = result.concat(collectActionRows(child));
         return result;
+    }
+    function shortcutFor(item: Item): string {
+        const button = item as ActionButton;
+        if (!button || !button.accessKey || headerButtons.filter(other => (other as ActionButton)?.accessKey === button.accessKey).length !== 1)
+            return "";
+        return "Alt+" + button.accessKey;
+    }
+    onHeaderShortcutsEnabledChanged: if (!headerShortcutsEnabled) {
+        for (const row of actionRows) row.closePopup();
     }
     function triggerHeader(index: int): void {
         const button = headerButtons[index] as ActionControl;
@@ -304,7 +317,9 @@ FocusScope {
     }
     function retreat(): void {
         if (popupOpen) {
-            (currentTarget as DropDownList).popup.close();
+            for (const row of actionRows) row.closePopup();
+            const dropdown = currentTarget as DropDownList;
+            if (dropdown && dropdown.popup.visible) dropdown.popup.close();
         } else if (editing) {
             focusContent();
         } else {
@@ -380,13 +395,21 @@ FocusScope {
     }
 
     Repeater {
-        model: 9
+        model: navigation.headerButtons
         delegate: Item {
             id: shortcutSlot
+            required property Item modelData
             required property int index
+            readonly property string sequence: navigation.shortcutFor(modelData)
+            Binding {
+                target: shortcutSlot.modelData
+                property: "surfaceShortcut"
+                value: shortcutSlot.sequence
+                restoreMode: Binding.RestoreBindingOrValue
+            }
             Shortcut {
-                sequence: "Alt+" + (shortcutSlot.index + 1)
-                enabled: navigation.headerShortcutsEnabled && !navigation.popupOpen && shortcutSlot.index < navigation.headerButtons.length
+                sequence: shortcutSlot.sequence
+                enabled: !!shortcutSlot.sequence && navigation.headerShortcutsEnabled && !navigation.popupOpen
                 autoRepeat: false
                 onActivated: navigation.triggerHeader(shortcutSlot.index)
             }

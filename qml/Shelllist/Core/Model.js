@@ -101,6 +101,7 @@ function action(input) {
         label: nonEmptyString(source.label, "action.label"),
         icon: stringValue(source.icon, ""),
         shortcut: stringValue(source.shortcut, ""),
+        accessKey: stringValue(source.accessKey, "").trim().toUpperCase(),
         role: role,
         kind: kind,
         enabled: booleanValue(source.enabled, true),

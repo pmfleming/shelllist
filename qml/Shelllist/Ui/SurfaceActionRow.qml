@@ -14,7 +14,8 @@ Item {
     readonly property var primaryAction: primaryActions.length ? primaryActions[0] : null
     readonly property int controlHeight: Math.round(Theme.secondaryActionHeight * uiScale)
     readonly property int gap: Math.round(Theme.spacingSm * uiScale)
-    readonly property int primaryWidth: primaryAction ? Math.min(Math.max(Theme.primaryActionMinWidth * uiScale, primaryButton.implicitWidth), Theme.primaryActionMaxWidth * uiScale, Math.max(0, width - (secondaryActions.length ? controlHeight + gap : 0))) : 0
+    readonly property int preferredPrimaryWidth: primaryAction ? Math.min(Math.max(Theme.primaryActionMinWidth * uiScale, primaryButton.implicitWidth), Theme.primaryActionMaxWidth * uiScale) : 0
+    readonly property int primaryWidth: Math.min(preferredPrimaryWidth, Math.max(0, width - (secondaryActions.length ? controlHeight + gap : 0)))
     readonly property int shownSecondaryCount: fittingSecondaryCount()
     readonly property var shownSecondary: secondaryActions.slice(0, shownSecondaryCount)
     readonly property var overflowActions: secondaryActions.slice(shownSecondaryCount)
@@ -45,7 +46,7 @@ Item {
         return tone === "danger" || tone === "warning" ? tone : primary ? "accent" : "normal";
     }
     function fittingSecondaryCount(): int {
-        let used = primaryWidth;
+        let used = preferredPrimaryWidth;
         for (let i = 0; i < secondaryActions.length; ++i) {
             const next = used + (used ? gap : 0) + secondaryWidth(secondaryActions[i]);
             const reserve = i < secondaryActions.length - 1 ? gap + controlHeight : 0;
@@ -53,6 +54,10 @@ Item {
             used = next;
         }
         return secondaryActions.length;
+    }
+    function keyFor(action): string {
+        const key = String(action.accessKey || "").trim().toUpperCase();
+        return /^[A-Z]$/.test(key) && key !== "S" && key !== "M" ? key : "";
     }
     function closePopup(): void { overflowMenu.close(); }
     onVisibleChanged: if (!visible) closePopup()
@@ -80,6 +85,8 @@ Item {
             label: row.primaryAction ? row.primaryAction.label : ""
             icon: row.primaryAction ? row.primaryAction.icon || "" : ""
             iconOnly: false
+            accessKey: row.primaryAction ? row.keyFor(row.primaryAction) : ""
+            toolTip: row.primaryAction ? (row.primaryAction.metadata || {}).toolTip || "" : ""
             enabled: !!row.primaryAction && row.primaryAction.enabled !== false
             tone: row.primaryAction ? row.actionTone(row.primaryAction, true) : "normal"
             onClicked: row.triggered(row.primaryAction.id)
@@ -99,6 +106,8 @@ Item {
                 activeFocusOnTab: false
                 label: modelData.label || ""
                 icon: modelData.icon || ""
+                accessKey: row.keyFor(modelData)
+                toolTip: (modelData.metadata || {}).toolTip || ""
                 enabled: modelData.enabled !== false
                 tone: row.actionTone(modelData, false)
                 onClicked: row.triggered(modelData.id)
@@ -112,31 +121,89 @@ Item {
             height: row.controlHeight
             anchors.verticalCenter: parent.verticalCenter
             activeFocusOnTab: false
+            accessKey: "M"
             label: qsTr("More actions")
             sizeRole: "secondary"
             uiScale: row.uiScale
             icon: "more_horiz"
             onClicked: overflowMenu.open()
-            Controls.Menu {
+            // Popup rather than Menu: native Menu treats Alt as dismissal and
+            // can expose the underlying header shortcut in the same chord.
+            Controls.Popup {
                 id: overflowMenu
                 y: moreButton.height
+                x: moreButton.width - width
+                width: Math.min(row.width, Math.max(220 * row.uiScale, row.controlHeight))
+                height: Math.min(6, row.overflowActions.length) * row.controlHeight + padding * 2
+                padding: Theme.spacingSm
                 modal: true
+                focus: true
+                enter: null
+                exit: null
+                property Item savedFocus: null
+                onAboutToShow: savedFocus = row.Window.window ? row.Window.window.activeFocusItem : null
+                onOpened: {
+                    menuList.currentIndex = -1;
+                    menuList.move(1);
+                    menuList.forceActiveFocus();
+                }
                 onClosed: {
                     if (savedFocus && savedFocus.visible && savedFocus.enabled)
                         savedFocus.forceActiveFocus(Qt.OtherFocusReason);
                 }
-                property Item savedFocus: null
-                onAboutToShow: savedFocus = row.Window.window ? row.Window.window.activeFocusItem : null
-                Instantiator {
+                background: Rectangle {
+                    color: Theme.surfaceRaised
+                    radius: Theme.controlRadius
+                    border.color: Theme.border
+                }
+                contentItem: ListView {
+                    id: menuList
+                    objectName: "surfaceActionMenu"
                     model: row.overflowActions
-                    delegate: Controls.MenuItem {
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    Accessible.role: Accessible.PopupMenu
+                    Accessible.name: qsTr("More actions")
+                    function move(delta): void {
+                        for (let n = 1; n <= count; ++n) {
+                            const next = (currentIndex + delta * n + count) % count;
+                            if (row.overflowActions[next].enabled !== false) {
+                                currentIndex = next;
+                                positionViewAtIndex(next, ListView.Contain);
+                                return;
+                            }
+                        }
+                    }
+                    function trigger(index): void {
+                        const action = row.overflowActions[index];
+                        if (!action || action.enabled === false) return;
+                        overflowMenu.close();
+                        row.triggered(action.id);
+                    }
+                    Keys.onPressed: function(event) {
+                        if (event.modifiers & (Qt.AltModifier | Qt.ControlModifier)) {
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Up || event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+                            move(event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier) ? -1 : 1);
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                            if (!event.isAutoRepeat) trigger(currentIndex);
+                            event.accepted = true;
+                        }
+                    }
+                    delegate: Controls.ItemDelegate {
                         required property var modelData
+                        required property int index
+                        width: menuList.width
+                        height: row.controlHeight
                         text: modelData.label || ""
                         enabled: modelData.enabled !== false
-                        onTriggered: row.triggered(modelData.id)
+                        highlighted: menuList.currentIndex === index
+                        focusPolicy: Qt.NoFocus
+                        Accessible.role: Accessible.MenuItem
+                        Accessible.onPressAction: menuList.trigger(index)
+                        onClicked: menuList.trigger(index)
                     }
-                    onObjectAdded: function(index, object) { overflowMenu.insertItem(index, object); }
-                    onObjectRemoved: function(index, object) { overflowMenu.removeItem(object); }
                 }
             }
         }

@@ -51,6 +51,7 @@ ChooserSurface {
         id: navigation
         anchors.fill: parent
         contentItem: surface.navigationContent
+        headerContentItem: body
         headerShortcutsEnabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked
         viewMemory: surface.chooserController.viewMemory
         onInteractionRequested: surface.pendingFocus = false

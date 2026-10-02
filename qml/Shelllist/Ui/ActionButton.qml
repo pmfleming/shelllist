@@ -9,6 +9,9 @@ ActionControl {
     property bool iconOnly: icon.length > 0
     property int iconSize: Theme.iconSizeSmall
     property string hotkey: ""
+    property string accessKey: ""
+    // Assigned by the owning navigation boundary, shared by hints and activation.
+    property string surfaceShortcut: ""
     // Opt-in surface hierarchy; ordinary content buttons keep their sizing.
     property string sizeRole: "normal"
     property real uiScale: 1
@@ -16,7 +19,7 @@ ActionControl {
     readonly property int horizontalPadding: Math.round(Theme.actionHorizontalPadding * uiScale)
     // Transitional nonvisual metadata; no tooltip or focus label is rendered.
     property string toolTip: ""
-    Accessible.description: toolTip
+    Accessible.description: [toolTip, surfaceShortcut ? qsTr("Shortcut %1").arg(surfaceShortcut) : ""].filter(Boolean).join(". ")
     property string tone: "normal"
     property color backgroundColor: tone === "accent" ? Theme.accent : (tone === "active" ? Theme.active : (tone === "danger" ? Theme.danger : (tone === "warning" ? Theme.warning : Theme.controlBackground)))
     property color borderColor: tone === "normal" ? Theme.controlBorder : backgroundColor

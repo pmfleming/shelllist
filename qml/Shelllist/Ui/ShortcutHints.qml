@@ -127,7 +127,7 @@ Item {
     Timer { id: altDelay; interval: 250; onTriggered: hints.altReady = hints.altDown && !hints.ctrlDown }
     Timer { id: ctrlDelay; interval: 250; onTriggered: hints.ctrlReady = hints.ctrlDown && !hints.altDown }
 
-    // Use the actual activation list, not a second copy of action numbering.
+    // Use the actual activation list and resolved shortcut, never positional keys.
     Repeater {
         model: hints.navigation.headerButtons
         delegate: Item {
@@ -141,8 +141,8 @@ Item {
                 anchors.right: parent ? parent.right : undefined
                 anchors.topMargin: -4
                 anchors.rightMargin: -4
-                text: String(actionSlot.index + 1)
-                visible: hints.showActions && actionSlot.index < 9 && !!actionSlot.modelData
+                text: (actionSlot.modelData as ActionButton)?.surfaceShortcut.replace("Alt+", "") ?? ""
+                visible: hints.showActions && text.length > 0 && !!actionSlot.modelData
             }
         }
     }

@@ -15,7 +15,6 @@ RowLayout {
     property bool showLabels: false
     property string actionNamePrefix: "detailAction:"
     property bool tabFocusEnabled: true
-    property int shortcutOffset: -1
     property int controlHeight: Theme.controlHeight
 
     signal triggered(string actionId)
@@ -33,7 +32,6 @@ RowLayout {
         delegate: ActionButton {
             required property var modelData
             required property int index
-            Accessible.description: [toolTip, toolbar.shortcutOffset >= 0 ? qsTr("Shortcut Alt+%1").arg(toolbar.shortcutOffset + index + 1) : ""].filter(Boolean).join(". ")
             objectName: toolbar.actionNamePrefix + modelData.id
             activeFocusOnTab: toolbar.tabFocusEnabled && enabled && (interactive || activeFocus)
 
