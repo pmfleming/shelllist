@@ -186,6 +186,14 @@ layout journals and `monitors.lua` are preserved. Display settings never change
 lid actions, suspend policy or DPMS. Battery & Power no longer owns display state,
 requests, subscriptions or controls.
 
+The daemon normalizes connector support/internal classification, exact current
+mode IDs, structured mode catalogs (`id`, `width`, `height`, `rate`, `size`) and
+mirror references in every snapshot and event. Shelllist does not parse raw
+`availableModes` or resolve compositor monitor IDs. Drafts retain their snapshot's
+mode catalog for local canvas geometry; only mutation fields are sent on Preview.
+Field save/discard, labels, snapping and layout placement remain local. Deploy the
+matching daemon and frontend together; there is no legacy JS normalization fallback.
+
 No named profiles, workspace assignment, HDR/VRR or competing display manager
 is introduced. Those require separate backend capability/transaction work.
 

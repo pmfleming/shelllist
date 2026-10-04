@@ -174,4 +174,7 @@ content, modal guards, native menus, ordinary restoration and real setting
 acknowledgement/recovery paths.
 Run `tests/run-qml-tests.sh` in the development environment. Strict lint is
 `tests/run-qmllint.sh`. Hardware IME, live compositor and screen-reader acceptance
-remain separate from offscreen tests.
+remain separate from offscreen tests. Displays' mode selectors consume daemon
+mode IDs and structured geometry: Enter/Tab saves only to the local layout draft,
+Escape discards the field edit, and Preview remains the explicit backend boundary.
+`tst_displays.qml` exercises this with opaque mode IDs and actual key delivery.

@@ -21,7 +21,7 @@ Core.Provider {
             return qsTr("Off · External display preferred");
         if (output.disabled)
             return qsTr("Disabled");
-        const source = Model.mirrorSource(output, controller.outputs);
+        const source = Model.mirrorSource(output);
         return source ? qsTr("Mirrors %1").arg(source) : qsTr("Extended");
     }
     function resultFor(output: var): var {
@@ -29,7 +29,7 @@ Core.Provider {
             id: output.name,
             title: Model.title(output),
             subtitle: [output.name, stateLabel(output), Model.modeSummary(output)].filter(Boolean).join(" · "),
-            icon: Model.internal(output.name) ? "󰌢" : "󰍹",
+            icon: output.internal ? "󰌢" : "󰍹",
             keywords: [output.name, output.description || "", output.make || "", output.model || "", output.serial || ""],
             score: output.disabled ? 0 : 10,
             primaryActionId: "preview",

@@ -10,7 +10,7 @@ ColumnLayout {
     required property DisplayController controller
     readonly property var output: controller.selectedOutput || ({
             name: "",
-            availableModes: []
+            modes: []
         })
     readonly property var draft: controller.selectedDraft || ({
             mode: "",
@@ -103,18 +103,18 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     options: Model.resolutions(inspector.output)
-                    value: (Model.parseMode(inspector.draft.mode) || {}).size || ""
+                    value: (Model.modeInfo(inspector.output, inspector.draft.mode) || {}).size || ""
                     Accessible.name: qsTr("Resolution")
                     onSelected: function (value) {
                         const choices = Model.modes(inspector.output).filter(function (m) {
-                            return (Model.parseMode(m) || {}).size === value;
+                            return m.size === value;
                         });
-                        const oldRate = (Model.parseMode(inspector.draft.mode) || {}).rate;
+                        const oldRate = (Model.modeInfo(inspector.output, inspector.draft.mode) || {}).rate;
                         const choice = choices.find(function (m) {
-                            return Model.parseMode(m).rate === oldRate;
+                            return m.rate === oldRate;
                         }) || choices[0];
                         if (choice)
-                            inspector.controller.edit(inspector.output.name, "mode", choice);
+                            inspector.controller.edit(inspector.output.name, "mode", choice.id);
                     }
                 }
             }
@@ -209,7 +209,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         Layout.preferredHeight: implicitHeight
-        visible: Model.internal(inspector.output.name)
+        visible: !!inspector.output.internal
         controller: inspector.controller
     }
 

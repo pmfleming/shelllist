@@ -1,58 +1,29 @@
 .pragma library
 
-function internal(name) {
-    return /^(eDP-|LVDS-|DSI-)/.test(name);
-}
-function supported(name) {
-    return /^(eDP-|LVDS-|DSI-|DP-|HDMI-A-)[A-Za-z0-9-]+$/.test(name) && name.length <= 64;
-}
 function outputs(state) {
-    return (state.outputs || []).filter(o => supported(o.name)).sort((a, b) => Number(internal(b.name)) - Number(internal(a.name)) || a.name.localeCompare(b.name));
+    return (state.outputs || []).filter(o => o.supported === true).sort((a, b) => Number(b.internal) - Number(a.internal) || a.name.localeCompare(b.name));
 }
 function title(output) {
-    return internal(output.name) ? "Laptop" : (output.description || output.name || "");
+    return output.internal ? "Laptop" : (output.description || output.name || "");
 }
 // The laptop panel was switched off because the policy prefers an external display.
 function dockedOff(output, policyState) {
-    return output.disabled && internal(output.name) && policyState.available && policyState.status === "external" && !!(policyState.policy || {}).prefer_external;
+    return output.disabled && output.internal && policyState.available && policyState.status === "external" && !!(policyState.policy || {}).prefer_external;
 }
 function modeSummary(output) {
     return output.width > 0 && output.height > 0 ? output.width + "×" + output.height + " · " + Number(output.refreshRate).toFixed(2) + " Hz" : "";
 }
-function parseMode(value) {
-    const match = /^(\d+)x(\d+)@(\d+(?:\.\d+)?)(?:Hz)?$/.exec(String(value));
-    if (!match)
-        return null;
-    const width = Number(match[1]), height = Number(match[2]), rate = Number(match[3]);
-    return width > 0 && width <= 16384 && height > 0 && height <= 16384 && rate >= 1 && rate <= 1000 ? {
-        width: width,
-        height: height,
-        rate: rate,
-        size: match[1] + "x" + match[2]
-    } : null;
-}
-function currentMode(output) {
-    const observed = output.width + "x" + output.height + "@" + Number(output.refreshRate).toFixed(2);
-    const matching = (output.availableModes || []).filter(function (value) {
-        const m = parseMode(value);
-        return m && m.width === output.width && m.height === output.height && Math.abs(m.rate - output.refreshRate) < 0.1;
-    });
-    matching.sort((a, b) => Math.abs(parseMode(a).rate - output.refreshRate) - Math.abs(parseMode(b).rate - output.refreshRate));
-    return matching[0] || (output.disabled && !parseMode(observed) ? (output.availableModes || []).find(v => !!parseMode(v)) : "") || observed;
-}
+// IDs are opaque daemon values. Geometry comes from the same snapshot's typed
+// mode catalog, never from reparsing the compositor's availableModes strings.
 function modes(output) {
-    const values = (output.availableModes || []).filter(v => !!parseMode(v));
-    const current = currentMode(output);
-    return values.includes(current) ? values : [current].concat(values);
+    return output.modes || [];
 }
-function mirrorSource(output, outputs) {
-    if (typeof output.mirror_of === "string")
-        return output.mirror_of;
-    const reference = output.mirrorOf;
-    if (reference === undefined || reference === null || reference === "" || reference === "none" || String(reference) === "-1")
-        return "";
-    const source = outputs.find(o => o.name === String(reference) || (o.id !== undefined && String(o.id) === String(reference)));
-    return source ? source.name : String(reference);
+function modeInfo(output, id) {
+    const selected = id === undefined ? (output.mode || output.current_mode) : id;
+    return modes(output).find(m => m.id === selected) || null;
+}
+function mirrorSource(output) {
+    return output.mirror_of || "";
 }
 function isIndependent(output) {
     return output.enabled && !output.mirror_of;
@@ -90,13 +61,17 @@ function draft(outputs) {
     return outputs.map(function (o) {
         return {
             name: o.name,
-            mode: currentMode(o),
+            mode: o.current_mode || "",
+            modes: modes(o),
+            internal: !!o.internal,
+            width: o.width,
+            height: o.height,
             x: o.x || 0,
             y: o.y || 0,
             scale: o.scale,
             transform: o.transform || 0,
             enabled: !o.disabled,
-            mirror_of: o.disabled ? "" : mirrorSource(o, outputs)
+            mirror_of: mirrorSource(o)
         };
     });
 }
@@ -104,7 +79,7 @@ function topology(outputs) {
     return JSON.stringify(outputs.map(o => [o.name, o.id]));
 }
 function fingerprint(outputs) {
-    return JSON.stringify(outputs.map(o => [o.name, o.id, currentMode(o), o.scale, o.transform || 0, o.x || 0, o.y || 0, !!o.disabled, mirrorSource(o, outputs), o.availableModes || []]));
+    return JSON.stringify(outputs.map(o => [o.name, o.id, o.current_mode, o.scale, o.transform || 0, o.x || 0, o.y || 0, !!o.disabled, mirrorSource(o), modes(o)]));
 }
 function payload(draft) {
     return draft.map(function (d) {
@@ -138,11 +113,11 @@ function validateOutput(d, output, draft) {
     if (d.mirror_of !== undefined && typeof d.mirror_of !== "string")
         return "Choose a supported mirror source";
     const source = d.mirror_of || "";
-    if (source && (!supported(source) || source === d.name))
+    if (source && (!draft.some(v => v.name === source) || source === d.name))
         return "Choose a different supported display to mirror";
     if (d.enabled && source && !draft.some(v => v.name === source && isIndependent(v)))
         return "Mirror source must be an enabled extended display";
-    if (!parseMode(d.mode) || (d.enabled && !modes(output).includes(d.mode)))
+    if (!modeInfo(output, d.mode))
         return "Choose an advertised display mode";
     return "";
 }
@@ -164,7 +139,7 @@ function validate(draft, outputs) {
     return draft.some(isIndependent) ? "" : "Keep at least one independent display enabled";
 }
 function rect(output) {
-    const m = parseMode(output.mode) || {
+    const m = modeInfo(output) || {
         width: output.width || 1,
         height: output.height || 1
     };
@@ -238,7 +213,7 @@ function adjacent(selected, reference, side) {
 }
 function resolutions(output) {
     const seen = [];
-    return modes(output).map(parseMode).filter(function (m) {
+    return modes(output).filter(function (m) {
         if (!m || seen.includes(m.size))
             return false;
         seen.push(m.size);
@@ -251,14 +226,11 @@ function resolutions(output) {
     });
 }
 function rates(output, mode) {
-    const size = (parseMode(mode) || {}).size;
-    return modes(output).filter(function (v) {
-        const parsed = parseMode(v);
-        return parsed && parsed.size === size;
-    }).map(function (v) {
+    const size = (modeInfo(output, mode) || {}).size;
+    return modes(output).filter(m => m.size === size).map(function (m) {
         return {
-            value: v,
-            label: parseMode(v).rate + " Hz"
+            value: m.id,
+            label: m.rate + " Hz"
         };
     });
 }

@@ -41,8 +41,50 @@ DaemonTestCase {
     }
     function displayState() {
         return { available: true, policy: { prefer_external: true }, status: "external", layout: { saved: { outputs: [] }, trial: null },
-            outputs: [{ id: 0, name: "eDP-1", width: 1920, height: 1200, refreshRate: 60, x: 0, y: 0, scale: 1.25, transform: 0, disabled: true, availableModes: ["1920x1200@60.00Hz"] },
-                { id: 1, name: "DP-1", width: 3840, height: 2160, refreshRate: 60, x: 1536, y: 0, scale: 1.5, transform: 0, disabled: false, availableModes: ["3840x2160@60.00Hz"] }] };
+            outputs: [{ id: 0, name: "eDP-1", width: 1920, height: 1200, refreshRate: 60, x: 0, y: 0, scale: 1.25, transform: 0, disabled: true, supported: true, internal: true, mirror_of: "", current_mode: "1920x1200@60.00Hz", modes: [{id: "1920x1200@60.00Hz", width: 1920, height: 1200, rate: 60, size: "1920x1200"}] },
+                { id: 1, name: "DP-1", width: 3840, height: 2160, refreshRate: 60, x: 1536, y: 0, scale: 1.5, transform: 0, disabled: false, supported: true, internal: false, mirror_of: "", current_mode: "3840x2160@60.00Hz", modes: [{id: "3840x2160@60.00Hz", width: 3840, height: 2160, rate: 60, size: "3840x2160"}] }] };
+    }
+    function test_normalizedModesRemainLocalUntilPreview() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        const state = displayState();
+        // Opaque IDs deliberately cannot be parsed as compositor mode strings.
+        state.outputs[1].current_mode = "observed-mode";
+        state.outputs[1].modes = [
+            {id: "observed-mode", width: 3840, height: 2160, rate: 59.94, size: "3840x2160"},
+            {id: "alternate-mode", width: 2560, height: 1440, rate: 120, size: "2560x1440"}
+        ];
+        c.applyDisplayPolicy(state);
+        c.selectOutput("DP-1");
+        c.openDetails();
+        waitForDetails(panel);
+        const resolution = findChild(panel, "displayResolution");
+        compare(resolution.options.length, 2);
+        panel.navigation.focusContent();
+        tryVerify(() => panel.navigation.browsing);
+        for (let i = 0; i < panel.navigation.targets.length && panel.navigation.currentTarget !== resolution; ++i)
+            keyClick(Qt.Key_Tab);
+        compare(panel.navigation.currentTarget, resolution);
+        keyClick(Qt.Key_Return);
+        tryVerify(() => resolution.activeFocus && resolution.editSession.active);
+        keyClick(Qt.Key_Space);
+        tryCompare(resolution.popup, "visible", true);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Escape);
+        compare(c.selectedDraft.mode, "observed-mode", "Escape discards field-local choice");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Space);
+        tryCompare(resolution.popup, "visible", true);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Return);
+        compare(c.selectedDraft.mode, "alternate-mode");
+        compare(c.validationError, "");
+        compare(calls.length, 0, "saving a field changes only the layout draft");
+        compare(c.selectedOutput.current_mode, "observed-mode");
+        verify(c.preview());
+        compare(calls[0].params.outputs[1].mode, "alternate-mode");
+        verify(!("modes" in calls[0].params.outputs[1]));
     }
     function makePanel() {
         const panel = createTemporaryObject(panelComponent, testCase);
@@ -343,7 +385,7 @@ DaemonTestCase {
         compare(calls[0].params.outputs[0].mirror_of, "");
         const observed = displayState();
         observed.outputs[0].disabled = false;
-        observed.outputs[1].mirrorOf = "0";
+        observed.outputs[1].mirror_of = "eDP-1";
         observed.outputs[1].x = 0;
         observed.layout.trial = {id: "mirror-trial", expires_at: Date.now() / 1000 + 20};
         c.applyDisplayPolicy(observed);
@@ -357,7 +399,7 @@ DaemonTestCase {
         const c = panel.controller;
         const state = displayState();
         state.outputs[0].disabled = false;
-        state.outputs[1].mirrorOf = "0";
+        state.outputs[1].mirror_of = "eDP-1";
         state.outputs[1].x = 0;
         c.applyDisplayPolicy(state);
         compare(c.draft[1].mirror_of, "eDP-1");
@@ -526,7 +568,8 @@ DaemonTestCase {
         verify(c.preview());
         compare(calls[0].method, "displayLayout.preview");
         compare(calls[0].params.outputs[1].scale, 2);
-        verify(!("availableModes" in calls[0].params.outputs[1]));
+        verify(!("modes" in calls[0].params.outputs[1]));
+        verify(!("internal" in calls[0].params.outputs[1]));
         const value = displayState();
         value.layout.trial = { id: "token", expires_at: Date.now() / 1000 + 20 };
         c.applyDisplayPolicy(value);

@@ -26,11 +26,11 @@ Ui.DetailFlickable {
         },
         {
             label: qsTr("Display content"),
-            value: Model.mirrorSource(output, controller.outputs) ? qsTr("Mirrors %1").arg(Model.mirrorSource(output, controller.outputs)) : qsTr("Extended desktop")
+            value: Model.mirrorSource(output) ? qsTr("Mirrors %1").arg(Model.mirrorSource(output)) : qsTr("Extended desktop")
         },
         {
             label: qsTr("Current mode"),
-            value: output.width > 0 && output.height > 0 ? Model.currentMode(output) : null
+            value: output.width > 0 && output.height > 0 ? output.current_mode : null
         },
         {
             label: qsTr("Logical size"),

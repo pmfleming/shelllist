@@ -9,8 +9,8 @@ Rectangle {
     required property DisplayController controller
     readonly property var allValues: controller.draft
     // Mirrors share the source's desktop, not another movable workspace tile.
-    readonly property var values: allValues.filter(o => !Model.mirrorSource(o, allValues))
-    readonly property string selectedSource: Model.mirrorSource(allValues.find(o => o.name === controller.selectedName) || ({}), allValues)
+    readonly property var values: allValues.filter(o => !Model.mirrorSource(o))
+    readonly property string selectedSource: Model.mirrorSource(allValues.find(o => o.name === controller.selectedName) || ({}))
     readonly property bool interactive: controller.canEdit && !controller.discardPrompt
     property var frozenBounds: null
     readonly property var extent: frozenBounds || Model.bounds(values)
@@ -56,7 +56,7 @@ Rectangle {
             readonly property var output: canvas.values[index] || ({})
             readonly property var geometry: Model.rect(output)
             readonly property bool selected: output.name === canvas.controller.selectedName || output.name === canvas.selectedSource
-            readonly property string copies: canvas.allValues.filter(o => Model.mirrorSource(o, canvas.allValues) === output.name && o.enabled !== false).map(o => o.name).join(", ")
+            readonly property string copies: canvas.allValues.filter(o => Model.mirrorSource(o) === output.name && o.enabled !== false).map(o => o.name).join(", ")
             x: canvas.originX + geometry.x * canvas.factor
             y: canvas.originY + geometry.y * canvas.factor
             width: Math.max(8, geometry.width * canvas.factor)
@@ -86,7 +86,7 @@ Rectangle {
             }
             Ui.GlyphLabel {
                 anchors.centerIn: parent
-                glyph: screenRect.output.enabled ? (Model.internal(screenRect.output.name) ? "󰌢" : "󰍹") : "󰶐"
+                glyph: screenRect.output.enabled ? (screenRect.output.internal ? "󰌢" : "󰍹") : "󰶐"
                 font.pixelSize: Math.min(32, screenRect.height / 3)
                 color: screenRect.selected ? Ui.Theme.accent : Ui.Theme.mutedText
                 visible: screenRect.height > 75

@@ -5,6 +5,21 @@ All six planned migrations are now implemented locally; see the
 coordinated activation remain separate. The original findings below are retained
 as historical context and annotated with their implementation outcomes.
 
+## Follow-up: display normalization
+
+`bar-daemon` now publishes normalized display support/internal flags, exact current
+mode IDs, typed mode catalogs and resolved mirror sources in snapshots and events.
+Removed frontend mode-string parsing, current-mode matching, connector grammar and
+mirror-ID resolution. QML retains field-local drafts, basic numeric feedback,
+canvas geometry/snapping and explicit Preview/Keep interactions. Rust retains
+mutation validation and durable rollback. Matching daemon/frontend deployment is
+required; raw compositor fields remain only for older API consumers.
+
+Validation: 36 Rust display tests, the full bar-daemon library suite (144 passed,
+one ignored), 248 Qt cases including mode-selector save/discard, strict QML lint,
+display-model and daemon-boundary checks, and matching protocol fixtures. No live
+display configuration was changed.
+
 ## Conclusion (original audit)
 
 The system-integration boundary is mostly established, but **domain computation

@@ -11,10 +11,21 @@ const outputs = [
     { id: 0, name: "eDP-1", width: 1920, height: 1200, refreshRate: 60, scale: 1.25, x: -1536, y: 0, transform: 0, disabled: true, availableModes: ["1920x1200@60.000Hz"] },
     { id: 1, name: "DP-1", description: "Desk", width: 3840, height: 2160, refreshRate: 59.94, scale: 1.5, x: 0, y: 0, transform: 0, disabled: false, availableModes: ["3840x2160@59.940Hz", "3840x2160@60.00Hz", "2560x1440@120.00Hz"] }
 ];
+// Daemon-owned normalization is tested in Rust. The frontend consumes opaque
+// IDs and typed geometry, even if raw compositor strings disagree.
+Object.assign(outputs[0], { supported: true, internal: true, mirror_of: "", current_mode: "1920x1200@60.000Hz", modes: [
+    { id: "1920x1200@60.000Hz", width: 1920, height: 1200, rate: 60, size: "1920x1200" }
+] });
+Object.assign(outputs[1], { supported: true, internal: false, mirror_of: "", current_mode: "3840x2160@59.940Hz", modes: [
+    { id: "3840x2160@59.940Hz", width: 3840, height: 2160, rate: 59.94, size: "3840x2160" },
+    { id: "3840x2160@60.00Hz", width: 3840, height: 2160, rate: 60, size: "3840x2160" },
+    { id: "2560x1440@120.00Hz", width: 2560, height: 1440, rate: 120, size: "2560x1440" }
+] });
 const draft = model.draft(outputs);
-assert.equal(model.currentMode({ ...outputs[0], width: 0, height: 0, refreshRate: 0 }), "1920x1200@60.000Hz", "disabled displays use an advertised mode when current geometry is absent");
-assert.equal(draft[1].mode, "3840x2160@59.940Hz", "exact advertised refresh string survives");
-assert.equal(model.parseMode("3840x2160@60;exec"), null);
+assert.equal(draft[1].mode, "3840x2160@59.940Hz", "exact daemon mode ID survives");
+assert.equal(model.modeInfo(outputs[1], "3840x2160@60;exec"), null);
+assert.equal(model.outputs({outputs: [{name: "DP-99"}]}).length, 0, "raw legacy records must not be locally normalized");
+assert.equal(model.modeInfo({availableModes: ["1920x1200@60"], current_mode: "1920x1200@60"}), null);
 for (const [key, value] of [["x", NaN], ["y", Infinity], ["x", ""], ["x", 32769], ["x", 1.5], ["scale", 0], ["scale", 4.1], ["scale", "bad"], ["transform", 8], ["mode", "3840x2160@75"]]) {
     const changed = plain(draft); changed[1][key] = value;
     assert.notEqual(model.validate(changed, outputs), "", `${key}=${value} must be rejected`);
@@ -29,7 +40,7 @@ assert.notEqual(model.validate([], []), "", "an empty layout is unsafe");
 assert.notEqual(model.validate([draft[0], draft[0]], outputs), "", "duplicate identities are rejected");
 assert.notEqual(model.validate(draft.map(d => ({ ...d, enabled: false })), outputs), "", "all-off layout rejected");
 const mirroredOutputs = outputs.map(o => ({ ...o, disabled: false }));
-mirroredOutputs[1].mirrorOf = "0";
+mirroredOutputs[1].mirror_of = "eDP-1";
 const mirrored = model.draft(mirroredOutputs);
 for (const source of ["DP-1", "DP-99", "eDP-1\";evil", false, 0, null]) {
     const invalid = plain(mirrored); invalid[1].mirror_of = source;
@@ -41,4 +52,4 @@ const disabledSource = plain(mirrored); disabledSource[0].enabled = false;
 assert.notEqual(model.validate(disabledSource, mirroredOutputs), "", "mirrors require an enabled source");
 // Native Displays tests own enable/extend/promotion, stale identities, focus
 // setting payloads and acknowledgement. Do not duplicate their UI catalogues.
-console.log("display model: exact modes, finite geometry and unsafe-layout rejection passed");
+console.log("display model: normalized modes, finite geometry and unsafe-layout rejection passed");

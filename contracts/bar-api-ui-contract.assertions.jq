@@ -39,6 +39,11 @@
 (.snapshot.power_sleep.keep_awake | type == "boolean") and
 (.snapshot.display_policy.policy.prefer_external | type == "boolean") and
 (.snapshot.display_policy.outputs | type == "array") and
+(.snapshot.display_policy.outputs[0].internal == true) and
+(.snapshot.display_policy.outputs[1].supported == true) and
+(.snapshot.display_policy.outputs[1].current_mode == "3840x2160@59.940Hz") and
+(.snapshot.display_policy.outputs[1].mirror_of | type == "string") and
+(.snapshot.display_policy.outputs[1].modes[0] == {id: "3840x2160@59.940Hz", width: 3840, height: 2160, rate: 59.94, size: "3840x2160"}) and
 (.snapshot.display_policy.layout.saved.outputs | type == "array") and
 (any(.registry.methods[]; .name == "displayLayout.preview" and (.params.outputs[0].mirror_of | type == "string"))) and
 (.snapshot.display_policy.focus.available | type == "boolean") and
