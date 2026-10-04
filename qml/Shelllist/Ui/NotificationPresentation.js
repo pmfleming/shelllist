@@ -11,7 +11,9 @@ function recordKey(record) {
 }
 
 function isReplyAction(action) {
-    return String(action && action.key || "").toLowerCase().indexOf("reply") >= 0;
+    // KDE's inline-reply extension is an exact key, not any app action whose
+    // name happens to include "reply" (which must emit ActionInvoked).
+    return String(action && action.key || "") === "inline-reply";
 }
 
 // Freedesktop reserves "default" for activating the notification itself.

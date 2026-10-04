@@ -9,6 +9,8 @@ ChooserSurface {
     required property Component listComponent
     required property Component detailsComponent
     property bool navigationEnabled: true
+    property Item additionalCommandItem: null
+    property bool commandsWithoutDetails: false
     property bool sessionReady: true
     property string sessionContext: chooserController.viewMemory ? JSON.stringify([chooserController.viewMemory.key, chooserController.viewMemory.tab]) : ""
     readonly property DetailsNavigation detailsNavigation: chooser.detailsNavigation
@@ -93,7 +95,10 @@ ChooserSurface {
     SplitChooserLayout {
         id: chooser
         controller: surface.chooserController
-        detailsNavigation.headerShortcutsEnabled: surface.chooserController.uiActive && surface.chooserController.detailsOpen && surface.navigationEnabled
+        detailsNavigation.additionalCommandItem: surface.additionalCommandItem
+        detailsNavigation.visible: surface.chooserController.detailsRendered || surface.commandsWithoutDetails
+        detailsNavigation.enabled: surface.chooserController.detailsOpen || surface.commandsWithoutDetails
+        detailsNavigation.headerShortcutsEnabled: surface.chooserController.uiActive && !surface.chooserController.uiSuspending && (surface.chooserController.detailsOpen || surface.commandsWithoutDetails) && surface.navigationEnabled && !surface.chooserController.navigationBlocked
         navigationAllowed: surface.navigationEnabled
         sessionContext: surface.sessionContext
         sessionReady: surface.sessionReady

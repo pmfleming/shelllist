@@ -32,6 +32,7 @@ Item {
     property string historyError: ""
     readonly property alias drafts: replyDrafts.drafts
     property var replies: ({})
+    property var operations: ({})
     readonly property var activeNotifications: notificationActive.notifications || []
     readonly property var recentNotifications: Ui.NotificationPresentation.recentRecords(activeNotifications, history)
     readonly property int draftCount: Object.keys(drafts).filter(function (key) {
@@ -49,6 +50,10 @@ Item {
         return activeNotifications.some(function (notification) {
             return notification.id === id;
         });
+    }
+    function isLive(record: var): bool {
+        const key = Ui.NotificationPresentation.recordKey(record);
+        return activeNotifications.some(notification => Ui.NotificationPresentation.recordKey(notification) === key);
     }
     function isGroupActive(key: string): bool {
         return activeNotifications.some(function (notification) {
@@ -157,8 +162,20 @@ Item {
         if (notifications.dnd)
             setDndEnabled(true);
     }
+    function beginOperation(id: int): bool {
+        if (!isActive(id) || operations[id])
+            return false;
+        operations = Object.assign({}, operations, {[id]: true});
+        lastError = "";
+        return true;
+    }
+    function finishOperation(id: int): void {
+        const next = Object.assign({}, operations);
+        delete next[id];
+        operations = next;
+    }
     function dismissNotification(id: int): bool {
-        return backend.dismiss(id);
+        return beginOperation(id) && backend.dismiss(id);
     }
     function clearNotifications(): bool {
         return backend.clear();
@@ -167,10 +184,11 @@ Item {
         return backend.clearGroup(key);
     }
     function snoozeNotification(id: int, minutes: int): bool {
-        return backend.snooze(id, Date.now() + minutes * 60000);
+        return beginOperation(id) && backend.snooze(id, Date.now() + minutes * 60000);
     }
     function invokeNotificationAction(id: int, key: string): bool {
-        return backend.invoke(id, key);
+        const notification = activeNotifications.find(item => item.id === id);
+        return !!notification && Ui.NotificationPresentation.notificationActions(notification).some(action => action.key === key && !Ui.NotificationPresentation.isReplyAction(action)) && beginOperation(id) && backend.invoke(id, key);
     }
 
     onNotificationsChanged: scheduleHistory()

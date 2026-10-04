@@ -23,3 +23,10 @@ Unrelated worktree changes are excluded from these commits. No service reload or
 - Shelllist filters toasts by visibility without removing center records. Snooze renews the popup window. DND does not age ordinary retained conversations out of the center.
 - Existing 200-live-record overflow closes the oldest with `UNDEFINED` and retains history. Server restart archives old conversations and preserves an ID high-water mark (including transient IDs), rather than reviving invalid actions. Inline-reply emission now checks the exact advertised action and serializes with closure.
 - Updated both protocol fixtures. Validation: daemon library **150 passed / 1 existing ignored** including lifecycle, signal ordering, resident actions, reply capability and restart identity tests; bar Qt suite **6 passes**. No live bus or compositor was used.
+
+## 4 — explicit selected-notification commands
+
+- Enter invokes a live default action or inspects the message; it never dismisses an actionless record. An always-visible selected-message strip exposes open/dismiss/snooze/copy/reply and the shared Alt+J app-action menu, even with details collapsed.
+- Extended the shared chooser's command context rather than introducing a panel-local key model. Actions remain outside field Tab traversal; menu modality blocks underlying commands. Removed the obsolete group/hover controls and active dot from the inspector; full bodies are readable without pointer-only expansion.
+- Exact `inline-reply` classification preserves ordinary `reply`/`mail-reply-sender` actions. Invocations are pending-guarded and backend failures retire the guard; inline reply still saves locally on Enter and sends explicitly with Alt+R.
+- Validation: notification Qt **11 passes**, action components **4**, shared chooser keyboard **9**, field transactions **29**; warning-fatal lint passed. Added and passed a private peer-to-peer D-Bus client test in bar-daemon covering real action/token/reply/close serialization and dispatch. Compositor focus activation remains a separate live acceptance check (the frontend does not yet acquire activation tokens).

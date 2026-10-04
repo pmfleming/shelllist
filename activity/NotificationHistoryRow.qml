@@ -1,217 +1,71 @@
 pragma ComponentBehavior: Bound
-
 import QtQuick
 import Shelllist.Ui as Ui
 
 Rectangle {
     id: row
-
     required property var record
     required property NotificationController controller
     readonly property NotificationState notificationState: controller.notificationState
-    property bool bodyExpanded: false
-    property bool replyOpen: false
+    readonly property var notification: Ui.NotificationPresentation.notificationFor(record)
+    readonly property bool active: notificationState.isLive(record)
     readonly property var replyStatus: notificationState.replies[notification.id] || ({})
     readonly property string draft: String(notificationState.drafts[notification.id] || "")
-    property int groupCount: 1
-    property bool groupedContext: false
-    property bool groupToggleVisible: false
-    readonly property var notification: Ui.NotificationPresentation.notificationFor(record)
-    readonly property bool active: notificationState.isActive(notification.id)
-    readonly property int urgency: Ui.NotificationPresentation.urgency(notification)
-    readonly property var actions: Ui.NotificationPresentation.standardActions(notification)
-    readonly property var replyAction: Ui.NotificationPresentation.replyAction(notification)
-    readonly property var defaultAction: active ? Ui.NotificationPresentation.defaultAction(notification) : null
-    readonly property bool replyVisible: replyOpen || draft.length > 0 || replyStatus.pending === true || String(replyStatus.error || "").length > 0
-    readonly property bool controlsRevealed: hover.hovered || replyVisible || hoverControls.focusInside
-
-    signal groupToggled
 
     objectName: "notificationHistoryRow-" + notification.id
-    width: ListView.view ? ListView.view.width : 300
-    implicitHeight: historyContent.implicitHeight + Ui.Theme.spacingMd * 2
+    width: parent.width
+    implicitHeight: body.implicitHeight + Ui.Theme.spacingMd * 2
     radius: Ui.Theme.cardRadius
-    color: urgency >= 2 && active ? Ui.Theme.mix(Ui.Theme.surfaceRaised, Ui.Theme.danger, 0.08) : active ? Ui.Theme.surfaceRaised : Ui.Theme.mix(Ui.Theme.surfaceRaised, Ui.Theme.surface, 0.5)
-    border.color: urgency >= 2 && active ? Ui.Theme.withAlpha(Ui.Theme.danger, 0.6) : active ? Ui.Theme.withAlpha(Ui.Theme.accent, 0.36) : Ui.Theme.border
+    color: Ui.Theme.surfaceRaised
+    border.color: Ui.Theme.border
 
-    HoverHandler {
-        id: hover
+    function focusReply(): void {
+        if (row.visible && replyRow.visible && row.controller.replyKey === row.controller.selectedKey)
+            replyRow.focusInput();
+    }
+    Component.onCompleted: Qt.callLater(focusReply)
+    Connections {
+        target: row.controller
+        function onReplyFocusRequested(): void { Qt.callLater(row.focusReply); }
     }
 
-    // Beneath the content: clicking the card activates the notification's default action.
-    Ui.ActionArea {
-        objectName: "notificationOpen-" + row.notification.id
-        anchors.fill: parent
-        visible: row.defaultAction !== null
-        accessibleName: qsTr("Open notification: %1").arg(row.notification.summary || row.notification.app_name || "")
-        onClicked: row.notificationState.invokeNotificationAction(row.notification.id, row.defaultAction.key)
-    }
-
-    Row {
-        id: historyContent
-        anchors {
-            left: parent.left
-            right: parent.right
-            top: parent.top
-            margins: Ui.Theme.spacingMd
-        }
+    Column {
+        id: body
+        x: Ui.Theme.spacingMd
+        y: Ui.Theme.spacingMd
+        width: parent.width - Ui.Theme.spacingMd * 2
         spacing: Ui.Theme.spacingMd
-
-        Ui.NotificationAppIcon {
-            id: iconSlot
-            visible: !row.groupedContext
-            width: visible ? 36 : 0
-            height: 36
-            notification: row.notification
-            count: row.groupToggleVisible ? row.groupCount : 1
+        Ui.NotificationAppIcon { notification: row.notification }
+        Ui.ThemeText {
+            width: parent.width
+            text: [row.notification.app_name, Ui.NotificationPresentation.timeLabel(row.notification.created_unix_ms, row.controller.nowMs)].filter(part => !!part).join(" · ")
+            color: Ui.Theme.mutedText
+            wrapMode: Text.WordWrap
         }
-
-        Column {
-            width: parent.width - iconSlot.width - (iconSlot.visible ? parent.spacing : 0)
-            spacing: 2
-
-            Item {
-                width: parent.width
-                height: 32
-
-                Row {
-                    anchors.left: parent.left
-                    anchors.right: controls.visible ? controls.left : parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Ui.Theme.spacingXs
-
-                    Rectangle {
-                        objectName: "notificationActiveDot"
-                        visible: row.active
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 6
-                        height: 6
-                        radius: 3
-                        color: row.urgency >= 2 ? Ui.Theme.danger : Ui.Theme.accent
-                    }
-                    Ui.ThemeText {
-                        width: parent.width - (row.active ? 6 + parent.spacing : 0)
-                        text: [row.groupedContext ? "" : row.notification.app_name || "", Ui.NotificationPresentation.timeLabel(row.notification.created_unix_ms, row.controller.nowMs)].filter(function (part) {
-                            return part.length > 0;
-                        }).join(" · ")
-                        color: row.urgency >= 2 && row.active ? Ui.Theme.danger : Ui.Theme.mutedText
-                        elide: Text.ElideRight
-                        font.pixelSize: Ui.Theme.fontSizeCaption
-                    }
-                }
-
-                Row {
-                    id: controls
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-
-                    // Hidden by opacity only, so keyboard focus can still reach them.
-                    Ui.NotificationQuickActions {
-                        id: hoverControls
-                        visible: row.active
-                        opacity: row.controlsRevealed ? 1 : 0
-                        showReply: row.replyAction !== null && !row.replyVisible
-                        onReplyRequested: row.replyOpen = true
-                        onSnoozeRequested: row.notificationState.snoozeNotification(row.notification.id, 15)
-                        onDismissRequested: row.notificationState.dismissNotification(row.notification.id)
-
-                        Behavior on opacity {
-                            enabled: !Ui.Theme.noAnimations && !hoverControls.focusInside
-                            NumberAnimation {
-                                duration: Ui.Theme.animationFast
-                            }
-                        }
-                    }
-                    Ui.FlatIconButton {
-                        visible: row.groupToggleVisible
-                        width: 32
-                        height: 32
-                        icon: "󰅀"
-                        accessibleName: "Expand " + row.groupCount + " notifications"
-                        toolTip: accessibleName
-                        onClicked: row.groupToggled()
-                    }
-                }
-            }
-
-            Ui.ThemeText {
-                width: parent.width
-                text: row.notification.summary || row.notification.app_name || "Notification"
-                wrapMode: Text.Wrap
-                maximumLineCount: 2
-                elide: Text.ElideRight
-                font.weight: Ui.Theme.fontWeightDemiBold
-            }
-
-            Ui.ThemeText {
-                id: bodyText
-                objectName: "notificationBody"
-                readonly property bool expandable: truncated || row.bodyExpanded
-                width: parent.width
-                visible: text.length > 0
-                text: row.notification.body || ""
-                textFormat: Text.PlainText
-                wrapMode: Text.Wrap
-                maximumLineCount: row.bodyExpanded ? 2147483647 : 3
-                elide: Text.ElideRight
-                color: bodyToggle.containsMouse ? Ui.Theme.text : Ui.Theme.mix(Ui.Theme.text, Ui.Theme.mutedText, 0.35)
-                font.pixelSize: Ui.Theme.fontSizeSmall
-                Accessible.role: expandable ? Accessible.Button : Accessible.StaticText
-                Accessible.name: expandable ? (row.bodyExpanded ? "Show less" : "Show more") : text
-                Accessible.onPressAction: if (expandable)
-                    row.bodyExpanded = !row.bodyExpanded
-
-                // Long bodies expand in place; the elision marks that there is more.
-                MouseArea {
-                    id: bodyToggle
-                    anchors.fill: parent
-                    enabled: bodyText.expandable
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: row.bodyExpanded = !row.bodyExpanded
-                }
-            }
-
-            Item {
-                width: parent.width
-                height: Ui.Theme.spacingXs
-                visible: actionList.visible || replyRow.visible
-            }
-
-            Ui.NotificationActionList {
-                id: actionList
-                width: parent.width
-                visible: row.active && row.actions.length > 0
-                actions: row.actions
-                minimumButtonWidth: 68
-                maximumButtonWidth: 130
-                characterWidth: 7
-                horizontalPadding: 22
-                controlHeight: 30
-                onTriggered: function (actionKey) {
-                    row.notificationState.invokeNotificationAction(row.notification.id, actionKey);
-                }
-            }
-
-            Ui.NotificationReplyRow {
-                id: replyRow
-                visible: row.replyVisible
-                notificationId: Number(row.notification.id)
-                draftText: row.draft
-                sending: row.replyStatus.pending === true
-                canReply: row.active && row.replyAction !== null
-                errorText: row.replyStatus.error || ""
-                onDraftEdited: function (text) {
-                    row.notificationState.setDraft(notificationId, text);
-                }
-                submitReply: function (id, text) {
-                    return row.notificationState.replyNotification(id, text);
-                }
-            }
+        Ui.ThemeText {
+            width: parent.width
+            text: row.notification.summary || row.notification.app_name || qsTr("Notification")
+            wrapMode: Text.Wrap
+            font.weight: Ui.Theme.fontWeightDemiBold
+        }
+        Ui.ThemeText {
+            objectName: "notificationBody"
+            width: parent.width
+            visible: text.length > 0
+            text: row.notification.body || ""
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+        }
+        Ui.NotificationReplyRow {
+            id: replyRow
+            visible: row.controller.replyVisible
+            notificationId: Number(row.notification.id || 0)
+            draftText: row.draft
+            sending: row.replyStatus.pending === true
+            canReply: row.active && Ui.NotificationPresentation.replyAction(row.notification) !== null
+            errorText: row.replyStatus.error || ""
+            onDraftEdited: function (text) { row.notificationState.setDraft(notificationId, text); }
+            submitReply: function (id, text) { return row.notificationState.replyNotification(id, text); }
         }
     }
-
-    onReplyOpenChanged: if (replyOpen)
-        Qt.callLater(replyRow.focusInput)
 }

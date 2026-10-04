@@ -7,11 +7,13 @@ FocusScope {
     id: navigation
 
     property Item contentItem: null
+    // Selected-result commands may live beside the list, independent of details.
+    property Item additionalCommandItem: null
     property bool headerShortcutsEnabled: false
     property Item headerContentItem: contentItem
     readonly property list<SurfaceActionRow> actionRows: collectActionRows(headerContentItem)
     readonly property list<ActionControl> headerButtons: actionRows.reduce((buttons, row) => buttons.concat(Array.from(row.buttons)), [])
-    readonly property list<ActionControl> contentCommands: collectCommands(contentItem).filter(item => commandInScope(item))
+    readonly property list<ActionControl> contentCommands: collectCommands(contentItem).concat(collectCommands(additionalCommandItem)).filter(item => commandInScope(item))
     readonly property list<ActionControl> commandButtons: headerButtons.concat(contentCommands.filter(item => !!item.accessKey))
     readonly property bool commandMenuOpen: commandMenu.visible || actionRows.some(row => row.popupOpen)
     property ChooserMemory viewMemory: null
@@ -485,8 +487,14 @@ FocusScope {
         }
     }
 
+    function closeCommandMenu(): void { commandMenu.close(); }
+    function openCommandMenu(): void {
+        if (headerShortcutsEnabled && !popupOpen && commandMenu.commands.length > 0)
+            commandMenu.open();
+    }
     ActionMenu {
         id: commandMenu
+        parent: navigation.additionalCommandItem && navigation.additionalCommandItem.visible ? navigation.additionalCommandItem : navigation
         readonly property list<ActionControl> commands: navigation.contentCommands.filter(item => !item.accessKey)
         actions: commands
         function available(index: int): bool {
@@ -506,7 +514,7 @@ FocusScope {
         sequence: "Alt+J"
         enabled: navigation.headerShortcutsEnabled && !navigation.popupOpen && commandMenu.commands.length > 0
         autoRepeat: false
-        onActivated: commandMenu.open()
+        onActivated: navigation.openCommandMenu()
     }
     Shortcut {
         sequences: ["Return", "Enter"]

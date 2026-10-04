@@ -102,6 +102,13 @@ animation. `ToggleRow.focusSurface` is its switch, not the containing row.
 - Action buttons use **Alt+letter**, not Tab. `ActionControl.accessKey` defines a
   command; `commandScope` can limit a repeated command to the current field/row
   (e.g. Alt+H for its help). Duplicate active letters fail closed.
+- Selected-result commands can use `ProviderChooserSurface.additionalCommandItem`
+  with `commandsWithoutDetails`. They share `DetailsNavigation`'s access keys,
+  command menu, modifier hints and modal guards even while details are collapsed;
+  they do not create another field-navigation region. Notifications uses this
+  for a single selected message: Enter invokes its live default action, otherwise
+  opens details without dismissing it. Alt+O opens, Alt+D dismisses, Alt+Z snoozes,
+  Alt+C copies text and Alt+R opens inline reply (or sends from its editor).
 - Alt+J opens the content-action menu for unassigned/repeated commands, such as
   arbitrary application desktop actions and per-window commands. This keeps
   unbounded action lists keyboard-accessible without putting them in field Tab

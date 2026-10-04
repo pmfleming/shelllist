@@ -43,7 +43,7 @@ Io.DaemonBackend {
     function dismiss(id: int): bool {
         return request("dismiss", Api.methods.notificationsDismiss, {
             id: id
-        }, {});
+        }, {operationId: id});
     }
     function clear(): bool {
         return request("clear", Api.methods.notificationsClear, {}, {});
@@ -57,14 +57,14 @@ Io.DaemonBackend {
         return request("snooze", Api.methods.notificationsSnooze, {
             id: id,
             until_unix_ms: until
-        }, {});
+        }, {operationId: id});
     }
     function invoke(id: int, key: string): bool {
         return request("action", Api.methods.notificationsInvokeAction, {
             id: id,
             action_key: key,
             activation_token: null
-        }, {});
+        }, {operationId: id});
     }
     function reply(id: int, text: string): bool {
         return request("reply", Api.methods.notificationsReply, {
@@ -86,6 +86,8 @@ Io.DaemonBackend {
             store.finishReply(context.replyId, context.text, error);
         if (context.dnd)
             store.finishDnd(data.notifications, error);
+        if (context.operationId !== undefined)
+            store.finishOperation(context.operationId);
         if (error) {
             store.lastError = error;
             if (context.history)

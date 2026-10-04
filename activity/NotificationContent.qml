@@ -8,6 +8,14 @@ Ui.ProviderChooserSurface {
     required property NotificationController controller
     chooserController: controller
     detailsTabEnabled: false
+    property Item messageCommands: null
+    additionalCommandItem: messageCommands
+    commandsWithoutDetails: controller.hasSelection && !controller.settingsOpen
+    Connections {
+        target: content.controller
+        function onSelectedKeyChanged(): void { content.detailsNavigation.closeCommandMenu(); }
+        function onSettingsOpenChanged(): void { content.detailsNavigation.closeCommandMenu(); }
+    }
 
     listComponent: Ui.ChooserListPane {
         id: pane
@@ -21,23 +29,29 @@ Ui.ProviderChooserSurface {
         searchActionToolTip: qsTr("Notification settings")
         onSearchActionRequested: content.controller.openSettings()
         refreshing: content.controller.notificationState.historyLoading
-        status: content.controller.notificationState.lastError || content.controller.notificationState.historyError || content.controller.screenshotStatus || (content.controller.notificationState.draftCount ? content.controller.notificationState.draftCount + qsTr(" unsent reply drafts") : "")
+        status: content.controller.notificationState.lastError || content.controller.notificationState.historyError || content.controller.screenshotStatus || content.controller.copyStatus || (content.controller.notificationState.draftCount ? content.controller.notificationState.draftCount + qsTr(" unsent reply drafts") : "")
         emptyText: !content.controller.notificationState.notifications.available ? qsTr("Notifications unavailable") : refreshing && !content.controller.notificationState.historyLoaded ? qsTr("Loading notifications…") : filterText.length ? qsTr("No matching notifications") : qsTr("No notifications")
         emptyIcon: "󰂚"
         preserveViewportOnAppend: true
         readonly property bool loadMore: listNearEnd && !filterText.length && content.controller.notificationState.historyHasMore && !refreshing && !content.controller.notificationState.historyError
         onLoadMoreChanged: if (loadMore) Qt.callLater(content.controller.notificationState.loadMoreHistory)
-        listOptionsComponent: Row {
+        listOptionsComponent: Column {
             width: parent.width
-            height: content.controller.returnSurface === "activity" ? Ui.Theme.controlHeight : 0
             spacing: Ui.Theme.spacingSm
             Ui.FlatIconButton {
                 width: height
-                height: parent.height
+                height: Ui.Theme.controlHeight
                 visible: content.controller.returnSurface === "activity"
                 icon: "󰁍"
                 accessibleName: qsTr("Back to agenda")
                 onClicked: content.controller.goBack()
+            }
+            NotificationCommands {
+                id: commands
+                controller: content.controller
+                navigation: content.detailsNavigation
+                Component.onCompleted: content.messageCommands = commands
+                Component.onDestruction: if (content.messageCommands === commands) content.messageCommands = null
             }
         }
         rowDelegate: Ui.ResultRow {

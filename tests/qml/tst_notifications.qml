@@ -60,7 +60,7 @@ DaemonTestCase {
             created_unix_ms: id * 1000,
             actions: [
                 {
-                    key: "reply",
+                    key: "inline-reply",
                     label: "Reply"
                 },
                 {
@@ -293,17 +293,72 @@ DaemonTestCase {
         const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 900, height: 600});
         tryVerify(() => findChild(content, "notificationHistoryRow-100") !== null);
         mouseMove(testCase, 1090, 640);
-        const row = findChild(content, "notificationHistoryRow-100");
-        const action = findChild(row, "notificationQuickSnooze");
+        const action = findChild(content, "detailAction:snooze");
         content.detailsNavigation.focusContent(true);
         verify(!content.detailsNavigation.targets.includes(action));
         tryVerify(() => content.detailsNavigation.contentCommands.includes(action));
+        compare(content.detailsNavigation.shortcutFor(action), "Alt+Z");
         keyClick(Qt.Key_J, Qt.AltModifier);
         tryVerify(() => content.detailsNavigation.commandMenuOpen);
         verify(!action.activeFocus);
         compare(state.activeNotifications.length, 2, "opening commands must not snooze or dismiss");
         keyClick(Qt.Key_Escape);
         tryVerify(() => !content.detailsNavigation.commandMenuOpen);
+        content.destroy();
+        wait(0);
+    }
+    function test_selectedCommandsWorkWithoutOpeningDetails() {
+        const state = makeState();
+        const live = notification(100);
+        live.actions = [{key: "default", label: "Open"}, {key: "mail-reply-sender", label: "Reply in app"}, {key: "inline-reply", label: "Reply here"}];
+        state.notificationActive = {notifications: [live]};
+        const controller = makeController(state);
+        controller.uiActive = true;
+        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
+        content.listItem.focusList();
+        const sent = () => testCase.calls.filter(call => call.method === "notifications.invokeAction");
+        let before = sent().length;
+        keyClick(Qt.Key_Return);
+        compare(sent().length, before + 1);
+        compare(sent()[before].params.action_key, "default");
+        verify(!controller.detailsOpen);
+        keyClick(Qt.Key_O, Qt.AltModifier);
+        compare(sent().length, before + 1, "pending invocation cannot repeat");
+        state.backend.finish(Object.keys(state.backend.requests).find(key => key.startsWith("action-")), {}, "App unavailable");
+        compare(state.lastError, "App unavailable");
+        keyClick(Qt.Key_J, Qt.AltModifier);
+        tryVerify(() => content.detailsNavigation.commandMenuOpen);
+        const menu = findChild(content, "detailsCommandMenu");
+        verify(menu.width > 0 && menu.height > 0, "menu is visible even with collapsed details");
+        const dismissCount = testCase.calls.filter(call => call.method === "notifications.dismiss").length;
+        keyClick(Qt.Key_D, Qt.AltModifier);
+        compare(testCase.calls.filter(call => call.method === "notifications.dismiss").length, dismissCount, "menu owns command chords");
+        keyClick(Qt.Key_Return);
+        compare(sent().length, before + 2);
+        compare(sent()[before + 1].params.action_key, "mail-reply-sender", "ordinary reply is an app action");
+        state.backend.finish(Object.keys(state.backend.requests).find(key => key.startsWith("action-")), {}, "");
+        keyClick(Qt.Key_R, Qt.AltModifier);
+        tryVerify(() => controller.detailsOpen);
+        tryVerify(() => findChild(content, "notificationReplyInput") !== null);
+        const field = findChild(content, "notificationReplyInput");
+        tryVerify(() => field.inputActiveFocus);
+        keyClick(Qt.Key_H);
+        keyClick(Qt.Key_I);
+        const repliesBefore = testCase.calls.filter(call => call.method === "notifications.reply").length;
+        keyClick(Qt.Key_Return);
+        compare(testCase.calls.filter(call => call.method === "notifications.reply").length, repliesBefore, "field save is not send");
+        keyClick(Qt.Key_R, Qt.AltModifier);
+        compare(testCase.calls.filter(call => call.method === "notifications.reply").length, repliesBefore + 1);
+        const reply = testCase.calls.filter(call => call.method === "notifications.reply").pop();
+        compare(reply.params.id, 100);
+        compare(reply.params.text, "hi");
+        controller.closeDetails();
+        controller.select(1); // closed historical notification
+        verify(!controller.selectedLive);
+        content.listItem.focusList();
+        keyClick(Qt.Key_Return);
+        verify(controller.detailsOpen, "no default action means inspect, never dismiss");
+        compare(sent().length, before + 2);
         content.destroy();
         wait(0);
     }

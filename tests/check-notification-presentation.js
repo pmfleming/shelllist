@@ -26,4 +26,7 @@ const recent = context.recentRecords([
     { history_id: 1, notification: { id: 2, created_unix_ms: 100 } }
 ]);
 equal(recent[2].history_id, 1, "reusing a notification ID does not erase older history");
-console.log("notification presentation: adversarial identity passed");
+const actions = {actions: [{key: "reply"}, {key: "mail-reply-sender"}, {key: "inline-reply"}, {key: "default"}]};
+equal(context.standardActions(actions).map(action => action.key).join(","), "reply,mail-reply-sender", "ordinary reply actions remain callable");
+equal(context.replyAction(actions).key, "inline-reply", "inline reply is an exact extension key");
+console.log("notification presentation: adversarial identity and action classification passed");

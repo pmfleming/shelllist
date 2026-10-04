@@ -4,6 +4,7 @@ internal ActivityGlancePane ActivityGlancePane.qml
 internal GlanceScheduleCard GlanceScheduleCard.qml
 internal ActivityHeaderButton ActivityHeaderButton.qml
 internal NotificationSettings NotificationSettings.qml
+internal NotificationCommands NotificationCommands.qml
 internal ActivitySchedulePane ActivitySchedulePane.qml
 internal ActivityWeatherPane ActivityWeatherPane.qml
 internal WeatherIcon WeatherIcon.qml

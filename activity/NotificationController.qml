@@ -16,12 +16,19 @@ Ui.ChooserController {
     property string selectedKey: ""
     property bool settingsOpen: false
     property bool messageWasOpen: false
+    property string replyKey: ""
+    property string copyStatus: ""
     property double nowMs: Date.now()
     property alias screenshotStatus: screenshotCapture.statusMessage
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
     readonly property alias notificationModel: records
     readonly property var visibleRecords: Ui.NotificationPresentation.filterRecords(notificationState.recentNotifications, filterText)
     readonly property var selectedRecord: visibleRecords.find(record => Ui.NotificationPresentation.recordKey(record) === selectedKey) || null
+    readonly property var selectedNotification: Ui.NotificationPresentation.notificationFor(selectedRecord)
+    readonly property bool selectedLive: hasSelection && notificationState.isLive(selectedRecord)
+    readonly property bool selectedBusy: !!notificationState.operations[selectedNotification.id]
+    readonly property var selectedAppActions: selectedLive ? Ui.NotificationPresentation.standardActions(selectedNotification) : []
+    readonly property bool replyVisible: replyKey === selectedKey || !!notificationState.drafts[selectedNotification.id] || !!notificationState.replies[selectedNotification.id]
 
     hasSelection: selectedRecord !== null
     selectionModel: recordSelection
@@ -82,11 +89,32 @@ Ui.ChooserController {
         }
     }
     function primarySelected(): bool {
+        if (settingsOpen)
+            return false;
+        const action = selectedLive ? Ui.NotificationPresentation.defaultAction(selectedNotification) : null;
+        if (action)
+            return invokeAction(action.key);
         openDetails();
         focusDetailsRequested();
         return hasSelection;
     }
+    function invokeAction(key: string): bool {
+        return !settingsOpen && selectedLive && notificationState.invokeNotificationAction(selectedNotification.id, key);
+    }
+    function requestReply(): void {
+        if (!selectedLive || !Ui.NotificationPresentation.replyAction(selectedNotification))
+            return;
+        openDetails();
+        replyKey = selectedKey;
+        focusDetailsRequested();
+        replyFocusRequested();
+    }
+    function copySelected(): bool {
+        return hasSelection && clipboard.publishText([selectedNotification.summary, selectedNotification.body].filter(part => !!part).join("\n\n"), qsTr("Notification copied"));
+    }
+    onSelectedKeyChanged: replyKey = ""
 
+    signal replyFocusRequested
     signal backRequested
 
     // Older bar/agenda entry points can still request active/history. Both now
@@ -150,6 +178,10 @@ Ui.ChooserController {
         // Deliberately retain search, scroll and reply drafts.
     }
 
+    Io.ClipboardPublisher {
+        id: clipboard
+        onFinished: function (succeeded, message) { controller.copyStatus = message; }
+    }
     Io.ClipboardScreenshotCapture {
         id: screenshotCapture
         active: controller.uiActive

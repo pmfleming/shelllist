@@ -70,7 +70,7 @@ TestCase {
                             label: "Archive"
                         },
                         {
-                            key: "reply",
+                            key: "inline-reply",
                             label: "Reply"
                         }
                     ]
@@ -94,7 +94,7 @@ TestCase {
         compare(Ui.NotificationPresentation.standardActions(notification).map(function (action) {
             return action.key;
         }), ["archive"]);
-        compare(Ui.NotificationPresentation.replyAction(notification).key, "reply");
+        compare(Ui.NotificationPresentation.replyAction(notification).key, "inline-reply");
         compare(Ui.NotificationPresentation.defaultAction(notification).key, "default");
     }
 
