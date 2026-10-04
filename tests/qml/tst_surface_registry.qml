@@ -29,7 +29,7 @@ DaemonTestCase {
         tryVerify(function () {
             return registry.notificationController !== null;
         });
-        compare(registry.notificationController.tab, "history");
+        compare(registry.notificationController.pendingGroupKey, "Mail");
         compare(registry.notificationController.returnSurface, "activity");
     }
 

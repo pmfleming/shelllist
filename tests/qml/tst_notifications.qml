@@ -97,8 +97,31 @@ DaemonTestCase {
             height: testCase.height
         });
         verify(controller !== null);
-        controller.rebuildGroups();
+        controller.rebuildRecords();
         return controller;
+    }
+    function test_unifiedListUsesIndividualStableRecords() {
+        const state = makeState();
+        const controller = makeController(state);
+        compare(controller.notificationModel.count, 4, "live/history overlap is not duplicated");
+        compare(controller.selectedRecord.id, 100);
+        controller.select(2);
+        const key = controller.selectedKey;
+        state.notificationActive = {notifications: [notification(101), notification(100), notification(1)]};
+        compare(controller.selectedKey, key);
+        compare(controller.selectionModel.selectedIndex, 3);
+        controller.filterText = "Message 2";
+        compare(controller.notificationModel.count, 1);
+        compare(controller.selectedRecord.notification.id, 2);
+        controller.openNotifications("chat", "history", "activity");
+        compare(controller.selectedRecord.id, 101);
+        verify(controller.detailsOpen);
+        compare(controller.returnSurface, "activity");
+        state.history = state.history.concat([record(101)]);
+        compare(controller.notificationModel.count, 5);
+        state.notificationActive = {notifications: [notification(100), notification(1)]};
+        compare(controller.selectedRecord.history_id, 101);
+        compare(controller.selectedKey, "101:101000", "closing retains identity and selection");
     }
     function test_dndToggleAndDurationCycle() {
         const state = makeState();

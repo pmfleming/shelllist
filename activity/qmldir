@@ -29,5 +29,4 @@ NotificationState 1.0 NotificationState.qml
 NotificationBackend 1.0 NotificationBackend.qml
 NotificationController 1.0 NotificationController.qml
 NotificationContent 1.0 NotificationContent.qml
-NotificationHistoryGroup 1.0 NotificationHistoryGroup.qml
 NotificationHistoryRow 1.0 NotificationHistoryRow.qml

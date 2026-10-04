@@ -19,9 +19,9 @@ Alt+S captures the complete visible Activity panel through `clip-daemon` and cop
 
 Active notifications appear in up to three compact notification stacks per monitor. A stacked toast shows only its newest record and a count badge; its chevron opens that group in the separate Notifications callout. `shelllist notifications open|toggle` and the `notifications` global shortcut open the pane directly.
 
-The surface uses a group chooser and explicit message/reply inspector, with search / DND toggle / duration / refresh controls. Alt+S copies a screenshot of the current view to the clipboard through `clip-daemon`. It provides **Active / History**, wrapped actions, expandable bodies, inline replies and 15-minute snooze. **Dismiss all active** and group dismissal retain history; the daemon's bulk dismissal also includes snoozed records. There is no history-deletion control.
+The surface uses one searchable list of individual notifications and a selected-message/reply inspector. Live records and loaded history are merged without duplicates; there is no Active/History switch. Alt+S copies a screenshot through `clip-daemon`. Message actions, expandable bodies, inline replies and 15-minute snooze remain capability-dependent. Bulk dismissal retains history and also includes snoozed records. There is no history-deletion control.
 
-When entered from Activity, Back or `Escape` restores Activity's calendar/detail state. Direct entry closes back to the desktop. The close button always closes. `Ctrl+Tab` switches Active/History; `F5` refreshes notifications. With the list focused, Up/Down selects a group and Right/Left expands/collapses it. Search and replies have no printable single-key shortcuts.
+When entered from Activity, Back or `Escape` restores Activity's calendar/detail state. Direct entry closes back to the desktop. The close button always closes. `F5` refreshes notifications. With the list focused, Up/Down selects an individual notification and Right/Left expands/collapses its details. Search and replies have no printable single-key shortcuts.
 
 Panels follow the [mandatory interaction contract](chooser-keyboard-workflow.md): Tab traverses editable fields, Enter/Tab saves, and Escape discards the current field edit. Todo entry uses Alt+A to add; Alt+D deletes the currently browsed todo. Alt+R sends the current reply; Alt+J opens other content actions. Saving a reply field retains its draft, rather than sending it.
 
@@ -56,9 +56,9 @@ Time & Weather follows the same list/detail interaction as Wi-Fi and Bluetooth. 
 
 Shelllist requests only a buffered range around the visible month. A compact `activity.changed` event schedules a debounced range refresh rather than carrying the full range in every event. Weather locations—including which location is home, labels, coordinates, and timezones—come entirely from `bar-daemon/activity.json`; no city is compiled into the UI. `bar-daemon` refreshes configured Open-Meteo locations concurrently at most every 15 minutes and retains each last successful forecast through transient failures.
 
-In native notification mode, `bar-daemon` owns `org.freedesktop.Notifications` and publishes a bounded, recoverable snapshot containing only unsnoozed active records. The Active tab uses that snapshot directly, independently of history pagination. History is loaded while Notifications is open and requested in pages of 50; its count is explicitly labelled **loaded**. Refresh merges/deduplicates by history ID and catches up across missing pages rather than discarding older loaded records. Search filters records before grouping. Group models are reconciled by key, with retained expansion and scroll anchors. Loading, unavailable, failed, empty and no-match states are distinct.
+In native notification mode, `bar-daemon` owns `org.freedesktop.Notifications` and publishes a bounded, recoverable snapshot containing only unsnoozed active records. The unified list merges that snapshot with history loaded in pages of 50 while Notifications is open. Search explicitly covers loaded notifications. Refresh merges/deduplicates by history ID and catches up across missing pages rather than discarding older loaded records. Notification rows are reconciled by stable identity, preserving selection across live/history transitions. Loading, unavailable, failed, empty and no-match states are distinct.
 
-Both active and historical records use the same frontend grouping policy:
+Toast stacks and legacy group links use the same grouping policy:
 
 1. daemon-provided `group_key`;
 2. desktop entry;
@@ -76,9 +76,9 @@ Removal animation is presentation-only. Dismiss, clear-group, clear-all, snooze,
 | `activity/ActivityApi.js` | Activity and notification method/stream registry |
 | `activity/ActivityBackend.qml` | Calendar/todo/weather transport adapter |
 | `activity/ActivityController.qml` | Ephemeral calendar range, selection, and presentation state |
-| `activity/NotificationState.qml` | Shared active/history data, expansion and reply drafts |
+| `activity/NotificationState.qml` | Shared live/history data and reply drafts |
 | `activity/NotificationBackend.qml` | Notification requests, acknowledgements and stream adapter |
-| `activity/NotificationController.qml` | Callout navigation, search and keyed group model |
+| `activity/NotificationController.qml` | Callout navigation, search and keyed notification model |
 | `activity/NotificationContent.qml` | Standalone notification surface and return navigation |
 | `activity/ActivityContent.qml` | Anchored calendar/agenda/todo composition |
 | `activity/ActivityGlancePane.qml` | Calendar and schedule summary |
@@ -86,8 +86,7 @@ Removal animation is presentation-only. Dismiss, clear-group, clear-all, snooze,
 | `activity/TimeWeatherTimePane.qml` | Local time, sun position, moon, and timezone detail |
 | `activity/ActivityWeatherPane.qml` | Reusable local weather and forecast detail |
 | `activity/ActivitySchedulePane.qml` | Calendar, selected-day agenda, and todo detail |
-| `activity/NotificationContent.qml` | Shared group chooser, active/history filtering, DND, pagination and explicit message inspector |
-| `activity/NotificationHistoryGroup.qml` | Expandable active and historical groups |
+| `activity/NotificationHistoryRow.qml` | Selected-message inspector |
 | `bar/NotificationToastStack.qml` | Monitor-local active groups |
 | `qml/Shelllist/Ui/NotificationPresentation.js` | Shared grouping, routing, and DND labels |
 | `qml/Shelllist/Ui/RemovalAnimation.qml` | Shared transient dismissal animation |

@@ -10,62 +10,49 @@ Ui.ChooserController {
         uiActive: controller.uiActive
         historyEnabled: controller.uiActive
     }
-    property string tab: "active"
-    property alias filterText: groupSelection.queryText
+    property alias filterText: recordSelection.queryText
     property string returnSurface: ""
     property string pendingGroupKey: ""
-    property string selectedGroupKey: ""
+    property string selectedKey: ""
     property double nowMs: Date.now()
     property alias screenshotStatus: screenshotCapture.statusMessage
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
-    readonly property alias groupModel: groups
-    readonly property var visibleGroups: Ui.NotificationPresentation.groupRecords(Ui.NotificationPresentation.filterRecords(tab === "active" ? Ui.NotificationPresentation.newestFirst(notificationState.activeNotifications) : notificationState.history, filterText))
+    readonly property alias notificationModel: records
+    readonly property var visibleRecords: Ui.NotificationPresentation.filterRecords(notificationState.recentNotifications, filterText)
+    readonly property var selectedRecord: visibleRecords.find(record => Ui.NotificationPresentation.recordKey(record) === selectedKey) || null
 
-    readonly property var selectedGroup: visibleGroups.find(group => group.key === selectedGroupKey) || null
-    hasSelection: selectedGroup !== null
-    selectionModel: groupSelection
+    hasSelection: selectedRecord !== null
+    selectionModel: recordSelection
     viewMemory: Ui.ChooserMemory {
         controller: controller
-        key: controller.selectedGroupKey ? "notifications::" + controller.tab + "::" + controller.selectedGroupKey : ""
-        tab: "messages"
-        tabs: ["messages"]
+        key: controller.selectedKey ? "notifications::" + controller.selectedKey : ""
+        tab: "message"
+        tabs: ["message"]
         onRestoreRequested: function (open, tab) {
             controller.detailsOpen = open && controller.hasSelection;
-            if (controller.detailsOpen)
-                controller.expandSelected(true);
         }
     }
     QtObject {
-        id: groupSelection
-        property int selectedIndex: 0
+        id: recordSelection
+        // Identity owns selection. Never feed a derived index back into the key
+        // while the list is being reconciled/reordered.
+        readonly property int selectedIndex: Math.max(0, controller.visibleRecords.findIndex(record => Ui.NotificationPresentation.recordKey(record) === controller.selectedKey))
         property string queryText: ""
-        onSelectedIndexChanged: {
-            const group = controller.visibleGroups[selectedIndex];
-            if (group)
-                controller.selectedGroupKey = group.key;
-        }
-        function move(delta: int): void { controller.moveGroup(delta); }
+        function move(delta: int): void { controller.select(selectedIndex + delta); }
         function selectFirst(): void { controller.select(0); }
     }
-    onSelectedGroupKeyChanged: groupSelection.selectedIndex = Math.max(0, visibleGroups.findIndex(group => group.key === selectedGroupKey))
     function select(index): void {
-        if (visibleGroups[index])
-            selectedGroupKey = visibleGroups[index].key;
+        const record = visibleRecords[Math.max(0, Math.min(visibleRecords.length - 1, index))];
+        if (record)
+            selectedKey = Ui.NotificationPresentation.recordKey(record);
     }
     function resultKeyAt(index: int): string {
-        return visibleGroups[index] ? "notifications::" + tab + "::" + visibleGroups[index].key : "";
+        return visibleRecords[index] ? "notifications::" + Ui.NotificationPresentation.recordKey(visibleRecords[index]) : "";
     }
     function resultIndexForKey(key: string): int {
-        return visibleGroups.findIndex(group => "notifications::" + tab + "::" + group.key === key);
+        return visibleRecords.findIndex(record => "notifications::" + Ui.NotificationPresentation.recordKey(record) === key);
     }
     function setPower() { notificationState.setDndEnabled(!notificationState.notifications.dnd); }
-    function openDetails() {
-        viewMemory.synchronize();
-        if (hasSelection) {
-            detailsOpen = true;
-            expandSelected(true);
-        }
-    }
     function primarySelected(): bool {
         openDetails();
         focusDetailsRequested();
@@ -73,18 +60,14 @@ Ui.ChooserController {
     }
 
     signal backRequested
-    signal groupsAboutToChange
-    signal groupsUpdated
-    signal revealGroupRequested(string key)
 
+    // Older bar/agenda entry points can still request active/history. Both now
+    // resolve to the unified list; a group link reveals its newest message.
     function openNotifications(key: string, requestedTab: string, origin: string): void {
         returnSurface = origin;
         filterText = "";
-        tab = requestedTab === "history" ? "history" : "active";
         pendingGroupKey = key;
-        if (key)
-            notificationState.setExpanded(key, true);
-        rebuildGroups();
+        revealPendingGroup();
     }
     function goBack(): void {
         if (returnSurface === "activity")
@@ -106,43 +89,26 @@ Ui.ChooserController {
         notificationState.backend.snapshot();
         notificationState.reloadHistory();
     }
-    function rebuildGroups(): void {
-        groupsAboutToChange();
-        groups.rows = visibleGroups.map(group => ({
-                    key: group.key,
-                    payload: group
-                }));
-        if (!visibleGroups.some(function (group) {
-            return group.key === controller.selectedGroupKey;
-        }))
-            selectedGroupKey = visibleGroups.length ? visibleGroups[0].key : "";
-        groupSelection.selectedIndex = Math.max(0, visibleGroups.findIndex(group => group.key === selectedGroupKey));
-        groupsUpdated();
+    function rebuildRecords(): void {
+        const oldIndex = records.currentKeys().indexOf(selectedKey);
+        records.rows = visibleRecords.map(record => ({key: Ui.NotificationPresentation.recordKey(record), payload: record}));
+        if (!selectedRecord) {
+            selectedKey = "";
+            select(Math.max(0, oldIndex));
+        }
+        if (!hasSelection)
+            detailsOpen = false;
         revealPendingGroup();
     }
     function revealPendingGroup(): void {
-        if (pendingGroupKey && visibleGroups.some(function (group) {
-            return group.key === controller.pendingGroupKey;
-        })) {
-            selectedGroupKey = pendingGroupKey;
-            revealGroupRequested(pendingGroupKey);
+        if (!pendingGroupKey)
+            return;
+        const index = visibleRecords.findIndex(record => Ui.NotificationPresentation.groupKey(record) === pendingGroupKey);
+        if (index >= 0) {
+            select(index);
             pendingGroupKey = "";
             openDetails();
         }
-    }
-    function moveGroup(delta: int): void {
-        const index = visibleGroups.findIndex(function (group) {
-            return group.key === controller.selectedGroupKey;
-        });
-        const next = Math.max(0, Math.min(visibleGroups.length - 1, index + delta));
-        if (visibleGroups.length) {
-            selectedGroupKey = visibleGroups[next].key;
-            revealGroupRequested(selectedGroupKey);
-        }
-    }
-    function expandSelected(expand: bool): void {
-        if (selectedGroupKey)
-            notificationState.setExpanded(selectedGroupKey, expand);
     }
     function activateUi(workspaceId): void {
         activateUiState(workspaceId);
@@ -152,7 +118,7 @@ Ui.ChooserController {
     function deactivateUi(): void {
         deactivateUiState();
         returnSurface = "";
-        // Deliberately retain search, scroll, expansion and reply drafts.
+        // Deliberately retain search, scroll and reply drafts.
     }
 
     Io.ClipboardScreenshotCapture {
@@ -161,10 +127,8 @@ Ui.ChooserController {
         startMessage: "Capturing Notifications panel…"
     }
 
-    onVisibleGroupsChanged: rebuildGroups()
-    Core.SerializedListModel {
-        id: groups
-    }
+    onVisibleRecordsChanged: rebuildRecords()
+    Core.SerializedListModel { id: records }
     Timer {
         interval: 30000
         repeat: true

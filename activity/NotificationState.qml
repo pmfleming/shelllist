@@ -29,7 +29,6 @@ Item {
     property string historyError: ""
     readonly property alias drafts: replyDrafts.drafts
     property var replies: ({})
-    property var expandedGroups: ({})
     readonly property var activeNotifications: notificationActive.notifications || []
     readonly property var recentNotifications: Ui.NotificationPresentation.recentRecords(activeNotifications, history)
     readonly property int draftCount: Object.keys(drafts).filter(function (key) {
@@ -52,11 +51,6 @@ Item {
         return activeNotifications.some(function (notification) {
             return Ui.NotificationPresentation.groupKey(notification) === key;
         });
-    }
-    function setExpanded(key: string, expanded: bool): void {
-        const next = Object.assign(Object.create(null), expandedGroups);
-        next[key] = expanded;
-        expandedGroups = next;
     }
     function setDraft(id: int, text: string): void {
         replyDrafts.put(id, text);

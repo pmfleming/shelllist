@@ -4,6 +4,12 @@ function notificationFor(record) {
     return record && record.notification ? record.notification : (record || ({}));
 }
 
+// Live snapshots and persisted wrappers share identity, including after close.
+function recordKey(record) {
+    const n = notificationFor(record);
+    return String(n.id) + ":" + String(n.created_unix_ms);
+}
+
 function isReplyAction(action) {
     return String(action && action.key || "").toLowerCase().indexOf("reply") >= 0;
 }

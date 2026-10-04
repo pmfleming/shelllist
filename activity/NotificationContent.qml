@@ -12,19 +12,19 @@ Ui.ProviderChooserSurface {
     listComponent: Ui.ChooserListPane {
         id: pane
         chooserController: content.controller
-        resultModel: content.controller.groupModel
+        resultModel: content.controller.notificationModel
         filterText: content.controller.filterText
         icon: ""
-        placeholder: content.controller.tab === "history" ? qsTr("Search loaded history…") : qsTr("Search notifications…")
+        placeholder: qsTr("Search loaded notifications…")
         powered: content.controller.notificationState.notifications.dnd
         powerEnabled: content.controller.notificationState.notifications.available
         powerAccessory: NotificationDndDuration { notificationState: content.controller.notificationState }
         refreshing: content.controller.notificationState.historyLoading
-        status: content.controller.notificationState.lastError || (content.controller.tab === "history" ? content.controller.notificationState.historyError : "") || content.controller.screenshotStatus || (content.controller.notificationState.draftCount ? content.controller.notificationState.draftCount + qsTr(" unsent reply drafts") : "")
-        emptyText: qsTr("No notifications")
+        status: content.controller.notificationState.lastError || content.controller.notificationState.historyError || content.controller.screenshotStatus || (content.controller.notificationState.draftCount ? content.controller.notificationState.draftCount + qsTr(" unsent reply drafts") : "")
+        emptyText: !content.controller.notificationState.notifications.available ? qsTr("Notifications unavailable") : refreshing && !content.controller.notificationState.historyLoaded ? qsTr("Loading notifications…") : filterText.length ? qsTr("No matching notifications") : qsTr("No notifications")
         emptyIcon: "󰂚"
         preserveViewportOnAppend: true
-        readonly property bool loadMore: listNearEnd && content.controller.tab === "history" && content.controller.notificationState.historyHasMore && !refreshing && !content.controller.notificationState.historyError
+        readonly property bool loadMore: listNearEnd && !filterText.length && content.controller.notificationState.historyHasMore && !refreshing && !content.controller.notificationState.historyError
         onLoadMoreChanged: if (loadMore) Qt.callLater(content.controller.notificationState.loadMoreHistory)
         listOptionsComponent: Row {
             width: parent.width
@@ -38,19 +38,12 @@ Ui.ProviderChooserSurface {
                 accessibleName: qsTr("Back to agenda")
                 onClicked: content.controller.goBack()
             }
-            Ui.SegmentedControl {
-                objectName: "notificationTabs"
-                width: 240
-                value: content.controller.tab
-                options: [{value: "active", label: qsTr("Active")}, {value: "history", label: qsTr("History")}]
-                onSelected: function (value) { content.controller.tab = value; }
-            }
             Ui.FlatIconButton {
                 objectName: "notificationClearAll"
                 width: height
                 height: parent.height
                 icon: "󰎟"
-                accessibleName: qsTr("Dismiss all active notifications")
+                accessibleName: qsTr("Dismiss all live notifications (retain history)")
                 enabled: content.controller.notificationState.activeNotifications.length > 0
                 onClicked: content.controller.notificationState.clearNotifications()
             }
@@ -58,32 +51,25 @@ Ui.ProviderChooserSurface {
         rowDelegate: Ui.ResultRow {
             id: row
             required property var resultData
-            readonly property var group: JSON.parse(resultData.payload)
+            readonly property var notification: Ui.NotificationPresentation.notificationFor(JSON.parse(resultData.payload))
             listPane: pane
             rowHeight: pane.delegateHeight
             leadingIcon: "󰂚"
-            accessibleName: (row.group.appName || qsTr("Notifications")) + ". " + row.group.records.length
+            accessibleName: (row.notification.app_name || qsTr("Notification")) + ". " + row.notification.summary
             Ui.ResultLabel {
-                title: row.group.appName || qsTr("Notifications")
-                subtitle: String(row.group.records.length)
+                title: row.notification.summary || row.notification.app_name || qsTr("Notification")
+                subtitle: [row.notification.app_name, Ui.NotificationPresentation.timeLabel(row.notification.created_unix_ms, content.controller.nowMs), row.notification.body].filter(part => !!part).join(" · ")
             }
         }
     }
     detailsComponent: Ui.DetailFlickable {
         viewMemory: content.controller.viewMemory
-        memoryTab: "messages"
-        NotificationHistoryGroup {
+        memoryTab: "message"
+        NotificationHistoryRow {
             width: parent.width
+            visible: content.controller.hasSelection
             controller: content.controller
-            group: content.controller.selectedGroup || {key: "", records: [], appName: ""}
-        }
-    }
-    Shortcut {
-        sequences: ["Ctrl+Tab", "Ctrl+Shift+Tab"]
-        enabled: content.controller.uiActive && !content.detailsNavigation.popupOpen
-        onActivated: {
-            content.controller.navigationInteracted();
-            content.controller.tab = content.controller.tab === "active" ? "history" : "active";
+            record: content.controller.selectedRecord || ({})
         }
     }
 }
