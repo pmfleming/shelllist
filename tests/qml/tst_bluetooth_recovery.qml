@@ -124,13 +124,22 @@ DaemonTestCase {
             controller.openDetails();
             controller.detailsTab = "settings";
         }
+        // Incubation exposes named children before completion handlers and
+        // layout have finished. Establish the editor only after the page is ready.
+        tryVerify(() => content.detailsItem !== null);
+        tryVerify(() => content.detailsNavigation.contentReady);
+        verify(waitForPolish(content.Window.window));
         const name = adapter ? "adapterNameInput" : "deviceNameInput";
         tryVerify(() => findChild(content, name) !== null);
+        tryCompare(findChild(content, name), "text", adapter ? "Adapter" : "Buds");
         content.detailsNavigation.currentTarget = findChild(content, name);
         content.detailsNavigation.focusContent();
         keyClick(Qt.Key_Return);
         verify(content.detailsNavigation.editing);
-        findChild(content.detailsNavigation.currentTarget, "fieldInput").select(3, 1);
+        const input = findChild(content.detailsNavigation.currentTarget, "fieldInput");
+        compare(input.text, adapter ? "Adapter" : "Buds");
+        input.select(3, 1);
+        compare(input.cursorPosition, 1);
         return content;
     }
     function closeSession(content) {
@@ -161,6 +170,7 @@ DaemonTestCase {
     function test_invocationWaitsForRefreshWithoutReplayingEdits(data) {
         const content = sessionContent(data.adapter, data.empty);
         closeSession(content);
+        compare(content.controller.focusMemory.location.selection, {cursor: 1, anchor: 3});
         calls = [];
         startSession(content);
         finishSessionRefresh(content);

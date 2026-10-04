@@ -762,8 +762,7 @@ DaemonTestCase {
         c.uiActive = true;
         c.selectOutput("eDP-1");
         c.openDetails();
-        tryVerify(function () { return findChild(panel, "dockedLaptopBehavior") !== null; });
-        verify(waitForRendering(panel));
+        waitForDetails(panel);
         const choice = findChild(panel, "dockedLaptopBehavior");
         const status = findChild(panel, "dockingSaveStatus");
         panel.navigation.focusContent();

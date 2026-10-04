@@ -23,7 +23,8 @@ FocusScope {
     property bool restorationAllowed: !viewMemory || (viewMemory.controller.uiActive && !viewMemory.controller.uiSuspending)
     property var sessionLocation: null
     property var lastLocation: ({})
-    readonly property list<Item> targets: collectTargets(contentItem)
+    readonly property bool contentReady: contentItem !== null && loadersReady(contentItem)
+    readonly property list<Item> targets: contentReady ? collectTargets(contentItem) : []
     property Item currentTarget: null
     property bool awaitingContent: false
     property Item editorTarget: null
@@ -168,6 +169,27 @@ FocusScope {
         }
     }
 
+    // Loader children become discoverable during incubation, before completion
+    // handlers initialize fields. Do not consume saved focus/selection yet.
+    function loadersReady(item: Item): bool {
+        const parentLoader = item.parent as Loader;
+        if (parentLoader && parentLoader.active && parentLoader.status !== Loader.Ready)
+            return false;
+        const loader = item as Loader;
+        if (loader && loader.active && loader.status === Loader.Loading)
+            return false;
+        // Match target traversal boundaries; native input/cursor decorations
+        // are not pages and may be created as a consequence of restoring focus.
+        if (editable(item) || item instanceof ActionControl || item instanceof IconTile || item instanceof ModalFrame || item instanceof DetailsHeader || item instanceof DetailsTabBar || item instanceof SurfaceActionRow || (item as DetailSection)?.informationOnly)
+            return true;
+        const page = item as DetailFlickable;
+        const children = page ? page.navigationContent.children : item.children;
+        for (const child of children) {
+            if (!loadersReady(child))
+                return false;
+        }
+        return true;
+    }
     function collectTargets(item: Item): var {
         if (!item || !item.visible || (item as DetailSection)?.informationOnly || item instanceof DetailsTabBar || item instanceof ModalFrame || item instanceof DetailsHeader || item instanceof SurfaceActionRow)
             return [];

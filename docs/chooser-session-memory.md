@@ -19,8 +19,11 @@ after [anchored geometry](chooser-geometry.md):
 
 ## Per-result presentation
 
-Initial page layout is part of restoration readiness: a newly incubated control
-is not revealed against zero-height content. Explicit reveal commits scroll
+Loader completion and initial page layout are part of restoration readiness.
+Named children can exist before their asynchronous Loader (including nested
+Loaders) is ready; shared navigation must wait before discovering field targets,
+entering an editor or clamping a saved caret against uninitialized text. A newly
+incubated control is not revealed against zero-height content. Explicit reveal commits scroll
 bookkeeping before moving, so a queued initial restore cannot undo it. New input
 and invocation/context cancellation still supersede pending restoration.
 
