@@ -7,7 +7,6 @@ Ui.ProviderChooserSurface {
     id: content
     required property NotificationController controller
     chooserController: controller
-    keyboardWorkflow: true
     detailsTabEnabled: false
 
     listComponent: Ui.ChooserListPane {

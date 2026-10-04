@@ -2,14 +2,19 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
 
-// Unbounded/repeated content actions cannot all have unique one-letter chords.
-// Alt+J opens their menu; they never become field Tab stops.
+// Header overflow and content commands share modality, traversal and focus
+// return. Owners supply actions and presentation adapters, retaining effects.
 Controls.Popup {
     id: menu
-    required property var commands
+    required property var actions
+    property int controlHeight: Theme.controlHeight
+    property int maximumVisibleItems: 6
+    property string accessibleName: qsTr("More actions")
+    property alias listObjectName: list.objectName
     property Item returnFocus: null
+    signal triggered(var action)
     width: Math.min(parent.width, 360)
-    height: Math.min(commands.length, 7) * Theme.controlHeight + padding * 2
+    height: Math.min(actions.length, maximumVisibleItems) * controlHeight + padding * 2
     padding: Theme.spacingSm
     modal: true
     focus: true
@@ -23,12 +28,21 @@ Controls.Popup {
     }
     onClosed: if (returnFocus && returnFocus.visible && returnFocus.enabled)
         returnFocus.forceActiveFocus(Qt.OtherFocusReason)
+    function available(index: int): bool {
+        const action = actions[index];
+        return !!action && action.enabled !== false;
+    }
+    function labelFor(index: int): string {
+        return actions[index]?.label || "";
+    }
     function activate(index: int): void {
-        const action = commands[index] as ActionControl;
-        if (!action || !action.visible || !action.enabled || !action.interactive)
+        if (!available(index))
             return;
+        // Closing restores focus and can change the model: route the captured
+        // action, never look it up again by index after closing.
+        const action = actions[index];
         close();
-        action.activate();
+        triggered(action);
     }
     background: Rectangle {
         radius: Theme.controlRadius
@@ -37,16 +51,15 @@ Controls.Popup {
     }
     contentItem: ListView {
         id: list
-        objectName: "detailsCommandMenu"
-        model: menu.visible ? menu.commands : []
+        model: menu.visible ? menu.actions : []
         clip: true
+        boundsBehavior: Flickable.StopAtBounds
         Accessible.role: Accessible.PopupMenu
-        Accessible.name: qsTr("Content actions")
+        Accessible.name: menu.accessibleName
         function moveSelection(delta: int): void {
             for (let n = 1; n <= count; ++n) {
                 const index = (currentIndex + delta * n + count) % count;
-                const action = menu.commands[index];
-                if (action && action.enabled && action.interactive) {
+                if (menu.available(index)) {
                     currentIndex = index;
                     positionViewAtIndex(index, ListView.Contain);
                     return;
@@ -65,15 +78,16 @@ Controls.Popup {
             }
         }
         delegate: Controls.ItemDelegate {
-            required property ActionControl modelData
             required property int index
             width: list.width
-            height: Theme.controlHeight
-            text: modelData ? modelData.accessibleName || modelData.objectName : ""
-            enabled: modelData !== null && modelData.enabled && modelData.interactive
+            height: menu.controlHeight
+            text: menu.labelFor(index)
+            enabled: menu.available(index)
             highlighted: list.currentIndex === index
             focusPolicy: Qt.NoFocus
             Accessible.role: Accessible.MenuItem
+            Accessible.focused: list.activeFocus && highlighted
+            Accessible.onPressAction: menu.activate(index)
             onClicked: menu.activate(index)
         }
     }

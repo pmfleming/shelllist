@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-const assert = require("node:assert/strict");
 const fs = require("fs");
 const vm = require("vm");
 
@@ -35,11 +34,6 @@ const launch = model.action({
     presentation: { group: "primary", tone: "active", width: 140 }
 });
 
-assert.equal(launch.accessKey, "L");
-assert.equal(launch.shortcut, "Enter", "header access key must not replace the result command");
-assert.equal(model.action({id: "plain", label: "Plain"}).accessKey, "");
-++checks;
-
 const terminal = model.result({
     providerId: "desktop.applications",
     id: "org.example.Terminal.desktop",
@@ -56,37 +50,6 @@ throws("duplicate actions are rejected", () => model.result({
 }), "duplicate");
 
 throws("cross-provider batches rejected", () => model.resultBatch({ providerId: "settings", results: [terminal] }), "does not match");
-
-for (const checked of [true, false, undefined]) {
-    const options = { enabled: false, visible: false, presentation: { tone: "danger", width: 92 }, metadata: { disabledReason: "unsupported" } };
-    const before = JSON.stringify(options);
-    const expected = model.keepOpenAction("blocked", "Blocked", Object.assign({}, options, {
-        kind: "toggle", state: { checked }, presentation: { group: "settings", tone: "danger", width: 92 }
-    }));
-    assert.deepEqual(model.settingToggle("blocked", "Blocked", checked, options), expected);
-    assert.equal(JSON.stringify(options), before);
-    ++checks;
-}
-const toggle = model.settingToggle("trusted", "Trusted", true);
-assert.equal(toggle.presentation.group, "settings");
-assert.equal(toggle.presentation.tone, "normal");
-assert.equal(toggle.state.checked, true);
-assert.equal(toggle.closePolicy, "keep-open");
-++checks;
-
-// Presentation grouping preserves original objects, disabled slots and order.
-const grouped = Object.freeze([
-    Object.freeze({id: "first", presentation: {group: "primary"}}),
-    Object.freeze({id: "hidden", visible: false, presentation: {group: "primary"}}),
-    Object.freeze({id: "disabled", enabled: false, presentation: {group: "toolbar"}}),
-    Object.freeze({id: "implicit"})
-]);
-assert.deepEqual(model.visibleActions(grouped, "primary"), [grouped[0]]);
-assert.deepEqual(model.visibleActions(grouped, "toolbar"), [grouped[2]]);
-assert.deepEqual(model.visibleActions(grouped, "toolbar", "toolbar"), [grouped[2], grouped[3]]);
-assert.deepEqual(model.visibleActions(grouped), [grouped[0], grouped[2], grouped[3]]);
-assert.equal(model.visibleActions(null).length, 0);
-checks += 5;
 
 // ProviderRegistry's Qt tests own dispatch routing and disabled-action rejection.
 

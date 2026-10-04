@@ -63,26 +63,26 @@ Their natural height includes wrapped labels and spacing; containing cards and
 always-visible sections reserve that height. Wi-Fi segmented/IP fields also stack their
 labels above controls at narrow widths.
 
-`tst_detail_layout.qml` exercises compact/wide settings, live content growth,
-always-visible information sections and diagnostic-grid resizing. These are offscreen geometry
-checks, not an exhaustive live screenshot review of every surface/state.
+The dedicated shared-layout catalogue was removed during the
+[2026-10-04 test pruning](reviews/test-pruning-2026-10-04.md). These sizing rules
+remain the intended behavior, but every card/width combination is no longer
+individually checked.
 
 ## Validation
 
-`tst_chooser_geometry.qml` covers minimum/laptop/desktop/ultrawide and emergency
-bounds, negative-origin work areas, absent-data fallback, single-column geometry,
-animated list anchoring, filtering, live resize, stable text/control sizes,
-native editor/browse visibility,
-return-to-search overflow and the actual Activity glance rail. The Displays
-regression now exercises the split overflow viewport rather than prescribing the
-rejected single-pane layout; numeric validation, trial and disconnect checks
-remain intact.
+`tst_chooser_geometry.qml` retains negative-origin work areas, absent-data
+fallback, single-column geometry, live/fractional list anchoring, filtering,
+live resize, focused-delegate routing and keyboard overflow revelation.
+Displays retains numeric validation, topology, preview/revert and disconnect
+checks. Repeated size matrices and the Activity-specific rail test were removed;
+see [current test scope](../tests/README.md) for validation and explicit gaps.
 
-Strict lint, **141 behavioral cases / 215 Qt passes including hooks**, runtime
-smoke and the full sibling-aware gate pass. Light/dark Applications captures were
-reviewed at normal, minimum-width and emergency-overflow sizes. Real focused
-result delegates also now use the same query/guard/detail-focus route as the list;
-the geometry tests exposed their legacy key handlers bypassing that boundary.
+At the original geometry checkpoint, strict lint, **141 behavioral cases / 215
+Qt passes including hooks**, runtime smoke and the full sibling-aware gate passed.
+Those results and the normal/minimum/emergency light/dark Applications capture
+review are historical, not fresh acceptance of the pruned suite. Real focused
+result delegates use the same query/guard/detail-focus route as the list; the
+geometry tests exposed their legacy key handlers bypassing that boundary.
 
 The native floating-window smoke checks shared visual bounds without touching a
 live compositor. Its offscreen plugin prints the expected advisory

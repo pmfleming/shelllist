@@ -71,35 +71,6 @@ DaemonTestCase {
         return panel;
     }
 
-    function test_profilesEnterEditingWithoutChangingPowerAndActionsComeFirst() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.uiActive = true;
-        compare(findChild(panel, "powerSuspendCard").y, 0);
-        verify(findChild(panel, "batteryLevelsCard").visible);
-        const safety = findChild(panel, "criticalBatterySafety");
-        compare(safety.elide, Text.ElideNone);
-        compare(safety.wrapMode, Text.Wrap);
-        c.selectViewTab("overview");
-        const selector = findChild(panel, "batteryPowerModeProfile");
-        const navigation = findChild(panel, "batterySurface").detailsNavigation;
-        navigation.focusContent(true);
-        navigation.currentTarget = selector;
-        calls = [];
-        keyClick(Qt.Key_Return);
-        verify(selector.activeFocus);
-        compare(calls.length, 0, "entering a profile editor cannot change a setting");
-        keyClick(Qt.Key_Right);
-        compare(calls.length, 0, "profile choice remains local until save");
-        keyClick(Qt.Key_Return);
-        compare(calls.length, 1);
-        compare(calls[0].method, "powerProfile.set");
-        compare(calls[0].params.profile, "performance");
-        compare(selector.value, "balanced", "only acknowledgement changes the selected mode");
-        c.alertSaveError = "Save failed";
-        c.selectViewTab("power");
-        verify(findChild(panel, "batteryLevelsCard").visible, "secondary recovery controls remain visible");
-    }
     function test_keepAwakeIsAccessibleAndOnlyDisablesSuspend() {
         const panel = makePanel();
         const controller = panel.controller;

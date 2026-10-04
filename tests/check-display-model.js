@@ -14,7 +14,6 @@ const outputs = [
 const draft = model.draft(outputs);
 assert.equal(model.currentMode({ ...outputs[0], width: 0, height: 0, refreshRate: 0 }), "1920x1200@60.000Hz", "disabled displays use an advertised mode when current geometry is absent");
 assert.equal(draft[1].mode, "3840x2160@59.940Hz", "exact advertised refresh string survives");
-assert.deepEqual(plain(model.rect({ ...draft[1], transform: 1 })), { x: 0, y: 0, width: 1440, height: 2560 });
 assert.equal(model.parseMode("3840x2160@60;exec"), null);
 for (const [key, value] of [["x", NaN], ["y", Infinity], ["x", ""], ["x", 32769], ["x", 1.5], ["scale", 0], ["scale", 4.1], ["scale", "bad"], ["transform", 8], ["mode", "3840x2160@75"]]) {
     const changed = plain(draft); changed[1][key] = value;

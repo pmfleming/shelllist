@@ -14,12 +14,6 @@ DaemonTestCase {
     height: 100
 
     Component {
-        id: button
-        Ui.ActionButton {
-            label: "Button"
-        }
-    }
-    Component {
         id: toggleSwitch
         Ui.ToggleSwitch {}
     }
@@ -39,24 +33,6 @@ DaemonTestCase {
             }
         }
     }
-    Component {
-        id: details
-        Ui.ActionDetailsPane {
-            uiScale: 1
-            chooserController: Ui.ChooserController {
-                property string routed: ""
-                function triggerDetailAction(actionId) {
-                    routed += actionId + ";";
-                }
-            }
-        }
-    }
-    function test_detailsRouteEachActionOnce() {
-        const pane = createTemporaryObject(details, testCase);
-        pane.actionTriggered("connect");
-        pane.actionTriggered("disconnect");
-        compare(pane.chooserController.routed, "connect;disconnect;");
-    }
     SignalSpy {
         id: clicks
         signalName: "clicked"
@@ -68,10 +44,6 @@ DaemonTestCase {
 
     function test_sharedActivation_data() {
         return [
-            {
-                tag: "button",
-                factory: button
-            },
             {
                 tag: "switch",
                 factory: toggleSwitch

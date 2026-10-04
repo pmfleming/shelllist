@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls as Controls
 import Shelllist.Core as Core
 
 // Surface commands only. Settings and contextual content toolbars stay separate.
@@ -20,11 +19,10 @@ Item {
     readonly property var shownSecondary: secondaryActions.slice(0, shownSecondaryCount)
     readonly property var overflowActions: secondaryActions.slice(shownSecondaryCount)
     readonly property bool popupOpen: overflowMenu.visible
-    readonly property Item focusedItem: Window.window ? Window.window.activeFocusItem : null
     // count can change before Repeater has instantiated its delegates. Track
     // actual additions/removals so navigation never caches an incomplete list.
-    property var secondaryButtons: []
-    readonly property var buttons: (primaryAction ? [primaryButton] : []).concat(secondaryButtons, overflowActions.length ? [moreButton] : [])
+    property list<ActionControl> secondaryButtons: []
+    readonly property list<ActionControl> buttons: (primaryAction ? [primaryButton] : []).concat(Array.from(secondaryButtons), overflowActions.length ? [moreButton] : [])
     signal triggered(string actionId)
     implicitHeight: primaryAction || secondaryActions.length ? Math.round(Theme.primaryActionHeight * uiScale) : 0
     height: implicitHeight
@@ -88,7 +86,6 @@ Item {
             onClicked: row.triggered(row.primaryAction.id)
         }
         Repeater {
-            id: secondaryRepeater
             model: row.shownSecondary
             onItemAdded: function(index, item) {
                 const buttons = row.secondaryButtons.slice();
@@ -133,83 +130,15 @@ Item {
             onClicked: overflowMenu.open()
             // Popup rather than Menu: native Menu treats Alt as dismissal and
             // can expose the underlying header shortcut in the same chord.
-            Controls.Popup {
+            ActionMenu {
                 id: overflowMenu
                 y: moreButton.height
                 x: moreButton.width - width
                 width: Math.min(row.width, Math.max(220 * row.uiScale, row.controlHeight))
-                height: Math.min(6, row.overflowActions.length) * row.controlHeight + padding * 2
-                padding: Theme.spacingSm
-                modal: true
-                focus: true
-                enter: null
-                exit: null
-                property Item savedFocus: null
-                onAboutToShow: savedFocus = row.focusedItem
-                onOpened: {
-                    menuList.currentIndex = -1;
-                    menuList.moveSelection(1);
-                    menuList.forceActiveFocus();
-                }
-                onClosed: {
-                    if (savedFocus && savedFocus.visible && savedFocus.enabled)
-                        savedFocus.forceActiveFocus(Qt.OtherFocusReason);
-                }
-                background: Rectangle {
-                    color: Theme.surfaceRaised
-                    radius: Theme.controlRadius
-                    border.color: Theme.border
-                }
-                contentItem: ListView {
-                    id: menuList
-                    objectName: "surfaceActionMenu"
-                    model: row.overflowActions
-                    clip: true
-                    boundsBehavior: Flickable.StopAtBounds
-                    Accessible.role: Accessible.PopupMenu
-                    Accessible.name: qsTr("More actions")
-                    function moveSelection(delta): void {
-                        for (let n = 1; n <= count; ++n) {
-                            const next = (currentIndex + delta * n + count) % count;
-                            if (row.overflowActions[next].enabled !== false) {
-                                currentIndex = next;
-                                positionViewAtIndex(next, ListView.Contain);
-                                return;
-                            }
-                        }
-                    }
-                    function trigger(index): void {
-                        const action = row.overflowActions[index];
-                        if (!action || action.enabled === false) return;
-                        overflowMenu.close();
-                        row.triggered(action.id);
-                    }
-                    Keys.onPressed: function(event) {
-                        if (event.modifiers & (Qt.AltModifier | Qt.ControlModifier)) {
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Up || event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
-                            moveSelection(event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier) ? -1 : 1);
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
-                            if (!event.isAutoRepeat) trigger(currentIndex);
-                            event.accepted = true;
-                        }
-                    }
-                    delegate: Controls.ItemDelegate {
-                        required property var modelData
-                        required property int index
-                        width: menuList.width
-                        height: row.controlHeight
-                        text: modelData.label || ""
-                        enabled: modelData.enabled !== false
-                        highlighted: menuList.currentIndex === index
-                        focusPolicy: Qt.NoFocus
-                        Accessible.role: Accessible.MenuItem
-                        Accessible.focused: menuList.activeFocus && highlighted
-                        Accessible.onPressAction: menuList.trigger(index)
-                        onClicked: menuList.trigger(index)
-                    }
-                }
+                controlHeight: row.controlHeight
+                listObjectName: "surfaceActionMenu"
+                actions: row.overflowActions
+                onTriggered: function (action) { row.triggered(action.id); }
             }
         }
     }

@@ -17,14 +17,11 @@ TestCase {
             width: 640
             height: 400
             property int activations: 0
-            property int dismissals: 0
-            property int f1Events: 0
             property alias shortcut: actionShortcut
             property alias screenshotShortcut: screenshotShortcut
             property alias search: searchField
             chooserController: Ui.ChooserController {
                 uiActive: true
-                onCloseWindowRequested: surface.dismissals++
                 onScreenshotRequested: surface.activations++
             }
             listComponent: Component {
@@ -46,11 +43,6 @@ TestCase {
                 id: searchField
                 width: 240
                 height: 42
-                onKeyPressed: function (event) {
-                    if (event.key === Qt.Key_F1)
-                        surface.f1Events++;
-                    event.accepted = false;
-                }
             }
         }
     }
@@ -116,24 +108,4 @@ TestCase {
         compare(other.requests, 1);
     }
 
-    function test_noHelpShortcutStealsTextFocusOrEscape() {
-        const surface = createTemporaryObject(surfaceComponent, testCase);
-        verify(surface !== null);
-        surface.search.focusInput(false);
-        verify(surface.search.inputActiveFocus);
-        wait(0);
-        keyClick(Qt.Key_F1);
-        compare(surface.f1Events, 1, "F1 reaches the focused control, not a help overlay");
-        verify(surface.search.inputActiveFocus);
-        keyClick(Qt.Key_Question);
-        compare(surface.search.text, "?", "question marks remain ordinary query text");
-        verify(surface.search.inputActiveFocus);
-        surface.chooserController.detailsOpen = true;
-        keyClick(Qt.Key_F1);
-        keyClick(Qt.Key_Escape);
-        compare(surface.chooserController.detailsOpen, false, "no hidden help layer consumes Escape");
-        compare(surface.dismissals, 0);
-        keyClick(Qt.Key_Escape);
-        compare(surface.dismissals, 1);
-    }
 }

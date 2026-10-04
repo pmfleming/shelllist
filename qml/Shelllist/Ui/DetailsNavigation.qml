@@ -9,10 +9,10 @@ FocusScope {
     property Item contentItem: null
     property bool headerShortcutsEnabled: false
     property Item headerContentItem: contentItem
-    readonly property var actionRows: collectActionRows(headerContentItem)
-    readonly property list<Item> headerButtons: actionRows.reduce((buttons, row) => buttons.concat(row.buttons), [])
-    readonly property list<Item> contentCommands: collectCommands(contentItem).filter(item => commandInScope(item))
-    readonly property list<Item> commandButtons: headerButtons.concat(contentCommands.filter(item => !!(item as ActionControl)?.accessKey))
+    readonly property list<SurfaceActionRow> actionRows: collectActionRows(headerContentItem)
+    readonly property list<ActionControl> headerButtons: actionRows.reduce((buttons, row) => buttons.concat(Array.from(row.buttons)), [])
+    readonly property list<ActionControl> contentCommands: collectCommands(contentItem).filter(item => commandInScope(item))
+    readonly property list<ActionControl> commandButtons: headerButtons.concat(contentCommands.filter(item => !!item.accessKey))
     readonly property bool commandMenuOpen: commandMenu.visible || actionRows.some(row => row.popupOpen)
     property ChooserMemory viewMemory: null
     property bool pendingMemory: false
@@ -47,11 +47,9 @@ FocusScope {
     signal resultMoveRequested(int delta)
 
     function locationState(): var {
-        const field = currentTarget as TextField;
-        const editor = currentTarget as TextEditor;
         const key = FocusLocations.key(currentTarget);
         return {target: key, editing: key.length > 0 && editable(currentTarget) && editorTarget === currentTarget,
-            selection: field && key ? field.selectionState() : editor ? editor.selectionState() : null};
+            selection: key || currentTarget instanceof TextEditor ? FocusLocations.selection(currentTarget) : null};
     }
     function rememberLocation(): void {
         if (applyingMemory || pendingMemory || !currentTarget)
@@ -97,24 +95,24 @@ FocusScope {
         }
         // Incubated controls can exist before their page's first layout.
         pendingMemory = awaitingContent || (currentPage && currentTarget !== currentPage && currentPage.contentHeight <= 0);
-        if (activeFocus && restorationAllowed) {
-            browseCursor.forceActiveFocus(Qt.OtherFocusReason);
-            if (!pendingMemory && resumeEditor && saved.editing && target === currentTarget && editable(currentTarget) && !binary(currentTarget))
-                enterEditor();
-            const field = currentTarget as TextField;
-            if (field && currentTarget === target)
-                field.restoreSelection(saved.selection);
-            const editor = currentTarget as TextEditor;
-            if (editor && currentTarget === target)
-                editor.restoreSelection(saved.selection);
-            if (sessionLocation)
-                revealTarget();
-        }
+        restoreFocus(target, saved);
         applyingMemory = false;
         if (!pendingMemory) {
             sessionLocation = null;
             resumeEditor = false;
         }
+    }
+    function restoreFocus(target: Item, saved: var): void {
+        if (!activeFocus || !restorationAllowed)
+            return;
+        browseCursor.forceActiveFocus(Qt.OtherFocusReason);
+        if (target === currentTarget) {
+            if (!pendingMemory && resumeEditor && saved.editing && sessionFor(target))
+                enterEditor();
+            FocusLocations.restoreSelection(target, saved.selection);
+        }
+        if (sessionLocation)
+            revealTarget();
     }
     function suspendView(): void {
         finishEditor(false);
@@ -168,8 +166,8 @@ FocusScope {
         }
     }
 
-    function collectTargets(item: Item, includeHeaders: bool): var {
-        if (!item || !item.visible || (item as DetailSection)?.informationOnly || item instanceof DetailsTabBar || item instanceof ModalFrame || (!includeHeaders && (item instanceof DetailsHeader || item instanceof SurfaceActionRow)))
+    function collectTargets(item: Item): var {
+        if (!item || !item.visible || (item as DetailSection)?.informationOnly || item instanceof DetailsTabBar || item instanceof ModalFrame || item instanceof DetailsHeader || item instanceof SurfaceActionRow)
             return [];
         // Composite inputs are one browsing stop, not their internal buttons.
         if (editable(item))
@@ -181,7 +179,7 @@ FocusScope {
         const page = item as DetailFlickable;
         const children = page ? page.navigationContent.children : item.children;
         for (const child of children)
-            result = result.concat(collectTargets(child, includeHeaders));
+            result = result.concat(collectTargets(child));
         // Page keys scroll read-only pages; Tab prefers editable controls.
         if (page)
             result.push(page);
@@ -196,14 +194,15 @@ FocusScope {
         return null;
     }
     function editable(item: Item): bool {
-        return item instanceof TextField || item instanceof TextEditor || item instanceof DropDownList || item instanceof SegmentedControl || item instanceof ValueSlider || item instanceof LabeledValueSlider || item instanceof ToggleRow || item instanceof ToggleSwitch;
+        return binary(item) || sessionFor(item) !== null;
     }
     function available(item: Item): bool {
-        return item && item.enabled && !((item as TextField)?.readOnly ?? false)
-            && ((item as TextEditor)?.editingAllowed ?? true)
-            && ((item as ActionControl)?.interactive ?? true)
-            && ((item as SegmentedControl)?.interactive ?? true)
-            && ((item as DropDownList)?.interactive ?? true);
+        return sessionFor(item)?.available ?? (item !== null && item.enabled && ((item as ActionControl)?.interactive ?? true));
+    }
+    // Read current targets synchronously: onTargetsChanged can run before a
+    // derived list binding updates during Loader creation/removal.
+    function availableFields(): var {
+        return targets.filter(item => editable(item) && available(item));
     }
     function binary(item: Item): bool {
         return item instanceof ToggleRow || item instanceof ToggleSwitch;
@@ -252,8 +251,8 @@ FocusScope {
             result = result.concat(collectCommands(child));
         return result;
     }
-    function commandInScope(item: Item): bool {
-        const scope = (item as ActionControl)?.commandScope;
+    function commandInScope(item: ActionControl): bool {
+        const scope = item.commandScope;
         if (!scope) return true;
         let target = currentTarget;
         while (target) {
@@ -262,9 +261,8 @@ FocusScope {
         }
         return false;
     }
-    function shortcutFor(item: Item): string {
-        const button = item as ActionControl;
-        if (!button || commandButtons.indexOf(button) < 0 || !/^[A-IK-RT-Z]$/.test(button.accessKey) || commandButtons.filter(other => (other as ActionControl)?.accessKey === button.accessKey).length !== 1)
+    function shortcutFor(button: ActionControl): string {
+        if (!button || commandButtons.indexOf(button) < 0 || !/^[A-IK-RT-Z]$/.test(button.accessKey) || commandButtons.filter(other => other.accessKey === button.accessKey).length !== 1)
             return "";
         return "Alt+" + button.accessKey;
     }
@@ -273,7 +271,7 @@ FocusScope {
         for (const row of actionRows) row.closePopup();
     }
     function triggerHeader(index: int): void {
-        const button = commandButtons[index] as ActionControl;
+        const button = commandButtons[index];
         if (!headerShortcutsEnabled || popupOpen || !button || !button.visible || !button.enabled || !button.interactive)
             return;
         interactionRequested();
@@ -294,17 +292,13 @@ FocusScope {
         // Looking up the old field in the filtered post-save stops loses its
         // position and incorrectly restarts traversal at the first/last field.
         const order = targets.filter(item => editable(item));
-        const index = order.indexOf(currentTarget);
-        const candidates = [];
-        for (let offset = 1; offset <= order.length; ++offset) {
-            const next = index < 0 ? (backwards ? order.length - offset : offset - 1)
-                : (index + (backwards ? -offset : offset) + order.length) % order.length;
-            candidates.push(order[next]);
-        }
+        if (backwards) order.reverse();
+        const start = order.indexOf(currentTarget) + 1;
+        const candidates = order.slice(start).concat(order.slice(0, start));
         finishEditor(true);
-        const controls = targets.filter(item => available(item) && editable(item));
-        const stops = controls.length ? controls : targets.filter(item => item.enabled && item instanceof DetailFlickable);
-        currentTarget = candidates.find(item => controls.indexOf(item) >= 0)
+        const fields = availableFields();
+        const stops = fields.length ? fields : targets.filter(item => item.enabled && item instanceof DetailFlickable);
+        currentTarget = candidates.find(item => fields.indexOf(item) >= 0)
             || stops[backwards ? stops.length - 1 : 0] || null;
         browseCursor.forceActiveFocus(Qt.TabFocusReason);
         if (retainEditing && !binary(currentTarget))
@@ -313,7 +307,7 @@ FocusScope {
         revealTarget();
     }
     function selectContent(): void {
-        currentTarget = targets.find(item => available(item) && editable(item)) || targets.find(item => item instanceof DetailFlickable && item.enabled) || null;
+        currentTarget = availableFields()[0] || targets.find(item => item instanceof DetailFlickable && item.enabled) || null;
         awaitingContent = !currentTarget;
     }
     function focusContent(reset: bool): void {
@@ -417,9 +411,9 @@ FocusScope {
         if (editorTarget !== focusedTarget)
             finishEditor(false);
         currentTarget = focusedTarget;
-        editorTarget = editable(focusedTarget) && !binary(focusedTarget) && (available(focusedTarget) || sessionFor(focusedTarget)?.active) ? focusedTarget : null;
-        const session = sessionFor(editorTarget);
-        if (session) session.begin();
+        const session = sessionFor(focusedTarget);
+        editorTarget = session && (session.available || session.active) ? focusedTarget : null;
+        if (editorTarget) session.begin();
         awaitingContent = false;
         nativeFocusChanged();
         rememberLocation();
@@ -491,9 +485,22 @@ FocusScope {
         }
     }
 
-    DetailsCommandMenu {
+    ActionMenu {
         id: commandMenu
-        commands: navigation.contentCommands.filter(item => !(item as ActionControl)?.accessKey)
+        readonly property list<ActionControl> commands: navigation.contentCommands.filter(item => !item.accessKey)
+        actions: commands
+        function available(index: int): bool {
+            const command = commands[index];
+            return !!command && command.visible && command.enabled && command.interactive;
+        }
+        function labelFor(index: int): string {
+            const command = commands[index];
+            return command ? command.accessibleName || command.objectName : "";
+        }
+        maximumVisibleItems: 7
+        accessibleName: qsTr("Content actions")
+        listObjectName: "detailsCommandMenu"
+        onTriggered: function (action) { (action as ActionControl)?.activate(); }
     }
     Shortcut {
         sequence: "Alt+J"
@@ -512,7 +519,7 @@ FocusScope {
         model: navigation.commandButtons
         delegate: Item {
             id: shortcutSlot
-            required property Item modelData
+            required property ActionControl modelData
             required property int index
             readonly property string sequence: navigation.shortcutFor(modelData)
             Shortcut {

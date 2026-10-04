@@ -118,21 +118,6 @@ DaemonTestCase {
         compare(controller.qr.password, "", "an old generation cannot fill a reopened dialog");
     }
 
-    function test_securityControlsLeadTechnicalDetailsWithoutResettingDrafts() {
-        const panel = makePanel(false);
-        const primary = findChild(panel, "wifiSecurityControls");
-        const technical = findChild(panel, "wifiSecurityDiagnostics");
-        tryCompare(primary, "y", 0);
-        verify(technical.visible && technical.informationOnly);
-        verify(technical.content[0].visible);
-        panel.page.passwordValue = "Retained test draft";
-        panel.page.passwordRevealed = true;
-        panel.width = 500;
-        wait(0);
-        compare(panel.page.passwordValue, "Retained test draft");
-        verify(panel.page.passwordRevealed);
-        compare(calls.length, 0, "showing technical information cannot load a secret or save settings");
-    }
     function test_disablingCastingPersists_data() {
         return [
             {

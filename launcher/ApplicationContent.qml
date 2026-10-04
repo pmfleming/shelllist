@@ -8,7 +8,6 @@ Ui.ProviderChooserSurface {
 
     required property ApplicationController controller
     chooserController: controller
-    keyboardWorkflow: true
     refreshEnabled: !content.controller.operationBlocked && navigationEnabled
     detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection && refreshEnabled
 

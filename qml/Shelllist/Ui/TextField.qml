@@ -5,6 +5,7 @@ FieldFrame {
 
     readonly property FieldEditSession editSession: FieldEditSession {
         owner: field
+        available: field.enabled && !field.readOnly
         valueProperty: "text"
         focused: field.inputActiveFocus
         value: field.text

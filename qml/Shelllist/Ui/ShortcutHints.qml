@@ -12,7 +12,7 @@ Item {
     readonly property Item focusedItem: Window.window ? Window.window.activeFocusItem : null
     readonly property bool listening: enabled && visible && !!Window.window && Window.window.active && ownsFocus(focusedItem)
     property Item observedItem: null
-    readonly property var observedKeys: observedItem ? observedItem.Keys : null
+    readonly property QtObject observedKeys: observedItem ? observedItem.Keys : null
     property list<Item> forwardingTargets: []
     property bool altDown: false
     property bool ctrlDown: false
@@ -21,7 +21,7 @@ Item {
     property bool ctrlReady: false
     readonly property bool showActions: listening && altReady && altDown && !ctrlDown && navigation.headerShortcutsEnabled && !navigation.popupOpen
     readonly property bool showTabs: listening && ctrlReady && ctrlDown && !altDown && tabsEnabled && !navigation.popupOpen
-    readonly property list<Item> tabBars: collectTabBars(scope)
+    readonly property list<DetailsTabBar> tabBars: collectTabBars(scope)
 
     function ownsFocus(item: Item): bool {
         while (item) {
@@ -132,8 +132,7 @@ Item {
         model: hints.navigation.headerButtons
         delegate: Item {
             id: actionSlot
-            required property Item modelData
-            required property int index
+            required property ActionControl modelData
             ShortcutBadge {
                 parent: actionSlot.modelData || hints
                 objectName: "headerShortcutBadge"
@@ -141,7 +140,7 @@ Item {
                 anchors.right: parent ? parent.right : undefined
                 anchors.topMargin: -4
                 anchors.rightMargin: -4
-                text: (actionSlot.modelData as ActionButton)?.surfaceShortcut.replace("Alt+", "") ?? ""
+                text: actionSlot.modelData?.surfaceShortcut.replace("Alt+", "") ?? ""
                 visible: hints.showActions && text.length > 0 && !!actionSlot.modelData
             }
         }
@@ -150,7 +149,7 @@ Item {
         model: hints.tabBars
         delegate: Item {
             id: tabSlot
-            required property Item modelData
+            required property DetailsTabBar modelData
             ShortcutBadge {
                 parent: tabSlot.modelData || hints
                 objectName: "tabShortcutBadge"

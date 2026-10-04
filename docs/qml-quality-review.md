@@ -4,7 +4,15 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
-The [latest post-surface maintenance review](reviews/lens-surface-maintenance.md)
+The [latest interaction-layer review](reviews/lens-interaction-maintenance-2026-10-04.md)
+compares against `8331047`: shared native editor keys and command menus, local
+field availability guards, typed QObject collections, and removal of obsolete
+keyboard-migration paths. All requested aggregate metrics improve modestly;
+tracked code falls 38 lines including regression additions. The 374-pass Qt suite,
+strict lint and runtime smoke pass. Lens remains incomplete on unresolved binding
+side effects and the existing tray-mock formatter error.
+
+The [preceding post-surface maintenance review](reviews/lens-surface-maintenance.md)
 compares against `4ad8d58`: obsolete Activity previews removed, shared action
 visibility/grouping and body toolbars, a typed tray list and simpler Bluetooth
 projection/queue handling. All requested aggregate metrics improve modestly;
@@ -61,6 +69,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - `ChooserShortcuts` centralizes Escape, refresh, and details-tab shortcuts.
 - `ChooserListPane` derives its own density instead of requiring every domain wrapper to forward presentation state.
 - `KeyedListModel` owns persistent model reconciliation and chunking for `ResultStore` and the bar; selection and ranking remain in `ResultStore`. Its `SerializedListModel` specialization keeps notification action arrays encoded and uses synchronous, reset-free reconciliation to preserve live reply editors.
+- `ActionMenu` shares header-overflow/content command modality, disabled-item traversal and focus return; owners retain stable action models and effect routing. `FieldEditSession` shares native editor transaction keys, with availability owned beside each field.
 - `ActionControl` shares keyboard/accessibility activation and busy-focus policy across chooser controls and bar actions. `FocusRing` provides an immediate, inset indicator independent of decorative animation; fields, icon tiles and result rows also use it. No hover tooltip or automatic focus label is rendered; legacy tooltip strings retained during migration supply nonvisual accessible descriptions where appropriate.
 - Providers resolve dynamic actions at use time rather than copying actions into recurring snapshots. `Core.Model.settingToggle` shares Wi-Fi/Bluetooth descriptor normalization without owning capabilities or effects. `Core.Model.visibleActions` shares presentation grouping while preserving disabled shortcut slots; headers, toolbars and domain settings use it. `ActionDetailsPane.triggerAction` supplies controller routing by default; Clipboard overrides the method for specialized actions.
 - `BarContent` renders normalized status descriptors through one delegate.
@@ -78,7 +87,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 
 `qmlqualitylens.config.json` declares the resident shell and QML test files as entrypoints. It also records dynamic component edges hidden behind `Component`, `Loader.sourceComponent`, and `SplitChooserLayout` factories. These edges are analysis metadata, not runtime dependencies. Keep them synchronized when a surface gains or removes dynamically instantiated content; prefer an explicit edge over a broad unused-component suppression.
 
-An earlier maintenance pass removed three unused in-repository exports (`ChartFrame`, `ChooserWindowHost`, and an old `DisclosureSection`) after checking consumers and dynamic edges. A draft-retaining `DisclosureSection` was subsequently introduced for the Material surface follow-up; it has now been replaced by always-visible `DetailSection`, with read-only information excluded from keyboard browsing. The latest pass removes the obsolete `GlanceWeatherCard` and `GlanceNotificationsCard` exports after checking their construction sites. The removed components were not a supported external toolkit contract. Do not retain unused exports merely because export reachability exempts them from cleanup findings. Configured edges still describe loader-created components; current measurements and analyzer limitations are recorded in the latest review.
+An earlier maintenance pass removed three unused in-repository exports (`ChartFrame`, `ChooserWindowHost`, and an old `DisclosureSection`) after checking consumers and dynamic edges. A draft-retaining `DisclosureSection` was subsequently introduced for the Material surface follow-up; it has now been replaced by always-visible `DetailSection`, with read-only information excluded from keyboard browsing. The post-surface pass removed the obsolete `GlanceWeatherCard` and `GlanceNotificationsCard` exports after checking their construction sites. The removed components were not a supported external toolkit contract. Do not retain unused exports merely because export reachability exempts them from cleanup findings. Configured edges still describe loader-created components; current measurements and analyzer limitations are recorded in the latest review.
 
 ## Focused declarative-state refactoring
 

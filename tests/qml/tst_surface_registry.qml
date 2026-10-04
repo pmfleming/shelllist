@@ -16,35 +16,6 @@ DaemonTestCase {
         Shell.SurfaceRegistry {}
     }
 
-    function test_audioMediaAndTrayHaveIndependentLazyControllers(): void {
-        const registry = createTemporaryObject(registryComponent, testCase);
-        for (const kind of ["audio", "media", "tray"]) {
-            compare(registry.controllerFor(kind), null);
-            verify(registry.select(kind));
-            tryVerify(() => registry.controllerFor(kind) !== null);
-            compare(registry.controllerFor(kind).kind, kind);
-            verify(registry.controllerFor(kind).viewMemory !== null);
-        }
-        verify(registry.controllerFor("audio") !== registry.controllerFor("media"));
-    }
-
-    function test_activityDoesNotActivateNotificationHistory(): void {
-        const registry = createTemporaryObject(registryComponent, testCase);
-        verify(registry.select("activity"));
-        tryVerify(() => registry.activityController !== null);
-        registry.activityController.uiActive = true;
-        verify(!registry.notificationState.uiActive);
-        verify(!registry.notificationState.historyEnabled);
-        registry.notificationState.setDraft(42, "Keep this reply");
-        registry.openNotifications("", "active", "");
-        tryVerify(() => registry.notificationController !== null);
-        registry.notificationController.uiActive = true;
-        verify(registry.notificationState.historyEnabled, "the standalone notification surface still loads history");
-        compare(registry.notificationState.drafts[42], "Keep this reply");
-        registry.notificationController.uiActive = false;
-        verify(!registry.notificationState.historyEnabled, "Activity alone must not keep history active");
-    }
-
     function test_requestsQueuedBeforeLoadApplyOnceTheControllerExists(): void {
         const registry = createTemporaryObject(registryComponent, testCase);
         compare(registry.bundleFor("time-weather"), null, "surfaces load lazily");

@@ -10,7 +10,6 @@ Ui.ProviderChooserSurface {
     id: content
     required property SystemChooserController controller
     chooserController: controller
-    keyboardWorkflow: true
     navigationEnabled: !controller.trayMenuActive
     property Item menuReturnFocus: null
     property int menuGeneration: -1

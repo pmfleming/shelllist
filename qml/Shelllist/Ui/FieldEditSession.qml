@@ -5,6 +5,8 @@ import QtQuick
 QtObject {
     id: session
     required property Item owner
+    property bool available: owner.enabled
+    property bool multiline: false
     property var value
     property var initialValue: value
     property bool livePreview: false
@@ -27,7 +29,7 @@ QtObject {
     property bool focused: owner.activeFocus
     // Native focus can arrive before an asynchronous page is discovered by the
     // navigation scope. Capture first, so its first keystroke cannot leak a write.
-    onFocusedChanged: if (focused && navigation && navigation.available(owner)) begin()
+    onFocusedChanged: if (focused && navigation && available) begin()
 
     signal restoreRequested(var value)
     signal publishRequested(var value)
@@ -42,6 +44,21 @@ QtObject {
             item = item.parent;
         }
         return null;
+    }
+    // Editors with native key handlers (including a dropdown's popup) must
+    // intercept transaction keys before Qt consumes them. Other keys stay native.
+    function handleKey(event: var): void {
+        if (!active || !navigation || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
+            return;
+        if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && (!multiline || event.modifiers === Qt.NoModifier))
+            navigation.saveEditor();
+        else if (event.key === Qt.Key_Escape)
+            navigation.retreat();
+        else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab)
+            navigation.cycleFocus(event.key === Qt.Key_Backtab || !!(event.modifiers & Qt.ShiftModifier));
+        else
+            return;
+        event.accepted = true;
     }
     function begin(): void {
         if (active || finishing)

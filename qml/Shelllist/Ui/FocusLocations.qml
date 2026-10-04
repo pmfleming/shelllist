@@ -8,6 +8,13 @@ QtObject {
         const field = item as TextField;
         return field ? (field.sensitive ? "" : field.focusKey) : (item ? item.objectName : "");
     }
+    function selection(item: Item): var {
+        return (item as TextField)?.selectionState() || (item as TextEditor)?.selectionState() || null;
+    }
+    function restoreSelection(item: Item, state: var): void {
+        (item as TextField)?.restoreSelection(state);
+        (item as TextEditor)?.restoreSelection(state);
+    }
     function registered(item: Item): bool {
         return item instanceof ActionControl || item instanceof TextField || item instanceof IconTile;
     }
@@ -34,8 +41,7 @@ QtObject {
         }
         if (focus !== root || !target || uniqueTarget(targets(root), key(target)) !== target)
             return null;
-        const field = target as TextField;
-        return {target: key(target), selection: field ? field.selectionState() : null};
+        return {target: key(target), selection: selection(target)};
     }
     function restore(root: Item, state: var): bool {
         if (!state || !state.target)
@@ -50,7 +56,7 @@ QtObject {
             return false;
         if (field) {
             field.focusInput(false);
-            field.restoreSelection(state.selection);
+            restoreSelection(field, state.selection);
         } else {
             target.forceActiveFocus(Qt.OtherFocusReason);
         }

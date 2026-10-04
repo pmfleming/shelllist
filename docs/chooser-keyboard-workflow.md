@@ -123,8 +123,9 @@ There is no F1 overlay, hover tooltip or plain-letter action shortcut.
 
 ## Implementing or extending a panel
 
-1. Use `ProviderChooserSurface` (shared keyboard workflow is on by default) or
-   `PanelSurface`. Do not add local Up/Down field traversal or Right-to-edit.
+1. Use `ProviderChooserSurface` or `PanelSurface`; their shared keyboard
+   workflow is mandatory, not an optional migration mode. Do not add local
+   Up/Down field traversal or Right-to-edit.
 2. Use shared `TextField`, `TextEditor`, `DropDownList`, `SegmentedControl`,
    `ValueSlider`/`LabeledValueSlider`, `ToggleRow` and `ToggleSwitch` controls.
    Assign stable `objectName`/`focusKey` identities for ordinary restoration.
@@ -147,8 +148,13 @@ There is no F1 overlay, hover tooltip or plain-letter action shortcut.
    at the appropriate transaction boundary, and join `DetailsNavigation`'s
    typed editable/session dispatch. Native-value editors set the session's
    `valueProperty` (`text` or `value`) to preserve the caller's binding during
-   edits and rollback. Add behavioral tests before adding a new control family;
-   do not implement a parallel keyboard model in a panel.
+   edits and rollback. Keep read-only/capability guards in the session's
+   `available` binding beside the control. Native editors/popups that consume
+   transaction keys call `FieldEditSession.handleKey`; multiline editors set
+   `multiline: true` to retain Shift+Enter. `ActionMenu` shares header/content
+   command navigation without owning domain effects. Add behavioral tests before
+   adding a new control family; do not implement a parallel keyboard model in a
+   panel.
 8. Exercise both forward/reverse wrap, on/off arrival, local-save/discard,
    live-preview rollback, list movement, disabled/removed editors and command
    modality. Update this contract when an intentional model change is approved.

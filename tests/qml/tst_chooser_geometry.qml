@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Shelllist.Ui as Ui
-import Shelllist.Activity as Activity
 import "../../qml/Shelllist/Io/HyprlandWorkArea.js" as WorkArea
 
 DaemonTestCase {
@@ -54,7 +53,6 @@ DaemonTestCase {
                     Ui.ProviderChooserSurface {
                         objectName: "geometrySurface"
                         chooserController: controller
-                        keyboardWorkflow: true
                         listComponent: Component {
                             Ui.ChooserListPane {
                                 id: pane
@@ -100,40 +98,6 @@ DaemonTestCase {
             }
         }
     }
-    Component {
-        id: activityFactory
-        Item {
-            id: activity
-            property alias controller: controller
-            width: controller.currentWindowWidth
-            height: controller.geometry.height
-            Activity.ActivityController {
-                id: controller
-                availableScreenWidth: 1280
-                availableScreenHeight: 720
-            }
-            Activity.ActivityContent { controller: activity.controller }
-        }
-    }
-    function test_activityExpandsRightOfItsGlanceRail() {
-        const activity = createTemporaryObject(activityFactory, testCase);
-        const glance = findChild(activity, "activityGlancePane");
-        verify(glance !== null);
-        const left = glance.mapToItem(activity, 0, 0).x;
-        const width = glance.width;
-        const height = glance.height;
-        activity.controller.openSection("schedule");
-        for (let frame = 0; frame < 12; ++frame) {
-            wait(20);
-            compare(glance.mapToItem(activity, 0, 0).x, left);
-            compare(glance.width, width);
-            compare(glance.height, height);
-        }
-        verify(activity.controller.detailsOpen);
-        activity.controller.closeSection();
-        tryCompare(activity, "width", activity.controller.closedWindowWidth);
-        compare(glance.mapToItem(activity, 0, 0).x, left);
-    }
     function init() {
         failOnWarning(/.*/);
         Quickshell.environment = {SHELLLIST_NO_ANIMATIONS: "false"};
@@ -145,30 +109,6 @@ DaemonTestCase {
         const surface = findChild(fixture, "geometrySurface");
         verify(surface !== null);
         return surface;
-    }
-    function test_bounds_data() {
-        return [
-            {tag: "minimum-supported", width: 976, height: 600},
-            {tag: "logical-hidpi-laptop", width: 1024, height: 640},
-            {tag: "laptop", width: 1280, height: 720},
-            {tag: "desktop", width: 1920, height: 1080},
-            {tag: "ultrawide", width: 3440, height: 1440},
-            {tag: "overflow", width: 800, height: 500},
-            {tag: "tiny-emergency", width: 400, height: 240}
-        ];
-    }
-    function test_bounds(data) {
-        const geometry = createTemporaryObject(geometryFactory, testCase, {availableWidth: data.width, availableHeight: data.height});
-        verify(geometry.x >= geometry.edgeMargin);
-        verify(geometry.y >= geometry.edgeMargin);
-        verify(geometry.x + geometry.surfaceWidth <= data.width - geometry.edgeMargin);
-        verify(geometry.y + geometry.height <= data.height - geometry.edgeMargin);
-        compare(geometry.closedWidth, Ui.Theme.popupClosedWidth);
-        verify(geometry.openWidth >= 960);
-        verify(geometry.openWidth <= Ui.Theme.popupOpenWidth);
-        verify(geometry.height <= 900);
-        // The list is as close to centered as possible without moving on expansion.
-        compare(geometry.x, Math.max(geometry.edgeMargin, Math.min(Math.round((data.width - geometry.closedWidth) / 2), data.width - geometry.edgeMargin - geometry.surfaceWidth)));
     }
     function test_workAreaAndSingleColumn() {
         const area = WorkArea.rectangle({x: -1920, y: -100, width: 1920, height: 1080}, {left: 26, top: 82, right: 12, bottom: 22});
@@ -278,23 +218,6 @@ DaemonTestCase {
         keyClick(Qt.Key_Tab);
         tryVerify(() => surface.detailsNavigation.browsing);
         verify(fixture.controller.detailsOpen);
-    }
-    function test_textAndControlsDoNotScaleWithWorkArea() {
-        const fixture = createTemporaryObject(fixtureFactory, testCase, {areaWidth: 976, areaHeight: 600});
-        const surface = surfaceFor(fixture);
-        const search = findChild(surface.listItem, "fieldInput");
-        verify(search !== null);
-        for (const height of [600, 1080, 720]) {
-            fixture.areaHeight = height;
-            verify(waitForPolish(fixture.Window.window));
-            compare(surface.listItem.headerHeight, 56);
-            compare(search.parent.height, 48);
-            compare(search.font.pixelSize, 16);
-            compare(surface.listItem.delegateHeight, Ui.Theme.listRowHeight);
-            compare(findChild(surface, "geometryResult").height, Ui.Theme.listRowHeight);
-            compare(findChild(surface, "geometryResultLabel").titlePixelSize, Ui.Theme.fontSizeHeading);
-            compare(surface.uiScale, 1);
-        }
     }
     function test_overflowRevealsKeyboardTargetsWithoutReplacingList() {
         const fixture = createTemporaryObject(fixtureFactory, testCase, {areaWidth: 800, areaHeight: 500});

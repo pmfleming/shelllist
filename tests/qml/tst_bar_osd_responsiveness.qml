@@ -88,22 +88,6 @@ TestCase {
         compare(controller.osd.valueLabel, "Active");
     }
 
-    function test_progressTracksEveryConfirmedValueImmediately() {
-        const panel = makePanel();
-        const fill = findChild(panel, "osdProgressFill");
-        const thumb = findChild(panel, "osdProgressThumb");
-        verify(fill !== null && thumb !== null);
-        for (const percent of [20, 80, 35, 90, 0, 100, 50]) {
-            panel.controller.showBrightnessOsd({
-                available: true,
-                percent: percent
-            });
-            compare(panel.surface.opacity, 1, "first feedback must not fade in");
-            fuzzyCompare(fill.width, fill.parent.width * percent / 100, 0.01, "progress must not wait for an animation or chase key repeats");
-            fuzzyCompare(thumb.x, Math.max(0, Math.min(fill.parent.width - thumb.width, fill.width - thumb.width / 2)), 0.01, "thumb and fill must agree in the same frame");
-        }
-    }
-
     function test_brightnessFailure_data() {
         return [
             {

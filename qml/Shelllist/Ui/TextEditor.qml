@@ -10,6 +10,8 @@ TextEdit {
     signal editFinished(bool saved)
     readonly property FieldEditSession editSession: FieldEditSession {
         owner: editor
+        available: editor.enabled && editor.editingAllowed
+        multiline: true
         valueProperty: "text"
         value: editor.text
         onRestoreRequested: function (value) { editor.text = value; }
@@ -20,20 +22,7 @@ TextEdit {
         active: editor.activeFocus || editor.browseFocused
         editing: editor.editSession.active
     }
-    Keys.onPressed: function (event) {
-        const navigation = editSession.navigation;
-        if (!navigation || !editSession.active || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
-            return;
-        if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && event.modifiers === Qt.NoModifier)
-            navigation.saveEditor();
-        else if (event.key === Qt.Key_Escape)
-            navigation.retreat();
-        else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab)
-            navigation.cycleFocus(event.key === Qt.Key_Backtab || !!(event.modifiers & Qt.ShiftModifier));
-        else
-            return;
-        event.accepted = true;
-    }
+    Keys.onPressed: function (event) { editSession.handleKey(event); }
     signal selectionChanged
     onCursorPositionChanged: selectionChanged()
     onSelectionStartChanged: selectionChanged()

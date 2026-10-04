@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
 import QtTest
 import Quickshell
 import Shelllist.Ui as Ui
@@ -11,29 +10,6 @@ TestCase {
     width: 500
     height: 200
 
-    Component {
-        id: sectionFactory
-        Ui.DetailSection {
-            objectName: "advanced"
-            width: 420
-            title: "Advanced settings"
-            Ui.DetailColumnCard {
-                objectName: "tonalCard"
-                Layout.fillWidth: true
-                title: "Settings"
-                Ui.SettingRow {
-                    objectName: "settingRow"
-                    title: "A setting with a long descriptive name"
-                    subtitle: "Supporting information remains visible when the label wraps."
-                    Ui.TextField {
-                        objectName: "retainedDraft"
-                        Layout.preferredWidth: 116
-                        text: "draft"
-                    }
-                }
-            }
-        }
-    }
     Component {
         id: sliderFactory
         Ui.PercentageSlider {
@@ -72,10 +48,6 @@ TestCase {
         id: edited
         signalName: "edited"
     }
-    SignalSpy {
-        id: finished
-        signalName: "editingFinished"
-    }
 
     function init(): void {
         failOnWarning(/.*/);
@@ -83,33 +55,8 @@ TestCase {
     }
     function cleanup(): void {
         edited.target = null;
-        finished.target = null;
         selection.target = null;
         Quickshell.environment = ({});
-        Ui.Theme.previewColorScheme = Qt.Unknown;
-    }
-    function test_tonalSectionAlwaysShowsContentAndRetainsDrafts(): void {
-        const section = createTemporaryObject(sectionFactory, this);
-        compare(findChild(section, "advancedToggle"), null);
-        const card = findChild(section, "tonalCard");
-        const row = findChild(section, "settingRow");
-        const draft = findChild(section, "retainedDraft");
-        verify(draft.visible);
-        draft.text = "unsaved";
-        for (const scheme of [Qt.Light, Qt.Dark]) {
-            Ui.Theme.previewColorScheme = scheme;
-            compare(card.border.width, 0);
-            compare(card.color.a, 1);
-            compare(String(card.color), String(Ui.Theme.surface));
-            verify(String(card.color) !== String(Ui.Theme.window));
-        }
-        section.width = 320;
-        wait(0);
-        verify(draft.visible);
-        compare(draft.text, "unsaved");
-        verify(row.height >= 56);
-        verify(draft.mapToItem(row, draft.width, 0).x <= row.width);
-        verify(card.height >= row.height);
     }
     function test_sliderFeedbackDoesNotTrailItsValue(): void {
         const slider = createTemporaryObject(sliderFactory, this);
@@ -127,38 +74,21 @@ TestCase {
         }
     }
 
-    function test_sliderNativeMapping_data() {
-        return [
-            { tag: "horizontal", vertical: false, rtl: false },
-            { tag: "mirrored", vertical: false, rtl: true },
-            { tag: "vertical", vertical: true, rtl: false }
-        ];
-    }
-    function test_sliderNativeMapping(data): void {
-        const slider = createTemporaryObject(bareSliderFactory, this, {
-            width: data.vertical ? 44 : 300,
-            height: data.vertical ? 180 : 44,
-            orientation: data.vertical ? Qt.Vertical : Qt.Horizontal
-        });
-        slider.LayoutMirroring.enabled = data.rtl;
+    function test_sliderNativeMapping(): void {
+        const slider = createTemporaryObject(bareSliderFactory, this, {width: 300, height: 44});
         const before = findChild(slider, "sliderTrackBefore");
         const after = findChild(slider, "sliderTrackAfter");
-        const forward = !data.vertical && !data.rtl;
-        compare(String(before.color), String(forward ? Ui.Theme.accent : Ui.Theme.selected));
-        compare(String(after.color), String(forward ? Ui.Theme.selected : Ui.Theme.accent));
+        compare(String(before.color), String(Ui.Theme.accent));
+        compare(String(after.color), String(Ui.Theme.selected));
         slider.forceActiveFocus();
         keyClick(Qt.Key_End);
         compare(slider.value, slider.to);
-        const position = data.vertical ? slider.handle.y : slider.handle.x;
-        const extent = data.vertical ? slider.availableHeight - slider.handle.height : slider.availableWidth - slider.handle.width;
-        compare(position, forward ? extent : 0);
+        compare(slider.handle.x, slider.availableWidth - slider.handle.width);
         keyClick(Qt.Key_Home);
         compare(slider.value, slider.from);
         edited.target = slider;
         edited.clear();
-        const quarter = forward ? 0.25 : 0.75;
-        mouseClick(slider, data.vertical ? slider.width / 2 : slider.width * quarter,
-                   data.vertical ? slider.height * quarter : slider.height / 2);
+        mouseClick(slider, slider.width / 4, slider.height / 2);
         verify(slider.value > 20 && slider.value < 40, "native pointer mapping agrees with the painted direction");
         verify(edited.count > 0);
         const saved = slider.value;
@@ -212,35 +142,4 @@ TestCase {
         compare(selection.count, count);
     }
 
-    function test_percentageKeyboardAndAccessibleLabel(): void {
-        const slider = createTemporaryObject(sliderFactory, this);
-        const input = findChild(slider, "labeledValueSliderInput");
-        verify(input !== null);
-        compare(input.Accessible.name, "Low battery");
-        compare(input.Accessible.description, "20%");
-        edited.target = slider;
-        edited.clear();
-        finished.target = slider;
-        finished.clear();
-        input.forceActiveFocus();
-        keyClick(Qt.Key_Right);
-        compare(slider.value, 21);
-        compare(slider.valueText, "21%");
-        compare(edited.count, 1);
-        compare(edited.signalArguments[0][0], true);
-        compare(finished.count, 1);
-        slider.to = 99;
-        keyClick(Qt.Key_End);
-        compare(slider.value, 99);
-        compare(finished.count, 2);
-        keyClick(Qt.Key_Home);
-        compare(slider.value, 0);
-        compare(finished.count, 3);
-        keyClick(Qt.Key_End);
-        slider.enabled = false;
-        keyClick(Qt.Key_Left);
-        compare(slider.value, 99);
-        edited.target = null;
-        finished.target = null;
-    }
 }

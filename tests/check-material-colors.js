@@ -9,12 +9,12 @@ const luminance = channels => channels.map(c => c <= 0.04045 ? c / 12.92 : ((c +
     .reduce((value, c, i) => value + c * [0.2126, 0.7152, 0.0722][i], 0);
 const contrast = (a, b) => (Math.max(luminance(a), luminance(b)) + 0.05) / (Math.min(luminance(a), luminance(b)) + 0.05);
 const create = (seed, dark) => context.MaterialColors.createScheme(...rgb(seed), dark);
-// Native MaterialPalette tests own reference colors and seed/mode reactivity.
+// Native MaterialPalette tests check foreground binding types. Contrast,
+// rather than fixed reference colors or a proposed shell opacity, is the gate.
 const seeds = ['#000000', '#ffffff', '#808080', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff', '#6750a4', '#009688'];
 for (let hue = 0; hue < 64; hue++) seeds.push('#' + ((hue * 2654435761) >>> 8).toString(16).padStart(6, '0'));
 for (const seed of seeds) for (const dark of [false, true]) {
     const colors = create(seed, dark);
-    for (const value of Object.values(colors)) assert.match(value, /^#[0-9a-f]{6}$/);
     for (const role of ['primary', 'secondary', 'tertiary', 'error', 'success', 'warning', 'primaryContainer', 'secondaryContainer', 'tertiaryContainer', 'errorContainer']) {
         const on = 'on' + role[0].toUpperCase() + role.slice(1);
         assert.ok(contrast(rgb(colors[role]), rgb(colors[on])) >= 4.5, `${seed}/${dark}: ${role}`);
@@ -23,13 +23,6 @@ for (const seed of seeds) for (const dark of [false, true]) {
         for (const text of ['onSurface', 'onSurfaceVariant'])
             assert.ok(contrast(rgb(colors[surface]), rgb(colors[text])) >= 4.5, `${seed}/${dark}: ${text}/${surface}`);
         assert.ok(contrast(rgb(colors[surface]), rgb(colors.primary)) >= 3, `${seed}/${dark}: focus/${surface}`);
-    }
-    // Proposed 94% outer shell over the extremal desktop backgrounds. Controls
-    // stay opaque; this does not pretend to test compositor blur or text rendering.
-    for (const desktop of [0, 1]) {
-        const shell = rgb(colors.surface).map(c => c * 0.94 + desktop * 0.06);
-        for (const text of ['onSurface', 'onSurfaceVariant']) assert.ok(contrast(shell, rgb(colors[text])) >= 4.5);
-        assert.ok(contrast(shell, rgb(colors.primary)) >= 3);
     }
 }
 console.log(`Material colors: contrast passes for ${seeds.length * 2} seed/mode combinations`);

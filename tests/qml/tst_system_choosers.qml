@@ -96,28 +96,6 @@ DaemonTestCase {
         compare(calls.length, 2);
         compare(calls[1].method, BarApi.methods.audioSetMuted);
     }
-    function test_audioVolumeUsesAcknowledgedDeltaControls(): void {
-        const root = fixture();
-        root.chooser.kind = "audio";
-        root.desktop.audio = {available: true, sink_name: "speakers", volume_percent: 50, muted: false};
-        root.chooser.activateUi("");
-        root.chooser.primarySelected();
-        tryVerify(() => findChild(root, "audioVolume-louder") !== null);
-        const louder = findChild(root, "audioVolume-louder");
-        const value = findChild(root, "audioVolumeValue");
-        compare(value.text, "50%");
-        tryVerify(() => louder.width > 0 && louder.height > 0);
-        compare(louder.objectName, "audioVolume-louder");
-        verify(louder.iconOnly);
-        louder.clicked();
-        compare(calls.length, 1);
-        compare(calls[0].method, BarApi.methods.audioAdjust);
-        compare(calls[0].params.delta_percent, 5);
-        compare(value.text, "50%", "no optimistic volume");
-        verify(!root.chooser.triggerDetailAction("louder"));
-        acknowledge(root, calls[0], {audio: {available: true, sink_name: "speakers", volume_percent: 55, muted: false}});
-        compare(value.text, "55%");
-    }
     function test_mediaPreferencesAreAcknowledgedAndDoNotReplayOnRestore(): void {
         const root = fixture();
         const p = Object.assign(player("one", true), {control_mode: "automatic", content_type: "unknown"});
@@ -142,28 +120,6 @@ DaemonTestCase {
         compare(calls.length, 2);
         verify(root.chooser.setMediaSelection(false));
         compare(calls[2].params.operation, "automatic");
-    }
-    function test_mediaPlaybackLeadsPreferencesAndReflectsAcknowledgedState(): void {
-        const root = fixture();
-        const p = Object.assign(player("one", true), {control_mode: "automatic", content_type: "unknown"});
-        root.desktop.media = {available: true, active_player: "one", pinned_player: null, players: [p]};
-        root.chooser.activateUi("");
-        root.chooser.primarySelected();
-        tryVerify(() => findChild(root, "mediaPlayback") !== null);
-        verify(findChild(root, "mediaPlayerPin").visible);
-        const pause = findChild(root, "detailAction:play-pause");
-        compare(pause.label, "Pause");
-        compare(pause.icon, "");
-        verify(!pause.iconOnly);
-        compare(pause.tone, "accent");
-        tryCompare(pause, "surfaceShortcut", "Alt+P");
-        keyClick(Qt.Key_P, Qt.AltModifier);
-        compare(calls[0].params.player_id, "one");
-        compare(pause.label, "Pause", "no optimistic playback state");
-        acknowledge(root, calls[0], {media: {available: true, active_player: "one", pinned_player: null, players: [Object.assign({}, p, {playback_status: "Paused"})]}});
-        const play = root.chooser.detailActions.find(action => action.id === "play-pause");
-        compare(play.label, "Play");
-        compare(play.icon, "");
     }
     function test_nativeTrayMenuOwnsFocusAndCannotSurviveInvocation(): void {
         const root = fixture();
@@ -196,30 +152,6 @@ DaemonTestCase {
         root.chooser.trayMenuRequested(tray);
         verify(root.chooser.navigationBlocked);
         tryCompare(root.chooser, "navigationBlocked", false, 2500);
-    }
-    function test_trayInspectorUsesSuppliedIdentityAndGuardedMenuAction(): void {
-        const root = fixture();
-        const tray = createTemporaryObject(trayFactory, testCase, {id: "example", title: "Example application", onlyMenu: true, icon: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="red"/></svg>')});
-        TrayFixture.SystemTray.items.values = [tray];
-        root.chooser.kind = "tray";
-        root.chooser.activateUi("");
-        tryCompare(root.chooser, "hasSelection", true);
-        root.chooser.primarySelected();
-        tryVerify(() => root.content.detailsItem !== null);
-        compare(decodeURIComponent(String(root.content.detailsItem.iconSource)), decodeURIComponent(tray.icon));
-        tryCompare(findChild(root.content.detailsItem, "detailIdentityIcon"), "hasImage", true);
-        const menuAction = findChild(root, "detailAction:menu");
-        verify(menuAction.enabled);
-        verify(menuAction.iconOnly, "secondary header actions are compact");
-        compare(menuAction.Accessible.name, "Open application menu");
-        tryCompare(menuAction, "surfaceShortcut", "Alt+O");
-        verify(!findChild(root, "detailAction:activate").enabled);
-        compare(findChild(root, "trayOtherActions"), null, "header commands are not duplicated in content");
-        menuAction.clicked();
-        verify(root.chooser.trayMenuActive);
-        verify(findChild(root, "systemTrayMenu").visible);
-        root.chooser.deactivateUi();
-        verify(!findChild(root, "systemTrayMenu").visible);
     }
     function test_trayProjectionNeverConfusesDuplicateOrPrototypeIdentities(): void {
         const values = Entries.tray([

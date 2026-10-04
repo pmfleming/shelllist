@@ -9,7 +9,6 @@ Item {
     required property ChooserController controller
     required property Component listComponent
     required property Component detailsComponent
-    property bool keyboardWorkflow: false
     property bool navigationAllowed: true
     property string sessionContext: ""
     property bool sessionReady: true
@@ -56,8 +55,7 @@ Item {
         }
         function onFocusDetailsRequested() {
             session.cancel();
-            if (layout.keyboardWorkflow)
-                detailsNavigation.focusRememberedContent();
+            detailsNavigation.focusRememberedContent();
         }
         function onSearchTextRequested(text: string) {
             session.cancel();
@@ -68,7 +66,7 @@ Item {
 
     ChooserSession {
         id: session
-        enabled: layout.keyboardWorkflow && layout.controller.viewMemory !== null
+        enabled: layout.controller.viewMemory !== null
         controller: layout.controller
         listItem: layout.listItem
         navigation: detailsNavigation
@@ -101,8 +99,8 @@ Item {
 
     DetailsNavigation {
         id: detailsNavigation
-        contentItem: layout.keyboardWorkflow ? layout.detailsItem : null
-        viewMemory: layout.keyboardWorkflow ? layout.controller.viewMemory : null
+        contentItem: layout.detailsItem
+        viewMemory: layout.controller.viewMemory
         restorationAllowed: layout.controller.uiActive && !layout.controller.uiSuspending && layout.navigationAllowed && !layout.controller.navigationBlocked
         onResultContextChanged: layout.focusList()
         onResultMoveRequested: function (delta) {

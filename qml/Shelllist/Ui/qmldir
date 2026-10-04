@@ -36,7 +36,7 @@ DetailSection 1.0 DetailSection.qml
 DetailsHeader 1.0 DetailsHeader.qml
 DetailsPane 1.0 DetailsPane.qml
 DetailsNavigation 1.0 DetailsNavigation.qml
-internal DetailsCommandMenu DetailsCommandMenu.qml
+internal ActionMenu ActionMenu.qml
 DestructiveIconButton 1.0 DestructiveIconButton.qml
 DetailsTab 1.0 DetailsTab.qml
 DetailsTabBar 1.0 DetailsTabBar.qml

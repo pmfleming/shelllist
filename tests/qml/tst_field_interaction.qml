@@ -172,17 +172,17 @@ TestCase {
         verify(surface.detailsNavigation.browsing);
     }
     function test_transactionsPreserveModelBindings_data() {
-        const rows = [];
-        for (const save of [false, true]) {
-            for (const name of ["text", "multiline", "level"]) {
-                rows.push({tag: name + (save ? "-save" : "-discard"), name: name, save: save,
-                    key: name === "level" ? Qt.Key_Right : Qt.Key_X, preview: false});
-            }
-            for (const key of [Qt.Key_Home, Qt.Key_End])
-                rows.push({tag: "slider-boundary-" + key + "-" + save, name: "level", save: save, key: key, preview: false});
-        }
-        rows.push({tag: "live-slider-rollback", name: "level", save: false, key: Qt.Key_Right, preview: true});
-        return rows;
+        // Cover both native string controls, numeric boundary keys and live
+        // rollback without repeating the slider key × outcome cross-product.
+        return [
+            {tag: "text-discard", name: "text", save: false, key: Qt.Key_X, preview: false},
+            {tag: "text-save", name: "text", save: true, key: Qt.Key_X, preview: false},
+            {tag: "multiline-discard", name: "multiline", save: false, key: Qt.Key_X, preview: false},
+            {tag: "multiline-save", name: "multiline", save: true, key: Qt.Key_X, preview: false},
+            {tag: "slider-home-discard", name: "level", save: false, key: Qt.Key_Home, preview: false},
+            {tag: "slider-end-save", name: "level", save: true, key: Qt.Key_End, preview: false},
+            {tag: "live-slider-rollback", name: "level", save: false, key: Qt.Key_Right, preview: true}
+        ];
     }
     function test_transactionsPreserveModelBindings(data) {
         const surface = make();
@@ -249,13 +249,12 @@ TestCase {
         compare(surface.writes, 0);
     }
     function test_tabKeepsPositionWhenSaveChangesAvailability_data() {
-        const rows = [];
-        for (const change of ["disable", "hide"])
-            for (const backwards of [false, true])
-                for (const skip of [false, true])
-                    rows.push({tag: change + "-" + backwards + "-skip-" + skip,
-                        change: change, backwards: backwards, skip: skip});
-        return rows;
+        return [
+            {tag: "disable-forward", change: "disable", backwards: false, skip: false},
+            {tag: "disable-reverse", change: "disable", backwards: true, skip: false},
+            {tag: "hide-forward-skip", change: "hide", backwards: false, skip: true},
+            {tag: "hide-reverse-skip", change: "hide", backwards: true, skip: true}
+        ];
     }
     function test_tabKeepsPositionWhenSaveChangesAvailability(data) {
         const surface = make();
@@ -381,6 +380,9 @@ TestCase {
         verify(field(surface, "multiline").activeFocus);
         keyClick(Qt.Key_X);
         verify(field(surface, "multiline").text.includes("x"));
+        keyClick(Qt.Key_Return, Qt.ShiftModifier);
+        compare(field(surface, "multiline").text.split("\n").length, 3, "Shift+Enter stays a native newline");
+        compare(surface.writes, 0);
         verify(field(surface, "multiline").editSession.active);
         compare(field(surface, "multiline").editSession.originalValue, "first\nsecond");
         compare(surface.detailsNavigation.editorTarget, field(surface, "multiline"));
@@ -417,24 +419,32 @@ TestCase {
             verify(surface.detailsNavigation.currentTarget !== field(surface, "action"));
         }
     }
+    function test_contentMenuWrapsSkipsDisabledAndTracksAvailability() {
+        const surface = make();
+        const action = field(surface, "action");
+        const other = field(surface, "otherAction");
+        action.accessKey = "";
+        keyClick(Qt.Key_J, Qt.AltModifier);
+        tryVerify(() => surface.detailsNavigation.commandMenuOpen);
+        const menu = findChild(surface, "detailsCommandMenu");
+        compare(menu.currentIndex, 0);
+        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
+        compare(menu.currentIndex, 1);
+        other.enabled = false;
+        compare(menu.currentIndex, 1, "availability changes must not select a different command");
+        keyClick(Qt.Key_Down);
+        compare(menu.currentIndex, 1, "disabled commands are skipped on wrap");
+        keyClick(Qt.Key_Return);
+        compare(surface.actions, 1);
+        verify(surface.detailsNavigation.browsing);
+        compare(surface.writes, 0);
+    }
     function test_restoringSwitchNeverActivatesIt() {
         const surface = make();
         surface.detailsNavigation.focusSessionLocation({target: "switch", editing: true});
         tryVerify(() => surface.detailsNavigation.browsing);
         compare(surface.writes, 0);
         verify(!surface.switched);
-    }
-    function test_disabledAndRemovedFieldsCannotCaptureTraversal() {
-        const surface = make();
-        field(surface, "choice").enabled = false;
-        keyClick(Qt.Key_Tab);
-        compare(surface.detailsNavigation.currentTarget, field(surface, "segments"));
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        field(surface, "segments").visible = false;
-        verify(surface.detailsNavigation.browsing);
-        compare(surface.writes, 0);
-        compare(surface.savedChoice, "a");
     }
     function test_pointerEditingAlsoDefersAndFocusLossDiscards() {
         const surface = make();

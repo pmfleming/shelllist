@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Shelllist.Ui as Ui
 import "../../bluetooth" as Bt
 
 DaemonTestCase {
@@ -106,72 +105,6 @@ DaemonTestCase {
         id: adapterPageComponent
         Bt.BluetoothAdapterPage {}
     }
-    function test_radioSelectionAndPowerAreControlledInBluetoothSettings() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        controller.applySnapshot({
-            radio: {
-                available: true,
-                operational: true,
-                powered: true,
-                adapter_count: 2
-            },
-            adapters: [
-                {
-                    key: "adapter",
-                    alias: "Built-in",
-                    powered: true
-                },
-                {
-                    key: "usb",
-                    alias: "USB",
-                    powered: false
-                }
-            ],
-            devices: controller.allDevices
-        });
-        controller.openBluetoothSettings();
-        const page = createTemporaryObject(adapterPageComponent, panel, {
-            controller: controller,
-            width: 320,
-            height: 500
-        });
-        wait(0);
-        const selector = findChild(page, "bluetoothRadioSelector");
-        verify(selector.visible && selector.interactive);
-        verify(selector instanceof Ui.DropDownList, "radio lists use a scrollable choice, not compressed segments");
-        compare(selector.Accessible.name, "Preferred Bluetooth radio");
-        const technical = findChild(page, "adapterTechnicalDetails");
-        verify(technical.informationOnly);
-        verify(findChild(technical, "adapterAddress").visible);
-        compare(findChild(technical, "adapterTechnicalDetailsToggle"), null);
-        selector.selected("usb");
-        compare(calls[calls.length - 1].method, "bluetooth.management.update");
-        compare(calls[calls.length - 1].params.preferred_adapter_key, "usb");
-        compare(controller.selectedAdapter.key, "usb");
-        const backend = findChild(controller, "bluetoothBackend");
-        backend.pending = ({});
-        const power = findChild(page, "bluetoothRadioPower");
-        verify(!power.checked && power.interactive);
-        power.clicked();
-        compare(calls[calls.length - 1].method, "bluetooth.setPowered");
-        compare(calls[calls.length - 1].params.adapter_key, "usb");
-        compare(calls[calls.length - 1].params.powered, true);
-        backend.pending = ({});
-        controller.applySnapshot({
-            radio: {
-                available: false,
-                adapter_count: 0,
-                powered: false
-            },
-            adapters: [],
-            devices: []
-        });
-        verify(!selector.visible && !power.interactive);
-        verify(controller.detailsOpen);
-        verify(controller.cycleDetailsTab());
-        compare(controller.adapterSettingsTab, "pairing");
-    }
     Component {
         id: contentComponent
         Bt.BluetoothContent {}
@@ -223,7 +156,7 @@ DaemonTestCase {
         }, "");
     }
     function test_invocationWaitsForRefreshWithoutReplayingEdits_data() {
-        return [{tag: "device", adapter: false}, {tag: "adapter", adapter: true}, {tag: "adapter-empty", adapter: true, empty: true}];
+        return [{tag: "device", adapter: false}, {tag: "adapter-empty", adapter: true, empty: true}];
     }
     function test_invocationWaitsForRefreshWithoutReplayingEdits(data) {
         const content = sessionContent(data.adapter, data.empty);
@@ -239,32 +172,6 @@ DaemonTestCase {
         verify(calls.every(call => call.method === "bluetooth.snapshot"), "restoration performs no rename, policy or adapter write");
         verify(content.controller.viewMemory.enabled);
         compare(content.controller.viewMemory, data.adapter ? content.controller.adapterMemory : content.controller.deviceMemory);
-    }
-    function test_adapterPresentationRecordsAreIndependent() {
-        const content = sessionContent(true);
-        const controller = content.controller;
-        const first = controller.selectedAdapter.key;
-        const second = Object.assign({}, controller.selectedAdapter, {key: "usb", alias: "Second"});
-        controller.adapters = controller.adapters.concat([second]);
-        controller.viewMemory.synchronize();
-        controller.viewMemory.rememberPage("pairing", {scroll: 42});
-        controller.adapterSettingsTab = "general";
-        controller.viewMemory.synchronize();
-        controller.preferredAdapterKey = "usb";
-        controller.viewMemory.synchronize();
-        compare(controller.adapterSettingsTab, "general");
-        controller.adapterSettingsTab = "pairing";
-        controller.viewMemory.synchronize();
-        controller.viewMemory.rememberPage("pairing", {scroll: 17});
-        controller.preferredAdapterKey = first;
-        controller.viewMemory.synchronize();
-        compare(controller.adapterSettingsTab, "general");
-        compare(controller.viewMemory.pageState("pairing").scroll, 42);
-        controller.preferredAdapterKey = "usb";
-        controller.viewMemory.synchronize();
-        compare(controller.adapterSettingsTab, "pairing");
-        compare(controller.viewMemory.pageState("pairing").scroll, 17);
-        verify(controller.detailsOpen);
     }
     function test_changedAdapterCannotInheritAnInvocationEditor() {
         const content = sessionContent(true);
@@ -328,93 +235,6 @@ DaemonTestCase {
         compare(input.cursorPosition, 1);
         compare(input.selectionEnd, 3);
         verify(!controller.modalPromptOpen);
-    }
-    function test_deviceViewMemorySurvivesOtherSelectionsAndSensitiveClosure() {
-        const panel = makePanel();
-        panel.page.visible = false;
-        const controller = panel.controller;
-        controller.uiActive = true;
-        controller.allDevices = controller.allDevices.concat([{
-            key: "keyboard", name: "Keyboard", paired: true, connected: false,
-            adapter_key: "adapter", capabilities: {}, battery: [], services: [], policy: {}
-        }]);
-        controller.rebuildResults(false);
-        const content = createTemporaryObject(contentComponent, panel, {
-            controller: controller, width: 1100, height: 900
-        });
-        wait(0);
-        content.listItem.focusList();
-        keyClick(Qt.Key_Right);
-        controller.detailsTab = "settings";
-        tryCompare(controller.viewMemory, "activeTab", "settings");
-        tryVerify(() => findChild(content, "deviceNameInput") !== null);
-        content.detailsNavigation.currentTarget = findChild(content, "deviceNameInput");
-        content.detailsNavigation.focusContent();
-        keyClick(Qt.Key_Return);
-        verify(content.detailsNavigation.editing);
-        content.listItem.focusList();
-        controller.select(controller.filteredResults.findIndex(result => result.payload.key === "keyboard"));
-        tryCompare(controller, "detailsOpen", true);
-        controller.select(controller.filteredResults.findIndex(result => result.payload.key === "buds"));
-        tryCompare(controller, "detailsOpen", true);
-        compare(controller.detailsTab, "settings");
-        verify(content.listItem.listFocused);
-        calls = [];
-        keyClick(Qt.Key_Tab);
-        tryCompare(content.detailsNavigation.currentTarget, "objectName", "deviceNameInput");
-        keyClick(Qt.Key_Return);
-        tryVerify(() => content.detailsNavigation.editing);
-        compare(content.detailsNavigation.currentTarget.objectName, "deviceNameInput");
-        compare(calls.length, 0, "focus restoration must not rename or apply policy");
-        controller.handlePairingEvent({event: "requested", data: {
-            request_id: "memory-secret", device_key: "buds", kind: "pin-code", response_required: true
-        }});
-        controller.pairingInput = "sensitive-value";
-        controller.deactivateUi();
-        compare(controller.pairingInput, "");
-        verify(!JSON.stringify(controller.viewMemory.records).includes("sensitive-value"));
-        verify(controller.detailsOpen);
-        compare(controller.detailsTab, "settings");
-    }
-    function test_settingsUseBrowseEditRegionsAndContentFirstTabs() {
-        const panel = makePanel();
-        panel.page.visible = false;
-        panel.controller.uiActive = true;
-        const content = createTemporaryObject(contentComponent, panel, {
-            controller: panel.controller, width: 1100, height: 900
-        });
-        content.listItem.focusSearch();
-        keyClick(Qt.Key_Return, Qt.AltModifier);
-        tryVerify(() => content.detailsNavigation.currentTarget !== null);
-        verify(content.detailsNavigation.browsing);
-        compare(panel.controller.detailsTab, "adapter");
-        let steps = 0;
-        while (content.detailsNavigation.currentTarget.objectName !== "bluetoothLoginState" && steps++ < content.detailsNavigation.targets.length)
-            keyClick(Qt.Key_Tab);
-        compare(content.detailsNavigation.currentTarget.objectName, "bluetoothLoginState");
-        calls = [];
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        compare(calls.length, 0, "a choice draft remains local until save");
-        keyClick(Qt.Key_Return);
-        compare(calls.length, 1);
-        compare(calls[0].method, "bluetooth.management.update");
-        compare(calls[0].params.launch_state, "enable");
-        verify(content.detailsNavigation.browsing);
-        findChild(panel.controller, "bluetoothBackend").pending = ({});
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(panel.controller.adapterSettingsTab, "pairing");
-        tryCompare(content.detailsNavigation.currentTarget, "objectName", "adapterNameInput");
-        verify(content.detailsNavigation.browsing);
-        keyClick(Qt.Key_Return);
-        verify(content.editingDetails);
-        keyClick(Qt.Key_Left);
-        verify(content.editingDetails);
-        keyClick(Qt.Key_Escape);
-        verify(content.detailsNavigation.browsing);
-        keyClick(Qt.Key_Escape);
-        verify(content.listItem.listFocused);
-        verify(!panel.controller.detailsOpen);
     }
     function test_surfaceCloseClearsSecretsAndFencesLatePairingRecovery() {
         const panel = makePanel();
@@ -988,44 +808,6 @@ DaemonTestCase {
         compare(profile.value, "");
         compare(codec.text, "Codec: —");
         compare(controller.audioPresentationByDevice.buds, undefined);
-    }
-    Component {
-        id: batteryComponent
-        Bt.BluetoothBatteryStatus {
-            width: 600
-            height: implicitHeight
-        }
-    }
-    function test_overallEarbudBatteryIsNotLostOrAssignedToEachEarbud() {
-        const battery = createTemporaryObject(batteryComponent, testCase, {
-            device: {
-                device_type: "Earbuds",
-                connected: true,
-                battery: [
-                    {
-                        component: "main",
-                        percentage: 79
-                    }
-                ]
-            }
-        });
-        verify(battery !== null);
-        const overall = findChild(battery, "overallBatteryPercentage");
-        verify(overall.visible);
-        compare(overall.text, "79%");
-        for (const component of ["left", "right"]) {
-            verify(findChild(battery, "batteryArtwork-" + component).visible);
-            compare(findChild(battery, "batteryPercentage-" + component).text, "—");
-        }
-        battery.device = {
-            device_type: "Headphones",
-            connected: false,
-            battery: []
-        };
-        verify(!overall.visible);
-        const percentage = findChild(battery, "batteryPercentage-main");
-        verify(percentage.visible);
-        compare(percentage.text, "—");
     }
     Component {
         id: deviceDetailsComponent

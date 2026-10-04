@@ -9,8 +9,6 @@ ChooserSurface {
     required property Component listComponent
     required property Component detailsComponent
     property bool navigationEnabled: true
-    // Incremental migration: native dialogs and unmigrated domains stay intact.
-    property bool keyboardWorkflow: true
     property bool sessionReady: true
     property string sessionContext: chooserController.viewMemory ? JSON.stringify([chooserController.viewMemory.key, chooserController.viewMemory.tab]) : ""
     readonly property DetailsNavigation detailsNavigation: chooser.detailsNavigation
@@ -29,7 +27,7 @@ ChooserSurface {
         chooserController.navigationInteracted();
         if (chooserController.viewMemory)
             chooserController.viewMemory.synchronize();
-        const restoreContent = keyboardWorkflow && detailsNavigation.activeFocus;
+        const restoreContent = detailsNavigation.activeFocus;
         detailsNavigation.finishEditor(false);
         chooserController.cycleDetailsTab(backwards);
         if (restoreContent)
@@ -49,12 +47,12 @@ ChooserSurface {
         if (chooserController.detailsOpen)
             regions.push(detailsNavigation.focusContent);
         const current = listItem.listFocused ? 1 : 0;
-        const next = detailsNavigation.activeFocus ? (backwards ? 1 : 0) : (current + (backwards ? -1 : 1) + regions.length) % regions.length;
+        const next = (current + (backwards ? -1 : 1) + regions.length) % regions.length;
         regions[next]();
     }
     function dismiss(): void {
         chooserController.navigationInteracted();
-        if (keyboardWorkflow && chooserController.detailsOpen && (detailsNavigation.activeFocus || detailsNavigation.popupOpen))
+        if (chooserController.detailsOpen && (detailsNavigation.activeFocus || detailsNavigation.popupOpen))
             detailsNavigation.retreat();
         else
             chooserController.dismissNavigation();
@@ -64,7 +62,7 @@ ChooserSurface {
         objectName: "shortcutHints"
         scope: surface
         navigation: surface.detailsNavigation
-        enabled: surface.keyboardWorkflow && surface.chooserController.uiActive && !surface.chooserController.uiSuspending && surface.navigationEnabled && !surface.chooserController.navigationBlocked
+        enabled: surface.chooserController.uiActive && !surface.chooserController.uiSuspending && surface.navigationEnabled && !surface.chooserController.navigationBlocked
         tabsEnabled: surface.detailsTabEnabled
     }
 
@@ -72,7 +70,7 @@ ChooserSurface {
         controller: surface.chooserController
         navigationEnabled: surface.navigationEnabled
         refreshEnabled: surface.refreshEnabled
-        detailsTabEnabled: surface.detailsTabEnabled && (!surface.keyboardWorkflow || !surface.detailsNavigation.popupOpen)
+        detailsTabEnabled: surface.detailsTabEnabled && !surface.detailsNavigation.popupOpen
         refreshAutoRepeat: surface.refreshAutoRepeat
         onRefreshRequested: surface.refresh()
         onDetailsTabRequested: function (backwards) { surface.cycleDetailsTab(backwards); }
@@ -83,20 +81,19 @@ ChooserSurface {
 
     Shortcut {
         sequence: "Tab"
-        enabled: surface.keyboardWorkflow && surface.chooserController.uiActive && surface.navigationEnabled && !surface.detailsNavigation.commandMenuOpen
+        enabled: surface.chooserController.uiActive && surface.navigationEnabled && !surface.detailsNavigation.commandMenuOpen
         onActivated: surface.cycleRegion(false)
     }
     Shortcut {
         sequence: "Shift+Tab"
-        enabled: surface.keyboardWorkflow && surface.chooserController.uiActive && surface.navigationEnabled && !surface.detailsNavigation.commandMenuOpen
+        enabled: surface.chooserController.uiActive && surface.navigationEnabled && !surface.detailsNavigation.commandMenuOpen
         onActivated: surface.cycleRegion(true)
     }
 
     SplitChooserLayout {
         id: chooser
         controller: surface.chooserController
-        keyboardWorkflow: surface.keyboardWorkflow
-        detailsNavigation.headerShortcutsEnabled: surface.keyboardWorkflow && surface.chooserController.uiActive && surface.chooserController.detailsOpen && surface.navigationEnabled
+        detailsNavigation.headerShortcutsEnabled: surface.chooserController.uiActive && surface.chooserController.detailsOpen && surface.navigationEnabled
         navigationAllowed: surface.navigationEnabled
         sessionContext: surface.sessionContext
         sessionReady: surface.sessionReady

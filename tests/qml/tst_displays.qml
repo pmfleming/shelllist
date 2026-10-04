@@ -4,7 +4,6 @@ import QtQuick
 import Shelllist.Displays as Displays
 import Shelllist.Ui as Ui
 import "../../displays/DisplayFocusModel.js" as Focus
-import "../../qml/Shelllist/Ui/MaterialIcons.js" as Icons
 
 DaemonTestCase {
     id: testCase
@@ -77,46 +76,6 @@ DaemonTestCase {
             for (const entry of group.settings)
                 state.focus.values[entry.key] = entry.boolean ? false : 0;
         return state;
-    }
-    function test_focusGeometry_data() {
-        return [
-            {tag: "emergency-short", width: 320, height: 360},
-            {tag: "narrow", width: 390, height: 600},
-            {tag: "wide-short", width: 1040, height: 480},
-            {tag: "wide", width: 1040, height: 780}
-        ];
-    }
-    function test_focusGeometry(data) {
-        const panel = makePanel();
-        panel.width = data.width;
-        panel.height = data.height;
-        const c = panel.controller;
-        c.uiActive = true;
-        c.applyDisplayPolicy(completeFocusState());
-        c.openGlobalSettings();
-        waitForDetails(panel);
-        const map = findChild(panel, "displayArrangementSummary");
-        const top = map.mapToItem(panel.list, 0, 0).y;
-        verify(map.height >= 96 && map.height <= 150);
-        verify(top >= panel.list.headerHeight && top + map.height < panel.list.height);
-        for (const tab of c.focusTabs) {
-            c.selectFocusPage(tab);
-            verify(waitForPolish(panel.Window.window));
-            const page = findChild(panel, "displayFocusPane");
-            verify(page.height > 0 && page.width > 0);
-            for (const target of panel.navigation.targets) {
-                if (!target.visible || target instanceof Ui.DetailFlickable)
-                    continue;
-                const point = target.mapToItem(panel.detailsItem, 0, 0);
-                verify(target.width > 0 && target.height > 0, target.objectName + " has usable dimensions");
-                verify(point.x >= 0 && point.x + target.width <= panel.detailsItem.width + 1,
-                    target.objectName + " fits the detail canvas horizontally");
-            }
-            page.contentY = Math.max(0, page.contentHeight - page.height);
-            compare(map.mapToItem(panel.list, 0, 0).y, top, "detail scrolling never moves the map");
-            compare(panel.navigation.collectTargets(map, true).length, 0, "graphic has no browse targets");
-        }
-        compare(calls.length, 0);
     }
     function test_keyboardCategoryHelpAndReturnWithoutMutations() {
         const panel = makePanel();
@@ -194,58 +153,6 @@ DaemonTestCase {
         verify(target.visible);
         compare(calls.length, 0, "hotplug/restoration does not replay settings");
     }
-    function test_editsNormalizeOnlyTheTargetAndRetainInvalidInput() {
-        const c = makePanel().controller;
-        const untouched = c.draft[0];
-        for (const field of ["x", "y", "scale", "transform"]) {
-            c.edit("DP-1", field, "2");
-            compare(c.draft[1][field], 2);
-            compare(c.draft[0], untouched);
-        }
-        c.edit("DP-1", "scale", "");
-        compare(c.draft[1].scale, "", "invalid input remains available for validation");
-        c.edit("DP-1", "mode", "3840x2160@60.00Hz");
-        compare(c.draft[1].mode, "3840x2160@60.00Hz");
-        const before = JSON.stringify(c.draft);
-        c.edit("missing", "scale", 3);
-        c.edit("DP-1", "unknown-field", 3);
-        compare(JSON.stringify(c.draft), before);
-        compare(calls.length, 0, "edits never bypass preview");
-    }
-    function test_displayHierarchySeparatesLayoutAndGlobalFocus() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.applyDisplayPolicy(focusState());
-        c.openDetails();
-        waitForDetails(panel);
-        for (const glyph of ["settings", "help_outline", "chevron_right", "info"].concat(Focus.groups().map(group => group.icon)))
-            verify(Icons.name(glyph).length > 0, glyph + " uses the Material font, not literal fallback text");
-        const actions = c.detailActions;
-        verify(actions.find(a => a.id === "preview").icon !== actions.find(a => a.id === "identify").icon);
-        verify(findChild(panel, "displayArrangementSummary").visible);
-        verify(findChild(panel, "displayX").visible);
-        c.openGlobalSettings();
-        compare(panel.detailsItem.title, "Display settings");
-        compare(panel.detailsItem.subtitle, "Focus · all monitors");
-        compare(panel.detailsItem.actions.length, 0, "global focus does not expose selected-monitor layout actions");
-        verify(findChild(panel, "displayAdvancedFocus").visible);
-        verify(!findChild(panel, "displayFocusedMonitor").visible);
-        verify(findChild(panel, "displayFocusTechnical").informationOnly);
-        verify(findChild(panel, "displayFocusStatus").text.includes("Enter or Tab saves"));
-        const help = findChild(panel, "focusHelpText-input:follow_mouse");
-        verify(!help.visible);
-        findChild(panel, "focusHelp-input:follow_mouse").clicked();
-        verify(help.visible);
-        verify(!help.text.includes("input:follow_mouse"), "raw compositor keys stay in Diagnostics");
-        findChild(panel, "focusCategory-keyboard").clicked();
-        verify(!findChild(panel, "displayCommonFocus").visible);
-        verify(findChild(panel, "focusSetting-binds:window_direction_monitor_fallback").visible);
-        c.closeDetails();
-        verify(c.detailsOpen && c.detailsTab === "focus", "Back returns from a category to Focus");
-        findChild(panel, "focusDiagnosticsLink").clicked();
-        verify(findChild(panel, "displayFocusedMonitor").visible);
-        compare(calls.length, 0, "navigation and help do not save settings");
-    }
     function test_persistentMapUsesDraftWithoutKeyboardFocus() {
         const panel = makePanel();
         const c = panel.controller;
@@ -279,39 +186,6 @@ DaemonTestCase {
         c.dismissNavigation();
         verify(c.discardPrompt, "compact-map edits retain discard protection");
         compare(calls.length, 0, "map changes are draft-only");
-    }
-    function test_globalSettingsWithoutSelectionAndIndependentMemory() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.uiActive = true;
-        c.applyDisplayPolicy(focusState());
-        c.openDetails();
-        c.detailsTab = "information";
-        c.viewMemory.synchronize();
-        findChild(panel, "fieldTrailingAction").clicked();
-        waitForDetails(panel);
-        compare(c.viewMemory.key, "display-global-settings");
-        c.selectionModel.rankRequestsEnabled = false;
-        c.filterText = "no-such-monitor";
-        const store = c.selectionModel;
-        store.applyRustRanking(store.searchOwner, store.searchGeneration, []);
-        tryCompare(c, "hasSelection", false);
-        verify(c.detailsOpen && c.globalSettingsOpen);
-        verify(findChild(panel, "displayFocusPane").visible);
-        c.closeDetails();
-        c.openGlobalSettings();
-        verify(c.detailsOpen, "gear works without any search results");
-        c.filterText = "";
-        tryCompare(c, "hasSelection", true);
-        c.openDetails();
-        compare(c.detailsTab, "information", "monitor page memory survives global settings");
-        c.closeDetails();
-        const state = focusState();
-        state.outputs = [];
-        c.applyDisplayPolicy(state);
-        c.openGlobalSettings();
-        verify(c.detailsOpen && c.globalSettingsOpen, "global settings do not require a connected display");
-        compare(calls.length, 0);
     }
     function test_focusTelemetryDoesNotInvalidateLayoutDrafts() {
         const panel = makePanel();

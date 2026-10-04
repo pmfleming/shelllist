@@ -28,7 +28,6 @@ Ui.ActionDetailsPane {
             Layout.fillWidth: true
             spacing: Ui.Theme.spacingSm
             Ui.FlatIconButton {
-                id: backButton
                 objectName: "backToDisplayList"
                 accessKey: "B"
                 Layout.preferredWidth: Ui.Theme.controlHeight

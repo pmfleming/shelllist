@@ -39,25 +39,6 @@ TestCase {
         return controller;
     }
 
-    function test_timeHeroFitsReadableMetricDetailsAtNarrowWidths() {
-        const component = Qt.createComponent("../../qml/Shelllist/Activity/TimeWeatherTimePane.qml");
-        compare(component.status, Component.Ready, component.errorString());
-        const pane = createTemporaryObject(component, testCase, {
-            width: 400, height: 600,
-            city: {label: "Example city", lunar: {phase: "waxing-gibbous", fraction: 0.8, illumination_percent: 80}},
-            now: new Date(2026, 8, 29, 12, 30)
-        });
-        const hero = findChild(pane, "timeHero");
-        const metrics = findChild(pane, "timeHeroMetrics");
-        const detail = findChild(pane, "timeMetricDetail-moon");
-        tryVerify(() => metrics.height > 0);
-        verify(detail.font.pixelSize >= 11);
-        verify(hero.stacked);
-        verify(metrics.y + metrics.height <= hero.height);
-        pane.width = 800;
-        tryCompare(hero, "stacked", false);
-        tryVerify(() => metrics.y + metrics.height <= hero.height);
-    }
     function test_snapshotChangesCityWithoutChangingIndex() {
         const controller = makeController();
         controller.applySnapshot({

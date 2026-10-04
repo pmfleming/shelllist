@@ -8,7 +8,6 @@ Ui.ProviderChooserSurface {
 
     required property ClipboardController controller
     chooserController: controller
-    keyboardWorkflow: true
     navigationEnabled: !controller.deleteMenuOpen && !controller.deleteConfirmationOpen && !controller.bulkDeleteConfirmationOpen && !controller.wipeChallenge
     sessionReady: !controller.refreshInFlight && !controller.revisionRequestId && !controller.detailState.editBeginPending
     readonly property var selectedEntry: content.controller.selectedEntry || ({})

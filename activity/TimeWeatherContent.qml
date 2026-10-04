@@ -10,7 +10,6 @@ Ui.ProviderChooserSurface {
     readonly property alias now: liveClock.now
 
     chooserController: controller
-    keyboardWorkflow: true
     navigationEnabled: !controller.screenshotInFlight
     refreshEnabled: !controller.activity.syncing && !controller.screenshotInFlight
 

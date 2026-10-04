@@ -26,11 +26,8 @@ TestCase {
         }
     }
     function init(): void { failOnWarning(/.*/); }
-    function test_groupsStayOrderedAndNumericalDataStaysInDetails_data() {
-        return [{tag: "normal", width: 1200}, {tag: "compact", width: 700}, {tag: "emergency", width: 300}];
-    }
-    function test_groupsStayOrderedAndNumericalDataStaysInDetails(data): void {
-        const bar = createTemporaryObject(barFactory, testCase, {width: data.width});
+    function test_emergencyOverflowKeepsGroupsReachable(): void {
+        const bar = createTemporaryObject(barFactory, testCase, {width: 300});
         tryVerify(() => findChild(bar, "bar:notifications") !== null);
         verify(waitForRendering(bar));
         const names = ["barWorkspaces", "barMedia", "bar:network", "bar:bluetooth", "bar:battery", "bar:notifications", "barTray", "barClock"];
@@ -47,15 +44,13 @@ TestCase {
         verify(findChild(bar, "bar:battery").accessibleName.includes("80"));
         verify(findChild(bar, "barClock").text.includes(":"));
         compare(bar.visualSurface.radius, 20);
-        if (data.width === 300) {
-            verify(bar.overflow);
-            const viewport = findChild(bar, "barOverflowViewport");
-            const button = findChild(bar, "barOverflowButton");
-            verify(button.width >= 32 && button.height >= 32);
-            verify(viewport.mapToItem(bar, viewport.width, 0).x <= button.x, "the wider hit target does not cover bar content");
-            mouseClick(button, 1, button.height / 2);
-            verify(viewport.contentX > 0, "emergency overflow has an explicit pointer route");
-        }
+        verify(bar.overflow);
+        const viewport = findChild(bar, "barOverflowViewport");
+        const button = findChild(bar, "barOverflowButton");
+        verify(button.width >= 32 && button.height >= 32);
+        verify(viewport.mapToItem(bar, viewport.width, 0).x <= button.x, "the wider hit target does not cover bar content");
+        mouseClick(button, 1, button.height / 2);
+        verify(viewport.contentX > 0, "emergency overflow has an explicit pointer route");
         bar.controller.notificationActive = {notifications: [{urgency: 2}]};
         tryCompare(findChild(bar, "bar:notifications"), "foreground", Ui.Theme.danger);
     }

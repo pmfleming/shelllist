@@ -15,6 +15,7 @@ Controls.ComboBox {
     readonly property int selectedIndex: optionIndex(editSession.active ? draftValue : value)
     readonly property FieldEditSession editSession: FieldEditSession {
         owner: control
+        available: control.enabled && control.interactive
         value: control.draftValue
         initialValue: control.value
         onActiveChanged: if (active) control.draftValue = control.value
@@ -31,21 +32,7 @@ Controls.ComboBox {
             selected(nextValue);
     }
 
-    function handleEditKey(event: var): void {
-        if (!editSession.active || !editSession.navigation || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
-            return;
-        const navigation = editSession.navigation;
-        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
-            navigation.saveEditor();
-        else if (event.key === Qt.Key_Escape)
-            navigation.retreat();
-        else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab)
-            navigation.cycleFocus(event.key === Qt.Key_Backtab || !!(event.modifiers & Qt.ShiftModifier));
-        else
-            return;
-        event.accepted = true;
-    }
-    Keys.onPressed: function (event) { handleEditKey(event); }
+    Keys.onPressed: function (event) { editSession.handleKey(event); }
 
     signal selected(string value)
 
@@ -126,7 +113,7 @@ Controls.ComboBox {
         height: Math.min(control.options.length, 6) * Theme.controlHeight + topPadding + bottomPadding
 
         contentItem: ScrollableListView {
-            Keys.onPressed: function (event) { control.handleEditKey(event); }
+            Keys.onPressed: function (event) { control.editSession.handleKey(event); }
             clip: true
             implicitHeight: contentHeight
             model: control.popup.visible ? control.delegateModel : null

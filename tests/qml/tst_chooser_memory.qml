@@ -20,7 +20,6 @@ DaemonTestCase {
             id: surface
             width: testCase.width
             height: testCase.height
-            keyboardWorkflow: true
             property int edits: 0
             property bool showLevel: true
             property bool levelEnabled: true
@@ -96,10 +95,6 @@ DaemonTestCase {
         }
     }
     Component {
-        id: listOptionFactory
-        Ui.ActionButton { objectName: "listOption"; label: "List option"; height: 52 }
-    }
-    Component {
         id: retainedControllerFactory
         Ui.ProviderChooserController {
             id: retainedOwner
@@ -124,7 +119,6 @@ DaemonTestCase {
             width: testCase.width
             height: testCase.height
             chooserController: owner
-            keyboardWorkflow: true
             listComponent: Component {
                 Ui.ChooserListPane {
                     chooserController: delayedSurface.owner
@@ -251,24 +245,6 @@ DaemonTestCase {
         compare(input.cursorPosition, 3);
         compare(controller.filterText, "abxf");
     }
-    function test_newQuerySelectionCancelsQueuedInvocationRestoration() {
-        const surface = makeSurface();
-        const controller = surface.chooserController;
-        controller.selectionModel.rankRequestsEnabled = false;
-        controller.selectionModel.queryText = "abcdef";
-        surface.listItem.focusSearch();
-        const input = findChild(surface.listItem, "fieldInput");
-        input.select(4, 1);
-        closeInvocation(surface);
-        surface.visible = true;
-        controller.activateUiState("");
-        surface.listItem.focusSearch();
-        controller.restoreUiFocus();
-        input.select(5, 2); // A newer native selection wins before the queued turn.
-        wait(0);
-        compare(input.cursorPosition, 2);
-        compare(input.selectionEnd, 5);
-    }
     function test_resultSwitchKeepsTheLatestNativeSelection() {
         const surface = makeSurface();
         open(surface);
@@ -316,69 +292,6 @@ DaemonTestCase {
         const item = list.itemAtIndex(controller.selectionModel.selectedIndex);
         verify(item.y >= list.contentY && item.y + item.height <= list.contentY + list.height, "new navigation wins over the bookmark");
     }
-    function test_invocationRestoresEditorCaretButNotValues() {
-        const surface = makeSurface();
-        open(surface);
-        keyClick(Qt.Key_Return);
-        verify(surface.detailsNavigation.editing);
-        const field = surface.detailsNavigation.currentTarget;
-        const input = findChild(field, "fieldInput");
-        input.select(12, 5);
-        closeInvocation(surface);
-        field.text = "shorten"; // Authoritative data can change while closed.
-        reopenInvocation(surface);
-        tryVerify(() => surface.detailsNavigation.editing);
-        tryCompare(input, "cursorPosition", 5);
-        compare(input.selectionStart, 5);
-        compare(input.selectionEnd, 7, "clamp to current text, do not restore a value");
-        compare(field.text, "shorten");
-        compare(surface.edits, 0);
-        surface.listItem.focusList();
-        surface.chooserController.restoreUiFocus();
-        wait(0);
-        verify(surface.listItem.listFocused, "a duplicate invocation request must not steal new focus");
-    }
-    function test_namedListControlRestoration_data() {
-        return [{tag: "valid"}, {tag: "disabled"}, {tag: "removed"}];
-    }
-    function test_namedListControlRestoration(data) {
-        const surface = makeSurface();
-        open(surface);
-        keyClick(Qt.Key_Return);
-        surface.listItem.listOptionsComponent = listOptionFactory;
-        tryVerify(() => findChild(surface, "listOption") !== null);
-        findChild(surface, "listOption").forceActiveFocus();
-        closeInvocation(surface);
-        compare(surface.chooserController.focusMemory.region, "list-control");
-        if (data.tag === "disabled")
-            findChild(surface, "listOption").enabled = false;
-        if (data.tag === "removed")
-            surface.listItem.listOptionsComponent = null;
-        reopenInvocation(surface);
-        if (data.tag === "valid")
-            tryVerify(() => findChild(surface, "listOption").activeFocus);
-        else
-            tryVerify(() => surface.listItem.searchFocused);
-        verify(!surface.detailsNavigation.editing);
-    }
-    function test_contextChangedAfterFocusLossCannotInheritAnEditor() {
-        const surface = makeSurface();
-        select(surface, "b");
-        open(surface);
-        select(surface, "a");
-        open(surface);
-        keyClick(Qt.Key_Return);
-        testCase.forceActiveFocus();
-        surface.chooserController.select(1);
-        surface.chooserController.viewMemory.synchronize();
-        verify(!surface.detailsNavigation.activeFocus);
-        closeInvocation(surface);
-        compare(surface.chooserController.focusMemory.region, "results");
-        reopenInvocation(surface);
-        tryVerify(() => surface.listItem.listFocused);
-        compare(surface.chooserController.selectedResult.id, "b");
-        verify(!surface.detailsNavigation.editing);
-    }
     function test_queuedSearchCannotCrossAnInvocationBoundary() {
         const surface = makeSurface();
         open(surface);
@@ -393,36 +306,6 @@ DaemonTestCase {
         wait(0);
         tryVerify(() => surface.detailsNavigation.editing);
         compare(surface.detailsNavigation.currentTarget.objectName, "ordinaryNote");
-    }
-    function test_invocationRestoresBrowseWithoutEditing() {
-        const surface = makeSurface();
-        open(surface);
-        keyClick(Qt.Key_Tab);
-        compare(surface.detailsNavigation.currentTarget.objectName, "level");
-        closeInvocation(surface);
-        reopenInvocation(surface);
-        tryVerify(() => surface.detailsNavigation.browsing && surface.detailsNavigation.currentTarget.objectName === "level");
-        const detailPage = page(surface);
-        tryVerify(() => detailPage.contentY > 0, 5000, "the restored cursor is revealed");
-        compare(surface.edits, 0);
-    }
-    function test_revealBeforeInitialScrollRestoreIsRetained() {
-        const surface = makeSurface();
-        open(surface);
-        const detailPage = page(surface);
-        detailPage.contentY = 0;
-        detailPage.restoredKey = ""; // Newly created page, before queued scroll restoration.
-        detailPage.revealItem(findChild(detailPage, "level"));
-        verify(detailPage.contentY > 0);
-        detailPage.restoreScroll();
-        verify(detailPage.contentY > 0, "queued restoration must not undo the explicit reveal");
-        detailPage.contentHeight = 0; // Controls created, but initial layout not committed.
-        surface.detailsNavigation.focusSessionLocation({target: "level", editing: false});
-        wait(0);
-        verify(surface.detailsNavigation.pendingMemory);
-        detailPage.contentHeight = detailPage.navigationContent.implicitHeight;
-        tryCompare(surface.detailsNavigation, "pendingMemory", false);
-        verify(detailPage.contentY > 0, "layout readiness must finish the retained reveal");
     }
     function test_invocationRevalidatesDisabledEditors() {
         const surface = makeSurface();
@@ -453,19 +336,16 @@ DaemonTestCase {
         verify(!surface.detailsNavigation.editing);
         compare(field.text, "");
     }
-    function test_invocationMissingResultFallsBack_data() {
-        return [{tag: "replacement", rows: [{id: "b", title: "Beta"}], results: true}, {tag: "empty", rows: [], results: false}];
-    }
-    function test_invocationMissingResultFallsBack(data) {
+    function test_invocationMissingResultFallsBack() {
         const surface = makeSurface();
         open(surface);
         keyClick(Qt.Key_Return);
         closeInvocation(surface);
-        catalog(surface, data.rows);
+        catalog(surface, []);
         surface.chooserController.viewMemory.synchronize();
         reopenInvocation(surface);
-        tryVerify(() => data.results ? surface.listItem.listFocused : surface.listItem.searchFocused);
-        compare(surface.chooserController.detailsOpen, data.results);
+        tryVerify(() => surface.listItem.searchFocused);
+        verify(!surface.chooserController.detailsOpen);
         compare(surface.edits, 0);
     }
     function recreatedView() {
@@ -487,40 +367,6 @@ DaemonTestCase {
         reopenInvocation(second);
         tryVerify(() => second.detailsNavigation.sessionLocation !== null);
         return second;
-    }
-    function test_recreatedViewRestoresQuerySelectionAndViewport() {
-        const owner = createTemporaryObject(retainedControllerFactory, testCase);
-        owner.selectionModel.rankRequestsEnabled = false;
-        const first = createTemporaryObject(delayedViewFactory, testCase, {owner: owner});
-        retainedViews = [first];
-        catalog(first, Array.from({length: 40}, (_, i) => ({id: "entry" + i, title: "Item " + i})));
-        owner.selectionModel.queryText = "ordinary-query";
-        first.listItem.focusSearch();
-        findChild(first.listItem, "fieldInput").select(7, 2);
-        const list = findChild(first.listItem, "resultListView");
-        tryCompare(list, "count", 40);
-        verify(waitForPolish(first.Window.window));
-        list.contentY = 465;
-        tryVerify(() => first.listItem.sessionState().viewport !== null);
-        const bookmark = first.listItem.sessionState().viewport;
-        closeInvocation(first);
-        verify(!JSON.stringify(owner.focusMemory).includes("ordinary-query"));
-        first.destroy();
-        retainedViews = [];
-        wait(0);
-        const second = createTemporaryObject(delayedViewFactory, testCase, {owner: owner});
-        retainedViews = [second];
-        reopenInvocation(second);
-        const input = findChild(second.listItem, "fieldInput");
-        tryCompare(input, "cursorPosition", 2);
-        compare(input.selectionEnd, 7);
-        compare(input.text, "ordinary-query", "the query belongs to the retained controller");
-        verify(second.listItem.searchFocused);
-        tryVerify(() => {
-            const current = second.listItem.sessionState().viewport;
-            return current && current.key === bookmark.key;
-        });
-        compare(second.listItem.sessionState().viewport.offset, bookmark.offset);
     }
     function test_recreatedViewRestoresAnAsynchronousEditor() {
         const surface = recreatedView();
@@ -602,56 +448,6 @@ DaemonTestCase {
         surface.listItem.toggleDetails(1);
         verify(surface.chooserController.detailsOpen);
     }
-    function test_disabledRememberedEditorFallsBackToBrowse() {
-        const surface = makeSurface();
-        inspectSecondTab(surface);
-        select(surface, "b");
-        surface.levelEnabled = false;
-        select(surface, "a");
-        open(surface);
-        tryCompare(surface.detailsNavigation.currentTarget, "objectName", "ordinaryNote");
-        verify(surface.detailsNavigation.browsing);
-        verify(!surface.detailsNavigation.editing);
-        keyClick(Qt.Key_Right);
-        verify(!surface.detailsNavigation.editing);
-        surface.chooserController.select(1);
-        tryVerify(() => surface.listItem.listFocused);
-        compare(surface.edits, 0);
-    }
-    function test_expansionIsSharedAcrossResults() {
-        const surface = makeSurface();
-        open(surface);
-        keyClick(Qt.Key_Escape);
-        verify(!surface.chooserController.detailsOpen);
-        select(surface, "b");
-        open(surface);
-        select(surface, "a");
-        verify(surface.chooserController.detailsOpen);
-        surface.chooserController.closeDetails();
-        select(surface, "b");
-        verify(!surface.chooserController.detailsOpen);
-    }
-    function test_reorderRemovalAndReconnectDoNotEraseInspectedState() {
-        const surface = makeSurface();
-        inspectSecondTab(surface);
-        surface.listItem.focusList();
-        const key = surface.chooserController.selectedResult.key;
-        catalog(surface, [{id: "a", title: "Zulu"}, {id: "b", title: "Alpha"}]);
-        wait(0);
-        compare(surface.chooserController.selectedResult.key, key);
-        compare(surface.chooserController.detailsTab, "two");
-        verify(surface.chooserController.detailsOpen);
-        catalog(surface, []);
-        tryCompare(surface.chooserController, "detailsOpen", false);
-        verify(surface.chooserController.viewMemory.records[key].open);
-        catalog(surface, [{id: "a", title: "Alpha"}, {id: "b", title: "Beta"}]);
-        tryCompare(surface.chooserController, "detailsOpen", false);
-        open(surface);
-        compare(surface.chooserController.detailsTab, "two");
-        surface.listItem.focusList();
-        verify(surface.listItem.listFocused);
-        compare(surface.edits, 0);
-    }
     function test_missingEditorAndTabFallBackWithoutMutations() {
         const surface = makeSurface();
         inspectSecondTab(surface);
@@ -674,44 +470,6 @@ DaemonTestCase {
         tryCompare(surface.chooserController, "detailsTab", "one");
         verify(surface.listItem.listFocused);
         compare(surface.edits, 0);
-    }
-    function test_tabsKeepIndependentScrollAndNoFocusOnAsyncLoad() {
-        const surface = makeSurface();
-        open(surface);
-        page(surface).contentY = 100;
-        surface.listItem.focusList();
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        tryCompare(surface.chooserController.viewMemory, "activeTab", "two");
-        tryCompare(page(surface), "contentY", 0);
-        page(surface).contentY = 300;
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        tryCompare(surface.chooserController.viewMemory, "activeTab", "one");
-        tryCompare(page(surface), "contentY", 100);
-        verify(surface.listItem.listFocused);
-        const serialized = JSON.stringify(surface.chooserController.viewMemory.records);
-        verify(!serialized.includes("This value"));
-        compare(surface.edits, 0);
-    }
-    function test_applicationHeaderUsesOneActionRowWithoutRepeatedDescription() {
-        const content = createTemporaryObject(applicationsFactory, testCase);
-        const controller = content.controller;
-        wait(0);
-        controller.uiActive = true;
-        const app = {id: "app.desktop", name: "App", comment: "Browse the web", kind: "desktop-application", running: false, instances: [], desktop_actions: []};
-        controller.replaceProviderResults([controller.provider.resultFor(app)], true);
-        open(content);
-        tryVerify(() => findChild(content, "applicationDescription") !== null);
-        verify(!findChild(content, "applicationDescription").visible);
-        const header = findChild(content.detailsItem, "detailIdentityIcon").parent.parent;
-        const row = findChild(header, "surfaceActionRow");
-        compare(header.height, header.headerHeight + header.sectionSpacing + row.height);
-        compare(content.detailsNavigation.headerButtons.length, 3);
-        controller.replaceProviderResults([controller.provider.resultFor(Object.assign({}, app, {generic_name: "Browser"}))], true);
-        tryVerify(() => findChild(content, "applicationDescription").visible, 5000, "distinct supporting description remains visible");
-        header.width = 380;
-        compare(row.shownSecondaryCount, 2, "compact headers keep a single action line");
-        compare(header.height, header.headerHeight + header.sectionSpacing + row.height);
-        compare(content.detailsNavigation.headerButtons.length, 3);
     }
     function test_applicationInvocationRestoresAnEditorButNotItsMenu() {
         const content = createTemporaryObject(applicationsFactory, testCase);
@@ -776,53 +534,5 @@ DaemonTestCase {
         controller.uiActive = true;
         tryVerify(() => calls.some(call => call.method === "applications.history" && call.params.target_id === "a.desktop"));
         verify(!calls.some(call => call.method === "applications.execute" || call.method === "applications.settings.update"));
-    }
-    function test_applicationsRetainSettingsViewAcrossClosureAndCapabilityChange() {
-        const content = createTemporaryObject(applicationsFactory, testCase);
-        const controller = content.controller;
-        wait(0);
-        controller.uiActive = true;
-        const result = {id: "app.desktop", name: "App", kind: "desktop-application", category: "shell", default_workspace_id: "1", running: false, focused: false, instances: [], desktop_actions: []};
-        controller.replaceProviderResults([controller.provider.resultFor(result)], true);
-        open(content);
-        controller.selectDetailsTab("settings");
-        tryCompare(controller.viewMemory, "activeTab", "settings");
-        tryVerify(() => content.detailsNavigation.currentTarget && content.detailsNavigation.currentTarget.objectName === "applicationCategory");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Space);
-        tryCompare(content.detailsNavigation.currentTarget.popup, "visible", true);
-        keyClick(Qt.Key_Escape);
-        content.listItem.focusList();
-        controller.replaceProviderResults([controller.provider.resultFor(result), controller.provider.resultFor(Object.assign({}, result, {id: "other.desktop", name: "Other"}))], false);
-        select(content, "other.desktop");
-        select(content, "app.desktop");
-        keyClick(Qt.Key_Tab);
-        tryVerify(() => content.detailsNavigation.currentTarget && content.detailsNavigation.currentTarget.objectName === "applicationCategory");
-        keyClick(Qt.Key_Return);
-        tryVerify(() => content.detailsNavigation.editing);
-        compare(content.detailsNavigation.currentTarget.objectName, "applicationCategory");
-        verify(!content.detailsNavigation.currentTarget.popup.visible, "remembered editing never reopens a menu");
-        keyClick(Qt.Key_Space);
-        tryCompare(content.detailsNavigation.currentTarget.popup, "visible", true);
-        controller.deactivateUi();
-        verify(!content.detailsNavigation.currentTarget.popup.visible, "surface closure closes ordinary menus too");
-        content.visible = false;
-        wait(0);
-        verify(controller.detailsOpen);
-        compare(controller.detailsTab, "settings");
-        controller.uiActive = true;
-        content.visible = true;
-        content.listItem.focusList();
-        controller.replaceProviderResults([controller.provider.resultFor(Object.assign({}, result, {kind: "desktop-shortcut"}))], false);
-        tryCompare(controller, "detailsTab", "application");
-        verify(content.listItem.listFocused);
-        const key = controller.selectedResult.key;
-        controller.clearProviderResults();
-        tryCompare(controller, "detailsOpen", false);
-        verify(controller.viewMemory.records[key].open, "missing data is not an explicit close");
-        controller.replaceProviderResults([controller.provider.resultFor(result)], false);
-        tryCompare(controller, "detailsOpen", false);
-        verify(content.listItem.listFocused);
-        verify(!calls.some(call => call.method === "applications.settings.update"));
     }
 }

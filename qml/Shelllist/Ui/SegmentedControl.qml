@@ -14,6 +14,7 @@ Rectangle {
     readonly property string displayedValue: editSession.active ? draftValue : value
     readonly property FieldEditSession editSession: FieldEditSession {
         owner: control
+        available: control.enabled && control.interactive
         value: control.draftValue
         initialValue: control.value
         onActiveChanged: if (active) control.draftValue = control.value

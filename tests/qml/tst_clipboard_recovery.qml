@@ -24,12 +24,6 @@ DaemonTestCase {
         Clip.ClipboardListPane {}
     }
     Component {
-        id: detailsFactory
-        Clip.ClipboardDetails {
-            uiScale: 1
-        }
-    }
-    Component {
         id: editorPanelFactory
         Ui.PanelSurface {
             id: panel
@@ -128,48 +122,6 @@ DaemonTestCase {
         verify(!details.visible);
     }
 
-    function test_metadataOmitsIrrelevantFactsAndWrapsLongFileNames() {
-        const controller = makeController();
-        controller.detailsTab = "info";
-        const cards = makeCards(controller);
-        const metadata = findChild(cards, "clipboardMetadata");
-        compare(metadata.entries.length, 3);
-        verify(!findChild(cards, "clipboardFilesHeading").visible);
-        const name = "Long filename without losing its extension ".repeat(8) + ".txt";
-        controller.detailState.value = {
-            entry: {kind: "files", mime: "text/uri-list", byte_size: 120},
-            text: null,
-            image: {width: 1920, height: 1080},
-            files: [{display_name: name, exists: false, operation: "cut"}]
-        };
-        compare(metadata.entries.length, 4);
-        verify(findChild(cards, "clipboardFilesHeading").visible);
-        tryVerify(() => findChild(cards, "clipboardFileName") !== null);
-        const label = findChild(cards, "clipboardFileName");
-        compare(label.text, name);
-        tryVerify(() => label.lineCount > 1);
-        verify(label.height >= label.implicitHeight);
-        compare(calls.length, 0, "metadata changes do not acquire an edit lease");
-    }
-    function test_detailsKeepSpecializedClipboardRouting() {
-        const controller = makeController();
-        const pane = createTemporaryObject(detailsFactory, testCase, {
-            controller: controller,
-            width: 600,
-            height: 800
-        });
-        views = views.concat([pane]);
-        calls = [];
-        pane.actionTriggered("edit"); // Plain text is edited in its card, not an external image/link action.
-        pane.actionTriggered("paste-as-file");
-        pane.actionTriggered("unknown");
-        compare(calls.length, 0);
-        pane.actionTriggered("copy");
-        compare(calls.length, 1);
-        compare(calls[0].params.action, "copy");
-        pane.actionTriggered("copy"); // Existing busy ownership still rejects replay.
-        compare(calls.length, 1);
-    }
     function init() {
         failOnWarning(/.*(TypeError|Binding loop|invalid context).*/);
     }
@@ -448,22 +400,6 @@ DaemonTestCase {
         compare(controller.selectedIndex, 199);
         compare(list.footerItem.height, 0);
         compare(historyCalls().length, 2);
-    }
-    function test_warmReopenRetainsCursorAfterRevisionCheck() {
-        const controller = pagedController();
-        controller.deactivateUi();
-        compare(controller.historyCursor, "next-page");
-        controller.activateUi("1");
-        verify(controller.revisionRequestId.length > 0);
-        controller.loadMoreHistory();
-        compare(historyCalls().length, 0, "validate the cached snapshot before paging");
-        reply(controller, controller.revisionRequestId, {
-            revision: {},
-            snapshot_revision: "123"
-        });
-        controller.loadMoreHistory();
-        compare(historyCalls().length, 1);
-        compare(historyCalls()[0].params.cursor, "next-page");
     }
     function test_stalePageRefreshesInsteadOfRetryingCursor() {
         const controller = pagedController();

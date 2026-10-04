@@ -9,7 +9,6 @@ Ui.ProviderChooserSurface {
     required property BluetoothController controller
     chooserController: controller
     readonly property bool editingDetails: (detailsItem as BluetoothDeviceDetails)?.editingText ?? false
-    keyboardWorkflow: true
     sessionReady: !controller.refreshInFlight
     sessionContext: controller.detailsTab === "adapter" ? JSON.stringify(["adapter", controller.selectedAdapter.key || "", controller.adapterSettingsTab]) : JSON.stringify([controller.viewMemory.key, controller.viewMemory.tab])
     navigationEnabled: !controller.modalPromptOpen

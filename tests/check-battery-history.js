@@ -49,8 +49,8 @@ const zeroTransition = series([
 ], "power_watts");
 const zeroAreas = history.powerAreas(zeroTransition.segments);
 assert.equal(zeroAreas[0].points[1].x, 0.5, "zero-to-zero mode changes remain finite");
-// Qt's BatteryHistory suite owns visible isolated samples and gap rendering.
-// Keep protection against late cache data below.
+// Keep protection against late cache data; Qt covers explicit inspection,
+// while exact chart pixels are intentionally outside the retained suite.
 const live = point(2 * day + 16 * minute, 31 * minute, 59);
 const extended = history.windowPoints(points, 6, live);
 assert.equal(history.windowPoints(extended, 6, points[1]).length, 5, "late metadata cannot rewind a newer response");
