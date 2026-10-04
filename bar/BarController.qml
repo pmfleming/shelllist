@@ -228,7 +228,7 @@ Item {
         });
         const focused = workspaces.focused_monitor || "";
         const routed = active.filter(function (notification) {
-            return Ui.NotificationPresentation.notificationMonitor(notification, focused, monitors) === monitorName;
+            return notification.toast_visible !== false && Ui.NotificationPresentation.notificationMonitor(notification, focused, monitors) === monitorName;
         }).reverse();
         return Ui.NotificationPresentation.groupRecords(routed).slice(0, 3);
     }

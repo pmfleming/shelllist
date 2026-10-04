@@ -17,7 +17,7 @@ The bar bell opens Notifications; its right-click route opens Agenda. **Super+Sh
 
 Alt+S captures the complete visible Activity panel through `clip-daemon` and copies the image to the clipboard and clipboard history, just as in every other Shelllist surface.
 
-Active notifications appear in up to three compact notification stacks per monitor. A stacked toast shows only its newest record and a count badge; its chevron opens that group in the separate Notifications callout. `shelllist notifications open|toggle` and the `notifications` global shortcut open the pane directly.
+Popup-visible notifications appear in up to three compact notification stacks per monitor. Normal server-default popups hide after five seconds without closing the live notification; it remains actionable in the center. Explicit client expiry, dismissal or sender closure makes a record read-only. Transient notifications are not retained in history. Server restart archives old conversations rather than reviving their actions. A stacked toast shows only its newest record and a count badge; its chevron opens that group in the separate Notifications callout. `shelllist notifications open|toggle` and the `notifications` global shortcut open the pane directly.
 
 The surface uses one searchable list of individual notifications and a selected-message/reply inspector. Live records and loaded history are merged without duplicates; there is no Active/History switch. Alt+S copies a screenshot through `clip-daemon`. Message actions, expandable bodies, inline replies and 15-minute snooze remain capability-dependent. Bulk dismissal retains history and also includes snoozed records. There is no history-deletion control.
 
