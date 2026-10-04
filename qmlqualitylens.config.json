@@ -34,6 +34,7 @@
     "tests/qml/tst_time_weather_selection.qml",
     "tests/qml/tst_wifi_casting.qml",
     "tests/qml/tst_wifi_prompt.qml",
+    "tests/qml/tst_wifi_results.qml",
     "tests/qml/tst_work_area.qml"
   ],
   "dynamic_component_edges": [

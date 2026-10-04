@@ -107,7 +107,7 @@ Core.Provider {
         return makeResult({
             id: network.key || network.bssid || Presentation.networkName(network),
             title: Presentation.networkName(network),
-            subtitle: strength + "% · " + security,
+            subtitle: Presentation.bandLabel(network) + " · " + security,
             icon: icon,
             score: (network.active ? 10000 : 0) + strength,
             keywords: [network.ssid, network.bssid, network.security, network.band],
