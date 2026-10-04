@@ -72,6 +72,9 @@ jq -e '
   .data.fixtures."wifi-status.active".status.active == true and
   .data.fixtures."wifi-status.inactive".status.active == false and
   .data.fixtures."wifi-set-enabled.success".result.enabled == true and
+  .data.fixtures."portal.prepare".portal.intent.reason == "manual" and
+  .data.fixtures."portal.claim".portal.intent.launch_id == "launch-contract" and
+  .data.fixtures."portal.complete".portal.outcome == "opened" and
   .data.fixtures."wifi-band.status".band.selected == "5" and
   .data.fixtures."wifi-band.set".result.stream == "wifi.band" and
   .data.fixtures."wifi-band.stream".events[-1].event == "cancelled" and
@@ -114,6 +117,7 @@ jq -e '
   .ok == true and
   ([.data.protocol.methods[].name] | contains([
     "wifi.status", "wifi.setEnabled", "radio.setWwanEnabled", "radio.setAirplaneMode",
+    "network.portalPrepare", "network.portalClaim", "network.portalComplete",
     "network.connectivity", "wifi.networks", "wifi.band.status", "wifi.band.set", "wifi.scan",
     "wifi.connectTarget", "wifi.disconnect", "wifi.profile.operation",
     "wifi.secret.capabilities", "wifi.secret.provide",
@@ -150,6 +154,9 @@ jq -r '
           or .name == "wifi.qr.parse"
           or .name == "wifi.qr.render"
           or .name == "wifi.qr.connect"
+          or .name == "network.portalPrepare"
+          or .name == "network.portalClaim"
+          or .name == "network.portalComplete"
           or .name == "network.inventory"
           or .name == "network.status"
           or .name == "network.activateProfile"

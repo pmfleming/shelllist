@@ -168,7 +168,7 @@ fn profile_and_lock() -> Result<(PathBuf, File)> {
 fn browser_command(browser: &Path, profile: &Path, url: &str) -> Command {
     let mut command = Command::new(browser);
     command.arg(format!("--user-data-dir={}", profile.display())).arg(format!("--class={CLASS}"))
-        .args(["--ozone-platform=x11", "--no-first-run", "--no-default-browser-check", "--disable-search-engine-choice-screen", "--new-window", "--disable-extensions", "--disable-background-mode", "--disable-quic", "--disable-features=HttpsUpgrades,HttpsFirstBalancedModeAutoEnable,HttpsFirstModeV2,DnsOverHttpsUpgrade"])
+        .args(["--ozone-platform=x11", "--no-first-run", "--no-default-browser-check", "--disable-search-engine-choice-screen", "--new-window", "--disable-extensions", "--disable-background-mode", "--disable-quic", "--no-proxy-server", "--disable-features=HttpsUpgrades,HttpsFirstBalancedModeAutoEnable,HttpsFirstModeV2,DnsOverHttpsUpgrade"])
         .arg(format!("--app={url}")).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
     command
 }

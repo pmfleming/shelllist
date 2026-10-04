@@ -58,6 +58,16 @@ The current family gate captures sibling worktrees through
 vendored-copy/release-pin procedures below are historical, not current build
 instructions.
 
+## Follow-up — captive-portal lifecycle (implemented locally)
+
+Delivered in four stages: validated NM-owned intents; durable attempts, fallback
+rotation and one-shot claims/outcomes; a frontend-owned native browser/compositor
+adapter; and removal of superseded JS/shell policy. Wi-Fi Sign in and the bar
+fallback now share the same explicit transaction. Lost replies, transport
+recovery and UI/daemon restarts cannot replay uncertain automatic launches.
+Workspace/focus remains frontend-owned. See the [migration record](../reviews/captive-portal-migration.md)
+for boundaries, tests and the separate live-acceptance limit.
+
 ## Final candidate validation (original phases 1–6)
 
 The full sibling Nix gate was run, not just its mock wiring test. It caught and

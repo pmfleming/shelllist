@@ -13,13 +13,15 @@ Io.DaemonBackend {
     expectedVersion: NmApi.version
     streams: NmApi.subscribedStreams
     recoverProtocolErrors: false
-    active: controller.statusMonitorActive || controller.uiActive || requestRunning || controller.connection.running || controller.promptActive
+    active: controller.statusMonitorActive || controller.uiActive || requestRunning || controller.connection.running || controller.promptActive || (controller.portal && controller.portal.busy)
     readonly property bool listRunning: isPending("networks")
     readonly property bool scanRunning: isPending("scan-start") || controller.scan.requestId.length > 0
     readonly property bool connectStarting: isPending("connect-start")
     // List refreshes, scans and sharing may overlap a connection attempt.
     readonly property bool nonConnectRunning: hasPendingOtherThan(["networks", "scan-start", "connect-start", "share"])
-    readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
+    readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0 || (controller.portal && controller.portal.busy)
+    property var portalExecutor: portalProcess
+    property string portalLaunchId: ""
     readonly property var responseHandlerById: ({
             "status-recovery": function (value) {
                 controller.applyRecoveredStatus(Api.apiData(value, "status") || null);
@@ -321,6 +323,10 @@ Io.DaemonBackend {
     }
 
     function finish(id, envelope, transportError) {
+        if (id.startsWith("portal-")) {
+            controller.portal.receive(id, envelope, transportError);
+            return;
+        }
         if (transportError.length > 0) {
             console.error("shelllist nm request failed id=" + id + " stage=response error=" + transportError);
             controller.failCall(id, "nm-daemon request failed: " + transportError, envelope && envelope.error ? (envelope.error.details || ({})) : ({}));
@@ -345,33 +351,35 @@ Io.DaemonBackend {
         controller.handleTransportReady();
     }
 
-    function portalArguments(context) {
-        const args = ["shelllist-captive-portal", context.automatic ? "--automatic" : "--manual", "--trigger", context.trigger, "--ssid", context.ssid, "--identity", context.identity, "--connectivity", context.connectivity, "--request-id", context.requestId, "--workspace", context.workspaceId];
-        if (context.checkUri && context.checkUri.length > 0)
-            args.push("--check-uri", context.checkUri);
-        if (context.primaryConnection && context.primaryConnection.length > 0)
-            args.push("--primary-connection", context.primaryConnection);
-        if (context.automatic)
-            args.push("--episode", context.episode);
-        if (context.fallback)
-            args.push("--fallback");
-        return args;
-    }
-    function startPortal(context) {
-        try {
-            console.info("shelllist portal helper started trigger=" + context.trigger + " request_id=" + context.requestId);
-            portalProcess.exec(portalArguments(context));
-        } catch (error) {
-            console.error("shelllist portal helper failed stage=start error=" + error);
-            controller.status = "Could not start captive portal browser: " + error;
-        }
-    }
-    function openPortal(context) {
-        if (portalProcess.running) {
-            console.info("shelllist portal decision=helper-busy trigger=" + context.trigger + " request_id=" + context.requestId);
+    function executePortal(intent, workspace) {
+        portalLaunchId = intent.launch_id;
+        if (portalExecutor.running || intent.expires_at_ms <= Date.now()) {
+            controller.portal.finished(portalLaunchId, "failed");
             return;
         }
-        startPortal(context);
+        try {
+            portalExecutor.exec(["shelllist-portal-launch", "--url", intent.url, "--workspace", workspace, "--expires-at-ms", String(intent.expires_at_ms)]);
+        } catch (error) {
+            failPortalStart();
+        }
+    }
+    function failPortalStart() {
+        const launchId = portalLaunchId;
+        portalLaunchId = "";
+        controller.portal.finished(launchId, "failed");
+    }
+    function finishPortal(exitCode, outputText) {
+        const launchId = portalLaunchId;
+        portalLaunchId = "";
+        let outcome = "uncertain";
+        try {
+            const result = JSON.parse(outputText);
+            if (exitCode === 0 && ["opened", "failed", "uncertain"].includes(result.outcome))
+                outcome = result.outcome;
+        } catch (error) {
+            // A crash or missing result cannot prove that nothing was opened.
+        }
+        controller.portal.finished(launchId, outcome);
     }
 
     onResponseReceived: function (id, envelope, transportError) {
@@ -384,7 +392,10 @@ Io.DaemonBackend {
         controller.handleDaemonEvent(event);
     }
     onSendFailed: function (id, message) {
-        controller.failCall(id, message);
+        if (id.startsWith("portal-"))
+            controller.portal.receive(id, null, message);
+        else
+            controller.failCall(id, message);
     }
     onTransportFailed: function (message, lostRequestIds) {
         console.error("shelllist nm transport failed error=" + message + " lost_requests=" + (lostRequestIds.length > 0 ? lostRequestIds.join(",") : "none"));
@@ -395,14 +406,9 @@ Io.DaemonBackend {
     CommandProcess {
         id: portalProcess
         stderrWaitForEnd: false
+        onStartFailed: backend.failPortalStart()
         onFinished: function (exitCode, outputText, errorText) {
-            if (exitCode !== 0) {
-                const detail = errorText.length > 0 ? errorText : ("exit " + exitCode);
-                console.error("shelllist portal helper failed stage=exit error=" + detail);
-                backend.controller.status = "Could not open captive portal browser: " + detail;
-            } else {
-                console.info("shelllist portal helper completed");
-            }
+            backend.finishPortal(exitCode, outputText);
         }
     }
 }

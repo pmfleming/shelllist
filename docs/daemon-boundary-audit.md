@@ -55,6 +55,16 @@ Pages, query scope, byte size and concurrent reads are bounded. Cursors retain
 no snapshots or mutation authority. Legacy history remains stored and the old
 list API remains available. See the [implementation and validation record](reviews/notification-history-migration.md).
 
+## Follow-up: captive-portal policy
+
+`nm-daemon` now owns validated, owner-fenced portal intents, durable automatic
+attempt deduplication, fallback selection and claim/completion acknowledgement.
+The frontend retains explicit browser/workspace/focus intent through the native
+`portal-launcher/` effect adapter, using shared Hyprland IPC. Removed the QML/JS
+episode/context policy and shell-wrapper state, rotation and compositor parsing.
+Both Wi-Fi Sign in and the bar fallback use the same daemon transaction; uncertain
+attempts cannot replay on recovery. See the [migration record](reviews/captive-portal-migration.md).
+
 ## Conclusion (original audit)
 
 The system-integration boundary is mostly established, but **domain computation

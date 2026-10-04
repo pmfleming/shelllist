@@ -60,6 +60,7 @@ ProviderChooserController {
     readonly property ShareAvailabilityController shareController: services.share
     navigationBlocked: promptActive || !powered
     readonly property WifiAdvancedController advanced: services.advanced
+    readonly property CaptivePortalController portal: services.portal
     readonly property WifiConnectionController connection: services.connection
     readonly property WifiNetworkActions actions: services.actions
     readonly property WifiScanController scan: services.scan
@@ -217,6 +218,7 @@ ProviderChooserController {
         const lost = lostRequestIds || [];
         scan.handleTransportFailure();
         connection.handleTransportFailure();
+        portal.transportLost();
         statistics.handleTransportFailure();
         bandRequestId = "";
         lost.forEach(function (id) {

@@ -183,8 +183,8 @@ Item {
             controller.invalidateShareAvailabilityCache();
             controller.setHeldStatus(message, 2500);
         }
-        if (Flow.confirmedPortalResult(result))
-            portal.launchForConnect(lastConnectAp, result, completedRequestId || "", workspaceId);
+        if (result && result.suggest_open_portal)
+            portal.launchForConnect(completedRequestId || "", workspaceId);
         controller.maybeRunPendingRefresh();
     }
     function handleConnectError(result) {

@@ -282,7 +282,8 @@ Item {
         }
         const actions = ({
                 portal: function () {
-                    Quickshell.execDetached(["shelllist-captive-portal", "--manual", "--fallback"]);
+                    if (wifiController)
+                        wifiController.portal.launchManual("", true);
                 },
                 updates: function () {
                     Quickshell.execDetached(["ghostty", "-e", "bash", "-lc", "journalctl -u 'nixos-update-*.service' -u 'nixos-ai-tools-*.service' -n 150 --no-pager; read -r -p 'Press enter to close'"]);

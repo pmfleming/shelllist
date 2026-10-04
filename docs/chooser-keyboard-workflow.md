@@ -194,6 +194,13 @@ viewport and reply-editor transactions. Stale cursors retry reads; they must not
 merge revisions or resurrect deleted rows. `tst_notifications.qml` covers actual
 search key delivery, late replies, cursor recovery and reply/viewport retention.
 
+Wi-Fi Sign in remains **Alt+I**, never a field Tab stop. It requests and claims a
+daemon-owned portal intent before the frontend executes browser/workspace focus;
+Tab/arrows/Enter field transactions never invoke it. The bar's explicit fallback
+uses the same transaction. Failure or transport recovery does not replay an
+uncertain launch. `tst_wifi_portal.qml` exercises actual command/navigation keys,
+claim acknowledgement, late replies, failures and UI disappearance.
+
 Display arrangement follows the same command model: **Alt+L/U/D/R** invokes the
 Left/Above/Below/Right buttons below the monitor map. These actions modify the
 local layout draft, not the backend. Buttons and the map are not Tab stops;

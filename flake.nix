@@ -112,7 +112,6 @@
               pkgs.hyprland # hyprctl: layer rules and live workspace placement
               self.packages.${system}.shelllistSearch
               pkgs.kdePackages.qrca
-              self.packages.${system}.captivePortalBrowser
               self.packages.${system}.portalLauncher
               nmDaemon
               btDaemon
@@ -373,220 +372,16 @@
           portalLauncher = pkgs.rustPlatform.buildRustPackage {
             pname = "shelllist-portal-launch";
             version = "0.1.0";
-            src = ./.;
+            src = pkgs.lib.fileset.toSource {
+              root = ./.;
+              fileset = ./portal-launcher;
+            };
             postUnpack = ''
               cp -R --no-preserve=mode ${inputs.daemon-framework} "$(dirname "$sourceRoot")/daemon-framework"
               sourceRoot="$sourceRoot/portal-launcher"
             '';
             cargoLock.lockFile = ./portal-launcher/Cargo.lock;
             meta = mkMeta "Frontend-owned portal browser and native compositor launcher" "shelllist-portal-launch";
-          };
-
-          captivePortalBrowser = pkgs.writeShellApplication {
-            name = "shelllist-captive-portal";
-            meta = mkMeta "Open browser pages that trigger captive portal login flows" "shelllist-captive-portal";
-            runtimeInputs = [
-              pkgs.coreutils
-              pkgs.hyprland
-              pkgs.jq
-              pkgs.util-linux
-            ];
-            text = ''
-              started_ms=$(date +%s%3N)
-              state_dir="''${XDG_RUNTIME_DIR:-/tmp}/shelllist-captive-portal"
-              profile_dir="$state_dir/browser-profile"
-              episode_file="$state_dir/automatic-episode"
-              fallback_index_file="$state_dir/fallback-index"
-              lock_file="$state_dir/lock"
-              window_class="shelllist-captive-portal"
-              mkdir -p "$profile_dir"
-
-              mode=manual
-              trigger=manual
-              ssid=
-              identity=
-              connectivity=unknown
-              request_id=
-              episode=
-              workspace=
-              fallback=0
-              check_uri=
-              primary_connection=
-              portal_url="http://neverssl.com/"
-
-              require_value() {
-                if [ "$#" -lt 2 ]; then
-                  echo "Missing value for $1" >&2
-                  exit 2
-                fi
-              }
-
-              while [ "$#" -gt 0 ]; do
-                case "$1" in
-                  --automatic) mode=automatic ;;
-                  --manual) mode=manual ;;
-                  --fallback) fallback=1 ;;
-                  --trigger) require_value "$@"; trigger=$2; shift ;;
-                  --ssid) require_value "$@"; ssid=$2; shift ;;
-                  --identity) require_value "$@"; identity=$2; shift ;;
-                  --connectivity) require_value "$@"; connectivity=$2; shift ;;
-                  --request-id) require_value "$@"; request_id=$2; shift ;;
-                  --episode) require_value "$@"; episode=$2; shift ;;
-                  --workspace) require_value "$@"; workspace=$2; shift ;;
-                  --check-uri) require_value "$@"; check_uri=$2; shift ;;
-                  --primary-connection) require_value "$@"; primary_connection=$2; shift ;;
-                  *) echo "Unknown option: $1" >&2; exit 2 ;;
-                esac
-                shift
-              done
-
-              if [ "$mode" = automatic ] && [ -z "$episode" ]; then
-                echo "Automatic portal launches require --episode" >&2
-                exit 2
-              fi
-
-              exec 9>"$lock_file"
-              flock -x 9
-
-              if [ "$fallback" -eq 1 ]; then
-                fallback_index=0
-                if [ -f "$fallback_index_file" ]; then
-                  fallback_index=$(cat "$fallback_index_file")
-                fi
-                case "$fallback_index" in
-                  0|1|2) ;;
-                  *) fallback_index=0 ;;
-                esac
-                case "$fallback_index" in
-                  0) portal_url="http://captive.apple.com/hotspot-detect.html" ;;
-                  1) portal_url="http://www.msftconnecttest.com/connecttest.txt" ;;
-                  *) portal_url="http://nmcheck.gnome.org/check_network_status.txt"; fallback_index=2 ;;
-                esac
-                printf '%s\n' $(((fallback_index + 1) % 3)) > "$fallback_index_file"
-              elif [ -n "$check_uri" ]; then
-                # NetworkManager already probed this URL and got the portal
-                # verdict, so it is the one most likely to redirect to the
-                # login page. Only plain HTTP is used; an HTTPS probe cannot be
-                # intercepted by a portal without a certificate warning.
-                case "$check_uri" in
-                  http://*) portal_url="$check_uri" ;;
-                  *) ;;
-                esac
-              fi
-
-              if [ -z "$workspace" ] && command -v hyprctl >/dev/null 2>&1; then
-                workspace=$(hyprctl activeworkspace -j 2>/dev/null | jq -r '.id // empty' || true)
-              fi
-
-              portal_client() {
-                hyprctl clients -j 2>/dev/null \
-                  | jq -c --arg class "$window_class" 'first(.[] | select((.class // "") == $class or (.initialClass // "") == $class)) // empty' \
-                  || true
-              }
-
-              place_and_focus() {
-                case "$workspace" in
-                  "") ;;
-                  *[!A-Za-z0-9_.:+-]*) workspace= ;;
-                  *)
-                    hyprctl dispatch "hl.dsp.window.move({ workspace = '$workspace', follow = false, window = 'class:^($window_class)$' })" >/dev/null 2>&1 \
-                      || hyprctl dispatch movetoworkspacesilent "$workspace,class:^($window_class)$" >/dev/null 2>&1 \
-                      || true
-                    ;;
-                esac
-                hyprctl dispatch "hl.dsp.focus({ window = 'class:^($window_class)$' })" >/dev/null 2>&1 \
-                  || hyprctl dispatch focuswindow "class:^($window_class)$" >/dev/null 2>&1 \
-                  || true
-              }
-
-              log_event() {
-                decision=$1
-                browser_pid="''${2:-}"
-                window_title="''${3:-}"
-                event_ms=$(date +%s%3N)
-                helper_elapsed_ms=$((event_ms - started_ms))
-                jq -cn \
-                  --arg decision "$decision" \
-                  --arg trigger "$trigger" \
-                  --arg ssid "$ssid" \
-                  --arg identity "$identity" \
-                  --arg connectivity "$connectivity" \
-                  --arg request_id "$request_id" \
-                  --arg episode "$episode" \
-                  --arg workspace "$workspace" \
-                  --arg browser_pid "$browser_pid" \
-                  --arg window_title "$window_title" \
-                  --arg url "$portal_url" \
-                  --arg primary_connection "$primary_connection" \
-                  --argjson helper_elapsed_ms "$helper_elapsed_ms" \
-                  '{decision:$decision,trigger:$trigger,ssid:$ssid,identity:$identity,connectivity:$connectivity,request_id:$request_id,episode:$episode,workspace:$workspace,browser_pid:$browser_pid,url:$url,window_title:$window_title,primary_connection:$primary_connection,helper_elapsed_ms:$helper_elapsed_ms}' \
-                  | logger -t shelllist-captive-portal
-              }
-
-              existing_client=$(portal_client)
-              if [ -n "$existing_client" ]; then
-                place_and_focus
-                existing_title=$(printf '%s' "$existing_client" | jq -r '.title // empty')
-                log_event focus-existing "" "$existing_title"
-                exit 0
-              fi
-
-              if [ "$mode" = automatic ] && [ -f "$episode_file" ] && [ "$(cat "$episode_file")" = "$episode" ]; then
-                log_event deduplicated-episode
-                exit 0
-              fi
-
-              browser=
-              for candidate in google-chrome-stable google-chrome chromium; do
-                if command -v "$candidate" >/dev/null 2>&1; then
-                  browser=$candidate
-                  break
-                fi
-              done
-
-              if [ -z "$browser" ]; then
-                echo "No supported browser found for captive portal" >&2
-                log_event browser-unavailable
-                exit 1
-              fi
-
-              "$browser" \
-                --user-data-dir="$profile_dir" \
-                --class="$window_class" \
-                --ozone-platform=x11 \
-                --no-first-run \
-                --no-default-browser-check \
-                --disable-search-engine-choice-screen \
-                --new-window \
-                --disable-extensions \
-                --disable-background-mode \
-                --disable-quic \
-                --disable-features=HttpsUpgrades,HttpsFirstBalancedModeAutoEnable,HttpsFirstModeV2,DnsOverHttpsUpgrade \
-                --no-proxy-server \
-                --app="$portal_url" \
-                >/dev/null 2>&1 &
-              browser_pid=$!
-
-              if [ "$mode" = automatic ]; then
-                printf '%s\n' "$episode" > "$episode_file"
-              fi
-              log_event launched "$browser_pid"
-
-              attempts=0
-              while [ "$attempts" -lt 20 ]; do
-                observed_client=$(portal_client)
-                if [ -n "$observed_client" ]; then
-                  place_and_focus
-                  observed_title=$(printf '%s' "$observed_client" | jq -r '.title // empty')
-                  log_event placed-and-focused "$browser_pid" "$observed_title"
-                  exit 0
-                fi
-                attempts=$((attempts + 1))
-                sleep 0.1
-              done
-
-              log_event window-not-observed "$browser_pid"
-            '';
           };
 
           shelllistConfig = pkgs.stdenvNoCC.mkDerivation {

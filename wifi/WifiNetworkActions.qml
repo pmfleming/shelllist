@@ -111,7 +111,7 @@ Item {
         });
     }
     function openPortal(ap) {
-        portal.launchManual(ap, controller.currentWorkspaceId);
+        portal.launchManual(controller.currentWorkspaceId, false);
         return true;
     }
     function execute(actionId, ap) {
