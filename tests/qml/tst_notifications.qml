@@ -123,13 +123,13 @@ DaemonTestCase {
         compare(controller.selectedRecord.history_id, 101);
         compare(controller.selectedKey, "101:101000", "closing retains identity and selection");
     }
-    function test_dndToggleAndDurationCycle() {
+    function test_dndAcknowledgementAndRetry() {
         const state = makeState();
         state.backend = createTemporaryObject(fakeBackendComponent, state, {
             store: state
         });
         compare(state.dndDurationMinutes, 30);
-        state.cycleDndDuration();
+        state.setDndDuration(60);
         compare(state.dndDurationMinutes, 60);
         compare(state.backend.dndCalls, 0);
         const now = Date.now();
@@ -137,21 +137,67 @@ DaemonTestCase {
         verify(state.backend.requestedDnd);
         verify(state.backend.requestedUntil >= now + 3600000);
         verify(!state.notifications.dnd, "daemon owns acknowledged DND state");
-        state.notifications = {
-            available: true,
-            dnd: true
-        };
-        state.cycleDndDuration();
-        compare(state.dndDurationMinutes, 0);
-        verify(state.backend.requestedDnd);
+        verify(state.dndPending);
+        verify(!state.setDndEnabled(false), "one outstanding DND request");
+        state.finishDnd(null, "Disconnected");
+        compare(state.dndError, "Disconnected");
+        verify(!state.notifications.dnd);
+        state.retryDnd();
+        compare(state.backend.dndCalls, 2);
+        state.finishDnd({available: true, dnd: true}, "");
+        verify(state.notifications.dnd);
+        state.setDndDuration(0);
         compare(state.backend.requestedUntil, null);
-        state.cycleDndDuration();
-        compare(state.dndDurationMinutes, 30);
-        verify(state.backend.requestedUntil >= now + 1800000);
+        verify(state.dndPending);
+        state.finishDnd({available: true, dnd: true, dnd_until_unix_ms: null}, "");
         state.setDndEnabled(false);
         verify(!state.backend.requestedDnd);
         compare(state.backend.requestedUntil, null);
+    }
+    function test_searchSettingsWithoutSelectionAndDeferredDuration() {
+        const state = makeState();
+        state.notificationActive = {notifications: []};
+        state.history = [];
+        state.backend = createTemporaryObject(fakeBackendComponent, state, {store: state});
+        const controller = makeController(state);
+        controller.uiActive = true;
+        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
+        content.listItem.focusSearch();
+        keyClick(Qt.Key_Return, Qt.AltModifier);
+        tryVerify(() => controller.settingsOpen && controller.detailsOpen);
+        tryVerify(() => findChild(content, "notificationDndDuration") !== null);
+        verify(!findChild(content, "chooserPowerToggle").visible);
+        const duration = findChild(content, "notificationDndDuration");
+        content.detailsNavigation.focusContent(true);
+        keyClick(Qt.Key_Tab);
+        compare(content.detailsNavigation.currentTarget, duration);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Down);
+        compare(state.dndDurationMinutes, 30, "choice remains local while editing");
+        compare(state.backend.dndCalls, 0);
+        keyClick(Qt.Key_Escape);
         compare(state.dndDurationMinutes, 30);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Return);
+        compare(state.dndDurationMinutes, 60);
+        compare(state.backend.dndCalls, 0, "saving duration while off must not enable DND");
+        state.notificationActive = {notifications: [notification(12)]};
+        verify(controller.settingsOpen, "arrival must not replace settings");
+        keyClick(Qt.Key_Escape);
+        tryVerify(() => !controller.settingsOpen);
+        tryVerify(() => content.listItem.searchFocused);
+        compare(state.backend.dndCalls, 0);
+        const key = controller.selectedKey;
+        controller.openDetails();
+        mouseClick(findChild(content, "fieldTrailingAction"));
+        tryVerify(() => controller.settingsOpen);
+        compare(controller.viewMemory.key, "notifications::settings");
+        controller.closeDetails();
+        compare(controller.selectedKey, key);
+        verify(controller.detailsOpen, "return to previously expanded message");
+        content.destroy();
+        wait(0);
     }
     function test_refreshCatchesUpAcrossMissingPages() {
         const state = makeState();

@@ -16,9 +16,10 @@ Ui.ProviderChooserSurface {
         filterText: content.controller.filterText
         icon: ""
         placeholder: qsTr("Search loaded notifications…")
-        powered: content.controller.notificationState.notifications.dnd
-        powerEnabled: content.controller.notificationState.notifications.available
-        powerAccessory: NotificationDndDuration { notificationState: content.controller.notificationState }
+        powerVisible: false
+        searchActionIcon: "󰒓"
+        searchActionToolTip: qsTr("Notification settings")
+        onSearchActionRequested: content.controller.openSettings()
         refreshing: content.controller.notificationState.historyLoading
         status: content.controller.notificationState.lastError || content.controller.notificationState.historyError || content.controller.screenshotStatus || (content.controller.notificationState.draftCount ? content.controller.notificationState.draftCount + qsTr(" unsent reply drafts") : "")
         emptyText: !content.controller.notificationState.notifications.available ? qsTr("Notifications unavailable") : refreshing && !content.controller.notificationState.historyLoaded ? qsTr("Loading notifications…") : filterText.length ? qsTr("No matching notifications") : qsTr("No notifications")
@@ -28,7 +29,7 @@ Ui.ProviderChooserSurface {
         onLoadMoreChanged: if (loadMore) Qt.callLater(content.controller.notificationState.loadMoreHistory)
         listOptionsComponent: Row {
             width: parent.width
-            height: Ui.Theme.controlHeight
+            height: content.controller.returnSurface === "activity" ? Ui.Theme.controlHeight : 0
             spacing: Ui.Theme.spacingSm
             Ui.FlatIconButton {
                 width: height
@@ -37,15 +38,6 @@ Ui.ProviderChooserSurface {
                 icon: "󰁍"
                 accessibleName: qsTr("Back to agenda")
                 onClicked: content.controller.goBack()
-            }
-            Ui.FlatIconButton {
-                objectName: "notificationClearAll"
-                width: height
-                height: parent.height
-                icon: "󰎟"
-                accessibleName: qsTr("Dismiss all live notifications (retain history)")
-                enabled: content.controller.notificationState.activeNotifications.length > 0
-                onClicked: content.controller.notificationState.clearNotifications()
             }
         }
         rowDelegate: Ui.ResultRow {
@@ -64,10 +56,14 @@ Ui.ProviderChooserSurface {
     }
     detailsComponent: Ui.DetailFlickable {
         viewMemory: content.controller.viewMemory
-        memoryTab: "message"
+        memoryTab: content.controller.settingsOpen ? "settings" : "message"
+        NotificationSettings {
+            visible: content.controller.settingsOpen
+            notificationState: content.controller.notificationState
+        }
         NotificationHistoryRow {
             width: parent.width
-            visible: content.controller.hasSelection
+            visible: !content.controller.settingsOpen && content.controller.hasSelection
             controller: content.controller
             record: content.controller.selectedRecord || ({})
         }

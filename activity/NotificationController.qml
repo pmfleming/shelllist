@@ -14,6 +14,8 @@ Ui.ChooserController {
     property string returnSurface: ""
     property string pendingGroupKey: ""
     property string selectedKey: ""
+    property bool settingsOpen: false
+    property bool messageWasOpen: false
     property double nowMs: Date.now()
     property alias screenshotStatus: screenshotCapture.statusMessage
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
@@ -25,11 +27,11 @@ Ui.ChooserController {
     selectionModel: recordSelection
     viewMemory: Ui.ChooserMemory {
         controller: controller
-        key: controller.selectedKey ? "notifications::" + controller.selectedKey : ""
-        tab: "message"
-        tabs: ["message"]
+        key: controller.settingsOpen ? "notifications::settings" : controller.selectedKey ? "notifications::" + controller.selectedKey : ""
+        tab: controller.settingsOpen ? "settings" : "message"
+        tabs: ["message", "settings"]
         onRestoreRequested: function (open, tab) {
-            controller.detailsOpen = open && controller.hasSelection;
+            controller.detailsOpen = open && (controller.settingsOpen || controller.hasSelection);
         }
     }
     QtObject {
@@ -43,8 +45,10 @@ Ui.ChooserController {
     }
     function select(index): void {
         const record = visibleRecords[Math.max(0, Math.min(visibleRecords.length - 1, index))];
-        if (record)
+        if (record) {
+            settingsOpen = false;
             selectedKey = Ui.NotificationPresentation.recordKey(record);
+        }
     }
     function resultKeyAt(index: int): string {
         return visibleRecords[index] ? "notifications::" + Ui.NotificationPresentation.recordKey(visibleRecords[index]) : "";
@@ -52,7 +56,31 @@ Ui.ChooserController {
     function resultIndexForKey(key: string): int {
         return visibleRecords.findIndex(record => "notifications::" + Ui.NotificationPresentation.recordKey(record) === key);
     }
-    function setPower() { notificationState.setDndEnabled(!notificationState.notifications.dnd); }
+    function openSettings(): void {
+        navigationInteracted();
+        viewMemory.synchronize();
+        if (!settingsOpen)
+            messageWasOpen = detailsOpen;
+        settingsOpen = true;
+        detailsOpen = true;
+        viewMemory.synchronize();
+        focusDetailsRequested();
+    }
+    function closeDetails(): void {
+        viewMemory.synchronize();
+        if (settingsOpen) {
+            settingsOpen = false;
+            detailsOpen = messageWasOpen && hasSelection;
+            viewMemory.synchronize();
+            const generation = uiGeneration;
+            Qt.callLater(function () {
+                if (controller.uiActive && controller.uiGeneration === generation && !controller.settingsOpen)
+                    controller.focusSearchRequested();
+            });
+        } else {
+            detailsOpen = false;
+        }
+    }
     function primarySelected(): bool {
         openDetails();
         focusDetailsRequested();
@@ -65,6 +93,7 @@ Ui.ChooserController {
     // resolve to the unified list; a group link reveals its newest message.
     function openNotifications(key: string, requestedTab: string, origin: string): void {
         returnSurface = origin;
+        settingsOpen = false;
         filterText = "";
         pendingGroupKey = key;
         revealPendingGroup();
@@ -93,10 +122,10 @@ Ui.ChooserController {
         const oldIndex = records.currentKeys().indexOf(selectedKey);
         records.rows = visibleRecords.map(record => ({key: Ui.NotificationPresentation.recordKey(record), payload: record}));
         if (!selectedRecord) {
-            selectedKey = "";
-            select(Math.max(0, oldIndex));
+            const next = visibleRecords[Math.max(0, Math.min(visibleRecords.length - 1, oldIndex))];
+            selectedKey = next ? Ui.NotificationPresentation.recordKey(next) : "";
         }
-        if (!hasSelection)
+        if (!hasSelection && !settingsOpen)
             detailsOpen = false;
         revealPendingGroup();
     }

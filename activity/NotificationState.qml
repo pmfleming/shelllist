@@ -11,6 +11,9 @@ Item {
     // DND duration is presentation state; opening Activity does not activate it.
     // Zero means indefinite; enabled/disabled is a separate daemon-owned state.
     property int dndDurationMinutes: 30
+    property bool dndPending: false
+    property string dndError: ""
+    property var dndRequest: null
     property var notifications: ({
             available: false,
             count: 0,
@@ -128,10 +131,29 @@ Item {
         historyError = message;
     }
     function setDndEnabled(enabled: bool): bool {
+        if (dndPending)
+            return false;
+        dndRequest = {enabled: enabled, minutes: dndDurationMinutes};
+        dndError = "";
+        dndPending = true;
         return backend.setDnd(enabled, enabled && dndDurationMinutes > 0 ? Date.now() + dndDurationMinutes * 60000 : null);
     }
-    function cycleDndDuration(): void {
-        dndDurationMinutes = dndDurationMinutes === 30 ? 60 : dndDurationMinutes === 60 ? 0 : 30;
+    function finishDnd(state: var, error: string): void {
+        dndPending = false;
+        dndError = error;
+        if (!error && state)
+            notifications = state;
+    }
+    function retryDnd(): void {
+        if (dndRequest && !dndPending) {
+            dndDurationMinutes = dndRequest.minutes;
+            setDndEnabled(dndRequest.enabled);
+        }
+    }
+    function setDndDuration(minutes: int): void {
+        if (dndPending || ![0, 30, 60].includes(minutes) || minutes === dndDurationMinutes)
+            return;
+        dndDurationMinutes = minutes;
         if (notifications.dnd)
             setDndEnabled(true);
     }

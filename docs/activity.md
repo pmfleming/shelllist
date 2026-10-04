@@ -13,7 +13,7 @@ Time/weather, notification previews and DND controls are not part of Activity.
 Time & Weather and Notifications remain separate surfaces, reachable from the
 bar, their commands and global shortcuts.
 
-The bar bell opens Notifications; its right-click route opens Agenda. **Super+Shift+N** opens Notifications directly (installed by the Home Manager module when Hyprland is enabled; configurable with `programs.shelllist.notificationsShortcut`, or see the README binding). Changing the duration while DND is off only selects the next duration; while on it restarts DND with that duration. ∞ enables DND without an expiry.
+The bar bell opens Notifications; its right-click route opens Agenda. **Super+Shift+N** opens Notifications directly (installed by the Home Manager module when Hyprland is enabled; configurable with `programs.shelllist.notificationsShortcut`, or see the README binding). The search gear (Alt+Enter from search) opens Notification settings even when the list is empty. DND and its duration live there, not in a standalone power button. Saving duration while DND is off only selects the next duration; while on it restarts DND with that duration. “Until turned off” has no expiry. The switch and deadline show daemon-acknowledged state; failed writes offer retry.
 
 Alt+S captures the complete visible Activity panel through `clip-daemon` and copies the image to the clipboard and clipboard history, just as in every other Shelllist surface.
 

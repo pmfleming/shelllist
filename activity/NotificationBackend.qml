@@ -38,7 +38,7 @@ Io.DaemonBackend {
         return request("dnd", Api.methods.notificationsSetDnd, {
             enabled: enabled,
             until_unix_ms: until
-        }, {});
+        }, {dnd: true});
     }
     function dismiss(id: int): bool {
         return request("dismiss", Api.methods.notificationsDismiss, {
@@ -84,6 +84,8 @@ Io.DaemonBackend {
         requests = next;
         if (context.replyId !== undefined)
             store.finishReply(context.replyId, context.text, error);
+        if (context.dnd)
+            store.finishDnd(data.notifications, error);
         if (error) {
             store.lastError = error;
             if (context.history)
