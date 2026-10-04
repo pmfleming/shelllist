@@ -47,6 +47,8 @@ Column {
         }
         ActionButton {
             id: sendButton
+            accessKey: "R"
+            commandScope: reply
             width: reply.buttonWidth
             height: reply.controlHeight
             tone: "accent"

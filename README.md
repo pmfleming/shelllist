@@ -215,19 +215,19 @@ Common chooser keys:
 | Key | Action |
 | --- | --- |
 | Type | Edit the query; typing in results returns to its saved cursor (including J/K) |
-| `Up` / `Down` | Move selection; Up from the first result returns to search |
+| `Up` / `Down` | Move results without changing expansion; Up from the first result returns to search |
 | `Enter` | Run the primary action |
-| `Right` / `Left` | Open or close details |
+| `Right` / `Left` | Open or close details; Right keeps focus in results |
 | `Ctrl+Tab` | Cycle detail tabs |
 | `Ctrl+Alt+Left/Right` | Switch Shelllist surface |
 | `F5` | Refresh the current surface |
 | `Esc` | Close the current modal, details, or popover |
 
-Surface-specific additions include `Shift+Enter` for a new application instance; `F6`–`F8` for hidden-network, security, and IP settings; and Clipboard copy/paste/delete combinations. There is no F1/contextual-help overlay, hover tooltip, or automatic action label. Question marks remain ordinary search text. Shared controls and result rows use the same immediate rounded tonal highlight for mouse and keyboard focus, without an extra rectangular focus ring; decorative animation does not delay focus feedback.
+Surface-specific additions include `Shift+Enter` for a new application instance; `F6`–`F8` for hidden-network, security, and IP settings; and Clipboard copy/paste/delete combinations. There is no F1/contextual-help overlay, hover tooltip, or automatic action label. Question marks remain ordinary search text. Shared controls use immediate rounded tonal feedback, with a stronger accent edge during field editing; decorative animation does not delay focus feedback.
 
-Shared chooser details contain `Tab` / `Shift+Tab` within the current tab's content and wrap at either end. Headers are excluded; expanded detail actions use `Alt+1`…`Alt+9`. Enter starts editing (Right remains an alias), and native arrows edit; Tab returns to browsing the next control. Escape closes a menu, then leaves editing, then returns to results. `Ctrl+Tab` / `Ctrl+Shift+Tab` change detail tabs. Required-input dialogs retain conventional, contained Tab traversal. `Alt+Enter` in search invokes its trailing action; `Alt+S` copies a screenshot of the current view to the clipboard in every surface. See the [keyboard workflow](docs/chooser-keyboard-workflow.md) for scope and remaining work.
+Tab enters expanded fields. `Tab` / `Shift+Tab` traverse **editable controls only**, wrapping at either end; action buttons use `Alt+letter` (Alt+J opens additional content actions). Enter starts editing or immediately toggles an on/off switch. While editing, arrows are native, **Enter saves**, **Escape discards**, and **Tab saves and continues editing the next field**. Switches reached by Tab are never activated automatically. Changes stay local until save; explicit volume/brightness-style preview sliders roll back on Escape. Only the editable portion is highlighted, subtly while browsing and more strongly while editing. `Ctrl+Tab` / `Ctrl+Shift+Tab` change detail pages. Required-input dialogs retain conventional contained traversal. `Alt+Enter` invokes search's trailing action; `Alt+S` captures the view. The [interaction contract](docs/chooser-keyboard-workflow.md) is mandatory for every current and future panel.
 
-Applications and Bluetooth device details retain per-result open/tab/scroll/editor locations until process exit. Returning to an inspected result restores its view without stealing list focus; Right enters its remembered ordinary location. Reopening Applications or Bluetooth also restores ordinary region/editor focus, caret/selection and the keyed result viewport, without reopening menus or sensitive prompts. See [session memory](docs/chooser-session-memory.md) for safety and capability fallbacks.
+Choosers retain per-result tab/scroll/field locations until process exit. Returning to a result restores those locations without stealing list focus or changing the surface's expanded/collapsed mode; Right expands and Tab enters fields. Reopening Applications or Bluetooth also restores ordinary region/editor focus, caret/selection and the keyed result viewport, without reopening menus or sensitive prompts. See [session memory](docs/chooser-session-memory.md) for safety and capability fallbacks.
 
 The [Material Expressive design decisions](docs/proposals/material-expressive.md) distinguish delivered slices from the target. Shared navigation/memory, independent Bluetooth adapter records, production assets, dedicated desktop lists and the bar prototype are implemented. Arbitrary custom focus targets, prototype approval and live compositor/accessibility/hardware acceptance remain separate.
 

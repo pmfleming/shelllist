@@ -6,6 +6,25 @@ import QtQuick.Controls as Controls
 Controls.Slider {
     id: slider
     property bool browseFocused: false
+    // Only continuous preview settings (volume/brightness) opt in.
+    property alias livePreview: transaction.livePreview
+    readonly property alias editSession: transaction
+    FieldEditSession {
+        id: transaction
+        owner: slider
+        value: slider.value
+        onRestoreRequested: function (value) { slider.value = value; }
+        onPublishRequested: function (value) { slider.edited(value); }
+        onFinished: function (saved) { if (saved || livePreview) slider.editingFinished(); }
+    }
+    function publishEdit(): void {
+        if (!transaction.active || transaction.livePreview)
+            edited(value);
+    }
+    function finishPointerEdit(): void {
+        if (!transaction.active)
+            editingFinished();
+    }
 
     signal edited(real value)
     signal editingFinished
@@ -14,8 +33,8 @@ Controls.Slider {
         if (!enabled || value === boundary)
             return;
         value = boundary;
-        edited(value);
-        editingFinished();
+        publishEdit();
+        finishPointerEdit();
     }
 
     implicitWidth: horizontal ? 200 : 44
@@ -24,9 +43,9 @@ Controls.Slider {
     live: true
     snapMode: Controls.Slider.SnapAlways
     activeFocusOnTab: enabled
-    onMoved: edited(value)
+    onMoved: publishEdit()
     onPressedChanged: if (!pressed)
-        editingFinished()
+        finishPointerEdit()
     Keys.onPressed: function (event) {
         if (event.key === Qt.Key_Home || event.key === Qt.Key_End) {
             moveToBoundary(event.key === Qt.Key_Home ? from : to);
@@ -104,6 +123,7 @@ Controls.Slider {
 
     FocusRing {
         active: slider.activeFocus || slider.browseFocused
+        editing: slider.editSession.active
         cornerRadius: Theme.pressedCornerRadius
     }
 }

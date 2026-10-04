@@ -42,6 +42,7 @@ RowLayout {
             icon: modelData.icon || ""
             iconOnly: !toolbar.showLabels && icon.length > 0
             hotkey: modelData.shortcut || ""
+            accessKey: modelData.accessKey || ""
             toolTip: (modelData.metadata || {}).toolTip || ""
             tone: (modelData.presentation || {}).tone || "normal"
             enabled: modelData.enabled !== false

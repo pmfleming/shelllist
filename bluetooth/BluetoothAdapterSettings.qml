@@ -93,6 +93,7 @@ ColumnLayout {
             Layout.fillWidth: true
             Ui.ActionButton {
                 objectName: "retryAdapterSettings"
+                accessKey: "R"
                 Layout.fillWidth: true
                 Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: qsTr("Retry save")
@@ -101,6 +102,7 @@ ColumnLayout {
             }
             Ui.ActionButton {
                 objectName: "discardAdapterSettings"
+                accessKey: "X"
                 Layout.fillWidth: true
                 Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: qsTr("Discard drafts")

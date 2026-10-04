@@ -322,6 +322,7 @@ ColumnLayout {
                         delegate: Ui.ActionButton {
                             required property var modelData
                             objectName: "displayPlace-" + modelData.side
+                            accessKey: ({left: "L", above: "U", below: "D", right: "R"})[modelData.side]
                             Layout.fillWidth: true
                             Layout.preferredWidth: 1
                             icon: modelData.icon

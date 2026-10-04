@@ -103,8 +103,17 @@ Item {
         id: detailsNavigation
         contentItem: layout.keyboardWorkflow ? layout.detailsItem : null
         viewMemory: layout.keyboardWorkflow ? layout.controller.viewMemory : null
-        restorationAllowed: layout.controller.uiActive && !layout.controller.uiSuspending && layout.navigationAllowed
+        restorationAllowed: layout.controller.uiActive && !layout.controller.uiSuspending && layout.navigationAllowed && !layout.controller.navigationBlocked
         onResultContextChanged: layout.focusList()
+        onResultMoveRequested: function (delta) {
+            if (!layout.navigationAllowed || layout.controller.navigationBlocked)
+                return;
+            layout.focusList();
+            if (delta < 0 && layout.controller.selectionAtStart())
+                layout.controller.focusSearchRequested();
+            else
+                layout.controller.moveSelection(delta);
+        }
         onExitRequested: {
             layout.controller.closeDetails();
             if (!layout.controller.detailsOpen && layout.navigationAllowed)

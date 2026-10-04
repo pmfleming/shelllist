@@ -38,16 +38,20 @@ already-open development shell after changing `flake.nix`.
 - `tst_material_fields.qml` checks native editing/read-only behavior, masking and
   guarded embedded actions, immediate focus/error roles, hover-independent menu
   navigation, acknowledged selection, Escape cancellation and disabled guards.
+- `tst_field_interaction.qml` enforces the mandatory panel interaction contract:
+  field-local save/discard, forward/reverse edit-mode wrapping, native editor
+  arrows versus result browsing, switch arrival without activation, two-option
+  choice editing, pointer transactions, preview rollback and editable-only paint.
 - `tst_chooser_keyboard.qml` exercises saved-cursor result typing, contained wrapping
   Tab/Shift+Tab excluding extra information while retaining additional controls,
   forward/reverse Ctrl+Tab, Enter-to-edit, guarded Alt+letter header
-  shortcuts, editor-to-browse traversal, native menu Escape, pending editor
-  ownership, actual Applications settings, read-only scrolling, removed editors
+  shortcuts, save-and-continue traversal, dropdown save/discard, acknowledgement
+  guards, actual Applications settings, read-only scrolling, removed editors
   and modal focus containment/restoration, with decorative animations enabled.
   Bluetooth recovery tests also cover its actual adapter-settings keyboard
   journey and clearing/fencing sensitive prompts on whole-surface closure.
-  The suite now has 218 behavioral cases (300 passes with hooks); the inventory
-  below is the completed pruning checkpoint, not a permanent cap on feature tests.
+  The inventory below is the completed pruning checkpoint, not a permanent cap
+  on feature tests; use the current runner totals for the expanded suite.
 - `tst_chooser_geometry.qml` covers anchored expansion, work-area bounds and
   fallback, stable frame/list/text/control sizes, minimum and emergency canvases,
   focused-delegate query/guard/detail routing, keyboard overflow revelation and

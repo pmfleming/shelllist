@@ -116,6 +116,7 @@ Ui.DetailColumnCard {
 
     Ui.ActionButton {
         objectName: "batteryAutomationResume"
+        accessKey: "A"
         Layout.fillWidth: true
         visible: pane.controller.batteryAutomation.status === "paused"
         label: qsTr("Resume automatic switching")

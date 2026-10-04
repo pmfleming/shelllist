@@ -101,8 +101,9 @@ proof that mirroring worked.
 
 Select the laptop screen, including when it is off, and open **Settings → When
 docked**. Choose **Keep laptop screen on** or **Turn off automatically** when an
-external display is available. This persistent preference is labelled **Saved
-automatically · no preview needed**; the displayed choice changes only after daemon
+external display is available. Enter edits the preference; Enter/Tab submits it
+without a layout preview, and Escape discards it. The editing highlight shows a
+local choice; outside editing the displayed value changes only after daemon
 acknowledgement. A failed save leaves the previous choice selected and reports the
 error so the choice can be retried. This monitor-specific preference stays here rather than in global Focus settings.
 
@@ -137,10 +138,12 @@ explanation. Raw compositor keys and acknowledged values appear only in
 **Diagnostics**, alongside the active monitor and focused window's monitor.
 This telemetry makes it clear when pointer-selected monitor and keyboard-focused
 window differ. Back/Escape returns from a category or Diagnostics to Focus before
-closing the details pane; native editor/menu Escape takes precedence. Category
-navigation retains numeric drafts and per-page focus/scroll memory.
-These settings apply to **all** monitors. Choices save immediately after daemon
-verification, not through layout Preview. Numeric values require Enter or Apply.
+closing the details pane; editor Escape first discards the current field edit.
+Category navigation retains per-page focus/scroll memory, not uncommitted edits.
+These settings apply to **all** monitors. Choices and numbers use the shared
+Enter/Tab save and Escape discard contract, not layout Preview; switches toggle
+immediately on Enter. Alt+P/K/A/C opens Pointer/Keyboard/Applications/Cursor,
+Alt+D opens Diagnostics, and Alt+H shows help for the current field.
 Only reported compositor capabilities are editable; unsupported options are
 labelled unavailable. Controls are locked during layout drafts/trials or loss of
 transport, and a failed save keeps the acknowledged choice visible for retry.

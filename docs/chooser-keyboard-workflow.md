@@ -1,146 +1,157 @@
-# Chooser keyboard workflow
+# Shelllist interaction contract
 
-This is the first step-3 slice of the [Material Expressive plan](proposals/material-expressive.md).
-Applications, Bluetooth, Wi-Fi, Clipboard, Displays, Time & Weather, Notifications,
-Audio, Media and Tray opt into the shared region/browse/edit boundary. Notifications uses groups as
-results and exposes messages/replies in its explicit inspector. Battery and Activity
-use the single-panel adapter (Activity keeps Tab within its active overview/details content). Subsequent step-4
-slices supply [anchored geometry](chooser-geometry.md) and
-[session memory](chooser-session-memory.md): per-result or computer-wide
-presentation and ordinary invocation focus, without replaying effects.
+**Required for every current and future panel.** This document is the normative
+search/list/field interaction model, superseding older keyboard decisions in
+proposals and reviews. Shared implementation lives in `qml/Shelllist/Ui/`.
+Applications, Bluetooth, Wi-Fi, Clipboard, Displays, Time & Weather,
+Notifications, Audio, Media and Tray use `ProviderChooserSurface`; Battery and
+Activity use `PanelSurface`. Domain-specific actions do not override field keys.
 
-## Current keys
+## Search and results
 
-- Search is a native text editor. Left/Right move its cursor; Down enters the
-  first result. Up from the first result returns to search.
-- Printable keys in results, including J/K and spaces, focus search and insert
-  at its retained cursor/selection. They no longer invoke result navigation or
-  plain-letter detail actions. Command chords remain shortcuts.
-- Enter in results runs the primary action; Right explicitly opens and enters
-  details. First-time selection is list-only; returning to an inspected result
-  restores its remembered view without stealing focus. Right can then resume its
-  remembered ordinary editor, while region Tab enters browse mode.
-- Outside details, Tab moves between search/results and into already-open
-  details; it never opens details implicitly or changes the result selection.
-- Once in details, Tab/Shift+Tab cycle enabled content controls in the current
-  tab, wrapping last → first / first → last. They leave editing in browse mode,
-  without undoing drafts or settings. Header buttons, tab selectors and read-only
-  extra-information sections are excluded. Extra information is always shown;
-  there are no expand/collapse buttons. Editable settings in additional sections
-  remain keyboard-accessible.
-- Enter enters the selected editor; Right remains an alias. Native arrows then
-  edit normally. Up/Down also browse without changing settings. Enter/Space
-  activate a browsed action button; Space does not toggle a browsed setting.
-  Pointer input can edit directly; hover never moves the browse cursor.
-- Detail pages also provide a read-only scrolling stop: Up/Down and PageUp/
-  PageDown scroll charts/information. Browse targets are revealed in their
-  containing scroll view. Tab selectors are excluded from content traversal.
-- Ctrl+Tab / Ctrl+Shift+Tab change detail tabs forward/backward and restore content browse focus when invoked
-  from details, including asynchronously loaded pages. Invoking it from the
-  result region does not steal result focus.
-- Escape closes a native menu first, then leaves its editor, then closes details
-  and restores results, then dismisses the surface. Left backs out only while
-  browsing; text/slider arrows remain native inside editors. Leaving an editor
-  does not undo ordinary settings. Domain acknowledgement, debounce and retry
-  policies are unchanged.
+| Focus | Key | Required behavior |
+| --- | --- | --- |
+| Search | Left / Right | Native cursor/selection movement |
+| Search | Up | Stay in search; do not change result selection |
+| Search | Down | Focus/select the first result |
+| Results | Up / Down | Previous/next result; keep expanded/collapsed mode unchanged |
+| First result | Up | Return to search |
+| Results | Right | Expand details **without transferring focus** |
+| Results | Left | Collapse details |
+| Results | Enter | Existing domain primary action |
+| Results | Printable text | Focus search and insert at its retained cursor/selection |
+| Results, details open | Tab | Enter field browsing, not editing |
 
-Surface header actions use explicit Alt+letter shortcuts (for example Connect C,
-Disconnect D, Forget F). A single right-aligned row below the title/status shows
-a larger labelled primary and compact secondary commands. The same row is used
-by custom panel headers, including Activity. Narrow rows move trailing secondary
-commands into More (Alt+M); those commands have no header chord while overflowed.
-The menu supports arrows/Tab, Enter/Space and Escape, skips disabled entries, and
-restores prior focus. Numeric header shortcuts are removed. The
-[full action/key map](proposals/surface-action-row.md) reserves S for screenshots.
-Disabled actions retain their letter but cannot execute;
-closed inspectors, native menus and required-input modals block these shortcuts.
-They do not move focus, and their accessible descriptions expose the shortcut.
-Other header routes remain: F5 refreshes, Alt+Enter in search invokes its trailing
-action, and Alt+S copies a screenshot of the complete current view to the clipboard
-in every Shelllist surface. Screenshot buttons are not shown.
-Activity's Today action uses Ctrl+T; Escape returns to its overview. Bluetooth radio
-power and list options remain reachable in its adapter settings, including
-when the device list is empty.
+Outside details, Tab/Shift+Tab cycle the available search/results/details regions.
+They never open details or select a different result. Within details, traversal
+is contained. Expansion belongs to the **surface**, not each result. Per-result
+memory can restore tabs, scroll and field locations, but cannot open/close details
+on result movement. Missing results may close unavailable details safely.
 
-The owner-approved Material roadmap adds explicit modifier-held hints: hold Alt
-for 250ms to show letter badges on the current header actions; hold Ctrl for
-250ms to show Ctrl+Tab at the existing tab bar (Ctrl+Shift+Tab while Shift is held).
-Disabled header actions keep their letter. Release, focus/window loss, native
-menus, blocked navigation or surface deactivation clear the hints immediately.
-Ctrl+Alt/AltGr does not reveal them. Duplicate or invalid action letters fail
-closed rather than being reassigned. Hints, dispatch and accessible descriptions
-use the same displayed-button mapping. Badges are decorative, take no focus and
-never appear on hover, focus or first open. No F1 or general help overlay is added.
+## Field browsing
 
-## Shared boundaries
+- Only visible, enabled, editable controls are Tab stops. Read-only text, labels,
+  headers, tab selectors and action buttons are excluded. Composite controls
+  (e.g. a labeled slider) are one stop.
+- Tab goes forward; Shift+Tab goes backward. Both wrap at either end.
+- Up/Down select the previous/next **list result**, retaining open details and
+  returning focus to the result list. They never traverse fields. In a panel
+  without results, they do nothing while browsing.
+- Enter starts editing the highlighted field. **Right is not an edit alias.**
+- Enter on an on/off switch toggles immediately, remaining in browse mode.
+  A two-option segmented selector is **not** a switch: it still requires editing
+  and save/discard.
+- Left or Escape leaves details while browsing. Domain back-navigation (such as
+  a Displays subpage) still takes precedence over closing its parent page.
+- PageUp/PageDown scroll a read-only page; Up/Down remain result navigation.
+  Pages without editable controls have a non-highlighted scrolling fallback.
 
-The subsequent geometry slice also routes native focused result delegates through
-`ResultNavigation`, just like the list view. Their old local key handlers could
-swallow printable spaces, bypass blocked-operation guards or open details without
-transferring browse focus. Native delegate regressions now cover that boundary.
+## Editing transactions
 
-`Ui.DetailsNavigation` is a Qt-only focus scope around the existing details
-loader. It discovers visible shared input/action boundaries, treats composite
-inputs as one browse stop, and excludes headers/tab selectors from the content
-sequence. A page with no enabled controls retains a scrolling stop. The separate
-browse cursor uses the same immediate rounded tonal highlight as native keyboard
-or mouse focus, without an extra rectangular outline; native edit focus and
-caret feedback stay with the actual input. Controls
-are not disabled merely because the user is browsing.
+| Key | Required behavior |
+| --- | --- |
+| Arrows | Native editor behavior: cursor movement, slider adjustment, option selection |
+| Enter | Save this field and return to browsing it |
+| Escape | Discard this field's changes and return to browsing it |
+| Tab | Save, move forward, and enter the next editor |
+| Shift+Tab | Save, move backward, and enter the previous editor |
 
-Busy inputs can lose native Qt focus when their owner disables them. The scope
-retains editor ownership and its tonal highlight until the user explicitly
-leaves, rather than letting the next Escape accidentally dismiss details.
-Removed/hidden editors fall back to content without dispatching an edit. New
-content never pulls focus out of another region. The subsequent session-memory
-slice remembers ordinary locations by stable control ID, independently of this
-live editor ownership. Invocation restoration now resumes the ordinary region and
-valid editor/caret, while per-result selection still leaves results/search focused.
-New navigation and activation generations fence delayed restoration; Bluetooth
-waits for its initial refresh before resuming an editor.
+Forward/reverse traversal wraps in edit mode too. Arriving at a switch highlights
+it **without toggling it** and returns to browsing. Actions are never traversal
+stops. Shift+Enter remains available for a newline in multiline editors.
 
-`Ui.ModalFrame` traps conventional forward/reverse Tab among its visible,
-enabled inputs/actions and restores valid preceding focus on hide. Native
-popup focus is outside that trap. Required-input prompts focus their input;
-input-free confirmations focus an action. Long dialog content scrolls and reveals
-focused controls; title/instructions are not elided, and the frame exposes its
-dialog role/name. Surface-level region shortcuts are disabled while the domain
-reports a modal prompt.
+Changes remain **field-local until Enter/Tab**. Typing, native option selection,
+slider movement, blur, tab/category changes and surface closure must not dispatch
+a deferred field's setting write. Leaving via a route other than save discards
+the uncommitted field edit. Already submitted operations and domain failure/retry
+state are not undone. A save is a request, not an acknowledgement: existing daemon
+validation, capability guards, errors and retry mechanisms remain authoritative.
 
-Bluetooth surface closure now clears all queued pairing credentials and rejects
-unsubmitted response-required prompts with credential-free, request-specific
-calls. Already-submitted responses retain their original identity and are not
-contradicted or duplicated. Closed request IDs are suppressed for the process
-lifetime, so late events, failed responses and recovery snapshots cannot reopen
-those sensitive prompts. A new request ID can still prompt normally. Cancellation
-is best-effort when the transport is unavailable; locally retained credentials
-are cleared regardless. Display-only prompts have no response to reject.
+The explicit exception is a continuous preview control such as volume or
+brightness: set `livePreview: true` on `ValueSlider`/`LabeledValueSlider`.
+Adjustments publish live, Enter/Tab retain the value, and Escape publishes the
+value captured at edit entry to restore it. Other sliders default to deferred
+save, including battery thresholds and Bluetooth timeouts.
 
-## Validation and limits
+Pointer entry into a shared field uses the same transaction as keyboard entry.
+On/off switches and explicit action buttons remain immediately actionable.
+A dropdown's open menu belongs to its field: Enter/Tab saves the highlighted
+choice; Escape closes it and discards that edit. It does not add an extra
+Escape-to-stop-editing step.
 
-`tst_chooser_keyboard.qml` exercises actual Qt key delivery, saved query cursor,
-contained forward/reverse Tab, Enter-to-edit, guarded header shortcuts, busy acknowledgement, nested menu
-Escape, asynchronous Applications tabs/settings, removed editors, read-only
-scrolling, and modal focus containment/restoration. It runs with decorative
-animations enabled. `tst_bluetooth_recovery.qml` adds the real adapter-settings
-journey and sensitive-close/late-response regressions; existing domain recovery
-cases remain.
+## Highlighting
 
-The original slice passed strict lint, **127 behavioral cases / 199 Qt passes including hooks**, runtime
-smoke and the full sibling-aware `local-build.py check . --keep-going
---print-build-logs` gate pass. Logs are `/tmp/shelllist-keyboard-validation.log`
-and `/tmp/shelllist-keyboard-full-check.log`. The sandbox still prints its
-pre-existing Fontconfig default-config diagnostic (also present in the previous
-field-slice gate); there are no QML engine warnings or failing/skipped Qt cases.
+Only the editable portion is highlighted: input box, slider, selected segment or
+switch—not the setting's label, explanatory text, row or card. Browsing has a
+subtle tonal highlight. Editing has a stronger tonal highlight and accent edge,
+plus native caret/selection feedback. Feedback is immediate and never delayed by
+animation. `ToggleRow.focusSurface` is its switch, not the containing row.
 
-The contained-Tab/tonal-focus follow-up adds header/modality guards, reverse
-Ctrl+Tab, editor-to-browse Tab, mouse/keyboard paint parity and circular workspace
-highlight tests. Its current full-suite count is recorded in `tests/README.md`.
+## Commands, tabs and exceptions
 
-Hardware IME, screen-reader and live compositor acceptance remain outstanding.
-Later slices extend region navigation and presentation/invocation memory across
-the registered domains, including independent Bluetooth adapter records and the
-new desktop lists. Production assets and the bar prototype are now delivered;
-arbitrary unnamed custom controls still fall back safely. See the proposal's
-current ledger and [bar acceptance limits](material-bar.md). No live service
-deployment is part of these tests.
+- Action buttons use **Alt+letter**, not Tab. `ActionControl.accessKey` defines a
+  command; `commandScope` can limit a repeated command to the current field/row
+  (e.g. Alt+H for its help). Duplicate active letters fail closed.
+- Alt+J opens the content-action menu for unassigned/repeated commands, such as
+  arbitrary application desktop actions and per-window commands. This keeps
+  unbounded action lists keyboard-accessible without putting them in field Tab
+  order. Prefer explicit letters for common commands.
+- Alt+M opens the existing header overflow menu. Alt+S takes a screenshot.
+  J, M and S are reserved for these purposes. Command menus use conventional
+  arrows/Tab, Enter/Space and Escape and restore preceding focus on close.
+- Ctrl+Tab / Ctrl+Shift+Tab change detail pages, discarding any uncommitted field
+  edit and entering browsing on the new page. They do not steal result focus.
+- F5 refreshes where supported. Alt+Enter invokes search's trailing action.
+- Required-input modal dialogs keep conventional contained native Tab traversal
+  and their explicit submit/cancel behavior. They are not list/detail editors.
+  While a modal or command menu owns input, underlying field/command shortcuts
+  must not run. Sensitive inputs never enter presentation memory.
+
+Header modifier-held hints remain: holding Alt shows command badges after
+250ms; holding Ctrl shows the detail-tab chord. AltGr does not show hints.
+There is no F1 overlay, hover tooltip or plain-letter action shortcut.
+
+## Implementing or extending a panel
+
+1. Use `ProviderChooserSurface` (shared keyboard workflow is on by default) or
+   `PanelSurface`. Do not add local Up/Down field traversal or Right-to-edit.
+2. Use shared `TextField`, `TextEditor`, `DropDownList`, `SegmentedControl`,
+   `ValueSlider`/`LabeledValueSlider`, `ToggleRow` and `ToggleSwitch` controls.
+   Assign stable `objectName`/`focusKey` identities for ordinary restoration.
+3. For deferred settings, consume **`edited` / `selected` / `editingFinished`**,
+   not `textChanged`, `valueChanged`, native `activated`, or focus loss. These
+   public edit signals publish only on save inside a navigation boundary.
+   `FieldEditSession` owns only the temporary original/draft transaction; it
+   never stores values in presentation memory. Raw controls outside a panel
+   boundary retain their native behavior (including required-input dialogs).
+4. Multiline/lease-owning domains use `TextEditor.edited` and
+   `editFinished(saved)` to submit/cancel their domain session. Clipboard is the
+   reference adapter; it must not debounce-save per-keystroke drafts.
+5. Keep acknowledged values distinct from choice drafts. Do not mark a proposed
+   backend setting acknowledged just because Enter was pressed. Preserve domain
+   validation and in-flight guards.
+6. Give commands explicit, non-conflicting `accessKey` letters or expose them
+   through the shared content menu. Use `commandScope` for field-specific help
+   or repeated row actions. Never make commands ordinary field stops.
+7. Custom editable controls must integrate a `FieldEditSession`, publish only
+   at the appropriate transaction boundary, and join `DetailsNavigation`'s
+   typed editable/session dispatch. Add behavioral tests before adding a new
+   control family; do not implement a parallel keyboard model in a panel.
+8. Exercise both forward/reverse wrap, on/off arrival, local-save/discard,
+   live-preview rollback, list movement, disabled/removed editors and command
+   modality. Update this contract when an intentional model change is approved.
+
+See [session memory](chooser-session-memory.md) for focus/caret restoration and
+[geometry](chooser-geometry.md) for revealing controls without moving the list.
+Neither restoration nor a browse highlight may activate a setting or command.
+
+## Validation
+
+`tests/qml/tst_field_interaction.qml` checks actual key delivery for transactions,
+wrapping, choice drafts, two-option selectors, live rollback, pointer entry and
+highlight boundaries. `tst_chooser_keyboard.qml`, `tst_chooser_memory.qml` and the
+domain suites cover navigation, asynchronous content, modal guards, native
+menus, ordinary restoration and real setting acknowledgement/recovery paths.
+Run `tests/run-qml-tests.sh` in the development environment. Strict lint is
+`tests/run-qmllint.sh`. Hardware IME, live compositor and screen-reader acceptance
+remain separate from offscreen tests.

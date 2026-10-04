@@ -74,6 +74,7 @@ DaemonTestCase {
     function test_profilesEnterEditingWithoutChangingPowerAndActionsComeFirst() {
         const panel = makePanel();
         const c = panel.controller;
+        c.uiActive = true;
         compare(findChild(panel, "powerSuspendCard").y, 0);
         verify(findChild(panel, "batteryLevelsCard").visible);
         const safety = findChild(panel, "criticalBatterySafety");
@@ -89,6 +90,8 @@ DaemonTestCase {
         verify(selector.activeFocus);
         compare(calls.length, 0, "entering a profile editor cannot change a setting");
         keyClick(Qt.Key_Right);
+        compare(calls.length, 0, "profile choice remains local until save");
+        keyClick(Qt.Key_Return);
         compare(calls.length, 1);
         compare(calls[0].method, "powerProfile.set");
         compare(calls[0].params.profile, "performance");

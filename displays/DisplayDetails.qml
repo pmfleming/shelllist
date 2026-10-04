@@ -9,7 +9,6 @@ Ui.ActionDetailsPane {
     required property DisplayController controller
     objectName: "displayDetails"
     readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
-    readonly property bool narrowDetails: width - leftMargin - rightMargin < 440
     chooserController: controller
     contentAvailable: true
     headerHeight: Math.max(56, Math.round(64 * uiScale))
@@ -21,17 +20,6 @@ Ui.ActionDetailsPane {
     actions: controller.globalSettingsOpen ? [] : controller.detailActions
     subtitleWeight: Ui.Theme.fontWeightMedium
     enabled: !controller.trial && !controller.discardPrompt && !controller.actionInFlight
-    Keys.onLeftPressed: function (event) {
-        if (event.modifiers !== Qt.NoModifier)
-            return;
-        controller.closeDetails();
-        event.accepted = true;
-    }
-    function focusNarrowDetails(): void {
-        if (narrowDetails && controller.uiActive)
-            backButton.forceActiveFocus();
-    }
-    Component.onCompleted: Qt.callLater(focusNarrowDetails)
 
     ColumnLayout {
         anchors.fill: parent
@@ -42,6 +30,7 @@ Ui.ActionDetailsPane {
             Ui.FlatIconButton {
                 id: backButton
                 objectName: "backToDisplayList"
+                accessKey: "B"
                 Layout.preferredWidth: Ui.Theme.controlHeight
                 Layout.preferredHeight: Ui.Theme.controlHeight
                 icon: "󰅁"
@@ -58,6 +47,7 @@ Ui.ActionDetailsPane {
             }
             Ui.FlatIconButton {
                 objectName: "reloadDisplayLayout"
+                accessKey: "X"
                 visible: !pane.controller.globalSettingsOpen
                 Layout.preferredWidth: Ui.Theme.controlHeight
                 Layout.preferredHeight: Ui.Theme.controlHeight

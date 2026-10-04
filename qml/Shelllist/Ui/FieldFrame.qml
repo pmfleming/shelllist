@@ -18,6 +18,7 @@ Rectangle {
     // One native field boundary plus the shared tonal focus state.
     FocusRing {
         active: frame.highlighted
+        editing: frame.focused
         cornerRadius: frame.radius
         ringColor: frame.invalid ? Theme.danger : Theme.accent
     }

@@ -85,6 +85,7 @@ Ui.DetailColumnCard {
             Layout.fillWidth: true
             Ui.ActionButton {
                 objectName: "useAudioOutput"
+                accessKey: "O"
                 Layout.fillWidth: true
                 Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: card.controller.selectedSink.is_default ? "Default output" : "Use as output"
@@ -94,6 +95,7 @@ Ui.DetailColumnCard {
             }
             Ui.ActionButton {
                 objectName: "useAudioInput"
+                accessKey: "I"
                 Layout.fillWidth: true
                 Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: card.controller.selectedSource.is_default ? "Default input" : "Use as input"

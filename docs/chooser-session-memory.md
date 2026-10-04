@@ -24,18 +24,19 @@ is not revealed against zero-height content. Explicit reveal commits scroll
 bookkeeping before moving, so a queued initial restore cannot undo it. New input
 and invocation/context cancellation still supersede pending restoration.
 
-- Each explicitly inspected result remembers details-open state, its valid tab,
-  and each tab's scroll offset and ordinary browse/editor location. Identity is
-  the provider-qualified `Result.key`, never a row index or display name.
-- Returning to an inspected result restores presentation **without moving focus
-  out of results/search**. A new result is list-only. Hover does not select.
-- **Right from results** enters the remembered location and can resume a valid
-  ordinary editor. Region Tab and tab changes enter browse mode instead.
+- Each inspected result remembers its valid tab and each tab's scroll offset
+  and ordinary browse/editor location. Identity is the provider-qualified
+  `Result.key`, never a row index or display name.
+- Returning to a result restores tabs/locations **without moving focus out of
+  results/search**. Expanded/collapsed mode belongs to the surface and remains
+  unchanged on result movement, including previously unseen results.
+- **Right from results** expands without entering fields. Tab enters browsing;
+  Enter then edits. See the mandatory [interaction contract](chooser-keyboard-workflow.md).
 - Ordinary text editors retain cursor and selection direction, not their values.
   Positions are clamped to the current text. Native selection changes are captured
   before a pointer result switch can replace the current identity.
-- Escape from an editor records browse mode. Explicitly closing details changes
-  only that result's remembered open state.
+- Escape discards the current field transaction and records browse mode.
+  Explicitly closing details changes the surface expansion state for all results.
 - Filtering, category/scope changes, reorder, refresh, temporary disappearance,
   reconnect and closure do not erase inspected-item records. A missing selection
   closes presentation without recording an explicit close. Selection continues
@@ -103,7 +104,9 @@ entering a remembered target reveals its current position.
 Neither cache stores text, password positions, control values, drafts, payloads,
 QObject references, operation IDs, IME preedit state or popup-open state. State
 is process-local and never written to disk. Native controls and domain-owned
-drafts remain responsible for editing, autosave, acknowledgement and recovery.
+drafts remain responsible for committed changes, acknowledgement and recovery.
+Uncommitted field transactions are discarded on closure; invocation restoration
+may resume editor focus but never restores unsaved field values or publishes edits.
 Focus restoration cannot activate a button, select a menu option or dispatch a
 setting change.
 

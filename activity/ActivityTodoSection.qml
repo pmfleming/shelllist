@@ -35,6 +35,7 @@ Column {
         }
         Ui.FlatIconButton {
             id: addButton
+            accessKey: "A"
             width: height
             height: parent.height
             icon: "+"
@@ -64,6 +65,8 @@ Column {
             }
             Ui.FlatIconButton {
                 id: deleteButton
+                accessKey: "D"
+                commandScope: todoRow
                 objectName: "todo::" + todoRow.modelData.id + "::delete"
                 width: height
                 height: parent.height

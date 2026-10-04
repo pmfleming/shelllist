@@ -225,14 +225,14 @@ immediately visible; only the chevron uses decorative spring motion.
 Qt ComboBox treats its delegate's `hovered` state as a request to move keyboard
 highlight. The custom delegate now observes hover through a passive
 `HoverHandler` instead, leaving activation to the native button. Merely passing
-the pointer over another option cannot redirect Enter. Qt still owns popup key
-navigation, scrolling, activation and Escape handling; this is not the future
-browse-versus-edit model or a rewrite of native option traversal.
+the pointer over another option cannot redirect Enter. Qt owns native option
+navigation and scrolling. In a panel, the shared [interaction contract](chooser-keyboard-workflow.md)
+wraps selection in a field transaction: Enter/Tab saves, Escape discards.
 
 Native `currentIndex` can represent a proposed choice before a daemon confirms
 it. The field label and selected-row semantics now derive from the owner's
-`value` through `selectedIndex`; the native keyboard candidate remains separate.
-Activation only emits intent and is guarded against disabled/unavailable/busy
+`value` through `selectedIndex` outside editing; an active edit displays its
+field-local draft. Saving emits intent and is guarded against disabled/unavailable/busy
 states. Synchronous owner updates still display immediately; pending/rejected
 requests do not masquerade as acknowledged values.
 

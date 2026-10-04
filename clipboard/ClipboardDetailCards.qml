@@ -32,6 +32,7 @@ Ui.DetailFlickable {
             Layout.fillWidth: true
             Ui.ActionButton {
                 objectName: "retryClipboardEdit"
+                accessKey: "R"
                 Layout.fillWidth: true
                 Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: qsTr("Retry save")
@@ -40,6 +41,7 @@ Ui.DetailFlickable {
             }
             Ui.ActionButton {
                 objectName: "discardClipboardEdit"
+                accessKey: "D"
                 Layout.fillWidth: true
                 Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: qsTr("Discard draft")
@@ -82,11 +84,19 @@ Ui.DetailFlickable {
                 focus = false
             onActiveFocusChanged: if (cards.directTextEdit)
                 cards.detailState.setEditorFocused(activeFocus)
-            onTextChanged: if (cards.detailState.editing && activeFocus) {
+            onEdited: function (value) {
                 if (cards.directTextEdit)
-                    cards.detailState.updateEditDraft(text);
+                    cards.detailState.updateEditDraft(value);
                 else
-                    cards.detailState.editDraft = text;
+                    cards.detailState.editDraft = value;
+            }
+            onEditFinished: function (saved) {
+                if (saved)
+                    cards.detailState.finishDirectEdit();
+                else if (cards.detailState.editError.length === 0)
+                    cards.detailState.cancelEdit();
+                else
+                    cards.detailState.setEditorFocused(false); // Keep a previously submitted failed draft.
             }
             wrapMode: TextEdit.Wrap
         }

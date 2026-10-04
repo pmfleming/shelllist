@@ -66,6 +66,7 @@ DaemonTestCase {
     function test_profileSelectionSupportsKeyboardAndAccessibility() {
         const panel = makePanel();
         const controller = panel.controller;
+        controller.uiActive = true;
         controller.applyPowerProfile({
             available: true,
             profile: "balanced",
@@ -126,6 +127,8 @@ DaemonTestCase {
         findChild(panel, "batteryDetailPage").revealItem(selector);
         wait(0);
         mouseClick(balanced);
+        compare(spy.count, 0, "pointer edits use the same transaction");
+        keyClick(Qt.Key_Return);
         compare(spy.count, 1);
         compare(controller.alertDraft.warning_profile, "balanced");
         verify(balanced.Accessible.checked);
@@ -133,8 +136,10 @@ DaemonTestCase {
         keyClick(Qt.Key_Right);
         compare(spy.count, 1, "keyboard skips unavailable Performance");
         keyClick(Qt.Key_Left);
-        compare(controller.alertDraft.warning_profile, "power-saver");
+        compare(controller.alertDraft.warning_profile, "balanced");
         verify(selector.activeFocus);
+        keyClick(Qt.Key_Return);
+        compare(controller.alertDraft.warning_profile, "power-saver");
         toggle.forceActiveFocus();
         keyClick(Qt.Key_Space);
         compare(controller.alertDraft.warning_profile, "keep-current");

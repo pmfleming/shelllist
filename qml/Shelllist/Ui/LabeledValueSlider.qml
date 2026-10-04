@@ -8,6 +8,8 @@ Item {
     implicitHeight: content.implicitHeight
 
     required property string label
+    readonly property alias editSession: slider.editSession
+    property alias livePreview: slider.livePreview
     property alias value: slider.value
     property alias browseFocused: slider.browseFocused
     property alias from: slider.from

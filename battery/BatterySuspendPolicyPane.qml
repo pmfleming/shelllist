@@ -242,6 +242,7 @@ Ui.DetailColumnCard {
 
     Ui.ActionButton {
         objectName: "criticalBatteryCancel"
+        accessKey: "C"
         Layout.fillWidth: true
         visible: ["countdown", "acting"].includes(pane.criticalState.phase)
         label: qsTr("Cancel critical-battery hibernation")
@@ -262,6 +263,7 @@ Ui.DetailColumnCard {
 
     Ui.ActionButton {
         objectName: "suspendPolicyRetry"
+        accessKey: "R"
         Layout.fillWidth: true
         visible: pane.controller.suspendPolicyError.length > 0 && pane.controller.suspendPolicyDirty
         label: qsTr("Retry settings")

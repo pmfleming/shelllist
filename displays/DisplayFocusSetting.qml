@@ -76,12 +76,12 @@ ColumnLayout {
                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                 maximumLength: 10
                 Accessible.name: setting.entry.title
-                Accessible.description: qsTr("Enter a value, then press Enter or Apply to save")
+                Accessible.description: qsTr("Enter to edit; Enter or Tab saves; Escape discards")
                 trailingActionIcon: "󰄬"
                 trailingActionToolTip: qsTr("Apply")
                 trailingActionEnabled: inputValid && Number(text) !== setting.observed
                 onEdited: function (value) { setting.numberDraft = value; }
-                onAccepted: save()
+                onEditingFinished: save()
                 onTrailingActionRequested: save()
                 function save(): void {
                     if (setting.editable && inputValid && Number(text) !== setting.observed)
@@ -91,6 +91,8 @@ ColumnLayout {
         }
         Ui.FlatIconButton {
             objectName: "focusHelp-" + setting.entry.key
+            accessKey: "H"
+            commandScope: setting
             Layout.preferredWidth: 40
             Layout.preferredHeight: 40
             icon: setting.helpOpen ? "expand_less" : "help_outline"

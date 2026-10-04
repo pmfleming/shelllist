@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Shelllist.Ui as Ui
 import "../../clipboard" as Clip
 
 DaemonTestCase {
@@ -27,6 +28,68 @@ DaemonTestCase {
         Clip.ClipboardDetails {
             uiScale: 1
         }
+    }
+    Component {
+        id: editorPanelFactory
+        Ui.PanelSurface {
+            id: panel
+            required property Clip.ClipboardController controller
+            chooserController: controller
+            width: 600
+            height: 800
+            Clip.ClipboardDetailCards {
+                anchors.fill: parent
+                controller: panel.controller
+            }
+        }
+    }
+    function test_keyboardEditLeaseSavesOnlyOnExplicitCommit_data() {
+        return [{tag: "save", save: true}, {tag: "discard", save: false}];
+    }
+    function test_keyboardEditLeaseSavesOnlyOnExplicitCommit(data) {
+        const controller = makeController();
+        const panel = createTemporaryObject(editorPanelFactory, testCase, {controller: controller});
+        views = views.concat([panel]);
+        panel.detailsNavigation.focusContent(true);
+        keyClick(Qt.Key_Return);
+        verify(controller.detailState.editBeginPending);
+        reply(controller, "edit-begin", {edit: {id: "keyboard-lease", value: "Original"}});
+        const editor = findChild(panel, "clipboardTextEditor");
+        verify(editor.activeFocus && !editor.readOnly);
+        calls = [];
+        keyClick(Qt.Key_End);
+        keyClick(Qt.Key_X);
+        compare(editor.text, "Originalx");
+        wait(900); // Longer than the domain's former per-keystroke debounce.
+        verify(!calls.some(call => call.id === "edit-commit"));
+        compare(controller.detailState.editDraft, "Original");
+        keyClick(data.save ? Qt.Key_Return : Qt.Key_Escape);
+        verify(panel.detailsNavigation.browsing);
+        if (data.save) {
+            verify(controller.detailState.saveInFlight);
+            compare(controller.detailState.committedDraft, "Originalx");
+        } else {
+            verify(!controller.detailState.editing);
+            compare(editor.text, "Original");
+            verify(!calls.some(call => call.id === "edit-commit"));
+        }
+    }
+    function test_escapePreservesPreviouslySubmittedFailedClipboardDraft() {
+        const controller = makeController();
+        failEdit(controller);
+        const panel = createTemporaryObject(editorPanelFactory, testCase, {controller: controller});
+        views = views.concat([panel]);
+        panel.detailsNavigation.focusContent(true);
+        keyClick(Qt.Key_Return);
+        const editor = findChild(panel, "clipboardTextEditor");
+        compare(editor.text, "Keep this draft");
+        keyClick(Qt.Key_End);
+        keyClick(Qt.Key_X);
+        keyClick(Qt.Key_Escape);
+        compare(editor.text, "Keep this draft");
+        compare(controller.detailState.editDraft, "Keep this draft");
+        verify(controller.detailState.editError.length > 0);
+        verify(controller.detailState.failedDrafts.first !== undefined);
     }
     function test_deleteSitsBesideDetailsArrowAndKeepsConfirmation() {
         const controller = makeController();

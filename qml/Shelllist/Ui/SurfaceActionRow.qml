@@ -53,7 +53,7 @@ Item {
     }
     function keyFor(action): string {
         const key = String(action.accessKey || "").trim().toUpperCase();
-        return /^[A-Z]$/.test(key) && key !== "S" && key !== "M" ? key : "";
+        return /^[A-Z]$/.test(key) && key !== "S" && key !== "M" && key !== "J" ? key : "";
     }
     function closePopup(): void { overflowMenu.close(); }
     onVisibleChanged: if (!visible) closePopup()

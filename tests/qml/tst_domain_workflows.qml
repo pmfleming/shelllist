@@ -73,7 +73,7 @@ DaemonTestCase {
         const owner = panel.chooserController;
         owner.restoreUiFocus();
         tryVerify(() => panel.detailsNavigation.browsing);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         const field = findChild(panel, "ordinary");
         tryVerify(() => field.inputActiveFocus);
         field.restoreSelection({anchor: 8, cursor: 2});
@@ -94,9 +94,9 @@ DaemonTestCase {
         const panel = createTemporaryObject(panelFactory, testCase);
         panel.chooserController.restoreUiFocus();
         tryVerify(() => panel.detailsNavigation.browsing);
-        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Tab);
         compare(panel.detailsNavigation.currentTarget.objectName, "multiline");
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         const editor = findChild(panel, "multiline");
         verify(editor.activeFocus);
         editor.cursorPosition = 4;
@@ -162,8 +162,10 @@ DaemonTestCase {
         field.focusInput(false);
         keyClick(Qt.Key_T);
         keyClick(Qt.Key_1);
-        compare(panel.controller.todoDraft, "t1");
+        compare(panel.controller.todoDraft, "", "typing remains field-local");
         compare(field.text, "t1");
+        keyClick(Qt.Key_Return);
+        compare(panel.controller.todoDraft, "t1");
         panel.controller.deactivateUi();
         compare(panel.controller.todoDraft, "t1");
     }

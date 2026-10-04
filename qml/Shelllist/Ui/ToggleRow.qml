@@ -17,7 +17,8 @@ ActionControl {
     implicitHeight: Math.max(56, labels.implicitHeight + 2 * Theme.spacingSm)
     Layout.minimumHeight: implicitHeight
     radius: Theme.controlRadius
-    color: area.pressed ? Theme.pressed : (area.containsMouse || highlighted ? Theme.hover : "transparent")
+    color: "transparent"
+    focusSurface: toggleFocus
     border.width: 0
     opacity: enabled && interactive ? 1.0 : Theme.disabledOpacity
     accessibleName: subtitle.length > 0 ? title + ". " + subtitle : title
@@ -55,14 +56,21 @@ ActionControl {
             }
         }
 
-        TogglePill {
-            Layout.preferredWidth: implicitWidth
-            Layout.preferredHeight: implicitHeight
-            Layout.alignment: Qt.AlignVCenter
-            checked: row.checked
-            pressed: row.enabled && row.interactive && (area.pressed || row.keyboardPressed)
-            checkedColor: row.tone === "danger" ? Theme.danger : (row.tone === "active" ? Theme.active : (row.tone === "warning" ? Theme.warning : Theme.accent))
-            handleColor: !checked ? Theme.controlBorder : (row.tone === "danger" ? Theme.dangerText : (row.tone === "active" ? Theme.activeText : (row.tone === "warning" ? Theme.warningText : Theme.accentText)))
+        Rectangle {
+            id: toggleFocus
+            Layout.preferredWidth: 64
+            Layout.preferredHeight: Theme.controlHeight
+            radius: height / 2
+            color: area.pressed ? Theme.pressed : (area.containsMouse ? Theme.hover : "transparent")
+            TogglePill {
+                anchors.centerIn: parent
+                width: implicitWidth
+                height: implicitHeight
+                checked: row.checked
+                pressed: row.enabled && row.interactive && (area.pressed || row.keyboardPressed)
+                checkedColor: row.tone === "danger" ? Theme.danger : (row.tone === "active" ? Theme.active : (row.tone === "warning" ? Theme.warning : Theme.accent))
+                handleColor: !checked ? Theme.controlBorder : (row.tone === "danger" ? Theme.dangerText : (row.tone === "active" ? Theme.activeText : (row.tone === "warning" ? Theme.warningText : Theme.accentText)))
+            }
         }
     }
 

@@ -37,6 +37,7 @@ ChooserSurface {
     }
     function changeTab(backwards: bool): void {
         chooserController.navigationInteracted();
+        navigation.finishEditor(false);
         chooserController.cycleDetailsTab(backwards);
         navigation.focusContent(true);
     }
@@ -53,6 +54,7 @@ ChooserSurface {
         contentItem: surface.navigationContent
         headerContentItem: body
         headerShortcutsEnabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked
+        restorationAllowed: surface.chooserController.uiActive && !surface.chooserController.uiSuspending && !surface.chooserController.navigationBlocked
         viewMemory: surface.chooserController.viewMemory
         onInteractionRequested: surface.pendingFocus = false
         onNativeFocusChanged: if (!applyingMemory) surface.pendingFocus = false
@@ -66,12 +68,12 @@ ChooserSurface {
     }
     Shortcut {
         sequence: "Tab"
-        enabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked && !navigation.popupOpen
+        enabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked && !navigation.commandMenuOpen
         onActivated: surface.cycleRegion(false)
     }
     Shortcut {
         sequence: "Shift+Tab"
-        enabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked && !navigation.popupOpen
+        enabled: surface.chooserController.uiActive && !surface.chooserController.navigationBlocked && !navigation.commandMenuOpen
         onActivated: surface.cycleRegion(true)
     }
     Connections {

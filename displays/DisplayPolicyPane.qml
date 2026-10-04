@@ -34,7 +34,7 @@ Ui.DetailColumnCard {
         value: (pane.controller.displayPolicyState.policy || {}).prefer_external ? "auto-off" : "keep-on"
         interactive: pane.controller.canSetPolicy
         Accessible.name: qsTr("Laptop screen when docked")
-        Accessible.description: qsTr("Saved automatically. The laptop screen returns if external displays disconnect.")
+        Accessible.description: qsTr("Enter or Tab saves; Escape discards. The laptop screen returns if external displays disconnect.")
         onSelected: function (value) {
             pane.controller.setPreferExternal(value === "auto-off");
             // ComboBox changes its index on activation; show the acknowledged
@@ -54,7 +54,7 @@ Ui.DetailColumnCard {
     Ui.ThemeText {
         objectName: "dockingSaveStatus"
         Layout.fillWidth: true
-        text: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : pane.controller.dirty || pane.controller.trial ? qsTr("Finish or discard layout changes before changing this preference.") : qsTr("All displays · saved automatically")
+        text: pane.controller.pendingAction === "policy" ? qsTr("Saving preference…") : pane.controller.dirty || pane.controller.trial ? qsTr("Finish or discard layout changes before changing this preference.") : qsTr("All displays · Enter or Tab saves; Escape discards")
         wrapMode: Text.Wrap
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeCaption

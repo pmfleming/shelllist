@@ -8,6 +8,18 @@ Rectangle {
     property Rectangle focusSurface: control
     property bool browseFocused: false
     readonly property bool highlighted: activeFocus || browseFocused
+    property string accessKey: ""
+    // Repeated commands (e.g. field help) can share a letter in disjoint scopes.
+    property Item commandScope: null
+    readonly property DetailsNavigation shortcutNavigation: owningNavigation(parent)
+    readonly property string surfaceShortcut: shortcutNavigation ? shortcutNavigation.shortcutFor(control) : ""
+    function owningNavigation(item: Item): DetailsNavigation {
+        while (item) {
+            if (item instanceof DetailsNavigation) return item as DetailsNavigation;
+            item = item.parent;
+        }
+        return null;
+    }
     property string accessibleName: ""
     property bool interactive: true
     property bool keyboardPressed: false

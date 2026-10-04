@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-// A browse cursor is separate from native editor focus. Only opted-in chooser
-// surfaces use this boundary; dialogs and native popups keep their own keys.
+// Shared panel contract: result arrows, editable-only Tab and field transactions.
+// See docs/chooser-keyboard-workflow.md. Required-input dialogs remain native.
 FocusScope {
     id: navigation
 
@@ -11,6 +11,9 @@ FocusScope {
     property Item headerContentItem: contentItem
     readonly property var actionRows: collectActionRows(headerContentItem)
     readonly property list<Item> headerButtons: actionRows.reduce((buttons, row) => buttons.concat(row.buttons), [])
+    readonly property list<Item> contentCommands: collectCommands(contentItem).filter(item => commandInScope(item))
+    readonly property list<Item> commandButtons: headerButtons.concat(contentCommands.filter(item => !!(item as ActionControl)?.accessKey))
+    readonly property bool commandMenuOpen: commandMenu.visible || actionRows.some(row => row.popupOpen)
     property ChooserMemory viewMemory: null
     property bool pendingMemory: false
     property bool resumeEditor: false
@@ -22,12 +25,13 @@ FocusScope {
     property Item currentTarget: null
     property bool awaitingContent: false
     property Item editorTarget: null
+    property bool finishingEditor: false
     readonly property DetailFlickable currentPage: pageForTarget(currentTarget)
     readonly property Item focusedTarget: targetForFocus(Window.window ? Window.window.activeFocusItem : null)
-    readonly property bool popupOpen: ((currentTarget as DropDownList)?.popup.visible ?? false) || actionRows.some(row => row.popupOpen)
+    readonly property bool popupOpen: ((currentTarget as DropDownList)?.popup.visible ?? false) || commandMenuOpen
     readonly property bool editing: editorTarget !== null && (activeFocus || popupOpen)
     readonly property bool browsing: browseCursor.activeFocus && !editing
-    readonly property Item highlightedControl: currentTarget instanceof ActionControl || currentTarget instanceof IconTile || editable(currentTarget) ? currentTarget : null
+    readonly property Item highlightedControl: editable(currentTarget) && (available(currentTarget) || editorTarget === currentTarget) ? currentTarget : null
     Binding {
         target: navigation.highlightedControl
         property: "browseFocused"
@@ -40,6 +44,7 @@ FocusScope {
     signal interactionRequested
     signal exitRequested
     signal resultContextChanged
+    signal resultMoveRequested(int delta)
 
     function locationState(): var {
         const field = currentTarget as TextField;
@@ -84,9 +89,9 @@ FocusScope {
         const saved = sessionLocation || viewMemory.pageState(viewMemory.activeTab);
         const target = FocusLocations.uniqueTarget(targets, saved.target);
         applyingMemory = true;
-        editorTarget = null;
+        finishEditor(false);
         selectContent();
-        if (target) {
+        if (target && available(target)) {
             currentTarget = target;
             awaitingContent = false;
         }
@@ -94,13 +99,13 @@ FocusScope {
         pendingMemory = awaitingContent || (currentPage && currentTarget !== currentPage && currentPage.contentHeight <= 0);
         if (activeFocus && restorationAllowed) {
             browseCursor.forceActiveFocus(Qt.OtherFocusReason);
-            if (!pendingMemory && resumeEditor && saved.editing && target && editable(currentTarget))
+            if (!pendingMemory && resumeEditor && saved.editing && target === currentTarget && editable(currentTarget) && !binary(currentTarget))
                 enterEditor();
-            const field = editorTarget as TextField;
-            if (field && field.inputActiveFocus)
+            const field = currentTarget as TextField;
+            if (field && currentTarget === target)
                 field.restoreSelection(saved.selection);
-            const editor = editorTarget as TextEditor;
-            if (editor && editor.activeFocus)
+            const editor = currentTarget as TextEditor;
+            if (editor && currentTarget === target)
                 editor.restoreSelection(saved.selection);
             if (sessionLocation)
                 revealTarget();
@@ -112,8 +117,10 @@ FocusScope {
         }
     }
     function suspendView(): void {
+        finishEditor(false);
         cancelSessionRestore();
         for (const row of actionRows) row.closePopup();
+        commandMenu.close();
         const dropdown = currentTarget as DropDownList;
         if (dropdown && dropdown.popup.visible)
             dropdown.popup.close();
@@ -133,6 +140,12 @@ FocusScope {
     }
     onCurrentTargetChanged: if (activeFocus)
         rememberLocation()
+    onEnabledChanged: if (enabled) Qt.callLater(function () {
+        if (navigation.awaitingContent) {
+            navigation.selectContent();
+            navigation.restoreLocation();
+        }
+    })
     onContentItemChanged: if (viewMemory && viewMemory.enabled && !focusedTarget) {
         pendingMemory = true;
         Qt.callLater(restoreLocation);
@@ -156,17 +169,20 @@ FocusScope {
     }
 
     function collectTargets(item: Item, includeHeaders: bool): var {
-        if (!item || !item.visible || (item as DetailSection)?.informationOnly || item instanceof DetailsTabBar || (!includeHeaders && (item instanceof DetailsHeader || item instanceof SurfaceActionRow)))
+        if (!item || !item.visible || (item as DetailSection)?.informationOnly || item instanceof DetailsTabBar || item instanceof ModalFrame || (!includeHeaders && (item instanceof DetailsHeader || item instanceof SurfaceActionRow)))
             return [];
         // Composite inputs are one browsing stop, not their internal buttons.
-        if (editable(item) || item instanceof ActionControl || item.activeFocusOnTab)
-            return [item];
+        if (editable(item))
+            return [item]; // Stable identity while capabilities/acknowledgements change.
+        // Actions are Alt+letter commands, never field traversal stops.
+        if (item instanceof ActionControl || item instanceof IconTile)
+            return [];
         let result = [];
         const page = item as DetailFlickable;
         const children = page ? page.navigationContent.children : item.children;
         for (const child of children)
             result = result.concat(collectTargets(child, includeHeaders));
-        // Arrow/Page keys can scroll read-only pages; Tab prefers their controls.
+        // Page keys scroll read-only pages; Tab prefers editable controls.
         if (page)
             result.push(page);
         return result;
@@ -182,6 +198,41 @@ FocusScope {
     function editable(item: Item): bool {
         return item instanceof TextField || item instanceof TextEditor || item instanceof DropDownList || item instanceof SegmentedControl || item instanceof ValueSlider || item instanceof LabeledValueSlider || item instanceof ToggleRow || item instanceof ToggleSwitch;
     }
+    function available(item: Item): bool {
+        return item && item.enabled && !((item as TextField)?.readOnly ?? false)
+            && ((item as TextEditor)?.editingAllowed ?? true)
+            && ((item as ActionControl)?.interactive ?? true)
+            && ((item as SegmentedControl)?.interactive ?? true)
+            && ((item as DropDownList)?.interactive ?? true);
+    }
+    function binary(item: Item): bool {
+        return item instanceof ToggleRow || item instanceof ToggleSwitch;
+    }
+    function sessionFor(item: Item): FieldEditSession {
+        return (item as TextField)?.editSession || (item as TextEditor)?.editSession
+            || (item as DropDownList)?.editSession || (item as SegmentedControl)?.editSession
+            || (item as ValueSlider)?.editSession || (item as LabeledValueSlider)?.editSession || null;
+    }
+    function finishEditor(save: bool): void {
+        if (finishingEditor)
+            return;
+        finishingEditor = true;
+        const target = editorTarget;
+        const dropdown = target as DropDownList;
+        if (dropdown && dropdown.popup.visible) {
+            if (save) dropdown.stageIndex(dropdown.highlightedIndex);
+            dropdown.popup.close();
+        }
+        const session = sessionFor(target);
+        if (session) session.finish(save && available(target));
+        editorTarget = null;
+        finishingEditor = false;
+    }
+    function saveEditor(): void {
+        if (!restorationAllowed) return;
+        finishEditor(true);
+        focusContent();
+    }
     function collectActionRows(item: Item): var {
         if (!item || !item.visible || (item as DetailSection)?.informationOnly)
             return [];
@@ -192,17 +243,37 @@ FocusScope {
             result = result.concat(collectActionRows(child));
         return result;
     }
+    function collectCommands(item: Item): var {
+        if (!item || !item.visible || item instanceof SurfaceActionRow || item instanceof DetailsHeader || item instanceof DetailsTabBar || item instanceof ModalFrame)
+            return [];
+        const action = item as ActionControl;
+        let result = action && !binary(action) ? [action] : [];
+        for (const child of item.children)
+            result = result.concat(collectCommands(child));
+        return result;
+    }
+    function commandInScope(item: Item): bool {
+        const scope = (item as ActionControl)?.commandScope;
+        if (!scope) return true;
+        let target = currentTarget;
+        while (target) {
+            if (target === scope) return true;
+            target = target.parent;
+        }
+        return false;
+    }
     function shortcutFor(item: Item): string {
-        const button = item as ActionButton;
-        if (!button || headerButtons.indexOf(button) < 0 || !button.accessKey || headerButtons.filter(other => (other as ActionButton)?.accessKey === button.accessKey).length !== 1)
+        const button = item as ActionControl;
+        if (!button || commandButtons.indexOf(button) < 0 || !/^[A-IK-RT-Z]$/.test(button.accessKey) || commandButtons.filter(other => (other as ActionControl)?.accessKey === button.accessKey).length !== 1)
             return "";
         return "Alt+" + button.accessKey;
     }
     onHeaderShortcutsEnabledChanged: if (!headerShortcutsEnabled) {
+        commandMenu.close();
         for (const row of actionRows) row.closePopup();
     }
     function triggerHeader(index: int): void {
-        const button = headerButtons[index] as ActionControl;
+        const button = commandButtons[index] as ActionControl;
         if (!headerShortcutsEnabled || popupOpen || !button || !button.visible || !button.enabled || !button.interactive)
             return;
         interactionRequested();
@@ -211,35 +282,42 @@ FocusScope {
         button.activate();
     }
     function cycleFocus(backwards: bool): void {
+        if (!restorationAllowed) return;
         interactionRequested();
         rememberLocation();
         cancelSessionRestore();
         pendingMemory = false;
         awaitingContent = false;
-        const controls = targets.filter(item => item.enabled && !(item instanceof DetailFlickable));
-        const stops = controls.length ? controls : targets.filter(item => item.enabled);
-        const index = browsing || focusedTarget ? stops.indexOf(currentTarget) : -1;
-        editorTarget = null;
+        const retainEditing = editing;
+        const previous = currentTarget;
+        finishEditor(true);
+        const controls = targets.filter(item => available(item) && editable(item));
+        const stops = controls.length ? controls : targets.filter(item => item.enabled && item instanceof DetailFlickable);
+        const index = stops.indexOf(previous);
         if (stops.length) {
             const next = index < 0 ? (backwards ? stops.length - 1 : 0) : (index + (backwards ? -1 : 1) + stops.length) % stops.length;
             currentTarget = stops[next];
+        } else {
+            currentTarget = null;
         }
         browseCursor.forceActiveFocus(Qt.TabFocusReason);
+        if (retainEditing && !binary(currentTarget))
+            enterEditor();
         rememberLocation();
         revealTarget();
     }
     function selectContent(): void {
-        currentTarget = targets.length > 0 ? targets[0] : null;
+        currentTarget = targets.find(item => available(item) && editable(item)) || targets.find(item => item instanceof DetailFlickable && item.enabled) || null;
         awaitingContent = !currentTarget;
     }
     function focusContent(reset: bool): void {
+        finishEditor(false);
         cancelSessionRestore();
-        editorTarget = null;
         if (reset || targets.indexOf(currentTarget) < 0)
             selectContent();
         browseCursor.forceActiveFocus(Qt.OtherFocusReason);
-        if (viewMemory && viewMemory.enabled && reset) {
-            viewMemory.synchronize();
+        if (viewMemory && viewMemory.enabled) {
+            if (reset) viewMemory.synchronize();
             pendingMemory = true;
         }
         restoreLocation();
@@ -249,13 +327,7 @@ FocusScope {
     function move(delta: int): void {
         awaitingContent = false;
         pendingMemory = false;
-        if (targets.length === 0)
-            return;
-        if (scrollPage(delta * Theme.controlHeight))
-            return;
-        const index = targets.indexOf(currentTarget);
-        currentTarget = targets[Math.max(0, Math.min(targets.length - 1, index + delta))];
-        revealTarget();
+        resultMoveRequested(delta);
     }
     function scrollPage(distance: real): bool {
         const page = currentTarget as DetailFlickable;
@@ -297,16 +369,17 @@ FocusScope {
     function enterEditor(): void {
         awaitingContent = false;
         const item = currentTarget;
-        if (!item || !item.enabled || item instanceof DetailFlickable)
+        if (!available(item) || !editable(item))
             return;
+        if (binary(item)) {
+            (item as ActionControl).activate();
+            return;
+        }
         const field = item as TextField;
-        const editor = item as TextEditor;
         const labeled = item as LabeledValueSlider;
-        const action = item as ActionControl;
-        const segments = item as SegmentedControl;
-        if ((field && field.readOnly) || (editor && !editor.editingAllowed) || (action && !action.interactive) || (segments && !segments.interactive))
-            return;
         editorTarget = item;
+        const session = sessionFor(item);
+        if (session) session.begin();
         if (field)
             field.focusInput(false);
         else if (labeled)
@@ -316,46 +389,67 @@ FocusScope {
         rememberLocation();
     }
     function retreat(): void {
-        if (popupOpen) {
+        if (commandMenuOpen) {
+            commandMenu.close();
             for (const row of actionRows) row.closePopup();
-            const dropdown = currentTarget as DropDownList;
-            if (dropdown && dropdown.popup.visible) dropdown.popup.close();
         } else if (editing) {
+            finishEditor(false);
             focusContent();
+        } else if (popupOpen) {
+            for (const row of actionRows) row.closePopup();
         } else {
             exitRequested();
         }
     }
-    onFocusedTargetChanged: if (focusedTarget) {
+    onFocusedTargetChanged: if (focusedTarget && !finishingEditor) {
         // A pointer/native editor interaction supersedes queued presentation
         // restoration just as explicit key navigation does.
         if (!applyingMemory) {
             cancelSessionRestore();
             pendingMemory = false;
         }
+        if (editorTarget !== focusedTarget)
+            finishEditor(false);
         currentTarget = focusedTarget;
-        editorTarget = focusedTarget;
+        editorTarget = editable(focusedTarget) && !binary(focusedTarget) && (available(focusedTarget) || sessionFor(focusedTarget)?.active) ? focusedTarget : null;
+        const session = sessionFor(editorTarget);
+        if (session) session.begin();
         awaitingContent = false;
         nativeFocusChanged();
         rememberLocation();
+    } else if (!focusedTarget && editorTarget && !popupOpen && !finishingEditor && activeFocus) {
+        finishEditor(false);
     }
-    onActiveFocusChanged: if (!activeFocus && !popupOpen) {
+    onActiveFocusChanged: if (!activeFocus && !popupOpen && !finishingEditor) {
         rememberLocation();
+        finishEditor(false);
         cancelSessionRestore();
-        editorTarget = null;
     }
     onTargetsChanged: {
         if (pendingMemory && (sessionLocation || (viewMemory && viewMemory.enabled))) {
             Qt.callLater(restoreLocation);
             return;
         }
-        if (awaitingContent || targets.indexOf(currentTarget) < 0) {
-            editorTarget = null;
+        if (!finishingEditor && (awaitingContent || targets.indexOf(currentTarget) < 0)) {
+            finishEditor(false);
             selectContent();
             // A removed editor must not strand focus in a destroyed loader.
             if (activeFocus)
                 browseCursor.forceActiveFocus();
         }
+    }
+
+    // Pointer-focused command buttons still belong to the detail region.
+    Keys.onPressed: function (event) {
+        if (editing || popupOpen || event.modifiers !== Qt.NoModifier)
+            return;
+        if (event.key === Qt.Key_Left)
+            exitRequested();
+        else if (event.key === Qt.Key_Up || event.key === Qt.Key_Down)
+            move(event.key === Qt.Key_Up ? -1 : 1);
+        else
+            return;
+        event.accepted = true;
     }
 
     Item {
@@ -377,15 +471,12 @@ FocusScope {
             else if (event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp)
                 navigation.scrollPage((event.key === Qt.Key_PageDown ? 1 : -1) * navigation.height);
             else if (event.key === Qt.Key_Right)
-                navigation.enterEditor();
+                event.accepted = true; // Already expanded. Only Enter edits.
             else if (event.key === Qt.Key_Left || event.key === Qt.Key_Escape)
                 navigation.exitRequested();
             else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
                 if (!event.isAutoRepeat) {
-                    const action = navigation.currentTarget as ActionControl;
-                    if (action && !navigation.editable(action))
-                        action.activate();
-                    else if (event.key !== Qt.Key_Space)
+                    if (event.key !== Qt.Key_Space)
                         navigation.enterEditor();
                 }
             } else
@@ -394,8 +485,25 @@ FocusScope {
         }
     }
 
+    DetailsCommandMenu {
+        id: commandMenu
+        commands: navigation.contentCommands.filter(item => !(item as ActionControl)?.accessKey)
+    }
+    Shortcut {
+        sequence: "Alt+J"
+        enabled: navigation.headerShortcutsEnabled && !navigation.popupOpen && commandMenu.commands.length > 0
+        autoRepeat: false
+        onActivated: commandMenu.open()
+    }
+    Shortcut {
+        sequences: ["Return", "Enter"]
+        enabled: navigation.editing && navigation.restorationAllowed && !navigation.commandMenuOpen
+        autoRepeat: false
+        onActivated: navigation.saveEditor()
+    }
+
     Repeater {
-        model: navigation.headerButtons
+        model: navigation.commandButtons
         delegate: Item {
             id: shortcutSlot
             required property Item modelData
@@ -410,12 +518,4 @@ FocusScope {
         }
     }
 
-    // Parenting to the target keeps the highlight attached during scrolling and
-    // layout changes. It neither changes hit geometry nor takes input/focus.
-    FocusRing {
-        parent: navigation.currentTarget || navigation
-        active: !navigation.highlightedControl && (navigation.browsing || (navigation.editing && !navigation.focusedTarget))
-        ringColor: Theme.accent
-        cornerRadius: (navigation.currentTarget as Rectangle)?.radius ?? Theme.controlRadius
-    }
 }

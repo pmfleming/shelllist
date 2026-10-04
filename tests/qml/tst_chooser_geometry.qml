@@ -274,6 +274,8 @@ DaemonTestCase {
         verify(!fixture.controller.detailsOpen);
         fixture.controller.navigationBlocked = false;
         keyClick(Qt.Key_Right);
+        verify(!surface.detailsNavigation.activeFocus);
+        keyClick(Qt.Key_Tab);
         tryVerify(() => surface.detailsNavigation.browsing);
         verify(fixture.controller.detailsOpen);
     }
@@ -303,23 +305,26 @@ DaemonTestCase {
         keyClick(Qt.Key_Right);
         tryVerify(() => surface.detailsItem !== null && surface.detailsNavigation.currentTarget !== null);
         tryVerify(() => viewport.contentWidth > viewport.width);
+        keyClick(Qt.Key_Tab);
         tryVerify(() => viewport.contentX > 0);
         verify(surface.listItem.visible && surface.detailsItem.visible);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         verify(surface.detailsNavigation.editing);
         const editor = findChild(surface, "geometryEditor");
         tryCompare(fixture.controller, "detailsExpansionProgress", 1);
         tryVerify(() => editor.mapToItem(viewport, 0, 0).x >= 0 && editor.mapToItem(viewport, editor.width, 0).x <= viewport.width + 1);
         keyClick(Qt.Key_Escape);
         keyClick(Qt.Key_Down);
-        compare(surface.detailsNavigation.currentTarget.objectName, "geometryAction");
+        verify(surface.listItem.listFocused);
+        verify(fixture.controller.detailsOpen);
         keyClick(Qt.Key_Tab);
         compare(surface.detailsNavigation.currentTarget.objectName, "geometryEditor");
         verify(surface.detailsNavigation.browsing);
         keyClick(Qt.Key_Escape);
         verify(surface.listItem.listFocused);
         keyClick(Qt.Key_Up);
-        verify(surface.listItem.searchFocused);
+        keyClick(Qt.Key_Up);
+        tryVerify(() => surface.listItem.searchFocused);
         tryCompare(viewport, "contentX", 0);
         compare(fixture.edits, 0, "revealing focus never activates a setting/action");
         fixture.controller.detailsOpen = false;

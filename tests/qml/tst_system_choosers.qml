@@ -82,12 +82,11 @@ DaemonTestCase {
         const navigation = root.content.detailsNavigation;
         tryVerify(() => navigation.browsing && navigation.currentTarget !== null);
         for (let i = 0; i < 10 && navigation.currentTarget.objectName !== "audioMute"; ++i)
-            keyClick(Qt.Key_Down);
+            keyClick(Qt.Key_Tab);
         compare(navigation.currentTarget.objectName, "audioMute");
         keyClick(Qt.Key_Space);
         compare(calls.length, 0);
-        keyClick(Qt.Key_Right);
-        keyClick(Qt.Key_Space);
+        keyClick(Qt.Key_Return);
         compare(calls.length, 1);
         compare(calls[0].method, BarApi.methods.audioSetMuted);
         compare(root.desktop.audio.muted, false);

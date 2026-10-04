@@ -10,7 +10,7 @@ ChooserSurface {
     required property Component detailsComponent
     property bool navigationEnabled: true
     // Incremental migration: native dialogs and unmigrated domains stay intact.
-    property bool keyboardWorkflow: false
+    property bool keyboardWorkflow: true
     property bool sessionReady: true
     property string sessionContext: chooserController.viewMemory ? JSON.stringify([chooserController.viewMemory.key, chooserController.viewMemory.tab]) : ""
     readonly property DetailsNavigation detailsNavigation: chooser.detailsNavigation
@@ -30,6 +30,7 @@ ChooserSurface {
         if (chooserController.viewMemory)
             chooserController.viewMemory.synchronize();
         const restoreContent = keyboardWorkflow && detailsNavigation.activeFocus;
+        detailsNavigation.finishEditor(false);
         chooserController.cycleDetailsTab(backwards);
         if (restoreContent)
             detailsNavigation.focusContent(true);
@@ -82,12 +83,12 @@ ChooserSurface {
 
     Shortcut {
         sequence: "Tab"
-        enabled: surface.keyboardWorkflow && surface.chooserController.uiActive && surface.navigationEnabled && !surface.detailsNavigation.popupOpen
+        enabled: surface.keyboardWorkflow && surface.chooserController.uiActive && surface.navigationEnabled && !surface.detailsNavigation.commandMenuOpen
         onActivated: surface.cycleRegion(false)
     }
     Shortcut {
         sequence: "Shift+Tab"
-        enabled: surface.keyboardWorkflow && surface.chooserController.uiActive && surface.navigationEnabled && !surface.detailsNavigation.popupOpen
+        enabled: surface.keyboardWorkflow && surface.chooserController.uiActive && surface.navigationEnabled && !surface.detailsNavigation.commandMenuOpen
         onActivated: surface.cycleRegion(true)
     }
 

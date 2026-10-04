@@ -41,8 +41,7 @@ Item {
     }
     function enterDetails() {
         controller.openDetails();
-        if (controller.detailsOpen)
-            controller.focusDetailsRequested();
+        // Expansion never enters an editor; Tab owns entry to detail fields.
     }
     function handleSearchText(event) {
         // Printable keys belong to the query, never to result/action hotkeys.
@@ -56,7 +55,7 @@ Item {
     function handleSearchDirection(event) {
         const actions = ({});
         actions[Qt.Key_Down] = focusListTop;
-        actions[Qt.Key_Up] = moveUp;
+        actions[Qt.Key_Up] = function () {};
         if (actions[event.key])
             accept(event, actions[event.key]);
     }

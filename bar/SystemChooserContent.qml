@@ -172,6 +172,7 @@ Ui.ProviderChooserSurface {
                         }
                         Ui.ActionButton {
                             objectName: "mediaAutomatic"
+                            accessKey: "A"
                             width: parent.width
                             visible: content.controller.mediaPreferencesSupported && !!content.controller.barController.media.pinned_player
                             label: qsTr("Resume automatic player selection")

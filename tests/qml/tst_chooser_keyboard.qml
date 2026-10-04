@@ -181,7 +181,7 @@ DaemonTestCase {
         const choice = content.detailsNavigation.currentTarget;
         compare(choice.value, "shell");
         calls = [];
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Space);
         tryCompare(choice.popup, "visible", true);
         keyClick(Qt.Key_Down);
@@ -190,9 +190,7 @@ DaemonTestCase {
         const update = calls.find(call => call.method === "applications.settings.update");
         verify(update !== undefined);
         compare(choice.value, "shell", "proposal does not acknowledge a setting");
-        verify(content.detailsNavigation.editing, "pending acknowledgement retains editor ownership");
-        keyClick(Qt.Key_Escape);
-        verify(content.detailsNavigation.browsing);
+        verify(content.detailsNavigation.browsing, "save leaves editing while acknowledgement is pending");
         keyClick(Qt.Key_Tab);
         verify(content.detailsNavigation.browsing);
         verify(!choice.enabled, "pending settings cannot be entered again");
@@ -230,15 +228,15 @@ DaemonTestCase {
         const navigation = createTemporaryObject(readOnlyPageComponent, testCase);
         tryVerify(() => navigation.contentItem.contentHeight > navigation.height);
         navigation.focusContent(true);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         verify(navigation.editing);
         navigation.showEditor = false;
         verify(navigation.browsing);
         compare(navigation.currentTarget, navigation.contentItem);
         keyClick(Qt.Key_Down);
-        verify(navigation.contentItem.contentY > 0);
+        compare(navigation.contentItem.contentY, 0, "Up/Down never traverse or scroll fields");
         keyClick(Qt.Key_PageDown);
-        verify(navigation.contentItem.contentY > navigation.height);
+        verify(navigation.contentItem.contentY >= navigation.height);
         navigation.showEditor = true;
         compare(navigation.currentTarget, navigation.contentItem, "new content does not steal the browse cursor");
         verify(navigation.browsing);
@@ -264,6 +262,8 @@ DaemonTestCase {
         keyClick(Qt.Key_Right);
         tryVerify(() => surface.detailsItem !== null);
         tryVerify(() => surface.detailsNavigation.currentTarget !== null);
+        verify(surface.listItem.listFocused, "Right expands without entering fields");
+        keyClick(Qt.Key_Tab);
         verify(surface.detailsNavigation.browsing);
     }
 
@@ -304,20 +304,18 @@ DaemonTestCase {
         verify(surface.listItem.searchFocused);
         verify(!surface.chooserController.detailsOpen, "Tab does not implicitly open details");
         enterDetails(surface);
-        compare(surface.detailsNavigation.targets.length, 5, "information sections and tab selectors are not browsing stops");
+        compare(surface.detailsNavigation.targets.length, 4, "actions, information and tab selectors are not browsing stops");
         const information = findChild(surface, "informationValue");
         verify(information.visible);
         compare(Ui.FocusLocations.targets(surface.detailsItem).indexOf(information), -1, "information cannot be restored as an editor");
         compare(surface.detailsNavigation.currentTarget.objectName, "settingRow");
-        for (const name of ["editor", "choice", "toggle", "action", "settingRow"]) {
+        for (const name of ["editor", "choice", "toggle", "settingRow"]) {
             keyClick(Qt.Key_Tab);
             verify(surface.detailsNavigation.browsing);
             compare(surface.detailsNavigation.currentTarget.objectName, name);
             verify(surface.detailsNavigation.highlightedControl.browseFocused, "browse uses the control's own focus paint");
             compare(surface.chooserController.selectionModel.selectedIndex, 1);
         }
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        compare(surface.detailsNavigation.currentTarget.objectName, "action");
         keyClick(Qt.Key_Tab, Qt.ShiftModifier);
         compare(surface.detailsNavigation.currentTarget.objectName, "toggle");
         keyClick(Qt.Key_Tab, Qt.ShiftModifier);
@@ -517,7 +515,7 @@ DaemonTestCase {
         compare(input.Keys.forwardTo[0], receiver);
     }
 
-    function test_tabLeavesEditorWithoutReplayingActivation() {
+    function test_tabSavesAndRetainsEditingWithoutReplayingActivation() {
         const surface = makeSurface();
         enterDetails(surface);
         keyClick(Qt.Key_Tab);
@@ -527,11 +525,11 @@ DaemonTestCase {
         keyClick(Qt.Key_X);
         const text = editor.text;
         keyClick(Qt.Key_Tab);
-        verify(surface.detailsNavigation.browsing);
+        verify(surface.detailsNavigation.editing);
         compare(surface.detailsNavigation.currentTarget.objectName, "choice");
         keyClick(Qt.Key_Tab, Qt.ShiftModifier);
         compare(surface.detailsNavigation.currentTarget, editor);
-        verify(!editor.inputActiveFocus);
+        verify(editor.inputActiveFocus);
         compare(editor.text, text);
         compare(surface.settingEdits, 0);
         compare(surface.actionCalls, 0);
@@ -541,7 +539,11 @@ DaemonTestCase {
         enterDetails(surface);
         const row = findChild(surface.detailsItem, "settingRow");
         keyClick(Qt.Key_Down);
+        compare(surface.chooserController.selectionModel.selectedIndex, 2);
+        verify(surface.chooserController.detailsOpen);
+        verify(surface.listItem.listFocused);
         keyClick(Qt.Key_Up);
+        keyClick(Qt.Key_Tab);
         compare(surface.settingEdits, 0);
         compare(row.value, 50);
         keyClick(Qt.Key_Return);
@@ -549,11 +551,11 @@ DaemonTestCase {
         compare(surface.settingEdits, 0, "entering a slider does not edit it");
         keyClick(Qt.Key_Right);
         compare(row.value, 60);
-        compare(surface.settingEdits, 1);
+        compare(surface.settingEdits, 0, "slider draft remains local until save");
         keyClick(Qt.Key_Escape);
         verify(surface.detailsNavigation.browsing);
         verify(surface.chooserController.detailsOpen);
-        compare(row.value, 60, "leaving an editor does not undo applied settings");
+        compare(row.value, 50, "Escape discards the current field draft");
         keyClick(Qt.Key_Tab);
         keyClick(Qt.Key_Return);
         const editor = findChild(surface.detailsItem, "editor");
@@ -573,9 +575,9 @@ DaemonTestCase {
     function test_popupEscapeAndGuardedToggleActivation() {
         const surface = makeSurface();
         enterDetails(surface);
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_Return);
         const choice = findChild(surface.detailsItem, "choice");
         verify(choice.activeFocus);
         keyClick(Qt.Key_Space);
@@ -583,25 +585,20 @@ DaemonTestCase {
         keyClick(Qt.Key_Down);
         keyClick(Qt.Key_Escape);
         tryCompare(choice.popup, "visible", false);
-        verify(!surface.detailsNavigation.browsing, "first Escape closes only the native menu");
+        verify(surface.detailsNavigation.browsing, "Escape closes the menu and discards the edit");
         compare(choice.value, "a");
         compare(surface.settingEdits, 0);
-        keyClick(Qt.Key_Escape);
         verify(surface.detailsNavigation.browsing);
-        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Tab);
         keyClick(Qt.Key_Space);
         compare(surface.settingEdits, 0, "browsing a switch does not activate it");
         keyClick(Qt.Key_Return);
-        compare(surface.settingEdits, 0, "Enter focuses a browsed switch without toggling it");
-        keyClick(Qt.Key_Space);
-        compare(surface.settingEdits, 1);
-        keyClick(Qt.Key_Escape);
-        findChild(surface.detailsItem, "toggle").interactive = false;
-        keyClick(Qt.Key_Right);
+        compare(surface.settingEdits, 1, "Enter immediately toggles a browsed switch");
         verify(surface.detailsNavigation.browsing);
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_Return);
-        compare(surface.actionCalls, 1);
+        findChild(surface.detailsItem, "toggle").interactive = false;
+        keyClick(Qt.Key_Tab);
+        verify(surface.detailsNavigation.currentTarget.objectName !== "action");
+        compare(surface.actionCalls, 0, "actions never enter field traversal");
     }
 
     Component {

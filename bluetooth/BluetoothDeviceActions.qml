@@ -106,6 +106,7 @@ ColumnLayout {
 
         Ui.ActionButton {
             objectName: "restoreDeviceName"
+            accessKey: "O"
             Layout.preferredWidth: 180
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             label: qsTr("Restore original name")
@@ -127,6 +128,7 @@ ColumnLayout {
         visible: !!(section.draft || {}).error
         Ui.ActionButton {
             objectName: "retryDeviceName"
+            accessKey: "N"
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             label: qsTr("Retry rename")
@@ -135,6 +137,7 @@ ColumnLayout {
         }
         Ui.ActionButton {
             objectName: "discardDeviceName"
+            accessKey: "X"
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             label: qsTr("Discard draft")

@@ -8,14 +8,14 @@ The launcher presents standards-visible desktop applications and live Hyprland w
 
 - `Enter` focuses the most-recent running instance or launches a non-running application.
 - `Shift+Enter` launches another instance of a desktop application.
-- `Right` opens first-time details in content browse focus, not the tab selector.
+- `Right` expands details while retaining list focus; Tab enters editable fields.
   Previously inspected applications restore their tab/scroll without stealing
-  list focus; Right enters their remembered ordinary location. See
+  list focus or changing the shared expansion state. See
   [session memory](chooser-session-memory.md) for fallbacks and remaining work.
 - Reopening restores the ordinary region/editor, query selection and result viewport. Menus stay collapsed; missing/disabled targets fall back safely without launching an app or changing settings.
 - `Ctrl+Tab` / `Ctrl+Shift+Tab` cycle Application, Resources and (for desktop applications) Settings forward/backward.
 - Outside details, `Tab` / `Shift+Tab` move between search/results and into already-open details; selection is retained.
-- Tab/Shift+Tab wrap among controls in the current detail tab; Up/Down also browse. Enter starts editing (Right remains an alias). Native arrows edit there, and Escape leaves the editor before closing details. Category settings still wait for daemon acknowledgement.
+- Tab/Shift+Tab wrap among editable fields only. While browsing fields, Up/Down select the previous/next application with details kept open. Enter starts editing; native arrows edit; Enter saves, Escape discards, and Tab saves while continuing in the next editor. Category settings still wait for daemon acknowledgement. Commands use Alt+letter; Alt+J opens additional desktop/window actions.
 - Typing in results, including J/K, continues the query at its retained cursor.
 - `Alt+S` copies a screenshot of the current view to the clipboard. See the [shared keyboard workflow](chooser-keyboard-workflow.md).
 - `F5` refreshes the catalog and current windows.

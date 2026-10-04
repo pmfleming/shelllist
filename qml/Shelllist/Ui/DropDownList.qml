@@ -11,7 +11,41 @@ Controls.ComboBox {
     property bool interactive: true
     property bool browseFocused: false
     property string placeholder: "Select an option"
-    readonly property int selectedIndex: optionIndex(value)
+    property string draftValue: value
+    readonly property int selectedIndex: optionIndex(editSession.active ? draftValue : value)
+    readonly property FieldEditSession editSession: FieldEditSession {
+        owner: control
+        value: control.draftValue
+        initialValue: control.value
+        onActiveChanged: if (active) control.draftValue = control.value
+        onRestoreRequested: function (value) { control.draftValue = value; }
+        onPublishRequested: function (value) { control.selected(value); }
+    }
+    function stageIndex(index: int): void {
+        if (!enabled || !interactive || !optionEnabled(index))
+            return;
+        const nextValue = String(options[index].value || "");
+        if (editSession.active)
+            draftValue = nextValue;
+        else if (nextValue !== value)
+            selected(nextValue);
+    }
+
+    function handleEditKey(event: var): void {
+        if (!editSession.active || !editSession.navigation || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
+            return;
+        const navigation = editSession.navigation;
+        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+            navigation.saveEditor();
+        else if (event.key === Qt.Key_Escape)
+            navigation.retreat();
+        else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab)
+            navigation.cycleFocus(event.key === Qt.Key_Backtab || !!(event.modifiers & Qt.ShiftModifier));
+        else
+            return;
+        event.accepted = true;
+    }
+    Keys.onPressed: function (event) { handleEditKey(event); }
 
     signal selected(string value)
 
@@ -46,13 +80,7 @@ Controls.ComboBox {
     function optionText(option) {
         return option.label || option.value || "";
     }
-    onActivated: function (index) {
-        if (!enabled || !interactive || !optionEnabled(index))
-            return;
-        const nextValue = String(options[index].value || "");
-        if (nextValue !== value)
-            selected(nextValue);
-    }
+    onActivated: function (index) { stageIndex(index); }
 
     contentItem: ThemeText {
         leftPadding: 0
@@ -91,12 +119,14 @@ Controls.ComboBox {
     }
 
     popup: Controls.Popup {
+        closePolicy: Controls.Popup.CloseOnPressOutside
         y: control.height + Theme.spacingXs
         width: control.width
         padding: Theme.spacingSm
         height: Math.min(control.options.length, 6) * Theme.controlHeight + topPadding + bottomPadding
 
         contentItem: ScrollableListView {
+            Keys.onPressed: function (event) { control.handleEditKey(event); }
             clip: true
             implicitHeight: contentHeight
             model: control.popup.visible ? control.delegateModel : null

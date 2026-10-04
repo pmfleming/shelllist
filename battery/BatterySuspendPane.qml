@@ -24,6 +24,7 @@ Ui.DetailColumnCard {
 
         Ui.ActionButton {
             objectName: "keepAwakeButton"
+            accessKey: "K"
             Layout.preferredWidth: 42
             Layout.preferredHeight: 42
             icon: "󰅶"
@@ -46,6 +47,7 @@ Ui.DetailColumnCard {
             delegate: Ui.ActionButton {
                 required property string modelData
                 objectName: "suspendAction-" + modelData
+                accessKey: ({lock: "L", suspend: "U", hibernate: "H"})[modelData]
                 Layout.preferredWidth: 42
                 Layout.preferredHeight: 42
                 icon: modelData === "lock" ? "󰌾" : (modelData === "suspend" ? "󰖔" : "󰒲")
@@ -78,6 +80,7 @@ Ui.DetailColumnCard {
 
         Ui.FlatIconButton {
             objectName: "suspendRetryButton"
+            accessKey: "T"
             Layout.preferredWidth: 30
             Layout.preferredHeight: 30
             visible: pane.controller.suspendError.length > 0 && !pane.controller.suspendBusy && !pane.controller.suspendOutcomeUnknown

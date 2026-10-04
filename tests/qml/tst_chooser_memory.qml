@@ -187,7 +187,9 @@ DaemonTestCase {
         surface.listItem.focusList();
         keyClick(Qt.Key_Right);
         tryVerify(() => surface.detailsNavigation.currentTarget !== null);
-        tryVerify(() => surface.detailsNavigation.browsing || surface.detailsNavigation.editing);
+        verify(surface.listItem.listFocused);
+        keyClick(Qt.Key_Tab);
+        tryVerify(() => surface.detailsNavigation.browsing);
     }
     function page(surface) {
         tryVerify(() => {
@@ -204,9 +206,9 @@ DaemonTestCase {
         tryCompare(surface.chooserController.viewMemory, "activeTab", "two");
         page(surface);
         tryCompare(surface.detailsNavigation.currentTarget, "objectName", "ordinaryNote");
-        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Tab);
         compare(surface.detailsNavigation.currentTarget.objectName, "level");
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         verify(surface.detailsNavigation.editing);
     }
     function closeInvocation(surface) {
@@ -270,7 +272,7 @@ DaemonTestCase {
     function test_resultSwitchKeepsTheLatestNativeSelection() {
         const surface = makeSurface();
         open(surface);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         findChild(surface.detailsNavigation.currentTarget, "fieldInput").select(8, 2);
         surface.listItem.pick(1); // Changes identity before transferring focus.
         tryCompare(surface.chooserController.viewMemory, "activeKey", surface.chooserController.selectedResult.key);
@@ -278,7 +280,8 @@ DaemonTestCase {
         select(surface, "a");
         const input = findChild(findChild(page(surface), "ordinaryNote"), "fieldInput");
         input.cursorPosition = 0;
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_Return);
         tryVerify(() => surface.detailsNavigation.editing);
         compare(input.cursorPosition, 2);
         compare(input.selectionEnd, 8);
@@ -316,7 +319,7 @@ DaemonTestCase {
     function test_invocationRestoresEditorCaretButNotValues() {
         const surface = makeSurface();
         open(surface);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         verify(surface.detailsNavigation.editing);
         const field = surface.detailsNavigation.currentTarget;
         const input = findChild(field, "fieldInput");
@@ -341,7 +344,7 @@ DaemonTestCase {
     function test_namedListControlRestoration(data) {
         const surface = makeSurface();
         open(surface);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         surface.listItem.listOptionsComponent = listOptionFactory;
         tryVerify(() => findChild(surface, "listOption") !== null);
         findChild(surface, "listOption").forceActiveFocus();
@@ -364,7 +367,7 @@ DaemonTestCase {
         open(surface);
         select(surface, "a");
         open(surface);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         testCase.forceActiveFocus();
         surface.chooserController.select(1);
         surface.chooserController.viewMemory.synchronize();
@@ -379,7 +382,7 @@ DaemonTestCase {
     function test_queuedSearchCannotCrossAnInvocationBoundary() {
         const surface = makeSurface();
         open(surface);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         const controller = surface.chooserController;
         controller.focusSearchRequested();
         // Close/reopen before the previous invocation's queued request runs.
@@ -394,7 +397,7 @@ DaemonTestCase {
     function test_invocationRestoresBrowseWithoutEditing() {
         const surface = makeSurface();
         open(surface);
-        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Tab);
         compare(surface.detailsNavigation.currentTarget.objectName, "level");
         closeInvocation(surface);
         reopenInvocation(surface);
@@ -427,7 +430,7 @@ DaemonTestCase {
         closeInvocation(surface);
         surface.levelEnabled = false;
         reopenInvocation(surface);
-        tryVerify(() => surface.detailsNavigation.browsing && surface.detailsNavigation.currentTarget.objectName === "level");
+        tryVerify(() => surface.detailsNavigation.browsing && surface.detailsNavigation.currentTarget.objectName === "ordinaryNote");
         verify(!surface.detailsNavigation.editing);
         compare(surface.edits, 0);
     }
@@ -435,7 +438,7 @@ DaemonTestCase {
         const surface = makeSurface();
         surface.privateNote = true;
         open(surface);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         const field = surface.detailsNavigation.currentTarget;
         field.text = "private-value";
         closeInvocation(surface);
@@ -456,13 +459,13 @@ DaemonTestCase {
     function test_invocationMissingResultFallsBack(data) {
         const surface = makeSurface();
         open(surface);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         closeInvocation(surface);
         catalog(surface, data.rows);
         surface.chooserController.viewMemory.synchronize();
         reopenInvocation(surface);
         tryVerify(() => data.results ? surface.listItem.listFocused : surface.listItem.searchFocused);
-        verify(!surface.chooserController.detailsOpen);
+        compare(surface.chooserController.detailsOpen, data.results);
         compare(surface.edits, 0);
     }
     function recreatedView() {
@@ -472,7 +475,7 @@ DaemonTestCase {
         catalog(first, [{id: "a", title: "Alpha"}]);
         owner.viewMemory.synchronize();
         open(first);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         verify(first.detailsNavigation.editing);
         findChild(first.detailsNavigation.currentTarget, "fieldInput").select(8, 2);
         closeInvocation(first);
@@ -565,7 +568,7 @@ DaemonTestCase {
         const scroll = page(surface).contentY;
         verify(scroll > 0);
         select(surface, "b");
-        verify(!surface.chooserController.detailsOpen, "uninspected items are list-only");
+        verify(surface.chooserController.detailsOpen, "new items preserve surface expansion");
         open(surface);
         compare(surface.chooserController.detailsTab, "one");
         page(surface).contentY = 123;
@@ -575,7 +578,8 @@ DaemonTestCase {
         tryCompare(page(surface), "contentY", scroll);
         verify(surface.listItem.listFocused);
         compare(surface.edits, 0);
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_Return);
         tryVerify(() => surface.detailsNavigation.editing);
         compare(surface.detailsNavigation.currentTarget.objectName, "level");
         compare(surface.edits, 0, "restoration cannot dispatch an edit");
@@ -590,12 +594,12 @@ DaemonTestCase {
         open(surface);
         surface.listItem.toggleDetails(1);
         compare(surface.chooserController.selectedResult.id, "b");
-        verify(surface.chooserController.detailsOpen, "the new row opens instead of closing the previous row's view");
+        verify(!surface.chooserController.detailsOpen, "row toggle changes the shared expansion state");
         compare(surface.chooserController.viewMemory.activeKey, surface.chooserController.selectedResult.key);
-        surface.listItem.toggleDetails(1);
-        verify(!surface.chooserController.detailsOpen);
         verify(!surface.detailsNavigation.enabled, "closing decoration cannot receive edits");
         select(surface, "a");
+        verify(!surface.chooserController.detailsOpen);
+        surface.listItem.toggleDetails(1);
         verify(surface.chooserController.detailsOpen);
     }
     function test_disabledRememberedEditorFallsBackToBrowse() {
@@ -605,7 +609,7 @@ DaemonTestCase {
         surface.levelEnabled = false;
         select(surface, "a");
         open(surface);
-        tryCompare(surface.detailsNavigation.currentTarget, "objectName", "level");
+        tryCompare(surface.detailsNavigation.currentTarget, "objectName", "ordinaryNote");
         verify(surface.detailsNavigation.browsing);
         verify(!surface.detailsNavigation.editing);
         keyClick(Qt.Key_Right);
@@ -614,7 +618,7 @@ DaemonTestCase {
         tryVerify(() => surface.listItem.listFocused);
         compare(surface.edits, 0);
     }
-    function test_explicitCloseChangesOnlyThatResult() {
+    function test_expansionIsSharedAcrossResults() {
         const surface = makeSurface();
         open(surface);
         keyClick(Qt.Key_Escape);
@@ -622,9 +626,10 @@ DaemonTestCase {
         select(surface, "b");
         open(surface);
         select(surface, "a");
-        verify(!surface.chooserController.detailsOpen);
-        select(surface, "b");
         verify(surface.chooserController.detailsOpen);
+        surface.chooserController.closeDetails();
+        select(surface, "b");
+        verify(!surface.chooserController.detailsOpen);
     }
     function test_reorderRemovalAndReconnectDoNotEraseInspectedState() {
         const surface = makeSurface();
@@ -640,8 +645,10 @@ DaemonTestCase {
         tryCompare(surface.chooserController, "detailsOpen", false);
         verify(surface.chooserController.viewMemory.records[key].open);
         catalog(surface, [{id: "a", title: "Alpha"}, {id: "b", title: "Beta"}]);
-        tryCompare(surface.chooserController, "detailsOpen", true);
+        tryCompare(surface.chooserController, "detailsOpen", false);
+        open(surface);
         compare(surface.chooserController.detailsTab, "two");
+        surface.listItem.focusList();
         verify(surface.listItem.listFocused);
         compare(surface.edits, 0);
     }
@@ -655,7 +662,7 @@ DaemonTestCase {
         tryVerify(() => surface.detailsNavigation.browsing);
         compare(surface.detailsNavigation.currentTarget.objectName, "ordinaryNote");
         surface.privateNote = true;
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         verify(surface.detailsNavigation.editing);
         select(surface, "b");
         select(surface, "a");
@@ -716,7 +723,7 @@ DaemonTestCase {
         open(content);
         controller.selectDetailsTab("settings");
         tryVerify(() => content.detailsNavigation.currentTarget && content.detailsNavigation.currentTarget.objectName === "applicationCategory");
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Space);
         const category = content.detailsNavigation.currentTarget;
         tryCompare(category.popup, "visible", true);
@@ -781,7 +788,7 @@ DaemonTestCase {
         controller.selectDetailsTab("settings");
         tryCompare(controller.viewMemory, "activeTab", "settings");
         tryVerify(() => content.detailsNavigation.currentTarget && content.detailsNavigation.currentTarget.objectName === "applicationCategory");
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Space);
         tryCompare(content.detailsNavigation.currentTarget.popup, "visible", true);
         keyClick(Qt.Key_Escape);
@@ -789,7 +796,9 @@ DaemonTestCase {
         controller.replaceProviderResults([controller.provider.resultFor(result), controller.provider.resultFor(Object.assign({}, result, {id: "other.desktop", name: "Other"}))], false);
         select(content, "other.desktop");
         select(content, "app.desktop");
-        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Tab);
+        tryVerify(() => content.detailsNavigation.currentTarget && content.detailsNavigation.currentTarget.objectName === "applicationCategory");
+        keyClick(Qt.Key_Return);
         tryVerify(() => content.detailsNavigation.editing);
         compare(content.detailsNavigation.currentTarget.objectName, "applicationCategory");
         verify(!content.detailsNavigation.currentTarget.popup.visible, "remembered editing never reopens a menu");
@@ -812,7 +821,7 @@ DaemonTestCase {
         tryCompare(controller, "detailsOpen", false);
         verify(controller.viewMemory.records[key].open, "missing data is not an explicit close");
         controller.replaceProviderResults([controller.provider.resultFor(result)], false);
-        tryCompare(controller, "detailsOpen", true);
+        tryCompare(controller, "detailsOpen", false);
         verify(content.listItem.listFocused);
         verify(!calls.some(call => call.method === "applications.settings.update"));
     }

@@ -92,6 +92,7 @@ Column {
 
         Ui.ActionButton {
             Layout.fillWidth: true
+            accessKey: "O"
             label: pane.protection.charge_once_active ? "Charging to 100%" : "Charge to 100% once"
             tone: pane.protection.charge_once_active ? "active" : "normal"
             enabled: !!pane.battery.plugged && !pane.protection.charge_once_active && !pane.controller.batteryOperationActive && !pane.controller.thresholdOperationActive && pane.controller.protectionSupported && !pane.controller.actionInFlight
@@ -112,6 +113,7 @@ Column {
 
             Ui.ActionButton {
                 Layout.fillWidth: true
+                accessKey: "P"
                 label: pane.controller.chargingInhibited ? "Resume charging" : "Pause charging"
                 tone: pane.controller.chargingInhibited ? "active" : "normal"
                 enabled: pane.controller.inhibitionSupported && (!pane.controller.batteryOperationActive || pane.controller.chargingInhibited) && !pane.controller.thresholdOperationActive && !pane.controller.actionInFlight
@@ -120,6 +122,7 @@ Column {
 
             Ui.ActionButton {
                 Layout.fillWidth: true
+                accessKey: "C"
                 label: pane.controller.calibrating ? "Cancel calibration" : "Calibrate battery"
                 tone: pane.controller.calibrating ? "active" : "normal"
                 enabled: pane.controller.calibrationSupported && (pane.controller.calibrating || !!pane.battery.plugged) && (!pane.controller.batteryOperationActive || pane.controller.calibrating) && !pane.controller.thresholdOperationActive && !pane.controller.actionInFlight

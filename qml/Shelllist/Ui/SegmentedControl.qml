@@ -10,6 +10,16 @@ Rectangle {
     property string value: ""
     property bool interactive: true
     property bool browseFocused: false
+    property string draftValue: value
+    readonly property string displayedValue: editSession.active ? draftValue : value
+    readonly property FieldEditSession editSession: FieldEditSession {
+        owner: control
+        value: control.draftValue
+        initialValue: control.value
+        onActiveChanged: if (active) control.draftValue = control.value
+        onRestoreRequested: function (value) { control.draftValue = value; }
+        onPublishRequested: function (value) { control.selected(value); }
+    }
 
     signal selected(string value)
 
@@ -17,7 +27,7 @@ Rectangle {
     readonly property real segmentWidth: options.length > 0 ? Math.max(0, width - 2 * contentPadding) / options.length : 0
     readonly property int currentIndex: {
         for (let index = 0; index < options.length; ++index)
-            if (options[index].value === value)
+            if (options[index].value === displayedValue)
                 return index;
         return -1;
     }
@@ -40,7 +50,9 @@ Rectangle {
         if (!enabled || !interactive || !optionEnabled(index))
             return;
         const nextValue = options[index].value;
-        if (nextValue !== value)
+        if (editSession.active)
+            draftValue = nextValue;
+        else if (nextValue !== value)
             selected(nextValue);
     }
 
@@ -127,6 +139,7 @@ Rectangle {
                 }
                 FocusRing {
                     active: (control.activeFocus || control.browseFocused) && segment.selected
+                    editing: control.editSession.active
                     cornerRadius: segment.height / 2
                     ringColor: Theme.selectedText
                 }
@@ -141,6 +154,7 @@ Rectangle {
     }
     FocusRing {
         active: (control.activeFocus || control.browseFocused) && control.currentIndex < 0
+        editing: control.editSession.active
         cornerRadius: control.radius
     }
 }

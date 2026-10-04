@@ -1,8 +1,7 @@
 import QtQuick
-import QtTest
 import Shelllist.Activity as Activity
 
-TestCase {
+DaemonTestCase {
     id: testCase
     name: "Notifications"
     width: 1100
@@ -175,6 +174,7 @@ TestCase {
     function test_liveUpdateRetainsReplyDelegateAndFocus() {
         const state = makeState();
         const controller = makeController(state);
+        controller.uiActive = true;
         controller.openDetails();
         state.setDraft(100, "Draft");
         const content = createTemporaryObject(contentComponent, controller, {
@@ -191,7 +191,7 @@ TestCase {
         field.focusInput(false);
         keyClick(Qt.Key_End);
         keyClick(Qt.Key_T);
-        compare(state.drafts[100], "Draftt");
+        compare(state.drafts[100], "Draft", "reply typing is local until save");
         state.notificationActive = {
             notifications: [notification(101), notification(100), notification(1)]
         };
@@ -211,12 +211,15 @@ TestCase {
         compare(findChild(content, "notificationHistoryRow-100"), row);
         verify(field.inputActiveFocus);
         compare(field.text, "Draftt");
+        keyClick(Qt.Key_Return);
+        compare(state.drafts[100], "Draftt");
         content.destroy();
         wait(50);
     }
-    function test_browseQuickActionIsImmediatelyVisibleWithoutActivation() {
+    function test_quickActionsUseCommandMenuNotFieldTraversal() {
         const state = makeState();
         const controller = makeController(state);
+        controller.uiActive = true;
         controller.openDetails();
         const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 900, height: 600});
         tryVerify(() => findChild(content, "notificationHistoryRow-100") !== null);
@@ -224,12 +227,14 @@ TestCase {
         const row = findChild(content, "notificationHistoryRow-100");
         const action = findChild(row, "notificationQuickSnooze");
         content.detailsNavigation.focusContent(true);
-        content.detailsNavigation.currentTarget = action;
-        verify(action.browseFocused);
+        verify(!content.detailsNavigation.targets.includes(action));
+        verify(content.detailsNavigation.contentCommands.includes(action));
+        keyClick(Qt.Key_J, Qt.AltModifier);
+        tryVerify(() => content.detailsNavigation.commandMenuOpen);
         verify(!action.activeFocus);
-        compare(action.parent.opacity, 1, "browse reveal must not wait for animation or native editing focus");
-        compare(state.activeNotifications.length, 2, "browsing must not snooze or dismiss");
-        verify(row.controlsRevealed);
+        compare(state.activeNotifications.length, 2, "opening commands must not snooze or dismiss");
+        keyClick(Qt.Key_Escape);
+        tryVerify(() => !content.detailsNavigation.commandMenuOpen);
         content.destroy();
         wait(0);
     }

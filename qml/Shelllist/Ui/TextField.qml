@@ -3,6 +3,14 @@ import QtQuick
 FieldFrame {
     id: field
 
+    readonly property FieldEditSession editSession: FieldEditSession {
+        owner: field
+        focused: field.inputActiveFocus
+        value: field.text
+        onRestoreRequested: function (value) { field.text = value; }
+        onPublishRequested: function (value) { field.edited(value); }
+        onFinished: function (saved) { if (saved) field.editingFinished(); }
+    }
     property string focusKey: objectName
     property alias text: input.text
     property alias horizontalAlignment: input.horizontalAlignment
@@ -42,7 +50,7 @@ FieldFrame {
         passwordRevealed = false
 
     implicitHeight: Theme.controlHeight
-    focused: input.activeFocus
+    focused: input.activeFocus && !readOnly
     invalid: !inputValid
     hovered: hover.hovered
     opacity: enabled ? (readOnly ? Theme.readOnlyOpacity : 1.0) : Theme.disabledOpacity
@@ -76,7 +84,8 @@ FieldFrame {
         const position = input.selectionStart;
         input.remove(input.selectionStart, input.selectionEnd);
         input.insert(position, value);
-        field.edited(input.text);
+        if (!editSession.active)
+            field.edited(input.text);
     }
 
     HoverHandler {
@@ -111,9 +120,9 @@ FieldFrame {
         onCursorPositionChanged: field.selectionChanged()
         onSelectionStartChanged: field.selectionChanged()
         onSelectionEndChanged: field.selectionChanged()
-        onTextEdited: field.edited(text)
-        onEditingFinished: field.editingFinished()
-        onAccepted: field.accepted()
+        onTextEdited: if (!field.editSession.active) field.edited(text)
+        onEditingFinished: if (!field.editSession.navigation) field.editingFinished()
+        onAccepted: if (!field.editSession.navigation) field.accepted()
         Keys.onPressed: function (event) {
             field.keyPressed(event);
         }

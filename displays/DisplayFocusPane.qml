@@ -23,7 +23,7 @@ Ui.DetailFlickable {
     Ui.ThemeText {
         objectName: "displayFocusStatus"
         width: parent.width
-        text: page.controller.pendingAction === "focus" || page.controller.pendingAction === "focusReset" ? qsTr("Saving…") : page.controller.focusState.error || (!page.controller.focusState.available ? qsTr("Waiting for compositor capabilities") : page.controller.dirty || page.controller.trial ? qsTr("Finish or discard layout changes to edit focus settings.") : qsTr("All monitors · saves automatically"))
+        text: page.controller.pendingAction === "focus" || page.controller.pendingAction === "focusReset" ? qsTr("Saving…") : page.controller.focusState.error || (!page.controller.focusState.available ? qsTr("Waiting for compositor capabilities") : page.controller.dirty || page.controller.trial ? qsTr("Finish or discard layout changes to edit focus settings.") : qsTr("All monitors · Enter or Tab saves; Escape discards"))
         wrapMode: Text.Wrap
         color: page.controller.focusState.error ? Ui.Theme.warning : Ui.Theme.mutedText
     }
@@ -51,6 +51,7 @@ Ui.DetailFlickable {
             delegate: DisplaySettingsLink {
                 required property var modelData
                 objectName: "focusCategory-" + modelData.id
+                accessKey: ({pointer: "P", keyboard: "K", applications: "A", cursor: "C"})[modelData.id] || ""
                 Layout.fillWidth: true
                 title: modelData.title
                 subtitle: modelData.summary
@@ -79,6 +80,7 @@ Ui.DetailFlickable {
     }
     DisplaySettingsLink {
         objectName: "focusDiagnosticsLink"
+        accessKey: "D"
         width: parent.width
         visible: page.overview
         title: qsTr("Diagnostics")
@@ -126,6 +128,7 @@ Ui.DetailFlickable {
         }
         Ui.ActionButton {
             objectName: "resetDisplayFocus"
+            accessKey: "X"
             Layout.fillWidth: true
             label: qsTr("Restore previous settings")
             enabled: page.controller.canSetFocus && Object.keys(page.controller.focusState.saved || {}).length > 0

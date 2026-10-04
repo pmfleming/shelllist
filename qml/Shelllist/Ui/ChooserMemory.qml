@@ -43,7 +43,9 @@ Item {
         restoring = true;
         activeKey = key;
         activeTab = nextTab;
-        restoreRequested(changed ? !!record && record.open : presentationOpen, nextTab);
+        // Expansion belongs to the surface, not the newly selected result.
+        // Per-result memory restores tabs/locations, never flips the list mode.
+        restoreRequested(key.length > 0 && presentationOpen, nextTab);
         restoring = false;
         rememberPresentation();
         contextRestored(changed);
