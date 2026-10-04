@@ -33,7 +33,7 @@ Shelllist owns only:
 
 - Hyprland/Quickshell layer-shell surfaces and monitor placement;
 - month, agenda, todo, notification, and world-clock rendering;
-- selected date, viewed month, focus, scroll, expanded groups, and open tab;
+- selected date, viewed month, focus, scroll, selected message and open tab;
 - locale-aware labels and time formatting;
 - animations and input;
 - translation of user intent into `bar-api` calls.
@@ -56,7 +56,7 @@ Time & Weather follows the same list/detail interaction as Wi-Fi and Bluetooth. 
 
 Shelllist requests only a buffered range around the visible month. A compact `activity.changed` event schedules a debounced range refresh rather than carrying the full range in every event. Weather locations—including which location is home, labels, coordinates, and timezones—come entirely from `bar-daemon/activity.json`; no city is compiled into the UI. `bar-daemon` refreshes configured Open-Meteo locations concurrently at most every 15 minutes and retains each last successful forecast through transient failures.
 
-In native notification mode, `bar-daemon` owns `org.freedesktop.Notifications` and publishes a bounded, recoverable snapshot containing only unsnoozed active records. The unified list merges that snapshot with history loaded in pages of 50 while Notifications is open. Search explicitly covers loaded notifications. Refresh merges/deduplicates by history ID and catches up across missing pages rather than discarding older loaded records. Notification rows are reconciled by stable identity, preserving selection across live/history transitions. Loading, unavailable, failed, empty and no-match states are distinct.
+In native notification mode, `bar-daemon` owns `org.freedesktop.Notifications` and publishes a bounded, recoverable snapshot containing only unsnoozed active records. The unified list merges that snapshot with history loaded in pages of 50 while Notifications is open. Search explicitly covers loaded notifications. Refresh merges/deduplicates by history ID and catches up across missing pages rather than discarding older loaded records. Notification rows are reconciled by stable identity, preserving selection across live/history transitions. One resident notification backend owns the shared state; the bar reads it rather than writing its own notification snapshots back. Equal snapshots, popup visibility and DND-only changes do not rebuild center rows or reload history. History reads follow changed revisions and are coalesced, with transport-generation and in-flight revision fences. Temporary non-transient rows bridge the close→history-read interval so a selected message does not disappear and reappear. Drafts, replies and pending operations are keyed by notification ID plus creation time, not a reusable numeric ID alone. Prepend and page-append batches preserve the top visible row/offset and active reply editor. Loading, unavailable, failed, empty and no-match states are distinct.
 
 Toast stacks and legacy group links use the same grouping policy:
 

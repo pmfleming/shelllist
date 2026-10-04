@@ -48,6 +48,9 @@ Item {
     readonly property bool detailsRendered: detailsOpen || detailsExpansionProgress > detailsRenderCutoff
     readonly property int currentWindowWidth: Math.round(closedWindowWidth + detailsPaintProgress * (openWindowWidth - closedWindowWidth))
 
+    signal resultsAboutToChange(bool preserveViewport)
+    signal resultsChanged
+    signal detailsClosing
     signal navigationInteracted
     signal uiSuspensionRequested
     signal restoreSessionFocusRequested
@@ -146,6 +149,7 @@ Item {
             detailsOpen = true;
     }
     function closeDetails() {
+        detailsClosing();
         if (viewMemory)
             viewMemory.synchronize();
         detailsOpen = false;

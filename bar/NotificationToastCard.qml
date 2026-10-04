@@ -16,8 +16,9 @@ Rectangle {
     readonly property var defaultAction: Ui.NotificationPresentation.defaultAction(notification)
     readonly property int urgency: Ui.NotificationPresentation.urgency(notification)
     readonly property Activity.NotificationState replyState: controller.notificationState
-    readonly property var replyStatus: replyState ? replyState.replies[notification.id] || ({}) : ({})
-    readonly property string draft: replyState ? String(replyState.drafts[notification.id] || "") : ""
+    readonly property string recordKey: Ui.NotificationPresentation.recordKey(notification)
+    readonly property var replyStatus: replyState ? replyState.replies[recordKey] || ({}) : ({})
+    readonly property string draft: replyState ? String(replyState.drafts[recordKey] || "") : ""
     property bool replyOpen: false
     readonly property bool replyVisible: replyAction !== null && (replyOpen || draft.length > 0 || replyStatus.pending === true || String(replyStatus.error || "").length > 0)
     readonly property bool controlsFocused: quickActions.focusInside || breakout.highlighted
@@ -190,13 +191,13 @@ Rectangle {
         Ui.NotificationReplyRow {
             id: replyRow
             visible: card.replyVisible
-            notificationId: Number(card.notification.id)
+            notificationKey: card.recordKey
             draftText: card.draft
             sending: card.replyStatus.pending === true
             errorText: card.replyStatus.error || ""
             onDraftEdited: function (text) {
                 if (card.replyState)
-                    card.replyState.setDraft(notificationId, text);
+                    card.replyState.setDraft(notificationKey, text);
             }
             submitReply: function (id, text) {
                 return card.controller.replyNotification(id, text);

@@ -81,6 +81,7 @@ Item {
 
     Activity.NotificationState {
         id: sharedNotifications
+        resident: true
         uiActive: registry.notificationController !== null && registry.notificationController.uiActive
         historyEnabled: uiActive
     }

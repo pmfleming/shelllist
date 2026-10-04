@@ -4,7 +4,7 @@ Delivered step-4 slices of the [Material Expressive plan](proposals/material-exp
 after [anchored geometry](chooser-geometry.md):
 
 - Applications, Bluetooth devices, Wi-Fi, Clipboard, Displays, Time & Weather
-  and notification groups use per-result presentation and ordinary invocation focus.
+  and individual notifications use per-result presentation and ordinary invocation focus.
 - Audio, Media and Tray use the same independent records. Media pins/control modes
   are separate daemon-owned settings, never replayed from presentation memory;
   native tray-menu handles and open state remain transient.
@@ -73,6 +73,12 @@ or writes query/control values. Viewport bookmarks survive visual-tree recreatio
 and reorder, wait for keyed-model chunks, and clamp to current bounds. A missing
 bookmark or changed selected identity falls back to normal selection revelation.
 New selection, query editing or scrolling takes precedence over a bookmark.
+Notification model batches emit `resultsAboutToChange(preserveViewport)` before
+changing their presented records and `resultsChanged` after reconciliation. The
+shared result frame captures a keyed viewport before index changes and restores
+it once after the batch. Equal model payloads are not reassigned. Explicit detail
+collapse emits `detailsClosing` so the shared surface discards a field transaction
+before its loader is destroyed; this also makes rapid reply close/reopen safe.
 
 Host visibility, controller-ready and content-ready paths call `restoreUiFocus()`
 instead of issuing competing search-focus requests. Restoration is consumed once

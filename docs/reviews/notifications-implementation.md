@@ -30,3 +30,20 @@ Unrelated worktree changes are excluded from these commits. No service reload or
 - Extended the shared chooser's command context rather than introducing a panel-local key model. Actions remain outside field Tab traversal; menu modality blocks underlying commands. Removed the obsolete group/hover controls and active dot from the inspector; full bodies are readable without pointer-only expansion.
 - Exact `inline-reply` classification preserves ordinary `reply`/`mail-reply-sender` actions. Invocations are pending-guarded and backend failures retire the guard; inline reply still saves locally on Enter and sends explicitly with Alt+R.
 - Validation: notification Qt **11 passes**, action components **4**, shared chooser keyboard **9**, field transactions **29**; warning-fatal lint passed. Added and passed a private peer-to-peer D-Bus client test in bar-daemon covering real action/token/reply/close serialization and dispatch. Compositor focus activation remains a separate live acceptance check (the frontend does not yet acquire activation tokens).
+
+## 5 — coherent updates, stable viewport and identity-owned drafts
+
+- One resident notification backend/store now serves panel, bar and toasts. Bar subscriptions exclude notification streams when that store exists; unrelated snapshots cannot overwrite it.
+- Coalesced stream/model batches reject no-op payloads, older revisions and stale-generation replies. F5/history requests coalesce; DND and popup hiding do not invalidate history. Changed-revision history responses are retried rather than merging stale records.
+- Preserved selected identity and keyed viewport across arrivals and history paging. A bounded temporary non-transient cache bridges closure until authoritative history arrives; transient replacements cannot reappear through stale history.
+- Reply drafts, pending replies and operation acknowledgements use record identity, including across numeric ID reuse. Alt+R from results reopens a saved reply; only the editor's Alt+R sends it. The shared detail-close boundary retires editors before loader destruction.
+- Daemon clear/expiry batches publish final state once, and history reads wait for the persistence-enqueue boundary. Retained the existing mutation lock, reservation/backpressure and per-notification close signals.
+- Validation includes no-op model-write counts, coalesced history requests, old snapshot/reconnect fences, old reply acknowledgements, viewport prepend/append, 205-record burst and real key delivery.
+
+## Final validation
+
+- Entire offscreen Qt suite: **281 passed, zero failed** (Qt 6.11.2 with matching SVG plugins). The first broad run lacked the SVG plugin and failed only the image-assets fixture; the corrected environment passed the full suite.
+- Daemon library: **152 passed, zero failed, one existing ignored test**, including private peer D-Bus dispatch and publication/history ordering coverage. Regular daemon binary builds successfully.
+- Warning-fatal lint passed for all changed production QML components; notification presentation JS and the compiled daemon/frontend contract checks passed.
+- Evidence: `/tmp/notification-final-qt.log`, `/tmp/notification-final-lint.txt`, `/tmp/notification-step5-rust.log`.
+- Not deployed; no service was restarted and no live notification history was mutated. Physical compositor focus, activation-token acquisition, screen-reader and multi-monitor visual acceptance remain outside these automated results. Existing unrelated `flake.nix` changes were not committed.

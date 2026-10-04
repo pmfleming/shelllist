@@ -8,7 +8,7 @@ Io.DaemonBackend {
     daemonName: "bar-daemon"
     expectedProtocol: BarApi.protocol
     expectedVersion: BarApi.version
-    streams: BarApi.subscribedStreams
+    streams: controller.notificationState ? BarApi.subscribedStreams.filter(stream => ![BarApi.streams.notifications, BarApi.streams.notificationActive].includes(stream)) : BarApi.subscribedStreams
     active: true
 
     function snapshot(): bool {

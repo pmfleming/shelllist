@@ -43,7 +43,8 @@ Wheel/touchpad/touch scrolling and scrollbar dragging remain native Qt behavior;
 outer mouse dragging is disabled so it cannot steal text-selection drags. Very
 small viewports may require panning across a control wider than the viewport.
 
-Notifications remain a single-column surface and reserve no inspector space.
+Notifications uses the shared anchored list/inspector surface, with one selected
+message or independent settings page in the inspector.
 Activity now has its glance rail on the left and expands Schedule to the right;
 its former full-height, right-edge special placement is removed. Displays no
 longer switches to a detail-only layout. Domain settings, recovery, preview/revert

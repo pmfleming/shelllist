@@ -9,8 +9,9 @@ Rectangle {
     readonly property NotificationState notificationState: controller.notificationState
     readonly property var notification: Ui.NotificationPresentation.notificationFor(record)
     readonly property bool active: notificationState.isLive(record)
-    readonly property var replyStatus: notificationState.replies[notification.id] || ({})
-    readonly property string draft: String(notificationState.drafts[notification.id] || "")
+    readonly property string recordKey: Ui.NotificationPresentation.recordKey(record)
+    readonly property var replyStatus: notificationState.replies[recordKey] || ({})
+    readonly property string draft: String(notificationState.drafts[recordKey] || "")
 
     objectName: "notificationHistoryRow-" + notification.id
     width: parent.width
@@ -59,13 +60,14 @@ Rectangle {
         Ui.NotificationReplyRow {
             id: replyRow
             visible: row.controller.replyVisible
-            notificationId: Number(row.notification.id || 0)
+            notificationKey: row.recordKey
+            sendAccessKey: row.controller.replyEditorFocused ? "R" : ""
             draftText: row.draft
             sending: row.replyStatus.pending === true
             canReply: row.active && Ui.NotificationPresentation.replyAction(row.notification) !== null
             errorText: row.replyStatus.error || ""
-            onDraftEdited: function (text) { row.notificationState.setDraft(notificationId, text); }
-            submitReply: function (id, text) { return row.notificationState.replyNotification(id, text); }
+            onDraftEdited: function (text) { row.notificationState.setDraft(notificationKey, text); }
+            submitReply: function (key, text) { return row.notificationState.replyNotification(key, text); }
         }
     }
 }

@@ -13,17 +13,18 @@ Io.DaemonBackend {
     expectedVersion: Api.version
     streams: [Api.streams.notifications, Api.streams.notificationActive]
     // Keep the command consumer alive until replies are acknowledged, even on close.
-    active: store.uiActive || requestRunning
+    active: store.resident || store.uiActive || requestRunning
 
     function request(prefix: string, method: string, params: var, context: var): bool {
         const id = nextRequestId(prefix);
         const next = Object.assign({}, requests);
-        next[id] = context || ({});
+        next[id] = Object.assign({generation: store.dataGeneration, eventVersion: store.eventVersion}, context || ({}));
         requests = next;
         return call(id, method, params);
     }
     function snapshot(): void {
-        request("snapshot", Api.methods.snapshot, {}, {});
+        if (!Object.keys(requests).some(id => id.startsWith("snapshot-")))
+            request("snapshot", Api.methods.snapshot, {}, {snapshot: true});
     }
     function loadHistory(cursor: var, refresh: bool): bool {
         return request("history", Api.methods.notificationsList, {
@@ -31,6 +32,7 @@ Io.DaemonBackend {
             limit: 50
         }, {
             history: true,
+            historyRevision: store.observedHistoryRevision,
             refresh: refresh
         });
     }
@@ -43,7 +45,7 @@ Io.DaemonBackend {
     function dismiss(id: int): bool {
         return request("dismiss", Api.methods.notificationsDismiss, {
             id: id
-        }, {operationId: id});
+        }, {operationKey: store.keyFor(id)});
     }
     function clear(): bool {
         return request("clear", Api.methods.notificationsClear, {}, {});
@@ -57,21 +59,21 @@ Io.DaemonBackend {
         return request("snooze", Api.methods.notificationsSnooze, {
             id: id,
             until_unix_ms: until
-        }, {operationId: id});
+        }, {operationKey: store.keyFor(id)});
     }
     function invoke(id: int, key: string): bool {
         return request("action", Api.methods.notificationsInvokeAction, {
             id: id,
             action_key: key,
             activation_token: null
-        }, {operationId: id});
+        }, {operationKey: store.keyFor(id)});
     }
     function reply(id: int, text: string): bool {
         return request("reply", Api.methods.notificationsReply, {
             id: id,
             text: text
         }, {
-            replyId: id,
+            replyKey: store.keyFor(id),
             text: text
         });
     }
@@ -82,25 +84,38 @@ Io.DaemonBackend {
         const next = Object.assign({}, requests);
         delete next[id];
         requests = next;
-        if (context.replyId !== undefined)
-            store.finishReply(context.replyId, context.text, error);
+        if (context.generation !== undefined && context.generation !== store.dataGeneration)
+            return;
+        store.flushEvents();
+        if (context.replyKey !== undefined)
+            store.finishReply(context.replyKey, context.text, error);
         if (context.dnd)
-            store.finishDnd(data.notifications, error);
-        if (context.operationId !== undefined)
-            store.finishOperation(context.operationId);
+            store.finishDnd(context.eventVersion === store.eventVersion ? data.notifications : null, error);
+        if (context.operationKey !== undefined)
+            store.finishOperation(context.operationKey);
         if (error) {
-            store.lastError = error;
             if (context.history)
                 store.failHistory(error);
+            else
+                store.lastError = error;
             return;
         }
-        store.lastError = "";
-        if (data.snapshot)
-            store.applySnapshot(data.snapshot);
-        if (context.history)
-            store.applyHistory(data.notification_history || [], context.refresh);
-        else if (!id.startsWith("snapshot"))
-            store.scheduleHistory();
+        if (!context.history && !context.snapshot)
+            store.lastError = "";
+        if (data.snapshot) {
+            if (context.eventVersion === store.eventVersion)
+                store.applySnapshot(data.snapshot);
+            else if (!store.notifications.available && (store.resident || store.uiActive))
+                Qt.callLater(snapshot);
+        }
+        if (context.history) {
+            if (context.historyRevision !== undefined && context.historyRevision !== store.observedHistoryRevision) {
+                store.historyLoading = false;
+                store.scheduleHistory();
+            } else {
+                store.applyHistory(data.notification_history || [], context.refresh);
+            }
+        }
     }
 
     onResponseReceived: function (id, envelope, transportError) {
@@ -113,9 +128,14 @@ Io.DaemonBackend {
         lostRequestIds.forEach(function (id) {
             backend.finish(id, {}, message);
         });
+        store.connectionLost();
     }
-    onTransportReady: if (store.uiActive)
-        snapshot()
+    onTransportReady: {
+        if (store.resident || store.uiActive)
+            snapshot();
+        if (store.historyDirty || !store.historyLoaded)
+            store.scheduleHistory();
+    }
     onEventGapDetected: {
         snapshot();
         store.scheduleHistory();
@@ -123,14 +143,18 @@ Io.DaemonBackend {
     Connections {
         target: backend.store
         function onUiActiveChanged(): void {
-            if (backend.store.uiActive && backend.ready)
+            if (backend.store.uiActive && backend.ready && !backend.store.resident)
+                backend.snapshot();
+        }
+        function onResidentChanged(): void {
+            if (backend.store.resident && backend.ready)
                 backend.snapshot();
         }
     }
     onEventReceived: function (event) {
         if (event.stream === Api.streams.notifications)
-            store.notifications = event.data;
+            store.queueEvent(true, event.data);
         else if (event.stream === Api.streams.notificationActive)
-            store.notificationActive = event.data;
+            store.queueEvent(false, event.data);
     }
 }

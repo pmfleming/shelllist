@@ -19,6 +19,7 @@ Rectangle {
     readonly property real delegateHeight: Theme.listRowHeight
 
     property var viewportBookmark: null
+    property bool reconcilingResults: false
 
     signal keyPressed(var event)
 
@@ -51,6 +52,8 @@ Rectangle {
         list.forceActiveFocus();
     }
     function revealSelection() {
+        if (reconcilingResults)
+            return;
         // ListView tracks the old delegate through inserts/moves/removals, even
         // when the controller's index has not changed. Reconcile from the
         // logical selection after model changes, never from that delegate.
@@ -59,7 +62,7 @@ Rectangle {
         if (!applyViewport() && index >= 0)
             list.positionViewAtIndex(index, ListView.Contain);
     }
-    onSelectedIndexChanged: {
+    onSelectedIndexChanged: if (!reconcilingResults) {
         viewportBookmark = null;
         revealSelection();
     }
@@ -118,6 +121,14 @@ Rectangle {
 
     Connections {
         target: frame.controller
+        function onResultsAboutToChange(preserveViewport: bool): void {
+            frame.reconcilingResults = true;
+            frame.viewportBookmark = preserveViewport && frame.preserveViewportOnAppend ? frame.viewportState() : null;
+        }
+        function onResultsChanged(): void {
+            frame.reconcilingResults = false;
+            Qt.callLater(frame.revealSelection);
+        }
         function onUiActiveChanged() {
             if (frame.controller.uiActive && !frame.controller.viewMemory)
                 Qt.callLater(frame.revealSelection);

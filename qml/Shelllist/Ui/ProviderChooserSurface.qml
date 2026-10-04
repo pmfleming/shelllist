@@ -60,6 +60,11 @@ ChooserSurface {
             chooserController.dismissNavigation();
     }
 
+    Connections {
+        target: surface.chooserController
+        function onDetailsClosing(): void { surface.detailsNavigation.suspendView(); }
+    }
+
     ShortcutHints {
         objectName: "shortcutHints"
         scope: surface

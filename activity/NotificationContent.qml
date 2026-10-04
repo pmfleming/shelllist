@@ -11,10 +11,16 @@ Ui.ProviderChooserSurface {
     property Item messageCommands: null
     additionalCommandItem: messageCommands
     commandsWithoutDetails: controller.hasSelection && !controller.settingsOpen
+    Binding {
+        target: content.controller
+        property: "replyEditorFocused"
+        value: content.detailsNavigation.activeFocus && content.detailsNavigation.currentTarget?.objectName === "notificationReplyInput"
+    }
     Connections {
         target: content.controller
         function onSelectedKeyChanged(): void { content.detailsNavigation.closeCommandMenu(); }
         function onSettingsOpenChanged(): void { content.detailsNavigation.closeCommandMenu(); }
+        function onSelectedLiveChanged(): void { if (!content.controller.selectedLive) content.detailsNavigation.closeCommandMenu(); }
     }
 
     listComponent: Ui.ChooserListPane {
@@ -51,7 +57,7 @@ Ui.ProviderChooserSurface {
                 controller: content.controller
                 navigation: content.detailsNavigation
                 Component.onCompleted: content.messageCommands = commands
-                Component.onDestruction: if (content.messageCommands === commands) content.messageCommands = null
+                Component.onDestruction: if (content && content.messageCommands === commands) content.messageCommands = null
             }
         }
         rowDelegate: Ui.ResultRow {

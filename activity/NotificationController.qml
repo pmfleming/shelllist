@@ -17,18 +17,21 @@ Ui.ChooserController {
     property bool settingsOpen: false
     property bool messageWasOpen: false
     property string replyKey: ""
+    property bool replyEditorFocused: false
     property string copyStatus: ""
     property double nowMs: Date.now()
     property alias screenshotStatus: screenshotCapture.statusMessage
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
     readonly property alias notificationModel: records
-    readonly property var visibleRecords: Ui.NotificationPresentation.filterRecords(notificationState.recentNotifications, filterText)
+    readonly property var filteredRecords: Ui.NotificationPresentation.filterRecords(notificationState.recentNotifications, filterText)
+    property var visibleRecords: []
+    property string presentedFilter: ""
     readonly property var selectedRecord: visibleRecords.find(record => Ui.NotificationPresentation.recordKey(record) === selectedKey) || null
     readonly property var selectedNotification: Ui.NotificationPresentation.notificationFor(selectedRecord)
     readonly property bool selectedLive: hasSelection && notificationState.isLive(selectedRecord)
-    readonly property bool selectedBusy: !!notificationState.operations[selectedNotification.id]
+    readonly property bool selectedBusy: !!notificationState.operations[selectedKey]
     readonly property var selectedAppActions: selectedLive ? Ui.NotificationPresentation.standardActions(selectedNotification) : []
-    readonly property bool replyVisible: replyKey === selectedKey || !!notificationState.drafts[selectedNotification.id] || !!notificationState.replies[selectedNotification.id]
+    readonly property bool replyVisible: hasSelection && (replyKey === selectedKey || !!notificationState.drafts[selectedKey] || !!notificationState.replies[selectedKey])
 
     hasSelection: selectedRecord !== null
     selectionModel: recordSelection
@@ -74,6 +77,7 @@ Ui.ChooserController {
         focusDetailsRequested();
     }
     function closeDetails(): void {
+        detailsClosing();
         viewMemory.synchronize();
         if (settingsOpen) {
             settingsOpen = false;
@@ -89,6 +93,7 @@ Ui.ChooserController {
         }
     }
     function primarySelected(): bool {
+        rebuildRecords(); // Explicit activation observes the current query, not a queued old list.
         if (settingsOpen)
             return false;
         const action = selectedLive ? Ui.NotificationPresentation.defaultAction(selectedNotification) : null;
@@ -124,7 +129,7 @@ Ui.ChooserController {
         settingsOpen = false;
         filterText = "";
         pendingGroupKey = key;
-        revealPendingGroup();
+        rebuildRecords();
     }
     function goBack(): void {
         if (returnSurface === "activity")
@@ -147,14 +152,25 @@ Ui.ChooserController {
         notificationState.reloadHistory();
     }
     function rebuildRecords(): void {
-        const oldIndex = records.currentKeys().indexOf(selectedKey);
-        records.rows = visibleRecords.map(record => ({key: Ui.NotificationPresentation.recordKey(record), payload: record}));
-        if (!selectedRecord) {
-            const next = visibleRecords[Math.max(0, Math.min(visibleRecords.length - 1, oldIndex))];
-            selectedKey = next ? Ui.NotificationPresentation.recordKey(next) : "";
+        const next = filteredRecords;
+        const rows = next.map(record => ({key: Ui.NotificationPresentation.recordKey(record), payload: record}));
+        const changed = records.count !== rows.length || rows.some((row, index) => records.get(index).resultKey !== row.key || records.get(index).resultData.payload !== JSON.stringify(row.payload));
+        if (changed) {
+            const oldIndex = records.currentKeys().indexOf(selectedKey);
+            resultsAboutToChange(presentedFilter === filterText);
+            if (next.length === 0 && detailsOpen && !settingsOpen)
+                detailsClosing();
+            visibleRecords = next;
+            records.rows = rows;
+            if (!selectedRecord) {
+                const nearest = visibleRecords[Math.max(0, Math.min(visibleRecords.length - 1, oldIndex))];
+                selectedKey = nearest ? Ui.NotificationPresentation.recordKey(nearest) : "";
+            }
+            if (!hasSelection && !settingsOpen)
+                detailsOpen = false;
+            resultsChanged();
         }
-        if (!hasSelection && !settingsOpen)
-            detailsOpen = false;
+        presentedFilter = filterText;
         revealPendingGroup();
     }
     function revealPendingGroup(): void {
@@ -188,7 +204,7 @@ Ui.ChooserController {
         startMessage: "Capturing Notifications panel…"
     }
 
-    onVisibleRecordsChanged: rebuildRecords()
+    onFilteredRecordsChanged: Qt.callLater(rebuildRecords)
     Core.SerializedListModel { id: records }
     Timer {
         interval: 30000

@@ -4,6 +4,7 @@ import Shelllist.Ui as Ui
 Column {
     id: settings
     required property NotificationState notificationState
+    readonly property bool nativeAvailable: notificationState.notifications.available && notificationState.notifications.backend !== "swaync"
     width: parent.width
     spacing: Ui.Theme.spacingMd
 
@@ -15,7 +16,7 @@ Column {
     }
     Ui.ThemeText {
         width: parent.width
-        text: qsTr("Do Not Disturb silences popups. Notifications remain in the notification list.")
+        text: settings.notificationState.notifications.backend === "swaync" ? qsTr("Notification settings are managed by SwayNC while the fallback backend is enabled.") : qsTr("Do Not Disturb silences popups. Notifications remain in the notification list.")
         wrapMode: Text.WordWrap
     }
     Ui.ToggleRow {
@@ -24,7 +25,7 @@ Column {
         height: implicitHeight
         title: qsTr("Do Not Disturb")
         checked: settings.notificationState.notifications.dnd === true
-        interactive: settings.notificationState.notifications.available && !settings.notificationState.dndPending
+        interactive: settings.nativeAvailable && !settings.notificationState.dndPending
         subtitle: settings.notificationState.dndPending ? qsTr("Saving…") : !checked ? qsTr("Off") : settings.notificationState.notifications.dnd_until_unix_ms ? qsTr("Until %1").arg(new Date(settings.notificationState.notifications.dnd_until_unix_ms).toLocaleTimeString()) : qsTr("Until turned off")
         onClicked: settings.notificationState.setDndEnabled(!checked)
     }
@@ -34,7 +35,7 @@ Column {
         width: parent.width
         Accessible.name: qsTr("Do Not Disturb duration")
         value: String(settings.notificationState.dndDurationMinutes)
-        interactive: !settings.notificationState.dndPending
+        interactive: settings.nativeAvailable && !settings.notificationState.dndPending
         options: [{value: "30", label: qsTr("30 minutes")}, {value: "60", label: qsTr("1 hour")}, {value: "0", label: qsTr("Until turned off")}]
         onSelected: function (value) { settings.notificationState.setDndDuration(Number(value)); }
     }
@@ -49,7 +50,7 @@ Column {
         objectName: "notificationDndRetry"
         accessKey: "T"
         visible: settings.notificationState.dndError.length > 0
-        enabled: !settings.notificationState.dndPending && settings.notificationState.notifications.available
+        enabled: !settings.notificationState.dndPending && settings.nativeAvailable
         width: parent.width
         height: Ui.Theme.controlHeight
         label: qsTr("Retry Do Not Disturb change")

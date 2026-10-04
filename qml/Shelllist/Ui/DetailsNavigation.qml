@@ -529,7 +529,7 @@ FocusScope {
             id: shortcutSlot
             required property ActionControl modelData
             required property int index
-            readonly property string sequence: navigation.shortcutFor(modelData)
+            readonly property string sequence: navigation ? navigation.shortcutFor(modelData) : ""
             Shortcut {
                 sequence: shortcutSlot.sequence
                 enabled: !!shortcutSlot.sequence && navigation.headerShortcutsEnabled && !navigation.popupOpen

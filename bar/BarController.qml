@@ -69,12 +69,12 @@ Item {
             microphone_privacy: false,
             camera_privacy: false
         })
-    property var notifications: ({
+    property var notifications: notificationState ? notificationState.notifications : ({
             available: false,
             count: 0,
             dnd: false
         })
-    property var notificationActive: ({
+    property var notificationActive: notificationState ? notificationState.notificationActive : ({
             available: false,
             revision: 0,
             notifications: []
@@ -111,8 +111,11 @@ Item {
 
     function applyPayload(data: var): void {
         Object.keys(BarApi.propertyByPayload).forEach(function (payloadName) {
+            const propertyName = BarApi.propertyByPayload[payloadName];
+            if (controller.notificationState && ["notifications", "notificationActive"].includes(propertyName))
+                return; // The resident notification store owns these streams.
             if (data[payloadName] !== undefined)
-                controller[BarApi.propertyByPayload[payloadName]] = data[payloadName];
+                controller[propertyName] = data[payloadName];
         });
     }
 
@@ -199,24 +202,19 @@ Item {
         return profile.length > 0 && backend.setPowerProfile(profile);
     }
     function dismissNotification(notificationId: int): bool {
-        return backend.dismissNotification(notificationId);
+        return notificationState ? notificationState.dismissNotification(notificationId) : backend.dismissNotification(notificationId);
     }
     function clearNotificationGroup(groupKey: string): bool {
-        return backend.clearNotificationGroup(groupKey);
+        return notificationState ? notificationState.clearNotificationGroup(groupKey) : backend.clearNotificationGroup(groupKey);
     }
     function snoozeNotification(notificationId: int, minutes: int): bool {
-        return backend.snoozeNotification(notificationId, Date.now() + minutes * 60 * 1000);
+        return notificationState ? notificationState.snoozeNotification(notificationId, minutes) : backend.snoozeNotification(notificationId, Date.now() + minutes * 60 * 1000);
     }
     function invokeNotificationAction(notificationId: int, actionKey: string): bool {
-        return backend.invokeNotificationAction(notificationId, actionKey);
+        return notificationState ? notificationState.invokeNotificationAction(notificationId, actionKey) : backend.invokeNotificationAction(notificationId, actionKey);
     }
     readonly property Activity.NotificationState notificationState: surfaceRegistry ? surfaceRegistry.notificationState : null
-    onNotificationsChanged: if (notificationState)
-        notificationState.notifications = notifications
-    onNotificationActiveChanged: if (notificationState)
-        notificationState.notificationActive = notificationActive
-
-    function replyNotification(notificationId: int, text: string): bool {
+    function replyNotification(notificationId: var, text: string): bool {
         return notificationState ? notificationState.replyNotification(notificationId, text) : false;
     }
     function visibleToastGroups(monitorName: string): var {

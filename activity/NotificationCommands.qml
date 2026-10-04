@@ -16,7 +16,7 @@ Column {
         tabFocusEnabled: false
         actions: [
             {id: "open", label: qsTr("Open notification"), icon: "󰏌", accessKey: "O", visible: commands.controller.selectedLive && Ui.NotificationPresentation.defaultAction(commands.controller.selectedNotification) !== null, enabled: !commands.controller.selectedBusy},
-            {id: "reply", label: qsTr("Reply"), icon: "󰑚", accessKey: "R", visible: commands.controller.selectedLive && Ui.NotificationPresentation.replyAction(commands.controller.selectedNotification) !== null && !commands.controller.replyVisible, enabled: !commands.controller.selectedBusy},
+            {id: "reply", label: qsTr("Reply"), icon: "󰑚", accessKey: "R", visible: commands.controller.selectedLive && Ui.NotificationPresentation.replyAction(commands.controller.selectedNotification) !== null && !commands.controller.replyEditorFocused, enabled: !commands.controller.selectedBusy},
             {id: "dismiss", label: qsTr("Dismiss notification"), icon: "󰅖", accessKey: "D", visible: commands.controller.selectedLive, enabled: !commands.controller.selectedBusy},
             {id: "snooze", label: qsTr("Snooze for 15 minutes"), icon: "󰒲", accessKey: "Z", visible: commands.controller.selectedLive, enabled: !commands.controller.selectedBusy},
             {id: "copy", label: qsTr("Copy notification text"), icon: "󰆏", accessKey: "C"},
@@ -35,7 +35,7 @@ Column {
     }
     Ui.ThemeText {
         width: parent.width
-        text: commands.controller.selectedLive ? qsTr("Hold Alt for commands · Alt+J for app actions") : qsTr("Closed notification · app actions are no longer available")
+        text: !commands.controller.notificationState.notifications.available ? qsTr("Notifications unavailable · cached message") : commands.controller.selectedLive ? qsTr("Hold Alt for commands · Alt+J for app actions") : commands.controller.selectedNotification.snoozed_until_unix_ms ? qsTr("Snoozed notification") : qsTr("Closed notification · app actions are no longer available")
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeCaption
         wrapMode: Text.WordWrap

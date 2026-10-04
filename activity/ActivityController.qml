@@ -116,7 +116,8 @@ Ui.ChooserController {
     function applySnapshot(snapshot: var): void {
         if (snapshot.activity)
             activity = snapshot.activity;
-        notificationState.applySnapshot(snapshot);
+        if (!notificationState.resident)
+            notificationState.applySnapshot(snapshot);
         if (snapshot.timezone)
             timezone = snapshot.timezone;
         scheduleRangeQuery();
@@ -136,9 +137,9 @@ Ui.ChooserController {
             activity = data;
             scheduleRangeQuery();
         } else if (kind === "notifications") {
-            notificationState.notifications = data;
+            if (!notificationState.resident) notificationState.applySummary(data);
         } else if (kind === "notificationActive") {
-            notificationState.notificationActive = data;
+            if (!notificationState.resident) notificationState.applyActive(data);
         } else if (kind === "timezone") {
             timezone = data;
         }
