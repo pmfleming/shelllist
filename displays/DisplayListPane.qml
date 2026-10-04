@@ -26,25 +26,6 @@ Ui.ChooserListPane {
     searchActionToolTip: qsTr("Display settings")
     searchActionEnabled: !controller.navigationBlocked
     onSearchActionRequested: controller.openGlobalSettings()
-    listOptionsComponent: Component {
-        Column {
-            width: parent.width
-            spacing: Ui.Theme.spacingXs
-            DisplayCanvas {
-                width: parent.width
-                height: Math.max(96, Math.min(150, pane.height * 0.23))
-                controller: pane.controller
-            }
-            Ui.ThemeText {
-                objectName: "displayLayoutPreviewLabel"
-                width: parent.width
-                text: pane.controller.stale ? qsTr("Layout changed · reload") : pane.controller.dirty ? qsTr("Preview layout · not applied") : qsTr("Display layout")
-                color: pane.controller.stale ? Ui.Theme.warning : Ui.Theme.mutedText
-                font.pixelSize: Ui.Theme.fontSizeSmall
-                wrapMode: Text.Wrap
-            }
-        }
-    }
     rowDelegate: Component {
         DisplayListRow {
             listPane: pane

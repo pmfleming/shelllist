@@ -57,8 +57,12 @@ Ui.ProviderChooserController {
     readonly property bool canSetPolicy: canChange && !dirty
     readonly property var focusState: displayPolicyState.focus || ({available: false})
     readonly property bool canSetFocus: canSetPolicy && !!focusState.available
-    readonly property string validationError: Model.validate(draft, outputs)
-    readonly property bool canPreview: canEdit && dirty && validationError.length === 0
+    readonly property string validationError: Model.validate(draft, outputs) || Model.arrangementError(draft, baselineDraft)
+    readonly property bool canPreview: canEdit && !layoutDragging && !discardPrompt && dirty && validationError.length === 0
+    readonly property var placementReferences: Model.placementReferences(draft, selectedName)
+    readonly property bool canArrange: canEdit && !discardPrompt && !layoutDragging && !!selectedDraft && Model.isIndependent(selectedDraft) && placementReferences.length > 0
+    readonly property var placementChoices: ["left", "above", "below", "right"].map(side => Model.placement(draft, selectedName, referenceName, side))
+    readonly property string arrangementHint: !selectedDraft ? qsTr("Select a display to arrange") : !selectedDraft.enabled ? qsTr("Enable this display to arrange it") : selectedDraft.mirror_of ? qsTr("Mirrors %1 · position follows the source").arg(selectedDraft.mirror_of) : !placementReferences.length ? qsTr("Connect another extended display to arrange") : ""
     readonly property var selectedOutput: outputs.find(function (o) {
         return o.name === selectedName;
     }) || null
@@ -78,6 +82,7 @@ Ui.ProviderChooserController {
     provider: displayProvider
     navigationBlocked: discardPrompt || layoutDragging || actionInFlight || !!trial
     onSelectedNameChanged: updateReference()
+    onDraftChanged: updateReference()
 
     signal editorFocusRequested
     signal compactFocusRequested
@@ -108,7 +113,7 @@ Ui.ProviderChooserController {
         if (trial) {
             if (baselineTopology && Model.topology(outputs) !== baselineTopology)
                 stale = true;
-        } else if (previousTrial || (!dirty && pendingAction !== "preview")) {
+        } else if (previousTrial || (!dirty && pendingAction !== "preview" && (Model.fingerprint(outputs) !== baselineFingerprint || !!(displayPolicyState.policy || {}).prefer_external !== baselinePreference))) {
             // A trial ended authoritatively; the new observed layout is the baseline.
             baselineDraft = [];
             draft = [];
@@ -192,37 +197,26 @@ Ui.ProviderChooserController {
         const normalized = ["x", "y", "scale", "transform"].includes(key) && Model.number(value) ? Number(value) : value;
         draft = draft.map(o => o.name === name ? Object.assign({}, o, {[key]: normalized}) : o);
     }
-    function moveTo(name: string, x: real, y: real, snapDistance: real): void {
-        if (!canEdit || draft.some(o => o.name === name && !!o.mirror_of))
-            return;
-        const position = Model.snap(draft, name, x, y, snapDistance);
-        draft = draft.map(function (o) {
-            return o.name === name ? Object.assign({}, o, {
-                x: Math.round(position.x),
-                y: Math.round(position.y)
-            }) : o;
-        });
+    function placeDisplay(name: string, reference: string, side: string): bool {
+        if (!canEdit || discardPrompt || layoutDragging)
+            return false;
+        const candidate = Model.placement(draft, name, reference, side);
+        if (candidate.error)
+            return false;
+        const own = draft.find(o => o.name === name);
+        if (own.x !== candidate.x || own.y !== candidate.y)
+            draft = draft.map(o => o.name === name ? Object.assign({}, o, { x: candidate.x, y: candidate.y }) : o);
+        if (name === selectedName)
+            referenceName = reference;
+        return true;
     }
-    function moveSelected(dx: real, dy: real): void {
-        if (selectedDraft)
-            moveTo(selectedName, Number(selectedDraft.x) + dx, Number(selectedDraft.y) + dy, 0);
-    }
-    function placeSelected(side: string): void {
-        const reference = draft.find(function (o) {
-            return o.name === referenceName;
-        });
-        if (!selectedDraft || selectedDraft.mirror_of || !reference || reference.mirror_of || !["left", "right", "above", "below"].includes(side))
-            return;
-        const position = Model.adjacent(selectedDraft, reference, side);
-        moveTo(selectedName, position.x, position.y, 0);
+    function placeSelected(side: string): bool {
+        return placeDisplay(selectedName, referenceName, side);
     }
     function updateReference(): void {
-        if (!draft.some(function (o) {
-            return o.name === referenceName && o.name !== selectedName && !o.mirror_of;
-        }))
-            referenceName = (draft.find(function (o) {
-                    return o.name !== selectedName && !o.mirror_of;
-                }) || {}).name || "";
+        const references = Model.placementReferences(draft, selectedName);
+        if (!references.some(o => o.name === referenceName))
+            referenceName = references.length ? references[0].name : "";
     }
     function selectOutput(name: string): void {
         if (!outputs.some(function (o) {

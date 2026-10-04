@@ -16,22 +16,28 @@ serial metadata; it does not discover disconnected or wireless displays.
 Up/Down selects a row; **Right** or its chevron expands that display's options
 beside the list, keeping its left edge anchored. Narrow outputs retain this split
 layout; below the supported canvas size, explicit scrolling and focus revelation
-keep controls reachable. **Back to displays** closes details; pending layout
-changes are protected by a discard confirmation. See [shared geometry](chooser-geometry.md) for bounds and limits.
-Left closes details when not consumed by an editor or tab control; Left
-inside a position field moves its cursor. Returning to the list restores search
-focus. Empty searches and disconnected displays have distinct messages, and Back
-and draft recovery remain available even if the selected display disappears.
+keep controls reachable. **Left/Escape** closes monitor details without a separate
+back-arrow button; pending layout changes are protected by a discard confirmation. See [shared geometry](chooser-geometry.md) for bounds and limits.
+Left closes details when not consumed by an editor or tab control. Returning
+to the list restores search focus. Empty searches and disconnected displays have distinct messages, and
+keyboard back navigation and draft recovery remain available even if the selected
+display disappears.
 
-A persistent layout diagram sits below search, outside the scrolling list. It
-remains present with one display, in monitor details and in global settings.
-The diagram shows the draft consistently; **Preview layout · not applied** marks
-pending changes. It never takes Tab/browse focus. Select displays using the list,
-and use position fields for keyboard-only arrangement. Pointer selection and
-snapped dragging remain available on the diagram; there is no separate Arrange
-mode or hide button. On outputs below the shared minimum canvas width, existing
-horizontal overflow/revelation still applies: the map stays in the left pane,
-not overlaid on a horizontally scrolled inspector.
+The layout diagram sits at the top of expanded monitor details, above the
+Settings/Information pages, rather than below search. It shows every connected
+supported display, including disabled screens and mirrors, and highlights only
+the selected display. It remains visible with one display and on either monitor
+tab, but is absent from the compact list and global focus settings. Independent
+screens use their draft desktop positions; disabled screens and mirrors are
+labelled and placed beside the desktop so overlapping coordinates cannot hide
+them. This presentation placement never changes the draft.
+
+**Preview layout · not applied** marks pending changes. The diagram never takes
+Tab/browse focus. Select displays using the list or pointer. Arrange enabled
+independent displays using edge-snapping drag/drop or the **Left / Above / Below /
+Right** buttons immediately below the map. Parked disabled/mirror tiles are
+selection-only. On narrow outputs, the shared horizontal overflow/revelation
+still applies.
 
 The trailing **settings gear** inside search opens global Display settings,
 even when search has no results or no display is selected. Alt+Enter from search
@@ -49,9 +55,10 @@ with distinct Preview/Identify symbols and two secondary actions:
   The last enabled display is protected. Confirmed manual enablement overrides
   docking policy until that preference is set again.
 
-**Settings** contains mirror/extend content selection, resolution/refresh, scale,
-rotation/reflection, and an always-visible **Precise position** section for X/Y and
-relative placement. Controls preserve advertised backend mode strings.
+**Settings** contains mirror/extend content selection, resolution/refresh, scale
+and rotation/reflection. Controls preserve advertised backend mode strings.
+There are no X/Y fields or separate Position card; relative arrangement stays
+with the map above both detail pages.
 **Information** is read-only observed state, including connector, available
 identity metadata, mode, logical size, scale and position and whether it is the
 active monitor. Missing metadata is omitted. Ctrl+Tab cycles Settings and
@@ -60,7 +67,7 @@ Switching displays, tabs or global settings retains the complete layout draft.
 
 All tabs use the same inset detail layout, themed cards, typography and fixed
 footer as the other chooser surfaces. Settings groups individually labelled
-controls into **Display settings** and **Position** cards. Information groups
+controls into **Display content** and **Display settings** cards. Information groups
 observed values into **Display status** and **Display information** cards, with
 one column on narrow outputs and two where space permits. Cards grow with their
 contents; the page scrolls without moving the tabs.
@@ -69,6 +76,39 @@ contents; the page scrolls without moving the tabs.
 **whole layout**, not just the selected screen. Unsaved/stale/error status and
 Discard/Reload remain above the tabs. Narrow headers stack the primary button
 above the secondary row, and settings scroll while tab controls stay visible.
+
+## Relative arrangement
+
+A monitor can be placed only **left, above, below or right** of another enabled
+independent monitor. Left/right placements align the top edges; above/below align
+the left edges. Logical dimensions account for scale and rotation, rounded to
+integer pixels consistently for placement and collision checks.
+
+- **Drag:** move a monitor tile to an edge of another monitor. The map makes room
+  for possible destinations at drag entry, then freezes its fitting. A translucent
+  tile and target outline show the destination, with a label naming the reference
+  and side. Hovering does not change the draft. Release at a valid edge to place;
+  Escape, an outside drop, loss of the pointer grab, hiding the view or a topology/
+  geometry change cancels. Ordinary unchanged telemetry does not interrupt it.
+- **Buttons / keyboard:** click the four buttons below the map, or use **Alt+L**
+  (left), **Alt+U** (above), **Alt+D** (below), **Alt+R** (right). Plain arrows retain
+  list/editor navigation. Buttons are commands, not Tab stops. With two eligible
+  monitors the reference is automatic. With three or more, the reference name
+  becomes a dropdown using the shared Enter/Tab save and Escape discard workflow.
+  Selecting a reference alone never moves a monitor. A successful drop selects
+  its target as the reference for subsequent button commands.
+
+Both routes use the same validated operation and modify only the local draft.
+Other monitors remain fixed. Destinations overlapping another independent screen
+or exceeding supported coordinates are blocked with an explanation; invalid
+ghosts are warning-coloured. Repeating the current placement is a no-op. Disabled
+screens and mirrors are neither draggable nor reference targets, and the strip
+explains when enabling/extending or connecting another screen is required.
+
+Opening the panel never rewrites an observed layout. New overlaps introduced by
+placement, enablement, resolution, scale or rotation block Preview until resolved.
+Existing unchanged compositor geometry is preserved. Free-coordinate placement,
+diagonal drops, pixel nudges and Alt-to-bypass-snapping are not available.
 
 ## Mirror or extend content
 
@@ -85,8 +125,8 @@ refresh rate, scale and rotation. Different aspect ratios are fitted with black
 bars rather than requiring identical modes.
 
 Mirrors share the source's desktop, so their position controls are disabled and
-the canvas labels copies on the source tile instead of showing duplicate movable
-workspaces. Selecting Extend again places the screen beside the other extended
+the canvas shows them as separate labelled, selection-only screens beside the
+desktop, not duplicate movable workspaces. Selecting Extend again places the screen beside the other extended
 displays. Observed mirror relationships appear in the list and Information tab.
 
 Disabling a source promotes its copies to extended displays; the daemon applies
@@ -164,16 +204,17 @@ claim to lock all focus to one screen.
 
 ## Layout safety and keyboard controls
 
-- Drag screens to align edges; hold Alt to bypass snapping.
+- Drag screens to a reference edge or use the four direction commands below the
+  map. Only enabled independent displays can be arranged.
 - The diagram is an accessible graphic, never a keyboard navigation stop.
-  Select an output in the list and use **Settings → Precise position** for X/Y
-  or relative placement. Escape cancels an active pointer drag.
+  Select an output in the list; Alt+L/U/D/R places it relative to the shown
+  reference. Escape cancels an active pointer drag without editing the draft.
 - Preview or Ctrl+Enter sends the complete validated draft. Nothing moves live
   while editing. An unconfirmed trial reverts after 20 seconds, subject to daemon
   reconciliation and compositor availability. Revert has initial keyboard focus;
   Keep is a separate deliberate action. Held activation keys cannot repeat.
 - Escape reverts a trial, returns from a global category to Focus, or returns to
-  the compact view. Dirty drafts ask before discarding, including compact-map edits. Incoming telemetry does not overwrite a draft. A changed topology
+  the compact view. Dirty drafts ask before discarding, including diagram edits. Incoming telemetry does not overwrite a draft. A changed topology
   or externally changed configuration blocks Preview until explicitly reloaded.
 - Closing during a pending preview schedules a revert when its token arrives.
   Daemon rollback remains authoritative when the client or transport is lost.
@@ -197,7 +238,16 @@ matching daemon and frontend together; there is no legacy JS normalization fallb
 No named profiles, workspace assignment, HDR/VRR or competing display manager
 is introduced. Those require separate backend capability/transaction work.
 
-## Current redesign validation
+## Relative-arrangement validation
+
+The [approved arrangement plan](proposals/display-relative-placement.md) records
+the design and delivery. Validation passed 41 focused Displays Qt checks, 279 full
+QML checks, four visual-fixture checks, strict QML lint, pure geometry/model checks,
+daemon-boundary checks and relative-import resolution. Light/dark captures cover
+2/3 screens, drop ghosts, disabled/mirrored screens and short/narrow layouts.
+No live mode switch, deployment or service restart was performed.
+
+## Earlier focus-settings redesign validation
 
 See [the five-step review](reviews/display-settings-redesign.md) for the current
 search-gear/global-settings routing, persistent diagram, focus-category design,

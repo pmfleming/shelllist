@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="1200" viewBox="0 0 1360 1200">
+  <defs>
+    <style>
+      text { font-family: 'DejaVu Sans', sans-serif; fill: #e4e7ec; font-size: 16px; }
+      .muted { fill: #a7b0be; } .accent { fill: #a7c7ff; }
+      .small { font-size: 13px; } .tiny { font-size: 12px; }
+      .title { font-size: 23px; font-weight: 700; }
+      .label { font-size: 17px; font-weight: 500; }
+      .key { font-family: 'DejaVu Sans Mono', monospace; font-size: 12px; fill: #b8c8dd; }
+    </style>
+    <g id="monitor" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
+      <rect x="-15" y="-12" width="30" height="21" rx="2"/><path d="M0 9v7m-9 0h18"/>
+    </g>
+    <g id="laptop" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
+      <rect x="-14" y="-12" width="28" height="21" rx="2"/><path d="M-19 13h38l-5-4h-28z"/>
+    </g>
+    <g id="down" fill="none" stroke="#a7b0be" stroke-width="2"><path d="m-5-2 5 5 5-5"/></g>
+  </defs>
+  <rect width="1360" height="1200" fill="#0c1016"/>
+  <text x="28" y="35" class="small accent" letter-spacing="2">SHELLLIST / DISPLAY ARRANGEMENT</text>
+  <text x="28" y="67" class="title">Proposed: drag to an edge, or choose a direction</text>
+  <text x="1330" y="35" text-anchor="end" class="small muted">DESIGN PROPOSAL · NOT IMPLEMENTED</text>
+
+  <rect x="20" y="92" width="1320" height="814" rx="28" fill="#11151b" stroke="#65778f" stroke-width="1.5"/>
+  <path d="M432 108v782" stroke="#2b323c"/>
+
+  <!-- Stable list, without a second monitor map. -->
+  <rect x="36" y="108" width="378" height="60" rx="30" fill="#252a32"/>
+  <circle cx="62" cy="136" r="8" fill="none" stroke="#b6c6d9" stroke-width="2"/><path d="m68 142 6 7" stroke="#b6c6d9" stroke-width="2"/>
+  <text x="89" y="144" class="muted">Search displays…</text>
+  <text x="306" y="145" font-size="22" class="muted">⚙</text>
+  <use href="#monitor" transform="translate(349 138) scale(.46)" color="#a7b0be"/>
+  <text x="383" y="145" font-size="23" class="muted">↻</text>
+
+  <rect x="36" y="184" width="378" height="78" rx="18" fill="#3e4b63"/>
+  <circle cx="70" cy="223" r="23" fill="#a7c7ff"/>
+  <use href="#monitor" transform="translate(70 222) scale(.7)" color="#25344c"/>
+  <text x="107" y="213" class="label">iiyama PL3493WQ</text>
+  <text x="107" y="239" class="small" fill="#c3cfdf">HDMI-A-1 · Extended · 3440 × 1440</text>
+  <text x="386" y="231" font-size="23" class="accent">‹</text>
+  <rect x="36" y="270" width="378" height="78" rx="18" fill="#1a1f26"/>
+  <use href="#laptop" transform="translate(70 309) scale(.85)" color="#b8c3d2"/>
+  <text x="107" y="299" class="label">Laptop</text>
+  <text x="107" y="325" class="small muted">eDP-1 · Extended · 1920 × 1200</text>
+  <rect x="36" y="848" width="378" height="42" rx="16" fill="#252a32" stroke="#353d49"/>
+  <use href="#monitor" transform="translate(61 868) scale(.48)" color="#a7c7ff"/>
+  <text x="83" y="874" class="small muted">2 active · 2 connected</text>
+
+  <!-- Expanded monitor header and existing actions. -->
+  <rect x="464" y="112" width="52" height="52" rx="9" fill="#34425a" stroke="#809ac0"/>
+  <use href="#monitor" transform="translate(490 136) scale(.85)" color="#acd199"/>
+  <text x="534" y="135" class="title">iiyama PL3493WQ</text>
+  <text x="534" y="159" class="small muted">HDMI-A-1 · Extended · 3440 × 1440 · 75.05 Hz</text>
+  <rect x="970" y="178" width="204" height="42" rx="21" fill="#a7c7ff"/>
+  <text x="1072" y="205" text-anchor="middle" style="fill:#20304a;font-weight:600">Preview changes</text>
+  <rect x="1188" y="178" width="46" height="42" rx="21" fill="#252a32" stroke="#475261"/>
+  <rect x="1202" y="190" width="14" height="16" rx="2" fill="none" stroke="#bdcce0" stroke-width="1.6"/>
+  <text x="1209" y="202" text-anchor="middle" class="tiny">2</text>
+  <rect x="1248" y="178" width="46" height="42" rx="21" fill="#252a32" stroke="#475261"/>
+  <path d="M1271 188v10m-6-7a10 10 0 1 0 12 0" fill="none" stroke="#bdcce0" stroke-width="1.8"/>
+
+  <!-- Map: actual logical aspect ratios, touching, top aligned. -->
+  <rect x="464" y="232" width="830" height="232" rx="18" fill="#252b34"/>
+  <rect x="570" y="266" width="206" height="129" rx="5" fill="#303843" stroke="#87919f" stroke-width="1.3"/>
+  <circle cx="589" cy="285" r="12" fill="#616d7e"/>
+  <text x="589" y="290" text-anchor="middle" class="small" font-weight="700">1</text>
+  <use href="#laptop" transform="translate(673 324) scale(1.05)" color="#bbc4cf"/>
+  <text x="673" y="376" text-anchor="middle" class="small">eDP-1</text>
+  <rect x="776" y="266" width="382" height="160" rx="5" fill="#3e4b63" stroke="#a7c7ff" stroke-width="2.5"/>
+  <circle cx="795" cy="285" r="12" fill="#a7c7ff"/>
+  <text x="795" y="290" text-anchor="middle" class="small" style="fill:#20304a;font-weight:700">2</text>
+  <use href="#monitor" transform="translate(967 338) scale(1.15)" color="#a7c7ff"/>
+  <text x="967" y="406" text-anchor="middle">HDMI-A-1 · Selected</text>
+  <text x="484" y="448" class="small muted">Drag a display to another display’s edge</text>
+  <text x="1274" y="448" text-anchor="end" class="small accent">Draft layout</text>
+
+  <!-- New arrangement strip immediately below the map. -->
+  <text x="464" y="494" class="muted">Move <tspan fill="#e4e7ec">HDMI-A-1</tspan> relative to <tspan fill="#e4e7ec">Laptop (eDP-1)</tspan></text>
+  <g>
+    <rect x="464" y="510" width="197" height="50" rx="16" fill="#252b34" stroke="#647184"/>
+    <text x="482" y="542" class="label">← Left</text>
+    <rect x="593" y="525" width="54" height="22" rx="6" fill="#354154"/><text x="620" y="541" text-anchor="middle" class="key">Alt+L</text>
+    <rect x="675" y="510" width="197" height="50" rx="16" fill="#252b34" stroke="#647184"/>
+    <text x="693" y="542" class="label">↑ Above</text>
+    <rect x="804" y="525" width="54" height="22" rx="6" fill="#354154"/><text x="831" y="541" text-anchor="middle" class="key">Alt+U</text>
+    <rect x="886" y="510" width="197" height="50" rx="16" fill="#252b34" stroke="#647184"/>
+    <text x="904" y="542" class="label">↓ Below</text>
+    <rect x="1015" y="525" width="54" height="22" rx="6" fill="#354154"/><text x="1042" y="541" text-anchor="middle" class="key">Alt+D</text>
+    <rect x="1097" y="510" width="197" height="50" rx="16" fill="#252b34" stroke="#647184"/>
+    <text x="1115" y="542" class="label">→ Right</text>
+    <rect x="1226" y="525" width="54" height="22" rx="6" fill="#354154"/><text x="1253" y="541" text-anchor="middle" class="key">Alt+R</text>
+  </g>
+  <text x="464" y="584" class="small muted">Unsaved layout · Preview changes to apply</text>
+  <text x="1294" y="584" text-anchor="end" class="small accent">↻ Discard changes</text>
+
+  <!-- Remaining settings, without the old position card. -->
+  <rect x="464" y="602" width="830" height="100" rx="18" fill="#1b2027"/>
+  <text x="480" y="628" class="label">Display content</text>
+  <rect x="480" y="642" width="798" height="44" rx="5" fill="#171c23" stroke="#647184"/>
+  <text x="494" y="670">Extend desktop</text><use href="#down" transform="translate(1258 664)"/>
+  <rect x="464" y="716" width="830" height="120" rx="18" fill="#1b2027"/>
+  <text x="480" y="744" class="label">Display settings</text>
+  <text x="480" y="772" class="small muted">Resolution</text><text x="685" y="772" class="small muted">Refresh rate</text>
+  <text x="890" y="772" class="small muted">Scale</text><text x="1095" y="772" class="small muted">Rotation</text>
+  <g fill="#171c23" stroke="#647184">
+    <rect x="480" y="783" width="183" height="38" rx="5"/><rect x="685" y="783" width="183" height="38" rx="5"/>
+    <rect x="890" y="783" width="183" height="38" rx="5"/><rect x="1095" y="783" width="183" height="38" rx="5"/>
+  </g>
+  <text x="492" y="808" class="small">3440 × 1440</text><use href="#down" transform="translate(645 802)"/>
+  <text x="697" y="808" class="small">75.05 Hz</text><use href="#down" transform="translate(850 802)"/>
+  <text x="902" y="808" class="small">125%</text><use href="#down" transform="translate(1055 802)"/>
+  <text x="1107" y="808" class="small">0°</text><use href="#down" transform="translate(1260 802)"/>
+  <path d="M464 850h830" stroke="#354150"/>
+  <rect x="464" y="850" width="415" height="40" rx="5" fill="#34425a"/>
+  <path d="M478 851h387" stroke="#a7c7ff" stroke-width="3"/>
+  <text x="671" y="877" text-anchor="middle" class="small accent">Settings</text>
+  <text x="1086" y="877" text-anchor="middle" class="small muted">Information</text>
+
+  <!-- Interaction detail, deliberately outside the proposed application frame. -->
+  <text x="28" y="947" class="small accent" letter-spacing="1.5">DRAG PREVIEW DETAIL</text>
+  <rect x="28" y="965" width="365" height="190" rx="18" fill="#1b222c" stroke="#354150"/>
+  <rect x="60" y="988" width="205" height="76" rx="5" fill="#a7c7ff" fill-opacity=".13" stroke="#a7c7ff" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="162" y="1020" text-anchor="middle" class="small accent">HDMI-A-1</text>
+  <text x="162" y="1043" text-anchor="middle" class="tiny accent">Drop above</text>
+  <rect x="60" y="1064" width="128" height="71" rx="5" fill="#354154" stroke="#a7c7ff" stroke-width="2"/>
+  <text x="124" y="1104" text-anchor="middle" class="small">eDP-1</text>
+  <path d="m280 1012 0 30 9-7 7 15 7-4-8-13 12-1z" fill="#e4e7ec" stroke="#11151b" stroke-width="2"/>
+  <text x="426" y="994" class="label">Only four destinations. No free positioning.</text>
+  <text x="426" y="1024" class="muted">Drag near an edge → see the snapped ghost → release to place.</text>
+  <text x="426" y="1054" class="muted">Escape or an invalid drop leaves the draft unchanged.</text>
+  <text x="426" y="1084" class="muted">With 3+ screens, choose the reference beside “relative to”.</text>
+  <text x="426" y="1114" class="muted">Disabled screens and mirrors stay visible, but cannot be arranged.</text>
+  <text x="426" y="1144" class="small accent">No X/Y fields · Edge-to-edge placement · Preview / Keep still required</text>
+  <text x="28" y="1183" class="tiny muted">Illustrative layout, not a live screenshot. Shortcut badges shown for clarity; both example monitors are enabled.</text>
+</svg>

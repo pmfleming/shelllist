@@ -128,6 +128,7 @@ DaemonTestCase {
         keyClick(Qt.Key_Return, Qt.AltModifier);
         waitForDetails(panel);
         verify(c.globalSettingsOpen);
+        verify(findChild(panel, "backToDisplayList").visible, "global settings retain their subpage navigation");
         tryVerify(() => panel.navigation.activeFocus);
         const navigation = panel.navigation;
         keyClick(Qt.Key_P, Qt.AltModifier);
@@ -195,24 +196,28 @@ DaemonTestCase {
         verify(target.visible);
         compare(calls.length, 0, "hotplug/restoration does not replay settings");
     }
-    function test_persistentMapUsesDraftWithoutKeyboardFocus() {
+    function test_expandedMapUsesDraftWithoutKeyboardFocus() {
         const panel = makePanel();
         const c = panel.controller;
         c.uiActive = true;
-        const map = findChild(panel, "displayArrangementSummary");
-        verify(map.visible);
-        verify(!map.activeFocusOnTab);
+        compare(findChild(panel.list, "displayArrangementSummary"), null);
         c.openDetails();
         waitForDetails(panel);
+        const map = findChild(panel.detailsItem, "displayArrangementSummary");
+        verify(map.visible);
+        verify(!findChild(panel, "backToDisplayList").visible, "monitor details have no back-arrow button");
+        verify(!map.activeFocusOnTab);
+        const tabs = findChild(panel, "displayDetailsTabs");
+        verify(map.mapToItem(panel.detailsItem, 0, map.height).y < tabs.mapToItem(panel.detailsItem, 0, 0).y);
         c.edit("DP-1", "x", 1700);
         compare(map.allValues.find(o => o.name === "DP-1").x, 1700);
         verify(findChild(panel, "displayLayoutPreviewLabel").text.includes("not applied"));
         c.detailsTab = "information";
         verify(map.visible);
         c.openGlobalSettings();
-        verify(map.visible);
+        verify(!map.visible);
         c.reloadDraft();
-        c.closeDetails();
+        c.openDetails();
         const state = displayState();
         state.outputs = [state.outputs[1]];
         c.applyDisplayPolicy(state);
@@ -220,14 +225,274 @@ DaemonTestCase {
         findChild(panel, "displayList").focusSearch();
         const pointer = findChild(panel, "displayMapPointer-DP-1");
         mousePress(pointer, pointer.width / 2, pointer.height / 2);
-        verify(c.layoutDragging, "drag must not disable its own pointer area");
+        verify(!c.layoutDragging, "a single screen has no relative placement target");
         mouseMove(pointer, pointer.width / 2 + 12, pointer.height / 2 + 4);
         mouseRelease(pointer, pointer.width / 2, pointer.height / 2);
         verify(!map.activeFocus && !c.layoutDragging);
         c.edit("DP-1", "x", 99);
         c.dismissNavigation();
-        verify(c.discardPrompt, "compact-map edits retain discard protection");
+        verify(c.discardPrompt, "map edits retain discard protection");
         compare(calls.length, 0, "map changes are draft-only");
+    }
+    function test_expandedMapShowsAllDisplaysAndHighlightsOnlySelection() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        const state = displayState();
+        // Disabled screens commonly report the same origin as the active one.
+        state.outputs[1].x = 0;
+        c.applyDisplayPolicy(state);
+        c.selectOutput("DP-1");
+        c.openDetails();
+        waitForDetails(panel);
+        const map = findChild(panel.detailsItem, "displayArrangementSummary");
+        compare(map.values.length, 2);
+        const laptop = findChild(map, "displayMapScreen-eDP-1");
+        const external = findChild(map, "displayMapScreen-DP-1");
+        verify(laptop.visible && external.visible);
+        verify(external.selected && !laptop.selected);
+        verify(laptop.x >= external.x + external.width, "off screen is not hidden under the selected screen");
+        verify(laptop.x + laptop.width <= map.width);
+        const pointer = findChild(map, "displayMapPointer-eDP-1");
+        mousePress(pointer, pointer.width / 2, pointer.height / 2);
+        verify(!c.layoutDragging, "parked screens are selectable but not draggable");
+        mouseRelease(pointer, pointer.width / 2, pointer.height / 2);
+        compare(c.selectedName, "eDP-1");
+        verify(laptop.selected && !external.selected);
+        compare(c.selectedDraft.x, 0, "presentation placement never changes the draft");
+        verify(!c.dirty);
+        c.edit("eDP-1", "enabled", true);
+        c.setDisplayContent("eDP-1", "DP-1");
+        compare(map.values.length, 2);
+        verify(laptop.selected && !external.selected, "selecting a mirror highlights that physical display only");
+        verify(laptop.x >= external.x + external.width);
+        verify(!laptop.movable);
+        compare(calls.length, 0);
+    }
+    function arrangementPanel(withThird) {
+        const panel = makePanel();
+        const state = displayState();
+        state.outputs[0].disabled = false;
+        if (withThird)
+            state.outputs.push(Object.assign({}, state.outputs[1], { id: 2, name: "HDMI-A-1", x: 4096 }));
+        panel.controller.applyDisplayPolicy(state);
+        panel.controller.uiActive = true;
+        panel.controller.selectOutput("DP-1");
+        panel.controller.openDetails();
+        waitForDetails(panel);
+        return panel;
+    }
+    function placementCases() {
+        return [
+            {tag: "left", side: "left", key: Qt.Key_L, x: -2560, y: 0},
+            {tag: "above", side: "above", key: Qt.Key_U, x: 0, y: -1440},
+            {tag: "below", side: "below", key: Qt.Key_D, x: 0, y: 960},
+            {tag: "right", side: "right", key: Qt.Key_R, x: 1536, y: 0}
+        ];
+    }
+    function test_directionButtonsAndKeyboard_data() { return placementCases(); }
+    function test_directionButtonsAndKeyboard(data) {
+        const panel = arrangementPanel(false);
+        const c = panel.controller;
+        const map = findChild(panel, "displayArrangementSummary");
+        const controls = findChild(panel, "displayArrangementControls");
+        const button = findChild(panel, "displayPlace-" + data.side);
+        verify(button.visible && button.enabled);
+        verify(controls.mapToItem(panel.detailsItem, 0, 0).y >= map.mapToItem(panel.detailsItem, 0, map.height).y);
+        compare(findChild(panel, "displayX"), null);
+        compare(findChild(panel, "displayY"), null);
+        verify(!findChild(panel, "displayPositionReference").visible, "two monitors have an automatic reference");
+        mouseClick(button);
+        compare(c.selectedDraft.x, data.x);
+        compare(c.selectedDraft.y, data.y);
+        c.reloadDraft();
+        panel.list.focusSearch();
+        keyClick(data.key, Qt.AltModifier);
+        compare(c.selectedDraft.x, data.x);
+        compare(c.selectedDraft.y, data.y);
+        const saved = JSON.stringify(c.draft);
+        keyClick(data.key, Qt.AltModifier);
+        compare(JSON.stringify(c.draft), saved, "repeating the current direction is a no-op");
+        c.detailsTab = "information";
+        verify(button.visible && controls.visible);
+        panel.navigation.focusContent();
+        verify(panel.navigation.targets.every(item => !item.objectName.startsWith("displayPlace-")));
+        compare(calls.length, 0, "buttons and Alt commands are draft-only");
+    }
+    function beginMapDrag(panel) {
+        const map = findChild(panel, "displayArrangementSummary");
+        const pointer = findChild(map, "displayMapPointer-DP-1");
+        const start = pointer.mapToItem(map, pointer.width / 2, pointer.height / 2);
+        mousePress(pointer, pointer.width / 2, pointer.height / 2);
+        verify(!map.dragging, "a click must not start a drag");
+        mouseMove(map, start.x + 12, start.y);
+        verify(map.dragging && panel.controller.layoutDragging);
+        verify(pointer.enabled, "dragging cannot disable its own pointer grab");
+        return map;
+    }
+    function dragToEdge(map, side) {
+        const reference = findChild(map, "displayMapScreen-eDP-1");
+        const x = reference.x + (side === "left" ? 2 : side === "right" ? reference.width - 2 : reference.width / 2);
+        const y = reference.y + (side === "above" ? 2 : side === "below" ? reference.height - 2 : reference.height / 2);
+        mouseMove(map, x, y);
+        compare(map.targetEdge.reference, "eDP-1");
+        compare(map.targetEdge.side, side);
+        return { x: x, y: y };
+    }
+    function test_dragAndButtonsUseIdenticalPlacement_data() { return placementCases(); }
+    function test_dragAndButtonsUseIdenticalPlacement(data) {
+        const panel = arrangementPanel(false);
+        const c = panel.controller;
+        const original = JSON.stringify(c.draft);
+        const map = beginMapDrag(panel);
+        const factor = map.factor;
+        const drop = dragToEdge(map, data.side);
+        verify(findChild(map, "displayDropGhost").visible);
+        compare(map.candidate.error, "");
+        compare(map.factor, factor, "fitting stays frozen while choosing an edge");
+        compare(JSON.stringify(c.draft), original, "hover never edits the draft");
+        verify(!c.canPreview && !c.placeSelected("above"), "actions cannot mutate during a drag");
+        mouseRelease(map, drop.x, drop.y, Qt.LeftButton, Qt.AltModifier);
+        verify(!map.dragging && !c.layoutDragging && !map.activeFocus);
+        compare(c.selectedDraft.x, data.x);
+        compare(c.selectedDraft.y, data.y);
+        compare(c.referenceName, "eDP-1");
+        compare(calls.length, 0, "Alt cannot bypass relative placement or submit the draft");
+    }
+    function test_cancelledDragDoesNotCommit_data() {
+        return ["escape", "outside", "grab", "unplug", "hidden", "disconnect", "trial"].map(value => ({tag: value, route: value}));
+    }
+    function test_cancelledDragDoesNotCommit(data) {
+        const panel = arrangementPanel(false);
+        const c = panel.controller;
+        // An existing edit must survive cancellation/topology changes.
+        c.edit("DP-1", "scale", 2);
+        const original = JSON.stringify(c.draft);
+        const map = beginMapDrag(panel);
+        const drop = dragToEdge(map, "above");
+        if (data.route === "escape") keyClick(Qt.Key_Escape);
+        else if (data.route === "outside") mouseMove(map, -10, -10);
+        else if (data.route === "grab") findChild(map, "displayMapPointer-DP-1").enabled = false;
+        else if (data.route === "hidden") panel.visible = false;
+        else if (data.route === "disconnect") c.transportFailed("disconnected");
+        else {
+            const state = displayState();
+            state.outputs[0].disabled = false;
+            if (data.route === "unplug") state.outputs.pop();
+            else state.layout.trial = {id: "external-trial", expires_at: Date.now() / 1000 + 20};
+            c.applyDisplayPolicy(state);
+        }
+        if (data.route === "outside") mouseRelease(map, -10, -10);
+        else mouseRelease(map, drop.x, drop.y);
+        verify(!map.dragging && !c.layoutDragging);
+        compare(JSON.stringify(c.draft), original);
+        verify(!findChild(map, "displayDropGhost").visible);
+        compare(calls.length, 0);
+    }
+    function test_referenceFieldAndPlacementSafety() {
+        const panel = arrangementPanel(true);
+        const c = panel.controller;
+        const reference = findChild(panel, "displayPositionReference");
+        verify(reference.visible && reference.interactive);
+        compare(c.referenceName, "eDP-1");
+        const original = JSON.stringify(c.draft);
+        panel.navigation.focusContent();
+        panel.navigation.currentTarget = reference;
+        keyClick(Qt.Key_Return);
+        tryVerify(() => reference.editSession.active);
+        keyClick(Qt.Key_Space);
+        tryCompare(reference.popup, "visible", true);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Escape);
+        compare(c.referenceName, "eDP-1");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Space);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Return);
+        compare(c.referenceName, "HDMI-A-1");
+        compare(JSON.stringify(c.draft), original, "reference selection is presentation-only");
+        c.referenceName = "eDP-1";
+        c.edit("HDMI-A-1", "x", -2560);
+        verify(!findChild(panel, "displayPlace-left").enabled);
+        verify(findChild(panel, "displayArrangementHint").text.includes("Would overlap HDMI-A-1"));
+        const collisionDraft = JSON.stringify(c.draft);
+        verify(!c.placeSelected("left"));
+        const map = beginMapDrag(panel);
+        const drop = dragToEdge(map, "left");
+        verify(map.candidate.error.includes("Would overlap"));
+        mouseRelease(map, drop.x, drop.y);
+        compare(JSON.stringify(c.draft), collisionDraft, "an invalid drag cannot commit");
+        c.edit("HDMI-A-1", "enabled", false);
+        compare(c.placementReferences.length, 1);
+        verify(!reference.visible);
+        verify(c.placeSelected("left"), "disabled parked displays do not obstruct placement");
+        c.stale = true;
+        verify(!c.placeSelected("above"));
+        c.stale = false;
+        c.discardPrompt = true;
+        verify(!c.placeSelected("above"));
+        c.discardPrompt = false;
+        c.actionInFlight = true;
+        verify(!c.placeSelected("above"));
+        c.actionInFlight = false;
+        c.selectOutput("HDMI-A-1");
+        verify(!c.canArrange && !c.placeSelected("above"));
+        verify(findChild(panel, "displayArrangementHint").text.includes("Enable"));
+        compare(calls.length, 0);
+    }
+    function test_dragRetainsTelemetryButCancelsGeometryChanges() {
+        const panel = arrangementPanel(true);
+        const c = panel.controller;
+        const map = beginMapDrag(panel);
+        dragToEdge(map, "above");
+        const state = displayState();
+        state.outputs[0].disabled = false;
+        state.outputs.push(Object.assign({}, state.outputs[1], { id: 2, name: "HDMI-A-1", x: 4096 }));
+        state.outputs[1].focused = true;
+        c.applyDisplayPolicy(state);
+        verify(map.dragging, "ordinary telemetry must not interrupt a drag");
+        c.edit("DP-1", "scale", 2);
+        verify(!map.dragging, "a concurrent geometry edit cancels the old candidate");
+        mouseRelease(map);
+        compare(c.selectedDraft.x, 1536);
+        compare(c.selectedDraft.scale, 2);
+        compare(calls.length, 0);
+    }
+    function test_arrangementShortAndNarrowKeepsControlsReachable() {
+        const panel = arrangementPanel(true);
+        panel.width = 390;
+        panel.height = 600;
+        verify(waitForPolish(panel.Window.window));
+        const controls = findChild(panel, "displayArrangementControls");
+        const map = findChild(panel, "displayArrangementSummary");
+        const tabs = findChild(panel, "displayDetailsTabs");
+        const reference = findChild(panel, "displayPositionReference");
+        reference.forceActiveFocus();
+        tryVerify(() => panel.viewport.contentX > 0);
+        verify(controls.mapToItem(panel.detailsItem, 0, 0).y >= map.mapToItem(panel.detailsItem, 0, map.height).y);
+        verify(tabs.height > 60, "short layout leaves a scrollable settings page and footer");
+        for (const direction of placementCases()) {
+            const button = findChild(panel, "displayPlace-" + direction.side);
+            verify(button.visible && button.height >= 36 && button.width >= 80);
+            const position = button.mapToItem(panel.detailsItem, 0, 0);
+            verify(position.y >= 0 && position.y + button.height <= panel.detailsItem.height);
+        }
+        panel.controller.detailsTab = "information";
+        verify(reference.visible && controls.visible);
+        compare(calls.length, 0);
+    }
+    function test_modeChangesRevalidatePlacementBeforePreview() {
+        const panel = arrangementPanel(false);
+        const c = panel.controller;
+        verify(c.placeSelected("left"));
+        verify(c.canPreview);
+        c.edit("DP-1", "scale", 1);
+        verify(!c.canPreview && c.validationError.includes("overlaps"));
+        verify(!c.preview());
+        verify(c.placeSelected("left"));
+        compare(c.selectedDraft.x, -3840);
+        verify(c.canPreview);
+        compare(calls.length, 0);
     }
     function test_focusTelemetryDoesNotInvalidateLayoutDrafts() {
         const panel = makePanel();
@@ -367,16 +632,19 @@ DaemonTestCase {
         content.selected("eDP-1");
         compare(c.selectedDraft.mirror_of, "eDP-1");
         verify(c.canPreview);
-        verify(!findChild(panel, "displayPositionCard").enabled);
+        verify(!c.canArrange);
+        verify(findChild(panel, "displayArrangementHint").text.includes("Mirrors"));
+        compare(findChild(panel, "displayPositionCard"), null);
         const oldX = c.selectedDraft.x;
         c.edit("DP-1", "x", 9999);
-        c.moveSelected(16, 0);
+        verify(!c.placeSelected("left"));
         compare(c.selectedDraft.x, oldX, "mirrors cannot be positioned independently");
-        compare(findChild(panel, "displayArrangementSummary").values.length, 1, "a mirror is not a second desktop tile");
+        compare(findChild(panel, "displayArrangementSummary").values.length, 2, "mirrors remain visible as physical screens");
+        verify(!findChild(panel, "displayMapScreen-DP-1").movable, "mirrors cannot be dragged independently");
         compare(calls.length, 0);
         content.selected("");
         compare(c.selectedDraft.mirror_of, "");
-        verify(findChild(panel, "displayPositionCard").enabled);
+        verify(c.canArrange);
         verify(c.selectedDraft.x >= 1536, "extended content gets an independent position");
         content.selected("eDP-1");
         verify(c.preview());
@@ -418,14 +686,14 @@ DaemonTestCase {
         verify(c.stale, "external changes to mirroring invalidate the draft");
         compare(calls.length, 0);
     }
-    function test_emptySelectionRetainsBackAndDraftRecovery() {
+    function test_emptySelectionRetainsKeyboardBackAndDraftRecovery() {
         const panel = makePanel();
         const c = panel.controller;
         panel.width = 390;
         panel.height = 600;
         c.uiActive = true;
         c.openDetails();
-        tryVerify(function () { return findChild(panel, "backToDisplayList") !== null; });
+        waitForDetails(panel);
         c.edit("DP-1", "scale", 2);
         const empty = displayState();
         empty.outputs = [];
@@ -433,9 +701,8 @@ DaemonTestCase {
         verify(c.stale && c.dirty);
         verify(!c.hasSelection);
         verify(findChild(panel, "displayEmptyDetails").visible);
-        const back = findChild(panel, "backToDisplayList");
-        verify(back.visible && back.enabled);
-        back.forceActiveFocus();
+        verify(!findChild(panel, "backToDisplayList").visible);
+        panel.navigation.focusContent();
         keyClick(Qt.Key_Left);
         verify(c.discardPrompt, "Left/back still protects a disconnected display's draft");
         c.discardAndClose();

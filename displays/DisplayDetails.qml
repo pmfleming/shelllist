@@ -24,11 +24,35 @@ Ui.ActionDetailsPane {
     ColumnLayout {
         anchors.fill: parent
         spacing: pane.sectionSpacing
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Ui.Theme.spacingXs
+            visible: !pane.controller.globalSettingsOpen && !!pane.controller.selectedOutput
+            DisplayCanvas {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.max(96, Math.min(180, pane.height * 0.23))
+                controller: pane.controller
+            }
+            DisplayArrangementControls {
+                Layout.fillWidth: true
+                controller: pane.controller
+            }
+            Ui.ThemeText {
+                objectName: "displayLayoutPreviewLabel"
+                Layout.fillWidth: true
+                text: pane.controller.stale ? qsTr("Layout changed · reload") : pane.controller.dirty ? qsTr("Preview layout · not applied") : qsTr("Drag to an edge or choose a direction")
+                color: pane.controller.stale ? Ui.Theme.warning : Ui.Theme.mutedText
+                font.pixelSize: Ui.Theme.fontSizeSmall
+                wrapMode: Text.Wrap
+            }
+        }
         RowLayout {
             Layout.fillWidth: true
+            visible: pane.controller.globalSettingsOpen || !!pane.controller.statusMessage || pane.controller.dirty || pane.controller.stale
             spacing: Ui.Theme.spacingSm
             Ui.FlatIconButton {
                 objectName: "backToDisplayList"
+                visible: pane.controller.globalSettingsOpen
                 accessKey: "B"
                 Layout.preferredWidth: Ui.Theme.controlHeight
                 Layout.preferredHeight: Ui.Theme.controlHeight

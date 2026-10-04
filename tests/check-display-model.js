@@ -50,6 +50,74 @@ const cycle = plain(mirrored); cycle[0].mirror_of = "DP-1";
 assert.notEqual(model.validate(cycle, mirroredOutputs), "", "mirror cycles are rejected");
 const disabledSource = plain(mirrored); disabledSource[0].enabled = false;
 assert.notEqual(model.validate(disabledSource, mirroredOutputs), "", "mirrors require an enabled source");
+// Presentation parking keeps every physical screen visible without changing
+// draft positions or the geometry of the independent desktops.
+const mapDraft = plain(draft);
+mapDraft[0].x = 0;
+mapDraft.push({ ...mapDraft[1], name: "HDMI-A-1", mirror_of: "DP-1" });
+const originalMapDraft = plain(mapDraft);
+const tiles = model.canvasValues(mapDraft);
+assert.equal(tiles.length, mapDraft.length);
+assert.deepEqual(plain(tiles[1]), mapDraft[1]);
+assert.ok(tiles[0].x > model.rect(tiles[1]).x + model.rect(tiles[1]).width);
+assert.ok(tiles[2].x > model.rect(tiles[0]).x + model.rect(tiles[0]).width);
+assert.deepEqual(mapDraft, originalMapDraft, "canvas placement cannot mutate the layout payload");
+assert.equal(model.canvasValues([]).length, 0);
+const allOff = model.canvasValues(mapDraft.map(o => ({ ...o, enabled: false })));
+assert.ok(allOff.every(o => Object.values(model.rect(o)).every(Number.isFinite)));
+assert.ok(allOff[1].x > allOff[0].x + model.rect(allOff[0]).width);
+const extended = mapDraft.slice(0, 2).map((o, i) => ({ ...o, enabled: true, x: i ? 0 : -1536, y: -200, transform: i }));
+assert.deepEqual(plain(model.canvasValues(extended)), extended, "negative positions and rotation retain desktop geometry");
+const arranged = plain(draft).map(o => ({ ...o, enabled: true }));
+arranged[0].x = 0;
+arranged[1].x = 1536;
+const expected = { left: [-2560, 0], above: [0, -1440], below: [0, 960], right: [1536, 0] };
+for (const [side, [x, y]] of Object.entries(expected)) {
+    const candidate = model.placement(arranged, "DP-1", "eDP-1", side);
+    assert.equal(candidate.error, "");
+    assert.deepEqual([candidate.x, candidate.y], [x, y]);
+    const changed = arranged.map(o => o.name === "DP-1" ? { ...o, x, y } : o);
+    assert.equal(model.arrangementError(changed, arranged), "");
+}
+for (const [name, reference, side] of [["missing", "eDP-1", "left"], ["DP-1", "DP-1", "left"], ["DP-1", "missing", "left"], ["DP-1", "eDP-1", "diagonal"]])
+    assert.notEqual(model.placement(arranged, name, reference, side).error, "");
+assert.notEqual(model.placement(draft, "DP-1", "eDP-1", "left").error, "", "disabled reference rejected");
+assert.notEqual(model.placement(mirrored, "DP-1", "eDP-1", "left").error, "", "mirror cannot move independently");
+const blocked = [...arranged, { ...arranged[1], name: "HDMI-A-1", x: -2560 }];
+assert.match(model.placement(blocked, "DP-1", "eDP-1", "left").error, /HDMI-A-1/);
+blocked[2].enabled = false;
+assert.equal(model.placement(blocked, "DP-1", "eDP-1", "left").error, "");
+blocked[2].enabled = true; blocked[2].mirror_of = "eDP-1";
+assert.equal(model.placement(blocked, "DP-1", "eDP-1", "left").error, "");
+const negative = arranged.map(o => ({ ...o, x: -32768, y: -32768 }));
+assert.match(model.placement(negative, "DP-1", "eDP-1", "left").error, /coordinates/);
+assert.match(model.placement(negative, "DP-1", "eDP-1", "above").error, /coordinates/);
+const fractional = arranged.map(o => ({ ...o, scale: 1.75, transform: 1, x: -100, y: -200 }));
+for (const side of Object.keys(expected)) {
+    const candidate = model.placement(fractional, "DP-1", "eDP-1", side);
+    assert.equal(candidate.error, "", "rounded rotated fractional dimensions touch without overlap");
+    assert.ok(Number.isInteger(candidate.x) && Number.isInteger(candidate.y));
+    assert.equal(model.overlaps(candidate, model.placementRect(fractional[0])), false);
+}
+const oldOverlap = arranged.map(o => ({ ...o, x: 0 }));
+assert.equal(model.arrangementError(oldOverlap, oldOverlap), "", "observed layouts are not silently repaired");
+assert.notEqual(model.arrangementError(oldOverlap, arranged), "", "new overlaps block Preview");
+const resized = arranged.map(o => o.name === "eDP-1" ? { ...o, scale: 1 } : o);
+assert.match(model.arrangementError(resized, arranged), /overlaps/);
+assert.equal(model.dropTarget(arranged, "DP-1", 500, -500, 20, null, 6), null);
+const top = model.dropTarget(arranged, "DP-1", 768, 0, 24, null, 6);
+assert.equal(top.reference, "eDP-1"); assert.equal(top.side, "above");
+const retained = model.dropTarget(arranged, "DP-1", 1, 4, 24, top, 6);
+assert.equal(retained.side, "above", "corner dead band retains the current side");
+assert.equal(model.dropTarget(arranged, "DP-1", 0, 20, 24, retained, 6).side, "left");
+assert.equal(model.dropTarget(draft, "DP-1", 0, 0, 24, null, 6), null, "disabled screens cannot be drop targets");
+const dragExtent = model.dragBounds(arranged, "DP-1");
+for (const side of Object.keys(expected)) {
+    const candidate = model.placement(arranged, "DP-1", "eDP-1", side);
+    assert.ok(candidate.x >= dragExtent.x && candidate.y >= dragExtent.y);
+    assert.ok(candidate.x + candidate.width <= dragExtent.x + dragExtent.width);
+    assert.ok(candidate.y + candidate.height <= dragExtent.y + dragExtent.height);
+}
 // Native Displays tests own enable/extend/promotion, stale identities, focus
 // setting payloads and acknowledgement. Do not duplicate their UI catalogues.
-console.log("display model: normalized modes, finite geometry and unsafe-layout rejection passed");
+console.log("display model: normalized modes, relative placement, collision/edge geometry and unsafe-layout rejection passed");

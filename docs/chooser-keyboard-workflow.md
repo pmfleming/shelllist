@@ -185,3 +185,14 @@ remain separate from offscreen tests. Displays' mode selectors consume daemon
 mode IDs and structured geometry: Enter/Tab saves only to the local layout draft,
 Escape discards the field edit, and Preview remains the explicit backend boundary.
 `tst_displays.qml` exercises this with opaque mode IDs and actual key delivery.
+
+Display arrangement follows the same command model: **Alt+L/U/D/R** invokes the
+Left/Above/Below/Right buttons below the monitor map. These actions modify the
+local layout draft, not the backend. Buttons and the map are not Tab stops;
+plain arrows remain result/native-editor navigation. With 3+ eligible monitors,
+the reference dropdown is an ordinary editable field: Enter/Tab saves the target
+selection, Escape discards it, and changing the target alone never moves a screen.
+Pointer edge-dragging uses a transient ghost, committing to the draft only on a
+valid drop; Escape cancels the gesture without also closing details. Preview stays
+the explicit backend boundary. Native tests cover all four commands/drop edges,
+reference save/discard, guards, cancellation, and narrow-view focus revelation.

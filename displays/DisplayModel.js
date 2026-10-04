@@ -170,46 +170,113 @@ function bounds(values) {
         height: Math.max(1, Math.max(...r.map(v => v.y + v.height)) - y)
     };
 }
-function snap(values, name, x, y, threshold) {
-    const own = values.find(o => o.name === name);
-    if (!own)
-        return {
-            x: x,
-            y: y
-        };
-    const r = rect(own);
-    const horizontal = [], vertical = [];
-    for (const o of values) {
-        if (o.name === name || o.enabled === false || o.mirror_of)
-            continue;
-        const other = rect(o);
-        horizontal.push(other.x, other.x + other.width);
-        vertical.push(other.y, other.y + other.height);
-    }
-    return {
-        x: snapCoordinate(x, r.width, horizontal, threshold),
-        y: snapCoordinate(y, r.height, vertical, threshold)
-    };
+// Disabled outputs and mirrors have no independent desktop position. Park them
+// beside the desktop in the diagram so an overlapping (often 0,0) coordinate
+// cannot hide a connected screen. These presentation coordinates never persist.
+function canvasValues(draft) {
+    const independent = draft.filter(isIndependent);
+    const extent = bounds(independent);
+    const gap = Math.max(80, extent.width * 0.04);
+    let x = independent.length ? extent.x + extent.width + gap : 0;
+    return draft.map(function (output) {
+        if (isIndependent(output))
+            return output;
+        const tile = Object.assign({}, output, { x: x, y: independent.length ? extent.y : 0 });
+        x += rect(output).width + gap;
+        return tile;
+    });
 }
-function snapCoordinate(position, size, edges, threshold) {
-    let result = position;
-    for (const edge of edges) {
-        for (const offset of [0, size]) {
-            const distance = Math.abs(edge - offset - position);
-            if (distance < threshold) {
-                threshold = distance;
-                result = edge - offset;
-            }
-        }
-    }
-    return result;
+function placementRect(output) {
+    const r = rect(output);
+    // Positions use integer logical pixels at the daemon boundary. Use the same
+    // rounded extents for adjacency and collision checks (not subpixel overlap).
+    return { x: Math.round(r.x), y: Math.round(r.y), width: Math.max(1, Math.round(r.width)), height: Math.max(1, Math.round(r.height)) };
+}
+function overlaps(a, b) {
+    return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+function placementReferences(values, name) {
+    return values.filter(o => o.name !== name && isIndependent(o));
 }
 function adjacent(selected, reference, side) {
-    const r = rect(reference), own = rect(selected);
+    const r = placementRect(reference), own = placementRect(selected);
     return {
         x: side === "left" ? r.x - own.width : side === "right" ? r.x + r.width : r.x,
         y: side === "above" ? r.y - own.height : side === "below" ? r.y + r.height : r.y
     };
+}
+function placement(values, name, referenceName, side) {
+    const selected = values.find(o => o.name === name);
+    const reference = values.find(o => o.name === referenceName);
+    if (!selected || !isIndependent(selected))
+        return { error: "Select an enabled extended display" };
+    if (!reference || reference === selected || !isIndependent(reference))
+        return { error: "Choose another enabled extended display" };
+    if (!["left", "above", "below", "right"].includes(side))
+        return { error: "Choose a side of the reference display" };
+    const position = adjacent(selected, reference, side);
+    const candidate = Object.assign({}, placementRect(selected), position, { name: name, reference: referenceName, side: side, error: "" });
+    if (!inRange(position.x, -32768, 32768, true) || !inRange(position.y, -32768, 32768, true))
+        candidate.error = "Position exceeds supported coordinates";
+    else {
+        const collision = values.find(o => o.name !== name && isIndependent(o) && overlaps(candidate, placementRect(o)));
+        if (collision)
+            candidate.error = "Would overlap " + collision.name;
+    }
+    return candidate;
+}
+// Keep observed layouts intact; only changed geometry must pass the new overlap
+// guard. This also catches mode/scale/rotation changes after a valid placement.
+function arrangementError(values, baseline) {
+    const independent = values.filter(isIndependent);
+    for (let i = 0; i < independent.length; ++i) {
+        for (let j = i + 1; j < independent.length; ++j) {
+            const a = independent[i], b = independent[j];
+            if (!overlaps(placementRect(a), placementRect(b)))
+                continue;
+            const oldA = baseline.find(o => o.name === a.name && isIndependent(o));
+            const oldB = baseline.find(o => o.name === b.name && isIndependent(o));
+            if (!oldA || !oldB || JSON.stringify(placementRect(a)) !== JSON.stringify(placementRect(oldA)) || JSON.stringify(placementRect(b)) !== JSON.stringify(placementRect(oldB)))
+                return a.name + " overlaps " + b.name + " · arrange displays before previewing";
+        }
+    }
+    return "";
+}
+// Hit-test edge segments, not the old tile's free coordinates. Hysteresis keeps
+// the current side stable near corners; distant/outside drops have no target.
+function dropTarget(values, name, x, y, threshold, previous, hysteresis) {
+    const edges = [];
+    for (const output of placementReferences(values, name)) {
+        const r = placementRect(output);
+        const dx = x - Math.max(r.x, Math.min(x, r.x + r.width));
+        const dy = y - Math.max(r.y, Math.min(y, r.y + r.height));
+        for (const side of ["left", "above", "below", "right"]) {
+            const horizontal = side === "above" || side === "below";
+            const edge = horizontal ? (side === "above" ? r.y : r.y + r.height) : (side === "left" ? r.x : r.x + r.width);
+            const distance = Math.hypot(horizontal ? dx : x - edge, horizontal ? y - edge : dy);
+            if (distance <= threshold)
+                edges.push({ reference: output.name, side: side, distance: distance, inside: x > r.x && x < r.x + r.width && y > r.y && y < r.y + r.height });
+        }
+    }
+    // On a shared edge, moving just inside a tile unambiguously chooses it as
+    // the reference instead of sticking to its neighbour through hysteresis.
+    const candidates = edges.some(e => e.inside) ? edges.filter(e => e.inside) : edges;
+    candidates.sort((a, b) => a.distance - b.distance);
+    if (!candidates.length)
+        return null;
+    const retained = previous && candidates.find(e => e.reference === previous.reference && e.side === previous.side);
+    return retained && retained.distance <= candidates[0].distance + hysteresis ? retained : candidates[0];
+}
+function dragBounds(values, name) {
+    const selected = values.find(o => o.name === name);
+    const tiles = canvasValues(values);
+    if (selected && isIndependent(selected)) {
+        for (const reference of placementReferences(values, name)) {
+            for (const side of ["left", "above", "below", "right"])
+                tiles.push(Object.assign({}, selected, adjacent(selected, reference, side)));
+        }
+    }
+    return bounds(tiles);
 }
 function resolutions(output) {
     const seen = [];
