@@ -113,6 +113,7 @@
               self.packages.${system}.shelllistSearch
               pkgs.kdePackages.qrca
               self.packages.${system}.captivePortalBrowser
+              self.packages.${system}.portalLauncher
               nmDaemon
               btDaemon
               clipDaemon
@@ -367,6 +368,18 @@
             name = "shelllist";
             paths = [ self.packages.${system}.shelllistApplication barDaemon ];
             meta = mkMeta "Single-host Shelllist desktop action center" "shelllist";
+          };
+
+          portalLauncher = pkgs.rustPlatform.buildRustPackage {
+            pname = "shelllist-portal-launch";
+            version = "0.1.0";
+            src = ./.;
+            postUnpack = ''
+              cp -R --no-preserve=mode ${inputs.daemon-framework} "$(dirname "$sourceRoot")/daemon-framework"
+              sourceRoot="$sourceRoot/portal-launcher"
+            '';
+            cargoLock.lockFile = ./portal-launcher/Cargo.lock;
+            meta = mkMeta "Frontend-owned portal browser and native compositor launcher" "shelllist-portal-launch";
           };
 
           captivePortalBrowser = pkgs.writeShellApplication {
