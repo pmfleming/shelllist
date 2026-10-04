@@ -43,7 +43,22 @@ Status: phases 1–6 implemented locally; coordinated deployment pending. Based 
   Validation: 118 bar-daemon tests passed (1 opt-in test ignored), Clippy, 192 QML
   tests, weather-presentation tests, QML lint and bar fixture checks. Not deployed.
 
-## Final candidate validation
+## Follow-up — notification history (implemented locally)
+
+`notifications.queryHistory` moves the unified live/history catalog, search,
+ordering and revision/epoch-bound cursors into `bar-daemon`. Shelllist retains
+visible-page staging and UI identity, not a second catalog. This fixes the
+coalesced transient-replacement/closure regression and also repairs missed
+deletions after reconnect. The original history API remains for legacy clients;
+matching daemon/frontend activation is required. See the [current validation
+record](../reviews/notification-history-migration.md).
+
+The current family gate captures sibling worktrees through
+`daemon-framework/tools/local-build.py`, with one framework source. The older
+vendored-copy/release-pin procedures below are historical, not current build
+instructions.
+
+## Final candidate validation (original phases 1–6)
 
 The full sibling Nix gate was run, not just its mock wiring test. It caught and
 prompted fixes for stale TypeScript sources behind generated JS (resource

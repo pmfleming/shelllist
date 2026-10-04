@@ -23,7 +23,8 @@ Ui.ChooserController {
     property alias screenshotStatus: screenshotCapture.statusMessage
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
     readonly property alias notificationModel: records
-    readonly property var filteredRecords: Ui.NotificationPresentation.filterRecords(notificationState.recentNotifications, filterText)
+    readonly property var filteredRecords: notificationState.recentNotifications
+    onFilterTextChanged: notificationState.setHistoryQuery(filterText)
     property var visibleRecords: []
     property string presentedFilter: ""
     readonly property var selectedRecord: visibleRecords.find(record => Ui.NotificationPresentation.recordKey(record) === selectedKey) || null

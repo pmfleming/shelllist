@@ -62,6 +62,16 @@
 (.snapshot.notifications.count | type == "number") and
 (.snapshot.notifications.backend | type == "string") and
 (.snapshot.notifications.dnd_until_unix_ms | type == "number" or . == null) and
+(any(.registry.methods[]; .name == "notifications.queryHistory" and (.params | has("cursor") and has("anchor") and has("query")))) and
+(.notification_page.epoch | type == "string") and
+(.notification_page.revision == "1") and
+(.notification_page.query == "") and
+(.notification_page.scope_limit == 5000) and
+(.notification_page.anchor_reached == true) and
+(.notification_page.next_cursor == null) and
+(.notification_page.records[0].history_id == null) and
+(.notification_page.records[0].notification.id == .snapshot.notification_active.notifications[0].id) and
+(.notification_page.records[0].notification.toast_visible == false) and
 (.snapshot.notification_active.notifications | type == "array") and
 (.snapshot.notification_active.notifications[0].group_key | type == "string") and
 (.snapshot.notification_active.notifications[0].source_monitor | type == "string") and

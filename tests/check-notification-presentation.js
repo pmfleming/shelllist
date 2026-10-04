@@ -13,19 +13,15 @@ function equal(actual, expected, label) {
         throw new Error(`${label}: expected ${expected}, got ${actual}`);
 }
 
-// Filtering, history catch-up, DND and preview reachability are exercised by
-// the real QML consumers. Keep adversarial identity cases here.
+// Catalog search, ordering and deduplication belong to Rust. Keep only
+// presentation identity/action cases here; Qt covers the page consumer.
 equal(context.groupRecords([{ app_name: "__proto__" }, { app_name: "constructor" }]).length,
     2, "app-controlled group keys cannot collide with object prototypes");
 
-const recent = context.recentRecords([
-    { id: 2, created_unix_ms: 200, summary: "live" }
-], [
-    { history_id: 3, notification: { id: 3, created_unix_ms: 300 } },
-    { history_id: 2, notification: { id: 2, created_unix_ms: 200 } },
-    { history_id: 1, notification: { id: 2, created_unix_ms: 100 } }
-]);
-equal(recent[2].history_id, 1, "reusing a notification ID does not erase older history");
+equal(context.recordKey({id: 2, created_unix_ms: 200}),
+    context.recordKey({notification: {id: 2, created_unix_ms: 200}}), "live and history share view identity");
+equal(context.recordKey({id: 2, created_unix_ms: 100}) === context.recordKey({id: 2, created_unix_ms: 200}),
+    false, "numeric ID reuse cannot alias reply drafts");
 const actions = {actions: [{key: "reply"}, {key: "mail-reply-sender"}, {key: "inline-reply"}, {key: "default"}]};
 equal(context.standardActions(actions).map(action => action.key).join(","), "reply,mail-reply-sender", "ordinary reply actions remain callable");
 equal(context.replyAction(actions).key, "inline-reply", "inline reply is an exact extension key");

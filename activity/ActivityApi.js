@@ -13,7 +13,7 @@ var methods = {
     todoDelete: Protocol.methods["todos.delete"],
     notificationsToggleDnd: Protocol.methods["notifications.toggleDnd"],
     notificationsSetDnd: Protocol.methods["notifications.setDnd"],
-    notificationsList: Protocol.methods["notifications.list"],
+    notificationsQueryHistory: Protocol.methods["notifications.queryHistory"],
     notificationsDismiss: Protocol.methods["notifications.dismiss"],
     notificationsClear: Protocol.methods["notifications.clear"],
     notificationsClearGroup: Protocol.methods["notifications.clearGroup"],

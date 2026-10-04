@@ -74,49 +74,9 @@ function groupRecords(records) {
     return groups;
 }
 
-function newestFirst(records) {
-    return (records || []).slice().sort(function (left, right) {
-        return Number(notificationFor(right).created_unix_ms || 0) - Number(notificationFor(left).created_unix_ms || 0) || Number(notificationFor(right).id || 0) - Number(notificationFor(left).id || 0);
-    });
-}
-
-// Keep expired/dismissed records in the agenda, without duplicating records
-// also present in the active snapshot. IDs alone can be reused after restart.
-function recentRecords(active, history) {
-    const activeKeys = Object.create(null);
-    (active || []).forEach(function (record) {
-        const n = notificationFor(record);
-        activeKeys[n.id + ":" + n.created_unix_ms] = true;
-    });
-    return newestFirst((active || []).concat((history || []).filter(function (record) {
-        const n = notificationFor(record);
-        return !activeKeys[n.id + ":" + n.created_unix_ms];
-    })));
-}
-
 function previewCapacity(height, spacing, margin) {
     // Header, DND row, view-all row and their gaps; each preview is 48px.
     return Math.max(0, Math.floor((height - margin * 2 - 28 - 34 - 34 - spacing * 2) / (48 + spacing)));
-}
-
-function mergeHistory(existing, incoming) {
-    const byId = Object.create(null);
-    (existing || []).concat(incoming || []).forEach(function (record) {
-        byId[record.history_id] = record;
-    });
-    return Object.keys(byId).map(function (id) {
-        return byId[id];
-    }).sort(function (left, right) {
-        return Number(right.history_id) - Number(left.history_id);
-    });
-}
-
-function filterRecords(records, query) {
-    const needle = String(query || "").trim().toLowerCase();
-    return (records || []).filter(function (record) {
-        const n = notificationFor(record);
-        return [n.app_name, n.summary, n.body].join(" ").toLowerCase().indexOf(needle) >= 0;
-    });
 }
 
 function relativeTime(createdMs, nowMs) {

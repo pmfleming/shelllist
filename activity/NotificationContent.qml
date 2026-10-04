@@ -29,7 +29,7 @@ Ui.ProviderChooserSurface {
         resultModel: content.controller.notificationModel
         filterText: content.controller.filterText
         icon: ""
-        placeholder: qsTr("Search loaded notifications…")
+        placeholder: qsTr("Search recent notifications…")
         powerVisible: false
         searchActionIcon: "󰒓"
         searchActionToolTip: qsTr("Notification settings")
@@ -39,7 +39,7 @@ Ui.ProviderChooserSurface {
         emptyText: !content.controller.notificationState.notifications.available ? qsTr("Notifications unavailable") : refreshing && !content.controller.notificationState.historyLoaded ? qsTr("Loading notifications…") : filterText.length ? qsTr("No matching notifications") : qsTr("No notifications")
         emptyIcon: "󰂚"
         preserveViewportOnAppend: true
-        readonly property bool loadMore: listNearEnd && !filterText.length && content.controller.notificationState.historyHasMore && !refreshing && !content.controller.notificationState.historyError
+        readonly property bool loadMore: listNearEnd && content.controller.notificationState.historyHasMore && !refreshing && !content.controller.notificationState.historyError
         onLoadMoreChanged: if (loadMore) Qt.callLater(content.controller.notificationState.loadMoreHistory)
         listOptionsComponent: Column {
             width: parent.width

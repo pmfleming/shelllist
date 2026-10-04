@@ -42,6 +42,19 @@ changed Rust packages, matching generated bar bindings/fixtures, and the
 current-worktree Nix `barDaemonContract` build. Full-family Nix checks and live
 compositor acceptance were not run; no service was deployed or restarted.
 
+## Follow-up: notification history catalog
+
+`bar-daemon` now owns unified live/persisted notification identity, ordering,
+Unicode substring search and revision/epoch-bound cursor consistency through
+`notifications.queryHistory`. Shelllist stages only its requested visible window
+and atomically replaces it through a daemon-evaluated refresh anchor. Removed
+frontend retired-record retention, history union/deduplication and search. A
+coalesced transient replacement followed by closure cannot survive a fresh read.
+
+Pages, query scope, byte size and concurrent reads are bounded. Cursors retain
+no snapshots or mutation authority. Legacy history remains stored and the old
+list API remains available. See the [implementation and validation record](reviews/notification-history-migration.md).
+
 ## Conclusion (original audit)
 
 The system-integration boundary is mostly established, but **domain computation
@@ -256,8 +269,10 @@ fixture, consume the new fields in QML, remove the superseded JS policy, and run
 both daemon and QML tests. UI hiding/crashing must not change authoritative
 results. Never replay an uncertain mutation during reconnection.
 
-Run `tests/check-sibling-boundary.sh` before advancing release pins. The latest
-routing fix still requires matching rebuilt client binaries and QML; local
-commits alone do not deploy it. Only migrations explicitly marked implemented above are complete. A passing
-fixture or source audit must not be described as proof that pending ownership
-problems have been fixed.
+Run `tests/check-sibling-boundary.sh` against one captured current sibling-worktree
+graph before activation. The current build helper resolves all local daemons and
+one framework together; the historical vendored-source/release-pin procedure
+above is not the current integration gate. Matching rebuilt client binaries and
+QML are still required; local commits alone do not deploy them. Only migrations
+explicitly marked implemented above are complete. A passing fixture or source
+audit is not proof of full-family deployment readiness.

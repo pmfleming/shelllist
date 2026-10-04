@@ -3,7 +3,7 @@ import Shelllist.Core as Core
 import Shelllist.Ui as Ui
 
 // One notification store for the bar, toasts and panel. Transport ownership and
-// persisted data belong to the daemon; cached closed rows only bridge history IO.
+// catalog identity, search, ordering and snapshot consistency belong to Rust.
 Item {
     id: notificationState
     property bool resident: false
@@ -23,10 +23,20 @@ Item {
     property var notifications: ({available: false, count: 0, dnd: false})
     property var notificationActive: ({available: false, notifications: []})
     property var activeRecords: []
-    property var retiredRecords: []
+    // Only the requested visible window. Refresh pages are staged atomically;
+    // the old window remains visible until a complete authoritative replacement.
     property var history: []
+    property string historyQuery: ""
+    property int historyGeneration: 0
+    property var historyCursor: null
+    property string historyEpoch: ""
+    property string historyRevision: ""
+    property var historyStaging: []
+    property string stagingEpoch: ""
+    property string stagingRevision: ""
+    property var historyAnchor: null
     property bool historyLoading: false
-    property bool historyHasMore: false
+    readonly property bool historyHasMore: historyCursor !== null
     property bool historyLoaded: false
     property bool historyDirty: false
     property string lastError: ""
@@ -35,7 +45,7 @@ Item {
     property var replies: ({})
     property var operations: ({})
     readonly property var activeNotifications: activeRecords
-    readonly property var recentNotifications: Ui.NotificationPresentation.recentRecords(activeRecords.concat(retiredRecords), history)
+    readonly property var recentNotifications: history
     readonly property int draftCount: Object.keys(drafts).filter(key => String(drafts[key] || "").length > 0).length
     property NotificationBackend backend: notificationBackend
 
@@ -74,6 +84,9 @@ Item {
     }
     function connectionLost(): void {
         dataGeneration++;
+        historyGeneration++;
+        historyStaging = [];
+        historyCursor = null;
         queuedSummary = null;
         queuedActive = null;
         acceptedHistoryRevision = -1;
@@ -93,14 +106,6 @@ Item {
             delete value.toast_expires_unix_ms;
             return value;
         });
-        const keys = new Set(next.map(Ui.NotificationPresentation.recordKey));
-        const transientKeys = new Set(next.filter(record => (record.hints || {}).transient).map(Ui.NotificationPresentation.recordKey));
-        // Replacing a persisted notification with a transient one also deletes
-        // its persisted row; mirror that removal rather than retaining a ghost.
-        const retainedHistory = history.filter(record => !transientKeys.has(Ui.NotificationPresentation.recordKey(record)));
-        if (!equal(history, retainedHistory)) history = retainedHistory;
-        const retired = Ui.NotificationPresentation.recentRecords(activeRecords.filter(record => !keys.has(Ui.NotificationPresentation.recordKey(record)) && !(record.hints || {}).transient), retiredRecords).filter(record => !keys.has(Ui.NotificationPresentation.recordKey(record))).slice(0, 200);
-        if (!equal(retiredRecords, retired)) retiredRecords = retired;
         if (!equal(activeRecords, next)) activeRecords = next;
     }
     function keyFor(value: var): string {
@@ -140,48 +145,102 @@ Item {
         setReplyState(identity, true, "");
         return backend.reply(record.id, value);
     }
+    function setHistoryQuery(value: string): void {
+        const query = value.trim().toLowerCase();
+        if (historyQuery === query) return;
+        historyQuery = query;
+        // These are bounded ordinary RPCs, not cancellable subscriptions.
+        // Let old reads finish; their generation cannot alter the new query.
+        historyGeneration++;
+        historyLoading = false;
+        historyLoaded = false;
+        historyCursor = null;
+        historyStaging = [];
+        history = [];
+        scheduleHistory();
+    }
     function scheduleHistory(): void {
         historyDirty = true;
-        if (historyEnabled && !historyLoading && backend.ready)
-            historyDebounce.restart();
+        if (historyEnabled && !historyLoading && backend.ready && !historyDebounce.running)
+            historyDebounce.start();
     }
     function reloadHistory(): void {
         historyDebounce.stop();
-        if (historyLoading)
-            return;
+        if (historyLoading) return;
+        historyGeneration++;
         historyDirty = false;
         historyError = "";
+        historyStaging = [];
+        stagingEpoch = "";
+        stagingRevision = "";
+        const oldest = history.length ? Ui.NotificationPresentation.notificationFor(history[history.length - 1]) : null;
+        historyAnchor = oldest ? {created: oldest.created_unix_ms, id: oldest.id} : null;
         historyLoading = true;
         backend.loadHistory(null, true);
     }
     function loadMoreHistory(): void {
-        if (historyLoading || !historyHasMore || history.length === 0)
-            return;
+        if (historyLoading || !historyHasMore) return;
+        if (historyDirty) { reloadHistory(); return; }
         historyError = "";
         historyLoading = true;
-        backend.loadHistory(history[history.length - 1].history_id, false);
+        backend.loadHistory(historyCursor, false);
     }
-    function applyHistory(records: var, refresh: bool): void {
-        const values = Array.isArray(records) ? records : [];
-        const hadHistory = history.length > 0;
-        const overlap = values.some(record => history.some(old => old.history_id === record.history_id));
-        const merged = Ui.NotificationPresentation.mergeHistory(history, values);
-        if (!equal(history, merged)) history = merged;
-        const received = new Set(values.map(Ui.NotificationPresentation.recordKey));
-        const retained = retiredRecords.filter(record => !received.has(Ui.NotificationPresentation.recordKey(record)));
-        if (!equal(retiredRecords, retained)) retiredRecords = retained;
-        if (!refresh || !hadHistory)
-            historyHasMore = values.length === 50;
-        if (refresh && hadHistory && !overlap && values.length === 50) {
-            backend.loadHistory(values[values.length - 1].history_id, true);
+    function invalidateHistory(): void {
+        historyGeneration++;
+        historyLoading = false;
+        historyStaging = [];
+        historyCursor = null;
+        scheduleHistory(); // Read-only recovery; never replay a mutation.
+    }
+    function applyHistory(page: var, refresh: bool, requestedCursor: var): void {
+        if (!page || !Array.isArray(page.records) || page.records.length > 100 || typeof page.epoch !== "string" || !page.epoch.length || typeof page.revision !== "string" || !page.revision.length || page.query !== historyQuery || typeof page.anchor_reached !== "boolean" || (page.next_cursor !== null && (typeof page.next_cursor !== "string" || !page.next_cursor.length))) {
+            failHistory("Invalid notification history page");
             return;
         }
+        const base = refresh ? historyStaging : history;
+        const epoch = refresh ? stagingEpoch : historyEpoch;
+        const revision = refresh ? stagingRevision : historyRevision;
+        if (epoch && (epoch !== page.epoch || revision !== page.revision)) {
+            invalidateHistory();
+            return;
+        }
+        const keys = new Set(base.map(Ui.NotificationPresentation.recordKey));
+        const valid = page.records.every(function (record) {
+            if (!record || !record.notification) return false;
+            const notification = record.notification;
+            if (!Number.isSafeInteger(notification.id) || notification.id <= 0 || notification.id > 4294967295 || !Number.isSafeInteger(notification.created_unix_ms) || notification.created_unix_ms <= 0) return false;
+            const key = Ui.NotificationPresentation.recordKey(record);
+            if (keys.has(key)) return false;
+            keys.add(key);
+            return true;
+        });
+        if (!valid || (page.next_cursor !== null && (!page.records.length || page.next_cursor === requestedCursor)) || base.length + page.records.length > 5200) {
+            failHistory("Notification history page did not advance");
+            return;
+        }
+        const next = base.concat(page.records);
+        if (refresh) {
+            stagingEpoch = page.epoch;
+            stagingRevision = page.revision;
+            historyStaging = next;
+            if (page.next_cursor !== null && !page.anchor_reached) {
+                if (historyEnabled) backend.loadHistory(page.next_cursor, true);
+                else invalidateHistory();
+                return;
+            }
+        }
+        if (!equal(history, next)) history = next;
+        historyEpoch = page.epoch;
+        historyRevision = page.revision;
+        historyCursor = page.next_cursor;
+        historyStaging = [];
         historyLoaded = true;
         historyLoading = false;
         if (historyDirty) scheduleHistory();
     }
     function failHistory(message: string): void {
         historyLoading = false;
+        historyStaging = [];
         historyError = message;
     }
     function setDndEnabled(enabled: bool): bool {

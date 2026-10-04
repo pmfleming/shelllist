@@ -80,6 +80,16 @@ DaemonTestCase {
             notification: notification(id, app)
         };
     }
+    function page(records, cursor, revision, query, anchorReached) {
+        return {records: records, next_cursor: cursor || null, epoch: "test-epoch", revision: revision || "1", query: query || "", anchor_reached: anchorReached !== false, scope_limit: 5000};
+    }
+    // Presentation tests supply authoritative pages, not a second native catalog.
+    function project(state, records, cursor) {
+        state.historyStaging = [];
+        state.stagingEpoch = "";
+        state.stagingRevision = "";
+        state.applyHistory(page(records, cursor, "1", state.historyQuery), true, null);
+    }
     function makeState() {
         const state = createTemporaryObject(stateComponent, testCase);
         verify(state !== null);
@@ -91,7 +101,7 @@ DaemonTestCase {
         state.notificationActive = {
             notifications: [notification(1), notification(100)]
         };
-        state.history = [record(3), record(2), record(1)];
+        project(state, [record(100), record(3), record(2), record(1)]);
         return state;
     }
     function makeController(state) {
@@ -108,27 +118,31 @@ DaemonTestCase {
         const state = makeState();
         const controller = makeController(state);
         compare(controller.notificationModel.count, 4, "live/history overlap is not duplicated");
-        compare(controller.selectedRecord.id, 100);
+        compare(controller.selectedNotification.id, 100);
         controller.select(2);
         const key = controller.selectedKey;
         state.notificationActive = {notifications: [notification(101), notification(100), notification(1)]};
+        project(state, [record(101), record(100), record(3), record(2), record(1)]);
         wait(0);
         compare(controller.selectedKey, key);
         compare(controller.selectionModel.selectedIndex, 3);
         controller.filterText = "Message 2";
+        compare(state.historyQuery, "message 2");
+        project(state, [record(2)]);
         tryCompare(controller.notificationModel, "count", 1);
         compare(controller.selectedRecord.notification.id, 2);
         controller.openNotifications("chat", "history", "activity");
+        project(state, [record(101), record(100), record(3), record(2), record(1)]);
         wait(0);
-        compare(controller.selectedRecord.id, 101);
+        compare(controller.selectedNotification.id, 101);
         verify(controller.detailsOpen);
         compare(controller.returnSurface, "activity");
-        state.applyHistory([record(101)], true);
+        project(state, [record(101), record(100), record(3), record(2), record(1)]);
         tryCompare(controller.notificationModel, "count", 5);
         state.notificationActive = {notifications: [notification(100), notification(1)]};
         wait(0);
         compare(controller.selectedKey, "101:101000", "no disappearing row while history is in flight");
-        state.applyHistory([record(101)], true);
+        project(state, [record(101), record(100), record(3), record(2), record(1)]);
         wait(0);
         compare(controller.selectedRecord.history_id, 101);
         compare(controller.selectedKey, "101:101000", "closing retains identity and selection");
@@ -167,7 +181,6 @@ DaemonTestCase {
     function test_searchSettingsWithoutSelectionAndDeferredDuration() {
         const state = makeState();
         state.notificationActive = {notifications: []};
-        state.retiredRecords = [];
         state.history = [];
         state.backend = createTemporaryObject(fakeBackendComponent, state, {store: state});
         const controller = makeController(state);
@@ -194,6 +207,8 @@ DaemonTestCase {
         compare(state.dndDurationMinutes, 60);
         compare(state.backend.dndCalls, 0, "saving duration while off must not enable DND");
         state.notificationActive = {notifications: [notification(12)]};
+        project(state, [record(12)]);
+        wait(0);
         verify(controller.settingsOpen, "arrival must not replace settings");
         keyClick(Qt.Key_Escape);
         tryVerify(() => !controller.settingsOpen);
@@ -210,25 +225,25 @@ DaemonTestCase {
         content.destroy();
         wait(0);
     }
-    function test_refreshCatchesUpAcrossMissingPages() {
+    function test_refreshStagesAuthoritativePagesUntilVisibleAnchor() {
         const state = makeState();
-        state.backend = createTemporaryObject(fakeBackendComponent, state, {
-            store: state
-        });
-        const page = [];
-        for (let id = 100; id > 50; --id)
-            page.push(record(id));
-        state.historyLoading = true;
-        state.applyHistory(page, true);
-        compare(state.backend.requestedCursor, 51);
+        state.backend = createTemporaryObject(fakeBackendComponent, state, {store: state});
+        state.historyEnabled = true;
+        state.reloadHistory();
+        compare(state.historyAnchor.id, 1);
+        const first = Array.from({length: 50}, (_, index) => record(100 - index));
+        state.applyHistory(page(first, "opaque-next", "2", "", false), true, null);
+        compare(state.backend.requestedCursor, "opaque-next");
         verify(state.backend.requestedRefresh);
         verify(state.historyLoading);
-        const rest = [];
-        for (let id = 50; id >= 3; --id)
-            rest.push(record(id));
-        state.applyHistory(rest, true);
+        compare(state.history.length, 4, "old window remains until replacement is complete");
+        const rest = Array.from({length: 50}, (_, index) => record(50 - index));
+        state.applyHistory(page(rest, null, "2"), true, "opaque-next");
         compare(state.history.length, 100);
         verify(!state.historyLoading);
+        state.reloadHistory();
+        state.applyHistory(page([], null, "3"), true, null);
+        compare(state.history.length, 0, "refresh removes absent rows instead of union-merging them");
     }
     function test_replyAcknowledgementAndFailure() {
         const state = makeState();
@@ -276,6 +291,7 @@ DaemonTestCase {
         state.notificationActive = {
             notifications: [notification(101), notification(100), notification(1)]
         };
+        project(state, [record(101), record(100), record(3), record(2), record(1)]);
         wait(50);
         compare(findChild(content, "notificationHistoryRow-100"), row);
         verify(field.inputActiveFocus);
@@ -288,6 +304,7 @@ DaemonTestCase {
         state.notificationActive = {
             notifications: burst.concat([notification(100), notification(1)])
         };
+        state.history = burst.map(n => ({history_id: null, notification: n})).concat([record(100), record(3), record(2), record(1)]);
         wait(50);
         compare(findChild(content, "notificationHistoryRow-100"), row);
         verify(field.inputActiveFocus);
@@ -324,6 +341,7 @@ DaemonTestCase {
         const live = notification(100);
         live.actions = [{key: "default", label: "Open"}, {key: "mail-reply-sender", label: "Reply in app"}, {key: "inline-reply", label: "Reply here"}];
         state.notificationActive = {notifications: [live]};
+        project(state, [{history_id: null, notification: live}, record(3), record(2), record(1)]);
         const controller = makeController(state);
         controller.uiActive = true;
         const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
@@ -400,11 +418,11 @@ DaemonTestCase {
         const controller = makeController(state);
         const spy = createTemporaryObject(spyComponent, testCase, {target: controller.notificationModel, signalName: "rowsChanged"});
         state.historyEnabled = true;
-        const historyCalls = () => testCase.calls.filter(call => call.method === "notifications.list");
+        const historyCalls = () => testCase.calls.filter(call => call.method === "notifications.queryHistory");
         const before = historyCalls().length;
         tryCompare(state, "historyLoading", true);
         compare(historyCalls().length, before + 1);
-        state.backend.finish(Object.keys(state.backend.requests).find(key => key.startsWith("history-")), {notification_history: state.history}, "");
+        state.backend.finish(Object.keys(state.backend.requests).find(key => key.startsWith("history-")), {notification_page: page(state.history)}, "");
         wait(0);
         spy.clear();
         for (let i = 0; i < 5; i++) state.applySnapshot(JSON.parse(JSON.stringify(snapshot)));
@@ -418,6 +436,9 @@ DaemonTestCase {
         state.queueEvent(true, {available: true, count: 4, dnd: true, history_revision: 12});
         state.queueEvent(false, {available: true, revision: 11, notifications: [notification(101), notification(100), notification(1)]});
         state.queueEvent(false, {available: true, revision: 12, notifications: [notification(102), notification(101), notification(100), notification(1)]});
+        wait(0);
+        compare(spy.count, 0, "active snapshots never infer catalog contents");
+        project(state, [record(102), record(101), record(100), record(3), record(2), record(1)]);
         tryCompare(spy, "count", 1);
         wait(30);
         compare(spy.count, 1, "same-turn updates are one model reconciliation");
@@ -464,11 +485,24 @@ DaemonTestCase {
         const pendingHistory = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
         state.connectionLost();
         verify(!state.isLive(reused), "cached rows are not actionable while disconnected");
-        state.backend.finish(pendingHistory, {notification_history: [record(987)]}, "");
+        state.backend.finish(pendingHistory, {notification_page: page([record(987)])}, "");
         verify(!state.history.some(record => record.history_id === 987));
         state.applySnapshot({notifications: {available: true, history_revision: 0}, notification_active: {available: true, revision: 0, notifications: [reused]}});
         verify(state.isLive(reused), "a new generation accepts reset revisions");
         compare(state.drafts[newKey], "New draft");
+    }
+    function test_coalescedTransientReplacementThenClose() {
+        const state = makeState();
+        state.applySnapshot({notifications: {available: true, history_revision: 1}, notification_active: {available: true, revision: 1, notifications: [notification(1)]}});
+        project(state, [record(1)]);
+        state.queueEvent(false, {available: true, revision: 2, notifications: [Object.assign({}, notification(1), {hints: {transient: true}})]});
+        state.queueEvent(false, {available: true, revision: 3, notifications: []});
+        state.queueEvent(true, {available: true, history_revision: 3});
+        state.flushEvents();
+        state.reloadHistory();
+        const request = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        state.backend.finish(request, {notification_page: page([], null, "3")}, "", "");
+        compare(state.recentNotifications.length, 0, "coalescing cannot retain deleted persisted content");
     }
     function test_transientReplacementAndStaleHistoryCannotResurrectClosedRows() {
         const state = makeState();
@@ -477,19 +511,20 @@ DaemonTestCase {
         const pendingHistory = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
         const transient = Object.assign({}, notification(1), {hints: {transient: true}});
         state.applySnapshot({notifications: {available: true, history_revision: 2}, notification_active: {available: true, revision: 2, notifications: [transient]}});
-        verify(!state.history.some(record => record.history_id === 1), "transient replacement removes persisted content");
+        compare(state.history.length, 4, "only authoritative query pages replace the window");
         state.applySnapshot({notifications: {available: true, history_revision: 3}, notification_active: {available: true, revision: 3, notifications: []}});
-        state.backend.finish(pendingHistory, {notification_history: [record(1)]}, "");
-        verify(!state.history.some(record => record.history_id === 1), "old in-flight history cannot revive deleted content");
-        verify(!state.recentNotifications.some(record => state.keyFor(record) === "1:1000"));
-        verify(state.historyDirty, "changed revisions trigger a fresh catch-up instead");
+        state.backend.finish(pendingHistory, {notification_page: page([record(1)])}, "", "");
+        verify(state.historyDirty, "changed revisions trigger a fresh read instead of merging stale content");
+        state.reloadHistory();
+        const current = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        state.backend.finish(current, {notification_page: page([record(3), record(2)], null, "3")}, "", "");
+        verify(!state.history.some(record => record.history_id === 1), "refresh removes deleted content");
     }
     function test_prependAndHistoryAppendPreserveViewportAnchor() {
         const state = makeState();
         const records = Array.from({length: 45}, (_, index) => notification(1000 - index));
         state.notificationActive = {available: true, notifications: records};
-        state.history = [];
-        state.retiredRecords = [];
+        project(state, records.map(n => ({history_id: null, notification: n})), "next-older");
         const controller = makeController(state);
         controller.uiActive = true;
         const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
@@ -502,16 +537,92 @@ DaemonTestCase {
         verify(anchor !== null);
         const selected = controller.selectedKey;
         state.notificationActive = {available: true, notifications: [notification(2000)].concat(records)};
+        project(state, [notification(2000)].concat(records).map(n => ({history_id: null, notification: n})), "next-older");
         wait(40);
         compare(controller.selectedKey, selected);
         compare(content.listItem.sessionState().viewport.key, anchor.key);
         verify(Math.abs(content.listItem.sessionState().viewport.offset - anchor.offset) < 1);
-        state.applyHistory(Array.from({length: 50}, (_, index) => record(900 - index)), false);
+        state.applyHistory(page(Array.from({length: 50}, (_, index) => record(900 - index))), false, "next-older");
         wait(40);
         compare(content.listItem.sessionState().viewport.key, anchor.key);
         compare(list.count, 96, "single-app history uses notification rows, not eager group expansion");
         content.destroy();
         wait(0);
+    }
+    function test_keyboardSearchUsesNativeCatalogAndRejectsSupersededReplies() {
+        const state = makeState();
+        const controller = makeController(state);
+        controller.uiActive = true;
+        state.historyEnabled = true;
+        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
+        tryCompare(state, "historyLoading", true);
+        const initial = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        state.setDraft(100, "Keep my draft");
+        content.listItem.focusSearch();
+        keyClick(Qt.Key_N);
+        keyClick(Qt.Key_E);
+        keyClick(Qt.Key_E);
+        keyClick(Qt.Key_D);
+        keyClick(Qt.Key_L);
+        keyClick(Qt.Key_E);
+        compare(controller.filterText, "needle");
+        compare(state.historyQuery, "needle");
+        state.backend.finish(initial, {notification_page: page([record(888)])}, "", "");
+        compare(state.history.length, 0, "an old query cannot repopulate new search results");
+        tryCompare(state, "historyLoading", true);
+        const request = Object.keys(state.backend.requests).find(key => key.startsWith("history-") && state.backend.requests[key].historyGeneration === state.historyGeneration);
+        const call = testCase.calls.filter(call => call.method === "notifications.queryHistory").pop();
+        compare(call.params.query, "needle");
+        compare(call.params.cursor, null);
+        const found = record(900);
+        found.notification.summary = "Needle from previously unloaded history";
+        state.backend.finish(request, {notification_page: page([found], "query-page-2", "9", "needle")}, "", "");
+        tryCompare(controller.notificationModel, "count", 1);
+        compare(controller.selectedNotification.id, 900);
+        compare(state.drafts["100:100000"], "Keep my draft");
+        // Pagination remains enabled for search, and consumes the opaque cursor.
+        state.loadMoreHistory();
+        const next = testCase.calls.filter(call => call.method === "notifications.queryHistory").pop();
+        compare(next.params.cursor, "query-page-2");
+        compare(next.params.query, "needle");
+        content.destroy();
+        wait(0);
+    }
+    function test_cursorInvalidationAndMalformedPagesNeverMixVisibleRevisions() {
+        const state = makeState();
+        project(state, [record(100), record(3)], "old-cursor");
+        state.historyDirty = false;
+        state.loadMoreHistory();
+        const request = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        state.backend.finish(request, {}, "History changed", "history-cursor-stale");
+        verify(state.historyDirty);
+        compare(state.history.length, 2, "stale reads retain the current visible window until refresh");
+        verify(!state.historyHasMore);
+        state.reloadHistory();
+        const refresh = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        state.backend.finish(refresh, {notification_page: page([record(101), record(100)], "new-cursor", "2")}, "", "");
+        compare(state.historyRevision, "2");
+        verify(!state.history.some(item => item.history_id === 3), "refresh removes absent records");
+        state.applyHistory(page([record(99)], null, "3"), false, "new-cursor");
+        compare(state.history.length, 2, "a different page revision is never appended");
+        verify(state.historyDirty);
+        project(state, [record(100)], "cursor");
+        state.applyHistory(page([], "cursor"), false, "cursor");
+        verify(state.historyError.length > 0, "non-advancing pages fail instead of looping");
+        compare(state.history.length, 1);
+        state.applyHistory(page([record(100)], null), false, "cursor");
+        compare(state.history.length, 1, "duplicate pages are rejected, not silently deduplicated");
+        state.applyHistory(page([{notification: {id: 99}}]), false, "cursor");
+        compare(state.history.length, 1, "malformed identities cannot enter the keyed model");
+        // Reconnect can legitimately reset revision numbers and changes epoch.
+        state.connectionLost();
+        state.reloadHistory();
+        const reconnect = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        const replacement = page([], null, "0");
+        replacement.epoch = "new-daemon";
+        state.backend.finish(reconnect, {notification_page: replacement}, "", "");
+        compare(state.historyEpoch, "new-daemon");
+        compare(state.history.length, 0, "missed deletion events are repaired by authoritative replacement");
     }
     function test_backendFailuresRetireLoadingAndPreserveDraft() {
         const state = makeState();

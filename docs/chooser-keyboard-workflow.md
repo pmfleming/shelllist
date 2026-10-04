@@ -186,6 +186,14 @@ mode IDs and structured geometry: Enter/Tab saves only to the local layout draft
 Escape discards the field edit, and Preview remains the explicit backend boundary.
 `tst_displays.qml` exercises this with opaque mode IDs and actual key delivery.
 
+Notifications search uses the daemon catalog, including unloaded retained rows
+within its documented recent-history scope. Typing issues debounced reads only;
+query changes supersede old pages, and F5 refreshes without replaying any
+command. Page append and atomic same-query refresh preserve keyed selection,
+viewport and reply-editor transactions. Stale cursors retry reads; they must not
+merge revisions or resurrect deleted rows. `tst_notifications.qml` covers actual
+search key delivery, late replies, cursor recovery and reply/viewport retention.
+
 Display arrangement follows the same command model: **Alt+L/U/D/R** invokes the
 Left/Above/Below/Right buttons below the monitor map. These actions modify the
 local layout draft, not the backend. Buttons and the map are not Tab stops;

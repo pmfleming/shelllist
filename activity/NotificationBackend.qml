@@ -27,12 +27,16 @@ Io.DaemonBackend {
             request("snapshot", Api.methods.snapshot, {}, {snapshot: true});
     }
     function loadHistory(cursor: var, refresh: bool): bool {
-        return request("history", Api.methods.notificationsList, {
-            before_history_id: cursor,
+        return request("history", Api.methods.notificationsQueryHistory, {
+            query: store.historyQuery,
+            cursor: cursor,
+            anchor: refresh ? store.historyAnchor : null,
             limit: 50
         }, {
             history: true,
+            historyGeneration: store.historyGeneration,
             historyRevision: store.observedHistoryRevision,
+            cursor: cursor,
             refresh: refresh
         });
     }
@@ -77,14 +81,14 @@ Io.DaemonBackend {
             text: text
         });
     }
-    function finish(id: string, data: var, error: string): void {
+    function finish(id: string, data: var, error: string, errorCode: string): void {
         const context = requests[id];
         if (!context)
             return;
         const next = Object.assign({}, requests);
         delete next[id];
         requests = next;
-        if (context.generation !== undefined && context.generation !== store.dataGeneration)
+        if ((context.generation !== undefined && context.generation !== store.dataGeneration) || (context.history && context.historyGeneration !== undefined && context.historyGeneration !== store.historyGeneration))
             return;
         store.flushEvents();
         if (context.replyKey !== undefined)
@@ -94,7 +98,9 @@ Io.DaemonBackend {
         if (context.operationKey !== undefined)
             store.finishOperation(context.operationKey);
         if (error) {
-            if (context.history)
+            if (context.history && errorCode === "history-cursor-stale")
+                store.invalidateHistory();
+            else if (context.history)
                 store.failHistory(error);
             else
                 store.lastError = error;
@@ -110,23 +116,22 @@ Io.DaemonBackend {
         }
         if (context.history) {
             if (context.historyRevision !== undefined && context.historyRevision !== store.observedHistoryRevision) {
-                store.historyLoading = false;
-                store.scheduleHistory();
+                store.invalidateHistory();
             } else {
-                store.applyHistory(data.notification_history || [], context.refresh);
+                store.applyHistory(data.notification_page, context.refresh, context.cursor);
             }
         }
     }
 
     onResponseReceived: function (id, envelope, transportError) {
-        finish(id, envelope && envelope.data ? envelope.data : ({}), responseError(envelope, transportError, "Notification operation failed"));
+        finish(id, envelope && envelope.data ? envelope.data : ({}), responseError(envelope, transportError, "Notification operation failed"), envelope && envelope.error ? envelope.error.code : "");
     }
     onSendFailed: function (id, message) {
-        finish(id, {}, message);
+        finish(id, {}, message, "");
     }
     onTransportFailed: function (message, lostRequestIds) {
         lostRequestIds.forEach(function (id) {
-            backend.finish(id, {}, message);
+            backend.finish(id, {}, message, "");
         });
         store.connectionLost();
     }

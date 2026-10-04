@@ -70,7 +70,7 @@ The UI uses opaque daemon device keys and live subscriptions. It does not parse 
 
 ### Activity
 
-The Activity surface contains a month calendar, selected-day agenda, persistent todos and source health. Time/weather and notifications are separate surfaces, not Activity sections. Notifications' Active/History tabs offer search, DND, actions, inline replies, 15-minute snooze and dismissal that retains history. Toast chevrons open the selected group. Drafts survive navigation and only clear after successful replies. `bar-daemon` owns notification ingestion, expiry, DND, snooze and persistent history. Open directly with `shelllist notifications open` or the `notifications` global shortcut. See [`docs/activity.md`](docs/activity.md).
+The Activity surface contains a month calendar, selected-day agenda, persistent todos and source health. Time/weather and notifications are separate surfaces, not Activity sections. Notifications offers one daemon-searched list, settings for DND, actions, inline replies, 15-minute snooze and dismissal that retains history. Search covers the newest 5,000 persisted notifications plus live records, including unloaded pages. Toast chevrons open the selected group. Drafts survive navigation and only clear after successful replies. `bar-daemon` owns notification ingestion, expiry, DND, snooze and persistent history. Open directly with `shelllist notifications open` or the `notifications` global shortcut. See [`docs/activity.md`](docs/activity.md).
 
 ### Time & Weather
 
