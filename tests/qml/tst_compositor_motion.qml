@@ -1,0 +1,64 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import Shelllist.Io as Io
+
+DaemonTestCase {
+    id: testCase
+    name: "NativeCompositorMotion"
+    Component {
+        id: motionFactory
+        Io.CompositorMotion { active: true }
+    }
+    function backend(client) { return findChild(client, "compositorMotionBackend"); }
+    function update(client, value) {
+        backend(client).acceptSharedEvent({protocol: "bar-api", version: 1,
+            stream: "compositor.changed", event: "changed", data: Object.assign({revision: client.revision + 1}, value)});
+    }
+    function test_nativeSnapshotEventsRecoveryAndNoFrontendPolling() {
+        const client = createTemporaryObject(motionFactory, testCase);
+        verify(client !== null);
+        wait(0);
+        const transport = backend(client);
+        compare(Array.from(transport.streams), ["compositor.changed"]);
+        transport.acceptSharedResponse("compositor-snapshot", {
+            protocol: "bar-api", version: 1, ok: true,
+            data: {snapshot: {compositor: {available: true, revision: 1, animations_enabled: false, error: null}}}
+        }, "");
+        verify(client.reduced && client.available);
+        update(client, {available: true, revision: 0, animations_enabled: true});
+        verify(client.reduced, "an old snapshot cannot overwrite a newer stream event");
+        const requests = calls.length;
+        wait(1100);
+        compare(calls.length, requests, "no frontend option polling");
+        update(client, {available: false, animations_enabled: false, error: "offline"});
+        verify(client.reduced && !client.available);
+        transport.failSharedTransport("disconnected");
+        verify(client.reduced && !client.available, "disconnect cannot re-enable motion");
+        compare(client.revision, -1, "a restarted daemon may begin a new revision sequence");
+        update(client, {available: false, animations_enabled: null, error: "restarting"});
+        verify(client.reduced, "unknown observations retain the local last-known value");
+        update(client, {available: true, animations_enabled: "false"});
+        verify(client.reduced, "malformed booleans are not coerced");
+        transport.acceptSharedEvent({protocol: "bar-api", version: 1,
+            stream: "compositor.changed", event: "lagged"});
+        compare(calls[calls.length - 1].method, "bar.snapshot");
+        update(client, {available: true, animations_enabled: true, error: null});
+        verify(!client.reduced && client.available, "new authoritative preference applies");
+        client.active = false;
+        update(client, {available: true, animations_enabled: false, error: null});
+        verify(!client.reduced && !client.available, "inactive/overridden readers ignore late events");
+    }
+    function test_consumers_share_the_resident_daemon_transport() {
+        const first = createTemporaryObject(motionFactory, testCase);
+        const second = createTemporaryObject(motionFactory, testCase);
+        wait(0);
+        const session = Io.DaemonSessions.sessions["bar-daemon"];
+        verify(session !== undefined);
+        verify(session.consumers[backend(first).sharedConsumerId] !== undefined);
+        verify(session.consumers[backend(second).sharedConsumerId] !== undefined);
+        first.active = false;
+        update(second, {available: true, animations_enabled: false});
+        verify(second.reduced);
+        verify(session.client.active, "closing one consumer leaves the shared session alive");
+    }
+}

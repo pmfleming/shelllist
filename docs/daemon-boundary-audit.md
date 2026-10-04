@@ -20,6 +20,28 @@ one ignored), 248 Qt cases including mode-selector save/discard, strict QML lint
 display-model and daemon-boundary checks, and matching protocol fixtures. No live
 display configuration was changed.
 
+## Follow-up: compositor animation preference
+
+`daemon-framework/crates/shelllist-hyprland` now reads and validates the typed
+animation preference over bounded native IPC. `bar-daemon` owns one event-driven
+cache and the additive `compositor.changed` stream. Config reloads and socket
+reconnections reuse the existing compositor listener; healthy values are not
+polled. Failed reads retain the last known value and retry. Snapshot/event
+revisions fence late replies, with the frontend fence reset on transport loss.
+
+`CompositorMotion.qml` only consumes the daemon projection through the shared
+transport. Removed its `hyprctl` subprocess, JSON option parsing, compositor-event
+listener and process deadline. Environment overrides, animation presentation and
+scoped layer rules remain UI-owned. Rebuild the framework, bar-daemon and frontend
+together; there is no subprocess fallback.
+
+Validation: 252 Qt checks, strict QML lint, daemon-boundary checks, all bar-daemon
+Cargo targets (146 library tests and one integration test passed; two tests
+ignored), framework workspace tests (56 passed, one ignored), Clippy for the
+changed Rust packages, matching generated bar bindings/fixtures, and the
+current-worktree Nix `barDaemonContract` build. Full-family Nix checks and live
+compositor acceptance were not run; no service was deployed or restarted.
+
 ## Conclusion (original audit)
 
 The system-integration boundary is mostly established, but **domain computation

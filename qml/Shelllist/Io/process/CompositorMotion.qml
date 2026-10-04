@@ -1,58 +1,58 @@
 import QtQuick
-import Quickshell.Io
-import Quickshell.Hyprland
-import "../HyprlandSettings.js" as Settings
+import Shelllist.Io as Io
+import "../../Bar/BarProtocol.generated.js" as Protocol
 
 Item {
     id: client
     property bool active: false
     property bool reduced: false
-    property bool pending: false
+    property bool available: false
+    property double revision: -1
+
+    function apply(value: var): void {
+        if (!active || !value || typeof value.revision !== "number" || !Number.isSafeInteger(value.revision) || value.revision < 0 || value.revision < revision)
+            return;
+        revision = value.revision;
+        available = value.available === true && typeof value.animations_enabled === "boolean";
+        // The daemon retains its last valid observation on errors. Unknown
+        // data, disconnects and restarts must not enable previously disabled
+        // motion. No compositor parsing or subprocess fallback lives here.
+        if (typeof value.animations_enabled === "boolean")
+            reduced = !value.animations_enabled;
+    }
     function refresh(): void {
-        if (!active)
-            return;
-        if (reader.running) {
-            pending = true;
-            return;
-        }
-        pending = false;
-        reader.exec(["hyprctl", "-j", "getoption", "animations:enabled"]);
+        if (active)
+            backend.call("compositor-snapshot", Protocol.methods["bar.snapshot"], {});
     }
-    onActiveChanged: if (active) refresh(); else reduced = false
-    Component.onCompleted: if (active) refresh()
-    Connections {
-        target: client.active ? Hyprland : null
-        function onRawEvent(event): void {
-            if (event.name === "configreloaded")
-                client.refresh();
-        }
+    function unavailable(): void {
+        available = false;
+        revision = -1; // A new daemon lifetime starts a new revision sequence.
     }
-    Process {
-        id: reader
-        onRunningChanged: {
-            if (running)
-                deadline.restart();
-            else {
-                deadline.stop();
-                if (client.pending)
-                    Qt.callLater(client.refresh);
-            }
-        }
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (!client.active)
-                    return;
-                try {
-                    const option = JSON.parse(text);
-                    if (option.int !== undefined || option.bool !== undefined)
-                        client.reduced = !!Settings.motionDisabled(option);
-                } catch (_) {} // Failed reads retain the last known preference.
-            }
-        }
+    onActiveChanged: if (!active) {
+        unavailable();
+        reduced = false;
     }
-    Timer {
-        id: deadline
-        interval: 1500
-        onTriggered: reader.running = false
+
+    Io.DaemonBackend {
+        id: backend
+        objectName: "compositorMotionBackend"
+        active: client.active
+        daemonName: "bar-daemon"
+        expectedProtocol: Protocol.protocol
+        expectedVersion: Protocol.version
+        streams: [Protocol.streams["compositor.changed"]]
+        onTransportReady: client.refresh()
+        onTransportFailed: client.unavailable()
+        onResponseReceived: function (id, envelope, transportError) {
+            if (responseError(envelope, transportError, "Compositor preference unavailable"))
+                client.available = false;
+            else
+                client.apply((envelope.data && envelope.data.snapshot || {}).compositor);
+        }
+        onEventGapDetected: client.refresh()
+        onEventReceived: function (event) {
+            if (event.stream === Protocol.streams["compositor.changed"])
+                client.apply(event.data);
+        }
     }
 }

@@ -31,9 +31,16 @@ compositor reload preserved them. Legacy/non-Hyprland platforms retain the
 translucent fallback; no unsupported blur API is claimed.
 
 With no explicit `SHELLLIST_NO_ANIMATIONS` override, the compositor's
-`animations:enabled` preference is read at startup and on `configreloaded`.
-Reads time out after 1.5 seconds; failed reads retain the last known preference.
-There is no polling. Existing springs stop at their latest target when reduced
+`animations:enabled` preference comes from bar-daemon's shared
+`compositor.changed` subscription and snapshot. The framework reads and parses
+native Hyprland IPC at daemon startup, config reload and reconnect, with a
+two-second request deadline. Healthy values are not polled; failed reads retry
+after five seconds or a compositor invalidation and retain the last known value.
+Shelllist does not launch `hyprctl` or parse raw options for this preference.
+Disconnects and unknown startup data cannot re-enable previously disabled motion.
+An explicit environment override disables the frontend subscription; scoped
+layer-rule effects remain frontend-owned. Deploy matching framework/daemon/UI
+builds together. Existing springs stop at their latest target when reduced
 motion becomes active. Qt 6.11's accessibility hints expose contrast, not a
 portable reduced-motion setting; this integration is specifically Hyprland.
 

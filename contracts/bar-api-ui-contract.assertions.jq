@@ -16,6 +16,11 @@
 (.snapshot.activity.weather.wind_direction_degrees | type == "number") and
 (.snapshot.activity.weather.hourly[0].condition_code | type == "number") and
 (.snapshot.activity.weather.daily[0].condition_code | type == "number") and
+(.snapshot.compositor.available == true) and
+(.snapshot.compositor.revision == 1) and
+(.snapshot.compositor.animations_enabled == false) and
+(.snapshot.compositor | has("error")) and
+(any(.registry.streams[]; .name == "compositor.changed")) and
 (.snapshot.workspaces.monitors[0].active_workspace_id | type == "number") and
 (.snapshot.media.players[0].playback_status | type == "string") and
 (.snapshot.media.players[0].can_seek | type == "boolean") and

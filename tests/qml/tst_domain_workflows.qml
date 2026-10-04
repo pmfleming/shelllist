@@ -37,9 +37,7 @@ DaemonTestCase {
         id: iconActionFactory
         Ui.ActionButton { label: "Settings"; icon: "󰒓"; width: 42; height: 42 }
     }
-    function test_compositorPreferenceAndScopedBlurCommand() {
-        verify(CompositorSettings.motionDisabled({int: 0}));
-        verify(!CompositorSettings.motionDisabled({int: 1}));
+    function test_scopedBlurCommand() {
         const command = CompositorSettings.layerStyle("shelllist.test", true, true);
         compare(command[0], "hyprctl");
         compare(command[1], "eval");

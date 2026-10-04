@@ -59,6 +59,7 @@ var streams = ({
     "activity.changed": "activity.changed",
     "workspaces.changed": "workspaces.changed",
     "workarea.changed": "workarea.changed",
+    "compositor.changed": "compositor.changed",
     "media.changed": "media.changed",
     "audio.changed": "audio.changed",
     "brightness.changed": "brightness.changed",
