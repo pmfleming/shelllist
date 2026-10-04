@@ -10,6 +10,7 @@ TextEdit {
     signal editFinished(bool saved)
     readonly property FieldEditSession editSession: FieldEditSession {
         owner: editor
+        valueProperty: "text"
         value: editor.text
         onRestoreRequested: function (value) { editor.text = value; }
         onPublishRequested: function (value) { editor.edited(value); }

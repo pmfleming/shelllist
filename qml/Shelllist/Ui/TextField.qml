@@ -5,6 +5,7 @@ FieldFrame {
 
     readonly property FieldEditSession editSession: FieldEditSession {
         owner: field
+        valueProperty: "text"
         focused: field.inputActiveFocus
         value: field.text
         onRestoreRequested: function (value) { field.text = value; }

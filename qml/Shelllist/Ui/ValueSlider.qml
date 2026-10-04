@@ -12,6 +12,7 @@ Controls.Slider {
     FieldEditSession {
         id: transaction
         owner: slider
+        valueProperty: "value"
         value: slider.value
         onRestoreRequested: function (value) { slider.value = value; }
         onPublishRequested: function (value) { slider.edited(value); }

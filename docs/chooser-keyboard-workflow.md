@@ -56,9 +56,12 @@ on result movement. Missing results may close unavailable details safely.
 | Tab | Save, move forward, and enter the next editor |
 | Shift+Tab | Save, move backward, and enter the previous editor |
 
-Forward/reverse traversal wraps in edit mode too. Arriving at a switch highlights
-it **without toggling it** and returns to browsing. Actions are never traversal
-stops. Shift+Enter remains available for a newline in multiline editors.
+Forward/reverse traversal wraps in edit mode too. If saving disables, hides or
+removes the current field, continue from its original position, skipping any
+neighbours that are now unavailable; do not restart at the first/last field.
+Arriving at a switch highlights it **without toggling it** and returns to
+browsing. Actions are never traversal stops. Shift+Enter remains available for a
+newline in multiline editors.
 
 Changes remain **field-local until Enter/Tab**. Typing, native option selection,
 slider movement, blur, tab/category changes and surface closure must not dispatch
@@ -66,6 +69,13 @@ a deferred field's setting write. Leaving via a route other than save discards
 the uncommitted field edit. Already submitted operations and domain failure/retry
 state are not undone. A save is a request, not an acknowledgement: existing daemon
 validation, capability guards, errors and retry mechanisms remain authoritative.
+
+Source bindings must survive every transaction, including no-op cancellation,
+blur and native slider Home/End edits. Incoming snapshots must not overwrite an
+active local draft. On exit, restore the source binding so later backend or
+result changes remain visible; a deferred field's discard reveals the latest
+source value if it changed during editing. Unbound fields retain their saved
+draft or revert to their captured original on discard.
 
 The explicit exception is a continuous preview control such as volume or
 brightness: set `livePreview: true` on `ValueSlider`/`LabeledValueSlider`.
@@ -135,8 +145,10 @@ There is no F1 overlay, hover tooltip or plain-letter action shortcut.
    or repeated row actions. Never make commands ordinary field stops.
 7. Custom editable controls must integrate a `FieldEditSession`, publish only
    at the appropriate transaction boundary, and join `DetailsNavigation`'s
-   typed editable/session dispatch. Add behavioral tests before adding a new
-   control family; do not implement a parallel keyboard model in a panel.
+   typed editable/session dispatch. Native-value editors set the session's
+   `valueProperty` (`text` or `value`) to preserve the caller's binding during
+   edits and rollback. Add behavioral tests before adding a new control family;
+   do not implement a parallel keyboard model in a panel.
 8. Exercise both forward/reverse wrap, on/off arrival, local-save/discard,
    live-preview rollback, list movement, disabled/removed editors and command
    modality. Update this contract when an intentional model change is approved.
@@ -148,10 +160,12 @@ Neither restoration nor a browse highlight may activate a setting or command.
 ## Validation
 
 `tests/qml/tst_field_interaction.qml` checks actual key delivery for transactions,
-wrapping, choice drafts, two-option selectors, live rollback, pointer entry and
-highlight boundaries. `tst_chooser_keyboard.qml`, `tst_chooser_memory.qml` and the
-domain suites cover navigation, asynchronous content, modal guards, native
-menus, ordinary restoration and real setting acknowledgement/recovery paths.
+wrapping, choice drafts, two-option selectors, live rollback, pointer entry,
+highlight boundaries, source-binding preservation and positional traversal when
+save disables, hides or removes a field. `tst_chooser_keyboard.qml`,
+`tst_chooser_memory.qml` and the domain suites cover navigation, asynchronous
+content, modal guards, native menus, ordinary restoration and real setting
+acknowledgement/recovery paths.
 Run `tests/run-qml-tests.sh` in the development environment. Strict lint is
 `tests/run-qmllint.sh`. Hardware IME, live compositor and screen-reader acceptance
 remain separate from offscreen tests.

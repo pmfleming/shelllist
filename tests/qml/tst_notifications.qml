@@ -228,7 +228,7 @@ DaemonTestCase {
         const action = findChild(row, "notificationQuickSnooze");
         content.detailsNavigation.focusContent(true);
         verify(!content.detailsNavigation.targets.includes(action));
-        verify(content.detailsNavigation.contentCommands.includes(action));
+        tryVerify(() => content.detailsNavigation.contentCommands.includes(action));
         keyClick(Qt.Key_J, Qt.AltModifier);
         tryVerify(() => content.detailsNavigation.commandMenuOpen);
         verify(!action.activeFocus);

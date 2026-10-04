@@ -289,17 +289,23 @@ FocusScope {
         pendingMemory = false;
         awaitingContent = false;
         const retainEditing = editing;
-        const previous = currentTarget;
+        // Saving can disable, hide or remove the current field. Capture its
+        // directional neighbours before the save; revalidate them afterwards.
+        // Looking up the old field in the filtered post-save stops loses its
+        // position and incorrectly restarts traversal at the first/last field.
+        const order = targets.filter(item => editable(item));
+        const index = order.indexOf(currentTarget);
+        const candidates = [];
+        for (let offset = 1; offset <= order.length; ++offset) {
+            const next = index < 0 ? (backwards ? order.length - offset : offset - 1)
+                : (index + (backwards ? -offset : offset) + order.length) % order.length;
+            candidates.push(order[next]);
+        }
         finishEditor(true);
         const controls = targets.filter(item => available(item) && editable(item));
         const stops = controls.length ? controls : targets.filter(item => item.enabled && item instanceof DetailFlickable);
-        const index = stops.indexOf(previous);
-        if (stops.length) {
-            const next = index < 0 ? (backwards ? stops.length - 1 : 0) : (index + (backwards ? -1 : 1) + stops.length) % stops.length;
-            currentTarget = stops[next];
-        } else {
-            currentTarget = null;
-        }
+        currentTarget = candidates.find(item => controls.indexOf(item) >= 0)
+            || stops[backwards ? stops.length - 1 : 0] || null;
         browseCursor.forceActiveFocus(Qt.TabFocusReason);
         if (retainEditing && !binary(currentTarget))
             enterEditor();

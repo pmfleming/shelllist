@@ -20,7 +20,10 @@ TestCase {
             property int writes: 0
             property int actions: 0
             property string savedText: "original"
+            property string savedMultiline: "first\nsecond"
             property string savedChoice: "a"
+            property string changeAvailabilityOnSave: ""
+            property bool transientFieldVisible: false
             property real savedLevel: 40
             property bool switched: false
             property bool preview: false
@@ -55,12 +58,27 @@ TestCase {
                     options: [{value: "a", label: "A"}, {value: "b", label: "B"}, {value: "c", label: "C"}]
                     onSelected: function (value) { surface.savedChoice = value; surface.writes++; }
                 }
+                Loader {
+                    active: surface.transientFieldVisible
+                    width: parent.width
+                    sourceComponent: Ui.TextField {
+                        objectName: "transient"
+                        text: "unbound original"
+                        onEdited: { surface.writes++; surface.transientFieldVisible = false; }
+                    }
+                }
                 Ui.SegmentedControl {
+                    id: segments
                     objectName: "segments"
                     width: parent.width
                     value: surface.savedChoice
                     options: [{value: "a", label: "A"}, {value: "b", label: "B"}]
-                    onSelected: function (value) { surface.savedChoice = value; surface.writes++; }
+                    onSelected: function (value) {
+                        surface.savedChoice = value;
+                        surface.writes++;
+                        if (surface.changeAvailabilityOnSave === "disable") segments.enabled = false;
+                        if (surface.changeAvailabilityOnSave === "hide") segments.visible = false;
+                    }
                 }
                 Ui.LabeledValueSlider {
                     objectName: "level"
@@ -82,8 +100,8 @@ TestCase {
                     objectName: "multiline"
                     width: parent.width
                     height: 70
-                    text: "first\nsecond"
-                    onEdited: surface.writes++
+                    text: surface.savedMultiline
+                    onEdited: function (value) { surface.savedMultiline = value; surface.writes++; }
                 }
                 Ui.TextField {
                     objectName: "readOnly"
@@ -152,6 +170,132 @@ TestCase {
         compare(surface.savedText, text.text);
         compare(surface.writes, 2);
         verify(surface.detailsNavigation.browsing);
+    }
+    function test_transactionsPreserveModelBindings_data() {
+        const rows = [];
+        for (const save of [false, true]) {
+            for (const name of ["text", "multiline", "level"]) {
+                rows.push({tag: name + (save ? "-save" : "-discard"), name: name, save: save,
+                    key: name === "level" ? Qt.Key_Right : Qt.Key_X, preview: false});
+            }
+            for (const key of [Qt.Key_Home, Qt.Key_End])
+                rows.push({tag: "slider-boundary-" + key + "-" + save, name: "level", save: save, key: key, preview: false});
+        }
+        rows.push({tag: "live-slider-rollback", name: "level", save: false, key: Qt.Key_Right, preview: true});
+        return rows;
+    }
+    function test_transactionsPreserveModelBindings(data) {
+        const surface = make();
+        surface.preview = data.preview;
+        browse(surface, data.name);
+        const control = field(surface, data.name);
+        const property = data.name === "level" ? "value" : "text";
+        const source = data.name === "level" ? "savedLevel" : data.name === "multiline" ? "savedMultiline" : "savedText";
+        const original = control[property];
+        keyClick(Qt.Key_Return);
+        keyClick(data.key);
+        const draft = control[property];
+        verify(draft !== original);
+        compare(surface.writes, data.preview ? 1 : 0);
+        keyClick(data.save ? Qt.Key_Return : Qt.Key_Escape);
+        verify(surface.detailsNavigation.browsing);
+        compare(control[property], data.save ? draft : original);
+        verify(!control.editSession.active, "save/discard must end the transaction");
+        compare(surface.writes, data.preview ? 2 : data.save ? 1 : 0);
+        // Acknowledgement, refresh or selecting another entity must still flow
+        // through the original binding after both cancellation and save.
+        for (let round = 0; round < 2; round++) {
+            surface[source] = data.name === "level" ? 70 + round * 10 : "backend update " + round;
+            compare(control[property], surface[source], "the model binding survives a transaction");
+            keyClick(Qt.Key_Return);
+            keyClick(Qt.Key_Escape); // Even a no-op discard must retain the binding.
+        }
+        compare(surface.writes, data.preview ? 2 : data.save ? 1 : 0);
+    }
+    function test_unboundFieldsKeepSavedDraftAndDiscardLocally_data() {
+        return [{tag: "text", name: "text"}, {tag: "multiline", name: "multiline"}, {tag: "slider", name: "level"}];
+    }
+    function test_unboundFieldsKeepSavedDraftAndDiscardLocally(data) {
+        const surface = make();
+        browse(surface, data.name);
+        const control = field(surface, data.name);
+        const property = data.name === "level" ? "value" : "text";
+        // Deliberately remove the fixture's source binding before edit entry.
+        control[property] = data.name === "level" ? 20 : "unbound original";
+        keyClick(Qt.Key_Return);
+        keyClick(data.name === "level" ? Qt.Key_Right : Qt.Key_X);
+        const draft = control[property];
+        keyClick(Qt.Key_Return);
+        compare(control[property], draft, "unbound inputs keep the committed draft");
+        keyClick(Qt.Key_Return);
+        keyClick(data.name === "level" ? Qt.Key_Right : Qt.Key_Y);
+        verify(control[property] !== draft);
+        keyClick(Qt.Key_Escape);
+        compare(control[property], draft, "unbound inputs roll back to their edit-entry value");
+        compare(surface.writes, 1);
+    }
+    function test_externalUpdateDoesNotOverwriteDraftAndBlurRestoresBinding() {
+        const surface = make();
+        const control = field(surface, "text");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_X);
+        const draft = control.text;
+        surface.savedText = "updated by backend while editing";
+        compare(control.text, draft, "the local edit is isolated from incoming snapshots");
+        surface.listItem.focusList();
+        compare(control.text, surface.savedText, "discard reveals the latest authoritative value");
+        surface.savedText = "another update";
+        compare(control.text, surface.savedText);
+        compare(surface.writes, 0);
+    }
+    function test_tabKeepsPositionWhenSaveChangesAvailability_data() {
+        const rows = [];
+        for (const change of ["disable", "hide"])
+            for (const backwards of [false, true])
+                for (const skip of [false, true])
+                    rows.push({tag: change + "-" + backwards + "-skip-" + skip,
+                        change: change, backwards: backwards, skip: skip});
+        return rows;
+    }
+    function test_tabKeepsPositionWhenSaveChangesAvailability(data) {
+        const surface = make();
+        surface.changeAvailabilityOnSave = data.change;
+        browse(surface, "segments");
+        if (data.skip)
+            field(surface, data.backwards ? "choice" : "level").enabled = false;
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Tab, data.backwards ? Qt.ShiftModifier : Qt.NoModifier);
+        compare(surface.savedChoice, "b");
+        compare(surface.writes, 1, "only the field being saved may dispatch a change");
+        const expected = data.backwards ? (data.skip ? "text" : "choice") : (data.skip ? "switch" : "level");
+        compare(surface.detailsNavigation.currentTarget, field(surface, expected));
+        if (expected === "switch") {
+            verify(surface.detailsNavigation.browsing);
+            verify(!surface.switched);
+        } else {
+            verify(surface.detailsNavigation.editing, "Tab retains edit mode on the correct neighbour");
+        }
+    }
+    function test_tabKeepsPositionWhenSaveRemovesField_data() {
+        return [{tag: "forward", backwards: false}, {tag: "reverse", backwards: true}];
+    }
+    function test_tabKeepsPositionWhenSaveRemovesField(data) {
+        const surface = make();
+        surface.transientFieldVisible = true;
+        tryVerify(() => field(surface, "transient") !== null);
+        tryVerify(() => surface.detailsNavigation.targets.includes(field(surface, "transient")));
+        browse(surface, "transient");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_X);
+        keyClick(Qt.Key_Tab, data.backwards ? Qt.ShiftModifier : Qt.NoModifier);
+        compare(surface.writes, 1);
+        verify(!surface.transientFieldVisible);
+        compare(surface.detailsNavigation.currentTarget, field(surface, data.backwards ? "choice" : "segments"));
+        verify(surface.detailsNavigation.editing);
+        wait(0); // Complete Loader teardown without invalidating the new editor.
+        compare(field(surface, "transient"), null);
+        verify(surface.detailsNavigation.editing);
     }
     function test_arrowsSelectResultsButNeverFields() {
         const surface = make();
