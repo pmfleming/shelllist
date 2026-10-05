@@ -18,11 +18,16 @@ confirmation text. Shell/panel/card radii are 28/20/16px; field outlines remain 
 and buttons retain their expressive capsule/pressed treatment. Selected result
 corners use the interruptible spring without changing hit geometry or focus timing.
 Mouse-click, keyboard and browse focus now share an immediate rounded tonal
-highlight, without an extra rectangular ring. `FocusRing` retains its historical
-component name but paints a borderless 12%-alpha tint. Controls reuse that paint
-for browse focus rather than stacking a second overlay; workspace focus follows
-the circular disc, not its tall hit area. Hover remains non-selecting, and native
-caret/control editing, error borders and semantic selection remain distinct.
+highlight, without an extra rectangular browse ring. `FocusRing` retains its
+historical name: browsing uses an 8%-alpha tint and a compact opaque Primary pill
+with a Surface keyline. The marker/keyline pair supplies at least 3:1 contrast;
+the tint alone does not. Horizontal sliders put the marker above their track.
+Editing uses the stronger 22% tint and accent edge from the current interaction
+contract. Controls reuse this paint rather than stacking overlays; workspace
+focus follows the circular disc, not its tall hit area. Hover remains
+non-selecting, and native caret/control editing, error borders and semantic
+selection remain distinct. See the [gap-fix record](reviews/material-gap-fixes-2026-10-05.md)
+for rendered-pixel contrast checks and the intentionally pointer-only Power chart.
 
 On Lua Hyprland, a named, literal-namespace layer rule enables blur and ignores
 alpha below 0.01, so reserved transparent host space does not blur the desktop.

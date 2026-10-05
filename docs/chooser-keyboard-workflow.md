@@ -45,6 +45,9 @@ on result movement. Missing results may close unavailable details safely.
   a Displays subpage) still takes precedence over closing its parent page.
 - PageUp/PageDown scroll a read-only page; Up/Down remain result navigation.
   Pages without editable controls have a non-highlighted scrolling fallback.
+- The Power history chart is intentionally pointer-entry-only for now. Do not
+  add it to field traversal or expose a keyboard inspection command. Its range
+  selector remains an ordinary field; explicit pointer inspection is unchanged.
 
 ## Editing transactions
 
@@ -93,9 +96,13 @@ Escape-to-stop-editing step.
 
 Only the editable portion is highlighted: input box, slider, selected segment or
 switch—not the setting's label, explanatory text, row or card. Browsing has a
-subtle tonal highlight. Editing has a stronger tonal highlight and accent edge,
-plus native caret/selection feedback. Feedback is immediate and never delayed by
-animation. `ToggleRow.focusSurface` is its switch, not the containing row.
+subtle tonal highlight plus a compact opaque Primary pill with a Surface keyline.
+The marker/keyline pair retains at least 3:1 contrast, including over selected or
+filled controls; the low-alpha tint alone is not the focus cue. This is not a
+rectangular outline around the control. Horizontal sliders place the marker above
+the track. Editing replaces the marker with a stronger tonal highlight and accent
+edge, plus native caret/selection feedback. Feedback is immediate and never delayed
+by animation. `ToggleRow.focusSurface` is its switch, not the containing row.
 
 ## Commands, tabs and exceptions
 

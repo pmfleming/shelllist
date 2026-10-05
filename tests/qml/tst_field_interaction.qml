@@ -146,12 +146,16 @@ TestCase {
         const surface = make();
         const text = field(surface, "text");
         const subtle = findChild(text, "focusRing");
+        const marker = findChild(subtle, "browseFocusIndicator");
         compare(subtle.border.width, 0);
+        verify(marker.visible, "browsing is distinguishable without outlining the field");
         keyClick(Qt.Key_Return);
         compare(subtle.border.width, 2);
+        verify(!marker.visible, "editing uses its own stronger tone and edge");
         keyClick(Qt.Key_X);
         compare(surface.writes, 0);
         keyClick(Qt.Key_Escape);
+        verify(marker.visible, "Escape restores browse paint immediately");
         compare(text.text, "original");
         compare(surface.writes, 0);
         surface.savedText = "backend after discard";

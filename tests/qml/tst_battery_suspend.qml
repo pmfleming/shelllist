@@ -71,6 +71,26 @@ DaemonTestCase {
         return panel;
     }
 
+    function test_historyRetainsPointerOnlyEntry() {
+        const panel = makePanel();
+        panel.controller.uiActive = true;
+        panel.controller.selectViewTab("overview");
+        findChild(panel, "batteryDetailPage").contentY = 0;
+        const surface = findChild(panel, "batterySurface");
+        const graph = findChild(panel, "batteryTimelineGraph");
+        const navigation = surface.detailsNavigation;
+        navigation.focusContent(true);
+        verify(!navigation.targets.includes(graph), "owner excludes the chart from field browsing");
+        verify(!navigation.contentCommands.includes(graph), "do not add a chart-entry command");
+        for (let i = 0; i < 12; i++) {
+            keyClick(Qt.Key_Tab);
+            verify(!graph.activeFocus && !graph.inspecting);
+        }
+        const plot = findChild(graph, "batteryHistoryPlot");
+        mouseClick(plot, plot.width / 2, plot.height / 2);
+        verify(graph.inspecting, "explicit pointer inspection remains available");
+    }
+
     function test_keepAwakeIsAccessibleAndOnlyDisablesSuspend() {
         const panel = makePanel();
         const controller = panel.controller;

@@ -126,5 +126,6 @@ Controls.Slider {
         active: slider.activeFocus || slider.browseFocused
         editing: slider.editSession.active
         cornerRadius: Theme.pressedCornerRadius
+        horizontalIndicator: slider.horizontal
     }
 }
