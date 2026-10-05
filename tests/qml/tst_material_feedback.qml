@@ -3,6 +3,8 @@ import QtQuick
 import QtTest
 import Quickshell
 import Shelllist.Ui as Ui
+import Shelllist.Battery as Battery
+import Shelllist.Launcher as Launcher
 import "ColorContrast.js" as Contrast
 
 TestCase {
@@ -34,6 +36,48 @@ TestCase {
             color: Ui.Theme.selected
             property alias feedback: feedback
             Ui.FocusRing { id: feedback; active: true; cornerRadius: 20 }
+        }
+    }
+    Component {
+        id: historyCardFactory
+        Battery.BatteryHistoryCard { history: ({points: []}); battery: ({available: false}) }
+    }
+    Component {
+        id: laneChartFactory
+        Launcher.ApplicationResourceLaneChart {
+            title: "CPU history"
+            points: []
+            lanes: []
+            rangeStartMilliseconds: 1000
+            rangeEndMilliseconds: 2000
+        }
+    }
+    Component {
+        id: metadataFactory
+        Launcher.ApplicationResourceMetadata {
+            application: ({running: false})
+            latestPoint: ({coverage: 1, sample_count: 2, energy_confidence: "low"})
+            uiScale: 1
+        }
+    }
+    function test_customCardsUseOpaqueSharedTone(): void {
+        for (const factory of [historyCardFactory, laneChartFactory, metadataFactory]) {
+            const card = createTemporaryObject(factory, testCase, {width: 400});
+            verify(card !== null);
+            const geometry = {width: card.width, height: card.height};
+            for (const scheme of [Qt.Light, Qt.Dark]) {
+                Ui.Theme.previewColorScheme = scheme;
+                compare(card.color, Ui.Theme.surface);
+                compare(card.color.a, 1);
+                compare(card.border.width, 0);
+                verify(waitForPolish(card.Window.window));
+                const image = grabImage(card);
+                compare(image.pixel(Math.floor(card.width / 2), 3), Ui.Theme.surface,
+                    "the outer card fill is the shared opaque tier, not a translucent blend");
+                compare(card.width, geometry.width);
+                compare(card.height, geometry.height);
+            }
+            card.visible = false;
         }
     }
     function test_browseMarkerContrast_data(): var {

@@ -15,7 +15,7 @@ Rectangle {
     width: parent ? parent.width : 0
     height: badgeFlow.height + Math.round(24 * uiScale)
     radius: Ui.Theme.cardRadius
-    color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.72)
+    color: Ui.Theme.surface
     border.width: 0
 
     Flow {

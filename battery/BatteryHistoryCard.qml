@@ -25,7 +25,8 @@ Rectangle {
     implicitHeight: content.implicitHeight + 2 * Ui.Theme.spacingMd
     height: implicitHeight
     radius: Ui.Theme.cardRadius
-    color: Ui.Theme.withAlpha(Ui.Theme.surfaceRaised, 0.7)
+    color: Ui.Theme.surface
+    border.width: 0
 
     ColumnLayout {
         id: content

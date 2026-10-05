@@ -54,7 +54,33 @@ Tray chooser/native-menu lifecycle tests still pass.
 Validation: strict lint; MaterialBar 6 and SystemChoosers 7 Qt passes including
 hooks, with no reported warnings. Log: `/tmp/material-fix4-checks.log`.
 
-## Remaining
+## 5 — Opaque custom-card containment
 
-Finding 5 (custom-card containment) follows in a separate commit. Live compositor,
-hardware input and screen-reader acceptance remain separate from offscreen checks.
+Battery history, Applications resource lanes and Applications resource metadata
+now use the same opaque Surface Container Low fill as shared detail cards.
+Battery history explicitly has no outer border. Chart series/gradients, metadata
+badges, layout, range controls and telemetry remain unchanged.
+
+Native tests check all three real components across a live light/dark change:
+opaque semantic fill, no outer border, rendered background pixels and unchanged
+geometry. Packaged-font before/after card captures and the actual Battery panel
+were inspected. Historical before samples are fixture-only color overrides, not
+production settings.
+
+## Final validation
+
+- Strict QML lint: passed.
+- Full native Qt suite: **222 passes including hooks; 0 failed, 0 skipped**.
+- Material color check: **150 seed/mode combinations passed**.
+- Both native offscreen runtime smoke configurations: loaded successfully.
+- Separate visual capture fixture: **5 passes including hooks**; images in
+  `target/material-gap-fixes/`.
+- Logs: `/tmp/material-fixes-final-checks.log`,
+  `/tmp/material-fixes-final-captures.log`.
+
+Failure-path tests intentionally log backend errors. The runtime smoke retains
+Qt offscreen's unsupported-window-mask warning; no warning suppression was added.
+The full sibling-aware Nix gate was not run. No services were deployed/restarted;
+live compositor, hardware input, screen-reader and final visual acceptance remain
+separate. Pre-existing unrelated working-tree changes were not included in these
+commits.
