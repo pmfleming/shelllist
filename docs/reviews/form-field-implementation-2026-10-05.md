@@ -39,14 +39,14 @@ Acknowledgement, capability guards, secrets, submit/send ownership, Display Prev
 
 Logs: `/tmp/form-final-checks.log`, `/tmp/form-captures.log`.
 
-### Full sibling-aware gate: blocked, not passed
+### Full sibling-aware gate: incomplete; untracked-file blocker resolved
 
-`tests/check-sibling-boundary.sh` was attempted using the current framework development environment. Its worktree preflight rejects these **pre-existing untracked review documents**:
+The initial `tests/check-sibling-boundary.sh` attempt, using the framework development environment, was blocked by these untracked review documents:
 
 - `docs/reviews/material-gap-review-2026-10-05.html`
 - `docs/reviews/material-gap-review-2026-10-05.md`
 
-They were deliberately not staged, ignored or removed to force a pass. The gate did not reach its full Nix matrix. Log: `/tmp/form-sibling-gate-retry.log`. Run it again after the owner decides how to track those earlier reports. The initial missing-Cargo environment issue was resolved by sourcing the framework's development environment; it is not the remaining blocker.
+Following the owner's follow-up, both reports were committed unchanged in `1e31be1`. No untracked files remain in `shelllist`, and the worktree preflight now succeeds. Two retries reached the Nix build matrix but exceeded the 240-second and 600-second command limits respectively; a full gate pass is still not claimed. Latest log: `/tmp/form-sibling-gate-tracked-reviews-final.log`. The earlier missing-Cargo environment issue was resolved by sourcing the framework's development environment.
 
 Live compositor/scaling, hardware IME, primary-selection pointer paste and screen-reader acceptance remain outstanding. Offscreen checks do not certify these. Unrelated pre-existing worktree edits were preserved, including the Displays telemetry paragraph in the interaction contract.
 
