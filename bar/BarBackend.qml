@@ -105,13 +105,6 @@ Io.DaemonBackend {
         });
     }
 
-    function replyNotification(notificationId: int, text: string): bool {
-        return callSequenced("notification-reply", BarApi.methods.notificationsReply, {
-            id: notificationId,
-            text: text
-        });
-    }
-
     readonly property var osdByRequestKind: ({
             "audio-adjust": function (data) {
                 controller.showOutputOsd(data.audio || controller.audio);

@@ -4,8 +4,9 @@ import QtQuick
 import Shelllist.Ui as Ui
 import "WeatherVisuals.js" as Visuals
 
-Ui.ActionControl {
+Ui.PointerActionControl {
     id: locationCard
+    pointerEnabled: enabled
 
     required property var modelData
     required property string selectedId
@@ -91,16 +92,6 @@ Ui.ActionControl {
                 color: Ui.Theme.accent
                 font.pixelSize: Ui.Theme.fontSizeCaption
             }
-        }
-    }
-
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            locationCard.forceActiveFocus();
-            locationCard.activate();
         }
     }
 }

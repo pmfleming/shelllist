@@ -27,18 +27,21 @@ Ui.ActionControl {
     function routeClick(button: int): void {
         if (!enabled || !interactive)
             return;
-        const handlers = ({});
-        handlers[Qt.LeftButton] = activate;
-        handlers[Qt.RightButton] = secondaryTriggered;
-        handlers[Qt.MiddleButton] = middleTriggered;
-        if (handlers[button])
-            handlers[button]();
+        if (button === Qt.LeftButton)
+            activate();
+        else if (button === Qt.RightButton)
+            secondaryTriggered();
+        else if (button === Qt.MiddleButton)
+            middleTriggered();
     }
 
     function routeWheel(delta: int): void {
         if (!enabled || !interactive || delta === 0)
             return;
-        (delta > 0 ? wheelUp : wheelDown)();
+        if (delta > 0)
+            wheelUp();
+        else
+            wheelDown();
     }
 
     implicitWidth: Math.max(minimumWidth, label.implicitWidth + horizontalPadding * 2)

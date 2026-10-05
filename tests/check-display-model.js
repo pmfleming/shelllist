@@ -57,4 +57,14 @@ for (const side of Object.keys(expected)) {
     const candidate = model.placement(fractional, "DP-1", "eDP-1", side);
     assert.equal(candidate.error, "", "rounded rotated fractional dimensions touch without overlap");
 }
-console.log("display model: numeric/layout safety and directional/fractional placement passed");
+const tiles = [0, 100, 1000].map((x, i) => ({ name: String(i), enabled: true, x, y: 0, width: 100, height: 100, scale: 1 }));
+for (const [x, y, previous, expected] of [
+    [-10, 50, null, ["0", "left"]], [50, -10, null, ["0", "above"]],
+    [50, 110, null, ["0", "below"]], [210, 50, null, ["1", "right"]],
+    [101, 50, {reference: "0", side: "right"}, ["1", "left"]],
+    [1, 1, {reference: "0", side: "above"}, ["0", "above"]], [500, 500, null, null]
+]) {
+    const target = model.dropTarget(tiles, "2", x, y, 30, previous, 10);
+    assert.deepEqual(target ? [target.reference, target.side] : null, expected);
+}
+console.log("display model: numeric/layout safety, placement, edge targets and hysteresis passed");

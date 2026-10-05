@@ -250,10 +250,12 @@ function dropTarget(values, name, x, y, threshold, previous, hysteresis) {
         const r = placementRect(output);
         const dx = x - Math.max(r.x, Math.min(x, r.x + r.width));
         const dy = y - Math.max(r.y, Math.min(y, r.y + r.height));
-        for (const side of ["left", "above", "below", "right"]) {
-            const horizontal = side === "above" || side === "below";
-            const edge = horizontal ? (side === "above" ? r.y : r.y + r.height) : (side === "left" ? r.x : r.x + r.width);
-            const distance = Math.hypot(horizontal ? dx : x - edge, horizontal ? y - edge : dy);
+        for (const [side, distance] of [
+            ["left", Math.hypot(x - r.x, dy)],
+            ["above", Math.hypot(dx, y - r.y)],
+            ["below", Math.hypot(dx, y - (r.y + r.height))],
+            ["right", Math.hypot(x - (r.x + r.width), dy)]
+        ]) {
             if (distance <= threshold)
                 edges.push({ reference: output.name, side: side, distance: distance, inside: x > r.x && x < r.x + r.width && y > r.y && y < r.y + r.height });
         }

@@ -3,6 +3,7 @@ singleton Theme 1.0 Theme.qml
 MaterialPalette 1.0 MaterialPalette.qml
 ThemeText 1.0 ThemeText.qml
 ActionControl 1.0 ActionControl.qml
+PointerActionControl 1.0 PointerActionControl.qml
 ActionButton 1.0 ActionButton.qml
 ActionArea 1.0 ActionArea.qml
 ActionDetailsPane 1.0 ActionDetailsPane.qml

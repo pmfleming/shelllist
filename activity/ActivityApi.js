@@ -11,7 +11,6 @@ var methods = {
     todoCreate: Protocol.methods["todos.create"],
     todoComplete: Protocol.methods["todos.complete"],
     todoDelete: Protocol.methods["todos.delete"],
-    notificationsToggleDnd: Protocol.methods["notifications.toggleDnd"],
     notificationsSetDnd: Protocol.methods["notifications.setDnd"],
     notificationsQueryHistory: Protocol.methods["notifications.queryHistory"],
     notificationsDismiss: Protocol.methods["notifications.dismiss"],
@@ -28,5 +27,3 @@ var streams = {
     notificationActive: Protocol.streams["notifications.active.changed"],
     timezone: Protocol.streams["timezone.changed"]
 };
-
-var subscribedStreams = [streams.activity, streams.notifications, streams.notificationActive, streams.timezone];

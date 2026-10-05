@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import "UiText.js" as UiText
 
-ActionControl {
+PointerActionControl {
     id: row
 
     property string title: ""
@@ -61,23 +61,16 @@ ActionControl {
             Layout.preferredWidth: 64
             Layout.preferredHeight: Theme.controlHeight
             radius: height / 2
-            color: area.pressed ? Theme.pressed : (area.containsMouse ? Theme.hover : "transparent")
+            color: row.pointerPressed ? Theme.pressed : (row.hovered ? Theme.hover : "transparent")
             TogglePill {
                 anchors.centerIn: parent
                 width: implicitWidth
                 height: implicitHeight
                 checked: row.checked
-                pressed: row.enabled && row.interactive && (area.pressed || row.keyboardPressed)
+                pressed: row.pressed
                 checkedColor: row.tone === "danger" ? Theme.danger : (row.tone === "active" ? Theme.active : (row.tone === "warning" ? Theme.warning : Theme.accent))
                 handleColor: !checked ? Theme.controlBorder : (row.tone === "danger" ? Theme.dangerText : (row.tone === "active" ? Theme.activeText : (row.tone === "warning" ? Theme.warningText : Theme.accentText)))
             }
         }
-    }
-
-    ControlPointerArea {
-        id: area
-        focusTarget: row
-        enabled: row.enabled && row.interactive
-        onClicked: row.activate()
     }
 }

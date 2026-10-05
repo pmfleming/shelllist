@@ -1,6 +1,6 @@
 import QtQuick
 
-ActionControl {
+PointerActionControl {
     id: control
 
     property string label: ""
@@ -23,8 +23,6 @@ ActionControl {
     property color hoverBackgroundColor: Theme.mix(backgroundColor, labelColor, 0.08)
     property color pressedBackgroundColor: Theme.mix(backgroundColor, labelColor, 0.14)
     property color labelColor: tone === "accent" ? Theme.accentText : (tone === "active" ? Theme.activeText : (tone === "danger" ? Theme.dangerText : (tone === "warning" ? Theme.warningText : Theme.text)))
-    readonly property bool hovered: area.containsMouse
-    readonly property bool pressed: enabled && interactive && (area.pressed || keyboardPressed)
     readonly property string interactionState: !enabled || !interactive ? "disabled" : (pressed ? "pressed" : (hovered || highlighted ? "highlighted" : "flat"))
 
     implicitHeight: Math.round((sizeRole === "primary" ? Theme.primaryActionHeight : sizeRole === "secondary" ? Theme.secondaryActionHeight : Theme.controlHeight) * uiScale)
@@ -60,14 +58,5 @@ ActionControl {
     ExpressiveMotion {
         id: shape
         target: control.pressed ? Math.min(Theme.pressedCornerRadius, Math.min(control.width, control.height) / 2) : Math.min(control.width, control.height) / 2
-    }
-
-    // Shape and solid state color replace the unbounded decorative ripple.
-    // Neither changes the pointer target or delays activation.
-    ControlPointerArea {
-        id: area
-        focusTarget: control
-        enabled: control.enabled && control.interactive
-        onClicked: control.activate()
     }
 }

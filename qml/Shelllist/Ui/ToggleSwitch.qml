@@ -1,6 +1,6 @@
 import QtQuick
 
-ActionControl {
+PointerActionControl {
     id: control
 
     property bool checked: false
@@ -12,7 +12,7 @@ ActionControl {
     implicitWidth: 64
     implicitHeight: Theme.controlHeight
     radius: Math.min(width, height) / 2
-    color: area.pressed ? Theme.pressed : (area.containsMouse || highlighted ? Theme.hover : "transparent")
+    color: pointerPressed ? Theme.pressed : (hovered || highlighted ? Theme.hover : "transparent")
     border.width: 0
     opacity: enabled && interactive ? 1.0 : Theme.disabledOpacity
     accessibleName: checked ? qsTr("Turn off") : qsTr("Turn on")
@@ -26,15 +26,8 @@ ActionControl {
         width: Math.min(implicitWidth, control.width)
         height: Math.min(implicitHeight, control.height, width * 32 / 52)
         checked: control.checked
-        pressed: control.enabled && control.interactive && (area.pressed || control.keyboardPressed)
+        pressed: control.pressed
         checkedColor: control.checkedColor
         uncheckedColor: control.uncheckedColor
-    }
-
-    ControlPointerArea {
-        id: area
-        focusTarget: control
-        enabled: control.enabled && control.interactive
-        onClicked: control.activate()
     }
 }

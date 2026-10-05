@@ -1,15 +1,10 @@
 import QtQuick
 
-ActionControl {
-    id: area
+PointerActionControl {
+    pointerEnabled: enabled
 
     required accessibleName
     property real focusRadius: Theme.controlRadius
     radius: focusRadius
     border.width: 0
-
-    ControlPointerArea {
-        focusTarget: area
-        onClicked: area.activate()
-    }
 }

@@ -20,7 +20,6 @@ AdvancedSettingsFlickable {
             objectName: "wifiSecurityControls"
             title: qsTr("Security & privacy")
             Column {
-                id: securityControls
                 Layout.fillWidth: true
                 spacing: 10
                 AdvancedSegmentedRow {

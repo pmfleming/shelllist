@@ -17,8 +17,7 @@ var methods = {
     notificationsDismiss: Protocol.methods["notifications.dismiss"],
     notificationsClearGroup: Protocol.methods["notifications.clearGroup"],
     notificationsSnooze: Protocol.methods["notifications.snooze"],
-    notificationsInvokeAction: Protocol.methods["notifications.invokeAction"],
-    notificationsReply: Protocol.methods["notifications.reply"]
+    notificationsInvokeAction: Protocol.methods["notifications.invokeAction"]
 };
 
 var streams = {

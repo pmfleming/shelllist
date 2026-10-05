@@ -18,6 +18,12 @@ DaemonTestCase {
         Ui.ToggleSwitch {}
     }
     Component {
+        id: button
+        Ui.ActionButton {
+            label: "Action"
+        }
+    }
+    Component {
         id: workspace
         Bar.WorkspaceButton {
             workspaceId: 3
@@ -34,6 +40,10 @@ DaemonTestCase {
 
     function test_sharedActivation_data() {
         return [
+            {
+                tag: "button",
+                factory: button
+            },
             {
                 tag: "switch",
                 factory: toggleSwitch

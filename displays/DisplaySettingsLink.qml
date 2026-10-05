@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
-Ui.ActionControl {
+Ui.PointerActionControl {
     id: row
     required property string title
     property string subtitle: ""
@@ -11,7 +11,7 @@ Ui.ActionControl {
     implicitHeight: Math.max(64, labels.implicitHeight + 2 * Ui.Theme.spacingSm)
     Layout.minimumHeight: implicitHeight
     radius: Ui.Theme.controlRadius
-    color: highlighted || pointer.containsMouse ? Ui.Theme.hover : "transparent"
+    color: highlighted || hovered ? Ui.Theme.hover : "transparent"
     accessibleName: title
     Accessible.description: subtitle
 
@@ -47,11 +47,5 @@ Ui.ActionControl {
             glyph: "chevron_right"
             color: Ui.Theme.mutedText
         }
-    }
-    Ui.ControlPointerArea {
-        id: pointer
-        focusTarget: row
-        enabled: row.enabled && row.interactive
-        onClicked: row.activate()
     }
 }

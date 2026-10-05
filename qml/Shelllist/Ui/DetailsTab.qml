@@ -1,6 +1,6 @@
 import QtQuick
 
-ActionControl {
+PointerActionControl {
     id: tab
 
     property string label: ""
@@ -13,7 +13,8 @@ ActionControl {
     Accessible.role: Accessible.PageTab
 
     activeFocusOnTab: false
-    color: selected ? Theme.selected : (enabled && area.pressed ? Theme.pressed : (enabled && (area.containsMouse || activeFocus) ? Theme.hover : "transparent"))
+    pointerEnabled: enabled
+    color: selected ? Theme.selected : (enabled && pointerPressed ? Theme.pressed : (enabled && (hovered || activeFocus) ? Theme.hover : "transparent"))
     border.width: 0
     opacity: enabled ? 1.0 : Theme.disabledOpacity
 
@@ -37,11 +38,5 @@ ActionControl {
         iconColor: tab.selected ? Theme.accent : Theme.mutedText
         labelColor: tab.selected ? Theme.accent : Theme.text
         labelWeight: tab.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
-    }
-
-    ControlPointerArea {
-        id: area
-        focusTarget: tab
-        onClicked: tab.activate()
     }
 }
