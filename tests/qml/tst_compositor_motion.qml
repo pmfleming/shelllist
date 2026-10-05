@@ -25,6 +25,12 @@ DaemonTestCase {
             data: {snapshot: {compositor: {available: true, revision: 1, animations_enabled: false, error: null}}}
         }, "");
         verify(client.reduced && client.available);
+        transport.acceptSharedEvent({protocol: "bar-api", version: 1,
+            stream: "workarea.changed", event: "changed", data: {revision: 99, animations_enabled: true}});
+        compare(client.revision, 1, "a different projection cannot alter motion");
+        transport.acceptSharedResponse("compositor-snapshot", null, "read failed");
+        verify(client.reduced && !client.available);
+        compare(client.revision, 1, "a failed read is not a new daemon lifetime");
         update(client, {available: true, revision: 0, animations_enabled: true});
         verify(client.reduced, "an old snapshot cannot overwrite a newer stream event");
         const requests = calls.length;

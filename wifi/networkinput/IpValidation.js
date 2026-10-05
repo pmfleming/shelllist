@@ -183,7 +183,6 @@ function prefixState(value, family, allowEmpty) {
 function isPrefix(value, family, allowEmpty) {
     return prefixState(value, family, allowEmpty) === Acceptable;
 }
-
 // Presentation reasons accompany, never replace, the authoritative state.
 // Return keys/arguments so the QML adapter owns translation, not the parser.
 function issue(value, family, multiple, allowEmpty, prefixLength) {
@@ -192,19 +191,19 @@ function issue(value, family, multiple, allowEmpty, prefixLength) {
     if (state === Acceptable)
         return null;
     if (String(value || "").length >= MaximumEditingLength)
-        return {key: "buffer"};
+        return { key: "buffer" };
     if (prefixLength)
-        return {key: "prefix", maximum: normalizedFamily(family) === "ipv6" ? 128 : 32};
+        return { key: "prefix", maximum: normalizedFamily(family) === "ipv6" ? 128 : 32 };
     if (input.indexOf("/") >= 0)
-        return {key: "cidr"};
+        return { key: "cidr" };
     if (input.indexOf("%") >= 0)
-        return {key: "zone"};
+        return { key: "zone" };
     if (/[\[\]]/.test(input))
-        return {key: "brackets"};
+        return { key: "brackets" };
     if (multiple && input.length > 512)
-        return {key: "length", maximum: 512};
+        return { key: "length", maximum: 512 };
     if (multiple && /(^|,)\s*(,|$)/.test(input))
-        return {key: "empty-list-item"};
+        return { key: "empty-list-item" };
     const tokens = multiple ? input.split(/[\s,]+/) : [input];
     for (let index = 0; index < tokens.length; index++) {
         if (addressState(tokens[index], family) === Acceptable)
@@ -213,10 +212,10 @@ function issue(value, family, multiple, allowEmpty, prefixLength) {
             const parts = tokens[index].split(".");
             for (let octet = 0; octet < parts.length; octet++) {
                 if (/^\d+$/.test(parts[octet]) && Number(parts[octet]) > 255)
-                    return {key: "octet", index: index + 1, octet: octet + 1};
+                    return { key: "octet", index: index + 1, octet: octet + 1 };
             }
         }
-        return {key: "address", index: index + 1};
+        return { key: "address", index: index + 1 };
     }
-    return {key: "address", index: 1};
+    return { key: "address", index: 1 };
 }

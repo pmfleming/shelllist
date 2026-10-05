@@ -4,7 +4,6 @@ import "NmApi.js" as NmApi
 // UI transaction only: policy, identity, URL selection and durable attempts live
 // in nm-daemon. Never recover/replay a launch command after transport loss.
 Item {
-    id: portal
     required property WifiController controller
     required property WifiBackend backend
 

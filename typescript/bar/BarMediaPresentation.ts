@@ -20,12 +20,13 @@ function trackControls(player: Maybe<MediaPlayer>) {
 }
 function transportAction(player: Maybe<MediaPlayer>, forward: boolean) {
     const tracks = trackControls(player);
+    const direction = forward ? 1 : 0;
     return {
-        operation: tracks ? (forward ? "next" : "previous") : "seek",
-        offset: forward ? 30 : -30,
-        icon: tracks ? (forward ? "" : "") : (forward ? "forward_30" : "replay_30"),
-        label: tracks ? (forward ? "Next track" : "Previous track") : (forward ? "Fast-forward 30 seconds" : "Rewind 30 seconds"),
-        enabled: !!player && !!player.can_control && (tracks ? !!(forward ? player.can_next : player.can_previous) : !!player.can_seek)
+        operation: tracks ? ["previous", "next"][direction] : "seek",
+        offset: [-30, 30][direction],
+        icon: (tracks ? ["", ""] : ["replay_30", "forward_30"])[direction],
+        label: (tracks ? ["Previous track", "Next track"] : ["Rewind 30 seconds", "Fast-forward 30 seconds"])[direction],
+        enabled: !!player?.can_control && !!(tracks ? [player.can_previous, player.can_next][direction] : player?.can_seek)
     };
 }
 function canPlayPause(player: Maybe<MediaPlayer>) {

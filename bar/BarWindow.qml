@@ -8,7 +8,7 @@ import Shelllist.Io as Io
 PanelWindow { // qmllint disable uncreatable-type
     id: window
 
-    required property var targetScreen
+    required property ShellScreen targetScreen
     required property BarController controller
     readonly property int barHeight: 51
     screen: targetScreen

@@ -46,7 +46,17 @@ DaemonTestCase {
             }
         }, "");
         compare(area.insets.top, 53);
+        backend.acceptSharedResponse("work-area-snapshot", null, "read failed");
+        compare(area.insets, null, "unlike motion, failed geometry reads clear the projection");
         verify(area.ready);
+        backend.acceptSharedEvent({
+            protocol: "bar-api",
+            version: 1,
+            stream: "workarea.changed",
+            event: "changed",
+            data: value
+        });
+        compare(area.insets.top, 53);
         const requests = calls.length;
         area.monitorName = "DP-1";
         compare(area.insets.top, 82);
@@ -63,7 +73,11 @@ DaemonTestCase {
         backend.failSharedTransport("Disconnected");
         compare(area.insets, null);
         verify(area.ready, "unavailable geometry permits the bounded screen fallback");
+        const beforeDeferred = calls.length;
+        area.scheduleRefresh();
         area.active = false;
+        wait(0);
+        compare(calls.length, beforeDeferred, "a queued refresh rechecks active at execution");
         area.apply(value);
         compare(area.insets, null, "hidden consumers ignore late data");
     }

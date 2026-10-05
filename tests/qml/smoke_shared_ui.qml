@@ -36,6 +36,19 @@ ShellRoot {
         }
     }
 
+    // Native Quickshell screen objects, not JSON stand-ins, feed window delegates.
+    Variants {
+        model: Quickshell.screens
+        QtObject {
+            required property ShellScreen modelData
+            readonly property ShellScreen targetScreen: modelData
+            Component.onCompleted: {
+                if (!targetScreen || targetScreen !== modelData)
+                    throw new Error("Screen delegate lost its typed target");
+            }
+        }
+    }
+
     Timer {
         interval: 50
         running: true

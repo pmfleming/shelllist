@@ -12,7 +12,7 @@ Item {
         model: root.controller && root.controller.uiActive && root.controller.identifyActive ? Quickshell.screens : []
         PanelWindow { // qmllint disable uncreatable-type
             id: window
-            required property var modelData
+            required property ShellScreen modelData
             readonly property int outputIndex: root.controller ? root.controller.outputs.findIndex(function (o) {
                 return o.name === window.modelData.name && !o.disabled;
             }) : -1

@@ -143,7 +143,7 @@ Item {
         model: root.barsEnabled && root.surfacesActive ? Quickshell.screens : []
 
         Bar.BarWindow {
-            required property var modelData
+            required property ShellScreen modelData
             targetScreen: modelData
             controller: root.controller
         }
@@ -153,7 +153,7 @@ Item {
         model: root.barsEnabled && root.surfacesActive ? Quickshell.screens : []
 
         Bar.BarOsdWindow {
-            required property var modelData
+            required property ShellScreen modelData
             targetScreen: modelData
             controller: root.controller
         }
@@ -163,7 +163,7 @@ Item {
         model: root.barsEnabled && root.surfacesActive ? Quickshell.screens : []
 
         Bar.NotificationToastWindow {
-            required property var modelData
+            required property ShellScreen modelData
             targetScreen: modelData
             controller: root.controller
         }

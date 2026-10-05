@@ -645,6 +645,12 @@ DaemonTestCase {
         compare(calls[0].params.outputs[1].scale, 2);
         verify(!("modes" in calls[0].params.outputs[1]));
         verify(!("internal" in calls[0].params.outputs[1]));
+        const pending = displayState();
+        pending.policy.prefer_external = false;
+        pending.outputs[1].x = 1600;
+        c.applyDisplayPolicy(pending);
+        verify(!c.stale, "unacknowledged preview changes do not invalidate its draft");
+        compare(c.selectedDraft.scale, 2);
         const value = displayState();
         value.layout.trial = { id: "token", expires_at: Date.now() / 1000 + 20 };
         c.applyDisplayPolicy(value);

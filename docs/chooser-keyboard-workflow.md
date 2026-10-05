@@ -201,6 +201,9 @@ remain separate from offscreen tests. Displays' mode selectors consume daemon
 mode IDs and structured geometry: Enter/Tab saves only to the local layout draft,
 Escape discards the field edit, and Preview remains the explicit backend boundary.
 `tst_displays.qml` exercises this with opaque mode IDs and actual key delivery.
+Layout/policy telemetry during an unacknowledged Preview must not replace its
+local draft or mark it stale merely for that pending change. Trial topology
+changes still invalidate the draft; acknowledgement/error guards remain intact.
 
 Notifications search uses the daemon catalog, including unloaded retained rows
 within its documented recent-history scope. Typing issues debounced reads only;

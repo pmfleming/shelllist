@@ -1,7 +1,7 @@
 import Quickshell
 
 PanelWindow { // qmllint disable uncreatable-type
-    required property var targetScreen
+    required property ShellScreen targetScreen
     required property BarController controller
     readonly property string focusedScreenName: controller.workspaces ? (controller.workspaces.focused_monitor || "") : ""
     property bool focusedScreenOnly: true

@@ -1,6 +1,5 @@
 import QtQuick
 import Shelllist.Io as Io
-import "../../Bar/BarProtocol.generated.js" as Protocol
 
 Item {
     id: client
@@ -20,10 +19,6 @@ Item {
         if (typeof value.animations_enabled === "boolean")
             reduced = !value.animations_enabled;
     }
-    function refresh(): void {
-        if (active)
-            backend.call("compositor-snapshot", Protocol.methods["bar.snapshot"], {});
-    }
     function unavailable(): void {
         available = false;
         revision = -1; // A new daemon lifetime starts a new revision sequence.
@@ -33,26 +28,13 @@ Item {
         reduced = false;
     }
 
-    Io.DaemonBackend {
-        id: backend
+    Io.BarProjectionBackend {
         objectName: "compositorMotionBackend"
         active: client.active
-        daemonName: "bar-daemon"
-        expectedProtocol: Protocol.protocol
-        expectedVersion: Protocol.version
-        streams: [Protocol.streams["compositor.changed"]]
-        onTransportReady: client.refresh()
+        projection: "compositor"
+        failureMessage: "Compositor preference unavailable"
+        onReceived: value => client.apply(value)
+        onReadFailed: client.available = false
         onTransportFailed: client.unavailable()
-        onResponseReceived: function (id, envelope, transportError) {
-            if (responseError(envelope, transportError, "Compositor preference unavailable"))
-                client.available = false;
-            else
-                client.apply((envelope.data && envelope.data.snapshot || {}).compositor);
-        }
-        onEventGapDetected: client.refresh()
-        onEventReceived: function (event) {
-            if (event.stream === Protocol.streams["compositor.changed"])
-                client.apply(event.data);
-        }
     }
 }

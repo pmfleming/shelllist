@@ -74,25 +74,6 @@ function groupRecords(records) {
     return groups;
 }
 
-function previewCapacity(height, spacing, margin) {
-    // Header, DND row, view-all row and their gaps; each preview is 48px.
-    return Math.max(0, Math.floor((height - margin * 2 - 28 - 34 - 34 - spacing * 2) / (48 + spacing)));
-}
-
-function relativeTime(createdMs, nowMs) {
-    const created = Number(createdMs);
-    if (!Number.isFinite(created) || created <= 0)
-        return "";
-    const minutes = Math.max(0, Math.floor((nowMs - created) / 60000));
-    if (minutes < 1)
-        return "now";
-    if (minutes < 60)
-        return minutes + "m ago";
-    if (minutes < 1440)
-        return Math.floor(minutes / 60) + "h ago";
-    return Math.floor(minutes / 1440) + "d ago";
-}
-
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 // Compact timestamp: relative within a day, then "Yesterday", then a date.

@@ -1,6 +1,9 @@
 var Invalid = 0;
 var Intermediate = 1;
 var Acceptable = 2;
+// A full native buffer is always invalid, even if a clipped suffix would have
+// left only an address followed by whitespace. Never accept a truncated paste.
+var MaximumEditingLength = 32767;
 
 interface Ipv6Measure {
     valid: boolean;
@@ -164,9 +167,15 @@ function addressGroupState(group: string, family: unknown, finalGroup: boolean) 
 }
 
 function addressInputState(value: unknown, family: unknown, multiple: boolean, allowEmpty: boolean) {
+    if (String(value || "").length >= MaximumEditingLength)
+        return Invalid;
     const input = String(value || "").trim();
     if (input.length === 0)
         return allowEmpty ? Acceptable : Intermediate;
+    // These are accepted-value limits, not native editor buffer limits. Never
+    // shorten pasted CIDR/zone suffixes before the parser gets to reject them.
+    if (input.length > (multiple ? 512 : (normalizedFamily(family) === "ipv6" ? 45 : 15)))
+        return Invalid;
     if (!multiple)
         return addressState(input, family);
     if (input[0] === ",")
@@ -185,6 +194,8 @@ function isAddressInput(value: unknown, family: unknown, multiple: boolean, allo
 }
 
 function prefixState(value: unknown, family: unknown, allowEmpty: boolean) {
+    if (String(value || "").length >= MaximumEditingLength)
+        return Invalid;
     const input = String(value || "").trim();
     if (input.length === 0)
         return allowEmpty ? Acceptable : Intermediate;
@@ -196,4 +207,41 @@ function prefixState(value: unknown, family: unknown, allowEmpty: boolean) {
 
 function isPrefix(value: unknown, family: unknown, allowEmpty: boolean) {
     return prefixState(value, family, allowEmpty) === Acceptable;
+}
+
+// Presentation reasons accompany, never replace, the authoritative state.
+// Return keys/arguments so the QML adapter owns translation, not the parser.
+function issue(value: unknown, family: unknown, multiple: boolean, allowEmpty: boolean, prefixLength: boolean) {
+    const input = String(value || "").trim();
+    const state = prefixLength ? prefixState(input, family, allowEmpty) : addressInputState(input, family, multiple, allowEmpty);
+    if (state === Acceptable)
+        return null;
+    if (String(value || "").length >= MaximumEditingLength)
+        return {key: "buffer"};
+    if (prefixLength)
+        return {key: "prefix", maximum: normalizedFamily(family) === "ipv6" ? 128 : 32};
+    if (input.indexOf("/") >= 0)
+        return {key: "cidr"};
+    if (input.indexOf("%") >= 0)
+        return {key: "zone"};
+    if (/[\[\]]/.test(input))
+        return {key: "brackets"};
+    if (multiple && input.length > 512)
+        return {key: "length", maximum: 512};
+    if (multiple && /(^|,)\s*(,|$)/.test(input))
+        return {key: "empty-list-item"};
+    const tokens = multiple ? input.split(/[\s,]+/) : [input];
+    for (let index = 0; index < tokens.length; index++) {
+        if (addressState(tokens[index], family) === Acceptable)
+            continue;
+        if (normalizedFamily(family) === "ipv4") {
+            const parts = tokens[index].split(".");
+            for (let octet = 0; octet < parts.length; octet++) {
+                if (/^\d+$/.test(parts[octet]) && Number(parts[octet]) > 255)
+                    return {key: "octet", index: index + 1, octet: octet + 1};
+            }
+        }
+        return {key: "address", index: index + 1};
+    }
+    return {key: "address", index: 1};
 }

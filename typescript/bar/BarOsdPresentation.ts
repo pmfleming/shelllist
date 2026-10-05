@@ -55,112 +55,102 @@ function osdTimeout(kind: Maybe<string>) {
     return 1400;
 }
 
+// One complete presentation schema; renderers supply only their differences.
+function osd(kind: string, presentation: Partial<Omit<Osd, "kind">>): Osd {
+    return Object.assign({
+        kind: kind,
+        icon: "",
+        label: "",
+        valueLabel: "",
+        percent: 0,
+        progressVisible: false,
+        timeoutMs: osdTimeout(kind)
+    }, presentation);
+}
+
 function outputOsd(audio: Maybe<AudioState>): Osd {
     const value: AudioState = audio || ({});
     const percent = Indicators.percent(value.volume_percent);
-    return {
-        kind: "audio",
+    return osd("audio", {
         icon: Indicators.audioIcon(value),
         label: value.sink_description || "Volume",
         valueLabel: value.muted ? "Muted" : percent + "%",
         percent: percent,
-        progressVisible: true,
-        timeoutMs: osdTimeout("audio")
-    };
+        progressVisible: true
+    });
 }
 
 function inputOsd(audio: Maybe<AudioState>): Osd {
     const value: AudioState = audio || ({});
     const muted = !!value.input_muted;
-    return {
-        kind: "input",
+    return osd("input", {
         icon: muted ? "󰍭" : "󰍬",
         label: value.source_description || "Microphone",
         valueLabel: muted ? "Muted" : "On",
-        percent: muted ? 0 : 100,
-        progressVisible: false,
-        timeoutMs: osdTimeout("input")
-    };
+        percent: muted ? 0 : 100
+    });
 }
 
 function brightnessOsd(brightness: Maybe<{ percent?: number }>): Osd {
     const value: { percent?: number } = brightness || ({});
     const percent = Indicators.percent(value.percent);
-    return {
-        kind: "brightness",
+    return osd("brightness", {
         icon: "󰃠",
         label: "Brightness",
         valueLabel: percent + "%",
         percent: percent,
-        progressVisible: true,
-        timeoutMs: osdTimeout("brightness")
-    };
+        progressVisible: true
+    });
 }
 
 function brightnessErrorOsd(): Osd {
-    return {
-        kind: "brightness-error",
+    return osd("brightness-error", {
         icon: "󰃠",
         label: "Brightness",
-        valueLabel: "Adjustment failed",
-        percent: 0,
-        progressVisible: false,
-        timeoutMs: osdTimeout("brightness-error")
-    };
+        valueLabel: "Adjustment failed"
+    });
 }
 
 function powerProfileOsd(profile: Maybe<PowerProfileState>): Osd {
     const value: PowerProfileState = profile || ({});
     const name = value.profile || "unknown";
     const labels: Record<string, string> = { "power-saver": "Power saver", balanced: "Balanced", performance: "Performance" };
-    return {
-        kind: "power-profile",
+    return osd("power-profile", {
         icon: Indicators.powerProfileIcon(value),
         label: "Power profile",
-        valueLabel: labels[name] || name,
-        percent: 0,
-        progressVisible: false,
-        timeoutMs: osdTimeout("power-profile")
-    };
+        valueLabel: labels[name] || name
+    });
 }
 
 function lockKeyOsd(kind: string, enabled: boolean): Osd {
     const caps = kind === "caps-lock";
-    return {
-        kind: kind,
+    return osd(kind, {
         icon: caps ? "󰪛" : "󰎠",
         label: caps ? "Caps Lock" : "Num Lock",
         valueLabel: enabled ? "On" : "Off",
-        percent: enabled ? 100 : 0,
-        progressVisible: false,
-        timeoutMs: osdTimeout(kind)
-    };
+        percent: enabled ? 100 : 0
+    });
 }
 
 function keyboardBacklightOsd(percent: unknown): Osd {
     const value = Indicators.percent(percent);
-    return {
-        kind: "keyboard-backlight",
+    return osd("keyboard-backlight", {
         icon: "󰌌",
         label: "Keyboard backlight",
         valueLabel: value + "%",
         percent: value,
-        progressVisible: true,
-        timeoutMs: osdTimeout("keyboard-backlight")
-    };
+        progressVisible: true
+    });
 }
 
 function privacyOsd(device: string, active: boolean): Osd {
     const camera = device === "camera";
-    return {
-        kind: "privacy-" + device,
+    return osd("privacy-" + device, {
         icon: camera ? (active ? "󰄀" : "󰄁") : (active ? "󰍭" : "󰍬"),
         label: camera ? "Camera privacy" : "Microphone privacy",
         valueLabel: active ? "Active" : "Inactive",
-        percent: active ? 100 : 0,
-        progressVisible: false,
-        timeoutMs: osdTimeout("privacy-" + device)
-    };
+        percent: active ? 100 : 0
+    });
 }
 
 function hardwareOsd(previous: Maybe<HardwareState>, current: Maybe<HardwareState>): Osd | null {
@@ -190,15 +180,12 @@ function idleInhibited(powerSuspend: Maybe<PowerSuspendState>) {
 
 function idleInhibitorOsd(powerSuspend: Maybe<PowerSuspendState>): Osd {
     const active = idleInhibited(powerSuspend);
-    return {
-        kind: "idle-inhibitor",
+    return osd("idle-inhibitor", {
         icon: active ? "󰒳" : "󰒲",
         label: "Idle inhibitor",
         valueLabel: active ? "Active" : "Inactive",
-        percent: active ? 100 : 0,
-        progressVisible: false,
-        timeoutMs: osdTimeout("idle-inhibitor")
-    };
+        percent: active ? 100 : 0
+    });
 }
 
 function changedPowerProfileOsd(previous: Maybe<PowerProfileState>, value: PowerProfileState) {
@@ -238,31 +225,25 @@ function displayOutputOsd(previous: Maybe<WorkspaceMonitors>, current: Maybe<Wor
     const removed = before.find(function (name: string) { return !after.includes(name); });
     if (!added && !removed)
         return null;
-    return {
-        kind: "device",
+    return osd("device", {
         icon: added ? "󰍹" : "󰶐",
         label: "Display output",
-        valueLabel: added ? added + " connected" : removed + " disconnected",
-        percent: 0,
-        progressVisible: false,
-        timeoutMs: osdTimeout("device")
-    };
+        valueLabel: added ? added + " connected" : removed + " disconnected"
+    });
 }
 
 function audioDeviceOsd(previous: Maybe<AudioState>, current: Maybe<AudioState>): Osd | null {
     const before: AudioState = previous || ({});
     const value: AudioState = current || ({});
     if (before.sink_name !== value.sink_name)
-        return {
-            kind: "device", icon: "󰓃", label: "Audio output",
-            valueLabel: value.sink_description || value.sink_name || "Unavailable",
-            percent: 0, progressVisible: false, timeoutMs: osdTimeout("device")
-        };
+        return osd("device", {
+            icon: "󰓃", label: "Audio output",
+            valueLabel: value.sink_description || value.sink_name || "Unavailable"
+        });
     if (before.source_name !== value.source_name)
-        return {
-            kind: "device", icon: "󰍬", label: "Audio input",
-            valueLabel: value.source_description || value.source_name || "Unavailable",
-            percent: 0, progressVisible: false, timeoutMs: osdTimeout("device")
-        };
+        return osd("device", {
+            icon: "󰍬", label: "Audio input",
+            valueLabel: value.source_description || value.source_name || "Unavailable"
+        });
     return null;
 }

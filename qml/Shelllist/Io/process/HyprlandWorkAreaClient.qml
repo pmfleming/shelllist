@@ -1,6 +1,5 @@
 import QtQuick
 import Shelllist.Io as Io
-import "../../Bar/BarProtocol.generated.js" as Protocol
 
 Item {
     id: client
@@ -18,13 +17,9 @@ Item {
         if (value.available || value.error)
             ready = true;
     }
-    function refresh(): void {
-        if (active)
-            backend.call("work-area-snapshot", Protocol.methods["bar.snapshot"], {});
-    }
     function scheduleRefresh(): void {
         if (active)
-            Qt.callLater(refresh);
+            Qt.callLater(backend.refresh);
     }
     function unavailable(): void {
         snapshot = null;
@@ -41,26 +36,15 @@ Item {
         running: client.active && !client.ready
         onTriggered: client.ready = true
     }
-    Io.DaemonBackend {
+    Io.BarProjectionBackend {
         id: backend
         objectName: "workAreaBackend"
         active: client.active
-        daemonName: "bar-daemon"
-        expectedProtocol: Protocol.protocol
-        expectedVersion: Protocol.version
-        streams: [Protocol.streams["workarea.changed"]]
-        onTransportReady: client.refresh()
+        projection: "workarea"
+        snapshotId: "work-area-snapshot"
+        failureMessage: "Work area unavailable"
+        onReceived: value => client.apply(value)
+        onReadFailed: client.unavailable()
         onTransportFailed: client.unavailable()
-        onResponseReceived: function (id, envelope, transportError) {
-            if (responseError(envelope, transportError, "Work area unavailable"))
-                client.unavailable();
-            else
-                client.apply(envelope.data && envelope.data.snapshot ? envelope.data.snapshot.workarea : null);
-        }
-        onEventGapDetected: client.refresh()
-        onEventReceived: function (event) {
-            if (event.stream === Protocol.streams["workarea.changed"])
-                client.apply(event.data);
-        }
     }
 }

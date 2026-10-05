@@ -3,10 +3,6 @@
 
 // This file is loaded through the Shelllist.Battery module symlink, so resolve
 // shared scripts relative to that logical module URL rather than the source tree.
-function clamp(value, minimum, maximum) {
-    return Math.max(minimum, Math.min(maximum, Number(value) || 0));
-}
-
 function duration(seconds) {
     return Duration.estimate(seconds, "Estimating");
 }

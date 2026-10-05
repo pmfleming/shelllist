@@ -202,10 +202,6 @@ Ui.ChooserController {
             weatherLocationId = locationId;
     }
 
-    function requestTimeWeather(tab: string): void {
-        timeWeatherRequested(tab === "time" ? "time" : "weather");
-    }
-
     function openSection(section: string): void {
         if (section === "notifications") {
             requestNotifications("", "active");
