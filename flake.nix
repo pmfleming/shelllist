@@ -2,7 +2,7 @@
   description = "Single-host Quickshell desktop action center";
 
   # CO-DEVELOPMENT INVARIANT: all five consumers follow ONE current framework.
-  # tools/local-build.py in daemon-framework resolves worktrees once per run.
+  # tools/local-build in daemon-framework resolves worktrees once per run.
   # Never add local revision pins or private/vendored framework dependencies.
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";

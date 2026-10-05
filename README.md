@@ -317,7 +317,7 @@ Animations default on under Hyprland and off elsewhere. Set `SHELLLIST_NO_ANIMAT
 ## Development
 
 ```sh
-python3 ../daemon-framework/tools/local-build.py develop .
+../daemon-framework/tools/local-build develop .
 tests/check-sibling-boundary.sh
 ```
 
@@ -330,7 +330,7 @@ remote branches, update locks, or activate binaries/services.
 The gate snapshots each tracked worktree once and resolves a disposable graph.
 All five daemons follow the same framework source. Persistent locks retain only
 third-party dependencies. No commits or manual lock updates are needed. Ordinary
-Nix commands can recreate local pins, so use `local-build.py` for Nix development.
+Nix commands can recreate local pins, so use `local-build` for Nix development.
 
 Focused checks:
 
@@ -366,7 +366,7 @@ fixture. There is no vendored framework and no separate local deployment pin.
 For standalone Nix builds use:
 
 ```sh
-python3 ../daemon-framework/tools/local-build.py build .
+../daemon-framework/tools/local-build build .
 ```
 
 The desktop `rebuild` applies this same current-source policy and reuses one
