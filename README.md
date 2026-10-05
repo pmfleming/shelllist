@@ -1,178 +1,115 @@
 # Shelllist
 
-Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and twelve keyboard-first surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, **Activity**, **Notifications**, **Time & Weather**, **Displays**, **Battery**, **Audio**, **Media**, and **Tray**.
+Shelllist is a Hyprland-oriented desktop action center and top bar built with Quickshell. One resident process owns the per-monitor bar and twelve surfaces: **Applications**, **Wi-Fi**, **Bluetooth**, **Clipboard**, **Activity**, **Notifications**, **Time & Weather**, **Displays**, **Battery**, **Audio**, **Media**, and **Tray**.
 
-Rust daemons handle system integration and policy. Shelllist handles windows, layout, navigation, animation, and presentation.
+Rust daemons own system integration, durable state and policy. Shelllist owns windows, layout, keyboard navigation, animation and presentation. A shared popover keeps lists anchored while details expand right; small work areas use explicit scrolling rather than clipping controls. A one-shot floating host is available for development. See [chooser geometry](docs/chooser-geometry.md).
 
-## What it provides
+## Top bar
 
-- A 51 px adaptive top bar on every monitor.
-- One bounded popover host: lists stay anchored while details expand right. Laptop margins tighten without replacing the list; undersized work areas get explicit scrolling. See [chooser geometry](docs/chooser-geometry.md).
-- A one-shot floating mode for development and fallback use.
-- One shared OSD frame for volume, microphone, brightness, power profile, lock keys, idle inhibition, keyboard backlight, privacy indicators, audio-device changes, and display-output changes. Now-playing state stays in the top bar instead of appearing as an OSD.
-- Global shortcuts and one IPC/CLI entry point.
-- Shared result, action, details, theme, and daemon-transport components.
+The adaptive 51 px bar contains **Workspaces, Media, Network, Bluetooth, Battery, Notifications, Tray, Clock/date**. It uses one continuous rounded surface, without floating pods or hover tooltips. Narrow bars compact groups and expose horizontal overflow without shrinking fonts or removing keyboard routes. Battery and notification indicators are pictorial; accessible metadata and choosers retain detailed values.
 
-### Top bar
+Media shows artwork and transport controls. Music uses Previous/Next; other content uses symmetric ±30-second seeking. Media details can override that mode. The daemon follows recently started playback unless pinned; pins and per-player overrides expire when the player exits. Opening or restoring a result never changes playback policy.
 
-One continuous rounded surface contains **Workspaces, Media, Network, Bluetooth,
-Battery, Notifications, Tray, Clock/date**, in that order. Battery and notification
-states are pictorial; detailed values remain in accessible metadata and choosers.
-There are no hover tooltips, floating status pods, focused-application group or
-separate Audio group. Narrow bars compact groups and expose horizontal overflow,
-without shrinking fonts or removing their keyboard routes.
+Artwork opens Media; network opens Wi-Fi, with right-click portal fallback; Bluetooth/Battery open their choosers; the bell opens Notifications, with right-click Activity and middle-click DND; Tray opens its list; clock/date open Time & Weather. Update logs use `shelllist:update-logs`, default Super+Shift+U in Home Manager.
 
-Media shows artwork and three transport icons, not persistent track text or a
-progress strip. Music uses Previous/Next; podcasts, video and unknown content use
-symmetric ±30-second seeking. Media details can override that mode. The daemon
-follows recently started playback until explicitly pinned; pins and per-player
-mode overrides are session-local and expire when that player exits. Opening or
-restoring a result does not change playback or selection policy.
-
-Common pointer routes: workspaces focus; artwork opens Media; network opens Wi-Fi
-(right-click portal fallback); Bluetooth/Battery open their choosers; the bell
-opens Notifications (right-click Activity, middle-click DND); Tray opens its list;
-clock/date open Time & Weather. Removed pods' destinations retain direct routes.
-Update logs use `shelllist:update-logs`, default Super+Shift+U in Home Manager.
-
-See [Material bar](docs/material-bar.md) for prototype choices, overflow policy,
-media backend semantics, native-menu safety and remaining live acceptance.
-
-`bar-daemon` supplies normalized bar state through `bar-api` v1. Wi-Fi and Bluetooth remain owned by their dedicated Shelllist controllers, while Quickshell owns tray rendering and menus.
+A shared OSD frame presents volume, microphone, brightness, power profile, lock keys, idle inhibition, keyboard backlight, privacy and device changes. Now-playing state stays in the bar. See [Material bar](docs/material-bar.md) and [OSD policy](docs/bar-osd.md).
 
 ## Surfaces
 
 ### Applications
 
-The launcher lists standards-visible desktop entries and groups live Hyprland windows with their applications. Apps can be browsed as **Shell**, **Browser**, **Code**, **Media**, or **Text**. Choosing a category in an app's Settings also chooses its default workspace: the five categories map to workspaces 1–5 respectively. `Enter` focuses the most-recent instance or launches the application; `Shift+Enter` launches another instance. Details expose running windows, desktop actions, close actions, interactive 30-minute, two-hour, and 24-hour resource graphs, and the combined category/workspace setting.
+Applications groups standards-visible desktop entries with live Hyprland windows. **Shell, Browser, Code, Media, Text** categories map to workspaces 1–5. `Enter` focuses the most-recent instance or launches; `Shift+Enter` launches another instance. Details expose windows, desktop/close actions, resource graphs and the combined category/workspace setting. Launch-only shortcuts do not claim windows or resource usage. Application actions are asynchronous; a frontend recovery timeout handles a lost terminal backend event without treating an unacknowledged action as success.
 
-Launch-only desktop entries remain shortcuts and do not claim windows or resource usage. Application actions are asynchronous and protected by a frontend recovery timeout if a terminal backend event is lost.
-
-Chooser search is ranked by the bundled Rust matcher. It supports middle-of-item substrings, ordered-character/acronym matches, diacritic folding, multiple terms, and conservative typo correction (including adjacent transpositions). Exact and prefix matches remain ahead of fuzzy matches.
+The bundled Rust search matcher supports substrings, ordered-character/acronym matches, diacritic folding, multiple terms and conservative typo correction. Exact/prefix matches rank ahead of fuzzy results. See [application behavior and ownership](docs/application-launcher.md).
 
 ### Wi-Fi
 
-The Wi-Fi surface supports scanning, saved and hidden networks, open/WEP/WPA personal and enterprise credentials, NetworkManager secret prompts, disconnect/forget, autoconnect and privacy settings, IPv4/IPv6 and DNS editing, Wi-Fi QR sharing, and captive-portal launch.
+Wi-Fi supports scanning, saved/hidden networks, personal and enterprise credentials, NetworkManager secret prompts, disconnect/forget, autoconnect/privacy settings, IPv4/IPv6/DNS editing and QR sharing. Secrets use stdin-backed JSON requests, never command-line arguments. Native IP editors retain invalid drafts and show errors on save; malformed CIDR/zone suffixes and truncated pastes cannot silently become accepted addresses.
 
-**Security & Privacy → Cast discovery** saves per-network mDNS policy and applies it live through nm-daemon without reconnecting. It controls systemd-resolved discovery, not casting sessions or applications such as Chromium that use their own mDNS sockets. The NixOS module configures NetworkManager's inherited mDNS default to off, enables resolve-only systemd-resolved support, and permits UDP 5353 replies. Set `programs.shelllist.discovery.openFirewall = false` for custom/interface-specific firewall rules, or `programs.shelllist.discovery.enable = false` to manage the entire resolver stack yourself. Home Manager alone does not configure these system settings. Changed defaults require a host rebuild; existing active inherited policies may need one reconnect when installing the configuration.
+**Security & Privacy → Cast discovery** applies per-network mDNS policy through `nm-daemon`, without reconnecting. It controls systemd-resolved discovery, not applications using their own mDNS sockets. The NixOS module enables resolve-only support, defaults inherited discovery off and permits UDP 5353 replies. Set `programs.shelllist.discovery.openFirewall = false` for custom firewall rules, or `discovery.enable = false` to manage the resolver stack yourself. Home Manager alone does not configure it; changed system defaults require a rebuild and may need one reconnect.
 
-Shelllist opens an automatic captive portal only after `nm-daemon` validates the successful connection and issues a one-shot launch claim. Rust owns durable deduplication and fallback selection; the frontend's native helper owns browser/workspace focus. Unknown launch outcomes require an explicit manual retry, never automatic replay. See [portal ownership](docs/reviews/captive-portal-migration.md). User-entered secrets travel through stdin-backed JSON requests and are never placed in command-line arguments.
+Automatic captive portals open only after `nm-daemon` validates the connection and grants a one-shot launch claim. Rust owns deduplication and fallback selection; the native `shelllist-portal-launch` helper executes browser/workspace focus. **Sign in** (`Alt+I`) and the bar fallback use that same transaction. Unknown outcomes require explicit retry, never automatic replay. See [portal ownership](docs/reviews/captive-portal-migration.md).
 
 ### Bluetooth
 
-The Bluetooth surface supports adapter power, bounded discovery, known and nearby devices, pair/connect/disconnect, pairing-agent prompts, trust/wake/multipoint/block/forget actions, persisted battery state, audio profiles, and read-only reported noise-control state.
+Bluetooth supports adapter power/discovery, pairing prompts, connect/disconnect, trust, wake, multipoint, block/forget, battery state, audio profiles and read-only reported noise control. The icon beside search opens **Bluetooth settings** and **List options**, including with an empty list. Device details contain **Device** and **Information**; the icon inside search switches My Devices/All Devices.
 
-The **Bluetooth icon beside search** opens a menu containing **Bluetooth settings** and **List options**, even when no devices are listed. Adapter and global settings are available only through this menu; device details contain only **Device** and **Information** tabs. The icon inside search still switches between My Devices and All Devices.
+Name and setting drafts become saved only after acknowledgement. Failed drafts survive tab changes with Retry/Discard. The UI uses opaque daemon keys and subscriptions, not `bluetoothctl`, MAC-address routing or unauthenticated Fast Pair writes.
 
-Device-name and adapter-setting drafts are marked saved only after daemon acknowledgement. Failed drafts remain in memory across tab changes and offer Retry/Discard instead of retrying automatically.
+### Activity, Notifications, Time & Weather
 
-The UI uses opaque daemon device keys and live subscriptions. It does not parse `bluetoothctl`, route actions by MAC address, or issue unauthenticated Fast Pair noise-control changes.
+**Activity** contains a month calendar, agenda, persistent todos and source health. Notifications and weather are independent surfaces, not Activity sections.
 
-### Activity
+**Notifications** provides daemon-backed search, DND, actions, inline replies, 15-minute snooze and dismissal with retained history. Search includes unloaded pages within the newest 5,000 persisted notifications plus live records. Reply drafts survive navigation and clear only after success. `bar-daemon` owns ingestion, expiry, snooze and persistence. See [Activity and notifications](docs/activity.md).
 
-The Activity surface contains a month calendar, selected-day agenda, persistent todos and source health. Time/weather and notifications are separate surfaces, not Activity sections. Notifications offers one daemon-searched list, settings for DND, actions, inline replies, 15-minute snooze and dismissal that retains history. Search covers the newest 5,000 persisted notifications plus live records, including unloaded pages. Toast chevrons open the selected group. Drafts survive navigation and only clear after successful replies. `bar-daemon` owns notification ingestion, expiry, DND, snooze and persistent history. Open directly with `shelllist notifications open` or the `notifications` global shortcut. See [`docs/activity.md`](docs/activity.md).
-
-### Time & Weather
-
-Time & Weather lists every configured city with its current condition, high/low temperature, rain chance, and local time. `Right` expands the selected city; **Time** shows local date/time, a world map with every region sharing the selected UTC offset highlighted and the location marked, sun position, daylight length, and moon phase, while **Weather** reuses the hourly and seven-day forecast view. Open it from the bar clock, `shelllist time-weather open`, or the `time-weather` global shortcut.
+**Time & Weather** lists configured cities with conditions, temperatures, rain chance and local time. Expanded Time details show the selected UTC-offset regions, location, daylight and moon phase; Weather shows hourly and seven-day forecasts.
 
 ### Clipboard
 
-The clipboard surface supports text, image, and binary history; copy and paste actions; inline text editing; favorites; entry deletion; and confirmed history clearing.
+Clipboard supports text/image/binary history, copy/paste, inline text editing, favorites, deletion and confirmed history clearing. Reconnection reloads session/settings/history without replaying mutations. Failed saves retain in-memory drafts with Retry/Discard; retry obtains a lease for the original revision rather than overwriting newer content. Drafts are not persisted.
 
-An open Clipboard surface reloads its session, settings, and history after daemon reconnection without replaying mutations.
-
-Failed text saves keep an editable, in-memory draft with **Retry save** and **Discard draft** controls. Retry acquires a new edit lease for the original revision, rather than overwriting changes made elsewhere. Failed drafts survive selection changes while Shelllist remains running; they are not written to disk.
-
-Capture policy is also available from the CLI:
-
-```sh
-shelllist clipboard pause
-shelllist clipboard private
-shelllist clipboard resume
-shelllist clipboard kept 750
-```
+Capture controls are also available through `shelllist clipboard pause`, `private`, `resume`, and `kept COUNT` (for example, `shelllist clipboard kept 750`).
 
 ### Displays
 
-Displays is a searchable list of connected outputs, including disabled displays.
-**Right** or the row chevron expands the selected display's options. One primary
-**Preview changes** button sits above **Identify**, **Arrange**, and an external
-screen's **Enable/Disable** button. **Settings** contains mode, scale, rotation and
-position controls; **Information** shows read-only observed display details.
-Ctrl+Tab switches tabs. Arrange reveals the existing snapping layout canvas.
+Displays lists connected outputs, including disabled screens. Expanded details show a layout map above **Settings/Information**. Settings includes mirror/extend, mode, scale and rotation/reflection; the search gear opens global focus settings. Arrange independent displays by edge-dragging or **Alt+L/U/D/R** for Left/Above/Below/Right. With three or more eligible displays, a reference dropdown selects the target; selecting it alone never moves a screen. There are no separate X/Y position fields or Arrange subpage.
 
-Layout changes stay in a draft until **Preview changes** (Ctrl+Enter), which previews
-the whole layout. **Keep** saves it; Escape, closure or the daemon's 20-second deadline
-reverts it. Search, display selection and tab changes preserve edits. The laptop
-screen's **Settings → When docked** section chooses whether to keep it on or turn
-it off automatically when external displays are available. This preference saves
-automatically after daemon acknowledgement, independently of layout previews; the
-laptop returns when external displays disconnect. Narrow outputs show details with
-a Back button instead of clipping the split view. Suspend does not own display controls.
-Open with `shelllist open displays` or the `displays` global shortcut.
-See [`docs/displays.md`](docs/displays.md) for behavior, ownership and tests.
+Changes remain local until **Preview changes** (`Ctrl+Enter`) previews the whole layout. **Keep** saves; Escape, closure or the daemon's 20-second deadline reverts. Navigation preserves drafts; topology changes invalidate stale layouts. Identify does not enable or focus a screen. Narrow outputs retain the split layout with scrolling, not a replacement Back page.
 
-### Battery
+The laptop's **When docked** preference saves independently after acknowledgement and restores the laptop display when external screens disconnect. See [Displays](docs/displays.md) for recovery, focus policy and arrangement constraints.
 
-The Battery & Power surface has three tabs, cycled with `Ctrl+Tab`:
+### Battery & Power
 
-- **Power:** power mode, live status, charge/energy history, and estimated per-application energy since the last charge or across the last week.
-- **Battery:** device selection, firmware charge thresholds, one-time full charging, pause/resume charging, calibration, full/charge-limit notification, health, cycles, and hardware details. Device selection stays beside the settings and health information it controls.
-- **Suspend:** shared **Battery levels & actions**, adaptive hardware tuning, and lock/suspend/hibernate controls with suspend inhibitors. Low and Critical each have an editable percentage, a level on/off switch, and top-bar-matching profile icons (Power saver, Balanced, or Performance where supported). Enabling a level enables its threshold notification and selected automatic profile; disabling it disables both. Notifications also work without a power-profile service. Rules apply while unplugged, with a 3-percentage-point recovery margin. Manual profile selection pauses automatic switching until recovery or AC; the status includes a Resume action. The daemon preserves existing thresholds and migrates the old automatic-saver preference to both levels.
+Three tabs separate controls:
 
-The Power tab combines battery percentage and measured battery watts on one timeline, with 6h, 24h, and 7d observed-time ranges. Suspend/offline periods are omitted and missing observations break the line. Blue shows charge, rose bars show discharge power, and green bars show charging power; these are battery-flow measurements, not total AC wall power. A dashed projection and approximate ETA point to empty while unplugged, or full/the active protection limit while charging. The daemon supplies both forecasts; missing or implausible estimates stay unplotted. Clicking the history plot or focusing it and pressing Right/Enter explicitly reveals sample times and values in an inline readout. Left/Right and Home/End inspect the timeline; Escape leaves inspection before closing the surface. Hover alone shows no tooltip. Application attribution comes from `app-daemon`'s low-confidence RAPL CPU-time estimate; system-only loads such as the display and radios are not assigned to apps.
+- **Power:** power mode, live status, charge/energy history and estimated per-application energy since the last charge or across the last week.
+- **Battery:** device selection, firmware thresholds, one-time full charging, pause/resume, calibration, notifications, health and hardware details.
+- **Suspend:** battery-level rules, adaptive hardware tuning, lock/suspend/hibernate, inhibitors, lid policy and inactivity profiles.
 
-Lock & suspend normally occupies one row with Lock, Suspend, and Hibernate buttons; accessible descriptions retain capability information without hover tooltips. Only blockers, pending operations, service unavailability, or failures add a status row; failed requests offer an explicit Retry. Routine preparation handlers do not add a warning. Suspend and Hibernate still require confirmed screen locking. Pending requests disable duplicate actions.
+History combines charge percentage and measured battery watts over 6h/24h/7d observed-time ranges. Offline periods are omitted; missing observations break lines. Forecasts target empty or full/the protection limit and remain unplotted when implausible. Plot inspection is pointer-entry-only, outside field Tab traversal. These are battery-flow measurements, not AC wall power; application attribution is `app-daemon`'s low-confidence RAPL CPU-time estimate, excluding system-only loads such as displays and radios.
 
-**Automatic suspend & hibernate** includes a **When the lid is closed** selector: System default, Do nothing, Lock screen, Suspend, Hibernate immediately, or Suspend then hibernate using profile. Existing settings keep System default. The profile option uses the current battery/AC hibernate delay, including when inactivity suspend is Never. Managed lid actions ignore docked/external-display use and require the active local graphical session; stopping the daemon restores logind's system policy. Lid failures are shown in the card without automatic retry.
+Low/Critical rules combine threshold notifications and supported automatic power profiles while unplugged, with a three-point recovery margin. Manual profile selection pauses automatic switching until recovery or AC; Resume is explicit. Notifications do not require a power-profile service.
 
-The card also sets an inactivity delay followed by an additional time suspended before hibernating. Use one shared profile or separate **On battery** / **Plugged in** profiles. Shared mode uses the battery settings and retains the separate plugged-in values for switching back. Each delay offers **Never**: Never suspend disables automatic suspend; Never hibernate leaves ordinary suspend. Systemd may hibernate sooner on critically low battery. Manual Lock/Suspend/Hibernate buttons remain immediate, independent actions.
+Lock/Suspend/Hibernate commands are immediate and capability-guarded; suspend/hibernate require confirmed screen locking. Blockers and failures show status, with explicit Retry rather than automatic replay. Managed lid actions require the active local graphical session and ignore docked/external-display use; stopping the daemon restores logind policy.
 
-The Home Manager module enables `programs.shelllist.suspend.enable` by default when it manages both `hypridle` and `bar-daemon`. Managed hypridle is patched for native readiness and runs as a `Type=notify` service: settings are acknowledged only after valid listeners and session integration initialize, not merely after writing a config file. Activate the updated Home Manager module along with the daemon; an old `Type=simple` service is reported unavailable. It preserves the declarative lock/DPMS configuration and replaces simple `systemctl`/`loginctl` suspend listeners with one managed listener. Source includes and custom suspend commands require manual migration; set the option to `false` to keep the existing idle policy. Settings persist in `$XDG_CONFIG_HOME/bar-daemon/sleep.json`; the initial shared profile is 30 minutes to suspend, Never hibernate. Saving or changing to a different inactivity timeout restarts hypridle's inactivity countdown. The hibernate delay is selected at suspend entry; plugging/unplugging while already suspended does not change that suspend cycle's delay.
+Automatic profiles set inactivity before suspend and additional suspended time before hibernation, shared or separate for battery/AC. Either delay supports **Never**. The initial shared profile is 30 minutes to suspend, Never hibernate. Changing inactivity delay restarts its countdown; hibernate delay is selected at suspend entry, not changed by later AC events. Settings persist in `$XDG_CONFIG_HOME/bar-daemon/sleep.json`.
 
-Timed hibernation requires working system hibernation (swap/resume setup), logind's `CanSuspendThenHibernate` capability, confirmed locking, and the updated privileged `bar-battery-helper` installed by the **system-level** NixOS module. Rebuild/activate both the system helper and Home Manager integration after updating. Unsupported hibernation and missing integration are reported in the card rather than pretending a timer is active. See [`bar-daemon's power/suspend documentation`](../bar-daemon/docs/power-sleep.md) for the protocol and systemd ownership details.
+Home Manager enables `programs.shelllist.suspend.enable` when it manages hypridle and bar-daemon. Managed hypridle uses native `Type=notify` readiness; an old `Type=simple` service is unavailable, not treated as acknowledged. Existing lock/DPMS settings remain, but includes/custom suspend commands need manual migration; disable the option to retain an independent idle policy. The old `programs.shelllist.sleep.enable` option remains an alias, without changing daemon API or persisted names.
 
-Shelllist uses **Suspend** consistently in its UI and frontend components. The old Home Manager `programs.shelllist.sleep.enable` option remains a migration alias for `programs.shelllist.suspend.enable`. Existing bar-api v1 method/stream/payload names, daemon CLI arguments, persisted `sleep.json` settings, and systemd/logind identifiers are intentionally unchanged for compatibility; no policy reset or daemon upgrade is required for this terminology change.
+Timed hibernation requires working swap/resume, logind capability, confirmed locking and the updated privileged `bar-battery-helper`. Rebuild both system and Home Manager integration. Firmware writes use system D-Bus and polkit; Shelllist stays unprivileged. Home Manager alone can display telemetry but cannot install those system artifacts. See [bar-daemon power/suspend documentation](https://github.com/pmfleming/bar-daemon/blob/main/docs/power-sleep.md).
 
-Battery settings apply automatically: toggles are immediate, while slider changes are coalesced and applied after editing finishes without Save or Apply buttons. Alt+S copies a screenshot of the complete current view to the clipboard in every Shelllist surface, including Battery & Power.
+### Audio, Media and Tray
 
-Battery settings are written through a privileged system D-Bus helper with polkit authorization; Shelllist itself remains unprivileged. The NixOS module installs and registers the helper automatically. A Home Manager-only installation can display telemetry, but setting ThinkPad firmware thresholds additionally requires installing the `bar-daemon` system D-Bus, systemd, and polkit artifacts at the system level.
+Audio provides default output/input state, acknowledged mute, 5% output-volume commands and the full mixer. Media lists players with capability-guarded actions targeting the inspected player. Tray offers activation, native menus, secondary activation and scrolling; ambiguous IDs cannot dispatch effects. Restoring these surfaces never opens menus or replays actions.
+
+Home Manager provides configurable Super+Shift+A/M/T bindings; set `audioShortcut`, `mediaShortcut` or `trayShortcut` to null to disable one.
 
 ## Architecture
 
 | Area | Owner |
 | --- | --- |
 | Applications and process resources | `app-daemon` / `app-api` v1 |
-| Wi-Fi and NetworkManager policy | `nm-daemon` / `nm-api` v1 |
-| Bluetooth, pairing, and audio profiles | `bt-daemon` / `bt-api` v1 |
-| Clipboard history and capture | `clip-daemon` / `clip-api` v1 |
-| Bar state, Battery/ThinkPad policy, Activity/notification data, hardware OSD state, and media-key effects | `bar-daemon` / `bar-api` v1 |
-| Windows, rendering, navigation, monitor routing, tray menus, and transient OSD policy | Shelllist / Quickshell |
+| NetworkManager and Wi-Fi policy | `nm-daemon` / `nm-api` v1 |
+| Bluetooth, pairing and profiles | `bt-daemon` / `bt-api` v1 |
+| Clipboard capture/history | `clip-daemon` / `clip-api` v1 |
+| Bar, power, displays, Activity, notifications, media and hardware state/effects | `bar-daemon` / `bar-api` v1 |
+| Rendering, navigation, monitor routing, tray menus and transient OSD | Shelllist / Quickshell |
 
-`shell/shell.qml` is the only UI entry point. Wi-Fi and Bluetooth load eagerly because the bar and hidden pairing requests need them. Applications and Clipboard load on first use. Opened surfaces remain warm.
+`shell/shell.qml` is the only UI entry point. Wi-Fi/Bluetooth load eagerly for the bar and pairing prompts; Applications/Clipboard load on demand. Opened surfaces remain warm. Shared JSONL transport provides bounded restart backoff; checked fixtures in `contracts/` guard protocol compatibility. See the [daemon boundary audit](docs/daemon-boundary-audit.md), [provider model](docs/provider-model.md) and [documentation index](docs/README.md).
 
-Every daemon connection uses the shared JSONL transport with bounded restart backoff. Checked fixtures in `contracts/` prevent frontend/backend protocol drift. The [daemon boundary audit](docs/daemon-boundary-audit.md) records current ownership and the remaining frontend-to-daemon migrations.
-
-See the [`docs/` index](docs/README.md), especially:
-
-- [`docs/provider-model.md`](docs/provider-model.md) for normalized result/action contracts;
-- [`docs/list-interaction-contract.md`](docs/list-interaction-contract.md) for mouse, touchpad, and touch list scrolling;
-- [`docs/application-launcher.md`](docs/application-launcher.md) for launcher behavior and ownership;
-- [`docs/activity.md`](docs/activity.md) for Activity and notification behavior;
-- [`docs/bar-osd.md`](docs/bar-osd.md) for OSD sources, presentation, and timeout policy;
-- [`docs/qml-quality-review.md`](docs/qml-quality-review.md) for QML structure and validation rules.
+Compositor and work-area projections share `BarProjectionBackend`; individual controllers retain validation, revision fencing and unavailable-state behavior. Transport recovery refreshes observations without authorizing duplicate effects or committing field drafts.
 
 ## Installation
 
-Keep `shelllist`, `daemon-framework`, and all five daemons in the same parent directory. Hyprland IPC lives in `daemon-framework/crates/shelllist-hyprland`; no separate checkout is needed. The supported `local-build` commands snapshot these current worktrees together; local project revisions must not be deployment-pinned.
+Requirements: Linux `x86_64` through the current flake, Hyprland, Quickshell, NetworkManager, BlueZ, PipeWire/WirePlumber, the five domain daemons and appropriate D-Bus/polkit/service permissions.
 
-Run directly:
+Keep `shelllist`, `daemon-framework` and all five daemons under one parent directory. Hyprland IPC lives in `daemon-framework/crates/shelllist-hyprland`; no separate checkout is needed. From this repository, run against current worktrees:
 
 ```sh
-nix run
-nix run .# -- open wifi
+../daemon-framework/tools/local-build run . -- open wifi
 ```
+
+The checkout launcher requires Cargo/Rust, Git and Nix; the packaged native `local-build` requires neither Cargo nor Python. It snapshots tracked edits, rejects untracked files and resolves only a disposable lock. Ordinary `nix run/build/flake check` can recreate local deployment pins; use `local-build` instead.
 
 Home Manager:
 
@@ -188,56 +125,57 @@ imports = [ inputs.shelllist.nixosModules.default ];
 programs.shelllist.enable = true;
 ```
 
-Both modules install Shelllist and can supervise the resident host plus `bar-daemon`. The bundled daemon runs in native notification mode, owns `org.freedesktop.Notifications`, and conflicts with `swaync.service`; disable any separately configured notification daemon. Set `programs.shelllist.systemd.target` for a compositor-specific session target, `systemd.startBarDaemon = false` to use D-Bus activation, or `systemd.environment` for theme overrides. The NixOS module additionally registers the packaged system D-Bus, systemd, and polkit artifacts used by privileged battery settings. It grants read-only access to Intel RAPL energy counters for application power estimates by default; set `programs.shelllist.resources.enableRaplAccess = false` to opt out. The other domain daemons must be running or D-Bus activatable through their own installations.
+Both modules install Shelllist and can supervise the resident host and `bar-daemon`. The bundled daemon owns `org.freedesktop.Notifications` and conflicts with `swaync.service`; disable other notification daemons. Configure `programs.shelllist.systemd.target` for a compositor-specific session target, `systemd.startBarDaemon = false` for D-Bus activation, or `systemd.environment` for theme overrides. Other domain daemons need their own running services or D-Bus activation.
+
+NixOS additionally installs privileged battery integration and read-only Intel RAPL access. Set `programs.shelllist.resources.enableRaplAccess = false` to disable RAPL access.
 
 ## CLI
 
 ```text
 shelllist                         Toggle Applications
-shelllist <surface> open          Open a surface
-shelllist <surface> toggle        Toggle a surface
+shelllist <surface> [open|toggle] Open or toggle a surface
 shelllist open <surface>          Open a surface
+shelllist toggle <surface>        Toggle a surface
 shelllist floating <surface>      Run a one-shot floating host
 shelllist hide                    Hide the popover
 shelllist status                  Print host state as JSON
 shelllist list                    List surfaces as JSON
+shelllist responsiveness          Print interaction timings as JSON
 shelllist daemon                  Ensure the resident host is running
 shelllist run                     Run the host in the foreground
 shelllist quit                    Stop the resident host
 ```
 
-Surfaces are `applications`, `wifi`, `bluetooth`, `clipboard`, `activity`, `notifications`, `time-weather`, and `battery`.
+Surface names: `applications`, `wifi`, `bluetooth`, `clipboard`, `activity`, `notifications`, `time-weather`, `displays`, `battery`, `audio`, `media`, `tray`. Run `shelllist quit` before starting floating mode.
 
 ## Keyboard use
 
-Common chooser keys:
-
-| Key | Action |
+| Context / key | Action |
 | --- | --- |
-| Type | Edit the query; typing in results returns to its saved cursor (including J/K) |
-| `Up` / `Down` | Move results without changing expansion; Up from the first result returns to search |
-| `Enter` | Run the primary action |
-| `Right` / `Left` | Open or close details; Right keeps focus in results |
-| `Ctrl+Tab` | Cycle detail tabs |
-| `Ctrl+Alt+Left/Right` | Switch Shelllist surface |
-| `F5` | Refresh the current surface |
-| `Esc` | Close the current modal, details, or popover |
+| Search Left/Right | Native cursor/selection movement |
+| Search Down | Select/focus the first result |
+| Results Up/Down | Move selection without changing expansion; first-result Up returns to search |
+| Results typing | Return to the query's saved cursor |
+| Results Enter | Run the primary action |
+| Results Right/Left | Expand/collapse details without transferring focus |
+| Ctrl+Tab / Ctrl+Shift+Tab | Change detail pages |
+| Ctrl+Alt+Left/Right | Switch surface |
+| F5 | Refresh where supported |
+| Escape | Leave the current editor, modal, details or popover |
 
-Surface-specific additions include `Shift+Enter` for a new application instance; `F6`–`F8` for hidden-network, security, and IP settings; and Clipboard copy/paste/delete combinations. There is no F1/contextual-help overlay, hover tooltip, or automatic action label. Question marks remain ordinary search text. Shared controls use immediate rounded tonal feedback, with a stronger accent edge during field editing; decorative animation does not delay focus feedback.
+Tab enters expanded details; Tab/Shift+Tab wrap through **editable controls only**. Enter starts editing or toggles an on/off switch. While editing, arrows remain native, **Enter saves**, **Escape discards**, and **Tab saves and continues editing the next field**. Arriving at a switch never toggles it. Other exits discard uncommitted field edits; volume/brightness previews roll back on Escape. Save requests are not acknowledgements.
 
-Tab enters expanded fields. `Tab` / `Shift+Tab` traverse **editable controls only**, wrapping at either end; action buttons use `Alt+letter` (Alt+J opens additional content actions). Enter starts editing or immediately toggles an on/off switch. While editing, arrows are native, **Enter saves**, **Escape discards**, and **Tab saves and continues editing the next field**. Switches reached by Tab are never activated automatically. Changes stay local until save; explicit volume/brightness-style preview sliders roll back on Escape. Only the editable portion is highlighted, subtly while browsing and more strongly while editing. `Ctrl+Tab` / `Ctrl+Shift+Tab` change detail pages. Required-input dialogs retain conventional contained traversal. `Alt+Enter` invokes search's trailing action; `Alt+S` captures the view. The [interaction contract](docs/chooser-keyboard-workflow.md) is mandatory for every current and future panel.
+Actions use **Alt+letter**, not field Tab stops. Alt+J opens additional content actions; Alt+M opens header overflow; Alt+Enter invokes search's trailing action; Alt+S captures the view. Required-input dialogs retain conventional contained traversal. There are no F1 overlays or hover tooltips. Read the mandatory [interaction contract](docs/chooser-keyboard-workflow.md) before panel changes.
 
-Choosers retain per-result tab/scroll/field locations until process exit. Returning to a result restores those locations without stealing list focus or changing the surface's expanded/collapsed mode; Right expands and Tab enters fields. Reopening Applications or Bluetooth also restores ordinary region/editor focus, caret/selection and the keyed result viewport, without reopening menus or sensitive prompts. See [session memory](docs/chooser-session-memory.md) for safety and capability fallbacks.
+Wi-Fi retains F6 for hidden-network entry, F7 for security and F8 for IP settings. Holding Alt reveals command badges after a short delay; holding Ctrl reveals detail-tab hints. Neither modifier changes the selected result.
 
-The [Material Expressive design decisions](docs/proposals/material-expressive.md) distinguish delivered slices from the target. Shared navigation/memory, independent Bluetooth adapter records, production assets, dedicated desktop lists and the bar prototype are implemented. Arbitrary custom focus targets, prototype approval and live compositor/accessibility/hardware acceptance remain separate.
+Per-result tab/scroll/field locations survive until process exit without changing expansion or stealing list focus. Applications/Bluetooth also restore ordinary invocation focus, caret/selection and keyed viewport, never menus or sensitive prompts. See [session memory](docs/chooser-session-memory.md).
 
-Suggested Hyprland bindings:
+Example Hyprland bindings:
 
 ```ini
 bind = SUPER, SPACE, global, shelllist:applications
 bind = SUPER, N, global, shelllist:wifi
-bind = SUPER SHIFT, N, exec, shelllist notifications open
-bind = SUPER, A, global, shelllist:activity
 bind = SUPER, B, global, shelllist:bluetooth
 bind = SUPER, V, global, shelllist:clipboard
 bind = SUPER, P, global, shelllist:battery
@@ -250,69 +188,20 @@ bindel = , XF86MonBrightnessUp, global, shelllist:brightness-up
 bindel = , XF86MonBrightnessDown, global, shelllist:brightness-down
 ```
 
-## Audio, Media and Tray lists
-
-`audio`, `media` and `tray` are independent surfaces accepted by `open`, `toggle`
-and `floating`, and by `shelllist audio open` (and corresponding domain commands).
-Global shortcut names are `shelllist:audio`, `shelllist:media`, `shelllist:tray`.
-Home Manager adds configurable Super+Shift+A/M/T bindings; set `audioShortcut`,
-`mediaShortcut` or `trayShortcut` to null to disable a binding.
-
-Audio lists the current default output/input, acknowledged mute state, 5% output
-volume commands and the full mixer. Media lists players with capability-guarded
-operations explicitly targeting the inspected player. Tray provides explicit
-activation, native menu, secondary activation and scroll commands; ambiguous
-tray IDs cannot dispatch an effect. All three use shared keyboard navigation and
-process-local presentation/focus memory; restoration never opens a tray menu or
-replays an action. Existing shortcuts and mixer routes remain available.
-
 ## Theme and motion
 
-The desktop accent seeds a Material Tonal Spot scheme through Google's Material
-Color Utilities. Light/dark follows Qt's desktop color-scheme setting, falling
-back to the system window palette when the platform supplies no preference.
-Controls are opaque; the chooser shell uses a provisional 94% opacity.
-Shared buttons now morph from capsules to rounded pressed shapes; switches use
-Material tracks/thumbs with interruptible springs. Sliders use split tracks and
-slim handles; segmented choices use outlined capsules. Text fields and dropdowns
-share outlined Material frames and immediate focus/error feedback. Dropdown
-hover is decorative, and pending choices are not displayed as confirmed values.
-Production typography uses packaged Roboto Flex, with Material Symbols Rounded
-for shared semantic icons and a packaged Nerd Font fallback for specialist glyphs.
-Icon-bearing actions/tabs hide their visual labels but retain accessible names;
-text-only and explicit confirmation actions keep meaningful text. Chooser/card
-shapes now use 28/20/16px surface radii. Lua Hyprland receives a namespace-scoped
-blur rule excluding transparent reserved space. Without an explicit motion
-override, Hyprland's animation preference is read on startup/config reload; there
-is no polling. Live blur, final spring feel and accessibility acceptance remain.
-
-Supported environment inputs:
+The desktop accent seeds Google's Material Tonal Spot palette; light/dark follows Qt's desktop preference with a window-palette fallback. Controls are opaque, the chooser shell uses 94% opacity, and forms use filled native editors with passive labels/supporting rows. Browsing highlights only the editable control with a tonal fill and contrast-qualified marker; editing adds a stronger accent edge. Typography uses packaged Roboto Flex, Material Symbols Rounded and a Nerd Font fallback. Icon-only controls retain accessible names.
 
 ```text
-SHELLLIST_ACCENT         # Optional seed override, not an exact primary-role color
+SHELLLIST_ACCENT         # Palette seed, not an exact primary-role color
+SHELLLIST_FONT           # Typography override
+SHELLLIST_ICON_FONT      # Specialist icon fallback
 SHELLLIST_RADIUS         # Remaining legacy controls
-SHELLLIST_BLUR           # false disables Shelllist's Lua Hyprland blur rule
-SHELLLIST_FONT           SHELLLIST_ICON_FONT    SHELLLIST_NO_ANIMATIONS
+SHELLLIST_BLUR           # false disables Lua Hyprland blur
+SHELLLIST_NO_ANIMATIONS  # 1 disables motion; 0 explicitly enables it
 ```
 
-**Migration:** `BG`, `SURFACE`, `TEXT`, `SUBTEXT`, `BORDER`,
-`STRONG_BORDER`, `SELECTED`, `SUCCESS`, `DANGER` and `WARNING` (each with the
-`SHELLLIST_` prefix) no longer override individual semantic roles. This prevents
-incoherent foreground/background pairs. Resource-series color overrides remain
-separate. The production font/icon defaults are unchanged pending visual review.
-See the [visual foundation and development gallery](docs/material-visual-foundation.md).
-
-Animations default on under Hyprland and off elsewhere. Set `SHELLLIST_NO_ANIMATIONS=1` or `0` to override that behavior.
-
-## Requirements
-
-- Linux on `x86_64` through the current flake;
-- Hyprland for compositor integration and global shortcuts;
-- Quickshell;
-- NetworkManager for Wi-Fi;
-- BlueZ and PipeWire/WirePlumber for Bluetooth audio;
-- the five sibling domain daemons described above;
-- appropriate D-Bus, polkit, backlight, and service permissions.
+Without an override, motion follows Hyprland's preference through `bar-daemon` snapshots/subscriptions and is disabled elsewhere. Old per-role color overrides no longer apply; resource-series overrides remain separate. Live blur, spring tuning, IME and screen-reader acceptance remain distinct from offscreen tests. See [visual foundation](docs/material-visual-foundation.md).
 
 ## Development
 
@@ -321,53 +210,27 @@ Animations default on under Hyprland and off elsewhere. Set `SHELLLIST_NO_ANIMAT
 tests/check-sibling-boundary.sh
 ```
 
-The sibling gate is the default **co-development compatibility check**. Every run
-uses the current local Git worktrees of all five daemons and `daemon-framework`
-(including its `shelllist-hyprland` crate), rather than the revisions in `flake.lock`. It includes
-tracked uncommitted changes; Git-add new source files first. It does not fetch
-remote branches, update locks, or activate binaries/services.
+The sibling gate snapshots current tracked worktrees once, including dirty files, and runs the full framework/daemon/UI check matrix. All five daemons share one framework source. Git-add new files first (`git add -N` is sufficient); no source commits or manual lock updates are needed. It neither fetches branches nor activates services. Persistent locks retain third-party dependencies only.
 
-The gate snapshots each tracked worktree once and resolves a disposable graph.
-All five daemons follow the same framework source. Persistent locks retain only
-third-party dependencies. No commits or manual lock updates are needed. Ordinary
-Nix commands can recreate local pins, so use `local-build` for Nix development.
+The complete gate includes daemon protocol contracts, JavaScript policies, generated-source freshness, QML interaction tests, strict lint, module evaluation, packaged imports, framework workspace tests and all five daemon package suites. Passing offscreen tests does not replace live compositor or hardware acceptance.
 
-Focused checks:
+Focused checks inside the development environment:
 
 ```sh
-shelllist-qmllint qml/Shelllist/{Core,Io,Ui}/*.qml shell/*.qml activity/*.qml \
-  bar/*.qml battery/*.qml displays/*.qml bluetooth/*.qml clipboard/*.qml launcher/*.qml \
-  wifi/*.qml wifi/networkinput/*.qml wifi/process/*.qml
+tests/run-qmllint.sh
 node tests/check-provider-model.js qml/Shelllist/Core/Model.js
 node tools/build-typescript.mjs --check
 tsc --project tsconfig.json
 tests/run-qml-tests.sh
 tests/run-performance-benchmarks.sh
-# With the installed resident host hidden:
+# Installed resident host hidden:
 tests/benchmark-resident.py --duration 20 --check
-# In a target Wayland session; this opens every surface twice:
+# Target Wayland session; opens every surface twice:
 tests/benchmark-responsiveness.py --check
 ```
 
-The policy benchmark writes qmlbench-compatible evidence to
-`target/performance/qmlbench.json`. The resident benchmark reports hidden CPU,
-PSS, page faults, and daemon-bridge thread counts without opening or closing a
-surface. The responsiveness benchmark records command acknowledgement, first
-presented frame, cold content readiness, search ranking, and catalog-to-model
-latency. `shelllist responsiveness` exposes the latest in-process timestamps for
-manual diagnosis.
+Edit generated presentation logic under `typescript/`, then run `node tools/build-typescript.mjs` and commit the corresponding JavaScript. The manifest maps sources to outputs; freshness checks prevent drift. QML tests run against packaged shared imports and domain fixtures, including bar/display sources.
 
-The sibling gate runs the full flake checks against current local inputs:
-daemon contracts, JavaScript policy tests, QML tests, module evaluation, and the
-packaged host, framework workspace tests, and all five daemon package suites.
-It also checks the remaining Hyprland/search snapshots and application resource
-fixture. There is no vendored framework and no separate local deployment pin.
+The policy benchmark writes `target/performance/qmlbench.json`; resident measurements cover hidden CPU, PSS, faults and bridge threads. Responsiveness measurements cover acknowledgement, first frame, cold readiness, search and model latency. See [QML quality guidance](docs/qml-quality-review.md) for maintenance gates and validation limits.
 
-For standalone Nix builds use:
-
-```sh
-../daemon-framework/tools/local-build build .
-```
-
-The desktop `rebuild` applies this same current-source policy and reuses one
-snapshot for compatibility checks and deployment.
+For a standalone build, use `../daemon-framework/tools/local-build build .`. The desktop `rebuild` uses the same current-source policy and one frozen graph for mandatory checks and deployment.
