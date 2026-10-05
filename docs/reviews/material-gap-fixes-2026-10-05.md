@@ -37,8 +37,24 @@ Validation: strict lint; MaterialFeedback 6, FieldInteraction 17, BatterySuspend
 inspected; the separate capture fixture adds 5 passes. Logs:
 `/tmp/material-fix3-tests.log`, `/tmp/material-fix3-additional.log`.
 
+## 4 — Tray assistive activation
+
+Inline tray items now route accessible press through the same primary dispatch
+as pointer clicks. Menu-only items open their menu without falling through to
+activation; disabled, hidden and removed items cannot dispatch. The bar remains
+outside keyboard Tab traversal. The native menu host defaults to the same
+`QsWindow.window`; tests can supply a recording host.
+
+The platform fixture now models the real status enum and records menu hosts,
+closing the review probe's missing-enum warning instead of suppressing it.
+Regression coverage includes ordinary activation, menu-only/missing-menu cases,
+disabled/hidden/removed guards and pointer/assistive parity. Existing dedicated
+Tray chooser/native-menu lifecycle tests still pass.
+
+Validation: strict lint; MaterialBar 6 and SystemChoosers 7 Qt passes including
+hooks, with no reported warnings. Log: `/tmp/material-fix4-checks.log`.
+
 ## Remaining
 
-Findings 4 (tray assistive activation) and 5 (custom-card containment) follow in
-separate commits. Live compositor, hardware input and screen-reader acceptance
-remain separate from offscreen checks.
+Finding 5 (custom-card containment) follows in a separate commit. Live compositor,
+hardware input and screen-reader acceptance remain separate from offscreen checks.

@@ -3,6 +3,7 @@ import QtQuick
 import QtTest
 import Shelllist.Bar as Bar
 import Shelllist.Ui as Ui
+import "imports/Quickshell/Services/SystemTray" as Tray
 
 TestCase {
     id: testCase
@@ -24,7 +25,56 @@ TestCase {
             }
         }
     }
+    Component {
+        id: trayFactory
+        Bar.BarTrayItem {
+            width: 32; height: 37
+            menuWindow: QtObject {}
+        }
+    }
+    Component {
+        id: trayItemFactory
+        Tray.SystemTrayItem { title: "Test application" }
+    }
     function init(): void { failOnWarning(/.*/); }
+    function test_trayAssistivePressUsesPointerPrimaryRoute(): void {
+        const tray = createTemporaryObject(trayItemFactory, testCase);
+        const button = createTemporaryObject(trayFactory, testCase, {item: tray});
+        compare(button.Accessible.role, Accessible.Button);
+        compare(button.Accessible.name, "Test application");
+        verify(!button.activeFocusOnTab, "the bar does not gain keyboard traversal");
+        button.Accessible.pressAction();
+        compare(button.item.activationCount, 1);
+        mouseClick(button, 16, 18);
+        compare(button.item.activationCount, 2);
+        button.enabled = false;
+        button.Accessible.pressAction();
+        compare(button.item.activationCount, 2);
+        button.enabled = true;
+        button.visible = false;
+        button.Accessible.pressAction();
+        compare(button.item.activationCount, 2);
+        button.visible = true;
+        button.item.onlyMenu = true;
+        button.Accessible.pressAction();
+        compare(button.item.activationCount, 2, "menu-only items never fall back to activation");
+        compare(button.item.menuCount, 0, "missing menus are not dispatched");
+        button.item.hasMenu = true;
+        button.Accessible.pressAction();
+        compare(button.item.menuCount, 1);
+        compare(button.item.lastMenuWindow, button.menuWindow);
+        mouseClick(button, 16, 18);
+        compare(button.item.menuCount, 2, "pointer and assistive routes preserve menu-only behavior");
+        compare(button.item.activationCount, 2);
+        compare(button.item.secondaryCount, 0);
+        button.item = null;
+        button.Accessible.pressAction();
+        button.routeClick(Qt.RightButton);
+        button.scroll(120);
+        compare(button.Accessible.name, "");
+        compare(tray.menuCount, 2, "a removed tray item cannot receive late actions");
+        compare(tray.scrollTotal, 0);
+    }
     function test_emergencyOverflowKeepsGroupsReachable(): void {
         const bar = createTemporaryObject(barFactory, testCase, {width: 300});
         tryVerify(() => findChild(bar, "bar:notifications") !== null);

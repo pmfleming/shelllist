@@ -3,6 +3,7 @@ import QtQuick
 QtObject {
     property string id: ""
     property string title: ""
+    property int status: Status.Active
     property string icon: ""
     property string tooltipTitle: ""
     property string tooltipDescription: ""
@@ -16,5 +17,6 @@ QtObject {
     function activate(): void { activationCount++; }
     function secondaryActivate(): void { secondaryCount++; }
     function scroll(delta: int, horizontal: bool): void { scrollTotal += delta; }
-    function display(window: QtObject, x: int, y: int): void { menuCount++; }
+    property QtObject lastMenuWindow: null
+    function display(window: QtObject, x: int, y: int): void { lastMenuWindow = window; menuCount++; }
 }
