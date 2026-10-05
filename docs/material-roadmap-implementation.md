@@ -3,7 +3,8 @@
 ## Item 2 — search bar
 
 Chooser search uses a 56px Surface Container High pill, a 16px native editor,
-primary caret/leading-icon focus feedback and embedded surface actions. Form inputs keep their outlined frames. Native query
+primary caret/leading-icon focus feedback and embedded surface actions. Form inputs originally kept outlined frames; the separately approved
+[form-field family](proposals/form-field-family.html) now uses filled rounded rectangles while search remains unchanged. Native query
 selection, printable-key continuation, IME ownership and guarded Alt+Enter are
 unchanged. Counts, progress, errors and domain status remain in the status footer,
 not in the search bar; empty footers collapse.
@@ -37,7 +38,7 @@ browsing and focus restoration; editable controls remain addressable. Shared tog
 rows have a 56px minimum with larger labels/supporting text. A passive SettingRow
 places labels/supporting text beside native controls, with a faint within-card
 separator; Sleep policies adopts it without changing acknowledgement or safety
-behavior. Form inputs retain their outlines. Spacing tokens are 4/8/12/16/24/32.
+behavior. Form outlines in this checkpoint were subsequently replaced by the approved filled field family. Spacing tokens are 4/8/12/16/24/32.
 
 Validation: strict lint and 303 Qt passes, including light/dark opaque card tones,
 wrapped setting bounds, draft retention and existing power

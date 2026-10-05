@@ -1,3 +1,20 @@
+# Form-field visual review
+
+`tests/manual/tst_form_review.qml` captures the shared field family and real
+Wi-Fi IP/DNS pane, using synthetic values and the recording daemon boundary.
+It never sends replies or applies network settings.
+
+```sh
+mkdir -p target/form-field-implementation
+export FONTCONFIG_FILE=/path/to/packaged-fonts.conf
+tests/run-qmlquality-tests.sh -input tests/manual/tst_form_review.qml -o -,txt
+```
+
+Eight PNGs cover light/dark shared fields, IPv4, IPv6 and narrow network forms.
+Captures are ignored build artifacts, not golden tests. The fixture checks that
+no backend mutation is emitted. Hardware IME, pointer-selection paste, compositor
+scaling and screen-reader acceptance remain live checks.
+
 # Display visual review
 
 `tests/manual/tst_display_review.qml` is an explicitly invoked, non-mutating

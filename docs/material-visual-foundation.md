@@ -14,8 +14,8 @@ are in `Ui/MaterialIcons.js`.
 
 Icon-bearing actions and detail tabs are visually icon-only; their full accessible
 names remain. A label remains when no meaningful icon exists, including explicit
-confirmation text. Shell/panel/card radii are 28/20/16px; field outlines remain 4px
-and buttons retain their expressive capsule/pressed treatment. Selected result
+confirmation text. Shell/panel/card radii are 28/20/16px; form fields now use
+12px filled containers and buttons retain their expressive capsule/pressed treatment. Selected result
 corners use the interruptible spring without changing hit geometry or focus timing.
 Mouse-click, keyboard and browse focus now share an immediate rounded tonal
 highlight, without an extra rectangular browse ring. `FocusRing` retains its
@@ -209,7 +209,47 @@ and [outlined segmented-button tokens](https://github.com/androidx/androidx/blob
 Per-corner Rectangle radii are supported by the packaged Qt 6.11.1 and were
 validated in the actual engine, including the software-rendered gallery.
 
-## Outlined text fields and dropdowns
+## Filled form-field family (approved 2026-10-05)
+
+The [approved illustrated proposal](proposals/form-field-family.html) is implemented
+in shared controls. Normal form containers are **56px high**, with **16px native
+value text**, **12px corners**, 16px padding and opaque Surface Container Highest.
+An explicit 48px compact variant keeps 16px text; production consumers currently
+use normal density. Search explicitly bypasses form paint and retains its 56px
+Surface Container High capsule and native editor behavior.
+
+`FormField` is a passive external-label/editor/supporting-row composition, not
+another navigation target or value owner. Labels are 14px, supporting text is
+12px, required fields have an explained marker, and errors replace helper text.
+Only the editor receives focus paint. Resting fields have a 1px inset bottom
+keyline; editing uses the existing stronger tint/edge. Read-only values retain
+normal contrast; disabled controls remain distinct. Native names/descriptions,
+units and read-only state are forwarded to the actual editor. Error icons use
+the packaged Material Symbols family rather than rendering an icon name as text.
+
+`TextEditor` now encloses a native plain-text `TextEdit` in a bounded scrolling
+focus scope, with the same filled background, padding, typography and existing
+`FieldEditSession`. It remains one typed navigation target. Clipboard lease,
+failed-draft and retry ownership are unchanged. Choice menus retain native
+navigation and acknowledgement, with 16px labels and 48px rows. Password/trailing
+actions have 48px targets; hiding still resets explicit password reveal.
+
+IP address and prefix editors keep native editing without segmented octet boxes.
+DNS is one native multiline list editor; Enter/Tab saves and Shift+Enter inserts
+a newline. Errors are exposed on explicit save, not every incomplete keystroke.
+Malformed CIDR/zone suffixes remain in the draft; native buffer exhaustion is
+invalid rather than a valid truncated paste. Group readiness still prevents
+invalid/incomplete settings from reaching the backend. No CIDR auto-splitting,
+normalization, new network capability or keyboard chart entry was added.
+
+See the [implementation and validation record](reviews/form-field-implementation-2026-10-05.md)
+for commits, real Qt captures, tests and outstanding live acceptance.
+
+## Earlier outlined-field foundation (superseded visually)
+
+The following describes the earlier compact outlined implementation. Its native
+editing, popup and acknowledgement boundaries remain; the geometry and paint
+above supersede its 4px/42px outlined default.
 
 `TextField` and the dropdown background now share an internal `FieldFrame`:
 opaque surface fill, **4px corners**, a single 1px neutral/primary/error outline

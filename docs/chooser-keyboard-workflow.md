@@ -66,6 +66,15 @@ Arriving at a switch highlights it **without toggling it** and returns to
 browsing. Actions are never traversal stops. Shift+Enter remains available for a
 newline in multiline editors.
 
+`FormField` labels and supporting/status rows are passive: the contained shared
+editor keeps its stable focus identity and transaction. A scrolling `TextEditor`
+is still one field. IP/DNS errors become visible on explicit save, without
+trapping Tab: saving retains the domain draft, while the existing whole-group
+readiness guard blocks invalid/incomplete backend writes. CIDR, unsupported zone
+suffixes and full native editing buffers are rejected without accepting a
+silently shortened value. No per-keystroke normalization or cross-field paste
+write is allowed.
+
 Changes remain **field-local until Enter/Tab**. Typing, native option selection,
 slider movement, blur, tab/category changes and surface closure must not dispatch
 a deferred field's setting write. Leaving via a route other than save discards
