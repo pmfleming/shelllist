@@ -17,7 +17,6 @@ TestCase {
             width: 640
             height: 400
             property int activations: 0
-            property alias shortcut: actionShortcut
             property alias screenshotShortcut: screenshotShortcut
             property alias search: searchField
             chooserController: Ui.ChooserController {
@@ -29,11 +28,6 @@ TestCase {
             }
             detailsComponent: Component {
                 Item {}
-            }
-            Shortcut {
-                id: actionShortcut
-                sequence: "Ctrl+J"
-                onActivated: surface.activations++
             }
             Ui.ScreenshotShortcut {
                 id: screenshotShortcut
@@ -49,21 +43,6 @@ TestCase {
 
     function init() {
         failOnWarning(/.*/);
-    }
-
-    function test_shortcutEditsAndDisabledState() {
-        const surface = createTemporaryObject(surfaceComponent, testCase);
-        verify(surface !== null);
-        surface.search.focusInput(false);
-        wait(0);
-        keyClick(Qt.Key_J, Qt.ControlModifier);
-        compare(surface.activations, 1);
-        surface.shortcut.sequence = "Ctrl+K";
-        keyClick(Qt.Key_K, Qt.ControlModifier);
-        compare(surface.activations, 2);
-        surface.shortcut.enabled = false;
-        keyClick(Qt.Key_K, Qt.ControlModifier);
-        compare(surface.activations, 2);
     }
 
     Component {

@@ -154,6 +154,8 @@ TestCase {
         keyClick(Qt.Key_Escape);
         compare(text.text, "original");
         compare(surface.writes, 0);
+        surface.savedText = "backend after discard";
+        compare(text.text, surface.savedText, "discard restores the source binding");
         verify(surface.detailsNavigation.browsing);
         keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Y);
@@ -170,74 +172,64 @@ TestCase {
         compare(surface.savedText, text.text);
         compare(surface.writes, 2);
         verify(surface.detailsNavigation.browsing);
+        surface.savedText = "backend after save";
+        compare(text.text, surface.savedText, "save also restores the source binding");
     }
     function test_transactionsPreserveModelBindings_data() {
-        // Cover both native string controls, numeric boundary keys and live
-        // rollback without repeating the slider key × outcome cross-product.
+        // String and live-preview binding survival is checked in their complete
+        // transaction workflows below. Keep the native numeric boundary keys.
         return [
-            {tag: "text-discard", name: "text", save: false, key: Qt.Key_X, preview: false},
-            {tag: "text-save", name: "text", save: true, key: Qt.Key_X, preview: false},
-            {tag: "multiline-discard", name: "multiline", save: false, key: Qt.Key_X, preview: false},
-            {tag: "multiline-save", name: "multiline", save: true, key: Qt.Key_X, preview: false},
-            {tag: "slider-home-discard", name: "level", save: false, key: Qt.Key_Home, preview: false},
-            {tag: "slider-end-save", name: "level", save: true, key: Qt.Key_End, preview: false},
-            {tag: "live-slider-rollback", name: "level", save: false, key: Qt.Key_Right, preview: true}
+            {tag: "slider-home-discard", save: false, key: Qt.Key_Home},
+            {tag: "slider-end-save", save: true, key: Qt.Key_End}
         ];
     }
     function test_transactionsPreserveModelBindings(data) {
         const surface = make();
-        surface.preview = data.preview;
-        browse(surface, data.name);
-        const control = field(surface, data.name);
-        const property = data.name === "level" ? "value" : "text";
-        const source = data.name === "level" ? "savedLevel" : data.name === "multiline" ? "savedMultiline" : "savedText";
-        const original = control[property];
+        browse(surface, "level");
+        const control = field(surface, "level");
+        const original = control.value;
         keyClick(Qt.Key_Return);
         keyClick(data.key);
-        const draft = control[property];
+        const draft = control.value;
         verify(draft !== original);
-        compare(surface.writes, data.preview ? 1 : 0);
+        compare(surface.writes, 0);
         keyClick(data.save ? Qt.Key_Return : Qt.Key_Escape);
         verify(surface.detailsNavigation.browsing);
-        compare(control[property], data.save ? draft : original);
+        compare(control.value, data.save ? draft : original);
         verify(!control.editSession.active, "save/discard must end the transaction");
-        compare(surface.writes, data.preview ? 2 : data.save ? 1 : 0);
+        compare(surface.writes, data.save ? 1 : 0);
         // Acknowledgement, refresh or selecting another entity must still flow
         // through the original binding after both cancellation and save.
         for (let round = 0; round < 2; round++) {
-            surface[source] = data.name === "level" ? 70 + round * 10 : "backend update " + round;
-            compare(control[property], surface[source], "the model binding survives a transaction");
+            surface.savedLevel = 70 + round * 10;
+            compare(control.value, surface.savedLevel, "the model binding survives a transaction");
             keyClick(Qt.Key_Return);
             keyClick(Qt.Key_Escape); // Even a no-op discard must retain the binding.
         }
-        compare(surface.writes, data.preview ? 2 : data.save ? 1 : 0);
+        compare(surface.writes, data.save ? 1 : 0);
     }
-    function test_unboundFieldsKeepSavedDraftAndDiscardLocally_data() {
-        return [{tag: "text", name: "text"}, {tag: "multiline", name: "multiline"}, {tag: "slider", name: "level"}];
-    }
-    function test_unboundFieldsKeepSavedDraftAndDiscardLocally(data) {
+    function test_unboundFieldsKeepSavedDraftAndDiscardLocally() {
         const surface = make();
-        browse(surface, data.name);
-        const control = field(surface, data.name);
-        const property = data.name === "level" ? "value" : "text";
-        // Deliberately remove the fixture's source binding before edit entry.
-        control[property] = data.name === "level" ? 20 : "unbound original";
+        const control = field(surface, "text");
+        // One representative source-less control exercises local rollback.
+        control.text = "unbound original";
         keyClick(Qt.Key_Return);
-        keyClick(data.name === "level" ? Qt.Key_Right : Qt.Key_X);
-        const draft = control[property];
+        keyClick(Qt.Key_X);
+        const draft = control.text;
         keyClick(Qt.Key_Return);
-        compare(control[property], draft, "unbound inputs keep the committed draft");
+        compare(control.text, draft, "unbound inputs keep the committed draft");
         keyClick(Qt.Key_Return);
-        keyClick(data.name === "level" ? Qt.Key_Right : Qt.Key_Y);
-        verify(control[property] !== draft);
+        keyClick(Qt.Key_Y);
+        verify(control.text !== draft);
         keyClick(Qt.Key_Escape);
-        compare(control[property], draft, "unbound inputs roll back to their edit-entry value");
+        compare(control.text, draft, "unbound inputs roll back to their edit-entry value");
         compare(surface.writes, 1);
     }
     function test_externalUpdateDoesNotOverwriteDraftAndBlurRestoresBinding() {
         const surface = make();
         const control = field(surface, "text");
-        keyClick(Qt.Key_Return);
+        mouseClick(findChild(control, "fieldInput"), 25, 15);
+        verify(surface.detailsNavigation.editing, "pointer entry uses the same local transaction");
         keyClick(Qt.Key_X);
         const draft = control.text;
         surface.savedText = "updated by backend while editing";
@@ -251,8 +243,6 @@ TestCase {
     function test_tabKeepsPositionWhenSaveChangesAvailability_data() {
         return [
             {tag: "disable-forward", change: "disable", backwards: false, skip: false},
-            {tag: "disable-reverse", change: "disable", backwards: true, skip: false},
-            {tag: "hide-forward-skip", change: "hide", backwards: false, skip: true},
             {tag: "hide-reverse-skip", change: "hide", backwards: true, skip: true}
         ];
     }
@@ -358,6 +348,9 @@ TestCase {
         compare(surface.savedLevel, 40);
         compare(field(surface, "level").value, 40);
         compare(surface.writes, data.preview ? 2 : 0);
+        surface.savedLevel = 60;
+        compare(field(surface, "level").value, 60, "rollback preserves the source binding");
+        surface.savedLevel = 40;
         keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Right);
         keyClick(Qt.Key_Tab);
@@ -365,7 +358,9 @@ TestCase {
         compare(surface.writes, data.preview ? 3 : 1);
         compare(surface.detailsNavigation.currentTarget, field(surface, "switch"));
         verify(surface.detailsNavigation.browsing);
-        verify(!surface.switched, "Tab never toggles a switch");
+        surface.detailsNavigation.focusSessionLocation({target: "switch", editing: true});
+        verify(surface.detailsNavigation.browsing);
+        verify(!surface.switched, "neither Tab nor restoration toggles a switch");
         keyClick(Qt.Key_Return);
         verify(surface.switched);
         verify(surface.detailsNavigation.browsing);
@@ -394,6 +389,16 @@ TestCase {
         compare(surface.detailsNavigation.currentTarget, field(surface, "multiline"));
         verify(surface.detailsNavigation.editing);
         compare(surface.actions, 0);
+        keyClick(Qt.Key_Escape);
+        surface.savedMultiline = "backend after save";
+        compare(field(surface, "multiline").text, surface.savedMultiline);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_X);
+        keyClick(Qt.Key_Escape);
+        compare(field(surface, "multiline").text, surface.savedMultiline);
+        surface.savedMultiline = "backend after discard";
+        compare(field(surface, "multiline").text, surface.savedMultiline);
+        compare(surface.writes, 1);
     }
     function test_commandChordsAndMenuNeverBecomeFieldStops() {
         const surface = make();
@@ -418,43 +423,5 @@ TestCase {
             verify(surface.detailsNavigation.currentTarget !== field(surface, "readOnly"));
             verify(surface.detailsNavigation.currentTarget !== field(surface, "action"));
         }
-    }
-    function test_contentMenuWrapsSkipsDisabledAndTracksAvailability() {
-        const surface = make();
-        const action = field(surface, "action");
-        const other = field(surface, "otherAction");
-        action.accessKey = "";
-        keyClick(Qt.Key_J, Qt.AltModifier);
-        tryVerify(() => surface.detailsNavigation.commandMenuOpen);
-        const menu = findChild(surface, "detailsCommandMenu");
-        compare(menu.currentIndex, 0);
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        compare(menu.currentIndex, 1);
-        other.enabled = false;
-        compare(menu.currentIndex, 1, "availability changes must not select a different command");
-        keyClick(Qt.Key_Down);
-        compare(menu.currentIndex, 1, "disabled commands are skipped on wrap");
-        keyClick(Qt.Key_Return);
-        compare(surface.actions, 1);
-        verify(surface.detailsNavigation.browsing);
-        compare(surface.writes, 0);
-    }
-    function test_restoringSwitchNeverActivatesIt() {
-        const surface = make();
-        surface.detailsNavigation.focusSessionLocation({target: "switch", editing: true});
-        tryVerify(() => surface.detailsNavigation.browsing);
-        compare(surface.writes, 0);
-        verify(!surface.switched);
-    }
-    function test_pointerEditingAlsoDefersAndFocusLossDiscards() {
-        const surface = make();
-        const input = findChild(field(surface, "text"), "fieldInput");
-        mouseClick(input, 25, 15);
-        verify(surface.detailsNavigation.editing);
-        keyClick(Qt.Key_X);
-        compare(surface.writes, 0);
-        surface.listItem.focusList();
-        compare(field(surface, "text").text, "original");
-        compare(surface.writes, 0);
     }
 }

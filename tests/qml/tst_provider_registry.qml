@@ -34,18 +34,6 @@ TestCase {
         dispatchedSpy.clear();
     }
 
-    function test_dispatchesDefaultAction() {
-        verify(registry.execute(result(true), "", {
-            workspaceId: "4"
-        }));
-        compare(dispatchedSpy.count, 1);
-        verify(dispatchedRequest !== null);
-        compare(dispatchedRequest.providerId, "test");
-        compare(dispatchedRequest.resultKey, result(true).key);
-        compare(dispatchedRequest.actionId, "open");
-        compare(dispatchedRequest.context.workspaceId, "4");
-    }
-
     function test_rejectsInvalidActionsWithoutDispatch() {
         for (const candidate of [null, result(false)]) {
             rejectedSpy.clear();

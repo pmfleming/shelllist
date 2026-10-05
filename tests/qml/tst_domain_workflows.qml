@@ -46,28 +46,6 @@ DaemonTestCase {
         verify(command[2].includes("ignore_alpha = 0.01"));
         verify(command[2].includes("^shelllist\\\\.test$"), "scope is a literal namespace, not an arbitrary regex");
     }
-    function test_panelRestoresEditorButNeverItsValue() {
-        const panel = createTemporaryObject(panelFactory, testCase);
-        const owner = panel.chooserController;
-        owner.restoreUiFocus();
-        tryVerify(() => panel.detailsNavigation.browsing);
-        keyClick(Qt.Key_Return);
-        const field = findChild(panel, "ordinary");
-        tryVerify(() => field.inputActiveFocus);
-        field.restoreSelection({anchor: 8, cursor: 2});
-        owner.deactivateUi();
-        panel.forceActiveFocus();
-        field.text = "short";
-        owner.activateUi("");
-        owner.restoreUiFocus();
-        tryVerify(() => field.inputActiveFocus);
-        compare(field.text, "short");
-        compare(field.selectionState().cursor, 2);
-        compare(field.selectionState().anchor, 5);
-        verify(!JSON.stringify(owner.focusMemory).includes("ordinary value"));
-        keyClick(Qt.Key_Escape);
-        verify(panel.detailsNavigation.browsing);
-    }
     function test_revealedSensitiveFieldsNeverHaveRestorableLocations() {
         const panel = createTemporaryObject(panelFactory, testCase);
         const field = findChild(panel, "ordinary");

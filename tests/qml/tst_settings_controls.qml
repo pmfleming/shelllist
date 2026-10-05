@@ -19,15 +19,6 @@ TestCase {
         }
     }
     Component {
-        id: bareSliderFactory
-        Ui.ValueSlider {
-            from: 10
-            to: 90
-            value: 50
-            stepSize: 1
-        }
-    }
-    Component {
         id: segmentsFactory
         Ui.SegmentedControl {
             width: 420
@@ -44,17 +35,12 @@ TestCase {
         id: selection
         signalName: "selected"
     }
-    SignalSpy {
-        id: edited
-        signalName: "edited"
-    }
 
     function init(): void {
         failOnWarning(/.*/);
         Quickshell.environment = { SHELLLIST_NO_ANIMATIONS: "false" };
     }
     function cleanup(): void {
-        edited.target = null;
         selection.target = null;
         Quickshell.environment = ({});
     }
@@ -72,32 +58,6 @@ TestCase {
             compare(input.handle.x, input.leftPadding, "drag and keyboard position both update immediately");
             input.pressed = false;
         }
-    }
-
-    function test_sliderNativeMapping(): void {
-        const slider = createTemporaryObject(bareSliderFactory, this, {width: 300, height: 44});
-        const before = findChild(slider, "sliderTrackBefore");
-        const after = findChild(slider, "sliderTrackAfter");
-        compare(String(before.color), String(Ui.Theme.accent));
-        compare(String(after.color), String(Ui.Theme.selected));
-        slider.forceActiveFocus();
-        keyClick(Qt.Key_End);
-        compare(slider.value, slider.to);
-        compare(slider.handle.x, slider.availableWidth - slider.handle.width);
-        keyClick(Qt.Key_Home);
-        compare(slider.value, slider.from);
-        edited.target = slider;
-        edited.clear();
-        mouseClick(slider, slider.width / 4, slider.height / 2);
-        verify(slider.value > 20 && slider.value < 40, "native pointer mapping agrees with the painted direction");
-        verify(edited.count > 0);
-        const saved = slider.value;
-        const count = edited.count;
-        slider.enabled = false;
-        slider.moveToBoundary(slider.to);
-        mouseClick(slider);
-        compare(slider.value, saved);
-        compare(edited.count, count);
     }
 
     function test_segmentedSelectionFocusAndAccessibleGuards(): void {

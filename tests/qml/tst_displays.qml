@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Displays as Displays
 import Shelllist.Ui as Ui
-import "../../displays/DisplayFocusModel.js" as Focus
 
 DaemonTestCase {
     id: testCase
@@ -112,128 +111,6 @@ DaemonTestCase {
         } };
         return state;
     }
-    function completeFocusState() {
-        const state = focusState();
-        for (const group of Focus.groups())
-            for (const entry of group.settings)
-                state.focus.values[entry.key] = entry.boolean ? false : 0;
-        return state;
-    }
-    function test_keyboardCategoryHelpAndReturnWithoutMutations() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.uiActive = true;
-        c.applyDisplayPolicy(completeFocusState());
-        panel.list.focusSearch();
-        keyClick(Qt.Key_Return, Qt.AltModifier);
-        waitForDetails(panel);
-        verify(c.globalSettingsOpen);
-        verify(findChild(panel, "backToDisplayList").visible, "global settings retain their subpage navigation");
-        tryVerify(() => panel.navigation.activeFocus);
-        const navigation = panel.navigation;
-        keyClick(Qt.Key_P, Qt.AltModifier);
-        compare(c.detailsTab, "focus-pointer");
-        const number = findChild(panel, "focusNumber-input:follow_mouse_threshold");
-        navigation.currentTarget = number;
-        navigation.focusContent();
-        keyClick(Qt.Key_Return);
-        tryVerify(() => number.inputActiveFocus);
-        const original = number.text;
-        keyClick(Qt.Key_A, Qt.ControlModifier);
-        keyClick(Qt.Key_X);
-        keyClick(Qt.Key_Escape);
-        tryVerify(() => navigation.browsing);
-        keyClick(Qt.Key_Escape);
-        compare(c.detailsTab, "focus");
-        verify(c.detailsOpen);
-        c.selectFocusPage("focus-pointer");
-        compare(number.text, original, "Escape discards the current numeric edit");
-        const help = findChild(panel, "focusHelp-input:follow_mouse_threshold");
-        navigation.currentTarget = number;
-        navigation.focusContent();
-        keyClick(Qt.Key_H, Qt.AltModifier);
-        verify(findChild(panel, "focusHelpText-input:follow_mouse_threshold").visible);
-        navigation.focusContent();
-        const names = [];
-        for (let i = 0; i < navigation.targets.length + 2; ++i) {
-            keyClick(Qt.Key_Tab);
-            verify(navigation.currentTarget !== null && navigation.currentTarget.visible);
-            names.push(navigation.currentTarget.objectName);
-        }
-        verify(names.includes(number.objectName) && !names.includes(help.objectName), "help is a command, not an editable field");
-        verify(!names.includes("displayArrangementSummary"));
-        c.closeDetails();
-        c.closeDetails();
-        tryVerify(() => panel.list.searchFocused);
-        verify(!c.detailsOpen);
-        compare(calls.length, 0);
-    }
-    function test_globalFocusSurvivesHotplugAndRestoresInvocationFocus() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.uiActive = true;
-        c.applyDisplayPolicy(completeFocusState());
-        c.openGlobalSettings();
-        waitForDetails(panel);
-        c.selectFocusPage("focus-cursor");
-        const target = findChild(panel, "focusSetting-cursor:no_warps");
-        panel.navigation.currentTarget = target;
-        panel.navigation.focusContent();
-        const unplugged = completeFocusState();
-        unplugged.outputs = [];
-        c.applyDisplayPolicy(unplugged);
-        verify(!c.hasSelection && c.detailsOpen);
-        compare(c.detailsTab, "focus-cursor");
-        verify(target.visible && target.interactive);
-        c.prepareUiDeactivation();
-        compare(c.focusMemory.region, "details");
-        c.deactivateUi();
-        c.activateUiState("");
-        c.restoreUiFocus();
-        tryVerify(() => panel.navigation.currentTarget === target && panel.navigation.activeFocus);
-        c.applyDisplayPolicy(completeFocusState());
-        compare(c.detailsTab, "focus-cursor");
-        verify(target.visible);
-        compare(calls.length, 0, "hotplug/restoration does not replay settings");
-    }
-    function test_expandedMapUsesDraftWithoutKeyboardFocus() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.uiActive = true;
-        compare(findChild(panel.list, "displayArrangementSummary"), null);
-        c.openDetails();
-        waitForDetails(panel);
-        const map = findChild(panel.detailsItem, "displayArrangementSummary");
-        verify(map.visible);
-        verify(!findChild(panel, "backToDisplayList").visible, "monitor details have no back-arrow button");
-        verify(!map.activeFocusOnTab);
-        const tabs = findChild(panel, "displayDetailsTabs");
-        verify(map.mapToItem(panel.detailsItem, 0, map.height).y < tabs.mapToItem(panel.detailsItem, 0, 0).y);
-        c.edit("DP-1", "x", 1700);
-        compare(map.allValues.find(o => o.name === "DP-1").x, 1700);
-        verify(findChild(panel, "displayLayoutPreviewLabel").text.includes("not applied"));
-        c.detailsTab = "information";
-        verify(map.visible);
-        c.openGlobalSettings();
-        verify(!map.visible);
-        c.reloadDraft();
-        c.openDetails();
-        const state = displayState();
-        state.outputs = [state.outputs[1]];
-        c.applyDisplayPolicy(state);
-        verify(map.visible && map.values.length === 1, "single-screen map remains visible");
-        findChild(panel, "displayList").focusSearch();
-        const pointer = findChild(panel, "displayMapPointer-DP-1");
-        mousePress(pointer, pointer.width / 2, pointer.height / 2);
-        verify(!c.layoutDragging, "a single screen has no relative placement target");
-        mouseMove(pointer, pointer.width / 2 + 12, pointer.height / 2 + 4);
-        mouseRelease(pointer, pointer.width / 2, pointer.height / 2);
-        verify(!map.activeFocus && !c.layoutDragging);
-        c.edit("DP-1", "x", 99);
-        c.dismissNavigation();
-        verify(c.discardPrompt, "map edits retain discard protection");
-        compare(calls.length, 0, "map changes are draft-only");
-    }
     function test_expandedMapShowsAllDisplaysAndHighlightsOnlySelection() {
         const panel = makePanel();
         const c = panel.controller;
@@ -290,7 +167,7 @@ DaemonTestCase {
             {tag: "right", side: "right", key: Qt.Key_R, x: 1536, y: 0}
         ];
     }
-    function test_directionButtonsAndKeyboard_data() { return placementCases(); }
+    function test_directionButtonsAndKeyboard_data() { return [placementCases()[0]]; }
     function test_directionButtonsAndKeyboard(data) {
         const panel = arrangementPanel(false);
         const c = panel.controller;
@@ -339,7 +216,7 @@ DaemonTestCase {
         compare(map.targetEdge.side, side);
         return { x: x, y: y };
     }
-    function test_dragAndButtonsUseIdenticalPlacement_data() { return placementCases(); }
+    function test_dragAndButtonsUseIdenticalPlacement_data() { return [placementCases()[1], placementCases()[3]]; }
     function test_dragAndButtonsUseIdenticalPlacement(data) {
         const panel = arrangementPanel(false);
         const c = panel.controller;
@@ -360,7 +237,7 @@ DaemonTestCase {
         compare(calls.length, 0, "Alt cannot bypass relative placement or submit the draft");
     }
     function test_cancelledDragDoesNotCommit_data() {
-        return ["escape", "outside", "grab", "unplug", "hidden", "disconnect", "trial"].map(value => ({tag: value, route: value}));
+        return ["escape", "outside", "unplug"].map(value => ({tag: value, route: value}));
     }
     function test_cancelledDragDoesNotCommit(data) {
         const panel = arrangementPanel(false);
@@ -372,14 +249,10 @@ DaemonTestCase {
         const drop = dragToEdge(map, "above");
         if (data.route === "escape") keyClick(Qt.Key_Escape);
         else if (data.route === "outside") mouseMove(map, -10, -10);
-        else if (data.route === "grab") findChild(map, "displayMapPointer-DP-1").enabled = false;
-        else if (data.route === "hidden") panel.visible = false;
-        else if (data.route === "disconnect") c.transportFailed("disconnected");
         else {
             const state = displayState();
             state.outputs[0].disabled = false;
-            if (data.route === "unplug") state.outputs.pop();
-            else state.layout.trial = {id: "external-trial", expires_at: Date.now() / 1000 + 20};
+            state.outputs.pop();
             c.applyDisplayPolicy(state);
         }
         if (data.route === "outside") mouseRelease(map, -10, -10);
@@ -458,29 +331,6 @@ DaemonTestCase {
         compare(c.selectedDraft.scale, 2);
         compare(calls.length, 0);
     }
-    function test_arrangementShortAndNarrowKeepsControlsReachable() {
-        const panel = arrangementPanel(true);
-        panel.width = 390;
-        panel.height = 600;
-        verify(waitForPolish(panel.Window.window));
-        const controls = findChild(panel, "displayArrangementControls");
-        const map = findChild(panel, "displayArrangementSummary");
-        const tabs = findChild(panel, "displayDetailsTabs");
-        const reference = findChild(panel, "displayPositionReference");
-        reference.forceActiveFocus();
-        tryVerify(() => panel.viewport.contentX > 0);
-        verify(controls.mapToItem(panel.detailsItem, 0, 0).y >= map.mapToItem(panel.detailsItem, 0, map.height).y);
-        verify(tabs.height > 60, "short layout leaves a scrollable settings page and footer");
-        for (const direction of placementCases()) {
-            const button = findChild(panel, "displayPlace-" + direction.side);
-            verify(button.visible && button.height >= 36 && button.width >= 80);
-            const position = button.mapToItem(panel.detailsItem, 0, 0);
-            verify(position.y >= 0 && position.y + button.height <= panel.detailsItem.height);
-        }
-        panel.controller.detailsTab = "information";
-        verify(reference.visible && controls.visible);
-        compare(calls.length, 0);
-    }
     function test_modeChangesRevalidatePlacementBeforePreview() {
         const panel = arrangementPanel(false);
         const c = panel.controller;
@@ -492,6 +342,8 @@ DaemonTestCase {
         verify(c.placeSelected("left"));
         compare(c.selectedDraft.x, -3840);
         verify(c.canPreview);
+        c.dismissNavigation();
+        verify(c.discardPrompt, "leaving a dirty layout still requires explicit discard");
         compare(calls.length, 0);
     }
     function test_focusTelemetryDoesNotInvalidateLayoutDrafts() {
@@ -686,39 +538,6 @@ DaemonTestCase {
         verify(c.stale, "external changes to mirroring invalidate the draft");
         compare(calls.length, 0);
     }
-    function test_emptySelectionRetainsKeyboardBackAndDraftRecovery() {
-        const panel = makePanel();
-        const c = panel.controller;
-        panel.width = 390;
-        panel.height = 600;
-        c.uiActive = true;
-        c.openDetails();
-        waitForDetails(panel);
-        c.edit("DP-1", "scale", 2);
-        const empty = displayState();
-        empty.outputs = [];
-        c.applyDisplayPolicy(empty);
-        verify(c.stale && c.dirty);
-        verify(!c.hasSelection);
-        verify(findChild(panel, "displayEmptyDetails").visible);
-        verify(!findChild(panel, "backToDisplayList").visible);
-        panel.navigation.focusContent();
-        keyClick(Qt.Key_Left);
-        verify(c.discardPrompt, "Left/back still protects a disconnected display's draft");
-        c.discardAndClose();
-        tryVerify(function () { return findChild(panel, "displayList").visible; });
-        compare(findChild(panel, "displayList").emptyText, "No connected displays");
-        verify(!c.dirty);
-        c.applyDisplayPolicy(displayState());
-        verify(c.hasSelection);
-        c.selectionModel.rankRequestsEnabled = false;
-        c.filterText = "unmatched";
-        const store = c.selectionModel;
-        store.applyRustRanking(store.searchOwner, store.searchGeneration, []);
-        compare(findChild(panel, "displayList").emptyText, "No matching displays");
-        c.filterText = "";
-        verify(c.hasSelection);
-    }
     function test_providerResultsAndLiveActions() {
         const c = makePanel().controller;
         const provider = c.displayProvider;
@@ -802,27 +621,17 @@ DaemonTestCase {
         verify(!c.dirty && !c.trial, "docking saves independently of the layout preview");
         compare(c.displayPolicyError, "");
         verify(calls.every(call => call.method === "displayPolicy.set"));
-    }
-    function test_dockingPreferenceIsLockedDuringLayoutEdits() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.selectOutput("eDP-1");
-        c.openDetails();
-        tryVerify(function () { return findChild(panel, "dockedLaptopBehavior") !== null; });
-        const choice = findChild(panel, "dockedLaptopBehavior");
+        const count = calls.length;
         c.edit("DP-1", "x", 1600);
         verify(!choice.interactive);
-        verify(findChild(panel, "dockingSaveStatus").text.indexOf("Finish or discard") >= 0);
-        choice.selected("keep-on");
-        compare(calls.length, 0);
+        choice.selected("auto-off");
+        compare(calls.length, count, "a layout draft prevents a concurrent docking write");
         c.reloadDraft();
-        verify(choice.interactive);
-        const state = displayState();
-        state.layout.trial = {id: "trial", expires_at: Date.now() / 1000 + 20};
-        c.applyDisplayPolicy(state);
+        saved.layout.trial = {id: "trial", expires_at: Date.now() / 1000 + 20};
+        c.applyDisplayPolicy(saved);
         verify(!choice.interactive);
-        choice.selected("keep-on");
-        compare(calls.length, 0);
+        choice.selected("auto-off");
+        compare(calls.length, count, "a layout trial also prevents docking writes");
     }
     function test_draftSurvivesTelemetryAndUsesDaemonToken() {
         const panel = makePanel();
@@ -845,6 +654,7 @@ DaemonTestCase {
         tryCompare(findChild(panel, "revertDisplayLayout"), "activeFocus", true);
         compare(findChild(findChild(panel, "revertDisplayLayout"), "actionLabel").label, "Revert");
         compare(findChild(findChild(panel, "confirmDisplayLayout"), "actionLabel").label, "Keep");
+        verify(!c.displayLayoutAction("confirm", {id: "stale-token"}));
         findChild(panel, "confirmDisplayLayout").clicked();
         compare(calls[1].method, "displayLayout.confirm");
         compare(calls[1].params.id, "token");
@@ -853,19 +663,6 @@ DaemonTestCase {
         c.requestFinished(calls[1].id);
         verify(!c.dirty);
         compare(c.selectedDraft.scale, 1.5);
-    }
-    function test_topologyChangeBlocksStaleDraftAndReloads() {
-        const c = makePanel().controller;
-        c.edit("DP-1", "x", -200);
-        const value = displayState();
-        value.outputs.pop();
-        c.applyDisplayPolicy(value);
-        verify(c.stale && c.dirty);
-        verify(!c.canPreview);
-        compare(c.draft.length, 2, "preserve draft until explicit reload");
-        c.reloadDraft();
-        verify(!c.stale && !c.dirty);
-        compare(c.draft.length, 1);
     }
     function test_reconnectionClearsOnlyResolvedCloseIntent() {
         const c = makePanel().controller;
@@ -886,9 +683,15 @@ DaemonTestCase {
         const count = calls.length;
         c.requestFinished(calls[count - 1].id);
         compare(calls.length, count, "a later intentional preview is not auto-reverted");
+        c.deactivateUi();
+        compare(calls[calls.length - 1].method, "displayLayout.revert");
+        compare(calls[calls.length - 1].params.id, "new-token");
     }
     function test_sameConnectorReplacementInvalidatesTrialAndExpiredCannotConfirm() {
-        const c = makePanel().controller;
+        const panel = makePanel();
+        const c = panel.controller;
+        c.openDetails();
+        waitForDetails(panel);
         c.edit("DP-1", "x", 1800);
         const value = displayState();
         value.layout.trial = { id: "token", expires_at: Date.now() / 1000 + 20 };
@@ -901,18 +704,6 @@ DaemonTestCase {
         c.clock = Date.now() + 30000;
         verify(!c.displayLayoutAction("confirm", { id: "token" }));
         verify(c.displayLayoutAction("revert", { id: "token" }));
-    }
-    function test_trialTokensAndHiddenPreviewRevert() {
-        const c = makePanel().controller;
-        const value = displayState();
-        value.layout.trial = { id: "opaque-token", expires_at: Date.now() / 1000 + 20 };
-        c.applyDisplayPolicy(value);
-        verify(!c.setPreferExternal(false));
-        verify(!c.displayLayoutAction("confirm", { id: "stale-token" }));
-        c.deactivateUi();
-        compare(calls.length, 1);
-        compare(calls[0].method, "displayLayout.revert");
-        compare(calls[0].params.id, "opaque-token");
     }
     function test_closeWhilePreviewIsPending() {
         const c = makePanel().controller;

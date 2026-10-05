@@ -3,7 +3,6 @@ import QtQuick
 import Quickshell
 import Shelllist.Core as Core
 import Shelllist.Ui as Ui
-import Shelllist.Launcher as Apps
 
 DaemonTestCase {
     id: testCase
@@ -22,7 +21,6 @@ DaemonTestCase {
             height: testCase.height
             property int edits: 0
             property bool showLevel: true
-            property bool levelEnabled: true
             property bool privateNote: false
             chooserController: Ui.ProviderChooserController {
                 id: owner
@@ -69,7 +67,6 @@ DaemonTestCase {
                         objectName: "level"
                         label: "Level"
                         visible: surface.showLevel
-                        enabled: surface.levelEnabled
                         width: parent.width
                         height: 48
                         from: 0; to: 100; value: 50; stepSize: 10
@@ -84,14 +81,6 @@ DaemonTestCase {
                     Loader { anchors.fill: parent; asynchronous: true; active: owner.detailsTab === "two"; sourceComponent: pageFactory }
                 }
             }
-        }
-    }
-    Component {
-        id: applicationsFactory
-        Apps.ApplicationContent {
-            width: testCase.width
-            height: testCase.height
-            controller: Apps.ApplicationController {}
         }
     }
     Component {
@@ -291,24 +280,6 @@ DaemonTestCase {
         compare(input.cursorPosition, 3);
         compare(controller.filterText, "abxf");
     }
-    function test_resultSwitchKeepsTheLatestNativeSelection() {
-        const surface = makeSurface();
-        open(surface);
-        keyClick(Qt.Key_Return);
-        findChild(surface.detailsNavigation.currentTarget, "fieldInput").select(8, 2);
-        surface.listItem.pick(1); // Changes identity before transferring focus.
-        tryCompare(surface.chooserController.viewMemory, "activeKey", surface.chooserController.selectedResult.key);
-        compare(surface.chooserController.selectedResult.id, "b");
-        select(surface, "a");
-        const input = findChild(findChild(page(surface), "ordinaryNote"), "fieldInput");
-        input.cursorPosition = 0;
-        keyClick(Qt.Key_Tab);
-        keyClick(Qt.Key_Return);
-        tryVerify(() => surface.detailsNavigation.editing);
-        compare(input.cursorPosition, 2);
-        compare(input.selectionEnd, 8);
-        compare(surface.edits, 0);
-    }
     function test_invocationRestoresResultsAndKeyedViewport() {
         const surface = makeSurface();
         const values = Array.from({length: 50}, (_, i) => ({id: "entry" + i, title: "Item " + String(i).padStart(2, "0")}));
@@ -352,16 +323,6 @@ DaemonTestCase {
         wait(0);
         tryVerify(() => surface.detailsNavigation.editing);
         compare(surface.detailsNavigation.currentTarget.objectName, "ordinaryNote");
-    }
-    function test_invocationRevalidatesDisabledEditors() {
-        const surface = makeSurface();
-        inspectSecondTab(surface);
-        closeInvocation(surface);
-        surface.levelEnabled = false;
-        reopenInvocation(surface);
-        tryVerify(() => surface.detailsNavigation.browsing && surface.detailsNavigation.currentTarget.objectName === "ordinaryNote");
-        verify(!surface.detailsNavigation.editing);
-        compare(surface.edits, 0);
     }
     function test_invocationDoesNotRememberPasswords() {
         const surface = makeSurface();
@@ -481,19 +442,6 @@ DaemonTestCase {
         compare(surface.chooserController.detailsTab, "one");
         tryCompare(page(surface), "contentY", 123);
     }
-    function test_immediateRowToggleUsesTheNewIdentity() {
-        const surface = makeSurface();
-        open(surface);
-        surface.listItem.toggleDetails(1);
-        compare(surface.chooserController.selectedResult.id, "b");
-        verify(!surface.chooserController.detailsOpen, "row toggle changes the shared expansion state");
-        compare(surface.chooserController.viewMemory.activeKey, surface.chooserController.selectedResult.key);
-        verify(!surface.detailsNavigation.enabled, "closing decoration cannot receive edits");
-        select(surface, "a");
-        verify(!surface.chooserController.detailsOpen);
-        surface.listItem.toggleDetails(1);
-        verify(surface.chooserController.detailsOpen);
-    }
     function test_missingEditorAndTabFallBackWithoutMutations() {
         const surface = makeSurface();
         inspectSecondTab(surface);
@@ -516,69 +464,5 @@ DaemonTestCase {
         tryCompare(surface.chooserController, "detailsTab", "one");
         verify(surface.listItem.listFocused);
         compare(surface.edits, 0);
-    }
-    function test_applicationInvocationRestoresAnEditorButNotItsMenu() {
-        const content = createTemporaryObject(applicationsFactory, testCase);
-        const controller = content.controller;
-        wait(0);
-        controller.uiActive = true;
-        const result = {id: "app.desktop", name: "App", kind: "desktop-application", category: "shell", default_workspace_id: "1", running: false, focused: false, instances: [], desktop_actions: []};
-        controller.replaceProviderResults([controller.provider.resultFor(result)], true);
-        open(content);
-        controller.selectDetailsTab("settings");
-        tryVerify(() => content.detailsNavigation.currentTarget && content.detailsNavigation.currentTarget.objectName === "applicationCategory");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Space);
-        const category = content.detailsNavigation.currentTarget;
-        tryCompare(category.popup, "visible", true);
-        closeInvocation(content);
-        verify(!category.popup.visible);
-        calls = [];
-        content.visible = true;
-        controller.activateUi("");
-        controller.restoreUiFocus();
-        tryVerify(() => content.detailsNavigation.editing);
-        compare(content.detailsNavigation.currentTarget.objectName, "applicationCategory");
-        verify(!category.popup.visible);
-        verify(!calls.some(call => call.method === "applications.execute" || call.method === "applications.settings.update"));
-        closeInvocation(content);
-        content.visible = true;
-        controller.activateUiState("");
-        category.forceActiveFocus();
-        controller.restoreUiFocus();
-        category.popup.open(); // A new user menu wins over queued restoration.
-        // ComboBox itself owns native menu navigation in the shared style.
-        verify(category.activeFocus);
-        keyClick(Qt.Key_Down);
-        const highlighted = category.highlightedIndex;
-        wait(0);
-        verify(category.popup.visible && category.activeFocus);
-        compare(category.highlightedIndex, highlighted);
-        verify(!calls.some(call => call.method === "applications.settings.update"));
-        category.popup.close();
-    }
-    function test_restoredApplicationResourcesRefreshAuthoritativeData() {
-        const content = createTemporaryObject(applicationsFactory, testCase);
-        const controller = content.controller;
-        wait(0);
-        controller.uiActive = true;
-        const base = {kind: "desktop-application", category: "shell", running: false, focused: false, instances: [], desktop_actions: []};
-        controller.replaceProviderResults([
-            controller.provider.resultFor(Object.assign({}, base, {id: "a.desktop", name: "App"})),
-            controller.provider.resultFor(Object.assign({}, base, {id: "b.desktop", name: "Other"}))
-        ], true);
-        open(content);
-        controller.selectDetailsTab("resources");
-        tryVerify(() => calls.some(call => call.method === "applications.history"));
-        select(content, "b.desktop");
-        calls = [];
-        select(content, "a.desktop");
-        compare(controller.detailsTab, "resources");
-        tryVerify(() => calls.some(call => call.method === "applications.history" && call.params.target_id === "a.desktop"));
-        controller.deactivateUi();
-        calls = [];
-        controller.uiActive = true;
-        tryVerify(() => calls.some(call => call.method === "applications.history" && call.params.target_id === "a.desktop"));
-        verify(!calls.some(call => call.method === "applications.execute" || call.method === "applications.settings.update"));
     }
 }

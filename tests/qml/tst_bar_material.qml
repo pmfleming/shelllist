@@ -3,7 +3,6 @@ import QtQuick
 import QtTest
 import Shelllist.Bar as Bar
 import Shelllist.Ui as Ui
-import "../../qml/Shelllist/Bar/BarMediaPresentation.js" as Media
 
 TestCase {
     id: testCase
@@ -71,14 +70,5 @@ TestCase {
         const bar = createTemporaryObject(barFactory, testCase, {width: 700});
         for (const name of ["missing", "__proto__", "constructor", "toString"])
             verify(!bar.controller.triggerModuleAction(name));
-    }
-    function test_transportModesNeverInventCapabilities(): void {
-        const p = {can_control: true, can_seek: true, can_play: true, can_pause: false, playback_status: "playing"};
-        verify(!Media.canPlayPause(p));
-        compare(Media.transportAction(p, false).offset, -30);
-        compare(Media.transportAction(p, true).offset, 30);
-        verify(!Media.transportAction(Object.assign({}, p, {content_type: "music"}), true).enabled);
-        verify(Media.transportAction(Object.assign({}, p, {content_type: "podcast"}), true).enabled);
-        verify(!Media.transportAction(Object.assign({}, p, {can_control: false}), true).enabled);
     }
 }

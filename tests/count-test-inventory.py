@@ -22,16 +22,18 @@ def source(name):
 
 
 names = (git("ls-tree", "-r", "--name-only", args.revision).splitlines() if args.revision
-         else [str(path.relative_to(root)) for directory in ("tests", "rust")
-               for path in (root / directory).rglob("*") if path.is_file()])
+         else [str(path.relative_to(root)) for directory in ("tests", "rust", "portal-launcher")
+               for path in (root / directory).rglob("*")
+               if path.is_file() and "target" not in path.relative_to(root).parts])
 # This expression is unchanged from the previous pruning inventory. Calls in
 # loops/helpers count once per source site, not once per runtime invocation.
 assertion = r"^\s*(?:assert\.\w+|expect|expectState|equal|near|ok|throws|compare)\("
 javascript = sum(len(re.findall(assertion, source(name), re.M)) for name in names
                  if re.fullmatch(r"tests/check-.*\.js", name)
                  and name != "tests/check-packaged-imports.js")
-rust = sum(len(re.findall(r"^\s*#\[test\]", source(name), re.M)) for name in names
-           if name.startswith("rust/") and name.endswith(".rs"))
+# Include the native portal executor and async tests added since the last census.
+rust = sum(len(re.findall(r"^\s*#\[(?:test|tokio::test)\]", source(name), re.M)) for name in names
+           if name.startswith(("rust/", "portal-launcher/")) and name.endswith(".rs"))
 python = sum(len(re.findall(r"^\s*def test_\w+\(", source(name), re.M)) for name in names
              if re.fullmatch(r"tests/test_.*\.py", name))
 # Contract declarations may use the shared apiContract builder or an inline derivation.

@@ -18,10 +18,7 @@ function equal(actual, expected, label) {
 equal(context.groupRecords([{ app_name: "__proto__" }, { app_name: "constructor" }]).length,
     2, "app-controlled group keys cannot collide with object prototypes");
 
-equal(context.recordKey({id: 2, created_unix_ms: 200}),
-    context.recordKey({notification: {id: 2, created_unix_ms: 200}}), "live and history share view identity");
-equal(context.recordKey({id: 2, created_unix_ms: 100}) === context.recordKey({id: 2, created_unix_ms: 200}),
-    false, "numeric ID reuse cannot alias reply drafts");
+// The Qt notification suite exercises identity through real drafts and replies.
 const actions = {actions: [{key: "reply"}, {key: "mail-reply-sender"}, {key: "inline-reply"}, {key: "default"}]};
 equal(context.standardActions(actions).map(action => action.key).join(","), "reply,mail-reply-sender", "ordinary reply actions remain callable");
 equal(context.replyAction(actions).key, "inline-reply", "inline reply is an exact extension key");

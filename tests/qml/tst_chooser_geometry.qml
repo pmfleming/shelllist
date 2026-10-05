@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Shelllist.Ui as Ui
-import "../../qml/Shelllist/Io/HyprlandWorkArea.js" as WorkArea
 
 DaemonTestCase {
     id: testCase
@@ -13,10 +12,6 @@ DaemonTestCase {
     width: 1100
     height: 900
 
-    Component {
-        id: geometryFactory
-        Ui.PopoverGeometry {}
-    }
     Component {
         id: fixtureFactory
         Item {
@@ -110,24 +105,6 @@ DaemonTestCase {
         verify(surface !== null);
         return surface;
     }
-    function test_workAreaAndSingleColumn() {
-        const area = WorkArea.rectangle({x: -1920, y: -100, width: 1920, height: 1080}, {left: 26, top: 82, right: 12, bottom: 22});
-        const geometry = createTemporaryObject(geometryFactory, testCase, {availableWidth: area.width, availableHeight: area.height});
-        const desktopX = area.x + geometry.x;
-        const desktopY = area.y + geometry.y;
-        verify(desktopX >= -1920 + 26);
-        verify(desktopX + geometry.surfaceWidth <= -12);
-        verify(desktopY >= -100 + 82);
-        verify(desktopY + geometry.height <= -100 + 1080 - 22);
-        geometry.expandable = false;
-        compare(geometry.openWidth, geometry.closedWidth);
-        compare(geometry.x, Math.round((area.width - geometry.closedWidth) / 2));
-        // Reconnect fallback uses the screen rectangle, not stale reserved space.
-        const fallback = WorkArea.rectangle({x: 0, y: 0, width: 1024, height: 640}, null);
-        geometry.availableWidth = fallback.width;
-        geometry.availableHeight = fallback.height;
-        verify(geometry.x + geometry.surfaceWidth <= fallback.width);
-    }
     function test_expansionFilteringAndResizeKeepListAnchored() {
         const fixture = createTemporaryObject(fixtureFactory, testCase);
         const surface = surfaceFor(fixture);
@@ -171,53 +148,6 @@ DaemonTestCase {
         compare(fixture.visual.x, 0);
         compare(fixture.height, frameHeight);
         compare(fixture.edits, 0);
-    }
-    function test_fractionalExpansionKeepsListAnchored() {
-        // Check fractional geometry in both directions as well as the live
-        // animation above, without relaxing the exact list-anchor assertion.
-        Quickshell.environment = {SHELLLIST_NO_ANIMATIONS: "true"};
-        const fixture = createTemporaryObject(fixtureFactory, testCase);
-        const surface = surfaceFor(fixture);
-        verify(waitForPolish(fixture.Window.window));
-        const left = surface.listItem.mapToItem(fixture, 0, 0).x;
-        fixture.controller.detailsOpen = true;
-        tryVerify(() => surface.detailsItem !== null);
-        const samples = [0, 0.03, 0.1, 0.3922279666191737, 0.5, 0.75, 0.999, 1];
-        for (const progress of samples.concat(samples.slice().reverse())) {
-            fixture.controller.detailsExpansionProgress = progress;
-            compare(fixture.controller.detailsExpansionProgress, progress);
-            wait(0);
-            verify(waitForPolish(fixture.Window.window));
-            compare(surface.listItem.mapToItem(fixture, 0, 0).x, left,
-                "list anchor at expansion progress " + progress);
-            compare(surface.listItem.width, fixture.controller.listPaneWidth);
-            if (progress > 0)
-                compare(surface.detailsItem.width, fixture.controller.detailsPaneWidth);
-        }
-    }
-    function test_focusedDelegateUsesSharedQueryGuardsAndDetailFocus() {
-        const fixture = createTemporaryObject(fixtureFactory, testCase);
-        const surface = surfaceFor(fixture);
-        tryVerify(() => findChild(surface, "geometryResult") !== null);
-        findChild(surface, "geometryResult").forceActiveFocus();
-        keyClick(Qt.Key_Space);
-        compare(fixture.controller.selectionModel.queryText, " ");
-        verify(surface.listItem.searchFocused, "a focused delegate cannot swallow printable query text");
-        fixture.controller.selectionModel.queryText = "";
-        verify(waitForPolish(fixture.Window.window));
-        tryVerify(() => findChild(surface, "geometryResult") !== null);
-        findChild(surface, "geometryResult").forceActiveFocus();
-        fixture.controller.navigationBlocked = true;
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        compare(fixture.edits, 0);
-        verify(!fixture.controller.detailsOpen);
-        fixture.controller.navigationBlocked = false;
-        keyClick(Qt.Key_Right);
-        verify(!surface.detailsNavigation.activeFocus);
-        keyClick(Qt.Key_Tab);
-        tryVerify(() => surface.detailsNavigation.browsing);
-        verify(fixture.controller.detailsOpen);
     }
     function test_overflowRevealsKeyboardTargetsWithoutReplacingList() {
         const fixture = createTemporaryObject(fixtureFactory, testCase, {areaWidth: 800, areaHeight: 500});

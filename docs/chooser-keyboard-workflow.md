@@ -209,5 +209,9 @@ the reference dropdown is an ordinary editable field: Enter/Tab saves the target
 selection, Escape discards it, and changing the target alone never moves a screen.
 Pointer edge-dragging uses a transient ghost, committing to the draft only on a
 valid drop; Escape cancels the gesture without also closing details. Preview stays
-the explicit backend boundary. Native tests cover all four commands/drop edges,
-reference save/discard, guards, cancellation, and narrow-view focus revelation.
+the explicit backend boundary. Native tests retain representative command/drop
+routes, reference save/discard, guards and cancellation; JavaScript checks cover
+all four directional calculations and fractional/rotated placement. Shared
+geometry tests cover overflow revelation rather than repeating a per-panel size
+matrix. The [2026-10-05 test review](reviews/test-pruning-2026-10-05.md) records
+reduced coverage; the interaction contract itself is unchanged.

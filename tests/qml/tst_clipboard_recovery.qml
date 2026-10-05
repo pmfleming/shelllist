@@ -248,6 +248,10 @@ DaemonTestCase {
         details.load();
         compare(details.editDraft, "Draft at disconnect");
         verify(details.editing && details.editDirty);
+        controller.uiActive = false;
+        calls = [];
+        backend.transportReady();
+        compare(calls.length, 0, "hidden consumers do not open a session on recovery");
     }
     function test_nativeSearchLoadsOnlyRequestedPagesAndFencesOldQueries() {
         const controller = makeController();
@@ -413,13 +417,6 @@ DaemonTestCase {
         compare(historyCalls()[1].params.cursor, null);
     }
 
-    function test_hiddenTransportReadyDoesNotOpenClipboardSession() {
-        const controller = makeController();
-        controller.uiActive = false;
-        calls = [];
-        findChild(controller, "clipboardBackend").transportReady();
-        compare(calls.length, 0);
-    }
     function test_failedSaveRetriesWithFreshLeaseAndKeepsVisibleDraft() {
         const controller = makeController();
         const details = controller.detailState;
@@ -464,31 +461,17 @@ DaemonTestCase {
         compare(editor.text, "Updated failed draft");
         verify(!details.saveInFlight);
     }
-    function test_lateCommitFailureDoesNotLoseDraftAfterLeavingEditor() {
+    function test_failedDraftSurvivesReloadAndConflictUntilDiscarded() {
         const controller = makeController();
         const details = controller.detailState;
         verify(details.beginEdit());
-        reply(controller, "edit-begin", {
-            edit: {
-                id: "lease-1",
-                value: "Original"
-            }
-        });
-        details.updateEditDraft("Draft sent before leaving");
+        reply(controller, "edit-begin", {edit: {id: "lease-1", value: "Original"}});
+        details.updateEditDraft("Keep this draft");
         verify(details.commitEdit());
         details.clear();
         reply(controller, "edit-commit", {}, "Disk full");
         details.load();
-        compare(details.editDraft, "Draft sent before leaving");
-        verify(details.editing && details.editDirty);
-    }
-    function test_failedDraftSurvivesReloadAndConflictUntilDiscarded() {
-        const controller = makeController();
-        const details = controller.detailState;
-        failEdit(controller);
-        details.clear();
-        details.load();
-        compare(details.editDraft, "Keep this draft");
+        compare(details.editDraft, "Keep this draft", "a late failure must survive leaving the editor");
         verify(details.editing && details.editDirty);
         verify(details.retryEdit());
         reply(controller, "edit-begin", {}, "Entry changed elsewhere");

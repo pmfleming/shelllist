@@ -105,147 +105,6 @@ DaemonTestCase {
         id: adapterPageComponent
         Bt.BluetoothAdapterPage {}
     }
-    Component {
-        id: contentComponent
-        Bt.BluetoothContent {}
-    }
-    function sessionContent(adapter, empty) {
-        const panel = makePanel();
-        panel.page.visible = false;
-        const controller = panel.controller;
-        controller.uiActive = true;
-        if (empty)
-            controller.applySnapshot({radio: controller.radio, adapters: controller.adapters, devices: []});
-        const content = createTemporaryObject(contentComponent, panel, {controller: controller, width: 1100, height: 900});
-        if (adapter) {
-            controller.openBluetoothSettings();
-            controller.adapterSettingsTab = "pairing";
-        } else {
-            controller.openDetails();
-            controller.detailsTab = "settings";
-        }
-        // Incubation exposes named children before completion handlers and
-        // layout have finished. Establish the editor only after the page is ready.
-        tryVerify(() => content.detailsItem !== null);
-        tryVerify(() => content.detailsNavigation.contentReady);
-        verify(waitForPolish(content.Window.window));
-        const name = adapter ? "adapterNameInput" : "deviceNameInput";
-        tryVerify(() => findChild(content, name) !== null);
-        tryCompare(findChild(content, name), "text", adapter ? "Adapter" : "Buds");
-        content.detailsNavigation.currentTarget = findChild(content, name);
-        content.detailsNavigation.focusContent();
-        keyClick(Qt.Key_Return);
-        verify(content.detailsNavigation.editing);
-        const input = findChild(content.detailsNavigation.currentTarget, "fieldInput");
-        compare(input.text, adapter ? "Adapter" : "Buds");
-        input.select(3, 1);
-        compare(input.cursorPosition, 1);
-        return content;
-    }
-    function closeSession(content) {
-        content.controller.prepareUiDeactivation();
-        content.visible = false;
-        testCase.forceActiveFocus();
-        content.controller.deactivateUi();
-        wait(0);
-    }
-    function startSession(content) {
-        content.visible = true;
-        content.controller.activateUi("");
-        content.controller.restoreUiFocus();
-        verify(!content.sessionReady);
-        tryVerify(() => content.detailsNavigation.browsing);
-        verify(!content.detailsNavigation.editing);
-    }
-    function finishSessionRefresh(content) {
-        const controller = content.controller;
-        findChild(controller, "bluetoothBackend").acceptSharedResponse("snapshot", {
-            protocol: "bt-api", version: 1, ok: true,
-            data: {snapshot: {radio: controller.radio, adapters: controller.adapters, devices: controller.allDevices}}
-        }, "");
-    }
-    function test_invocationWaitsForRefreshWithoutReplayingEdits_data() {
-        return [{tag: "device", adapter: false}, {tag: "adapter-empty", adapter: true, empty: true}];
-    }
-    function test_invocationWaitsForRefreshWithoutReplayingEdits(data) {
-        const content = sessionContent(data.adapter, data.empty);
-        closeSession(content);
-        compare(content.controller.focusMemory.location.selection, {cursor: 1, anchor: 3});
-        calls = [];
-        startSession(content);
-        finishSessionRefresh(content);
-        tryVerify(() => content.detailsNavigation.editing);
-        compare(content.detailsNavigation.currentTarget.objectName, data.adapter ? "adapterNameInput" : "deviceNameInput");
-        const input = findChild(content.detailsNavigation.currentTarget, "fieldInput");
-        compare(input.cursorPosition, 1);
-        compare(input.selectionEnd, 3);
-        verify(calls.every(call => call.method === "bluetooth.snapshot"), "restoration performs no rename, policy or adapter write");
-        verify(content.controller.viewMemory.enabled);
-        compare(content.controller.viewMemory, data.adapter ? content.controller.adapterMemory : content.controller.deviceMemory);
-    }
-    function test_changedAdapterCannotInheritAnInvocationEditor() {
-        const content = sessionContent(true);
-        const controller = content.controller;
-        closeSession(content);
-        controller.applySnapshot({radio: controller.radio, adapters: [{key: "usb", alias: "Other", powered: true}], devices: []});
-        content.visible = true;
-        controller.activateUi("");
-        controller.restoreUiFocus();
-        tryVerify(() => content.listItem.searchFocused);
-        finishSessionRefresh(content);
-        wait(0);
-        verify(content.listItem.searchFocused);
-        verify(!content.detailsNavigation.editing);
-        compare(controller.selectedAdapter.key, "usb");
-    }
-    function test_newNavigationWinsOverRefreshCompletion() {
-        const content = sessionContent(false);
-        closeSession(content);
-        startSession(content);
-        content.cycleRegion(false);
-        verify(content.detailsNavigation.browsing);
-        const target = content.detailsNavigation.currentTarget.objectName;
-        finishSessionRefresh(content);
-        content.controller.restoreUiFocus();
-        wait(0);
-        verify(content.detailsNavigation.browsing);
-        compare(content.detailsNavigation.currentTarget.objectName, target);
-        verify(!content.detailsNavigation.editing);
-    }
-    function test_pairingPromptCannotReplaceOrdinaryInvocationFocus() {
-        const content = sessionContent(false);
-        const controller = content.controller;
-        controller.handlePairingEvent({event: "requested", data: {
-            request_id: "focus-secret", device_key: "buds", kind: "pin-code", response_required: true
-        }});
-        controller.pairingInput = "private-value";
-        tryVerify(() => controller.pairingPromptOpen && !content.detailsNavigation.activeFocus);
-        calls = [];
-        closeSession(content);
-        compare(controller.pairingInput, "");
-        compare(controller.focusMemory.region, "details");
-        compare(controller.focusMemory.location.target, "deviceNameInput");
-        verify(controller.focusMemory.location.editing);
-        verify(!JSON.stringify(controller.focusMemory).includes("private-value"));
-        verify(!JSON.stringify(controller.focusMemory).includes("focus-secret"));
-        compare(calls.length, 1);
-        compare(calls[0].method, "bluetooth.pairing.respond");
-        compare(calls[0].params.accept, false);
-        compare(calls[0].params.value, undefined);
-        findChild(controller, "bluetoothBackend").acceptSharedResponse("pairing-cancel-focus-secret", {
-            protocol: "bt-api", version: 1, ok: true, data: {}
-        }, "");
-        startSession(content);
-        controller.replacePairingPrompts([{request_id: "focus-secret", response_required: true}]);
-        verify(!controller.pairingPromptOpen);
-        finishSessionRefresh(content);
-        tryVerify(() => content.detailsNavigation.editing);
-        compare(content.detailsNavigation.currentTarget.objectName, "deviceNameInput");
-        const input = findChild(content.detailsNavigation.currentTarget, "fieldInput");
-        compare(input.cursorPosition, 1);
-        compare(input.selectionEnd, 3);
-        verify(!controller.modalPromptOpen);
-    }
     function test_surfaceCloseClearsSecretsAndFencesLatePairingRecovery() {
         const panel = makePanel();
         const controller = panel.controller;
@@ -302,6 +161,11 @@ DaemonTestCase {
                 response_required: true
             }
         });
+        const sink = controller.selectedSink;
+        controller.applySnapshot({radio: controller.radio, adapters: controller.adapters,
+            devices: [Object.assign({}, controller.selectedDevice, {connected: false})]});
+        verify(!controller.setAudioDefault(sink), "cached audio endpoints cannot outlive connection capability");
+        verify(!controller.setAudioProfile({key: "sbc"}));
         controller.invalidateBluetooth("BlueZ unavailable");
         verify(!controller.hasSelection);
         verify(controller.globalRequestInFlight);
@@ -379,6 +243,14 @@ DaemonTestCase {
         });
         controller.pairingInput = "123456";
         verify(controller.respondPairing(true));
+        findChild(controller, "bluetoothBackend").acceptSharedResponse("pairing-response", {
+            protocol: "bt-api", version: 1, ok: false,
+            error: {code: "pairing-response-rejected", message: "Try again"}
+        }, "");
+        verify(!controller.pairingResponsePending);
+        compare(controller.pairingPrompt.request_id, "a");
+        compare(controller.pairingInput, "123456");
+        verify(controller.respondPairing(true));
         controller.handlePairingEvent({
             event: "requested",
             data: {
@@ -401,43 +273,6 @@ DaemonTestCase {
         compare(controller.pairingInput, "654321");
         verify(controller.respondPairing(true));
         compare(calls[calls.length - 1].params.request_id, "b");
-    }
-    function test_failedPairingResponseKeepsPromptAndInput() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        controller.handlePairingEvent({
-            event: "requested",
-            data: {
-                request_id: "a",
-                device_key: "buds",
-                kind: "passkey",
-                response_required: true
-            }
-        });
-        controller.pairingInput = "123456";
-        verify(controller.respondPairing(true));
-        verify(controller.pairingResponsePending);
-        findChild(controller, "bluetoothBackend").acceptSharedResponse("pairing-response", {
-            protocol: "bt-api",
-            version: 1,
-            ok: false,
-            error: {
-                code: "pairing-response-rejected",
-                message: "Try again"
-            }
-        }, "");
-        verify(!controller.pairingResponsePending);
-        compare(controller.pairingPrompt.request_id, "a");
-        compare(controller.pairingInput, "123456");
-        verify(controller.respondPairing(true));
-    }
-    function test_defaultRouteUsesOpaqueKeys() {
-        const controller = makePanel().controller;
-        verify(controller.setAudioDefault(controller.selectedSink));
-        compare(calls.length, 1);
-        compare(calls[0].method, "bluetooth.audio.setDefault");
-        compare(calls[0].params.device_key, "buds");
-        compare(calls[0].params.endpoint_key, "output");
     }
     function setupAudioProfile(panel) {
         panel.controller.applyAudioSnapshot([
@@ -469,7 +304,18 @@ DaemonTestCase {
         const backend = findChild(panel.controller, "bluetoothBackend");
         compare(findChild(panel.page, "audioProfileOnConnect"), null);
         compare(profile.value, "sbc");
-        profile.activated(profile.optionIndex("aac"));
+        profile.activated(profile.optionIndex("unavailable"));
+        compare(calls.length, 0);
+        profile.selected("aac");
+        backend.acceptSharedResponse("audio-set-profile", {
+            protocol: "bt-api", version: 1, ok: false,
+            error: {message: "Profile unavailable"}
+        }, "");
+        compare(calls.length, 1, "a rejected profile must not be remembered");
+        compare(profile.value, "sbc");
+        verify(profile.interactive);
+        calls = [];
+        profile.selected("aac");
         compare(calls.length, 1);
         compare(calls[0].method, "bluetooth.audio.setProfile");
         compare(calls[0].params.device_key, "buds");
@@ -512,27 +358,6 @@ DaemonTestCase {
         }, "");
         verify(!backend.requestRunning);
         compare(panel.controller.status, "Bluetooth audio profile updated and remembered");
-    }
-    function test_failedAudioProfileIsNotRemembered() {
-        const panel = makePanel();
-        const profile = setupAudioProfile(panel);
-        const backend = findChild(panel.controller, "bluetoothBackend");
-        profile.activated(profile.optionIndex("unavailable"));
-        compare(calls.length, 0);
-        profile.selected("aac");
-        backend.acceptSharedResponse("audio-set-profile", {
-            protocol: "bt-api",
-            version: 1,
-            ok: false,
-            error: {
-                message: "Profile unavailable"
-            }
-        }, "");
-        compare(calls.length, 1);
-        compare(backend.pendingAudioProfile, null);
-        compare(profile.value, "sbc");
-        verify(profile.interactive);
-        compare(panel.controller.status, "Profile unavailable");
     }
     function test_audioProfileSaveFailureIsReported() {
         const panel = makePanel();
@@ -734,90 +559,6 @@ DaemonTestCase {
         const draft = controller.nameEdits.draft("buds");
         compare(draft.value, "Keep on disconnect");
         verify(draft.dirty && !draft.pending && draft.error.length > 0);
-    }
-    function test_headsetAudioLayoutSurvivesDisconnect() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const audio = {
-            device_key: "buds",
-            active_profile_key: "sbc",
-            profiles: [
-                {
-                    key: "sbc",
-                    label: "High fidelity",
-                    codec: "SBC"
-                }
-            ],
-            sink: {
-                key: "output",
-                ready: true
-            },
-            source: {
-                key: "input",
-                ready: true
-            }
-        };
-        controller.applyAudioSnapshot([audio]);
-        const card = findChild(panel.page, "deviceAudio");
-        const profile = findChild(panel.page, "currentAudioProfile");
-        const codec = findChild(panel.page, "audioCodec");
-        const output = findChild(panel.page, "useAudioOutput");
-        const input = findChild(panel.page, "useAudioInput");
-        // Geometry assertions must wait for nested layouts, not just queued events.
-        verify(waitForPolish(panel.Window.window));
-        const height = card.height;
-        const outputY = output.mapToItem(card, 0, 0).y;
-        verify(profile.interactive && output.enabled && input.enabled);
-        const connectedDevice = controller.selectedDevice;
-        controller.applySnapshot({
-            radio: controller.radio,
-            adapters: controller.adapters,
-            devices: [Object.assign({}, connectedDevice, {
-                    connected: false
-                })]
-        });
-        // Even before the audio removal event, stale live routes cannot be used.
-        verify(!profile.interactive && !output.enabled && !input.enabled);
-        verify(!controller.setAudioDefault(audio.sink));
-        verify(!controller.setAudioProfile(audio.profiles[0]));
-        controller.applyAudioSnapshot([]);
-        verify(waitForPolish(panel.Window.window));
-        verify(card.visible && profile.visible && codec.visible && output.visible && input.visible);
-        compare(card.height, height);
-        compare(output.mapToItem(card, 0, 0).y, outputY);
-        compare(profile.value, "sbc");
-        compare(profile.optionLabel(profile.currentIndex), "High fidelity");
-        compare(codec.text, "Codec: SBC");
-        verify(codec.opacity < 1);
-        compare(controller.selectedSink.key, undefined);
-        compare(controller.selectedSource.key, undefined);
-        verify(findChild(panel.page, "audioOutputOnConnect").interactive);
-        compare(calls.length, 0);
-        controller.applySnapshot({
-            radio: controller.radio,
-            adapters: controller.adapters,
-            devices: [connectedDevice]
-        });
-        controller.applyAudioSnapshot([audio]);
-        verify(profile.interactive && output.enabled && input.enabled);
-        compare(codec.opacity, 1);
-        // A different device must not inherit this headset's profile or codec.
-        controller.applySnapshot({
-            radio: controller.radio,
-            adapters: controller.adapters,
-            devices: [
-                {
-                    key: "other",
-                    paired: true,
-                    device_type: "Earbuds",
-                    policy: {}
-                }
-            ]
-        });
-        controller.applyAudioSnapshot([]);
-        compare(profile.value, "");
-        compare(codec.text, "Codec: —");
-        compare(controller.audioPresentationByDevice.buds, undefined);
     }
     Component {
         id: deviceDetailsComponent

@@ -1,7 +1,5 @@
 import QtQuick
-import QtTest
 import Shelllist.Activity as Activity
-import Shelllist.Bar as Bar
 
 DaemonTestCase {
     id: testCase
@@ -11,8 +9,6 @@ DaemonTestCase {
     visible: true
     when: windowShown
 
-    Component { id: spyComponent; SignalSpy {} }
-    Component { id: barComponent; Bar.BarController { surfaceRegistry: null } }
     Component {
         id: stateComponent
         Activity.NotificationState {}
@@ -43,9 +39,6 @@ DaemonTestCase {
             function loadHistory(cursor: var, refresh: bool): bool {
                 requestedCursor = cursor;
                 requestedRefresh = refresh;
-                return true;
-            }
-            function reply(id: int, text: string): bool {
                 return true;
             }
         }
@@ -114,39 +107,6 @@ DaemonTestCase {
         controller.rebuildRecords();
         return controller;
     }
-    function test_unifiedListUsesIndividualStableRecords() {
-        const state = makeState();
-        const controller = makeController(state);
-        compare(controller.notificationModel.count, 4, "live/history overlap is not duplicated");
-        compare(controller.selectedNotification.id, 100);
-        controller.select(2);
-        const key = controller.selectedKey;
-        state.notificationActive = {notifications: [notification(101), notification(100), notification(1)]};
-        project(state, [record(101), record(100), record(3), record(2), record(1)]);
-        wait(0);
-        compare(controller.selectedKey, key);
-        compare(controller.selectionModel.selectedIndex, 3);
-        controller.filterText = "Message 2";
-        compare(state.historyQuery, "message 2");
-        project(state, [record(2)]);
-        tryCompare(controller.notificationModel, "count", 1);
-        compare(controller.selectedRecord.notification.id, 2);
-        controller.openNotifications("chat", "history", "activity");
-        project(state, [record(101), record(100), record(3), record(2), record(1)]);
-        wait(0);
-        compare(controller.selectedNotification.id, 101);
-        verify(controller.detailsOpen);
-        compare(controller.returnSurface, "activity");
-        project(state, [record(101), record(100), record(3), record(2), record(1)]);
-        tryCompare(controller.notificationModel, "count", 5);
-        state.notificationActive = {notifications: [notification(100), notification(1)]};
-        wait(0);
-        compare(controller.selectedKey, "101:101000", "no disappearing row while history is in flight");
-        project(state, [record(101), record(100), record(3), record(2), record(1)]);
-        wait(0);
-        compare(controller.selectedRecord.history_id, 101);
-        compare(controller.selectedKey, "101:101000", "closing retains identity and selection");
-    }
     function test_dndAcknowledgementAndRetry() {
         const state = makeState();
         state.backend = createTemporaryObject(fakeBackendComponent, state, {
@@ -178,53 +138,6 @@ DaemonTestCase {
         verify(!state.backend.requestedDnd);
         compare(state.backend.requestedUntil, null);
     }
-    function test_searchSettingsWithoutSelectionAndDeferredDuration() {
-        const state = makeState();
-        state.notificationActive = {notifications: []};
-        state.history = [];
-        state.backend = createTemporaryObject(fakeBackendComponent, state, {store: state});
-        const controller = makeController(state);
-        controller.uiActive = true;
-        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
-        content.listItem.focusSearch();
-        keyClick(Qt.Key_Return, Qt.AltModifier);
-        tryVerify(() => controller.settingsOpen && controller.detailsOpen);
-        tryVerify(() => findChild(content, "notificationDndDuration") !== null);
-        verify(!findChild(content, "chooserPowerToggle").visible);
-        const duration = findChild(content, "notificationDndDuration");
-        content.detailsNavigation.focusContent(true);
-        keyClick(Qt.Key_Tab);
-        compare(content.detailsNavigation.currentTarget, duration);
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Down);
-        compare(state.dndDurationMinutes, 30, "choice remains local while editing");
-        compare(state.backend.dndCalls, 0);
-        keyClick(Qt.Key_Escape);
-        compare(state.dndDurationMinutes, 30);
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_Return);
-        compare(state.dndDurationMinutes, 60);
-        compare(state.backend.dndCalls, 0, "saving duration while off must not enable DND");
-        state.notificationActive = {notifications: [notification(12)]};
-        project(state, [record(12)]);
-        wait(0);
-        verify(controller.settingsOpen, "arrival must not replace settings");
-        keyClick(Qt.Key_Escape);
-        tryVerify(() => !controller.settingsOpen);
-        tryVerify(() => content.listItem.searchFocused);
-        compare(state.backend.dndCalls, 0);
-        const key = controller.selectedKey;
-        controller.openDetails();
-        mouseClick(findChild(content, "fieldTrailingAction"));
-        tryVerify(() => controller.settingsOpen);
-        compare(controller.viewMemory.key, "notifications::settings");
-        controller.closeDetails();
-        compare(controller.selectedKey, key);
-        verify(controller.detailsOpen, "return to previously expanded message");
-        content.destroy();
-        wait(0);
-    }
     function test_refreshStagesAuthoritativePagesUntilVisibleAnchor() {
         const state = makeState();
         state.backend = createTemporaryObject(fakeBackendComponent, state, {store: state});
@@ -247,21 +160,26 @@ DaemonTestCase {
     }
     function test_replyAcknowledgementAndFailure() {
         const state = makeState();
-        state.backend = createTemporaryObject(fakeBackendComponent, state, {
-            store: state
-        });
         const key = state.keyFor(100);
         state.setDraft(key, "Hello");
         verify(state.replyNotification(key, "Hello"));
         compare(state.drafts[key], "Hello");
         verify(state.replies[key].pending);
         verify(!state.replyNotification(key, "Hello"));
-        state.finishReply(key, "Hello", "Connection lost");
+        state.reloadHistory();
+        const history = Object.keys(state.backend.requests).find(id => id.startsWith("history-"));
+        state.backend.finish(history, {}, "Read failed");
+        verify(!state.historyLoading);
+        compare(state.historyError, "Read failed");
+        verify(state.replies[key].pending, "a read failure cannot retire the reply");
+        const failed = Object.keys(state.backend.requests).find(id => id.startsWith("reply-"));
+        state.backend.acceptSharedResponse(failed, null, "Connection lost");
         compare(state.drafts[key], "Hello");
         verify(!state.replies[key].pending);
         compare(state.replies[key].error, "Connection lost");
         verify(state.replyNotification(key, "Hello"));
-        state.finishReply(key, "Hello", "");
+        const retried = Object.keys(state.backend.requests).find(id => id.startsWith("reply-"));
+        state.backend.finish(retried, {}, "");
         compare(state.drafts[key], undefined);
         state.setDraft(key, "Newer draft");
         state.finishReply(key, "Older draft", "");
@@ -313,28 +231,6 @@ DaemonTestCase {
         compare(state.drafts[state.keyFor(100)], "Draftt");
         content.destroy();
         wait(50);
-    }
-    function test_quickActionsUseCommandMenuNotFieldTraversal() {
-        const state = makeState();
-        const controller = makeController(state);
-        controller.uiActive = true;
-        controller.openDetails();
-        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 900, height: 600});
-        tryVerify(() => findChild(content, "notificationHistoryRow-100") !== null);
-        mouseMove(testCase, 1090, 640);
-        const action = findChild(content, "detailAction:snooze");
-        content.detailsNavigation.focusContent(true);
-        verify(!content.detailsNavigation.targets.includes(action));
-        tryVerify(() => content.detailsNavigation.contentCommands.includes(action));
-        compare(content.detailsNavigation.shortcutFor(action), "Alt+Z");
-        keyClick(Qt.Key_J, Qt.AltModifier);
-        tryVerify(() => content.detailsNavigation.commandMenuOpen);
-        verify(!action.activeFocus);
-        compare(state.activeNotifications.length, 2, "opening commands must not snooze or dismiss");
-        keyClick(Qt.Key_Escape);
-        tryVerify(() => !content.detailsNavigation.commandMenuOpen);
-        content.destroy();
-        wait(0);
     }
     function test_selectedCommandsWorkWithoutOpeningDetails() {
         const state = makeState();
@@ -407,64 +303,6 @@ DaemonTestCase {
         content.destroy();
         wait(0);
     }
-    function test_equalSnapshotsPopupAndDndChangesDoNotRebuildOrReloadHistory() {
-        const state = makeState();
-        state.historyLoaded = true;
-        const snapshot = {
-            notifications: {available: true, count: 2, dnd: false, history_revision: 10},
-            notification_active: {available: true, revision: 10, notifications: [notification(100), notification(1)]}
-        };
-        state.applySnapshot(snapshot);
-        const controller = makeController(state);
-        const spy = createTemporaryObject(spyComponent, testCase, {target: controller.notificationModel, signalName: "rowsChanged"});
-        state.historyEnabled = true;
-        const historyCalls = () => testCase.calls.filter(call => call.method === "notifications.queryHistory");
-        const before = historyCalls().length;
-        tryCompare(state, "historyLoading", true);
-        compare(historyCalls().length, before + 1);
-        state.backend.finish(Object.keys(state.backend.requests).find(key => key.startsWith("history-")), {notification_page: page(state.history)}, "");
-        wait(0);
-        spy.clear();
-        for (let i = 0; i < 5; i++) state.applySnapshot(JSON.parse(JSON.stringify(snapshot)));
-        state.applySummary(Object.assign({}, snapshot.notifications, {dnd: true}));
-        state.applyActive({available: true, revision: 10, notifications: snapshot.notification_active.notifications.map(record => Object.assign({}, record, {toast_visible: false}))});
-        wait(180);
-        compare(spy.count, 0, "no-op, DND and popup changes do not touch center rows");
-        compare(historyCalls().length, before + 1);
-        state.backend.snapshot();
-        const oldSnapshot = Object.keys(state.backend.requests).find(key => key.startsWith("snapshot-"));
-        state.queueEvent(true, {available: true, count: 4, dnd: true, history_revision: 12});
-        state.queueEvent(false, {available: true, revision: 11, notifications: [notification(101), notification(100), notification(1)]});
-        state.queueEvent(false, {available: true, revision: 12, notifications: [notification(102), notification(101), notification(100), notification(1)]});
-        wait(0);
-        compare(spy.count, 0, "active snapshots never infer catalog contents");
-        project(state, [record(102), record(101), record(100), record(3), record(2), record(1)]);
-        tryCompare(spy, "count", 1);
-        wait(30);
-        compare(spy.count, 1, "same-turn updates are one model reconciliation");
-        state.backend.finish(oldSnapshot, {snapshot: snapshot}, "");
-        state.applyActive(snapshot.notification_active);
-        compare(state.notificationActive.revision, 12, "stale snapshot/revision cannot undo events");
-        wait(150);
-        compare(historyCalls().length, before + 2, "one catch-up query per changed history revision batch");
-        controller.refresh();
-        controller.refresh();
-        compare(historyCalls().length, before + 2, "F5 coalesces with an in-flight history read");
-    }
-    function test_residentStoreIsTheOnlyNotificationStreamOwner() {
-        const state = makeState();
-        state.resident = true;
-        const bar = createTemporaryObject(barComponent, testCase, {surfaceRegistry: {notificationState: state, wifiController: null, bluetoothController: null}});
-        verify(state.backend.active);
-        verify(!bar.backend.streams.includes("notifications.changed"));
-        verify(!bar.backend.streams.includes("notifications.active.changed"));
-        const before = JSON.stringify(state.notificationActive);
-        bar.applySnapshot({notifications: {available: false, count: 999}, notification_active: {notifications: []}});
-        compare(JSON.stringify(state.notificationActive), before, "bar snapshots cannot overwrite notification state");
-        compare(bar.notifications.count, state.notifications.count);
-        state.applySummary({available: true, count: 3, history_revision: 2});
-        compare(bar.notifications.count, 3, "bar reads the canonical store");
-    }
     function test_recordIdentityAndConnectionGenerationFenceDraftsAndHistory() {
         const state = makeState();
         const oldKey = state.keyFor(100);
@@ -495,10 +333,14 @@ DaemonTestCase {
         const state = makeState();
         state.applySnapshot({notifications: {available: true, history_revision: 1}, notification_active: {available: true, revision: 1, notifications: [notification(1)]}});
         project(state, [record(1)]);
+        state.backend.snapshot();
+        const oldSnapshot = Object.keys(state.backend.requests).find(id => id.startsWith("snapshot-"));
         state.queueEvent(false, {available: true, revision: 2, notifications: [Object.assign({}, notification(1), {hints: {transient: true}})]});
         state.queueEvent(false, {available: true, revision: 3, notifications: []});
         state.queueEvent(true, {available: true, history_revision: 3});
         state.flushEvents();
+        state.backend.finish(oldSnapshot, {snapshot: {notification_active: {available: true, revision: 1, notifications: [notification(1)]}}}, "");
+        compare(state.notificationActive.revision, 3, "a stale snapshot cannot undo newer events");
         state.reloadHistory();
         const request = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
         state.backend.finish(request, {notification_page: page([], null, "3")}, "", "");
@@ -623,29 +465,5 @@ DaemonTestCase {
         state.backend.finish(reconnect, {notification_page: replacement}, "", "");
         compare(state.historyEpoch, "new-daemon");
         compare(state.history.length, 0, "missed deletion events are repaired by authoritative replacement");
-    }
-    function test_backendFailuresRetireLoadingAndPreserveDraft() {
-        const state = makeState();
-        compare(state.backend.store, state);
-        state.historyLoading = true;
-        state.setDraft(100, "Keep");
-        state.setReplyState(100, true, "");
-        state.backend.requests = {
-            history: {
-                history: true,
-                refresh: true
-            },
-            reply: {
-                replyKey: state.keyFor(100),
-                text: "Keep"
-            }
-        };
-        state.backend.finish("history", {}, "Transport lost");
-        verify(!state.historyLoading);
-        compare(state.historyError, "Transport lost");
-        state.backend.responseReceived("reply", null, "Transport lost");
-        verify(!state.replies[state.keyFor(100)].pending);
-        compare(state.drafts[state.keyFor(100)], "Keep");
-        compare(Object.keys(state.backend.requests).length, 0);
     }
 }

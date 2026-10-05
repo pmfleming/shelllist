@@ -30,7 +30,7 @@ TestCase {
         });
     }
 
-    function test_synchronizesAndBuildsManualPayload() {
+    function test_manualConfigurationPreservesRoutesAndValidatesEdits() {
         ipState.sync({
             method: "manual",
             addresses: [
@@ -64,9 +64,8 @@ TestCase {
         compare(payload.dns.length, 2);
         compare(payload.dns_search[0], "example.test");
         compare(payload.route_metric, 50);
-    }
-
-    function test_validatesEditsAndAutomaticDnsPolicy() {
+        // Continue the same edit from acknowledged settings through DNS changes
+        // and an incomplete address; no second empty-state fixture is needed.
         ipState.setAutoDns(false);
         verify(ipState.payload({}).ignore_auto_dns);
         ipState.setAutoDns(true);

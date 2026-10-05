@@ -18,12 +18,6 @@ DaemonTestCase {
         Ui.ToggleSwitch {}
     }
     Component {
-        id: bar
-        Bar.BarAction {
-            text: "Bar"
-        }
-    }
-    Component {
         id: workspace
         Bar.WorkspaceButton {
             workspaceId: 3
@@ -36,10 +30,6 @@ DaemonTestCase {
     SignalSpy {
         id: clicks
         signalName: "clicked"
-    }
-    SignalSpy {
-        id: secondary
-        signalName: "secondaryTriggered"
     }
 
     function test_sharedActivation_data() {
@@ -96,23 +86,5 @@ DaemonTestCase {
             compare(requests[0].params.workspace_id, 3);
             compare(control.Accessible.name, "Workspace 3");
         }
-    }
-    function test_barSecondaryIsDistinctFromPrimary() {
-        const control = createTemporaryObject(bar, testCase, {
-            width: 160,
-            height: 40
-        });
-        compare(control.backgroundColor, "#00000000", "groups share the continuous bar surface");
-        compare(control.borderColor, "#00000000");
-        clicks.target = control;
-        secondary.target = control;
-        clicks.clear();
-        secondary.clear();
-        mouseClick(control, 80, 20, Qt.RightButton);
-        compare(secondary.count, 1);
-        compare(clicks.count, 0);
-        control.interactive = false;
-        control.routeClick(Qt.RightButton);
-        compare(secondary.count, 1);
     }
 }

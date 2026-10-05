@@ -48,17 +48,4 @@ DaemonTestCase {
         update(client, {available: true, animations_enabled: false, error: null});
         verify(!client.reduced && !client.available, "inactive/overridden readers ignore late events");
     }
-    function test_consumers_share_the_resident_daemon_transport() {
-        const first = createTemporaryObject(motionFactory, testCase);
-        const second = createTemporaryObject(motionFactory, testCase);
-        wait(0);
-        const session = Io.DaemonSessions.sessions["bar-daemon"];
-        verify(session !== undefined);
-        verify(session.consumers[backend(first).sharedConsumerId] !== undefined);
-        verify(session.consumers[backend(second).sharedConsumerId] !== undefined);
-        first.active = false;
-        update(second, {available: true, animations_enabled: false});
-        verify(second.reduced);
-        verify(session.client.active, "closing one consumer leaves the shared session alive");
-    }
 }

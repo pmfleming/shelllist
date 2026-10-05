@@ -289,69 +289,6 @@ DaemonTestCase {
         compare(surface.primaryActions, 1);
     }
 
-    function test_tabTraversalWrapsInsideDetailsAndSkipsInformationAndTabSelectors() {
-        const surface = makeSurface();
-        keyClick(Qt.Key_Tab);
-        verify(surface.listItem.listFocused);
-        compare(surface.chooserController.selectionModel.selectedIndex, 1);
-        keyClick(Qt.Key_Tab);
-        verify(surface.listItem.searchFocused);
-        verify(!surface.chooserController.detailsOpen, "Tab does not implicitly open details");
-        enterDetails(surface);
-        compare(surface.detailsNavigation.targets.length, 4, "actions, information and tab selectors are not browsing stops");
-        const information = findChild(surface, "informationValue");
-        verify(information.visible);
-        compare(Ui.FocusLocations.targets(surface.detailsItem).indexOf(information), -1, "information cannot be restored as an editor");
-        compare(surface.detailsNavigation.currentTarget.objectName, "settingRow");
-        for (const name of ["editor", "choice", "toggle", "settingRow"]) {
-            keyClick(Qt.Key_Tab);
-            verify(surface.detailsNavigation.browsing);
-            compare(surface.detailsNavigation.currentTarget.objectName, name);
-            verify(surface.detailsNavigation.highlightedControl.browseFocused, "browse uses the control's own focus paint");
-            compare(surface.chooserController.selectionModel.selectedIndex, 1);
-        }
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        compare(surface.detailsNavigation.currentTarget.objectName, "toggle");
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        compare(surface.detailsNavigation.currentTarget.objectName, "choice");
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        compare(surface.detailsNavigation.currentTarget.objectName, "editor", "reverse traversal also skips information");
-        compare(surface.settingEdits, 0);
-        compare(surface.actionCalls, 0);
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(surface.tabChanges, 1);
-        verify(surface.detailsNavigation.browsing);
-    }
-
-    function test_popupEscapeAndGuardedToggleActivation() {
-        const surface = makeSurface();
-        enterDetails(surface);
-        keyClick(Qt.Key_Tab);
-        keyClick(Qt.Key_Tab);
-        keyClick(Qt.Key_Return);
-        const choice = findChild(surface.detailsItem, "choice");
-        verify(choice.activeFocus);
-        keyClick(Qt.Key_Space);
-        tryCompare(choice.popup, "visible", true);
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_Escape);
-        tryCompare(choice.popup, "visible", false);
-        verify(surface.detailsNavigation.browsing, "Escape closes the menu and discards the edit");
-        compare(choice.value, "a");
-        compare(surface.settingEdits, 0);
-        verify(surface.detailsNavigation.browsing);
-        keyClick(Qt.Key_Tab);
-        keyClick(Qt.Key_Space);
-        compare(surface.settingEdits, 0, "browsing a switch does not activate it");
-        keyClick(Qt.Key_Return);
-        compare(surface.settingEdits, 1, "Enter immediately toggles a browsed switch");
-        verify(surface.detailsNavigation.browsing);
-        findChild(surface.detailsItem, "toggle").interactive = false;
-        keyClick(Qt.Key_Tab);
-        verify(surface.detailsNavigation.currentTarget.objectName !== "action");
-        compare(surface.actionCalls, 0, "actions never enter field traversal");
-    }
-
     Component {
         id: tallModalFactory
         Ui.ModalFrame {

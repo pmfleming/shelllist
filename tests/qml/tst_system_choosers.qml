@@ -142,12 +142,7 @@ DaemonTestCase {
         menu.opened(); // Late native completion after the previous invocation.
         verify(!menu.visible);
         verify(!root.chooser.navigationBlocked);
-    }
-    function test_missingNativeMenuReleasesItsGuard(): void {
-        const root = fixture();
-        root.chooser.kind = "tray";
-        root.chooser.activateUi("");
-        const tray = createTemporaryObject(trayFactory, testCase);
+        // The same retained tray entry may lose its native menu on reopening.
         tray.menu = null;
         root.chooser.trayMenuRequested(tray);
         verify(root.chooser.navigationBlocked);

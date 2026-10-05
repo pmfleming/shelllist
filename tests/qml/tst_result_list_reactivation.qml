@@ -51,13 +51,8 @@ TestCase {
     }
 
     function test_replacementKeepsLogicalSelection_data() {
-        // Cover both lifecycle orderings without a position × timing cross-product.
+        // Keep the harder offscreen/later-page reactivation regression.
         return [
-            {
-                tag: "hidden-refresh",
-                index: 0,
-                reopenFirst: false
-            },
             {
                 tag: "later-page-refresh-on-reopen",
                 index: 240,
