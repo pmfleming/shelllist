@@ -14,14 +14,14 @@ Controls.AbstractButton {
 
     objectName: "dropDownOption-" + index
     width: Math.max(0, owner.popup.availableWidth)
-    height: Theme.controlHeight
+    height: Theme.formCompactHeight
     enabled: owner.enabled && owner.interactive && owner.optionEnabled(index)
     opacity: enabled ? 1 : Theme.disabledOpacity
     // ComboBox treats AbstractButton.hovered as keyboard highlighting. Observe
     // hover separately so merely passing the pointer cannot redirect Enter.
     hoverEnabled: false
-    leftPadding: Theme.spacingMd
-    rightPadding: Theme.spacingMd
+    leftPadding: Theme.formPadding
+    rightPadding: Theme.formPadding
     Accessible.role: Accessible.ListItem
     Accessible.name: optionText
     Accessible.selected: selected
@@ -33,6 +33,7 @@ Controls.AbstractButton {
     contentItem: ThemeText {
         text: option.optionText
         color: option.foreground
+        font.pixelSize: Theme.formValueSize
         font.weight: option.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight

@@ -115,7 +115,7 @@ Controls.ComboBox {
         y: control.height + Theme.spacingXs
         width: control.width
         padding: Theme.spacingSm
-        height: Math.min(control.options.length, 6) * Theme.controlHeight + topPadding + bottomPadding
+        height: Math.min(control.options.length, 6) * Theme.formCompactHeight + topPadding + bottomPadding
 
         contentItem: ScrollableListView {
             Keys.onPressed: function (event) { control.editSession.handleKey(event); }

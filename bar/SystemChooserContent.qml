@@ -87,10 +87,10 @@ Ui.ProviderChooserSurface {
         icon: content.controller.selectedResult ? content.controller.selectedResult.icon : ""
         iconSource: content.controller.selectedTrayItem ? content.controller.selectedTrayItem.icon : ""
         actions: content.controller.detailActions.filter(action => !["inspect", "quieter", "louder"].includes(action.id)).map(action => Object.assign({}, action, {
-            presentation: Object.assign({}, action.presentation, {
-                group: action.id === (content.controller.kind === "media" ? "play-pause" : "activate") ? "primary" : "toolbar"
-            })
-        }))
+                presentation: Object.assign({}, action.presentation, {
+                    group: action.id === (content.controller.kind === "media" ? "play-pause" : "activate") ? "primary" : "toolbar"
+                })
+            }))
         Ui.DetailFlickable {
             anchors.fill: parent
             viewMemory: content.controller.viewMemory
@@ -114,7 +114,9 @@ Ui.ProviderChooserSurface {
                             actionNamePrefix: "audioVolume-"
                             spacing: 5
                             actions: content.controller.kind === "audio" ? content.controller.detailActions.filter(action => ["quieter", "louder"].includes(action.id)) : []
-                            onTriggered: function (actionId) { content.controller.triggerDetailAction(actionId); }
+                            onTriggered: function (actionId) {
+                                content.controller.triggerDetailAction(actionId);
+                            }
                         }
                     }
                 }
@@ -178,30 +180,31 @@ Ui.ProviderChooserSurface {
                             enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
                             onClicked: content.controller.setMediaSelection(false)
                         }
-                        Ui.ThemeText {
-                            text: qsTr("Bar controls for this player")
-                        }
-                        Ui.DropDownList {
-                            objectName: "mediaControlMode"
+                        Ui.FormField {
                             width: parent.width
-                            value: content.controller.selectedPlayer ? content.controller.selectedPlayer.control_mode || "automatic" : "automatic"
-                            options: [
-                                {
-                                    value: "automatic",
-                                    label: qsTr("Automatic")
-                                },
-                                {
-                                    value: "tracks",
-                                    label: qsTr("Previous/next track")
-                                },
-                                {
-                                    value: "seek",
-                                    label: qsTr("Seek ±30 seconds")
+                            label: qsTr("Bar controls for this player")
+                            Ui.DropDownList {
+                                objectName: "mediaControlMode"
+                                Layout.fillWidth: true
+                                value: content.controller.selectedPlayer ? content.controller.selectedPlayer.control_mode || "automatic" : "automatic"
+                                options: [
+                                    {
+                                        value: "automatic",
+                                        label: qsTr("Automatic")
+                                    },
+                                    {
+                                        value: "tracks",
+                                        label: qsTr("Previous/next track")
+                                    },
+                                    {
+                                        value: "seek",
+                                        label: qsTr("Seek ±30 seconds")
+                                    }
+                                ]
+                                enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
+                                onSelected: function (value) {
+                                    content.controller.setMediaMode(value);
                                 }
-                            ]
-                            enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
-                            onSelected: function (value) {
-                                content.controller.setMediaMode(value);
                             }
                         }
                         Ui.ThemeText {

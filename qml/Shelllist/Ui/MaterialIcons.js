@@ -12,7 +12,7 @@ const symbols = {
     "filter_1": "filter_1",
     "settings": "settings", "mouse": "mouse", "keyboard": "keyboard", "apps": "apps",
     "arrow_selector_tool": "arrow_selector_tool", "chevron_right": "chevron_right",
-    "info": "info", "help_outline": "help_outline",
+    "info": "info", "help_outline": "help_outline", "error": "error",
     "expand_less": "expand_less", "expand_more": "expand_more",
     "󰑓": "refresh", "󰁍": "arrow_back", "󰅀": "expand_more", "󰏫": "edit",
     "󰒊": "send", "󰌾": "lock", "󰈈": "visibility", "󰈉": "visibility_off",

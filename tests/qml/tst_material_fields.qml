@@ -97,6 +97,10 @@ TestCase {
         compare(edits.count, 1);
         const height = field.height;
         field.inputValid = false;
+        const errorIcon = findChild(field, "fieldErrorIcon");
+        verify(errorIcon.visible);
+        compare(errorIcon.symbol, "error");
+        compare(errorIcon.font.family, Ui.Theme.symbolFontFamily);
         verify(input.activeFocus && ring.visible);
         compare(ring.border.width, 2);
         compare(String(ring.color), String(Ui.Theme.withAlpha(Ui.Theme.danger, 0.22)));
@@ -129,6 +133,22 @@ TestCase {
         trailing.Accessible.pressAction();
         compare(intent.count, 1);
         compare(edits.count, 1, "embedded actions do not rewrite the editor");
+    }
+
+    function test_unitsCompactAndReadonlyKeepValueAndHitGeometry() {
+        const field = createTemporaryObject(fieldFactory, this, {password: false, text: "60", trailingActionIcon: "", suffix: "min", compact: true});
+        const input = findChild(field, "fieldInput");
+        compare(field.height, 48);
+        compare(input.text, "60", "units never enter the native editable value");
+        verify(input.Accessible.description.includes("min"));
+        verify(input.rightPadding > field.rightPadding);
+        field.showPasswordButton = true;
+        const action = findChild(field, "passwordVisibilityAction");
+        compare(action.width, 48);
+        compare(action.height, 48);
+        field.readOnly = true;
+        compare(field.opacity, 1);
+        verify(input.Accessible.description.includes("Read-only"));
     }
 
     function test_dropdownHoverFocusAndAcknowledgedSelection() {

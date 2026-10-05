@@ -14,9 +14,13 @@ ColumnLayout {
     readonly property var observed: values[entry.key]
     readonly property bool editable: supported && controller.canSetFocus
     property var numberDraft: null
+    property bool validationAttempted: false
     readonly property string numberText: numberDraft !== null ? numberDraft : String(observed === undefined ? "" : observed)
     spacing: Ui.Theme.spacingXs
-    onObservedChanged: numberDraft = null
+    onObservedChanged: {
+        numberDraft = null;
+        validationAttempted = false;
+    }
 
     RowLayout {
         Layout.fillWidth: true
@@ -66,10 +70,13 @@ ColumnLayout {
                 enabled: setting.editable
                 text: setting.numberText
                 inputValid: !setting.supported || Focus.validNumber(setting.entry, text)
+                invalid: setting.validationAttempted && !inputValid
+                suffix: setting.entry.unit || ""
+                supportingText: qsTr("0–%1 %2").arg(setting.entry.maximum).arg(suffix).trim()
                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                 maximumLength: 10
                 Accessible.name: setting.entry.title
-                errorText: inputValid ? "" : qsTr("Enter a valid value for %1").arg(setting.entry.title)
+                errorText: !setting.validationAttempted || inputValid ? "" : qsTr("Enter a valid value for %1").arg(setting.entry.title)
                 trailingActionIcon: "󰄬"
                 trailingActionToolTip: qsTr("Apply")
                 trailingActionEnabled: inputValid && Number(text) !== setting.observed
@@ -79,6 +86,7 @@ ColumnLayout {
                 onEditingFinished: save()
                 onTrailingActionRequested: save()
                 function save(): void {
+                    setting.validationAttempted = true;
                     if (setting.editable && inputValid && Number(text) !== setting.observed)
                         setting.controller.setFocusSetting(setting.entry.key, Number(text));
                 }

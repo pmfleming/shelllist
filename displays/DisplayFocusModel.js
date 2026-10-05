@@ -26,13 +26,14 @@ function toggle(key, title, help) {
     ];
     return item;
 }
-function number(key, title, help, maximum, whole) {
+function number(key, title, help, maximum, whole, unit) {
     return {
         key: key,
         title: title,
         help: help,
         maximum: maximum,
         whole: whole,
+        unit: unit || "",
         choices: []
     };
 }
@@ -41,7 +42,7 @@ function groups() {
         {
             id: "pointer", title: "Pointer", icon: "mouse",
             summary: "Thresholds and focus exceptions",
-            settings: [choice("input:follow_mouse", "Window focus", "Window focus and active-monitor selection are related but separate. Detached sends pointer input to hovered windows; Separate also avoids refocusing on click.", ["Click to focus", "Focus follows pointer", "Detached pointer focus", "Separate pointer and keyboard focus"]), toggle("misc:mouse_move_focuses_monitor", "Activate monitor on pointer entry", "Crossing a screen boundary selects that monitor. Turning this off alone does not stop a hovered window from gaining keyboard focus; also choose Click to focus for keyboard-led use."), toggle("input:mouse_refocus", "Refocus on pointer movement", "With focus following the pointer, mouse movement can reclaim focus after a keyboard switch. Off requires crossing a window boundary."), number("input:follow_mouse_threshold", "Refocus distance (px)", "Minimum pointer travel in logical pixels for focus-following behaviour (0–1000).", 1000, false), number("input:follow_mouse_shrink", "Window-edge dead zone (px)", "Shrinks inactive window focus hitboxes in logical pixels (0–300). Applies when focus follows the pointer.", 300, true), choice("input:float_switch_override_focus", "Floating-window focus exceptions", "Allows pointer-based refocusing between tiled and floating windows even without ordinary focus following.", ["No exceptions", "Between tiled and floating", "Also between floating windows"]), toggle("misc:always_follow_on_dnd", "Follow the pointer while dragging data", "Temporarily use pointer-following focus during drag and drop."), toggle("misc:layers_hog_keyboard_focus", "Keep keyboard focus in panels and launchers", "Keyboard-interactive layer surfaces retain focus when the pointer moves."), toggle("input:special_fallthrough", "Focus through floating special workspaces", "A special workspace containing only floating windows does not block focusing regular-workspace windows.")]
+            settings: [choice("input:follow_mouse", "Window focus", "Window focus and active-monitor selection are related but separate. Detached sends pointer input to hovered windows; Separate also avoids refocusing on click.", ["Click to focus", "Focus follows pointer", "Detached pointer focus", "Separate pointer and keyboard focus"]), toggle("misc:mouse_move_focuses_monitor", "Activate monitor on pointer entry", "Crossing a screen boundary selects that monitor. Turning this off alone does not stop a hovered window from gaining keyboard focus; also choose Click to focus for keyboard-led use."), toggle("input:mouse_refocus", "Refocus on pointer movement", "With focus following the pointer, mouse movement can reclaim focus after a keyboard switch. Off requires crossing a window boundary."), number("input:follow_mouse_threshold", "Refocus distance", "Minimum pointer travel in logical pixels for focus-following behaviour (0–1000).", 1000, false, "px"), number("input:follow_mouse_shrink", "Window-edge dead zone", "Shrinks inactive window focus hitboxes in logical pixels (0–300). Applies when focus follows the pointer.", 300, true, "px"), choice("input:float_switch_override_focus", "Floating-window focus exceptions", "Allows pointer-based refocusing between tiled and floating windows even without ordinary focus following.", ["No exceptions", "Between tiled and floating", "Also between floating windows"]), toggle("misc:always_follow_on_dnd", "Follow the pointer while dragging data", "Temporarily use pointer-following focus during drag and drop."), toggle("misc:layers_hog_keyboard_focus", "Keep keyboard focus in panels and launchers", "Keyboard-interactive layer surfaces retain focus when the pointer moves."), toggle("input:special_fallthrough", "Focus through floating special workspaces", "A special workspace containing only floating windows does not block focusing regular-workspace windows.")]
         },
         {
             id: "keyboard", title: "Keyboard", icon: "keyboard",

@@ -42,7 +42,7 @@ Ui.DetailColumnCard {
 
         Ui.DropDownList {
             objectName: "lidCloseAction"
-            Layout.preferredWidth: 160
+            Layout.preferredWidth: 200
             options: [
                 {
                     value: "system",
@@ -116,7 +116,7 @@ Ui.DetailColumnCard {
 
                 Ui.DropDownList {
                     objectName: "suspendDelay-" + profile.modelData
-                    Layout.preferredWidth: 116
+                    Layout.preferredWidth: 160
                     options: pane.delayOptions(profile.settings.sleep_minutes)
                     value: String(profile.settings.sleep_minutes)
                     interactive: pane.interactive
@@ -132,7 +132,7 @@ Ui.DetailColumnCard {
 
                 Ui.DropDownList {
                     objectName: "hibernateDelay-" + profile.modelData
-                    Layout.preferredWidth: 116
+                    Layout.preferredWidth: 160
                     options: pane.delayOptions(profile.settings.hibernate_minutes).map(function (option) {
                         return Object.assign({}, option, {
                             enabled: option.value === "0" || !!pane.controller.suspendPolicyState.hibernate_available

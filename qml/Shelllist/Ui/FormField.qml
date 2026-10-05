@@ -16,6 +16,7 @@ ColumnLayout {
     property string statusText: ""
     readonly property string message: errorText || statusText || supportingText
     spacing: 0
+    Layout.alignment: Qt.AlignTop
 
     ThemeText {
         objectName: "formFieldLabel"

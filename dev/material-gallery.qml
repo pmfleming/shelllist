@@ -229,7 +229,7 @@ ShellRoot {
                     }
                 }
                 Ui.ThemeText {
-                    text: "Outlined fields · error / password / read-only / disabled"
+                    text: "Filled forms · persistent labels / validation / native editors"
                     font.pixelSize: 18
                 }
                 GridLayout {
@@ -238,46 +238,61 @@ ShellRoot {
                     uniformCellWidths: true
                     columnSpacing: 12
                     rowSpacing: 12
-                    Ui.TextField {
+                    Ui.FormField {
                         Layout.fillWidth: true
-                        placeholder: "Normal text editing"
-                        Accessible.name: "Preview text field"
+                        label: "Device name"
+                        Ui.TextField { Layout.fillWidth: true; placeholder: "Example headphones" }
                     }
-                    Ui.TextField {
+                    Ui.FormField {
                         Layout.fillWidth: true
-                        text: "Invalid value"
-                        inputValid: false
-                        Accessible.name: "Preview invalid field"
+                        label: "Validation"
+                        Ui.TextField { Layout.fillWidth: true; text: "Invalid value"; errorText: "Enter a valid value" }
                     }
-                    Ui.TextField {
+                    Ui.FormField {
                         Layout.fillWidth: true
-                        text: "Preview only"
-                        password: true
-                        Accessible.name: "Preview password field"
+                        label: "Password · example only"
+                        Ui.TextField { Layout.fillWidth: true; text: "Preview only"; password: true }
                     }
-                    Ui.TextField {
+                    Ui.FormField {
                         Layout.fillWidth: true
-                        text: "Read only"
-                        readOnly: true
-                        Accessible.name: "Preview read-only field"
+                        label: "Automatic value"
+                        supportingText: "Read-only"
+                        Ui.TextField { Layout.fillWidth: true; text: "192.168.1.20"; readOnly: true }
                     }
-                    Ui.TextField {
+                    Ui.FormField {
                         Layout.fillWidth: true
-                        text: "Disabled"
-                        enabled: false
-                        Accessible.name: "Preview disabled field"
+                        label: "Disabled capability"
+                        Ui.TextField { Layout.fillWidth: true; text: "Unavailable"; enabled: false }
                     }
-                    Ui.DropDownList {
-                        id: galleryChoice
+                    Ui.FormField {
                         Layout.fillWidth: true
-                        value: "automatic"
-                        options: [
-                            { value: "automatic", label: "Automatic" },
-                            { value: "unavailable", label: "Unavailable", enabled: false },
-                            { value: "manual", label: "Manual" }
-                        ]
-                        Accessible.name: "Preview choice field"
-                        onSelected: function (next) { value = next; }
+                        label: "Addressing"
+                        Ui.DropDownList {
+                            id: galleryChoice
+                            Layout.fillWidth: true
+                            value: "automatic"
+                            options: [
+                                { value: "automatic", label: "Automatic" },
+                                { value: "unavailable", label: "Unavailable", enabled: false },
+                                { value: "manual", label: "Manual" }
+                            ]
+                            onSelected: function (next) { value = next; }
+                        }
+                    }
+                    Ui.FormField {
+                        Layout.fillWidth: true
+                        label: "Compact density (explicit)"
+                        Ui.TextField { Layout.fillWidth: true; text: "48px · still 16px text"; compact: true }
+                    }
+                    Ui.FormField {
+                        Layout.fillWidth: true
+                        label: "Duration"
+                        Ui.TextField { Layout.fillWidth: true; text: "60"; suffix: "s" }
+                    }
+                    Ui.FormField {
+                        Layout.fillWidth: true
+                        label: "Multiline text"
+                        Ui.TextEditor { Layout.fillWidth: true; text: "Native editing\nShift+Enter adds a line" }
                     }
                 }
                 Ui.ThemeText {

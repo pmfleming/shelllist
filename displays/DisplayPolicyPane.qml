@@ -11,37 +11,37 @@ Ui.DetailColumnCard {
     title: qsTr("When docked")
     contentSpacing: Ui.Theme.spacingSm
 
-    Ui.ThemeText {
+    Ui.FormField {
         Layout.fillWidth: true
-        text: qsTr("When an external display is available")
-        wrapMode: Text.Wrap
-    }
-    Ui.DropDownList {
-        id: preference
-        objectName: "dockedLaptopBehavior"
-        Layout.fillWidth: true
-        Layout.minimumWidth: 0
-        options: [
-            {
-                value: "keep-on",
-                label: qsTr("Keep laptop screen on")
-            },
-            {
-                value: "auto-off",
-                label: qsTr("Turn off automatically")
+        label: qsTr("When an external display is available")
+        accessibleName: qsTr("Laptop screen when an external display is available")
+        Ui.DropDownList {
+            id: preference
+            objectName: "dockedLaptopBehavior"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            options: [
+                {
+                    value: "keep-on",
+                    label: qsTr("Keep laptop screen on")
+                },
+                {
+                    value: "auto-off",
+                    label: qsTr("Turn off automatically")
+                }
+            ]
+            value: (pane.controller.displayPolicyState.policy || {}).prefer_external ? "auto-off" : "keep-on"
+            interactive: pane.controller.canSetPolicy
+            Accessible.name: qsTr("Laptop screen when docked")
+            Accessible.description: qsTr("Enter or Tab saves; Escape discards. The laptop screen returns if external displays disconnect.")
+            onSelected: function (value) {
+                pane.controller.setPreferExternal(value === "auto-off");
+                // ComboBox changes its index on activation; show the acknowledged
+                // preference until the daemon confirms the save, including failures.
+                currentIndex = Qt.binding(function () {
+                    return preference.optionIndex(preference.value);
+                });
             }
-        ]
-        value: (pane.controller.displayPolicyState.policy || {}).prefer_external ? "auto-off" : "keep-on"
-        interactive: pane.controller.canSetPolicy
-        Accessible.name: qsTr("Laptop screen when docked")
-        Accessible.description: qsTr("Enter or Tab saves; Escape discards. The laptop screen returns if external displays disconnect.")
-        onSelected: function (value) {
-            pane.controller.setPreferExternal(value === "auto-off");
-            // ComboBox changes its index on activation; show the acknowledged
-            // preference until the daemon confirms the save, including failures.
-            currentIndex = Qt.binding(function () {
-                return preference.optionIndex(preference.value);
-            });
         }
     }
     Ui.ThemeText {

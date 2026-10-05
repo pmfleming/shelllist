@@ -86,17 +86,14 @@ ColumnLayout {
         GridLayout {
             objectName: "displayModeFields"
             Layout.fillWidth: true
-            columns: width >= 300 ? 2 : 1
+            columns: width >= 440 ? 2 : 1
             columnSpacing: Ui.Theme.spacingSm
             rowSpacing: Ui.Theme.spacingMd
-            ColumnLayout {
+            Ui.FormField {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: 1
-                spacing: Ui.Theme.spacingXs
-                Ui.FieldLabel {
-                    text: qsTr("Resolution")
-                }
+                label: qsTr("Resolution")
                 Ui.DropDownList {
                     id: resolution
                     objectName: "displayResolution"
@@ -118,14 +115,11 @@ ColumnLayout {
                     }
                 }
             }
-            ColumnLayout {
+            Ui.FormField {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: 1
-                spacing: Ui.Theme.spacingXs
-                Ui.FieldLabel {
-                    text: qsTr("Refresh rate")
-                }
+                label: qsTr("Refresh rate")
                 Ui.DropDownList {
                     objectName: "displayRefreshRate"
                     Layout.fillWidth: true
@@ -137,14 +131,11 @@ ColumnLayout {
                     }
                 }
             }
-            ColumnLayout {
+            Ui.FormField {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: 1
-                spacing: Ui.Theme.spacingXs
-                Ui.FieldLabel {
-                    text: qsTr("Scale")
-                }
+                label: qsTr("Scale")
                 Ui.DropDownList {
                     objectName: "displayScale"
                     Layout.fillWidth: true
@@ -169,14 +160,11 @@ ColumnLayout {
                     }
                 }
             }
-            ColumnLayout {
+            Ui.FormField {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: 1
-                spacing: Ui.Theme.spacingXs
-                Ui.FieldLabel {
-                    text: qsTr("Rotation")
-                }
+                label: qsTr("Rotation and reflection")
                 Ui.DropDownList {
                     objectName: "displayRotation"
                     Layout.fillWidth: true

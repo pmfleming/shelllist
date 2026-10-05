@@ -37,35 +37,36 @@ Ui.DetailColumnCard {
     height: visible ? implicitHeight : 0
     contentSpacing: Ui.Theme.spacingMd
 
-    Ui.FieldLabel {
-        text: qsTr("Audio profile")
-    }
-    Ui.DropDownList {
-        objectName: "currentAudioProfile"
+    Ui.FormField {
         Layout.fillWidth: true
-        options: card.profileOptions
-        value: card.profileKey
-        placeholder: card.profileKey || "—"
-        interactive: card.liveAudio && !card.controller.actionInFlight
-        // Selecting the active profile also makes it the reconnect preference.
-        onActivated: function (index) {
-            if (optionEnabled(index) && String(options[index].value || "") === value)
-                selected(value);
-        }
-        onSelected: function (key) {
-            if (!interactive)
-                return;
-            if (!key) {
-                card.controller.updateDevicePolicy({
-                    preferred_audio_profile_key: null
-                });
-                return;
+        label: qsTr("Audio profile")
+        Ui.DropDownList {
+            objectName: "currentAudioProfile"
+            Layout.fillWidth: true
+            options: card.profileOptions
+            value: card.profileKey
+            placeholder: card.profileKey || "—"
+            interactive: card.liveAudio && !card.controller.actionInFlight
+            // Selecting the active profile also makes it the reconnect preference.
+            onActivated: function (index) {
+                if (optionEnabled(index) && String(options[index].value || "") === value)
+                    selected(value);
             }
-            const profile = card.controller.selectedAudioProfiles.find(function (entry) {
-                return entry.key === key;
-            });
-            if (profile)
-                card.controller.setAudioProfile(profile);
+            onSelected: function (key) {
+                if (!interactive)
+                    return;
+                if (!key) {
+                    card.controller.updateDevicePolicy({
+                        preferred_audio_profile_key: null
+                    });
+                    return;
+                }
+                const profile = card.controller.selectedAudioProfiles.find(function (entry) {
+                    return entry.key === key;
+                });
+                if (profile)
+                    card.controller.setAudioProfile(profile);
+            }
         }
     }
     ColumnLayout {

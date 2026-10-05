@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
 Column {
@@ -29,15 +30,33 @@ Column {
         subtitle: settings.notificationState.dndPending ? qsTr("Saving…") : !checked ? qsTr("Off") : settings.notificationState.notifications.dnd_until_unix_ms ? qsTr("Until %1").arg(new Date(settings.notificationState.notifications.dnd_until_unix_ms).toLocaleTimeString()) : qsTr("Until turned off")
         onClicked: settings.notificationState.setDndEnabled(!checked)
     }
-    Ui.FieldLabel { text: qsTr("Duration") }
-    Ui.DropDownList {
-        objectName: "notificationDndDuration"
+    Ui.FormField {
         width: parent.width
-        Accessible.name: qsTr("Do Not Disturb duration")
-        value: String(settings.notificationState.dndDurationMinutes)
-        interactive: settings.nativeAvailable && !settings.notificationState.dndPending
-        options: [{value: "30", label: qsTr("30 minutes")}, {value: "60", label: qsTr("1 hour")}, {value: "0", label: qsTr("Until turned off")}]
-        onSelected: function (value) { settings.notificationState.setDndDuration(Number(value)); }
+        label: qsTr("Do Not Disturb duration")
+        Ui.DropDownList {
+            objectName: "notificationDndDuration"
+            Layout.fillWidth: true
+            Accessible.name: qsTr("Do Not Disturb duration")
+            value: String(settings.notificationState.dndDurationMinutes)
+            interactive: settings.nativeAvailable && !settings.notificationState.dndPending
+            options: [
+                {
+                    value: "30",
+                    label: qsTr("30 minutes")
+                },
+                {
+                    value: "60",
+                    label: qsTr("1 hour")
+                },
+                {
+                    value: "0",
+                    label: qsTr("Until turned off")
+                }
+            ]
+            onSelected: function (value) {
+                settings.notificationState.setDndDuration(Number(value));
+            }
+        }
     }
     Ui.ThemeText {
         width: parent.width
