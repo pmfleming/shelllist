@@ -17,6 +17,13 @@ ModalFrame {
 
     Keys.onEscapePressed: dialog.cancelled()
 
+    ThemeText {
+        visible: dialog.prompt.credentialFields.some(field => !!field.required)
+        text: qsTr("* Required")
+        font.pixelSize: Theme.formSupportSize
+        color: Theme.mutedText
+    }
+
     Flickable {
         width: parent.width
         height: Math.min(dialog.compact ? 260 : 360, fieldsColumn.implicitHeight)

@@ -8,6 +8,7 @@ ColumnLayout {
     default property alias content: editorHost.data
     property Item editor: editorHost.children.length > 0 ? editorHost.children[0] : null
     property string label: ""
+    property string accessibleName: label
     property bool requiredInput: false
     property bool reserveSupportingSpace: false
     property string supportingText: (editor as TextField)?.supportingText || (editor as TextEditor)?.supportingText || (editor as DropDownList)?.supportingText || ""
@@ -21,7 +22,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.bottomMargin: visible ? Theme.spacingSm : 0
         visible: field.label.length > 0
-        text: field.requiredInput ? qsTr("%1 (required)").arg(field.label) : field.label
+        text: field.requiredInput ? qsTr("%1 *").arg(field.label) : field.label
         font.pixelSize: Theme.formLabelSize
         font.weight: Theme.fontWeightMedium
         color: Theme.mutedText
@@ -46,7 +47,7 @@ ColumnLayout {
     Binding {
         target: field.editor
         property: "Accessible.name"
-        value: field.label
+        value: field.accessibleName
         when: field.editor !== null && field.label.length > 0
         restoreMode: Binding.RestoreBindingOrValue
     }

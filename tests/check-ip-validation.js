@@ -96,4 +96,23 @@ for (const [value, family, allowEmpty, expected] of prefixCases) {
     );
 }
 
+for (const [value, family, multiple, expected] of [
+    ["192.168.100.100/24", "ipv4", false, Invalid],
+    ["1.1.1.1\n8.8.8.8", "ipv4", true, Acceptable],
+    ["2001:db8::\n::1", "ipv6", true, Acceptable],
+    ["1.1.1.1,".repeat(65), "ipv4", true, Invalid],
+    ["1.1.1.1" + " ".repeat(validation.MaximumEditingLength), "ipv4", false, Invalid]
+]) expectState("untruncated input / list limit", validation.addressInputState(value, family, multiple, false), expected);
+expectState("prefix buffer boundary", validation.prefixState("24" + " ".repeat(validation.MaximumEditingLength), "ipv4", false), Invalid);
+for (const [value, family, multiple, prefix, key] of [
+    ["192.168.100.100/24", "ipv4", false, false, "cidr"],
+    ["fe80::1%wlan0", "ipv6", false, false, "zone"],
+    ["192.168.300.20", "ipv4", false, false, "octet"],
+    ["1.1.1.1,", "ipv4", true, false, "empty-list-item"],
+    ["129", "ipv6", false, true, "prefix"]
+]) {
+    ++checks;
+    if (validation.issue(value, family, multiple, false, prefix).key !== key)
+        throw new Error("incorrect validation reason for " + value);
+}
 console.log(`IP validation: ${checks} checks passed`);

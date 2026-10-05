@@ -78,54 +78,69 @@ AdvancedSettingsFlickable {
                     onClicked: hardwareFlick.settings.setAutoDns(!hardwareFlick.settings.currentAutoDns)
                 }
 
+                ThemeText {
+                    visible: hardwareFlick.settings.currentMethod === "manual"
+                    text: qsTr("* Required for manual addressing")
+                    font.pixelSize: Theme.formSupportSize
+                    color: Theme.mutedText
+                }
                 GridLayout {
+                    id: addressGroup
                     Layout.fillWidth: true
                     columns: width >= 480 ? 2 : 1
-                    columnSpacing: 12
-                    rowSpacing: 8
-
-                    FieldLabel {
-                        Layout.preferredWidth: 150
-                        Layout.preferredHeight: 38
-                        text: qsTr("IP address")
-                    }
-                    NetworkInput.IpAddressField {
+                    columnSpacing: Theme.spacingMd
+                    rowSpacing: Theme.spacingLg
+                    FormField {
                         Layout.fillWidth: true
-                        family: hardwareFlick.settings.ipFamily
-                        allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
-                        readOnly: hardwareFlick.settings.currentMethod !== "manual"
-                        objectName: "wifiIpAddress"
-                        text: hardwareFlick.settings.displayedAddress
-                        onEdited: function (value) {
-                            hardwareFlick.settings.currentIp.address = value;
+                        Layout.minimumWidth: 0
+                        Layout.alignment: Qt.AlignTop
+                        label: hardwareFlick.settings.ipFamily === "ipv6" ? qsTr("IPv6 address") : qsTr("IPv4 address")
+                        requiredInput: hardwareFlick.settings.currentMethod === "manual"
+                        reserveSupportingSpace: true
+                        statusText: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : ipAddress.readOnly ? qsTr("Automatic · read-only") : ""
+                        NetworkInput.IpAddressField {
+                            id: ipAddress
+                            Layout.fillWidth: true
+                            family: hardwareFlick.settings.ipFamily
+                            allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
+                            readOnly: hardwareFlick.settings.currentMethod !== "manual"
+                            objectName: "wifiIpAddress"
+                            text: hardwareFlick.settings.displayedAddress
+                            onEdited: function (value) {
+                                hardwareFlick.settings.currentIp.address = value;
+                            }
+                            onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                         }
-                        onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
-
-                    FieldLabel {
-                        Layout.preferredWidth: 150
-                        Layout.preferredHeight: 38
-                        text: qsTr("Prefix length")
-                    }
-                    NetworkInput.PrefixLengthField {
-                        Layout.fillWidth: true
-                        family: hardwareFlick.settings.ipFamily
-                        allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
-                        readOnly: hardwareFlick.settings.currentMethod !== "manual"
-                        objectName: "wifiIpPrefix"
-                        text: hardwareFlick.settings.displayedPrefix
-                        onEdited: function (value) {
-                            hardwareFlick.settings.currentIp.prefix = value;
+                    FormField {
+                        Layout.fillWidth: addressGroup.columns === 1
+                        Layout.preferredWidth: 128
+                        Layout.alignment: Qt.AlignTop
+                        label: qsTr("Prefix length")
+                        requiredInput: hardwareFlick.settings.currentMethod === "manual"
+                        accessibleName: hardwareFlick.settings.ipFamily === "ipv6" ? qsTr("IPv6 prefix length") : qsTr("IPv4 prefix length")
+                        reserveSupportingSpace: true
+                        NetworkInput.PrefixLengthField {
+                            Layout.fillWidth: true
+                            family: hardwareFlick.settings.ipFamily
+                            allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
+                            readOnly: hardwareFlick.settings.currentMethod !== "manual"
+                            objectName: "wifiIpPrefix"
+                            text: hardwareFlick.settings.displayedPrefix
+                            onEdited: function (value) {
+                                hardwareFlick.settings.currentIp.prefix = value;
+                            }
+                            onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                         }
-                        onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
-
-                    FieldLabel {
-                        Layout.preferredWidth: 150
-                        Layout.preferredHeight: 38
-                        text: "Gateway"
-                    }
+                }
+                FormField {
+                    Layout.fillWidth: true
+                    label: qsTr("Gateway (optional)")
+                    reserveSupportingSpace: true
+                    statusText: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : gateway.readOnly ? qsTr("Automatic · read-only") : ""
                     NetworkInput.IpAddressField {
+                        id: gateway
                         Layout.fillWidth: true
                         family: hardwareFlick.settings.ipFamily
                         readOnly: hardwareFlick.settings.currentMethod !== "manual"
@@ -136,30 +151,32 @@ AdvancedSettingsFlickable {
                         }
                         onEditingFinished: hardwareFlick.settings.queueHardwareSave()
                     }
-
-                    FieldLabel {
-                        Layout.preferredWidth: 150
-                        Layout.preferredHeight: 38
-                        text: qsTr("DNS servers")
-                    }
-                    NetworkInput.IpAddressField {
+                }
+                FormField {
+                    Layout.fillWidth: true
+                    label: qsTr("DNS servers")
+                    reserveSupportingSpace: true
+                    statusText: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : dnsServers.readOnly ? qsTr("Automatic · read-only") : ""
+                    NetworkInput.AddressListField {
+                        id: dnsServers
                         Layout.fillWidth: true
                         family: hardwareFlick.settings.ipFamily
-                        multiple: true
                         readOnly: !hardwareFlick.settings.currentFamilyEnabled || hardwareFlick.settings.currentAutoDns
                         objectName: "wifiDnsServers"
                         text: hardwareFlick.settings.displayedDns
                         onEdited: function (value) {
                             hardwareFlick.settings.currentIp.dns = value;
                         }
-                        onEditingFinished: hardwareFlick.settings.queueHardwareSave()
+                        onEditFinished: function (saved) {
+                            if (saved)
+                                hardwareFlick.settings.queueHardwareSave();
+                        }
                     }
-
-                    FieldLabel {
-                        Layout.preferredWidth: 150
-                        Layout.preferredHeight: 38
-                        text: qsTr("DNS search domains")
-                    }
+                }
+                FormField {
+                    Layout.fillWidth: true
+                    label: qsTr("DNS search domains (optional)")
+                    supportingText: qsTr("Comma or whitespace separated")
                     TextField {
                         Layout.fillWidth: true
                         readOnly: !hardwareFlick.settings.currentFamilyEnabled
