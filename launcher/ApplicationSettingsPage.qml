@@ -41,7 +41,6 @@ Ui.DetailFlickable {
             objectName: "applicationCategory"
             Accessible.name: qsTr("Category and default workspace")
             Layout.fillWidth: true
-            Layout.preferredHeight: Ui.Theme.compactControlHeight
             options: page.categoryOptions
             value: page.selectedCategory ? page.selectedCategory.value : ""
             placeholder: "Select a category"

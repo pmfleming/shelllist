@@ -32,19 +32,11 @@ ColumnLayout {
             Accessible.description: setting.entry.help
             onClicked: setting.controller.setFocusSetting(setting.entry.key, !checked)
         }
-        GridLayout {
+        Ui.FormField {
             Layout.fillWidth: true
             visible: !setting.entry.boolean
-            columns: width >= 380 ? 2 : 1
-            columnSpacing: Ui.Theme.spacingMd
-            rowSpacing: Ui.Theme.spacingXs
-            Ui.FieldLabel {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 160
-                text: setting.entry.title
-                wrapMode: Text.Wrap
-                elide: Text.ElideNone
-            }
+            label: setting.entry.title
+            editor: setting.entry.choices.length > 0 ? choice : numberField
             Ui.DropDownList {
                 id: choice
                 objectName: !setting.entry.boolean ? "focusSetting-" + setting.entry.key : ""
@@ -65,6 +57,7 @@ ColumnLayout {
                 }
             }
             Ui.TextField {
+                id: numberField
                 objectName: "focusNumber-" + setting.entry.key
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
@@ -76,11 +69,13 @@ ColumnLayout {
                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                 maximumLength: 10
                 Accessible.name: setting.entry.title
-                Accessible.description: qsTr("Enter to edit; Enter or Tab saves; Escape discards")
+                errorText: inputValid ? "" : qsTr("Enter a valid value for %1").arg(setting.entry.title)
                 trailingActionIcon: "󰄬"
                 trailingActionToolTip: qsTr("Apply")
                 trailingActionEnabled: inputValid && Number(text) !== setting.observed
-                onEdited: function (value) { setting.numberDraft = value; }
+                onEdited: function (value) {
+                    setting.numberDraft = value;
+                }
                 onEditingFinished: save()
                 onTrailingActionRequested: save()
                 function save(): void {
@@ -93,8 +88,8 @@ ColumnLayout {
             objectName: "focusHelp-" + setting.entry.key
             accessKey: "H"
             commandScope: setting
-            Layout.preferredWidth: 40
-            Layout.preferredHeight: 40
+            Layout.preferredWidth: Ui.Theme.formActionSize
+            Layout.preferredHeight: Ui.Theme.formActionSize
             icon: setting.helpOpen ? "expand_less" : "help_outline"
             accessibleName: qsTr("Help: %1").arg(setting.entry.title)
             Accessible.description: setting.entry.help

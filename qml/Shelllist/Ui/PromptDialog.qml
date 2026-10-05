@@ -5,6 +5,8 @@ ModalFrame {
     id: dialog
 
     property string inputText: ""
+    property string inputLabel: password ? qsTr("Password") : qsTr("Value")
+    property string inputSupportingText: ""
     property bool inputVisible: true
     property bool password: false
     property bool inputValid: true
@@ -60,24 +62,26 @@ ModalFrame {
             spacing: dialog.bodySpacing
         }
 
-        TextField {
-            id: promptInput
-
+        FormField {
             visible: dialog.inputVisible
             Layout.fillWidth: true
-            Layout.preferredHeight: Theme.controlHeight
-            text: dialog.inputText
-            password: dialog.password
-            inputValid: dialog.inputValid
-            maximumLength: dialog.inputMaximumLength
-            inputMethodHints: dialog.inputMethodHints
-            horizontalAlignment: dialog.inputHorizontalAlignment
-            fontPixelSize: Theme.fontSizeTitle
-            onEdited: function (text) {
-                dialog.inputEdited(text);
+            label: dialog.inputLabel
+            supportingText: dialog.inputSupportingText
+            TextField {
+                id: promptInput
+                Layout.fillWidth: true
+                text: dialog.inputText
+                password: dialog.password
+                inputValid: dialog.inputValid
+                maximumLength: dialog.inputMaximumLength
+                inputMethodHints: dialog.inputMethodHints
+                horizontalAlignment: dialog.inputHorizontalAlignment
+                onEdited: function (text) {
+                    dialog.inputEdited(text);
+                }
+                onAccepted: if (dialog.enterEnabled && dialog.acceptEnabled)
+                    dialog.accepted()
             }
-            onAccepted: if (dialog.enterEnabled && dialog.acceptEnabled)
-                dialog.accepted()
         }
 
         ToggleRow {

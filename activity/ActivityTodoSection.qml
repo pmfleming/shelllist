@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
 Column {
@@ -9,7 +10,9 @@ Column {
     required property real uiScale
     width: parent.width
     spacing: Ui.Theme.spacingSm
-    function focusInput(): void { todoInput.focusInput(false); }
+    function focusInput(): void {
+        todoInput.focusInput(false);
+    }
     function addTodo(): void {
         if (controller.todoDraft.trim().length > 0 && controller.createTodo(controller.todoDraft))
             controller.todoDraft = "";
@@ -19,28 +22,35 @@ Column {
         font.pixelSize: Ui.Theme.fontSizeHeading
         font.weight: Ui.Theme.fontWeightDemiBold
     }
-    Row {
+    Ui.FormField {
         width: parent.width
-        height: Ui.Theme.controlHeight
-        spacing: Ui.Theme.spacingSm
-        Ui.TextField {
-            id: todoInput
-            objectName: "activityTodoDraft"
-            width: parent.width - addButton.width - parent.spacing
-            height: parent.height
-            placeholder: qsTr("Add for selected day")
-            text: section.controller.todoDraft
-            onEdited: function (value) { section.controller.todoDraft = value; }
-            onAccepted: section.addTodo()
-        }
-        Ui.FlatIconButton {
-            id: addButton
-            accessKey: "A"
-            width: height
-            height: parent.height
-            icon: "+"
-            accessibleName: qsTr("Add todo")
-            onClicked: section.addTodo()
+        label: qsTr("New todo")
+        editor: todoInput
+        Row {
+            Layout.fillWidth: true
+            height: Ui.Theme.formHeight
+            spacing: Ui.Theme.spacingSm
+            Ui.TextField {
+                id: todoInput
+                objectName: "activityTodoDraft"
+                width: parent.width - addButton.width - parent.spacing
+                height: parent.height
+                placeholder: qsTr("Add for selected day")
+                text: section.controller.todoDraft
+                onEdited: function (value) {
+                    section.controller.todoDraft = value;
+                }
+                onAccepted: section.addTodo()
+            }
+            Ui.FlatIconButton {
+                id: addButton
+                accessKey: "A"
+                width: height
+                height: parent.height
+                icon: "+"
+                accessibleName: qsTr("Add todo")
+                onClicked: section.addTodo()
+            }
         }
     }
     Ui.ScrollableListView {

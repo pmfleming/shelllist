@@ -87,17 +87,12 @@ AdvancedSettingsFlickable {
                     enabled: !!securityFlick.settings.profile.path && !securityFlick.settings.controller.actionInFlight
                     onClicked: securityFlick.settings.setCastingEnabled(!checked)
                 }
-                Column {
+                FormField {
                     width: parent.width
-                    spacing: 5
-                    FieldLabel {
-                        width: parent.width
-                        text: qsTr("Network password")
-                    }
+                    label: qsTr("Network password")
                     TextField {
                         sensitive: true
-                        width: securityControls.width
-                        height: 40
+                        Layout.fillWidth: true
                         readOnly: !securityFlick.settings.personalSecurity
                         password: !securityFlick.settings.passwordRevealed
                         showPasswordButton: false

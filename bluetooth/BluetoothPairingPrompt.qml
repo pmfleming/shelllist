@@ -29,6 +29,8 @@ Ui.PromptDialog {
     detail: detailText()
     inputVisible: inputRequired
     inputText: controller.pairingInput
+    inputLabel: kind === "passkey" ? qsTr("Passkey") : qsTr("PIN")
+    inputSupportingText: kind === "passkey" ? qsTr("1–6 digits") : ""
     password: true
     inputValid: valueValid
     inputMaximumLength: kind === "passkey" ? 6 : 16

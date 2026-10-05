@@ -14,6 +14,7 @@ ColumnLayout {
     readonly property var draft: controller.nameEdits.draft(displayedDeviceKey)
     readonly property bool renameDirty: !!draft && draft.dirty
     readonly property bool renameValid: renameInput.text.trim().length > 0
+    property bool validationAttempted: false
 
     Layout.fillWidth: true
     spacing: Ui.Theme.spacingSm
@@ -23,6 +24,8 @@ ColumnLayout {
         const deviceChanged = nextKey !== displayedDeviceKey;
         if (deviceChanged)
             renameAutoSaveTimer.stop();
+        if (deviceChanged)
+            validationAttempted = false;
         displayedDeviceKey = nextKey;
         const saved = controller.nameEdits.draft(nextKey);
         renameInput.text = saved ? saved.value : (controller.selectedDevice.name || "");
@@ -35,6 +38,7 @@ ColumnLayout {
     }
 
     function saveRename() {
+        validationAttempted = true;
         renameAutoSaveTimer.stop();
         if (!renameValid) {
             controller.status = "Enter a non-empty Bluetooth device name.";
@@ -66,62 +70,35 @@ ColumnLayout {
         }
     }
 
-    RowLayout {
+    Ui.FormField {
         Layout.fillWidth: true
-        spacing: Ui.Theme.spacingSm
-
-        Ui.FieldLabel {
-            Layout.fillWidth: true
-            text: qsTr("Device name")
-        }
-
-        Ui.ThemeText {
-            Layout.maximumWidth: Math.round(section.width * 0.55)
-            visible: !!section.controller.selectedDevice.remote_name && section.controller.selectedDevice.name !== section.controller.selectedDevice.remote_name
-            text: "Original: " + (section.controller.selectedDevice.remote_name || "")
-            color: Ui.Theme.mutedText
-            font.pixelSize: Ui.Theme.fontSizeCaption
-            horizontalAlignment: Text.AlignRight
-            elide: Text.ElideRight
-        }
-    }
-
-    RowLayout {
-        Layout.fillWidth: true
-        spacing: Ui.Theme.spacingSm
+        label: qsTr("Device name")
+        supportingText: section.controller.selectedDevice.remote_name && section.controller.selectedDevice.name !== section.controller.selectedDevice.remote_name ? qsTr("Original: %1").arg(section.controller.selectedDevice.remote_name) : ""
+        statusText: (section.draft || {}).pending ? qsTr("Saving…") : ""
+        errorText: (section.draft || {}).error || (section.validationAttempted && !section.renameValid ? qsTr("Enter a non-empty device name") : "")
 
         Ui.TextField {
             id: renameInput
             objectName: "deviceNameInput"
             Layout.fillWidth: true
-            Layout.preferredHeight: Ui.Theme.compactControlHeight
             text: ""
             maximumLength: 248
-            inputValid: section.renameValid
+            inputValid: !section.validationAttempted || section.renameValid
             readOnly: section.controller.actionInFlight || !(section.controller.selectedDevice.capabilities && section.controller.selectedDevice.capabilities.can_rename)
             onEdited: section.queueRename()
             onEditingFinished: section.saveRename()
             onAccepted: section.saveRename()
         }
-
-        Ui.ActionButton {
-            objectName: "restoreDeviceName"
-            accessKey: "O"
-            Layout.preferredWidth: 180
-            Layout.preferredHeight: Ui.Theme.compactControlHeight
-            label: qsTr("Restore original name")
-            enabled: !section.renameDirty && !section.controller.actionInFlight && !!section.controller.selectedDevice.remote_name && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
-            onClicked: section.controller.resetSelectedName()
-        }
     }
 
-    Ui.ThemeText {
-        Layout.fillWidth: true
-        visible: !!(section.draft || {}).error
-        text: (section.draft || {}).error || ""
-        wrapMode: Text.WordWrap
-        color: Ui.Theme.danger
-        font.pixelSize: Ui.Theme.fontSizeSmall
+    Ui.ActionButton {
+        objectName: "restoreDeviceName"
+        accessKey: "O"
+        Layout.preferredWidth: 180
+        Layout.preferredHeight: Ui.Theme.compactControlHeight
+        label: qsTr("Restore original name")
+        enabled: !section.renameDirty && !section.controller.actionInFlight && !!section.controller.selectedDevice.remote_name && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
+        onClicked: section.controller.resetSelectedName()
     }
     RowLayout {
         Layout.fillWidth: true

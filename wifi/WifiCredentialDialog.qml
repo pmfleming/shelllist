@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Shelllist.Ui
 
 ModalFrame {
@@ -31,24 +32,18 @@ ModalFrame {
             Repeater {
                 model: dialog.prompt.credentialFields
 
-                delegate: Column {
+                delegate: FormField {
                     id: fieldColumn
                     required property var modelData
                     width: fieldsColumn.width
-                    spacing: Theme.spacingXs
-
-                    FieldLabel {
-                        width: parent.width
-                        height: 16
-                        text: fieldColumn.modelData.label + (fieldColumn.modelData.required ? " *" : "")
-                    }
+                    label: modelData.label
+                    requiredInput: !!modelData.required
 
                     TextField {
-                        width: parent.width
-                        height: Theme.controlHeight
+                        Layout.fillWidth: true
                         text: String(dialog.prompt.credentialValues[fieldColumn.modelData.key] || "")
                         password: !!fieldColumn.modelData.password
-                        placeholder: fieldColumn.modelData.required ? "Required" : "Optional"
+                        placeholder: fieldColumn.modelData.required ? "" : qsTr("Optional")
                         onEdited: function (value) {
                             const values = Object.assign({}, dialog.prompt.credentialValues);
                             values[fieldColumn.modelData.key] = value;

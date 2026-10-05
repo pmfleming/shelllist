@@ -2,6 +2,7 @@ import QtQuick
 import QtTest
 import Quickshell
 import Shelllist.Ui as Ui
+import "../../wifi" as Wifi
 
 TestCase {
     name: "MaterialFields"
@@ -32,6 +33,29 @@ TestCase {
                 { value: "third", label: "Third" }
             ]
         }
+    }
+    Component {
+        id: credentialFactory
+        Wifi.WifiCredentialDialog {
+            prompt: Wifi.WifiPromptController {
+                credentialFields: [{key: "password", label: "Network password", required: true, password: true}]
+            }
+        }
+    }
+    function test_credentialCompositionNamesTheNativeSecretEditor() {
+        const dialog = createTemporaryObject(credentialFactory, this);
+        const input = findChild(dialog, "fieldInput");
+        verify(input !== null);
+        compare(input.Accessible.name, "Network password");
+        verify(input.Accessible.description.includes("Required"));
+        compare(input.height, Ui.Theme.formHeight);
+        compare(input.font.pixelSize, Ui.Theme.formValueSize);
+        compare(input.echoMode, TextInput.Password);
+        input.forceActiveFocus();
+        keyClick(Qt.Key_X);
+        compare(dialog.prompt.credentialValues.password, "x", "modal editors retain native immediate draft entry, not a detail transaction");
+        dialog.prompt.cancel();
+        compare(Object.keys(dialog.prompt.credentialValues).length, 0);
     }
     SignalSpy {
         id: edits

@@ -73,11 +73,9 @@ Ui.DetailFlickable {
             visible: !cards.detailState.thumbnail && cards.detailState.value && cards.detailState.value.text !== null
             anchors.fill: parent
             text: cards.detailState.editing ? cards.detailState.editDraft : (cards.detailState.value ? (cards.detailState.value.text || "") : "")
-            color: Ui.Theme.text
-            selectionColor: Ui.Theme.selected
-            selectedTextColor: Ui.Theme.selectedText
-            font.family: Ui.Theme.fontFamily
-            font.pixelSize: Ui.Theme.fontSizeBody
+            Accessible.name: qsTr("Clipboard text")
+            Accessible.description: cards.detailState.editError || (cards.detailState.saveInFlight ? qsTr("Saving…") : "")
+            errorText: cards.detailState.editError
             readOnly: !cards.detailState.editing || cards.detailState.saveInFlight || cards.detailState.editBeginPending
             selectByMouse: true
             onVisibleChanged: if (!visible)

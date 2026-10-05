@@ -118,26 +118,26 @@ ColumnLayout {
         visible: section.controller.adapterSettingsTab === "general"
         title: qsTr("Bluetooth radio")
 
-        Ui.FieldLabel {
-            visible: section.controller.adapters.length > 1
-            text: qsTr("Preferred radio")
-        }
-        Ui.DropDownList {
-            objectName: "bluetoothRadioSelector"
-            Accessible.name: qsTr("Preferred Bluetooth radio")
-            visible: section.controller.adapters.length > 1
+        Ui.FormField {
             Layout.fillWidth: true
-            Layout.preferredHeight: Ui.Theme.compactControlHeight
-            options: section.controller.adapters.map(function (adapter) {
-                return {
-                    value: adapter.key,
-                    label: adapter.alias || adapter.name || "Adapter"
-                };
-            })
-            value: section.controller.selectedAdapter.key || ""
-            interactive: !section.controller.globalRequestInFlight && !section.hasDirtyFields && section.controller.adapters.length > 0
-            onSelected: function (value) {
-                section.controller.setPreferredAdapter(value);
+            visible: section.controller.adapters.length > 1
+            label: qsTr("Preferred radio")
+            Ui.DropDownList {
+                objectName: "bluetoothRadioSelector"
+                Accessible.name: qsTr("Preferred Bluetooth radio")
+                visible: section.controller.adapters.length > 1
+                Layout.fillWidth: true
+                options: section.controller.adapters.map(function (adapter) {
+                    return {
+                        value: adapter.key,
+                        label: adapter.alias || adapter.name || "Adapter"
+                    };
+                })
+                value: section.controller.selectedAdapter.key || ""
+                interactive: !section.controller.globalRequestInFlight && !section.hasDirtyFields && section.controller.adapters.length > 0
+                onSelected: function (value) {
+                    section.controller.setPreferredAdapter(value);
+                }
             }
         }
 
@@ -215,20 +215,21 @@ ColumnLayout {
         visible: section.controller.adapterSettingsTab === "pairing"
         title: qsTr("Visibility and pairing")
 
-        Ui.FieldLabel {
-            text: qsTr("Computer’s Bluetooth name")
-        }
-        Ui.TextField {
-            id: adapterAliasInput
-            objectName: "adapterNameInput"
+        Ui.FormField {
             Layout.fillWidth: true
-            text: ""
-            maximumLength: 248
-            inputValid: section.aliasValid
-            readOnly: section.controller.globalRequestInFlight || !section.controller.selectedAdapter.key
-            onEdited: section.queueAutoSave("alias")
-            onEditingFinished: section.saveDirtyFields()
-            onAccepted: section.saveDirtyFields()
+            label: qsTr("Computer’s Bluetooth name")
+            Ui.TextField {
+                id: adapterAliasInput
+                objectName: "adapterNameInput"
+                Layout.fillWidth: true
+                text: ""
+                maximumLength: 248
+                inputValid: section.aliasValid
+                readOnly: section.controller.globalRequestInFlight || !section.controller.selectedAdapter.key
+                onEdited: section.queueAutoSave("alias")
+                onEditingFinished: section.saveDirtyFields()
+                onAccepted: section.saveDirtyFields()
+            }
         }
 
         BluetoothAdapterAccessControl {

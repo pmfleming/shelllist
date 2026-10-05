@@ -1,6 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 
-Column {
+FormField {
     id: reply
 
     required property string notificationKey
@@ -8,14 +9,16 @@ Column {
     required property string draftText
     property bool sending: false
     property bool canReply: true
-    property string errorText: ""
-    property int controlHeight: 34
+    errorText: ""
+    label: qsTr("Reply")
+    editor: field
+    statusText: sending ? qsTr("Sending…") : (!canReply ? qsTr("No longer active") : "")
+    property int controlHeight: Theme.formHeight
     property string sendAccessKey: "R"
     property int buttonWidth: controlHeight
     signal draftEdited(string text)
 
     width: parent.width
-    spacing: Theme.spacingXs
 
     function focusInput(): void {
         field.focusInput(false);
@@ -35,7 +38,7 @@ Column {
     }
 
     Row {
-        width: parent.width
+        Layout.fillWidth: true
         spacing: Theme.spacingSm
         TextField {
             id: field
@@ -43,7 +46,8 @@ Column {
             focusKey: "notification::" + reply.notificationKey + "::reply"
             width: parent.width - sendButton.width - parent.spacing
             height: reply.controlHeight
-            placeholder: "Reply…"
+            placeholder: qsTr("Write a reply")
+            errorText: reply.errorText
             maximumLength: 4096
             text: reply.draftText
             readOnly: reply.sending
@@ -66,13 +70,5 @@ Column {
             enabled: field.text.trim().length > 0 && !reply.sending && reply.canReply
             onClicked: reply.send()
         }
-    }
-    ThemeText {
-        width: parent.width
-        visible: text.length > 0
-        text: reply.errorText || (!reply.canReply ? "No longer active" : "")
-        color: Theme.danger
-        wrapMode: Text.Wrap
-        font.pixelSize: Theme.fontSizeCaption
     }
 }
