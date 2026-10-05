@@ -6,6 +6,9 @@ import QtQuick.Controls as Controls
 Controls.ComboBox {
     id: control
 
+    property bool compact: false
+    property string supportingText: ""
+    property string errorText: ""
     property var options: []
     property string value: ""
     property bool interactive: true
@@ -40,9 +43,9 @@ Controls.ComboBox {
     textRole: "label"
     valueRole: "value"
     currentIndex: selectedIndex
-    implicitHeight: Theme.controlHeight
-    leftPadding: mirrored ? Theme.spacingLg + Theme.iconSizeSmall : Theme.spacingMd
-    rightPadding: mirrored ? Theme.spacingMd : Theme.spacingLg + Theme.iconSizeSmall
+    implicitHeight: compact ? Theme.formCompactHeight : Theme.formHeight
+    leftPadding: mirrored ? Theme.formActionSize : Theme.formPadding
+    rightPadding: mirrored ? Theme.formPadding : Theme.formActionSize
     hoverEnabled: true
     enabled: interactive
     activeFocusOnTab: enabled
@@ -75,7 +78,8 @@ Controls.ComboBox {
         // Native currentIndex may be a proposed choice awaiting acknowledgement.
         text: control.optionLabel(control.selectedIndex)
         color: control.selectedIndex >= 0 ? Theme.inputText : Theme.subtleText
-        font.weight: Theme.fontWeightMedium
+        font.pixelSize: Theme.formValueSize
+        font.weight: Theme.fontWeightRegular
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
     }
@@ -86,7 +90,7 @@ Controls.ComboBox {
         text: "󰅀"
         color: control.popup.visible || control.activeFocus || control.browseFocused ? Theme.accent : Theme.mutedText
         font.family: Theme.iconFontFamily
-        font.pixelSize: Theme.iconSizeSmall
+        font.pixelSize: Theme.formIconSize
         rotation: indicatorMotion.value
 
         ExpressiveMotion {
@@ -99,6 +103,7 @@ Controls.ComboBox {
         focused: control.activeFocus || control.popup.visible
         browseFocused: control.browseFocused
         hovered: control.hovered
+        invalid: control.errorText.length > 0
     }
 
     delegate: DropDownOptionDelegate {

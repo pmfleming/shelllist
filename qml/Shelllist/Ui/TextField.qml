@@ -17,8 +17,13 @@ FieldFrame {
     property alias text: input.text
     property alias horizontalAlignment: input.horizontalAlignment
     property alias cursorPosition: input.cursorPosition
-    property int leftPadding: Theme.spacingMd
-    property int rightPadding: Theme.spacingMd
+    property bool compact: false
+    property string supportingText: ""
+    property string errorText: ""
+    property string prefix: ""
+    property string suffix: ""
+    property int leftPadding: Theme.formPadding
+    property int rightPadding: Theme.formPadding
     readonly property alias inputActiveFocus: input.activeFocus
     property string placeholder: ""
     property bool password: false
@@ -30,12 +35,13 @@ FieldFrame {
     property bool inputValid: true
     property int inputMethodHints: Qt.ImhNone
     property int maximumLength: 32767
-    property int fontPixelSize: Theme.fontSizeBody
+    property int fontPixelSize: Theme.formValueSize
+    property string fontFamily: Theme.fontFamily
     property string trailingActionIcon: ""
     property string trailingActionToolTip: ""
     property bool trailingActionEnabled: true
-    property int trailingActionIconSize: Theme.iconSize
-    readonly property int embeddedActionWidth: Math.max(0, height - 2 * Theme.spacingXs)
+    property int trailingActionIconSize: Theme.formIconSize
+    readonly property int embeddedActionWidth: Theme.formActionSize
     readonly property int embeddedActionCount: (showPasswordButton ? 1 : 0) + (trailingActionIcon.length > 0 ? 1 : 0)
     readonly property int effectiveRightPadding: embeddedActionCount > 0 ? Math.max(rightPadding, Theme.spacingXs + embeddedActionCount * embeddedActionWidth + (embeddedActionCount - 1) * Theme.spacingXs) : rightPadding
 
@@ -51,11 +57,11 @@ FieldFrame {
     onVisibleChanged: if (!visible)
         passwordRevealed = false
 
-    implicitHeight: Theme.controlHeight
+    implicitHeight: compact ? Theme.formCompactHeight : Theme.formHeight
     focused: input.activeFocus && !readOnly
-    invalid: !inputValid
+    invalid: !inputValid || errorText.length > 0
     hovered: hover.hovered
-    opacity: enabled ? (readOnly ? Theme.readOnlyOpacity : 1.0) : Theme.disabledOpacity
+    opacity: enabled ? 1.0 : Theme.disabledOpacity
 
     function focusInput(selectContents) {
         input.forceActiveFocus();
@@ -99,12 +105,13 @@ FieldFrame {
         id: input
         objectName: "fieldInput"
         Accessible.name: field.Accessible.name || field.placeholder
-        Accessible.description: field.Accessible.description
+        Accessible.description: [field.Accessible.description, field.suffix, field.readOnly ? qsTr("Read-only") : ""].filter(part => part.length > 0).join(". ")
 
         anchors.fill: parent
         clip: true
-        leftPadding: field.leftPadding
-        rightPadding: field.effectiveRightPadding
+        leftPadding: field.leftPadding + (prefixLabel.visible ? prefixLabel.implicitWidth + Theme.spacingSm : 0)
+        rightPadding: field.effectiveRightPadding + (suffixLabel.visible ? suffixLabel.implicitWidth + Theme.spacingSm : 0) + (errorIcon.visible ? Theme.formIconSize + Theme.spacingSm : 0)
+        selectByMouse: true
         readOnly: field.readOnly
         inputMethodHints: field.inputMethodHints
         maximumLength: field.maximumLength
@@ -116,7 +123,7 @@ FieldFrame {
             width: 2
             color: Theme.accent
         }
-        font.family: Theme.fontFamily
+        font.family: field.fontFamily
         font.pixelSize: field.fontPixelSize
         verticalAlignment: TextInput.AlignVCenter
         onCursorPositionChanged: field.selectionChanged()
@@ -141,8 +148,44 @@ FieldFrame {
         }
     }
 
+    ThemeText {
+        id: prefixLabel
+        visible: field.prefix.length > 0
+        anchors.left: parent.left
+        anchors.leftMargin: field.leftPadding
+        anchors.verticalCenter: parent.verticalCenter
+        text: field.prefix
+        font.pixelSize: Theme.formValueSize
+        color: Theme.mutedText
+        Accessible.ignored: true
+    }
+    ThemeText {
+        id: suffixLabel
+        visible: field.suffix.length > 0
+        anchors.right: parent.right
+        anchors.rightMargin: field.effectiveRightPadding + (errorIcon.visible ? Theme.formIconSize + Theme.spacingSm : 0)
+        anchors.verticalCenter: parent.verticalCenter
+        text: field.suffix
+        font.pixelSize: Theme.formLabelSize
+        color: Theme.mutedText
+        Accessible.ignored: true
+    }
+    GlyphLabel {
+        id: errorIcon
+        objectName: "fieldErrorIcon"
+        visible: field.invalid && field.formStyle
+        anchors.right: parent.right
+        anchors.rightMargin: field.effectiveRightPadding
+        anchors.verticalCenter: parent.verticalCenter
+        glyph: "error"
+        font.pixelSize: Theme.formIconSize
+        color: Theme.danger
+        Accessible.ignored: true
+    }
+
     FlatIconButton {
         objectName: "passwordVisibilityAction"
+        commandScope: field
         visible: field.showPasswordButton
         anchors.right: trailingAction.visible ? trailingAction.left : parent.right
         anchors.rightMargin: Theme.spacingXs
@@ -151,7 +194,7 @@ FieldFrame {
         height: width
         icon: field.passwordRevealed ? "󰈉" : "󰈈"
         flatIconColor: Theme.text
-        iconSize: Theme.iconSize
+        iconSize: Theme.formIconSize
         accessibleName: field.passwordRevealed ? "Hide password" : "Show password"
         onClicked: field.passwordRevealed = !field.passwordRevealed
     }
@@ -159,6 +202,7 @@ FieldFrame {
     FlatIconButton {
         id: trailingAction
         objectName: "fieldTrailingAction"
+        commandScope: field
 
         visible: field.trailingActionIcon.length > 0
         anchors.right: parent.right

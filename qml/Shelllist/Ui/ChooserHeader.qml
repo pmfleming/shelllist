@@ -77,6 +77,7 @@ Rectangle {
             Layout.preferredHeight: header.scaled(48)
             leftPadding: header.scaled(8)
             rightPadding: header.scaled(8)
+            formStyle: false
             color: "transparent"
             border.width: 0
             focused: false

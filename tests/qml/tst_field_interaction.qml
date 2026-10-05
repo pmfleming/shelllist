@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
 import QtTest
 import Shelllist.Ui as Ui
 
@@ -41,15 +42,21 @@ TestCase {
                 chooserController: controller
                 powerVisible: false
                 resultModel: ["One", "Two", "Three"]
-                rowDelegate: Rectangle { width: 300; height: 40 }
+                rowDelegate: Rectangle { implicitWidth: 300; implicitHeight: 40 }
             }
             detailsComponent: Column {
                 spacing: 10
-                Ui.TextField {
-                    objectName: "text"
+                Ui.FormField {
+                    objectName: "textComposition"
                     width: parent.width
-                    text: surface.savedText
-                    onEdited: function (value) { surface.savedText = value; surface.writes++; }
+                    label: "Device name"
+                    supportingText: "Visible to nearby devices"
+                    Ui.TextField {
+                        objectName: "text"
+                        Layout.fillWidth: true
+                        text: surface.savedText
+                        onEdited: function (value) { surface.savedText = value; surface.writes++; }
+                    }
                 }
                 Ui.DropDownList {
                     objectName: "choice"
@@ -142,6 +149,41 @@ TestCase {
             keyClick(Qt.Key_Tab);
         compare(surface.detailsNavigation.currentTarget, field(surface, name));
     }
+    function test_formCompositionPreservesNativeIdentityAndSearch() {
+        const surface = make();
+        const text = field(surface, "text");
+        compare(text.height, Ui.Theme.formHeight);
+        compare(text.radius, Ui.Theme.formRadius);
+        compare(text.color, Ui.Theme.input);
+        compare(text.fontPixelSize, 16);
+        compare(text.border.width, 0);
+        compare(surface.detailsNavigation.currentTarget, text);
+        const input = findChild(text, "fieldInput");
+        compare(input.Accessible.name, "Device name");
+        compare(input.Accessible.description, "Visible to nearby devices");
+        const composition = field(surface, "textComposition");
+        verify(findChild(composition, "formFieldLabel").y < text.mapToItem(composition, 0, 0).y);
+        compare(field(surface, "readOnly").opacity, 1);
+        const search = findChild(surface, "chooserSearchField");
+        verify(!search.formStyle);
+        verify(!findChild(search, "fieldBaseline").visible);
+        compare(search.height, 48);
+    }
+    function test_multilineViewportRetainsNativeScrollAndSelection() {
+        const surface = make();
+        surface.savedMultiline = Array(40).fill("A line of ordinary text").join("\n");
+        browse(surface, "multiline");
+        const editor = field(surface, "multiline");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_End, Qt.ControlModifier);
+        tryVerify(() => editor.contentY > 0);
+        verify(editor.contentHeight > editor.height);
+        editor.selectAll();
+        keyClick(Qt.Key_X);
+        compare(surface.writes, 0);
+        keyClick(Qt.Key_Escape);
+        compare(editor.text, surface.savedMultiline);
+    }
     function test_textDiscardSaveAndTabTransaction() {
         const surface = make();
         const text = field(surface, "text");
@@ -232,6 +274,7 @@ TestCase {
     function test_externalUpdateDoesNotOverwriteDraftAndBlurRestoresBinding() {
         const surface = make();
         const control = field(surface, "text");
+        tryVerify(() => control.width > 50);
         mouseClick(findChild(control, "fieldInput"), 25, 15);
         verify(surface.detailsNavigation.editing, "pointer entry uses the same local transaction");
         keyClick(Qt.Key_X);

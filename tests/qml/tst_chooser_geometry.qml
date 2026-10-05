@@ -140,7 +140,7 @@ DaemonTestCase {
         wait(0);
         verify(surface.listItem.visible && surface.detailsItem.visible);
         const editor = findChild(surface, "geometryEditor");
-        compare(editor.height, Ui.Theme.controlHeight, "tight margins do not shrink controls");
+        compare(editor.height, Ui.Theme.formHeight, "tight margins do not shrink controls");
         verify(surface.detailsItem.width >= 495);
         tryVerify(() => surface.detailsItem.mapToItem(surface, surface.detailsItem.width, 0).x <= surface.width);
         fixture.controller.detailsOpen = false;

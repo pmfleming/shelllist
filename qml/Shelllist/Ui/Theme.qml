@@ -94,6 +94,18 @@ Item {
     readonly property real densityMaximum: 1.12
     readonly property int densityReferenceHeight: 850
 
+    // Form density is independent of button density and chooser geometry.
+    readonly property int formHeight: 56
+    readonly property int formCompactHeight: 48
+    readonly property int formRadius: 12
+    readonly property int formPadding: 16
+    readonly property int formValueSize: 16
+    readonly property int formLabelSize: 14
+    readonly property int formSupportSize: 12
+    readonly property int formIconSize: 24
+    readonly property int formActionSize: 48
+    readonly property int formTextAreaHeight: 112
+
     readonly property int compactControlHeight: 38
     readonly property int controlHeight: 42
     readonly property int primaryActionHeight: 48

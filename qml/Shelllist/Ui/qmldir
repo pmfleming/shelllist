@@ -46,6 +46,7 @@ Elevation 1.0 Elevation.qml
 internal FieldFrame FieldFrame.qml
 FieldEditSession 1.0 FieldEditSession.qml
 FieldLabel 1.0 FieldLabel.qml
+FormField 1.0 FormField.qml
 FlatIconButton 1.0 FlatIconButton.qml
 ExpressiveMotion 1.0 ExpressiveMotion.qml
 FocusRing 1.0 FocusRing.qml

@@ -1,13 +1,34 @@
 import QtQuick
+import QtQuick.Controls as Controls
 
-// Native multiline editing. A lease-owning domain can allow focus before its
-// editor becomes writable; no draft/value is owned by presentation memory.
-TextEdit {
+// A bounded native multiline editor. The focus scope preserves the shared
+// navigation identity while its TextEdit owns IME, selection and the caret.
+FocusScope {
     id: editor
+    property string focusKey: objectName
     property bool browseFocused: false
     property bool editingAllowed: !readOnly
+    property string supportingText: ""
+    property string errorText: ""
+    property alias text: input.text
+    property alias readOnly: input.readOnly
+    property alias color: input.color
+    property alias selectionColor: input.selectionColor
+    property alias selectedTextColor: input.selectedTextColor
+    property alias font: input.font
+    property alias wrapMode: input.wrapMode
+    property alias selectByMouse: input.selectByMouse
+    property alias cursorPosition: input.cursorPosition
+    property alias inputMethodHints: input.inputMethodHints
+    readonly property alias contentHeight: viewport.contentHeight
+    readonly property alias contentY: viewport.contentY
     signal edited(string value)
     signal editFinished(bool saved)
+    signal selectionChanged
+    implicitHeight: Theme.formTextAreaHeight
+    implicitWidth: 240
+    opacity: enabled ? 1.0 : Theme.disabledOpacity
+
     readonly property FieldEditSession editSession: FieldEditSession {
         owner: editor
         available: editor.enabled && editor.editingAllowed
@@ -18,22 +39,65 @@ TextEdit {
         onPublishRequested: function (value) { editor.edited(value); }
         onFinished: function (saved) { editor.editFinished(saved); }
     }
-    FocusRing {
-        active: editor.activeFocus || editor.browseFocused
-        editing: editor.editSession.active
+    FieldFrame {
+        anchors.fill: parent
+        focused: editor.editSession.active || (editor.activeFocus && !editor.readOnly)
+        browseFocused: editor.browseFocused
+        invalid: editor.errorText.length > 0
     }
-    Keys.onPressed: function (event) { editSession.handleKey(event); }
-    signal selectionChanged
-    onCursorPositionChanged: selectionChanged()
-    onSelectionStartChanged: selectionChanged()
-    onSelectionEndChanged: selectionChanged()
-
+    Flickable {
+        id: viewport
+        objectName: "textEditorViewport"
+        anchors.fill: parent
+        clip: true
+        contentWidth: width
+        contentHeight: input.height
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.VerticalFlick
+        Controls.ScrollBar.vertical: Controls.ScrollBar { }
+        TextEdit {
+            id: input
+            objectName: "multilineInput"
+            width: viewport.width
+            height: Math.max(viewport.height, implicitHeight)
+            focus: true
+            padding: Theme.formPadding
+            wrapMode: TextEdit.Wrap
+            textFormat: TextEdit.PlainText
+            selectByMouse: true
+            color: Theme.inputText
+            selectionColor: Theme.accent
+            selectedTextColor: Theme.accentText
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.formValueSize
+            Accessible.name: editor.Accessible.name
+            Accessible.description: [editor.Accessible.description, editor.readOnly ? qsTr("Read-only") : ""].filter(part => part.length > 0).join(". ")
+            Keys.onPressed: function (event) { editor.editSession.handleKey(event); }
+            onCursorPositionChanged: editor.selectionChanged()
+            onSelectionStartChanged: editor.selectionChanged()
+            onSelectionEndChanged: editor.selectionChanged()
+            onCursorRectangleChanged: editor.revealCursor()
+            onTextEdited: if (!editor.editSession.navigation) editor.edited(text)
+        }
+    }
+    function revealCursor(): void {
+        if (!input.activeFocus)
+            return;
+        const caret = input.cursorRectangle;
+        if (caret.y < viewport.contentY)
+            viewport.contentY = caret.y;
+        else if (caret.y + caret.height > viewport.contentY + viewport.height)
+            viewport.contentY = caret.y + caret.height - viewport.height;
+        viewport.returnToBounds();
+    }
+    function select(start: int, end: int): void { input.select(start, end); }
+    function selectAll(): void { input.selectAll(); }
     function selectionState(): var {
-        return {cursor: cursorPosition, anchor: cursorPosition === selectionStart ? selectionEnd : selectionStart};
+        return {cursor: input.cursorPosition, anchor: input.cursorPosition === input.selectionStart ? input.selectionEnd : input.selectionStart};
     }
     function restoreSelection(state: var): void {
         if (!state || !Number.isFinite(state.cursor) || !Number.isFinite(state.anchor))
             return;
-        select(Math.max(0, Math.min(text.length, state.anchor)), Math.max(0, Math.min(text.length, state.cursor)));
+        input.select(Math.max(0, Math.min(text.length, state.anchor)), Math.max(0, Math.min(text.length, state.cursor)));
     }
 }
