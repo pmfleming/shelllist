@@ -29,6 +29,7 @@ Item {
             icon: "more_horiz"
             accessibleName: qsTr("Open Tray")
             activeFocusOnTab: false
+            browseIndicatorVisible: false
             backgroundColor: "transparent"
             border.width: 0
             onClicked: root.controller.openSurface("tray")

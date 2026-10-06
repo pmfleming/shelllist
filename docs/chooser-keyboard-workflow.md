@@ -110,7 +110,9 @@ switch—not the setting's label, explanatory text, row or card. Browsing has a
 subtle tonal highlight plus a compact opaque Primary pill with a Surface keyline.
 The marker/keyline pair retains at least 3:1 contrast, including over selected or
 filled controls; the low-alpha tint alone is not the focus cue. This is not a
-rectangular outline around the control. Horizontal sliders place the marker above
+rectangular outline around the control. The top bar opts out of this panel
+browsing marker; its pointer feedback and panel markers remain unchanged.
+Horizontal sliders place the marker above
 the track. Editing replaces the marker with a stronger tonal highlight and accent
 edge, plus native caret/selection feedback. Feedback is immediate and never delayed
 by animation. `ToggleRow.focusSurface` is its switch, not the containing row.

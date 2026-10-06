@@ -12,6 +12,7 @@ Ui.ActionButton {
     implicitWidth: 32
     implicitHeight: 32
     activeFocusOnTab: false
+    browseIndicatorVisible: false
     backgroundColor: "transparent"
     borderColor: "transparent"
     border.width: 0

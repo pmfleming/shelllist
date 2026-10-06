@@ -18,6 +18,7 @@ Item {
         width: 34
         height: 34
         activeFocusOnTab: false
+        browseIndicatorVisible: false
         icon: artwork.status === Image.Ready ? "" : "󰎆"
         accessibleName: qsTr("Open Media") + (root.player ? ". " + (root.player.title || root.player.identity || "") : "")
         backgroundColor: "transparent"

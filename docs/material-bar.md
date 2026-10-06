@@ -12,7 +12,11 @@ Notifications, Tray, Clock/date**. Group backgrounds are transparent. Focused
 application, Audio, Displays, Power profile, Activity, Updates and separate
 Timezone pods are gone; their destinations remain accessible independently.
 There are no hover tooltips or persistent battery/notification numbers.
-Accessible metadata retains detailed values.
+Accessible metadata retains detailed values. The top bar does not display the
+panel selection caret: status actions, workspaces, media, tray-list and overflow
+buttons opt out through `ActionControl.browseIndicatorVisible`. Tonal focus,
+hover/press feedback, active-workspace styling and urgency indicators remain;
+controls do not gain Tab traversal. Panel selection indicators are unchanged.
 
 - Workspaces retain their established icon assignments and show the focused
   application's actual icon when available. Missing theme icons fall back to

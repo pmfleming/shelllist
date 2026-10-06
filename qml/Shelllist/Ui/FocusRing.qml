@@ -7,6 +7,7 @@ Rectangle {
     id: feedback
     property bool active: false
     property bool editing: false
+    property bool browseIndicatorVisible: true
     property real cornerRadius: Theme.controlRadius
     property color ringColor: Theme.accent
     // Horizontal sliders keep the marker above, rather than over, their track.
@@ -25,7 +26,7 @@ Rectangle {
 
     Rectangle {
         objectName: "browseFocusIndicator"
-        visible: !feedback.editing
+        visible: feedback.browseIndicatorVisible && !feedback.editing
         x: feedback.horizontalIndicator ? (parent.width - width) / 2 : 1
         y: feedback.horizontalIndicator ? 1 : (parent.height - height) / 2
         width: Math.min(feedback.horizontalIndicator ? 14 : 5, Math.max(0, parent.width - 2))

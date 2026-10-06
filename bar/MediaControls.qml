@@ -23,6 +23,7 @@ Row {
         iconSize: 20
         anchors.verticalCenter: parent.verticalCenter
         activeFocusOnTab: false
+        browseIndicatorVisible: false
         backgroundColor: "transparent"
         border.width: 0
         flatIconColor: Ui.Theme.text

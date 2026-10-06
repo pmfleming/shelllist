@@ -114,6 +114,7 @@ Item {
         height: 32
         visible: root.overflow
         activeFocusOnTab: false
+        browseIndicatorVisible: false
         icon: viewport.atXEnd ? "󰁍" : "󰅂"
         accessibleName: viewport.atXEnd ? qsTr("Scroll bar to beginning") : qsTr("Scroll bar forward")
         backgroundColor: Ui.Theme.surface

@@ -7,6 +7,8 @@ Rectangle {
     property color focusRingColor: Theme.accent
     property Rectangle focusSurface: control
     property bool browseFocused: false
+    // The top bar keeps tonal focus feedback without the panel browsing caret.
+    property bool browseIndicatorVisible: true
     readonly property bool highlighted: activeFocus || browseFocused
     property string accessKey: ""
     // Repeated commands (e.g. field help) can share a letter in disjoint scopes.
@@ -41,6 +43,7 @@ Rectangle {
     FocusRing {
         parent: control.focusSurface
         active: control.highlighted
+        browseIndicatorVisible: control.browseIndicatorVisible
         cornerRadius: control.focusSurface.radius
         ringColor: control.focusRingColor
     }
