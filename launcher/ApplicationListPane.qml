@@ -22,6 +22,7 @@ Ui.ChooserListPane {
     refreshing: controller.refreshInFlight
     busy: controller.refreshInFlight || controller.operationBlocked
     powerEnabled: false
+    powerVisible: false
     refreshEnabled: !controller.operationBlocked
     function requestRefresh(): void {
         controller.refresh(true);

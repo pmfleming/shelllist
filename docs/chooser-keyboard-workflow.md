@@ -187,6 +187,9 @@ There is no F1 overlay, hover tooltip or plain-letter action shortcut.
 
 ## Applications action outcomes
 
+The Applications search header has no power switch: there is no corresponding
+operation. Search, category filtering and refresh remain available.
+
 Focus and launch hand off to the application and dismiss after successful focus
 or checked launch handoff, not mere request admission. Close keeps the chooser
 open: window rows disappear only on authoritative snapshots, and the last window

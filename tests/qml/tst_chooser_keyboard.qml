@@ -163,6 +163,11 @@ DaemonTestCase {
             running: false, focused: false
         })], true);
         tryVerify(() => controller.hasSelection);
+        tryVerify(() => findChild(content, "chooserPowerToggle") !== null);
+        verify(!findChild(content, "chooserPowerToggle").visible, "Applications has no power operation");
+        verify(findChild(content, "chooserSearchField").visible);
+        verify(findChild(content, "fieldTrailingAction").visible, "Category filtering remains available");
+        verify(findChild(content, "chooserRefreshButton").visible);
         enterDetails(content);
         keyClick(Qt.Key_Tab, Qt.ControlModifier);
         compare(controller.detailsTab, "resources");
