@@ -6,12 +6,28 @@ import Shelllist.Ui as Ui
 
 ColumnLayout {
     id: list
+    objectName: "applicationInstanceList"
 
     required property ApplicationController controller
     required property var application
     required property real uiScale
     required property int actionHeight
     readonly property var instances: application.kind === "desktop-shortcut" ? [] : application.instances || []
+
+    // Reserve the current-window marker even on non-current rows so titles align.
+    readonly property real locationWidth: Math.min(Math.max(56 * uiScale,
+        ...instances.map(window => workspaceMetrics.advanceWidth(workspaceLabel(window)) + 40 * uiScale)),
+        Math.max(56 * uiScale, Math.min(120 * uiScale, width * 0.25)))
+
+    function workspaceLabel(window: var): string {
+        return String(window.workspace_name || window.workspace_id || "?");
+    }
+
+    FontMetrics {
+        id: workspaceMetrics
+        font.family: Ui.Theme.fontFamily
+        font.pixelSize: Math.round(Ui.Theme.fontSizeLabel * list.uiScale)
+    }
 
     Layout.fillWidth: true
     spacing: Math.round(Ui.Theme.spacingMd * uiScale)
@@ -41,9 +57,12 @@ ColumnLayout {
                     id: instanceRow
                     required property var modelData
                     required property int index
+                    objectName: "windowRow-" + modelData.id
                     readonly property string instanceTitle: modelData.title || list.application.name || qsTr("Window")
-                    readonly property string workspaceLabel: String(modelData.workspace_name || modelData.workspace_id || qsTr("unknown"))
+                    readonly property string workspaceLabel: list.workspaceLabel(modelData)
+                    readonly property string workspaceDescription: qsTr("Workspace %1").arg(workspaceLabel === "?" ? qsTr("unknown") : workspaceLabel)
                     readonly property string actionMessage: list.controller.operations.message(list.application.id, modelData.id)
+                    readonly property bool focusSucceeded: list.controller.operations.focusSucceeded(list.application.id, modelData.id)
                     readonly property bool actionEnabled: !list.controller.operationBlocked && !list.controller.operations.busy(list.application.id)
                     Layout.fillWidth: true
                     spacing: 0
@@ -64,54 +83,92 @@ ColumnLayout {
                         visible: instanceRow.index > 0
                         color: Ui.Theme.border
                     }
-                    RowLayout {
+                    GridLayout {
+                        columns: 4
                         Layout.fillWidth: true
                         Layout.leftMargin: Math.round(Ui.Theme.spacingLg * list.uiScale)
-                        Layout.rightMargin: Math.round(Ui.Theme.spacingSm * list.uiScale)
+                        Layout.rightMargin: Math.round(Ui.Theme.spacingLg * list.uiScale)
                         Layout.topMargin: Math.round(Ui.Theme.spacingMd * list.uiScale)
                         Layout.bottomMargin: Math.round(Ui.Theme.spacingMd * list.uiScale)
-                        spacing: Math.round(Ui.Theme.spacingSm * list.uiScale)
+                        columnSpacing: Math.round(Ui.Theme.spacingSm * list.uiScale)
+                        rowSpacing: Math.round(Ui.Theme.spacingSm * list.uiScale)
 
-                        ColumnLayout {
+                        Item {
+                            Layout.preferredWidth: list.locationWidth
+                            implicitHeight: locationBadge.implicitHeight
+                            Rectangle {
+                                id: locationBadge
+                                width: Math.min(list.locationWidth, Math.max(Math.round(28 * list.uiScale), locationText.implicitWidth + Math.round(12 * list.uiScale)) + (currentIcon.visible ? currentIcon.width : 0))
+                                implicitHeight: Math.max(Math.round(28 * list.uiScale), locationText.implicitHeight + Math.round(8 * list.uiScale))
+                                height: implicitHeight
+                                radius: Math.round(8 * list.uiScale)
+                                color: instanceRow.modelData.focused ? Ui.Theme.selected : "transparent"
+                                border.color: instanceRow.modelData.focused ? Ui.Theme.accent : Ui.Theme.controlBorder
+                                Ui.ThemeText {
+                                    id: locationText
+                                    objectName: "windowLocation-" + instanceRow.modelData.id
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: Math.round(6 * list.uiScale)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width - Math.round(12 * list.uiScale) - (currentIcon.visible ? currentIcon.width : 0)
+                                    text: instanceRow.workspaceLabel
+                                    horizontalAlignment: Text.AlignHCenter
+                                    wrapMode: Text.Wrap
+                                    color: instanceRow.modelData.focused ? Ui.Theme.selectedText : Ui.Theme.mutedText
+                                    font: workspaceMetrics.font
+                                    Accessible.role: Accessible.StaticText
+                                    Accessible.name: instanceRow.workspaceDescription
+                                }
+                                Ui.GlyphLabel {
+                                    id: currentIcon
+                                    objectName: "windowCurrent-" + instanceRow.modelData.id
+                                    visible: !!instanceRow.modelData.focused
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: Math.round(28 * list.uiScale)
+                                    height: parent.height
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    glyph: "center_focus_strong"
+                                    color: Ui.Theme.selectedText
+                                    font.pixelSize: Math.round(16 * list.uiScale)
+                                    Accessible.role: Accessible.StaticText
+                                    Accessible.name: qsTr("Current window")
+                                    Rectangle {
+                                        width: 1
+                                        height: parent.height
+                                        color: Ui.Theme.accent
+                                    }
+                                }
+                            }
+                        }
+                        Item {
+                            id: titleGroup
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
-                            spacing: Ui.Theme.spacingXs
+                            implicitHeight: Math.max(title.implicitHeight, successIcon.visible ? successIcon.implicitHeight : 0)
                             Ui.ThemeText {
+                                id: title
                                 objectName: "windowTitle-" + instanceRow.modelData.id
-                                Layout.fillWidth: true
+                                width: Math.max(0, Math.min(implicitWidth, titleGroup.width - (successIcon.visible ? successIcon.width + Ui.Theme.spacingSm * list.uiScale : 0)))
+                                anchors.verticalCenter: parent.verticalCenter
                                 text: instanceRow.instanceTitle
                                 wrapMode: Text.Wrap
                                 font.pixelSize: Math.round(Ui.Theme.fontSizeHeading * list.uiScale)
                             }
-                            Ui.ThemeText {
-                                objectName: "windowLocation-" + instanceRow.modelData.id
-                                Layout.fillWidth: true
-                                text: qsTr("Workspace %1").arg(instanceRow.workspaceLabel)
-                                color: Ui.Theme.mutedText
-                                wrapMode: Text.Wrap
-                                font.pixelSize: Ui.Theme.fontSizeSmall
-                            }
-                            Rectangle {
-                                visible: !!instanceRow.modelData.focused
-                                implicitWidth: currentLabel.implicitWidth + 12
-                                implicitHeight: currentLabel.implicitHeight + 4
-                                radius: 6
-                                color: Ui.Theme.selected
-                                Ui.ThemeText {
-                                    id: currentLabel
-                                    objectName: "windowCurrent-" + instanceRow.modelData.id
-                                    anchors.centerIn: parent
-                                    text: qsTr("Current window")
-                                    color: Ui.Theme.selectedText
-                                    font.pixelSize: Ui.Theme.fontSizeCaption
-                                }
-                            }
-                            Ui.ThemeText {
-                                Layout.fillWidth: true
-                                visible: instanceRow.actionMessage.length > 0
-                                text: instanceRow.actionMessage
-                                wrapMode: Text.Wrap
-                                font.pixelSize: Ui.Theme.fontSizeCaption
+                            Ui.GlyphLabel {
+                                id: successIcon
+                                objectName: "windowFocusSuccess-" + instanceRow.modelData.id
+                                visible: instanceRow.focusSucceeded
+                                anchors.left: title.right
+                                anchors.leftMargin: Math.round(Ui.Theme.spacingSm * list.uiScale)
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.round(18 * list.uiScale)
+                                glyph: "check"
+                                color: Ui.Theme.active
+                                font.pixelSize: Math.round(18 * list.uiScale)
+                                Accessible.role: Accessible.StaticText
+                                Accessible.name: instanceRow.actionMessage || qsTr("Window focused")
                             }
                         }
 
@@ -123,7 +180,7 @@ ColumnLayout {
                                 id: focusButton
                                 objectName: "focusWindow-" + instanceRow.modelData.id
                                 sizeRole: "secondary"
-                                uiScale: list.uiScale
+                                uiScale: list.uiScale * 2 / 3
                                 icon: "desktop_windows"
                                 enabled: instanceRow.actionEnabled
                                 accessibleName: qsTr("Focus %1 on workspace %2").arg(instanceRow.instanceTitle).arg(instanceRow.workspaceLabel)
@@ -145,11 +202,25 @@ ColumnLayout {
                         Ui.FlatIconButton {
                             objectName: "windowCommands-" + instanceRow.modelData.id
                             sizeRole: "secondary"
-                            uiScale: list.uiScale
+                            uiScale: list.uiScale * 2 / 3
                             icon: "more_horiz"
                             enabled: instanceRow.actionEnabled
                             accessibleName: qsTr("Commands for %1").arg(instanceRow.instanceTitle)
                             onClicked: if (shortcutNavigation) shortcutNavigation.openCommandMenuFor(windowCommands)
+                        }
+                        Item {
+                            visible: actionStatus.visible
+                        }
+                        Ui.ThemeText {
+                            id: actionStatus
+                            objectName: "windowActionStatus-" + instanceRow.modelData.id
+                            Layout.columnSpan: 3
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            visible: instanceRow.actionMessage.length > 0 && !instanceRow.focusSucceeded
+                            text: instanceRow.actionMessage
+                            wrapMode: Text.Wrap
+                            font.pixelSize: Math.round(Ui.Theme.fontSizeCaption * list.uiScale)
                         }
                     }
                 }

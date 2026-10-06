@@ -1,7 +1,8 @@
 # Application details: capability-driven Material presentation
 
-Implements the approved [HTML review](proposals/application-details-m3.html).
-The screenshot's browser is an example, not an application-specific layout.
+Implements the approved [HTML review](proposals/application-details-m3.html),
+with the [compact number-first window rows](proposals/window-metadata-icons.html)
+revision. The screenshot's browser is an example, not an application-specific layout.
 
 ## Presentation
 
@@ -10,8 +11,20 @@ The screenshot's browser is an example, not an application-specific layout.
   open-window count, not-running state or shortcut behavior in the subtitle.
 - Group **Open windows** in one opaque Surface Container with 16px corners and
   subtle separators, rather than individually outlined selection-like cards.
-  Preserve full window titles, wrap long/localized text and show workspace
-  provenance plus an explicit **Current window** label from daemon state.
+  Use one compact row: workspace capsule, full title, optional focus-success
+  check, then Focus/More commands. Single-line rows are 56px at scale 1 (plus
+  separators); long titles and named workspaces wrap without clipping.
+  Workspace numbers omit the repeated “Workspace” prefix; named workspaces
+  retain their names and unknown locations show “?”. A shared location column
+  keeps titles aligned, reserving space for the current-window marker.
+  The capsule's `center_focus_strong` glyph and tonal fill follow daemon focus,
+  not keyboard selection. Full workspace/current-window accessible names remain.
+- Only an acknowledged, completed **focus-window** operation becomes a passive
+  check beside that window's title. Use structured operation status, never parse
+  message text. Preserve the original message as the check's accessible name
+  and its existing feedback lifetime. Pending, failed, cancelled, uncertain and
+  close/launch outcomes remain readable text below the title. A new operation
+  supersedes the old check; success never fabricates compositor focus.
 - Remove per-window CPU/memory readouts from this page; the existing Resources
   page retains telemetry, attribution and history. Do not infer window-level
   attribution or invent warnings from aggregate values.
@@ -27,8 +40,8 @@ The screenshot's browser is an example, not an application-specific layout.
   runtime windows remain explicitly unavailable.
 - The existing `DetailFlickable` bounds and scrolls the whole page: no nested
   field traversal, hard cap on window/actions, or extra scrolling region.
-  Contextual commands use shared 48px secondary circles; the existing 56px
-  primary/32px header-secondary hierarchy is unchanged.
+  Window Focus/More use shared 32px secondary circles with 16px icons, matching
+  expanded headers. Desktop-action geometry and the 56px primary are unchanged.
 
 ## Commands and safety
 
@@ -54,6 +67,11 @@ zero/many windows and desktop actions, launch-only and stale-runtime states,
 long labels, page scrolling, editable-only traversal, per-window menu scope,
 modal shortcut blocking, Escape focus restoration, arbitrary Alt+J commands,
 stable-ID/revision routing, removal while a menu is open and busy guards.
+It also checks compact row geometry, aligned titles, passive status clicks,
+workspace accessibility, unknown/named workspaces and narrow long-title wrapping.
+`tests/qml/tst_application_actions.qml` covers acknowledged versus pending focus,
+window-scoped success, localized messages, failure/cancellation, superseding
+requests and independence from compositor focus through actual commands/replies.
 Shared control and chooser tests cover the reused focus/menu foundations.
 
 The HTML is an offline design study, not a replacement for native tests or a

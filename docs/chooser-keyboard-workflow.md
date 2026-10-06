@@ -224,8 +224,13 @@ undo. Alt+J still exposes all window and arbitrary desktop actions, regardless
 of scroll position. These menus share modal shortcut guards, native traversal
 and focus restoration; removing their owning window closes them rather than
 redirecting Enter to a different window. Full labels and stable daemon IDs are
-retained. See [application details](application-details.md) for the visual and
-capability contract and Qt interaction coverage.
+retained. Compact number-first window rows keep workspace/current-window badges
+and acknowledged focus-success checks passive, with full accessible names. Only
+the title/metadata composition changes: no field stops, row-wide hit targets or
+selection highlights are added. Long titles and error/progress text can expand
+the row; Focus/More retain shared 32px command circles and existing guards.
+See [application details](application-details.md) for the visual and capability
+contract and Qt interaction coverage.
 
 ## Implementing or extending a panel
 

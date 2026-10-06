@@ -22,6 +22,12 @@ Item {
             return "";
         return record.message;
     }
+    function focusSucceeded(targetId: string, windowId: string): bool {
+        const record = forTarget(targetId) || feedback[targetId];
+        return !!record && record.status === "completed"
+            && Lifecycle.expectedOperationAction(record.request.actionId) === "focus-window"
+            && record.windowIds.includes(windowId);
+    }
     function publish(record: var): void {
         const targetId = record.request.result.id;
         const entries = Object.entries(feedback).filter(entry => entry[0] !== targetId);
@@ -42,7 +48,7 @@ Item {
             request: {id: request.id, actionId: request.actionId,
                 result: {id: request.result.id, title: request.result.title},
                 action: {label: request.action.label}},
-            operationId: "", statusRequestId: "", checks: 0,
+            operationId: "", statusRequestId: "", status: "", checks: 0,
             generation: controller.uiGeneration, viewEpoch: controller.actionViewEpoch, handedOff: false,
             windowIds: windowId ? [windowId] : windows.map(window => window.id),
             message: request.action.label + "…", awaitingWindows: false, windowChecks: 0
@@ -70,7 +76,7 @@ Item {
         const transition = Lifecycle.operationTransition(original.request, original.request.result.id, original.operationId, responseId, operation);
         if (!transition)
             return;
-        const record = Object.assign({}, original, {operationId: operation.id, checks: original.operationId ? original.checks : 0});
+        const record = Object.assign({}, original, {operationId: operation.id, status: transition.status, checks: original.operationId ? original.checks : 0});
         const closing = Presentation.isCloseAction(record.request.actionId);
         if (transition.stage === "active") {
             record.message = record.request.action.label + (record.checks >= 3 ? ": still waiting for confirmation" : "…");
@@ -109,7 +115,7 @@ Item {
         const original = pending[id];
         if (!original)
             return false;
-        const record = Object.assign({}, original, {message: message});
+        const record = Object.assign({}, original, {message: message, status: "failed"});
         retire(record);
         reportFailure(record);
         return true;

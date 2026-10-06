@@ -113,6 +113,45 @@ DaemonTestCase {
         event(call, "completed");
         compare(panel.dismissals, 1, "Duplicate terminal delivery cannot dismiss again");
     }
+    function test_windowFocusFeedbackUsesAcknowledgedOutcome_data() {
+        return [{tag:"completed",status:"completed"}, {tag:"failed",status:"failed"}, {tag:"cancelled",status:"cancelled"}];
+    }
+    function test_windowFocusFeedbackUsesAcknowledgedOutcome(data) {
+        const panel = makePanel();
+        expand(panel);
+        mouseClick(findChild(panel,"focusWindow-w1"));
+        const call = lastCall(Api.methods.execute);
+        accept(call);
+        verify(!findChild(panel,"windowFocusSuccess-w1").visible,"Admission must not show success");
+        verify(findChild(panel,"windowActionStatus-w1").visible,"Progress remains readable");
+        // A retained/revisited view can display the result without being dismissed.
+        panel.listItem.focusList();
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Up);
+        const message = data.status === "completed" ? "Fenêtre activée" : "Focus not confirmed; check this window";
+        event(call,data.status,{message:message});
+        compare(panel.dismissals,0);
+        tryVerify(() => findChild(panel,"windowFocusSuccess-w1") !== null);
+        const success = findChild(panel,"windowFocusSuccess-w1");
+        const status = findChild(panel,"windowActionStatus-w1");
+        compare(success.visible,data.status === "completed");
+        compare(status.visible,data.status !== "completed");
+        compare(status.text,message);
+        verify(!findChild(panel,"windowFocusSuccess-w2").visible,"Success is window-scoped");
+        verify(!findChild(panel,"windowCurrent-w1").visible,"Operation success cannot invent compositor focus");
+        if (data.status === "completed") {
+            compare(success.Accessible.name,message);
+            mouseClick(success);
+            compare(calls.filter(c => c.method === Api.methods.execute).length,1,"Status glyph is passive");
+            mouseClick(findChild(panel,"focusWindow-w1"));
+            const retry = lastCall(Api.methods.execute);
+            verify(!success.visible,"New pending action supersedes old success");
+            reply(retry,{},"Could not send application action");
+            verify(!success.visible);
+            verify(status.visible);
+            compare(status.text,"Could not send application action");
+        }
+    }
     function test_close_reconcilesWindowsAndRestoresCommandFocus() {
         const panel = makePanel();
         const c = panel.controller;

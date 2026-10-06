@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Shelllist · Compact window rows</title>
+<style>
+:root { color-scheme:dark; --bg:#101114; --card:#1d2023; --ink:#e3e5eb; --muted:#acb1bc; --line:#34383f; --accent:#b5ccfa; --success:#b3d6bc; }
+* { box-sizing:border-box }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 system-ui,sans-serif; }
+main { max-width:1080px; margin:auto; padding:48px 32px; }
+.eyebrow { color:var(--accent); font-size:11px; letter-spacing:.16em; text-transform:uppercase; font-weight:650; }
+h1 { font-size:clamp(32px,4.5vw,52px); line-height:1.1; letter-spacing:-.045em; font-weight:550; margin:16px 0; }
+.intro { color:var(--muted); max-width:650px; font-size:17px; margin:0; }
+h2 { font-size:20px; font-weight:550; letter-spacing:-.02em; margin:0; }
+h3 { font-size:14px; margin:0 0 8px; font-weight:550; }
+p { margin:0; }
+.study { display:grid; grid-template-columns:minmax(0,680px) minmax(180px,1fr); gap:32px; margin-top:38px; align-items:start; }
+figure { margin:0; min-width:0; }
+.figure-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+.tag { color:var(--accent); font-size:11px; border:1px solid #52617b; border-radius:20px; padding:3px 9px; white-space:nowrap; }
+.window-list { border-radius:16px; background:var(--card); overflow:hidden; }
+/* One shared baseline. Status badges are passive, not controls. */
+.window { display:grid; grid-template-columns:58px minmax(0,1fr) auto; align-items:center; gap:12px; padding:12px 16px; min-height:56px; }
+.window + .window { border-top:1px solid var(--line); }
+.location { display:flex; align-items:center; min-width:0; }
+.capsule { display:inline-flex; align-items:center; min-height:28px; border:1px solid #505660; border-radius:8px; font-size:14px; color:#cbd0d9; font-variant-numeric:tabular-nums; }
+.capsule .number { min-width:28px; text-align:center; font-weight:550; padding:0 3px; }
+.capsule.is-current { border-color:#63789c; color:var(--accent); background:#283448; }
+.capsule .focus-mark { display:grid; place-items:center; width:27px; height:26px; border-left:1px solid #63789c; }
+svg.i { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; flex:none; vertical-align:middle; }
+.capsule .i { width:16px; height:16px; }
+.title-group { min-width:0; display:flex; align-items:center; gap:9px; }
+.window-title { min-width:0; font-size:16px; margin:0; line-height:1.4; font-weight:450; overflow-wrap:anywhere; }
+.success { display:inline-flex; align-items:center; color:var(--success); flex:none; }
+.commands { display:flex; align-items:center; gap:4px; color:#a4afc0; flex:none; }
+.command { display:grid; place-items:center; width:32px; height:32px; border-radius:50%; }
+.command .i { width:16px; height:16px; }
+figcaption { color:var(--muted); font-size:12px; margin-top:12px; }
+.annotation { padding-top:43px; }
+.annotation p { font-size:13px; color:var(--muted); margin-bottom:18px; }
+.annotation strong { color:var(--ink); font-weight:550; }
+.key { display:flex; gap:12px 22px; flex-wrap:wrap; margin-top:22px; color:var(--muted); font-size:12px; }
+.key > span { display:inline-flex; align-items:center; gap:7px; }
+.key .i { width:16px; height:16px; color:var(--accent); }
+.key .check { color:var(--success); }
+.numeral { border:1px solid #63789c; border-radius:4px; width:20px; text-align:center; color:var(--accent); }
+.comparison { margin-top:36px; padding-top:26px; border-top:1px solid var(--line); }
+.comparison summary { cursor:pointer; color:var(--muted); font-size:13px; }
+.comparison summary:focus-visible { outline:2px solid var(--accent); outline-offset:5px; }
+.comparison figure { max-width:680px; margin-top:18px; }
+.old-window { min-height:99px; padding:17px 18px; display:flex; align-items:center; gap:12px; }
+.old-window + .old-window { border-top:1px solid var(--line); }
+.old-copy { min-width:0; flex:1; }
+.old-window .window-title { margin-bottom:8px; }
+.metadata { display:flex; align-items:center; gap:12px; min-height:28px; }
+.edge-cases { margin-top:36px; padding-top:28px; border-top:1px solid var(--line); }
+.edge-intro { color:var(--muted); font-size:13px; margin:8px 0 22px; }
+.examples { display:grid; grid-template-columns:360px minmax(0,1fr); gap:28px; align-items:start; }
+.example-label { color:var(--muted); font-size:11px; margin-bottom:10px; }
+.failure { grid-column:2 / -1; color:#ffb4ab; font-size:12px; line-height:1.5; }
+.rules { display:grid; grid-template-columns:repeat(3,1fr); gap:28px; border-top:1px solid var(--line); margin-top:34px; padding-top:25px; }
+.rules h3 { font-size:13px; }
+.rules p { color:var(--muted); font-size:12px; }
+footer { margin-top:32px; color:#9299a7; font-size:11px; }
+a { color:var(--accent); text-underline-offset:3px; }
+.symbols { position:absolute; width:0; height:0; overflow:hidden; }
+@media(max-width:850px) { .study { grid-template-columns:1fr; gap:18px; } .annotation { padding-top:0; } .annotation p { margin-bottom:10px; } .examples { grid-template-columns:1fr; } .examples figure:first-child { max-width:360px; } }
+@media(max-width:520px) { main { padding:28px 16px; } .window { gap:8px; padding:12px; } .commands { gap:0; } .rules { grid-template-columns:1fr; gap:20px; } .figure-heading { align-items:flex-start; } }
+</style>
+</head>
+<body>
+<svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+<symbol id="current" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+<symbol id="monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M12 17v4m-4 0h8"/></symbol>
+<symbol id="more" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></g></symbol>
+</defs></svg>
+<main>
+<header>
+<div class="eyebrow">Shelllist / Window metadata / Implemented capsule design</div>
+<h1>One window. One row.</h1>
+<p class="intro">Keep the capsule you preferred. Move it beside the title, not beneath it. Same information, without the empty second line.</p>
+</header>
+<section class="study" aria-labelledby="redesign">
+<figure>
+<div class="figure-heading"><h2 id="redesign">Compact, number-first rows</h2><span class="tag">Approved &amp; implemented</span></div>
+<div class="window-list" aria-label="Redesigned window list, static preview">
+<div class="window">
+<div class="location"><span class="capsule is-current" role="img" aria-label="Workspace 1, current window"><span class="number" aria-hidden="true">1</span><span class="focus-mark"><svg class="i" aria-hidden="true"><use href="#current"/></svg></span></span></div>
+<div class="title-group"><h3 class="window-title">~/Projects</h3><span class="success" role="img" aria-label="Successfully focused Ghostty"><svg class="i" aria-hidden="true"><use href="#check"/></svg></span></div>
+<div class="commands" aria-hidden="true"><span class="command"><svg class="i"><use href="#monitor"/></svg></span><span class="command"><svg class="i"><use href="#more"/></svg></span></div>
+</div>
+<div class="window">
+<div class="location"><span class="capsule" role="img" aria-label="Workspace 1"><span class="number" aria-hidden="true">1</span></span></div>
+<div class="title-group"><h3 class="window-title">~</h3></div>
+<div class="commands" aria-hidden="true"><span class="command"><svg class="i"><use href="#monitor"/></svg></span><span class="command"><svg class="i"><use href="#more"/></svg></span></div>
+</div>
+</div>
+<figcaption>56px single-line rows instead of the previous 99px minimum: about 43% less height. Titles align; commands stay on the same right edge.</figcaption>
+<div class="key" aria-label="Design legend, not part of the application panel">
+<span><span class="numeral" aria-hidden="true">1</span>Workspace</span>
+<span><svg class="i" aria-hidden="true"><use href="#current"/></svg>Current window</span>
+<span><svg class="i check" aria-hidden="true"><use href="#check"/></svg>Focus succeeded</span>
+</div>
+</figure>
+<aside class="annotation">
+<h3>Less padding, not less clarity</h3>
+<p><strong>Location → title → actions.</strong> The capsule becomes a useful leading anchor instead of a separate metadata line.</p>
+<p>The success check sits next to the title. Short titles retain breathing room; long titles use it. No filler or enlarged badges.</p>
+<p>Keep the 32px command circles. Only the row composition and vertical spacing change.</p>
+</aside>
+</section>
+<details class="comparison">
+<summary>Compare with the previous two-line capsule layout</summary>
+<figure>
+<div class="window-list" aria-label="Previous layout at the same width">
+<div class="old-window">
+<div class="old-copy"><h3 class="window-title">~/Projects</h3><div class="metadata"><span class="capsule is-current" role="img" aria-label="Workspace 1, current window"><span class="number" aria-hidden="true">1</span><span class="focus-mark"><svg class="i" aria-hidden="true"><use href="#current"/></svg></span></span><span class="success" role="img" aria-label="Successfully focused Ghostty"><svg class="i" aria-hidden="true"><use href="#check"/></svg></span></div></div>
+<div class="commands" aria-hidden="true"><span class="command"><svg class="i"><use href="#monitor"/></svg></span><span class="command"><svg class="i"><use href="#more"/></svg></span></div>
+</div>
+<div class="old-window">
+<div class="old-copy"><h3 class="window-title">~</h3><div class="metadata"><span class="capsule" role="img" aria-label="Workspace 1"><span class="number" aria-hidden="true">1</span></span></div></div>
+<div class="commands" aria-hidden="true"><span class="command"><svg class="i"><use href="#monitor"/></svg></span><span class="command"><svg class="i"><use href="#more"/></svg></span></div>
+</div>
+</div>
+<figcaption>The old composition reserved a second line for very little content. Removing that line does more than simply shrinking its margins.</figcaption>
+</figure>
+</details>
+<section class="edge-cases" aria-labelledby="edge-title">
+<h2 id="edge-title">Compact by default. Taller only when needed.</h2>
+<p class="edge-intro">The same layout at a narrow width and with a readable failure message. No fixed-height clipping.</p>
+<div class="examples">
+<figure>
+<div class="example-label">360px list · long title</div>
+<div class="window-list">
+<div class="window">
+<div class="location"><span class="capsule is-current" role="img" aria-label="Workspace 1, current window"><span class="number" aria-hidden="true">1</span><span class="focus-mark"><svg class="i" aria-hidden="true"><use href="#current"/></svg></span></span></div>
+<div class="title-group"><h3 class="window-title">~/Projects/shelllist — development</h3></div>
+<div class="commands" aria-hidden="true"><span class="command"><svg class="i"><use href="#monitor"/></svg></span><span class="command"><svg class="i"><use href="#more"/></svg></span></div>
+</div>
+<div class="window">
+<div class="location"><span class="capsule" role="img" aria-label="Workspace 12"><span class="number" aria-hidden="true">12</span></span></div>
+<div class="title-group"><h3 class="window-title">~</h3></div>
+<div class="commands" aria-hidden="true"><span class="command"><svg class="i"><use href="#monitor"/></svg></span><span class="command"><svg class="i"><use href="#more"/></svg></span></div>
+</div>
+</div>
+<figcaption>Full titles wrap naturally. Workspace and command slots stay aligned; ordinary rows remain compact.</figcaption>
+</figure>
+<figure>
+<div class="example-label">Failure · keep the explanation</div>
+<div class="window-list">
+<div class="window">
+<div class="location"><span class="capsule" role="img" aria-label="Workspace 1"><span class="number" aria-hidden="true">1</span></span></div>
+<div class="title-group"><h3 class="window-title">~/Projects</h3></div>
+<div class="commands" aria-hidden="true"><span class="command"><svg class="i"><use href="#monitor"/></svg></span><span class="command"><svg class="i"><use href="#more"/></svg></span></div>
+<p class="failure">Couldn’t focus this window. Check status before retrying.</p>
+</div>
+</div>
+<figcaption>A second line is reserved for useful information, not repeated labels. Actual failure wording and recovery remain controller-owned.</figcaption>
+</figure>
+</div>
+</section>
+<section class="rules" aria-label="Implementation boundaries">
+<div><h3>Keep the meaning</h3><p>The current-window icon follows compositor state. The check represents only a confirmed focus success, for the existing message lifetime. Never confuse either with keyboard selection.</p></div>
+<div><h3>Keep the exceptions readable</h3><p>Errors and uncertain results remain text. Named workspaces retain their names, with a wider shared location column when needed; unknown locations use “?” with a full accessible description.</p></div>
+<div><h3>Keep the keyboard model</h3><p>Badges remain passive and fully named for accessibility. No new Tab stops or hover tooltips. Focus and More retain their shared command routes and safety guards.</p></div>
+</section>
+<footer>Implemented in ApplicationInstanceList.qml with Qt geometry, keyboard, pointer and acknowledgement tests. These HTML examples remain static design references; live compositor and screen-reader acceptance remain separate.<br>The comparison disclosure is a review-page control, not a panel interaction. Production follows the <a href="../chooser-keyboard-workflow.md">shared interaction contract</a>.</footer>
+</main>
+</body>
+</html>
