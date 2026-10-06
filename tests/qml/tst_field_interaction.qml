@@ -218,8 +218,14 @@ TestCase {
         const draft = control.text;
         surface.savedText = "updated by backend while editing";
         compare(control.text, draft, "the local edit is isolated from incoming snapshots");
-        surface.listItem.focusList();
+        const next = field(surface, "multiline");
+        mouseClick(findChild(next, "multilineInput"), 25, 15);
+        compare(surface.detailsNavigation.editorTarget, next, "native focus replaces the previous editor");
         compare(control.text, surface.savedText, "discard reveals the latest authoritative value");
+        keyClick(Qt.Key_Y);
+        compare(surface.writes, 0);
+        surface.listItem.focusList();
+        compare(next.text, surface.savedMultiline, "leaving native focus discards the second draft too");
         surface.savedText = "another update";
         compare(control.text, surface.savedText);
         compare(surface.writes, 0);

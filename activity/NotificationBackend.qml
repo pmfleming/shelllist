@@ -120,12 +120,12 @@ Io.DaemonBackend {
         }
         if (!context.snapshot)
             store.lastError = "";
-        if (data.snapshot) {
-            if (context.eventVersion === store.eventVersion)
-                store.applySnapshot(data.snapshot);
-            else if (!store.notifications.available && (store.resident || store.uiActive))
-                Qt.callLater(snapshot);
-        }
+        if (!data.snapshot)
+            return;
+        if (context.eventVersion === store.eventVersion)
+            store.applySnapshot(data.snapshot);
+        else if (!store.notifications.available && (store.resident || store.uiActive))
+            Qt.callLater(snapshot);
     }
 
     onResponseReceived: function (id, envelope, transportError) {

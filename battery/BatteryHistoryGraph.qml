@@ -36,7 +36,6 @@ Item {
         hoverPosition = position;
     }
     activeFocusOnTab: enabled
-    Ui.FocusRing { active: graph.activeFocus }
     Accessible.role: Accessible.Graphic
     Accessible.name: qsTr("Battery history")
     Accessible.description: inspecting ? inspectionText : ""

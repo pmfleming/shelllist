@@ -437,7 +437,14 @@ FocusScope {
             exitRequested();
         }
     }
-    onFocusedTargetChanged: if (focusedTarget && !finishingEditor) {
+    onFocusedTargetChanged: {
+        if (finishingEditor)
+            return;
+        if (!focusedTarget) {
+            if (editorTarget && !popupOpen && activeFocus)
+                finishEditor(false);
+            return;
+        }
         // A pointer/native editor interaction supersedes queued presentation
         // restoration just as explicit key navigation does.
         if (!applyingMemory) {
@@ -453,8 +460,6 @@ FocusScope {
         awaitingContent = false;
         nativeFocusChanged();
         rememberLocation();
-    } else if (!focusedTarget && editorTarget && !popupOpen && !finishingEditor && activeFocus) {
-        finishEditor(false);
     }
     onActiveFocusChanged: if (!activeFocus && !popupOpen && !finishingEditor) {
         rememberLocation();

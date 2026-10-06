@@ -16,7 +16,6 @@ DaemonTestCase {
     Component {
         id: factory
         Ui.ProviderChooserSurface {
-            id: surface
             width: tests.width
             height: tests.height
             chooserController: Apps.ApplicationController { id: controller }
@@ -259,6 +258,39 @@ DaemonTestCase {
         verify(card(panel, "applicationPeriodEnergy").valueText.indexOf("Loading") >= 0);
         verify(!card(panel, "resourcePlot_energy").visible, "No stale plot while requesting another range");
         compare(card(panel, "applicationPower").valueText, "<0.01 W", "Latest snapshot remains separate");
+    }
+    Component {
+        id: drawingFactory
+        Canvas {
+            width: 100; height: 60
+            property bool area: false
+            onPaint: {
+                const context = getContext("2d");
+                context.reset();
+                context.fillStyle = "white";
+                context.fillRect(0, 0, width, height);
+                context.strokeStyle = "red";
+                context.fillStyle = "blue";
+                context.lineWidth = 2;
+                Ui.ChartDrawing.series(context, [[], [{x: 10, y: 10}, {x: 30, y: 10}],
+                    [{x: 70, y: 10}, {x: 90, y: 10}], [{x: 50, y: 25}]], 50, area ? "green" : null, true);
+            }
+        }
+    }
+    function test_sharedChartPaths_data() {
+        return [{tag: "line", area: false}, {tag: "area", area: true}];
+    }
+    function test_sharedChartPaths(data) {
+        const chart = createTemporaryObject(drawingFactory, tests, {area: data.area});
+        // QtTest's Canvas grab uses device pixels, including fractional scales.
+        const pixel = (image, x, y) => image.pixel(Math.floor(x * chart.Screen.devicePixelRatio), Math.floor(y * chart.Screen.devicePixelRatio));
+        tryVerify(() => pixel(grabImage(chart), 20, 10).g < 0.1);
+        const pixels = grabImage(chart);
+        compare(pixel(pixels, 20, 10), Qt.color("red"), "Observed segment is stroked");
+        compare(pixel(pixels, 20, 30), Qt.color(data.area ? "green" : "white"), "Null fill draws only a line");
+        compare(pixel(pixels, 50, 10), Qt.color("white"), "Missing intervals are not bridged");
+        compare(pixel(pixels, 50, 30), Qt.color("white"), "Area fill also preserves gaps");
+        compare(pixel(pixels, 50, 25), Qt.color("blue"), "Isolated dots retain the caller's fill style");
     }
     function test_chartIntervalsAndIndependentAvailability() {
         const panel = make();

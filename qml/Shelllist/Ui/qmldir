@@ -16,7 +16,6 @@ CommandGroup 1.0 CommandGroup.qml
 SurfaceActionRow 1.0 SurfaceActionRow.qml
 CenteredMessage 1.0 CenteredMessage.qml
 singleton ChartDrawing 1.0 ChartDrawing.qml
-ChartValueRail 1.0 ChartValueRail.qml
 ChooserController 1.0 ChooserController.qml
 ChooserHeader 1.0 ChooserHeader.qml
 ChooserMemory 1.0 ChooserMemory.qml

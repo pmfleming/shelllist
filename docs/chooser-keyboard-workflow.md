@@ -105,6 +105,8 @@ value captured at edit entry to restore it. Other sliders default to deferred
 save, including battery thresholds and Bluetooth timeouts.
 
 Pointer entry into a shared field uses the same transaction as keyboard entry.
+Moving native focus directly between editors discards the previous unsaved draft
+before editing the next field; leaving the detail region discards that draft too.
 Dropdown option icons are passive; their saved check and selected accessibility
 state follow the acknowledged owner value, not the field-local draft or native
 menu highlight. The stronger menu highlight identifies the current candidate.
@@ -221,8 +223,8 @@ for ownership, acknowledgement, recovery bounds and interaction tests.
 
 ## Application detail commands
 
-Application window and desktop-action groups are information/commands only, not
-editable fields. Tab uses the page's non-highlighted scrolling fallback; PageUp/
+Application window and desktop-action groups use passive shared `DetailColumnCard`
+containers and remain information/commands only, not editable fields. Tab uses the page's non-highlighted scrolling fallback; PageUp/
 PageDown scroll, and Up/Down continue browsing application results. Each window's
 More circle opens the shared named command menu restricted to that window's
 Focus/Close commands. Close has no adjacent destructive hit target or claimed

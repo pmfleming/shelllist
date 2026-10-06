@@ -178,6 +178,18 @@ DaemonTestCase {
         }));
         compare(calls.length, 0);
     }
+    function test_operationLookupPreservesFirstMatchAndEmptyGuard() {
+        const controller = makePanel().controller;
+        controller.applyRequestSnapshot({operations: {active: [
+            {request_id: "first", device_key: "buds", operation: "connect", state: "running"},
+            {request_id: "second", device_key: "buds", operation: "connect", state: "queued"},
+            {request_id: "empty", device_key: "", operation: "connect", state: "running"}
+        ]}});
+        compare(controller.operationForDevice("buds").request_id, "first");
+        compare(controller.operationForDevice("unknown"), null);
+        compare(controller.operationForDevice(""), null);
+        compare(calls.length, 0, "Snapshot lookup never replays operations");
+    }
     function test_pairingInputSurvivesUnrelatedOperationsAndQueueRecovery() {
         const controller = makePanel().controller;
         const first = {

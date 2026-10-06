@@ -12,7 +12,7 @@ Rectangle {
     property real latitude: 0
     property real longitude: 0
     property bool hasCoordinates: false
-    property var regionIds: []
+    property list<string> regionIds: []
     readonly property bool hasOceanBand: offsetSeconds % 3600 === 0 && offsetSeconds >= -12 * 3600 && offsetSeconds <= 12 * 3600
     readonly property real oceanBandCenter: (offsetSeconds / 3600 * 15 + 180) * 2
     readonly property real oceanBandLeft: Math.max(0, oceanBandCenter - 15)

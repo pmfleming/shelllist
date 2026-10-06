@@ -15,7 +15,7 @@ Ui.DetailFlickable {
     onHeightChanged: Qt.callLater(revealFocus)
     readonly property bool overview: controller.detailsTab === "focus"
     readonly property bool diagnostics: controller.detailsTab === "focus-diagnostics"
-    readonly property var commonKeys: ["input:follow_mouse", "misc:mouse_move_focuses_monitor", "input:mouse_refocus"]
+    readonly property list<string> commonKeys: ["input:follow_mouse", "misc:mouse_move_focuses_monitor", "input:mouse_refocus"]
     readonly property string focusedMonitor: controller.workspaceState.available ? controller.workspaceState.focused_monitor || "" : (controller.outputs.find(o => !!o.focused && !o.disabled) || {}).name || ""
     readonly property var activeWindow: controller.workspaceState.available ? controller.workspaceState.active_window : null
     readonly property string windowMonitor: activeWindow ? ((controller.workspaceState.workspaces || []).find(w => w.id === activeWindow.workspace_id) || {}).monitor || "" : ""

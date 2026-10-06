@@ -11,7 +11,6 @@ Ui.DetailFlickable {
     required property ApplicationController controller
     required property var application
     required property real uiScale
-    required property int actionHeight
 
     Ui.LabeledAction {
         objectName: "applicationActionStatus"
@@ -55,7 +54,6 @@ Ui.DetailFlickable {
         controller: page.controller
         application: page.application
         uiScale: page.uiScale
-        actionHeight: page.actionHeight
     }
 
     ApplicationDesktopActions {

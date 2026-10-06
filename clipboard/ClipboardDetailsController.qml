@@ -28,7 +28,7 @@ Item {
     property var pendingCommit: null
     property int sequence
     property string entryId
-    property var replacedSourceIds: []
+    property list<string> replacedSourceIds: []
     property double entryRevision: -1
     property string requestId
     property string thumbnailRequestId

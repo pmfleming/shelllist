@@ -33,13 +33,7 @@ Item {
     function forDevice(deviceKey: string): var {
         if (!deviceKey)
             return null;
-        const requestIds = Object.keys(activeOperations);
-        for (let index = 0; index < requestIds.length; index++) {
-            const operation = activeOperations[requestIds[index]];
-            if (operation.device_key === deviceKey)
-                return operation;
-        }
-        return null;
+        return Object.values(activeOperations).find(operation => operation.device_key === deviceKey) || null;
     }
     function errorForDevice(deviceKey: string): var {
         return deviceKey ? (errorsByDevice[deviceKey] || null) : null;

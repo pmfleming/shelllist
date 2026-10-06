@@ -15,7 +15,6 @@ DaemonTestCase {
     Component {
         id: factory
         Apps.ApplicationContent {
-            id: surface
             width: tests.width
             height: tests.height
             controller: Apps.ApplicationController {

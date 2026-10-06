@@ -63,7 +63,6 @@ Ui.ActionDetailsPane {
                 controller: pane.controller
                 application: pane.application
                 uiScale: pane.uiScale
-                actionHeight: pane.actionHeight
             }
         }
 

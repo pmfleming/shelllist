@@ -42,25 +42,17 @@ WeatherForecastCard {
                 context.fillRect(index * slot + slot * 0.31, 183 - barHeight, slot * 0.38, barHeight);
             }
 
-            context.beginPath();
-            for (let index = 0; index < points.length; ++index) {
-                const x = index * slot + slot / 2;
-                const y = hourlyCard.hourY(points[index].temperature_c);
-                if (index === 0)
-                    context.moveTo(x, y);
-                else
-                    context.lineTo(x, y);
-            }
+            const vertices = points.map((point, index) => ({
+                x: index * slot + slot / 2, y: hourlyCard.hourY(point.temperature_c)
+            }));
             context.strokeStyle = String(Ui.Theme.accent);
             context.lineWidth = 2.5;
-            context.stroke();
+            Ui.ChartDrawing.segment(context, vertices, 0, null, false);
 
             context.fillStyle = String(Ui.Theme.accent);
-            for (let index = 0; index < points.length; ++index) {
-                const x = index * slot + slot / 2;
-                const y = hourlyCard.hourY(points[index].temperature_c);
+            for (const point of vertices) {
                 context.beginPath();
-                context.arc(x, y, 3.5, 0, Math.PI * 2);
+                context.arc(point.x, point.y, 3.5, 0, Math.PI * 2);
                 context.fill();
             }
         }

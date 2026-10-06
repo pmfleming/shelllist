@@ -22,56 +22,51 @@ ColumnLayout {
         text: qsTr("Application actions · %1").arg(actions.desktopActions.length)
     }
 
-    Rectangle {
+    Ui.DetailColumnCard {
         Layout.fillWidth: true
-        implicitHeight: rows.implicitHeight
-        radius: Ui.Theme.cardRadius
+        contentPadding: 0
+        verticalContentPadding: 0
+        contentSpacing: 0
         color: Ui.Theme.surfaceContainer
         clip: true
 
-        ColumnLayout {
-            id: rows
-            width: parent.width
-            spacing: 0
+        Repeater {
+            model: actions.desktopActions
 
-            Repeater {
-                model: actions.desktopActions
-
-                delegate: ColumnLayout {
-                    id: actionRow
-                    required property var modelData
-                    required property int index
+            delegate: ColumnLayout {
+                id: actionRow
+                required property var modelData
+                required property int index
+                Layout.fillWidth: true
+                spacing: 0
+                Rectangle {
                     Layout.fillWidth: true
-                    spacing: 0
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 1
-                        visible: actionRow.index > 0
-                        color: Ui.Theme.border
-                    }
-                    Ui.LabeledAction {
-                        objectName: "desktopAction-" + actionRow.modelData.id
-                        Layout.fillWidth: true
-                        Layout.leftMargin: Math.round(Ui.Theme.spacingLg * actions.uiScale)
-                        Layout.rightMargin: Math.round(Ui.Theme.spacingSm * actions.uiScale)
-                        Layout.topMargin: Math.round(Ui.Theme.spacingSm * actions.uiScale)
-                        Layout.bottomMargin: Math.round(Ui.Theme.spacingSm * actions.uiScale)
-                        uiScale: actions.uiScale
-                        label: actionRow.modelData.name || qsTr("Application action")
-                        // XDG icon names are opaque: resolve the supplied asset,
-                        // never guess an action's meaning from its localized name.
-                        iconSource: actionRow.modelData.icon ? Quickshell.iconPath(actionRow.modelData.icon, "") : ""
-                        icon: Ui.MaterialIcons.name(actionRow.modelData.icon || "") || "open_in_new"
-                        button.backgroundColor: "transparent"
-                        button.borderColor: "transparent"
-                        enabled: !actions.controller.operationBlocked && !actions.controller.operations.busy(actions.application.id)
-                        onClicked: {
-                            if (actions.controller.selectedApplication?.id !== actions.application.id)
-                                return;
-                            const action = actions.controller.detailActions.find(candidate => candidate.metadata?.desktopActionId === actionRow.modelData.id);
-                            if (action && action.enabled !== false)
-                                actions.controller.triggerDetailAction(action.id);
-                        }
+                    Layout.preferredHeight: 1
+                    visible: actionRow.index > 0
+                    color: Ui.Theme.border
+                }
+                Ui.LabeledAction {
+                    objectName: "desktopAction-" + actionRow.modelData.id
+                    Layout.fillWidth: true
+                    Layout.leftMargin: Math.round(Ui.Theme.spacingLg * actions.uiScale)
+                    Layout.rightMargin: Math.round(Ui.Theme.spacingSm * actions.uiScale)
+                    Layout.topMargin: Math.round(Ui.Theme.spacingSm * actions.uiScale)
+                    Layout.bottomMargin: Math.round(Ui.Theme.spacingSm * actions.uiScale)
+                    uiScale: actions.uiScale
+                    label: actionRow.modelData.name || qsTr("Application action")
+                    // XDG icon names are opaque: resolve the supplied asset,
+                    // never guess an action's meaning from its localized name.
+                    iconSource: actionRow.modelData.icon ? Quickshell.iconPath(actionRow.modelData.icon, "") : ""
+                    icon: Ui.MaterialIcons.name(actionRow.modelData.icon || "") || "open_in_new"
+                    button.backgroundColor: "transparent"
+                    button.borderColor: "transparent"
+                    enabled: !actions.controller.operationBlocked && !actions.controller.operations.busy(actions.application.id)
+                    onClicked: {
+                        if (actions.controller.selectedApplication?.id !== actions.application.id)
+                            return;
+                        const action = actions.controller.detailActions.find(candidate => candidate.metadata?.desktopActionId === actionRow.modelData.id);
+                        if (action && action.enabled !== false)
+                            actions.controller.triggerDetailAction(action.id);
                     }
                 }
             }

@@ -5,8 +5,6 @@ import Shelllist.Ui as Ui
 import "ApplicationResources.js" as Resources
 
 Canvas {
-    id: plot
-
     required property var points
     required property var series
     required property string chartStyle
@@ -69,33 +67,21 @@ Canvas {
     function strokeSegment(context: var, segment: var, index: int): void {
         const descriptor = series[index];
         const first = segment[0];
-        const last = segment[segment.length - 1];
         const area = chartStyle === "area" || chartStyle === "paired-area";
-        context.beginPath();
-        context.moveTo(xFor(first.start), yFor(first.value, index));
-        segment.forEach((interval, position) => {
-            if (chartStyle === "steps") {
-                context.lineTo(xFor(interval.start), yFor(interval.value, index));
-                context.lineTo(xFor(interval.end), yFor(interval.value, index));
-            } else {
-                // The first bucket starts with its own reading. Subsequent
-                // endpoints join only inside a contiguous observed segment.
-                if (position === 0) context.lineTo(xFor(interval.start), yFor(interval.value, index));
-                context.lineTo(xFor(interval.end), yFor(interval.value, index));
-            }
-        });
+        // The first bucket starts with its own reading; join endpoints only
+        // inside this observed segment. Steps retain each bucket's width.
+        const vertices = [{x: xFor(first.start), y: yFor(first.value, index)}];
+        for (const interval of segment) {
+            const y = yFor(interval.value, index);
+            if (chartStyle === "steps")
+                vertices.push({x: xFor(interval.start), y: y});
+            vertices.push({x: xFor(interval.end), y: y});
+        }
         context.strokeStyle = descriptor.color;
         context.lineWidth = 1.6 * uiScale;
         context.setLineDash(descriptor.dashed ? [4 * uiScale, 3 * uiScale] : []);
-        context.stroke();
+        Ui.ChartDrawing.segment(context, vertices, baselineY(), area ? Ui.Theme.withAlpha(descriptor.color, 0.18) : null, false);
         context.setLineDash([]);
-        if (area) {
-            context.lineTo(xFor(last.end), baselineY());
-            context.lineTo(xFor(first.start), baselineY());
-            context.closePath();
-            context.fillStyle = Ui.Theme.withAlpha(descriptor.color, 0.18);
-            context.fill();
-        }
     }
     function drawColumns(context: var, index: int): void {
         context.fillStyle = series[index].color;

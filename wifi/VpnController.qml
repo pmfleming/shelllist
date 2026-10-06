@@ -20,18 +20,6 @@ Item {
         backend.loadVpnStatus();
     }
 
-    function activeFor(uuid) {
-        for (let index = 0; index < active.length; index++) {
-            if (active[index].uuid === uuid)
-                return active[index];
-        }
-        return null;
-    }
-
-    function isActive(uuid) {
-        return !!activeFor(uuid);
-    }
-
     function connect(profile) {
         if (!profile || !profile.uuid) {
             controller.status = "Could not start the VPN: no profile selected.";

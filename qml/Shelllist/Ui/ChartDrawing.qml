@@ -15,7 +15,8 @@ QtObject {
         if (points.length === 0)
             return;
         const originalFill = context.fillStyle;
-        if (points.length > 1) {
+        // A null fill requests a line only; callers still own measurement gaps.
+        if (points.length > 1 && fill !== null) {
             context.beginPath();
             context.moveTo(points[0].x, baseline);
             for (const point of points)

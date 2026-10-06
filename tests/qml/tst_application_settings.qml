@@ -15,7 +15,6 @@ DaemonTestCase {
     Component {
         id: factory
         Ui.ProviderChooserSurface {
-            id: surface
             width: tests.width
             height: tests.height
             chooserController: Apps.ApplicationController {
