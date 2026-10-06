@@ -226,7 +226,10 @@ for ownership, acknowledgement, recovery bounds and interaction tests.
 ## Application detail commands
 
 Application window and desktop-action groups use passive shared `DetailColumnCard`
-containers and remain information/commands only, not editable fields. Tab uses the page's non-highlighted scrolling fallback; PageUp/
+containers and remain information/commands only, not editable fields. Each
+`ApplicationWindowRow` owns its command scope and stable window ID; its list owns
+shared column measurements, not command routing by row index. Tab uses the
+page's non-highlighted scrolling fallback; PageUp/
 PageDown scroll, and Up/Down continue browsing application results. Each window's
 More circle opens the shared named command menu restricted to that window's
 Focus/Close commands. Close has no adjacent destructive hit target or claimed

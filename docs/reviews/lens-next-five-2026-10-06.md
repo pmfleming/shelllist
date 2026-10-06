@@ -72,3 +72,28 @@ Logs: `/tmp/quality-step3-{qt,fields,lint}.txt`.
 Incremental production delta: source lines **+2**, cyclomatic **−5**, cognitive
 **−6**, function effort **−18**, component effort **−9**. The shared predicate
 adds one binding in place of duplicated lifecycle expressions.
+
+## 4. Application window rows own their local presentation and commands
+
+`ApplicationWindowRow.qml` now owns the window badge, title, acknowledged status
+and scoped commands, with explicit typed application identity, controller and
+measurement inputs. Only the window's actual JSON record remains dynamic. The
+list owns iteration and common workspace-column measurement; it no longer embeds
+a nine-level object tree or supplies incidental outer IDs to row internals.
+Geometry, shared command discovery, stable IDs and per-application guards are
+unchanged. This is a domain component, not a new generic row framework.
+
+Validation: **16 application-details Qt passes**, strict lint, and **5 targeted
+fractional-scale passes**. Coverage retains alignment, long titles, passive labels,
+field exclusion, named menus, busy/removed-window guards and adds snapshot reorder
+with a live application-name fallback and ID-based pointer dispatch. The new
+pointer test waits for layout polish before hitting a reordered row.
+Logs: `/tmp/quality-step4-{qt,lint,fractional}.txt`.
+
+List source size **205 → 51**, maximum object depth **9 → 4**, locality **0 → 89**;
+the extracted row has depth **6**. Complexity/function effort are unchanged.
+Across production this deliberate ownership boundary costs **21 source lines**,
+**17 component-effort units** and one component; mean locality improves by
+**0.0456**, while mean leverage decreases by **0.0735** because the new domain
+component has one consumer. These are explicit tradeoffs, not a code-size or
+aggregate-leverage win.

@@ -7,6 +7,7 @@ internal ApplicationOperations ApplicationOperations.qml
 ApplicationDesktopActions 1.0 ApplicationDesktopActions.qml
 ApplicationDetails 1.0 ApplicationDetails.qml
 ApplicationInstanceList 1.0 ApplicationInstanceList.qml
+ApplicationWindowRow 1.0 ApplicationWindowRow.qml
 ApplicationListPane 1.0 ApplicationListPane.qml
 ApplicationListRow 1.0 ApplicationListRow.qml
 ApplicationPage 1.0 ApplicationPage.qml

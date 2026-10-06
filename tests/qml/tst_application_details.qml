@@ -194,6 +194,22 @@ DaemonTestCase {
         verify(title.mapToItem(panel,title.width,0).x <= focus.mapToItem(panel,0,0).x);
         compare(title.text,app.instances[0].title,"Full title is retained");
     }
+    function test_reorderedRowsKeepIdentityAndLiveApplicationFallback() {
+        const app = application("desktop-application", 2, 0);
+        const panel = make(app);
+        const updated = application("desktop-application", 2, 0);
+        updated.name = "Renamed application";
+        updated.instances.reverse();
+        updated.instances[0].title = "";
+        setApplication(panel, updated);
+        verify(waitForPolish(panel.Window.window));
+        const row = findChild(panel, "windowRow-window-1");
+        tryCompare(row, "index", 0);
+        compare(findChild(row, "windowTitle-window-1").text, updated.name);
+        mouseClick(findChild(row, "focusWindow-window-1"));
+        compare(panel.controller.dispatched.length, 1);
+        compare(panel.controller.dispatched[0].window_id, "window-1", "The window ID, not the new row index, owns the command");
+    }
     function test_namedWindowMenuRoutesByIdAndIsModal() {
         const panel = make(application("desktop-application",2,1));
         const more = findChild(panel,"windowCommands-window-0");
