@@ -47,46 +47,11 @@ Ui.DetailFlickable {
             options: page.categoryOptions
             value: page.selectedCategory ? page.selectedCategory.value : ""
             placeholder: qsTr("Choose a category")
+            saveOnOptionClick: true
             errorText: page.categoryError
             interactive: !page.controller.settingsInFlight
             onSelected: function (value) {
                 page.controller.updateApplicationSettings(value);
-            }
-        }
-    }
-
-    Ui.DetailSection {
-        objectName: "applicationCategoryEffect"
-        informationOnly: true
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: Ui.Theme.spacingSm
-            Ui.GlyphLabel {
-                Layout.alignment: Qt.AlignTop
-                glyph: "desktop_windows"
-                color: Ui.Theme.mutedText
-                font.pixelSize: Ui.Theme.formIconSize
-                Accessible.ignored: true
-            }
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: Ui.Theme.spacingXs
-                Ui.ThemeText {
-                    objectName: "applicationCategoryConsequence"
-                    Layout.fillWidth: true
-                    text: page.selectedCategory ? qsTr("New windows open in this category’s workspace.")
-                        : page.mappingNeedsAttention ? qsTr("Update the category to set where new windows open.")
-                        : qsTr("Choose where new windows open.")
-                    wrapMode: Text.Wrap
-                }
-                Ui.ThemeText {
-                    Layout.fillWidth: true
-                    text: qsTr("Existing windows stay where they are.")
-                    color: Ui.Theme.mutedText
-                    font.pixelSize: Ui.Theme.formSupportSize
-                    wrapMode: Text.Wrap
-                }
             }
         }
     }

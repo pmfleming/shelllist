@@ -27,6 +27,7 @@ Controls.AbstractButton {
     Accessible.role: Accessible.ListItem
     Accessible.name: optionText
     Accessible.selected: selected
+    onClicked: owner.acceptOptionClick(index)
 
     HoverHandler {
         id: hover

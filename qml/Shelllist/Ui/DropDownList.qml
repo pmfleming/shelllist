@@ -12,6 +12,8 @@ Controls.ComboBox {
     property var options: []
     property string value: ""
     property bool interactive: true
+    // Explicit option clicks may save; keyboard browsing remains a local draft.
+    property bool saveOnOptionClick: false
     property bool browseFocused: false
     property string placeholder: "Select an option"
     property string draftValue: value
@@ -35,6 +37,17 @@ Controls.ComboBox {
             draftValue = nextValue;
         else if (nextValue !== value)
             selected(nextValue);
+    }
+
+    function acceptOptionClick(index: int): void {
+        // Outside a navigation transaction, native activation already publishes.
+        if (!saveOnOptionClick || !editSession.active || !editSession.navigation
+                || !enabled || !interactive || !optionEnabled(index))
+            return;
+        stageIndex(index);
+        // Do not let saveEditor replace the clicked choice with a keyboard highlight.
+        popup.close();
+        editSession.navigation.saveEditor();
     }
 
     Keys.onPressed: function (event) { editSession.handleKey(event); }

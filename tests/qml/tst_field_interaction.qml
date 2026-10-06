@@ -317,6 +317,37 @@ TestCase {
         verify(surface.detailsNavigation.editing);
         compare(surface.detailsNavigation.currentTarget, field(surface, "segments"));
     }
+    function test_dropdownOptionClickSavePolicy_data() {
+        return [{tag: "deferred", immediate: false}, {tag: "save-on-click", immediate: true}];
+    }
+    function test_dropdownOptionClickSavePolicy(data) {
+        const surface = make();
+        const control = field(surface, "choice");
+        control.saveOnOptionClick = data.immediate;
+        browse(surface, "choice");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Down);
+        compare(surface.writes, 0, "closed-menu arrows never save");
+        keyClick(Qt.Key_Escape);
+        compare(control.value, "a");
+        mouseClick(control, control.width / 2, control.height / 2);
+        tryCompare(control.popup, "visible", true);
+        keyClick(Qt.Key_Down);
+        compare(surface.writes, 0, "menu highlighting never saves");
+        const option = findChild(control.popup.contentItem, "dropDownOption-2");
+        mouseClick(option, option.width / 2, option.height / 2);
+        tryCompare(control.popup, "visible", false);
+        compare(control.contentItem.text, "C", "clicked option wins over keyboard highlight");
+        compare(surface.writes, data.immediate ? 1 : 0);
+        compare(surface.savedChoice, data.immediate ? "c" : "a");
+        compare(surface.detailsNavigation.browsing, data.immediate);
+        if (!data.immediate) {
+            keyClick(Qt.Key_Escape);
+            compare(control.contentItem.text, "A");
+        }
+        surface.savedChoice = "b";
+        compare(control.contentItem.text, "B", "source binding survives click save or discard");
+    }
     function test_sliderCommitAndLiveRollback_data() {
         return [{tag: "deferred", preview: false}, {tag: "live", preview: true}];
     }

@@ -80,8 +80,10 @@ suffixes and full native editing buffers are rejected without accepting a
 silently shortened value. No per-keystroke normalization or cross-field paste
 write is allowed.
 
-Changes remain **field-local until Enter/Tab**. Typing, native option selection,
-slider movement, blur, tab/category changes and surface closure must not dispatch
+Changes remain **field-local until Enter/Tab**, or an explicit option click on a
+shared dropdown with `saveOnOptionClick` enabled (currently Workspace category).
+That click is a save, not a preview; arrows and hover still never save.
+Typing, other native option selection, slider movement, blur, tab/category changes and surface closure must not dispatch
 a deferred field's setting write. Leaving via a route other than save discards
 the uncommitted field edit. Already submitted operations and domain failure/retry
 state are not undone. A save is a request, not an acknowledgement: existing daemon
@@ -104,7 +106,9 @@ Pointer entry into a shared field uses the same transaction as keyboard entry.
 Dropdown option icons are passive; their saved check and selected accessibility
 state follow the acknowledged owner value, not the field-local draft or native
 menu highlight. The stronger menu highlight identifies the current candidate.
-On/off switches and explicit action buttons remain immediately actionable.
+An explicit option click on a `saveOnOptionClick` dropdown closes the menu and
+saves through shared navigation, returning to browsing; other dropdown clicks
+remain drafts. On/off switches and explicit action buttons remain immediately actionable.
 A dropdown's open menu belongs to its field: Enter/Tab saves the highlighted
 choice; Escape closes it and discards that edit. It does not add an extra
 Escape-to-stop-editing step.
@@ -314,10 +318,13 @@ changes still invalidate the draft; acknowledgement/error guards remain intact.
 
 Applications Settings uses one shared `FormField`/`DropDownList` named
 **Workspace category**, with category-only labels and separate semantic icons.
-Its label, supporting/status text and information-only launch consequence are
-passive; only `applicationCategory` joins field traversal. No-op forward/reverse
+Its label and supporting/status text are passive; there is no separate launch
+consequence footer. Only `applicationCategory` joins field traversal. No-op forward/reverse
 wrap does not submit; saving a change disables the field until acknowledgement,
-so traversal temporarily falls back to the page. Pending/error feedback is
+so traversal temporarily falls back to the page. Clicking a category option also
+saves immediately via shared `saveOnOptionClick`, with the same acknowledgement,
+no-op and retry guards; keyboard arrows remain drafts until Enter/Tab.
+Pending/error feedback is
 scoped to the originating application; a mismatched saved mapping is not shown
 as unassigned. `tst_application_settings.qml` covers actual keyboard/pointer
 transactions, saved checks versus drafts, failure/retry and acknowledgement.

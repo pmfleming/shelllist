@@ -73,7 +73,7 @@ The frontend does not parse desktop files, process tables, cgroups, or composito
 | `ApplicationInstanceList.qml` | Per-window focus and close actions |
 | `ApplicationDesktopActions.qml` | Desktop-defined actions |
 | `ApplicationResourcesPage.qml` | Current resource cards and history graphs |
-| `ApplicationSettingsPage.qml` | Workspace category field, scoped status and launch consequence |
+| `ApplicationSettingsPage.qml` | Workspace category field and scoped status |
 
 The launcher uses `ProviderRegistry`, `ResultStore`, and the generic chooser components. It is loaded on first use by `SurfaceRegistry` and remains warm afterward.
 
@@ -106,12 +106,14 @@ description is replaced by request-scoped pending/error feedback when needed;
 failures retain the acknowledged value and allow an explicit retry. A present
 but inconsistent workspace mapping prompts repair rather than claiming that no
 preference exists. A category inferred from desktop metadata without a saved
-workspace remains unassigned. One passive explanation states that new windows
-use the category’s workspace and existing windows stay where they are.
+workspace remains unassigned. New windows use the saved category’s workspace;
+existing windows stay where they are. There is no separate explanatory footer.
 
-The shared field transaction publishes only on Enter/Tab; pointer selection and
-native menu highlighting remain local until save. Pending requests disable the
-field; no-op traversal and Escape never write. Successful settings responses
+Clicking an option saves immediately through the shared dropdown's
+`saveOnOptionClick` policy; no additional confirmation is needed. Keyboard
+arrows/highlighting remain local until Enter/Tab saves; Escape discards.
+Pending requests disable the field; selecting the saved option and no-op
+traversal never write. Successful settings responses
 trigger the existing catalog refresh, which supplies the authoritative field
 value. Old request failures cannot replace a newer request’s feedback.
 See the [approved illustrated proposal](proposals/application-workspace-category.html)

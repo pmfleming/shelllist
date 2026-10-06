@@ -80,7 +80,6 @@ DaemonTestCase {
         compare(control.options.map(option => option.label), ["Shell", "Browser", "Code", "Media", "Text"]);
         compare(control.contentItem.text, "Code");
         compare(findChild(control, "dropDownValueIcon").symbol, "code");
-        verify(findChild(surface.detailsItem, "applicationCategoryEffect").informationOnly);
         compare(surface.detailsNavigation.targets.length, 2, "only the editor and read-only page fallback are discovered");
         verify(findChild(control, "browseFocusIndicator").visible);
         open(surface);
@@ -119,7 +118,6 @@ DaemonTestCase {
         compare(surface.detailsItem.mappingNeedsAttention, data.mismatch);
         compare(form(surface).message, data.mismatch
             ? "Category mapping needs attention. Choose a category to update it." : "No workspace category assigned.");
-        verify(findChild(surface.detailsItem, "applicationCategoryConsequence").text !== "New windows open in this category’s workspace.");
         compare(updates().length, 0);
     }
     function test_saveKeepsAcknowledgement_data() {
@@ -177,25 +175,41 @@ DaemonTestCase {
         compare(control.contentItem.text, "Shell");
         compare(updates().length, 0, "leaving discards the menu's uncommitted choice");
     }
-    function test_pointerChoiceRemainsLocalAndSavedCheckDoesNotFollowDraft() {
+    function test_pointerChoiceSavesImmediatelyWithAcknowledgementAndRetry() {
         const surface = make("shell", "1");
+        const controller = surface.chooserController;
         const control = choice(surface);
+        for (let attempt = 0; attempt < 2; attempt++) {
+            mouseClick(control, control.width / 2, control.height / 2);
+            tryCompare(control.popup, "visible", true);
+            verify(surface.detailsNavigation.editing);
+            const textOption = findChild(control.popup.contentItem, "dropDownOption-4");
+            mouseClick(textOption, textOption.width / 2, textOption.height / 2);
+            tryCompare(control.popup, "visible", false);
+            compare(updates().length, attempt + 1);
+            compare(updates()[attempt].params, {target_id: "example.desktop", category: "text"});
+            verify(controller.settingsInFlight);
+            verify(!control.enabled);
+            verify(surface.detailsNavigation.browsing);
+            compare(control.value, "shell");
+            compare(control.contentItem.text, "Shell", "click is a save request, not acknowledgement");
+            if (attempt === 0) {
+                controller.handleFailure(controller.activeSettingsRequestId, "Permission denied.");
+                verify(control.enabled);
+                verify(control.errorText.indexOf("Permission denied.") >= 0);
+            }
+        }
+        controller.applyApplicationSettings(controller.activeSettingsRequestId, {category: "text", workspace_id: "5"});
+        setApplication(surface, "text", "5");
+        compare(control.value, "text");
+        compare(control.contentItem.text, "Text");
         mouseClick(control, control.width / 2, control.height / 2);
         tryCompare(control.popup, "visible", true);
-        verify(surface.detailsNavigation.editing);
-        const textOption = findChild(control.popup.contentItem, "dropDownOption-4");
-        mouseClick(textOption, textOption.width / 2, textOption.height / 2);
-        tryCompare(control.popup, "visible", false);
-        compare(control.contentItem.text, "Text");
-        compare(control.value, "shell");
-        compare(updates().length, 0);
-        keyClick(Qt.Key_Space);
-        tryCompare(control.popup, "visible", true);
-        verify(findChild(findChild(control.popup.contentItem, "dropDownOption-0"), "dropDownSelectedCheck").visible);
-        verify(!findChild(findChild(control.popup.contentItem, "dropDownOption-4"), "dropDownSelectedCheck").visible);
-        keyClick(Qt.Key_Escape);
-        compare(control.contentItem.text, "Shell");
-        compare(updates().length, 0);
+        const savedOption = findChild(control.popup.contentItem, "dropDownOption-4");
+        verify(findChild(savedOption, "dropDownSelectedCheck").visible);
+        mouseClick(savedOption, savedOption.width / 2, savedOption.height / 2);
+        compare(updates().length, 2, "clicking the saved choice is a no-op");
+        verify(surface.detailsNavigation.browsing);
     }
     function test_failureRetryAndTargetScopedFeedback() {
         const surface = make("shell", "1");
