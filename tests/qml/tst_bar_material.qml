@@ -54,6 +54,36 @@ TestCase {
         for (const child of item.children) controls = controls.concat(actionControls(child));
         return controls;
     }
+    function test_mediaArtworkUsesSoftFeedbackAndDarkBacking(): void {
+        const bar = createTemporaryObject(barFactory, testCase, {width: 1200});
+        const button = findChild(bar, "mediaArtworkButton");
+        const backdrop = findChild(button, "mediaArtworkBackdrop");
+        verify(waitForPolish(bar.Window.window));
+        verify(waitForRendering(button));
+        verify(!backdrop.visible, "no empty artwork tile behind the media glyph");
+        mouseMove(testCase, testCase.width - 1, testCase.height - 1);
+        mouseMove(button, 1, button.height / 2);
+        tryCompare(button, "color", Ui.Theme.hover);
+        compare(button.labelColor, Ui.Theme.text);
+        button.forceActiveFocus();
+        compare(button.color, Ui.Theme.hover);
+        bar.controller.media = {available: true, active_player: "player", players: [{
+            id: "player", identity: "Player", playback_status: "Playing",
+            art_url: Qt.resolvedUrl("../../qml/Shelllist/Activity/assets/weather/clear-night.svg").toString()
+        }]};
+        tryCompare(backdrop, "visible", true);
+        verify(waitForPolish(bar.Window.window));
+        compare(backdrop.color, Ui.Theme.window);
+        mousePress(button, 1, button.height / 2);
+        compare(button.color, Ui.Theme.pressed);
+        compare(backdrop.color, Ui.Theme.window, "press feedback never lightens transparent artwork");
+        mouseRelease(button, 1, button.height / 2);
+        compare(button.color, Ui.Theme.hover);
+        compare(backdrop.color, Ui.Theme.window);
+        bar.controller.media = {available: false, players: []};
+        tryCompare(backdrop, "visible", false);
+        verify(button.icon.length > 0, "the media glyph returns when artwork disappears");
+    }
     function test_topBarControlsNeverShowPanelCaret(): void {
         const bar = createTemporaryObject(barFactory, testCase, {width: 1200});
         bar.controller.media = {available: true, active_player: "player", players: [{id: "player", identity: "Player", playback_status: "Playing", can_control: true, can_pause: true, can_play: true, can_previous: true, can_next: true}]};
