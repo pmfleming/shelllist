@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import "ApplicationResources.js" as Resources
 
@@ -15,28 +16,32 @@ Rectangle {
     required property double rangeEndMilliseconds
     property double maximumGapMilliseconds: 30000
     property real uiScale: 1
-    readonly property int plotLeft: Math.round(150 * uiScale)
-    readonly property int plotRight: Math.round(12 * uiScale)
+    readonly property bool wide: width >= 640 * uiScale
+    readonly property int plotLeft: Math.round((wide ? 150 : 12) * uiScale)
+    readonly property int plotRight: Math.round((wide ? 210 : 12) * uiScale)
     readonly property var timestamps: (points || []).map(function (point) {
         const value = Number(point.timestamp_ms || 0);
         return isFinite(value) && value > 0 ? value : 0;
     })
 
     function timeLabel(index) {
-        if (index === 4)
-            return "Now";
         const timestamp = rangeStartMilliseconds + (rangeEndMilliseconds - rangeStartMilliseconds) * index / 4;
         if (!isFinite(timestamp) || timestamp <= 0)
             return "--:--";
         return Qt.formatTime(new Date(timestamp), "HH:mm");
     }
 
-    height: Math.round((48 + lanes.length * 64 + 30) * uiScale)
+    implicitHeight: heading.implicitHeight + laneColumn.height + Math.round(62 * uiScale)
+    height: implicitHeight
     radius: Ui.Theme.cardRadius
     color: Ui.Theme.surface
     border.width: 0
 
     Ui.ThemeText {
+        id: heading
+        anchors.right: parent.right
+        anchors.rightMargin: 12
+        wrapMode: Text.Wrap
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: 12
@@ -47,10 +52,11 @@ Rectangle {
     }
 
     Column {
+        id: laneColumn
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.topMargin: Math.round(42 * chart.uiScale)
+        anchors.top: heading.bottom
+        anchors.topMargin: Math.round(16 * chart.uiScale)
 
         Repeater {
             model: chart.lanes
@@ -58,15 +64,92 @@ Rectangle {
                 id: lane
                 required property var modelData
                 width: parent.width
-                height: Math.round(64 * chart.uiScale)
+                readonly property real plotTop: (chart.wide ? 0 : Math.max(identity.implicitHeight, statistics.implicitHeight)) + 22 * chart.uiScale
+                readonly property real maximum: {
+                    let peak = 0;
+                    (modelData.series || []).forEach(function (descriptor) {
+                        peak = Math.max(peak, Number((chart.summaries[descriptor.metric] || {}).peak) || 0);
+                        chart.points.forEach(function (point) {
+                            if (Resources.historicalMetricAvailable(point, descriptor.metric))
+                                peak = Math.max(peak, point[descriptor.metric]);
+                        });
+                    });
+                    const minimum = modelData.kind === "power" ? 0.01 : 1;
+                    const value = Math.max(minimum, peak * 1.15);
+                    const step = Math.pow(10, Math.floor(Math.log(value) / Math.LN10));
+                    return Math.ceil(value / step) * step;
+                }
+                height: Math.max(identity.implicitHeight, statistics.implicitHeight, observation.y + observation.implicitHeight) + 18 * chart.uiScale
+                Accessible.role: Accessible.StaticText
+                Accessible.name: modelData.label + ": " + modelData.valueText + ". " + qsTr("Average") + ": " + modelData.averageText + ". " + qsTr("Peak") + ": " + modelData.peakText + ". " + modelData.observationText
 
-                Ui.ChartValueRail {
-                    x: 12
-                    width: chart.plotLeft - 22
-                    label: lane.modelData.label
-                    valueText: lane.modelData.currentUnavailable ? "" : lane.modelData.valueText
-                    referenceText: lane.modelData.currentUnavailable ? "No measurements" : lane.modelData.secondaryText || lane.modelData.referenceText || ""
-                    valueColor: lane.modelData.color
+                Column {
+                    id: identity
+                    x: 12 * chart.uiScale
+                    width: chart.wide ? chart.plotLeft - 24 * chart.uiScale : parent.width * 0.36
+                    spacing: Ui.Theme.spacingSm
+                    Ui.ThemeText {
+                        width: parent.width
+                        text: lane.modelData.label
+                        wrapMode: Text.Wrap
+                        font.pixelSize: Ui.Theme.fontSizeCaption
+                        font.weight: Ui.Theme.fontWeightDemiBold
+                    }
+                    Ui.ThemeText {
+                        width: parent.width
+                        text: lane.modelData.valueText
+                        wrapMode: Text.Wrap
+                        color: lane.modelData.color
+                        font.pixelSize: Ui.Theme.fontSizeCaption
+                    }
+                }
+                RowLayout {
+                    id: statistics
+                    x: chart.wide ? parent.width - chart.plotRight + 12 * chart.uiScale : parent.width * 0.4
+                    width: chart.wide ? chart.plotRight - 24 * chart.uiScale : parent.width * 0.6 - 12 * chart.uiScale
+                    spacing: Ui.Theme.spacingSm
+                    Repeater {
+                        model: [{label: qsTr("Average"), value: lane.modelData.averageText}, {label: qsTr("Peak"), value: lane.modelData.peakText}]
+                        delegate: ColumnLayout {
+                            id: statisticColumn
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            Layout.alignment: Qt.AlignTop
+                            spacing: Ui.Theme.spacingSm
+                            Ui.ThemeText {
+                                Layout.fillWidth: true
+                                text: statisticColumn.modelData.label
+                                color: Ui.Theme.mutedText
+                                font.pixelSize: Ui.Theme.fontSizeCaption
+                                wrapMode: Text.Wrap
+                            }
+                            Ui.ThemeText {
+                                Layout.fillWidth: true
+                                text: statisticColumn.modelData.value
+                                font.pixelSize: Ui.Theme.fontSizeCaption
+                                wrapMode: Text.Wrap
+                            }
+                        }
+                    }
+                }
+                Ui.ThemeText {
+                    x: chart.plotLeft
+                    y: lane.plotTop - implicitHeight - 3
+                    width: parent.width - chart.plotLeft - chart.plotRight
+                    text: lane.modelData.unavailable ? qsTr("No observed intervals") : "0 – " + Resources.formatted(lane.maximum, lane.modelData.kind)
+                    color: Ui.Theme.mutedText
+                    font.pixelSize: Ui.Theme.fontSizeCaption
+                }
+                Ui.ThemeText {
+                    id: observation
+                    x: chart.plotLeft
+                    y: plot.y + plot.height + 6 * chart.uiScale
+                    width: parent.width - chart.plotLeft - chart.plotRight
+                    text: lane.modelData.observationText
+                    color: Ui.Theme.mutedText
+                    wrapMode: Text.Wrap
+                    font.pixelSize: Ui.Theme.fontSizeCaption
                 }
 
                 Canvas {
@@ -76,22 +159,15 @@ Rectangle {
                     anchors.right: parent.right
                     anchors.rightMargin: chart.plotRight
                     anchors.top: parent.top
-                    anchors.topMargin: 4
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 6
+                    anchors.topMargin: lane.plotTop
+                    height: Math.round(54 * chart.uiScale)
                     antialiasing: true
 
                     function xFor(timestamp) {
                         return (timestamp - chart.rangeStartMilliseconds) / Math.max(1, chart.rangeEndMilliseconds - chart.rangeStartMilliseconds) * width;
                     }
-                    function maximumFor(descriptors) {
-                        const configured = Number(lane.modelData.maximum || 0);
-                        if (configured > 0)
-                            return configured;
-                        const largest = descriptors.reduce(function (maximum, descriptor) {
-                            return Math.max(maximum, Number((chart.summaries[descriptor.metric] || {}).peak || 0));
-                        }, 0);
-                        return Math.max(1, largest * 1.15);
+                    function maximumFor(_descriptors) {
+                        return lane.maximum;
                     }
                     function yFor(value, descriptorIndex, maximum) {
                         const fraction = Math.min(1, Math.max(0, value) / maximum);
@@ -111,6 +187,7 @@ Rectangle {
                             return null;
                         return {
                             timestamp: timestamp,
+                            start: timestamp - Math.max(0, Number(point.duration_ms) || 0),
                             x: xFor(timestamp),
                             y: yFor(value, descriptorIndex, maximum)
                         };
@@ -121,7 +198,7 @@ Rectangle {
                         let previous = null;
                         chart.points.forEach(function (_point, pointIndex) {
                             const sample = sampleAt(pointIndex, descriptor, descriptorIndex, maximum);
-                            if (sample && previous && sample.timestamp - previous.timestamp <= chart.maximumGapMilliseconds)
+                            if (sample && previous && sample.timestamp > previous.timestamp && sample.start <= previous.timestamp && sample.timestamp - previous.timestamp <= chart.maximumGapMilliseconds)
                                 segments[segments.length - 1].push(sample);
                             else if (sample)
                                 segments.push([sample]);
@@ -152,9 +229,11 @@ Rectangle {
                             if (!supported)
                                 return;
                             const timestamp = Number(point.timestamp_ms);
-                            const radius = Math.min(15000, Number(point.duration_ms) || 15000) / 2;
-                            const left = Math.max(0, xFor(timestamp - radius));
-                            const right = Math.min(width, xFor(timestamp + radius));
+                            // A history bucket ends at timestamp_ms; its duration is
+                            // not centred on that timestamp and may cross the window edge.
+                            const duration = Math.max(0, Number(point.duration_ms) || 0);
+                            const left = Math.max(0, xFor(timestamp - duration));
+                            const right = Math.min(width, xFor(timestamp));
                             if (right <= 0 || left >= width)
                                 return;
                             dimRegion(context, previousEnd, left);
@@ -172,30 +251,6 @@ Rectangle {
                         context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.border, 0.26);
                         context.lineWidth = 1;
                         context.stroke();
-                    }
-                    function descriptorValues(descriptor) {
-                        const summary = chart.summaries[descriptor.metric] || {};
-                        return {
-                            average: Number(summary.mean || 0),
-                            peak: Number(summary.peak || 0)
-                        };
-                    }
-                    function drawReferences(context, descriptor, descriptorIndex, maximum) {
-                        const values = descriptorValues(descriptor);
-                        if (values.average <= 0 && values.peak <= 0)
-                            return;
-                        const averageY = yFor(values.average, descriptorIndex, maximum);
-                        context.beginPath();
-                        context.moveTo(0, averageY);
-                        context.lineTo(width, averageY);
-                        context.setLineDash([3, 5]);
-                        context.strokeStyle = Ui.Theme.withAlpha(descriptor.color, 0.25);
-                        context.lineWidth = 1;
-                        context.stroke();
-                        context.setLineDash([]);
-                        const peakY = yFor(values.peak, descriptorIndex, maximum);
-                        context.fillStyle = Ui.Theme.withAlpha(descriptor.color, 0.55);
-                        context.fillRect(width - 7, peakY - 1, 7, 2);
                     }
                     function drawSeries(context, descriptor, descriptorIndex, maximum) {
                         const baseline = lane.modelData.chartStyle === "paired" ? height / 2 : height - 3;
@@ -241,14 +296,13 @@ Rectangle {
                         const context = getContext("2d");
                         context.reset();
                         drawUnavailablePeriods(context);
-                        drawTimeGuides(context);
-                        drawBaseline(context);
                         if (lane.modelData.unavailable)
                             return;
+                        drawTimeGuides(context);
+                        drawBaseline(context);
                         const descriptors = lane.modelData.series || [];
                         const maximum = maximumFor(descriptors);
                         descriptors.forEach(function (descriptor, descriptorIndex) {
-                            drawReferences(context, descriptor, descriptorIndex, maximum);
                             drawSeries(context, descriptor, descriptorIndex, maximum);
                         });
                     }

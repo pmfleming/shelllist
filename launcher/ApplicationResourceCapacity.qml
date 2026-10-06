@@ -1,98 +1,74 @@
-import QtQuick
-import Shelllist.Ui as Ui
-import "ApplicationResources.js" as Resources
+pragma ComponentBehavior: Bound
 
+import QtQuick
+import QtQuick.Layouts
+import Shelllist.Ui as Ui
+
+// Read-only resource value. Only composition cards opt into a bar; memory and
+// activity values have no implied capacity denominator or severity indicator.
 Rectangle {
     id: capacity
 
     required property string label
-    required property var segments
-    property string valueText: Resources.bytes(total)
+    required property string valueText
     property string detailText: ""
-    property color accentColor: segments.length > 0 ? segments[0].color : Ui.Theme.mutedText
-    property real maximum: total
-    property bool available: true
+    property color accentColor: Ui.Theme.resourceCpu
     property real uiScale: 1
-    readonly property real total: (segments || []).reduce(function (sum, segment) {
-        return sum + Math.max(0, Number(segment.value || 0));
+    property bool available: true
+    property var segments: []
+    readonly property real total: segments.reduce(function (sum, segment) {
+        return sum + Math.max(0, Number(segment.value) || 0);
     }, 0)
 
-    height: Math.round(92 * uiScale)
+    implicitHeight: content.implicitHeight + 24 * uiScale
     radius: Ui.Theme.cardRadius
-    color: Ui.Theme.mix(Ui.Theme.surfaceRaised, accentColor, Ui.Theme.dark ? 0.12 : 0.07)
-    border.width: 0
+    color: Ui.Theme.mix(Ui.Theme.surfaceRaised, accentColor, Ui.Theme.dark ? 0.06 : 0.03)
+    Accessible.role: Accessible.StaticText
+    Accessible.name: label + ": " + (available ? valueText : qsTr("Unavailable")) + ". " + detailText
 
-    Ui.ThemeText {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.leftMargin: 10
-        anchors.rightMargin: 10
-        anchors.topMargin: 8
-        text: capacity.label
-        color: Ui.Theme.mutedText
-        elide: Text.ElideRight
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        font.weight: Ui.Theme.fontWeightDemiBold
-    }
+    ColumnLayout {
+        id: content
+        anchors.fill: parent
+        anchors.margins: Math.round(12 * capacity.uiScale)
+        spacing: Ui.Theme.spacingSm
 
-    Ui.ThemeText {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.leftMargin: 10
-        anchors.rightMargin: 10
-        anchors.topMargin: 26
-        text: capacity.available ? capacity.valueText : ""
-        color: capacity.accentColor
-        elide: Text.ElideRight
-        font.pixelSize: Ui.Theme.fontSizeHeading
-        font.weight: Ui.Theme.fontWeightBold
-    }
-
-    Ui.ThemeText {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.leftMargin: 10
-        anchors.rightMargin: 10
-        anchors.topMargin: 51
-        text: capacity.available ? capacity.detailText : "No measurements"
-        color: Ui.Theme.subtleText
-        elide: Text.ElideRight
-        font.pixelSize: Ui.Theme.fontSizeCaption
-    }
-
-    Canvas {
-        id: bar
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: 10
-        anchors.rightMargin: 10
-        anchors.bottomMargin: 10
-        height: Math.max(6, Math.round(7 * capacity.uiScale))
-        antialiasing: true
-
-        onPaint: {
-            const context = getContext("2d");
-            context.reset();
-            context.fillStyle = Ui.Theme.withAlpha(Ui.Theme.input, capacity.available ? 0.9 : 0.5);
-            context.fillRect(0, 0, width, height);
-            if (!capacity.available || capacity.maximum <= 0)
-                return;
-            let left = 0;
-            capacity.segments.forEach(function (segment) {
-                const segmentWidth = Math.max(0, Number(segment.value || 0)) / capacity.maximum * width;
-                context.fillStyle = segment.color;
-                context.fillRect(left, 0, Math.min(width - left, segmentWidth), height);
-                left += segmentWidth;
-            });
+        Ui.ThemeText {
+            Layout.fillWidth: true
+            text: capacity.label
+            color: Ui.Theme.mutedText
+            wrapMode: Text.Wrap
+            font.pixelSize: Ui.Theme.fontSizeCaption
+        }
+        Ui.ThemeText {
+            objectName: "resourceValue"
+            Layout.fillWidth: true
+            text: capacity.available ? capacity.valueText : "—"
+            color: capacity.available ? capacity.accentColor : Ui.Theme.mutedText
+            wrapMode: Text.Wrap
+            font.pixelSize: Ui.Theme.fontSizeHeading
+            font.weight: Ui.Theme.fontWeightBold
+        }
+        Ui.ThemeText {
+            Layout.fillWidth: true
+            visible: text.length > 0
+            text: capacity.detailText
+            color: Ui.Theme.mutedText
+            wrapMode: Text.Wrap
+            font.pixelSize: Ui.Theme.fontSizeCaption
+        }
+        Row {
+            Layout.fillWidth: true
+            Layout.preferredHeight: Math.round(6 * capacity.uiScale)
+            visible: capacity.available && capacity.segments.length > 0 && capacity.total > 0
+            Repeater {
+                model: capacity.segments
+                delegate: Rectangle {
+                    required property var modelData
+                    width: parent.width * Math.max(0, Number(modelData.value) || 0) / Math.max(1, capacity.total)
+                    height: parent.height
+                    color: modelData.color
+                }
+            }
         }
     }
-
-    onSegmentsChanged: bar.requestPaint()
-    onMaximumChanged: bar.requestPaint()
-    onAvailableChanged: bar.requestPaint()
-    onWidthChanged: bar.requestPaint()
 }

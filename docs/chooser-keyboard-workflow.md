@@ -230,6 +230,15 @@ The enlarged Media now-playing artwork card is information-only: its image and
 labels follow the inspected player without gaining focus, pinning a player or
 invoking transport. Tab continues directly to editable player preferences.
 
+Applications' Resources page keeps its overview, metadata and history
+information-only. Its shared 30m / 2h / 24h segmented field is the sole editable
+stop and controls both period totals and history. Pointer choice remains a local
+draft; Enter/Tab saves and requests the new range, Escape or leaving the editor
+discards without a history request. Tab/Shift+Tab wrap on that field; charts and
+resource values never become additional stops. See
+[resource measurement semantics](application-resources.md) and
+`tst_application_resources.qml` for actual key/pointer coverage.
+
 ## Validation
 
 `tests/qml/tst_field_interaction.qml` checks actual key delivery for transactions,

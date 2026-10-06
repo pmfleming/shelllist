@@ -15,5 +15,6 @@ ApplicationResourceCapacity 1.0 ApplicationResourceCapacity.qml
 ApplicationResourceHistory 1.0 ApplicationResourceHistory.qml
 ApplicationResourceLaneChart 1.0 ApplicationResourceLaneChart.qml
 ApplicationResourceMetadata 1.0 ApplicationResourceMetadata.qml
+internal ApplicationResourceOverview ApplicationResourceOverview.qml
 ApplicationResources 1.0 ApplicationResources.js
 ApplicationResourcesPage 1.0 ApplicationResourcesPage.qml

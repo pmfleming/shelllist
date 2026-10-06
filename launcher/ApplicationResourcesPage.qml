@@ -13,21 +13,11 @@ Ui.DetailFlickable {
     readonly property var historyPoints: controller.resourceHistory || []
     readonly property var latestHistoryPoint: historyPoints.length > 0 ? historyPoints[historyPoints.length - 1] : null
 
-    ApplicationResourceMetadata {
-        visible: page.application.running || page.latestHistoryPoint !== null
-        width: parent.width
-        application: page.application
-        latestPoint: page.latestHistoryPoint
-        uiScale: page.uiScale
-    }
-
     Ui.ThemeText {
         objectName: "applicationHistoryStatus"
-        visible: page.controller.historyInFlight || (!page.application.running && page.controller.resourceHistory.length > 0)
+        visible: page.controller.historyInFlight
         width: parent.width
-        text: page.controller.historyInFlight
-            ? (page.application.running ? qsTr("Loading measurements…") : qsTr("Application is not running · loading retained measurements…"))
-            : qsTr("Application is not running · showing retained measurements")
+        text: qsTr("Loading period measurements… Latest snapshot values remain separate from history.")
         color: Ui.Theme.mutedText
         wrapMode: Text.Wrap
         font.pixelSize: Ui.Theme.fontSizeCaption
@@ -37,6 +27,14 @@ Ui.DetailFlickable {
         width: parent.width
         controller: page.controller
         application: page.application
+        uiScale: page.uiScale
+    }
+
+    ApplicationResourceMetadata {
+        visible: page.application.running || page.latestHistoryPoint !== null
+        width: parent.width
+        application: page.application
+        latestPoint: page.latestHistoryPoint
         uiScale: page.uiScale
     }
 }

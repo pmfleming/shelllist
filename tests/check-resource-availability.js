@@ -31,4 +31,22 @@ vm.createContext(context);
 vm.runInContext(lift("sampleAt") + "\n" + lift("validSegments"), context);
 const segments = context.validSegments({ metric: "gpu_busy_percent" }, 0, 100);
 assert.equal(segments.length, 2);
-console.log("resource availability: measured power and unavailable chart gaps passed");
+context.chart.points = [idle, {...idle, timestamp_ms: 30000, duration_ms: 1000}];
+context.chart.timestamps = context.chart.points.map(p => p.timestamp_ms);
+assert.equal(context.validSegments({metric: "gpu_busy_percent"}, 0, 100).length, 2,
+    "unobserved time breaks traces even below the maximum timestamp-gap threshold");
+context.chart.points = [idle, {...idle}];
+context.chart.timestamps = context.chart.points.map(p => p.timestamp_ms);
+assert.equal(context.validSegments({metric: "gpu_busy_percent"}, 0, 100).length, 2,
+    "duplicate/non-advancing timestamps cannot draw backward or duplicate segments");
+
+const regions = [];
+Object.assign(context, {
+    lane: {modelData: {unavailable: false, series: [{metric: "gpu_busy_percent"}]}},
+    width: 60000, dimRegion: (_canvas, start, end) => regions.push([start, end])
+});
+context.chart.points = [{...idle, timestamp_ms: 30000, duration_ms: 10000}];
+vm.runInContext(lift("drawUnavailablePeriods"), context);
+context.drawUnavailablePeriods({});
+assert.deepEqual(regions, [[0, 20000], [30000, 60000]], "buckets cover time before their end, not a centred radius");
+console.log("resource availability: measured power, interval geometry and unavailable chart gaps passed");

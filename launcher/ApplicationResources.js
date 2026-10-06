@@ -1,6 +1,9 @@
 .pragma library
 
 "use strict";
+function measured(value) {
+    return typeof value === "number" && isFinite(value) && value >= 0;
+}
 function finite(value) {
     const number = Number(value);
     return isFinite(number) ? number : 0;
@@ -33,7 +36,78 @@ function rate(value) {
     return bytes(value) + "/s";
 }
 function power(value) {
+    if (measured(value) && value > 0 && value < 0.01)
+        return "<0.01 W";
     return decimal(value, 2) + " W";
+}
+function energy(value) {
+    if (measured(value) && value > 0 && value < 0.01)
+        return "<0.01 mWh";
+    return finite(value) >= 1000 ? decimal(finite(value) / 1000, 2) + " Wh" : decimal(value, 2) + " mWh";
+}
+function observedTime(milliseconds) {
+    const seconds = Math.max(0, finite(milliseconds)) / 1000;
+    return seconds < 60 ? decimal(seconds, 0) + " s" : seconds < 3600
+        ? decimal(seconds / 60, 1) + " min" : decimal(seconds / 3600, 1) + " h";
+}
+function formatted(value, kind) {
+    if (!measured(value))
+        return "Unavailable";
+    if (kind === "bytes")
+        return bytes(value);
+    if (kind === "rate")
+        return rate(value);
+    if (kind === "power")
+        return power(value);
+    if (kind === "energy")
+        return energy(value);
+    return percent(value);
+}
+// The canonical daemon summary is duration-weighted over the selected window,
+// independent of pagination. Never integrate the latest rate over missing time,
+// sum cumulative counters, or reuse a summary from another range.
+function windowSummary(summary, start, end) {
+    return summary && summary.weighting === "observed-duration" && start < end
+        && summary.window_start_ms === start && summary.window_end_ms === end ? summary : null;
+}
+function summaryMetric(summary, metric) {
+    const stats = summary?.metrics?.[metric];
+    const window = finite(summary?.window_end_ms) - finite(summary?.window_start_ms);
+    return stats?.available === true && measured(stats.mean) && measured(stats.observed_ms)
+        && stats.observed_ms > 0 && stats.observed_ms <= window ? stats : {};
+}
+function periodEstimate(summary, metric) {
+    const stats = summaryMetric(summary, metric);
+    if (!stats.available || !metric.endsWith("_bytes_per_second") && metric !== "average_power_watts")
+        return null;
+    const result = Number(stats.mean) * Number(stats.observed_ms) / (metric === "average_power_watts" ? 3600 : 1000);
+    return measured(result) ? result : null;
+}
+function periodText(summary, metric) {
+    const estimate = periodEstimate(summary, metric);
+    return estimate === null ? "Unavailable" : "≈ " + formatted(estimate, metric === "average_power_watts" ? "energy" : "bytes");
+}
+function observationText(summary, metric) {
+    const stats = summaryMetric(summary, metric);
+    if (!stats.available)
+        return "No observed intervals";
+    return observedTime(stats.observed_ms) + " observed / "
+        + observedTime(finite(summary?.window_end_ms) - finite(summary?.window_start_ms));
+}
+function rangeEnergyConfidence(points) {
+    const confidences = points.filter(point => historicalMetricAvailable(point, "average_power_watts"))
+        .map(point => text(point.energy_confidence, "unknown").toLowerCase());
+    if (confidences.includes("low"))
+        return "low";
+    if (confidences.length === 0 || confidences.some(value => !["high", "medium"].includes(value)))
+        return "unknown";
+    return confidences.includes("medium") ? "medium" : "high";
+}
+function currentValue(resource, metric) {
+    if (metric !== "average_power_watts")
+        return resource[metric];
+    // Zero is a reading, not a reason to fall back to another power source.
+    return measured(resource.estimated_app_power_watts) ? resource.estimated_app_power_watts : resource.power_watts;
 }
 function duration(value) {
     const milliseconds = Math.max(0, finite(value));
@@ -66,10 +140,13 @@ function historicalMetricAvailable(point, metric) {
     const capability = metricCapability(metric);
     // Legacy-record normalization belongs to app-daemon, not the chart.
     const value = point ? point[metric] : undefined;
-    return !!point && typeof value === "number" && isFinite(value)
-        && !!point.availability && point.availability[capability] === true;
+    return !!point && measured(value)
+        && !!point.availability && point.availability[capability] === true
+        && (capability !== "energy" || point.energy_source === "rapl");
 }
 function currentMetricAvailable(resource, metric) {
+    if (!measured(currentValue(resource, metric)))
+        return false;
     const measurement = resource.measurement || ({});
     switch (metricCapability(metric)) {
         case "cpu": return Number(measurement.coverage) > 0;
@@ -83,10 +160,10 @@ function currentMetadataBadges(application) {
     const measurement = application.measurement || ({});
     const badges = [
         { text: text(measurement.attribution_method, "Unknown attribution"), tone: "accent" },
-        { text: ratioPercent(measurement.coverage) + " coverage", tone: Number(measurement.coverage) < 0.8 ? "warning" : "normal" },
-        { text: duration(measurement.sample_interval_ms) + " samples", tone: "normal" },
+        { text: measured(measurement.coverage) ? ratioPercent(measurement.coverage) + " process coverage" : "Unknown process coverage", tone: !measured(measurement.coverage) || measurement.coverage < 0.8 ? "warning" : "normal" },
+        { text: measured(measurement.sample_interval_ms) && measurement.sample_interval_ms > 0 ? duration(measurement.sample_interval_ms) + " sampling interval" : "Unknown sampling interval", tone: "normal" },
         { text: text(measurement.memory_source, "Unknown memory").toUpperCase() + " memory", tone: "normal" },
-        { text: "Energy " + text(application.energy_confidence).toLowerCase(), tone: application.energy_confidence === "low" ? "warning" : "normal" }
+        { text: application.energy_source === "rapl" ? "Energy estimate · " + text(application.energy_confidence).toLowerCase() + " confidence" : "Energy unavailable", tone: "warning" }
     ];
     if (measurement.resources_shared)
         badges.push({ text: "Shared attribution", tone: "warning" });
@@ -95,9 +172,9 @@ function currentMetadataBadges(application) {
 function historicalMetadataBadges(latestPoint) {
     return [
         { text: "Retained history", tone: "accent" },
-        { text: ratioPercent(latestPoint.coverage) + " coverage", tone: Number(latestPoint.coverage) < 0.8 ? "warning" : "normal" },
+        { text: ratioPercent(latestPoint.coverage) + " process coverage", tone: Number(latestPoint.coverage) < 0.8 ? "warning" : "normal" },
         { text: integer(latestPoint.sample_count) + " samples", tone: "normal" },
-        { text: "Energy " + text(latestPoint.energy_confidence).toLowerCase(), tone: latestPoint.energy_confidence === "low" ? "warning" : "normal" }
+        { text: latestPoint.energy_source === "rapl" ? "Energy estimate · " + text(latestPoint.energy_confidence).toLowerCase() + " confidence" : "Energy unavailable", tone: "warning" }
     ];
 }
 function metadataBadges(application, latestPoint) {
