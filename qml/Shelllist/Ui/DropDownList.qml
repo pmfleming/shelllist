@@ -15,7 +15,9 @@ Controls.ComboBox {
     property bool browseFocused: false
     property string placeholder: "Select an option"
     property string draftValue: value
+    readonly property int acknowledgedIndex: optionIndex(value)
     readonly property int selectedIndex: optionIndex(editSession.active ? draftValue : value)
+    readonly property string selectedIcon: selectedIndex >= 0 ? String(options[selectedIndex].icon || "") : ""
     readonly property FieldEditSession editSession: FieldEditSession {
         owner: control
         available: control.enabled && control.interactive
@@ -73,8 +75,8 @@ Controls.ComboBox {
     onActivated: function (index) { stageIndex(index); }
 
     contentItem: ThemeText {
-        leftPadding: 0
-        rightPadding: 0
+        leftPadding: control.selectedIcon ? Theme.formIconSize + Theme.spacingSm : 0
+        rightPadding: control.errorText ? Theme.formIconSize + Theme.spacingSm : 0
         // Native currentIndex may be a proposed choice awaiting acknowledgement.
         text: control.optionLabel(control.selectedIndex)
         color: control.selectedIndex >= 0 ? Theme.inputText : Theme.subtleText
@@ -82,15 +84,36 @@ Controls.ComboBox {
         font.weight: Theme.fontWeightRegular
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
+
+        GlyphLabel {
+            objectName: "dropDownValueIcon"
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            visible: control.selectedIcon.length > 0
+            glyph: control.selectedIcon
+            font.pixelSize: Theme.formIconSize
+            color: parent.color
+            Accessible.ignored: true
+        }
+        GlyphLabel {
+            objectName: "dropDownErrorIcon"
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            visible: control.errorText.length > 0
+            glyph: "error"
+            font.pixelSize: Theme.formIconSize
+            color: Theme.danger
+            Accessible.ignored: true
+        }
     }
 
-    indicator: Text {
+    indicator: GlyphLabel {
         x: control.mirrored ? Theme.spacingMd : control.width - width - Theme.spacingMd
         y: Math.round((control.height - height) / 2)
-        text: "󰅀"
+        glyph: "expand_more"
         color: control.popup.visible || control.activeFocus || control.browseFocused ? Theme.accent : Theme.mutedText
-        font.family: Theme.iconFontFamily
         font.pixelSize: Theme.formIconSize
+        Accessible.ignored: true
         rotation: indicatorMotion.value
 
         ExpressiveMotion {

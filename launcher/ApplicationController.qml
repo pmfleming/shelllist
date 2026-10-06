@@ -55,6 +55,8 @@ Ui.ProviderChooserController {
     property string historyCursor: ""
     property string pendingHistoryCursor: ""
     property string activeSettingsRequestId: ""
+    // Request-scoped feedback belongs to its application, not the current row.
+    property var settingsFeedback: ({})
     readonly property bool historyInFlight: activeHistoryRequestId.length > 0
     readonly property bool settingsInFlight: activeSettingsRequestId.length > 0
     readonly property var selectedApplication: selectedResult ? selectedResult.payload : null
@@ -146,10 +148,14 @@ Ui.ProviderChooserController {
     function updateApplicationSettings(category: string): bool {
         if (!selectedResult || operationBlocked)
             return false;
-        activeSettingsRequestId = "settings-" + Date.now();
+        settingsFeedback = {targetId: selectedResult.id, category: category, error: ""};
+        const requestId = backend.nextRequestId("settings");
+        activeSettingsRequestId = requestId;
         status = "Saving application settings…";
-        if (!backend.updateSettings(activeSettingsRequestId, selectedResult.id, category)) {
-            activeSettingsRequestId = "";
+        if (!backend.updateSettings(requestId, selectedResult.id, category)) {
+            // sendFailed may already have supplied a more specific error.
+            if (activeSettingsRequestId === requestId)
+                handleFailure(requestId, qsTr("Application service is unavailable."));
             return false;
         }
         return true;
@@ -158,6 +164,7 @@ Ui.ProviderChooserController {
         if (id !== activeSettingsRequestId)
             return;
         activeSettingsRequestId = "";
+        settingsFeedback = ({});
         status = "Saved settings for " + (selectedResult ? selectedResult.title : "application");
         scheduleRefresh();
     }
@@ -327,6 +334,14 @@ Ui.ProviderChooserController {
             return;
         }
         const kind = Lifecycle.requestKind(id);
+        if (kind === "settings") {
+            if (id !== activeSettingsRequestId)
+                return;
+            clearFailedRequest(kind, id);
+            settingsFeedback = Object.assign({}, settingsFeedback, {error: message});
+            status = qsTr("Couldn’t save workspace category");
+            return;
+        }
         if (kind === "history") {
             if (id === activeHistoryRequestId) {
                 activeHistoryRequestId = "";

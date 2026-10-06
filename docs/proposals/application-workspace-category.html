@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="A Material 3–aligned proposal for Shelllist application workspace categories. Illustrated states, simplified copy, and implementation notes.">
+<title>Shelllist · A category, not a coordinate</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg:#101318; --surface:#191c22; --low:#15181e; --high:#272a31;
+  --highest:#32353c; --ink:#e1e2e9; --muted:#c2c6d2; --outline:#8c919d;
+  --line:#424751; --primary:#adc7ff; --on-primary:#102f60;
+  --secondary:#3e4759; --on-secondary:#dbe3fa; --edit:#404f68;
+  --error:#ffb4ab; --error-bg:#49302e; --shadow:0 8px 24px #0005;
+}
+:root.light {
+  color-scheme:light;
+  --bg:#f9f9ff; --surface:#f0f0f7; --low:#f4f4fb; --high:#e7e8ef;
+  --highest:#e1e2e9; --ink:#191c22; --muted:#424751; --outline:#737883;
+  --line:#c2c6d2; --primary:#405f91; --on-primary:#fff;
+  --secondary:#dbe3fa; --on-secondary:#141c2b; --edit:#cedaf0;
+  --error:#904a43; --error-bg:#ffdad5; --shadow:0 8px 24px #18203020;
+}
+* { box-sizing:border-box }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 "Roboto Flex","Roboto",system-ui,sans-serif }
+a { color:var(--primary); text-underline-offset:4px }
+button { font:inherit }
+button:focus-visible,a:focus-visible { outline:3px solid var(--primary); outline-offset:5px }
+.wrap { max-width:1180px; margin:auto; padding:0 32px }
+.top { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-top:28px }
+.brand { font-size:13px; letter-spacing:.12em; text-transform:uppercase; font-weight:650 }
+.theme { border:1px solid var(--outline); color:var(--ink); background:transparent; border-radius:24px; padding:10px 18px; cursor:pointer; font-size:14px }
+header { padding:72px 0 44px }
+.eyebrow { font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--primary); font-weight:650 }
+h1 { font-size:clamp(40px,6vw,70px); font-weight:500; line-height:1.06; letter-spacing:-.045em; margin:18px 0 24px; max-width:940px }
+h1 span { color:var(--primary) }
+.lede { color:var(--muted); font-size:20px; max-width:770px; margin:0 }
+.meta { display:flex; gap:8px 24px; flex-wrap:wrap; color:var(--muted); font-size:12px; margin-top:24px }
+section { padding:38px 0; border-top:1px solid var(--line) }
+h2 { font-size:30px; font-weight:500; letter-spacing:-.025em; line-height:1.2; margin:12px 0 16px }
+h3 { font-size:18px; font-weight:600; margin:0 0 8px }
+p { margin:0 0 16px }
+.muted { color:var(--muted) }
+.review { display:grid; grid-template-columns:repeat(3,1fr); gap:24px }
+.review article { padding:20px 0 0; border-top:2px solid var(--line) }
+.review p { color:var(--muted); font-size:14px; margin:0 }
+.num { color:var(--primary); font-size:13px; display:block; margin-bottom:12px }
+.decision { padding:24px 28px; background:var(--secondary); color:var(--on-secondary); border-radius:20px; margin-top:30px }
+.decision p { margin:0 }
+.mock-grid { display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:28px; align-items:start }
+figure { margin:0; min-width:0 }
+.fig-label { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:13px; margin-bottom:14px; color:var(--muted) }
+.tag { border:1px solid var(--line); padding:3px 10px; border-radius:20px; font-size:11px; color:var(--primary); white-space:nowrap }
+.panel { background:var(--surface); border:1px solid var(--line); border-radius:28px; padding:24px }
+.identity { display:flex; align-items:center; gap:14px; padding-bottom:22px; border-bottom:1px solid var(--line); margin-bottom:24px }
+.app-icon { width:48px; height:48px; background:var(--secondary); color:var(--on-secondary); border-radius:16px; display:grid; place-items:center; flex-shrink:0 }
+.identity strong { font-size:20px; font-weight:500; display:block; line-height:1.3 }
+.identity small { color:var(--muted); font-size:12px }
+.i { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; vertical-align:middle }
+.setting-label { font-size:14px; font-weight:500; margin-bottom:8px }
+.field { position:relative; display:flex; align-items:center; gap:14px; min-height:56px; padding:14px 16px; border-radius:12px; background:var(--highest); font-size:16px }
+.field:after { content:""; position:absolute; bottom:0; left:12px; right:12px; height:1px; background:var(--outline) }
+.field .chevron { margin-left:auto; color:var(--muted) }
+.field.browse { background:color-mix(in srgb,var(--highest),var(--primary) 8%) }
+.field.browse:before { content:""; position:absolute; left:3px; top:20px; width:5px; height:16px; border-radius:4px; background:var(--primary); box-shadow:0 0 0 1px var(--surface) }
+.field.edit { background:var(--edit); box-shadow:inset 0 0 0 2px var(--primary) }
+.field.edit:after { display:none }
+.field.edit .chevron { color:var(--primary); transform:rotate(180deg) }
+.helper { color:var(--muted); font-size:12px; margin:6px 0 0; line-height:1.45 }
+.effect { display:flex; align-items:flex-start; gap:12px; margin-top:28px }
+.effect .i { width:20px; height:20px; margin-top:2px; color:var(--muted) }
+.effect p { font-size:14px; margin:0 }
+.effect small { display:block; font-size:12px; color:var(--muted); margin-top:4px }
+.menu-anchor { position:relative }
+.open-panel { min-height:510px }
+.menu { position:absolute; z-index:1; top:64px; left:0; right:0; padding:8px; background:var(--high); border-radius:12px; box-shadow:var(--shadow) }
+.option { display:flex; align-items:center; gap:14px; min-height:48px; padding:12px 12px; border-radius:8px; font-size:16px }
+.option .i { width:22px; height:22px }
+.option .check { margin-left:auto; color:var(--primary) }
+.option.current { color:var(--on-secondary); background:var(--secondary) }
+.option.highlight { box-shadow:inset 0 0 0 2px var(--primary); background:var(--edit) }
+figcaption { color:var(--muted); font-size:13px; margin-top:14px; max-width:510px }
+.annotation { margin:28px 0 0; padding-left:16px; border-left:2px solid var(--primary); color:var(--muted); font-size:14px }
+.annotation strong { color:var(--ink) }
+.state-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:28px }
+.state-grid .panel { padding:20px; border-radius:20px }
+.state-grid h3 { font-size:14px; color:var(--muted); font-weight:400; margin-bottom:20px }
+.state-grid .effect { margin-top:20px }
+.pending { display:flex; gap:8px; align-items:flex-start }
+.pending .i { height:16px; width:16px; margin-top:1px }
+.error { color:var(--error) }
+.field.failed:after { background:var(--error); height:2px }
+.note-grid { display:grid; grid-template-columns:1fr 1fr; gap:36px }
+ul { margin:12px 0 0; padding-left:19px; color:var(--muted); font-size:14px }
+li { padding-left:3px; margin:10px 0 }
+li strong { color:var(--ink) }
+.specs { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin:24px 0 }
+.spec { padding:18px; background:var(--surface); border-radius:16px }
+.spec strong { display:block; font-size:25px; font-weight:500; color:var(--primary) }
+.spec span { font-size:12px; color:var(--muted) }
+code,kbd { font:12px/1.5 ui-monospace,monospace; background:var(--high); padding:2px 5px; border-radius:4px; overflow-wrap:anywhere }
+kbd { border:1px solid var(--line); white-space:nowrap }
+.key-row { display:flex; flex-wrap:wrap; gap:10px 24px; font-size:13px; color:var(--muted); margin:20px 0 }
+footer { padding:26px 0 40px; color:var(--muted); border-top:1px solid var(--line); font-size:12px }
+.small { font-size:13px; color:var(--muted) }
+.symbols { position:absolute; width:0; height:0; overflow:hidden }
+@media(max-width:850px) { .state-grid { grid-template-columns:1fr } .review { gap:16px } .panel { padding:20px } .wrap { padding:0 24px } }
+@media(max-width:640px) { .mock-grid,.note-grid,.review { grid-template-columns:1fr } .specs { grid-template-columns:1fr 1fr } header { padding-top:44px } .wrap { padding:0 18px } .top { align-items:flex-start } .brand { font-size:11px; max-width:150px } .theme { font-size:12px } h2 { font-size:26px } }
+@media print { .theme { display:none } .panel,article,figure { break-inside:avoid } header { padding-top:24px } body { print-color-adjust:exact; -webkit-print-color-adjust:exact } }
+</style>
+</head>
+<body>
+<svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+<symbol id="code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-13-2 16"/></symbol>
+<symbol id="shell" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 9 3 3-3 3m6 0h4"/></symbol>
+<symbol id="browser" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></symbol>
+<symbol id="media" viewBox="0 0 24 24"><path d="M10 17V5l10-2v12M10 8l10-2"/><ellipse cx="7" cy="18" rx="3" ry="2.5"/><ellipse cx="17" cy="16" rx="3" ry="2.5"/></symbol>
+<symbol id="text" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Zm0 0v6h6M8 13h8M8 17h6"/></symbol>
+<symbol id="chevron" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+<symbol id="window" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/></symbol>
+<symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="error" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 3v.1"/></symbol>
+</defs></svg>
+<div class="wrap">
+<div class="top"><div class="brand">Shelllist / Design notes</div><button class="theme" type="button" id="theme" aria-pressed="false">Light theme</button></div>
+<header>
+<div class="eyebrow">Application settings · approved &amp; implemented</div>
+<h1>A category,<br><span>not a coordinate.</span></h1>
+<p class="lede">Choose where an app belongs. Let Shelllist handle the workspace mapping. A quieter settings page, with a clearer consequence.</p>
+<div class="meta"><span>Based on your screenshot + the current QML</span><span>Implemented · live desktop acceptance pending</span><span>Self-contained · no external assets</span></div>
+</header>
+<main>
+<section aria-labelledby="review-title">
+<div class="eyebrow">01 / Review</div><h2 id="review-title">One decision. Too many explanations.</h2>
+<div class="review">
+<article><span class="num">01 — Content</span><h3>The mapping is repeated</h3><p>The introductory paragraph, “Category &amp; default workspace” title, every option, and the footer all explain the same relationship. “Code · Workspace 3” adds bookkeeping, not a useful choice.</p></article>
+<article><span class="num">02 — Hierarchy</span><h3>The wrapper competes with the field</h3><p>A card around one selector adds another layer without grouping anything. Keep a persistent label, one filled field, and useful supporting text. Save the strong accent edge for editing.</p></article>
+<article><span class="num">03 — Usefulness</span><h3>Show the effect, not the mechanism</h3><p>Answer the practical questions: which category is saved, what happens to new windows, and do existing windows move? Keep unassigned, pending, and rejected changes honest.</p></article>
+</div>
+<div class="decision"><p><strong>Recommendation:</strong> rename the field <strong>Workspace category</strong>. Keep only <strong>Shell, Browser, Code, Media, Text</strong> in the menu. Explain the launch behavior once; remove workspace numbers from normal UI.</p></div>
+</section>
+<section aria-labelledby="mock-title">
+<div class="eyebrow">02 / Recommended design</div><h2 id="mock-title">Less chrome. More confidence.</h2>
+<p class="muted">Same shared dropdown, cleaner composition. These are static design mockups, not functioning Qt controls. The theme button changes all examples.</p>
+<div class="mock-grid">
+<figure>
+<div class="fig-label"><span>A / Saved value · field browsing</span><span class="tag">Recommended</span></div>
+<div class="panel">
+<div class="identity"><div class="app-icon"><svg class="i" aria-hidden="true"><use href="#code"/></svg></div><div><strong>Visual Studio Code</strong><small>Application settings</small></div></div>
+<div class="setting-label">Workspace category</div>
+<div class="field browse"><svg class="i" aria-hidden="true"><use href="#code"/></svg><span>Code</span><svg class="i chevron" aria-hidden="true"><use href="#chevron"/></svg></div>
+<p class="helper">Editors and development tools</p>
+<div class="effect"><svg class="i" aria-hidden="true"><use href="#window"/></svg><div><p>New windows open in this category’s workspace.</p><small>Existing windows stay where they are.</small></div></div>
+</div>
+<figcaption>A compact body with no nested card or repeated section title. The small accent pill identifies the browsed control; the saved category is immediately readable.</figcaption>
+<div class="annotation"><strong>Keep the existing app header and tabs.</strong> The identity above is context for this isolated mockup—not a proposed duplicate header. No launch, move-window, reset, or page-wide Save action is added.</div>
+</figure>
+<figure>
+<div class="fig-label"><span>B / Menu open · editing a local draft</span><span class="tag">Category names only</span></div>
+<div class="panel open-panel">
+<div class="identity"><div class="app-icon"><svg class="i" aria-hidden="true"><use href="#code"/></svg></div><div><strong>Visual Studio Code</strong><small>Application settings</small></div></div>
+<div class="setting-label">Workspace category</div>
+<div class="menu-anchor">
+<div class="field edit"><svg class="i" aria-hidden="true"><use href="#media"/></svg><span>Media</span><svg class="i chevron" aria-hidden="true"><use href="#chevron"/></svg></div>
+<div class="menu" aria-label="Illustration of category choices, Code saved and Media highlighted">
+<div class="option"><svg class="i" aria-hidden="true"><use href="#shell"/></svg>Shell</div>
+<div class="option"><svg class="i" aria-hidden="true"><use href="#browser"/></svg>Browser</div>
+<div class="option current"><svg class="i" aria-hidden="true"><use href="#code"/></svg>Code<svg class="i check" aria-label="Saved choice"><use href="#check"/></svg></div>
+<div class="option highlight"><svg class="i" aria-hidden="true"><use href="#media"/></svg>Media</div>
+<div class="option"><svg class="i" aria-hidden="true"><use href="#text"/></svg>Text</div>
+</div>
+</div>
+</div>
+<figcaption>Consistent icons, 48px rows, and a menu aligned to the field. Code’s check denotes the acknowledged value; the accent highlight denotes the Media draft. Browsing options does not save.</figcaption>
+</figure>
+</div>
+<div class="key-row"><span><kbd>Enter</kbd> Edit / save</span><span><kbd>↑</kbd> <kbd>↓</kbd> Choose while editing</span><span><kbd>Esc</kbd> Discard</span><span><kbd>Tab</kbd> Save &amp; continue editing</span></div>
+<p class="small">The keyboard legend belongs to this review, not an extra permanent footer in the panel. The open-menu frame is taller only to show its popup; do not enlarge the production panel or reserve a blank menu-sized area.</p>
+</section>
+<section aria-labelledby="states-title">
+<div class="eyebrow">03 / Useful states</div><h2 id="states-title">A request is not a saved setting.</h2>
+<p class="muted">Keep the acknowledged value visible until the backend confirms a change. Put transient status immediately below the field, in place of its category description.</p>
+<div class="state-grid">
+<figure><div class="panel"><h3>01 · Not configured</h3><div class="setting-label">Workspace category</div><div class="field"><span class="muted">Choose a category</span><svg class="i chevron" aria-hidden="true"><use href="#chevron"/></svg></div><p class="helper">No workspace category assigned.</p><div class="effect"><div><p>Choose where new windows open.</p><small>Existing windows stay where they are.</small></div></div></div><figcaption>No silent default, fabricated recommendation, or unsupported “Automatic” option.</figcaption></figure>
+<figure><div class="panel"><h3>02 · Saving a change</h3><div class="setting-label">Workspace category</div><div class="field"><svg class="i" aria-hidden="true"><use href="#code"/></svg>Code<svg class="i chevron" aria-hidden="true"><use href="#chevron"/></svg></div><p class="helper pending"><svg class="i" aria-hidden="true"><use href="#clock"/></svg><span>Saving Browser… Code is still applied.</span></p><div class="effect"><div><p>New windows open in this category’s workspace.</p><small>Existing windows stay where they are.</small></div></div></div><figcaption>Prevent duplicate submissions while pending. Keep readable text; announce confirmation only after acknowledgement.</figcaption></figure>
+<figure><div class="panel"><h3>03 · Change rejected</h3><div class="setting-label">Workspace category</div><div class="field failed"><svg class="i" aria-hidden="true"><use href="#code"/></svg>Code<svg class="i chevron" aria-hidden="true"><use href="#chevron"/></svg></div><p class="helper pending error"><svg class="i" aria-hidden="true"><use href="#error"/></svg><span>Couldn’t save Browser. Code is unchanged. Choose again to retry.</span></p><div class="effect"><div><p>New windows open in this category’s workspace.</p><small>Existing windows stay where they are.</small></div></div></div><figcaption>An icon and actionable text—not just a red border. Preserve domain error details and existing recovery guards.</figcaption></figure>
+</div>
+<p class="annotation"><strong>Handle a mismatched mapping separately.</strong> The current code treats a category/workspace mismatch as no selection. Do not label that “unassigned.” Use “Category mapping needs attention. Choose a category to update it,” and suppress the normal launch-effect claim until the acknowledged mapping is valid. Keep raw IDs in diagnostics, not every menu row.</p>
+</section>
+<section aria-labelledby="material-title">
+<div class="eyebrow">04 / Material 3 alignment</div><h2 id="material-title">Use the existing design system, not a new skin.</h2>
+<div class="specs"><div class="spec"><strong>56</strong><span>px filled field height</span></div><div class="spec"><strong>48</strong><span>px menu row height</span></div><div class="spec"><strong>16 / 24</strong><span>px value type / line height</span></div><div class="spec"><strong>12</strong><span>px field &amp; popup corners</span></div></div>
+<div class="note-grid"><div><h3>Material-derived improvements</h3><ul><li><strong>Tonal hierarchy:</strong> Surface Container panel, Surface Container Highest field, and a raised menu. Avoid border-on-border containment.</li><li><strong>Typography:</strong> 14px persistent label, 16px value/options, 12px supporting text. Use On Surface and On Surface Variant, not arbitrary dimmed white.</li><li><strong>Selection:</strong> a secondary-container saved row with a check; a separate accent treatment for the active edit. Color is not the sole cue.</li><li><strong>Icon consistency:</strong> packaged Material Symbols in production, not embedded Nerd Font characters in labels. These offline illustrations use inline SVG approximations.</li></ul></div><div><h3>Deliberate Shelllist adaptations</h3><ul><li><strong>Not a claim of stock M3 conformance:</strong> external labels, 12px all-round field corners, and the browse pill are established product choices.</li><li><strong>No keyboard redesign:</strong> only editable controls are field Tab stops. Arrows browse results outside editing; inside the menu they select options.</li><li><strong>No new settings:</strong> five fixed choices do not need search, a five-wide segmented control, or a separate workspace selector.</li><li><strong>Theme-aware:</strong> illustrative blue palettes here; production must use the existing seed-derived semantic tokens, never these hard-coded swatches.</li></ul></div></div>
+</section>
+<section aria-labelledby="build-title">
+<div class="eyebrow">05 / Implementation handoff</div><h2 id="build-title">A small change with clear boundaries.</h2>
+<div class="note-grid"><div><h3>Composition &amp; copy</h3><ul><li>In <code>launcher/ApplicationSettingsPage.qml</code>, replace the long introductory paragraph and single-control card with a shared <code>Ui.FormField</code> + <code>Ui.DropDownList</code>. Retain navigation boundaries and stable <code>applicationCategory</code> identity.</li><li>Use <strong>Workspace category</strong> for the visible and accessible name. Set option labels to <code>category.label</code> only. Workspace IDs remain internal payload data.</li><li>Keep <code>ApplicationPreferences.js</code> as the source of labels and useful category descriptions. Render icons through shared icon support, not a panel-local menu.</li><li>Use one supporting/status slot and one passive consequence block. Do not duplicate a global failure verbatim beside the field.</li></ul></div><div><h3>Behavior &amp; acceptance</h3><ul><li>Preserve <code>onSelected</code>, <code>settingsInFlight</code>, backend validation, error ownership, and acknowledgement. If saved-check versus draft styling needs work, improve the shared dropdown.</li><li>Enter saves; Escape discards; Tab/Shift+Tab saves and continues editing. Pointer entry follows the same transaction. Blur and panel closure do not save.</li><li>Add actual Qt interaction coverage for category-only labels, forward/reverse traversal, cancel/no write, pending/rejection, acknowledged values, and mismatched mappings.</li><li>Check narrow panels, translated labels, light/dark contrast, popup clipping, and accessible announcements. Document this composition without introducing a panel-specific key model.</li></ul></div></div>
+<p class="small" style="margin-top:24px">Basis: <a href="../chooser-keyboard-workflow.md">Shelllist interaction contract</a> · <a href="../material-visual-foundation.md">Material visual foundation</a> · <a href="https://m3.material.io/components/text-fields/overview">M3 text fields</a> · <a href="https://m3.material.io/components/menus/overview">M3 menus</a>. This proposal is based on the repository’s documented M3 foundation, not a new external conformance audit.</p>
+</section>
+</main>
+<footer>Approved design, implemented with shared Qt controls and interaction tests. These static mockups remain the design reference; the catalog refresh supplies the acknowledged value in production. Live compositor and screen-reader acceptance remain separate. This document makes no backend requests and loads no external assets.</footer>
+</div>
+<script>
+const themeButton = document.getElementById('theme');
+themeButton.addEventListener('click', () => {
+  const light = document.documentElement.classList.toggle('light');
+  themeButton.textContent = light ? 'Dark theme' : 'Light theme';
+  themeButton.setAttribute('aria-pressed', String(light));
+});
+</script>
+</body>
+</html>

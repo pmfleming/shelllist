@@ -68,7 +68,7 @@ The frontend does not parse desktop files, process tables, cgroups, or composito
 | `ApplicationInstanceList.qml` | Per-window focus and close actions |
 | `ApplicationDesktopActions.qml` | Desktop-defined actions |
 | `ApplicationResourcesPage.qml` | Current resource cards and history graphs |
-| `ApplicationSettingsPage.qml` | Combined category and default-workspace selection |
+| `ApplicationSettingsPage.qml` | Workspace category field, scoped status and launch consequence |
 
 The launcher uses `ProviderRegistry`, `ResultStore`, and the generic chooser components. It is loaded on first use by `SurfaceRegistry` and remains warm afterward.
 
@@ -93,6 +93,24 @@ applications.operation
 ```
 
 Queries are generation-scoped and can select all applications or one of the five app categories. The compact search-field selector owns that transient filter; no category tab bar is rendered. Superseded results are ignored and cancellable backend work is cancelled. Catalog, settings, and window change events trigger a coalesced requery instead of carrying complete snapshots.
+
+Settings presents one **Workspace category** field with Shell, Browser, Code,
+Media and Text options, semantic icons, and a saved-choice check. Workspace
+numbers remain internal mapping data, not repeated option text. The category
+description is replaced by request-scoped pending/error feedback when needed;
+failures retain the acknowledged value and allow an explicit retry. A present
+but inconsistent workspace mapping prompts repair rather than claiming that no
+preference exists. A category inferred from desktop metadata without a saved
+workspace remains unassigned. One passive explanation states that new windows
+use the category’s workspace and existing windows stay where they are.
+
+The shared field transaction publishes only on Enter/Tab; pointer selection and
+native menu highlighting remain local until save. Pending requests disable the
+field; no-op traversal and Escape never write. Successful settings responses
+trigger the existing catalog refresh, which supplies the authoritative field
+value. Old request failures cannot replace a newer request’s feedback.
+See the [approved illustrated proposal](proposals/application-workspace-category.html)
+and `tests/qml/tst_application_settings.qml`.
 
 Category overrides are persisted by `app-daemon` and map directly to default workspaces 1–5. Execution requests contain only a target ID, normalized action, optional window or desktop-action ID, a JavaScript-safe expected revision, and non-authoritative workspace context. The daemon resolves every identifier against current state before applying an effect, applies the category's saved workspace preference, and moves the newly created window without disturbing existing instances.
 

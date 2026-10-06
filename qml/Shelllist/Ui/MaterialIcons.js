@@ -10,6 +10,8 @@ const symbols = {
     "󰅇": "content_paste", "󰍹": "monitor", "󰃭": "calendar_month", "": "notifications",
     "󰅐": "schedule", "󰒓": "settings", "󰋜": "home", "󰆴": "delete", "󰅖": "close",
     "filter_1": "filter_1",
+    "󰆍": "terminal", "󰖟": "language", "󰅩": "code",
+    "󰎈": "music_note", "󰈙": "description",
     "settings": "settings", "mouse": "mouse", "keyboard": "keyboard", "apps": "apps",
     "arrow_selector_tool": "arrow_selector_tool", "chevron_right": "chevron_right",
     "info": "info", "help_outline": "help_outline", "error": "error",

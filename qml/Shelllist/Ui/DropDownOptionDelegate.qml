@@ -7,7 +7,9 @@ Controls.AbstractButton {
     required property DropDownList owner
     required property int index
     required property var modelData
-    readonly property bool selected: index === owner.selectedIndex
+    // A saved check is acknowledgement, never the field-local choice draft.
+    readonly property bool selected: index === owner.acknowledgedIndex
+    readonly property string optionIcon: String(modelData.icon || "")
     readonly property bool highlighted: owner.highlightedIndex === index
     readonly property string optionText: owner.optionText(modelData)
     readonly property color foreground: highlighted ? Theme.accentText : (selected ? Theme.selectedText : Theme.text)
@@ -32,11 +34,34 @@ Controls.AbstractButton {
     }
     contentItem: ThemeText {
         text: option.optionText
+        leftPadding: option.optionIcon ? Theme.formIconSize + Theme.spacingSm : 0
+        rightPadding: Theme.formIconSize + Theme.spacingSm
         color: option.foreground
         font.pixelSize: Theme.formValueSize
         font.weight: option.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
+
+        GlyphLabel {
+            objectName: "dropDownOptionIcon"
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            visible: option.optionIcon.length > 0
+            glyph: option.optionIcon
+            font.pixelSize: Theme.formIconSize
+            color: option.foreground
+            Accessible.ignored: true
+        }
+        GlyphLabel {
+            objectName: "dropDownSelectedCheck"
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            visible: option.selected
+            glyph: "check"
+            font.pixelSize: Theme.formIconSize
+            color: option.foreground
+            Accessible.ignored: true
+        }
     }
     background: Rectangle {
         radius: 8

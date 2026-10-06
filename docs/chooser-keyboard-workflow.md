@@ -101,6 +101,9 @@ value captured at edit entry to restore it. Other sliders default to deferred
 save, including battery thresholds and Bluetooth timeouts.
 
 Pointer entry into a shared field uses the same transaction as keyboard entry.
+Dropdown option icons are passive; their saved check and selected accessibility
+state follow the acknowledged owner value, not the field-local draft or native
+menu highlight. The stronger menu highlight identifies the current candidate.
 On/off switches and explicit action buttons remain immediately actionable.
 A dropdown's open menu belongs to its field: Enter/Tab saves the highlighted
 choice; Escape closes it and discards that edit. It does not add an extra
@@ -115,6 +118,8 @@ The marker/keyline pair retains at least 3:1 contrast, including over selected o
 filled controls; the low-alpha tint alone is not the focus cue. This is not a
 rectangular outline around the control. The top bar opts out of this panel
 browsing marker; its pointer feedback and panel markers remain unchanged.
+System tray application icons appear only in the Tray chooser, opened by the
+bar's ellipsis button; no bar density exposes inline tray application icons.
 Horizontal sliders place the marker above
 the track. Editing replaces the marker with a stronger tonal highlight and accent
 edge, plus native caret/selection feedback. Feedback is immediate and never delayed
@@ -243,6 +248,16 @@ Escape discards the field edit, and Preview remains the explicit backend boundar
 Layout/policy telemetry during an unacknowledged Preview must not replace its
 local draft or mark it stale merely for that pending change. Trial topology
 changes still invalidate the draft; acknowledgement/error guards remain intact.
+
+Applications Settings uses one shared `FormField`/`DropDownList` named
+**Workspace category**, with category-only labels and separate semantic icons.
+Its label, supporting/status text and information-only launch consequence are
+passive; only `applicationCategory` joins field traversal. No-op forward/reverse
+wrap does not submit; saving a change disables the field until acknowledgement,
+so traversal temporarily falls back to the page. Pending/error feedback is
+scoped to the originating application; a mismatched saved mapping is not shown
+as unassigned. `tst_application_settings.qml` covers actual keyboard/pointer
+transactions, saved checks versus drafts, failure/retry and acknowledgement.
 
 Notifications search uses the daemon catalog, including unloaded retained rows
 within its documented recent-history scope. Typing issues debounced reads only;
