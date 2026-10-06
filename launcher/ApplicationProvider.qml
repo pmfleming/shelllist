@@ -25,7 +25,7 @@ Core.Provider {
     }
 
     function primaryActions(application: var, busy: bool): var {
-        const running = !!application.running;
+        const running = (application.instances || []).length > 0;
         const actions = [action("activate", running ? "Focus" : "Launch", {
                 accessKey: "A",
                 icon: running ? "󰖯" : "󰐕",
@@ -56,17 +56,17 @@ Core.Provider {
     }
 
     function closeAction(application: var, busy: bool): var {
-        return action("close", "Close", {
+        return action("close", "Close all windows (" + (application.instances || []).length + ")", {
             accessKey: "C",
             icon: "󰅖",
             role: "destructive",
-            enabled: !!application.running && !busy,
+            enabled: (application.instances || []).length > 0 && !busy,
             presentation: {
                 group: "toolbar",
                 tone: "normal"
             },
             metadata: {
-                toolTip: "Close all running instances"
+                toolTip: "Request all open windows to close; applications may ask to save"
             }
         });
     }
@@ -116,7 +116,7 @@ Core.Provider {
     function actionsForApplication(application: var): var {
         if (!application)
             return [];
-        const busy = controller.actionInFlight || controller.settingsInFlight;
+        const busy = controller.operations.busy(application.id) || controller.operationBlocked;
         const runtimeActions = application.kind === "desktop-shortcut" ? [] : [closeAction(application, busy)].concat(windowActions(application, busy));
         return primaryActions(application, busy).concat(runtimeActions, desktopActions(application, busy));
     }
@@ -156,7 +156,7 @@ Core.Provider {
             },
             state: {
                 active: !!application.focused,
-                busy: controller.actionInFlight && controller.activeTargetId === application.id
+                busy: controller.operations.busy(application.id)
             },
             payload: application
         });

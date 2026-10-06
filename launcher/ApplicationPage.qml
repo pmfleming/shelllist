@@ -12,6 +12,17 @@ Ui.DetailFlickable {
     required property real uiScale
     required property int actionHeight
 
+    Ui.LabeledAction {
+        objectName: "applicationActionStatus"
+        width: parent.width
+        visible: page.controller.selectedActionMessage.length > 0
+        label: page.controller.selectedActionMessage
+        accessibleName: "Check status"
+        icon: "refresh"
+        accessKey: "K"
+        onClicked: page.controller.operations.check(page.application.id)
+    }
+
     Ui.ThemeText {
         objectName: "applicationDescription"
         visible: !!page.application.comment && page.application.comment !== (page.controller.selectedResult || {}).subtitle
@@ -37,10 +48,11 @@ Ui.DetailFlickable {
     }
 
     Ui.CenteredMessage {
-        visible: (page.application.instances || []).length === 0 && (page.application.desktop_actions || []).length === 0
+        objectName: "applicationEmptyState"
+        visible: (page.application.instances || []).length === 0
         width: parent.width
         height: Math.max(120, implicitHeight)
-        text: page.application.kind === "desktop-shortcut" ? "This shortcut opens content in another application" : page.application.kind === "desktop-application" ? "No additional actions" : "Window is no longer available"
+        text: page.application.kind === "desktop-shortcut" ? "This shortcut opens content in another application" : page.application.kind === "desktop-application" ? "No open windows · Launch to open this application" : "Window is no longer available"
         font.pixelSize: Ui.Theme.fontSizeBody
     }
 }

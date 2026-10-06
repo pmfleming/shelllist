@@ -11,6 +11,30 @@ Ui.ProviderChooserSurface {
     refreshEnabled: !content.controller.operationBlocked && navigationEnabled
     detailsTabEnabled: content.controller.detailsOpen && content.controller.hasSelection && refreshEnabled
 
+    property bool restoreWindowCommandFocus: false
+    property string commandTarget: ""
+
+    Connections {
+        target: content.controller
+        function onResultsAboutToChange(): void {
+            let item = content.Window.window ? content.Window.window.activeFocusItem : null;
+            content.restoreWindowCommandFocus = false;
+            while (item && item !== content) {
+                if (item.objectName.startsWith("focusWindow-") || item.objectName.startsWith("closeWindow-"))
+                    content.restoreWindowCommandFocus = true;
+                item = item.parent;
+            }
+            content.commandTarget = content.controller.selectedResult ? content.controller.selectedResult.id : "";
+        }
+        function onResultsChanged(): void {
+            if (content.restoreWindowCommandFocus && content.controller.uiActive && !content.controller.uiSuspending
+                    && content.controller.detailsOpen && content.controller.selectedResult
+                    && content.controller.selectedResult.id === content.commandTarget)
+                content.detailsNavigation.focusContent(true);
+            content.restoreWindowCommandFocus = false;
+        }
+    }
+
     function refresh(): void {
         content.controller.refresh(true);
     }

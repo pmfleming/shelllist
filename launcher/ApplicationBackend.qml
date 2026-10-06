@@ -7,7 +7,7 @@ Io.DaemonBackend {
     expectedProtocol: AppApi.protocol
     expectedVersion: AppApi.version
     streams: AppApi.subscribedStreams
-    active: controller.uiActive
+    active: controller.uiActive || controller.actionInFlight
 
     function finish(id: string, envelope: var, transportError: string): void {
         const error = responseError(envelope, transportError, "Application operation failed");
@@ -26,6 +26,8 @@ Io.DaemonBackend {
             controller.applyApplicationSettings(id, data.settings);
         if (data.operation)
             controller.applyOperation(id, data.operation);
+        if (data.operation_status)
+            controller.operations.applyStatus(id, data.operation_status);
     }
 
     function revision(id: string): bool {
@@ -51,6 +53,10 @@ Io.DaemonBackend {
         });
     }
 
+    function operationStatus(id: string, operationId: string): bool {
+        return call(id, AppApi.methods.operationStatus, {operation_id: operationId});
+    }
+
     function execute(id: string, params: var): bool {
         return call(id, AppApi.methods.execute, params);
     }
@@ -65,7 +71,10 @@ Io.DaemonBackend {
     onResponseReceived: function (id, envelope, transportError) {
         finish(id, envelope, transportError);
     }
-    onEventGapDetected: controller.scheduleRefresh()
+    onEventGapDetected: {
+        controller.operations.poll();
+        controller.scheduleRefresh();
+    }
     onEventReceived: function (event) {
         if (event.event === "subscribed")
             return;

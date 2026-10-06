@@ -3,6 +3,7 @@ AppApi 1.0 AppApi.js
 ApplicationBackend 1.0 ApplicationBackend.qml
 ApplicationContent 1.0 ApplicationContent.qml
 ApplicationController 1.0 ApplicationController.qml
+internal ApplicationOperations ApplicationOperations.qml
 ApplicationDesktopActions 1.0 ApplicationDesktopActions.qml
 ApplicationDetails 1.0 ApplicationDetails.qml
 ApplicationInstanceList 1.0 ApplicationInstanceList.qml

@@ -244,6 +244,12 @@ Item {
                 }
                 Launcher.ApplicationController {
                     id: applicationController
+                    onBackgroundActionFailed: function (title, message) {
+                        // Separate arguments, never a shell command; notification
+                        // markup must not interpret application-supplied text.
+                        const body = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        Quickshell.execDetached(["notify-send", "--app-name=Shelllist", "--icon=dialog-error", "--", "Application action: " + title, body]);
+                    }
                 }
             }
         }

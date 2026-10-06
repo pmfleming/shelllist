@@ -31,14 +31,17 @@ ColumnLayout {
             required property int index
             readonly property string instanceTitle: modelData.title || list.application.name || "Window"
             readonly property string workspaceLabel: modelData.workspace_name || modelData.workspace_id || "unknown"
+            readonly property string actionMessage: list.controller.operations.message(list.application.id, modelData.id)
+            readonly property bool actionEnabled: !list.controller.operationBlocked && !list.controller.operations.busy(list.application.id)
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.round(50 * list.uiScale)
+            Layout.preferredHeight: Math.max(Math.round(50 * list.uiScale), rowContent.implicitHeight + 16)
             radius: Ui.Theme.cardRadius
             color: Ui.Theme.surface
             border.color: modelData.focused ? Ui.Theme.accent : Ui.Theme.border
             border.width: 1
 
             RowLayout {
+                id: rowContent
                 anchors.fill: parent
                 anchors.leftMargin: 12
                 anchors.rightMargin: 8
@@ -69,6 +72,13 @@ ColumnLayout {
                             font.pixelSize: Ui.Theme.fontSizeCaption
                         }
                     }
+                    Ui.ThemeText {
+                        Layout.fillWidth: true
+                        visible: instanceRow.actionMessage.length > 0
+                        text: instanceRow.actionMessage
+                        wrapMode: Text.Wrap
+                        font.pixelSize: Ui.Theme.fontSizeCaption
+                    }
                 }
 
                 Ui.FlatIconButton {
@@ -76,7 +86,8 @@ ColumnLayout {
                     Layout.preferredHeight: list.actionHeight
                     icon: Presentation.runningWindowIcon(1)
                     flatIconColor: instanceRow.modelData.focused ? Ui.Theme.active : Ui.Theme.accent
-                    enabled: !list.controller.actionInFlight
+                    objectName: "focusWindow-" + instanceRow.modelData.id
+                    enabled: instanceRow.actionEnabled
                     accessibleName: "Focus " + instanceRow.instanceTitle
                     toolTip: "Focus “" + instanceRow.instanceTitle + "” on workspace " + instanceRow.workspaceLabel
                     onClicked: list.controller.triggerDetailAction("focus-window-" + instanceRow.index)
@@ -85,7 +96,8 @@ ColumnLayout {
                 Ui.DestructiveIconButton {
                     Layout.preferredWidth: list.actionHeight
                     Layout.preferredHeight: list.actionHeight
-                    enabled: !list.controller.actionInFlight
+                    objectName: "closeWindow-" + instanceRow.modelData.id
+                    enabled: instanceRow.actionEnabled
                     accessibleName: "Close " + instanceRow.instanceTitle
                     toolTip: "Close “" + instanceRow.instanceTitle + "”"
                     onClicked: list.controller.triggerDetailAction("close-window-" + instanceRow.index)

@@ -30,7 +30,7 @@ Ui.ChooserListPane {
     searchActionToolTip: "Category: " + activeCategoryFilter.label + " · Click for " + nextCategoryFilter.label
     searchActionEnabled: !controller.operationBlocked
     filterText: controller.filterText
-    status: controller.status
+    status: controller.selectedActionMessage || controller.status
     onSearchActionRequested: controller.selectCategory(nextCategoryFilter.value)
 
     rowDelegate: Component {

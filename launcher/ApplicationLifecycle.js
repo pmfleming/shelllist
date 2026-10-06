@@ -1,14 +1,5 @@
 .pragma library
 
-function completionDisposition(status, closingAction) {
-    const completed = status === "completed";
-    return {
-        completed: completed,
-        removeInstances: completed && closingAction,
-        closeSurface: completed && !closingAction
-    };
-}
-
 function requestKind(id) {
     if (id.indexOf("history-") === 0)
         return "history";
@@ -66,19 +57,23 @@ function operationMatches(activeRequest, activeTargetId, operation) {
 }
 
 function acceptedOperationMatches(activeRequest, responseId) {
-    return !!activeRequest && (!responseId || responseId === activeRequest.id);
+    return !!activeRequest && !!responseId && responseId === activeRequest.id;
 }
 
 function currentOperationMatches(activeRequest, activeTargetId, activeOperationId, operation) {
     if (!activeRequest)
         return false;
-    return activeOperationId ? operation.id === activeOperationId : operationMatches(activeRequest, activeTargetId, operation);
+    return operationMatches(activeRequest, activeTargetId, operation) && (!activeOperationId || operation.id === activeOperationId);
 }
 
 function operationTransition(activeRequest, activeTargetId, activeOperationId, responseId, operation) {
     if (!operation || !operation.id)
         return null;
-    const status = operation.status || "completed";
+    if (!operationMatches(activeRequest, activeTargetId, operation) || (activeOperationId && operation.id !== activeOperationId))
+        return null;
+    const status = operation.status;
+    if (!["accepted", "running", "completed", "failed", "cancelled"].includes(status))
+        return null;
     if (status === "accepted") {
         if (!acceptedOperationMatches(activeRequest, responseId))
             return null;

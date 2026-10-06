@@ -71,17 +71,3 @@ function pageStatus(page) {
         status += " · launch only";
     return status;
 }
-
-function withoutClosedInstances(application, actionId, windowId) {
-    const payload = Object.assign({}, application || ({}));
-    const instances = actionId === "close" ? [] : (payload.instances || []).filter(function (instance) {
-        return instance.id !== windowId;
-    });
-    payload.instances = instances;
-    payload.running_count = instances.length;
-    payload.running = instances.length > 0;
-    payload.focused = instances.some(function (instance) {
-        return instance.focused;
-    });
-    return payload;
-}

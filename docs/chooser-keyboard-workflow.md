@@ -185,6 +185,19 @@ Header modifier-held hints remain: holding Alt shows command badges after
 250ms; holding Ctrl shows the detail-tab chord. AltGr does not show hints.
 There is no F1 overlay, hover tooltip or plain-letter action shortcut.
 
+## Applications action outcomes
+
+Focus and launch hand off to the application and dismiss after successful focus
+or checked launch handoff, not mere request admission. Close keeps the chooser
+open: window rows disappear only on authoritative snapshots, and the last window
+leaves “No open windows” with Launch available. Conflicting commands are blocked
+per application, not by freezing result navigation. Check status uses Alt+K and
+read-only recovery; progress text is not a field stop. A removed window command
+returns to shared detail browsing. Closing a view does not cancel its submitted
+operation, and a late reply cannot dismiss a reopened or newly browsed view.
+Background errors notify without reopening. See [application action outcomes](application-actions.md)
+for ownership, acknowledgement, recovery bounds and interaction tests.
+
 ## Implementing or extending a panel
 
 1. Use `ProviderChooserSurface` or `PanelSurface`; their shared keyboard

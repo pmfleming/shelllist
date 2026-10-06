@@ -35,10 +35,13 @@ Ui.ProviderChooserController {
         }
     }
     property string categoryFilter: ""
-    actionInFlight: false
-    property string activeTargetId: ""
-    property string activeOperationId: ""
-    property var activeRequest: null
+    actionInFlight: operations.count > 0
+    property alias operations: operationState
+    property int actionViewEpoch: 0
+    onNavigationInteracted: actionViewEpoch++
+    onFilterTextChanged: actionViewEpoch++
+    readonly property string selectedActionMessage: selectedResult ? operations.message(selectedResult.id, "") : ""
+    signal backgroundActionFailed(string title, string message)
     property bool forceRefresh: false
     property double catalogRevision: -1
     property string revisionRequestId: ""
@@ -64,27 +67,11 @@ Ui.ProviderChooserController {
         return key.indexOf("query-") === 0;
     })
     readonly property bool screenshotInFlight: sharedScreenshotInFlight
-    readonly property bool operationBlocked: actionInFlight || screenshotInFlight || settingsInFlight
+    readonly property bool operationBlocked: screenshotInFlight || settingsInFlight
     readonly property bool resourcesVisible: uiActive && detailsOpen && detailsTab === "resources"
-    navigationPrimaryEnabled: hasSelection && !operationBlocked
+    navigationPrimaryEnabled: hasSelection && !operationBlocked && !operations.busy(selectedResult.id)
     navigationBlocked: operationBlocked
 
-    function clearActiveAction(): void {
-        actionInFlight = false;
-        activeTargetId = "";
-        activeOperationId = "";
-        activeRequest = null;
-    }
-    function recoverTimedOutAction(): void {
-        if (!actionInFlight)
-            return;
-        clearActiveAction();
-        status = "Application launch status timed out; refreshed current state";
-        forceRefresh = false;
-        beginProviderQuery({
-            workspaceId: currentWorkspaceId
-        }, applicationSearchLimit);
-    }
     function clearResourceHistory(): void {
         resourceHistory = [];
         resourceHistorySummary = null;
@@ -112,7 +99,7 @@ Ui.ProviderChooserController {
     }
     function deactivateUi(): void {
         deactivateUiState();
-        clearActiveAction();
+        // Submitted actions retain their owner/subscription while hidden.
         clearResourceHistory();
         activeSettingsRequestId = "";
     }
@@ -146,7 +133,7 @@ Ui.ProviderChooserController {
         return true;
     }
     function updateApplicationSettings(category: string): bool {
-        if (!selectedResult || operationBlocked)
+        if (!selectedResult || operationBlocked || operations.busy(selectedResult.id))
             return false;
         settingsFeedback = {targetId: selectedResult.id, category: category, error: ""};
         const requestId = backend.nextRequestId("settings");
@@ -268,8 +255,13 @@ Ui.ProviderChooserController {
         status = filteredResults.length + " applications";
     }
     function applyApplications(id: string, page: var): void {
+        if (!isActiveQuery(id))
+            return;
         catalogRevision = Number(page.revision);
+        resultsAboutToChange(true);
         applyProviderQuery(id, applicationProvider.resultsFor(page.applications));
+        operations.reconcile(page.applications);
+        resultsChanged();
         if (detailsOpen && detailsTab === "resources" && selectedResult && selectedResult.id !== historyTargetId)
             requestResourceHistory();
         status = Presentation.pageStatus(page);
@@ -277,57 +269,20 @@ Ui.ProviderChooserController {
     function executeProviderAction(request: var, params: var): bool {
         if (operationBlocked)
             return false;
-        actionInFlight = true;
-        activeTargetId = request.result.id;
-        activeRequest = request;
-        status = request.action.label + "…";
-        if (!backend.execute(request.id, params)) {
-            clearActiveAction();
-            return false;
-        }
-        return true;
-    }
-    function applyActiveOperation(transition: var, operation: var): void {
-        activeOperationId = transition.operationId;
-        status = operation.message || (transition.accepted ? "Application action accepted…" : activeRequest.action.label + "…");
-    }
-    function applyCompletedOperation(transition: var, operation: var): void {
-        const completedRequest = activeRequest;
-        const action = completedRequest.actionId;
-        const disposition = Lifecycle.completionDisposition(transition.status, Presentation.isCloseAction(action));
-        if (disposition.removeInstances)
-            removeClosedInstances(completedRequest, action);
-        clearActiveAction();
-        status = operation.message || (disposition.completed ? "Application action completed" : "Application action " + transition.status);
-        if (disposition.closeSurface)
-            closeWindowRequested();
+        return operations.start(request, params);
     }
     function applyOperation(id: string, operation: var): void {
-        const transition = Lifecycle.operationTransition(activeRequest, activeTargetId, activeOperationId, id, operation);
-        if (!transition)
-            return;
-        if (transition.stage === "active")
-            applyActiveOperation(transition, operation);
-        else
-            applyCompletedOperation(transition, operation);
-    }
-    function removeClosedInstances(request: var, action: string): void {
-        const targetId = request.result.id;
-        const windowId = (request.action.metadata || ({})).windowId || "";
-        const next = filteredResults.map(function (result) {
-            if (result.id !== targetId)
-                return result;
-            return applicationProvider.resultFor(Presentation.withoutClosedInstances(result.payload, action, windowId));
-        });
-        replaceProviderResults(next, false);
+        operations.apply(id, operation);
     }
     function clearFailedRequest(kind: string, id: string): void {
         if (kind === "settings" && id === activeSettingsRequestId)
             activeSettingsRequestId = "";
-        else if (kind === "action")
-            clearActiveAction();
     }
     function handleFailure(id: string, message: string): void {
+        if (operations.fail(id, message) || operations.statusFailed(id, message))
+            return;
+        if (id.startsWith("action-") || id.startsWith("operation-status-"))
+            return; // Obsolete failures cannot overwrite another request.
         if (id === revisionRequestId) {
             revisionRequestId = "";
             refresh(false);
@@ -363,7 +318,7 @@ Ui.ProviderChooserController {
         status = message;
     }
     function handleTransportFailure(message: string): void {
-        clearActiveAction();
+        operations.transportLost(message);
         clearResourceHistory();
         activeSettingsRequestId = "";
         revisionRequestId = "";
@@ -372,7 +327,7 @@ Ui.ProviderChooserController {
         status = message;
     }
     function canActOnSelection(): bool {
-        return !!selectedResult && !operationBlocked;
+        return !!selectedResult && !operationBlocked && !operations.busy(selectedResult.id);
     }
     function primarySelected(): bool {
         return canActOnSelection() && executeSelected("activate");
@@ -394,10 +349,10 @@ Ui.ProviderChooserController {
     }
 
     Timer {
-        interval: 20000
-        running: controller.actionInFlight
-        repeat: false
-        onTriggered: controller.recoverTimedOutAction()
+        interval: 2000
+        running: controller.uiActive && Object.values(controller.operations.feedback).some(record => record.awaitingWindows && record.windowChecks < 3)
+        repeat: true
+        onTriggered: if (!controller.refreshInFlight) controller.refresh(false)
     }
 
     Timer {
@@ -417,5 +372,10 @@ Ui.ProviderChooserController {
     ApplicationBackend {
         id: backend
         controller: controller
+    }
+    ApplicationOperations {
+        id: operationState
+        controller: controller
+        backend: backend
     }
 }

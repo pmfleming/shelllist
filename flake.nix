@@ -128,6 +128,7 @@
               appDaemon
               barDaemon
               pkgs.pavucontrol
+              pkgs.libnotify # background application-action failures
               pkgs.ghostty
             ];
             text = ''

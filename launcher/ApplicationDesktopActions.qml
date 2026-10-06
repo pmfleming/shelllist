@@ -32,7 +32,7 @@ ColumnLayout {
             // Desktop icon names are opaque, not necessarily font ligatures.
             // The passive full action name disambiguates the execute fallback.
             icon: Ui.MaterialIcons.name(modelData.icon || "") || "play_arrow"
-            enabled: !actions.controller.actionInFlight
+            enabled: !actions.controller.operationBlocked && !actions.controller.operations.busy(actions.application.id)
             onClicked: actions.controller.triggerDetailAction("desktop-action-" + index)
         }
     }
