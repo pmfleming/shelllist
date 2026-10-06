@@ -60,11 +60,7 @@ Ui.ProviderChooserController {
         }).map(entry => provider.makeResult(entry)));
     }
     function primarySelected(): bool {
-        if (!hasSelection)
-            return false;
-        openDetails();
-        focusDetailsRequested();
-        return true;
+        return executeSelected("");
     }
     function triggerDetailAction(actionId: string): bool {
         return executeSelected(actionId);
@@ -92,8 +88,11 @@ Ui.ProviderChooserController {
         const action = entry && entry.actions.find(value => value.id === actionId && value.enabled !== false);
         if (!action)
             return false;
-        if (actionId === "inspect")
-            return primarySelected();
+        if (actionId === "inspect") {
+            openDetails();
+            focusDetailsRequested();
+            return true;
+        }
         if (kind === "audio") {
             if (actionId === "mixer")
                 return barController.triggerModuleAction("audio-mixer");

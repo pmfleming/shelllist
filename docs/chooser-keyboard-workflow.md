@@ -277,6 +277,10 @@ contract and Qt interaction coverage.
 See [session memory](chooser-session-memory.md) for focus/caret restoration and
 [geometry](chooser-geometry.md) for revealing controls without moving the list.
 Neither restoration nor a browse highlight may activate a setting or command.
+Media result Enter invokes the selected player's capability-guarded Play/Pause
+primary action, retaining list focus and expanded/collapsed state. It never routes
+to a different active player or falls back to inspection when playback is disabled
+or busy. Right remains the action-free way to expand details.
 The Media playback card is information-only: contained square artwork, content
 labels, read-only progress and numeric elapsed/remaining/rate follow the inspected
 player without gaining focus, pinning a player or invoking transport. Tab continues

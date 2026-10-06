@@ -47,8 +47,9 @@ function media(players, busy) {
         result.metadata.stateIcon = Media.stateIcon(player);
         result.metadata.playbackStatus = player.playback_status || "";
         result.searchText += " " + Media.identityLabel(player) + " " + (player.album || "");
+        result.primaryActionId = "play-pause";
         result.actions.forEach(function (item) {
-            if (item.id !== "inspect" && item.id !== "play-pause") item.presentation.group = Media.actionGroup(player, item.id);
+            item.presentation.group = item.id === "inspect" ? "toolbar" : Media.actionGroup(player, item.id);
         });
         return result;
     });

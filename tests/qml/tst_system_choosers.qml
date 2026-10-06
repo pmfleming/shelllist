@@ -224,6 +224,49 @@ DaemonTestCase {
         verify(findChild(root.content.detailsItem, "detailAction:previous") === null);
         compare(calls.length, 1);
     }
+    function test_mediaListEnterPrimary_data() {
+        return [
+            {tag: "playing-collapsed", status: "Playing", expanded: false, key: Qt.Key_Return},
+            {tag: "paused-expanded", status: "Paused", expanded: true, key: Qt.Key_Enter}
+        ];
+    }
+    function test_mediaListEnterPrimary(data): void {
+        const root = fixture();
+        const selected = Object.assign(player("selected", true), {playback_status: data.status});
+        const active = player("active", true);
+        root.desktop.media = {available: true, active_player: active.id, players: [active, selected]};
+        root.chooser.activateUi("");
+        root.content.listItem.focusSearch();
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Down);
+        compare(root.chooser.selectedResult.id, selected.id);
+        compare(root.chooser.selectedResult.primaryActionId, "play-pause");
+        keyClick(Qt.Key_Right);
+        compare(root.chooser.detailsOpen, true);
+        verify(root.content.listItem.listFocused);
+        compare(calls.length, 0, "Right only inspects the player");
+        if (!data.expanded)
+            keyClick(Qt.Key_Left);
+        keyClick(data.key);
+        compare(calls.length, 1);
+        compare(calls[0].params.player_id, selected.id, "never route to the active player");
+        compare(calls[0].params.operation, "play-pause");
+        compare(root.chooser.detailsOpen, data.expanded);
+        verify(root.content.listItem.listFocused, "primary action keeps list focus");
+        compare(root.chooser.selectedPlayer.playback_status, data.status, "no optimistic playback state");
+        keyClick(data.key);
+        compare(calls.length, 1, "busy Enter does not replay");
+        acknowledge(root, calls[0], {});
+        const blocked = Object.assign({}, selected, data.status === "Playing" ? {can_pause: false} : {can_play: false});
+        root.desktop.media = {available: true, active_player: active.id, players: [active, blocked]};
+        keyClick(data.key);
+        compare(calls.length, 1, "unavailable primary does not dispatch or fall back to inspection");
+        compare(root.chooser.detailsOpen, data.expanded);
+        clientReady = false;
+        tryCompare(root.desktop.backend, "ready", false);
+        keyClick(data.key);
+        compare(calls.length, 1, "disconnected Enter cannot dispatch");
+    }
     function test_selectedPlayerIsExplicitAndCapabilitiesAreRevalidated(): void {
         const root = fixture();
         root.desktop.media = {available: true, active_player: "two", players: [player("one", true), player("two", true)]};
