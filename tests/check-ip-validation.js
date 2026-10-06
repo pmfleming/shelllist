@@ -86,7 +86,8 @@ const prefixCases = [
     ["33", "ipv4", false, Invalid],
     ["128", "ipv6", false, Acceptable],
     ["129", "ipv6", false, Invalid],
-    ["abc", "ipv6", false, Invalid]
+    ["abc", "ipv6", false, Invalid],
+    ["24" + " ".repeat(validation.MaximumEditingLength), "ipv4", false, Invalid]
 ];
 for (const [value, family, allowEmpty, expected] of prefixCases) {
     expectState(
@@ -103,7 +104,6 @@ for (const [value, family, multiple, expected] of [
     ["1.1.1.1,".repeat(65), "ipv4", true, Invalid],
     ["1.1.1.1" + " ".repeat(validation.MaximumEditingLength), "ipv4", false, Invalid]
 ]) expectState("untruncated input / list limit", validation.addressInputState(value, family, multiple, false), expected);
-expectState("prefix buffer boundary", validation.prefixState("24" + " ".repeat(validation.MaximumEditingLength), "ipv4", false), Invalid);
 for (const [value, family, multiple, prefix, key] of [
     ["192.168.100.100/24", "ipv4", false, false, "cidr"],
     ["fe80::1%wlan0", "ipv6", false, false, "zone"],
@@ -121,7 +121,7 @@ for (const [input, index, octet] of [
     ["255.255.255.255, 1.2.3.999", 2, 4]
 ]) {
     const issue = validation.issue(input, "ipv4", true, false, false);
-    expectState("first invalid address index", issue.index, index);
-    expectState("first overflowing octet only", issue.octet, octet);
+    expectState("first invalid address and overflowing octet",
+        JSON.stringify({index: issue.index, octet: issue.octet}), JSON.stringify({index, octet}));
 }
 console.log(`IP validation: ${checks} checks passed`);

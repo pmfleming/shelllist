@@ -62,10 +62,8 @@ function install(context, text, names) {
     install(controller, source, ["confirmBulkDelete"]);
     controller.confirmBulkDelete();
     controller.confirmBulkDelete();
-    assert.equal(requests.length, 1, "an in-flight delete cannot be dispatched twice");
-    assert.equal(requests[0][1], "clipboard.entries.delete");
-    assert.deepEqual(JSON.parse(JSON.stringify(requests[0][2])), {
-        entries: [{ entry_id: "one", revision: 4 }, { entry_id: "two", revision: 9 }]
-    });
+    assert.deepEqual(JSON.parse(JSON.stringify(requests.map(([, method, params]) => ({method, params})))),
+        [{method: "clipboard.entries.delete", params: {entries: [{entry_id: "one", revision: 4}, {entry_id: "two", revision: 9}]}}],
+        "one revision-checked bulk command; a second in-flight dispatch is forbidden");
 }
 console.log("clipboard actions: background annotation and revision-checked bulk deletion passed");

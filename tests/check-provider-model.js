@@ -31,11 +31,8 @@ const launch = model.action({
     role: "default",
     shortcut: "Enter",
     accessKey: " l ",
-    presentation: { group: "primary", tone: "active", width: 140 }
+    presentation: { group: "primary", tone: "active" }
 });
-
-if ("width" in launch.presentation)
-    throw new Error("Legacy action widths must not survive normalization; circular geometry is UI-owned");
 
 const terminal = model.result({
     providerId: "desktop.applications",
@@ -48,11 +45,11 @@ const terminal = model.result({
     actions: [launch],
     payload: { desktopFile: "/tmp/terminal.desktop" }
 });
-throws("duplicate actions are rejected", () => model.result({
-    providerId: "test", id: "one", title: "One", actions: [launch, launch]
-}), "duplicate");
-
-throws("cross-provider batches rejected", () => model.resultBatch({ providerId: "settings", results: [terminal] }), "does not match");
+for (const [label, action, fragment] of [
+    ["duplicate actions", () => model.result({providerId: "test", id: "one", title: "One", actions: [launch, launch]}), "duplicate"],
+    ["cross-provider batch", () => model.resultBatch({providerId: "settings", results: [terminal]}), "does not match"]
+])
+    throws(label, action, fragment);
 
 // ProviderRegistry's Qt tests own dispatch routing and disabled-action rejection.
 

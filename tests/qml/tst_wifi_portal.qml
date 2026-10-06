@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Shelllist.Wifi as Wifi
-import Shelllist.Bar as Bar
 import "../../wifi/process" as Process
 
 DaemonTestCase {
@@ -44,10 +43,6 @@ DaemonTestCase {
                 }
             }
         }
-    }
-    Component {
-        id: barFactory
-        Bar.BarController {}
     }
     Component {
         id: commandFactory
@@ -161,8 +156,7 @@ DaemonTestCase {
     function test_processFailureAndUncertaintyAreAcknowledgedWithoutRetry_data() {
         return [
             {tag:"known-no-effect", code:0, output:'{"outcome":"failed"}', expected:"failed"},
-            {tag:"crash", code:9, output:'{"outcome":"opened"}', expected:"uncertain"},
-            {tag:"missing-result", code:0, output:'', expected:"uncertain"}
+            {tag:"crash", code:9, output:'{"outcome":"opened"}', expected:"uncertain"}
         ];
     }
     function test_processFailureAndUncertaintyAreAcknowledgedWithoutRetry(data) {
@@ -191,18 +185,6 @@ DaemonTestCase {
         compare(portalCalls().length, 0);
         compare(reopened.executor.commands.length, 0);
     }
-    function test_disappearanceAfterAutomaticClaimDoesNotReplay() {
-        const panel = makePanel();
-        panel.controller.portal.launchForConnect("connect-1", "1");
-        claim(panel, intent());
-        compare(panel.executor.commands.length, 1);
-        panel.destroy();
-        wait(0);
-        const reopened = makePanel();
-        reopened.controller.backend.handleTransportReady();
-        compare(portalCalls().length, 0);
-        compare(reopened.executor.commands.length, 0);
-    }
     function test_networkChangedDenialRetainsManualRetryWithoutExecuting() {
         const panel = makePanel();
         panel.controller.portal.launchForConnect("connect-1", "1");
@@ -216,14 +198,6 @@ DaemonTestCase {
         compare(panel.executor.commands.length, 0);
         verify(panel.controller.portal.launchManual("2", false));
         compare(portalCalls().slice(-1)[0].params.mode, "manual");
-    }
-    function test_barFallbackUsesTheSameDaemonTransaction() {
-        const panel = makePanel();
-        const bar = createTemporaryObject(barFactory, testCase, {surfaceRegistry: {wifiController:panel.controller, bluetoothController:null, notificationState:null}});
-        verify(bar !== null);
-        verify(bar.triggerModuleAction("portal"));
-        compare(portalCalls()[0].params, {mode:"manual", fallback:true});
-        compare(panel.executor.commands.length, 0);
     }
     function test_signInUsesAltCommandNotFieldNavigation() {
         const panel = makePanel();

@@ -217,8 +217,9 @@ changed by dragging, keys or authoritative state. Only the painted handle
 thickness springs from 4px to 2px under focus/press; its native footprint stays
 fixed, so decoration cannot change drag mapping. The shared tonal focus highlight
 also appears immediately. The previous animated keyboard-position test was a
-constraint on the wrong behavior and is now replaced with immediate-position
-assertions. Home/End, stepped keyboard edits, live edits and completion signals
+constraint on the wrong behavior and was replaced with immediate-position
+assertions at that checkpoint; that dedicated fixture was later pruned.
+Home/End, stepped keyboard edits, live edits and completion signals
 retain their existing contract.
 
 `SegmentedControl` now has a solid, outlined capsule with joined options,
@@ -366,6 +367,13 @@ fonts, rejects warnings and errors, and exits without deploying or restarting
 anything.
 
 ## Validation checkpoints
+
+These are historical implementation results, not the current test inventory.
+The [2026-10-06 pruning](reviews/test-pruning-2026-10-06.md) removes standalone
+settings-control and palette-token suites, wrapper size/motion snapshots and some
+form composition checks. Native transactions, representative activation guards,
+masking/reveal, dropdown acknowledgement and painted contrast remain. The visual
+and accessibility requirements above are unchanged.
 
 The original palette/gallery slice passed strict lint, **210 Qt passes**
 (including lifecycle hooks), the generated-color

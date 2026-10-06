@@ -80,12 +80,14 @@ individually checked.
 
 ## Validation
 
-`tst_chooser_geometry.qml` retains negative-origin work areas, absent-data
-fallback, single-column geometry, live/fractional list anchoring, filtering,
-live resize, focused-delegate routing and keyboard overflow revelation.
-Displays retains numeric validation, topology, preview/revert and disconnect
-checks. Repeated size matrices and the Activity-specific rail test were removed;
-see [current test scope](../tests/README.md) for validation and explicit gaps.
+`tst_chooser_geometry.qml` was removed in the
+[2026-10-06 pruning](reviews/test-pruning-2026-10-06.md). Its broad geometry/input
+fixture overlapped native-window smoke, work-area recovery, chooser keyboard and
+keyed list/restoration tests. Header/bar tests retain narrow command reachability
+and overflow revelation. Displays retains numeric validation, topology,
+preview/revert and disconnect checks. Fractional anchoring, negative-origin
+fallback and live resizing now have less direct evidence; see
+[current test scope](../tests/README.md) for validation and explicit gaps.
 
 At the original geometry checkpoint, strict lint, **141 behavioral cases / 215
 Qt passes including hooks**, runtime smoke and the full sibling-aware gate passed.

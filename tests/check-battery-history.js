@@ -14,23 +14,18 @@ function point(wall, active, percentage, continuous = true, extra = {}) {
 function series(points, metric = "percentage") {
     return history.series(points, metric, metric === "percentage" ? 100 : 3600, false);
 }
-function equal(actual, expected, message) {
-    assert.deepEqual(JSON.parse(JSON.stringify(actual)), expected, message);
-}
-
 const points = [
     point(0, 0, 100, false), point(15 * minute, 15 * minute, 90),
     point(2 * day, 15 * minute, 70, false),
     point(2 * day + 15 * minute, 30 * minute, 60)
 ];
-assert.equal(series([point(0, 0, 80), point(minute, minute, null),
-    point(2 * minute, 2 * minute, 79)]).breaks.length, 0,
-    "missing charge readings must not fabricate gap endpoints");
-
-for (const invalid of [null, undefined, NaN, Infinity, -1, 101, "80"])
-    assert.equal(series([point(0, 0, invalid, false)]).segments.length, 0);
-const backwards = series([point(minute, minute, 80), point(0, 0, 70)]);
-assert.equal(backwards.segments.length, 2, "never interpolate backwards through a clock reset");
+const cases = [
+    {label: "missing readings do not fabricate gap endpoints", points: [point(0, 0, 80), point(minute, minute, null), point(2 * minute, 2 * minute, 79)], field: "breaks", count: 0},
+    {label: "clock reset breaks interpolation", points: [point(minute, minute, 80), point(0, 0, 70)], field: "segments", count: 2},
+    ...[null, undefined, NaN, Infinity, -1, 101, "80"].map(value => ({label: `invalid percentage ${value}`, points: [point(0, 0, value, false)], field: "segments", count: 0}))
+];
+for (const sample of cases)
+    assert.equal(series(sample.points)[sample.field].length, sample.count, sample.label);
 
 const watts = series([
     point(0, 0, 80, false, { power_watts: 0, power_valid: false }),
@@ -40,7 +35,7 @@ const watts = series([
     point(4 * minute, 4 * minute, 78, true, { power_watts: 8, charging: true })
 ], "power_watts");
 const areas = history.powerAreas(watts.segments);
-equal(areas.map(area => [area.charging, area.points.map(p => p.value)]),
+assert.deepEqual(JSON.parse(JSON.stringify(areas.map(area => [area.charging, area.points.map(p => p.value)]))),
     [[false, [0]], [false, [12, 0]], [true, [0, 8]]],
     "power areas split at missing samples and change colour through zero");
 const zeroTransition = series([

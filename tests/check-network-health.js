@@ -25,14 +25,14 @@ const daemonFailure = event({
     message: "Example failed to authenticate.", device_path: "/devices/1",
     reason: { code: 7, name: "no-secrets", category: "authentication" }, id: "Example"
 });
-expect("daemon recommended failure is surfaced", health.isFailure(daemonFailure), true);
 
 const daemonSuppressed = event({
     subject: "connection", state_name: "deactivated", unexpected: true, user_requested: false,
     transition_kind: "failure", notification_recommended: false, severity: "warning",
     reason: { code: 3, name: "device-disconnected", category: "dependency" }, id: "Example"
 });
-expect("daemon suppressed failure stays quiet", health.isFailure(daemonSuppressed), false);
+for (const [value, recommended] of [[daemonFailure, true], [daemonSuppressed, false]])
+    expect("honor daemon notification recommendation", health.isFailure(value), recommended);
 
 // The daemon classifies lifecycle traces. Repeating each reason/state here
 // only retests the recommendation boolean, not DHCP, VPN or suspend behavior.

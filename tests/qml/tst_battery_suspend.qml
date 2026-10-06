@@ -91,48 +91,6 @@ DaemonTestCase {
         verify(graph.inspecting, "explicit pointer inspection remains available");
     }
 
-    function test_keepAwakeIsAccessibleAndOnlyDisablesSuspend() {
-        const panel = makePanel();
-        const controller = panel.controller;
-        const button = findChild(panel, "keepAwakeButton");
-        const card = findChild(panel, "powerSuspendCard");
-        verify(button.enabled);
-        compare(button.Accessible.name, "Keep awake");
-        verify(button.Accessible.checkable);
-        verify(!button.Accessible.checked);
-        verify(button.toolTip.indexOf("locking and screen blanking continue") >= 0);
-        verify(button.mapToItem(card, button.width, 0).x <= card.width - card.contentPadding);
-        controller.applyPowerSuspend(Object.assign(suspendState(), {
-            keep_awake: true,
-            can_hibernate: "yes"
-        }));
-        verify(button.Accessible.checked);
-        compare(button.tone, "accent");
-        verify(button.enabled, "must be able to turn it off");
-        verify(findChild(panel, "suspendAction-lock").enabled);
-        verify(!findChild(panel, "suspendAction-suspend").enabled);
-        verify(!findChild(panel, "suspendAction-hibernate").enabled);
-        compare(findChild(panel, "suspendStatusText").text, "Keep awake on · suspend & hibernate blocked");
-        controller.keepAwakePending = true;
-        controller.actionInFlight = true;
-        verify(!button.enabled);
-        compare(findChild(panel, "keepAwakeStatus").text, "Updating Keep awake…");
-        controller.operationFailed("power-keep-awake-1", "Permission denied");
-        verify(button.enabled);
-        compare(findChild(panel, "keepAwakeStatus").text, "Permission denied");
-        verify(!findChild(panel, "suspendRetryButton").visible);
-        controller.applyPowerSuspend(suspendState());
-        verify(!button.Accessible.checked);
-        verify(findChild(panel, "suspendAction-suspend").enabled);
-        button.forceActiveFocus();
-        verify(button.activeFocus);
-        const oldDaemon = suspendState();
-        delete oldDaemon.keep_awake;
-        controller.applyPowerSuspend(oldDaemon);
-        verify(!button.enabled);
-        verify(button.toolTip.indexOf("updated bar-daemon") >= 0);
-    }
-
     function test_degradedTelemetryAllowsOnlyReleaseThroughKeyboardAndAccessibility() {
         const panel = makePanel();
         const controller = panel.controller;
@@ -167,6 +125,13 @@ DaemonTestCase {
         button.Accessible.toggleAction();
         compare(calls.length, 1);
         compare(calls[0].params.enabled, true, "healthy telemetry restores ordinary toggling");
+        verify(!button.Accessible.checked, "sending is not acknowledgement");
+        controller.operationFinished("power-keep-awake-3");
+        controller.applyPowerSuspend(Object.assign(suspendState(), {keep_awake: true, can_hibernate: "yes"}));
+        verify(button.Accessible.checked && button.enabled, "acknowledged Keep awake can still be released");
+        verify(findChild(panel, "suspendAction-lock").enabled);
+        verify(!findChild(panel, "suspendAction-suspend").enabled);
+        verify(!findChild(panel, "suspendAction-hibernate").enabled);
     }
 
     function test_criticalProtectionControlsAndUnknownOutcome() {

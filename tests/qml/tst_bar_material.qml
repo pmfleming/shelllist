@@ -36,22 +36,6 @@ TestCase {
         id: trayItemFactory
         Tray.SystemTrayItem { title: "Test application" }
     }
-    Component {
-        id: actionFactory
-        Bar.BarAction {
-            text: "wifi"
-            property int primaryCalls: 0
-            property int secondaryCalls: 0
-            property int middleCalls: 0
-            onPrimaryTriggered: primaryCalls++
-            onSecondaryTriggered: secondaryCalls++
-            onMiddleTriggered: middleCalls++
-        }
-    }
-    Component {
-        id: panelActionFactory
-        Ui.ActionButton { icon: "wifi"; label: "Panel command" }
-    }
     function init(): void { failOnWarning(/.*/); }
     function actionControls(item): var {
         if (item instanceof Ui.ActionControl) return [item];
@@ -81,30 +65,7 @@ TestCase {
         mouseClick(overflow, overflow.width / 2, overflow.height / 2);
         verify(overflow.activeFocus);
         verify(!findChild(overflow, "browseFocusIndicator").visible);
-    }
-    function test_barPointerAndKeyboardRoutesKeepFeedbackWithoutCaret(): void {
-        const button = createTemporaryObject(actionFactory, testCase);
-        verify(waitForRendering(button));
-        mousePress(button, 16, 16);
-        verify(button.activeFocus);
-        verify(findChild(button, "focusRing").visible);
-        verify(!findChild(button, "browseFocusIndicator").visible);
-        mouseRelease(button, 16, 16);
-        compare(button.primaryCalls, 1);
-        mouseClick(button, 16, 16, Qt.RightButton);
-        compare(button.secondaryCalls, 1);
-        mouseClick(button, 16, 16, Qt.MiddleButton);
-        compare(button.middleCalls, 1);
-        keyClick(Qt.Key_Return);
-        compare(button.primaryCalls, 2);
-        button.enabled = false;
-        mouseClick(button, 16, 16);
-        button.activate();
-        compare(button.primaryCalls, 2, "disabled commands remain guarded");
-
-        const panelButton = createTemporaryObject(panelActionFactory, testCase);
-        panelButton.forceActiveFocus();
-        verify(findChild(panelButton, "browseFocusIndicator").visible, "panel command feedback is unchanged");
+        verify(findChild(bar, "barOverflowViewport").contentX > 0, "overflow remains reachable by pointer");
     }
     function test_trayAssistivePressUsesPointerPrimaryRoute(): void {
         const tray = createTemporaryObject(trayItemFactory, testCase);
@@ -143,34 +104,6 @@ TestCase {
         compare(button.Accessible.name, "");
         compare(tray.menuCount, 2, "a removed tray item cannot receive late actions");
         compare(tray.scrollTotal, 0);
-    }
-    function test_emergencyOverflowKeepsGroupsReachable(): void {
-        const bar = createTemporaryObject(barFactory, testCase, {width: 300});
-        tryVerify(() => findChild(bar, "bar:notifications") !== null);
-        verify(waitForRendering(bar));
-        const names = ["barWorkspaces", "barMedia", "bar:network", "bar:bluetooth", "bar:battery", "bar:notifications", "barTray", "barClock"];
-        let edge = -1;
-        for (const name of names) {
-            const item = findChild(bar, name);
-            verify(item !== null && item.visible, name);
-            const x = item.mapToItem(bar, 0, 0).x;
-            verify(x >= edge, name + " must follow the preceding group without overlap");
-            edge = x + item.width;
-        }
-        verify(!findChild(bar, "bar:battery").text.includes("80"));
-        verify(!findChild(bar, "bar:notifications").text.includes("17"));
-        verify(findChild(bar, "bar:battery").accessibleName.includes("80"));
-        verify(findChild(bar, "barClock").text.includes(":"));
-        compare(bar.visualSurface.radius, 20);
-        verify(bar.overflow);
-        const viewport = findChild(bar, "barOverflowViewport");
-        const button = findChild(bar, "barOverflowButton");
-        verify(button.width >= 32 && button.height >= 32);
-        verify(viewport.mapToItem(bar, viewport.width, 0).x <= button.x, "the wider hit target does not cover bar content");
-        mouseClick(button, 1, button.height / 2);
-        verify(viewport.contentX > 0, "emergency overflow has an explicit pointer route");
-        bar.controller.notificationActive = {notifications: [{urgency: 2}]};
-        tryCompare(findChild(bar, "bar:notifications"), "foreground", Ui.Theme.danger);
     }
     function test_popupVisibilityIsIndependentOfLiveNotificationCount(): void {
         const bar = createTemporaryObject(barFactory, testCase, {width: 700});

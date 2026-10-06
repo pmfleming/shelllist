@@ -353,40 +353,10 @@ DaemonTestCase {
         backend.acceptSharedResponse("audio-profile-policy", {
             protocol: "bt-api",
             version: 1,
-            ok: true,
-            data: {}
+            ok: false,
+            error: {message: "Permission denied"}
         }, "");
         verify(!backend.requestRunning);
-        compare(panel.controller.status, "Bluetooth audio profile updated and remembered");
-    }
-    function test_audioProfileSaveFailureIsReported() {
-        const panel = makePanel();
-        const profile = setupAudioProfile(panel);
-        const backend = findChild(panel.controller, "bluetoothBackend");
-        profile.selected("aac");
-        backend.acceptSharedResponse("audio-set-profile", {
-            protocol: "bt-api",
-            version: 1,
-            ok: true,
-            data: {
-                audio_devices: [
-                    {
-                        device_key: "buds",
-                        active_profile_key: "aac"
-                    }
-                ]
-            }
-        }, "");
-        backend.acceptSharedResponse("audio-profile-policy", {
-            protocol: "bt-api",
-            version: 1,
-            ok: false,
-            error: {
-                message: "Permission denied"
-            }
-        }, "");
-        compare(profile.value, "aac");
-        verify(profile.interactive);
         compare(panel.controller.status, "Audio profile applied, but could not remember it: Permission denied");
     }
     function findToggle(item, title) {

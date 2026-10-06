@@ -18,8 +18,6 @@ function equal(actual, expected, label) {
 equal(context.groupRecords([{ app_name: "__proto__" }, { app_name: "constructor" }]).length,
     2, "app-controlled group keys cannot collide with object prototypes");
 
-// The Qt notification suite exercises identity through real drafts and replies.
-const actions = {actions: [{key: "reply"}, {key: "mail-reply-sender"}, {key: "inline-reply"}, {key: "default"}]};
-equal(context.standardActions(actions).map(action => action.key).join(","), "reply,mail-reply-sender", "ordinary reply actions remain callable");
-equal(context.replyAction(actions).key, "inline-reply", "inline reply is an exact extension key");
-console.log("notification presentation: adversarial identity and action classification passed");
+// Qt's Repeater-payload and selected-command workflows cover ordinary versus
+// inline reply classification through actual consumers.
+console.log("notification presentation: adversarial group identity passed");

@@ -195,58 +195,6 @@ DaemonTestCase {
         wait(0);
     }
 
-    function test_applicationResourcesWithoutExternalHeadings() {
-        const content = createTemporaryObject(applicationsComponent, testCase);
-        const controller = content.controller;
-        wait(0);
-        controller.uiActive = true;
-        controller.replaceProviderResults([controller.provider.resultFor({
-            id: "example.desktop", name: "Example", kind: "desktop-application",
-            running: true, instances: [], desktop_actions: []
-        })], true);
-        tryVerify(() => controller.hasSelection);
-        enterDetails(content);
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(controller.detailsTab, "resources");
-        tryVerify(() => findChild(content, "applicationHistoryRange") !== null);
-        const range = findChild(content, "applicationHistoryRange");
-        tryVerify(() => content.detailsNavigation.currentTarget === range);
-        compare(content.detailsNavigation.availableFields().length, 1, "only the range selector joins field traversal");
-        compare(range.value, "30m");
-        calls = [];
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        compare(controller.historyRange, "30m", "arrows only edit the field-local draft");
-        compare(calls.length, 0);
-        keyClick(Qt.Key_Escape);
-        compare(range.value, "30m");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        keyClick(Qt.Key_Tab);
-        compare(controller.historyRange, "2h");
-        compare(content.detailsNavigation.currentTarget, range, "Tab wraps to the only editor");
-        verify(content.detailsNavigation.editing);
-        keyClick(Qt.Key_Escape);
-        verify(content.detailsNavigation.browsing);
-        verify(calls.every(call => call.method === "applications.history"), "range selection only requests measurements");
-
-        const status = findChild(content, "applicationHistoryStatus");
-        controller.activeHistoryRequestId = "review-loading";
-        tryCompare(status, "visible", true);
-        compare(status.text, "Loading measurements…");
-        controller.activeHistoryRequestId = "";
-        tryCompare(status, "visible", false);
-        // Exercise the same production page's stopped-application status without
-        // changing selection or relying on asynchronous daemon replies.
-        const page = findChild(content, "applicationResourcesPage");
-        page.application = {running: false};
-        controller.resourceHistory = [{timestamp_ms: Date.now()}];
-        tryCompare(status, "visible", true);
-        compare(status.text, "Application is not running · showing retained measurements");
-        controller.activeHistoryRequestId = "review-retained-loading";
-        compare(status.text, "Application is not running · loading retained measurements…");
-    }
-
     Component {
         id: readOnlyPageComponent
         Ui.DetailsNavigation {
@@ -315,31 +263,6 @@ DaemonTestCase {
         verify(surface.detailsNavigation.browsing);
     }
 
-    function test_expandedSecondaryButtonsKeepPointerAndAltCommands() {
-        const surface = makeSurface();
-        enterDetails(surface); // Right expands without moving focus; Tab enters fields.
-        const header = findChild(surface, "testDetailsHeader");
-        const primary = findChild(header, "detailAction:first");
-        const secondary = findChild(header, "detailAction:second");
-        compare(primary.width, 56);
-        compare(secondary.width, 32);
-        compare(secondary.height, 32);
-        compare(secondary.iconSize, 16);
-        const field = surface.detailsNavigation.currentTarget;
-        keyClick(Qt.Key_O, Qt.AltModifier);
-        compare(surface.actionCalls, 1);
-        compare(surface.detailsNavigation.currentTarget, field);
-        mouseClick(secondary, secondary.width / 2, secondary.height / 2);
-        compare(surface.actionCalls, 2);
-        surface.detailsNavigation.focusContent(true);
-        keyClick(Qt.Key_Tab);
-        compare(surface.detailsNavigation.currentTarget.objectName, "editor", "Tab skips header buttons");
-        secondary.enabled = false;
-        keyClick(Qt.Key_O, Qt.AltModifier);
-        mouseClick(secondary, secondary.width / 2, secondary.height / 2);
-        compare(surface.actionCalls, 2, "disabled commands stay guarded");
-    }
-
     function test_searchOwnsPrintableKeysAndSavedCursor() {
         const surface = makeSurface();
         const input = findChild(surface.listItem, "fieldInput");
@@ -368,36 +291,6 @@ DaemonTestCase {
         compare(surface.primaryActions, 1);
     }
 
-    Component {
-        id: tallModalFactory
-        Ui.ModalFrame {
-            anchors.fill: null
-            width: 400
-            height: 240
-            title: "Confirm service action"
-            detail: "Required instructions. ".repeat(60)
-            Ui.TextField { objectName: "modalFirst"; width: parent.width; text: "draft"; sensitive: true }
-            Item { width: parent.width; height: 450 }
-            Ui.ActionButton { objectName: "modalLast"; width: parent.width; label: "Cancel" }
-        }
-    }
-    function test_longModalScrollsFocusedInputsAndActionsIntoView() {
-        const modal = createTemporaryObject(tallModalFactory, testCase);
-        compare(modal.Accessible.role, Accessible.Dialog);
-        compare(modal.Accessible.name, "Confirm service action");
-        const first = findChild(modal, "modalFirst");
-        const last = findChild(modal, "modalLast");
-        const viewport = findChild(modal, "modalViewport");
-        first.focusInput(false);
-        tryVerify(() => viewport.contentHeight > viewport.height);
-        keyClick(Qt.Key_Tab);
-        tryVerify(() => last.activeFocus);
-        tryVerify(() => last.mapToItem(viewport, 0, 0).y >= 0 && last.mapToItem(viewport, 0, last.height).y <= viewport.height + 1);
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        tryVerify(() => first.inputActiveFocus);
-        tryVerify(() => first.mapToItem(viewport, 0, 0).y >= 0 && first.mapToItem(viewport, 0, first.height).y <= viewport.height + 1);
-        compare(first.text, "draft");
-    }
     function test_modalUsesConventionalTabAndOwnEscape() {
         const surface = makeSurface();
         enterDetails(surface);

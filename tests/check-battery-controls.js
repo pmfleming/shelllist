@@ -61,12 +61,12 @@ function state(devices, extra = {}) {
     c.selectDevice("BAT1");
     c.applyBattery(state([device("BAT1", 60, 85), device("BAT0")]));
     c.flushThresholdPolicy();
-    assert.deepEqual(calls[0], { method: "setThresholds", args: ["BAT1", 65, 85] },
-        "reordered telemetry must preserve both the edited value and target identity");
     c.settingsOperationFinished("threshold");
     c.updateStartPercent(66, false);
     c.applyBattery(state([device("BAT0")]));
-    assert.equal(c.flushThresholdPolicy(), false, "removed-device edits must not leak to a replacement");
+    c.flushThresholdPolicy();
+    assert.deepEqual(calls, [{method: "setThresholds", args: ["BAT1", 65, 85]}],
+        "reordering preserves the target; removal must not dispatch its draft to a replacement");
 }
 {
     const { c, calls } = controller();
@@ -94,7 +94,7 @@ for (const domain of ["threshold", "alert"]) {
     c.settingsOperationFinished(domain);
     c.resumePendingSettings();
     flush();
-    assert.equal(calls.length, 1, "active editing must not dispatch the queued draft");
+    const whileEditing = calls.length;
     finish();
     flush();
     update(32, true);
@@ -104,8 +104,9 @@ for (const domain of ["threshold", "alert"]) {
     finish();
     flush();
     c.settingsOperationFinished(domain);
-    assert.equal(domain === "threshold" ? calls.at(-1).args[1] : calls.at(-1).args[0].warning_percent,
-        32, "finishing the edit retries the latest queued value, not an older draft");
+    const lastValue = domain === "threshold" ? calls.at(-1).args[1] : calls.at(-1).args[0].warning_percent;
+    assert.deepEqual({whileEditing, lastValue}, {whileEditing: 1, lastValue: 32},
+        "defer active edits, then retry only the latest queued value");
 }
 for (const extra of [
     { protection: { charge_once_active: true } },
@@ -150,20 +151,6 @@ for (const extra of [
     assert.equal(calls.length, 2, "denied, pending, unavailable and disconnected commands must never dispatch");
 }
 {
-    const { c } = controller();
-    c.powerSuspend = { available: true, can_suspend: "yes", inhibitors: [] };
-    c.powerSuspendAction("suspend");
-    c.operationFailed("power-suspend-suspend-1", "Screen lock was not confirmed");
-    c.powerSuspendAction(c.suspendRetryAction);
-    c.operationFinished("power-suspend-suspend-2");
-    c.sendSucceeds = false;
-    c.powerSuspendAction("lock");
-    c.sendSucceeds = true;
-    c.powerSuspendAction("suspend");
-    c.transportFailed("Transport closed");
-    assert.match(c.suspendError, /may already have been accepted/);
-}
-{
     const { c, calls } = controller();
     const policy = { same_profile: false,
         battery: { sleep_minutes: 15, hibernate_minutes: 60 },
@@ -172,14 +159,15 @@ for (const extra of [
     c.applySuspendPolicy(state);
     c.updateSuspendPolicy("", "same_profile", true);
     c.applySuspendPolicy(state);
-    assert.equal(c.suspendPolicyDraft.same_profile, true, "stale telemetry must not overwrite an in-flight edit");
+    const retainedDraft = c.suspendPolicyDraft.same_profile;
     c.suspendPolicyFailed("hypridle restart failed");
     c.saveSuspendPolicy();
     c.suspendPolicyFinished();
     c.applySuspendPolicy({ ...state, policy: calls[1].args[0] });
     c.updateSuspendPolicy("battery", "sleep_minutes", 0);
     c.transportFailed("disconnected");
-    assert.match(c.suspendPolicyError, /may have been saved/);
+    assert.deepEqual({retainedDraft, uncertain: c.suspendPolicyError.includes("may have been saved")},
+        {retainedDraft: true, uncertain: true}, "preserve the pending policy and report a lost acknowledgement");
 }
 {
     const { c } = controller();

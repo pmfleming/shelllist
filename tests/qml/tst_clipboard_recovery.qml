@@ -37,10 +37,7 @@ DaemonTestCase {
             }
         }
     }
-    function test_keyboardEditLeaseSavesOnlyOnExplicitCommit_data() {
-        return [{tag: "save", save: true}, {tag: "discard", save: false}];
-    }
-    function test_keyboardEditLeaseSavesOnlyOnExplicitCommit(data) {
+    function test_keyboardEditLeaseSavesOnlyOnExplicitCommit() {
         const controller = makeController();
         const panel = createTemporaryObject(editorPanelFactory, testCase, {controller: controller});
         views = views.concat([panel]);
@@ -57,16 +54,10 @@ DaemonTestCase {
         wait(900); // Longer than the domain's former per-keystroke debounce.
         verify(!calls.some(call => call.id === "edit-commit"));
         compare(controller.detailState.editDraft, "Original");
-        keyClick(data.save ? Qt.Key_Return : Qt.Key_Escape);
+        keyClick(Qt.Key_Return);
         verify(panel.detailsNavigation.browsing);
-        if (data.save) {
-            verify(controller.detailState.saveInFlight);
-            compare(controller.detailState.committedDraft, "Originalx");
-        } else {
-            verify(!controller.detailState.editing);
-            compare(editor.text, "Original");
-            verify(!calls.some(call => call.id === "edit-commit"));
-        }
+        verify(controller.detailState.saveInFlight);
+        compare(controller.detailState.committedDraft, "Originalx");
     }
     function test_escapePreservesPreviouslySubmittedFailedClipboardDraft() {
         const controller = makeController();

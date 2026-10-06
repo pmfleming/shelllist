@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Ui as Ui
-import "../../qml/Shelllist/Io/HyprlandSettings.js" as CompositorSettings
 
 DaemonTestCase {
     id: testCase
@@ -36,15 +35,6 @@ DaemonTestCase {
     Component {
         id: iconActionFactory
         Ui.ActionButton { label: "Settings"; icon: "󰒓"; width: 42; height: 42 }
-    }
-    function test_scopedBlurCommand() {
-        const command = CompositorSettings.layerStyle("shelllist.test", true, true);
-        compare(command[0], "hyprctl");
-        compare(command[1], "eval");
-        verify(command[2].includes("blur = true"));
-        verify(command[2].includes("no_anim = true"));
-        verify(command[2].includes("ignore_alpha = 0.01"));
-        verify(command[2].includes("^shelllist\\\\.test$"), "scope is a literal namespace, not an arbitrary regex");
     }
     function test_revealedSensitiveFieldsNeverHaveRestorableLocations() {
         const panel = createTemporaryObject(panelFactory, testCase);

@@ -111,41 +111,6 @@ DaemonTestCase {
         } };
         return state;
     }
-    function test_expandedMapShowsAllDisplaysAndHighlightsOnlySelection() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.uiActive = true;
-        const state = displayState();
-        // Disabled screens commonly report the same origin as the active one.
-        state.outputs[1].x = 0;
-        c.applyDisplayPolicy(state);
-        c.selectOutput("DP-1");
-        c.openDetails();
-        waitForDetails(panel);
-        const map = findChild(panel.detailsItem, "displayArrangementSummary");
-        compare(map.values.length, 2);
-        const laptop = findChild(map, "displayMapScreen-eDP-1");
-        const external = findChild(map, "displayMapScreen-DP-1");
-        verify(laptop.visible && external.visible);
-        verify(external.selected && !laptop.selected);
-        verify(laptop.x >= external.x + external.width, "off screen is not hidden under the selected screen");
-        verify(laptop.x + laptop.width <= map.width);
-        const pointer = findChild(map, "displayMapPointer-eDP-1");
-        mousePress(pointer, pointer.width / 2, pointer.height / 2);
-        verify(!c.layoutDragging, "parked screens are selectable but not draggable");
-        mouseRelease(pointer, pointer.width / 2, pointer.height / 2);
-        compare(c.selectedName, "eDP-1");
-        verify(laptop.selected && !external.selected);
-        compare(c.selectedDraft.x, 0, "presentation placement never changes the draft");
-        verify(!c.dirty);
-        c.edit("eDP-1", "enabled", true);
-        c.setDisplayContent("eDP-1", "DP-1");
-        compare(map.values.length, 2);
-        verify(laptop.selected && !external.selected, "selecting a mirror highlights that physical display only");
-        verify(laptop.x >= external.x + external.width);
-        verify(!laptop.movable);
-        compare(calls.length, 0);
-    }
     function arrangementPanel(withThird) {
         const panel = makePanel();
         const state = displayState();
@@ -162,9 +127,7 @@ DaemonTestCase {
     function placementCases() {
         return [
             {tag: "left", side: "left", key: Qt.Key_L, x: -2560, y: 0},
-            {tag: "above", side: "above", key: Qt.Key_U, x: 0, y: -1440},
-            {tag: "below", side: "below", key: Qt.Key_D, x: 0, y: 960},
-            {tag: "right", side: "right", key: Qt.Key_R, x: 1536, y: 0}
+            {tag: "above", side: "above", key: Qt.Key_U, x: 0, y: -1440}
         ];
     }
     function test_directionButtonsAndKeyboard_data() { return [placementCases()[0]]; }
@@ -216,7 +179,7 @@ DaemonTestCase {
         compare(map.targetEdge.side, side);
         return { x: x, y: y };
     }
-    function test_dragAndButtonsUseIdenticalPlacement_data() { return [placementCases()[1], placementCases()[3]]; }
+    function test_dragAndButtonsUseIdenticalPlacement_data() { return [placementCases()[1]]; }
     function test_dragAndButtonsUseIdenticalPlacement(data) {
         const panel = arrangementPanel(false);
         const c = panel.controller;
@@ -237,7 +200,7 @@ DaemonTestCase {
         compare(calls.length, 0, "Alt cannot bypass relative placement or submit the draft");
     }
     function test_cancelledDragDoesNotCommit_data() {
-        return ["escape", "outside", "unplug"].map(value => ({tag: value, route: value}));
+        return ["escape", "unplug"].map(value => ({tag: value, route: value}));
     }
     function test_cancelledDragDoesNotCommit(data) {
         const panel = arrangementPanel(false);
@@ -248,15 +211,13 @@ DaemonTestCase {
         const map = beginMapDrag(panel);
         const drop = dragToEdge(map, "above");
         if (data.route === "escape") keyClick(Qt.Key_Escape);
-        else if (data.route === "outside") mouseMove(map, -10, -10);
         else {
             const state = displayState();
             state.outputs[0].disabled = false;
             state.outputs.pop();
             c.applyDisplayPolicy(state);
         }
-        if (data.route === "outside") mouseRelease(map, -10, -10);
-        else mouseRelease(map, drop.x, drop.y);
+        mouseRelease(map, drop.x, drop.y);
         verify(!map.dragging && !c.layoutDragging);
         compare(JSON.stringify(c.draft), original);
         verify(!findChild(map, "displayDropGhost").visible);
@@ -344,31 +305,6 @@ DaemonTestCase {
         verify(c.canPreview);
         c.dismissNavigation();
         verify(c.discardPrompt, "leaving a dirty layout still requires explicit discard");
-        compare(calls.length, 0);
-    }
-    function test_focusTelemetryDoesNotInvalidateLayoutDrafts() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.applyDisplayPolicy(focusState());
-        c.openGlobalSettings();
-        waitForDetails(panel);
-        c.selectFocusPage("focus-diagnostics");
-        const label = findChild(panel, "displayFocusedMonitor");
-        verify(label.text.indexOf("DP-1") >= 0);
-        c.edit("DP-1", "scale", 2);
-        const switched = focusState();
-        switched.outputs[0].focused = true;
-        switched.outputs[1].focused = false;
-        c.applyDisplayPolicy(switched);
-        verify(label.text.indexOf("eDP-1") >= 0);
-        verify(c.dirty && !c.stale);
-        verify(c.canPreview);
-        c.backend.applyData({workspaces: {available: true, focused_monitor: "DP-1",
-            active_window: {title: "Editor", workspace_id: 1}, workspaces: [{id: 1, monitor: "eDP-1"}]}});
-        verify(label.text.indexOf("DP-1") >= 0);
-        verify(findChild(panel, "displayFocusedWindow").text.indexOf("Editor · Monitor: eDP-1") >= 0,
-            "active monitor and focused-window monitor may differ");
-        verify(c.dirty && !c.stale);
         compare(calls.length, 0);
     }
     function test_focusSettingsAreGlobalAcknowledgedAndRetryable() {
@@ -538,43 +474,6 @@ DaemonTestCase {
         verify(c.stale, "external changes to mirroring invalidate the draft");
         compare(calls.length, 0);
     }
-    function test_providerResultsAndLiveActions() {
-        const c = makePanel().controller;
-        const provider = c.displayProvider;
-        const results = provider.resultsFor(c.outputs);
-        compare(results.length, 2);
-        compare(results[0].key, "displays::eDP-1");
-        verify(results[0].subtitle.indexOf("Off · External display preferred") >= 0);
-        verify(results[1].keywords.indexOf("DP-1") >= 0);
-        const internalActions = provider.actionsFor(results[0]);
-        verify(internalActions.find(a => a.id === "toggle-enabled").visible);
-        verify(internalActions.find(a => a.id === "toggle-enabled").enabled);
-        verify(!internalActions.find(a => a.id === "identify").enabled);
-        verify(!provider.actionsFor(results[1]).find(a => a.id === "preview").enabled);
-        verify(!provider.execute({ result: results[1], actionId: "toggle-enabled" }), "cannot disable the last enabled output");
-        c.edit("DP-1", "enabled", false);
-        verify(c.draft[1].enabled, "direct edits also protect the last enabled output");
-        verify(provider.execute({ result: results[0], actionId: "toggle-enabled" }));
-        verify(c.draft[0].enabled, "laptop can be enabled manually");
-        verify(provider.execute({ result: results[0], actionId: "toggle-enabled" }));
-        verify(!c.draft[0].enabled, "laptop can be disabled while external remains enabled");
-        verify(!c.dirty);
-        verify(provider.execute({ result: results[0], actionId: "toggle-enabled" }));
-        verify(provider.execute({ result: results[1], actionId: "toggle-enabled" }));
-        verify(!c.draft[1].enabled, "external can be disabled with laptop enabled");
-        verify(!provider.actionsFor(results[0]).find(a => a.id === "toggle-enabled").enabled);
-        verify(c.dirty);
-        compare(calls.length, 0, "enablement is draft-only");
-        verify(provider.actionsFor(results[1]).find(a => a.id === "preview").enabled);
-        verify(provider.execute({ result: results[1], actionId: "identify" }));
-        compare(c.identifyName, "DP-1");
-        verify(c.identifyActive);
-        const changed = displayState();
-        changed.outputs[1].id = 99;
-        c.applyDisplayPolicy(changed);
-        compare(provider.actionsFor(results[1]).length, 0, "stale output identity is rejected");
-        verify(!provider.execute({ result: results[1], actionId: "toggle-enabled" }));
-    }
     function test_dockingChoiceWaitsForAcknowledgementAndCanRetry() {
         const panel = makePanel();
         const c = panel.controller;
@@ -708,9 +607,13 @@ DaemonTestCase {
         const value = displayState();
         value.layout.trial = { id: "token", expires_at: Date.now() / 1000 + 20 };
         c.applyDisplayPolicy(value);
-        value.outputs[1].id = 99;
-        c.applyDisplayPolicy(value);
+        const oldResult = c.displayProvider.resultsFor(c.outputs).find(result => result.id === "DP-1");
+        const replacement = JSON.parse(JSON.stringify(value));
+        replacement.outputs[1].id = 99;
+        c.applyDisplayPolicy(replacement);
         verify(c.stale);
+        compare(c.displayProvider.actionsFor(oldResult).length, 0, "stale physical identity exposes no actions");
+        verify(!c.displayProvider.execute({result: oldResult, actionId: "toggle-enabled"}));
         verify(!c.displayLayoutAction("confirm", { id: "token" }));
         c.stale = false;
         c.clock = Date.now() + 30000;

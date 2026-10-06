@@ -78,8 +78,6 @@ DaemonTestCase {
     function test_pasteValidationSavesOnlyTheDomainDraft_data() {
         return [
             {tag: "ipv4-cidr", family: "ipv4", value: "192.168.100.100/24", state: IpValidation.Invalid, message: "Prefix length"},
-            {tag: "ipv4-intermediate", family: "ipv4", value: "192.168.1.", state: IpValidation.Intermediate, message: "complete IPv4"},
-            {tag: "ipv4-octet", family: "ipv4", value: "192.168.300.20", state: IpValidation.Invalid, message: "Octet 3"},
             {tag: "ipv6-zone", family: "ipv6", value: "fe80::1%wlan0", state: IpValidation.Invalid, message: "Scoped IPv6"}
         ];
     }
@@ -152,18 +150,5 @@ DaemonTestCase {
         compare(updates().length, 1);
         compare(updates()[0].params.settings.ipv4.dns, ["1.1.1.1", "8.8.8.8"]);
         verify(panel.controller.advanced.saving, "submitting is not acknowledgement");
-    }
-    function test_readonlyNamesAndNarrowLayout() {
-        const panel = make();
-        panel.width = 380;
-        panel.page.currentIp.method = "auto";
-        const field = findChild(panel, "wifiIpAddress");
-        tryVerify(() => field.width > 200 && field.width < 380);
-        compare(field.height, Ui.Theme.formHeight);
-        compare(field.opacity, 1);
-        verify(field.readOnly);
-        compare(findChild(field, "fieldInput").Accessible.name, "IPv4 address");
-        verify(!panel.availableFields().includes(field));
-        compare(updates().length, 0);
     }
 }

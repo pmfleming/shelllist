@@ -343,18 +343,6 @@ DaemonTestCase {
         verify(!surface.detailsNavigation.editing);
         compare(field.text, "");
     }
-    function test_invocationMissingResultFallsBack() {
-        const surface = makeSurface();
-        open(surface);
-        keyClick(Qt.Key_Return);
-        closeInvocation(surface);
-        catalog(surface, []);
-        surface.chooserController.viewMemory.synchronize();
-        reopenInvocation(surface);
-        tryVerify(() => surface.listItem.searchFocused);
-        verify(!surface.chooserController.detailsOpen);
-        compare(surface.edits, 0);
-    }
     function recreatedView() {
         const owner = createTemporaryObject(retainedControllerFactory, testCase);
         const first = createTemporaryObject(delayedViewFactory, testCase, {owner: owner});
@@ -374,22 +362,6 @@ DaemonTestCase {
         reopenInvocation(second);
         tryVerify(() => second.detailsNavigation.sessionLocation !== null);
         return second;
-    }
-    function test_recreatedViewRestoresAnAsynchronousEditor() {
-        const surface = recreatedView();
-        surface.ready = true;
-        tryVerify(() => surface.detailsNavigation.editing);
-        compare(surface.detailsNavigation.currentTarget.objectName, "delayedNote");
-        const input = findChild(surface.detailsNavigation.currentTarget, "fieldInput");
-        compare(input.cursorPosition, 2);
-        compare(input.selectionEnd, 8);
-        compare(surface.edits, 0);
-        testCase.forceActiveFocus(); // The compositor may blur before hide.
-        closeInvocation(surface);
-        compare(surface.chooserController.focusMemory.region, "details");
-        verify(surface.chooserController.focusMemory.location.editing);
-        reopenInvocation(surface);
-        tryVerify(() => surface.detailsNavigation.editing);
     }
     function test_newNavigationCancelsDeferredEditorRestoration() {
         const surface = recreatedView();
@@ -413,6 +385,9 @@ DaemonTestCase {
         reopenInvocation(surface);
         tryVerify(() => surface.detailsNavigation.editing);
         compare(surface.detailsNavigation.currentTarget.objectName, "delayedNote");
+        const input = findChild(surface.detailsNavigation.currentTarget, "fieldInput");
+        compare(input.cursorPosition, 2);
+        compare(input.selectionEnd, 8);
         compare(surface.edits, 0);
     }
     function test_itemsRememberTabScrollAndEditorWithoutStealingFocus() {

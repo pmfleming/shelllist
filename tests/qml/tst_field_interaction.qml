@@ -149,41 +149,6 @@ TestCase {
             keyClick(Qt.Key_Tab);
         compare(surface.detailsNavigation.currentTarget, field(surface, name));
     }
-    function test_formCompositionPreservesNativeIdentityAndSearch() {
-        const surface = make();
-        const text = field(surface, "text");
-        compare(text.height, Ui.Theme.formHeight);
-        compare(text.radius, Ui.Theme.formRadius);
-        compare(text.color, Ui.Theme.input);
-        compare(text.fontPixelSize, 16);
-        compare(text.border.width, 0);
-        compare(surface.detailsNavigation.currentTarget, text);
-        const input = findChild(text, "fieldInput");
-        compare(input.Accessible.name, "Device name");
-        compare(input.Accessible.description, "Visible to nearby devices");
-        const composition = field(surface, "textComposition");
-        verify(findChild(composition, "formFieldLabel").y < text.mapToItem(composition, 0, 0).y);
-        compare(field(surface, "readOnly").opacity, 1);
-        const search = findChild(surface, "chooserSearchField");
-        verify(!search.formStyle);
-        verify(!findChild(search, "fieldBaseline").visible);
-        compare(search.height, 48);
-    }
-    function test_multilineViewportRetainsNativeScrollAndSelection() {
-        const surface = make();
-        surface.savedMultiline = Array(40).fill("A line of ordinary text").join("\n");
-        browse(surface, "multiline");
-        const editor = field(surface, "multiline");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_End, Qt.ControlModifier);
-        tryVerify(() => editor.contentY > 0);
-        verify(editor.contentHeight > editor.height);
-        editor.selectAll();
-        keyClick(Qt.Key_X);
-        compare(surface.writes, 0);
-        keyClick(Qt.Key_Escape);
-        compare(editor.text, surface.savedMultiline);
-    }
     function test_textDiscardSaveAndTabTransaction() {
         const surface = make();
         const text = field(surface, "text");
@@ -221,55 +186,27 @@ TestCase {
         surface.savedText = "backend after save";
         compare(text.text, surface.savedText, "save also restores the source binding");
     }
-    function test_transactionsPreserveModelBindings_data() {
-        // String and live-preview binding survival is checked in their complete
-        // transaction workflows below. Keep the native numeric boundary keys.
-        return [
-            {tag: "slider-home-discard", save: false, key: Qt.Key_Home},
-            {tag: "slider-end-save", save: true, key: Qt.Key_End}
-        ];
-    }
-    function test_transactionsPreserveModelBindings(data) {
+    function test_nativeSliderHomeDiscardPreservesBinding() {
         const surface = make();
         browse(surface, "level");
         const control = field(surface, "level");
         const original = control.value;
         keyClick(Qt.Key_Return);
-        keyClick(data.key);
-        const draft = control.value;
-        verify(draft !== original);
+        keyClick(Qt.Key_Home);
+        verify(control.value !== original);
         compare(surface.writes, 0);
-        keyClick(data.save ? Qt.Key_Return : Qt.Key_Escape);
+        keyClick(Qt.Key_Escape);
         verify(surface.detailsNavigation.browsing);
-        compare(control.value, data.save ? draft : original);
-        verify(!control.editSession.active, "save/discard must end the transaction");
-        compare(surface.writes, data.save ? 1 : 0);
-        // Acknowledgement, refresh or selecting another entity must still flow
-        // through the original binding after both cancellation and save.
+        compare(control.value, original);
+        verify(!control.editSession.active);
+        // A backend update must still flow through the restored binding.
         for (let round = 0; round < 2; round++) {
             surface.savedLevel = 70 + round * 10;
             compare(control.value, surface.savedLevel, "the model binding survives a transaction");
             keyClick(Qt.Key_Return);
             keyClick(Qt.Key_Escape); // Even a no-op discard must retain the binding.
         }
-        compare(surface.writes, data.save ? 1 : 0);
-    }
-    function test_unboundFieldsKeepSavedDraftAndDiscardLocally() {
-        const surface = make();
-        const control = field(surface, "text");
-        // One representative source-less control exercises local rollback.
-        control.text = "unbound original";
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_X);
-        const draft = control.text;
-        keyClick(Qt.Key_Return);
-        compare(control.text, draft, "unbound inputs keep the committed draft");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Y);
-        verify(control.text !== draft);
-        keyClick(Qt.Key_Escape);
-        compare(control.text, draft, "unbound inputs roll back to their edit-entry value");
-        compare(surface.writes, 1);
+        compare(surface.writes, 0);
     }
     function test_externalUpdateDoesNotOverwriteDraftAndBlurRestoresBinding() {
         const surface = make();

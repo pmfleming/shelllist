@@ -244,7 +244,7 @@ merge revisions or resurrect deleted rows. A superseded read's success or error
 must not retire a newer read or clear a reply draft. Incomplete refresh pages stay
 unpublished on read failure, epoch/revision changes, or loss of permission to
 continue history loading. Queued revision events are applied before accepting a
-page. `tst_notifications.qml` covers these ordering/validation cases, actual
+page. `tst_notifications.qml` covers representative ordering/validation cases, actual
 search key delivery, cursor recovery and reply/viewport retention.
 
 Wi-Fi Sign in remains **Alt+I**, never a field Tab stop. It requests and claims a
@@ -265,6 +265,9 @@ valid drop; Escape cancels the gesture without also closing details. Preview sta
 the explicit backend boundary. Native tests retain representative command/drop
 routes, reference save/discard, guards and cancellation; JavaScript checks cover
 all four directional calculations and fractional/rotated placement. Shared
-geometry tests cover overflow revelation rather than repeating a per-panel size
-matrix. The [2026-10-05 test review](reviews/test-pruning-2026-10-05.md) records
-reduced coverage; the interaction contract itself is unchanged.
+header/bar tests cover overflow revelation rather than repeating a per-panel size
+matrix. The [2026-10-06 test review](reviews/test-pruning-2026-10-06.md) records
+reduced coverage, including native End/RTL/vertical matrices, outside-drop and
+some restoration/consumer paths. Shared transactions, actual command keys and
+domain safety guards remain tested; these reductions do not change or relax the
+interaction contract.

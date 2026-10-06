@@ -19,28 +19,32 @@ const outputs = [
       modes: [{ id: "desk-mode", width: 3840, height: 2160, rate: 59.94, size: "3840x2160" }] }
 ];
 const draft = model.draft(outputs);
+const rejected = [
+    {label: "empty layout", layout: [], outputs: []},
+    {label: "duplicate identities", layout: [draft[1], draft[1]], outputs},
+    {label: "all-off layout", layout: draft.map(d => ({...d, enabled: false})), outputs}
+];
 for (const [key, value] of [["x", NaN], ["y", Infinity], ["x", ""], ["x", 32769], ["x", 1.5], ["scale", 0], ["scale", 4.1], ["scale", "bad"], ["transform", 8], ["mode", "unknown;exec"]]) {
     const changed = plain(draft); changed[1][key] = value;
-    assert.notEqual(model.validate(changed, outputs), "", `${key}=${value} must be rejected`);
+    rejected.push({label: `${key}=${value}`, layout: changed, outputs});
 }
 for (const [key, values] of Object.entries({ x: [-32768, 32768, "0"], y: [-32768, 32768], scale: [0.5, 4], transform: [0, 7] })) {
     for (const value of values)
         assert.equal(model.validate(draft.map(d => ({ ...d, [key]: value })), outputs), "", `${key}=${value} is valid`);
 }
-assert.notEqual(model.validate([], []), "", "an empty layout is unsafe");
-assert.notEqual(model.validate([draft[1], draft[1]], outputs), "", "duplicate identities are rejected");
-assert.notEqual(model.validate(draft.map(d => ({ ...d, enabled: false })), outputs), "", "all-off layout rejected");
 const mirroredOutputs = outputs.map(o => ({ ...o, disabled: false }));
 mirroredOutputs[1].mirror_of = "eDP-1";
 const mirrored = model.draft(mirroredOutputs);
 for (const source of ["DP-1", "DP-99", "eDP-1\";evil", false, 0, null]) {
     const invalid = plain(mirrored); invalid[1].mirror_of = source;
-    assert.notEqual(model.validate(invalid, mirroredOutputs), "");
+    rejected.push({label: `invalid mirror source ${source}`, layout: invalid, outputs: mirroredOutputs});
 }
 const cycle = plain(mirrored); cycle[0].mirror_of = "DP-1";
-assert.notEqual(model.validate(cycle, mirroredOutputs), "", "mirror cycles are rejected");
+rejected.push({label: "mirror cycle", layout: cycle, outputs: mirroredOutputs});
 const disabledSource = plain(mirrored); disabledSource[0].enabled = false;
-assert.notEqual(model.validate(disabledSource, mirroredOutputs), "", "mirrors require an enabled source");
+rejected.push({label: "disabled mirror source", layout: disabledSource, outputs: mirroredOutputs});
+for (const candidate of rejected)
+    assert.notEqual(model.validate(candidate.layout, candidate.outputs), "", candidate.label);
 
 // Direction arithmetic belongs here; Qt needs representative button/drag routes,
 // not another complete matrix of these same coordinates.

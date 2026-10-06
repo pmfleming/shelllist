@@ -359,22 +359,6 @@ DaemonTestCase {
         state.backend.finish(request, {notification_page: page([], null, "3")}, "", "");
         compare(state.recentNotifications.length, 0, "coalescing cannot retain deleted persisted content");
     }
-    function test_transientReplacementAndStaleHistoryCannotResurrectClosedRows() {
-        const state = makeState();
-        state.applySummary({available: true, history_revision: 1});
-        state.reloadHistory();
-        const pendingHistory = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        const transient = Object.assign({}, notification(1), {hints: {transient: true}});
-        state.applySnapshot({notifications: {available: true, history_revision: 2}, notification_active: {available: true, revision: 2, notifications: [transient]}});
-        compare(state.history.length, 4, "only authoritative query pages replace the window");
-        state.applySnapshot({notifications: {available: true, history_revision: 3}, notification_active: {available: true, revision: 3, notifications: []}});
-        state.backend.finish(pendingHistory, {notification_page: page([record(1)])}, "", "");
-        verify(state.historyDirty, "changed revisions trigger a fresh read instead of merging stale content");
-        state.reloadHistory();
-        const current = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        state.backend.finish(current, {notification_page: page([record(3), record(2)], null, "3")}, "", "");
-        verify(!state.history.some(record => record.history_id === 1), "refresh removes deleted content");
-    }
     function test_prependAndHistoryAppendPreserveViewportAnchor() {
         const state = makeState();
         const records = Array.from({length: 45}, (_, index) => notification(1000 - index));
@@ -444,11 +428,10 @@ DaemonTestCase {
         wait(0);
     }
     function test_oldQueryCompletionCannotRetireReplacement_data() {
-        const rows = [];
-        for (const committed of [false, true])
-            for (const outcome of ["success", "failure", "stale"])
-                rows.push({tag: outcome + "-committed-" + committed, committed: committed, outcome: outcome});
-        return rows;
+        // Successful old-query replies are covered by keyboard search. Keep
+        // errors on either side of replacement publication, not the full product.
+        return [{tag: "failure-pending", committed: false, outcome: "failure"},
+                {tag: "stale-after-commit", committed: true, outcome: "stale"}];
     }
     function test_oldQueryCompletionCannotRetireReplacement(data) {
         const state = makeState();
@@ -462,7 +445,7 @@ DaemonTestCase {
         const response = {notification_page: page([record(900)], null, "2", "needle")};
         if (data.committed) state.backend.finish(current, response, "", "");
         const visible = JSON.stringify(state.history);
-        state.backend.finish(old, {notification_page: page([record(888)])}, data.outcome === "success" ? "" : "Old read failed", data.outcome === "stale" ? "history-cursor-stale" : "");
+        state.backend.finish(old, {notification_page: page([record(888)])}, "Old read failed", data.outcome === "stale" ? "history-cursor-stale" : "");
         compare(state.historyGeneration, generation);
         compare(state.historyLoading, !data.committed, "an old error cannot retire the current read");
         compare(JSON.stringify(state.history), visible);
@@ -501,7 +484,7 @@ DaemonTestCase {
         compare(state.historyRevision, "2");
     }
     function test_abandonedRefreshNeverPublishesPartialPages_data() {
-        return [{tag: "read-error"}, {tag: "hidden"}, {tag: "epoch-change"}];
+        return [{tag: "read-error"}, {tag: "epoch"}];
     }
     function test_abandonedRefreshNeverPublishesPartialPages(data) {
         const state = makeState();
@@ -513,8 +496,7 @@ DaemonTestCase {
         state.backend.finish(first, {notification_page: page([record(200)], "tail", "2", "", false)}, "", "");
         const tail = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
         const continuation = page([record(199)], "older", "2", "", false);
-        if (data.tag === "hidden") state.historyEnabled = false;
-        if (data.tag === "epoch-change") continuation.epoch = "new-daemon";
+        if (data.tag === "epoch") continuation.epoch = "after-restart";
         state.backend.finish(tail, {notification_page: continuation}, data.tag === "read-error" ? "Read failed" : "", "");
         compare(JSON.stringify(state.history), visible);
         compare(state.historyStaging.length, 0);
@@ -525,18 +507,10 @@ DaemonTestCase {
     function test_rejectInvalidHistoryPages_data() {
         return [
             {tag: "missing-page", patch: null},
-            {tag: "missing-records", patch: {records: null}},
-            {tag: "oversized-page", patch: {records: Array.from({length: 101}, (_, index) => record(index + 200))}},
-            {tag: "empty-epoch", patch: {epoch: ""}},
-            {tag: "numeric-revision", patch: {revision: 1}},
             {tag: "wrong-query", patch: {query: "other"}},
-            {tag: "missing-anchor-status", patch: {anchor_reached: null}},
             {tag: "invalid-cursor", patch: {next_cursor: 42}},
-            {tag: "empty-cursor", patch: {next_cursor: ""}},
             {tag: "duplicate-records", patch: {records: [record(99), record(99)]}},
-            {tag: "invalid-id", patch: {records: [record(4294967296)]}},
-            {tag: "invalid-created", patch: {records: [{notification: {id: 99, created_unix_ms: 0}}]}},
-            {tag: "null-record", patch: {records: [null]}}
+            {tag: "invalid-id", patch: {records: [record(4294967296)]}}
         ];
     }
     function test_rejectInvalidHistoryPages(data) {

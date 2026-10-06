@@ -15,7 +15,6 @@ function load(path) {
 
 const clipboard = load(process.argv[2]);
 const first = clipboard.rememberTerminal({ id: "op-1", status: "completed" }, {}, 64);
-assert.ok(!first.duplicate, "first terminal event is handled");
-assert.ok(clipboard.rememberTerminal({ id: "op-1", status: "completed" }, first.handled, 64).duplicate,
-    "a repeated completion must not repeat its effects");
+const repeated = clipboard.rememberTerminal({ id: "op-1", status: "completed" }, first.handled, 64);
+assert.deepEqual([first.duplicate, repeated.duplicate], [false, true], "handle once, then suppress repeated effects");
 console.log("flow policies: duplicate completion suppression passed");

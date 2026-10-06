@@ -20,7 +20,7 @@ The repository README is the user-facing overview and installation guide. These 
 | [`reviews/lens-session-maintenance-2026-09-27.md`](reviews/lens-session-maintenance-2026-09-27.md) | Latest measured descriptor/routing/host refactor against the saved focus-restoration worktree |
 | [`reviews/lens-keyboard-maintenance-2026-09-27.md`](reviews/lens-keyboard-maintenance-2026-09-27.md) | Earlier shared-UI/search refactor, complete clone comparisons and validation limits |
 | [`reviews/commonality-2026-09-20.md`](reviews/commonality-2026-09-20.md) | Measured shared frontend refactor, validation, and remaining debt |
-| [`reviews/test-pruning-2026-09-27.md`](reviews/test-pruning-2026-09-27.md) | Latest test inventory reduction, retained boundaries and coverage tradeoffs |
+| [`reviews/test-pruning-2026-10-06.md`](reviews/test-pruning-2026-10-06.md) | Latest test inventory reduction, retained boundaries and coverage tradeoffs |
 
 ## Visual decision checklists
 

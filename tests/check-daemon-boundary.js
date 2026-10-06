@@ -58,8 +58,8 @@ for (const failure of ["start", "exit", "recovered-exit"]) {
     backend.acceptSharedEvent({ ...event, stream: "" });
     backend.acceptSharedEvent({ ...event, event: "lagged" });
     backend.acceptSharedEvent(event);
-    assert.deepEqual(received, [event], "only compatible ordinary events reach consumers");
-    assert.deepEqual(gaps, ["updates"], "gaps trigger resynchronization, not normal updates");
+    assert.deepEqual({received, gaps}, {received: [event], gaps: ["updates"]},
+        "compatible updates are delivered; gaps request resynchronization instead");
 }
 
 // Extra subscriptions must be cancelled by daemon ID, even if the view closes
@@ -136,13 +136,13 @@ for (const [kind, localId, ok] of [
         response: { data: { subscription: { id: "subscription-1" } } }
     }, "test-daemon");
     registry.routeResponse("test-daemon", outcome.id, outcome.envelope, outcome.error, outcome.route);
-    assert.deepEqual(responses, [[localId, outcome.envelope, outcome.error]]);
     const shouldRecover = kind === "base-subscription" && !ok;
-    assert.deepEqual(recoveries, shouldRecover ? ["subscription refused"] : [], `${kind}: ${localId}`);
-    if (shouldRecover) {
-        registry.restoreSubscriptions("test-daemon");
-        assert.equal(subscriptions.length, 1);
-    }
+    if (shouldRecover) registry.restoreSubscriptions("test-daemon");
+    assert.deepEqual({responses, recoveries, subscriptions: subscriptions.length}, {
+        responses: [[localId, outcome.envelope, outcome.error]],
+        recoveries: shouldRecover ? ["subscription refused"] : [],
+        subscriptions: shouldRecover ? 1 : 0
+    }, `${kind}: ${localId}`);
 }
 
 function subscriptionLifecycle() {
@@ -210,11 +210,12 @@ function subscriptionLifecycle() {
     fixture.open();
     registry.subscribe("test-daemon", "view", "subscribe-extra", ["updates"], false);
     registry.detach("test-daemon", "view");
-    assert.equal(fixture.session.client.active, true, "the resident bar keeps the bridge alive");
+    const activeAfterDetach = fixture.session.client.active;
     fixture.reply(0, "detached-base");
     fixture.reply(1, "detached-extra");
-    assert.deepEqual(fixture.cancellations.map(([, id]) => id), ["detached-base", "detached-extra"]);
-    assert.equal(fixture.responses.length, 0);
+    assert.deepEqual({activeAfterDetach, cancelled: fixture.cancellations.map(([, id]) => id), responses: fixture.responses},
+        {activeAfterDetach: true, cancelled: ["detached-base", "detached-extra"], responses: []},
+        "a resident keeps the bridge alive, but detached replies are cancelled and never delivered");
 }
 
 // A delayed response from a retired transport must not claim a new request.

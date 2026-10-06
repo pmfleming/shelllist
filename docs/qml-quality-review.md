@@ -4,6 +4,12 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
+The subsequent [test pruning](reviews/test-pruning-2026-10-06.md) reduces the
+corrected mixed inventory from 314 to 210 without changing production code.
+Current Qt results are 148 behavioral cases / 212 passes including hooks. Counts
+and Lens metrics below remain historical results for their captured source trees;
+pruning does not resolve the full-gate or Lens limitations.
+
 The [latest notification-history review](reviews/lens-notification-history-2026-10-06.md)
 uses the pending maintenance tree as its baseline. It separates history response
 completion, validation and publication, retaining generation/revision fences and

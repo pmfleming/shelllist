@@ -2,7 +2,6 @@ import QtQuick
 import QtTest
 import Quickshell
 import Shelllist.Ui as Ui
-import "../../wifi" as Wifi
 
 TestCase {
     name: "MaterialFields"
@@ -33,29 +32,6 @@ TestCase {
                 { value: "third", label: "Third" }
             ]
         }
-    }
-    Component {
-        id: credentialFactory
-        Wifi.WifiCredentialDialog {
-            prompt: Wifi.WifiPromptController {
-                credentialFields: [{key: "password", label: "Network password", required: true, password: true}]
-            }
-        }
-    }
-    function test_credentialCompositionNamesTheNativeSecretEditor() {
-        const dialog = createTemporaryObject(credentialFactory, this);
-        const input = findChild(dialog, "fieldInput");
-        verify(input !== null);
-        compare(input.Accessible.name, "Network password");
-        verify(input.Accessible.description.includes("Required"));
-        compare(input.height, Ui.Theme.formHeight);
-        compare(input.font.pixelSize, Ui.Theme.formValueSize);
-        compare(input.echoMode, TextInput.Password);
-        input.forceActiveFocus();
-        keyClick(Qt.Key_X);
-        compare(dialog.prompt.credentialValues.password, "x", "modal editors retain native immediate draft entry, not a detail transaction");
-        dialog.prompt.cancel();
-        compare(Object.keys(dialog.prompt.credentialValues).length, 0);
     }
     SignalSpy {
         id: edits
@@ -133,22 +109,6 @@ TestCase {
         trailing.Accessible.pressAction();
         compare(intent.count, 1);
         compare(edits.count, 1, "embedded actions do not rewrite the editor");
-    }
-
-    function test_unitsCompactAndReadonlyKeepValueAndHitGeometry() {
-        const field = createTemporaryObject(fieldFactory, this, {password: false, text: "60", trailingActionIcon: "", suffix: "min", compact: true});
-        const input = findChild(field, "fieldInput");
-        compare(field.height, 48);
-        compare(input.text, "60", "units never enter the native editable value");
-        verify(input.Accessible.description.includes("min"));
-        verify(input.rightPadding > field.rightPadding);
-        field.showPasswordButton = true;
-        const action = findChild(field, "passwordVisibilityAction");
-        compare(action.width, 48);
-        compare(action.height, 48);
-        field.readOnly = true;
-        compare(field.opacity, 1);
-        verify(input.Accessible.description.includes("Read-only"));
     }
 
     function test_dropdownHoverFocusAndAcknowledgedSelection() {

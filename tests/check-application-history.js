@@ -59,9 +59,10 @@ function respond(c, points, cursor, hasMore = false) {
     }
     c.now += 15000;
     c.requestResourceHistory(true);
-    assert.equal(c.calls.at(-1)[3], "cursor-5760", "poll from the committed cursor, not the range start");
+    const cursor = c.calls.at(-1)[3];
     respond(c, [{ timestamp_ms: c.now - 15000 }], "cursor-5761");
-    assert.equal(c.resourceHistory.length, 5760, "append new buckets and prune the sliding range");
+    assert.deepEqual({cursor, points: c.resourceHistory.length}, {cursor: "cursor-5760", points: 5760},
+        "poll from the committed cursor and prune the sliding window");
 }
 
 {
@@ -72,12 +73,12 @@ function respond(c, points, cursor, hasMore = false) {
     respond(c, [{ timestamp_ms: c.now - 15000 }], "two", true);
     c.handleFailure(c.activeHistoryRequestId, "timeout");
     c.requestResourceHistory(true);
-    assert.equal(c.calls.at(-1)[3], "one");
+    const cursor = c.calls.at(-1)[3];
     respond(c, [{ timestamp_ms: c.now - 30000 }, { timestamp_ms: c.now - 15000 }], "two");
-    assert.equal(c.resourceHistory.length, 2, "overlapping pages are deduplicated");
     c.requestResourceHistory(true);
     respond(c, [], "two", true);
-    assert.equal(c.historyInFlight, false, "nonadvancing cursors cannot loop forever");
+    assert.deepEqual({cursor, points: c.resourceHistory.length, pending: c.historyInFlight},
+        {cursor: "one", points: 2, pending: false}, "retry uses the committed cursor, deduplicates overlaps and stops nonadvancing pages");
 }
 
 console.log("application history: pagination and recovery passed");
