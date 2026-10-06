@@ -51,3 +51,24 @@ Strict QML lint and daemon-boundary checks pass. Logs:
 Incremental production delta: source lines **+1**, cyclomatic **−5**, cognitive
 **−8**, function effort **−21**, component effort **−14**. Safety checks were
 strengthened, not removed to lower the branch count.
+
+## 3. Chooser restoration uses one invocation lifecycle guard
+
+`ChooserSession.invocationActive` centralizes enabled/active/not-suspending checks
+used by admission, remembered region, queued application and modal fallback.
+Disabling session memory now cancels outstanding work immediately; re-enabling
+it is not a new invocation. Previously queued `apply` could dereference a removed
+memory owner, or deferred readiness could resurrect a cancelled editor. Capture
+intentionally keeps its separate pre-hide semantics so suspension still saves
+ordinary focus before cancellation. No key model or domain writes changed.
+
+Validation: **13 chooser-memory Qt passes** and **17 field-interaction passes**,
+plus strict lint. New native tests disable memory both before queued application
+and while waiting for capabilities, remove/reinstall its owner and verify that
+result focus remains without edits. Existing close/reopen, modal, source-binding,
+loader readiness, viewport and new-input cancellation tests remain green.
+Logs: `/tmp/quality-step3-{qt,fields,lint}.txt`.
+
+Incremental production delta: source lines **+2**, cyclomatic **−5**, cognitive
+**−6**, function effort **−18**, component effort **−9**. The shared predicate
+adds one binding in place of duplicated lifecycle expressions.

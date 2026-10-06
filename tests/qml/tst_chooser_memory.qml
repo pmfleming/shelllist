@@ -324,6 +324,31 @@ DaemonTestCase {
         tryVerify(() => surface.detailsNavigation.editing);
         compare(surface.detailsNavigation.currentTarget.objectName, "ordinaryNote");
     }
+    function test_disablingMemoryCancelsInvocationRestore_data() {
+        return [{tag: "queued", waiting: false}, {tag: "waiting-for-capabilities", waiting: true}];
+    }
+    function test_disablingMemoryCancelsInvocationRestore(data) {
+        const surface = makeSurface();
+        open(surface);
+        keyClick(Qt.Key_Return);
+        closeInvocation(surface);
+        const controller = surface.chooserController;
+        const memory = controller.viewMemory;
+        surface.sessionReady = false;
+        reopenInvocation(surface);
+        if (data.waiting)
+            tryVerify(() => surface.detailsNavigation.browsing);
+        controller.viewMemory = null;
+        surface.listItem.focusList();
+        wait(0); // An already queued apply must tolerate the removed owner.
+        controller.viewMemory = memory;
+        surface.sessionReady = true;
+        controller.restoreUiFocus();
+        wait(0);
+        verify(surface.listItem.listFocused, "Re-enabling memory must not revive an old restore");
+        verify(!surface.detailsNavigation.editing);
+        compare(surface.edits, 0);
+    }
     function test_invocationDoesNotRememberPasswords() {
         const surface = makeSurface();
         surface.privateNote = true;

@@ -283,6 +283,8 @@ contract and Qt interaction coverage.
 See [session memory](chooser-session-memory.md) for focus/caret restoration and
 [geometry](chooser-geometry.md) for revealing controls without moving the list.
 Neither restoration nor a browse highlight may activate a setting or command.
+Disabling session memory cancels queued/editor restoration; re-enabling it within
+the same invocation must not steal focus or resume the cancelled transaction.
 Media result Enter invokes the selected player's capability-guarded Play/Pause
 primary action, retaining list focus and expanded/collapsed state. It never routes
 to a different active player or falls back to inspection when playback is disabled

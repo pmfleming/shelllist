@@ -15,6 +15,7 @@ Item {
     property bool restoring: false
     property string lastRegion: "search"
     property string lastContext: ""
+    readonly property bool invocationActive: enabled && controller.uiActive && !controller.uiSuspending
     readonly property string region: listItem && listItem.searchFocused ? "search" : listItem && listItem.listFocused ? "results" : listItem && listItem.controlLocation ? "list-control" : navigation.activeFocus || navigation.popupOpen ? "details" : insideList(Window.window ? Window.window.activeFocusItem : null) ? "search" : ""
     readonly property string selectedKey: controller.resultKeyAt(controller.selectionModel ? controller.selectionModel.selectedIndex : 0)
 
@@ -24,7 +25,7 @@ Item {
         return listItem !== null && item === listItem;
     }
     function rememberRegion(): bool {
-        if (!enabled || !controller.uiActive || controller.uiSuspending || !navigationAllowed || !region)
+        if (!invocationActive || !navigationAllowed || !region)
             return false;
         lastRegion = region;
         lastContext = context;
@@ -47,7 +48,7 @@ Item {
         navigation.cancelSessionRestore();
     }
     function request(): void {
-        if (!enabled || consumed || !controller.uiActive || controller.uiSuspending)
+        if (consumed || !invocationActive)
             return;
         consumed = true;
         pending = navigationAllowed;
@@ -57,7 +58,7 @@ Item {
     function apply(): void {
         if (!pending || !listItem)
             return;
-        if (!controller.uiActive || controller.uiSuspending || !navigationAllowed) {
+        if (!invocationActive || !navigationAllowed) {
             pending = false;
             return;
         }
@@ -81,9 +82,12 @@ Item {
         restoring = false;
     }
     function modalFallback(generation: int): void {
-        if (generation === controller.uiGeneration && enabled && controller.uiActive && !controller.uiSuspending && navigationAllowed && !region && listItem)
+        if (generation === controller.uiGeneration && invocationActive && navigationAllowed && !region && listItem)
             listItem.focusSearch();
     }
+    // Disabling memory also retires queued work; re-enabling is not a new
+    // invocation and must not resume a previously cancelled editor request.
+    onEnabledChanged: if (!enabled) cancel()
     // Track restored focus too, so subsequent native focus loss retains it.
     onRegionChanged: if (rememberRegion() && !restoring && (pending || (region !== "details" && navigation.sessionLocation)))
         cancel()

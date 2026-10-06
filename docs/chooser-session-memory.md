@@ -85,8 +85,11 @@ before its loader is destroyed; this also makes rapid reply close/reopen safe.
 
 Host visibility, controller-ready and content-ready paths call `restoreUiFocus()`
 instead of issuing competing search-focus requests. Restoration is consumed once
-per activation. New navigation, native focus/input, modal prompts and closure
-cancel deferred restoration. Queued explicit-search and modal-fallback callbacks
+per activation. New navigation, native focus/input, modal prompts, disabled
+session memory and closure cancel deferred restoration. A single invocation-active
+guard covers admission, application and modal fallback; suspension still captures
+ordinary focus before cancellation. Re-enabling memory does not revive an older
+queued editor request. Queued explicit-search and modal-fallback callbacks
 are fenced by the UI generation, including rapid close/reopen cycles.
 
 Bluetooth refreshes on activation. During that read, a remembered detail location
