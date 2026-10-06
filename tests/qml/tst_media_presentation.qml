@@ -15,7 +15,14 @@ TestCase {
             {tag: "no-title-inference", player: {identity: "Chrome", title: "The Anfield Wrap", album: "Pocket Casts", art_url: "https://audible.com/icon.png"}, service: "", kind: "unknown", heading: "The Anfield Wrap"},
             {tag: "no-substring-inference", player: {desktop_entry: "not-spotify", identity: "Spotify impostor", title: "Title"}, service: "", kind: "unknown", heading: "Title"},
             {tag: "music", player: {identity: "Spotify", content_type: "music", title: "Karma Police", artist: "Pierce The Veil"}, service: "spotify", kind: "music", heading: "Pierce The Veil"},
-            {tag: "fallback", player: {identity: "Player"}, service: "", kind: "unknown", heading: "Player"}
+            {tag: "fallback", player: {identity: "Player"}, service: "", kind: "unknown", heading: "Player"},
+            {tag: "youtube-source", player: {identity: "Mozilla zen", source: {service: "youtube"}, content_type: "video", title: "Video"}, service: "youtube", kind: "video", heading: "Video"},
+            {tag: "vimeo-source", player: {identity: "Firefox", source: {service: "vimeo"}, content_type: "video", title: "Film"}, service: "vimeo", kind: "video", heading: "Film"},
+            {tag: "soundcloud-not-necessarily-music", player: {identity: "Mozilla zen", source: {service: "soundcloud"}, title: "Recording"}, service: "soundcloud", kind: "unknown", heading: "Recording"},
+            {tag: "audible-url-not-a-book", player: {identity: "Mozilla zen", source: {service: "audible"}, title: "Preview"}, service: "audible", kind: "unknown", heading: "Preview"},
+            {tag: "pocketcasts-url-not-an-episode", player: {identity: "Mozilla zen", source: {service: "pocketcasts"}, title: "Page"}, service: "pocketcasts", kind: "unknown", heading: "Page"},
+            {tag: "source-precedes-isolated-label", player: {identity: "Audible", source: {service: "vimeo"}, content_type: "video", title: "Film"}, service: "vimeo", kind: "video", heading: "Film"},
+            {tag: "unknown-source", player: {identity: "Mozilla zen", source: {service: "future-service", url: "https://youtube.com/watch?v=example"}, title: "Video"}, service: "", kind: "unknown", heading: "Video"}
         ];
     }
     function test_identity(data) {
@@ -36,6 +43,21 @@ TestCase {
         compare(Media.actionGroup({content_type: "unknown", control_mode: "tracks"}, "next"), "toolbar");
         compare(Media.actionGroup({content_type: "podcast"}, "rewind"), "toolbar");
         compare(Media.identityLabel({id: "org.mpris.MediaPlayer2.chromium.instance42", identity: "Audible"}), "Audible · via Chrome");
+    }
+    function test_sourceLabels_data() {
+        return [
+            {tag: "zen-desktop", identity: "Mozilla zen", desktop: "zen", expected: "SoundCloud · via Zen"},
+            {tag: "zen-identity", identity: "Mozilla zen", desktop: "", expected: "SoundCloud · via Zen"},
+            {tag: "firefox", identity: "Mozilla Firefox", desktop: "firefox", expected: "SoundCloud · via Firefox"},
+            {tag: "chromium", identity: "Chromium", desktop: "chromium", expected: "SoundCloud · via Chromium"},
+            {tag: "chrome", identity: "Google Chrome", desktop: "google-chrome", expected: "SoundCloud · via Chrome"},
+            {tag: "other-player", identity: "VLC", desktop: "vlc", expected: "SoundCloud · via VLC"},
+            {tag: "no-duplicate", identity: "SoundCloud", desktop: "", expected: "SoundCloud"},
+            {tag: "no-origin", identity: "", desktop: "", expected: "SoundCloud"}
+        ];
+    }
+    function test_sourceLabels(data) {
+        compare(Media.identityLabel({identity: data.identity, desktop_entry: data.desktop, source: {service: "soundcloud"}}), data.expected);
     }
     function test_timelineBoundariesAndStaleData() {
         const base = {length_us: 240000000, position_us: 60000000, position_observed_at_unix_ms: 10000, playback_rate: 2, playback_status: "playing"};

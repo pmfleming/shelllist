@@ -19,8 +19,11 @@ Ui.ProviderChooserSurface {
         const names = metadata.serviceIcon ? metadata.iconNames || [] : [name];
         const installed = names.find(candidate => candidate && Quickshell.hasThemeIcon(candidate));
         if (installed) return Quickshell.iconPath(installed);
-        return ["spotify", "pocketcasts", "audible"].includes(metadata.serviceIcon)
-            ? Qt.resolvedUrl("assets/media/" + metadata.serviceIcon + ".png").toString() : "";
+        if (["spotify", "pocketcasts", "audible"].includes(metadata.serviceIcon))
+            return Qt.resolvedUrl("assets/media/" + metadata.serviceIcon + ".png").toString();
+        // A recognized web service need not have an installed icon. Keep the
+        // player identity as fallback; never substitute a logo for cover art.
+        return name && Quickshell.hasThemeIcon(name) ? Quickshell.iconPath(name) : "";
     }
     function finishMenu(): void {
         menuDeadline.stop();

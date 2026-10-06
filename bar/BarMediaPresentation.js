@@ -25,22 +25,31 @@ function playPauseActionIcon(player) {
     return String(player?.playback_status || "").toLowerCase() === "playing" ? "" : "";
 }
 // Presentation only. Never infer a service from a title, artwork/CDN URL or a
-// substring match; the daemon's explicit isolated-browser labels count as identity.
+// substring match. The daemon owns source URL recognition; older snapshots still
+// use exact application identities and explicit isolated-browser labels.
 function serviceFor(player) {
     const desktop = String(player?.desktop_entry || "").trim().toLowerCase().replace(/\.desktop$/, "");
     const identity = String(player?.identity || "").trim().toLowerCase();
     const services = [
         { key: "spotify", name: "Spotify", desktops: ["spotify", "spotify-client", "com.spotify.client"], identities: ["spotify"], icons: ["spotify-client", "spotify", "com.spotify.Client"] },
         { key: "pocketcasts", name: "Pocket Casts", desktops: ["com.laufan.pocketcasts", "pocketcasts", "pocket-casts", "com.pocketcasts.pocketcasts"], identities: ["pocket casts", "pocketcasts"], icons: ["com.laufan.pocketcasts", "pocketcasts", "pocket-casts"] },
-        { key: "audible", name: "Audible", desktops: ["com.laufan.audible", "audible"], identities: ["audible"], icons: ["com.laufan.audible", "audible"] }
+        { key: "audible", name: "Audible", desktops: ["com.laufan.audible", "audible"], identities: ["audible"], icons: ["com.laufan.audible", "audible"] },
+        { key: "youtube", name: "YouTube", desktops: [], identities: [], icons: ["youtube"] },
+        { key: "vimeo", name: "Vimeo", desktops: [], identities: [], icons: ["vimeo"] },
+        { key: "soundcloud", name: "SoundCloud", desktops: [], identities: [], icons: ["soundcloud"] }
     ];
-    return services.find(service => service.desktops.includes(desktop))
+    return services.find(service => service.key === player?.source?.service)
+        || services.find(service => service.desktops.includes(desktop))
         || services.find(service => service.identities.includes(identity)) || null;
 }
 function contentKind(player) {
     const kind = String(player?.content_type || "unknown").toLowerCase();
     if (["music", "podcast", "audiobook", "video"].includes(kind))
         return kind;
+    // A recognized web service is not evidence of the current content kind.
+    // Retain the historical isolated-app fallback only for source-less snapshots.
+    if (player?.source)
+        return "unknown";
     const service = serviceFor(player);
     return service?.key === "pocketcasts" ? "podcast" : service?.key === "audible" ? "audiobook" : "unknown";
 }
@@ -60,9 +69,20 @@ function distinctLabels(values) {
 }
 function identityLabel(player) {
     const service = serviceFor(player);
-    const browser = /^org\.mpris\.MediaPlayer2\.chrom(?:e|ium)\.instance\d+$/.test(player?.id || "") ? "Chrome" : "";
-    return service ? distinctLabels([service.name, browser ? "via " + browser : ""])
-        : String(player?.identity || "");
+    const desktop = String(player?.desktop_entry || "").toLowerCase().replace(/\.desktop$/, "");
+    const identity = String(player?.identity || "");
+    const browsers = [
+        { name: "Zen", desktops: ["zen", "zen-browser", "app.zen_browser.zen"], identities: ["zen", "mozilla zen", "zen browser"] },
+        { name: "Firefox", desktops: ["firefox", "org.mozilla.firefox"], identities: ["firefox", "mozilla firefox"] },
+        { name: "Chromium", desktops: ["chromium", "chromium-browser"], identities: ["chromium"] },
+        { name: "Chrome", desktops: ["google-chrome", "google-chrome-stable"], identities: ["chrome", "google chrome"] }
+    ];
+    const browser = browsers.find(browser => browser.desktops.includes(desktop))
+        || browsers.find(browser => browser.identities.includes(identity.toLowerCase()));
+    const origin = browser?.name || (/^org\.mpris\.MediaPlayer2\.chrom(?:e|ium)\.instance\d+$/.test(player?.id || "") ? "Chrome"
+        : player?.source?.service && identity.toLowerCase() !== service?.name.toLowerCase() ? identity : "");
+    return service ? distinctLabels([service.name, origin ? "via " + origin : ""])
+        : identity;
 }
 function heading(player) {
     const kind = contentKind(player);
