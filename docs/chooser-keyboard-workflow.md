@@ -142,7 +142,11 @@ use 32px diameters and 16px icons (two-thirds of 48/24px); primary circles stay
 56/28px. Collapsed headers, modal/toast/contextual buttons and named menu rows
 retain their existing sizes. Modifier hints remain separate overlays.
 
-`SurfaceActionRow` owns both header tiers and overflow commands. A command-only
+`SurfaceActionRow` owns both header tiers and overflow commands. Explicit
+`presentation.group: "overflow"` actions stay in More even when the header has
+room, reserving one secondary-circle slot; width-overflowed toolbar actions join
+that same menu. Hidden menu actions do not register parallel header chords.
+A command-only
 `CommandGroup` can move between a selected-result host and details without
 joining editable traversal or field-page readiness. Shared navigation deduplicates
 those live command objects; it does not create parallel command registrations.
@@ -256,9 +260,16 @@ capability contract and Qt interaction coverage.
 See [session memory](chooser-session-memory.md) for focus/caret restoration and
 [geometry](chooser-geometry.md) for revealing controls without moving the list.
 Neither restoration nor a browse highlight may activate a setting or command.
-The enlarged Media now-playing artwork card is information-only: its image and
-labels follow the inspected player without gaining focus, pinning a player or
-invoking transport. Tab continues directly to editable player preferences.
+The Media playback card is information-only: contained square artwork, content
+labels, read-only progress and numeric elapsed/remaining/rate follow the inspected
+player without gaining focus, pinning a player or invoking transport. Tab continues
+directly to the shared Pin to bar switch and Bar controls dropdown. Only explicit
+Enter/Tab saves the control-mode draft; acknowledged mode and capability guards
+choose track/seek header commands, with the alternative pair in More. Playback
+state uses icons and timing uses numbers, with full accessible descriptions;
+there is no persistent shortcut legend or instructional footer. Errors remain text.
+Recognition changes presentation/search only, never the MPRIS routing or pin ID.
+See [Media presentation and shortcut diagnosis](media.md).
 
 Applications' Resources page keeps its overview, metadata and history
 information-only. Its shared 30m / 2h / 24h segmented field is the sole editable

@@ -7,8 +7,9 @@ QtObject {
     function env(name: string): string {
         return environment[name] || "";
     }
-    function hasThemeIcon(name: string): bool { return false; }
+    property var themeIcons: ({})
+    function hasThemeIcon(name: string): bool { return !!themeIcons[name]; }
     function iconPath(name: string, fallback: string): string {
-        return "";
+        return themeIcons[name] || themeIcons[fallback] || "";
     }
 }

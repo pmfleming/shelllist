@@ -16,6 +16,7 @@ Item {
     property bool tabFocusEnabled: false
     readonly property var primaryActions: Core.Model.visibleActions(actions, "primary")
     readonly property var secondaryActions: secondaryVisible ? Core.Model.visibleActions(actions, "toolbar") : []
+    readonly property var menuActions: secondaryVisible ? Core.Model.visibleActions(actions, "overflow") : []
     readonly property var primaryAction: primaryActions.length ? primaryActions[0] : null
     readonly property int controlHeight: Math.round(Theme.secondaryActionHeight * secondaryUiScale)
     readonly property int gap: Math.round(Theme.spacingSm * uiScale)
@@ -23,14 +24,14 @@ Item {
     readonly property real topHeight: primaryAction || reserveIdentity ? Math.max(identityHeight, primaryWidth) : 0
     readonly property int shownSecondaryCount: fittingSecondaryCount()
     readonly property var shownSecondary: secondaryActions.slice(0, shownSecondaryCount)
-    readonly property var overflowActions: secondaryActions.slice(shownSecondaryCount)
+    readonly property var overflowActions: secondaryActions.slice(shownSecondaryCount).concat(menuActions)
     readonly property bool popupOpen: overflowMenu.visible
     // Repeater.count may change before delegates exist. Track actual lifetime
     // so command discovery never caches missing or destroyed buttons.
     property list<ActionControl> secondaryButtons: []
     readonly property list<ActionControl> buttons: (primaryAction ? [primaryButton] : []).concat(Array.from(secondaryButtons), overflowActions.length ? [moreButton] : [])
     signal triggered(string actionId)
-    implicitHeight: topHeight + (secondaryActions.length ? (topHeight ? gap : 0) + controlHeight : 0)
+    implicitHeight: topHeight + (secondaryActions.length || menuActions.length ? (topHeight ? gap : 0) + controlHeight : 0)
     height: implicitHeight
 
     function actionTone(action, primary): string {
@@ -39,7 +40,8 @@ Item {
     }
     function fittingSecondaryCount(): int {
         const slots = Math.max(1, Math.floor((width + gap) / (controlHeight + gap)));
-        return secondaryActions.length <= slots ? secondaryActions.length : slots - 1;
+        const available = Math.max(0, slots - (menuActions.length ? 1 : 0));
+        return secondaryActions.length <= available ? secondaryActions.length : Math.max(0, slots - 1);
     }
     function keyFor(action): string {
         const key = String(action.accessKey || "").trim().toUpperCase();

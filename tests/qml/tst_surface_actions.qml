@@ -192,6 +192,34 @@ TestCase {
         keyClick(Qt.Key_C, Qt.AltModifier);
         compare(navigation.calls, 1, "duplicate letters fail closed");
     }
+    function test_explicitOverflowReservesMoreAndRetainsGuards() {
+        const navigation = createTemporaryObject(navigationComponent, testCase);
+        navigation.actions = [
+            {id: "play", label: "Play", accessKey: "P", presentation: {group: "primary"}},
+            {id: "back", label: "Back", accessKey: "B", presentation: {group: "toolbar"}},
+            {id: "forward", label: "Forward", accessKey: "F", presentation: {group: "toolbar"}},
+            {id: "disabled", label: "Unavailable", enabled: false, presentation: {group: "overflow"}},
+            {id: "next", label: "Next episode", accessKey: "N", presentation: {group: "overflow"}}
+        ];
+        navigation.focusContent(true);
+        tryCompare(navigation.row, "shownSecondaryCount", 2);
+        compare(navigation.row.overflowActions.length, 2, "explicit extras stay in More even with plenty of room");
+        tryCompare(navigation.headerButtons, "length", 4);
+        keyClick(Qt.Key_N, Qt.AltModifier);
+        compare(navigation.calls, 0, "menu-only commands do not register hidden header chords");
+        keyClick(Qt.Key_M, Qt.AltModifier);
+        tryCompare(navigation, "popupOpen", true);
+        keyClick(Qt.Key_Return);
+        compare(navigation.lastAction, "next", "opening skips disabled overflow action");
+        navigation.width = 72;
+        tryCompare(navigation.row, "shownSecondaryCount", 1, 5000, "reserve a real slot for More");
+        compare(navigation.row.overflowActions.length, 3);
+        navigation.actions = [{id: "only", label: "Only in More", presentation: {group: "overflow"}}];
+        tryCompare(navigation.headerButtons, "length", 1);
+        verify(navigation.row.height > 0, "overflow-only rows still have geometry");
+        navigation.row.secondaryVisible = false;
+        tryCompare(navigation.headerButtons, "length", 0);
+    }
     function test_overflowKeyboardSelectionAndFocusRestoration() {
         const navigation = createTemporaryObject(navigationComponent, testCase, {width: 60});
         navigation.actions = [

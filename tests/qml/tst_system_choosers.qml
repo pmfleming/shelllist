@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 import Shelllist.Bar as Bar
 import Shelllist.Io as Io
 import Shelllist.Ui as Ui
@@ -33,7 +34,7 @@ DaemonTestCase {
     }
     property int previousScheme
     function init(): void { calls = []; failOnWarning(/.*/); previousScheme = Ui.Theme.previewColorScheme; }
-    function cleanup(): void { clientReady = true; TrayFixture.SystemTray.items.values = []; Ui.Theme.previewColorScheme = previousScheme; }
+    function cleanup(): void { clientReady = true; TrayFixture.SystemTray.items.values = []; Quickshell.themeIcons = {}; Ui.Theme.previewColorScheme = previousScheme; }
     function acknowledge(fixture, call, data): void {
         Io.DaemonSessions.sessions[fixture.desktop.backend.daemonName].client.response(call.id, {protocol: BarApi.protocol, version: BarApi.version, ok: true, data: data || {}}, "", call.route);
     }
@@ -49,6 +50,42 @@ DaemonTestCase {
     }
     function player(id, seek) {
         return {id: id, identity: id, title: "Track " + id, playback_status: "Playing", can_control: true, can_pause: true, can_play: true, can_seek: seek};
+    }
+    function test_mediaAppIcons_data() {
+        return [
+            {tag: "audible", desktop: "com.laufan.audible", asset: "clear-day.svg"},
+            {tag: "pocketcasts", desktop: "com.laufan.pocketcasts", asset: "clear-night.svg"},
+            {tag: "spotify-theme-alias", desktop: "spotify", icon: "spotify-client", asset: "clear-day.svg"},
+            {tag: "audible-bundled", desktop: "com.laufan.audible", asset: "", bundled: "audible"},
+            {tag: "pocketcasts-bundled", desktop: "com.laufan.pocketcasts", asset: "", bundled: "pocketcasts"},
+            {tag: "spotify-bundled", desktop: "spotify", asset: "", bundled: "spotify"},
+            {tag: "missing-icon", desktop: "unknown-player", asset: ""},
+            {tag: "missing-desktop-entry", desktop: "", asset: ""}
+        ];
+    }
+    function test_mediaAppIcons(data): void {
+        const source = data.asset ? Qt.resolvedUrl("../../qml/Shelllist/Activity/assets/weather/" + data.asset).toString()
+            : data.bundled ? Qt.resolvedUrl("../../qml/Shelllist/Bar/assets/media/" + data.bundled + ".png").toString() : "";
+        const icons = {};
+        if (data.asset) icons[data.icon || data.desktop] = source;
+        Quickshell.themeIcons = icons;
+        const root = fixture();
+        const p = Object.assign(player("one", true), {desktop_entry: data.desktop, art_url: Qt.resolvedUrl("fixtures/media-cover.svg").toString()});
+        root.desktop.media = {available: true, active_player: "one", players: [p]};
+        root.chooser.activateUi("");
+        tryCompare(root.chooser, "hasSelection", true);
+        compare(root.chooser.selectedResult.metadata.desktopEntry, data.desktop);
+        tryVerify(() => findChild(root, "systemResult:one") !== null);
+        const row = findChild(root, "systemResult:one");
+        compare(row.leadingIconSource.toString(), source);
+        const avatar = findChild(row, "resultAvatar");
+        tryCompare(avatar, "hasImage", !!source);
+        root.chooser.openDetails();
+        tryVerify(() => findChild(root.content.detailsItem, "detailIdentityIcon") !== null);
+        const header = findChild(root.content.detailsItem, "detailIdentityIcon");
+        compare(header.iconSource.toString(), source);
+        tryCompare(header, "hasImage", !!source);
+        compare(calls.length, 0, "rendering app icons never changes playback");
     }
     function test_mediaArtworkFollowsMetadataWithoutChangingPlayback(): void {
         const root = fixture();
@@ -68,7 +105,9 @@ DaemonTestCase {
         const subtitle = findChild(card, "mediaPlaybackSubtitle");
         tryCompare(image, "status", Image.Ready);
         compare(image.source.toString(), cover);
-        verify(card.height >= 250 && card.height <= 300, "roughly 2.5 times the former compact card");
+        compare(image.fillMode, Image.PreserveAspectFit, "covers are contained, never enlarged into a cropped background");
+        compare(image.width, image.height);
+        verify(card.height >= image.height + 32 && card.height < 350, "card fits cover, metadata and numeric timing");
         compare(subtitle.text, "Chapter 5");
         for (const identity of ["Zen", "Chrome", "Audible", "Spotify", "Pocket Casts"]) {
             current = Object.assign({}, current, {identity: identity, title: identity + " current media", art_url: inlineCover});
@@ -96,7 +135,7 @@ DaemonTestCase {
         root.desktop.media = {available: true, active_player: "other", pinned_player: null, players: [current, other]};
         tryCompare(image, "status", Image.Error);
         verify(!card.hasArtwork, "failed covers use the same fallback, not stale imagery");
-        compare(title.color, Ui.Theme.text);
+        compare(title.color, Ui.Theme.selectedText);
         root.chooser.selectedIndex = 1;
         tryCompare(title, "text", "Track other");
         tryCompare(image, "status", Image.Ready);
@@ -111,6 +150,79 @@ DaemonTestCase {
         root.content.visible = false;
         tryCompare(image, "status", Image.Null, 1000);
         compare(calls.length, 0, "artwork updates and field browsing never invoke playback or pinning");
+    }
+    function test_mediaIdentityTimingAndContextualCommands(): void {
+        const root = fixture();
+        const p = Object.assign(player("org.mpris.MediaPlayer2.chrome.instance12", true), {
+            identity: "Chrome", desktop_entry: "com.laufan.pocketcasts", title: "Ask Anything", artist: "The Anfield Wrap", album: "The Anfield Wrap",
+            playback_status: "Paused", control_mode: "automatic", content_type: "unknown",
+            can_next: true, can_previous: true, position_us: 1458000000, length_us: 3920000000, playback_rate: 1
+        });
+        root.desktop.media = {available: true, active_player: "other", pinned_player: null, players: [p, player("other", true)]};
+        root.chooser.activateUi("");
+        root.chooser.openDetails();
+        tryVerify(() => root.content.detailsItem && findChild(root.content.detailsItem, "detailTitle") !== null);
+        const details = root.content.detailsItem;
+        tryCompare(findChild(details, "detailTitle"), "text", "The Anfield Wrap");
+        compare(findChild(details, "detailSubtitle").text, "Pocket Casts · via Chrome");
+        compare(findChild(details, "mediaPlaybackSubtitle").text, "The Anfield Wrap", "duplicate metadata is collapsed");
+        compare(findChild(details, "mediaElapsed").text, "24:18");
+        compare(findChild(details, "mediaRemaining").text, "−41:02");
+        compare(findChild(details, "mediaPlaybackRate").text, "1×");
+        compare(findChild(root, "mediaSessionState").glyph, "pause");
+        verify(!root.chooser.selectedResult.subtitle.toLowerCase().includes("paused"));
+        verify(findChild(details, "detailAction:rewind") !== null);
+        verify(findChild(details, "detailAction:previous") === null, "extra transport lives only in More");
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Tab);
+        compare(root.content.detailsNavigation.currentTarget.objectName, "mediaPlayerPin");
+        keyClick(Qt.Key_M, Qt.AltModifier);
+        tryCompare(root.content.detailsNavigation, "popupOpen", true);
+        keyClick(Qt.Key_P, Qt.AltModifier);
+        compare(calls.length, 0, "More blocks underlying play/pause");
+        keyClick(Qt.Key_Return);
+        tryCompare(root.content.detailsNavigation, "popupOpen", false);
+        compare(calls.length, 1);
+        compare(calls[0].params.player_id, p.id);
+        compare(calls[0].params.operation, "previous");
+        acknowledge(root, calls[0], {});
+        root.chooser.filterText = "pocket casts";
+        tryCompare(root.chooser.filteredResultsModel, "count", 1);
+        compare(root.chooser.selectedResult.id, p.id);
+    }
+    function test_mediaModeKeyboardDraftAndAcknowledgement(): void {
+        const root = fixture();
+        const p = Object.assign(player("one", true), {control_mode: "automatic", content_type: "music", can_next: true, can_previous: true});
+        root.desktop.media = {available: true, active_player: "one", pinned_player: null, players: [p]};
+        root.chooser.activateUi("");
+        root.chooser.openDetails();
+        tryVerify(() => root.content.detailsItem && findChild(root.content.detailsItem, "mediaControlMode") !== null);
+        root.content.listItem.focusList();
+        const nav = root.content.detailsNavigation;
+        keyClick(Qt.Key_Tab);
+        tryVerify(() => nav.currentTarget !== null);
+        compare(nav.currentTarget.objectName, "mediaPlayerPin");
+        keyClick(Qt.Key_Backtab, Qt.ShiftModifier);
+        compare(nav.currentTarget.objectName, "mediaControlMode", "reverse traversal wraps over editable fields only");
+        const mode = nav.currentTarget;
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_End);
+        compare(calls.length, 0);
+        keyClick(Qt.Key_Escape);
+        compare(mode.value, "automatic");
+        compare(calls.length, 0, "discarded mode never writes");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_End);
+        keyClick(Qt.Key_Tab);
+        compare(calls.length, 1);
+        compare(calls[0].params.operation, "set-mode");
+        compare(calls[0].params.mode, "seek");
+        compare(root.chooser.selectedPlayer.control_mode, "automatic");
+        acknowledge(root, calls[0], {media: {available: true, active_player: "one", pinned_player: null, players: [Object.assign({}, p, {control_mode: "seek"})]}});
+        tryCompare(mode, "value", "seek");
+        verify(findChild(root.content.detailsItem, "detailAction:rewind") !== null);
+        verify(findChild(root.content.detailsItem, "detailAction:previous") === null);
+        compare(calls.length, 1);
     }
     function test_selectedPlayerIsExplicitAndCapabilitiesAreRevalidated(): void {
         const root = fixture();

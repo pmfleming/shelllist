@@ -33,13 +33,24 @@ function audio(state, busy) {
 function media(players, busy) {
     return (players || []).map(function (player) {
         const control = !!player.can_control && !busy;
-        return entry(player.id, player.title || player.identity, [player.identity, player.artist, player.playback_status].filter(Boolean).join(" · "), "󰎆", [
+        const service = Media.serviceFor(player);
+        const result = entry(player.id, player.title || player.identity, Media.distinctLabels([service ? service.name : player.identity, player.artist]), Media.contentIcon(player), [
             action("previous", "Previous track", "", control && player.can_previous),
             action("play-pause", String(player.playback_status || "").toLowerCase() === "playing" ? "Pause" : "Play", Media.playPauseActionIcon(player), !busy && Media.canPlayPause(player), "active"),
             action("next", "Next track", "", control && player.can_next),
             action("rewind", "Rewind 30 seconds", "replay_30", control && player.can_seek),
             action("forward", "Fast-forward 30 seconds", "forward_30", control && player.can_seek)
         ]);
+        result.metadata.desktopEntry = player.desktop_entry || "";
+        result.metadata.iconNames = service ? service.icons : [];
+        result.metadata.serviceIcon = service ? service.key : "";
+        result.metadata.stateIcon = Media.stateIcon(player);
+        result.metadata.playbackStatus = player.playback_status || "";
+        result.searchText += " " + Media.identityLabel(player) + " " + (player.album || "");
+        result.actions.forEach(function (item) {
+            if (item.id !== "inspect" && item.id !== "play-pause") item.presentation.group = Media.actionGroup(player, item.id);
+        });
+        return result;
     });
 }
 function tray(items) {
