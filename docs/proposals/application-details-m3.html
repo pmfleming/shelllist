@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Shelllist · Application details / M3 proposal</title>
+<style>
+:root { color-scheme: light; --paper:#f5f5ef; --ink:#242923; --muted:#62685f; --line:#daddd3; --accent:#355f43; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--paper); color:var(--ink); font-family:"Roboto Flex",Roboto,"Segoe UI",Arial,sans-serif; font-size:15px; line-height:1.5; }
+button { font:inherit; cursor:pointer; }
+button:disabled { cursor:wait; opacity:.5; }
+button:focus-visible, a:focus-visible { outline:3px solid #527fbc; outline-offset:4px; }
+a { color:var(--accent); }
+svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+.symbols { position:absolute; width:0; height:0; overflow:hidden; }
+.page { max-width:1440px; margin:auto; padding:36px 48px 48px; }
+.masthead { display:flex; justify-content:space-between; align-items:center; padding-bottom:20px; border-bottom:1px solid var(--line); font-size:12px; letter-spacing:.12em; text-transform:uppercase; }
+.brand { display:flex; gap:10px; align-items:center; font-weight:750; }
+.brand-mark { display:grid; place-items:center; width:27px; height:27px; border-radius:9px; background:var(--ink); color:var(--paper); font-size:17px; }
+.intro { display:grid; grid-template-columns:1.4fr 1fr; gap:64px; align-items:end; margin:48px 0 32px; }
+.eyebrow { font-size:11px; font-weight:750; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 12px; }
+h1 { font-size:clamp(34px,4vw,54px); font-weight:560; line-height:1.08; letter-spacing:-.045em; margin:0; max-width:740px; }
+.intro p { color:var(--muted); margin:0; font-size:16px; max-width:490px; }
+.intro strong { color:var(--ink); font-weight:600; }
+.review { display:grid; grid-template-columns:repeat(3,1fr); border:1px solid var(--line); border-radius:20px; overflow:hidden; margin-bottom:44px; }
+.review article { padding:22px 24px; }
+.review article + article { border-left:1px solid var(--line); }
+.review .number { font-size:11px; color:var(--accent); font-weight:750; letter-spacing:.08em; }
+.review h2 { font-size:16px; font-weight:650; margin:8px 0 6px; }
+.review p { margin:0; color:var(--muted); font-size:13px; }
+.section-title { display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:16px; }
+.section-title h2 { font-size:22px; font-weight:570; letter-spacing:-.025em; margin:0; }
+.section-title p { margin:0; color:var(--muted); font-size:12px; }
+.workbench { border:1px solid var(--line); border-radius:24px; overflow:hidden; background:#e9ece3; }
+.toolbar { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:16px 24px; border-bottom:1px solid #d4d9cd; flex-wrap:wrap; }
+.state-picker { display:flex; flex-wrap:wrap; gap:4px; }
+.state-picker button, .theme-toggle { background:transparent; color:var(--muted); border:0; border-radius:24px; padding:9px 14px; font-size:13px; min-height:40px; }
+.state-picker button[aria-pressed="true"] { background:#354d3c; color:#fff; }
+.theme-toggle { display:flex; align-items:center; gap:8px; border:1px solid #aab3a4; color:var(--ink); }
+.theme-toggle svg { width:18px; height:18px; }
+.app-picker { display:flex; gap:12px; align-items:center; padding:16px 24px 0; font-size:13px; flex-wrap:wrap; }
+.app-picker select { max-width:100%; padding:10px 36px 10px 12px; border:1px solid #aab3a4; border-radius:10px; background:#f5f7f0; color:#242923; font:inherit; }
+.app-picker small { color:#596354; }
+.app-picker select:focus-visible { outline:3px solid #527fbc; outline-offset:3px; }
+.stage { display:grid; grid-template-columns:minmax(0,680px) minmax(230px,1fr); gap:48px; align-items:start; padding:36px; }
+/* Illustrative M3 semantic roles. Production must use Ui.MaterialPalette. */
+.material { color-scheme:dark; --surface:#101510; --container:#1b211b; --high:#252c25; --highest:#303830; --on:#e0e5db; --variant:#bdcaba; --outline:#404c40; --primary:#a4d5a8; --on-primary:#0b3818; --secondary:#354b38; --on-secondary:#d3e8d0; --error:#ffb4ab; --error-container:#552b29; color:var(--on); }
+.light .material { color-scheme:light; --surface:#f6faf0; --container:#ebefe5; --high:#e5e9df; --highest:#dfe4da; --on:#181e17; --variant:#414d40; --outline:#becabb; --primary:#396b42; --on-primary:#fff; --secondary:#d4e8d0; --on-secondary:#102014; --error:#9b302d; --error-container:#ffdad5; }
+.panel { background:var(--surface); border-radius:28px; padding:24px; box-shadow:0 16px 40px #14271518,0 1px 3px #14271518; border:1px solid var(--outline); min-width:0; }
+.identity { display:flex; align-items:center; gap:16px; }
+.app-icon { width:52px; height:52px; border-radius:17px; display:grid; place-items:center; color:var(--primary); background:var(--secondary); flex-shrink:0; }
+.app-icon svg { width:32px; height:32px; }
+.identity-text { flex:1; min-width:0; }
+.identity h3 { font-size:23px; font-weight:550; letter-spacing:-.025em; line-height:1.2; margin:0 0 5px; overflow-wrap:anywhere; }
+.identity p { font-size:13px; color:var(--variant); margin:0; }
+.command { flex-shrink:0; display:grid; place-items:center; border:0; border-radius:50%; width:48px; height:48px; color:var(--variant); background:transparent; padding:0; position:relative; }
+.command:hover { background:var(--highest); }
+.command:active { background:var(--secondary); }
+.command.primary { background:var(--primary); color:var(--on-primary); width:56px; height:56px; }
+.command.primary svg { width:28px; height:28px; }
+.command.primary:hover { filter:brightness(1.08); }
+.command.tonal { background:var(--secondary); color:var(--on-secondary); }
+.command.tonal:hover { background:var(--highest); color:var(--on); }
+.command.small { width:32px; height:32px; }
+.command.small svg { width:16px; height:16px; }
+.header-secondary { display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-top:12px; }
+.header-secondary .hint { color:var(--variant); font-size:11px; }
+kbd { font:inherit; font-size:11px; border:1px solid var(--outline,var(--line)); border-radius:5px; padding:1px 5px; white-space:nowrap; }
+.detail-nav { display:flex; gap:24px; border-bottom:1px solid var(--outline); margin:12px 0 24px; }
+.detail-nav span { position:relative; padding:12px 0; font-size:13px; color:var(--variant); }
+.detail-nav .active { color:var(--primary); font-weight:650; }
+.detail-nav .active:after { content:""; height:3px; width:28px; background:var(--primary); position:absolute; bottom:0; left:calc(50% - 14px); border-radius:4px 4px 0 0; }
+.group-label { display:flex; align-items:center; gap:8px; font-size:14px; margin:0 0 12px; font-weight:600; }
+.count { display:inline-grid; place-items:center; min-width:22px; height:22px; border-radius:8px; color:var(--variant); background:var(--high); font-size:11px; }
+.window-list { background:var(--container); border-radius:16px; overflow:auto; max-height:290px; scrollbar-width:thin; }
+#actions { max-height:310px; overflow:auto; scrollbar-width:thin; }
+.window { display:flex; gap:12px; align-items:center; padding:14px 12px 14px 16px; min-height:84px; }
+.window + .window { border-top:1px solid var(--outline); }
+.window-copy { flex:1; min-width:0; }
+.window-title { font-size:16px; line-height:1.4; font-weight:500; margin:0 0 5px; overflow-wrap:anywhere; }
+.window-meta { color:var(--variant); font-size:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.workspace { display:inline-flex; align-items:center; gap:5px; }
+.workspace svg { width:14px; height:14px; }
+.status { color:var(--on-secondary); background:var(--secondary); border-radius:6px; padding:1px 6px; font-size:10px; font-weight:600; }
+.window-commands { display:flex; gap:4px; }
+.section-gap { margin-top:24px; }
+.action-list { border-radius:16px; background:var(--container); overflow:hidden; }
+.action { display:flex; align-items:center; gap:12px; min-height:72px; padding:10px 12px 10px 16px; }
+.action + .action { border-top:1px solid var(--outline); }
+.action-copy { flex:1; min-width:0; }
+.action-title { font-size:14px; margin:0; font-weight:500; }
+.action-support { font-size:12px; color:var(--variant); margin:2px 0 0; }
+.panel-footer { display:flex; gap:8px; align-items:center; font-size:11px; color:var(--variant); margin-top:20px; }
+.panel-footer svg { width:16px; height:16px; }
+.annotation-list { display:grid; gap:28px; padding-top:12px; }
+.annotation { display:grid; grid-template-columns:26px 1fr; gap:12px; }
+.annotation .tag { width:26px; height:26px; border-radius:50%; background:#d6e4d2; color:#35533c; display:grid; place-items:center; font-size:11px; font-weight:750; }
+.annotation h3 { font-size:15px; margin:1px 0 6px; font-weight:650; }
+.annotation p { font-size:13px; color:#596354; margin:0; }
+.recommendation { border-top:1px solid #cbd3c5; padding-top:20px; font-size:12px; color:#596354; }
+.recommendation strong { color:#304a36; }
+.announcement { margin-top:16px; border-radius:12px; background:var(--high); padding:12px 14px; font-size:12px; color:var(--on); }
+.announcement:empty { display:none; }
+.error-banner { background:var(--error-container); color:var(--error); border-radius:12px; padding:12px; display:flex; gap:10px; align-items:center; margin-bottom:16px; }
+.error-banner .error-copy { flex:1; min-width:0; }
+.error-banner strong { display:block; font-size:13px; }
+.error-banner p { margin:3px 0 0; font-size:12px; }
+.error-banner .command { color:var(--error); }
+.empty { padding:28px 20px; border-radius:16px; background:var(--container); text-align:center; }
+.empty > svg { width:32px; height:32px; color:var(--variant); margin-bottom:8px; }
+.empty h4 { margin:0 0 6px; font-size:16px; font-weight:500; }
+.empty p { margin:0; font-size:13px; color:var(--variant); }
+.prototype-note { padding:0 36px 22px; margin:0; font-size:12px; color:#596354; }
+.other-states { margin-top:44px; }
+.state-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+.state-card { border:1px solid var(--line); border-radius:20px; overflow:hidden; background:#fafbf6; }
+.state-preview { background:var(--surface); padding:20px; min-height:223px; }
+.state-preview .window { padding:12px; min-height:68px; }
+.state-preview .window-title { font-size:13px; }
+.state-preview .window-meta { font-size:11px; }
+.state-preview .empty { padding:18px 10px; }
+.state-preview .error-banner { margin-bottom:12px; }
+.static-icon { width:32px; height:32px; border-radius:50%; display:grid; place-items:center; flex-shrink:0; color:var(--variant); }
+.static-icon svg { width:18px; height:18px; }
+.state-description { padding:20px; }
+.state-description h3 { margin:0 0 6px; font-size:15px; font-weight:650; }
+.state-description p { margin:0; font-size:13px; color:var(--muted); }
+.specs { margin:44px 0 0; display:grid; grid-template-columns:1fr 1fr; gap:40px; }
+.specs h2 { font-size:20px; font-weight:550; margin:0 0 16px; letter-spacing:-.02em; }
+.specs ul { list-style:none; padding:0; margin:0; }
+.specs li { padding:10px 0; border-top:1px solid var(--line); font-size:13px; color:var(--muted); }
+.specs strong { color:var(--ink); font-weight:600; }
+.swatches { display:flex; gap:6px; margin:14px 0; }
+.swatch { height:28px; flex:1; border-radius:7px; }
+.footer { margin-top:40px; padding-top:20px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:24px; color:var(--muted); font-size:11px; }
+code { font-size:12px; overflow-wrap:anywhere; }
+dialog { width:min(420px,calc(100% - 32px)); padding:20px; border:1px solid var(--outline); border-radius:20px; background:var(--high); box-shadow:0 24px 80px #0006; }
+dialog::backdrop { background:#0b130b88; }
+.dialog-heading { display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.dialog-heading h2 { font-size:18px; margin:0; font-weight:550; }
+.menu-list { display:grid; gap:4px; max-height:60vh; overflow:auto; }
+.menu-item { border:0; border-radius:12px; padding:12px; min-height:48px; display:flex; align-items:center; gap:12px; background:transparent; color:var(--on); text-align:left; font-size:14px; }
+.menu-item:hover,.menu-item:focus-visible { background:var(--highest); }
+.menu-item.danger { color:var(--error); }
+.menu-item small { display:block; color:var(--variant); font-size:11px; }
+.dialog-note { color:var(--variant); font-size:11px; margin:14px 0 0; }
+[hidden] { display:none !important; }
+@media (max-width:1100px) { .page { padding:28px; } .stage { gap:28px; padding:28px; grid-template-columns:minmax(0,1.7fr) minmax(210px,1fr); } .annotation-list { gap:22px; } .intro { gap:32px; } .state-grid { gap:12px; } }
+@media (max-width:820px) { .stage { grid-template-columns:1fr; } .annotation-list { grid-template-columns:1fr 1fr; } .recommendation { grid-column:1/-1; } .intro { grid-template-columns:1fr; gap:20px; } .review { grid-template-columns:1fr; } .review article + article { border-left:0; border-top:1px solid var(--line); } .state-grid { grid-template-columns:1fr; } .state-preview { min-height:0; } .specs { grid-template-columns:1fr; gap:28px; } }
+@media (max-width:480px) { .page { padding:20px 12px; } .masthead { font-size:10px; letter-spacing:.07em; } .intro { margin-top:32px; } .stage { padding:16px 10px; } .panel { padding:18px 14px; } .toolbar { padding:12px; } .state-picker button { padding:8px 10px; font-size:12px; } .identity { gap:12px; } .identity h3 { font-size:20px; } .app-icon { width:44px; height:44px; } .window { gap:6px; padding-left:12px; } .window-title { font-size:14px; } .window-commands { gap:0; } .command { width:44px; height:44px; } .annotation-list { grid-template-columns:1fr; padding:12px; } .prototype-note { padding:0 22px 20px; } .section-title { align-items:start; flex-direction:column; gap:5px; } .footer { flex-direction:column; gap:8px; } }
+@media (prefers-reduced-motion:no-preference) { button { transition:background-color 120ms ease; } }
+@media print { .page { padding:0; } .toolbar,.prototype-note { display:none; } .stage { padding:20px; } .panel,.state-card { break-inside:avoid; } body { print-color-adjust:exact; -webkit-print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+<svg class="symbols" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+<symbol id="i-zen" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M5 8h14M4 12h16M5 16h14M12 4c-5 4-5 12 0 16M12 4c5 4 5 12 0 16"/></symbol>
+<symbol id="i-focus" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 8h18M9 14h7m-3-3 3 3-3 3"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+<symbol id="i-add" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 8h18m-9 3v6m-3-3h6"/></symbol>
+<symbol id="i-private" viewBox="0 0 24 24"><path d="M12 3 4 6v5c0 5 8 10 8 10s8-5 8-10V6z"/><rect x="9" y="10" width="6" height="5" rx="1"/><path d="M10 10V8a2 2 0 0 1 4 0v2"/></symbol>
+<symbol id="i-profile" viewBox="0 0 24 24"><circle cx="10" cy="8" r="3"/><path d="M3 20v-2a7 7 0 0 1 10-6m5 2v6m-3-3h6"/></symbol>
+<symbol id="i-workspace" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8m-4-3v3"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 4v16h16M8 15l4-6 4 3 4-7"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 10a8 8 0 1 0-1 7M20 4v6h-6"/></symbol>
+<symbol id="i-warning" viewBox="0 0 24 24"><path d="m12 3 10 18H2zM12 9v5m0 3v.1"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol>
+<symbol id="i-app" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+<symbol id="i-code" viewBox="0 0 24 24"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18"/></symbol>
+<symbol id="i-terminal" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="m6 9 3 3-3 3m6 0h5"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 20V5a2 2 0 0 1 2-2h5l3 4h6a2 2 0 0 1 2 2v11z"/></symbol>
+<symbol id="i-launch" viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></symbol>
+<symbol id="i-command" viewBox="0 0 24 24"><path d="M8 8H5a3 3 0 1 1 3-3v14a3 3 0 1 1-3-3h14a3 3 0 1 1-3 3V5a3 3 0 1 1 3 3H8"/></symbol>
+</defs></svg>
+<div class="page">
+<header class="masthead"><div class="brand"><span class="brand-mark">s</span> Shelllist / design review</div><span>01 · Application details</span></header>
+<section class="intro">
+<div><p class="eyebrow">Material 3 · Desktop adaptation</p><h1>Less chrome.<br>More useful context.</h1></div>
+<p>One template for <strong>every installed application—and whatever comes next.</strong> Render the capabilities the catalog actually reports: return to a window, launch an app, or invoke its own named actions. Never assume every app is a browser.</p>
+</section>
+<section class="review" aria-label="Review of the supplied screenshot">
+<article><span class="number">01 / VISUAL HIERARCHY</span><h2>Everything asks for attention</h2><p>The outlined window, large repeated circles and visible desktop behind the text compete. Use opaque tonal content surfaces, fewer borders and consistent spacing. Rounding alone does not make a screen M3.</p></article>
+<article><span class="number">02 / ACTION CLARITY</span><h2>Three different actions, one play icon</h2><p>Use each desktop action’s icon when available, with a neutral execute fallback when it is not. Keep the app-provided names beside the circles. Separate returning to a window from closing one.</p></article>
+<article><span class="number">03 / USEFUL INFORMATION</span><h2>Location matters more than CPU</h2><p>Lead with the full window title, workspace and explicit current-window status. Put resource telemetry in the existing Resources page, where attribution and history can be explained.</p></article>
+</section>
+<section aria-labelledby="proposal-heading">
+<div class="section-title"><h2 id="proposal-heading">01 / Recommended application view</h2><p>Interactive study · All data and effects are simulated</p></div>
+<div class="workbench" id="workbench">
+<div class="toolbar">
+<div class="state-picker" role="group" aria-label="Mockup scenario">
+<button type="button" data-state="single" aria-pressed="true">One window</button><button type="button" data-state="multiple" aria-pressed="false">Three windows</button><button type="button" data-state="empty" aria-pressed="false">Not running</button><button type="button" data-state="error" aria-pressed="false">Action failed</button>
+</div>
+<button type="button" class="theme-toggle" id="theme" aria-pressed="false"><svg aria-hidden="true"><use href="#i-sun"/></svg>Light surfaces</button>
+</div>
+<div class="app-picker"><label for="app-select">Example application</label><select id="app-select"><option value="browser">Browser · desktop actions</option><option value="editor">Code editor · long titles</option><option value="terminal">Terminal · no desktop actions</option><option value="files">File manager · named action</option><option value="future">Future app · unknown icon / many actions</option><option value="shortcut">Launch-only shortcut · no runtime state</option></select><small>Illustrative fixtures, not an inventory of your laptop.</small></div>
+<div class="stage">
+<div class="panel material" id="demo" role="region" aria-label="Application details mockup">
+<div class="identity"><div class="app-icon" aria-hidden="true"><svg><use id="app-icon" href="#i-zen"/></svg></div><div class="identity-text"><h3 id="app-name">Zen Browser</h3><p id="app-status">Web browser · 1 open window</p></div><button type="button" class="command primary" id="primary" tabindex="-1" aria-label="Return to most recent Zen Browser window"><svg aria-hidden="true"><use id="primary-icon" href="#i-focus"/></svg></button></div>
+<div class="header-secondary"><span class="hint">All commands <kbd>Alt J</kbd></span><button type="button" class="command small" id="commands" tabindex="-1" aria-label="All application and window commands" aria-haspopup="dialog"><svg aria-hidden="true"><use href="#i-command"/></svg></button></div>
+<div class="detail-nav" aria-label="Page positions, shown for context only"><span class="active">Application</span><span>Resources</span><span>Settings</span></div>
+<div id="error" class="error-banner" role="status" hidden><svg aria-hidden="true"><use href="#i-warning"/></svg><div class="error-copy"><strong id="error-title">Action failed</strong><p>Request was rejected. Existing windows are unchanged.</p></div><button type="button" id="retry" class="command" tabindex="-1" aria-label="Retry failed action"><svg aria-hidden="true"><use href="#i-refresh"/></svg></button></div>
+<h4 class="group-label" id="windows-heading">Open windows <span class="count" id="window-count">1</span></h4>
+<div class="window-list" id="windows"></div>
+<div class="empty" id="empty" hidden><svg aria-hidden="true"><use href="#i-workspace"/></svg><h4 id="empty-title">No open windows</h4><p id="empty-copy">Use the launch command beside the application name.</p></div>
+<h4 class="group-label section-gap" id="actions-heading">Application actions <span class="count" id="action-count">3</span></h4>
+<div class="action-list" id="actions"></div>
+<p class="action-support section-gap" id="no-actions" hidden>No additional actions provided by this application.</p>
+<div class="panel-footer" id="resources-note"><svg aria-hidden="true"><use href="#i-chart"/></svg><span>CPU, memory &amp; history live in Resources</span></div>
+<div class="announcement" id="announcement" role="status" aria-live="polite"></div>
+</div>
+<aside class="annotation-list" aria-label="Design rationale">
+<div class="annotation"><span class="tag">A</span><div><h3>One unmistakable primary</h3><p>The existing identity header gets one filled 56px command: return to the most recent window, or launch when not running. No competing filled actions.</p></div></div>
+<div class="annotation"><span class="tag">B</span><div><h3>Windows, not “instances”</h3><p>A grouped list replaces individually outlined pills. Keep the real title—including “(121)”—and label the workspace. “Current window” comes from compositor state, not pointer hover.</p></div></div>
+<div class="annotation"><span class="tag">C</span><div><h3>Make close deliberate</h3><p>Keep a focus-window circle; move Close into a named per-window menu. No ambiguous × beside the everyday action. Do not imply that a closed browser window can be undone.</p></div></div>
+<div class="annotation"><span class="tag">D</span><div><h3>Recognizable, compact commands</h3><p>Render zero, one or many desktop-defined actions, keeping their localized names and IDs. Resolve supplied icons; otherwise use a neutral execute glyph. Never guess behavior from the app name. Labels stay passive.</p></div></div>
+<div class="recommendation"><strong>Recommended scope:</strong> presentation and discoverability only. No new backend capability, keyboard variant, “close all”, forced quit or invented memory-health warning.</div>
+</aside>
+</div>
+<p class="prototype-note">Choose an application and scenario, try the circles, switch light surfaces, or use <strong>Alt+J</strong> for the named command dialog. Window/action lists scroll when needed; all commands also remain available by name. Page tabs are contextual illustrations, not implemented routes. Surrounding review controls use normal browser Tab navigation.</p>
+</div>
+</section>
+<section class="other-states" aria-labelledby="states-heading">
+<div class="section-title"><h2 id="states-heading">02 / Design the less-perfect moments</h2><p>Static companion mockups · Also available in the scenario picker</p></div>
+<div class="state-grid">
+<article class="state-card"><div class="state-preview material"><h4 class="group-label">Open windows <span class="count">3</span></h4><div class="window-list"><div class="window"><div class="window-copy"><p class="window-title">(121) YouTube — Zen Browser</p><div class="window-meta">Workspace 2 <span class="status">Current window</span></div></div><span class="static-icon" aria-hidden="true"><svg><use href="#i-focus"/></svg></span></div><div class="window"><div class="window-copy"><p class="window-title">Material Design — Zen Browser</p><div class="window-meta">Workspace 4</div></div><span class="static-icon" aria-hidden="true"><svg><use href="#i-focus"/></svg></span></div></div><p style="font-size:11px;color:var(--variant);margin:10px 0 0">+ 1 more window shown in the interactive study</p></div><div class="state-description"><h3>Multiple windows</h3><p>Use the daemon’s MRU order. Preserve window IDs and titles; do not reorder on hover or promote a row merely because it was inspected.</p></div></article>
+<article class="state-card"><div class="state-preview material"><h4 class="group-label">Open windows <span class="count">0</span></h4><div class="empty"><svg aria-hidden="true"><use href="#i-workspace"/></svg><h4>Ready when you are</h4><p>No open windows.<br>Launch Zen Browser to get started.</p></div></div><div class="state-description"><h3>Not running</h3><p>Replace the blank gap with one useful sentence. The header primary changes from focus to launch. Keep supported desktop actions available.</p></div></article>
+<article class="state-card"><div class="state-preview material"><h4 class="group-label">Action status</h4><div class="error-banner"><svg aria-hidden="true"><use href="#i-warning"/></svg><div class="error-copy"><strong>Couldn’t open a private window</strong><p>Launch was rejected. Try again.</p></div><span class="static-icon" aria-hidden="true"><svg><use href="#i-refresh"/></svg></span></div><div class="window-list"><div class="window"><div class="window-copy"><p class="window-title">(121) YouTube — Zen Browser</p><div class="window-meta">Workspace 2 · Still open</div></div></div></div></div><div class="state-description"><h3>A failure is not a dismissal</h3><p>Keep the chooser open, retain the target and explain the failed operation. Offer retry only for known failures; refresh uncertain outcomes rather than replaying them.</p></div></article>
+</div>
+</section>
+<section class="specs" aria-label="Implementation guidance">
+<div><h2>Material, not just rounded</h2><div class="swatches" aria-label="Illustrative dark color roles"><span class="swatch" style="background:#101510" title="Surface"></span><span class="swatch" style="background:#1b211b" title="Surface container"></span><span class="swatch" style="background:#303830" title="Surface container highest"></span><span class="swatch" style="background:#354b38" title="Secondary container"></span><span class="swatch" style="background:#a4d5a8" title="Primary"></span></div><ul>
+<li><strong>Color roles:</strong> opaque content containers; on-surface text; primary only for priority. This hand-picked green study is illustrative—production uses the existing seed-derived <code>Ui.MaterialPalette</code>, not these hex values.</li>
+<li><strong>Type &amp; spacing:</strong> production Roboto Flex; 24/16/14/12px hierarchy, 8px rhythm, 24px between groups, 16px inset. This offline HTML uses local system-font fallbacks and embedded SVGs.</li>
+<li><strong>Shape &amp; targets:</strong> 28px panel, 16px list groups; 56px primary, 32px header secondary, 48px contextual circles. These follow Shelllist’s desktop adaptation, not a claim of exact M3 certification.</li>
+<li><strong>Accessibility:</strong> retain full accessible command names and status text, not color alone. Validate contrast with the generated theme, scaling, native focus paint and assistive technology in Qt.</li>
+</ul></div>
+<div><h2>Capability-driven, not browser-driven</h2><ul>
+<li><strong>Any installation:</strong> consume the daemon’s XDG catalog identity, localized name, icon, kind, windows and desktop-action list. Refresh on catalog changes. No frontend app allowlist or per-application layout registry.</li>
+<li><strong>Unknown is normal:</strong> generic icon for unresolved assets; wrap long titles and translated labels; hide empty action groups. Bound long lists with scrolling and retain every action in Alt+J. Shortcuts expose launch only, not invented window/resource state.</li>
+<li><strong>Illustrative data only:</strong> editor, terminal, file manager, future-app and shortcut fixtures demonstrate structure—not verified installed apps or exact desktop-entry capabilities. Browser privacy/profile commands exist only when that app actually supplies them.</li>
+<li><strong>No new field stops:</strong> titles, telemetry and command rows are information-only. Tab visits editable controls; command-only pages use the shared scrolling fallback. Up/Down still browse application results.</li>
+<li><strong>Commands:</strong> use shared <code>SurfaceActionRow</code>, <code>LabeledAction</code> and <code>ActionMenu</code>. Arbitrary desktop/per-window commands remain under Alt+J; reserve Alt+M for existing header overflow and Alt+S for screenshots.</li>
+<li><strong>Honest data:</strong> do not add per-window CPU numbers unless the daemon provides reliable attribution. Preserve unknown workspace labels and capability guards. Hide absent desktop actions; do not invent browser features.</li>
+<li><strong>Safe operations:</strong> keep revision checks, in-flight guards and terminal acknowledgements. A focus/launch success closes the real chooser; close updates in place. A submitted request alone never means success.</li>
+<li><strong>Ship with Qt tests:</strong> cover named window/desktop commands, stale targets, menu focus restoration, in-flight disabling, failures, zero/many windows and long titles. This HTML is a proposal, not production interaction validation.</li>
+</ul></div>
+</section>
+<footer class="footer"><span>Based on the supplied cropped screenshot; header and page positions are shown for context, not as a claim that they are missing today.</span><span>Proposal only · No application code changed</span></footer>
+</div>
+<dialog class="material" id="command-dialog" aria-labelledby="dialog-title"><div class="dialog-heading"><h2 id="dialog-title">Application commands</h2><button type="button" class="command small" id="dismiss-dialog" aria-label="Dismiss command dialog"><svg aria-hidden="true"><use href="#i-close"/></svg></button></div><div class="menu-list" id="menu-list"></div><p class="dialog-note">Demo only. Arrows or Tab browse, Enter activates, Escape dismisses. Close has no undo.</p></dialog>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+// Fixtures describe capabilities, not application-name detection. All examples are fictional data.
+const catalog = {
+  browser: { name:'Zen Browser', category:'Web browser', icon:'zen', windows:['(121) YouTube — Zen Browser','Material Design — Zen Browser','Shelllist documentation — chooser keyboard workflow — Zen Browser'], actions:[{id:'new',name:'New Window',icon:'add'},{id:'private',name:'New Private Window',icon:'private'},{id:'profiles',name:'Profile Manager',icon:'profile'}] },
+  editor: { name:'Code Editor', category:'Development', icon:'code', windows:['application-details-m3.html — shelllist','A very long project name / src / components / ApplicationDetails.qml — Code Editor','README.md — another workspace'], actions:[{id:'new',name:'New Empty Window',icon:'add'}] },
+  terminal: { name:'Terminal', category:'System', icon:'terminal', windows:['shelllist — bash','build logs — bash','remote session — ssh'], actions:[] },
+  files: { name:'Files', category:'File manager', icon:'folder', windows:['Home','Documents','Downloads'], actions:[{id:'new',name:'New Window',icon:'add'}] },
+  future: { name:'An unfamiliar application with a longer localized name', category:'Application', icon:null, windows:['Untitled project','A second project with a long descriptive title','Imported document'], actions:[{id:'project',name:'Create a project from a template'},{id:'import',name:'Import an existing document'},{id:'recent',name:'Open most recent project'},{id:'library',name:'Browse the asset library'},{id:'render',name:'Open render queue'},{id:'check',name:'Validate project'},{id:'settings',name:'Preferences'},{id:'help',name:'Help and documentation'}] },
+  shortcut: { name:'Team handbook', category:'Desktop shortcut', icon:null, kind:'desktop-shortcut', windows:[], actions:[] }
+};
+let app = catalog.browser, scenario = 'single';
+let windows = [], busy = false, timer = null, generation = 0, returnFocus = null;
+const isShortcut = () => app.kind === 'desktop-shortcut';
+const failedAction = () => app.actions[0]?.id || null;
+const actionName = id => id === null ? (isShortcut() ? 'Open ' : 'Launch ') + app.name : app.actions.find(action => action.id === id)?.name || 'Unavailable action';
+const icon = name => '<svg aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
+function button(name, label, callback, tone='') {
+  const node = document.createElement('button');
+  node.type = 'button'; node.className = 'command ' + tone; node.tabIndex = -1;
+  node.setAttribute('aria-label', label); node.innerHTML = icon(name);
+  node.disabled = busy; node.addEventListener('click', callback); return node;
+}
+function renderWindows() {
+  $('windows').replaceChildren();
+  windows.forEach(win => {
+    const row = document.createElement('div'); row.className = 'window';
+    const copy = document.createElement('div'); copy.className = 'window-copy';
+    const title = document.createElement('p'); title.className = 'window-title'; title.textContent = win.title;
+    const meta = document.createElement('div'); meta.className = 'window-meta';
+    const workspace = document.createElement('span'); workspace.className = 'workspace';
+    workspace.innerHTML = icon('workspace'); workspace.append('Workspace ' + win.workspace); meta.append(workspace);
+    if (win.current) { const status = document.createElement('span'); status.className = 'status'; status.textContent = 'Current window'; meta.append(status); }
+    copy.append(title,meta);
+    const commands = document.createElement('div'); commands.className = 'window-commands';
+    commands.append(button('focus', 'Focus ' + win.title + ' on workspace ' + win.workspace, () => run('focus',win.id)));
+    const more = button('more', 'Commands for ' + win.title, () => openMenu(win.id));
+    more.setAttribute('aria-haspopup','dialog'); commands.append(more); row.append(copy,commands); $('windows').append(row);
+  });
+  const count = windows.length;
+  $('window-count').textContent = count;
+  $('app-status').textContent = isShortcut() ? 'Desktop shortcut · Opens in another application' : app.category + (count ? ' · ' + count + ' open window' + (count === 1 ? '' : 's') : ' · Not running');
+  $('empty').hidden = count > 0; $('windows').hidden = count === 0;
+  $('windows-heading').hidden = isShortcut();
+  $('empty-title').textContent = isShortcut() ? 'Open content in its associated application' : 'No open windows';
+  $('empty-copy').textContent = isShortcut() ? 'This shortcut does not own windows or resource telemetry.' : 'Use the launch command beside the application name.';
+  $('primary-icon').setAttribute('href', count ? '#i-focus' : '#i-launch');
+  $('primary').setAttribute('aria-label', count ? 'Return to most recent ' + app.name + ' window' : actionName(null));
+  $('resources-note').hidden = isShortcut();
+  document.querySelectorAll('.detail-nav span').forEach((node,index) => node.hidden = isShortcut() && index > 0);
+}
+function renderActions() {
+  $('actions').replaceChildren();
+  app.actions.forEach(action => {
+    const row = document.createElement('div'); row.className = 'action';
+    const copy = document.createElement('div'); copy.className = 'action-copy';
+    const label = document.createElement('p'); label.className = 'action-title'; label.textContent = action.name;
+    copy.append(label);
+    row.append(copy,button(action.icon || 'launch',action.name,() => run('desktop',action.id)));
+    $('actions').append(row);
+  });
+  $('action-count').textContent = app.actions.length;
+  $('actions-heading').hidden = $('actions').hidden = !app.actions.length;
+  $('no-actions').hidden = !!app.actions.length || isShortcut();
+}
+function setState(state) {
+  clearTimeout(timer); generation++; busy = false; scenario = state;
+  document.querySelectorAll('[data-state]').forEach(node => {
+    node.setAttribute('aria-pressed', String(node.dataset.state === state));
+    node.disabled = isShortcut() && ['single','multiple'].includes(node.dataset.state);
+  });
+  windows = state === 'empty' ? [] : app.windows.slice(0, state === 'multiple' ? 3 : 1).map((title,index) => ({id:'window-' + index,title,workspace:index ? '4' : '2',current:index === 0}));
+  $('app-name').textContent = app.name; $('app-icon').setAttribute('href','#i-' + (app.icon || 'app'));
+  $('demo').setAttribute('aria-label',app.name + ' details mockup');
+  $('error-title').textContent = 'Couldn’t complete: ' + actionName(failedAction());
+  $('retry').setAttribute('aria-label','Retry ' + actionName(failedAction()));
+  $('error').hidden = state !== 'error'; $('announcement').textContent = '';
+  $('demo').setAttribute('aria-busy','false');
+  $('demo').querySelectorAll('button').forEach(node => node.disabled = false);
+  renderWindows(); renderActions();
+}
+function run(action, id) {
+  if (busy) return;
+  const win = windows.find(item => item.id === id);
+  if ((action === 'focus' || action === 'close') && !win) { $('announcement').textContent = 'Demo: that window is no longer available. Refresh before trying again.'; return; }
+  busy = true; const currentGeneration = generation;
+  $('demo').setAttribute('aria-busy','true');
+  $('demo').querySelectorAll('button').forEach(node => node.disabled = true);
+  $('announcement').textContent = 'Demo: request accepted. Waiting for acknowledgement…';
+  timer = setTimeout(() => {
+    if (generation !== currentGeneration) return;
+    busy = false; $('demo').setAttribute('aria-busy','false'); $('error').hidden = true;
+    if (action === 'close') {
+      windows = windows.filter(item => item.id !== id);
+      $('announcement').textContent = 'Demo acknowledged: “' + win.title + '” closed. The chooser stays open. No undo is offered.';
+    } else if (action === 'focus') {
+      $('announcement').textContent = 'Demo acknowledged: focused “' + win.title + '” on workspace ' + win.workspace + '. The real chooser would now close.';
+    } else {
+      $('announcement').textContent = 'Demo acknowledged: ' + actionName(action === 'desktop' ? id : null) + ' completed. The real chooser would now close.';
+    }
+    $('demo').querySelectorAll('button').forEach(node => node.disabled = false);
+    renderWindows();
+  },700);
+}
+function closeMenu() { $('command-dialog').close(); }
+function openMenu(id) {
+  if (busy || $('command-dialog').open) return;
+  const win = windows.find(item => item.id === id);
+  returnFocus = document.activeElement;
+  $('dialog-title').textContent = win ? 'Window commands' : 'Application commands';
+  $('menu-list').replaceChildren();
+  function item(label, name, action, windowId, supporting) {
+    const node = document.createElement('button'); node.type = 'button';
+    node.className = 'menu-item' + (action === 'close' ? ' danger' : ''); node.innerHTML = icon(name);
+    const text = document.createElement('span'); text.textContent = label;
+    if (supporting) { const sub = document.createElement('small'); sub.textContent = supporting; text.append(sub); }
+    node.append(text); node.addEventListener('click', () => { closeMenu(); run(action,windowId); }); $('menu-list').append(node);
+  }
+  (win ? [win] : windows).forEach(target => {
+    item('Focus window','focus','focus',target.id,target.title + ' · Workspace ' + target.workspace);
+    item('Close window','close','close',target.id,target.title);
+  });
+  if (!win) {
+    item(actionName(null),'launch','launch',null);
+    app.actions.forEach(action => item(action.name,action.icon || 'launch','desktop',action.id));
+    if (!$('error').hidden) item('Retry: ' + actionName(failedAction()),'refresh',failedAction() ? 'desktop' : 'launch',failedAction());
+  }
+  $('command-dialog').showModal(); $('menu-list').querySelector('button')?.focus();
+}
+$('command-dialog').addEventListener('close', () => { if (returnFocus?.isConnected && !returnFocus.disabled) returnFocus.focus(); });
+$('dismiss-dialog').addEventListener('click', closeMenu);
+$('command-dialog').addEventListener('keydown', event => {
+  if (!['ArrowDown','ArrowUp','Home','End'].includes(event.key)) return;
+  event.preventDefault(); const items = [...$('command-dialog').querySelectorAll('button')];
+  const index = items.indexOf(document.activeElement);
+  const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+  items[next].focus();
+});
+document.addEventListener('keydown', event => {
+  if (event.altKey && !event.ctrlKey && !event.metaKey && !event.repeat && event.key.toLowerCase() === 'j') {
+    if ($('command-dialog').open) return;
+    event.preventDefault(); openMenu();
+  }
+});
+document.querySelectorAll('[data-state]').forEach(node => node.addEventListener('click', () => setState(node.dataset.state)));
+$('app-select').addEventListener('change', event => {
+  app = catalog[event.target.value];
+  setState(isShortcut() && scenario !== 'error' ? 'empty' : scenario);
+});
+$('primary').addEventListener('click', () => windows.length ? run('focus', windows[0].id) : run('launch',null));
+$('commands').addEventListener('click', () => openMenu());
+$('retry').addEventListener('click', () => run(failedAction() ? 'desktop' : 'launch',failedAction()));
+$('theme').addEventListener('click', () => {
+  const light = document.body.classList.toggle('light');
+  $('theme').setAttribute('aria-pressed', String(light));
+  $('theme').innerHTML = icon('sun') + (light ? 'Dark surfaces' : 'Light surfaces');
+});
+setState('single');
+</script>
+</body>
+</html>

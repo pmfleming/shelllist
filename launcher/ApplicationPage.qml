@@ -6,6 +6,7 @@ Ui.DetailFlickable {
     objectName: "applicationPage"
     viewMemory: controller.viewMemory
     memoryTab: "application"
+    cardSpacing: Math.round(Ui.Theme.spacingXl * uiScale)
 
     required property ApplicationController controller
     required property var application
@@ -32,6 +33,23 @@ Ui.DetailFlickable {
         wrapMode: Text.Wrap
     }
 
+    Ui.CenteredMessage {
+        objectName: "applicationEmptyState"
+        visible: page.application.kind === "desktop-shortcut" || (page.application.instances || []).length === 0
+        width: parent.width
+        height: Math.max(112, implicitHeight + 32)
+        leftPadding: Ui.Theme.spacingLg
+        rightPadding: Ui.Theme.spacingLg
+        text: page.application.kind === "desktop-shortcut" ? qsTr("This shortcut opens content in another application") : page.application.kind === "desktop-application" ? qsTr("No open windows\nUse Launch beside the application name to get started.") : qsTr("Window is no longer available")
+        font.pixelSize: Ui.Theme.fontSizeBody
+        Rectangle {
+            anchors.fill: parent
+            z: -1
+            radius: Ui.Theme.cardRadius
+            color: Ui.Theme.surfaceContainer
+        }
+    }
+
     ApplicationInstanceList {
         width: parent.width
         controller: page.controller
@@ -47,12 +65,21 @@ Ui.DetailFlickable {
         uiScale: page.uiScale
     }
 
-    Ui.CenteredMessage {
-        objectName: "applicationEmptyState"
-        visible: (page.application.instances || []).length === 0
+    Ui.ThemeText {
+        objectName: "applicationNoActions"
+        visible: page.application.kind === "desktop-application" && (page.application.desktop_actions || []).length === 0
         width: parent.width
-        height: Math.max(120, implicitHeight)
-        text: page.application.kind === "desktop-shortcut" ? "This shortcut opens content in another application" : page.application.kind === "desktop-application" ? "No open windows · Launch to open this application" : "Window is no longer available"
-        font.pixelSize: Ui.Theme.fontSizeBody
+        text: qsTr("No additional actions provided by this application.")
+        color: Ui.Theme.mutedText
+        wrapMode: Text.Wrap
+    }
+
+    Ui.ThemeText {
+        visible: page.application.kind !== "desktop-shortcut" && (page.application.instances || []).length > 0
+        width: parent.width
+        text: qsTr("CPU, memory and history are available in Resources.")
+        color: Ui.Theme.mutedText
+        wrapMode: Text.Wrap
+        font.pixelSize: Ui.Theme.fontSizeSmall
     }
 }

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import Quickshell
 import QtQuick
 import Shelllist.Ui as Ui
 
@@ -18,9 +19,11 @@ Ui.ActionDetailsPane {
     emptyText: "Select an application"
     controlHeight: actionHeight
     icon: "󰀻"
-    iconColor: application.focused ? Ui.Theme.active : Ui.Theme.accent
+    iconSource: Quickshell.iconPath(application.icon || "application-x-executable", "application-x-executable")
+    iconColor: Ui.Theme.accent
+    iconBorderColor: "transparent"
     title: selected.title || "Application"
-    subtitle: selected.subtitle || ""
+    subtitle: application.kind === "desktop-shortcut" ? qsTr("Opens in another application") : (application.instances || []).length === 1 ? qsTr("1 open window") : (application.instances || []).length > 1 ? qsTr("%1 open windows").arg(application.instances.length) : application.kind === "desktop-application" ? qsTr("Not running") : qsTr("Window is no longer available")
     actions: controller.detailActions || []
 
     Ui.TabbedDetailsStack {

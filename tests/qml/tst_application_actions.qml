@@ -117,8 +117,10 @@ DaemonTestCase {
         const panel = makePanel();
         const c = panel.controller;
         expand(panel);
-        const close = findChild(panel, "closeWindow-w1");
-        mouseClick(close);
+        mouseClick(findChild(panel, "windowCommands-w1"));
+        tryVerify(() => panel.detailsNavigation.commandMenuOpen);
+        keyClick(Qt.Key_Down); // Focus -> Close in the shared per-window menu.
+        keyClick(Qt.Key_Return);
         const call = lastCall(Api.methods.execute);
         compare(call.params.window_id, "w1");
         compare(call.params.action, "close-window");
@@ -130,7 +132,7 @@ DaemonTestCase {
         verify(c.selectedActionMessage.indexOf("still open") >= 0);
         verify(findChild(panel, "focusWindow-w1").enabled, "Can reach a save prompt");
         // Put real native focus on the row command before removing that row.
-        findChild(panel, "closeWindow-w1").forceActiveFocus();
+        findChild(panel, "windowCommands-w1").forceActiveFocus();
         snapshot(panel, ["w2"]);
         compare(c.selectedApplication.instances.length, 1);
         verify(panel.detailsNavigation.activeFocus, "Removed command returns to shared browsing");

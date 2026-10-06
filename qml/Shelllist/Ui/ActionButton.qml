@@ -8,6 +8,7 @@ PointerActionControl {
     property string label: ""
     accessibleName: label
     property string icon: ""
+    property url iconSource: ""
     property int iconSize: Math.round((sizeRole === "primary" ? Theme.primaryActionIconSize : Theme.secondaryActionIconSize) * uiScale)
     property string sizeRole: "normal"
     property real uiScale: 1
@@ -37,6 +38,7 @@ PointerActionControl {
         label: ""
         hotkey: ""
         icon: control.icon
+        iconSource: control.iconSource
         iconColor: control.labelColor
         iconSize: Math.min(control.iconSize, Math.min(control.width, control.height) - 8)
         labelColor: control.labelColor

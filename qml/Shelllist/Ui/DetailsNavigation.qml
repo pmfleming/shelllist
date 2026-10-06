@@ -520,14 +520,23 @@ FocusScope {
     }
 
     function closeCommandMenu(): void { commandMenu.close(); }
-    function openCommandMenu(): void {
-        if (headerShortcutsEnabled && !popupOpen && commandMenu.commands.length > 0)
+    function openCommandMenu(): void { openCommandMenuFor(null); }
+    // Contextual buttons use the same menu, modal guards and native traversal
+    // as Alt+J, restricted to their command-only subtree when requested.
+    function openCommandMenuFor(root: Item): void {
+        if (!headerShortcutsEnabled || popupOpen)
+            return;
+        commandMenu.commandRoot = root;
+        if (commandMenu.commands.length > 0)
             commandMenu.open();
     }
     ActionMenu {
         id: commandMenu
         parent: navigation.additionalCommandItem && navigation.additionalCommandItem.visible ? navigation.additionalCommandItem : navigation
-        readonly property list<ActionControl> commands: navigation.contentCommands.filter(item => !item.accessKey)
+        property Item commandRoot: null
+        readonly property list<ActionControl> commands: (commandRoot ? navigation.collectCommands(commandRoot) : navigation.contentCommands).filter(item => !item.accessKey)
+        // A removed/replaced subtree must not redirect Enter to another window.
+        onCommandRootChanged: if (visible) close()
         actions: commands
         function available(index: int): bool {
             const command = commands[index];

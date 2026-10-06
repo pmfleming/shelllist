@@ -24,6 +24,11 @@ The launcher presents standards-visible desktop applications and live Hyprland w
 
 Empty queries put focused and running applications before launch-only results. Typed queries use daemon match scores and the shared provider model. Selection is retained by stable result key when snapshots change.
 
+The Application page uses [capability-driven Material details](application-details.md):
+tonal open-window/action groups, full window/workspace context, supplied icon
+assets with generic fallbacks, and named per-window Focus/Close menus. Alt+J
+retains every command; the page adds no editable-field stops.
+
 ## Ownership
 
 ### `app-daemon`

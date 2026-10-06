@@ -201,6 +201,20 @@ operation, and a late reply cannot dismiss a reopened or newly browsed view.
 Background errors notify without reopening. See [application action outcomes](application-actions.md)
 for ownership, acknowledgement, recovery bounds and interaction tests.
 
+## Application detail commands
+
+Application window and desktop-action groups are information/commands only, not
+editable fields. Tab uses the page's non-highlighted scrolling fallback; PageUp/
+PageDown scroll, and Up/Down continue browsing application results. Each window's
+More circle opens the shared named command menu restricted to that window's
+Focus/Close commands. Close has no adjacent destructive hit target or claimed
+undo. Alt+J still exposes all window and arbitrary desktop actions, regardless
+of scroll position. These menus share modal shortcut guards, native traversal
+and focus restoration; removing their owning window closes them rather than
+redirecting Enter to a different window. Full labels and stable daemon IDs are
+retained. See [application details](application-details.md) for the visual and
+capability contract and Qt interaction coverage.
+
 ## Implementing or extending a panel
 
 1. Use `ProviderChooserSurface` or `PanelSurface`; their shared keyboard

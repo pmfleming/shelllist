@@ -8,6 +8,7 @@ RowLayout {
     property string label: ""
     property string accessibleName: label
     property alias icon: button.icon
+    property alias iconSource: button.iconSource
     property alias accessKey: button.accessKey
     property alias commandScope: button.commandScope
     property alias toolTip: button.toolTip
