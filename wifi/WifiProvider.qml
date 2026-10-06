@@ -25,8 +25,7 @@ Core.Provider {
                 enabled: controller.actions.canConnect(ap),
                 visible: !controller.isActive(ap) && !connecting,
                 presentation: {
-                    tone: "active",
-                    width: 152
+                    tone: "active"
                 }
             }), Core.Model.keepOpenAction("cancel-connect", "Cancel", {
                 accessKey: "X",
@@ -35,8 +34,7 @@ Core.Provider {
                 enabled: controller.connection.requestId.length > 0,
                 visible: connecting,
                 presentation: {
-                    group: "primary",
-                    width: 152
+                    group: "primary"
                 }
             }), Core.Model.keepOpenAction("disconnect", "Disconnect", {
                 accessKey: "D",
@@ -45,8 +43,7 @@ Core.Provider {
                 enabled: controller.actions.canDisconnect(ap),
                 visible: controller.isActive(ap) && !connecting,
                 presentation: {
-                    group: "primary",
-                    width: 152
+                    group: "primary"
                 }
             })];
     }
@@ -62,23 +59,20 @@ Core.Provider {
                 },
                 presentation: {
                     group: "toolbar",
-                    tone: "normal",
-                    width: 92
+                    tone: "normal"
                 }
             }), Core.Model.keepOpenAction("portal", "Sign in", {
                 accessKey: "I",
                 icon: "󰏌",
                 presentation: {
-                    group: "toolbar",
-                    width: 100
+                    group: "toolbar"
                 }
             }), Core.Model.keepOpenAction("share", "Share", {
                 accessKey: "H",
                 icon: "󰒖",
                 enabled: controller.actions.canShare(ap),
                 presentation: {
-                    group: "toolbar",
-                    width: 92
+                    group: "toolbar"
                 }
             })];
     }

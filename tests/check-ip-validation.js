@@ -115,4 +115,13 @@ for (const [value, family, multiple, prefix, key] of [
     if (validation.issue(value, family, multiple, false, prefix).key !== key)
         throw new Error("incorrect validation reason for " + value);
 }
+for (const [input, index, octet] of [
+    ["1.1.1.1, 192.300.400.1, 999.1.1.1", 2, 2],
+    ["1.1.1.1 bad 999.1.1.1", 2, undefined],
+    ["255.255.255.255, 1.2.3.999", 2, 4]
+]) {
+    const issue = validation.issue(input, "ipv4", true, false, false);
+    expectState("first invalid address index", issue.index, index);
+    expectState("first overflowing octet only", issue.octet, octet);
+}
 console.log(`IP validation: ${checks} checks passed`);

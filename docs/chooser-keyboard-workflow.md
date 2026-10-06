@@ -135,6 +135,12 @@ retain their existing sizes. Modifier hints remain separate overlays.
 `CommandGroup` can move between a selected-result host and details without
 joining editable traversal or field-page readiness. Shared navigation deduplicates
 those live command objects; it does not create parallel command registrations.
+`RecoveryActions` shares only the labeled retry/discard layout. Its controls keep
+stable domain command names, access keys and independent enabled guards; domain
+owners retain drafts, retries, discard effects and acknowledgement handling.
+Discovery and loader readiness use the same `DetailsNavigation.fieldBoundary`
+predicate, so command, modal and information-only subtrees stay out of field
+traversal.
 Modal header commands are excluded from panel command discovery and use the
 existing contained native modal traversal. See the
 [circular action implementation](proposals/circular-panel-actions.md).
@@ -234,8 +240,12 @@ within its documented recent-history scope. Typing issues debounced reads only;
 query changes supersede old pages, and F5 refreshes without replaying any
 command. Page append and atomic same-query refresh preserve keyed selection,
 viewport and reply-editor transactions. Stale cursors retry reads; they must not
-merge revisions or resurrect deleted rows. `tst_notifications.qml` covers actual
-search key delivery, late replies, cursor recovery and reply/viewport retention.
+merge revisions or resurrect deleted rows. A superseded read's success or error
+must not retire a newer read or clear a reply draft. Incomplete refresh pages stay
+unpublished on read failure, epoch/revision changes, or loss of permission to
+continue history loading. Queued revision events are applied before accepting a
+page. `tst_notifications.qml` covers these ordering/validation cases, actual
+search key delivery, cursor recovery and reply/viewport retention.
 
 Wi-Fi Sign in remains **Alt+I**, never a field Tab stop. It requests and claims a
 daemon-owned portal intent before the frontend executes browser/workspace focus;

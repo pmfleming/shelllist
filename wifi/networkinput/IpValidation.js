@@ -205,17 +205,13 @@ function issue(value, family, multiple, allowEmpty, prefixLength) {
     if (multiple && /(^|,)\s*(,|$)/.test(input))
         return { key: "empty-list-item" };
     const tokens = multiple ? input.split(/[\s,]+/) : [input];
-    for (let index = 0; index < tokens.length; index++) {
-        if (addressState(tokens[index], family) === Acceptable)
-            continue;
-        if (normalizedFamily(family) === "ipv4") {
-            const parts = tokens[index].split(".");
-            for (let octet = 0; octet < parts.length; octet++) {
-                if (/^\d+$/.test(parts[octet]) && Number(parts[octet]) > 255)
-                    return { key: "octet", index: index + 1, octet: octet + 1 };
-            }
-        }
-        return { key: "address", index: index + 1 };
+    const index = tokens.findIndex(token => addressState(token, family) !== Acceptable);
+    if (index < 0)
+        return { key: "address", index: 1 };
+    if (normalizedFamily(family) === "ipv4") {
+        const octet = tokens[index].split(".").findIndex(part => /^\d+$/.test(part) && Number(part) > 255);
+        if (octet >= 0)
+            return { key: "octet", index: index + 1, octet: octet + 1 };
     }
-    return { key: "address", index: 1 };
+    return { key: "address", index: index + 1 };
 }

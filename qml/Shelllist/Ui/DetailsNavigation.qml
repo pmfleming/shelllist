@@ -169,6 +169,14 @@ FocusScope {
         }
     }
 
+    // These subtrees own commands, modal focus or read-only information, not
+    // fields. Use the same boundary for discovery and incubation readiness.
+    function fieldBoundary(item: Item): bool {
+        return item instanceof ActionControl || item instanceof IconTile
+            || item instanceof CommandGroup || item instanceof ModalFrame
+            || item instanceof DetailsHeader || item instanceof DetailsTabBar
+            || item instanceof SurfaceActionRow || (item as DetailSection)?.informationOnly === true;
+    }
     // Loader children become discoverable during incubation, before completion
     // handlers initialize fields. Do not consume saved focus/selection yet.
     function loadersReady(item: Item): bool {
@@ -180,7 +188,7 @@ FocusScope {
             return false;
         // Match target traversal boundaries; native input/cursor decorations
         // are not pages and may be created as a consequence of restoring focus.
-        if (editable(item) || item instanceof ActionControl || item instanceof IconTile || item instanceof CommandGroup || item instanceof ModalFrame || item instanceof DetailsHeader || item instanceof DetailsTabBar || item instanceof SurfaceActionRow || (item as DetailSection)?.informationOnly)
+        if (editable(item) || fieldBoundary(item))
             return true;
         const page = item as DetailFlickable;
         const children = page ? page.navigationContent.children : item.children;
@@ -191,13 +199,12 @@ FocusScope {
         return true;
     }
     function collectTargets(item: Item): var {
-        if (!item || !item.visible || (item as DetailSection)?.informationOnly || item instanceof DetailsTabBar || item instanceof ModalFrame || item instanceof CommandGroup || item instanceof DetailsHeader || item instanceof SurfaceActionRow)
+        if (!item || !item.visible)
             return [];
         // Composite inputs are one browsing stop, not their internal buttons.
         if (editable(item))
             return [item]; // Stable identity while capabilities/acknowledgements change.
-        // Actions are Alt+letter commands, never field traversal stops.
-        if (item instanceof ActionControl || item instanceof IconTile)
+        if (fieldBoundary(item))
             return [];
         let result = [];
         const page = item as DetailFlickable;

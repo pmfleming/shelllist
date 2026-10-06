@@ -34,6 +34,9 @@ const launch = model.action({
     presentation: { group: "primary", tone: "active", width: 140 }
 });
 
+if ("width" in launch.presentation)
+    throw new Error("Legacy action widths must not survive normalization; circular geometry is UI-owned");
+
 const terminal = model.result({
     providerId: "desktop.applications",
     id: "org.example.Terminal.desktop",

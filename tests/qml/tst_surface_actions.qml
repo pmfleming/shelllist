@@ -122,20 +122,46 @@ TestCase {
             contentItem: content
             headerShortcutsEnabled: true
             property int calls: 0
+            property bool recovery: false
             Column {
                 id: content
                 width: parent.width
                 Ui.TextField { objectName: "contextField"; width: parent.width; text: "Draft" }
                 Ui.LabeledAction {
                     objectName: "contextRetry"
+                    visible: !navigation.recovery
                     width: parent.width
                     label: "Retry a failed save"
                     icon: "refresh"
                     accessKey: "R"
                     onClicked: navigation.calls++
                 }
+                Ui.RecoveryActions {
+                    objectName: "recoveryActions"
+                    visible: navigation.recovery
+                    width: parent.width
+                    onRetryRequested: navigation.calls++
+                    onDiscardRequested: navigation.calls += 10
+                }
             }
         }
+    }
+    function test_recoveryCommandsKeepIndependentGuardsAndSkipTab() {
+        const navigation = createTemporaryObject(contextualComponent, testCase, {recovery: true});
+        const actions = findChild(navigation, "recoveryActions");
+        navigation.focusContent(true);
+        keyClick(Qt.Key_Tab);
+        compare(navigation.currentTarget.objectName, "contextField");
+        keyClick(Qt.Key_R, Qt.AltModifier);
+        compare(navigation.calls, 1);
+        actions.retryAction.enabled = false;
+        keyClick(Qt.Key_R, Qt.AltModifier);
+        compare(navigation.calls, 1);
+        keyClick(Qt.Key_X, Qt.AltModifier);
+        compare(navigation.calls, 11, "retry pending must not disable independently allowed discard");
+        actions.enabled = false;
+        keyClick(Qt.Key_X, Qt.AltModifier);
+        compare(navigation.calls, 11);
     }
     function test_contextualLabelsStayPassiveAndCommandsStayOutOfTab() {
         const navigation = createTemporaryObject(contextualComponent, testCase);

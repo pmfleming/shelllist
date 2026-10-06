@@ -152,8 +152,8 @@ Rectangle {
                 if (card.replyState)
                     card.replyState.setDraft(notificationKey, text);
             }
-            submitReply: function (id, text) {
-                return card.controller.replyNotification(id, text);
+            onReplyRequested: function (key, text) {
+                card.controller.replyNotification(key, text);
             }
         }
     }
@@ -208,8 +208,6 @@ Rectangle {
     Ui.RemovalAnimation {
         targetItem: card
         removalRequested: card.removing
-        finishRemoval: function () {
-            card.controller.dismissNotification(card.notification.id);
-        }
+        onRemovalFinished: card.controller.dismissNotification(card.notification.id)
     }
 }

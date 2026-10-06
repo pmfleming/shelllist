@@ -33,8 +33,7 @@ Core.Provider {
                 role: "default",
                 enabled: !busy,
                 presentation: {
-                    tone: "active",
-                    width: 128
+                    tone: "active"
                 },
                 metadata: {
                     toolTip: running ? "Focus the first running instance" : (application.default_workspace_id ? "Launch on workspace " + application.default_workspace_id : "Launch on the current workspace")
@@ -47,8 +46,7 @@ Core.Provider {
                 shortcut: "Shift+Enter",
                 enabled: !busy,
                 presentation: {
-                    group: "toolbar",
-                    width: 120
+                    group: "toolbar"
                 },
                 metadata: {
                     toolTip: application.default_workspace_id ? "Launch another instance on workspace " + application.default_workspace_id : "Launch another instance in a new tile on the current workspace"
@@ -65,8 +63,7 @@ Core.Provider {
             enabled: !!application.running && !busy,
             presentation: {
                 group: "toolbar",
-                tone: "normal",
-                width: 104
+                tone: "normal"
             },
             metadata: {
                 toolTip: "Close all running instances"

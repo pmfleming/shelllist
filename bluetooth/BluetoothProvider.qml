@@ -36,8 +36,7 @@ Core.Provider {
     function primaryPresentation(tone: string): var {
         return {
             group: "primary",
-            tone: tone,
-            width: 152
+            tone: tone
         };
     }
 
@@ -69,8 +68,7 @@ Core.Provider {
                 enabled: actionEnabled(true, device),
                 presentation: {
                     group: "toolbar",
-                    tone: "normal",
-                    width: 92
+                    tone: "normal"
                 }
             }), Core.Model.keepOpenAction("forget", "Forget", {
                 accessKey: "F",
@@ -84,8 +82,7 @@ Core.Provider {
                 },
                 presentation: {
                     group: "toolbar",
-                    tone: "normal",
-                    width: 92
+                    tone: "normal"
                 },
                 metadata: {
                     disabledReason: unsupported(caps, "remove")

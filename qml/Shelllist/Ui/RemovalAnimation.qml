@@ -5,7 +5,7 @@ SequentialAnimation {
 
     required property Item targetItem
     required property bool removalRequested
-    required property var finishRemoval
+    signal removalFinished
 
     running: removalRequested
 
@@ -24,7 +24,6 @@ SequentialAnimation {
         }
     }
     ScriptAction {
-        script: if (removal.finishRemoval)
-            removal.finishRemoval()
+        script: removal.removalFinished()
     }
 }

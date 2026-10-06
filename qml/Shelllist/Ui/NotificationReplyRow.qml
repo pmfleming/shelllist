@@ -5,7 +5,6 @@ FormField {
     id: reply
 
     required property string notificationKey
-    required property var submitReply
     required property string draftText
     property bool sending: false
     property bool canReply: true
@@ -17,6 +16,7 @@ FormField {
     property string sendAccessKey: "R"
     property int buttonWidth: controlHeight
     signal draftEdited(string text)
+    signal replyRequested(string key, string text)
 
     width: parent.width
 
@@ -33,7 +33,7 @@ FormField {
         const navigation = field.editSession.navigation;
         if (navigation && navigation.editorTarget === field)
             navigation.saveEditor();
-        submitReply(notificationKey, value);
+        replyRequested(notificationKey, value);
         // Only the acknowledged response in the shared state clears a draft.
     }
 

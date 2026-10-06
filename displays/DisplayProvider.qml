@@ -66,8 +66,7 @@ Core.Provider {
                 enabled: controller.canPreview && browsing,
                 presentation: {
                     group: "primary",
-                    tone: "active",
-                    width: 170
+                    tone: "active"
                 }
             }), Core.Model.keepOpenAction("identify", qsTr("Identify"), {
                 accessKey: "I",

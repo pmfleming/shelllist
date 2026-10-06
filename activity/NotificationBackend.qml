@@ -81,6 +81,17 @@ Io.DaemonBackend {
             text: text
         });
     }
+    function finishHistory(context: var, data: var, error: string, errorCode: string): void {
+        if (error) {
+            if (errorCode === "history-cursor-stale") store.invalidateHistory();
+            else store.failHistory(error);
+            return;
+        }
+        if (context.historyRevision !== store.observedHistoryRevision)
+            store.invalidateHistory();
+        else
+            store.applyHistory(data.notification_page, context.refresh, context.cursor);
+    }
     function finish(id: string, data: var, error: string, errorCode: string): void {
         const context = requests[id];
         if (!context)
@@ -88,9 +99,15 @@ Io.DaemonBackend {
         const next = Object.assign({}, requests);
         delete next[id];
         requests = next;
-        if ((context.generation !== undefined && context.generation !== store.dataGeneration) || (context.history && context.historyGeneration !== undefined && context.historyGeneration !== store.historyGeneration))
+        // request()/loadHistory() always capture these generations. Consume the
+        // request once, then fence late reads before touching any current state.
+        if (context.generation !== store.dataGeneration || (context.history && context.historyGeneration !== store.historyGeneration))
             return;
         store.flushEvents();
+        if (context.history) {
+            finishHistory(context, data, error, errorCode);
+            return;
+        }
         if (context.replyKey !== undefined)
             store.finishReply(context.replyKey, context.text, error);
         if (context.dnd)
@@ -98,28 +115,16 @@ Io.DaemonBackend {
         if (context.operationKey !== undefined)
             store.finishOperation(context.operationKey);
         if (error) {
-            if (context.history && errorCode === "history-cursor-stale")
-                store.invalidateHistory();
-            else if (context.history)
-                store.failHistory(error);
-            else
-                store.lastError = error;
+            store.lastError = error;
             return;
         }
-        if (!context.history && !context.snapshot)
+        if (!context.snapshot)
             store.lastError = "";
         if (data.snapshot) {
             if (context.eventVersion === store.eventVersion)
                 store.applySnapshot(data.snapshot);
             else if (!store.notifications.available && (store.resident || store.uiActive))
                 Qt.callLater(snapshot);
-        }
-        if (context.history) {
-            if (context.historyRevision !== undefined && context.historyRevision !== store.observedHistoryRevision) {
-                store.invalidateHistory();
-            } else {
-                store.applyHistory(data.notification_page, context.refresh, context.cursor);
-            }
         }
     }
 

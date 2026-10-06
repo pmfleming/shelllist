@@ -61,7 +61,7 @@ Rectangle {
             canReply: row.active && Ui.NotificationPresentation.replyAction(row.notification) !== null
             errorText: row.replyStatus.error || ""
             onDraftEdited: function (text) { row.notificationState.setDraft(notificationKey, text); }
-            submitReply: function (key, text) { return row.notificationState.replyNotification(key, text); }
+            onReplyRequested: function (key, text) { row.notificationState.replyNotification(key, text); }
         }
     }
 }

@@ -70,6 +70,27 @@ TestCase {
         tryVerify(() => button.activeFocus);
         compare(actions.lastKey, "mute", "Escape never invokes an action");
     }
+    Component {
+        id: removalFactory
+        Rectangle {
+            id: card
+            width: 80; height: 40
+            property bool removing: false
+            property int completions: 0
+            Ui.RemovalAnimation {
+                targetItem: card
+                removalRequested: card.removing
+                onRemovalFinished: card.completions++
+            }
+        }
+    }
+    function test_removalSignalsCompletionOnce(): void {
+        const card = createTemporaryObject(removalFactory, testCase);
+        compare(card.completions, 0);
+        card.removing = true;
+        tryCompare(card, "completions", 1);
+        compare(card.opacity, 0);
+    }
     function test_actionsSurviveRepeaterModelData(): void {
         const group = groupRepeater.itemAt(0) as ToastGroup;
         verify(group !== null);

@@ -268,6 +268,7 @@ DaemonTestCase {
         tryVerify(() => findChild(content, "notificationReplyInput") !== null);
         const field = findChild(content, "notificationReplyInput");
         tryVerify(() => field.inputActiveFocus);
+        verify(waitForRendering(field));
         const primary = findChild(content, "detailAction:open");
         verify(primary !== null && primary.visible);
         compare(primary.width, primary.height);
@@ -277,9 +278,11 @@ DaemonTestCase {
         verify(!navigation.targets.includes(primary), "commands never join field traversal");
         keyClick(Qt.Key_H);
         keyClick(Qt.Key_I);
+        compare(field.text, "hi");
         const repliesBefore = testCase.calls.filter(call => call.method === "notifications.reply").length;
         keyClick(Qt.Key_Return);
         compare(testCase.calls.filter(call => call.method === "notifications.reply").length, repliesBefore, "field save is not send");
+        compare(state.drafts[controller.selectedKey], "hi");
         keyClick(Qt.Key_R, Qt.AltModifier);
         compare(testCase.calls.filter(call => call.method === "notifications.reply").length, repliesBefore + 1);
         const reply = testCase.calls.filter(call => call.method === "notifications.reply").pop();
@@ -439,6 +442,113 @@ DaemonTestCase {
         compare(next.params.query, "needle");
         content.destroy();
         wait(0);
+    }
+    function test_oldQueryCompletionCannotRetireReplacement_data() {
+        const rows = [];
+        for (const committed of [false, true])
+            for (const outcome of ["success", "failure", "stale"])
+                rows.push({tag: outcome + "-committed-" + committed, committed: committed, outcome: outcome});
+        return rows;
+    }
+    function test_oldQueryCompletionCannotRetireReplacement(data) {
+        const state = makeState();
+        state.setDraft(100, "Keep draft");
+        state.reloadHistory();
+        const old = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        state.setHistoryQuery("needle");
+        state.reloadHistory();
+        const current = Object.keys(state.backend.requests).find(key => key !== old && key.startsWith("history-"));
+        const generation = state.historyGeneration;
+        const response = {notification_page: page([record(900)], null, "2", "needle")};
+        if (data.committed) state.backend.finish(current, response, "", "");
+        const visible = JSON.stringify(state.history);
+        state.backend.finish(old, {notification_page: page([record(888)])}, data.outcome === "success" ? "" : "Old read failed", data.outcome === "stale" ? "history-cursor-stale" : "");
+        compare(state.historyGeneration, generation);
+        compare(state.historyLoading, !data.committed, "an old error cannot retire the current read");
+        compare(JSON.stringify(state.history), visible);
+        compare(state.historyError, "");
+        verify(!state.backend.requests[old]);
+        if (!data.committed) state.backend.finish(current, response, "", "");
+        // Duplicate delivery is ignored after request ownership was consumed.
+        state.backend.finish(current, {notification_page: page([record(777)])}, "Late error", "history-cursor-stale");
+        compare(state.history[0].notification.id, 900);
+        compare(state.historyGeneration, generation);
+        compare(state.historyError, "");
+        compare(state.drafts[state.keyFor(100)], "Keep draft");
+    }
+    function test_queuedRevisionBetweenRefreshPagesDiscardsStaging() {
+        const state = makeState();
+        state.applySummary({available: true, history_revision: 1});
+        state.historyEnabled = true;
+        state.reloadHistory();
+        const first = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        const visible = JSON.stringify(state.history);
+        state.backend.finish(first, {notification_page: page([record(200)], "tail", "1", "", false)}, "", "");
+        const tail = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        compare(state.historyStaging.length, 1);
+        compare(JSON.stringify(state.history), visible);
+        state.queueEvent(true, {available: true, history_revision: 2});
+        state.backend.finish(tail, {notification_page: page([record(199)], null, "1")}, "", "");
+        compare(state.observedHistoryRevision, 2, "queued events are flushed before accepting a page");
+        compare(JSON.stringify(state.history), visible, "stale staging is never published");
+        compare(state.historyStaging.length, 0);
+        verify(state.historyDirty);
+        verify(!state.historyLoading);
+        state.reloadHistory();
+        const replacement = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        state.backend.finish(replacement, {notification_page: page([record(201)], null, "2")}, "", "");
+        compare(state.history.map(item => item.notification.id), [201]);
+        compare(state.historyRevision, "2");
+    }
+    function test_abandonedRefreshNeverPublishesPartialPages_data() {
+        return [{tag: "read-error"}, {tag: "hidden"}, {tag: "epoch-change"}];
+    }
+    function test_abandonedRefreshNeverPublishesPartialPages(data) {
+        const state = makeState();
+        state.historyEnabled = true;
+        const visible = JSON.stringify(state.history);
+        const callsBefore = testCase.calls.length;
+        state.reloadHistory();
+        const first = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        state.backend.finish(first, {notification_page: page([record(200)], "tail", "2", "", false)}, "", "");
+        const tail = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        const continuation = page([record(199)], "older", "2", "", false);
+        if (data.tag === "hidden") state.historyEnabled = false;
+        if (data.tag === "epoch-change") continuation.epoch = "new-daemon";
+        state.backend.finish(tail, {notification_page: continuation}, data.tag === "read-error" ? "Read failed" : "", "");
+        compare(JSON.stringify(state.history), visible);
+        compare(state.historyStaging.length, 0);
+        verify(!state.historyLoading);
+        compare(testCase.calls.length - callsBefore, 2, "no further continuation after abandonment");
+        verify(testCase.calls.slice(callsBefore).every(call => call.method === "notifications.queryHistory"), "recovery is read-only");
+    }
+    function test_rejectInvalidHistoryPages_data() {
+        return [
+            {tag: "missing-page", patch: null},
+            {tag: "missing-records", patch: {records: null}},
+            {tag: "oversized-page", patch: {records: Array.from({length: 101}, (_, index) => record(index + 200))}},
+            {tag: "empty-epoch", patch: {epoch: ""}},
+            {tag: "numeric-revision", patch: {revision: 1}},
+            {tag: "wrong-query", patch: {query: "other"}},
+            {tag: "missing-anchor-status", patch: {anchor_reached: null}},
+            {tag: "invalid-cursor", patch: {next_cursor: 42}},
+            {tag: "empty-cursor", patch: {next_cursor: ""}},
+            {tag: "duplicate-records", patch: {records: [record(99), record(99)]}},
+            {tag: "invalid-id", patch: {records: [record(4294967296)]}},
+            {tag: "invalid-created", patch: {records: [{notification: {id: 99, created_unix_ms: 0}}]}},
+            {tag: "null-record", patch: {records: [null]}}
+        ];
+    }
+    function test_rejectInvalidHistoryPages(data) {
+        const state = makeState();
+        const visible = JSON.stringify(state.history);
+        state.reloadHistory();
+        const request = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        state.backend.finish(request, {notification_page: data.patch === null ? null : Object.assign(page([record(99)]), data.patch)}, "", "");
+        compare(JSON.stringify(state.history), visible);
+        verify(state.historyError.length > 0);
+        verify(!state.historyLoading);
+        compare(state.historyStaging.length, 0);
     }
     function test_cursorInvalidationAndMalformedPagesNeverMixVisibleRevisions() {
         const state = makeState();

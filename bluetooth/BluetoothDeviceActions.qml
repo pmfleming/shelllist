@@ -100,29 +100,19 @@ ColumnLayout {
         enabled: !section.renameDirty && !section.controller.actionInFlight && !!section.controller.selectedDevice.remote_name && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
         onClicked: section.controller.resetSelectedName()
     }
-    RowLayout {
+    Ui.RecoveryActions {
         Layout.fillWidth: true
         visible: !!(section.draft || {}).error
-        Ui.LabeledAction {
-            icon: "refresh"
-            objectName: "retryDeviceName"
-            accessKey: "N"
-            Layout.fillWidth: true
-            label: qsTr("Retry rename")
-            enabled: !section.controller.actionInFlight && section.renameValid
-            onClicked: section.controller.nameEdits.retry(section.displayedDeviceKey)
-        }
-        Ui.LabeledAction {
-            icon: "undo"
-            objectName: "discardDeviceName"
-            accessKey: "X"
-            Layout.fillWidth: true
-            label: qsTr("Discard draft")
-            enabled: !(section.draft || {}).pending
-            onClicked: {
-                section.controller.nameEdits.discard(section.displayedDeviceKey);
-                section.syncDeviceName(true);
-            }
+        retryAction.objectName: "retryDeviceName"
+        retryAction.accessKey: "N"
+        retryAction.label: qsTr("Retry rename")
+        retryAction.enabled: !section.controller.actionInFlight && section.renameValid
+        discardAction.objectName: "discardDeviceName"
+        discardAction.enabled: !(section.draft || {}).pending
+        onRetryRequested: section.controller.nameEdits.retry(section.displayedDeviceKey)
+        onDiscardRequested: {
+            section.controller.nameEdits.discard(section.displayedDeviceKey);
+            section.syncDeviceName(true);
         }
     }
 

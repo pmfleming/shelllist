@@ -29,7 +29,6 @@ RowLayout {
 
         delegate: ActionButton {
             required property var modelData
-            required property int index
             objectName: toolbar.actionNamePrefix + modelData.id
             activeFocusOnTab: toolbar.tabFocusEnabled && enabled && (interactive || activeFocus)
 

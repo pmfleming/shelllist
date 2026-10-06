@@ -4,7 +4,24 @@ Shelllist treats `qmllint`, QML tests, JavaScript policy tests, daemon-contract 
 
 ## Latest review
 
-The [latest interaction-layer review](reviews/lens-interaction-maintenance-2026-10-04.md)
+The [latest notification-history review](reviews/lens-notification-history-2026-10-06.md)
+uses the pending maintenance tree as its baseline. It separates history response
+completion, validation and publication, retaining generation/revision fences and
+atomic refresh. Production complexity and effort fall; locality/leverage stay
+unchanged and code grows to make responsibilities explicit and add 23 regression
+cases. All 286 Qt tests, strict lint and runtime smoke pass. Lens remains incomplete;
+the full sibling Nix gate remains unverified after the preceding timeout.
+
+The [preceding maintenance review](reviews/lens-maintenance-2026-10-06.md)
+compares against `80056cc`, holding concurrent media changes constant. It removes
+unused notification/action scaffolding, shares retry/discard presentation and
+field boundaries, replaces callback properties with signals, and simplifies
+notification/event/IP diagnostic dispatch. All requested aggregate metrics improve
+modestly; production source falls 61 lines and tracked code falls eight lines,
+including regression additions and canonical TypeScript. See the review for
+validation results and the remaining Lens/full-gate limitations.
+
+The [preceding interaction-layer review](reviews/lens-interaction-maintenance-2026-10-04.md)
 compares against `8331047`: shared native editor keys and command menus, local
 field availability guards, typed QObject collections, and removal of obsolete
 keyboard-migration paths. All requested aggregate metrics improve modestly;
@@ -77,7 +94,7 @@ Rust daemons remain responsible for system parsing, identity, validation, policy
 - Activity, battery, power, and OSD views are split into cohesive panes rather than one large object tree.
 - `LiveClock`, `PulsingLabel`, `NotificationReplyRow`, and `BarOverlayWindow` centralize repeated presentation behavior.
 - `ChartDrawing` shares gap-preserving Canvas paths between battery and application history; `ChartValueRail` keeps their label geometry and styling consistent. Availability, axes, and telemetry policy stay with their existing owners.
-- `NotificationPresentation`, `NotificationStackHeader`, `NotificationQuickActions`, and `RemovalAnimation` shared grouping, routing, stack headers, action rendering/focus tracking and transient removal behavior. Notification quick actions emit intent only; toast/history owners retain their distinct dismissal and reply lifecycles. The now-unused `NotificationStackHeader` was subsequently removed in the [post-migration Lens review](reviews/lens-post-migration-maintenance.md).
+- `NotificationPresentation`, `NotificationStackHeader`, `NotificationQuickActions`, and `RemovalAnimation` shared grouping, routing, stack headers, action rendering/focus tracking and transient removal behavior. Notification quick actions emit intent only; toast/history owners retain their distinct dismissal and reply lifecycles. The now-unused `NotificationStackHeader` was subsequently removed in the [post-migration Lens review](reviews/lens-post-migration-maintenance.md); `NotificationQuickActions` was removed in the [2026-10-06 review](reviews/lens-maintenance-2026-10-06.md), after `NotificationCommands` superseded it.
 - Every OSD family uses one normalized descriptor, one `BarOsdContent` frame, and one dismissal timer; pure transition and timeout policy stays in `BarOsdPresentation.js`.
 - `StateLayer` and `Elevation` centralize interaction feedback and depth.
 - UI operation-state transitions are kept in small testable JavaScript helpers. Authoritative operation lifecycle policy, validation, leases and effects belong in the owning Rust daemon.

@@ -28,26 +28,14 @@ Ui.DetailFlickable {
             wrapMode: Text.WordWrap
             color: Ui.Theme.danger
         }
-        RowLayout {
+        Ui.RecoveryActions {
             Layout.fillWidth: true
-            Ui.LabeledAction {
-                icon: "refresh"
-                objectName: "retryClipboardEdit"
-                accessKey: "R"
-                Layout.fillWidth: true
-                label: qsTr("Retry save")
-                enabled: !cards.controller.actionInFlight && !cards.detailState.editBeginPending
-                onClicked: cards.detailState.retryEdit()
-            }
-            Ui.LabeledAction {
-                icon: "undo"
-                objectName: "discardClipboardEdit"
-                accessKey: "D"
-                Layout.fillWidth: true
-                label: qsTr("Discard draft")
-                enabled: !cards.controller.actionInFlight && !cards.detailState.editBeginPending
-                onClicked: cards.detailState.discardFailedEdit()
-            }
+            enabled: !cards.controller.actionInFlight && !cards.detailState.editBeginPending
+            retryAction.objectName: "retryClipboardEdit"
+            discardAction.objectName: "discardClipboardEdit"
+            discardAction.accessKey: "D"
+            onRetryRequested: cards.detailState.retryEdit()
+            onDiscardRequested: cards.detailState.discardFailedEdit()
         }
     }
 

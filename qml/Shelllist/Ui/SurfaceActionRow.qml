@@ -73,7 +73,6 @@ Item {
         onClicked: row.triggered(row.primaryAction.id)
     }
     Row {
-        id: actionLine
         anchors.right: parent.right
         y: row.topHeight + (row.topHeight ? row.gap : 0)
         spacing: row.gap

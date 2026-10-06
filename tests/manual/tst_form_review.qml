@@ -97,7 +97,7 @@ Tests.DaemonTestCase {
                     Layout.fillWidth: true
                     notificationKey: "capture-only"
                     draftText: "Looks good, thank you."
-                    submitReply: function () { tests.fail("Capture must not send replies"); }
+                    onReplyRequested: tests.fail("Capture must not send replies")
                 }
                 Item { Layout.fillHeight: true }
             }

@@ -133,14 +133,18 @@ Ui.ChooserController {
     }
 
     function applyDomainEvent(kind: string, data: var): void {
-        if (kind === "activity") {
+        switch (kind) {
+        case "activity":
             activity = data;
             scheduleRangeQuery();
-        } else if (kind === "notifications") {
+            break;
+        case "notifications":
             if (!notificationState.resident) notificationState.applySummary(data);
-        } else if (kind === "notificationActive") {
+            break;
+        case "notificationActive":
             if (!notificationState.resident) notificationState.applyActive(data);
-        } else if (kind === "timezone") {
+            break;
+        case "timezone":
             timezone = data;
         }
     }

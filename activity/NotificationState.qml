@@ -84,15 +84,12 @@ Item {
     }
     function connectionLost(): void {
         dataGeneration++;
-        historyGeneration++;
-        historyStaging = [];
-        historyCursor = null;
+        resetHistoryRead();
         queuedSummary = null;
         queuedActive = null;
         acceptedHistoryRevision = -1;
         acceptedActiveRevision = -1;
         observedHistoryRevision = -1;
-        historyLoading = false;
         historyDirty = true;
         historyDebounce.stop();
         notifications = Object.assign({}, notifications, {available: false});
@@ -151,11 +148,8 @@ Item {
         historyQuery = query;
         // These are bounded ordinary RPCs, not cancellable subscriptions.
         // Let old reads finish; their generation cannot alter the new query.
-        historyGeneration++;
-        historyLoading = false;
+        resetHistoryRead();
         historyLoaded = false;
-        historyCursor = null;
-        historyStaging = [];
         history = [];
         scheduleHistory();
     }
@@ -185,15 +179,38 @@ Item {
         historyLoading = true;
         backend.loadHistory(historyCursor, false);
     }
-    function invalidateHistory(): void {
+    function resetHistoryRead(): void {
         historyGeneration++;
         historyLoading = false;
         historyStaging = [];
         historyCursor = null;
+    }
+    function invalidateHistory(): void {
+        resetHistoryRead();
         scheduleHistory(); // Read-only recovery; never replay a mutation.
     }
+    function historyToken(value: var): bool { return typeof value === "string" && value.length > 0; }
+    function validHistoryPage(page: var): bool {
+        return Array.isArray(page?.records) && page.records.length <= 100
+            && historyToken(page.epoch) && historyToken(page.revision)
+            && page.query === historyQuery && typeof page.anchor_reached === "boolean"
+            && (page.next_cursor === null || historyToken(page.next_cursor));
+    }
+    function historyPageAdvances(page: var, base: var, requestedCursor: var): bool {
+        if (base.length + page.records.length > 5200 || (page.next_cursor !== null && (!page.records.length || page.next_cursor === requestedCursor)))
+            return false;
+        const keys = new Set(base.map(Ui.NotificationPresentation.recordKey));
+        return page.records.every(function (record) {
+            const notification = record?.notification;
+            if (!Number.isSafeInteger(notification?.id) || notification.id <= 0 || notification.id > 4294967295 || !Number.isSafeInteger(notification.created_unix_ms) || notification.created_unix_ms <= 0) return false;
+            const key = Ui.NotificationPresentation.recordKey(record);
+            if (keys.has(key)) return false;
+            keys.add(key);
+            return true;
+        });
+    }
     function applyHistory(page: var, refresh: bool, requestedCursor: var): void {
-        if (!page || !Array.isArray(page.records) || page.records.length > 100 || typeof page.epoch !== "string" || !page.epoch.length || typeof page.revision !== "string" || !page.revision.length || page.query !== historyQuery || typeof page.anchor_reached !== "boolean" || (page.next_cursor !== null && (typeof page.next_cursor !== "string" || !page.next_cursor.length))) {
+        if (!validHistoryPage(page)) {
             failHistory("Invalid notification history page");
             return;
         }
@@ -204,30 +221,18 @@ Item {
             invalidateHistory();
             return;
         }
-        const keys = new Set(base.map(Ui.NotificationPresentation.recordKey));
-        const valid = page.records.every(function (record) {
-            if (!record || !record.notification) return false;
-            const notification = record.notification;
-            if (!Number.isSafeInteger(notification.id) || notification.id <= 0 || notification.id > 4294967295 || !Number.isSafeInteger(notification.created_unix_ms) || notification.created_unix_ms <= 0) return false;
-            const key = Ui.NotificationPresentation.recordKey(record);
-            if (keys.has(key)) return false;
-            keys.add(key);
-            return true;
-        });
-        if (!valid || (page.next_cursor !== null && (!page.records.length || page.next_cursor === requestedCursor)) || base.length + page.records.length > 5200) {
+        if (!historyPageAdvances(page, base, requestedCursor)) {
             failHistory("Notification history page did not advance");
             return;
         }
         const next = base.concat(page.records);
-        if (refresh) {
+        if (refresh && page.next_cursor !== null && !page.anchor_reached) {
             stagingEpoch = page.epoch;
             stagingRevision = page.revision;
             historyStaging = next;
-            if (page.next_cursor !== null && !page.anchor_reached) {
-                if (historyEnabled) backend.loadHistory(page.next_cursor, true);
-                else invalidateHistory();
-                return;
-            }
+            if (historyEnabled) backend.loadHistory(page.next_cursor, true);
+            else invalidateHistory();
+            return;
         }
         if (!equal(history, next)) history = next;
         historyEpoch = page.epoch;

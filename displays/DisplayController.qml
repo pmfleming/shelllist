@@ -40,7 +40,7 @@ Ui.ProviderChooserController {
     property bool identifyActive: false
     property string identifyName: ""
     property bool changingDetailsContext: false
-    readonly property var focusTabs: ["focus", "focus-pointer", "focus-keyboard", "focus-applications", "focus-cursor", "focus-diagnostics"]
+    readonly property list<string> focusTabs: ["focus", "focus-pointer", "focus-keyboard", "focus-applications", "focus-cursor", "focus-diagnostics"]
     property bool globalSettingsOpen: false
     property string detailsTab: "settings"
     readonly property DisplayProvider displayProvider: DisplayProvider {

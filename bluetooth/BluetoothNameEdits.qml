@@ -4,7 +4,7 @@ import Shelllist.Core as Core
 Core.DraftStore {
     required property BluetoothController controller
     required property BluetoothBackend backend
-    property var finishedRequests: []
+    property list<string> finishedRequests: []
 
     function edit(key: string, value: string): void {
         if (!key || (draft(key) || {}).pending)

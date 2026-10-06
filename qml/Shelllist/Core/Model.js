@@ -92,8 +92,7 @@ function action(input) {
     const role = enumValue(source.role, actionRoles, "secondary", "action.role"), kind = enumValue(source.kind, actionKinds, "command", "action.kind");
     const presentation = {
         group: enumValue(presentationSource.group, presentationGroups, role === "default" ? "primary" : "overflow", "action.presentation.group"),
-        tone: enumValue(presentationSource.tone, tones, role === "destructive" ? "danger" : "normal", "action.presentation.tone"),
-        width: Math.max(0, finiteNumber(presentationSource.width, 0))
+        tone: enumValue(presentationSource.tone, tones, role === "destructive" ? "danger" : "normal", "action.presentation.tone")
     };
     return {
         schemaVersion: schemaVersion,

@@ -100,7 +100,6 @@ Providers with dynamic state normally leave `actions` empty and implement `actio
   presentation: {
     group: "primary",          // primary | toolbar | settings | overflow
     tone: "active",            // normal | active | danger | warning
-    width: 140
   },
   metadata: {}
 }

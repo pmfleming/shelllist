@@ -89,26 +89,15 @@ ColumnLayout {
             color: Ui.Theme.danger
             wrapMode: Text.WordWrap
         }
-        RowLayout {
+        Ui.RecoveryActions {
             Layout.fillWidth: true
-            Ui.LabeledAction {
-                icon: "refresh"
-                objectName: "retryAdapterSettings"
-                accessKey: "R"
-                Layout.fillWidth: true
-                label: qsTr("Retry save")
-                enabled: !section.controller.globalRequestInFlight
-                onClicked: section.controller.adapterEdits.retry(section.displayedAdapterKey)
-            }
-            Ui.LabeledAction {
-                icon: "undo"
-                objectName: "discardAdapterSettings"
-                accessKey: "X"
-                Layout.fillWidth: true
-                label: qsTr("Discard drafts")
-                enabled: !section.draft.pendingField
-                onClicked: section.controller.adapterEdits.discard(section.displayedAdapterKey)
-            }
+            retryAction.objectName: "retryAdapterSettings"
+            retryAction.enabled: !section.controller.globalRequestInFlight
+            discardAction.objectName: "discardAdapterSettings"
+            discardAction.label: qsTr("Discard drafts")
+            discardAction.enabled: !section.draft.pendingField
+            onRetryRequested: section.controller.adapterEdits.retry(section.displayedAdapterKey)
+            onDiscardRequested: section.controller.adapterEdits.discard(section.displayedAdapterKey)
         }
     }
 
