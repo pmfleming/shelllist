@@ -45,8 +45,13 @@ Automatic operation-status checks are bounded to ten reads at two-second
 intervals; Check status remains available afterward. Close reconciliation performs
 up to three catalog observations, then relies on normal window events or explicit
 refresh. An absent app in a filtered catalog does not prove its windows closed.
-Feedback retains the latest 64 targets. A failed status read does not complete the
-mutation. Transport loss explicitly reports an unknown outcome; check windows
+Feedback retains the latest 64 targets independently of pending ownership;
+updating a target refreshes its position, and opaque keys cannot change the
+cache's prototype. Success and failure share one owned status-read completion
+path. An empty/malformed status response releases that read for bounded polling
+or explicit Check status, without completing or replaying the mutation. Empty
+request IDs and obsolete read failures cannot retire a newer read. A failed
+status read does not complete the mutation. Transport loss explicitly reports an unknown outcome; check windows
 before explicitly trying again. There is no misleading Cancel/Undo command.
 
 ## Validation

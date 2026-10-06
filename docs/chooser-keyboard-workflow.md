@@ -217,7 +217,9 @@ or checked launch handoff, not mere request admission. Close keeps the chooser
 open: window rows disappear only on authoritative snapshots, and the last window
 leaves “No open windows” with Launch available. Conflicting commands are blocked
 per application, not by freezing result navigation. Check status uses Alt+K and
-read-only recovery; progress text is not a field stop. A removed window command
+read-only recovery; progress text is not a field stop. A missing/malformed status
+reply retires only its owned read so Check status remains usable, never replaying
+the mutation or announcing completion. A removed window command
 returns to shared detail browsing. Closing a view does not cancel its submitted
 operation, and a late reply cannot dismiss a reopened or newly browsed view.
 Background errors notify without reopening. See [application action outcomes](application-actions.md)

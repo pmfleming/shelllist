@@ -278,6 +278,64 @@ DaemonTestCase {
         compare(c.selectedApplication.instances.length, 2);
         compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
     }
+    function test_malformedStatusRetiresOnlyItsReadAndAllowsRecovery() {
+        const panel = makePanel();
+        const c = panel.controller;
+        verify(c.triggerDetailAction("close"));
+        const call = lastCall(Api.methods.execute);
+        accept(call);
+        const original = JSON.stringify(c.operations.pending);
+        c.applyOperation("", null);
+        verify(!c.operations.finishStatus("", null, "Unowned error"));
+        compare(JSON.stringify(c.operations.pending), original);
+        let previous = null;
+        for (const data of [{}, {operation_status: null}, {operation_status: {}}]) {
+            c.operations.check("Alpha");
+            const read = lastCall(Api.methods.operationStatus);
+            if (previous) {
+                verify(read.id !== previous.id);
+                const requestId = c.operations.forTarget("Alpha").statusRequestId;
+                reply(previous, {}, "Obsolete read failure");
+                compare(c.operations.forTarget("Alpha").statusRequestId, requestId);
+            }
+            reply(read, data);
+            compare(c.operations.forTarget("Alpha").statusRequestId, "");
+            verify(c.operations.busy("Alpha"), "An empty status is not mutation completion");
+            compare(panel.dismissals, 0);
+            previous = read;
+        }
+        c.operations.check("Alpha");
+        reply(lastCall(Api.methods.operationStatus), {operation_status: operation(call, "completed")});
+        verify(!c.operations.busy("Alpha"));
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
+    }
+    function test_feedbackIsBoundedAndEvictionCannotRetirePendingOperations() {
+        const panel = makePanel();
+        const c = panel.controller;
+        verify(c.triggerDetailAction("close"));
+        const call = lastCall(Api.methods.execute);
+        accept(call);
+        const owned = c.operations.forTarget("Alpha");
+        const publish = (id, message) => c.operations.publish(Object.assign({}, owned, {
+            request: Object.assign({}, owned.request, {result: {id: id, title: id}}), message: message
+        }));
+        for (let index = 0; index < 65; ++index)
+            publish("cached-" + index, "Old feedback");
+        compare(Object.keys(c.operations.feedback).length, 64);
+        compare(c.operations.feedback["cached-0"], undefined);
+        compare(c.operations.feedback.Alpha, undefined);
+        publish("cached-1", "Updated feedback");
+        publish("__proto__", "Opaque target ID");
+        compare(Object.keys(c.operations.feedback).length, 64);
+        compare(c.operations.feedback["cached-2"], undefined, "Updating a target moves it to the newest end");
+        compare(c.operations.message("cached-1", ""), "Updated feedback");
+        c.operations.reconcile([]);
+        verify(Object.prototype.hasOwnProperty.call(c.operations.feedback, "__proto__"), "Reconciliation preserves opaque keys too");
+        compare(c.operations.message("__proto__", ""), "Opaque target ID");
+        compare(c.operations.forTarget("Alpha").request.id, owned.request.id);
+        compare(c.operations.message("Alpha", ""), owned.message, "Pending ownership takes precedence over the feedback cache");
+        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
+    }
     function test_readFailureAndTransportLossStayExplicit() {
         const panel = makePanel();
         const c = panel.controller;

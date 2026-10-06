@@ -18,7 +18,7 @@ function controller() {
         Lifecycle, calls, now: 10 * 86400000,
         // This fixture has no application actions in flight. Their failure
         // handlers decline history IDs so the controller owns history recovery.
-        operations: { fail: () => false, statusFailed: () => false },
+        operations: { fail: () => false, finishStatus: () => false },
         resourcesVisible: true, selectedResult: { id: "A" },
         resourceHistory: [], pendingResourceHistory: [], resourceHistorySummary: null, pendingHistorySummary: null, historyTargetId: "",
         activeHistoryRequestId: "", historyWindowStartMs: 0, historyWindowEndMs: 0,

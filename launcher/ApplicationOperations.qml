@@ -9,7 +9,7 @@ Item {
     required property ApplicationController controller
     required property ApplicationBackend backend
     property var pending: ({})
-    property var feedback: ({})
+    property var feedback: Object.create(null)
     readonly property int count: Object.keys(pending).length
 
     function forTarget(targetId: string): var {
@@ -31,7 +31,7 @@ Item {
     function publish(record: var): void {
         const targetId = record.request.result.id;
         const entries = Object.entries(feedback).filter(entry => entry[0] !== targetId);
-        const next = {};
+        const next = Object.create(null);
         entries.concat([[targetId, record]]).slice(-64).forEach(entry => next[entry[0]] = entry[1]);
         feedback = next;
     }
@@ -70,7 +70,7 @@ Item {
             controller.closeWindowRequested();
     }
     function apply(responseId: string, operation: var): void {
-        const original = pending[responseId] || Object.values(pending).find(record => record.operationId && record.operationId === operation.id);
+        const original = pending[responseId] || Object.values(pending).find(record => record.operationId && record.operationId === operation?.id);
         if (!original)
             return; // An event before admission is recovered with an owned status read.
         const transition = Lifecycle.operationTransition(original.request, original.request.result.id, original.operationId, responseId, operation);
@@ -139,27 +139,26 @@ Item {
         store(record);
         backend.operationStatus(record.statusRequestId, record.operationId);
     }
-    function applyStatus(id: string, operation: var): void {
-        const original = Object.values(pending).find(record => record.statusRequestId === id);
-        if (!original)
-            return;
-        const record = Object.assign({}, original, {statusRequestId: ""});
-        store(record);
-        if (operation && operation.id === record.operationId)
-            apply(record.request.id, operation);
-    }
-    function statusFailed(id: string, message: string): bool {
+    // Retire only an owned read, including an empty/malformed success payload.
+    // Neither a missing status nor a read error completes the pending mutation.
+    function finishStatus(id: string, operation: var, error: string): bool {
+        if (!id)
+            return false;
         const original = Object.values(pending).find(record => record.statusRequestId === id);
         if (!original)
             return false;
-        store(Object.assign({}, original, {
-            statusRequestId: "", checks: 10,
-            message: "Could not confirm action status: " + message + ". Check windows before trying again."
-        }));
+        const record = Object.assign({}, original, {statusRequestId: ""});
+        if (error) {
+            record.checks = 10;
+            record.message = "Could not confirm action status: " + error + ". Check windows before trying again.";
+        }
+        store(record);
+        if (!error && operation?.id === record.operationId)
+            apply(record.request.id, operation);
         return true;
     }
     function reconcile(applications: var): void {
-        const next = Object.assign({}, feedback);
+        const next = Object.assign(Object.create(null), feedback);
         for (const targetId of Object.keys(next)) {
             const record = next[targetId];
             if (!record.awaitingWindows || busy(targetId))

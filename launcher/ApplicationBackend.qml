@@ -16,6 +16,8 @@ Io.DaemonBackend {
             return;
         }
         const data = envelope.data || ({});
+        if (controller.operations.finishStatus(id, data.operation_status, ""))
+            return;
         if (data.applications)
             controller.applyApplications(id, data.applications);
         if (data.revision !== undefined)
@@ -26,8 +28,6 @@ Io.DaemonBackend {
             controller.applyApplicationSettings(id, data.settings);
         if (data.operation)
             controller.applyOperation(id, data.operation);
-        if (data.operation_status)
-            controller.operations.applyStatus(id, data.operation_status);
     }
 
     function revision(id: string): bool {

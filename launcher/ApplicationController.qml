@@ -279,7 +279,7 @@ Ui.ProviderChooserController {
             activeSettingsRequestId = "";
     }
     function handleFailure(id: string, message: string): void {
-        if (operations.fail(id, message) || operations.statusFailed(id, message))
+        if (operations.fail(id, message) || operations.finishStatus(id, null, message))
             return;
         if (id.startsWith("action-") || id.startsWith("operation-status-"))
             return; // Obsolete failures cannot overwrite another request.

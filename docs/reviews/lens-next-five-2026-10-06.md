@@ -97,3 +97,63 @@ Across production this deliberate ownership boundary costs **21 source lines**,
 **0.0456**, while mean leverage decreases by **0.0735** because the new domain
 component has one consumer. These are explicit tradeoffs, not a code-size or
 aggregate-leverage win.
+
+## 5. Application status reads have one completion owner
+
+`finishStatus` replaces separate success/failure lookups. The backend offers every
+successful response to that ownership check before dispatching other payloads;
+missing/null/malformed status payloads can therefore release their read instead
+of wedging all subsequent Check status requests. Empty IDs, stale errors and null
+operation events cannot retire another request or complete a mutation. Existing
+target/action/lifecycle validation still authorizes actual transitions.
+
+The 64-target feedback cache and its reconciliation copies use prototype-free
+objects, so opaque target IDs such as `__proto__` remain ordinary owned entries.
+Updating a target refreshes its cache position; eviction never removes pending
+operation ownership. Construction uses Qt-supported object operations, not the
+unavailable `Object.fromEntries` API.
+
+Validation: **16 application-action Qt passes**, strict lint, application lifecycle
+and application-history JavaScript checks. New native tests cover malformed reads,
+subsequent recovery, stale failure fencing, null events, no mutation replay,
+cache bounds/refresh/eviction, opaque keys and pending ownership after eviction.
+The history test adapter now mocks the unified completion interface.
+Logs: `/tmp/quality-step5-{qt,lint}.txt`.
+
+Incremental production delta: source lines **−3**, cyclomatic **0**, cognitive
+**+1**, function effort **0**, component effort **−1**. The extra empty-ID safety
+guard is retained despite its branch cost.
+
+## Combined result and final gates
+
+| Metric | Production baseline → final | All analyzed sources baseline → final |
+| --- | ---: | ---: |
+| Source lines | 38,507 → 38,528 | 47,304 → 47,455 |
+| Cyclomatic | 7,573 → 7,561 | 8,289 → 8,286 |
+| Cognitive | 5,131 → 5,113 | 5,437 → 5,423 |
+| Function effort | 37,875 → 37,822 | 44,252 → 44,310 |
+| Component effort | 42,524 → 42,509 | 52,560 → 52,668 |
+| Mean locality | 75.4527 → 75.4983 | 76.5641 → 76.5994 |
+| Mean leverage | 36.8243 → 36.7508 | 32.6068 → 32.5568 |
+| Clone groups | 113 → 113 | 152 → 152 |
+| Clone-covered lines | 1,580 → 1,580 | 2,162 → 2,162 |
+
+Tracked code lines across languages: **58,835 → 59,019**. Added safety regression
+coverage and the explicit row boundary increase size; this sequence is not a
+net line-count reduction. Production effort and both scopes' complexity improve;
+test-inclusive effort and aggregate leverage do not. Dynamic-property and lint
+suppression counts are unchanged. Expanded clone enumeration remains complete.
+
+Final validation: **345 Qt passes, zero failures, one existing skip**; strict
+lint; generated TypeScript check; 106 IP checks; daemon-boundary, application
+lifecycle and history checks; both real Quickshell runtime smoke fixtures; and
+`nix build .#shelllistConfig --no-link --no-write-lock-file`. No dependency lock
+change. The targeted row fractional-scale checks also passed (see step 4).
+Qt uses the same font configuration as the preceding review. Final logs:
+`/tmp/quality-five-final-{qt,lint,smoke,nix}.txt`.
+
+This sequence uses matched static Lens snapshots, not a new full profiler gate.
+The previously documented Lens timeout/coverage/formatter limitations remain
+unresolved; no full-contract or performance success is claimed. Full daemon
+contract matrices, the full package build and live hardware/IME/screen-reader
+acceptance remain outside these targeted changes.
