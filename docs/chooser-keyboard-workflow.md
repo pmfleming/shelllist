@@ -215,6 +215,9 @@ There is no F1 overlay, hover tooltip or plain-letter action shortcut.
 See [session memory](chooser-session-memory.md) for focus/caret restoration and
 [geometry](chooser-geometry.md) for revealing controls without moving the list.
 Neither restoration nor a browse highlight may activate a setting or command.
+The enlarged Media now-playing artwork card is information-only: its image and
+labels follow the inspected player without gaining focus, pinning a player or
+invoking transport. Tab continues directly to editable player preferences.
 
 ## Validation
 

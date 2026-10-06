@@ -2,6 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Shelllist.Bar as Bar
 import Shelllist.Io as Io
+import Shelllist.Ui as Ui
+import "ColorContrast.js" as Contrast
 import "imports/Quickshell/Services/SystemTray" as TrayFixture
 import "../../qml/Shelllist/Bar/BarApi.js" as BarApi
 import "../../qml/Shelllist/Bar/SystemEntries.js" as Entries
@@ -29,8 +31,9 @@ DaemonTestCase {
         id: trayFactory
         TrayFixture.SystemTrayItem { hasMenu: true; menu: QtObject {} }
     }
-    function init(): void { calls = []; failOnWarning(/.*/); }
-    function cleanup(): void { clientReady = true; TrayFixture.SystemTray.items.values = []; }
+    property int previousScheme
+    function init(): void { calls = []; failOnWarning(/.*/); previousScheme = Ui.Theme.previewColorScheme; }
+    function cleanup(): void { clientReady = true; TrayFixture.SystemTray.items.values = []; Ui.Theme.previewColorScheme = previousScheme; }
     function acknowledge(fixture, call, data): void {
         Io.DaemonSessions.sessions[fixture.desktop.backend.daemonName].client.response(call.id, {protocol: BarApi.protocol, version: BarApi.version, ok: true, data: data || {}}, "", call.route);
     }
@@ -46,6 +49,68 @@ DaemonTestCase {
     }
     function player(id, seek) {
         return {id: id, identity: id, title: "Track " + id, playback_status: "Playing", can_control: true, can_pause: true, can_play: true, can_seek: seek};
+    }
+    function test_mediaArtworkFollowsMetadataWithoutChangingPlayback(): void {
+        const root = fixture();
+        const cover = Qt.resolvedUrl("fixtures/media-cover.svg").toString();
+        const inlineCover = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="white"/></svg>');
+        // All clients use the same metadata path, including browser Media Session
+        // covers. Inspecting a player must not borrow another active player's art.
+        const other = Object.assign(player("other", true), {art_url: inlineCover, control_mode: "automatic"});
+        let current = Object.assign(player("one", true), {art_url: cover, album: "Chapter 5", control_mode: "automatic"});
+        root.desktop.media = {available: true, active_player: "other", pinned_player: null, players: [current, other]};
+        root.chooser.activateUi("");
+        root.chooser.openDetails();
+        tryVerify(() => findChild(root.content.detailsItem, "mediaPlayback") !== null);
+        const card = findChild(root.content.detailsItem, "mediaPlayback");
+        const image = findChild(card, "mediaPlaybackArtwork");
+        const title = findChild(card, "mediaPlaybackTitle");
+        const subtitle = findChild(card, "mediaPlaybackSubtitle");
+        tryCompare(image, "status", Image.Ready);
+        compare(image.source.toString(), cover);
+        verify(card.height >= 250 && card.height <= 300, "roughly 2.5 times the former compact card");
+        compare(subtitle.text, "Chapter 5");
+        for (const identity of ["Zen", "Chrome", "Audible", "Spotify", "Pocket Casts"]) {
+            current = Object.assign({}, current, {identity: identity, title: identity + " current media", art_url: inlineCover});
+            root.desktop.media = {available: true, active_player: "other", pinned_player: null, players: [current, other]};
+            tryCompare(title, "text", identity + " current media");
+            tryCompare(image, "status", Image.Ready);
+            compare(decodeURIComponent(image.source.toString()), decodeURIComponent(inlineCover));
+        }
+        for (const scheme of [Qt.Light, Qt.Dark]) {
+            Ui.Theme.previewColorScheme = scheme;
+            verify(waitForPolish(card.Window.window));
+            const pixels = grabImage(testCase);
+            const point = title.mapToItem(testCase, -4, title.height / 2);
+            const background = pixels.pixel(Math.round(point.x), Math.round(point.y));
+            verify(Contrast.ratio(title.color, background) >= 4.5, "title contrast: " + title.color + " on " + background + " at " + point.x + "," + point.y);
+            verify(Contrast.ratio(subtitle.color, background) >= 4.5, "metadata remains readable in either theme");
+        }
+        current = Object.assign({}, current, {art_url: "", title: "No cover supplied"});
+        root.desktop.media = {available: true, active_player: "other", pinned_player: null, players: [current, other]};
+        tryCompare(image, "status", Image.Null);
+        verify(!card.hasArtwork, "never keep the previous cover when metadata clears it");
+        compare(title.text, "No cover supplied");
+        ignoreWarning(/.*QML (?:QQuick)?Image: Cannot open: .*missing-media-cover\.png/);
+        current = Object.assign({}, current, {art_url: Qt.resolvedUrl("fixtures/missing-media-cover.png").toString()});
+        root.desktop.media = {available: true, active_player: "other", pinned_player: null, players: [current, other]};
+        tryCompare(image, "status", Image.Error);
+        verify(!card.hasArtwork, "failed covers use the same fallback, not stale imagery");
+        compare(title.color, Ui.Theme.text);
+        root.chooser.selectedIndex = 1;
+        tryCompare(title, "text", "Track other");
+        tryCompare(image, "status", Image.Ready);
+        compare(decodeURIComponent(image.source.toString()), decodeURIComponent(inlineCover));
+        // The larger presentation remains passive; Tab still starts at settings.
+        root.content.listItem.focusList();
+        keyClick(Qt.Key_Tab);
+        tryVerify(() => root.content.detailsNavigation.currentTarget !== null);
+        compare(root.content.detailsNavigation.currentTarget.objectName, "mediaPlayerPin");
+        keyClick(Qt.Key_Tab);
+        compare(root.content.detailsNavigation.currentTarget.objectName, "mediaControlMode");
+        root.content.visible = false;
+        tryCompare(image, "status", Image.Null, 1000);
+        compare(calls.length, 0, "artwork updates and field browsing never invoke playback or pinning");
     }
     function test_selectedPlayerIsExplicitAndCapabilitiesAreRevalidated(): void {
         const root = fixture();

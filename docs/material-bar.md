@@ -66,6 +66,26 @@ track/artist/player text, a cycle button or a progress strip/timer. Artwork open
 Media as this prototype's explicit detail route. Pin/mode changes wait for daemon
 state; neither those changes nor presentation restoration invokes playback.
 
+The Media detail's **Now playing** card is at least 260px tall (about 2.6 times
+its previous compact height), growing for wrapped text. It displays the inspected
+player's `art_url` behind the track/book/episode labels, cropped inside the card's
+rounded outer frame. A dark text backing keeps white labels readable even over
+white artwork in either theme. Artwork and titles always come from the same
+player, never from a different globally active player.
+
+This uses the common MPRIS artwork path for Zen, Chrome, Audible, Spotify and
+Pocket Casts, including browser Media Session artwork exposed through MPRIS.
+There is no app-name whitelist or external cover-search service. If the player
+supplies no artwork, or loading fails, the card uses a neutral music fallback;
+it cannot invent a cover that the application does not expose. Hidden cards stop
+requesting artwork. Application icons remain separate in the list and header.
+The card is information-only and adds no field stop or playback effect.
+
+Native tests cover metadata replacement, file/inline images, missing/failed
+covers, painted text contrast in both themes and unchanged settings traversal.
+Offscreen wide/narrow captures are in `target/media-playback-card/`; these are
+synthetic artwork fixtures, not live acceptance of the five applications.
+
 ## Routes and menu safety
 
 Audio/Media/Tray retain independent CLI, global shortcut and Home Manager routes.

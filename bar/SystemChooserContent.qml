@@ -138,23 +138,10 @@ Ui.ProviderChooserSurface {
                         wrapMode: Text.Wrap
                     }
                 }
-                Ui.DetailColumnCard {
+                MediaPlaybackCard {
                     objectName: "mediaPlayback"
                     visible: content.controller.kind === "media"
-                    title: qsTr("Now playing")
-                    Ui.ThemeText {
-                        Layout.fillWidth: true
-                        text: content.controller.selectedPlayer ? content.controller.selectedPlayer.title || qsTr("No track title") : ""
-                        wrapMode: Text.WordWrap
-                        font.pixelSize: Ui.Theme.fontSizeHeading
-                    }
-                    Ui.ThemeText {
-                        Layout.fillWidth: true
-                        text: content.controller.selectedPlayer ? [content.controller.selectedPlayer.artist, content.controller.selectedPlayer.album].filter(Boolean).join(" · ") : ""
-                        visible: text.length > 0
-                        wrapMode: Text.WordWrap
-                        color: Ui.Theme.mutedText
-                    }
+                    player: content.controller.selectedPlayer
                 }
                 Ui.DetailSection {
                     objectName: "mediaPreferences"
