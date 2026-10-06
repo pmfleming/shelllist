@@ -23,13 +23,15 @@ ColumnLayout {
     Repeater {
         model: actions.desktopActions
 
-        delegate: Ui.ActionButton {
+        delegate: Ui.LabeledAction {
             required property var modelData
             required property int index
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.round(42 * actions.uiScale)
+            uiScale: actions.uiScale
             label: modelData.name || "Application action"
-            icon: modelData.icon || ""
+            // Desktop icon names are opaque, not necessarily font ligatures.
+            // The passive full action name disambiguates the execute fallback.
+            icon: Ui.MaterialIcons.name(modelData.icon || "") || "play_arrow"
             enabled: !actions.controller.actionInFlight
             onClicked: actions.controller.triggerDetailAction("desktop-action-" + index)
         }

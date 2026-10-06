@@ -1,14 +1,17 @@
 module Shelllist.Ui
 singleton Theme 1.0 Theme.qml
 MaterialPalette 1.0 MaterialPalette.qml
+MaterialIcons 1.0 MaterialIcons.js
 ThemeText 1.0 ThemeText.qml
 ActionControl 1.0 ActionControl.qml
 PointerActionControl 1.0 PointerActionControl.qml
 ActionButton 1.0 ActionButton.qml
+LabeledAction 1.0 LabeledAction.qml
 ActionArea 1.0 ActionArea.qml
 ActionDetailsPane 1.0 ActionDetailsPane.qml
 ActionToggleList 1.0 ActionToggleList.qml
 ActionToolbar 1.0 ActionToolbar.qml
+CommandGroup 1.0 CommandGroup.qml
 SurfaceActionRow 1.0 SurfaceActionRow.qml
 CenteredMessage 1.0 CenteredMessage.qml
 singleton ChartDrawing 1.0 ChartDrawing.qml

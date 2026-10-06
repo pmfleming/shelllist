@@ -63,8 +63,8 @@ FormField {
             width: reply.buttonWidth
             height: reply.controlHeight
             tone: "accent"
+            sizeRole: "primary"
             icon: reply.sending ? "󰔟" : "󰒊"
-            iconSize: Theme.iconSize
             accessibleName: reply.sending ? "Sending reply" : "Send reply"
             toolTip: accessibleName
             enabled: field.text.trim().length > 0 && !reply.sending && reply.canReply

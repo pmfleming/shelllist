@@ -6,6 +6,8 @@ Rectangle {
     id: row
     required property var record
     required property NotificationController controller
+    property Item commandItem: null
+    readonly property alias headerHost: headerHost
     readonly property NotificationState notificationState: controller.notificationState
     readonly property var notification: Ui.NotificationPresentation.notificationFor(record)
     readonly property bool active: notificationState.isLive(record)
@@ -36,18 +38,10 @@ Rectangle {
         y: Ui.Theme.spacingMd
         width: parent.width - Ui.Theme.spacingMd * 2
         spacing: Ui.Theme.spacingMd
-        Ui.NotificationAppIcon { notification: row.notification }
-        Ui.ThemeText {
+        Item {
+            id: headerHost
             width: parent.width
-            text: [row.notification.app_name, Ui.NotificationPresentation.timeLabel(row.notification.created_unix_ms, row.controller.nowMs)].filter(part => !!part).join(" · ")
-            color: Ui.Theme.mutedText
-            wrapMode: Text.WordWrap
-        }
-        Ui.ThemeText {
-            width: parent.width
-            text: row.notification.summary || row.notification.app_name || qsTr("Notification")
-            wrapMode: Text.Wrap
-            font.weight: Ui.Theme.fontWeightDemiBold
+            height: row.commandItem ? row.commandItem.implicitHeight : 0
         }
         Ui.ThemeText {
             objectName: "notificationBody"

@@ -20,6 +20,16 @@ ModalFrame {
     property string rejectLabel: "Cancel"
     property string acceptLabel: "Confirm"
     property string acceptTone: "accent"
+    property string acceptIcon: acceptTone === "danger" ? "delete" : "check"
+    property string rejectIcon: "close"
+    actions: actionsVisible ? [
+        {id: "accept", label: acceptLabel, icon: acceptIcon, enabled: acceptEnabled, presentation: {group: "primary", tone: acceptTone}},
+        {id: "reject", label: rejectLabel, icon: rejectIcon, presentation: {group: "toolbar"}}
+    ] : []
+    onActionTriggered: function(actionId) {
+        if (actionId === "accept") accepted();
+        else cancelled();
+    }
     property bool acceptEnabled: true
     property bool escapeEnabled: true
     property bool enterEnabled: true
@@ -34,6 +44,8 @@ ModalFrame {
     function focusInput() {
         if (inputVisible)
             promptInput.focusInput(true);
+        else if (actionsVisible)
+            focusAction("reject");
         else
             moveFocus(false);
     }
@@ -94,25 +106,12 @@ ModalFrame {
             onClicked: dialog.optionEdited(!dialog.optionChecked)
         }
 
-        RowLayout {
+        ThemeText {
             visible: dialog.actionsVisible
             Layout.fillWidth: true
-            spacing: Theme.spacingSm
-
-            ActionButton {
-                Layout.fillWidth: true
-                Layout.preferredHeight: Theme.controlHeight
-                label: dialog.rejectLabel
-                onClicked: dialog.cancelled()
-            }
-            ActionButton {
-                Layout.fillWidth: true
-                Layout.preferredHeight: Theme.controlHeight
-                label: dialog.acceptLabel
-                tone: dialog.acceptTone
-                enabled: dialog.acceptEnabled
-                onClicked: dialog.accepted()
-            }
+            text: dialog.acceptLabel + " · " + dialog.rejectLabel
+            wrapMode: Text.Wrap
+            color: Theme.mutedText
         }
 
         ThemeText {

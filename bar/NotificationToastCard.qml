@@ -21,8 +21,6 @@ Rectangle {
     readonly property string draft: replyState ? String(replyState.drafts[recordKey] || "") : ""
     property bool replyOpen: false
     readonly property bool replyVisible: replyAction !== null && (replyOpen || draft.length > 0 || replyStatus.pending === true || String(replyStatus.error || "").length > 0)
-    readonly property bool controlsFocused: quickActions.focusInside || breakout.highlighted
-    readonly property bool controlsRevealed: hover.hovered || replyVisible || controlsFocused
     Accessible.role: Accessible.Button
     Accessible.name: notification.summary || notification.app_name || qsTr("Notification")
     Accessible.onPressAction: if (!removing) activate()
@@ -58,8 +56,10 @@ Rectangle {
         z: -1
     }
 
-    HoverHandler {
-        id: hover
+    Ui.NotificationAppIcon {
+        id: identity
+        visible: false
+        notification: card.notification
     }
 
     // Beneath the content: a click activates the card, a swipe right dismisses it.
@@ -93,96 +93,49 @@ Rectangle {
         }
         spacing: Ui.Theme.spacingSm
 
-        Row {
+        Ui.DetailsHeader {
             width: parent.width
-            spacing: Ui.Theme.spacingMd
-
-            Ui.NotificationAppIcon {
-                notification: card.notification
-                count: card.groupCount
+            uiScale: 1
+            titlePixelSize: Ui.Theme.fontSizeLabel
+            title: card.notification.summary || card.notification.app_name || qsTr("Notification")
+            subtitle: [card.notification.app_name, Ui.NotificationPresentation.timeLabel(card.notification.created_unix_ms, card.nowMs)].filter(Boolean).join(" · ")
+            subtitleColor: card.urgency >= 2 ? Ui.Theme.danger : Ui.Theme.mutedText
+            icon: "notifications"
+            iconSource: identity.source
+            iconCount: card.groupCount
+            tabFocusEnabled: true
+            enabled: !card.removing
+            actions: [
+                {id: "open", label: qsTr("Open notification"), icon: "open_in_new", visible: card.defaultAction !== null, presentation: {group: "primary"}},
+                {id: "breakout", label: qsTr("Show all %1 in notification center").arg(card.groupCount), icon: "unfold_more", visible: card.breakoutVisible, presentation: {group: "toolbar"}},
+                {id: "reply", label: qsTr("Reply"), icon: "reply", visible: card.replyAction !== null && !card.replyVisible, presentation: {group: "toolbar"}},
+                {id: "snooze", label: qsTr("Snooze for 15 minutes"), icon: "snooze", presentation: {group: "toolbar"}},
+                {id: "dismiss", label: qsTr("Dismiss"), icon: "close", presentation: {group: "toolbar"}}
+            ]
+            onActionTriggered: function(actionId) {
+                if (actionId === "open") card.activate();
+                else if (actionId === "breakout") card.breakoutRequested();
+                else if (actionId === "reply") card.replyOpen = true;
+                else if (actionId === "snooze") card.controller.snoozeNotification(card.notification.id, 15);
+                else if (actionId === "dismiss") card.removing = true;
             }
-
-            Column {
-                width: parent.width - 40 - parent.spacing
-                spacing: 2
-
-                Item {
-                    width: parent.width
-                    height: 32
-
-                    Ui.ThemeText {
-                        anchors.left: parent.left
-                        anchors.right: controls.visible ? controls.left : parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: [card.notification.app_name || "", Ui.NotificationPresentation.timeLabel(card.notification.created_unix_ms, card.nowMs)].filter(function (part) {
-                            return part.length > 0;
-                        }).join(" · ")
-                        color: card.urgency >= 2 ? Ui.Theme.danger : Ui.Theme.mutedText
-                        elide: Text.ElideRight
-                        font.pixelSize: Ui.Theme.fontSizeCaption
-                    }
-
-                    Row {
-                        id: controls
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
-                        opacity: card.controlsRevealed ? 1 : 0
-
-                        Ui.InteractiveBehavior on opacity {
-                            animate: !card.controlsFocused
-                            duration: Ui.Theme.animationFast
-                            easingType: Easing.Linear
-                        }
-
-                        Ui.FlatIconButton {
-                            id: breakout
-                            visible: card.breakoutVisible
-                            width: 32
-                            height: 32
-                            icon: "󰅂"
-                            accessibleName: "Show all " + card.groupCount + " in notification center"
-                            toolTip: accessibleName
-                            onClicked: card.breakoutRequested()
-                        }
-                        Ui.NotificationQuickActions {
-                            id: quickActions
-                            showReply: card.replyAction !== null && !card.replyVisible
-                            onReplyRequested: card.replyOpen = true
-                            onSnoozeRequested: card.controller.snoozeNotification(card.notification.id, 15)
-                            onDismissRequested: card.removing = true
-                        }
-                    }
-                }
-
-                Ui.ThemeText {
-                    width: parent.width
-                    text: card.notification.summary || card.notification.app_name || "Notification"
-                    wrapMode: Text.Wrap
-                    maximumLineCount: 2
-                    elide: Text.ElideRight
-                    font.pixelSize: Ui.Theme.fontSizeLabel
-                    font.weight: Ui.Theme.fontWeightDemiBold
-                }
-
-                Ui.ThemeText {
-                    width: parent.width
-                    visible: text.length > 0
-                    text: card.notification.body || ""
-                    textFormat: Text.PlainText
-                    wrapMode: Text.Wrap
-                    maximumLineCount: 4
-                    elide: Text.ElideRight
-                    color: Ui.Theme.mix(Ui.Theme.text, Ui.Theme.mutedText, 0.35)
-                    font.pixelSize: Ui.Theme.fontSizeSmall
-                }
-            }
+        }
+        Ui.ThemeText {
+            width: parent.width
+            visible: text.length > 0
+            text: card.notification.body || ""
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            maximumLineCount: 4
+            elide: Text.ElideRight
+            color: Ui.Theme.mutedText
+            font.pixelSize: Ui.Theme.fontSizeSmall
         }
 
         Ui.NotificationActionList {
             width: parent.width
             actions: card.actions
-            controlHeight: 32
+            enabled: !card.removing
             onTriggered: function (actionKey) {
                 card.controller.invokeNotificationAction(card.notification.id, actionKey);
             }

@@ -126,7 +126,8 @@ Ui.DetailFlickable {
             text: qsTr("Removes Shelllist overrides and restores values from before their first edit. Later reloads follow your Hyprland configuration.")
             wrapMode: Text.Wrap
         }
-        Ui.ActionButton {
+        Ui.LabeledAction {
+            icon: "restore"
             objectName: "resetDisplayFocus"
             accessKey: "X"
             Layout.fillWidth: true

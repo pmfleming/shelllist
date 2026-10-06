@@ -11,7 +11,6 @@ Ui.ActionDetailsPane {
     readonly property int actionHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     chooserController: controller
     contentAvailable: true
-    headerHeight: Math.max(56, Math.round(64 * uiScale))
     controlHeight: actionHeight
     icon: controller.globalSettingsOpen ? "󰒓" : controller.selectedResult ? controller.selectedResult.icon : "󰍹"
     iconColor: controller.globalSettingsOpen ? Ui.Theme.accent : controller.selectedOutput && !controller.selectedOutput.disabled ? Ui.Theme.active : Ui.Theme.mutedText

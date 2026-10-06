@@ -91,11 +91,11 @@ ColumnLayout {
         }
     }
 
-    Ui.ActionButton {
+    Ui.LabeledAction {
+        icon: "restore"
         objectName: "restoreDeviceName"
         accessKey: "O"
-        Layout.preferredWidth: 180
-        Layout.preferredHeight: Ui.Theme.compactControlHeight
+        Layout.fillWidth: true
         label: qsTr("Restore original name")
         enabled: !section.renameDirty && !section.controller.actionInFlight && !!section.controller.selectedDevice.remote_name && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
         onClicked: section.controller.resetSelectedName()
@@ -103,20 +103,20 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         visible: !!(section.draft || {}).error
-        Ui.ActionButton {
+        Ui.LabeledAction {
+            icon: "refresh"
             objectName: "retryDeviceName"
             accessKey: "N"
             Layout.fillWidth: true
-            Layout.preferredHeight: Ui.Theme.compactControlHeight
             label: qsTr("Retry rename")
             enabled: !section.controller.actionInFlight && section.renameValid
             onClicked: section.controller.nameEdits.retry(section.displayedDeviceKey)
         }
-        Ui.ActionButton {
+        Ui.LabeledAction {
+            icon: "undo"
             objectName: "discardDeviceName"
             accessKey: "X"
             Layout.fillWidth: true
-            Layout.preferredHeight: Ui.Theme.compactControlHeight
             label: qsTr("Discard draft")
             enabled: !(section.draft || {}).pending
             onClicked: {

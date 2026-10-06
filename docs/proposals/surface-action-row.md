@@ -1,4 +1,11 @@
-# Standard surface action row
+# Standard surface action row (historical implementation)
+
+**Visual layout superseded:** the delivered
+[circular panel action contract](circular-panel-actions.md) replaces the labelled
+primary and single row described below. Primaries now align with the title/icon;
+secondaries sit below/right, and all command buttons are icon-only circles.
+Keyboard routing, menu safety and accessible names from this implementation remain.
+The following audit and test counts are historical, not current acceptance.
 
 ## Contract
 

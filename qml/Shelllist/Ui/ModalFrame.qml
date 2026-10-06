@@ -5,6 +5,12 @@ Rectangle {
 
     property string title: ""
     property string detail: ""
+    property string icon: "help"
+    property var actions: []
+    signal actionTriggered(string actionId)
+    function focusAction(actionId: string): void {
+        header.focusAction(actionId);
+    }
     property real maximumCardWidth: 560
     readonly property bool compact: height < 720
     property real minimumOuterMargin: compact ? Theme.minimumVerticalSpacing : Theme.spacingLg
@@ -36,7 +42,7 @@ Rectangle {
         return targets;
     }
     function moveFocus(backwards: bool): void {
-        const targets = focusTargets(bodyColumn);
+        const targets = focusTargets(contentColumn);
         if (!targets.length)
             return;
         let current = Window.window ? Window.window.activeFocusItem : null;
@@ -104,13 +110,16 @@ Rectangle {
                 width: viewport.width
                 spacing: frame.bodySpacing
 
-                ThemeText {
+                DetailsHeader {
+                    id: header
                     width: parent.width
-                    visible: frame.title.length > 0
-                    text: frame.title
-                    font.pixelSize: frame.compact ? Theme.fontSizeHeading : Theme.fontSizeDisplay
-                    font.weight: Theme.fontWeightBold
-                    wrapMode: Text.Wrap
+                    uiScale: 1
+                    visible: frame.title.length > 0 || frame.actions.length > 0
+                    title: frame.title
+                    icon: frame.icon
+                    actions: frame.actions
+                    tabFocusEnabled: true
+                    onActionTriggered: function(actionId) { frame.actionTriggered(actionId); }
                 }
 
                 ThemeText {

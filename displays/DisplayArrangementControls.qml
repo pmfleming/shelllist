@@ -57,7 +57,8 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         visible: !controls.controller.arrangementHint
-        spacing: Ui.Theme.spacingXs
+        spacing: Ui.Theme.spacingSm
+        Item { Layout.fillWidth: true }
         Repeater {
             model: controls.directions
             delegate: Ui.ActionButton {
@@ -65,8 +66,8 @@ ColumnLayout {
                 required property int index
                 readonly property string reason: controls.controller.placementChoices[index].error
                 objectName: "displayPlace-" + modelData.side
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
+                sizeRole: "secondary"
+                icon: ({left: "arrow_back", above: "arrow_upward", below: "arrow_downward", right: "arrow_forward"})[modelData.side]
                 label: modelData.label
                 accessKey: modelData.key
                 enabled: controls.controller.canArrange && !reason

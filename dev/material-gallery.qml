@@ -120,12 +120,12 @@ ShellRoot {
                 }
                 RowLayout {
                     Ui.ActionButton {
-                        implicitWidth: 150
+                        icon: "contrast"
                         label: Ui.Theme.dark ? "Preview light" : "Preview dark"
                         onClicked: Ui.Theme.previewColorScheme = Ui.Theme.dark ? Qt.Light : Qt.Dark
                     }
                     Ui.ActionButton {
-                        implicitWidth: 150
+                        icon: "desktop_windows"
                         label: "Follow desktop"
                         onClicked: Ui.Theme.previewColorScheme = Qt.Unknown
                     }
@@ -171,34 +171,35 @@ ShellRoot {
                     }
                 }
                 Ui.ThemeText {
-                    text: "Expressive controls · hold Space or the pointer to inspect press shapes"
+                    text: "Circular commands · hold Space or the pointer to inspect state feedback"
                     font.pixelSize: 18
                 }
                 Flow {
                     Layout.fillWidth: true
                     spacing: 12
                     Ui.ActionButton {
-                        width: 100
+                        sizeRole: "primary"
+                        icon: "play_arrow"
                         label: "Primary"
                         tone: "accent"
                     }
                     Ui.ActionButton {
-                        width: 100
+                        icon: "check"
                         label: "Success"
                         tone: "active"
                     }
                     Ui.ActionButton {
-                        width: 100
+                        icon: "warning"
                         label: "Warning"
                         tone: "warning"
                     }
                     Ui.ActionButton {
-                        width: 100
+                        icon: "delete"
                         label: "Error"
                         tone: "danger"
                     }
                     Ui.ActionButton {
-                        width: 100
+                        icon: "close"
                         label: "Disabled"
                         enabled: false
                     }

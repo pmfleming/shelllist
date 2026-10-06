@@ -53,6 +53,15 @@ keyboard models still await their own migration.
 
 ## Detail content sizing
 
+Expanded command headers use a shared title/icon band with a right-aligned 56px
+primary circle, and a separate right-aligned row of 48px secondary circles when
+present. Text reserves the primary diameter plus a 16px gap and elides. The
+secondary row fits independently, overflowing to More rather than shrinking or
+stretching buttons. Header natural height is subtracted from the scrolling body;
+result-list anchoring and the supported split envelope are unchanged. Empty
+command rows take no height. Wi-Fi uses the same unscaled header/control geometry
+rather than reducing targets with viewport height.
+
 Settings cards grow from their content, not a fraction of the viewport height.
 Toggle rows retain their natural height (at least 56px); wrapped labels can grow
 further. Short viewports scroll rather than compressing controls into the next

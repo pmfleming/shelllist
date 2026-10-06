@@ -115,6 +115,23 @@ by animation. `ToggleRow.focusSurface` is its switch, not the containing row.
 
 ## Commands, tabs and exceptions
 
+Command buttons are icon-only Material 3 circles. The shared `DetailsHeader`
+centres its larger filled primary beside the title and identity icon; secondary
+circles sit below, right-aligned to the same edge. Title and subtitle elide with
+an explicit gap before the primary. No primary is invented on information-only
+pages. `LabeledAction` supplies passive explanatory text beside contextual
+commands; that text/row is neither a hit target nor a field stop. Full labels
+remain in accessible names and named command menus. Press feedback keeps the
+circle and hit geometry fixed. Modifier hints remain separate overlays.
+
+`SurfaceActionRow` owns both header tiers and overflow commands. A command-only
+`CommandGroup` can move between a selected-result host and details without
+joining editable traversal or field-page readiness. Shared navigation deduplicates
+those live command objects; it does not create parallel command registrations.
+Modal header commands are excluded from panel command discovery and use the
+existing contained native modal traversal. See the
+[circular action implementation](proposals/circular-panel-actions.md).
+
 - Action buttons use **Alt+letter**, not Tab. `ActionControl.accessKey` defines a
   command; `commandScope` can limit a repeated command to the current field/row
   (e.g. Alt+H for its help). Duplicate active letters fail closed.

@@ -24,8 +24,9 @@ Item {
         }
         Ui.FlatIconButton {
             width: 32
-            height: root.height
-            icon: "⋯"
+            height: width
+            anchors.verticalCenter: parent.verticalCenter
+            icon: "more_horiz"
             accessibleName: qsTr("Open Tray")
             activeFocusOnTab: false
             backgroundColor: "transparent"

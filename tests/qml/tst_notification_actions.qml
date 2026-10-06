@@ -41,6 +41,35 @@ TestCase {
         delegate: ToastGroup {}
     }
 
+    Component {
+        id: menuFactory
+        Ui.NotificationActionList {
+            width: 320
+            actions: [{key: "archive", label: "Archive conversation"}, {key: "mute", label: "Mute conversation"}]
+            property string lastKey: ""
+            onTriggered: function(key) { lastKey = key; }
+        }
+    }
+    function test_namedActionsUseCircularMenuLauncher(): void {
+        const actions = createTemporaryObject(menuFactory, testCase);
+        const button = findChild(actions, "notificationAppActions");
+        compare(button.width, button.height);
+        compare(findChild(button, "actionLabel").label, "");
+        button.forceActiveFocus();
+        keyClick(Qt.Key_Return);
+        const menu = findChild(actions, "notificationAppActionMenu");
+        tryVerify(() => menu.activeFocus);
+        compare(menu.count, 2);
+        keyClick(Qt.Key_Down);
+        keyClick(Qt.Key_Return);
+        compare(actions.lastKey, "mute");
+        tryVerify(() => button.activeFocus);
+        keyClick(Qt.Key_Return);
+        tryVerify(() => menu.activeFocus);
+        keyClick(Qt.Key_Escape);
+        tryVerify(() => button.activeFocus);
+        compare(actions.lastKey, "mute", "Escape never invokes an action");
+    }
     function test_actionsSurviveRepeaterModelData(): void {
         const group = groupRepeater.itemAt(0) as ToastGroup;
         verify(group !== null);

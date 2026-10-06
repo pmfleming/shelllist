@@ -1,22 +1,24 @@
 import QtQuick
 import Shelllist.Ui as Ui
 
-Ui.ActionControl {
+Ui.ActionButton {
     id: root
-
     required property string text
     property color foreground: Ui.Theme.text
-    property color backgroundColor: "transparent"
-    property color borderColor: "transparent"
-    property bool symbolic: true
-    activeFocusOnTab: false
-    radius: height / 2
-    property int horizontalPadding: 10
-    property int minimumWidth: 0
+    icon: text
+    iconSize: 20
+    labelColor: foreground
     accessibleName: text
+    implicitWidth: 32
+    implicitHeight: 32
+    activeFocusOnTab: false
+    backgroundColor: "transparent"
+    borderColor: "transparent"
+    border.width: 0
+    // This adapter retains multi-button/wheel routes instead of also accepting
+    // clicks through PointerActionControl's ordinary single-click receiver.
+    pointerEnabled: false
     onClicked: primaryTriggered()
-    property alias elide: label.elide
-    property alias fontWeight: label.font.weight
 
     signal primaryTriggered
     signal secondaryTriggered
@@ -25,64 +27,19 @@ Ui.ActionControl {
     signal wheelDown
 
     function routeClick(button: int): void {
-        if (!enabled || !interactive)
-            return;
-        if (button === Qt.LeftButton)
-            activate();
-        else if (button === Qt.RightButton)
-            secondaryTriggered();
-        else if (button === Qt.MiddleButton)
-            middleTriggered();
+        if (!enabled || !interactive) return;
+        if (button === Qt.LeftButton) activate();
+        else if (button === Qt.RightButton) secondaryTriggered();
+        else if (button === Qt.MiddleButton) middleTriggered();
     }
-
     function routeWheel(delta: int): void {
-        if (!enabled || !interactive || delta === 0)
-            return;
-        if (delta > 0)
-            wheelUp();
-        else
-            wheelDown();
+        if (!enabled || !interactive || delta === 0) return;
+        if (delta > 0) wheelUp();
+        else wheelDown();
     }
-
-    implicitWidth: Math.max(minimumWidth, label.implicitWidth + horizontalPadding * 2)
-    implicitHeight: 37
-
-    Rectangle {
-        anchors.fill: parent
-        radius: height / 2
-        color: root.backgroundColor
-        border.width: 1
-        border.color: root.borderColor
-
-        Ui.InteractiveBehavior on color {
-            duration: Ui.Theme.animationFast
-            easingType: Easing.Linear
-        }
-    }
-
-    Ui.GlyphLabel {
-        id: label
-        anchors.fill: parent
-        anchors.leftMargin: root.horizontalPadding
-        anchors.rightMargin: root.horizontalPadding
-        glyph: root.text
-        color: root.foreground
-        font.family: root.symbolic ? (symbol ? Ui.Theme.symbolFontFamily : Ui.Theme.iconFontFamily) : Ui.Theme.fontFamily
-        font.pixelSize: root.symbolic ? 20 : Ui.Theme.fontSizeLabel
-        font.weight: Ui.Theme.fontWeightRegular
-        verticalAlignment: Text.AlignVCenter
-        horizontalAlignment: Text.AlignHCenter
-        elide: Text.ElideNone
-
-        Ui.InteractiveBehavior on color {
-            duration: Ui.Theme.animationFast
-            easingType: Easing.Linear
-        }
-    }
-
     Ui.StateLayer {
         focusTarget: root
-        radius: height / 2
+        radius: root.radius
         stateColor: root.foreground
         showStateBackground: true
         hoverOpacity: 0.09
@@ -90,11 +47,7 @@ Ui.ActionControl {
         interactive: root.interactive
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         consumeWheel: false
-        onClicked: function (mouse) {
-            root.routeClick(mouse.button);
-        }
-        onWheel: function (event) {
-            root.routeWheel(event.angleDelta.y);
-        }
+        onClicked: function (mouse) { root.routeClick(mouse.button); }
+        onWheel: function (event) { root.routeWheel(event.angleDelta.y); }
     }
 }

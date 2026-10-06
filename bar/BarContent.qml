@@ -72,10 +72,10 @@ Item {
                         required property var resultData
                         objectName: "bar:" + resultData.id
                         Layout.preferredWidth: 32
-                        Layout.fillHeight: true
+                        Layout.preferredHeight: 32
+                        Layout.alignment: Qt.AlignVCenter
                         text: resultData.text
                         accessibleName: resultData.tooltip
-                        horizontalPadding: 4
                         foreground: root.toneColors[resultData.tone] || Ui.Theme.text
                         onPrimaryTriggered: root.controller.triggerModuleAction(resultData.primary)
                         onSecondaryTriggered: root.controller.triggerModuleAction(resultData.secondary)
@@ -89,15 +89,16 @@ Item {
                     controller: root.controller
                     layoutDensity: root.layoutDensity
                 }
-                BarAction {
+                Ui.ThemeText {
                     objectName: "barClock"
                     readonly property var descriptor: Presentation.clockModule(root.now, root.controller.timezone)
-                    Layout.preferredWidth: implicitWidth
-                    Layout.fillHeight: true
                     text: Presentation.moduleText(descriptor, root.layoutDensity)
-                    symbolic: false
-                    accessibleName: descriptor.tooltip
-                    horizontalPadding: 6
+                    font.pixelSize: Ui.Theme.fontSizeLabel
+                }
+                BarAction {
+                    objectName: "barClockAction"
+                    text: "schedule"
+                    accessibleName: qsTr("Open time and weather")
                     onPrimaryTriggered: root.controller.openTimeWeather("time")
                 }
             }

@@ -16,7 +16,6 @@ Ui.ActionDetailsPane {
     chooserController: controller
     emptyText: "Select a Bluetooth device"
     contentAvailable: controller.hasSelection || controller.detailsTab === "adapter"
-    headerHeight: Math.max(56, Math.round(64 * uiScale))
     controlHeight: actionHeight
     icon: deviceContext ? controller.selectedResult.icon : "󰒓"
     iconColor: !deviceContext || controller.selectedDevice.connected ? Ui.Theme.active : Ui.Theme.mutedText

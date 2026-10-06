@@ -72,28 +72,13 @@ ModalFrame {
         onClicked: dialog.prompt.saveSecret = !dialog.prompt.saveSecret
     }
 
-    ActionToolbar {
-        width: parent.width
-        height: Theme.controlHeight
-        fillActions: true
-        actions: [
-            {
-                id: "cancel",
-                label: "Cancel"
-            },
-            {
-                id: "accept",
-                label: dialog.prompt.credentialMode === "daemon-secret" ? "Provide" : "Connect",
-                presentation: {
-                    tone: "accent"
-                }
-            }
-        ]
-        onTriggered: function (actionId) {
-            if (actionId === "cancel")
-                dialog.cancelled();
-            else
-                dialog.accepted(dialog.prompt.credentialValues);
-        }
+    icon: "wifi"
+    actions: [
+        {id: "accept", label: prompt.credentialMode === "daemon-secret" ? qsTr("Provide credentials") : qsTr("Connect"), icon: "wifi", presentation: {group: "primary"}},
+        {id: "cancel", label: qsTr("Cancel"), icon: "close", presentation: {group: "toolbar"}}
+    ]
+    onActionTriggered: function(actionId) {
+        if (actionId === "cancel") cancelled();
+        else accepted(prompt.credentialValues);
     }
 }

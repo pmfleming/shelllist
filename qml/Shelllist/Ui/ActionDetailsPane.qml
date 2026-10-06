@@ -40,7 +40,6 @@ DetailsPane {
         id: header
         width: parent.width
         uiScale: pane.uiScale
-        sectionSpacing: pane.sectionSpacing
         onActionTriggered: function (actionId) {
             pane.actionTriggered(actionId);
         }

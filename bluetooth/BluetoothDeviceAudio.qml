@@ -84,21 +84,21 @@ Ui.DetailColumnCard {
 
         RowLayout {
             Layout.fillWidth: true
-            Ui.ActionButton {
+            Ui.LabeledAction {
+                icon: "speaker"
                 objectName: "useAudioOutput"
                 accessKey: "O"
                 Layout.fillWidth: true
-                Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: card.controller.selectedSink.is_default ? "Default output" : "Use as output"
                 toolTip: card.controller.selectedSink.ready ? "" : "Audio output is not available"
                 enabled: card.liveAudio && !card.controller.actionInFlight && !!card.controller.selectedSink.ready && !card.controller.selectedSink.is_default
                 onClicked: card.controller.setAudioDefault(card.controller.selectedSink)
             }
-            Ui.ActionButton {
+            Ui.LabeledAction {
+                icon: "mic"
                 objectName: "useAudioInput"
                 accessKey: "I"
                 Layout.fillWidth: true
-                Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: card.controller.selectedSource.is_default ? "Default input" : "Use as input"
                 toolTip: card.controller.selectedSource.ready ? "" : "Audio input is not available"
                 enabled: card.liveAudio && !card.controller.actionInFlight && !!card.controller.selectedSource.ready && !card.controller.selectedSource.is_default

@@ -16,8 +16,9 @@ Item {
     Accessible.name: item ? item.title || item.id : ""
     Accessible.onPressAction: root.routeClick(Qt.LeftButton)
     Rectangle {
-        anchors.fill: parent
-        anchors.margins: 2
+        anchors.centerIn: parent
+        width: Math.min(root.width, root.height) - 4
+        height: width
         radius: width / 2
         color: "transparent"
         border.width: root.item && root.item.status === Status.NeedsAttention ? 2 : 0
@@ -50,6 +51,10 @@ Item {
     }
 
     Ui.StateLayer {
+        anchors.fill: undefined
+        anchors.centerIn: parent
+        width: Math.min(root.width, root.height)
+        height: width
         focusTarget: root
         radius: height / 2
         stateColor: Ui.Theme.text

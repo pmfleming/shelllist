@@ -11,9 +11,9 @@ FocusScope {
     property Item additionalCommandItem: null
     property bool headerShortcutsEnabled: false
     property Item headerContentItem: contentItem
-    readonly property list<SurfaceActionRow> actionRows: collectActionRows(headerContentItem)
+    readonly property list<SurfaceActionRow> actionRows: uniqueItems(collectActionRows(headerContentItem).concat(collectActionRows(additionalCommandItem)))
     readonly property list<ActionControl> headerButtons: actionRows.reduce((buttons, row) => buttons.concat(Array.from(row.buttons)), [])
-    readonly property list<ActionControl> contentCommands: collectCommands(contentItem).concat(collectCommands(additionalCommandItem)).filter(item => commandInScope(item))
+    readonly property list<ActionControl> contentCommands: uniqueItems(collectCommands(contentItem).concat(collectCommands(additionalCommandItem))).filter(item => commandInScope(item))
     readonly property list<ActionControl> commandButtons: headerButtons.concat(contentCommands.filter(item => !!item.accessKey))
     readonly property bool commandMenuOpen: commandMenu.visible || actionRows.some(row => row.popupOpen)
     property ChooserMemory viewMemory: null
@@ -180,7 +180,7 @@ FocusScope {
             return false;
         // Match target traversal boundaries; native input/cursor decorations
         // are not pages and may be created as a consequence of restoring focus.
-        if (editable(item) || item instanceof ActionControl || item instanceof IconTile || item instanceof ModalFrame || item instanceof DetailsHeader || item instanceof DetailsTabBar || item instanceof SurfaceActionRow || (item as DetailSection)?.informationOnly)
+        if (editable(item) || item instanceof ActionControl || item instanceof IconTile || item instanceof CommandGroup || item instanceof ModalFrame || item instanceof DetailsHeader || item instanceof DetailsTabBar || item instanceof SurfaceActionRow || (item as DetailSection)?.informationOnly)
             return true;
         const page = item as DetailFlickable;
         const children = page ? page.navigationContent.children : item.children;
@@ -191,7 +191,7 @@ FocusScope {
         return true;
     }
     function collectTargets(item: Item): var {
-        if (!item || !item.visible || (item as DetailSection)?.informationOnly || item instanceof DetailsTabBar || item instanceof ModalFrame || item instanceof DetailsHeader || item instanceof SurfaceActionRow)
+        if (!item || !item.visible || (item as DetailSection)?.informationOnly || item instanceof DetailsTabBar || item instanceof ModalFrame || item instanceof CommandGroup || item instanceof DetailsHeader || item instanceof SurfaceActionRow)
             return [];
         // Composite inputs are one browsing stop, not their internal buttons.
         if (editable(item))
@@ -256,8 +256,11 @@ FocusScope {
         finishEditor(true);
         focusContent();
     }
+    function uniqueItems(items: var): var {
+        return items.filter((item, index) => items.indexOf(item) === index);
+    }
     function collectActionRows(item: Item): var {
-        if (!item || !item.visible || (item as DetailSection)?.informationOnly)
+        if (!item || !item.visible || item instanceof ModalFrame || (item as DetailSection)?.informationOnly)
             return [];
         if (item instanceof SurfaceActionRow)
             return [item];

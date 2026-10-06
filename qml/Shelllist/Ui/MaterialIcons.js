@@ -19,4 +19,19 @@ const symbols = {
     "": "play_arrow", "": "pause", "": "skip_previous", "": "skip_next",
     "󰄪": "monitoring", "󰂚": "notifications_none", "󰂛": "notifications_off"
 };
-function name(glyph) { return Object.prototype.hasOwnProperty.call(symbols, glyph) ? symbols[glyph] : ""; }
+// Explicit semantic names used by shared command/header controls. Never treat
+// arbitrary application-provided text as a Material ligature.
+const commandSymbols = [
+    "wifi", "today", "refresh", "arrow_back", "arrow_forward", "arrow_upward",
+    "arrow_downward", "chevron_left", "more_horiz", "play_arrow", "pause",
+    "restore", "undo", "check", "close", "delete", "cancel", "help", "monitor",
+    "speaker", "mic", "autorenew", "battery_charging_full", "battery_saver",
+    "clear_all", "qr_code", "qr_code_scanner", "content_copy", "content_paste",
+    "open_in_new", "unfold_more", "reply", "snooze", "schedule", "notifications",
+    "contrast", "desktop_windows", "warning", "share", "bluetooth", "volume_up",
+    "music_note", "settings_input_component", "battery_full", "cloud"
+];
+function name(glyph) {
+    return Object.prototype.hasOwnProperty.call(symbols, glyph) ? symbols[glyph]
+        : commandSymbols.indexOf(glyph) >= 0 ? glyph : "";
+}

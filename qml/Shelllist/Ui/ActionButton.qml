@@ -1,20 +1,17 @@
 import QtQuick
 
+// Command labels are nonvisual. Explanations belong beside the circular control,
+// or in a named command menu; changing the label never changes hit geometry.
 PointerActionControl {
     id: control
 
     property string label: ""
     accessibleName: label
     property string icon: ""
-    property bool iconOnly: icon.length > 0
-    property int iconSize: Theme.iconSizeSmall
-    property string hotkey: ""
-    // Opt-in surface hierarchy; ordinary content buttons keep their sizing.
+    property int iconSize: Math.round((sizeRole === "primary" ? Theme.primaryActionIconSize : Theme.secondaryActionIconSize) * uiScale)
     property string sizeRole: "normal"
     property real uiScale: 1
-    readonly property int labelPixelSize: Math.round(Theme.fontSizeBody * uiScale)
-    readonly property int horizontalPadding: Math.round(Theme.actionHorizontalPadding * uiScale)
-    // Transitional nonvisual metadata; no tooltip or focus label is rendered.
+    // Nonvisual metadata; no hover tooltip is rendered.
     property string toolTip: ""
     Accessible.description: [toolTip, surfaceShortcut ? qsTr("Shortcut %1").arg(surfaceShortcut) : ""].filter(Boolean).join(". ")
     property string tone: "normal"
@@ -26,15 +23,8 @@ PointerActionControl {
     readonly property string interactionState: !enabled || !interactive ? "disabled" : (pressed ? "pressed" : (hovered || highlighted ? "highlighted" : "flat"))
 
     implicitHeight: Math.round((sizeRole === "primary" ? Theme.primaryActionHeight : sizeRole === "secondary" ? Theme.secondaryActionHeight : Theme.controlHeight) * uiScale)
-    implicitWidth: sizeRole === "normal" ? 0 : iconOnly ? implicitHeight : Math.ceil(labelMetrics.advanceWidth) + horizontalPadding * 2 + (icon.length ? iconSize + Theme.spacingSm : 0)
-    TextMetrics {
-        id: labelMetrics
-        text: control.sizeRole === "normal" ? "" : control.label
-        font.family: Theme.fontFamily
-        font.pixelSize: control.labelPixelSize
-        font.weight: control.sizeRole === "primary" ? Theme.fontWeightMedium : Theme.fontWeightRegular
-    }
-    radius: Math.max(0, Math.min(Math.min(width, height) / 2, shape.value))
+    implicitWidth: implicitHeight
+    radius: Math.min(width, height) / 2
     readonly property color stateBackgroundColor: interactionState === "pressed" ? pressedBackgroundColor : (interactionState === "highlighted" ? hoverBackgroundColor : backgroundColor)
     color: stateBackgroundColor
     border.color: borderColor
@@ -44,19 +34,11 @@ PointerActionControl {
     ControlLabel {
         objectName: "actionLabel"
         anchors.centerIn: parent
-        label: control.iconOnly ? "" : control.label
+        label: ""
+        hotkey: ""
         icon: control.icon
-        hotkey: control.hotkey
         iconColor: control.labelColor
-        iconSize: control.iconSize
+        iconSize: Math.min(control.iconSize, Math.min(control.width, control.height) - 8)
         labelColor: control.labelColor
-        labelPixelSize: control.labelPixelSize
-        labelWeight: control.sizeRole === "primary" ? Theme.fontWeightMedium : Theme.fontWeightRegular
-        maximumWidth: control.sizeRole === "normal" ? -1 : Math.max(0, control.width - control.horizontalPadding * 2)
-    }
-
-    ExpressiveMotion {
-        id: shape
-        target: control.pressed ? Math.min(Theme.pressedCornerRadius, Math.min(control.width, control.height) / 2) : Math.min(control.width, control.height) / 2
     }
 }

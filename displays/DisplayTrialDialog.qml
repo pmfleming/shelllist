@@ -10,6 +10,14 @@ Ui.ModalFrame {
     objectName: "displayTrialDialog"
     title: qsTr("Keep this layout?")
     maximumCardWidth: 420
+    icon: "monitor"
+    actions: [
+        {id: "confirm", label: qsTr("Keep layout"), icon: "check", enabled: controller.backend.ready && !controller.actionInFlight && !controller.stale && controller.secondsLeft > 0, presentation: {group: "primary"}},
+        {id: "revert", label: qsTr("Revert layout"), icon: "undo", enabled: controller.backend.ready && !controller.actionInFlight, presentation: {group: "toolbar"}}
+    ]
+    onActionTriggered: function(actionId) {
+        if (controller.trial) controller.displayLayoutAction(actionId, {id: controller.trial.id});
+    }
     visible: !!controller.trial
     detail: controller.displayPolicyError || (controller.stale ? qsTr("Displays changed. Revert this layout.") : "")
 
@@ -36,40 +44,15 @@ Ui.ModalFrame {
                 color: Ui.Theme.warning
             }
         }
-        RowLayout {
+        Ui.ThemeText {
             Layout.fillWidth: true
-            spacing: Ui.Theme.spacingMd
-            Ui.ActionButton {
-                id: revert
-                objectName: "revertDisplayLayout"
-                Layout.fillWidth: true
-                label: qsTr("Revert")
-                icon: "󰕍"
-                iconOnly: false
-                enabled: dialog.controller.backend.ready && !dialog.controller.actionInFlight
-                onClicked: if (dialog.controller.trial)
-                    dialog.controller.displayLayoutAction("revert", {
-                        id: dialog.controller.trial.id
-                    })
-            }
-            Ui.ActionButton {
-                objectName: "confirmDisplayLayout"
-                Layout.fillWidth: true
-                label: qsTr("Keep")
-                icon: "󰄬"
-                iconOnly: false
-                tone: "accent"
-                enabled: dialog.controller.backend.ready && !dialog.controller.actionInFlight && !dialog.controller.stale && dialog.controller.secondsLeft > 0
-                onClicked: if (dialog.controller.trial)
-                    dialog.controller.displayLayoutAction("confirm", {
-                        id: dialog.controller.trial.id
-                    })
-            }
+            text: qsTr("Keep this layout with the check button, or undo to revert now. Without confirmation the previous layout is restored automatically.")
+            wrapMode: Text.Wrap
         }
     }
     function focusRevert(): void {
         if (visible)
-            revert.forceActiveFocus();
+            focusAction("revert");
     }
     onVisibleChanged: if (visible)
         Qt.callLater(focusRevert)

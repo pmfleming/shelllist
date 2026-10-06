@@ -1,11 +1,12 @@
 import QtQuick
 import QtQuick.Layouts
 
-Column {
+Item {
     id: header
     required property real uiScale
     property string icon: ""
     property url iconSource: ""
+    property int iconCount: 1
     property bool signalIcon: false
     property color iconColor: Theme.mutedText
     property color iconBorderColor: Theme.strongBorder
@@ -19,13 +20,14 @@ Column {
     property var actions: []
     property bool secondaryVisible: true
     property int headerHeight: Math.max(56, Math.round(64 * uiScale))
-    property int sectionSpacing: Theme.verticalSpacing(Theme.spacingMd, uiScale)
     signal actionTriggered(string actionId)
-    spacing: actionRow.height > 0 ? sectionSpacing : 0
-    height: headerHeight + actionRow.height + spacing
+    property bool tabFocusEnabled: false
+    function focusAction(actionId: string): void { actionRow.focusAction(actionId); }
+    implicitHeight: actionRow.implicitHeight
+    height: implicitHeight
 
     RowLayout {
-        width: parent.width
+        width: Math.max(0, parent.width - actionRow.primaryWidth - (actionRow.primaryWidth ? Theme.actionTitleGap * header.uiScale : 0))
         height: header.headerHeight
         spacing: Math.max(Theme.spacingSm, Math.round(Theme.spacingMd * header.uiScale))
         IconTile {
@@ -39,6 +41,11 @@ Column {
             iconSize: Math.max(Theme.iconSizeLarge, Math.round(Theme.iconSizeLarge * header.uiScale))
             backgroundColor: Theme.selected
             borderColor: header.iconBorderColor
+            GroupCountBadge {
+                count: header.iconCount
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+            }
             SignalIcon {
                 visible: header.signalIcon
                 anchors.centerIn: parent
@@ -48,17 +55,45 @@ Column {
                 iconColor: header.iconColor
             }
         }
-        ResultLabel {
-            title: header.title
-            subtitle: header.subtitle
-            subtitleColor: header.subtitleColor
-            statusIndicatorVisible: header.statusIndicatorVisible
-            statusIndicatorColor: header.statusIndicatorColor
-            titleWeight: Theme.fontWeightBold
-            subtitleWeight: header.subtitleWeight
-            titlePixelSize: header.titlePixelSize
-            subtitlePixelSize: Math.max(Theme.fontSizeCaption, Math.round(Theme.fontSizeSmall * header.uiScale))
-            uiScale: header.uiScale
+        Item {
+            objectName: "detailIdentityLabel"
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumWidth: 0
+            ThemeText {
+                id: titleText
+                objectName: "detailTitle"
+                width: parent.width
+                anchors.verticalCenter: parent.verticalCenter
+                text: header.title
+                font.weight: Theme.fontWeightBold
+                font.pixelSize: header.titlePixelSize
+                elide: Text.ElideRight
+            }
+            RowLayout {
+                anchors.top: titleText.bottom
+                anchors.topMargin: Math.round(2 * header.uiScale)
+                width: parent.width
+                visible: header.subtitle.length > 0 || header.statusIndicatorVisible
+                spacing: Theme.spacingSm * header.uiScale
+                Rectangle {
+                    visible: header.statusIndicatorVisible
+                    Layout.preferredWidth: 8 * header.uiScale
+                    Layout.preferredHeight: 8 * header.uiScale
+                    radius: width / 2
+                    color: header.statusIndicatorColor
+                }
+                ThemeText {
+                    objectName: "detailSubtitle"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    text: header.subtitle
+                    color: header.subtitleColor
+                    font.weight: header.subtitleWeight
+                    font.pixelSize: Math.max(Theme.fontSizeCaption, Math.round(Theme.fontSizeSmall * header.uiScale))
+                    elide: Text.ElideRight
+                }
+            }
         }
     }
     SurfaceActionRow {
@@ -66,6 +101,9 @@ Column {
         objectName: "surfaceActionRow"
         width: parent.width
         uiScale: header.uiScale
+        identityHeight: header.headerHeight
+        reserveIdentity: true
+        tabFocusEnabled: header.tabFocusEnabled
         actions: header.actions
         secondaryVisible: header.secondaryVisible
         onTriggered: function(actionId) { header.actionTriggered(actionId); }

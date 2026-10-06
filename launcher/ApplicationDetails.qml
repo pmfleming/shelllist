@@ -16,7 +16,6 @@ Ui.ActionDetailsPane {
     leftMargin: 18
     rightMargin: 16
     emptyText: "Select an application"
-    headerHeight: Math.max(58, Math.round(66 * uiScale))
     controlHeight: actionHeight
     icon: "󰀻"
     iconColor: application.focused ? Ui.Theme.active : Ui.Theme.accent

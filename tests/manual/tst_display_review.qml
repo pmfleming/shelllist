@@ -144,7 +144,7 @@ Tests.DaemonTestCase {
         c.applyDisplayPolicy(trial);
         save(panel.viewport, data.tag + "-trial");
         verify(c.trial !== null);
-        verify(findChild(panel, "revertDisplayLayout").activeFocus, "Revert retains initial trial focus");
+        verify(findChild(panel, "detailAction:revert").activeFocus, "Revert retains initial trial focus");
         compare(calls.filter(call => call.method !== "bar.snapshot").length, 0, "rendering never mutates real or mocked displays");
     }
 }

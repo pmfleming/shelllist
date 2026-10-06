@@ -65,21 +65,21 @@ Column {
         color: Ui.Theme.danger
         wrapMode: Text.WordWrap
     }
-    Ui.ActionButton {
+    Ui.LabeledAction {
+        icon: "refresh"
         objectName: "notificationDndRetry"
         accessKey: "T"
         visible: settings.notificationState.dndError.length > 0
         enabled: !settings.notificationState.dndPending && settings.nativeAvailable
         width: parent.width
-        height: Ui.Theme.controlHeight
         label: qsTr("Retry Do Not Disturb change")
         onClicked: settings.notificationState.retryDnd()
     }
-    Ui.ActionButton {
+    Ui.LabeledAction {
+        icon: "clear_all"
         objectName: "notificationClearAll"
         visible: settings.notificationState.activeNotifications.length > 0
         width: parent.width
-        height: Ui.Theme.controlHeight
         label: qsTr("Dismiss all live notifications")
         accessibleName: qsTr("Dismiss all live notifications; retain history")
         onClicked: settings.notificationState.clearNotifications()

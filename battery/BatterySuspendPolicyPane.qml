@@ -240,7 +240,8 @@ Ui.DetailColumnCard {
         elide: Text.ElideNone
     }
 
-    Ui.ActionButton {
+    Ui.LabeledAction {
+        icon: "cancel"
         objectName: "criticalBatteryCancel"
         accessKey: "C"
         Layout.fillWidth: true
@@ -261,7 +262,8 @@ Ui.DetailColumnCard {
         elide: Text.ElideNone
     }
 
-    Ui.ActionButton {
+    Ui.LabeledAction {
+        icon: "refresh"
         objectName: "suspendPolicyRetry"
         accessKey: "R"
         Layout.fillWidth: true

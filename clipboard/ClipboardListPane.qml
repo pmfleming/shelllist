@@ -61,15 +61,14 @@ Ui.ChooserListPane {
                 Accessible.name: text
             }
 
-            Ui.ActionButton {
+            Ui.LabeledAction {
+                icon: "refresh"
                 objectName: "retryClipboardHistory"
                 anchors.centerIn: parent
                 width: Math.min(footer.width, 280)
                 visible: pane.controller.historyPageError.length > 0
                 label: "Couldn’t load more · Retry"
                 toolTip: pane.controller.historyPageError
-                backgroundColor: "transparent"
-                borderColor: "transparent"
                 onClicked: pane.controller.loadMoreHistory()
             }
         }

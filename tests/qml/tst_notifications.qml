@@ -268,6 +268,13 @@ DaemonTestCase {
         tryVerify(() => findChild(content, "notificationReplyInput") !== null);
         const field = findChild(content, "notificationReplyInput");
         tryVerify(() => field.inputActiveFocus);
+        const primary = findChild(content, "detailAction:open");
+        verify(primary !== null && primary.visible);
+        compare(primary.width, primary.height);
+        const navigation = content.detailsNavigation;
+        compare(navigation.commandButtons.filter(button => button.accessKey === "O").length, 1, "reparented header has one command owner");
+        verify(navigation.headerButtons.includes(primary));
+        verify(!navigation.targets.includes(primary), "commands never join field traversal");
         keyClick(Qt.Key_H);
         keyClick(Qt.Key_I);
         const repliesBefore = testCase.calls.filter(call => call.method === "notifications.reply").length;
@@ -282,6 +289,8 @@ DaemonTestCase {
         state.setDraft(controller.selectedKey, "Saved draft");
         controller.closeDetails();
         content.listItem.focusList();
+        tryCompare(primary, "visible", false);
+        compare(navigation.commandButtons.filter(button => button.accessKey === "O").length, 1, "collapsed commands remain unique");
         keyClick(Qt.Key_R, Qt.AltModifier);
         tryVerify(() => controller.detailsOpen);
         tryVerify(() => findChild(content, "notificationReplyInput") !== null && findChild(content, "notificationReplyInput").inputActiveFocus);
@@ -299,6 +308,7 @@ DaemonTestCase {
         content.listItem.focusList();
         keyClick(Qt.Key_Return);
         verify(controller.detailsOpen, "no default action means inspect, never dismiss");
+        tryVerify(() => !findChild(content, "surfaceActionRow").primaryAction);
         compare(sent().length, before + 2);
         content.destroy();
         wait(0);

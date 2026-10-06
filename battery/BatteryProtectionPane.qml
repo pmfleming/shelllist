@@ -90,7 +90,8 @@ Column {
             saving: pane.controller.thresholdOperationActive
         }
 
-        Ui.ActionButton {
+        Ui.LabeledAction {
+            icon: "battery_charging_full"
             Layout.fillWidth: true
             accessKey: "O"
             label: pane.protection.charge_once_active ? "Charging to 100%" : "Charge to 100% once"
@@ -111,7 +112,8 @@ Column {
             Layout.fillWidth: true
             title: qsTr("Charging maintenance")
 
-            Ui.ActionButton {
+            Ui.LabeledAction {
+                icon: pane.controller.chargingInhibited ? "play_arrow" : "pause"
                 Layout.fillWidth: true
                 accessKey: "P"
                 label: pane.controller.chargingInhibited ? "Resume charging" : "Pause charging"
@@ -120,7 +122,8 @@ Column {
                 onClicked: pane.controller.setChargingInhibited(!pane.controller.chargingInhibited)
             }
 
-            Ui.ActionButton {
+            Ui.LabeledAction {
+                icon: pane.controller.calibrating ? "cancel" : "battery_saver"
                 Layout.fillWidth: true
                 accessKey: "C"
                 label: pane.controller.calibrating ? "Cancel calibration" : "Calibrate battery"

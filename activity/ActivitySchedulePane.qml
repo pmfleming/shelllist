@@ -37,8 +37,8 @@ Column {
             ActivityHeaderButton {
                 id: previousButton
                 objectName: "activityPreviousDay"
-                Accessible.name: qsTr("Previous day")
-                label: "‹"
+                label: qsTr("Previous day")
+                icon: "chevron_left"
                 onTriggered: pane.controller.selectDate(new Date(pane.controller.selectedDate.getFullYear(), pane.controller.selectedDate.getMonth(), pane.controller.selectedDate.getDate() - 1))
             }
             Ui.ThemeText {
@@ -53,13 +53,14 @@ Column {
             ActivityHeaderButton {
                 id: nextWidth
                 objectName: "activityNextDay"
-                Accessible.name: qsTr("Next day")
-                label: "›"
+                label: qsTr("Next day")
+                icon: "chevron_right"
                 onTriggered: pane.controller.selectDate(new Date(pane.controller.selectedDate.getFullYear(), pane.controller.selectedDate.getMonth(), pane.controller.selectedDate.getDate() + 1))
             }
             ActivityHeaderButton {
                 id: todayButton
                 label: "Today"
+                icon: "today"
                 onTriggered: pane.controller.goToToday()
             }
         }

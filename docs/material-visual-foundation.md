@@ -12,10 +12,12 @@ than acquiring an invented meaning. `SHELLLIST_FONT` still overrides typography;
 `SHELLLIST_ICON_FONT` controls the specialist fallback. Existing symbol mappings
 are in `Ui/MaterialIcons.js`.
 
-Icon-bearing actions and detail tabs are visually icon-only; their full accessible
-names remain. A label remains when no meaningful icon exists, including explicit
-confirmation text. Shell/panel/card radii are 28/20/16px; form fields now use
-12px filled containers and buttons retain their expressive capsule/pressed treatment. Selected result
+Command buttons and detail tabs are visually icon-only; their full accessible
+names remain. Commands use fixed circles, including prompts and confirmations.
+Explanations remain outside buttons; arbitrary desktop actions use passive-labelled
+command rows and arbitrary notification actions use a named menu. Shell/panel/card
+radii are 28/20/16px; form fields use 12px filled containers. The earlier command
+capsule/pressed-corner treatment is superseded by the circular contract below. Selected result
 corners use the interruptible spring without changing hit geometry or focus timing.
 Mouse-click, keyboard and browse focus now share an immediate rounded tonal
 highlight, without an extra rectangular browse ring. `FocusRing` retains its
@@ -119,15 +121,30 @@ containers remain solid. Contrast tests include the composited shell over black
 and white backgrounds. This adds transparency, **not compositor blur**; live blur
 integration and visual validation remain separate work.
 
-## Expressive buttons and switches
+## Circular command buttons and expressive switches
 
-Shared `ActionButton` (including `FlatIconButton`) now rests as a capsule/circle
-and morphs to an **8px pressed corner**, bounded by the available size. This
-follows the small Expressive button's full/CornerSmall shape pairing. Existing
-42px desktop control height is retained rather than resizing every consumer to
-the 40px mobile button token. Width, height, hit regions and text never animate.
-The old unbounded button ripple is replaced by solid state color and shape
-feedback; other `StateLayer` consumers are unchanged.
+Shared `ActionButton` (including `FlatIconButton`) is icon-only and circular in
+rest, hover, focus, press and disabled states. Commands use M3 semantic fill/icon
+pairs and state-colour feedback, not a pressed corner morph. Header primaries are
+56px with 28px icons; secondaries are 48px with 24px icons, with an 8px gap.
+Compact bar/list commands retain smaller square geometry. Width, height and hit
+regions never animate. Selection controls and switches retain their own paint.
+
+`DetailsHeader` places the larger primary beside the title/icon, reserving its
+width plus a 16px text gap; title and subtitle elide. Secondary circles occupy a
+separate right-aligned lower row. `SurfaceActionRow` fits that row independently
+and preserves Alt+M overflow, popup ownership and live command discovery. Activity
+and selected Notifications now share this geometry; no-action headers do not
+reserve an empty action row. Wi-Fi no longer shrinks commands with viewport height.
+
+`LabeledAction` keeps contextual explanations passive beside a right-aligned
+circle. Modal headers share the hierarchy while retaining native contained Tab
+and safe initial focus. Toast commands use the same header; app-defined actions
+open a named menu instead of rendering arbitrary labels on buttons. The compact
+bar clock is passive text beside its circular time/weather command. Semantic
+Material symbol names are explicitly mapped, including identity tiles, so they
+do not render as literal icon-name strings. See the
+[all-panel audit and delivery record](proposals/circular-panel-actions.md).
 
 Both switch presentations share a **52×32** track, **16px off / 24px on** thumb
 and **28px pressed** thumb. Off uses a solid surface-container fill with a 2px
@@ -302,9 +319,9 @@ python3 ../daemon-framework/tools/local-build.py run --attr materialGallery .
 
 The separate gallery uses the shared production controls. It shows light/dark
 swatches for the desktop, purple and teal seeds; real controls with keyboard
-focus, capsule button shapes and on/off/disabled Material switches; and
+focus, circular command buttons and on/off/disabled Material switches; and
 **Roboto Flex versus Noto Sans** samples. Hold Space or the pointer on a button
-to inspect its press shape. The slider samples include live, disabled, mirrored
+to inspect its circular state-colour feedback. The slider samples include live, disabled, mirrored
 and vertical states; the segmented group includes an unavailable choice.
 The field grid shows normal, error, password, read-only, disabled and dropdown
 states with equal-width columns. Its package supplies the candidate fonts, and

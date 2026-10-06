@@ -9,6 +9,7 @@ Ui.ProviderChooserSurface {
     chooserController: controller
     detailsTabEnabled: false
     property Item messageCommands: null
+    property Item messageHeaderHost: null
     additionalCommandItem: messageCommands
     commandsWithoutDetails: controller.hasSelection && !controller.settingsOpen
     Binding {
@@ -42,6 +43,7 @@ Ui.ProviderChooserSurface {
         readonly property bool loadMore: listNearEnd && content.controller.notificationState.historyHasMore && !refreshing && !content.controller.notificationState.historyError
         onLoadMoreChanged: if (loadMore) Qt.callLater(content.controller.notificationState.loadMoreHistory)
         listOptionsComponent: Column {
+            id: listOptions
             width: parent.width
             spacing: Ui.Theme.spacingSm
             Ui.FlatIconButton {
@@ -56,6 +58,8 @@ Ui.ProviderChooserSurface {
                 id: commands
                 controller: content.controller
                 navigation: content.detailsNavigation
+                listHost: listOptions
+                detailHost: content.messageHeaderHost
                 Component.onCompleted: content.messageCommands = commands
                 Component.onDestruction: if (content && content.messageCommands === commands) content.messageCommands = null
             }
@@ -83,6 +87,9 @@ Ui.ProviderChooserSurface {
         }
         NotificationHistoryRow {
             width: parent.width
+            commandItem: content.messageCommands
+            Component.onCompleted: content.messageHeaderHost = headerHost
+            Component.onDestruction: if (content) content.messageHeaderHost = null
             visible: !content.controller.settingsOpen && content.controller.hasSelection
             controller: content.controller
             record: content.controller.selectedRecord || ({})

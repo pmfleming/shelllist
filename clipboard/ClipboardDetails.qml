@@ -98,7 +98,6 @@ Ui.ActionDetailsPane {
     leftMargin: 18
     rightMargin: 16
     emptyText: "Select a clipboard entry"
-    headerHeight: Math.max(58, Math.round(66 * uiScale))
     controlHeight: toolbarHeight
     icon: selected.icon || "󰅇"
     iconColor: entry.current ? Ui.Theme.active : Ui.Theme.accent

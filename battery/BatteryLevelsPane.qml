@@ -114,7 +114,8 @@ Ui.DetailColumnCard {
         color: pane.controller.batteryAutomation.status === "error" ? Ui.Theme.danger : Ui.Theme.mutedText
     }
 
-    Ui.ActionButton {
+    Ui.LabeledAction {
+        icon: "autorenew"
         objectName: "batteryAutomationResume"
         accessKey: "A"
         Layout.fillWidth: true

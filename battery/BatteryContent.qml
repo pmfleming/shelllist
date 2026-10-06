@@ -44,6 +44,8 @@ Ui.PanelSurface {
 
             Ui.ThemeText {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                elide: Text.ElideRight
                 text: qsTr("Battery & Power")
                 font.pixelSize: Ui.Theme.fontSizeTitle
                 font.weight: Ui.Theme.fontWeightBold

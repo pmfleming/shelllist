@@ -91,20 +91,20 @@ ColumnLayout {
         }
         RowLayout {
             Layout.fillWidth: true
-            Ui.ActionButton {
+            Ui.LabeledAction {
+                icon: "refresh"
                 objectName: "retryAdapterSettings"
                 accessKey: "R"
                 Layout.fillWidth: true
-                Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: qsTr("Retry save")
                 enabled: !section.controller.globalRequestInFlight
                 onClicked: section.controller.adapterEdits.retry(section.displayedAdapterKey)
             }
-            Ui.ActionButton {
+            Ui.LabeledAction {
+                icon: "undo"
                 objectName: "discardAdapterSettings"
                 accessKey: "X"
                 Layout.fillWidth: true
-                Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: qsTr("Discard drafts")
                 enabled: !section.draft.pendingField
                 onClicked: section.controller.adapterEdits.discard(section.displayedAdapterKey)

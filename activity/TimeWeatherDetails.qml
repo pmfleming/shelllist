@@ -13,7 +13,6 @@ Ui.ActionDetailsPane {
 
     chooserController: controller
     emptyText: "Select a city"
-    headerHeight: Math.max(58, Math.round(66 * uiScale))
     controlHeight: footerHeight
     icon: city.home ? "󰋜" : "󰍎"
     iconColor: Ui.Theme.accent

@@ -56,34 +56,15 @@ ModalFrame {
         }
     }
 
-    ActionToolbar {
-        width: parent.width
-        height: Theme.controlHeight
-        fillActions: true
-        actions: [
-            {
-                id: "copy",
-                label: "Copy payload"
-            },
-            {
-                id: "scan",
-                label: "Scan another code"
-            },
-            {
-                id: "close",
-                label: "Close",
-                presentation: {
-                    tone: "accent"
-                }
-            }
-        ]
-        onTriggered: function (actionId) {
-            if (actionId === "copy")
-                dialog.qr.copyPayload();
-            else if (actionId === "scan")
-                dialog.qr.launchScanner(false);
-            else
-                dialog.closed();
-        }
+    icon: "qr_code"
+    actions: [
+        {id: "copy", label: qsTr("Copy payload"), icon: "content_copy", presentation: {group: "toolbar"}},
+        {id: "scan", label: qsTr("Scan another code"), icon: "qr_code_scanner", presentation: {group: "toolbar"}},
+        {id: "close", label: qsTr("Close"), icon: "close", presentation: {group: "primary"}}
+    ]
+    onActionTriggered: function(actionId) {
+        if (actionId === "copy") qr.copyPayload();
+        else if (actionId === "scan") qr.launchScanner(false);
+        else closed();
     }
 }

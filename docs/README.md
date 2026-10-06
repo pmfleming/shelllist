@@ -24,6 +24,7 @@ The repository README is the user-facing overview and installation guide. These 
 
 ## Proposals
 
+- [`proposals/circular-panel-actions.md`](proposals/circular-panel-actions.md): all-panel audit and implementation record for title-aligned primary actions, right-aligned secondary rows and icon-only circular command buttons.
 - [`proposals/material-expressive.md`](proposals/material-expressive.md): accepted owner-interview decisions for keyboard-first Material 3 Expressive, remaining design questions, implementation sequence and progress ledger. This defines the target; the ledger distinguishes delivered changes from planned behavior.
 
 ## Sources of truth

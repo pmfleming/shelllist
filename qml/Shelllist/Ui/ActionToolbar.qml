@@ -11,8 +11,6 @@ RowLayout {
     property string group: "toolbar"
     property bool includeAllGroups: false
     property bool alignRight: true
-    property bool fillActions: false
-    property bool showLabels: false
     property string actionNamePrefix: "detailAction:"
     property bool tabFocusEnabled: true
     property int controlHeight: Theme.controlHeight
@@ -22,7 +20,7 @@ RowLayout {
     spacing: Theme.spacingSm
 
     Item {
-        visible: !toolbar.fillActions && toolbar.alignRight
+        visible: toolbar.alignRight
         Layout.fillWidth: true
     }
 
@@ -35,13 +33,10 @@ RowLayout {
             objectName: toolbar.actionNamePrefix + modelData.id
             activeFocusOnTab: toolbar.tabFocusEnabled && enabled && (interactive || activeFocus)
 
-            Layout.fillWidth: toolbar.fillActions
-            Layout.preferredWidth: toolbar.fillActions ? -1 : (iconOnly ? toolbar.controlHeight : (Number((modelData.presentation || {}).width) || 104))
+            Layout.preferredWidth: toolbar.controlHeight
             Layout.preferredHeight: toolbar.controlHeight
             label: modelData.label || ""
             icon: modelData.icon || ""
-            iconOnly: !toolbar.showLabels && icon.length > 0
-            hotkey: modelData.shortcut || ""
             accessKey: modelData.accessKey || ""
             toolTip: (modelData.metadata || {}).toolTip || ""
             tone: (modelData.presentation || {}).tone || "normal"
@@ -51,7 +46,7 @@ RowLayout {
     }
 
     Item {
-        visible: !toolbar.fillActions && !toolbar.alignRight
+        visible: !toolbar.alignRight
         Layout.fillWidth: true
     }
 }

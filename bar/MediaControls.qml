@@ -21,6 +21,7 @@ Row {
         width: 30
         height: 30
         iconSize: 20
+        anchors.verticalCenter: parent.verticalCenter
         activeFocusOnTab: false
         backgroundColor: "transparent"
         border.width: 0
@@ -38,6 +39,13 @@ Row {
     }
     Button {
         objectName: "mediaPlayPauseButton"
+        width: 36
+        height: 36
+        iconSize: 24
+        backgroundColor: Ui.Theme.accent
+        flatIconColor: Ui.Theme.accentText
+        highlightedBackgroundColor: Ui.Theme.accent
+        highlightedIconColor: Ui.Theme.accentText
         icon: Presentation.playPauseActionIcon(controls.controller.activePlayer)
         enabled: Presentation.canPlayPause(controls.controller.activePlayer)
         accessibleName: qsTr("Play/pause")

@@ -143,6 +143,33 @@ TestCase {
         sample.feedback.active = false;
         verify(!indicator.visible, "focus loss clears the cue immediately");
     }
+    Component {
+        id: circleFactory
+        Ui.ActionButton { icon: "wifi"; label: "Connect"; sizeRole: "primary" }
+    }
+    function test_circularCommandStates_data(): var {
+        return [{tag: "light", scheme: Qt.Light}, {tag: "dark", scheme: Qt.Dark}];
+    }
+    function test_circularCommandStates(data): void {
+        Ui.Theme.previewColorScheme = data.scheme;
+        const button = createTemporaryObject(circleFactory, testCase);
+        const glyph = findChild(button, "actionLabel");
+        compare(glyph.label, "");
+        compare(button.Accessible.name, "Connect");
+        for (const tone of ["accent", "danger", "warning", "normal"]) {
+            button.tone = tone;
+            button.forceActiveFocus();
+            keyPress(Qt.Key_Space);
+            verify(button.pressed);
+            compare(button.radius, button.width / 2);
+            verify(Contrast.ratio(button.labelColor, button.color) >= 3);
+            keyRelease(Qt.Key_Space);
+            button.enabled = false;
+            compare(button.radius, button.width / 2);
+            compare(button.width, button.height);
+            button.enabled = true;
+        }
+    }
     function test_destructiveContrast_data(): var {
         return [{tag: "light", scheme: Qt.Light}, {tag: "dark", scheme: Qt.Dark}];
     }

@@ -1,3 +1,25 @@
+# Circular-action visual review
+
+`tests/manual/tst_action_review.qml` loads all 12 actual registered surfaces with
+synthetic data and recording transports. It checks visible command circles,
+icon presence and nonvisual button labels, and captures normal/minimum geometry
+in both themes, plus Activity/Bluetooth/Notifications subpages, prompts, toasts
+and the compact bar. No real settings or actions are submitted.
+
+```sh
+mkdir -p target/circular-action-review
+export FONTCONFIG_FILE=/path/to/packaged-fonts.conf
+fc-match 'Roboto Flex'
+fc-match 'Material Symbols Rounded'
+tests/run-qmlquality-tests.sh -input tests/manual/tst_action_review.qml -o -,txt
+```
+
+The ignored PNGs are review artifacts, not golden tests. Shared unit geometry
+cases additionally cover fractional and 2× layout scales. To inspect native
+fractional/HiDPI rasterisation, repeat this fixture with `QT_SCALE_FACTOR=1.25`
+or `2`. Live compositor, hardware modifiers and screen-reader acceptance remain
+separate checks.
+
 # Form-field visual review
 
 `tests/manual/tst_form_review.qml` captures the shared field family and real

@@ -171,7 +171,8 @@ Ui.ProviderChooserSurface {
                             enabled: content.controller.mediaPreferencesSupported && !content.controller.actionInFlight
                             onClicked: content.controller.setMediaSelection(!checked)
                         }
-                        Ui.ActionButton {
+                        Ui.LabeledAction {
+                            icon: "autorenew"
                             objectName: "mediaAutomatic"
                             accessKey: "A"
                             width: parent.width

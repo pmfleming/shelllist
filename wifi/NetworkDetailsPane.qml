@@ -20,13 +20,12 @@ ActionDetailsPane {
     readonly property real networkCardHeight: Math.max(130, Math.round(cardBudget * 0.255))
 
     chooserController: controller
-    uiScale: Theme.densityScale(height, 0)
+    uiScale: 1
     sectionSpacing: Theme.verticalSpacing(Theme.spacingMd, uiScale)
     leftMargin: 18
     rightMargin: 16
     emptyText: "Select a network"
     emptyFontSize: 20
-    headerHeight: Math.max(56, Math.round(64 * uiScale))
     controlHeight: detailControlHeight
     signalIcon: true
     iconColor: Theme.accent

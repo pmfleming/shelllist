@@ -30,20 +30,20 @@ Ui.DetailFlickable {
         }
         RowLayout {
             Layout.fillWidth: true
-            Ui.ActionButton {
+            Ui.LabeledAction {
+                icon: "refresh"
                 objectName: "retryClipboardEdit"
                 accessKey: "R"
                 Layout.fillWidth: true
-                Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: qsTr("Retry save")
                 enabled: !cards.controller.actionInFlight && !cards.detailState.editBeginPending
                 onClicked: cards.detailState.retryEdit()
             }
-            Ui.ActionButton {
+            Ui.LabeledAction {
+                icon: "undo"
                 objectName: "discardClipboardEdit"
                 accessKey: "D"
                 Layout.fillWidth: true
-                Layout.preferredHeight: Ui.Theme.compactControlHeight
                 label: qsTr("Discard draft")
                 enabled: !cards.controller.actionInFlight && !cards.detailState.editBeginPending
                 onClicked: cards.detailState.discardFailedEdit()

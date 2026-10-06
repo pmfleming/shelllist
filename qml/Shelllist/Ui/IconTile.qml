@@ -56,12 +56,11 @@ Rectangle {
         fillMode: Image.PreserveAspectFit
         visible: tile.hasImage
     }
-    Text {
+    GlyphLabel {
         visible: !tile.hasImage
         anchors.centerIn: parent
-        text: tile.icon
+        glyph: tile.icon
         color: tile.iconColor
-        font.family: Theme.iconFontFamily
         font.pixelSize: tile.iconSize
         rotation: tile.iconRotation
     }
