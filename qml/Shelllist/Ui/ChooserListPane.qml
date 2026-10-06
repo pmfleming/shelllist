@@ -36,7 +36,6 @@ ColumnLayout {
     property bool searchActionEnabled: true
     property string filterText: ""
     property string status: ""
-    property real listInset: 0
     property int bodySpacing: Theme.verticalSpacing(Theme.spacingSm, densityScale)
     readonly property int resultCount: body.resultCount
     readonly property real delegateHeight: body.delegateHeight
@@ -153,7 +152,6 @@ ColumnLayout {
         signalIcon: pane.signalIcon
         powered: pane.powered
         busy: pane.busy
-        listInset: pane.listInset
         bodySpacing: pane.bodySpacing
     }
 }

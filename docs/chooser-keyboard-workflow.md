@@ -24,7 +24,10 @@ Activity use `PanelSurface`. Domain-specific actions do not override field keys.
 
 Outside details, Tab/Shift+Tab cycle the available search/results/details regions.
 They never open details or select a different result. Within details, traversal
-is contained. Expansion belongs to the **surface**, not each result. Per-result
+is contained. Search, result rows and domain status share the list pane's left
+and right edges; extra panel-specific left gutters must not shrink the row hit
+area. The result focus marker stays inside the row's clipped bounds.
+Expansion belongs to the **surface**, not each result. Per-result
 memory can restore tabs, scroll and field locations, but cannot open/close details
 on result movement. Missing results may close unavailable details safely.
 
@@ -116,6 +119,9 @@ Horizontal sliders place the marker above
 the track. Editing replaces the marker with a stronger tonal highlight and accent
 edge, plus native caret/selection feedback. Feedback is immediate and never delayed
 by animation. `ToggleRow.focusSurface` is its switch, not the containing row.
+The outer panel outline is passive decoration, inset inside the surface's clip
+boundary to survive fractional scaling. It is not a focus target or an extra
+editable-field highlight and does not change content or input geometry.
 
 ## Commands, tabs and exceptions
 

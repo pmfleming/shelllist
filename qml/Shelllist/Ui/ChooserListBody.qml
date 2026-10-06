@@ -20,7 +20,6 @@ Item {
     property bool signalIcon: false
     property bool powered: false
     property bool busy: false
-    property real listInset: 0
     property int bodySpacing: 0
     readonly property real delegateHeight: listFrame.delegateHeight
     readonly property bool listFocused: listFrame.listFocused
@@ -44,7 +43,6 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.leftMargin: body.listInset
         spacing: body.bodySpacing
 
         ResultListFrame {

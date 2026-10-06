@@ -24,7 +24,6 @@ ChooserListPane {
     searchActionEnabled: !controller.actionInFlight
     filterText: controller.filterText
     status: controller.status
-    listInset: Math.round(12 * densityScale)
     onSearchActionRequested: controller.launchQrScanner()
     rowDelegate: Component {
         NetworkListRow {

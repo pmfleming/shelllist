@@ -21,7 +21,19 @@ the current content width. Reserved space is not painted or included in that
 input region. The list's left edge stays fixed throughout expansion/collapse.
 Screenshots use that same content origin and the actual bounded visible size.
 
+The shared `ChooserSurface` paints its outline **one logical pixel inside** the
+surface bounds, above content, rather than on the native clip edge. Fractional
+scale/placement can otherwise clip almost all of the bottom stroke on screen,
+not just in captures. This decorative inset does not change window placement,
+canvas dimensions, input masks or content margins. A live 125% layer-surface
+comparison and 1×/1.25×/2× render checks are recorded in the
+[outline review](reviews/panel-outline-2026-10-06.md).
+
 - Normal outer/inner horizontal margins are 14px, with a 12px detail gap.
+  Within the list pane, search, result rows and status share both horizontal
+  edges. There is no second left-only list gutter. Wi-Fi, Bluetooth and
+  Time & Weather previously added a density-scaled 12px inset; that redundant
+  inset is removed. Row content padding and the inset focus marker remain intact.
 - Below 1200px work-area width or 800px height, margins/gap tighten to 8px.
   Legacy automatic chooser font/control scaling is removed. Shared result rows
   stay 64px high after the Material segmented-list pass; a shorter viewport
@@ -84,7 +96,10 @@ individually checked.
 [2026-10-06 pruning](reviews/test-pruning-2026-10-06.md). Its broad geometry/input
 fixture overlapped native-window smoke, work-area recovery, chooser keyboard and
 keyed list/restoration tests. Header/bar tests retain narrow command reachability
-and overflow revelation. Displays retains numeric validation, topology,
+and overflow revelation. `tst_list_alignment.qml` checks real Wi-Fi, Bluetooth
+and Time & Weather surfaces at normal/short heights: aligned search/list/status
+edges, retained outer margins, pointer access to the reclaimed strip and native
+Up/Down navigation with an unclipped focus marker. Displays retains numeric validation, topology,
 preview/revert and disconnect checks. Fractional anchoring, negative-origin
 fallback and live resizing now have less direct evidence; see
 [current test scope](../tests/README.md) for validation and explicit gaps.

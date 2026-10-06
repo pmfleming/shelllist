@@ -24,7 +24,6 @@ Ui.ChooserListPane {
     searchActionEnabled: !controller.modalPromptOpen
     filterText: controller.filterText
     status: controller.status
-    listInset: Math.round(12 * densityScale)
     function requestRefresh(): void {
         controller.refreshList();
     }
