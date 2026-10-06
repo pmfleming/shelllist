@@ -62,6 +62,8 @@ DaemonTestCase {
                         Ui.DetailsHeader {
                             objectName: "testDetailsHeader"
                             uiScale: 1
+                            compactSecondaryActions: true
+                            onActionTriggered: surface.actionCalls++
                             width: Math.min(parent.width, 500)
                             title: "Inspector"
                             actions: [
@@ -193,6 +195,58 @@ DaemonTestCase {
         wait(0);
     }
 
+    function test_applicationResourcesWithoutExternalHeadings() {
+        const content = createTemporaryObject(applicationsComponent, testCase);
+        const controller = content.controller;
+        wait(0);
+        controller.uiActive = true;
+        controller.replaceProviderResults([controller.provider.resultFor({
+            id: "example.desktop", name: "Example", kind: "desktop-application",
+            running: true, instances: [], desktop_actions: []
+        })], true);
+        tryVerify(() => controller.hasSelection);
+        enterDetails(content);
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        compare(controller.detailsTab, "resources");
+        tryVerify(() => findChild(content, "applicationHistoryRange") !== null);
+        const range = findChild(content, "applicationHistoryRange");
+        tryVerify(() => content.detailsNavigation.currentTarget === range);
+        compare(content.detailsNavigation.availableFields().length, 1, "only the range selector joins field traversal");
+        compare(range.value, "30m");
+        calls = [];
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Right);
+        compare(controller.historyRange, "30m", "arrows only edit the field-local draft");
+        compare(calls.length, 0);
+        keyClick(Qt.Key_Escape);
+        compare(range.value, "30m");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Tab);
+        compare(controller.historyRange, "2h");
+        compare(content.detailsNavigation.currentTarget, range, "Tab wraps to the only editor");
+        verify(content.detailsNavigation.editing);
+        keyClick(Qt.Key_Escape);
+        verify(content.detailsNavigation.browsing);
+        verify(calls.every(call => call.method === "applications.history"), "range selection only requests measurements");
+
+        const status = findChild(content, "applicationHistoryStatus");
+        controller.activeHistoryRequestId = "review-loading";
+        tryCompare(status, "visible", true);
+        compare(status.text, "Loading measurements…");
+        controller.activeHistoryRequestId = "";
+        tryCompare(status, "visible", false);
+        // Exercise the same production page's stopped-application status without
+        // changing selection or relying on asynchronous daemon replies.
+        const page = findChild(content, "applicationResourcesPage");
+        page.application = {running: false};
+        controller.resourceHistory = [{timestamp_ms: Date.now()}];
+        tryCompare(status, "visible", true);
+        compare(status.text, "Application is not running · showing retained measurements");
+        controller.activeHistoryRequestId = "review-retained-loading";
+        compare(status.text, "Application is not running · loading retained measurements…");
+    }
+
     Component {
         id: readOnlyPageComponent
         Ui.DetailsNavigation {
@@ -259,6 +313,31 @@ DaemonTestCase {
         verify(surface.listItem.listFocused, "Right expands without entering fields");
         keyClick(Qt.Key_Tab);
         verify(surface.detailsNavigation.browsing);
+    }
+
+    function test_expandedSecondaryButtonsKeepPointerAndAltCommands() {
+        const surface = makeSurface();
+        enterDetails(surface); // Right expands without moving focus; Tab enters fields.
+        const header = findChild(surface, "testDetailsHeader");
+        const primary = findChild(header, "detailAction:first");
+        const secondary = findChild(header, "detailAction:second");
+        compare(primary.width, 56);
+        compare(secondary.width, 32);
+        compare(secondary.height, 32);
+        compare(secondary.iconSize, 16);
+        const field = surface.detailsNavigation.currentTarget;
+        keyClick(Qt.Key_O, Qt.AltModifier);
+        compare(surface.actionCalls, 1);
+        compare(surface.detailsNavigation.currentTarget, field);
+        mouseClick(secondary, secondary.width / 2, secondary.height / 2);
+        compare(surface.actionCalls, 2);
+        surface.detailsNavigation.focusContent(true);
+        keyClick(Qt.Key_Tab);
+        compare(surface.detailsNavigation.currentTarget.objectName, "editor", "Tab skips header buttons");
+        secondary.enabled = false;
+        keyClick(Qt.Key_O, Qt.AltModifier);
+        mouseClick(secondary, secondary.width / 2, secondary.height / 2);
+        compare(surface.actionCalls, 2, "disabled commands stay guarded");
     }
 
     function test_searchOwnsPrintableKeysAndSavedCursor() {

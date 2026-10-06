@@ -118,7 +118,6 @@ AdvancedSettingsFlickable {
         DetailSection {
             informationOnly: true
             objectName: "wifiSecurityDiagnostics"
-            title: qsTr("Device & DHCP details")
             DetailCard {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 350

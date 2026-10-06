@@ -40,6 +40,7 @@ Ui.CommandGroup {
         visible: commands.controller.detailsOpen && commands.detailHost !== null
         width: parent.width
         uiScale: 1
+        compactSecondaryActions: true
         icon: "notifications"
         iconSource: identity.source
         title: commands.controller.selectedNotification.summary || commands.controller.selectedNotification.app_name || qsTr("Notification")

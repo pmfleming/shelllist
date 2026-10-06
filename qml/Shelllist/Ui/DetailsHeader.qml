@@ -19,6 +19,7 @@ Item {
     property int titlePixelSize: Math.round(Theme.fontSizeTitle * uiScale)
     property var actions: []
     property bool secondaryVisible: true
+    property bool compactSecondaryActions: false
     property int headerHeight: Math.max(56, Math.round(64 * uiScale))
     signal actionTriggered(string actionId)
     property bool tabFocusEnabled: false
@@ -106,6 +107,7 @@ Item {
         tabFocusEnabled: header.tabFocusEnabled
         actions: header.actions
         secondaryVisible: header.secondaryVisible
+        compactSecondaryActions: header.compactSecondaryActions
         onTriggered: function(actionId) { header.actionTriggered(actionId); }
     }
 }

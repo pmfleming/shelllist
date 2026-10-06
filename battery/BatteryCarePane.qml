@@ -90,7 +90,6 @@ Column {
     Ui.DetailSection {
         informationOnly: true
         objectName: "batteryHardwareDetails"
-        title: qsTr("Hardware details")
         Ui.DetailCard {
             Layout.fillWidth: true
             Layout.preferredHeight: 200

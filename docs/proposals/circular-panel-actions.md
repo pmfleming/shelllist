@@ -10,7 +10,8 @@ retained below for traceability; they are not descriptions of the current UI.
   and subtitles elide after reserving the primary and a 16px gap. Secondary
   overflow fits independently and retains the existing popup/key model.
 - Commands have fixed circular geometry and no rendered labels, including press
-  states. Header primary/secondary diameters are 56/48px and icons are 28/24px.
+  states. Header primary diameter/icon remain 56/28px. Expanded-panel secondaries
+  now use 32/16px (two-thirds of the original 48/24px); other contexts are unchanged.
   Existing semantic colours and disabled guards remain. Wi-Fi no longer applies
   viewport-dependent header scaling; per-panel header height variants are gone.
 - All 12 surfaces are migrated or inherit the shared header. Activity uses the
@@ -113,9 +114,13 @@ The old document's delivery/test results describe that earlier implementation.
 | `qml/Shelllist/Ui/DetailsNavigation.qml`, `ShortcutHints.qml` | Discover `SurfaceActionRow` buttons; exclude `DetailsHeader` from ordinary command/field recursion. | Preserve typed discovery, live delegate tracking, popup ownership and badges through the structural change. Moving buttons must not lose commands or register them twice. |
 | `qml/Shelllist/Ui/ActionDetailsPane.qml` | Body height subtracts the current header height. | Use the new natural header height; retain scrollable body and existing margins. |
 
-Agreed and delivered logical-pixel tokens: **56px primary / 28px icon**, **48px
-secondary / 24px icon**, **8px button gap**, **16px text-to-action gap**. These
-are shared implementation tokens, not dimensions inferred from the screenshots.
+Original delivered logical-pixel tokens: **56px primary / 28px icon**, **48px
+secondary / 24px icon**, **8px button gap**, **16px text-to-action gap**. The
+follow-up size reduction applies a shared **2/3** scale to expanded-panel
+secondary circles and icons only: **32px / 16px**, including More. Overflow
+fitting and header height use the smaller circles; named menu rows retain their
+original height. These are shared implementation tokens, not dimensions inferred
+from the screenshots.
 Compact bar/list contexts can use a shared smaller circular variant with usable
 hit targets; do not scale every panel down to fit. Validate tokens at the existing
 supported geometry before finalising them.

@@ -20,7 +20,6 @@ Column {
 
     Ui.DetailSection {
         objectName: "batteryAutomationSection"
-        title: qsTr("Battery levels & hardware tuning")
         BatteryLevelsPane {
             Layout.fillWidth: true
             controller: pane.controller

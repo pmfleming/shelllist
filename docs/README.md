@@ -22,6 +22,10 @@ The repository README is the user-facing overview and installation guide. These 
 | [`reviews/commonality-2026-09-20.md`](reviews/commonality-2026-09-20.md) | Measured shared frontend refactor, validation, and remaining debt |
 | [`reviews/test-pruning-2026-09-27.md`](reviews/test-pruning-2026-09-27.md) | Latest test inventory reduction, retained boundaries and coverage tradeoffs |
 
+## Visual decision checklists
+
+- [`reviews/external-header-review.html`](reviews/external-header-review.html): archived before-pictures and checklist for six external/internal section-heading pairs across all 12 panels. Decision: remove all six external headings; implemented with internal titles, controls and information-only semantics retained.
+
 ## Proposals
 
 - [`proposals/circular-panel-actions.md`](proposals/circular-panel-actions.md): all-panel audit and implementation record for title-aligned primary actions, right-aligned secondary rows and icon-only circular command buttons.

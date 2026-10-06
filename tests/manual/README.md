@@ -1,3 +1,26 @@
+# External-heading decision review
+
+`docs/reviews/external-header-review.html` preserves the offline **before-change**
+checklist and six embedded pictures from the all-panel audit. The decision was
+**remove all six external headings**; this is now implemented. The audit table
+explains excluded standalone headings and other repeated text. Original checkbox
+semantics were checked = keep; unchecked = delete only the external heading.
+
+Capture the current **after-change** sections with recording transports:
+
+```sh
+mkdir -p target/external-header-removal
+export FONTCONFIG_FILE=/path/to/packaged-fonts.conf
+tests/run-qmlquality-tests.sh -input tests/manual/tst_header_review.qml -o -,txt
+```
+
+The fixture checks all six removals, retained internal titles, no blank heading
+gaps, information-only boundaries and reachable fields; it rejects backend
+mutations. `tst_chooser_keyboard.qml` additionally exercises the actual application
+range selector with Enter/arrows/Escape/Tab and all loading/retained status variants.
+The HTML's images are historical and remain embedded. The original builder
+`build-header-review.py` refuses to overwrite the archive from post-removal sources.
+
 # Circular-action visual review
 
 `tests/manual/tst_action_review.qml` loads all 12 actual registered surfaces with

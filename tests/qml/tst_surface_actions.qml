@@ -25,6 +25,7 @@ TestCase {
             Ui.SurfaceActionRow {
                 id: row
                 width: parent.width
+                compactSecondaryActions: true
                 actions: [
                     {id: "connect", label: "Connect", icon: "wifi", accessKey: "C", presentation: {group: "primary"}},
                     {id: "forget", label: "Forget", accessKey: "F", icon: "delete", presentation: {group: "toolbar"}}
@@ -58,6 +59,7 @@ TestCase {
         return [
             {tag: "compact", width: 280, scale: 1},
             {tag: "normal", width: 480, scale: 1},
+            {tag: "unexpanded", width: 480, scale: 1, compact: false},
             {tag: "fractional", width: 600, scale: 1.25},
             {tag: "hidpi", width: 680, scale: 2},
             {tag: "signal", width: 480, scale: 1, signal: true},
@@ -67,7 +69,8 @@ TestCase {
     function test_headerGeometry(data) {
         const header = createTemporaryObject(headerComponent, testCase, {
             width: data.width, uiScale: data.scale, signalIcon: data.signal || false,
-            iconSource: data.image ? Qt.resolvedUrl("../../activity/assets/weather/clear-day.svg") : ""
+            compactSecondaryActions: data.compact !== false,
+            iconSource: data.image ? Qt.resolvedUrl("../../qml/Shelllist/Activity/assets/weather/clear-day.svg") : ""
         });
         verify(header);
         verify(waitForRendering(header));
@@ -85,6 +88,11 @@ TestCase {
         compare(s.x + secondary.width, header.width);
         compare(primary.width, primary.height);
         compare(secondary.width, secondary.height);
+        compare(primary.width, Math.round(56 * data.scale));
+        compare(primary.iconSize, Math.round(28 * data.scale));
+        compare(secondary.width, Math.round((data.compact === false ? 48 : 32) * data.scale));
+        compare(secondary.iconSize, Math.round((data.compact === false ? 24 : 16) * data.scale));
+        compare(findChild(secondary, "actionLabel").iconSize, secondary.iconSize);
         verify(primary.width > secondary.width);
         verify(primary.iconSize > secondary.iconSize);
         fuzzyCompare(p.y + primary.height / 2, i.y + identity.height / 2, 0.5);
@@ -174,6 +182,8 @@ TestCase {
         const field = findChild(prompt, "fieldInput");
         const accept = findChild(prompt, "detailAction:accept");
         const reject = findChild(prompt, "detailAction:reject");
+        compare(reject.width, 48, "modal secondary circles must not shrink");
+        compare(reject.iconSize, 24);
         tryVerify(() => field.activeFocus);
         keyClick(Qt.Key_Tab);
         tryCompare(reject, "activeFocus", true); // Disabled submit is skipped.
@@ -214,7 +224,7 @@ TestCase {
         keyClick(Qt.Key_F, Qt.AltModifier);
         compare(navigation.calls, 1);
         navigation.actions = navigation.actions.concat([{id: "share", label: "Share", icon: "share", accessKey: "H", presentation: {group: "toolbar"}}]);
-        navigation.width = 100;
+        navigation.width = 60;
         tryCompare(navigation.row, "shownSecondaryCount", 0);
         tryVerify(() => navigation.headerButtons[1].surfaceShortcut === "Alt+M");
         keyClick(Qt.Key_F, Qt.AltModifier);
@@ -236,7 +246,7 @@ TestCase {
         compare(navigation.calls, 1, "duplicate letters fail closed");
     }
     function test_overflowKeyboardSelectionAndFocusRestoration() {
-        const navigation = createTemporaryObject(navigationComponent, testCase, {width: 100});
+        const navigation = createTemporaryObject(navigationComponent, testCase, {width: 60});
         navigation.actions = [
             {id: "connect", label: "Connect", accessKey: "C", presentation: {group: "primary"}},
             {id: "disabled", label: "Disabled", enabled: false, accessKey: "D", presentation: {group: "toolbar"}},
@@ -245,11 +255,21 @@ TestCase {
         ];
         navigation.focusContent(true);
         tryVerify(() => navigation.headerButtons.some(button => button.surfaceShortcut === "Alt+M"));
+        const more = findChild(navigation, "surfaceActionMore");
+        compare(more.width, 32);
+        compare(more.height, 32);
+        compare(more.iconSize, 16);
+        navigation.width = 120;
+        tryCompare(navigation.row, "shownSecondaryCount", 3, 5000, "smaller circles fit without overflow");
+        navigation.width = 60;
+        tryCompare(navigation.row, "shownSecondaryCount", 0);
         keyClick(Qt.Key_M, Qt.AltModifier);
         tryCompare(navigation, "popupOpen", true);
         const menu = findChild(navigation, "surfaceActionMenu");
         tryVerify(() => menu.activeFocus);
         compare(menu.currentIndex, 1, "opening skips disabled commands");
+        tryVerify(() => menu.currentItem !== null);
+        compare(menu.currentItem.height, 48, "named overflow entries keep their full size");
         keyClick(Qt.Key_Up);
         compare(menu.currentIndex, 2, "navigation wraps and skips disabled commands");
         const actions = navigation.actions;

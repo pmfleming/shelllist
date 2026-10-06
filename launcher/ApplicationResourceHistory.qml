@@ -97,11 +97,6 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: Math.round(Ui.Theme.spacingMd * uiScale)
 
-    Ui.SectionLabel {
-        Layout.fillWidth: true
-        text: qsTr("Resource composition")
-    }
-
     GridLayout {
         Layout.fillWidth: true
         columns: 4
@@ -193,9 +188,8 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: Ui.Theme.spacingMd
 
-        Ui.SectionLabel {
+        Item {
             Layout.fillWidth: true
-            text: history.controller.historyInFlight ? "Activity overview · Loading…" : history.application.running ? "Activity overview" : "Retained activity"
         }
 
         Ui.SegmentedControl {

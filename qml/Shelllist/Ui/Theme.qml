@@ -112,6 +112,7 @@ Item {
     readonly property int secondaryActionHeight: 48
     readonly property int primaryActionIconSize: 28
     readonly property int secondaryActionIconSize: 24
+    readonly property real expandedSecondaryActionScale: 2 / 3
     readonly property int actionTitleGap: 16
     readonly property int headerHeight: 48
     readonly property int statusHeight: 38

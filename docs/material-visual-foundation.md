@@ -56,6 +56,18 @@ require the separate acceptance stage. The sections below record the foundation
 and earlier incremental decisions, not an assertion that those earlier defaults
 remain the production choices.
 
+## Section heading hierarchy
+
+The [external-heading review](reviews/external-header-review.html) concluded with
+**remove all six**: Wi-Fi's Connection & network details and Device & DHCP details;
+Battery's Hardware details and Battery levels & hardware tuning; Applications'
+Resource composition and Activity overview / Retained activity. Their internal
+card titles remain. Untitled section containers retain object identity,
+`informationOnly` and field traversal semantics, without a blank heading gap.
+The application's history-range selector remains right-aligned and editable;
+loading/retained-measurement state is passive supporting text, not another heading.
+Standalone section headings and expanded-panel identity headers are unchanged.
+
 ## Color implementation
 
 `Ui.MaterialPalette` is a Qt-only, reactive palette taking `seedColor` and `dark`.
@@ -126,7 +138,12 @@ integration and visual validation remain separate work.
 Shared `ActionButton` (including `FlatIconButton`) is icon-only and circular in
 rest, hover, focus, press and disabled states. Commands use M3 semantic fill/icon
 pairs and state-colour feedback, not a pressed corner morph. Header primaries are
-56px with 28px icons; secondaries are 48px with 24px icons, with an 8px gap.
+56px with 28px icons. Expanded-panel header secondaries (including More) are
+32px with 16px icons, two-thirds of their former 48/24px sizes; the 8px gap
+and right alignment remain. `DetailsHeader.compactSecondaryActions` applies the
+shared scale only in expanded inspectors, Notifications details and expanded
+Activity. Collapsed headers, modals, toasts, contextual buttons and named menu
+entries retain their existing sizing.
 Compact bar/list commands retain smaller square geometry. Width, height and hit
 regions never animate. Selection controls and switches retain their own paint.
 

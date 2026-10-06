@@ -28,6 +28,7 @@ Ui.PanelSurface {
         Ui.DetailsHeader {
             width: parent.width
             uiScale: content.uiScale
+            compactSecondaryActions: content.controller.detailsOpen
             icon: "today"
             title: content.controller.detailsOpen ? "Activity  /  " + content.sectionTitle(content.controller.detailSection) : "Activity"
             actions: [

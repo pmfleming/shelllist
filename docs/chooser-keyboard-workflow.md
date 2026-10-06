@@ -32,7 +32,9 @@ on result movement. Missing results may close unavailable details safely.
 
 - Only visible, enabled, editable controls are Tab stops. Read-only text, labels,
   headers, tab selectors and action buttons are excluded. Composite controls
-  (e.g. a labeled slider) are one stop.
+  (e.g. a labeled slider) are one stop. Removing a redundant external heading
+  must retain its section's `informationOnly` boundary and editable-control
+  identities; an untitled group does not become a new browsing stop.
 - Tab goes forward; Shift+Tab goes backward. Both wrap at either end.
 - Up/Down select the previous/next **list result**, retaining open details and
   returning focus to the result list. They never traverse fields. In a panel
@@ -122,7 +124,10 @@ an explicit gap before the primary. No primary is invented on information-only
 pages. `LabeledAction` supplies passive explanatory text beside contextual
 commands; that text/row is neither a hit target nor a field stop. Full labels
 remain in accessible names and named command menus. Press feedback keeps the
-circle and hit geometry fixed. Modifier hints remain separate overlays.
+circle and hit geometry fixed. Expanded-panel secondary circles, including More,
+use 32px diameters and 16px icons (two-thirds of 48/24px); primary circles stay
+56/28px. Collapsed headers, modal/toast/contextual buttons and named menu rows
+retain their existing sizes. Modifier hints remain separate overlays.
 
 `SurfaceActionRow` owns both header tiers and overflow commands. A command-only
 `CommandGroup` can move between a selected-result host and details without

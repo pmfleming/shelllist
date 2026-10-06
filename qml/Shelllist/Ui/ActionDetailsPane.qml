@@ -40,6 +40,7 @@ DetailsPane {
         id: header
         width: parent.width
         uiScale: pane.uiScale
+        compactSecondaryActions: true
         onActionTriggered: function (actionId) {
             pane.actionTriggered(actionId);
         }

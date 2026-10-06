@@ -22,7 +22,6 @@ DetailFlickable {
     DetailSection {
         informationOnly: true
         objectName: "wifiNetworkDiagnostics"
-        title: qsTr("Connection & network details")
         DetailCard {
             Layout.fillWidth: true
             Layout.preferredHeight: cards.connectionCardHeight

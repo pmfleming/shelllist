@@ -22,9 +22,12 @@ Ui.DetailFlickable {
     }
 
     Ui.ThemeText {
-        visible: !page.application.running && (page.controller.historyInFlight || page.controller.resourceHistory.length > 0)
+        objectName: "applicationHistoryStatus"
+        visible: page.controller.historyInFlight || (!page.application.running && page.controller.resourceHistory.length > 0)
         width: parent.width
-        text: qsTr("Application is not running · showing retained measurements")
+        text: page.controller.historyInFlight
+            ? (page.application.running ? qsTr("Loading measurements…") : qsTr("Application is not running · loading retained measurements…"))
+            : qsTr("Application is not running · showing retained measurements")
         color: Ui.Theme.mutedText
         wrapMode: Text.Wrap
         font.pixelSize: Ui.Theme.fontSizeCaption

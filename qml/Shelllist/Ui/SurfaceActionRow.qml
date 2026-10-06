@@ -9,13 +9,15 @@ Item {
     property var actions: []
     property real uiScale: 1
     property bool secondaryVisible: true
+    property bool compactSecondaryActions: false
+    readonly property real secondaryUiScale: uiScale * (compactSecondaryActions ? Theme.expandedSecondaryActionScale : 1)
     property real identityHeight: Math.round(Theme.primaryActionHeight * uiScale)
     property bool reserveIdentity: false
     property bool tabFocusEnabled: false
     readonly property var primaryActions: Core.Model.visibleActions(actions, "primary")
     readonly property var secondaryActions: secondaryVisible ? Core.Model.visibleActions(actions, "toolbar") : []
     readonly property var primaryAction: primaryActions.length ? primaryActions[0] : null
-    readonly property int controlHeight: Math.round(Theme.secondaryActionHeight * uiScale)
+    readonly property int controlHeight: Math.round(Theme.secondaryActionHeight * secondaryUiScale)
     readonly property int gap: Math.round(Theme.spacingSm * uiScale)
     readonly property int primaryWidth: primaryAction ? Math.round(Theme.primaryActionHeight * uiScale) : 0
     readonly property real topHeight: primaryAction || reserveIdentity ? Math.max(identityHeight, primaryWidth) : 0
@@ -89,7 +91,7 @@ Item {
                 required property var modelData
                 objectName: "detailAction:" + modelData.id
                 sizeRole: "secondary"
-                uiScale: row.uiScale
+                uiScale: row.secondaryUiScale
                 activeFocusOnTab: row.tabFocusEnabled && enabled
                 label: modelData.label || ""
                 icon: modelData.icon || "more_horiz"
@@ -108,7 +110,7 @@ Item {
             accessKey: "M"
             label: qsTr("More actions")
             sizeRole: "secondary"
-            uiScale: row.uiScale
+            uiScale: row.secondaryUiScale
             icon: "more_horiz"
             onClicked: overflowMenu.open()
             // Shared modal Popup, not a native Menu that dismisses itself on
@@ -118,7 +120,8 @@ Item {
                 y: moreButton.height
                 x: moreButton.width - width
                 width: Math.min(row.width, Math.max(220 * row.uiScale, row.controlHeight))
-                controlHeight: row.controlHeight
+                // Only circular header buttons shrink; named menu rows do not.
+                controlHeight: Math.round(Theme.secondaryActionHeight * row.uiScale)
                 listObjectName: "surfaceActionMenu"
                 actions: row.overflowActions
                 onTriggered: function (action) { row.triggered(action.id); }
