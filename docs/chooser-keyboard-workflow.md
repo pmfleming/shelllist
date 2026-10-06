@@ -118,6 +118,14 @@ The marker/keyline pair retains at least 3:1 contrast, including over selected o
 filled controls; the low-alpha tint alone is not the focus cue. This is not a
 rectangular outline around the control. The top bar opts out of this panel
 browsing marker; its pointer feedback and panel markers remain unchanged.
+The bar's Media opener and transport share a passive tonal pill, not a combined
+hit target or focus stop. Artwork (or its missing/failed-image glyph) opens the
+existing Media panel without playback, seeking or pinning. The adjacent transport
+buttons retain independent capability-guarded actions and never open the panel;
+hover/pressed feedback stays local to each button. Compact density hides transport
+but retains the artwork opener. Group padding and gaps have no action. Native
+pointer/accessibility route and density coverage lives in `tst_media_chip.qml`;
+its rounded-artwork pixel check additionally requires an RHI renderer.
 System tray application icons appear only in the Tray chooser, opened by the
 bar's ellipsis button; no bar density exposes inline tray application icons.
 Horizontal sliders place the marker above
