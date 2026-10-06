@@ -359,7 +359,10 @@ Wi-Fi Sign in remains **Alt+I**, never a field Tab stop. It requests and claims 
 daemon-owned portal intent before the frontend executes browser/workspace focus;
 Tab/arrows/Enter field transactions never invoke it. The bar's explicit fallback
 uses the same transaction. Failure or transport recovery does not replay an
-uncertain launch. `tst_wifi_portal.qml` exercises actual command/navigation keys,
+uncertain launch. Only a nonempty owned response ID in prepare/claim/complete
+may advance the transaction; an unowned response cannot retire an executing
+browser launch. Claimed ID, episode and URL must match, with a finite future
+expiry. `tst_wifi_portal.qml` exercises actual command/navigation keys,
 claim acknowledgement, late replies, failures and UI disappearance.
 
 Display arrangement follows the same command model: **Alt+L/U/D/R** invokes the

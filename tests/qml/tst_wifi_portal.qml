@@ -122,7 +122,13 @@ DaemonTestCase {
         compare(panel.executor.commands.length, 0);
     }
     function test_expiredAndChangedClaimsFailClosed_data() {
-        return [{tag:"expired", expired:true}, {tag:"changed", expired:false}];
+        return [
+            {tag: "expired", field: "expires_at_ms", value: 0},
+            {tag: "non-finite-expiry", field: "expires_at_ms", value: Infinity},
+            {tag: "changed-id", field: "launch_id", value: "other-launch"},
+            {tag: "changed-episode", field: "episode", value: "other-connection"},
+            {tag: "changed-url", field: "url", value: "http://other.example/"}
+        ];
     }
     function test_expiredAndChangedClaimsFailClosed(data) {
         const panel = makePanel();
@@ -130,13 +136,31 @@ DaemonTestCase {
         const value = intent();
         reply(panel, {decision:"launch", intent:value});
         const changed = Object.assign({}, value);
-        if (data.expired)
-            changed.expires_at_ms = Date.now() - 1;
-        else
-            changed.launch_id = "other-launch";
+        changed[data.field] = data.value;
         reply(panel, {intent:changed});
         compare(panel.executor.commands.length, 0);
         verify(!panel.controller.portal.busy);
+    }
+    function test_unownedResponsesCannotRetireExecutingIntent() {
+        const panel = makePanel();
+        const portal = panel.controller.portal;
+        panel.controller.status = "Unrelated status";
+        portal.receive("", null, "Unowned error");
+        compare(panel.controller.status, "Unrelated status");
+        portal.launchManual("1", false);
+        const value = intent();
+        reply(panel, {decision: "launch", intent: value});
+        const claimId = portal.pendingId;
+        reply(panel, {intent: value});
+        portal.receive(claimId, null, "Duplicate claim failure");
+        portal.receive("", null, "Unowned error during execution");
+        compare(portal.phase, "executing");
+        compare(panel.executor.commands.length, 1);
+        panel.executor.running = false;
+        panel.controller.backend.finishPortal(0, '{"outcome":"opened"}');
+        compare(portalCalls().slice(-1)[0].method, "network.portalComplete");
+        reply(panel, {outcome: "opened"});
+        verify(!portal.busy);
     }
     function test_reconnectDropsLateRepliesAndDoesNotReplay() {
         const panel = makePanel();
