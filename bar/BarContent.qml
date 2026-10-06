@@ -87,7 +87,6 @@ Item {
                     Layout.preferredWidth: implicitWidth
                     Layout.fillHeight: true
                     controller: root.controller
-                    layoutDensity: root.layoutDensity
                 }
                 Ui.ThemeText {
                     objectName: "barClock"

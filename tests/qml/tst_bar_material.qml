@@ -36,7 +36,18 @@ TestCase {
         id: trayItemFactory
         Tray.SystemTrayItem { title: "Test application" }
     }
+    Component {
+        id: registryFactory
+        QtObject {
+            property var wifiController: null
+            property var bluetoothController: null
+            property var notificationState: null
+            property string requestedSurface: ""
+            function surfaceRequested(id: string): void { requestedSurface = id; }
+        }
+    }
     function init(): void { failOnWarning(/.*/); }
+    function cleanup(): void { Tray.SystemTray.items.values = []; }
     function actionControls(item): var {
         if (item instanceof Ui.ActionControl) return [item];
         let controls = [];
@@ -66,6 +77,31 @@ TestCase {
         verify(overflow.activeFocus);
         verify(!findChild(overflow, "browseFocusIndicator").visible);
         verify(findChild(bar, "barOverflowViewport").contentX > 0, "overflow remains reachable by pointer");
+    }
+    function test_trayItemsStayBehindEllipsisAtEveryDensity(): void {
+        const tray = createTemporaryObject(trayItemFactory, testCase);
+        Tray.SystemTray.items.values = [tray];
+        const registry = createTemporaryObject(registryFactory, testCase);
+        const bar = createTemporaryObject(barFactory, testCase, {width: 1200});
+        bar.controller.surfaceRegistry = registry;
+        const group = findChild(bar, "barTray");
+        const button = findChild(group, "barTrayButton");
+        for (const width of [2000, 1200, 900, 600]) {
+            bar.width = width;
+            verify(waitForRendering(button));
+            compare(group.implicitWidth, 32, "tray never reserves space for application icons");
+            const controls = actionControls(group);
+            compare(controls.length, 1, "only the ellipsis is rendered, never an inline tray item");
+            compare(controls[0], button);
+        }
+        bar.width = 1200;
+        verify(waitForRendering(button));
+        mouseClick(button, button.width / 2, button.height / 2);
+        compare(registry.requestedSurface, "tray");
+        compare(tray.activationCount, 0);
+        Tray.SystemTray.items.values = [];
+        verify(button.visible, "empty tray remains accessible");
+        compare(group.implicitWidth, 32);
     }
     function test_trayAssistivePressUsesPointerPrimaryRoute(): void {
         const tray = createTemporaryObject(trayItemFactory, testCase);
