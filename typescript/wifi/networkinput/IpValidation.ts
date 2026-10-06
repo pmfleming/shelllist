@@ -212,12 +212,16 @@ function isPrefix(value: unknown, family: unknown, allowEmpty: boolean) {
 // Presentation reasons accompany, never replace, the authoritative state.
 // Return keys/arguments so the QML adapter owns translation, not the parser.
 function issue(value: unknown, family: unknown, multiple: boolean, allowEmpty: boolean, prefixLength: boolean) {
-    const input = String(value || "").trim();
-    const state = prefixLength ? prefixState(input, family, allowEmpty) : addressInputState(input, family, multiple, allowEmpty);
-    if (state === Acceptable)
-        return null;
-    if (String(value || "").length >= MaximumEditingLength)
+    const state = prefixLength ? prefixState(value, family, allowEmpty) : addressInputState(value, family, multiple, allowEmpty);
+    return state === Acceptable ? null : invalidIssue(String(value || ""), family, multiple, prefixLength);
+}
+
+// For adapters that already hold the authoritative non-Acceptable state.
+// Check the untrimmed buffer before diagnosing syntax; do not parse it twice.
+function invalidIssue(value: string, family: unknown, multiple: boolean, prefixLength: boolean) {
+    if (value.length >= MaximumEditingLength)
         return {key: "buffer"};
+    const input = value.trim();
     if (prefixLength)
         return {key: "prefix", maximum: normalizedFamily(family) === "ipv6" ? 128 : 32};
     if (input.indexOf("/") >= 0)

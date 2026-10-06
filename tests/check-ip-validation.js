@@ -124,4 +124,22 @@ for (const [input, index, octet] of [
     expectState("first invalid address and overflowing octet",
         JSON.stringify({index: issue.index, octet: issue.octet}), JSON.stringify({index, octet}));
 }
+// Diagnostics and acceptance must agree on raw buffers, including whitespace
+// that the native editor may leave after clipping a pasted suffix.
+for (const prefix of [false, true]) {
+    for (const multiple of [false, true]) {
+        for (const allowEmpty of [false, true]) {
+            for (const value of ["", " ".repeat(validation.MaximumEditingLength),
+                (prefix ? "24" : "1.1.1.1").padEnd(validation.MaximumEditingLength - 1),
+                (prefix ? "24" : "1.1.1.1").padEnd(validation.MaximumEditingLength)]) {
+                const state = prefix ? validation.prefixState(value, "ipv4", allowEmpty)
+                    : validation.addressInputState(value, "ipv4", multiple, allowEmpty);
+                const issue = validation.issue(value, "ipv4", multiple, allowEmpty, prefix);
+                expectState("diagnostic agrees with acceptance", issue === null, state === Acceptable);
+                if (value.length >= validation.MaximumEditingLength)
+                    expectState("untrimmed buffer reason", issue.key, "buffer");
+            }
+        }
+    }
+}
 console.log(`IP validation: ${checks} checks passed`);

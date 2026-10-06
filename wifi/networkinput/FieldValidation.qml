@@ -10,12 +10,10 @@ QtObject {
     property bool prefixLength: false
     property bool attempted: false
     readonly property int state: prefixLength ? IpValidation.prefixState(text, family, allowEmpty) : IpValidation.addressInputState(text, family, multiple, allowEmpty)
-    readonly property string errorText: attempted ? message(IpValidation.issue(text, family, multiple, allowEmpty, prefixLength)) : ""
+    readonly property string errorText: attempted && state !== IpValidation.Acceptable ? message(IpValidation.invalidIssue(text, family, multiple, prefixLength)) : ""
     onFamilyChanged: attempted = false
 
     function message(issue: var): string {
-        if (!issue)
-            return "";
         switch (issue.key) {
         case "buffer":
             return qsTr("Input is too long; replace it with a complete value");
@@ -34,7 +32,8 @@ QtObject {
         case "octet":
             return multiple ? qsTr("Address %1: octet %2 must be 0–255").arg(issue.index).arg(issue.octet) : qsTr("Octet %1 must be 0–255").arg(issue.octet);
         default:
-            return multiple ? qsTr("Address %1: enter a complete %2 address").arg(issue.index).arg(family === "ipv6" ? "IPv6" : "IPv4") : qsTr("Enter a complete %1 address").arg(family === "ipv6" ? "IPv6" : "IPv4");
+            const familyName = IpValidation.normalizedFamily(family) === "ipv6" ? "IPv6" : "IPv4";
+            return multiple ? qsTr("Address %1: enter a complete %2 address").arg(issue.index).arg(familyName) : qsTr("Enter a complete %1 address").arg(familyName);
         }
     }
 }

@@ -79,8 +79,10 @@ is still one field. IP/DNS errors become visible on explicit save, without
 trapping Tab: saving retains the domain draft, while the existing whole-group
 readiness guard blocks invalid/incomplete backend writes. CIDR, unsupported zone
 suffixes and full native editing buffers are rejected without accepting a
-silently shortened value. No per-keystroke normalization or cross-field paste
-write is allowed.
+silently shortened value. Error diagnostics use that same raw-buffer state,
+including full buffers whose visible suffix is whitespace; trimming must not
+turn a rejected value into an error-free one. No per-keystroke normalization or
+cross-field paste write is allowed.
 
 Changes remain **field-local until Enter/Tab**, or an explicit option click on a
 shared dropdown with `saveOnOptionClick` enabled (currently Workspace category).

@@ -78,7 +78,8 @@ DaemonTestCase {
     function test_pasteValidationSavesOnlyTheDomainDraft_data() {
         return [
             {tag: "ipv4-cidr", family: "ipv4", value: "192.168.100.100/24", state: IpValidation.Invalid, message: "Prefix length"},
-            {tag: "ipv6-zone", family: "ipv6", value: "fe80::1%wlan0", state: IpValidation.Invalid, message: "Scoped IPv6"}
+            {tag: "ipv6-zone", family: "ipv6", value: "fe80::1%wlan0", state: IpValidation.Invalid, message: "Scoped IPv6"},
+            {tag: "full-buffer", family: "ipv4", value: "192.168.1.20".padEnd(IpValidation.MaximumEditingLength), state: IpValidation.Invalid, message: "too long"}
         ];
     }
     function test_pasteValidationSavesOnlyTheDomainDraft(data) {
@@ -121,6 +122,12 @@ DaemonTestCase {
         keyClick(Qt.Key_Tab);
         const prefix = panel.currentTarget;
         compare(prefix.objectName, "wifiIpPrefix");
+        keyClick(Qt.Key_Return);
+        paste("24".padEnd(IpValidation.MaximumEditingLength));
+        compare(prefix.validationState, IpValidation.Invalid);
+        compare(prefix.errorText, "");
+        keyClick(Qt.Key_Return);
+        verify(prefix.errorText.includes("too long"));
         keyClick(Qt.Key_Return);
         paste("3200");
         compare(prefix.text, "3200");
