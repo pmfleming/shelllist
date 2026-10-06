@@ -5,331 +5,250 @@ import QtQuick.Layouts
 import Shelllist.Ui as Ui
 import "ApplicationResources.js" as Resources
 
-Rectangle {
+ColumnLayout {
     id: chart
 
-    required property string title
     required property var points
     required property var lanes
-    property var summaries: ({})
+    required property var footprint
     required property double rangeStartMilliseconds
     required property double rangeEndMilliseconds
-    property double maximumGapMilliseconds: 30000
+    property bool loading: false
     property real uiScale: 1
-    readonly property bool wide: width >= 640 * uiScale
-    readonly property int plotLeft: Math.round((wide ? 150 : 12) * uiScale)
-    readonly property int plotRight: Math.round((wide ? 210 : 12) * uiScale)
-    readonly property var timestamps: (points || []).map(function (point) {
-        const value = Number(point.timestamp_ms || 0);
-        return isFinite(value) && value > 0 ? value : 0;
-    })
+    readonly property bool wide: width >= 480 * uiScale
+    readonly property real valueWidth: Math.round(155 * uiScale)
+    readonly property real inset: Math.round(8 * uiScale)
+    spacing: Math.round(7 * uiScale)
 
-    function timeLabel(index) {
+    function timeLabel(index: int): string {
         const timestamp = rangeStartMilliseconds + (rangeEndMilliseconds - rangeStartMilliseconds) * index / 4;
-        if (!isFinite(timestamp) || timestamp <= 0)
-            return "--:--";
-        return Qt.formatTime(new Date(timestamp), "HH:mm");
+        return isFinite(timestamp) && timestamp > 0 ? Qt.formatTime(new Date(timestamp), "HH:mm") : "--:--";
     }
 
-    implicitHeight: heading.implicitHeight + laneColumn.height + Math.round(62 * uiScale)
-    height: implicitHeight
-    radius: Ui.Theme.cardRadius
-    color: Ui.Theme.surface
-    border.width: 0
+    Repeater {
+        model: chart.lanes
+        delegate: Rectangle {
+            id: lane
+            required property var modelData
+            objectName: "resourceGroup_" + modelData.id
+            Layout.fillWidth: true
+            implicitHeight: content.implicitHeight + 2 * chart.inset
+            radius: Ui.Theme.cardRadius
+            color: Ui.Theme.surface
+            readonly property bool hasHistory: modelData.series.some(descriptor => Resources.historySegments(chart.points, descriptor.metric, chart.rangeStartMilliseconds, chart.rangeEndMilliseconds).length > 0)
+            readonly property bool hasCurrent: modelData.series.some(descriptor => descriptor.available)
+            readonly property real maximum: {
+                let peak = 0;
+                modelData.series.forEach(descriptor => {
+                    if (Resources.measured(descriptor.peak)) peak = Math.max(peak, descriptor.peak);
+                    Resources.historySegments(chart.points, descriptor.metric, chart.rangeStartMilliseconds, chart.rangeEndMilliseconds).forEach(segment => segment.forEach(interval => { peak = Math.max(peak, interval.value); }));
+                });
+                const value = Math.max(modelData.kind === "power" ? 0.01 : 1, peak * 1.15);
+                const step = Math.pow(10, Math.floor(Math.log(value) / Math.LN10));
+                return Math.ceil(value / step) * step;
+            }
+            Accessible.role: Accessible.StaticText
+            Accessible.name: modelData.accessibleText
 
-    Ui.ThemeText {
-        id: heading
-        anchors.right: parent.right
-        anchors.rightMargin: 12
-        wrapMode: Text.Wrap
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.leftMargin: 12
-        anchors.topMargin: 11
-        text: chart.title
-        font.pixelSize: Ui.Theme.fontSizeLabel
-        font.weight: Ui.Theme.fontWeightDemiBold
-    }
-
-    Column {
-        id: laneColumn
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: heading.bottom
-        anchors.topMargin: Math.round(16 * chart.uiScale)
-
-        Repeater {
-            model: chart.lanes
-            delegate: Item {
-                id: lane
-                required property var modelData
-                width: parent.width
-                readonly property real plotTop: (chart.wide ? 0 : Math.max(identity.implicitHeight, statistics.implicitHeight)) + 22 * chart.uiScale
-                readonly property real maximum: {
-                    let peak = 0;
-                    (modelData.series || []).forEach(function (descriptor) {
-                        peak = Math.max(peak, Number((chart.summaries[descriptor.metric] || {}).peak) || 0);
-                        chart.points.forEach(function (point) {
-                            if (Resources.historicalMetricAvailable(point, descriptor.metric))
-                                peak = Math.max(peak, point[descriptor.metric]);
-                        });
-                    });
-                    const minimum = modelData.kind === "power" ? 0.01 : 1;
-                    const value = Math.max(minimum, peak * 1.15);
-                    const step = Math.pow(10, Math.floor(Math.log(value) / Math.LN10));
-                    return Math.ceil(value / step) * step;
-                }
-                height: Math.max(identity.implicitHeight, statistics.implicitHeight, observation.y + observation.implicitHeight) + 18 * chart.uiScale
-                Accessible.role: Accessible.StaticText
-                Accessible.name: modelData.label + ": " + modelData.valueText + ". " + qsTr("Average") + ": " + modelData.averageText + ". " + qsTr("Peak") + ": " + modelData.peakText + ". " + modelData.observationText
-
-                Column {
-                    id: identity
-                    x: 12 * chart.uiScale
-                    width: chart.wide ? chart.plotLeft - 24 * chart.uiScale : parent.width * 0.36
+            ColumnLayout {
+                id: content
+                x: chart.inset
+                y: chart.inset
+                width: lane.width - 2 * chart.inset
+                spacing: Math.round(4 * chart.uiScale)
+                RowLayout {
+                    Layout.fillWidth: true
                     spacing: Ui.Theme.spacingSm
+                    Ui.GlyphLabel {
+                        glyph: lane.modelData.icon
+                        color: lane.modelData.series[0].color
+                        font.pixelSize: Ui.Theme.iconSizeSmall
+                        Accessible.ignored: true
+                    }
                     Ui.ThemeText {
-                        width: parent.width
                         text: lane.modelData.label
-                        wrapMode: Text.Wrap
-                        font.pixelSize: Ui.Theme.fontSizeCaption
+                        font.pixelSize: Ui.Theme.fontSizeSmall
                         font.weight: Ui.Theme.fontWeightDemiBold
                     }
                     Ui.ThemeText {
-                        width: parent.width
-                        text: lane.modelData.valueText
-                        wrapMode: Text.Wrap
-                        color: lane.modelData.color
+                        Layout.fillWidth: true
+                        text: lane.modelData.qualifier
+                        color: Ui.Theme.mutedText
                         font.pixelSize: Ui.Theme.fontSizeCaption
+                        horizontalAlignment: Text.AlignRight
+                        wrapMode: Text.Wrap
                     }
                 }
-                RowLayout {
-                    id: statistics
-                    x: chart.wide ? parent.width - chart.plotRight + 12 * chart.uiScale : parent.width * 0.4
-                    width: chart.wide ? chart.plotRight - 24 * chart.uiScale : parent.width * 0.6 - 12 * chart.uiScale
-                    spacing: Ui.Theme.spacingSm
-                    Repeater {
-                        model: [{label: qsTr("Average"), value: lane.modelData.averageText}, {label: qsTr("Peak"), value: lane.modelData.peakText}]
-                        delegate: ColumnLayout {
-                            id: statisticColumn
-                            required property var modelData
+                ColumnLayout {
+                    objectName: lane.modelData.id === "storage" ? "applicationDiskFootprint" : ""
+                    visible: lane.modelData.id === "storage"
+                    Layout.fillWidth: true
+                    property string valueText: chart.footprint.valueText
+                    property bool available: chart.footprint.available
+                    property string detailText: chart.footprint.detailText
+                    spacing: Math.round(4 * chart.uiScale)
+                    Accessible.role: Accessible.StaticText
+                    Accessible.name: qsTr("Identified app data, not the complete installation: %1. %2").arg(valueText).arg(detailText)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Ui.ThemeText {
+                            text: qsTr("App data")
+                            font.pixelSize: Ui.Theme.fontSizeCaption
+                            color: Ui.Theme.mutedText
+                        }
+                        Ui.ThemeText {
+                            objectName: "resourceValue"
+                            text: chart.footprint.available ? chart.footprint.valueText : "—"
+                            color: Ui.Theme.resourceDisk
+                            font.weight: Ui.Theme.fontWeightDemiBold
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: !chart.wide
+                        }
+                        Rectangle {
+                            objectName: lane.modelData.id === "storage" ? "applicationDiskComposition" : ""
+                            visible: chart.wide
                             Layout.fillWidth: true
-                            Layout.preferredWidth: 1
-                            Layout.alignment: Qt.AlignTop
-                            spacing: Ui.Theme.spacingSm
+                            Layout.minimumWidth: 20
+                            implicitHeight: Math.round(6 * chart.uiScale)
+                            radius: height / 2
+                            color: "transparent"
+                            border.width: 1
+                            border.color: Ui.Theme.border
+                            readonly property real total: chart.footprint.permanent + chart.footprint.temporary
+                            readonly property real fraction: total > 0 && chart.footprint.compositionAvailable ? chart.footprint.permanent / total : 0
+                            Rectangle {
+                                width: parent.width * parent.fraction
+                                height: parent.height
+                                color: Ui.Theme.resourceDisk
+                            }
+                            Rectangle {
+                                x: parent.width * parent.fraction
+                                width: chart.footprint.compositionAvailable && parent.total > 0 ? parent.width - x : 0
+                                height: parent.height
+                                color: Ui.Theme.resourceGpu
+                            }
+                            Accessible.ignored: true
+                        }
+                        Ui.ThemeText {
+                            Layout.maximumWidth: content.width * 0.45
+                            text: qsTr("Installation not measured")
+                            color: Ui.Theme.mutedText
+                            font.pixelSize: Ui.Theme.fontSizeCaption
+                            wrapMode: Text.Wrap
+                        }
+                    }
+                }
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: chart.wide ? 2 : 1
+                    columnSpacing: Ui.Theme.spacingMd
+                    rowSpacing: Math.round(4 * chart.uiScale)
+                    visible: lane.hasCurrent || lane.hasHistory || chart.loading
+                    ColumnLayout {
+                        Layout.fillWidth: !chart.wide
+                        Layout.preferredWidth: chart.wide ? chart.valueWidth : -1
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: Math.round(2 * chart.uiScale)
+                        Repeater {
+                            model: lane.modelData.series
+                            delegate: ApplicationResourceCapacity {
+                                required property var modelData
+                                objectName: modelData.objectName
+                                Layout.fillWidth: true
+                                label: modelData.shortLabel
+                                accessibleLabel: modelData.label
+                                valueText: modelData.valueText
+                                available: modelData.available
+                                detailText: modelData.detailText
+                                accentColor: modelData.color
+                                uiScale: chart.uiScale
+                            }
+                        }
+                        ApplicationResourceCapacity {
+                            objectName: lane.modelData.id === "energy" ? "applicationPeriodEnergy" : ""
+                            visible: lane.modelData.id === "energy"
+                            Layout.fillWidth: true
+                            label: lane.modelData.rangeLabel
+                            accessibleLabel: qsTr("Estimated energy over %1").arg(lane.modelData.rangeLabel)
+                            valueText: lane.modelData.periodText
+                            available: chart.loading || lane.modelData.periodAvailable
+                            detailText: lane.modelData.coverageText
+                            accentColor: Ui.Theme.resourcePower
+                            uiScale: chart.uiScale
+                        }
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        spacing: Math.round(3 * chart.uiScale)
+                        RowLayout {
+                            Layout.fillWidth: true
                             Ui.ThemeText {
                                 Layout.fillWidth: true
-                                text: statisticColumn.modelData.label
+                                text: chart.loading ? qsTr("Loading…") : !lane.hasHistory ? qsTr("No observed intervals")
+                                    : (lane.modelData.style === "columns" || lane.modelData.style === "paired-area" ? "±" : "0 – ") + Resources.formatted(lane.maximum, lane.modelData.kind)
+                                        + (lane.modelData.style === "lines" || lane.modelData.style === "steps" ? qsTr(" · GPU ┄") : "")
                                 color: Ui.Theme.mutedText
                                 font.pixelSize: Ui.Theme.fontSizeCaption
                                 wrapMode: Text.Wrap
                             }
                             Ui.ThemeText {
-                                Layout.fillWidth: true
-                                text: statisticColumn.modelData.value
+                                objectName: "resourceCoverage_" + lane.modelData.id
+                                Layout.maximumWidth: content.width * (chart.wide ? 0.3 : 0.5)
+                                visible: !chart.loading
+                                text: "◷ " + lane.modelData.coverageText
+                                color: Ui.Theme.mutedText
                                 font.pixelSize: Ui.Theme.fontSizeCaption
+                                horizontalAlignment: Text.AlignRight
                                 wrapMode: Text.Wrap
                             }
                         }
+                        ApplicationResourcePlot {
+                            objectName: "resourcePlot_" + lane.modelData.id
+                            Layout.fillWidth: true
+                            visible: lane.hasHistory && !chart.loading
+                            points: chart.points
+                            series: lane.modelData.series
+                            chartStyle: lane.modelData.style
+                            maximum: lane.maximum
+                            rangeStartMilliseconds: chart.rangeStartMilliseconds
+                            rangeEndMilliseconds: chart.rangeEndMilliseconds
+                            uiScale: chart.uiScale
+                        }
                     }
                 }
                 Ui.ThemeText {
-                    x: chart.plotLeft
-                    y: lane.plotTop - implicitHeight - 3
-                    width: parent.width - chart.plotLeft - chart.plotRight
-                    text: lane.modelData.unavailable ? qsTr("No observed intervals") : "0 – " + Resources.formatted(lane.maximum, lane.modelData.kind)
+                    Layout.fillWidth: true
+                    visible: !chart.loading && (lane.modelData.unavailableText.length > 0 || !lane.hasHistory)
+                    text: lane.modelData.unavailableText.length > 0 ? lane.modelData.unavailableText : qsTr("No retained history")
                     color: Ui.Theme.mutedText
                     font.pixelSize: Ui.Theme.fontSizeCaption
-                }
-                Ui.ThemeText {
-                    id: observation
-                    x: chart.plotLeft
-                    y: plot.y + plot.height + 6 * chart.uiScale
-                    width: parent.width - chart.plotLeft - chart.plotRight
-                    text: lane.modelData.observationText
-                    color: Ui.Theme.mutedText
                     wrapMode: Text.Wrap
-                    font.pixelSize: Ui.Theme.fontSizeCaption
                 }
-
-                Canvas {
-                    id: plot
-                    anchors.left: parent.left
-                    anchors.leftMargin: chart.plotLeft
-                    anchors.right: parent.right
-                    anchors.rightMargin: chart.plotRight
-                    anchors.top: parent.top
-                    anchors.topMargin: lane.plotTop
-                    height: Math.round(54 * chart.uiScale)
-                    antialiasing: true
-
-                    function xFor(timestamp) {
-                        return (timestamp - chart.rangeStartMilliseconds) / Math.max(1, chart.rangeEndMilliseconds - chart.rangeStartMilliseconds) * width;
-                    }
-                    function maximumFor(_descriptors) {
-                        return lane.maximum;
-                    }
-                    function yFor(value, descriptorIndex, maximum) {
-                        const fraction = Math.min(1, Math.max(0, value) / maximum);
-                        if (lane.modelData.chartStyle === "paired") {
-                            const centre = height / 2;
-                            const direction = Number((lane.modelData.series[descriptorIndex] || ({})).direction || (descriptorIndex === 0 ? 1 : -1));
-                            return direction > 0 ? centre - fraction * Math.max(1, centre - 3) : centre + fraction * Math.max(1, centre - 3);
-                        }
-                        return height - 3 - fraction * Math.max(1, height - 6);
-                    }
-                    function sampleAt(pointIndex, descriptor, descriptorIndex, maximum) {
-                        const point = chart.points[pointIndex];
-                        const timestamp = chart.timestamps[pointIndex];
-                        const value = Number(point[descriptor.metric]);
-                        const inRange = timestamp >= chart.rangeStartMilliseconds && timestamp <= chart.rangeEndMilliseconds;
-                        if (!inRange || !isFinite(value) || value < 0 || !Resources.historicalMetricAvailable(point, descriptor.metric))
-                            return null;
-                        return {
-                            timestamp: timestamp,
-                            start: timestamp - Math.max(0, Number(point.duration_ms) || 0),
-                            x: xFor(timestamp),
-                            y: yFor(value, descriptorIndex, maximum)
-                        };
-                    }
-                    // Unavailable samples and gaps longer than maximumGapMilliseconds break the line.
-                    function validSegments(descriptor, descriptorIndex, maximum) {
-                        const segments = [];
-                        let previous = null;
-                        chart.points.forEach(function (_point, pointIndex) {
-                            const sample = sampleAt(pointIndex, descriptor, descriptorIndex, maximum);
-                            if (sample && previous && sample.timestamp > previous.timestamp && sample.start <= previous.timestamp && sample.timestamp - previous.timestamp <= chart.maximumGapMilliseconds)
-                                segments[segments.length - 1].push(sample);
-                            else if (sample)
-                                segments.push([sample]);
-                            previous = sample;
-                        });
-                        return segments;
-                    }
-                    function dimRegion(context, left, right) {
-                        const start = Math.max(0, left);
-                        const end = Math.min(width, right);
-                        if (end <= start)
-                            return;
-                        context.fillStyle = Ui.Theme.withAlpha(Ui.Theme.input, 0.38);
-                        context.fillRect(start, 0, end - start, height);
-                    }
-                    function drawUnavailablePeriods(context) {
-                        if (lane.modelData.unavailable) {
-                            dimRegion(context, 0, width);
-                            return;
-                        }
-                        // Dim unavailable buckets even when adjacent timestamps are close.
-                        // Capability gaps must not be mistaken for measured zero activity.
-                        let previousEnd = 0;
-                        chart.points.forEach(function (point) {
-                            const supported = (lane.modelData.series || []).some(function (descriptor) {
-                                return Resources.historicalMetricAvailable(point, descriptor.metric);
-                            });
-                            if (!supported)
-                                return;
-                            const timestamp = Number(point.timestamp_ms);
-                            // A history bucket ends at timestamp_ms; its duration is
-                            // not centred on that timestamp and may cross the window edge.
-                            const duration = Math.max(0, Number(point.duration_ms) || 0);
-                            const left = Math.max(0, xFor(timestamp - duration));
-                            const right = Math.min(width, xFor(timestamp));
-                            if (right <= 0 || left >= width)
-                                return;
-                            dimRegion(context, previousEnd, left);
-                            previousEnd = Math.max(previousEnd, right);
-                        });
-                        dimRegion(context, previousEnd, width);
-                    }
-                    function drawTimeGuides(context) {
-                        context.beginPath();
-                        [0.25, 0.5, 0.75].forEach(function (fraction) {
-                            const x = width * fraction;
-                            context.moveTo(x, 0);
-                            context.lineTo(x, height);
-                        });
-                        context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.border, 0.26);
-                        context.lineWidth = 1;
-                        context.stroke();
-                    }
-                    function drawSeries(context, descriptor, descriptorIndex, maximum) {
-                        const baseline = lane.modelData.chartStyle === "paired" ? height / 2 : height - 3;
-                        let fill = Ui.Theme.withAlpha(descriptor.color, 0.12);
-                        if (lane.modelData.chartStyle !== "paired") {
-                            fill = context.createLinearGradient(0, height * 0.2, 0, baseline);
-                            fill.addColorStop(0, Ui.Theme.withAlpha(descriptor.color, 0.2));
-                            fill.addColorStop(1, Ui.Theme.withAlpha(descriptor.color, 0.025));
-                        }
-                        context.strokeStyle = descriptor.color;
-                        context.lineWidth = 1.75;
-                        context.lineJoin = "round";
-                        context.lineCap = "round";
-                        Ui.ChartDrawing.series(context, validSegments(descriptor, descriptorIndex, maximum), baseline, fill, false);
-                    }
-                    function drawBaseline(context) {
-                        const y = lane.modelData.chartStyle === "paired" ? height / 2 : height - 3;
-                        context.beginPath();
-                        context.moveTo(0, y);
-                        context.lineTo(width, y);
-                        context.strokeStyle = Ui.Theme.withAlpha(Ui.Theme.mutedText, 0.22);
-                        context.lineWidth = 1;
-                        context.stroke();
-                    }
-
-                    Connections {
-                        target: chart
-                        function onPointsChanged() {
-                            plot.requestPaint();
-                        }
-                        function onSummariesChanged() {
-                            plot.requestPaint();
-                        }
-                        function onRangeStartMillisecondsChanged() {
-                            plot.requestPaint();
-                        }
-                        function onRangeEndMillisecondsChanged() {
-                            plot.requestPaint();
-                        }
-                    }
-
-                    onPaint: {
-                        const context = getContext("2d");
-                        context.reset();
-                        drawUnavailablePeriods(context);
-                        if (lane.modelData.unavailable)
-                            return;
-                        drawTimeGuides(context);
-                        drawBaseline(context);
-                        const descriptors = lane.modelData.series || [];
-                        const maximum = maximumFor(descriptors);
-                        descriptors.forEach(function (descriptor, descriptorIndex) {
-                            drawSeries(context, descriptor, descriptorIndex, maximum);
-                        });
-                    }
+                Ui.ThemeText {
+                    Layout.fillWidth: true
+                    visible: lane.modelData.id === "storage" || lane.modelData.id === "network"
+                    text: chart.loading ? qsTr("Loading period totals…") : lane.modelData.rangeLabel + " · " + lane.modelData.periodText
+                    color: Ui.Theme.mutedText
+                    font.pixelSize: Ui.Theme.fontSizeCaption
+                    wrapMode: Text.Wrap
                 }
             }
         }
     }
-
-    Item {
-        anchors.left: parent.left
-        anchors.leftMargin: chart.plotLeft
-        anchors.right: parent.right
-        anchors.rightMargin: chart.plotRight
-        anchors.bottom: parent.bottom
-        height: Math.round(28 * chart.uiScale)
-
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.leftMargin: chart.wide ? chart.inset + chart.valueWidth + Ui.Theme.spacingMd : chart.inset
+        Layout.rightMargin: chart.inset
         Repeater {
-            model: 5
+            model: 3
             delegate: Ui.ThemeText {
                 required property int index
-                x: index === 0 ? 0 : index === 4 ? parent.width - width : parent.width * index / 4 - width / 2
-                width: 48
-                text: chart.timeLabel(index)
-                color: index === 4 ? Ui.Theme.mutedText : Ui.Theme.subtleText
-                horizontalAlignment: index === 0 ? Text.AlignLeft : index === 4 ? Text.AlignRight : Text.AlignHCenter
+                Layout.fillWidth: true
+                text: chart.timeLabel(index * 2)
+                horizontalAlignment: index === 0 ? Text.AlignLeft : index === 2 ? Text.AlignRight : Text.AlignHCenter
                 font.pixelSize: Ui.Theme.fontSizeCaption
-                font.weight: index === 4 ? Ui.Theme.fontWeightDemiBold : Ui.Theme.fontWeightRegular
+                color: Ui.Theme.mutedText
             }
         }
     }

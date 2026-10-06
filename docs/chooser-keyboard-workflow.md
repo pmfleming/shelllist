@@ -48,8 +48,10 @@ on result movement. Missing results may close unavailable details safely.
   and save/discard.
 - Left or Escape leaves details while browsing. Domain back-navigation (such as
   a Displays subpage) still takes precedence over closing its parent page.
-- PageUp/PageDown scroll a read-only page; Up/Down remain result navigation.
-  Pages without editable controls have a non-highlighted scrolling fallback.
+- PageUp/PageDown scroll the containing detail page while browsing, including
+  read-only charts beside an editable range field; Up/Down remain result
+  navigation. Native editors still own keys while editing. Pages without
+  editable controls have a non-highlighted scrolling fallback.
 - The Power history chart is intentionally pointer-entry-only for now. Do not
   add it to field traversal or expose a keyboard inspection command. Its range
   selector remains an ordinary field; explicit pointer inspection is unchanged.
@@ -292,12 +294,16 @@ there is no persistent shortcut legend or instructional footer. Errors remain te
 Recognition changes presentation/search only, never the MPRIS routing or pin ID.
 See [Media presentation and shortcut diagnosis](media.md).
 
-Applications' Resources page keeps its overview, metadata and history
-information-only. Its shared 30m / 2h / 24h segmented field is the sole editable
-stop and controls both period totals and history. Pointer choice remains a local
-draft; Enter/Tab saves and requests the new range, Escape or leaving the editor
-discards without a history request. Tab/Shift+Tab wrap on that field; charts and
-resource values never become additional stops. See
+Applications' Resources page combines snapshot readings and history in five
+information-only groups. Its shared 30m / 2h / 24h segmented field is the sole
+editable stop and controls both period totals and history. Pointer choice remains
+a local draft; Enter/Tab saves and requests the new range, Escape or leaving the
+editor discards without a history request. Tab/Shift+Tab wrap on that field;
+charts, metadata and statistics never become additional stops. The shared
+icon-only information command **Alt+H** toggles read-only Measurement details,
+also available by name in the shared **Alt+J** content menu. Opening reveals the
+heading if needed; PageUp/PageDown scroll the page. Disclosure has no backend
+side effects and adds no chart-inspection key model. See
 [resource measurement semantics](application-resources.md) and
 `tst_application_resources.qml` for actual key/pointer coverage.
 

@@ -52,13 +52,21 @@ Flickable {
         revealItem(focusedControl);
     }
     function revealItem(item: Item): void {
+        const ancestors = [];
         let ancestor = item.parent;
-        while (ancestor && ancestor !== contentItem)
+        while (ancestor && ancestor !== contentItem) {
+            ancestors.push(ancestor);
             ancestor = ancestor.parent;
+        }
         if (!ancestor)
             return;
         // Commit initial geometry/bookkeeping before a newer explicit reveal.
-        // Otherwise queued restoreScroll can overwrite an unrecorded movement.
+        // Disclosures can change nested Layouts, not only the outer Column;
+        // apply widths top-down, then settle implicit heights bottom-up before
+        // measuring the target's new position and the new scroll bounds.
+        cardColumn.forceLayout();
+        ancestors.slice().reverse().forEach(container => container.ensurePolished());
+        ancestors.forEach(container => container.ensurePolished());
         cardColumn.forceLayout();
         restoreScroll();
         const position = item.mapToItem(contentItem, 0, 0);

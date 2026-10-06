@@ -8,45 +8,47 @@ const Resources = {};
 vm.createContext(Resources);
 vm.runInContext(fs.readFileSync(path.join(launcher, "ApplicationResources.js"), "utf8")
     .replace(/^\.pragma library\s*/, ""), Resources);
+const plain = value => JSON.parse(JSON.stringify(value));
 
-// check-application-resources owns null/availability validation. This suite
-// checks actual canvas gaps and rejects system battery power as per-app data.
+// Exercise the interval geometry actually consumed by every Canvas style.
 const idle = { timestamp_ms: 15000, duration_ms: 15000, gpu_busy_percent: 0,
-    disk_read_bytes_per_second: 0, network_receive_bytes_per_second: 0,
-    availability: { gpu: true, storage: true, network_bytes: true } };
-const unavailable = { timestamp_ms: 30000, duration_ms: 15000, gpu_busy_percent: 80,
-    availability: { gpu: false } };
+    disk_read_bytes_per_second: 0, disk_write_bytes_per_second: 4,
+    availability: { gpu: true, storage: true } };
+const unavailable = { ...idle, timestamp_ms: 30000, gpu_busy_percent: 80,
+    availability: { gpu: false, storage: true } };
+const resumed = { ...idle, timestamp_ms: 45000, gpu_busy_percent: 70 };
+const segments = (points, metric = "gpu_busy_percent", start = 0, end = 60000) =>
+    plain(Resources.historySegments(points, metric, start, end));
+const gaps = (data, start = 0, end = 60000) => plain(Resources.missingIntervals(data, start, end));
 assert.equal(Resources.currentMetricAvailable({ energy_source: "battery" }, "average_power_watts"), false,
-    "battery discharge is system-only, not measured application power");
-
-// Exercise the actual Canvas segmentation function: unavailable buckets break
-// the line even when the gap threshold alone would join their neighbours.
-const source = fs.readFileSync(path.join(launcher, "ApplicationResourceLaneChart.qml"), "utf8");
-const lift = name => source.match(new RegExp("^                    function " + name + "\\([\\s\\S]*?\\n                    \\}", "m"))[0];
-const points = [idle, unavailable, { ...idle, timestamp_ms: 45000, gpu_busy_percent: 70 }];
-const context = { Resources, chart: { points, timestamps: points.map(p => p.timestamp_ms),
-    rangeStartMilliseconds: 0, rangeEndMilliseconds: 60000, maximumGapMilliseconds: 30000 },
-    xFor: x => x, yFor: y => y };
-vm.createContext(context);
-vm.runInContext(lift("sampleAt") + "\n" + lift("validSegments"), context);
-const segments = context.validSegments({ metric: "gpu_busy_percent" }, 0, 100);
-assert.equal(segments.length, 2);
-context.chart.points = [idle, {...idle, timestamp_ms: 30000, duration_ms: 1000}];
-context.chart.timestamps = context.chart.points.map(p => p.timestamp_ms);
-assert.equal(context.validSegments({metric: "gpu_busy_percent"}, 0, 100).length, 2,
-    "unobserved time breaks traces even below the maximum timestamp-gap threshold");
-context.chart.points = [idle, {...idle}];
-context.chart.timestamps = context.chart.points.map(p => p.timestamp_ms);
-assert.equal(context.validSegments({metric: "gpu_busy_percent"}, 0, 100).length, 2,
-    "duplicate/non-advancing timestamps cannot draw backward or duplicate segments");
-
-const regions = [];
-Object.assign(context, {
-    lane: {modelData: {unavailable: false, series: [{metric: "gpu_busy_percent"}]}},
-    width: 60000, dimRegion: (_canvas, start, end) => regions.push([start, end])
-});
-context.chart.points = [{...idle, timestamp_ms: 30000, duration_ms: 10000}];
-vm.runInContext(lift("drawUnavailablePeriods"), context);
-context.drawUnavailablePeriods({});
-assert.deepEqual(regions, [[0, 20000], [30000, 60000]], "buckets cover time before their end, not a centred radius");
-console.log("resource availability: measured power, interval geometry and unavailable chart gaps passed");
+    "battery discharge is not measured application power");
+assert.deepEqual(segments([idle, unavailable, resumed]), [
+    [{start: 0, end: 15000, value: 0}], [{start: 30000, end: 45000, value: 70}]
+], "unsupported buckets break lines and areas; zero is a measured interval");
+assert.deepEqual(gaps(segments([idle, unavailable, resumed])), [
+    {start: 15000, end: 30000}, {start: 45000, end: 60000}
+]);
+assert.equal(segments([idle, {...idle, timestamp_ms: 30000, duration_ms: 1000}]).length, 2,
+    "unobserved time breaks every trace, however short the timestamp gap");
+assert.deepEqual(segments([idle, {...idle}]), [[{start: 0, end: 15000, value: 0}]],
+    "duplicate ends never draw backward or paint duplicate columns");
+assert.deepEqual(segments([{...idle, timestamp_ms: 30000, duration_ms: 10000}]), [
+    [{start: 20000, end: 30000, value: 0}]
+], "buckets cover preceding duration, not a centred radius");
+assert.deepEqual(segments([idle, {...resumed, duration_ms: 45000}], "gpu_busy_percent", 10000, 40000), [
+    [{start: 10000, end: 15000, value: 0}, {start: 15000, end: 40000, value: 70}]
+], "clip both window edges and overlapping intervals; end-outside-window bucket still intersects");
+assert.deepEqual(segments([idle, unavailable, {...resumed, duration_ms: 45000}]), [
+    [{start: 0, end: 15000, value: 0}], [{start: 30000, end: 45000, value: 70}]
+], "a long later bucket never fills a known unsupported interval");
+for (const duration_ms of [0, -1, null, NaN, Infinity])
+    assert.deepEqual(segments([{...idle, duration_ms}]), [], "invalid duration is not observed time");
+assert.deepEqual(segments([idle], "gpu_busy_percent", 60000, 0), []);
+assert.deepEqual(gaps([]), [{start: 0, end: 60000}]);
+const directional = [idle, {...unavailable, disk_write_bytes_per_second: null}, resumed];
+const reads = segments(directional, "disk_read_bytes_per_second");
+const writes = segments(directional, "disk_write_bytes_per_second");
+assert.equal(reads.length, 1);
+assert.equal(writes.length, 2);
+assert.deepEqual(gaps(writes)[0], {start: 15000, end: 30000}, "one valid direction does not conceal the other direction's gap");
+console.log("resource availability: per-series gaps, clipped bucket geometry and measured zero passed");

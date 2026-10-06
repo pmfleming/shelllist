@@ -94,6 +94,62 @@ function observationText(summary, metric) {
     return observedTime(stats.observed_ms) + " observed / "
         + observedTime(finite(summary?.window_end_ms) - finite(summary?.window_start_ms));
 }
+function compactObservation(summary, metric) {
+    const stats = summaryMetric(summary, metric);
+    if (!stats.available)
+        return "—";
+    const compact = (ms) => observedTime(ms).replace(".0 ", " ").replace(" min", "m").replace(" h", "h").replace(" s", "s");
+    return compact(Number(stats.observed_ms)) + "/" + compact(finite(summary?.window_end_ms) - finite(summary?.window_start_ms));
+}
+// Buckets END at timestamp_ms. Clip their actual duration to the requested
+// window; never extrapolate, carry forward over gaps, or render duplicate ends.
+// Shared by all chart styles and tested without depending on Canvas internals.
+function historySegments(points, metric, start, end) {
+    if (!isFinite(start) || !isFinite(end) || start >= end)
+        return [];
+    const segments = [];
+    let previous = null;
+    let lastTimestamp = -Infinity;
+    for (const point of points) {
+        const timestamp = point.timestamp_ms;
+        const duration = point.duration_ms;
+        if (!measured(timestamp) || timestamp <= lastTimestamp) {
+            previous = null;
+            continue;
+        }
+        const previousTimestamp = lastTimestamp;
+        lastTimestamp = timestamp;
+        if (!measured(duration) || duration <= 0 || !historicalMetricAvailable(point, metric)) {
+            previous = null;
+            continue;
+        }
+        const left = Math.max(start, timestamp - duration, previousTimestamp);
+        const right = Math.min(end, timestamp);
+        if (right <= left)
+            continue;
+        const interval = { start: left, end: right, value: Number(point[metric]) };
+        if (previous && left === previous.end)
+            segments[segments.length - 1].push(interval);
+        else
+            segments.push([interval]);
+        previous = interval;
+    }
+    return segments;
+}
+function missingIntervals(segments, start, end) {
+    const gaps = [];
+    let cursor = start;
+    for (const segment of segments) {
+        for (const interval of segment) {
+            if (interval.start > cursor)
+                gaps.push({ start: cursor, end: interval.start });
+            cursor = Math.max(cursor, interval.end);
+        }
+    }
+    if (cursor < end)
+        gaps.push({ start: cursor, end });
+    return gaps;
+}
 function rangeEnergyConfidence(points) {
     const confidences = points.filter(point => historicalMetricAvailable(point, "average_power_watts"))
         .map(point => text(point.energy_confidence, "unknown").toLowerCase());

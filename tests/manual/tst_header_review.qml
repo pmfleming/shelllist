@@ -139,12 +139,10 @@ Tests.DaemonTestCase {
         const pane = createTemporaryObject(resourcesFactory, stage);
         verify(pane !== null);
         wait(100);
-        const children = Array.from(pane.children).filter(child => child.visible && child.height > 0);
-        compare(children.length, 3); // capacity cards, range-only row, chart
-        compare(children[0].y, 0, "removed composition heading leaves no top gap");
-        compare(children[2].title, "Shared timeline");
+        const chart = findChild(pane, "applicationResourceTimeline");
+        compare(chart.lanes.length, 5, "snapshot values and history share five compact groups");
+        verify(!findChild(pane, "applicationMeasurementDetails").visible);
         compare(navigation.collectTargets(pane).length, 1, "only the range selector joins field traversal");
-        capture(pane, 0, children[0].y + children[0].height, "applications-composition");
-        capture(pane, children[1].y, children[2].y + children[2].height - children[1].y, "applications-activity");
+        capture(pane, 0, pane.height, "applications-resources-compact");
     }
 }

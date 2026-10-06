@@ -15,6 +15,7 @@ ApplicationResourceBadge 1.0 ApplicationResourceBadge.qml
 ApplicationResourceCapacity 1.0 ApplicationResourceCapacity.qml
 ApplicationResourceHistory 1.0 ApplicationResourceHistory.qml
 ApplicationResourceLaneChart 1.0 ApplicationResourceLaneChart.qml
+internal ApplicationResourcePlot ApplicationResourcePlot.qml
 ApplicationResourceMetadata 1.0 ApplicationResourceMetadata.qml
 internal ApplicationResourceOverview ApplicationResourceOverview.qml
 ApplicationResources 1.0 ApplicationResources.js

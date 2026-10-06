@@ -31,7 +31,7 @@ const commandSymbols = [
     "clear_all", "qr_code", "qr_code_scanner", "content_copy", "content_paste",
     "open_in_new", "unfold_more", "reply", "snooze", "schedule", "notifications",
     "contrast", "desktop_windows", "center_focus_strong", "warning", "share", "bluetooth", "volume_up",
-    "music_note", "settings_input_component", "battery_full", "cloud",
+    "music_note", "settings_input_component", "memory", "storage", "bolt", "battery_full", "cloud",
     "headphones", "auto_stories", "videocam", "equalizer", "stop", "skip_next", "skip_previous"
 ];
 function name(glyph) {

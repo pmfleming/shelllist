@@ -364,7 +364,9 @@ FocusScope {
         resultMoveRequested(delta);
     }
     function scrollPage(distance: real): bool {
-        const page = currentTarget as DetailFlickable;
+        // Browsing a range field must not prevent scrolling its read-only
+        // charts/details. Native editors still own keys while editing.
+        const page = currentPage;
         if (!page)
             return false;
         const next = Math.max(0, Math.min(Math.max(0, page.contentHeight - page.height), page.contentY + distance));

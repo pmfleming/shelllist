@@ -61,6 +61,8 @@ assert.equal(resources.periodEstimate(validated, "disk_read_bytes_per_second"), 
 assert.equal(resources.periodEstimate(validated, "disk_write_bytes_per_second"), 0);
 assert.equal(resources.periodEstimate(validated, "network_receive_bytes_per_second"), null);
 assert.equal(resources.observationText(validated, "disk_read_bytes_per_second"), "15.0 min observed / 30.0 min");
+assert.equal(resources.compactObservation(validated, "disk_read_bytes_per_second"), "15m/30m");
+assert.equal(resources.compactObservation(validated, "network_receive_bytes_per_second"), "—");
 assert.equal(resources.periodText(validated, "average_power_watts"), "≈ 310.00 mWh");
 assert.equal(resources.periodText(null, "average_power_watts"), "Unavailable");
 assert.equal(resources.windowSummary(summary, 1000, 2000000), null, "stale range summary");

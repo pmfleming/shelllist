@@ -139,6 +139,62 @@ function observationText(summary: HistorySummary | null | undefined, metric: str
         + observedTime(finite(summary?.window_end_ms) - finite(summary?.window_start_ms));
 }
 
+function compactObservation(summary: HistorySummary | null | undefined, metric: string): string {
+    const stats = summaryMetric(summary, metric);
+    if (!stats.available) return "—";
+    const compact = (ms: number) => observedTime(ms).replace(".0 ", " ").replace(" min", "m").replace(" h", "h").replace(" s", "s");
+    return compact(Number(stats.observed_ms)) + "/" + compact(finite(summary?.window_end_ms) - finite(summary?.window_start_ms));
+}
+
+interface ResourceInterval { start: number; end: number; value: number; }
+
+// Buckets END at timestamp_ms. Clip their actual duration to the requested
+// window; never extrapolate, carry forward over gaps, or render duplicate ends.
+// Shared by all chart styles and tested without depending on Canvas internals.
+function historySegments(points: readonly ResourcePoint[], metric: string, start: number, end: number): ResourceInterval[][] {
+    if (!isFinite(start) || !isFinite(end) || start >= end) return [];
+    const segments: ResourceInterval[][] = [];
+    let previous: ResourceInterval | null = null;
+    let lastTimestamp = -Infinity;
+    for (const point of points) {
+        const timestamp = point.timestamp_ms;
+        const duration = point.duration_ms;
+        if (!measured(timestamp) || timestamp <= lastTimestamp) {
+            previous = null;
+            continue;
+        }
+        const previousTimestamp = lastTimestamp;
+        lastTimestamp = timestamp;
+        if (!measured(duration) || duration <= 0 || !historicalMetricAvailable(point, metric)) {
+            previous = null;
+            continue;
+        }
+        const left = Math.max(start, timestamp - duration, previousTimestamp);
+        const right = Math.min(end, timestamp);
+        if (right <= left) continue;
+        const interval = {start: left, end: right, value: Number(point[metric])};
+        if (previous && left === previous.end)
+            segments[segments.length - 1].push(interval);
+        else
+            segments.push([interval]);
+        previous = interval;
+    }
+    return segments;
+}
+
+function missingIntervals(segments: readonly ResourceInterval[][], start: number, end: number): {start: number; end: number}[] {
+    const gaps: {start: number; end: number}[] = [];
+    let cursor = start;
+    for (const segment of segments) {
+        for (const interval of segment) {
+            if (interval.start > cursor) gaps.push({start: cursor, end: interval.start});
+            cursor = Math.max(cursor, interval.end);
+        }
+    }
+    if (cursor < end) gaps.push({start: cursor, end});
+    return gaps;
+}
+
 function rangeEnergyConfidence(points: readonly ResourcePoint[]): string {
     const confidences = points.filter(point => historicalMetricAvailable(point, "average_power_watts"))
         .map(point => text(point.energy_confidence, "unknown").toLowerCase());
