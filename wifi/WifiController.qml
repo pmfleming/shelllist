@@ -124,7 +124,7 @@ ProviderChooserController {
     // Scanning from the network list joins the network it read; scanning from
     // the share dialog only reports what it read.
     function launchQrScanner() {
-        return qr.launchScanner(true);
+        return !promptActive && qr.launchScanner(true);
     }
     function applyShareResponse(response, errorText) {
         services.share.applyResponse(response, errorText);
@@ -407,8 +407,12 @@ ProviderChooserController {
             status = "Nothing was scanned.";
             return false;
         }
-        if (!connection.beginAny())
-            return false;
+        if (!connection.canBeginAny() || bandRequestId.length > 0) {
+            // Do not retain a scanned passphrase in QML or silently join later.
+            // Parsing is read-only; the daemon returns only non-secret metadata.
+            status = "Network change in progress; reading QR only. Scan again to join when it finishes.";
+            return backend.parseQr(payload);
+        }
         return backend.connectQr(payload, "");
     }
     function inspectScannedQr(payload) {
@@ -420,7 +424,7 @@ ProviderChooserController {
     }
     function applyScannedQr(parsed) {
         scannedQr = parsed || null;
-        status = parsed && parsed.ssid ? ("Scanned " + parsed.ssid + (parsed.hidden ? " (hidden)" : "")) : "The scanned code is not a Wi-Fi network.";
+        status = parsed && parsed.ssid ? ("Scanned " + parsed.ssid + (parsed.hidden ? " (hidden)" : "") + ". Scan again to join when network changes finish.") : "The scanned code is not a Wi-Fi network.";
     }
 
     onDetailsOpenChanged: {

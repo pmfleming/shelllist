@@ -16,10 +16,14 @@ Io.DaemonBackend {
     active: controller.statusMonitorActive || controller.uiActive || requestRunning || controller.connection.running || controller.promptActive || (controller.portal && controller.portal.busy)
     readonly property bool listRunning: isPending("networks")
     readonly property bool scanRunning: isPending("scan-start") || controller.scan.requestId.length > 0
-    readonly property bool connectStarting: isPending("connect-start")
-    // List refreshes, scans and sharing may overlap a connection attempt.
-    readonly property bool nonConnectRunning: hasPendingOtherThan(["networks", "scan-start", "connect-start", "share"])
-    readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0 || (controller.portal && controller.portal.busy)
+    readonly property bool connectStarting: isPending("connect-start") || isPending("qr-connect")
+    // Reads and portal transactions do not mutate the Wi-Fi link. Unknown
+    // request kinds remain conservatively exclusive; new mutations fail closed.
+    readonly property bool nonConnectRunning: Object.keys(pending).some(function (id) {
+        const reads = ["networks", "scan-start", "connect-start", "qr-connect", "share", "qr-parse", "status-recovery", "connection-status", "band-status", "advanced-load", "advanced-secret", "hotspot-capabilities", "hotspot-status", "vpn-list", "vpn-status", "inventory", "network-status", "statistics-watch"];
+        return !reads.includes(id) && !id.startsWith("portal-") && !isTransportControl(id);
+    })
+    readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
     property var portalExecutor: portalProcess
     property string portalLaunchId: ""
     readonly property var responseHandlerById: ({

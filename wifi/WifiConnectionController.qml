@@ -28,7 +28,7 @@ Item {
             progressTimer.stop();
     }
     function canBeginAny() {
-        return !backend.running;
+        return !backend.running && controller.bandRequestId.length === 0;
     }
     function canBegin(ap) {
         return canBeginAny() && !!(ap && ap.capabilities && ap.capabilities.can_connect);

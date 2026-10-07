@@ -18,10 +18,10 @@ ChooserListPane {
     refreshing: controller.scanInFlight
     busy: controller.actionInFlight
     powerEnabled: !controller.actionInFlight && !controller.promptActive
-    refreshEnabled: controller.powered && !controller.actionInFlight
+    refreshEnabled: controller.powered && !controller.promptActive
     searchActionIcon: "󰐲"
     searchActionToolTip: "Scan a Wi-Fi QR code"
-    searchActionEnabled: !controller.actionInFlight
+    searchActionEnabled: !controller.promptActive && !controller.qr.scannerRunning
     filterText: controller.filterText
     status: controller.status
     onSearchActionRequested: controller.launchQrScanner()

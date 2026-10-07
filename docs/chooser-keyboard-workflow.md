@@ -366,6 +366,15 @@ continue history loading. Queued revision events are applied before accepting a
 page. `tst_notifications.qml` covers representative ordering/validation cases, actual
 search key delivery, cursor recovery and reply/viewport retention.
 
+Wi-Fi busy guards apply to conflicting network mutations, not background reads
+or portal browser work. Search, result browsing, QR reading and requesting a
+refresh remain available during connection changes. A refresh requested during
+activation is deferred; a QR scanned while a mutation is pending is parsed by
+the daemon without retaining its passphrase in QML. Joining requires an explicit
+rescan after the mutation finishes, never a surprise delayed credential replay.
+Power/profile/connect/disconnect commands retain acknowledgement guards. These
+commands do not join Tab traversal. `tst_wifi_operations.qml` covers the guards.
+
 Wi-Fi Sign in remains **Alt+I**, never a field Tab stop. It requests and claims a
 daemon-owned portal intent before the frontend executes browser/workspace focus;
 Tab/arrows/Enter field transactions never invoke it. The bar's explicit fallback

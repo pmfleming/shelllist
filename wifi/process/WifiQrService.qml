@@ -50,6 +50,7 @@ Item {
     // Set when the scanner should join the scanned network rather than only
     // report what it read.
     property bool joinAfterScan: false
+    readonly property bool scannerRunning: scanner.running
 
     function launchScanner(join) {
         if (scanner.running) {
