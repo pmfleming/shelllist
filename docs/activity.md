@@ -109,6 +109,10 @@ Removal animation is presentation-only. Dismiss, clear-group, clear-all, snooze,
 Browse, Read and Page use registered semantic symbols through the shared icon
 renderer, not literal text in a Nerd Font. Commands retain their accessible
 names and shared command-menu routes, without entering field traversal.
+Notification icons use supplied local images or positively resolved installed
+icons (including desktop/name fallbacks), otherwise a neutral bell. Missing theme
+assets must never be represented by Quickshell's checkerboard placeholder;
+failed local images use the same shared glyph fallback.
 
 ## Validation
 
