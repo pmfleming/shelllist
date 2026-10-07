@@ -11,7 +11,7 @@ ProviderChooserSurface {
     chooserController: controller
     sessionReady: !controller.advanced.loading
     navigationEnabled: !content.controller.promptActive
-    refreshEnabled: content.controller.powered && navigationEnabled && !content.controller.actionInFlight
+    refreshEnabled: content.controller.powered && navigationEnabled
     refreshAutoRepeat: false
     readonly property bool pageShortcutsEnabled: content.controller.uiActive && content.controller.powered && content.navigationEnabled && !content.controller.advanced.open
 

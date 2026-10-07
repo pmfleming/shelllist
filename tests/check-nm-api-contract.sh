@@ -119,7 +119,7 @@ jq -e '
     "wifi.status", "wifi.setEnabled", "radio.setWwanEnabled", "radio.setAirplaneMode",
     "network.portalPrepare", "network.portalClaim", "network.portalComplete",
     "network.connectivity", "wifi.networks", "wifi.band.status", "wifi.band.set", "wifi.scan",
-    "wifi.connectTarget", "wifi.disconnect", "wifi.profile.operation",
+    "wifi.connectTarget", "wifi.disconnect", "wifi.profile.operation", "operation.status",
     "wifi.secret.capabilities", "wifi.secret.provide",
     "network.inventory", "network.devices", "network.connections", "network.status",
     "network.activateProfile", "network.deactivate", "network.statistics.watch",
@@ -169,7 +169,8 @@ jq -r '
           or .name == "vpn.list"
           or .name == "vpn.status"
           or .name == "vpn.connect"
-          or .name == "vpn.disconnect")
+          or .name == "vpn.disconnect"
+          or .name == "operation.status")
       | "    " + (.name | identifier) + ": Protocol.methods[" + (.name | tojson) + "]"] | join(",\n"))
   + "\n};\n\n"
   + "var streams = {\n"

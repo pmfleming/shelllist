@@ -50,15 +50,22 @@ Item {
     // Set when the scanner should join the scanned network rather than only
     // report what it read.
     property bool joinAfterScan: false
-    readonly property bool scannerRunning: scanner.running
+    property var scannerExecutor: scanner
+    readonly property bool scannerRunning: scannerExecutor.running
 
     function launchScanner(join) {
-        if (scanner.running) {
+        if (scannerRunning) {
             controller.status = "Wi-Fi QR scanner is already open";
             return false;
         }
         joinAfterScan = !!join;
-        scanner.exec(["qrca"]);
+        try {
+            scannerExecutor.exec(["qrca"]);
+        } catch (error) {
+            joinAfterScan = false;
+            controller.status = "Could not open the Wi-Fi QR scanner.";
+            return false;
+        }
         controller.status = "Opening Wi-Fi QR scanner…";
         return true;
     }

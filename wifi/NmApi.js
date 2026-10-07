@@ -5,7 +5,6 @@ var protocol = Protocol.protocol;
 var version = Protocol.version;
 
 var methods = {
-    operation_status: Protocol.methods["operation.status"],
     wifi_status: Protocol.methods["wifi.status"],
     wifi_setEnabled: Protocol.methods["wifi.setEnabled"],
     network_portalPrepare: Protocol.methods["network.portalPrepare"],
@@ -34,7 +33,8 @@ var methods = {
     wifi_connectTarget: Protocol.methods["wifi.connectTarget"],
     wifi_disconnect: Protocol.methods["wifi.disconnect"],
     wifi_profile_operation: Protocol.methods["wifi.profile.operation"],
-    wifi_secret_provide: Protocol.methods["wifi.secret.provide"]
+    wifi_secret_provide: Protocol.methods["wifi.secret.provide"],
+    operation_status: Protocol.methods["operation.status"]
 };
 
 var streams = {

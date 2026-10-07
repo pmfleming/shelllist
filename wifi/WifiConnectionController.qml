@@ -281,8 +281,8 @@ Item {
         // A progress snapshot is not completion, even if wifi.status is active.
         if (event && event.request_id === requestId && ["started", "progress"].includes(event.event))
             handleEvent(event);
-        if (result.cancellation_requested) {
-            cancellationRequested = true;
+        cancellationRequested = !!result.cancellation_requested;
+        if (cancellationRequested) {
             controller.setHeldStatus(result.timed_out ? "Connection timed out; waiting for cancellation acknowledgement…" : "Waiting for connection cancellation acknowledgement…", 15000);
         }
         recoveryTimer.restart();
@@ -298,11 +298,13 @@ Item {
     }
     Timer {
         id: recoveryTimer
+        objectName: "connectionRecoveryPoll"
         interval: 15000
         onTriggered: connection.checkStatus(false)
     }
     Timer {
         id: recoveryReplyTimer
+        objectName: "connectionRecoveryReplyDeadline"
         interval: 10000
         onTriggered: connection.recoveryFailed("Connection status check timed out.")
     }

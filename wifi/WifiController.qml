@@ -133,7 +133,7 @@ ProviderChooserController {
         return Date.now() < statusHoldUntil;
     }
     function setBackgroundStatus(message) {
-        if (!statusIsHeld())
+        if (!statusIsHeld() && !actionInFlight)
             status = message;
     }
     function setHeldStatus(message, milliseconds) {
