@@ -40,58 +40,10 @@ ActionDetailsPane {
     subtitleWeight: Theme.fontWeightMedium
     actions: controller.detailActions
 
-    Item {
-        id: tabViewport
-
-        property real advancedTransitionProgress: pane.controller.advanced.open && advancedLoader.status === Loader.Ready ? 1 : 0
-
-        width: parent.width
-        height: Math.max(0, parent.height - pane.footerHeight - pane.sectionSpacing)
-        clip: true
-
-        InteractiveBehavior on advancedTransitionProgress {}
-
-        NetworkDetailCards {
-            enabled: !pane.controller.advanced.open || advancedLoader.status !== Loader.Ready
-            width: parent.width
-            height: parent.height
-            x: -width * tabViewport.advancedTransitionProgress
-            controller: pane.controller
-            accessPoint: pane.ap
-            sectionSpacing: pane.sectionSpacing
-            connectionCardHeight: pane.connectionCardHeight
-            networkCardHeight: pane.networkCardHeight
-        }
-
-        Loader {
-            id: advancedLoader
-
-            active: pane.controller.advanced.open || tabViewport.advancedTransitionProgress > 0
-            asynchronous: true
-            enabled: pane.controller.advanced.open
-            width: parent.width
-            height: parent.height
-            x: width * (1 - tabViewport.advancedTransitionProgress)
-            sourceComponent: AdvancedSettingsPage {
-                controller: pane.controller
-                sectionSpacing: pane.sectionSpacing
-            }
-        }
-
-        PulsingLabel {
-            anchors.centerIn: parent
-            visible: pane.controller.advanced.open && advancedLoader.status === Loader.Loading
-            text: qsTr("Loading advanced settings…")
-            color: Theme.mutedText
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeBody
-        }
-    }
-
-    DetailsTabBar {
-        anchors.bottom: parent.bottom
-        width: parent.width
-        height: pane.footerHeight
+    TabbedDetailsStack {
+        anchors.fill: parent
+        footerHeight: pane.footerHeight
+        sectionSpacing: pane.sectionSpacing
         selectedValue: pane.controller.detailsTab
         tabs: [
             {
@@ -114,6 +66,46 @@ ActionDetailsPane {
         ]
         onSelected: function (value) {
             pane.controller.selectDetailsTab(value);
+        }
+
+        Item {
+            id: tabViewport
+            anchors.fill: parent
+            property real advancedTransitionProgress: pane.controller.advanced.open && advancedLoader.status === Loader.Ready ? 1 : 0
+            InteractiveBehavior on advancedTransitionProgress {}
+
+            NetworkDetailCards {
+                enabled: !pane.controller.advanced.open || advancedLoader.status !== Loader.Ready
+                width: parent.width
+                height: parent.height
+                x: -width * tabViewport.advancedTransitionProgress
+                controller: pane.controller
+                accessPoint: pane.ap
+                sectionSpacing: pane.sectionSpacing
+                connectionCardHeight: pane.connectionCardHeight
+                networkCardHeight: pane.networkCardHeight
+            }
+            Loader {
+                id: advancedLoader
+                active: pane.controller.advanced.open || tabViewport.advancedTransitionProgress > 0
+                asynchronous: true
+                enabled: pane.controller.advanced.open
+                width: parent.width
+                height: parent.height
+                x: width * (1 - tabViewport.advancedTransitionProgress)
+                sourceComponent: AdvancedSettingsPage {
+                    controller: pane.controller
+                    sectionSpacing: pane.sectionSpacing
+                }
+            }
+            PulsingLabel {
+                anchors.centerIn: parent
+                visible: pane.controller.advanced.open && advancedLoader.status === Loader.Loading
+                text: qsTr("Loading advanced settings…")
+                color: Theme.mutedText
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeBody
+            }
         }
     }
 }

@@ -537,3 +537,11 @@ including native End/RTL/vertical matrices, outside-drop and
 some restoration/consumer paths. Shared transactions, actual command keys and
 domain safety guards remain tested; these reductions do not change or relax the
 interaction contract.
+
+The [2026-10-07 Lens maintenance review](reviews/lens-maintenance-2026-10-07.md)
+changes no keys or save boundaries. Wi-Fi reuses `TabbedDetailsStack` for its
+clipped viewport/footer; profile availability still gates its tabs and Ctrl+Tab
+still discards unsaved edits. Resource snapshot descriptors feed one passive
+reading adapter: replacements update values, availability and accessible names
+without adding fields or interrupting the range draft. Native Wi-Fi tab and
+resource-arrival tests cover these shared-layout/data paths.

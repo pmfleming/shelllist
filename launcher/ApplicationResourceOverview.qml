@@ -60,14 +60,9 @@ Ui.DetailSection {
                     delegate: ApplicationResourceCapacity {
                         required property var modelData
                         required property int index
-                        objectName: modelData.objectName
+                        descriptor: modelData
                         Layout.fillWidth: true
                         glyph: (card.modelData.id === "memory" || card.modelData.id === "disk") && index === 0 ? "" : modelData.icon
-                        accessibleLabel: modelData.label
-                        valueText: modelData.valueText
-                        available: modelData.available
-                        detailText: modelData.detailText
-                        accentColor: modelData.color
                         uiScale: overview.uiScale
                         valueSize: (card.modelData.id === "disk" || card.modelData.id === "memory" && index === 0 ? 28
                             : card.modelData.id === "memory" ? 16 : 23) * overview.uiScale
@@ -83,16 +78,10 @@ Ui.DetailSection {
                         model: card.modelData.id === "disk" ? overview.lanes[2].series : []
                         delegate: ApplicationResourceCapacity {
                             required property var modelData
-                            objectName: modelData.objectName
+                            descriptor: modelData
                             Layout.fillWidth: true
                             Layout.preferredWidth: 1
                             Layout.minimumWidth: 0
-                            glyph: modelData.icon
-                            accessibleLabel: modelData.label
-                            valueText: modelData.valueText
-                            available: modelData.available
-                            detailText: modelData.detailText
-                            accentColor: modelData.color
                             uiScale: overview.uiScale * 0.8
                             valueSize: 13 * overview.uiScale
                         }

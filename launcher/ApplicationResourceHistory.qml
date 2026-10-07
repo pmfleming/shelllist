@@ -101,15 +101,9 @@ ColumnLayout {
         Layout.fillWidth: true
         informationOnly: true
         ApplicationResourceCapacity {
-            objectName: "applicationPower"
+            descriptor: history.lanes[4].series[0]
             Layout.fillWidth: true
-            glyph: "bolt"
             alignRight: false
-            accessibleLabel: history.lanes[4].series[0].label
-            valueText: history.lanes[4].series[0].valueText
-            available: history.lanes[4].series[0].available
-            detailText: history.lanes[4].series[0].detailText
-            accentColor: Ui.Theme.resourcePower
             uiScale: history.uiScale
             valueSize: 22 * history.uiScale
         }

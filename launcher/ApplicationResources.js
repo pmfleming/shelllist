@@ -11,9 +11,6 @@ function finite(value) {
 function decimal(value, digits) {
     return finite(value).toFixed(digits === undefined ? 1 : digits);
 }
-function integer(value) {
-    return Math.round(finite(value)).toLocaleString();
-}
 function percent(value) {
     return decimal(value, 1) + "%";
 }
@@ -165,10 +162,6 @@ function currentValue(resource, metric) {
     // Zero is a reading, not a reason to fall back to another power source.
     return measured(resource.estimated_app_power_watts) ? resource.estimated_app_power_watts : resource.power_watts;
 }
-function duration(value) {
-    const milliseconds = Math.max(0, finite(value));
-    return milliseconds >= 1000 ? decimal(milliseconds / 1000, 1) + " s" : integer(milliseconds) + " ms";
-}
 function text(value, fallback) {
     const result = String(value === undefined || value === null ? "" : value).trim();
     return result || fallback || "Unavailable";
@@ -211,30 +204,4 @@ function currentMetricAvailable(resource, metric) {
         case "energy": return resource.energy_source === "rapl";
         default: return measurement[metricCapability(metric) + "_available"] === true;
     }
-}
-function currentMetadataBadges(application) {
-    const measurement = application.measurement || ({});
-    const badges = [
-        { text: text(measurement.attribution_method, "Unknown attribution"), tone: "accent" },
-        { text: measured(measurement.coverage) ? ratioPercent(measurement.coverage) + " process coverage" : "Unknown process coverage", tone: !measured(measurement.coverage) || measurement.coverage < 0.8 ? "warning" : "normal" },
-        { text: measured(measurement.sample_interval_ms) && measurement.sample_interval_ms > 0 ? duration(measurement.sample_interval_ms) + " sampling interval" : "Unknown sampling interval", tone: "normal" },
-        { text: text(measurement.memory_source, "Unknown memory").toUpperCase() + " memory", tone: "normal" },
-        { text: application.energy_source === "rapl" ? "Energy estimate · " + text(application.energy_confidence).toLowerCase() + " confidence" : "Energy unavailable", tone: "warning" }
-    ];
-    if (measurement.resources_shared)
-        badges.push({ text: "Shared attribution", tone: "warning" });
-    return badges;
-}
-function historicalMetadataBadges(latestPoint) {
-    return [
-        { text: "Retained history", tone: "accent" },
-        { text: ratioPercent(latestPoint.coverage) + " process coverage", tone: Number(latestPoint.coverage) < 0.8 ? "warning" : "normal" },
-        { text: integer(latestPoint.sample_count) + " samples", tone: "normal" },
-        { text: latestPoint.energy_source === "rapl" ? "Energy estimate · " + text(latestPoint.energy_confidence).toLowerCase() + " confidence" : "Energy unavailable", tone: "warning" }
-    ];
-}
-function metadataBadges(application, latestPoint) {
-    if (application && application.running)
-        return currentMetadataBadges(application);
-    return latestPoint ? historicalMetadataBadges(latestPoint) : [];
 }

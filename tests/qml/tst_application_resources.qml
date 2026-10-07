@@ -295,8 +295,12 @@ DaemonTestCase {
         verify(card(panel, "applicationDiskFootprint").available, "Valid footprint survives a missing component and read rate");
         compare(card(panel, "resourceBar_persistent").fraction, 0);
         verify(card(panel, "resourceBar_temporary").fraction > 0);
-        verify(!card(panel, "applicationIo_disk_read_bytes_per_second").available);
+        const read = card(panel, "applicationIo_disk_read_bytes_per_second");
+        verify(!read.available);
+        compare(findChild(read, "resourceValue").text, "—");
+        verify(read.Accessible.name.includes("Disk read: Unavailable"));
         verify(card(panel, "applicationIo_disk_write_bytes_per_second").available);
+        compare(card(panel, "applicationRam").valueText, "123 GiB", "Descriptor replacement updates the existing reading");
         keyClick(Qt.Key_Escape);
         compare(field(panel).displayedValue, "30m");
         compare(card(panel, "applicationResourceOverview").cards.length, 4);

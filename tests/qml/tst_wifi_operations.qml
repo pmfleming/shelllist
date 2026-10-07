@@ -51,6 +51,46 @@ DaemonTestCase {
         tryVerify(function () { return panel.page.detailsNavigation.commandButtons.some(function (button) { return button.accessKey === (active ? "D" : "C") && button.enabled; }); });
         panel.page.listItem.focusList();
     }
+    function test_sharedDetailsTabsKeepDraftsAndProfileGuards() {
+        const panel = makePanel();
+        openNetwork(panel, false);
+        const c = panel.controller;
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        compare(c.detailsTab, "network", "Unsaved networks cannot open profile tabs");
+        const profile = {path: "/profiles/cafe", version: "v1", mac_address_policy: "default"};
+        c.applyNetworks([{key: "cafe", ssid: "Cafe", strength: 70, security: "Open", primary_profile: profile}], true, {});
+        panel.page.listItem.focusList();
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        compare(c.detailsTab, "security");
+        verify(panel.page.listItem.listFocused, "Page changes do not steal result focus");
+        c.backend.acceptSharedResponse("advanced-load", {protocol: "nm-api", version: 1, ok: true, data: {result: profile}}, "");
+        const nav = panel.page.detailsNavigation;
+        tryVerify(() => nav.availableFields().some(field => field.objectName === "wifiMacPolicy"));
+        keyClick(Qt.Key_Tab);
+        compare(nav.currentTarget.objectName, "wifiMacPolicy");
+        const field = nav.currentTarget;
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Right);
+        compare(field.displayedValue, "stable");
+        compare(field.value, "default");
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        compare(c.detailsTab, "hardware");
+        verify(!nav.editing, "Changing pages discards the native draft");
+        compare(c.advanced.profile.mac_address_policy, "default");
+        keyClick(Qt.Key_Tab, Qt.ControlModifier | Qt.ShiftModifier);
+        compare(c.detailsTab, "security");
+        tryVerify(() => nav.currentTarget && nav.currentTarget.objectName === "wifiMacPolicy");
+        verify(nav.browsing);
+        compare(nav.currentTarget.displayedValue, "default");
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Escape);
+        compare(nav.currentTarget.displayedValue, "default");
+        keyClick(Qt.Key_Tab, Qt.ControlModifier | Qt.ShiftModifier);
+        compare(c.detailsTab, "network");
+        tryVerify(() => !nav.availableFields().some(item => item.objectName === "wifiMacPolicy"));
+        verify(!calls.some(call => call.params.operation === "update"), "Navigation and discarded drafts never write a profile");
+    }
     function test_keyboardRecoveryAndCancellationSurviveLinkBecomingActive() {
         const panel = makePanel();
         openNetwork(panel, true);

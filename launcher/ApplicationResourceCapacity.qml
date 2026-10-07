@@ -8,17 +8,17 @@ import Shelllist.Ui as Ui
 ColumnLayout {
     id: reading
 
-    required property string valueText
-    property string label: ""
-    property string glyph: ""
-    property string accessibleLabel: label
-    property string detailText: ""
-    property color accentColor: Ui.Theme.resourceCpu
+    required property var descriptor
+    readonly property string valueText: descriptor.valueText
+    readonly property string accessibleLabel: descriptor.label
+    readonly property string detailText: descriptor.detailText
+    readonly property color accentColor: descriptor.color
+    readonly property bool available: descriptor.available
+    property string glyph: descriptor.icon
     property real uiScale: 1
     property real valueSize: 24 * uiScale
-    property bool available: true
     property bool alignRight: glyph.length > 0
-    property bool showUnavailable: true
+    objectName: descriptor.objectName
     spacing: Math.round(3 * uiScale)
     Accessible.role: Accessible.StaticText
     Accessible.name: accessibleLabel + ": " + (available ? valueText : qsTr("Unavailable")) + ". " + detailText
@@ -50,7 +50,7 @@ ColumnLayout {
     Ui.ThemeText {
         objectName: "resourceUnavailable"
         Layout.fillWidth: true
-        visible: !reading.available && reading.showUnavailable
+        visible: !reading.available
         text: qsTr("%1 unavailable").arg(reading.accessibleLabel)
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeCaption

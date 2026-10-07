@@ -2,23 +2,16 @@ interface Measurement {
     coverage?: number;
     memory_source?: string;
     disk_space_scope?: string;
-    attribution_method?: string;
-    sample_interval_ms?: number;
-    resources_shared?: boolean;
     [capabilityAvailable: string]: unknown;
 }
 interface ResourcePoint {
     availability?: Readonly<Record<string, boolean>>;
-    coverage?: number;
-    sample_count?: number;
     energy_confidence?: string;
     [metric: string]: unknown;
 }
 interface ApplicationResource {
-    running?: boolean;
     measurement?: Measurement;
     energy_source?: string;
-    energy_confidence?: string;
     [metric: string]: unknown;
 }
 interface MetricSummary {
@@ -46,10 +39,6 @@ function finite(value: unknown) {
 
 function decimal(value: unknown, digits?: number) {
     return finite(value).toFixed(digits === undefined ? 1 : digits);
-}
-
-function integer(value: unknown) {
-    return Math.round(finite(value)).toLocaleString();
 }
 
 function percent(value: unknown) {
@@ -209,11 +198,6 @@ function currentValue(resource: ApplicationResource, metric: string): unknown {
     return measured(resource.estimated_app_power_watts) ? resource.estimated_app_power_watts : resource.power_watts;
 }
 
-function duration(value: unknown) {
-    const milliseconds = Math.max(0, finite(value));
-    return milliseconds >= 1000 ? decimal(milliseconds / 1000, 1) + " s" : integer(milliseconds) + " ms";
-}
-
 function text(value: unknown, fallback?: string) {
     const result = String(value === undefined || value === null ? "" : value).trim();
     return result || fallback || "Unavailable";
@@ -250,33 +234,4 @@ function currentMetricAvailable(resource: ApplicationResource, metric: string): 
     case "energy": return resource.energy_source === "rapl";
     default: return measurement[metricCapability(metric) + "_available"] === true;
     }
-}
-
-function currentMetadataBadges(application: ApplicationResource) {
-    const measurement: Measurement = application.measurement || ({});
-    const badges = [
-        { text: text(measurement.attribution_method, "Unknown attribution"), tone: "accent" },
-        { text: measured(measurement.coverage) ? ratioPercent(measurement.coverage) + " process coverage" : "Unknown process coverage", tone: !measured(measurement.coverage) || measurement.coverage < 0.8 ? "warning" : "normal" },
-        { text: measured(measurement.sample_interval_ms) && measurement.sample_interval_ms > 0 ? duration(measurement.sample_interval_ms) + " sampling interval" : "Unknown sampling interval", tone: "normal" },
-        { text: text(measurement.memory_source, "Unknown memory").toUpperCase() + " memory", tone: "normal" },
-        { text: application.energy_source === "rapl" ? "Energy estimate · " + text(application.energy_confidence).toLowerCase() + " confidence" : "Energy unavailable", tone: "warning" }
-    ];
-    if (measurement.resources_shared)
-        badges.push({ text: "Shared attribution", tone: "warning" });
-    return badges;
-}
-
-function historicalMetadataBadges(latestPoint: ResourcePoint) {
-    return [
-        { text: "Retained history", tone: "accent" },
-        { text: ratioPercent(latestPoint.coverage) + " process coverage", tone: Number(latestPoint.coverage) < 0.8 ? "warning" : "normal" },
-        { text: integer(latestPoint.sample_count) + " samples", tone: "normal" },
-        { text: latestPoint.energy_source === "rapl" ? "Energy estimate · " + text(latestPoint.energy_confidence).toLowerCase() + " confidence" : "Energy unavailable", tone: "warning" }
-    ];
-}
-
-function metadataBadges(application: ApplicationResource | null | undefined, latestPoint: ResourcePoint | null | undefined) {
-    if (application && application.running)
-        return currentMetadataBadges(application);
-    return latestPoint ? historicalMetadataBadges(latestPoint) : [];
 }
