@@ -80,7 +80,9 @@ ChooserController {
         if (uiActive && filterRefreshDelay > 0)
             filterRefreshTimer.restart();
     }
-    onSelectedResultChanged: if (closeDetailsWithoutSelection && !hasSelection)
+    // hasSelection is a dependent binding and may still hold its previous
+    // value during this signal. Inspect the changed source directly.
+    onSelectedResultChanged: if (closeDetailsWithoutSelection && !selectedResult)
         detailsOpen = false
 
     Core.ProviderRegistry {

@@ -18,6 +18,8 @@ WeatherForecastCard {
     }
     height: 232
     label: "12H"
+    hasData: points.length > 0
+    emptyText: qsTr("No hourly forecast")
     labelTopMargin: 8
 
     Canvas {

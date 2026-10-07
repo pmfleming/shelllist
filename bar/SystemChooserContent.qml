@@ -73,7 +73,17 @@ Ui.ProviderChooserSurface {
         resultModel: content.controller.filteredResultsModel
         filterText: content.controller.filterText
         placeholder: qsTr("Search %1").arg(content.controller.title)
-        emptyText: qsTr("No available %1 items").arg(content.controller.title.toLowerCase())
+        readonly property bool tray: content.controller.kind === "tray"
+        readonly property bool audio: content.controller.kind === "audio"
+        readonly property string readError: !tray && content.controller.barController ? content.controller.barController.backend.snapshotError : ""
+        readonly property bool reading: !tray && !!content.controller.barController && content.controller.barController.backend.snapshotLoading
+        emptyIcon: tray ? "apps" : audio ? "speaker" : "music_note"
+        emptyState: readError ? "unavailable" : reading ? "loading" : !tray && (!content.controller.barController || !content.controller.barController.backend.ready) ? "unavailable" : filterText.trim() && content.controller.sourceEntries.length > 0 ? "filtered" : "empty"
+        emptyText: readError || (emptyState === "loading" ? (audio ? qsTr("Reading audio devices…") : qsTr("Looking for media players…"))
+            : emptyState === "unavailable" ? (audio ? qsTr("Audio service unavailable") : qsTr("Media service unavailable"))
+            : emptyState === "filtered" ? (tray ? qsTr("No matching tray applications") : audio ? qsTr("No matching audio devices") : qsTr("No matching players"))
+            : tray ? qsTr("No tray applications") : audio ? qsTr("No audio devices") : qsTr("No media players"))
+        refreshing: reading
         powerVisible: false
         status: content.controller.statusText
         rowDelegate: Ui.ResultRow {

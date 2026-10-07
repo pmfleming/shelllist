@@ -53,6 +53,16 @@ Column {
             }
         }
     }
+    Ui.ContentState {
+        objectName: "todoContentState"
+        width: parent.width
+        visible: section.controller.selectedTodos.length === 0
+        compact: true
+        active: section.controller.uiActive
+        icon: "checklist"
+        kind: section.controller.rangeReadError || section.controller.snapshotReadError ? "unavailable" : section.controller.rangeLoading || section.controller.backend.snapshotLoading ? "loading" : "empty"
+        text: section.controller.rangeReadError || section.controller.snapshotReadError || (kind === "loading" ? qsTr("Loading todos…") : qsTr("No todos for this day"))
+    }
     Ui.ScrollableListView {
         width: parent.width
         height: Math.min(230 * section.uiScale, section.controller.selectedTodos.length * 46)

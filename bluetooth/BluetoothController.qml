@@ -61,6 +61,8 @@ Ui.ProviderChooserController {
             show_recent_devices: false
         })
     property bool backendAvailable: false
+    property string listError: ""
+    property bool backendLoading: false
     property var adapters: []
     property var allDevices: []
     property var audioDevices: []
@@ -150,6 +152,8 @@ Ui.ProviderChooserController {
         deactivateUiState();
     }
     function invalidateBluetooth(message) {
+        listError = message;
+        backendLoading = false;
         backendAvailable = false;
         radio = BluetoothFlow.emptyRadio();
         adapters = [];
@@ -222,6 +226,8 @@ Ui.ProviderChooserController {
         }
     }
     function applySnapshot(snapshot) {
+        listError = "";
+        backendLoading = false;
         const recovering = !backendAvailable;
         backendAvailable = true;
         if (recovering)
@@ -286,6 +292,10 @@ Ui.ProviderChooserController {
         activeScan = transition.activeScan;
         if (transition.snapshot)
             applySnapshot(transition.snapshot);
+        if (scan.state === "failed" && !transition.activeScan)
+            listError = transition.status;
+        else if (scan.state === "running")
+            listError = "";
         status = transition.status;
     }
     function updateManagement(values) {

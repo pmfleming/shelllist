@@ -9,7 +9,9 @@ Ui.ChooserListPane {
     required property ClipboardController controller
     chooserController: controller
     resultModel: controller.filteredResultsModel
-    emptyText: controller.refreshInFlight ? "Loading clipboard history…" : "Clipboard history is empty"
+    emptyIcon: "content_paste"
+    emptyState: controller.historyReadError ? "unavailable" : controller.activeHistoryQueryId.length > 0 ? "loading" : !controller.historyRevision ? "unavailable" : controller.filterText.trim() ? "filtered" : "empty"
+    emptyText: controller.historyReadError || (emptyState === "loading" ? qsTr("Loading clipboard history…") : emptyState === "unavailable" ? qsTr("Clipboard history unavailable") : controller.historyQueryText !== controller.filterText ? qsTr("Waiting for search…") : emptyState === "filtered" ? qsTr("No matching clipboard items") : qsTr("Clipboard history is empty"))
     placeholder: controller.multiSelectMode ? controller.multiSelectedCount + " selected" : "Search clipboard…"
     icon: "󰅇"
     powered: true

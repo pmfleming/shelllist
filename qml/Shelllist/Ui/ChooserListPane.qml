@@ -16,6 +16,7 @@ ColumnLayout {
     property var resultModel: null
     property string emptyText: ""
     property string emptyIcon: ""
+    property string emptyState: "empty"
     property string placeholder: "Search…"
     property string icon: ""
     property bool signalIcon: false
@@ -147,6 +148,7 @@ ColumnLayout {
         selectedIndex: pane.selectedIndex
         emptyText: pane.emptyText
         emptyIcon: pane.emptyIcon
+        emptyState: pane.emptyState
         status: pane.status
         icon: pane.icon
         signalIcon: pane.signalIcon

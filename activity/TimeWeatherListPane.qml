@@ -9,7 +9,9 @@ Ui.ChooserListPane {
     required property TimeWeatherController controller
     chooserController: controller
     resultModel: controller.cityModel
-    emptyText: controller.activity.syncing ? "Loading cities…" : "No configured cities"
+    emptyIcon: "cloud"
+    emptyState: controller.snapshotReadError ? "unavailable" : controller.backend.snapshotLoading || controller.activity.syncing ? "loading" : !controller.snapshotLoaded && !controller.activity.available && !controller.timezone.available ? "unavailable" : controller.filterText.trim() && controller.cities.length > 0 ? "filtered" : "empty"
+    emptyText: controller.snapshotReadError || (emptyState === "loading" ? qsTr("Loading cities…") : emptyState === "unavailable" ? qsTr("City information unavailable") : emptyState === "filtered" ? qsTr("No matching cities") : qsTr("No configured cities"))
     placeholder: "Search cities or timezones…"
     icon: "󰅐"
     powered: true

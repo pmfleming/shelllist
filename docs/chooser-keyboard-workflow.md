@@ -341,6 +341,42 @@ side effects and adds no chart-inspection key model. See
 [resource measurement semantics](application-resources.md) and
 `tst_application_resources.qml` for actual key/pointer coverage.
 
+## Missing and arriving content
+
+All chooser list panes use the passive shared `ContentState` through
+`ChooserListPane`/`ChooserListBody`/`ResultListFrame`. Domain glyphs identify
+settled emptiness; a small search, read-progress or error badge distinguishes
+no-match, loading and unavailable states. Off/blocked radios retain their
+specific disabled glyphs. Disconnection, mute, pause, DND and zero search results
+are not power-off states. Audio currently combines inputs and outputs, so its
+empty reason is “No audio devices”; Tray uses its native inventory and never
+invents readiness from the bar daemon.
+
+Owners supply explicit read state, not generic mutation/screenshot busy flags.
+Read errors remain separate from operation status, and a failure cannot become
+successful emptiness when an unrelated command completes. Existing rows and
+partial history remain visible during refresh/page append; only zero-row lists
+show a centered mark. Shared navigation retains focus as rows arrive and safely
+closes unavailable details when the selected result disappears. State changes
+must not submit, commit, discard or replay domain writes or active editor drafts.
+
+`ContentState` is static information, not a result, field, command, pointer target
+or Tab stop. It uses semantic `GlyphLabel` rendering with legacy glyph fallback,
+an accessible text name, and decorative child glyphs. Its reason uses the status
+strip only when no domain message owns it; otherwise the reason remains visible
+beside the mark. Failures and blockers always retain visible words. The small
+loading cue stops when hidden/inactive and respects reduced motion; collecting
+history is passive, not an endless request. Agenda, Todos, forecast, battery and
+resource history use the same component inside missing-data sections, without
+hiding calendar/input/power controls or valid cached readings.
+
+`tests/qml/tst_content_state.qml` exercises semantic/legacy glyphs, actual key
+navigation and save/discard during arrival/refresh/removal, read-state adapters,
+radio-off versus absent hardware, failure copy, independent Tray readiness, and
+partial section data. Existing domain suites retain paging, reply drafts,
+acknowledgement, retry, modal and rollback coverage. See the
+[visual proposal](proposals/panel-empty-states.html) for the design rationale.
+
 ## Validation
 
 `tests/qml/tst_field_interaction.qml` checks actual key delivery for transactions,

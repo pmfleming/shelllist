@@ -57,6 +57,7 @@ Ui.ProviderChooserController {
     property string historyQueryText: ""
     property bool appendingHistory: false
     property string historyPageError: ""
+    property string historyReadError: ""
     readonly property bool loadingMoreHistory: appendingHistory && activeHistoryQueryId.length > 0
     readonly property bool canAutoLoadMoreHistory: uiActive && historyCursor.length > 0 && !activeHistoryQueryId.length && !revisionRequestId.length && !historyPageError.length && historyQueryText === filterText
     property int historyPageNumber: 0
@@ -175,6 +176,7 @@ Ui.ProviderChooserController {
         beginProviderQuery({}, 100);
     }
     function requestHistory(id, text, generation, limit) {
+        historyReadError = "";
         activeHistoryQueryId = id;
         historyQueryId = id;
         historyQueryText = text;
@@ -238,6 +240,7 @@ Ui.ProviderChooserController {
         if (typeof history.snapshot_revision !== "string")
             return handleFailure(id, "Rebuild clip-daemon for revision-bound history search");
         historyRevision = history.snapshot_revision;
+        historyReadError = "";
         historyCursor = history.next_cursor || "";
         const entries = history.entries || [];
         const results = clipboardProvider.resultsForEntries(entries, history.offset || 0);
@@ -548,6 +551,7 @@ Ui.ProviderChooserController {
             const staleCursor = message.indexOf("stale-cursor") >= 0;
             // Keep the page cursor and existing rows for an explicit retry.
             // Stale snapshots instead require a fresh first-page query.
+            historyReadError = message;
             historyPageError = appendingHistory && !staleCursor ? message : "";
             activeHistoryQueryId = "";
             appendingHistory = false;
@@ -584,6 +588,7 @@ Ui.ProviderChooserController {
         }
     }
     function handleTransportFailure(message) {
+        historyReadError = message;
         detailState.preserveDraftOnDisconnect(message);
         detailState.clear();
         clearProviderResults();

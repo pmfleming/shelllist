@@ -13,6 +13,8 @@ Rectangle {
     property real uiScale: 1
     property string emptyText: ""
     property string emptyIcon: ""
+    property string emptyState: "empty"
+    property bool emptyShowLabel: true
     property bool emptyVisible: list.count === 0
     readonly property int count: list.count
     readonly property bool listFocused: list.activeFocus
@@ -188,15 +190,16 @@ Rectangle {
         }
     }
 
-    CenteredMessage {
+    ContentState {
         objectName: "resultListEmptyMessage"
         anchors.fill: parent
         z: 3
         visible: frame.emptyVisible
-        text: frame.emptyIcon || frame.emptyText
-        font.family: frame.emptyIcon ? Theme.iconFontFamily : Theme.fontFamily
-        font.pixelSize: frame.emptyIcon ? Math.round(64 * frame.uiScale) : Math.max(Theme.fontSizeCaption, Math.round(Theme.fontSizeBody * frame.uiScale))
-        Accessible.role: Accessible.StaticText
-        Accessible.name: frame.emptyText
+        active: frame.controller.uiActive
+        text: frame.emptyText
+        icon: frame.emptyIcon
+        kind: frame.emptyState
+        showLabel: frame.emptyShowLabel
+        uiScale: frame.uiScale
     }
 }

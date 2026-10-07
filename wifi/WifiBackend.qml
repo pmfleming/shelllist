@@ -103,12 +103,14 @@ Io.DaemonBackend {
         return call("status-recovery", NmApi.methods.wifi_status, {});
     }
     function refreshNetworks(refreshCache) {
+        controller.networksError = "";
         return call("networks", NmApi.methods.wifi_networks, {
             cached: true,
             refresh_cache: !!refreshCache
         });
     }
     function loadCurrentNetworks() {
+        controller.networksError = "";
         return call("networks", NmApi.methods.wifi_networks, {
             cached: false,
             refresh_cache: false

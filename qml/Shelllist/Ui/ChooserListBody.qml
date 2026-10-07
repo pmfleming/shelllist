@@ -15,6 +15,7 @@ Item {
     property int selectedIndex: 0
     property string emptyText: ""
     property string emptyIcon: ""
+    property string emptyState: "empty"
     property string status: ""
     property string icon: ""
     property bool signalIcon: false
@@ -57,6 +58,10 @@ Item {
             selectedIndex: body.selectedIndex
             emptyText: body.emptyText
             emptyIcon: body.emptyIcon
+            emptyState: body.emptyState
+            // Preserve operation/screenshot/error ownership of the footer. If
+            // occupied, keep the missing-content reason visible beside its icon.
+            emptyShowLabel: body.status.length > 0 && body.status !== body.emptyText
             rowDelegate: body.rowDelegate
             onKeyPressed: function (event) {
                 body.chooserController.navigation.handleListKey(event);
@@ -65,10 +70,10 @@ Item {
 
         // Keep domain progress/errors; a result count cannot replace these.
         StatusPanel {
-            visible: body.status.length > 0
+            visible: status.length > 0
             Layout.fillWidth: true
             uiScale: 1
-            status: body.status
+            status: body.status || (listFrame.count === 0 ? body.emptyText : "")
             icon: body.icon
             signalIcon: body.signalIcon
             powered: body.powered

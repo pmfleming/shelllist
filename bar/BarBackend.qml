@@ -11,7 +11,11 @@ Io.DaemonBackend {
     streams: controller.notificationState ? BarApi.subscribedStreams.filter(stream => ![BarApi.streams.notifications, BarApi.streams.notificationActive].includes(stream)) : BarApi.subscribedStreams
     active: true
 
+    property string snapshotError: ""
+    readonly property bool snapshotLoading: Object.keys(pending).some(id => requestKind(id) === "snapshot")
+
     function snapshot(): bool {
+        snapshotError = "";
         return callSequenced("snapshot", BarApi.methods.snapshot, {});
     }
 
@@ -128,6 +132,8 @@ Io.DaemonBackend {
     function finish(id: string, envelope: var, transportError: string): void {
         const error = responseError(envelope, transportError, "Bar operation failed");
         operationError = error;
+        if (requestKind(id) === "snapshot")
+            snapshotError = error;
         if (error.length > 0) {
             console.error("shelllist bar request failed id=" + id + " error=" + error);
             showRequestFailure(id);
@@ -148,11 +154,14 @@ Io.DaemonBackend {
         controller.handleEvent(event);
     }
     onSendFailed: function (id, message) {
+        if (requestKind(id) === "snapshot")
+            snapshotError = message;
         operationError = message;
         console.error("shelllist bar send failed id=" + id + " error=" + message);
         showRequestFailure(id);
     }
     onTransportFailed: function (message, lostRequestIds) {
+        snapshotError = message;
         operationError = message;
         console.error("shelllist bar transport failed error=" + message);
         const brightnessRequest = (lostRequestIds || []).find(function (id) {

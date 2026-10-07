@@ -7,6 +7,9 @@ import "WeatherVisuals.js" as Visuals
 Rectangle {
     id: hero
     required property var weather
+    property bool updating: false
+    property bool active: true
+    readonly property bool hasReading: weather.temperature_c !== undefined && weather.temperature_c !== null && Number.isFinite(Number(weather.temperature_c))
     readonly property var heroColors: Visuals.heroColors(Visuals.conditionCode(weather.condition_code), weather.is_day !== false)
     readonly property bool compact: width < 420
     width: parent.width
@@ -58,7 +61,22 @@ Rectangle {
         }
     }
 
+    Ui.ContentState {
+        objectName: "weatherContentState"
+        anchors.left: header.left
+        anchors.right: header.right
+        anchors.top: header.bottom
+        anchors.bottom: parent.bottom
+        visible: !hero.hasReading
+        compact: true
+        active: hero.active
+        icon: "cloud"
+        kind: hero.weather.error ? "unavailable" : hero.updating ? "loading" : "empty"
+        text: hero.weather.error || (hero.updating ? qsTr("Updating forecast…") : qsTr("No forecast available"))
+    }
+
     Item {
+        visible: hero.hasReading
         anchors.left: header.left
         anchors.right: header.right
         anchors.top: header.bottom
@@ -120,6 +138,7 @@ Rectangle {
     Row {
         id: metrics
         objectName: "weatherHeroMetrics"
+        visible: hero.hasReading
         anchors.left: header.left
         anchors.right: header.right
         anchors.bottom: parent.bottom

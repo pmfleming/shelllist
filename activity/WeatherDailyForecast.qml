@@ -9,7 +9,9 @@ WeatherForecastCard {
     readonly property var days: (weather.daily || []).slice(0, 7)
     readonly property real minimum: Visuals.collectionMinimum(days, "low_c")
     readonly property real maximum: Visuals.collectionMaximum(days, "high_c")
-    height: 43 + forecast.days.length * 43
+    height: days.length > 0 ? 43 + days.length * 43 : 150
+    hasData: days.length > 0
+    emptyText: qsTr("No daily forecast")
     label: "7D"
     labelTopMargin: 10
 

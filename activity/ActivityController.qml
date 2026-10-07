@@ -40,6 +40,9 @@ Ui.ChooserController {
     property date selectedDate: startOfDay(new Date())
     property date viewDate: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
     property string lastError: ""
+    property string snapshotReadError: ""
+    property bool snapshotLoaded: false
+    property string rangeReadError: ""
     property bool rangeLoading: false
     property date loadedFrom
     property date loadedTo
@@ -114,6 +117,8 @@ Ui.ChooserController {
     }
 
     function applySnapshot(snapshot: var): void {
+        snapshotReadError = "";
+        snapshotLoaded = true;
         if (snapshot.activity)
             activity = snapshot.activity;
         if (!notificationState.resident)
@@ -124,6 +129,7 @@ Ui.ChooserController {
     }
 
     function applyRange(range: var): void {
+        rangeReadError = "";
         events = range.events || [];
         todos = range.todos || [];
         busyDates = range.busy_dates || [];
@@ -135,6 +141,7 @@ Ui.ChooserController {
     function applyDomainEvent(kind: string, data: var): void {
         switch (kind) {
         case "activity":
+            snapshotLoaded = true;
             activity = data;
             scheduleRangeQuery();
             break;
@@ -145,6 +152,7 @@ Ui.ChooserController {
             if (!notificationState.resident) notificationState.applyActive(data);
             break;
         case "timezone":
+            snapshotLoaded = true;
             timezone = data;
         }
     }
@@ -159,6 +167,7 @@ Ui.ChooserController {
             rangeQueryDebounce.restart();
     }
     function queryVisibleRange(): void {
+        rangeReadError = "";
         const range = monthRange();
         rangeLoading = backend.queryRange(range.from, range.to);
     }

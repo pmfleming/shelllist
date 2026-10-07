@@ -14,6 +14,7 @@ ColumnLayout {
     required property double rangeStartMilliseconds
     required property double rangeEndMilliseconds
     property bool loading: false
+    property bool active: true
     property real uiScale: 1
     readonly property bool wide: width >= 480 * uiScale
     readonly property real valueWidth: Math.round(155 * uiScale)
@@ -206,7 +207,7 @@ ColumnLayout {
                         ApplicationResourcePlot {
                             objectName: "resourcePlot_" + lane.modelData.id
                             Layout.fillWidth: true
-                            visible: lane.hasHistory && !chart.loading
+                            visible: lane.hasHistory
                             points: chart.points
                             series: lane.modelData.series
                             chartStyle: lane.modelData.style
@@ -217,10 +218,21 @@ ColumnLayout {
                         }
                     }
                 }
+                Ui.ContentState {
+                    objectName: "resourceContentState_" + lane.modelData.id
+                    Layout.fillWidth: true
+                    visible: !lane.hasHistory
+                    compact: true
+                    active: chart.active
+                    icon: "history"
+                    kind: chart.loading ? "loading" : "empty"
+                    text: chart.loading ? qsTr("Reading resource history…") : lane.modelData.unavailableText || qsTr("No retained history")
+                    uiScale: chart.uiScale
+                }
                 Ui.ThemeText {
                     Layout.fillWidth: true
-                    visible: !chart.loading && (lane.modelData.unavailableText.length > 0 || !lane.hasHistory)
-                    text: lane.modelData.unavailableText.length > 0 ? lane.modelData.unavailableText : qsTr("No retained history")
+                    visible: lane.hasHistory && !chart.loading && lane.modelData.unavailableText.length > 0
+                    text: lane.modelData.unavailableText
                     color: Ui.Theme.mutedText
                     font.pixelSize: Ui.Theme.fontSizeCaption
                     wrapMode: Text.Wrap

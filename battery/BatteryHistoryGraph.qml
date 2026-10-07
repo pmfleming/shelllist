@@ -259,16 +259,14 @@ Item {
         color: Ui.Theme.mutedText
         font.pixelSize: Ui.Theme.fontSizeCaption
     }
-    Ui.ThemeText {
+    Ui.ContentState {
         objectName: "historyEmptyLabel"
-        anchors.centerIn: chart
-        width: chart.width
-        horizontalAlignment: Text.AlignHCenter
-        wrapMode: Text.WordWrap
+        anchors.fill: chart
         visible: graph.series.segments.length === 0 && graph.forecast.seconds <= 0
-        text: graph.currentPercentage >= 0 ? "Collecting history" : "No battery measurements"
-        color: Ui.Theme.mutedText
-        font.pixelSize: Ui.Theme.fontSizeCaption
+        compact: true
+        icon: graph.currentPercentage >= 0 ? "history" : "battery_full"
+        kind: graph.currentPercentage >= 0 ? "collecting" : "empty"
+        text: graph.currentPercentage >= 0 ? qsTr("Collecting history") : qsTr("No battery measurements")
     }
     Ui.ThemeText {
         anchors.left: chart.left

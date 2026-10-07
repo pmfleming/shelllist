@@ -37,8 +37,9 @@ Ui.ProviderChooserSurface {
         onSearchActionRequested: content.controller.openSettings()
         refreshing: content.controller.notificationState.historyLoading
         status: content.controller.notificationState.lastError || content.controller.notificationState.historyError || content.controller.screenshotStatus || content.controller.copyStatus || (content.controller.notificationState.draftCount ? content.controller.notificationState.draftCount + qsTr(" unsent reply drafts") : "")
-        emptyText: !content.controller.notificationState.notifications.available ? qsTr("Notifications unavailable") : refreshing && !content.controller.notificationState.historyLoaded ? qsTr("Loading notifications…") : filterText.length ? qsTr("No matching notifications") : qsTr("No notifications")
-        emptyIcon: "󰂚"
+        emptyState: content.controller.notificationState.historyError ? "unavailable" : refreshing ? "loading" : !content.controller.notificationState.notifications.available ? "unavailable" : filterText.trim() ? "filtered" : "empty"
+        emptyText: content.controller.notificationState.historyError || (emptyState === "loading" ? qsTr("Loading notifications…") : emptyState === "unavailable" ? qsTr("Notifications unavailable") : content.controller.notificationState.historyQuery !== filterText ? qsTr("Waiting for search…") : emptyState === "filtered" ? qsTr("No matching notifications") : qsTr("No notifications"))
+        emptyIcon: "notifications_none"
         preserveViewportOnAppend: true
         readonly property bool loadMore: listNearEnd && content.controller.notificationState.historyHasMore && !refreshing && !content.controller.notificationState.historyError
         onLoadMoreChanged: if (loadMore) Qt.callLater(content.controller.notificationState.loadMoreHistory)

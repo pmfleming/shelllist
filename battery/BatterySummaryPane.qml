@@ -178,11 +178,15 @@ Column {
             }
         }
 
-        Ui.FieldLabel {
+        Ui.ContentState {
+            objectName: "energyContentState"
             Layout.fillWidth: true
-            visible: !pane.controller.energyLoading && pane.controller.energyError.length === 0 && (pane.controller.energyOverview.applications || []).length === 0
-            text: qsTr("No attributable application energy in this period")
-            color: Ui.Theme.mutedText
+            visible: (pane.controller.energyOverview.applications || []).length === 0
+            compact: true
+            active: pane.controller.uiActive
+            icon: "bolt"
+            kind: pane.controller.energyError ? "unavailable" : pane.controller.energyLoading ? "loading" : "empty"
+            text: pane.controller.energyError || (pane.controller.energyLoading ? qsTr("Reading application energy…") : qsTr("No attributable application energy in this period"))
         }
     }
 }

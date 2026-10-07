@@ -11,7 +11,10 @@ ChooserListPane {
     required property WifiController controller
     chooserController: controller
     resultModel: controller.powered ? controller.filteredResultsModel : null
-    emptyText: controller.powered ? "No Wi-Fi networks" : (!controller.radios.wireless_available ? "No Wi-Fi adapter" : (!controller.radios.wireless_hardware_enabled ? "Wi-Fi is hardware blocked" : "Wi-Fi is off"))
+    readonly property bool radioDisabled: controller.radios.wireless_available && !controller.powered
+    emptyIcon: radioDisabled ? "wifi_off" : "wifi"
+    emptyState: controller.networksError ? "unavailable" : radioDisabled ? "disabled" : !controller.radios.wireless_available ? "empty" : controller.scanInFlight ? "loading" : !controller.networksLoaded ? "unavailable" : controller.filterText.trim() && controller.visibleNetworks.length > 0 ? "filtered" : "empty"
+    emptyText: controller.networksError || (!controller.radios.wireless_available ? qsTr("No Wi-Fi adapter") : !controller.radios.wireless_hardware_enabled ? qsTr("Wi-Fi is hardware blocked") : !controller.powered ? qsTr("Wi-Fi is off") : emptyState === "loading" ? qsTr("Scanning for networks…") : emptyState === "unavailable" ? qsTr("Wi-Fi network information unavailable") : emptyState === "filtered" ? qsTr("No matching networks") : qsTr("No Wi-Fi networks found"))
     placeholder: "Search networks…"
     signalIcon: true
     powered: controller.powered

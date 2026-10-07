@@ -10,7 +10,10 @@ Io.DaemonBackend {
     streams: [ActivityApi.streams.activity, ActivityApi.streams.timezone]
     active: controller.uiActive
 
+    readonly property bool snapshotLoading: isPending("activity-snapshot")
+
     function snapshot(): bool {
+        controller.snapshotReadError = "";
         return call("activity-snapshot", ActivityApi.methods.snapshot, {});
     }
     function queryRange(fromDate: date, toDate: date): bool {
@@ -48,8 +51,12 @@ Io.DaemonBackend {
         const error = responseError(envelope, transportError, "Activity operation failed");
         if (error.length > 0) {
             controller.lastError = error;
-            if (kind === "activity-range")
+            if (kind === "activity-range") {
+                controller.rangeReadError = error;
                 controller.rangeLoading = false;
+            }
+            if (kind === "activity-snapshot")
+                controller.snapshotReadError = error;
             return;
         }
         controller.lastError = "";
@@ -73,9 +80,18 @@ Io.DaemonBackend {
     }
     onSendFailed: function (id, message) {
         controller.lastError = message;
+        if (requestKind(id) === "activity-snapshot")
+            controller.snapshotReadError = message;
+        if (requestKind(id) === "activity-range") {
+            controller.rangeReadError = message;
+            controller.rangeLoading = false;
+        }
     }
     onTransportFailed: function (message) {
         controller.lastError = message;
+        controller.snapshotReadError = message;
+        controller.rangeReadError = message;
+        controller.rangeLoading = false;
     }
     onTransportReady: snapshot()
 }

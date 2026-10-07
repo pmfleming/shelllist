@@ -98,6 +98,8 @@ Io.DaemonBackend {
             pendingAudioProfile = null;
         finishDeviceRequest(id, error);
         if (error.length > 0) {
+            if (id === "snapshot" || id === "scan-start")
+                controller.listError = error;
             finishAdapterRequest(id, error);
             console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
             controller.status = id === "audio-profile-policy" ? "Audio profile applied, but could not remember it: " + error : error;
@@ -117,6 +119,8 @@ Io.DaemonBackend {
             finishAdapterRequest(id, "Could not read the saved adapter settings: " + applyError);
             console.error("shelllist bluetooth request failed id=" + id + " stage=parse error=" + applyError);
             controller.status = "Could not parse bt-daemon " + id + " response: " + applyError;
+            if (id === "snapshot" || id === "scan-start")
+                controller.listError = controller.status;
         }
     }
     function applyResponse(id, data) {
@@ -147,6 +151,10 @@ Io.DaemonBackend {
     function applyUnhandledEvent(event) {
         if (event.event === "unavailable" || event.event === "loading") {
             controller.invalidateBluetooth((event.error && event.error.message) || (event.event === "loading" ? "Bluetooth is loading…" : "BlueZ is unavailable"));
+            if (event.event === "loading") {
+                controller.listError = "";
+                controller.backendLoading = true;
+            }
             return;
         }
         if (event.data && event.data.snapshot) {
@@ -191,6 +199,7 @@ Io.DaemonBackend {
     Component.onCompleted: resetTransportState()
 
     function refresh() {
+        controller.listError = "";
         return call("snapshot", BtApi.methods.snapshot, {});
     }
     function refreshAudio() {
@@ -252,6 +261,7 @@ Io.DaemonBackend {
                 console.info("shelllist bluetooth scan cancellation requested request_id=" + requestId);
             return accepted;
         }
+        controller.listError = "";
         return call("scan-start", BtApi.methods.scan, {
             enabled: true,
             adapter_key: adapterKey || null,
@@ -319,6 +329,8 @@ Io.DaemonBackend {
         handleEvent(event);
     }
     onSendFailed: function (id, message) {
+        if (id === "snapshot" || id === "scan-start")
+            controller.listError = message;
         controller.status = message;
     }
     onTransportFailed: function (message) {

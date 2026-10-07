@@ -28,14 +28,20 @@ Rectangle {
             font.pixelSize: Ui.Theme.fontSizeHeading
             font.weight: Ui.Theme.fontWeightDemiBold
         }
-        Ui.ThemeText {
+        Ui.ContentState {
+            objectName: "agendaContentState"
+            width: parent.width
+            height: visible ? Math.max(0, parent.height - y) : 0
             visible: pane.controller.selectedEvents.length === 0
-            text: pane.controller.rangeLoading ? "Loading events…" : "No events"
-            color: Ui.Theme.mutedText
+            compact: true
+            active: pane.controller.uiActive
+            icon: "calendar_month"
+            kind: pane.controller.rangeReadError || pane.controller.snapshotReadError ? "unavailable" : pane.controller.rangeLoading || pane.controller.backend.snapshotLoading ? "loading" : "empty"
+            text: pane.controller.rangeReadError || pane.controller.snapshotReadError || (kind === "loading" ? qsTr("Loading events…") : qsTr("No events on this day"))
         }
         Ui.ScrollableListView {
             width: parent.width
-            height: parent.height - y
+            height: Math.max(0, parent.height - y)
             spacing: Ui.Theme.spacingSm
             clip: true
             model: pane.controller.selectedEvents

@@ -10,6 +10,8 @@ Io.DaemonBackend {
     streams: Api.subscribedStreams
     active: controller.uiActive || controller.actionInFlight || !!controller.trial
 
+    readonly property bool snapshotLoading: Object.keys(pending).some(id => requestKind(id) === "display-snapshot")
+
     function snapshot(): bool {
         return callSequenced("display-snapshot", Api.methods.snapshot, {});
     }

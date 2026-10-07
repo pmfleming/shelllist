@@ -97,6 +97,8 @@ Item {
             controller.setBackgroundStatus("Wi-Fi scan finished without a completion event; refresh manually to retry.");
     }
     function applyEvent(event) {
+        if (event.event === "failed")
+            controller.networksError = event.message || qsTr("Wi-Fi scan failed");
         if (event.event === "snapshot") {
             snapshotSeen = true;
             controller.applyNetworks(event.networks || [], false, event.snapshot || null);

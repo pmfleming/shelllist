@@ -11,7 +11,9 @@ Ui.ChooserListPane {
     resultModel: controller.filteredResultsModel
     filterText: controller.filterText
     placeholder: qsTr("Search displays…")
-    emptyText: !controller.stateReady ? qsTr("Connecting…") : controller.outputs.length === 0 ? qsTr("No connected displays") : qsTr("No matching displays")
+    emptyIcon: "monitor"
+    emptyState: controller.displayPolicyError || controller.displayPolicyState.error ? "unavailable" : controller.backend.snapshotLoading ? "loading" : !controller.stateReady ? "unavailable" : !controller.displayPolicyState.available ? "disabled" : controller.outputs.length > 0 ? "filtered" : "empty"
+    emptyText: controller.displayPolicyError || controller.displayPolicyState.error || (emptyState === "loading" ? qsTr("Reading displays…") : emptyState === "unavailable" ? qsTr("Display service unavailable") : emptyState === "disabled" ? controller.statusMessage : emptyState === "filtered" ? qsTr("No matching displays") : qsTr("No connected displays"))
     icon: "󰍹"
     powered: controller.activeCount > 0
     powerVisible: false

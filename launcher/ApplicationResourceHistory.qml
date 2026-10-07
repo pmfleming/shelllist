@@ -116,6 +116,7 @@ ColumnLayout {
             lanes: history.lanes
             footprint: history.footprint
             loading: history.controller.historyInFlight
+            active: history.controller.uiActive
             rangeStartMilliseconds: history.controller.historyWindowStartMs
             rangeEndMilliseconds: history.controller.historyWindowEndMs
             uiScale: history.uiScale

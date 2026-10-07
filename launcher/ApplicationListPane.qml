@@ -15,7 +15,9 @@ Ui.ChooserListPane {
 
     chooserController: controller
     resultModel: controller.filteredResultsModel
-    emptyText: controller.refreshInFlight ? "Loading applications…" : "No matching applications"
+    emptyIcon: "apps"
+    emptyState: controller.catalogError ? "unavailable" : controller.refreshInFlight ? "loading" : controller.catalogRevision < 0 ? "unavailable" : controller.filterText.trim() || controller.categoryFilter ? "filtered" : "empty"
+    emptyText: controller.catalogError || (emptyState === "loading" ? qsTr("Loading applications…") : emptyState === "unavailable" ? qsTr("Application catalog unavailable") : emptyState === "filtered" ? qsTr("No matching applications") : qsTr("No applications found"))
     placeholder: "Search applications…"
     icon: "󰀻"
     powered: true

@@ -36,6 +36,8 @@ ProviderChooserController {
     property bool statusMonitorActive: false
     property var networkSnapshot: null
     property var visibleNetworks: []
+    property bool networksLoaded: false
+    property string networksError: ""
     property string status
     property var bandStatus: null
     // Result of the most recent wifi.qr.parse; never contains the passphrase.
@@ -215,6 +217,7 @@ ProviderChooserController {
     }
 
     function handleTransportFailure(message, lostRequestIds) {
+        networksError = message;
         const lost = lostRequestIds || [];
         scan.handleTransportFailure();
         connection.handleTransportFailure();
@@ -367,6 +370,8 @@ ProviderChooserController {
     }
 
     function failCall(id, message, details) {
+        if (id === "networks" || id === "scan-start")
+            networksError = message;
         if (id === "connect-start" || id === "qr-connect")
             connection.resetProgress();
         advanced.failCall(id, message, details);
@@ -391,6 +396,8 @@ ProviderChooserController {
         return executeSelected(id);
     }
     function applyNetworks(networks, resetSelection, snapshot) {
+        networksLoaded = true;
+        networksError = "";
         visibleNetworks = networks || [];
         if (snapshot)
             networkSnapshot = snapshot;

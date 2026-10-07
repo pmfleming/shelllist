@@ -21,6 +21,7 @@ Ui.ProviderChooserController {
     }
 
     property string status: "Loading applications…"
+    property string catalogError: ""
     readonly property int applicationSearchLimit: 1000
     property string detailsTab: "application"
     viewMemory: Ui.ChooserMemory {
@@ -105,6 +106,7 @@ Ui.ProviderChooserController {
     }
     function refresh(explicitRefresh: var): void {
         forceRefresh = explicitRefresh === true;
+        catalogError = "";
         status = forceRefresh ? "Refreshing applications…" : "Loading applications…";
         beginProviderQuery({
             workspaceId: currentWorkspaceId
@@ -258,6 +260,7 @@ Ui.ProviderChooserController {
         if (!isActiveQuery(id))
             return;
         catalogRevision = Number(page.revision);
+        catalogError = "";
         resultsAboutToChange(true);
         applyProviderQuery(id, applicationProvider.resultsFor(page.applications));
         operations.reconcile(page.applications);
@@ -313,8 +316,10 @@ Ui.ProviderChooserController {
             return;
         }
         clearFailedRequest(kind, id);
-        if (isActiveQuery(id))
+        if (isActiveQuery(id)) {
+            catalogError = message;
             clearProviderResults();
+        }
         status = message;
     }
     function handleTransportFailure(message: string): void {
@@ -323,6 +328,7 @@ Ui.ProviderChooserController {
         activeSettingsRequestId = "";
         revisionRequestId = "";
         catalogRevision = -1;
+        catalogError = message;
         clearProviderResults();
         status = message;
     }
