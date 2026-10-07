@@ -113,6 +113,58 @@ DaemonTestCase {
         event(call, "completed");
         compare(panel.dismissals, 1, "Duplicate terminal delivery cannot dismiss again");
     }
+    function test_placementWarningAfterHandoff_data() {
+        return [
+            {tag: "unavailable-event", status: "unavailable", statusRead: false},
+            {tag: "failed-status-read", status: "failed", statusRead: true},
+            {tag: "placed", status: "placed", statusRead: false}
+        ];
+    }
+    function test_placementWarningAfterHandoff(data) {
+        const panel = makePanel();
+        keyClick(Qt.Key_Return, Qt.ShiftModifier);
+        const call = lastCall(Api.methods.execute);
+        accept(call);
+        event(call, "running", {launch_backend: "uwsm-app", launch_scope: "app-graphical.slice",
+            placement: {workspace_id: "3", status: "pending"}});
+        compare(panel.dismissals, 1);
+        const extra = {launch_backend: "uwsm-app", launch_scope: "app-graphical.slice",
+            placement: {workspace_id: "3", status: data.status}, message: "Application started; placement " + data.status};
+        // A foreign target cannot retire this launch or report its warning.
+        event(call, "completed", Object.assign({}, extra, {target_id: "Beta"}));
+        verify(panel.controller.operations.busy("Alpha"));
+        compare(panel.failures.length, 0);
+        if (data.statusRead) {
+            panel.controller.operations.check("Alpha");
+            reply(lastCall(Api.methods.operationStatus), {operation_status: operation(call, "completed", extra)});
+        } else {
+            event(call, "completed", extra);
+        }
+        compare(panel.failures.length, data.status === "placed" ? 0 : 1);
+        if (data.status !== "placed")
+            compare(panel.failures[0].message, extra.message);
+        compare(panel.controller.operations.feedback.Alpha.placement.status, data.status);
+        verify(!panel.controller.operations.busy("Alpha"));
+        event(call, "completed", extra);
+        compare(panel.failures.length, data.status === "placed" ? 0 : 1, "Duplicate outcomes do not notify twice");
+        compare(panel.dismissals, 1);
+        compare(calls.filter(c => c.method === Api.methods.execute).length, 1, "Placement recovery never replays launch");
+    }
+    function test_placementWarningWithoutProgressKeepsVisibleChooserUsable() {
+        const panel = makePanel();
+        keyClick(Qt.Key_Return, Qt.ShiftModifier);
+        const call = lastCall(Api.methods.execute);
+        accept(call);
+        event(call, "completed", {launch_backend: "uwsm-app", launch_scope: "app-graphical.slice",
+            placement: {workspace_id: "3", status: "unavailable"}, message: "Started, but no safely attributable new window"});
+        compare(panel.dismissals, 0, "Missed handoff progress must not hide the warning");
+        compare(panel.failures.length, 0, "Visible inline feedback needs no background notification");
+        compare(panel.controller.selectedActionMessage, "Started, but no safely attributable new window");
+        verify(!panel.controller.actionInFlight);
+        keyClick(Qt.Key_Down);
+        compare(panel.controller.selectedResult.id, "Beta");
+        compare(calls.filter(c => c.method === Api.methods.execute).length, 1);
+    }
     function test_windowFocusFeedbackUsesAcknowledgedOutcome_data() {
         return [{tag:"completed",status:"completed"}, {tag:"failed",status:"failed"}, {tag:"cancelled",status:"cancelled"}];
     }

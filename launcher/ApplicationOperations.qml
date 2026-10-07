@@ -76,7 +76,8 @@ Item {
         const transition = Lifecycle.operationTransition(original.request, original.request.result.id, original.operationId, responseId, operation);
         if (!transition)
             return;
-        const record = Object.assign({}, original, {operationId: operation.id, status: transition.status, checks: original.operationId ? original.checks : 0});
+        const record = Object.assign({}, original, {operationId: operation.id, status: transition.status,
+            placement: operation.placement || null, checks: original.operationId ? original.checks : 0});
         const closing = Presentation.isCloseAction(record.request.actionId);
         if (transition.stage === "active") {
             record.message = record.request.action.label + (record.checks >= 3 ? ": still waiting for confirmation" : "…");
@@ -90,12 +91,18 @@ Item {
             return;
         }
         const completed = transition.status === "completed";
+        const placementWarning = completed
+            && ["activate", "launch", "desktop-action"].includes(Lifecycle.expectedOperationAction(record.request.actionId))
+            && ["unavailable", "failed"].includes(record.placement?.status);
         record.awaitingWindows = completed && closing;
         record.message = record.awaitingWindows ? "Close requested; waiting for windows to close" : (operation.message || "Application action " + transition.status);
-        if (completed && !closing)
+        // Placement is daemon-owned. A launched app must not be replayed because
+        // its move could not be confirmed; retain/show the partial-success warning
+        // even when checked handoff already dismissed the chooser.
+        if (completed && !closing && !placementWarning)
             handOff(record);
         retire(record);
-        if (!completed)
+        if (!completed || placementWarning)
             reportFailure(record);
         if (closing && controller.uiActive)
             controller.refresh(false);

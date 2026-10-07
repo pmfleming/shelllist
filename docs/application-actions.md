@@ -10,6 +10,17 @@ to an application; Close manages its windows without leaving the chooser.
   `launch_scope`) after process/D-Bus handoff, before potentially slow window
   placement. Shelllist can dismiss then while retaining operation ownership.
   Older daemons without this progress receipt fall back to terminal completion.
+- **Workspace placement:** app-daemon owns category routing, process attribution
+  (including UWSM scope migration, D-Bus and established singleton processes), and
+  compositor verification. Optional `placement` reports `workspace_id`, `status`
+  (`pending`, `placed`, `unavailable`, `failed`) and a failure `reason`. A completed
+  launch with unavailable/failed placement is a partial success, not permission
+  to launch again. Shelllist retains the daemon message and shows a background
+  notification if handoff already dismissed the chooser; otherwise the warning
+  remains inline without dismissing it. Owned status recovery uses the same path,
+  duplicates do not notify twice, and old daemons without `placement` retain their
+  existing behavior. New windows use the category workspace; existing windows
+  remain where they are. No new field stops, shortcuts or retry commands.
 - **Close:** send normal compositor close requests, never force termination.
   Keep the panel and selection. Say “Close requested,” not “Closed,” until a
   current catalog snapshot actually removes the requested window IDs. A remaining
@@ -61,6 +72,11 @@ Applications with a recording daemon transport. It covers handoff vs admission,
 background tracking/failure, close acknowledgements versus observed disappearance,
 last-window Launch, native focus recovery, concurrent targets, navigation while
 pending, reopened/navigated views, failed reads and stale/foreign completions.
-App-daemon tests cover retained owner-only launch receipts and terminal cancellation;
-its isolated session suite covers launcher failure, timeout and ownership.
+It also covers placement partial-success warnings after handoff and via owned
+status reads, foreign/duplicate outcomes, retained feedback, continued native
+navigation and the absence of automatic relaunch. App-daemon tests cover retained
+owner-only launch receipts and terminal cancellation; its isolated session suite
+covers all five category mappings across launch paths, scope migration, D-Bus and
+singleton attribution, existing-window exclusion, ambiguous/unrelated windows,
+rejected moves and compositor verification timeouts.
 These are not live compositor/application-save-prompt or screen-reader acceptance.

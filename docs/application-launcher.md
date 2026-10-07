@@ -119,7 +119,7 @@ value. Old request failures cannot replace a newer request’s feedback.
 See the [approved illustrated proposal](proposals/application-workspace-category.html)
 and `tests/qml/tst_application_settings.qml`.
 
-Category overrides are persisted by `app-daemon` and map directly to default workspaces 1–5. Execution requests contain only a target ID, normalized action, optional window or desktop-action ID, a JavaScript-safe expected revision, and non-authoritative workspace context. The daemon resolves every identifier against current state before applying an effect, applies the category's saved workspace preference, and moves the newly created window without disturbing existing instances.
+Category overrides are persisted by `app-daemon` and map directly to default workspaces 1–5. Execution requests contain only a target ID, normalized action, optional window or desktop-action ID, a JavaScript-safe expected revision, and non-authoritative workspace context. The daemon resolves every identifier against current state before applying an effect and applies the saved workspace preference to launches, non-running activation and desktop actions. It tracks verified process identities across UWSM scope migration and D-Bus/singleton handoffs, moves only an unambiguous new window without disturbing existing instances, and verifies its resulting workspace. Launches are assumed to originate through Shelllist/app-daemon; no global compositor rules are installed. Unprovable ownership and ambiguous windows remain untouched and produce explicit placement warnings rather than another launch.
 
 ## Operation lifecycle
 
@@ -128,10 +128,10 @@ Application execution is asynchronous:
 1. Shelllist dispatches an action and keeps the chooser open.
 2. `app-daemon` returns an accepted operation ID.
 3. `applications.operation` reports running and terminal state.
-4. Successful focus/launch actions close the chooser; close actions update the visible result in place.
-5. Failures remain visible and leave the chooser usable.
+4. Successful focus or checked launch handoff closes the chooser; close actions update the visible result in place.
+5. Failures and partial-success placement warnings remain visible inline or notify in the background after handoff, without replaying the launch.
 
-A 20-second frontend watchdog clears uncertain state and requeries if a terminal event is lost. Unsafe integer revisions are omitted rather than rounded by JavaScript.
+Owned operation-status recovery is bounded to ten automatic reads at two-second intervals; Check status remains available afterward. A missing terminal event never clears mutation ownership or replays the action. See [application action outcomes](application-actions.md). Unsafe integer revisions are omitted rather than rounded by JavaScript.
 
 ## Resources
 
