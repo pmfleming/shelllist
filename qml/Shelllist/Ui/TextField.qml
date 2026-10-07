@@ -31,7 +31,6 @@ FieldFrame {
     property bool sensitive: password
     property bool passwordRevealed: false
     property bool showPasswordButton: password
-    property bool readOnly: false
     property bool inputValid: true
     property int inputMethodHints: Qt.ImhNone
     property int maximumLength: 32767
@@ -40,10 +39,11 @@ FieldFrame {
     property string trailingActionIcon: ""
     property string trailingActionToolTip: ""
     property bool trailingActionEnabled: true
-    property int trailingActionIconSize: Theme.formIconSize
+    property int trailingActionIconSize: Theme.formActionIconSize
     readonly property int embeddedActionWidth: Theme.formActionSize
     readonly property int embeddedActionCount: (showPasswordButton ? 1 : 0) + (trailingActionIcon.length > 0 ? 1 : 0)
-    readonly property int effectiveRightPadding: embeddedActionCount > 0 ? Math.max(rightPadding, Theme.spacingXs + embeddedActionCount * embeddedActionWidth + (embeddedActionCount - 1) * Theme.spacingXs) : rightPadding
+    readonly property int actionRightPadding: embeddedActionCount > 0 ? Math.max(rightPadding, Theme.spacingXs + embeddedActionCount * embeddedActionWidth + (embeddedActionCount - 1) * Theme.spacingXs) : rightPadding
+    readonly property int effectiveRightPadding: actionRightPadding + (stateBadge.visible ? stateBadge.width + Theme.spacingSm : 0)
 
     signal selectionChanged
     signal edited(string value)
@@ -61,7 +61,8 @@ FieldFrame {
     focused: input.activeFocus && !readOnly
     invalid: !inputValid || errorText.length > 0
     hovered: hover.hovered
-    opacity: enabled ? 1.0 : Theme.disabledOpacity
+    // Unavailable is a state, not permission to make the value illegible.
+    opacity: 1
 
     function focusInput(selectContents) {
         input.forceActiveFocus();
@@ -105,7 +106,7 @@ FieldFrame {
         id: input
         objectName: "fieldInput"
         Accessible.name: field.Accessible.name || field.placeholder
-        Accessible.description: [field.Accessible.description, field.suffix, field.readOnly ? qsTr("Read-only") : ""].filter(part => part.length > 0).join(". ")
+        Accessible.description: [field.Accessible.description, field.suffix, !field.enabled ? qsTr("Unavailable") : field.readOnly ? qsTr("Read-only") : "", field.readOnly && !field.text.length ? qsTr("Not set") : ""].filter(part => part.length > 0).join(". ")
 
         anchors.fill: parent
         clip: true
@@ -137,12 +138,14 @@ FieldFrame {
         }
 
         ThemeText {
+            objectName: "fieldPlaceholder"
             anchors.fill: parent
             leftPadding: input.leftPadding
             rightPadding: input.rightPadding
             verticalAlignment: Text.AlignVCenter
             visible: input.text.length === 0 && input.preeditText.length === 0
-            text: field.placeholder
+            // Never present an example IP/password as an observed value.
+            text: field.readOnly || !field.enabled ? "—" : field.placeholder
             color: Theme.subtleText
             font.pixelSize: field.fontPixelSize
         }
@@ -183,9 +186,21 @@ FieldFrame {
         Accessible.ignored: true
     }
 
+    FieldStateBadge {
+        id: stateBadge
+        objectName: "fieldStateBadge"
+        visible: field.formStyle && (readOnly || unavailable)
+        readOnly: field.readOnly
+        unavailable: !field.enabled
+        anchors.right: parent.right
+        anchors.rightMargin: field.actionRightPadding
+        anchors.verticalCenter: parent.verticalCenter
+    }
+
     FlatIconButton {
         objectName: "passwordVisibilityAction"
-        commandScope: field
+        commandScope: field.readOnly ? null : field
+        accessKey: field.readOnly ? "" : "V"
         visible: field.showPasswordButton
         anchors.right: trailingAction.visible ? trailingAction.left : parent.right
         anchors.rightMargin: Theme.spacingXs
@@ -194,15 +209,15 @@ FieldFrame {
         height: width
         icon: field.passwordRevealed ? "󰈉" : "󰈈"
         flatIconColor: Theme.text
-        iconSize: Theme.formIconSize
-        accessibleName: field.passwordRevealed ? "Hide password" : "Show password"
+        iconSize: Theme.formActionIconSize
+        accessibleName: (field.passwordRevealed ? qsTr("Hide password: %1") : qsTr("Show password: %1")).arg(field.Accessible.name || field.placeholder)
         onClicked: field.passwordRevealed = !field.passwordRevealed
     }
 
     FlatIconButton {
         id: trailingAction
         objectName: "fieldTrailingAction"
-        commandScope: field
+        commandScope: field.readOnly ? null : field
 
         visible: field.trailingActionIcon.length > 0
         anchors.right: parent.right

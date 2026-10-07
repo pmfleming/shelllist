@@ -16,12 +16,13 @@ TestCase {
             {tag: "no-substring-inference", player: {desktop_entry: "not-spotify", identity: "Spotify impostor", title: "Title"}, service: "", kind: "unknown", heading: "Title"},
             {tag: "music", player: {identity: "Spotify", content_type: "music", title: "Karma Police", artist: "Pierce The Veil"}, service: "spotify", kind: "music", heading: "Pierce The Veil"},
             {tag: "fallback", player: {identity: "Player"}, service: "", kind: "unknown", heading: "Player"},
-            {tag: "youtube-source", player: {identity: "Mozilla zen", source: {service: "youtube"}, content_type: "video", title: "Video"}, service: "youtube", kind: "video", heading: "Video"},
-            {tag: "vimeo-source", player: {identity: "Firefox", source: {service: "vimeo"}, content_type: "video", title: "Film"}, service: "vimeo", kind: "video", heading: "Film"},
+            {tag: "youtube-source", player: {identity: "Mozilla zen", source: {service: "youtube"}, content_type: "video", title: "Video"}, service: "youtube", kind: "video", heading: "YouTube"},
+            {tag: "vimeo-source", player: {identity: "Firefox", source: {service: "vimeo"}, content_type: "video", title: "Film"}, service: "vimeo", kind: "video", heading: "Vimeo"},
+            {tag: "youtube-channel", player: {identity: "Mozilla zen", source: {service: "youtube"}, content_type: "video", title: "Full video title", artist: "Channel"}, service: "youtube", kind: "video", heading: "Channel"},
             {tag: "soundcloud-not-necessarily-music", player: {identity: "Mozilla zen", source: {service: "soundcloud"}, title: "Recording"}, service: "soundcloud", kind: "unknown", heading: "Recording"},
             {tag: "audible-url-not-a-book", player: {identity: "Mozilla zen", source: {service: "audible"}, title: "Preview"}, service: "audible", kind: "unknown", heading: "Preview"},
             {tag: "pocketcasts-url-not-an-episode", player: {identity: "Mozilla zen", source: {service: "pocketcasts"}, title: "Page"}, service: "pocketcasts", kind: "unknown", heading: "Page"},
-            {tag: "source-precedes-isolated-label", player: {identity: "Audible", source: {service: "vimeo"}, content_type: "video", title: "Film"}, service: "vimeo", kind: "video", heading: "Film"},
+            {tag: "source-precedes-isolated-label", player: {identity: "Audible", source: {service: "vimeo"}, content_type: "video", title: "Film"}, service: "vimeo", kind: "video", heading: "Vimeo"},
             {tag: "unknown-source", player: {identity: "Mozilla zen", source: {service: "future-service", url: "https://youtube.com/watch?v=example"}, title: "Video"}, service: "", kind: "unknown", heading: "Video"}
         ];
     }

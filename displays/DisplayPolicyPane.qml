@@ -13,7 +13,8 @@ Ui.DetailColumnCard {
 
     Ui.FormField {
         Layout.fillWidth: true
-        label: qsTr("When an external display is available")
+        label: qsTr("Laptop screen")
+        icon: "monitor"
         accessibleName: qsTr("Laptop screen when an external display is available")
         Ui.DropDownList {
             id: preference

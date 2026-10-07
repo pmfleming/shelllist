@@ -29,6 +29,8 @@
 (.snapshot.media.players[0].control_mode == "automatic") and
 (.snapshot.media.players[0].content_type == "music") and
 (.snapshot.media.players[0].content_type_source == "url") and
+(.snapshot.media.players[0].metadata_sources == {}) and
+(.snapshot.media.players[0] | has("owner") | not) and
 (.snapshot.media.players[0].source == {url: "spotify:track:example", service: "spotify"}) and
 (any(.registry.methods[]; .name == "media.operation" and (.params | has("mode")))) and
 (.snapshot.audio.volume_percent | type == "number") and

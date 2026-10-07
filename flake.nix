@@ -702,6 +702,7 @@
                     programs.shelllist = {
                       enable = true;
                       discovery.enable = false;
+                      media.youtubeMetadata.enable = true;
                     };
                   }
                 ];
@@ -713,6 +714,9 @@
               }/bin/shelllist run'
               test '${evaluated.config.systemd.user.services.bar-daemon.serviceConfig.BusName}' = 'org.laufan.BarDaemon'
               test '${evaluated.config.systemd.user.services.bar-daemon.environment.BAR_DAEMON_NOTIFICATION_BACKEND}' = 'native'
+              test '${toString evaluated.config.programs.shelllist.media.youtubeMetadata.enable}' = ""
+              test '${toString (evaluated.config.systemd.user.services.bar-daemon.environment ? BAR_DAEMON_YOUTUBE_METADATA)}' = ""
+              test '${withoutDiscovery.config.systemd.user.services.bar-daemon.environment.BAR_DAEMON_YOUTUBE_METADATA}' = '1'
               test '${builtins.concatStringsSep " " evaluated.config.systemd.user.services.bar-daemon.conflicts}' = 'swaync.service'
               test '${toString evaluated.config.security.polkit.enable}' = '1'
               test '${toString evaluated.config.networking.networkmanager.enable}' = '1'

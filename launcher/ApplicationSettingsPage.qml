@@ -33,13 +33,13 @@ Ui.DetailFlickable {
     Ui.FormField {
         objectName: "applicationCategoryField"
         width: parent.width
-        label: qsTr("Workspace category")
-        reserveSupportingSpace: true
-        supportingText: page.selectedCategory ? page.selectedCategory.description
-            : page.mappingNeedsAttention ? qsTr("Category mapping needs attention. Choose a category to update it.")
-            : qsTr("No workspace category assigned.")
+        label: qsTr("Category")
+        icon: "category"
+        accessibleName: qsTr("Workspace category")
+        supportingText: page.selectedCategory ? page.selectedCategory.description : qsTr("No workspace category assigned.")
         statusText: page.controller.settingsInFlight && page.requestedCategory
-            ? qsTr("Saving %1… Showing the last confirmed category.").arg(page.requestedCategory.label) : ""
+            ? qsTr("Saving %1…").arg(page.requestedCategory.label)
+            : page.mappingNeedsAttention ? qsTr("Category mapping needs attention. Choose a category to update it.") : ""
 
         Ui.DropDownList {
             objectName: "applicationCategory"

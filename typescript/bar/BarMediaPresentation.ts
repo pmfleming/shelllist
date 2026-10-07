@@ -106,8 +106,12 @@ function identityLabel(player: Maybe<MediaPlayer>) {
 function heading(player: Maybe<MediaPlayer>) {
     const kind = contentKind(player);
     const context = kind === "podcast" ? player?.album || player?.artist
-        : kind === "music" ? player?.artist : kind === "audiobook" ? player?.album : "";
-    return String(context || player?.title || serviceFor(player)?.name || player?.identity || "");
+        : kind === "music" || kind === "video" ? player?.artist : kind === "audiobook" ? player?.album : "";
+    // Video titles remain fully readable in the card, not duplicated/elided in
+    // the header. A missing channel falls back to service/browser identity.
+    const fallback = kind === "video" ? serviceFor(player)?.name || player?.identity || player?.title
+        : player?.title || serviceFor(player)?.name || player?.identity;
+    return String(context || fallback || "");
 }
 function subtitle(player: Maybe<MediaPlayer>) {
     const title = String(player?.title || "").trim().toLowerCase();
@@ -119,7 +123,7 @@ function stateIcon(player: Maybe<MediaPlayer>) {
 }
 function actionGroup(player: Maybe<MediaPlayer>, id: string) {
     if (id === "play-pause") return "primary";
-    return (trackControls(player) ? ["previous", "next"] : ["rewind", "forward"]).includes(id) ? "toolbar" : "overflow";
+    return "toolbar";
 }
 function durationText(microseconds: number) {
     const seconds = Math.max(0, Math.floor(microseconds / 1000000));

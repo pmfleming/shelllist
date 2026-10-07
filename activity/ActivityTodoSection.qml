@@ -25,6 +25,7 @@ Column {
     Ui.FormField {
         width: parent.width
         label: qsTr("New todo")
+        icon: "check"
         editor: todoInput
         Row {
             Layout.fillWidth: true

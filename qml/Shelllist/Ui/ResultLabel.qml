@@ -26,6 +26,7 @@ ColumnLayout {
         Layout.fillHeight: true
         verticalAlignment: label.singleLine || !label.subtitle ? Text.AlignVCenter : Text.AlignBottom
         text: label.title
+        textFormat: Text.PlainText
         color: label.titleColor
         font.pixelSize: label.titlePixelSize
         font.weight: label.titleWeight
@@ -51,6 +52,7 @@ ColumnLayout {
             Layout.fillHeight: true
             verticalAlignment: Text.AlignTop
             text: label.subtitle
+            textFormat: Text.PlainText
             color: label.subtitleColor
             font.pixelSize: label.subtitlePixelSize
             font.weight: label.subtitleWeight

@@ -24,7 +24,13 @@ TestCase {
     }
     Component {
         id: fieldFactory
-        Ui.TextField { width: 300; text: "Native text" }
+        Rectangle {
+            width: 300
+            height: field.implicitHeight
+            color: Ui.Theme.surface
+            property alias field: field
+            Ui.TextField { id: field; anchors.fill: parent; text: "Native text" }
+        }
     }
     Component {
         id: buttonFactory
@@ -65,12 +71,13 @@ TestCase {
         compare(host.clicks, 1);
     }
     // Keep actual painted contrast, not per-wrapper token/geometry snapshots.
-    function test_filledFieldContrast_data(): var {
+    function test_valueRowContrast_data(): var {
         return [{tag: "light", scheme: Qt.Light}, {tag: "dark", scheme: Qt.Dark}];
     }
-    function test_filledFieldContrast(data): void {
+    function test_valueRowContrast(data): void {
         Ui.Theme.previewColorScheme = data.scheme;
-        const field = createTemporaryObject(fieldFactory, testCase);
+        const host = createTemporaryObject(fieldFactory, testCase);
+        const field = host.field;
         const input = findChild(field, "fieldInput");
         const marker = findChild(field, "browseFocusIndicator");
         for (const seed of ["#6750a4", "#ff0000", "#00ff00", "#0000ff", "#ffffff", "#000000", "#009688"]) {
@@ -80,11 +87,11 @@ TestCase {
                 field.focused = state === "edit";
                 field.inputValid = state !== "error";
                 verify(waitForPolish(field.Window.window));
-                const image = grabImage(field);
-                const fill = image.pixel(150, 28);
+                const image = grabImage(host);
+                const fill = image.pixel(150, Math.floor(field.height / 2));
                 verify(Contrast.ratio(input.color, fill) >= 4.5, seed + ": text on actual " + state + " fill");
-                if (state !== "edit")
-                    verify(Contrast.ratio(image.pixel(150, 55), fill) >= 3, seed + ": bottom keyline on filled field");
+                if (state === "error")
+                    verify(Contrast.ratio(image.pixel(150, field.height - 1), fill) >= 3, seed + ": visible error edge");
                 if (state === "browse") {
                     const point = marker.mapToItem(field, 0, marker.height / 2);
                     verify(Contrast.ratio(image.pixel(Math.round(point.x + 2), Math.round(point.y)), image.pixel(Math.round(point.x), Math.round(point.y))) >= 3);

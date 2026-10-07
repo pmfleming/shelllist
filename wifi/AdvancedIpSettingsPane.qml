@@ -87,20 +87,24 @@ AdvancedSettingsFlickable {
                 GridLayout {
                     id: addressGroup
                     Layout.fillWidth: true
-                    columns: width >= 480 ? 2 : 1
+                    columns: width >= 640 ? 2 : 1
                     columnSpacing: Theme.spacingMd
-                    rowSpacing: Theme.spacingLg
+                    rowSpacing: Theme.spacingSm
                     FormField {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
                         Layout.alignment: Qt.AlignTop
-                        label: hardwareFlick.settings.ipFamily === "ipv6" ? qsTr("IPv6 address") : qsTr("IPv4 address")
+                        label: hardwareFlick.settings.ipFamily === "ipv6" ? "IPv6" : "IPv4"
+                        icon: "lan"
+                        accessibleName: hardwareFlick.settings.ipFamily === "ipv6" ? qsTr("IPv6 address") : qsTr("IPv4 address")
                         requiredInput: hardwareFlick.settings.currentMethod === "manual"
-                        reserveSupportingSpace: true
-                        statusText: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : ipAddress.readOnly ? qsTr("Automatic · read-only") : ""
+                        readOnlyReason: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : ipAddress.readOnly ? qsTr("Assigned automatically") : ""
+                        copyAvailable: ipAddress.readOnly && ipAddress.enabled && ipAddress.text.length > 0
+                        onCopyRequested: hardwareFlick.settings.controller.copyText(ipAddress.text, qsTr("IP address copied"))
                         NetworkInput.IpAddressField {
                             id: ipAddress
                             Layout.fillWidth: true
+                            enabled: hardwareFlick.settings.currentFamilyEnabled
                             family: hardwareFlick.settings.ipFamily
                             allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
                             readOnly: hardwareFlick.settings.currentMethod !== "manual"
@@ -114,14 +118,17 @@ AdvancedSettingsFlickable {
                     }
                     FormField {
                         Layout.fillWidth: addressGroup.columns === 1
-                        Layout.preferredWidth: 128
+                        Layout.preferredWidth: 168
                         Layout.alignment: Qt.AlignTop
-                        label: qsTr("Prefix length")
+                        // The slash is the visible identity; the full name and
+                        // range remain in accessibility and the named Help command.
+                        label: ""
+                        icon: ""
                         requiredInput: hardwareFlick.settings.currentMethod === "manual"
                         accessibleName: hardwareFlick.settings.ipFamily === "ipv6" ? qsTr("IPv6 prefix length") : qsTr("IPv4 prefix length")
-                        reserveSupportingSpace: true
                         NetworkInput.PrefixLengthField {
                             Layout.fillWidth: true
+                            enabled: hardwareFlick.settings.currentFamilyEnabled
                             family: hardwareFlick.settings.ipFamily
                             allowEmpty: hardwareFlick.settings.currentMethod !== "manual"
                             readOnly: hardwareFlick.settings.currentMethod !== "manual"
@@ -136,12 +143,17 @@ AdvancedSettingsFlickable {
                 }
                 FormField {
                     Layout.fillWidth: true
-                    label: qsTr("Gateway (optional)")
-                    reserveSupportingSpace: true
-                    statusText: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : gateway.readOnly ? qsTr("Automatic · read-only") : ""
+                    label: qsTr("Gateway")
+                    icon: "route"
+                    accessibleName: qsTr("Gateway (optional)")
+                    readOnlyReason: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : gateway.readOnly ? qsTr("Assigned automatically") : ""
+                    copyAvailable: gateway.readOnly && gateway.enabled && gateway.text.length > 0
+                    onCopyRequested: hardwareFlick.settings.controller.copyText(gateway.text, qsTr("Gateway copied"))
                     NetworkInput.IpAddressField {
                         id: gateway
                         Layout.fillWidth: true
+                        enabled: hardwareFlick.settings.currentFamilyEnabled
+                        placeholder: qsTr("Optional")
                         family: hardwareFlick.settings.ipFamily
                         readOnly: hardwareFlick.settings.currentMethod !== "manual"
                         objectName: "wifiIpGateway"
@@ -154,12 +166,16 @@ AdvancedSettingsFlickable {
                 }
                 FormField {
                     Layout.fillWidth: true
-                    label: qsTr("DNS servers")
-                    reserveSupportingSpace: true
-                    statusText: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : dnsServers.readOnly ? qsTr("Automatic · read-only") : ""
+                    label: qsTr("DNS")
+                    icon: "dns"
+                    accessibleName: qsTr("DNS servers")
+                    readOnlyReason: !hardwareFlick.settings.currentFamilyEnabled ? qsTr("IP family disabled") : dnsServers.readOnly ? qsTr("Assigned automatically") : ""
+                    copyAvailable: dnsServers.readOnly && dnsServers.enabled && dnsServers.text.length > 0
+                    onCopyRequested: hardwareFlick.settings.controller.copyText(dnsServers.text, qsTr("DNS servers copied"))
                     NetworkInput.AddressListField {
                         id: dnsServers
                         Layout.fillWidth: true
+                        enabled: hardwareFlick.settings.currentFamilyEnabled
                         family: hardwareFlick.settings.ipFamily
                         readOnly: !hardwareFlick.settings.currentFamilyEnabled || hardwareFlick.settings.currentAutoDns
                         objectName: "wifiDnsServers"
@@ -175,14 +191,17 @@ AdvancedSettingsFlickable {
                 }
                 FormField {
                     Layout.fillWidth: true
-                    label: qsTr("DNS search domains (optional)")
+                    label: qsTr("Domains")
+                    icon: "language"
+                    accessibleName: qsTr("DNS search domains (optional)")
                     supportingText: qsTr("Comma or whitespace separated")
                     TextField {
                         Layout.fillWidth: true
+                        enabled: hardwareFlick.settings.currentFamilyEnabled
                         readOnly: !hardwareFlick.settings.currentFamilyEnabled
                         objectName: "wifiDnsSearch"
                         text: hardwareFlick.settings.currentIp.search
-                        placeholder: "Optional, comma-separated"
+                        placeholder: qsTr("Optional")
                         onEdited: function (value) {
                             hardwareFlick.settings.currentIp.search = value;
                         }

@@ -6,8 +6,12 @@ editable controls and daemon acknowledgement/capability guards.
 
 ## Presentation
 
-- Show/book/artist context replaces a generic browser heading. Episode/track title
-  remains in the card; duplicate artist/album/title metadata is suppressed.
+- Show/book/artist context replaces a generic browser heading. For videos, use
+  the channel/creator as the heading (service/browser fallback if missing); keep
+  the full video title in the card rather than repeating it in the header.
+  Episode/track titles remain in the card; duplicate artist/album/title metadata
+  is suppressed. Header, result and playback labels render metadata as plain text,
+  never rich text, embedded resources or links.
 - Spotify, Pocket Casts and Audible resolve from exact known desktop IDs or explicit
   MPRIS identities (including daemon-provided isolated-browser labels). Installed
   theme assets take precedence over bundled official application icons. Spotify's
@@ -61,11 +65,35 @@ and Pocket Casts site recognition alone does not establish music/book/episode
 content. Unknown websites retain their original title/artist/album and browser
 identity. Missing or unfamiliar source fields remain compatible with older daemons.
 
-No network enrichment is implemented: no oEmbed/API requests, scraped pages,
-cookies or synthesized thumbnails. Zen currently supplies the screenshot's
-YouTube title/channel, URL, duration and position, but no artwork and an empty
-album; its paused rate is zero. This pass improves service/video recognition, not
-those absent fields. Supplied artwork always remains the cover source.
+Zen's recorded YouTube sample supplies title/channel, URL, duration and position,
+but no artwork and an empty album; its paused rate is zero. The daemon can now fill
+missing YouTube title/channel/artwork using an **opt-in oEmbed fallback**, without
+an API key or browser extension. Supplied metadata always wins; no album, timing
+or playback rate is invented. Private/restricted/unavailable videos may retain the
+placeholder. QML only renders the daemon's result; it never fetches oEmbed or parses
+source URLs.
+
+Enable in either the NixOS or Home Manager module, then rebuild/deploy both the
+updated daemon and UI:
+
+```nix
+programs.shelllist.media.youtubeMetadata.enable = true;
+```
+
+The option requires the managed bar-daemon service. For other installations, set
+`BAR_DAEMON_YOUTUBE_METADATA=1` in **bar-daemon's** service environment and restart
+it. This is off by default because requests disclose the video ID/IP to YouTube,
+including paused sessions. No cookies, browser profile access, scraping or playback
+requests are involved.
+
+Lookups use canonical video IDs, fixed HTTPS endpoints, safe DNS, no redirects or
+ambient proxies, bounded bodies/timeouts, four concurrent lookups and at most four
+new lookups per ten seconds. A 32-entry session cache uses six-hour success and
+five-minute failure/partial-result lifetimes. Artwork is downloaded to private
+temporary files, not exposed as new remote QML fetches. Owner/content-generation
+checks discard obsolete completions. `metadata_sources` identifies filled fields
+as `youtube-oembed`; selection, capabilities and timing stay MPRIS-owned. See
+`bar-daemon/docs/media.md` for exact endpoint, cache and cleanup boundaries.
 
 Source URLs can contain sensitive query/fragment values. They are transient
 metadata, not search text, clickable links or instructions to fetch/open anything.
@@ -107,7 +135,9 @@ has configurable Super+Shift+M; this desktop's Lua config deliberately uses Supe
   paused/future/stale/invalid snapshots.
 - `tst_media_sources.qml`: service/browser icon fallback without invented covers,
   source changes/clearing during an editable draft, unchanged field traversal,
-  service search, original-player command routing and disabled capability guards.
+  service search, original-player command routing and disabled capability guards;
+  delayed YouTube artwork/channel updates preserve editing drafts and pinning,
+  show the full title as plain text, and clear with a new video.
 - `tst_system_choosers.qml`: actual rendered icons (theme and bundled fallbacks),
   contained artwork, theme contrast, numeric values, selected-session isolation,
   native key delivery for field drafts/save/discard and direct transport, pointer

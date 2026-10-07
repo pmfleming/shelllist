@@ -110,7 +110,9 @@ ColumnLayout {
         Ui.FormField {
             Layout.fillWidth: true
             visible: section.controller.adapters.length > 1
-            label: qsTr("Preferred radio")
+            label: qsTr("Radio")
+            icon: "bluetooth"
+            accessibleName: qsTr("Preferred radio")
             Ui.DropDownList {
                 objectName: "bluetoothRadioSelector"
                 Accessible.name: qsTr("Preferred Bluetooth radio")
@@ -206,7 +208,9 @@ ColumnLayout {
 
         Ui.FormField {
             Layout.fillWidth: true
-            label: qsTr("Computer’s Bluetooth name")
+            label: qsTr("Name")
+            icon: "bluetooth"
+            accessibleName: qsTr("Computer’s Bluetooth name")
             Ui.TextField {
                 id: adapterAliasInput
                 objectName: "adapterNameInput"

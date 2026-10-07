@@ -67,6 +67,7 @@ Item {
                 width: parent.width
                 anchors.verticalCenter: parent.verticalCenter
                 text: header.title
+                textFormat: Text.PlainText
                 font.weight: Theme.fontWeightBold
                 font.pixelSize: header.titlePixelSize
                 elide: Text.ElideRight
@@ -89,6 +90,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     text: header.subtitle
+                    textFormat: Text.PlainText
                     color: header.subtitleColor
                     font.weight: header.subtitleWeight
                     font.pixelSize: Math.max(Theme.fontSizeCaption, Math.round(Theme.fontSizeSmall * header.uiScale))

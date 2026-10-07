@@ -44,6 +44,11 @@ in
       default = "SUPER SHIFT, M";
       description = "Hyprland modifiers and key for Media. Set null to disable.";
     };
+    media.youtubeMetadata.enable = lib.mkEnableOption ''YouTube metadata fallback.
+      Sends recognized video IDs to YouTube oEmbed to fill missing title, channel
+      and thumbnail, without browser cookies or extensions. Playback remains
+      MPRIS-controlled. Requires the managed bar-daemon service'';
+
     trayShortcut = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = "SUPER SHIFT, T";
@@ -101,6 +106,9 @@ in
     assertions = lib.optional cfg.suspend.enable {
       assertion = config.services.hypridle.enable && config.services.hypridle.package != null && cfg.systemd.enable && cfg.systemd.startBarDaemon;
       message = "Shelllist automatic suspend requires services.hypridle.enable and Shelllist's managed bar-daemon service.";
+    } ++ lib.optional cfg.media.youtubeMetadata.enable {
+      assertion = cfg.systemd.enable && cfg.systemd.startBarDaemon;
+      message = "Shelllist YouTube metadata requires the managed bar-daemon service.";
     } ++ lib.optional cfg.displays.enable {
       assertion = cfg.systemd.enable && cfg.systemd.startBarDaemon;
       message = "Shelllist display control requires the managed bar-daemon service.";
@@ -155,7 +163,8 @@ in
           ExecStart = "${cfg.package}/bin/bar-daemon daemon";
           Environment = [ "BAR_DAEMON_NOTIFICATION_BACKEND=native" ]
             ++ lib.optional cfg.suspend.enable "BAR_DAEMON_IDLE_CONFIG=${config.xdg.configHome}/hypr/hypridle.conf"
-            ++ lib.optional cfg.displays.enable "BAR_DAEMON_DISPLAY_CONTROL=1";
+            ++ lib.optional cfg.displays.enable "BAR_DAEMON_DISPLAY_CONTROL=1"
+            ++ lib.optional cfg.media.youtubeMetadata.enable "BAR_DAEMON_YOUTUBE_METADATA=1";
           Restart = "on-failure";
           RestartSec = "2s";
         };

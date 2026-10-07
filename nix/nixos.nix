@@ -37,6 +37,11 @@ in
       };
     };
 
+    media.youtubeMetadata.enable = lib.mkEnableOption ''YouTube metadata fallback.
+      Sends recognized video IDs to YouTube oEmbed to fill missing title, channel
+      and thumbnail, without browser cookies or extensions. Playback remains
+      MPRIS-controlled. Requires the managed bar-daemon service'';
+
     resources.enableRaplAccess = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -101,7 +106,10 @@ in
           && config.services.resolved.settings.Resolve.MulticastDNS == "resolve";
         message = "Shelllist discovery requires NetworkManager mDNS default 0 and systemd-resolved MulticastDNS=resolve; disable programs.shelllist.discovery.enable to manage these independently.";
       }
-    ];
+    ] ++ lib.optional cfg.media.youtubeMetadata.enable {
+      assertion = cfg.systemd.enable && cfg.systemd.startBarDaemon;
+      message = "Shelllist YouTube metadata requires the managed bar-daemon service.";
+    };
 
     services.udev.extraRules = lib.mkIf cfg.resources.enableRaplAccess ''
       ACTION=="add|change", SUBSYSTEM=="powercap", KERNEL=="intel-rapl:*", TEST=="energy_uj", RUN+="${pkgs.coreutils}/bin/chmod 0444 /sys%p/energy_uj"
@@ -138,7 +146,8 @@ in
       after = [ cfg.systemd.target "dbus.service" "pipewire.service" "wireplumber.service" ];
       before = [ "swaync.service" ];
       conflicts = [ "swaync.service" ];
-      environment.BAR_DAEMON_NOTIFICATION_BACKEND = "native";
+      environment = { BAR_DAEMON_NOTIFICATION_BACKEND = "native"; }
+        // lib.optionalAttrs cfg.media.youtubeMetadata.enable { BAR_DAEMON_YOUTUBE_METADATA = "1"; };
       serviceConfig = {
         Type = "dbus";
         BusName = "org.laufan.BarDaemon";

@@ -49,6 +49,7 @@ DropDownList 1.0 DropDownList.qml
 internal DropDownOptionDelegate DropDownOptionDelegate.qml
 Elevation 1.0 Elevation.qml
 internal FieldFrame FieldFrame.qml
+internal FieldStateBadge FieldStateBadge.qml
 FieldEditSession 1.0 FieldEditSession.qml
 FieldLabel 1.0 FieldLabel.qml
 FormField 1.0 FormField.qml

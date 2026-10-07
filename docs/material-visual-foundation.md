@@ -16,7 +16,8 @@ Command buttons and detail tabs are visually icon-only; their full accessible
 names remain. Commands use fixed circles, including prompts and confirmations.
 Explanations remain outside buttons; arbitrary desktop actions use passive-labelled
 command rows and arbitrary notification actions use a named menu. Shell/panel/card
-radii are 28/20/16px; form fields use 12px filled containers. The earlier command
+radii are 28/20/16px; form fields use compact unfilled value rows, with 8px
+editor-only focus corners. The earlier command
 capsule/pressed-corner treatment is superseded by the circular contract below. Selected result
 corners use the interruptible spring without changing hit geometry or focus timing.
 Mouse-click, keyboard and browse focus now share an immediate rounded tonal
@@ -250,30 +251,36 @@ and [outlined segmented-button tokens](https://github.com/androidx/androidx/blob
 Per-corner Rectangle radii are supported by the packaged Qt 6.11.1 and were
 validated in the actual engine, including the software-rendered gallery.
 
-## Filled form-field family (approved 2026-10-05)
+## Compact value-row family (option C)
 
-The [approved illustrated proposal](proposals/form-field-family.html) is implemented
-in shared controls. Normal form containers are **56px high**, with **16px native
-value text**, **12px corners**, 16px padding and opaque Surface Container Highest.
-An explicit 48px compact variant keeps 16px text; production consumers currently
-use normal density. Search explicitly bypasses form paint and retains its 56px
-Surface Container High capsule and native editor behavior.
+The owner selected **C as the shared default** from the
+[compact-field exploration](proposals/compact-text-fields.html), superseding the
+[earlier filled-field proposal](proposals/form-field-family.html)'s visual layout.
+Normal value rows have a **52px minimum content height**, **16px native value
+text**, 12px editor padding and a 1px passive row separator. There is no filled
+resting box. Inline names are 14px, purpose/status icons 20px, and command circles
+32px with 16px glyphs. Optional 48px compact editors keep normal-size values;
+focus corners are 8px. These are shared logical-pixel tokens, not panel-local
+geometry. Search remains its existing 56px capsule and bypasses form paint.
 
-`FormField` is a passive external-label/editor/supporting-row composition, not
-another navigation target or value owner. Labels are 14px, supporting text is
-12px, required fields have an explained marker, and errors replace helper text.
-Only the editor receives focus paint. Resting fields have a 1px inset bottom
-keyline; editing uses the existing stronger tint/edge. Read-only values retain
-normal contrast; disabled controls remain distinct. Native names/descriptions,
-units and read-only state are forwarded to the actual editor. Error icons use
-the packaged Material Symbols family rather than rendering an icon name as text.
+`FormField` is a passive inline-purpose/name/editor/command composition, not a
+navigation target or value owner. Long names can wrap. Routine guidance is
+available through explicit Help and native accessibility; no blank supporting
+row is reserved. Errors and necessary domain status still expand the row, using
+13px readable text. Only the editable portion gets browse/edit paint. The
+read-only lock is a prominent rounded-square passive badge, distinct from the
+circular commands; unavailable uses a blocked symbol, not faded value text.
+Empty read-only content shows a dash, not a plausible example input. Full native
+names/descriptions, required/optional state, units and read-only state survive.
 
-`TextEditor` now encloses a native plain-text `TextEdit` in a bounded scrolling
-focus scope, with the same filled background, padding, typography and existing
-`FieldEditSession`. It remains one typed navigation target. Clipboard lease,
-failed-draft and retry ownership are unchanged. Choice menus retain native
-navigation and acknowledgement, with 16px labels and 48px rows. Password/trailing
-actions have 48px targets; hiding still resets explicit password reveal.
+`TextEditor` retains native plain-text `TextEdit`, scrolling, selection, IME and
+`FieldEditSession`. Its implicit height starts at 52px and grows with content to
+112px before scrolling; explicitly sized document views keep their allocation.
+It remains one typed navigation target. Clipboard lease acquisition, failed drafts
+and retry ownership are unchanged. Choice menus retain native navigation and
+acknowledgement, with 16px labels and 48px rows. Password/trailing commands use
+32px targets; hiding still resets explicit password reveal. Copy is opt-in and
+uses existing domain publication, never a new generic backend write.
 
 IP address and prefix editors keep native editing without segmented octet boxes.
 DNS is one native multiline list editor; Enter/Tab saves and Shift+Enter inserts
@@ -283,8 +290,10 @@ invalid rather than a valid truncated paste. Group readiness still prevents
 invalid/incomplete settings from reaching the backend. No CIDR auto-splitting,
 normalization, new network capability or keyboard chart entry was added.
 
-See the [implementation and validation record](reviews/form-field-implementation-2026-10-05.md)
-for commits, real Qt captures, tests and outstanding live acceptance.
+See the [compact-field implementation record](reviews/compact-text-fields.md)
+for coverage and acceptance limits. The [earlier implementation record](reviews/form-field-implementation-2026-10-05.md)
+is historical evidence for the native field/validation foundation, not the current
+filled/external-label geometry.
 
 ## Earlier outlined-field foundation (superseded visually)
 

@@ -10,6 +10,7 @@ FormField {
     property bool canReply: true
     errorText: ""
     label: qsTr("Reply")
+    icon: "reply"
     editor: field
     statusText: sending ? qsTr("Sending…") : (!canReply ? qsTr("No longer active") : "")
     property int controlHeight: Theme.formHeight

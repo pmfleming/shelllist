@@ -73,9 +73,9 @@ Arriving at a switch highlights it **without toggling it** and returns to
 browsing. Actions are never traversal stops. Shift+Enter remains available for a
 newline in multiline editors.
 
-`FormField` labels and supporting/status rows are passive: the contained shared
-editor keeps its stable focus identity and transaction. A scrolling `TextEditor`
-is still one field. IP/DNS errors become visible on explicit save, without
+`FormField` inline icons/names, separators, state badges and disclosed help are
+passive: the contained shared editor keeps its stable focus identity and
+transaction. A single-line or expanded scrolling `TextEditor` is still one field. IP/DNS errors become visible on explicit save, without
 trapping Tab: saving retains the domain draft, while the existing whole-group
 readiness guard blocks invalid/incomplete backend writes. CIDR, unsupported zone
 suffixes and full native editing buffers are rejected without accepting a
@@ -145,6 +145,35 @@ by animation. `ToggleRow.focusSurface` is its switch, not the containing row.
 The outer panel outline is passive decoration, inset inside the surface's clip
 boundary to survive fractional scaling. It is not a focus target or an extra
 editable-field highlight and does not change content or input geometry.
+
+## Compact field presentation
+
+**Option C (compact value rows) is the shared default**, including editable
+fields: no filled resting box or routine label/helper rows above/below it.
+`FormField` keeps a semantic purpose icon and concise inline name; full names,
+units, required/optional state and guidance remain in native accessibility.
+Names may wrap instead of clipping at narrow/translated widths. Resting rows
+have a passive separator; only the native editor gets browse/edit feedback.
+
+Read-only values retain normal text contrast and a prominent passive lock badge,
+not a tiny “read-only” footer or an unlock command. Unavailable editors use a
+separate blocked indicator, without fading their values. Empty read-only values
+show a dash, never an example input masquerading as an observation. Clipboard's
+explicit `editingAllowed` gate still permits entry to acquire its native edit
+lease before the text becomes writable; presentation must not block that path.
+
+Ordinary guidance is disclosed explicitly using the shared Help command, never
+on hover. Editable-row Help uses scoped Alt+H. Read-only Help/Copy commands are
+unscoped named entries in Alt+J, since those rows cannot be selected with Tab.
+They remain outside field traversal. Copy is opt-in and routed through the
+existing domain publisher/guards; secrets never acquire automatic copy actions.
+Existing external Help commands can suppress the embedded button without losing
+accessible guidance. Errors, safety/recovery messages and in-flight status remain
+visible; no empty supporting row is reserved. DNS/other native multiline editors
+start at one line and grow to a bounded scrolling area; explicitly sized document
+editors retain their size and single-field transaction. See the
+[implementation record](reviews/compact-text-fields.md) and
+`tst_compact_fields.qml`, `tst_ip_fields.qml`, `tst_material_feedback.qml`.
 
 ## Commands, tabs and exceptions
 
@@ -325,7 +354,12 @@ and Forward 30s directly, with independent capability guards and no transport
 More menu. Shared header sizing may omit disabled commands only as a last resort.
 Playback state uses icons and timing uses numbers, with full accessible descriptions;
 there is no persistent shortcut legend or instructional footer. Errors remain text.
-Recognition changes presentation/search only, never the MPRIS routing or pin ID.
+Recognition and optional daemon-owned YouTube enrichment change presentation/search
+only, never the MPRIS routing or pin ID. Video headers show the channel (otherwise
+service/browser identity), with the full title in the passive card. Metadata is
+plain text. Late artwork/title/channel updates never save or discard a field draft,
+steal focus or become new Tab stops; stale owner/content completions are rejected
+by the daemon. Online enrichment is an explicit deployment setting, off by default.
 See [Media presentation and shortcut diagnosis](media.md).
 
 Applications' Resources page combines snapshot readings and history in five

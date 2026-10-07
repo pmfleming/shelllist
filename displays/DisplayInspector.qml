@@ -94,6 +94,7 @@ ColumnLayout {
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: 1
                 label: qsTr("Resolution")
+                icon: "aspect_ratio"
                 Ui.DropDownList {
                     id: resolution
                     objectName: "displayResolution"
@@ -120,6 +121,7 @@ ColumnLayout {
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: 1
                 label: qsTr("Refresh rate")
+                icon: "refresh"
                 Ui.DropDownList {
                     objectName: "displayRefreshRate"
                     Layout.fillWidth: true
@@ -136,6 +138,7 @@ ColumnLayout {
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: 1
                 label: qsTr("Scale")
+                icon: "format_size"
                 Ui.DropDownList {
                     objectName: "displayScale"
                     Layout.fillWidth: true
@@ -164,7 +167,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: 1
-                label: qsTr("Rotation and reflection")
+                label: qsTr("Orientation")
+                icon: "rotate_90_degrees_cw"
+                accessibleName: qsTr("Rotation and reflection")
                 Ui.DropDownList {
                     objectName: "displayRotation"
                     Layout.fillWidth: true

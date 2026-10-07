@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Three illustrated proposals for compact Shelllist text fields: semantic icons, inline actions, and unmistakable read-only values.">
+<title>Shelllist — One line, not three</title>
+<style>
+:root{color-scheme:dark;--bg:#101216;--card:#191c21;--field:#2b2f36;--quiet:#20242b;--line:#383e48;--ink:#edf0f6;--muted:#b1bac9;--blue:#a7c7ff;--blue-dark:#16365e;--green:#b3dfc4;--red:#ffb5b0;--amber:#f1d198}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}a{color:var(--blue);text-underline-offset:4px}a:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:5px}main,header,footer{max-width:1160px;margin:auto;padding-inline:32px}header{padding-top:65px;padding-bottom:40px}.eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--blue)}h1{font-size:clamp(44px,7vw,82px);font-weight:650;line-height:1.04;letter-spacing:-.06em;margin:20px 0 26px}h1 span{color:var(--blue)}h2{font-size:clamp(27px,4vw,38px);line-height:1.15;letter-spacing:-.035em;margin:12px 0 18px}h3{font-size:20px;line-height:1.3;margin:0 0 12px}p{margin:0 0 16px}.lede{max-width:800px;font-size:20px;color:var(--muted);line-height:1.55}.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}.tag{display:inline-flex;align-items:center;padding:4px 11px;border:1px solid var(--line);border-radius:30px;font-size:12px;color:var(--muted)}.tag.accent{color:var(--blue);background:#1c2b40;border-color:#3b5272}nav{display:flex;flex-wrap:wrap;gap:18px;margin-top:26px;font-size:13px}section{padding:40px 0;border-top:1px solid var(--line);scroll-margin-top:20px}.intro{max-width:810px;color:var(--muted)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.grid>*{min-width:0}.panel{border:1px solid var(--line);border-radius:22px;background:var(--card);padding:24px}.panel.recommended{border-color:#5b7daa}.panel-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}.panel-header h3{margin:0}.caption{font-size:13px;color:var(--muted);line-height:1.6;margin-top:18px;margin-bottom:0}.small{font-size:13px;color:var(--muted)}.stack{display:grid;gap:10px}.mock{font-size:16px;line-height:1.25;pointer-events:none}.mock *{min-width:0}.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 12px;border-radius:16px;background:var(--field);position:relative}.row .purpose{color:var(--muted);flex-shrink:0}.name{color:var(--muted);font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0}.value{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px}.mono{font-family:ui-monospace,"DejaVu Sans Mono",Consolas,monospace;font-variant-numeric:tabular-nums}.icon{display:inline-block;width:22px;height:22px;flex-shrink:0;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}.action{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#ced7e5;background:#353c47;flex-shrink:0}.action .icon{width:17px;height:17px}.actions{display:flex;gap:6px;flex-shrink:0}.lock{display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;border-radius:9px;background:#344354;color:#d2e5ff;flex-shrink:0}.lock .icon{width:20px;height:20px}.readonly{background:var(--quiet);border:1px solid #485464}.readonly .value{color:var(--ink)}.prefix{display:inline-flex;align-items:center;gap:6px;border-left:1px solid #526071;padding-left:12px;flex-shrink:0;font-size:16px}.prefix .slash{color:var(--muted)}.labelled .name{width:66px}.readonly .name{color:#c1ccdb}.search{border-radius:99px;min-height:56px;background:#272b31;margin-bottom:22px}.search .value{color:#c0c9d8;font-family:inherit}.search .action{background:none}.switch{width:44px;height:26px;border-radius:30px;background:var(--blue);display:flex;align-items:center;justify-content:flex-end;padding:3px;flex-shrink:0}.switch:after{content:"";width:20px;height:20px;border-radius:50%;background:#12345c}.old-label{font-size:13px;color:#bec9dc;margin-bottom:8px}.old-box{background:#33373d;border-radius:12px;min-height:56px;padding:17px 16px;position:relative;font-size:16px}.old-box:after{content:"";position:absolute;bottom:0;left:12px;right:12px;height:1px;background:#8b9098}.old-help{font-size:11px;color:#bcc7d8;margin-top:5px;margin-bottom:15px}.old-pair{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:12px}.old-tall{min-height:88px}.before-after{align-items:start}.measure{display:flex;align-items:center;gap:10px;margin-top:20px;font-size:12px;color:var(--muted)}.measure span{height:5px;background:#555f6d;border-radius:9px;display:block}.measure.after span{background:var(--blue)}.callout{margin-top:24px;padding:20px 24px;background:#1b293b;border-radius:18px;border-left:3px solid var(--blue)}.callout p:last-child{margin:0}.option{display:grid;grid-template-columns:260px minmax(0,1fr);gap:30px;margin-top:22px;padding:26px;border:1px solid var(--line);border-radius:22px;background:var(--card)}.option.best{border-color:#5b7daa}.option h3{margin-top:12px}.option p{font-size:14px;color:var(--muted)}.option .caption{margin-top:14px;font-size:12px}.option-code{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.1em}.summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.summary strong{font-size:14px}.summary .small{font-size:12px}.segment{display:flex;background:#111820;border:1px solid #3b485c;padding:3px;border-radius:30px;font-size:12px}.segment span{padding:6px 12px;color:var(--muted)}.segment .chosen{background:#344b68;border-radius:30px;color:#e8f0ff}.light-row{border-radius:9px;background:transparent;border-bottom:1px solid #39434e;padding-left:4px;padding-right:4px}.light-row .lock{background:#293a4c}.light-row .action{background:transparent}.state-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.state{padding:20px;border-radius:18px;background:var(--card);border:1px solid var(--line)}.state h3{font-size:14px;color:var(--muted);margin-bottom:16px;font-weight:500}.state .caption{font-size:12px;margin-top:14px}.browse .editor{background:#354253}.editor{display:flex;align-items:center;flex:1;position:relative;padding:9px 10px;border-radius:9px;min-height:36px}.with-editor{padding-block:6px;gap:8px}.with-editor .name{width:55px}.browse .editor:before{content:"";width:4px;height:14px;border-radius:4px;background:var(--blue);border:1px solid #101216;position:absolute;left:2px;top:50%;transform:translateY(-50%)}.browse .editor{padding-left:14px}.editing .editor{background:#354961;box-shadow:inset 0 0 0 2px var(--blue)}.caret{display:inline-block;width:1px;height:19px;background:var(--blue);vertical-align:-4px;margin-left:2px}.invalid .editor{box-shadow:inset 0 -2px var(--red)}.error-icon{color:var(--red)}.error{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--red);margin:10px 4px 0}.pending{color:var(--amber)}.unavailable{background:#202329;border:1px dashed #626975}.unavailable .value{color:#b0b7c3}.unavailable .lock{background:#383a40;color:#d2d4da}.legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:20px}.legend-item{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}.rule{padding:22px;border:1px solid var(--line);border-radius:18px;background:var(--card)}.rule .number{font-size:12px;color:var(--blue);margin-bottom:12px}.rule h3{font-size:18px}.rule p{font-size:14px;color:var(--muted);margin:0}.examples{display:grid;gap:14px}.two-values{display:grid;grid-template-columns:minmax(0,1fr) 104px;gap:8px}.two-values .row:last-child{gap:6px}.two-values .row:last-child .value{flex:initial}.wrap-value{white-space:normal;overflow-wrap:anywhere;font-size:15px}.multiline{align-items:flex-start}.multiline>.icon{margin-top:7px}.multiline .name{padding-top:10px}.multiline .value{padding-block:7px;line-height:1.65}.multiline .actions{padding-top:2px}.domain-list{display:grid;gap:4px}.help{margin-top:20px;border:1px solid var(--line);border-radius:14px;padding:16px 20px;background:#1a1e25}summary{cursor:pointer;font-size:14px;color:var(--blue)}details p{font-size:14px;color:var(--muted);margin:14px 0 0}ul{padding-left:21px;color:var(--muted);font-size:14px}li{margin:9px 0}code,kbd{font:12px ui-monospace,monospace;background:#272f3a;padding:2px 5px;border-radius:4px;color:#e0e9f8}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px;margin-top:20px;min-width:560px}th,td{text-align:left;vertical-align:top;padding:14px 12px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:12px}td:first-child{font-weight:600;width:25%}td:last-child{color:var(--muted)}footer{padding-top:28px;padding-bottom:50px;font-size:12px;color:var(--muted)}.verdict{font-size:22px;line-height:1.5;max-width:900px}.hidden-defs{position:absolute;width:0;height:0;overflow:hidden}.skip{position:absolute;left:20px;top:-100px;background:var(--card);padding:12px;z-index:2}.skip:focus{top:12px}
+@media(min-width:1000px){.hero-demo{padding:28px}.hero-demo .row{gap:14px}.hero-demo .value{font-size:17px}}
+@media(max-width:850px){.grid,.state-grid{grid-template-columns:1fr}.option{grid-template-columns:1fr;gap:12px}.option h3{margin:6px 0 10px}.rules{grid-template-columns:1fr}.panel{padding:20px}.before-after{gap:16px}}
+@media(max-width:480px){main,header,footer{padding-inline:16px}header{padding-top:38px}.panel,.option,.state{padding:16px}.row{gap:8px;padding-inline:10px}.labelled .name{width:auto;font-size:12px}.row .purpose{width:18px;height:18px}.value{font-size:14px}.prefix{font-size:14px;padding-left:8px;gap:3px}.actions{gap:4px}.action,.lock{width:28px;height:28px}.with-editor .name{width:auto}.with-editor{flex-wrap:wrap}.with-editor .editor{min-width:115px}.summary{flex-wrap:wrap}.old-pair{grid-template-columns:minmax(0,1fr) 72px}.old-box{padding-inline:10px;font-size:14px}.two-values{grid-template-columns:1fr}.two-values .row:last-child .value{flex:1}.option .row .name{font-size:12px}.panel-header{flex-wrap:wrap;gap:8px}}
+@media print{body{background:#101216;print-color-adjust:exact;-webkit-print-color-adjust:exact}header{padding-top:20px}nav,.skip{display:none}h1{font-size:48px}.panel,.option,.state,.rule{break-inside:avoid}section{padding-block:24px}main,header,footer{padding-inline:20px}a{color:inherit}}
+</style>
+</head>
+<body>
+<a href="#recommendation" class="skip">Skip to recommendation</a>
+<svg xmlns="http://www.w3.org/2000/svg" class="hidden-defs" aria-hidden="true"><defs>
+<symbol id="search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></symbol>
+<symbol id="network" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="6" rx="1.5"/><path d="M12 9v5M4 17v-3h16v3"/><rect x="1" y="17" width="6" height="4" rx="1"/><rect x="9" y="17" width="6" height="4" rx="1"/><rect x="17" y="17" width="6" height="4" rx="1"/></symbol>
+<symbol id="route" viewBox="0 0 24 24"><circle cx="5" cy="18" r="2.5"/><path d="M5 15.5V8a3 3 0 0 1 3-3h11m-4-4 4 4-4 4M10 18h9"/></symbol>
+<symbol id="dns" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></symbol>
+<symbol id="copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v13h5"/></symbol>
+<symbol id="help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 8.5a2.5 2.5 0 1 1 4 2c-1.5.8-1.5 1.5-1.5 2.5M12 17h.01"/></symbol>
+<symbol id="refresh" viewBox="0 0 24 24"><path d="M20 10a8 8 0 1 0-1 8M20 4v6h-6"/></symbol>
+<symbol id="sliders" viewBox="0 0 24 24"><path d="M5 3v5m0 4v9M12 3v10m0 4v4M19 3v2m0 4v12M2 8h6M9 17h6M16 5h6"/></symbol>
+<symbol id="pencil" viewBox="0 0 24 24"><path d="m4 16 12-12 4 4L8 20H4v-4ZM13 7l4 4"/></symbol>
+<symbol id="warning" viewBox="0 0 24 24"><path d="m12 3 10 18H2L12 3ZM12 9v5M12 18h.01"/></symbol>
+<symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></symbol>
+<symbol id="ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12"/></symbol>
+<symbol id="folder" viewBox="0 0 24 24"><path d="M3 19V5h7l2 3h9v11H3Z"/></symbol>
+<symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="key" viewBox="0 0 24 24"><circle cx="8" cy="8" r="5"/><path d="m12 12 9 9m-5-5 3-3m-1 5 3-3"/></symbol>
+<symbol id="text" viewBox="0 0 24 24"><path d="M4 5h16M12 5v15M8 20h8"/></symbol>
+<symbol id="chevron" viewBox="0 0 24 24"><path d="m8 4 8 8-8 8"/></symbol>
+</defs></svg>
+<header>
+<div class="eyebrow">Shelllist / text-field design exploration</div>
+<h1>One line.<br><span>Not three.</span></h1>
+<p class="lede">Take the search box’s best idea: purpose on the left, content in the middle, useful actions on the right. Give ordinary fields the same economy—and make read-only impossible to miss.</p>
+<div class="meta"><span class="tag accent">Selected: C · compact value rows</span><span class="tag">Implemented in shared controls</span><span class="tag">Self-contained visual examples</span></div>
+<nav aria-label="Proposal sections"><a href="#recommendation">Before / after</a><a href="#options">Three directions</a><a href="#states">States</a><a href="#family">Other text fields</a><a href="#delivery">Implementation boundaries</a></nav>
+</header>
+<main>
+<div class="callout"><p><strong>Owner decision: C is the default, including editable fields.</strong> Shared controls now use unfilled value rows, inline purpose/name, passive lock badges and explicit Help. The illustrations below preserve the original alternatives; the original A recommendation is superseded. See the <a href="../reviews/compact-text-fields.md">implementation and validation record</a>.</p></div>
+<section id="recommendation">
+<div class="eyebrow">01 / The recommendation</div>
+<h2>Flatten the layout, not the meaning.</h2>
+<p class="intro">Remove the permanent label above and helper line below. Keep a semantic icon and, where the icon alone is ambiguous, a short inline name. Use a visible lock badge instead of “Automatic · read-only” in tiny text.</p>
+<div class="grid before-after">
+<article class="panel">
+<div class="panel-header"><h3>Before</h3><span class="tag">Screenshot-derived reconstruction</span></div>
+<div class="mock" role="img" aria-label="Current layout: IPv4 address and prefix, each with a heading and footer; gateway with another heading and read-only footer; oversized DNS box.">
+<div class="old-pair"><div><div class="old-label">IPv4 address</div><div class="old-box mono">192.168.178.119</div><div class="old-help">Automatic · read-only</div></div><div><div class="old-label">Prefix length</div><div class="old-box mono">/ 24</div><div class="old-help">0–32</div></div></div>
+<div class="old-label">Gateway (optional)</div><div class="old-box mono">192.168.178.1</div><div class="old-help">Automatic · read-only</div>
+<div class="old-label">DNS servers</div><div class="old-box old-tall mono">84.116.46.23, 84.116.46.22</div>
+</div>
+<p class="caption">Three vertical layers per field. Read-only looks almost editable. Even a short DNS list occupies a large text area.</p>
+</article>
+<article class="panel recommended hero-demo">
+<div class="panel-header"><h3>After</h3><span class="tag accent">A · recommended</span></div>
+<div class="mock" role="img" aria-label="Proposed automatic network values: compact single-line IPv4, gateway and DNS rows. Each has a purpose icon, inline name, prominent lock and copy action. IPv4 prefix 24 is attached to the address for display.">
+<div class="summary"><strong>IPv4 configuration</strong><span class="tag">Automatic</span></div>
+<div class="stack labelled">
+<div class="row readonly"><svg class="icon purpose"><use href="#network"/></svg><span class="name">IPv4</span><span class="value mono">192.168.178.119</span><span class="prefix mono"><span class="slash">/</span>24</span><span class="lock"><svg class="icon"><use href="#lock"/></svg></span><span class="action"><svg class="icon"><use href="#copy"/></svg></span></div>
+<div class="row readonly"><svg class="icon purpose"><use href="#route"/></svg><span class="name">Gateway</span><span class="value mono">192.168.178.1</span><span class="lock"><svg class="icon"><use href="#lock"/></svg></span><span class="action"><svg class="icon"><use href="#copy"/></svg></span></div>
+<div class="row readonly"><svg class="icon purpose"><use href="#dns"/></svg><span class="name">DNS</span><span class="value mono">84.116.46.23, 84.116.46.22</span><span class="lock"><svg class="icon"><use href="#lock"/></svg></span><span class="action"><svg class="icon"><use href="#copy"/></svg></span></div>
+</div>
+</div>
+<div class="legend"><div class="legend-item"><span class="lock"><svg class="icon" aria-hidden="true"><use href="#lock"/></svg></span>Read-only · passive badge</div><div class="legend-item"><span class="action"><svg class="icon" aria-hidden="true"><use href="#copy"/></svg></span>Copy · circular command</div></div>
+<p class="caption">52px rows, 10px gaps, no routine footers. Normal-contrast values on a quieter surface; the lock is not an unlock button. “Automatic” appears once for the group.</p>
+</article>
+</div>
+<div class="callout"><p><strong>Compact does not mean tiny.</strong> Keep 16px values and clear 20–22px purpose icons. Save height by removing repeated scaffolding—not by shrinking text. Three single-line rows occupy <strong>176px</strong> before the group heading; long content and errors may grow.</p></div>
+<p class="small" style="margin-top:16px">All controls below are static design illustrations, not functioning form editors. The original screenshots are the visual brief, not measured production geometry. Inline prefix display is for read-only values; editable address and prefix remain separate fields.</p>
+</section>
+<section id="options">
+<div class="eyebrow">02 / Three directions</div>
+<h2>How far should the label disappear?</h2>
+<p class="intro">All three remove the routine above/below text. The difference is how much meaning the icon must carry.</p>
+<article class="option best">
+<div><span class="option-code">A / COMPACT LABELLED ROW</span><h3>The best general default.</h3><p>Icon + short inline name + value + relevant actions. Almost as compact as search, without asking people to learn a pictogram vocabulary.</p><span class="tag accent">Recommended</span></div>
+<div>
+<div class="mock stack labelled" role="img" aria-label="Option A shows a purpose icon and short persistent inline name beside each editable value: name, gateway, and timeout.">
+<div class="row"><svg class="icon purpose"><use href="#text"/></svg><span class="name">Name</span><span class="value">Studio headphones</span><span class="action"><svg class="icon"><use href="#help"/></svg></span></div>
+<div class="row"><svg class="icon purpose"><use href="#route"/></svg><span class="name">Gateway</span><span class="value mono">192.168.178.1</span><span class="action"><svg class="icon"><use href="#help"/></svg></span></div>
+<div class="row"><svg class="icon purpose"><use href="#clock"/></svg><span class="name">Timeout</span><span class="value mono">60</span><span class="name">s</span><span class="action"><svg class="icon"><use href="#help"/></svg></span></div>
+</div>
+<p class="caption">Persistent names survive entry. Units stay inline. A help command is present only when there is useful domain guidance—not on every field.</p>
+</div>
+</article>
+<article class="option">
+<div><span class="option-code">B / ICON-FIRST CAPSULE</span><h3>Closest to search.</h3><p>Icon + value + actions, with no visible label. Excellent for genuinely familiar purposes; risky when two fields could use the same icon.</p><span class="tag">Selective use, not universal</span></div>
+<div>
+<div class="mock stack" role="img" aria-label="Option B shows rounded icon-only rows for a folder path and a masked password with browse and reveal actions.">
+<div class="row" style="border-radius:99px"><svg class="icon purpose"><use href="#folder"/></svg><span class="value mono">~/Pictures/Screenshots</span><span class="action"><svg class="icon"><use href="#folder"/></svg></span></div>
+<div class="row" style="border-radius:99px"><svg class="icon purpose"><use href="#key"/></svg><span class="value mono">••••••••••••</span><span class="action"><svg class="icon"><use href="#eye"/></svg></span></div>
+</div>
+<p class="caption">Use only with unambiguous surrounding context. A key icon alone cannot distinguish password, API token and private key. An accessible name is mandatory but does not replace sighted discoverability.</p>
+</div>
+</article>
+<article class="option">
+<div><span class="option-code">C / COMPACT VALUE LIST</span><h3>Readings, not boxes.</h3><p>For information-heavy pages: strip away the input fill entirely. Keep aligned names, normal-contrast values, locks and copy commands.</p><span class="tag">Read-only companion to A</span></div>
+<div>
+<div class="mock stack labelled" role="img" aria-label="Option C presents IPv4, gateway and DNS as flat read-only value rows with separators, lock badges and copy commands rather than input boxes.">
+<div class="row light-row"><svg class="icon purpose"><use href="#network"/></svg><span class="name">IPv4</span><span class="value mono">192.168.178.119 / 24</span><span class="lock"><svg class="icon"><use href="#lock"/></svg></span><span class="action"><svg class="icon"><use href="#copy"/></svg></span></div>
+<div class="row light-row"><svg class="icon purpose"><use href="#route"/></svg><span class="name">Gateway</span><span class="value mono">192.168.178.1</span><span class="lock"><svg class="icon"><use href="#lock"/></svg></span><span class="action"><svg class="icon"><use href="#copy"/></svg></span></div>
+<div class="row light-row"><svg class="icon purpose"><use href="#dns"/></svg><span class="name">DNS</span><span class="value mono">84.116.46.23, 84.116.46.22</span><span class="lock"><svg class="icon"><use href="#lock"/></svg></span><span class="action"><svg class="icon"><use href="#copy"/></svg></span></div>
+</div>
+<p class="caption">Strongest distinction between observation and input. Prefer A’s quieter bounded row when automatic/manual modes share the same layout; prefer C for permanently informational pages.</p>
+</div>
+</article>
+</section>
+<section id="states">
+<div class="eyebrow">03 / More than a smaller rectangle</div>
+<h2>Make the state visible, not verbose.</h2>
+<p class="intro">Purpose, editability and operation status are separate signals. Don’t make one tiny footer explain all three.</p>
+<div class="state-grid">
+<article class="state"><h3>01 · Editable / idle</h3><div class="mock" role="img" aria-label="Editable name field with a filled surface, no lock, no focus treatment."><div class="row with-editor"><svg class="icon purpose"><use href="#text"/></svg><span class="name">Name</span><span class="editor"><span class="value">Studio headphones</span></span></div></div><p class="caption">Filled input surface. No lock and no permanent pencil button: Enter or pointer entry already starts editing.</p></article>
+<article class="state"><h3>02 · Browsing / keyboard target</h3><div class="mock" role="img" aria-label="Browsing highlights only the editable name area with a tonal fill and small blue marker; the icon and label remain unchanged."><div class="row with-editor browse"><svg class="icon purpose"><use href="#text"/></svg><span class="name">Name</span><span class="editor"><span class="value">Studio headphones</span></span></div></div><p class="caption">A tonal highlight and opaque marker identify the editable area only. Not the icon, label or entire row.</p></article>
+<article class="state"><h3>03 · Editing / local draft</h3><div class="mock" role="img" aria-label="Editing gives the name value a stronger blue edge, fill and caret."><div class="row with-editor editing"><svg class="icon purpose"><use href="#text"/></svg><span class="name">Name</span><span class="editor"><span class="value">Studio speakers<span class="caret"></span></span></span></div></div><p class="caption">Stronger edge + native caret. Enter saves; Escape discards; Tab saves and continues editing. No extra save/cancel button pair.</p></article>
+<article class="state"><h3>04 · Read-only / still useful</h3><div class="mock" role="img" aria-label="Read-only name value uses a quieter bounded surface, a prominent lock badge and a copy command, with full-contrast text."><div class="row readonly"><svg class="icon purpose"><use href="#text"/></svg><span class="name">Name</span><span class="value">Studio headphones</span><span class="lock"><svg class="icon"><use href="#lock"/></svg></span><span class="action"><svg class="icon"><use href="#copy"/></svg></span></div></div><p class="caption">Lock + different surface, not faded text. No edit baseline, caret or field Tab stop. Copy and text selection remain available where safe.</p></article>
+<article class="state"><h3>05 · Invalid / explain the correction</h3><div class="mock" role="img" aria-label="Invalid IPv4 value 192.168.300.1 has a warning icon and a visible message: third octet must be 0 to 255."><div class="row with-editor invalid"><svg class="icon purpose"><use href="#network"/></svg><span class="name">IPv4</span><span class="editor"><span class="value mono">192.168.300.1</span></span><svg class="icon error-icon"><use href="#warning"/></svg></div><div class="error">Third octet must be 0–255.</div></div><p class="caption">Errors earn a second line. Show actionable text on explicit save, not an unexplained red icon or a permanent empty helper slot.</p></article>
+<article class="state"><h3>06 · Pending / not acknowledged</h3><div class="mock" role="img" aria-label="Pending name change shows a clock and the inline word Saving, not a success check."><div class="row"><svg class="icon purpose"><use href="#text"/></svg><span class="name">Name</span><span class="value">Studio speakers</span><svg class="icon pending"><use href="#clock"/></svg><span class="name pending">Saving…</span></div></div><p class="caption">Transient status may use a word: a clock alone is ambiguous. Preserve the domain’s busy guards; never show success merely because Enter was pressed.</p></article>
+<article class="state"><h3>07 · Unavailable / not read-only</h3><div class="mock" role="img" aria-label="Unavailable address field uses a dashed subdued surface and an unavailable badge, with the reason Connection service unavailable below."><div class="row unavailable"><svg class="icon purpose"><use href="#network"/></svg><span class="name">IPv4</span><span class="value">Unavailable</span><span class="lock"><svg class="icon"><use href="#ban"/></svg></span></div><div class="error" style="color:var(--muted)">Connection service unavailable.</div></div><p class="caption">No fake blank value. Use an unavailable symbol and a readable reason, not the ordinary read-only lock.</p></article>
+<article class="state"><h3>08 · Empty / identity survives</h3><div class="mock" role="img" aria-label="Empty gateway field retains its icon and inline Gateway name with Optional as its placeholder."><div class="row with-editor"><svg class="icon purpose"><use href="#route"/></svg><span class="name">Gateway</span><span class="editor"><span class="value" style="color:var(--muted)">Optional</span></span><span class="action"><svg class="icon"><use href="#help"/></svg></span></div></div><p class="caption">The placeholder is a hint, never the only field name. Optional/required semantics remain in the accessible description when a value is entered.</p></article>
+</div>
+</section>
+<section id="family">
+<div class="eyebrow">04 / One family, sensible exceptions</div>
+<h2>Single line by default. Not at any cost.</h2>
+<div class="grid">
+<article class="panel"><h3>Manual network settings</h3><p class="small">The address and prefix keep separate native editors and separate transactions.</p>
+<div class="mock examples" role="img" aria-label="Manual IPv4 and prefix are separate compact controls. Gateway has an inline help command. A long IPv6 DNS list wraps into two readable lines rather than being squeezed.">
+<div class="two-values"><div class="row"><svg class="icon purpose"><use href="#network"/></svg><span class="name">IPv4</span><span class="value mono">192.168.178.119</span></div><div class="row"><span class="name">/</span><span class="value mono">24</span></div></div>
+<div class="row"><svg class="icon purpose"><use href="#route"/></svg><span class="name">Gateway</span><span class="value mono">192.168.178.1</span><span class="action"><svg class="icon"><use href="#help"/></svg></span></div>
+<div class="row multiline"><svg class="icon purpose"><use href="#dns"/></svg><span class="name">DNS</span><span class="value mono wrap-value">2001:4860:4860::8888,<br>2606:4700:4700::1111</span><span class="actions"><span class="action"><svg class="icon"><use href="#help"/></svg></span></span></div>
+</div>
+<p class="caption">Short DNS values start at one line; long lists may grow to a bounded multiline editor with scrolling. One list remains one field, not a row of chips. No octet widgets or cross-field CIDR paste magic.</p>
+</article>
+<article class="panel"><h3>Beyond IP addresses</h3><p class="small">Purpose icons are semantic, not magnifiers on every input.</p>
+<div class="mock examples" role="img" aria-label="Examples: an output path with browse-folder action, a password with reveal action, and a multi-line note with no unnecessary trailing controls.">
+<div class="row"><svg class="icon purpose"><use href="#folder"/></svg><span class="name">Output</span><span class="value mono">~/Pictures/Screenshots</span><span class="action"><svg class="icon"><use href="#folder"/></svg></span></div>
+<div class="row"><svg class="icon purpose"><use href="#key"/></svg><span class="name">Password</span><span class="value mono">••••••••••</span><span class="action"><svg class="icon"><use href="#eye"/></svg></span></div>
+<div class="row multiline"><svg class="icon purpose"><use href="#text"/></svg><span class="name">Note</span><span class="value wrap-value">Keep the USB receiver attached<br>when switching workspaces.</span></div>
+</div>
+<p class="caption">Only useful commands: browse for a path, reveal for a password. Do not add Copy, Clear, Help and Reset everywhere. Secrets do not gain automatic copy commands or presentation-memory storage.</p>
+</article>
+</div>
+<details class="help"><summary>Where did the helper text go?</summary><p>Routine guidance moves to an explicit, named Help command, not a hover tooltip. For example: “IPv4 prefix length: 0–32. Gateway: optional. DNS: comma- or whitespace-separated addresses.” Errors, security warnings and required recovery instructions stay visible where needed. This disclosure illustrates the information hierarchy, not a new panel keyboard model.</p></details>
+</section>
+<section>
+<div class="eyebrow">05 / Design rules</div>
+<h2>Less chrome. No guessing.</h2>
+<div class="rules">
+<article class="rule"><div class="number">01 / PURPOSE</div><h3>Icon first, not icon only.</h3><p>Use a shared semantic vocabulary. Keep a short inline name for ambiguous fields. Full translated names belong in accessibility and named commands; no new hover tooltips.</p></article>
+<article class="rule"><div class="number">02 / READ-ONLY</div><h3>A lock you can see.</h3><p>20px lock in a 32px rounded-square badge. Passive, not clickable. Keep values readable; remove editing affordances. Do not imply that pressing the lock can override policy.</p></article>
+<article class="rule"><div class="number">03 / ACTIONS</div><h3>Useful, not ornamental.</h3><p>32px command circles, 16–18px icons. Usually zero or one command, at most two. Stable hit areas; domain guards remain authoritative. Status badges are not buttons.</p></article>
+<article class="rule"><div class="number">04 / DENSITY</div><h3>One 52px row.</h3><p>Proposed shared compact token: 52px minimum height, 16px corners, 12px side padding, 10px between rows. Scale with uiScale. Do not hard-code a smaller local variant per panel.</p></article>
+<article class="rule"><div class="number">05 / WIDTH</div><h3>Let content win.</h3><p>Keep type and action targets stable. Stack address/prefix at narrow widths; allow labels to wrap when translation requires it. Native editors scroll horizontally; read-only elision must retain full copy/inspection.</p></article>
+<article class="rule"><div class="number">06 / EXCEPTIONS</div><h3>Words where they help.</h3><p>No reserved helper row at rest. Validation, failures, safety instructions and genuinely multiline text may expand. Space-saving must never conceal the reason a setting cannot be applied.</p></article>
+</div>
+</section>
+<section id="delivery">
+<div class="eyebrow">06 / If adopted</div>
+<h2>Change the composition, not the key model.</h2>
+<p class="intro">This revises the earlier <a href="form-field-family.html">form-field proposal</a>’s external-label/support-row direction. It is not approval to replace native editors or weaken the <a href="../chooser-keyboard-workflow.md">shared interaction contract</a>.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Area</th><th scope="col">Proposed implementation boundary</th></tr></thead><tbody>
+<tr><td>Shared composition</td><td>Extend <code>FormField.qml</code> with a shared compact layout: purpose/name slot, native editor, passive status, commands. Let <code>FieldFrame.qml</code> distinguish read-only from editable; retain the existing shared editor/session identity.</td></tr>
+<tr><td>Highlighting</td><td>In browse/edit mode, highlight only the native editable area, not the whole decorated row. Preserve the opaque marker/keyline contrast and immediate stronger editing feedback.</td></tr>
+<tr><td>Keyboard</td><td>Tab/Shift+Tab visit editable fields only. Enter starts editing or saves; Escape discards. Tab while editing saves and continues. Arrows remain native editing or result browsing—not field traversal. Shift+Enter inserts a multiline newline.</td></tr>
+<tr><td>Inline commands</td><td>Use shared <code>ActionControl</code>/command routing and Alt+letter access keys, not new Tab stops. Repeated Copy/Help commands need scoped, non-conflicting routing. Read-only rows remain reachable by named shared command menus; never require focusing a skipped field.</td></tr>
+<tr><td>Help &amp; read-only reason</td><td>Expose full names, units, optional/required state, read-only cause and errors through native accessibility. Explain automatic assignment once at group level; reveal field-specific details explicitly when necessary. The lock never bypasses the configuration-mode control.</td></tr>
+<tr><td>Data &amp; safety</td><td>Field-local drafts until save; no writes on typing or blur. Keep raw-buffer validation, whole-group readiness, acknowledgement, unsupported capability, retry and failure guards. An Enter/Tab save is not backend success.</td></tr>
+<tr><td>Verification before shipping</td><td>Add actual Qt pointer/key tests for the new composition, editable-only wrap, save/discard, command reachability, lock exclusion, error growth and focus boundaries. Check long/localized labels, narrow widths, scaling, light/dark contrast and native accessibility. Update the contract only when this visual change is approved.</td></tr>
+</tbody></table></div>
+<div class="callout"><p class="verdict"><strong>Selected direction: C as the general default.</strong> Keep A’s inline identity and useful actions without its filled resting container. Reserve B for purposes that truly need no label. The biggest improvement is not the radius—it is removing the two routine text rows and making read-only a first-class visual state.</p></div>
+</section>
+</main>
+<footer>Original CSS/SVG design illustrations, not Qt screenshots or an interaction prototype. C is implemented; see the linked validation record. No external fonts, scripts or image dependencies.</footer>
+</body>
+</html>

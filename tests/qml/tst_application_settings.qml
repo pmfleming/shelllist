@@ -73,7 +73,13 @@ DaemonTestCase {
     function test_compositionAndCategoryOnlyOptions() {
         const surface = make("code", "3");
         const control = choice(surface);
-        compare(form(surface).label, "Workspace category");
+        compare(form(surface).label, "Category");
+        compare(form(surface).icon, "category");
+        compare(form(surface).message, "");
+        keyClick(Qt.Key_H, Qt.AltModifier);
+        compare(form(surface).message, "Editors and development tools");
+        keyClick(Qt.Key_H, Qt.AltModifier);
+        compare(form(surface).message, "");
         compare(control.Accessible.name, "Workspace category");
         compare(control.Accessible.description, "Editors and development tools");
         compare(control.options.map(option => option.label), ["Shell", "Browser", "Code", "Media", "Text"]);
@@ -116,7 +122,8 @@ DaemonTestCase {
         compare(choice(surface).contentItem.text, "Choose a category");
         compare(surface.detailsItem.mappingNeedsAttention, data.mismatch);
         compare(form(surface).message, data.mismatch
-            ? "Category mapping needs attention. Choose a category to update it." : "No workspace category assigned.");
+            ? "Category mapping needs attention. Choose a category to update it." : "");
+        verify(choice(surface).Accessible.description.includes("No workspace category assigned."));
         compare(updates().length, 0);
     }
     function test_saveKeepsAcknowledgement_data() {
@@ -150,7 +157,8 @@ DaemonTestCase {
         compare(control.value, "shell", "catalog refresh remains the authoritative source binding");
         setApplication(surface, "browser", "2");
         compare(control.contentItem.text, "Browser");
-        compare(form(surface).message, "Web and network applications");
+        compare(form(surface).message, "");
+        compare(form(surface).supportingText, "Web and network applications");
     }
     function test_singleFieldWrapAndDiscardOnExit() {
         const surface = make("shell", "1");
@@ -248,6 +256,7 @@ DaemonTestCase {
         controller.applyApplicationSettings(retry, {category: "browser", workspace_id: "2"});
         setApplication(surface, "browser", "2");
         compare(choice(surface).value, "browser");
-        compare(form(surface).message, "Web and network applications");
+        compare(form(surface).message, "");
+        compare(form(surface).supportingText, "Web and network applications");
     }
 }

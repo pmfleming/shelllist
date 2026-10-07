@@ -39,7 +39,9 @@ Ui.DetailColumnCard {
 
     Ui.FormField {
         Layout.fillWidth: true
-        label: qsTr("Audio profile")
+        label: qsTr("Profile")
+        icon: "headphones"
+        accessibleName: qsTr("Audio profile")
         Ui.DropDownList {
             objectName: "currentAudioProfile"
             Layout.fillWidth: true

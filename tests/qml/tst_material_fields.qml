@@ -118,7 +118,7 @@ TestCase {
         intent.clear();
         control.forceActiveFocus();
         mouseMove(control, 20, control.height / 2);
-        compare(control.background.color.a, 1, "hover must not replace the solid field with a translucent fill");
+        compare(control.background.color.a, 0, "value rows keep their low-chrome base; hover/focus paint is local");
         verify(findChild(control.background, "focusRing").visible);
         keyClick(Qt.Key_Space);
         tryCompare(control.popup, "visible", true);

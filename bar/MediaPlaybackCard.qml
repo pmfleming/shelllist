@@ -83,6 +83,7 @@ Ui.DetailCard {
                     objectName: "mediaPlaybackTitle"
                     width: parent.width
                     text: card.player ? card.player.title || Media.heading(card.player) : ""
+                    textFormat: Text.PlainText
                     color: Ui.Theme.selectedText
                     wrapMode: Text.WordWrap
                     font.pixelSize: Ui.Theme.fontSizeDisplay
@@ -92,6 +93,7 @@ Ui.DetailCard {
                     objectName: "mediaPlaybackSubtitle"
                     width: parent.width
                     text: Media.subtitle(card.player)
+                    textFormat: Text.PlainText
                     visible: text.length > 0
                     wrapMode: Text.WordWrap
                     color: Ui.Theme.selectedText

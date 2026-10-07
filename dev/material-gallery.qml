@@ -230,7 +230,7 @@ ShellRoot {
                     }
                 }
                 Ui.ThemeText {
-                    text: "Filled forms · persistent labels / validation / native editors"
+                    text: "Compact value rows · inline identity / visible state / native editors"
                     font.pixelSize: 18
                 }
                 GridLayout {
@@ -251,18 +251,21 @@ ShellRoot {
                     }
                     Ui.FormField {
                         Layout.fillWidth: true
-                        label: "Password · example only"
+                        label: "Password"
+                        icon: "key"
                         Ui.TextField { Layout.fillWidth: true; text: "Preview only"; password: true }
                     }
                     Ui.FormField {
                         Layout.fillWidth: true
-                        label: "Automatic value"
-                        supportingText: "Read-only"
+                        label: "IPv4"
+                        icon: "lan"
+                        readOnlyReason: "Assigned automatically"
                         Ui.TextField { Layout.fillWidth: true; text: "192.168.1.20"; readOnly: true }
                     }
                     Ui.FormField {
                         Layout.fillWidth: true
-                        label: "Disabled capability"
+                        label: "Unavailable"
+                        icon: "lan"
                         Ui.TextField { Layout.fillWidth: true; text: "Unavailable"; enabled: false }
                     }
                     Ui.FormField {
@@ -282,17 +285,18 @@ ShellRoot {
                     }
                     Ui.FormField {
                         Layout.fillWidth: true
-                        label: "Compact density (explicit)"
+                        label: "Compact"
                         Ui.TextField { Layout.fillWidth: true; text: "48px · still 16px text"; compact: true }
                     }
                     Ui.FormField {
                         Layout.fillWidth: true
                         label: "Duration"
+                        icon: "schedule"
                         Ui.TextField { Layout.fillWidth: true; text: "60"; suffix: "s" }
                     }
                     Ui.FormField {
                         Layout.fillWidth: true
-                        label: "Multiline text"
+                        label: "Note"
                         Ui.TextEditor { Layout.fillWidth: true; text: "Native editing\nShift+Enter adds a line" }
                     }
                 }

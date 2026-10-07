@@ -44,6 +44,7 @@ ModalFrame {
                     required property var modelData
                     width: fieldsColumn.width
                     label: modelData.label
+                    icon: modelData.password ? "key" : "text_fields"
                     requiredInput: !!modelData.required
 
                     TextField {

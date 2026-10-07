@@ -72,7 +72,9 @@ ColumnLayout {
 
     Ui.FormField {
         Layout.fillWidth: true
-        label: qsTr("Device name")
+        label: qsTr("Name")
+        icon: "bluetooth"
+        accessibleName: qsTr("Device name")
         supportingText: section.controller.selectedDevice.remote_name && section.controller.selectedDevice.name !== section.controller.selectedDevice.remote_name ? qsTr("Original: %1").arg(section.controller.selectedDevice.remote_name) : ""
         statusText: (section.draft || {}).pending ? qsTr("Saving…") : ""
         errorText: (section.draft || {}).error || (section.validationAttempted && !section.renameValid ? qsTr("Enter a non-empty device name") : "")

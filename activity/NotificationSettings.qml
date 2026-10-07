@@ -32,7 +32,9 @@ Column {
     }
     Ui.FormField {
         width: parent.width
-        label: qsTr("Do Not Disturb duration")
+        label: qsTr("Duration")
+        icon: "schedule"
+        accessibleName: qsTr("Do Not Disturb duration")
         Ui.DropDownList {
             objectName: "notificationDndDuration"
             Layout.fillWidth: true

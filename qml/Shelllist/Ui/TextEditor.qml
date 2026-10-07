@@ -7,6 +7,8 @@ FocusScope {
     id: editor
     property string focusKey: objectName
     property bool browseFocused: false
+    property bool rowEmbedded: false
+    property int maximumImplicitHeight: Theme.formTextAreaHeight
     property bool editingAllowed: !readOnly
     property string supportingText: ""
     property string errorText: ""
@@ -25,12 +27,14 @@ FocusScope {
     signal edited(string value)
     signal editFinished(bool saved)
     signal selectionChanged
-    implicitHeight: Theme.formTextAreaHeight
+    implicitHeight: Math.max(Theme.formHeight, Math.min(maximumImplicitHeight, input.implicitHeight))
     implicitWidth: 240
-    opacity: enabled ? 1.0 : Theme.disabledOpacity
+    opacity: 1
 
     readonly property FieldEditSession editSession: FieldEditSession {
         owner: editor
+        // Some domains explicitly allow entry to acquire a lease before the
+        // native TextEdit becomes writable (Clipboard). Keep that gate intact.
         available: editor.enabled && editor.editingAllowed
         multiline: true
         valueProperty: "text"
@@ -39,16 +43,23 @@ FocusScope {
         onPublishRequested: function (value) { editor.edited(value); }
         onFinished: function (saved) { editor.editFinished(saved); }
     }
+    FontMetrics {
+        id: inputMetrics
+        font: input.font
+    }
     FieldFrame {
         anchors.fill: parent
         focused: editor.editSession.active || (editor.activeFocus && !editor.readOnly)
         browseFocused: editor.browseFocused
         invalid: editor.errorText.length > 0
+        rowEmbedded: editor.rowEmbedded
+        readOnly: !editor.editingAllowed
     }
     Flickable {
         id: viewport
         objectName: "textEditorViewport"
         anchors.fill: parent
+        anchors.rightMargin: stateBadge.visible ? stateBadge.width + Theme.spacingSm : (errorIcon.visible ? Theme.formIconSize + Theme.spacingSm : 0)
         clip: true
         contentWidth: width
         contentHeight: input.height
@@ -62,6 +73,8 @@ FocusScope {
             height: Math.max(viewport.height, implicitHeight)
             focus: true
             padding: Theme.formPadding
+            topPadding: Math.max(Theme.formPadding, Math.floor((Theme.formHeight - inputMetrics.height) / 2))
+            bottomPadding: topPadding
             wrapMode: TextEdit.Wrap
             textFormat: TextEdit.PlainText
             selectByMouse: true
@@ -71,14 +84,47 @@ FocusScope {
             font.family: Theme.fontFamily
             font.pixelSize: Theme.formValueSize
             Accessible.name: editor.Accessible.name
-            Accessible.description: [editor.Accessible.description, editor.readOnly ? qsTr("Read-only") : ""].filter(part => part.length > 0).join(". ")
+            Accessible.description: [editor.Accessible.description, !editor.enabled ? qsTr("Unavailable") : editor.readOnly || !editor.editingAllowed ? qsTr("Read-only") : "", editor.readOnly && !editor.text.length ? qsTr("Not set") : ""].filter(part => part.length > 0).join(". ")
             Keys.onPressed: function (event) { editor.editSession.handleKey(event); }
             onCursorPositionChanged: editor.selectionChanged()
             onSelectionStartChanged: editor.selectionChanged()
             onSelectionEndChanged: editor.selectionChanged()
             onCursorRectangleChanged: editor.revealCursor()
             onTextEdited: if (!editor.editSession.navigation) editor.edited(text)
+            ThemeText {
+                objectName: "fieldPlaceholder"
+                x: input.leftPadding
+                y: input.topPadding
+                visible: input.text.length === 0 && input.preeditText.length === 0 && (editor.readOnly || !editor.enabled)
+                text: "—"
+                color: Theme.subtleText
+                font: input.font
+                Accessible.ignored: true
+            }
         }
+    }
+    FieldStateBadge {
+        id: stateBadge
+        objectName: "fieldStateBadge"
+        readOnly: !editor.editingAllowed
+        unavailable: !editor.enabled
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.formPadding
+        anchors.top: parent.top
+        anchors.topMargin: (Theme.formHeight - height) / 2
+    }
+    GlyphLabel {
+        id: errorIcon
+        objectName: "fieldErrorIcon"
+        visible: editor.errorText.length > 0 && !stateBadge.visible
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.formPadding
+        anchors.top: parent.top
+        anchors.topMargin: (Theme.formHeight - height) / 2
+        glyph: "error"
+        font.pixelSize: Theme.formIconSize
+        color: Theme.danger
+        Accessible.ignored: true
     }
     function revealCursor(): void {
         if (!input.activeFocus)

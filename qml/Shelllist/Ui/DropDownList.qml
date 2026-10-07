@@ -7,6 +7,7 @@ Controls.ComboBox {
     id: control
 
     property bool compact: false
+    property bool rowEmbedded: false
     property string supportingText: ""
     property string errorText: ""
     property var options: []
@@ -64,7 +65,7 @@ Controls.ComboBox {
     hoverEnabled: true
     enabled: interactive
     activeFocusOnTab: enabled
-    opacity: enabled ? 1.0 : Theme.disabledOpacity
+    opacity: 1
 
     function optionIndex(optionValue) {
         for (let index = 0; index < options.length; ++index)
@@ -123,7 +124,7 @@ Controls.ComboBox {
     indicator: GlyphLabel {
         x: control.mirrored ? Theme.spacingMd : control.width - width - Theme.spacingMd
         y: Math.round((control.height - height) / 2)
-        glyph: "expand_more"
+        glyph: control.enabled && control.interactive ? "expand_more" : "block"
         color: control.popup.visible || control.activeFocus || control.browseFocused ? Theme.accent : Theme.mutedText
         font.pixelSize: Theme.formIconSize
         Accessible.ignored: true
@@ -140,6 +141,7 @@ Controls.ComboBox {
         browseFocused: control.browseFocused
         hovered: control.hovered
         invalid: control.errorText.length > 0
+        rowEmbedded: control.rowEmbedded
     }
 
     delegate: DropDownOptionDelegate {

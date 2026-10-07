@@ -47,7 +47,9 @@ ModalFrame {
     FormField {
         width: parent.width
         visible: dialog.qr.password.length > 0
-        label: qsTr("Wi-Fi password")
+        label: qsTr("Password")
+        icon: "key"
+        accessibleName: qsTr("Wi-Fi password")
         TextField {
             Layout.fillWidth: true
             sensitive: true

@@ -136,6 +136,49 @@ DaemonTestCase {
         panel.page.saveDirty();
         compare(updates().length, 0);
     }
+    function test_automaticRowsRemainReadableAndCopyUsesDomainPublisher_data() {
+        return [{tag: "wide", width: 720}, {tag: "narrow", width: 360}];
+    }
+    function test_automaticRowsRemainReadableAndCopyUsesDomainPublisher(data) {
+        const panel = make();
+        panel.width = data.width;
+        panel.page.currentIp.method = "auto";
+        panel.page.currentIp.autoDns = true;
+        panel.page.currentIp.gateway = "192.168.1.1";
+        panel.page.currentIp.dns = "1.1.1.1, 8.8.8.8";
+        panel.focusContent(true);
+        verify(waitForPolish(panel.Window.window));
+        const address = findChild(panel, "wifiIpAddress");
+        const prefix = findChild(panel, "wifiIpPrefix");
+        const dns = findChild(panel, "wifiDnsServers");
+        verify(address.readOnly && prefix.readOnly && dns.readOnly);
+        for (const field of [address, prefix, dns]) {
+            const badge = findChild(field, "fieldStateBadge");
+            verify(badge.visible);
+            compare(findChild(badge, "fieldStateGlyph").symbol, "lock");
+            verify(!panel.availableFields().includes(field));
+            let form = field.parent;
+            while (form && !(form instanceof Ui.FormField)) form = form.parent;
+            verify(form !== null);
+            verify(!findChild(form, "formFieldSupport").visible);
+        }
+        const prefixInput = findChild(prefix, "fieldInput");
+        verify(prefixInput.width - prefixInput.leftPadding - prefixInput.rightPadding >= 24,
+            "prefix digits fit beside the lock and help command");
+        if (data.width < 640)
+            verify(dns.height > Ui.Theme.formHeight && dns.height <= Ui.Theme.formTextAreaHeight,
+                "a constrained DNS list grows rather than clipping its addresses");
+        else
+            compare(dns.height, Ui.Theme.formHeight, "short DNS starts at one line when it fits");
+        const copies = panel.detailsNavigation.contentCommands.filter(command => command.accessibleName === "Copy IPv4 address");
+        compare(copies.length, 1, "read-only Copy is reachable in the shared named menu");
+        calls = [];
+        copies[0].activate();
+        const publications = calls.filter(call => call.method === "clipboard.selection.publishText");
+        compare(publications.length, 1);
+        compare(publications[0].params.text, address.text);
+        compare(updates().length, 0, "inspection never submits a network mutation");
+    }
     function test_dnsMultilineTransactionAndAcknowledgementBoundary() {
         const panel = make();
         const field = browse(panel, "wifiDnsServers");

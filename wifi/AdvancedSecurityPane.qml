@@ -88,7 +88,9 @@ AdvancedSettingsFlickable {
                 }
                 FormField {
                     width: parent.width
-                    label: qsTr("Network password")
+                    label: qsTr("Password")
+                    icon: "key"
+                    accessibleName: qsTr("Network password")
                     TextField {
                         sensitive: true
                         Layout.fillWidth: true

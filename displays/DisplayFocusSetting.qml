@@ -40,6 +40,10 @@ ColumnLayout {
             Layout.fillWidth: true
             visible: !setting.entry.boolean
             label: setting.entry.title
+            icon: "center_focus_strong"
+            // The row already has a scoped Help command below.
+            supportingText: setting.entry.help
+            showHelpButton: false
             editor: setting.entry.choices.length > 0 ? choice : numberField
             Ui.DropDownList {
                 id: choice
