@@ -12,7 +12,7 @@ FocusScope {
     property bool headerShortcutsEnabled: false
     property Item headerContentItem: contentItem
     readonly property list<SurfaceActionRow> actionRows: uniqueItems(collectActionRows(headerContentItem).concat(collectActionRows(additionalCommandItem)))
-    readonly property list<ActionControl> headerButtons: actionRows.reduce((buttons, row) => buttons.concat(Array.from(row.buttons)), [])
+    readonly property list<ActionControl> headerButtons: actionRows.filter(row => row.headerCommands).reduce((buttons, row) => buttons.concat(Array.from(row.buttons)), [])
     readonly property list<ActionControl> contentCommands: uniqueItems(collectCommands(contentItem).concat(collectCommands(additionalCommandItem))).filter(item => commandInScope(item))
     readonly property list<ActionControl> commandButtons: headerButtons.concat(contentCommands.filter(item => !!item.accessKey))
     readonly property bool commandMenuOpen: commandMenu.visible || actionRows.some(row => row.popupOpen)
@@ -277,7 +277,12 @@ FocusScope {
         return result;
     }
     function collectCommands(item: Item): var {
-        if (!item || !item.visible || item instanceof SurfaceActionRow || item instanceof DetailsHeader || item instanceof DetailsTabBar || item instanceof ModalFrame)
+        if (!item || !item.visible || item instanceof DetailsHeader || item instanceof DetailsTabBar || item instanceof ModalFrame)
+            return [];
+        // Responsive content rows reuse their live buttons without parallel
+        // header registrations or a second command/navigation model.
+        const actionRow = item as SurfaceActionRow;
+        if (actionRow && actionRow.headerCommands)
             return [];
         const action = item as ActionControl;
         let result = action && !binary(action) ? [action] : [];
@@ -542,8 +547,10 @@ FocusScope {
         parent: navigation.additionalCommandItem && navigation.additionalCommandItem.visible ? navigation.additionalCommandItem : navigation
         property Item commandRoot: null
         readonly property list<ActionControl> commands: (commandRoot ? navigation.collectCommands(commandRoot) : navigation.contentCommands).filter(item => !item.accessKey)
-        // A removed/replaced subtree must not redirect Enter to another window.
+        // A removed/replaced subtree or command must not redirect Enter to a
+        // different window, including while the global Alt+J menu is open.
         onCommandRootChanged: if (visible) close()
+        onCommandsChanged: if (visible) close()
         actions: commands
         function available(index: int): bool {
             const command = commands[index];

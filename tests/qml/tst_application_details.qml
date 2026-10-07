@@ -110,7 +110,12 @@ DaemonTestCase {
             compare(findChild(panel,"windowLocation-window-0").text,"2");
             compare(findChild(panel,"windowLocation-window-0").Accessible.name,"Workspace 2");
             verify(findChild(panel,"windowCurrent-window-0").visible);
-            compare(findChild(panel,"closeWindow-window-0").width,0,"Close is named-menu-only");
+            const close = findChild(panel,"closeWindow-window-0");
+            verify(close.visible && close.width > 0, "Close is directly available");
+            compare(close.Accessible.name, "Close (121) Example window");
+            compare(close.tone, "danger");
+            verify(!close.activeFocusOnTab);
+            verify(findChild(panel,"windowCommands-window-0") === null, "No per-window ellipsis");
         }
         keyClick(Qt.Key_Tab);
         tryVerify(() => panel.detailsNavigation.browsing);
@@ -148,6 +153,10 @@ DaemonTestCase {
         verify(Math.abs(title.mapToItem(panel,0,title.height/2).y - location.mapToItem(panel,0,location.height/2).y) <= 1);
         compare(focus.width,Math.round(32 * data.scale));
         compare(focus.height,Math.round(32 * data.scale));
+        const close = findChild(panel,"closeWindow-window-0");
+        compare(close.width,focus.width);
+        compare(close.height,focus.height);
+        compare(close.mapToItem(panel,0,0).x - focus.mapToItem(panel,focus.width,0).x,Math.round(8 * data.scale));
         compare(current.symbol,"center_focus_strong");
         compare(current.Accessible.name,"Current window");
         verify(!findChild(panel,"windowCurrent-window-1").visible);
@@ -209,25 +218,81 @@ DaemonTestCase {
         mouseClick(findChild(row, "focusWindow-window-1"));
         compare(panel.controller.dispatched.length, 1);
         compare(panel.controller.dispatched[0].window_id, "window-1", "The window ID, not the new row index, owns the command");
+        const actions = findChild(row, "windowActions-window-1");
+        actions.triggered("focusWindow-window-0");
+        compare(panel.controller.dispatched.length, 1, "Stale button IDs cannot become Close for a replacement window");
+        mouseClick(findChild(row, "closeWindow-window-1"));
+        compare(panel.controller.dispatched[1].action, "close-window");
+        compare(panel.controller.dispatched[1].window_id, "window-1");
     }
-    function test_namedWindowMenuRoutesByIdAndIsModal() {
+    function test_directCloseAndAdditionalMenuRouteById() {
         const panel = make(application("desktop-application",2,1));
-        const more = findChild(panel,"windowCommands-window-0");
-        panel.listItem.focusList();
-        mouseClick(more);
-        tryVerify(() => panel.detailsNavigation.commandMenuOpen);
-        compare(menu(panel).count,2,"Per-window menu contains focus and close only");
-        keyClick(Qt.Key_A,Qt.AltModifier);
-        compare(panel.controller.dispatched.length,0,"Underlying primary shortcut is blocked");
-        keyClick(Qt.Key_Escape);
-        tryVerify(() => !panel.detailsNavigation.commandMenuOpen);
-        verify(more.activeFocus,"Dismiss restores preceding pointer command focus");
-        mouseClick(more);
-        chooseCommand(panel,"Close (121) Example window");
+        const close = findChild(panel,"closeWindow-window-0");
+        mouseClick(close);
         compare(panel.controller.dispatched.length,1);
         compare(panel.controller.dispatched[0].action,"close-window");
         compare(panel.controller.dispatched[0].window_id,"window-0");
         compare(panel.controller.dispatched[0].expected_revision,7);
+        verify(!panel.detailsNavigation.commandMenuOpen, "Direct close never opens a menu");
+        keyClick(Qt.Key_J,Qt.AltModifier);
+        tryVerify(() => panel.detailsNavigation.commandMenuOpen);
+        compare(menu(panel).count,5,"Each live window command is registered once alongside desktop actions");
+        keyClick(Qt.Key_A,Qt.AltModifier);
+        compare(panel.controller.dispatched.length,1,"Underlying primary shortcut is blocked");
+        keyClick(Qt.Key_Escape);
+        tryVerify(() => !panel.detailsNavigation.commandMenuOpen);
+        verify(close.activeFocus,"Dismiss restores preceding pointer command focus");
+        keyClick(Qt.Key_J,Qt.AltModifier);
+        chooseCommand(panel,"Close (121) Example window");
+        compare(panel.controller.dispatched.length,2);
+        compare(panel.controller.dispatched[1].action,"close-window");
+        compare(panel.controller.dispatched[1].window_id,"window-0");
+    }
+    function test_windowCommandsReuseResponsiveSizing() {
+        const panel = make(application("desktop-application",1,0));
+        const list = findChild(panel,"applicationInstanceList");
+        list.uiScale = 1;
+        const row = findChild(panel,"windowActions-window-0");
+        // 32px margins + 56px workspace + 16px column gaps + 96px title.
+        const stages = [
+            {width:272, size:32, gap:8, rows:1},
+            {width:268, size:32, gap:4, rows:1},
+            {width:262, size:30, gap:2, rows:1},
+            {width:258, size:28, gap:2, rows:1},
+            {width:257, size:28, gap:2, rows:2}
+        ];
+        for (const stage of stages) {
+            list.width = stage.width;
+            verify(waitForPolish(panel.Window.window));
+            compare(row.controlHeight,stage.size);
+            compare(row.secondaryGap,stage.gap);
+            compare(row.secondaryRows,stage.rows);
+            compare(row.shownSecondaryCount,2);
+            verify(!findChild(row,"surfaceActionMore").visible);
+            const close = findChild(row,"closeWindow-window-0");
+            verify(close.visible);
+            const position = close.mapToItem(row,0,0);
+            verify(position.x >= 0 && position.x + close.width <= row.width);
+            verify(position.y + close.height <= row.height);
+            mouseClick(close);
+            compare(panel.controller.dispatched.slice(-1)[0].action,"close-window");
+        }
+        panel.controller.activeSettingsRequestId = "pending-settings";
+        tryCompare(row,"shownSecondaryCount",1,5000,"Only omit disabled commands after exhausting spacing and size");
+        verify(findChild(row,"closeWindow-window-0") === null);
+        list.width = 272;
+        verify(waitForPolish(panel.Window.window));
+        tryCompare(row,"shownSecondaryCount",2);
+        compare(row.controlHeight,32);
+        verify(!findChild(row,"closeWindow-window-0").enabled);
+        list.width = 257;
+        verify(waitForPolish(panel.Window.window));
+        tryCompare(row,"shownSecondaryCount",1);
+        panel.controller.activeSettingsRequestId = "";
+        tryCompare(row,"shownSecondaryCount",2,5000,"Newly enabled commands return immediately");
+        keyClick(Qt.Key_J,Qt.AltModifier);
+        chooseCommand(panel,"Close (121) Example window");
+        compare(panel.controller.dispatched.length,stages.length + 1);
     }
     function test_altJRetainsAllDesktopAndWindowCommands() {
         const panel = make(application("desktop-application",1,12));
@@ -243,8 +308,9 @@ DaemonTestCase {
     }
     function test_removedWindowCannotRedirectOpenMenu() {
         const panel = make(application("desktop-application",2,0));
-        mouseClick(findChild(panel,"windowCommands-window-0"));
+        keyClick(Qt.Key_J,Qt.AltModifier);
         tryVerify(() => panel.detailsNavigation.commandMenuOpen);
+        keyClick(Qt.Key_Down); // Select Close for window-0 before its removal.
         const replacement = application("desktop-application",2,0);
         replacement.instances = replacement.instances.slice(1);
         setApplication(panel,replacement);
@@ -258,7 +324,10 @@ DaemonTestCase {
         panel.controller.activeSettingsRequestId = "pending-settings";
         tryCompare(findChild(panel,"focusWindow-window-0"),"enabled",false);
         verify(!findChild(panel,"desktopAction-action-0").enabled);
-        findChild(panel,"closeWindow-window-0").activate();
+        const close = findChild(panel,"closeWindow-window-0");
+        verify(close.visible && !close.enabled);
+        mouseClick(close);
+        close.activate();
         findChild(panel,"desktopAction-action-0").button.activate();
         compare(panel.controller.dispatched.length,0);
     }

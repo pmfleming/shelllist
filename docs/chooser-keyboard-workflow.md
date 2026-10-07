@@ -149,7 +149,7 @@ editable-field highlight and does not change content or input geometry.
 ## Commands, tabs and exceptions
 
 Disabled commands normally retain their geometry and visible icons; only the
-shared header's last-resort narrow-width policy below may omit them. Unfilled
+shared action row's last-resort narrow-width policy below may omit them. Unfilled
 buttons use surface-appropriate foregrounds, not accent-fill foregrounds on
 transparent backgrounds. Disabled commands never activate or join field traversal.
 
@@ -165,7 +165,10 @@ normally use 32px diameters and 16px icons (two-thirds of 48/24px); primary circ
 stay 56/28px. Collapsed headers, modal/toast/contextual buttons and named menu rows
 retain their existing nominal sizes. Modifier hints remain separate overlays.
 
-`SurfaceActionRow` owns both header tiers and explicit menu commands. Toolbar
+`SurfaceActionRow` owns both header tiers and explicit menu commands. Content
+command groups can reuse it with `headerCommands: false`; their live buttons join
+the existing content-command registry and Alt+J, not a parallel header registry.
+They remain outside field traversal and share the same responsive layout. Toolbar
 commands remain directly visible: as width tightens, first reduce their horizontal
 gaps from 8px to 2px, then shrink secondary circles/icons to a shared minimum of
 28/14px, then omit only as many disabled commands as necessary (retaining earlier
@@ -246,18 +249,22 @@ containers and remain information/commands only, not editable fields. Each
 `ApplicationWindowRow` owns its command scope and stable window ID; its list owns
 shared column measurements, not command routing by row index. Tab uses the
 page's non-highlighted scrolling fallback; PageUp/
-PageDown scroll, and Up/Down continue browsing application results. Each window's
-More circle opens the shared named command menu restricted to that window's
-Focus/Close commands. Close has no adjacent destructive hit target or claimed
-undo. Alt+J still exposes all window and arbitrary desktop actions, regardless
-of scroll position. These menus share modal shortcut guards, native traversal
-and focus restoration; removing their owning window closes them rather than
-redirecting Enter to a different window. Full labels and stable daemon IDs are
-retained. Compact number-first window rows keep workspace/current-window badges
-and acknowledged focus-success checks passive, with full accessible names. Only
-the title/metadata composition changes: no field stops, row-wide hit targets or
-selection highlights are added. Long titles and error/progress text can expand
-the row; Focus/More retain shared 32px command circles and existing guards.
+PageDown scroll, and Up/Down continue browsing application results. Each window
+exposes Focus and a destructive Close (×) directly, in the same two-circle footprint
+formerly occupied by Focus/More. `SurfaceActionRow` supplies the shared order:
+reduce gaps, then sizes, then omit disabled commands only as needed; enabled
+commands wrap at extreme widths instead of entering More. Alt+J remains an
+additional keyboard route to all available window and arbitrary desktop actions,
+regardless of scroll position. Its menu shares modal shortcut guards, native
+traversal and focus restoration; removing or replacing commands closes it rather
+than redirecting Enter to a different window. Close keeps all existing revision,
+busy and backend guards; rows disappear only on authoritative snapshots, with no
+optimistic removal or claimed undo. Full labels and stable daemon IDs are retained.
+Compact number-first window rows keep workspace/current-window badges and
+acknowledged focus-success checks passive, with full accessible names. No field
+stops, row-wide hit targets or selection highlights are added. Long titles and
+error/progress text can expand the row; Focus/Close normally use shared 32px command
+circles with 16px icons.
 See [application details](application-details.md) for the visual and capability
 contract and Qt interaction coverage.
 

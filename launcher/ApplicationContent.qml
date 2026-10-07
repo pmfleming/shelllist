@@ -20,7 +20,7 @@ Ui.ProviderChooserSurface {
             let item = content.Window.window ? content.Window.window.activeFocusItem : null;
             content.restoreWindowCommandFocus = false;
             while (item && item !== content) {
-                if (item.objectName.startsWith("focusWindow-") || item.objectName.startsWith("closeWindow-") || item.objectName.startsWith("windowCommands-"))
+                if (item.objectName.startsWith("focusWindow-") || item.objectName.startsWith("closeWindow-"))
                     content.restoreWindowCommandFocus = true;
                 item = item.parent;
             }

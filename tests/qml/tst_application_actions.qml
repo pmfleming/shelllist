@@ -208,14 +208,16 @@ DaemonTestCase {
         const panel = makePanel();
         const c = panel.controller;
         expand(panel);
-        mouseClick(findChild(panel, "windowCommands-w1"));
-        tryVerify(() => panel.detailsNavigation.commandMenuOpen);
-        keyClick(Qt.Key_Down); // Focus -> Close in the shared per-window menu.
-        keyClick(Qt.Key_Return);
+        mouseClick(findChild(panel, "closeWindow-w1"));
+        verify(!panel.detailsNavigation.commandMenuOpen);
         const call = lastCall(Api.methods.execute);
         compare(call.params.window_id, "w1");
         compare(call.params.action, "close-window");
         accept(call);
+        verify(!findChild(panel, "closeWindow-w1").enabled);
+        mouseClick(findChild(panel, "closeWindow-w1"));
+        mouseClick(findChild(panel, "focusWindow-w1"));
+        compare(calls.filter(c => c.method === Api.methods.execute).length, 1, "Pending close blocks conflicting pointer commands");
         event(call, "completed");
         compare(panel.dismissals, 0);
         compare(c.selectedApplication.instances.length, 2, "Dispatch acknowledgement must not remove a window");
@@ -223,7 +225,7 @@ DaemonTestCase {
         verify(c.selectedActionMessage.indexOf("still open") >= 0);
         verify(findChild(panel, "focusWindow-w1").enabled, "Can reach a save prompt");
         // Put real native focus on the row command before removing that row.
-        findChild(panel, "windowCommands-w1").forceActiveFocus();
+        findChild(panel, "closeWindow-w1").forceActiveFocus();
         snapshot(panel, ["w2"]);
         compare(c.selectedApplication.instances.length, 1);
         verify(panel.detailsNavigation.activeFocus, "Removed command returns to shared browsing");
@@ -243,6 +245,22 @@ DaemonTestCase {
         compare(panel.dismissals, 0);
         keyClick(Qt.Key_A, Qt.AltModifier);
         compare(lastCall(Api.methods.execute).params.action, "activate", "Launch remains reachable after the last close");
+    }
+    function test_directCloseFailureKeepsWindowRetryable() {
+        const panel = makePanel();
+        expand(panel);
+        mouseClick(findChild(panel, "closeWindow-w1"));
+        const call = lastCall(Api.methods.execute);
+        accept(call);
+        event(call, "failed", {message: "Window refused to close"});
+        compare(panel.dismissals, 0);
+        compare(panel.controller.selectedApplication.instances.length, 2);
+        compare(findChild(panel, "windowActionStatus-w1").text, "Window refused to close");
+        const close = findChild(panel, "closeWindow-w1");
+        verify(close.visible && close.enabled);
+        mouseClick(close);
+        compare(calls.filter(c => c.method === Api.methods.execute).length, 2);
+        compare(lastCall(Api.methods.execute).params.window_id, "w1");
     }
     function test_pendingActionDoesNotLockBrowsingOrOtherTargets() {
         const panel = makePanel();

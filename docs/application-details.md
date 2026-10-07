@@ -12,7 +12,7 @@ revision. The screenshot's browser is an example, not an application-specific la
 - Group **Open windows** in one opaque Surface Container with 16px corners and
   subtle separators, rather than individually outlined selection-like cards.
   Use one compact row: workspace capsule, full title, optional focus-success
-  check, then Focus/More commands. Single-line rows are 56px at scale 1 (plus
+  check, then direct Focus/Close commands. Single-line rows are 56px at scale 1 (plus
   separators); long titles and named workspaces wrap without clipping.
   Workspace numbers omit the repeated “Workspace” prefix; named workspaces
   retain their names and unknown locations show “?”. A shared location column
@@ -40,38 +40,48 @@ revision. The screenshot's browser is an example, not an application-specific la
   runtime windows remain explicitly unavailable.
 - The existing `DetailFlickable` bounds and scrolls the whole page: no nested
   field traversal, hard cap on window/actions, or extra scrolling region.
-  Window Focus/More use shared 32px secondary circles with 16px icons, matching
-  expanded headers. Desktop-action geometry and the 56px primary are unchanged.
+  Window Focus/Close use `SurfaceActionRow` with shared 32px secondary circles
+  and 16px icons, matching expanded headers. Close uses the destructive tone.
+  Under width pressure, reduce gaps from 8px to 2px, then circles/icons to 28/14px,
+  then omit disabled commands only as needed; enabled commands wrap rather than
+  entering More. Widening restores the usual geometry and disabled commands.
+  Dimensions scale with `uiScale`. Desktop-action geometry and the 56px primary
+  are unchanged.
 
 ## Commands and safety
 
-Each window exposes Focus and More. More opens `DetailsNavigation`'s shared
-`ActionMenu` restricted to that window's command subtree; its Close command has
-no adjacent pointer target. Alt+J retains every window/desktop command even
-outside the viewport. Labels, badges and rows remain passive. Command-only
-pages use the existing non-highlighted scrolling fallback, not new Tab stops.
+Each window exposes Focus and Close (×) directly; no per-window ellipsis remains.
+The pair reuses the former Focus/More footprint. Content-mode `SurfaceActionRow`
+keeps stable button identities and joins `DetailsNavigation`'s content-command
+registry, without duplicate header registrations. Alt+J remains an additional
+keyboard route to every available window/desktop command even outside the viewport.
+Labels, badges and rows remain passive; neither button is a field Tab stop.
+Command-only pages retain the existing non-highlighted scrolling fallback.
 
-The shared contextual-menu entry point (`openCommandMenuFor`) reuses the same
-modal guards, native arrows/Tab, Enter and Escape behavior as Alt+J. Removing
-the scoped subtree closes the menu. Dispatch resolves the live provider action
-by stable window/desktop-action ID, checks availability, and still uses the
-provider's revision and backend guards. No frontend mutation acknowledgement,
-retry, close-all policy or launch lifecycle is changed by this presentation
-work. Existing status/error reporting remains owned by the controller; no
-optimistic removal or fictional undo is introduced.
+The shared Alt+J menu retains modal guards, native arrows/Tab, Enter, Escape and
+focus restoration. Removing or replacing commands closes the open menu rather
+than redirecting Enter to another window. Both pointer and menu dispatch resolve
+the live provider action by stable window/desktop-action ID, check availability,
+and retain the provider's revision and backend guards. Close does not dismiss the
+chooser or remove a row before an authoritative snapshot; failures retain readable
+status and allow explicit retry. Acknowledgement, close-all policy and launch
+lifecycle are unchanged; no optimistic removal or fictional undo is introduced.
 
 ## Validation
 
 `tests/qml/tst_application_details.qml` exercises actual Qt pointer/key delivery:
 zero/many windows and desktop actions, launch-only and stale-runtime states,
-long labels, page scrolling, editable-only traversal, per-window menu scope,
+long labels, page scrolling, editable-only traversal, direct Focus/Close commands,
 modal shortcut blocking, Escape focus restoration, arbitrary Alt+J commands,
 stable-ID/revision routing, removal while a menu is open and busy guards.
 It also checks compact row geometry, aligned titles, passive status clicks,
-workspace accessibility, unknown/named workspaces and narrow long-title wrapping.
-`tests/qml/tst_application_actions.qml` covers acknowledged versus pending focus,
-window-scoped success, localized messages, failure/cancellation, superseding
-requests and independence from compositor focus through actual commands/replies.
+workspace accessibility, unknown/named workspaces, narrow long-title wrapping and
+the shared spacing/size/disabled-omission sequence, including enabled restoration.
+`tests/qml/tst_application_actions.qml` covers direct Close acknowledgement,
+snapshot-owned removal, busy guards, failure/retry and removed-command focus
+restoration, plus acknowledged versus pending focus, window-scoped success,
+localized messages, failure/cancellation, superseding requests and independence
+from compositor focus through actual commands/replies.
 Shared control and chooser tests cover the reused focus/menu foundations.
 
 The HTML is an offline design study, not a replacement for native tests or a

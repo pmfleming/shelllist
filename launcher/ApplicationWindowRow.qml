@@ -44,7 +44,8 @@ ColumnLayout {
         color: Ui.Theme.border
     }
     GridLayout {
-        columns: 4
+        id: grid
+        columns: 3
         Layout.fillWidth: true
         Layout.leftMargin: Math.round(Ui.Theme.spacingLg * instanceRow.uiScale)
         Layout.rightMargin: Math.round(Ui.Theme.spacingLg * instanceRow.uiScale)
@@ -132,42 +133,35 @@ ColumnLayout {
             }
         }
 
-        Ui.CommandGroup {
-            id: windowCommands
-            Layout.preferredWidth: focusButton.implicitWidth
-            Layout.preferredHeight: focusButton.implicitHeight
-            Ui.FlatIconButton {
-                id: focusButton
-                objectName: "focusWindow-" + instanceRow.modelData.id
-                sizeRole: "secondary"
-                uiScale: instanceRow.uiScale * 2 / 3
-                icon: "desktop_windows"
-                enabled: instanceRow.actionEnabled
-                accessibleName: qsTr("Focus %1 on workspace %2").arg(instanceRow.instanceTitle).arg(instanceRow.workspaceLabel)
-                onClicked: instanceRow.trigger("focus-window")
+        Ui.SurfaceActionRow {
+            objectName: "windowActions-" + instanceRow.modelData.id
+            // Leave a readable title column where possible. Shared row sizing
+            // owns gap/size reduction, disabled omission and enabled wrapping.
+            Layout.preferredWidth: Math.min(2 * nominalControlHeight + gap,
+                Math.max(minimumControlHeight, grid.width - instanceRow.locationWidth
+                    - 2 * grid.columnSpacing - 6 * Ui.Theme.fontSizeHeading * instanceRow.uiScale))
+            Layout.minimumWidth: minimumControlHeight
+            Layout.preferredHeight: implicitHeight
+            uiScale: instanceRow.uiScale
+            compactSecondaryActions: true
+            headerCommands: false
+            actionObjectNamePrefix: ""
+            actions: [
+                {id: "focusWindow-" + instanceRow.modelData.id,
+                    label: qsTr("Focus %1 on workspace %2").arg(instanceRow.instanceTitle).arg(instanceRow.workspaceLabel),
+                    icon: "desktop_windows", enabled: instanceRow.actionEnabled,
+                    presentation: {group: "toolbar"}},
+                {id: "closeWindow-" + instanceRow.modelData.id,
+                    label: qsTr("Close %1").arg(instanceRow.instanceTitle),
+                    icon: "close", enabled: instanceRow.actionEnabled,
+                    presentation: {group: "toolbar", tone: "danger"}}
+            ]
+            onTriggered: function(actionId) {
+                if (actionId === "focusWindow-" + instanceRow.modelData.id)
+                    instanceRow.trigger("focus-window");
+                else if (actionId === "closeWindow-" + instanceRow.modelData.id)
+                    instanceRow.trigger("close-window");
             }
-            // Nonvisual command: accessible through the shared named menu,
-            // never a field or an adjacent × target.
-            Ui.ActionControl {
-                objectName: "closeWindow-" + instanceRow.modelData.id
-                width: 0
-                height: 0
-                activeFocusOnTab: false
-                Accessible.ignored: true
-                enabled: instanceRow.actionEnabled
-                accessibleName: qsTr("Close %1").arg(instanceRow.instanceTitle)
-                onClicked: instanceRow.trigger("close-window")
-            }
-        }
-        Ui.FlatIconButton {
-            objectName: "windowCommands-" + instanceRow.modelData.id
-            sizeRole: "secondary"
-            uiScale: instanceRow.uiScale * 2 / 3
-            icon: "more_horiz"
-            enabled: instanceRow.actionEnabled
-            accessibleName: qsTr("Commands for %1").arg(instanceRow.instanceTitle)
-            onClicked: if (shortcutNavigation)
-                shortcutNavigation.openCommandMenuFor(windowCommands)
         }
         Item {
             visible: actionStatus.visible
@@ -175,7 +169,7 @@ ColumnLayout {
         Ui.ThemeText {
             id: actionStatus
             objectName: "windowActionStatus-" + instanceRow.modelData.id
-            Layout.columnSpan: 3
+            Layout.columnSpan: 2
             Layout.fillWidth: true
             Layout.minimumWidth: 0
             visible: instanceRow.actionMessage.length > 0 && !instanceRow.focusSucceeded

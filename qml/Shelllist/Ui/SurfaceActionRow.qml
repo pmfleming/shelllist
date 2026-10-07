@@ -7,6 +7,7 @@ import Shelllist.Core as Core
 Item {
     id: row
     property var actions: []
+    property string actionObjectNamePrefix: "detailAction:"
     property real uiScale: 1
     property bool secondaryVisible: true
     property bool compactSecondaryActions: false
@@ -14,6 +15,9 @@ Item {
     property real identityHeight: Math.round(Theme.primaryActionHeight * uiScale)
     property bool reserveIdentity: false
     property bool tabFocusEnabled: false
+    // Content rows share geometry and guards, but join Alt+J rather than the
+    // header command registry. Their live buttons remain ordinary commands.
+    property bool headerCommands: true
     readonly property var primaryActions: Core.Model.visibleActions(actions, "primary")
     readonly property var secondaryActions: secondaryVisible ? Core.Model.visibleActions(actions, "toolbar") : []
     readonly property var menuActions: secondaryVisible ? Core.Model.visibleActions(actions, "overflow") : []
@@ -71,7 +75,7 @@ Item {
         return /^[A-Z]$/.test(key) && key !== "S" && key !== "M" && key !== "J" ? key : "";
     }
     function focusAction(actionId: string): void {
-        const button = buttons.find(item => item.objectName === "detailAction:" + actionId);
+        const button = buttons.find(item => item.objectName === actionObjectNamePrefix + actionId);
         if (button && button.enabled) button.forceActiveFocus();
     }
     function closePopup(): void { overflowMenu.close(); }
@@ -82,7 +86,7 @@ Item {
 
     ActionButton {
         id: primaryButton
-        objectName: "detailAction:" + (row.primaryAction ? row.primaryAction.id : "")
+        objectName: row.actionObjectNamePrefix + (row.primaryAction ? row.primaryAction.id : "")
         visible: !!row.primaryAction
         anchors.right: parent.right
         y: (row.topHeight - height) / 2
@@ -116,7 +120,7 @@ Item {
                 required property int index
                 x: row.secondaryX(index)
                 y: row.secondaryY(index)
-                objectName: "detailAction:" + modelData.id
+                objectName: row.actionObjectNamePrefix + modelData.id
                 sizeRole: "secondary"
                 uiScale: row.secondaryUiScale
                 activeFocusOnTab: row.tabFocusEnabled && enabled
