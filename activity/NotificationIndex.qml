@@ -48,6 +48,7 @@ Ui.DetailFlickable {
                 required property var modelData
                 objectName: "notificationPreview-" + Ui.NotificationPresentation.recordKey(modelData)
                 width: parent.width
+                spacing: Ui.Theme.spacingMd
                 ColumnLayout {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
@@ -89,6 +90,7 @@ Ui.DetailFlickable {
                 Ui.ActionButton {
                     objectName: "notificationRead-" + Ui.NotificationPresentation.recordKey(entry.modelData)
                     sizeRole: "secondary"
+                    uiScale: Ui.Theme.expandedSecondaryActionScale
                     icon: "article"
                     accessibleName: qsTr("Read %1 · %2").arg(Ui.NotificationPresentation.previewTitle(entry.modelData) || qsTr("Notification")).arg(new Date(entry.modelData.created_unix_ms).toLocaleString())
                     onClicked: page.controller.readRecord(entry.modelData)

@@ -8,6 +8,8 @@ Item {
     required property Ui.DetailsNavigation navigation
     Loader {
         anchors.fill: parent
+        anchors.leftMargin: Ui.Theme.spacingMd
+        anchors.rightMargin: Ui.Theme.spacingMd
         active: pane.controller.detailsOpen && pane.controller.settingsOpen
         sourceComponent: Ui.DetailFlickable {
             viewMemory: pane.controller.viewMemory
@@ -25,6 +27,8 @@ Item {
         onSelected: function (value) { pane.controller.setDetailsTab(value); }
         Loader {
             anchors.fill: parent
+            anchors.leftMargin: Ui.Theme.spacingMd
+            anchors.rightMargin: Ui.Theme.spacingMd
             active: pane.controller.detailsOpen && !pane.controller.settingsOpen
             sourceComponent: pane.controller.detailsTab === "message" ? message : index
         }

@@ -184,6 +184,44 @@ DaemonTestCase {
         compare(controller.detailsTab, "message");
         content.destroy(); wait(0);
     }
+    function test_paneSpacingAndCompactReadGeometry_data() {
+        return [{tag: "wide", width: 1280, height: 600}, {tag: "narrow", width: 900, height: 480}];
+    }
+    function test_paneSpacingAndCompactReadGeometry(data) {
+        const controller = makeController(makeState());
+        controller.availableScreenWidth = data.width;
+        controller.uiActive = true; controller.openDetails();
+        controller.width = controller.currentWindowWidth;
+        controller.height = data.height;
+        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: controller.currentWindowWidth, height: data.height});
+        wait(150); projectDetail(controller, [record(100), record(3)]);
+        verify(waitForRendering(content));
+        compare(content.width, controller.currentWindowWidth);
+        compare(content.height, data.height);
+        const list = findChild(content, "resultListView");
+        const pane = content.listItem;
+        const directY = list.mapToItem(pane, 0, 0).y;
+        verify(Math.abs(directY - pane.headerHeight - pane.spacing) <= 1, "no invisible options row below search");
+        const primary = findChild(content, "detailAction:browse");
+        const read = findChild(content, "notificationRead-100:100000");
+        compare(read.width, 32); compare(read.height, 32);
+        verify(primary.width > read.width);
+        const title = findChild(content, "notificationPreviewTitle-100:100000");
+        const left = title.mapToItem(content.detailsItem, 0, 0).x;
+        const right = read.mapToItem(content.detailsItem, read.width, 0).x;
+        verify(left >= 12);
+        verify(right <= content.detailsItem.width - 12);
+        verify(title.mapToItem(content.detailsItem, title.width, 0).x < read.mapToItem(content.detailsItem, 0, 0).x);
+        controller.returnSurface = "activity";
+        tryVerify(() => findChild(content, "notificationsBackToAgenda") !== null);
+        verify(waitForRendering(content));
+        verify(list.mapToItem(pane, 0, 0).y > directY + 30, "real Back action keeps its space");
+        let returned = false;
+        controller.backRequested.connect(() => returned = true);
+        mouseClick(findChild(content, "notificationsBackToAgenda"));
+        verify(returned);
+        content.destroy(); wait(0);
+    }
     function test_dndAcknowledgementAndRetry() {
         const state = makeState();
         state.backend = createTemporaryObject(fakeBackendComponent, state, {

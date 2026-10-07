@@ -46,13 +46,19 @@ Ui.ProviderChooserSurface {
         preserveViewportOnAppend: true
         readonly property bool loadMore: listNearEnd && content.controller.catalog.hasMore && !refreshing && !content.controller.catalog.rootError
         onLoadMoreChanged: if (loadMore) Qt.callLater(content.controller.catalog.loadMore)
-        listOptionsComponent: Ui.FlatIconButton {
-            width: height
-            height: visible ? Ui.Theme.controlHeight : 0
-            visible: content.controller.returnSurface === "activity"
-            icon: "󰁍"
-            accessibleName: qsTr("Back to agenda")
-            onClicked: content.controller.goBack()
+        // Do not instantiate a hidden button: the shared options loader uses
+        // implicitHeight, so an invisible control still reserves a whole row.
+        listOptionsComponent: content.controller.returnSurface === "activity" ? backToAgenda : null
+        Component {
+            id: backToAgenda
+            Ui.FlatIconButton {
+                objectName: "notificationsBackToAgenda"
+                width: height
+                height: Ui.Theme.controlHeight
+                icon: "󰁍"
+                accessibleName: qsTr("Back to agenda")
+                onClicked: content.controller.goBack()
+            }
         }
         rowDelegate: Ui.ResultRow {
             id: row

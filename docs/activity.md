@@ -118,6 +118,12 @@ subjects remain headlines; Overview body excerpts use normal text size and at
 most two lines, with date/lifecycle metadata on a separate caption. Index titles
 stay single-line. Text remains plain, passive and bounded, and Read still targets
 the original record identity, not its presentation text.
+Direct entry reserves no hidden Back/options row below search. Agenda entry
+still exposes its Back command. All detail pages share horizontal content insets;
+the fixed tab footer stays full-width. Read circles use the shared expanded
+secondary size (32px/16px), retaining a clear hierarchy below the 56px primary.
+Qt tests cover both wide and narrow layouts, mapped content bounds and Back/Read
+pointer routes.
 
 ## Validation
 
