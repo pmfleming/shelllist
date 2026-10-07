@@ -130,6 +130,32 @@ DaemonTestCase {
             entries: records.slice(0, 5).map(r => preview(r.notification.id, controller.selectedAppKey)),
             selected: records.find(r => r.notification.id + ":" + r.notification.created_unix_ms === controller.selectedKey) || null});
     }
+    function descendants(item) {
+        return Array.from(item.children || []).reduce((items, child) => items.concat(descendants(child)), [item]);
+    }
+    function test_indexCommandsRenderSymbolsAndRetainRoutes() {
+        const controller = makeController(makeState());
+        controller.uiActive = true;
+        controller.openDetails();
+        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
+        wait(150);
+        projectDetail(controller, [record(100), record(3), record(2)], 12);
+        verify(waitForRendering(content));
+        for (const name of ["list", "article"]) {
+            const glyph = descendants(content).find(item => item.glyph === name);
+            verify(glyph !== undefined);
+            compare(glyph.symbol, name, "semantic command uses the symbol font, not literal fallback text");
+            verify(glyph.implicitWidth <= glyph.font.pixelSize * 1.5);
+        }
+        mouseClick(findChild(content, "detailAction:browse"));
+        tryCompare(controller, "detailsTab", "notifications");
+        verify(waitForRendering(content));
+        const pageGlyph = descendants(content).find(item => item.glyph === "find_in_page");
+        verify(pageGlyph !== undefined);
+        compare(pageGlyph.symbol, "find_in_page");
+        verify(!content.detailsNavigation.targets.includes(findChild(content, "notificationRead-100:100000")));
+        content.destroy(); wait(0);
+    }
     function test_dndAcknowledgementAndRetry() {
         const state = makeState();
         state.backend = createTemporaryObject(fakeBackendComponent, state, {

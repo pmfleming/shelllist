@@ -104,6 +104,12 @@ Removal animation is presentation-only. Dismiss, clear-group, clear-all, snooze,
 
 `ActivityContent.qml` contains no filesystem, provider, subprocess, persistence, or notification-policy integration.
 
+## Notification presentation
+
+Browse, Read and Page use registered semantic symbols through the shared icon
+renderer, not literal text in a Nerd Font. Commands retain their accessible
+names and shared command-menu routes, without entering field traversal.
+
 ## Validation
 
 The checked `bar-api` fixture validates `bar/BarApi.js` and `activity/ActivityApi.js` against the backend registry. Focused checks are:
