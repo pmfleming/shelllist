@@ -51,7 +51,7 @@ Item {
     function updateVisibleProgress() {
         if (!running || !networkIsActive())
             return;
-        controller.setHeldStatus("Wi-Fi link established with " + networkName + "; checking internet access…", 2500);
+        controller.setHeldStatus("Wi-Fi link established with " + networkName + "; waiting for operation confirmation…", 2500);
         progressTimer.stop();
     }
     function resetProgress() {

@@ -26,7 +26,7 @@ ProviderChooserController {
         controller: wifi
     }
     sharedScreenshotEnabled: true
-    sharedScreenshotBlocked: actionInFlight || promptActive
+    sharedScreenshotBlocked: promptActive
     sharedScreenshotStartMessage: "Capturing Wi-Fi window…"
     onSharedScreenshotStatusChanged: function (message) {
         status = message;
@@ -51,7 +51,7 @@ ProviderChooserController {
     readonly property WifiBackend backend: services.backend
     readonly property bool screenshotInFlight: sharedScreenshotInFlight
     readonly property bool promptActive: prompt.open || prompt.credentialOpen || qr.open
-    actionInFlight: backend.running || screenshotInFlight || bandRequestId.length > 0
+    actionInFlight: backend.running || bandRequestId.length > 0
     readonly property string detailsTab: advanced.open ? advanced.section : "network"
     readonly property bool scanInFlight: scan.running
     readonly property var detailResult: selectedResult

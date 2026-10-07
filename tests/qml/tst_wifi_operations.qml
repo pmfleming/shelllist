@@ -53,6 +53,19 @@ DaemonTestCase {
         verify(findChild(panel, "fieldTrailingAction").enabled);
         verify(findChild(panel, "chooserRefreshButton").enabled);
     }
+    function test_screenshotAndConnectionAreIndependent() {
+        const panel = makePanel();
+        const c = panel.controller;
+        c.uiActive = true;
+        c.connection.requestId = "connect-owned";
+        verify(c.captureScreenshot(0, 0, 100, 100));
+        verify(c.screenshotInFlight);
+        verify(findChild(panel, "fieldTrailingAction").enabled);
+        c.connection.requestId = "";
+        verify(!c.actionInFlight, "capture alone cannot disable network changes");
+        verify(findChild(panel, "chooserPowerToggle").enabled);
+        verify(!c.captureScreenshot(0, 0, 100, 100), "duplicate captures remain guarded");
+    }
     function test_qrDuringConnectOnlyParsesAndNeverRetainsCredentials() {
         const panel = makePanel();
         const c = panel.controller;

@@ -372,6 +372,10 @@ refresh remain available during connection changes. A refresh requested during
 activation is deferred; a QR scanned while a mutation is pending is parsed by
 the daemon without retaining its passphrase in QML. Joining requires an explicit
 rescan after the mutation finishes, never a surprise delayed credential replay.
+Screenshot capture is independent of network-operation guards (modal privacy
+blocks remain). Link completion does not await an internet probe: the daemon
+publishes NetworkManager's passive connectivity verdict separately. Unknown
+reachability is not a failed Wi-Fi connection or permission to launch a portal.
 Power/profile/connect/disconnect commands retain acknowledgement guards. These
 commands do not join Tab traversal. `tst_wifi_operations.qml` covers the guards.
 
