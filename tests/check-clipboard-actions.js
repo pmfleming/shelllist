@@ -27,10 +27,11 @@ function install(context, text, names) {
 // Execute the actual annotation lifecycle. Hiding the chooser must not cancel
 // its background transport, and completion must restore the edited position.
 {
+    let cacheClears = 0;
     const controller = {
         uiActive: true, selectedIndex: 37, sessionId: "", activeAction: "",
         activeOperationId: "", actionInFlight: false,
-        detailState: { clear() {} }, finishEditSession() {}, leaveMultiSelect() {},
+        detailState: { clearCache() { cacheClears++; }, clear() {} }, finishEditSession() {}, leaveMultiSelect() {},
         deactivateUiState() { controller.uiActive = false; },
         runAction(action) {
             controller.activeAction = action;
@@ -45,6 +46,7 @@ function install(context, text, names) {
     install(controller, source, ["annotateImage", "deactivateUi", "finishAnnotate"]);
     controller.annotateImage();
     controller.deactivateUi();
+    assert.equal(cacheClears, 1, "hiding the chooser clears cached details without cancelling annotation");
     const transport = vm.createContext({ controller });
     assert.equal(vm.runInContext(backendSource.match(/^    active: (.*)$/m)[1], transport), true,
         "background annotation keeps the real backend active");

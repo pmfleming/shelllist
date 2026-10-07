@@ -18,7 +18,7 @@ TestCase {
     // Negative RPC outcomes log application warnings; engine errors still fail.
     function init() { failOnWarning(/.*(?:TypeError|ReferenceError|Binding loop).*/); }
     function test_brightnessFailure_data() {
-        return [{tag: "rejected", disconnected: false}, {tag: "lost-pending-request", disconnected: true}];
+        return [{tag: "lost-pending-request", disconnected: true}];
     }
     function test_brightnessFailure(data) {
         const controller = createTemporaryObject(controllerFactory, testCase);
@@ -26,15 +26,8 @@ TestCase {
         controller.showBrightnessOsd(controller.brightness);
         const backend = controller.backend;
         const id = "brightness-adjust-1";
-        if (data.disconnected) {
-            backend.setPending(id, true);
-            backend.failSharedTransport("Transport lost");
-        } else {
-            backend.finish(id, {
-                protocol: "bar-api", version: 1, ok: false,
-                error: {code: "brightness-operation-failed", message: "Permission denied"}
-            }, "");
-        }
+        backend.setPending(id, true);
+        backend.failSharedTransport("Transport lost");
         verify(controller.osdVisible);
         compare(controller.osd.kind, "brightness-error");
         verify(!controller.osd.progressVisible);

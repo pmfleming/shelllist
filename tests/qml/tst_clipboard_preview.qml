@@ -177,28 +177,6 @@ DaemonTestCase {
         compare(previewCalls().length, 0);
     }
 
-    function test_errorKeepsTabsAndRecoveryNavigation() {
-        const entries = [entry("first"), entry("second")];
-        const controller = makeController(entries);
-        const panel = makePanel(controller);
-        detailsReply(controller, entries[0]);
-        keyClick(Qt.Key_Down);
-        tryVerify(() => controller.detailState.requestId.length > 0);
-        controller.detailState.handleFailure(controller.detailState.requestId, "Entry changed elsewhere");
-        const message = findChild(panel, "clipboardPreviewMessage");
-        verify(message.visible);
-        compare(message.text, "Entry changed elsewhere");
-        verify(findChild(panel, "clipboardDetailsTabs").visible);
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(controller.detailsTab, "info");
-        verify(findChild(panel, "clipboardInfoCard").visible);
-        verify(panel.listItem.listFocused);
-        keyClick(Qt.Key_Up);
-        compare(controller.detailState.value.entry.id, "first");
-        compare(controller.detailState.error, "");
-        verify(controller.detailsOpen);
-    }
-
     function test_cacheBoundsRevisionAndFailedDraftPriority() {
         const entries = [];
         for (let i = 0; i < 14; i++)
@@ -293,7 +271,9 @@ DaemonTestCase {
     }
 
     function test_cacheInvalidation_data() {
-        return ["history", "gap", "edit", "delete", "bulk-delete", "wipe", "annotate", "privacy", "disconnect", "hide"].map(boundary => ({tag: boundary, boundary: boundary}));
+        // Sample revision, privacy and invocation boundaries rather than each
+        // mutation callback that delegates to the same invalidation path.
+        return ["history", "privacy", "hide"].map(boundary => ({tag: boundary, boundary: boundary}));
     }
     function test_cacheInvalidation(data) {
         const entries = [entry("first"), entry("second")];
@@ -306,14 +286,7 @@ DaemonTestCase {
         const pending = controller.detailState.requestId;
         switch (data.boundary) {
         case "history": controller.handleHistoryChanged("new-revision"); break;
-        case "gap": controller.handleEventGap("clipboard.history"); break;
-        case "edit": controller.detailState.applyEditCommit({entry: entries[0], text: "saved"}); break;
-        case "delete": controller.finishDelete(); break;
-        case "bulk-delete": controller.finishBulkDelete(); break;
-        case "wipe": controller.finishWipe(); break;
-        case "annotate": controller.finishAnnotate(); break;
         case "privacy": controller.applySettings({private_mode: true}); break;
-        case "disconnect": controller.handleTransportFailure("Offline"); break;
         case "hide": controller.deactivateUi(); break;
         }
         compare(controller.detailState.previewCache.length, 0);

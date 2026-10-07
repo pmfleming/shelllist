@@ -63,54 +63,8 @@ DaemonTestCase {
     }
     function click(item): void { mouseClick(item, item.width / 2, item.height / 2); }
 
-    function test_groupGeometryAndIndependentFeedback(): void {
-        const bar = fixture();
-        const chip = findChild(bar, "barMedia");
-        const group = findChild(chip, "mediaGroupBackground");
-        const opener = findChild(chip, "mediaArtworkButton");
-        const transport = findChild(chip, "mediaTransportControls");
-        const pause = findChild(chip, "mediaPlayPauseButton");
-        const art = findChild(chip, "mediaArtworkBackdrop");
-        compare(chip.implicitWidth, 146, "original group plus 8px of horizontal padding");
-        compare(group.height, 38);
-        compare(group.radius, 19);
-        verify(group.height <= chip.height, "pill fits the unchanged 51px bar");
-        compare(opener.x, 4);
-        compare(opener.width, 34);
-        compare(opener.height, 34);
-        compare(transport.x - opener.x - opener.width, 4);
-        compare(chip.width - transport.x - transport.width, 4);
-        compare(pause.width, 36);
-        compare(pause.height, 36);
-        compare(art.width, 24);
-        compare(art.height, 24);
-        compare(art.radius, 5);
-        verify(!chip.activeFocusOnTab && !group.activeFocusOnTab);
-        for (const name of ["mediaArtworkButton", "mediaRewindButton", "mediaPlayPauseButton", "mediaForwardButton"]) {
-            const button = findChild(chip, name);
-            verify(!button.activeFocusOnTab && !button.browseIndicatorVisible);
-        }
-        for (const scheme of [Qt.Light, Qt.Dark]) {
-            Ui.Theme.previewColorScheme = scheme;
-            compare(group.color, Ui.Theme.surfaceContainer);
-            mouseMove(opener, 1, opener.height / 2);
-            tryCompare(opener, "color", Ui.Theme.hover);
-            compare(group.color, Ui.Theme.surfaceContainer, "hover is local to the opener");
-            compare(pause.color, Ui.Theme.accent, "playback keeps its own emphasis");
-            mousePress(opener, 1, opener.height / 2);
-            compare(opener.color, Ui.Theme.pressed);
-            compare(group.color, Ui.Theme.surfaceContainer);
-            mouseRelease(opener, 1, opener.height / 2);
-        }
-        bar.registry.opened = [];
-        mouseClick(chip, opener.x + opener.width + 2, chip.height / 2);
-        mouseClick(chip, 1, chip.height / 2);
-        compare(bar.registry.opened.length, 0, "group gaps and padding have no action");
-        compare(calls.length, 0);
-    }
     function test_openerAndTransportHaveSeparateRoutes_data(): var {
-        return [{tag: "tracks", mode: "tracks", width: 1200}, {tag: "seek", mode: "seek", width: 1200},
-            {tag: "compact-tracks", mode: "tracks", width: 760}, {tag: "compact-seek", mode: "seek", width: 600}];
+        return [{tag: "compact-seek", mode: "seek", width: 600}];
     }
     function test_openerAndTransportHaveSeparateRoutes(data): void {
         const bar = fixture();

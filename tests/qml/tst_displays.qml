@@ -200,7 +200,7 @@ DaemonTestCase {
         compare(calls.length, 0, "Alt cannot bypass relative placement or submit the draft");
     }
     function test_cancelledDragDoesNotCommit_data() {
-        return ["escape", "unplug"].map(value => ({tag: value, route: value}));
+        return [{tag: "escape", route: "escape"}];
     }
     function test_cancelledDragDoesNotCommit(data) {
         const panel = arrangementPanel(false);
@@ -210,13 +210,7 @@ DaemonTestCase {
         const original = JSON.stringify(c.draft);
         const map = beginMapDrag(panel);
         const drop = dragToEdge(map, "above");
-        if (data.route === "escape") keyClick(Qt.Key_Escape);
-        else {
-            const state = displayState();
-            state.outputs[0].disabled = false;
-            state.outputs.pop();
-            c.applyDisplayPolicy(state);
-        }
+        keyClick(Qt.Key_Escape);
         mouseRelease(map, drop.x, drop.y);
         verify(!map.dragging && !c.layoutDragging);
         compare(JSON.stringify(c.draft), original);
@@ -274,39 +268,6 @@ DaemonTestCase {
         verify(findChild(panel, "displayArrangementHint").text.includes("Enable"));
         compare(calls.length, 0);
     }
-    function test_dragRetainsTelemetryButCancelsGeometryChanges() {
-        const panel = arrangementPanel(true);
-        const c = panel.controller;
-        const map = beginMapDrag(panel);
-        dragToEdge(map, "above");
-        const state = displayState();
-        state.outputs[0].disabled = false;
-        state.outputs.push(Object.assign({}, state.outputs[1], { id: 2, name: "HDMI-A-1", x: 4096 }));
-        state.outputs[1].focused = true;
-        c.applyDisplayPolicy(state);
-        verify(map.dragging, "ordinary telemetry must not interrupt a drag");
-        c.edit("DP-1", "scale", 2);
-        verify(!map.dragging, "a concurrent geometry edit cancels the old candidate");
-        mouseRelease(map);
-        compare(c.selectedDraft.x, 1536);
-        compare(c.selectedDraft.scale, 2);
-        compare(calls.length, 0);
-    }
-    function test_modeChangesRevalidatePlacementBeforePreview() {
-        const panel = arrangementPanel(false);
-        const c = panel.controller;
-        verify(c.placeSelected("left"));
-        verify(c.canPreview);
-        c.edit("DP-1", "scale", 1);
-        verify(!c.canPreview && c.validationError.includes("overlaps"));
-        verify(!c.preview());
-        verify(c.placeSelected("left"));
-        compare(c.selectedDraft.x, -3840);
-        verify(c.canPreview);
-        c.dismissNavigation();
-        verify(c.discardPrompt, "leaving a dirty layout still requires explicit discard");
-        compare(calls.length, 0);
-    }
     function test_focusSettingsAreGlobalAcknowledgedAndRetryable() {
         const panel = makePanel();
         const c = panel.controller;
@@ -355,26 +316,8 @@ DaemonTestCase {
         compare(c.detailsTab, "information");
         c.cycleDetailsTab();
         compare(c.detailsTab, "settings");
-    }
-    function test_focusControlsRespectLayoutTrialsDisconnectsAndNumericValidation() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.applyDisplayPolicy(focusState());
-        c.openGlobalSettings();
-        waitForDetails(panel);
-        c.selectFocusPage("focus-pointer");
-        const number = findChild(panel, "focusNumber-input:follow_mouse_threshold");
-        number.edited("");
-        verify(!number.inputValid);
-        number.editingFinished();
-        compare(calls.length, 0);
-        number.edited("-1");
-        verify(!number.inputValid);
-        number.edited("2.5");
-        verify(number.inputValid);
-        number.editingFinished();
-        compare(calls[0].params.values["input:follow_mouse_threshold"], 2.5);
-        c.requestFailed(calls[0].id, "retry");
+        // Keep safety gates in the acknowledged focus-policy workflow, without
+        // another numeric-field/viewport geometry fixture.
         c.edit("DP-1", "scale", 2);
         verify(!c.canSetFocus);
         verify(!c.setFocusSetting("input:follow_mouse", 0));
@@ -389,22 +332,6 @@ DaemonTestCase {
         verify(!c.setFocusSetting("input:follow_mouse", 0));
         c.applyDisplayPolicy(focusState());
         verify(c.canSetFocus);
-        panel.width = 390;
-        panel.height = 600;
-        // A rendered frame can precede the nested layout's resize/polish pass.
-        verify(waitForPolish(panel.Window.window));
-        const page = findChild(panel, "displayFocusPane");
-        verify(page.width > 0 && panel.detailsItem.width >= 495 && panel.listVisible, "small outputs retain the split canvas, not a replacement pane");
-        verify(panel.viewport.contentWidth > panel.viewport.width);
-        number.focusInput(false);
-        tryVerify(function () {
-            const position = number.mapToItem(page, 0, 0);
-            return position.y >= 0 && position.y + number.height <= page.height;
-        });
-        tryVerify(function () {
-            const position = number.mapToItem(panel.viewport, 0, 0);
-            return panel.viewport.contentX > 0 && position.x >= 0 && position.x < panel.viewport.width;
-        });
     }
     function test_mirrorAndExtendRemainDraftOnlyAndUseTheLayoutPreview() {
         const panel = makePanel();

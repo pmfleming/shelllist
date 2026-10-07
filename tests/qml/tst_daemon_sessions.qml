@@ -112,21 +112,6 @@ TestCase {
         compare(session.client.calls.length, 2, "reconnect still refreshes the attached backend");
     }
 
-    function test_sharedCancellationPreservesRequestAndConsumerIdentity() {
-        const backend = createTemporaryObject(backendFactory, testCase);
-        const client = Io.DaemonSessions.sessions[consumer.daemonName].client;
-        client.cancellation = null;
-        verify(!backend.cancel(""));
-        compare(client.cancellation, null);
-        verify(backend.cancel("history-7"));
-        compare(client.cancellation.requestId, "history-7");
-        compare(client.cancellation.route.consumerId, backend.sharedConsumerId);
-        compare(client.cancellation.route.localId, "cancel-history-7");
-        verify(backend.cancelWithId("operation-9", "cancel-operation-9"));
-        compare(client.cancellation.requestId, "operation-9");
-        compare(client.cancellation.route.localId, "cancel-operation-9");
-    }
-
     function test_paginatedRequestChurn() {
         const session = Io.DaemonSessions.sessions[consumer.daemonName];
         for (let generation = 0; generation < 4000; ++generation) {

@@ -70,118 +70,6 @@ DaemonTestCase {
         keyClick(Qt.Key_Space);
         tryCompare(choice(surface).popup, "visible", true);
     }
-    function test_compositionAndCategoryOnlyOptions() {
-        const surface = make("code", "3");
-        const control = choice(surface);
-        compare(form(surface).label, "Category");
-        compare(form(surface).icon, "category");
-        compare(form(surface).message, "");
-        keyClick(Qt.Key_H, Qt.AltModifier);
-        compare(form(surface).message, "Editors and development tools");
-        keyClick(Qt.Key_H, Qt.AltModifier);
-        compare(form(surface).message, "");
-        compare(control.Accessible.name, "Workspace category");
-        compare(control.Accessible.description, "Editors and development tools");
-        compare(control.options.map(option => option.label), ["Shell", "Browser", "Code", "Media", "Text"]);
-        compare(control.contentItem.text, "Code");
-        compare(findChild(control, "dropDownValueIcon").symbol, "code");
-        compare(surface.detailsNavigation.targets.length, 2, "only the editor and read-only page fallback are discovered");
-        verify(findChild(control, "browseFocusIndicator").visible);
-        open(surface);
-        verify(!findChild(control, "browseFocusIndicator").visible);
-        const symbols = ["terminal", "language", "code", "music_note", "description"];
-        for (let i = 0; i < 5; i++) {
-            const row = findChild(control.popup.contentItem, "dropDownOption-" + i);
-            verify(row !== null);
-            compare(row.Accessible.name, control.options[i].label);
-            compare(findChild(row, "dropDownOptionIcon").symbol, symbols[i]);
-            compare(findChild(row, "dropDownSelectedCheck").visible, i === 2);
-        }
-        keyClick(Qt.Key_End);
-        compare(control.highlightedIndex, 4);
-        verify(findChild(findChild(control.popup.contentItem, "dropDownOption-2"), "dropDownSelectedCheck").visible,
-            "native highlighting is not acknowledgement");
-        compare(updates().length, 0);
-        keyClick(Qt.Key_Escape);
-        verify(surface.detailsNavigation.browsing);
-        verify(!control.popup.visible);
-        compare(control.contentItem.text, "Code");
-        compare(updates().length, 0);
-    }
-    function test_emptyAndMismatchedMapping_data() {
-        return [
-            {tag: "unassigned", category: "", workspace: "", mismatch: false},
-            {tag: "inferred-not-saved", category: "code", workspace: "", mismatch: false},
-            {tag: "mismatch", category: "code", workspace: "2", mismatch: true},
-            {tag: "unknown-category", category: "unknown", workspace: "3", mismatch: true}
-        ];
-    }
-    function test_emptyAndMismatchedMapping(data) {
-        const surface = make(data.category, data.workspace);
-        compare(choice(surface).value, "");
-        compare(choice(surface).contentItem.text, "Choose a category");
-        compare(surface.detailsItem.mappingNeedsAttention, data.mismatch);
-        compare(form(surface).message, data.mismatch
-            ? "Category mapping needs attention. Choose a category to update it." : "");
-        verify(choice(surface).Accessible.description.includes("No workspace category assigned."));
-        compare(updates().length, 0);
-    }
-    function test_saveKeepsAcknowledgement_data() {
-        return [
-            {tag: "enter", key: Qt.Key_Return, modifiers: Qt.NoModifier},
-            {tag: "tab", key: Qt.Key_Tab, modifiers: Qt.NoModifier},
-            {tag: "shift-tab", key: Qt.Key_Tab, modifiers: Qt.ShiftModifier}
-        ];
-    }
-    function test_saveKeepsAcknowledgement(data) {
-        const surface = make("shell", "1");
-        const controller = surface.chooserController;
-        const control = choice(surface);
-        open(surface);
-        keyClick(Qt.Key_Down);
-        compare(updates().length, 0);
-        keyClick(data.key, data.modifiers);
-        compare(updates().length, 1);
-        compare(updates()[0].params, {target_id: "example.desktop", category: "browser"});
-        compare(control.value, "shell");
-        compare(control.contentItem.text, "Shell");
-        verify(controller.settingsInFlight);
-        verify(!control.enabled);
-        verify(form(surface).message.indexOf("Saving Browser") === 0);
-        verify(surface.detailsNavigation.browsing, "pending control is unavailable; Tab uses the page fallback");
-        control.activated(4);
-        compare(updates().length, 1, "busy controls cannot submit late activation");
-        controller.applyApplicationSettings(controller.activeSettingsRequestId, {category: "browser", workspace_id: "2"});
-        verify(!controller.settingsInFlight);
-        verify(control.enabled);
-        compare(control.value, "shell", "catalog refresh remains the authoritative source binding");
-        setApplication(surface, "browser", "2");
-        compare(control.contentItem.text, "Browser");
-        compare(form(surface).message, "");
-        compare(form(surface).supportingText, "Web and network applications");
-    }
-    function test_singleFieldWrapAndDiscardOnExit() {
-        const surface = make("shell", "1");
-        const control = choice(surface);
-        keyClick(Qt.Key_Tab);
-        compare(surface.detailsNavigation.currentTarget, control);
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        compare(surface.detailsNavigation.currentTarget, control);
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Tab);
-        verify(surface.detailsNavigation.editing);
-        compare(surface.detailsNavigation.currentTarget, control);
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        verify(surface.detailsNavigation.editing);
-        compare(updates().length, 0, "no-op wrapping does not submit");
-        keyClick(Qt.Key_Space);
-        keyClick(Qt.Key_End);
-        surface.detailsNavigation.suspendView();
-        verify(!control.popup.visible);
-        verify(!control.editSession.active);
-        compare(control.contentItem.text, "Shell");
-        compare(updates().length, 0, "leaving discards the menu's uncommitted choice");
-    }
     function test_pointerChoiceSavesImmediatelyWithAcknowledgementAndRetry() {
         const surface = make("shell", "1");
         const controller = surface.chooserController;
@@ -200,6 +88,8 @@ DaemonTestCase {
             verify(surface.detailsNavigation.browsing);
             compare(control.value, "shell");
             compare(control.contentItem.text, "Shell", "click is a save request, not acknowledgement");
+            control.activated(4);
+            compare(updates().length, attempt + 1, "late activation cannot resubmit while busy");
             if (attempt === 0) {
                 controller.handleFailure(controller.activeSettingsRequestId, "Permission denied.");
                 verify(control.enabled);

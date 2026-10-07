@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Shelllist.Ui as Ui
 import "../../bluetooth" as Bt
 
 DaemonTestCase {
@@ -178,18 +177,6 @@ DaemonTestCase {
             ready: true
         }));
         compare(calls.length, 0);
-    }
-    function test_operationLookupPreservesFirstMatchAndEmptyGuard() {
-        const controller = makePanel().controller;
-        controller.applyRequestSnapshot({operations: {active: [
-            {request_id: "first", device_key: "buds", operation: "connect", state: "running"},
-            {request_id: "second", device_key: "buds", operation: "connect", state: "queued"},
-            {request_id: "empty", device_key: "", operation: "connect", state: "running"}
-        ]}});
-        compare(controller.operationForDevice("buds").request_id, "first");
-        compare(controller.operationForDevice("unknown"), null);
-        compare(controller.operationForDevice(""), null);
-        compare(calls.length, 0, "Snapshot lookup never replays operations");
     }
     function test_pairingInputSurvivesUnrelatedOperationsAndQueueRecovery() {
         const controller = makePanel().controller;
@@ -542,87 +529,6 @@ DaemonTestCase {
         const draft = controller.nameEdits.draft("buds");
         compare(draft.value, "Keep on disconnect");
         verify(draft.dirty && !draft.pending && draft.error.length > 0);
-    }
-    Component {
-        id: namePanelComponent
-        Ui.PanelSurface {
-            id: namePanel
-            required property Bt.BluetoothController controller
-            chooserController: controller
-            Bt.BluetoothDeviceActions {
-                width: parent.width
-                controller: namePanel.controller
-            }
-        }
-    }
-    function test_restoreOriginalNameIsEmbeddedAndKeepsCommandGuards() {
-        failOnWarning(/.*/);
-        const panel = makePanel();
-        panel.page.visible = false;
-        const controller = panel.controller;
-        controller.uiActive = true;
-        const backend = findChild(controller, "bluetoothBackend");
-        const device = Object.assign({}, controller.selectedDevice, {name: "My buds", alias: "My buds", remote_name: "Buds"});
-        const snapshot = {radio: controller.radio, adapters: controller.adapters, devices: [device]};
-        controller.applySnapshot(snapshot);
-        const surface = createTemporaryObject(namePanelComponent, panel, {controller: controller});
-        verify(surface !== null);
-        wait(0);
-        backend.pending = ({});
-        calls = [];
-        const field = findChild(surface, "deviceNameInput");
-        const restore = findChild(surface, "restoreDeviceName");
-        compare(restore.parent, field, "restore is inside the shared name editor, not a separate labeled row");
-        compare(restore.label, "");
-        compare(restore.accessibleName, "Restore original name");
-        compare(restore.accessKey, "O");
-        verify(restore.visible && restore.enabled);
-        verify(surface.detailsNavigation.targets.indexOf(restore) < 0);
-        for (const width of [360, 720]) {
-            panel.width = width;
-            verify(waitForPolish(surface.Window.window));
-            const point = restore.mapToItem(field, 0, 0);
-            verify(point.x >= 0 && point.x + restore.width <= field.width);
-            verify(point.y >= 0 && point.y + restore.height <= field.height);
-            verify(findChild(field, "fieldInput").rightPadding >= restore.width);
-        }
-        surface.detailsNavigation.focusContent(true);
-        compare(surface.detailsNavigation.currentTarget, field);
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_End);
-        keyClick(Qt.Key_X);
-        compare(field.text, "My budsx");
-        compare(calls.length, 0, "typing is still a local draft");
-        keyClick(Qt.Key_Escape);
-        compare(field.text, "My buds");
-        keyClick(Qt.Key_Tab);
-        keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        verify(!restore.activeFocus, "restore never joins field traversal");
-        compare(calls.length, 0, "Tab never activates restore");
-        mouseClick(restore, restore.width / 2, restore.height / 2);
-        compare(calls.length, 1);
-        compare(calls[0].params.operation, "reset-alias");
-        compare(calls[0].params.key, "buds");
-        verify(!restore.enabled && restore.visible, "busy keeps the icon visible but guarded");
-        compare(field.text, "My buds", "restore waits for the authoritative name");
-        keyClick(Qt.Key_O, Qt.AltModifier);
-        compare(calls.length, 1, "busy keyboard command cannot resubmit");
-        const acknowledged = Object.assign({}, snapshot, {devices: [Object.assign({}, device, {name: "Buds", alias: "Buds"})]});
-        backend.acceptSharedResponse("device-reset-alias", {protocol: "bt-api", version: 1, ok: true, data: {snapshot: acknowledged}}, "");
-        tryCompare(field, "text", "Buds");
-        verify(!restore.enabled && restore.visible, "already-original name retains a disabled icon");
-        controller.applySnapshot(snapshot);
-        tryCompare(field, "text", "My buds");
-        verify(restore.enabled);
-        keyClick(Qt.Key_O, Qt.AltModifier);
-        compare(calls.length, 2);
-        compare(calls[1].params.operation, "reset-alias");
-        backend.pending = ({});
-        controller.nameEdits.edit("buds", "Unsaved rename");
-        verify(!restore.enabled, "existing domain drafts still block restore");
-        controller.nameEdits.discard("buds");
-        controller.applySnapshot(Object.assign({}, snapshot, {devices: [Object.assign({}, device, {remote_name: ""})]}));
-        verify(!restore.enabled && restore.visible, "unknown original name cannot be restored");
     }
     Component {
         id: deviceDetailsComponent

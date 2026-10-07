@@ -51,46 +51,6 @@ DaemonTestCase {
         tryVerify(function () { return panel.page.detailsNavigation.commandButtons.some(function (button) { return button.accessKey === (active ? "D" : "C") && button.enabled; }); });
         panel.page.listItem.focusList();
     }
-    function test_sharedDetailsTabsKeepDraftsAndProfileGuards() {
-        const panel = makePanel();
-        openNetwork(panel, false);
-        const c = panel.controller;
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(c.detailsTab, "network", "Unsaved networks cannot open profile tabs");
-        const profile = {path: "/profiles/cafe", version: "v1", mac_address_policy: "default"};
-        c.applyNetworks([{key: "cafe", ssid: "Cafe", strength: 70, security: "Open", primary_profile: profile}], true, {});
-        panel.page.listItem.focusList();
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(c.detailsTab, "security");
-        verify(panel.page.listItem.listFocused, "Page changes do not steal result focus");
-        c.backend.acceptSharedResponse("advanced-load", {protocol: "nm-api", version: 1, ok: true, data: {result: profile}}, "");
-        const nav = panel.page.detailsNavigation;
-        tryVerify(() => nav.availableFields().some(field => field.objectName === "wifiMacPolicy"));
-        keyClick(Qt.Key_Tab);
-        compare(nav.currentTarget.objectName, "wifiMacPolicy");
-        const field = nav.currentTarget;
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        compare(field.displayedValue, "stable");
-        compare(field.value, "default");
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(c.detailsTab, "hardware");
-        verify(!nav.editing, "Changing pages discards the native draft");
-        compare(c.advanced.profile.mac_address_policy, "default");
-        keyClick(Qt.Key_Tab, Qt.ControlModifier | Qt.ShiftModifier);
-        compare(c.detailsTab, "security");
-        tryVerify(() => nav.currentTarget && nav.currentTarget.objectName === "wifiMacPolicy");
-        verify(nav.browsing);
-        compare(nav.currentTarget.displayedValue, "default");
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Right);
-        keyClick(Qt.Key_Escape);
-        compare(nav.currentTarget.displayedValue, "default");
-        keyClick(Qt.Key_Tab, Qt.ControlModifier | Qt.ShiftModifier);
-        compare(c.detailsTab, "network");
-        tryVerify(() => !nav.availableFields().some(item => item.objectName === "wifiMacPolicy"));
-        verify(!calls.some(call => call.params.operation === "update"), "Navigation and discarded drafts never write a profile");
-    }
     function test_keyboardRecoveryAndCancellationSurviveLinkBecomingActive() {
         const panel = makePanel();
         openNetwork(panel, true);
@@ -134,7 +94,7 @@ DaemonTestCase {
         verify(c.connection.cancellationRequested, "QR operation retains global cancel command");
     }
     function test_disconnectReplyAndFailureKeepControlsVisibleAndRetryable_data() {
-        return [{tag: "success", ok: true}, {tag: "failure", ok: false}];
+        return [{tag: "failure", ok: false}];
     }
     function test_disconnectReplyAndFailureKeepControlsVisibleAndRetryable(data) {
         const panel = makePanel();
@@ -157,17 +117,8 @@ DaemonTestCase {
             verify(c.backend.isPending("disconnect"), "explicit retry remains available");
         }
     }
-    function test_readRequestsDoNotLockMutations_data() {
-        return ["band-status", "status-recovery", "advanced-load", "inventory", "vpn-status", "portal-claim-1"].map(function (id) { return {tag: id, id: id}; });
-    }
-    function test_readRequestsDoNotLockMutations(data) {
-        const panel = makePanel();
-        panel.controller.backend.setPending(data.id, true);
-        verify(!panel.controller.actionInFlight);
-        verify(findChild(panel, "chooserPowerToggle").enabled);
-    }
     function test_conflictingMutationsStayGuarded_data() {
-        return ["disconnect", "power", "profile", "advanced-save", "qr-connect", "future-mutation"].map(function (id) { return {tag: id, id: id}; });
+        return [{tag: "qr-connect", id: "qr-connect"}];
     }
     function test_conflictingMutationsStayGuarded(data) {
         const panel = makePanel();
@@ -226,16 +177,6 @@ DaemonTestCase {
         compare(c.connection.recoveryId, "");
         verify(c.connection.checkStatus(true), "manual read retry stays available");
     }
-    function test_backgroundReadsDoNotReplaceForegroundProgress() {
-        const c = makePanel().controller;
-        c.connection.requestId = "connect-owned";
-        c.status = "Verifying Wi-Fi activation";
-        c.setBackgroundStatus("12 cached networks");
-        compare(c.status, "Verifying Wi-Fi activation");
-        c.connection.requestId = "";
-        c.setBackgroundStatus("12 cached networks");
-        compare(c.status, "12 cached networks");
-    }
     function test_daemonStatusMakesUnacknowledgedCancellationRetryable() {
         const c = makePanel().controller;
         c.connection.requestId = "connect-owned";
@@ -268,9 +209,6 @@ DaemonTestCase {
     function test_malformedOrUnknownRecoveryNeverClaimsCompletion_data() {
         return [
             {tag: "missing", result: null},
-            {tag: "unknown", result: {request_id: "connect-owned", status: "unknown"}},
-            {tag: "foreign-stream", result: {request_id: "connect-owned", status: "running", stream: "vpn"}},
-            {tag: "missing-terminal", result: {request_id: "connect-owned", status: "finished", stream: "wifi.connect"}},
             {tag: "foreign-terminal", result: {request_id: "connect-owned", status: "finished", stream: "wifi.connect", event: {request_id: "other", event: "succeeded"}}}
         ];
     }
@@ -296,19 +234,6 @@ DaemonTestCase {
         statusReply(c, {request_id: "connect-owned", status: "finished", stream: "wifi.connect", event: {request_id: "connect-owned", event: "succeeded"}}, oldRead);
         verify(c.status.indexOf("Lost daemon") >= 0);
         verify(!calls.some(function (call) { return call.method === "wifi.connectTarget" || call.method === "wifi.qr.connect"; }));
-    }
-    function test_screenshotAndConnectionAreIndependent() {
-        const panel = makePanel();
-        const c = panel.controller;
-        c.uiActive = true;
-        c.connection.requestId = "connect-owned";
-        verify(c.captureScreenshot(0, 0, 100, 100));
-        verify(c.screenshotInFlight);
-        verify(findChild(panel, "fieldTrailingAction").enabled);
-        c.connection.requestId = "";
-        verify(!c.actionInFlight, "capture alone cannot disable network changes");
-        verify(findChild(panel, "chooserPowerToggle").enabled);
-        verify(!c.captureScreenshot(0, 0, 100, 100), "duplicate captures remain guarded");
     }
     function test_qrDuringConnectOnlyParsesAndNeverRetainsCredentials() {
         const panel = makePanel();

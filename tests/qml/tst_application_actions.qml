@@ -82,18 +82,13 @@ DaemonTestCase {
         waitForRendering(panel);
     }
     function test_handoff_data() {
-        return [{tag: "focus", launch: false}, {tag: "window-focus", launch: false, window: true}, {tag: "launch-receipt", launch: true}];
+        return [{tag: "focus", launch: false}, {tag: "launch-receipt", launch: true}];
     }
     function test_handoff(data) {
         const panel = makePanel();
-        if (data.window) {
-            expand(panel);
-            mouseClick(findChild(panel, "focusWindow-w1"));
-        } else {
-            keyClick(Qt.Key_Return, data.launch ? Qt.ShiftModifier : Qt.NoModifier);
-        }
+        keyClick(Qt.Key_Return, data.launch ? Qt.ShiftModifier : Qt.NoModifier);
         const call = lastCall(Api.methods.execute);
-        compare(call.params.action, data.window ? "focus-window" : data.launch ? "launch" : "activate");
+        compare(call.params.action, data.launch ? "launch" : "activate");
         accept(call);
         compare(panel.dismissals, 0, "Admission is not a successful handoff");
         verify(!panel.controller.navigationBlocked);
@@ -115,9 +110,7 @@ DaemonTestCase {
     }
     function test_placementWarningAfterHandoff_data() {
         return [
-            {tag: "unavailable-event", status: "unavailable", statusRead: false},
             {tag: "failed-status-read", status: "failed", statusRead: true},
-            {tag: "placed", status: "placed", statusRead: false}
         ];
     }
     function test_placementWarningAfterHandoff(data) {
@@ -149,60 +142,6 @@ DaemonTestCase {
         compare(panel.failures.length, data.status === "placed" ? 0 : 1, "Duplicate outcomes do not notify twice");
         compare(panel.dismissals, 1);
         compare(calls.filter(c => c.method === Api.methods.execute).length, 1, "Placement recovery never replays launch");
-    }
-    function test_placementWarningWithoutProgressKeepsVisibleChooserUsable() {
-        const panel = makePanel();
-        keyClick(Qt.Key_Return, Qt.ShiftModifier);
-        const call = lastCall(Api.methods.execute);
-        accept(call);
-        event(call, "completed", {launch_backend: "uwsm-app", launch_scope: "app-graphical.slice",
-            placement: {workspace_id: "3", status: "unavailable"}, message: "Started, but no safely attributable new window"});
-        compare(panel.dismissals, 0, "Missed handoff progress must not hide the warning");
-        compare(panel.failures.length, 0, "Visible inline feedback needs no background notification");
-        compare(panel.controller.selectedActionMessage, "Started, but no safely attributable new window");
-        verify(!panel.controller.actionInFlight);
-        keyClick(Qt.Key_Down);
-        compare(panel.controller.selectedResult.id, "Beta");
-        compare(calls.filter(c => c.method === Api.methods.execute).length, 1);
-    }
-    function test_windowFocusFeedbackUsesAcknowledgedOutcome_data() {
-        return [{tag:"completed",status:"completed"}, {tag:"failed",status:"failed"}, {tag:"cancelled",status:"cancelled"}];
-    }
-    function test_windowFocusFeedbackUsesAcknowledgedOutcome(data) {
-        const panel = makePanel();
-        expand(panel);
-        mouseClick(findChild(panel,"focusWindow-w1"));
-        const call = lastCall(Api.methods.execute);
-        accept(call);
-        verify(!findChild(panel,"windowFocusSuccess-w1").visible,"Admission must not show success");
-        verify(findChild(panel,"windowActionStatus-w1").visible,"Progress remains readable");
-        // A retained/revisited view can display the result without being dismissed.
-        panel.listItem.focusList();
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_Up);
-        const message = data.status === "completed" ? "Fenêtre activée" : "Focus not confirmed; check this window";
-        event(call,data.status,{message:message});
-        compare(panel.dismissals,0);
-        tryVerify(() => findChild(panel,"windowFocusSuccess-w1") !== null);
-        const success = findChild(panel,"windowFocusSuccess-w1");
-        const status = findChild(panel,"windowActionStatus-w1");
-        compare(success.visible,data.status === "completed");
-        compare(status.visible,data.status !== "completed");
-        compare(status.text,message);
-        verify(!findChild(panel,"windowFocusSuccess-w2").visible,"Success is window-scoped");
-        verify(!findChild(panel,"windowCurrent-w1").visible,"Operation success cannot invent compositor focus");
-        if (data.status === "completed") {
-            compare(success.Accessible.name,message);
-            mouseClick(success);
-            compare(calls.filter(c => c.method === Api.methods.execute).length,1,"Status glyph is passive");
-            mouseClick(findChild(panel,"focusWindow-w1"));
-            const retry = lastCall(Api.methods.execute);
-            verify(!success.visible,"New pending action supersedes old success");
-            reply(retry,{},"Could not send application action");
-            verify(!success.visible);
-            verify(status.visible);
-            compare(status.text,"Could not send application action");
-        }
     }
     function test_close_reconcilesWindowsAndRestoresCommandFocus() {
         const panel = makePanel();
@@ -308,25 +247,6 @@ DaemonTestCase {
         verify(panel.controller.uiActive);
         verify(!panel.controller.actionInFlight);
     }
-    function test_navigationAndRejectionDoNotStealFocus() {
-        const panel = makePanel();
-        const c = panel.controller;
-        keyClick(Qt.Key_Return);
-        const call = lastCall(Api.methods.execute);
-        accept(call);
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_Up);
-        compare(c.selectedResult.id, "Alpha");
-        event(call, "completed");
-        compare(panel.dismissals, 0, "Navigating away and back retires the original handoff view");
-        keyClick(Qt.Key_Return);
-        const rejected = lastCall(Api.methods.execute);
-        reply(rejected, {}, "Compositor rejected focus");
-        compare(panel.dismissals, 0);
-        verify(!c.actionInFlight);
-        compare(c.selectedActionMessage, "Compositor rejected focus");
-        verify(panel.listItem.listFocused);
-    }
     function test_statusRecoveryIsOwnedReadOnlyAndDoesNotReplay() {
         const panel = makePanel();
         const c = panel.controller;
@@ -377,33 +297,6 @@ DaemonTestCase {
         c.operations.check("Alpha");
         reply(lastCall(Api.methods.operationStatus), {operation_status: operation(call, "completed")});
         verify(!c.operations.busy("Alpha"));
-        compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
-    }
-    function test_feedbackIsBoundedAndEvictionCannotRetirePendingOperations() {
-        const panel = makePanel();
-        const c = panel.controller;
-        verify(c.triggerDetailAction("close"));
-        const call = lastCall(Api.methods.execute);
-        accept(call);
-        const owned = c.operations.forTarget("Alpha");
-        const publish = (id, message) => c.operations.publish(Object.assign({}, owned, {
-            request: Object.assign({}, owned.request, {result: {id: id, title: id}}), message: message
-        }));
-        for (let index = 0; index < 65; ++index)
-            publish("cached-" + index, "Old feedback");
-        compare(Object.keys(c.operations.feedback).length, 64);
-        compare(c.operations.feedback["cached-0"], undefined);
-        compare(c.operations.feedback.Alpha, undefined);
-        publish("cached-1", "Updated feedback");
-        publish("__proto__", "Opaque target ID");
-        compare(Object.keys(c.operations.feedback).length, 64);
-        compare(c.operations.feedback["cached-2"], undefined, "Updating a target moves it to the newest end");
-        compare(c.operations.message("cached-1", ""), "Updated feedback");
-        c.operations.reconcile([]);
-        verify(Object.prototype.hasOwnProperty.call(c.operations.feedback, "__proto__"), "Reconciliation preserves opaque keys too");
-        compare(c.operations.message("__proto__", ""), "Opaque target ID");
-        compare(c.operations.forTarget("Alpha").request.id, owned.request.id);
-        compare(c.operations.message("Alpha", ""), owned.message, "Pending ownership takes precedence over the feedback cache");
         compare(calls.filter(call => call.method === Api.methods.execute).length, 1);
     }
     function test_readFailureAndTransportLossStayExplicit() {

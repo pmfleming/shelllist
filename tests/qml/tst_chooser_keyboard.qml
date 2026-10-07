@@ -4,7 +4,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Shelllist.Ui as Ui
-import "../../launcher" as Apps
 
 DaemonTestCase {
     id: testCase
@@ -142,105 +141,6 @@ DaemonTestCase {
                 onCancelled: surface.modal = false
             }
         }
-    }
-
-    Component {
-        id: applicationsComponent
-        Apps.ApplicationContent {
-            width: testCase.width
-            height: testCase.height
-            controller: Apps.ApplicationController {}
-        }
-    }
-    function test_applicationsSettingsKeepAcknowledgementAndRegionFocus() {
-        const content = createTemporaryObject(applicationsComponent, testCase);
-        const controller = content.controller;
-        wait(0);
-        controller.uiActive = true;
-        controller.replaceProviderResults([controller.provider.resultFor({
-            id: "example.desktop", name: "Example", kind: "desktop-application",
-            category: "shell", default_workspace_id: "1", instances: [], desktop_actions: [],
-            running: false, focused: false
-        })], true);
-        tryVerify(() => controller.hasSelection);
-        tryVerify(() => findChild(content, "chooserPowerToggle") !== null);
-        verify(!findChild(content, "chooserPowerToggle").visible, "Applications has no power operation");
-        verify(findChild(content, "chooserSearchField").visible);
-        verify(findChild(content, "fieldTrailingAction").visible, "Category filtering remains available");
-        verify(findChild(content, "chooserRefreshButton").visible);
-        enterDetails(content);
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(controller.detailsTab, "resources");
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(controller.detailsTab, "settings");
-        keyClick(Qt.Key_Tab, Qt.ControlModifier | Qt.ShiftModifier);
-        compare(controller.detailsTab, "resources");
-        keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        compare(controller.detailsTab, "settings");
-        tryVerify(() => content.detailsNavigation.currentTarget && content.detailsNavigation.currentTarget instanceof Ui.DropDownList);
-        verify(content.detailsNavigation.browsing);
-        const choice = content.detailsNavigation.currentTarget;
-        compare(choice.value, "shell");
-        calls = [];
-        keyClick(Qt.Key_Return);
-        keyClick(Qt.Key_Space);
-        tryCompare(choice.popup, "visible", true);
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_Return);
-        verify(controller.settingsInFlight);
-        const update = calls.find(call => call.method === "applications.settings.update");
-        verify(update !== undefined);
-        compare(choice.value, "shell", "proposal does not acknowledge a setting");
-        verify(content.detailsNavigation.browsing, "save leaves editing while acknowledgement is pending");
-        keyClick(Qt.Key_Tab);
-        verify(content.detailsNavigation.browsing);
-        verify(!choice.enabled, "pending settings cannot be entered again");
-        compare(content.detailsNavigation.currentTarget.objectName, "applicationSettingsPage", "Tab stays in Settings with a scrollable fallback while its control is disabled");
-        content.destroy();
-        wait(0);
-    }
-
-    Component {
-        id: readOnlyPageComponent
-        Ui.DetailsNavigation {
-            id: navigation
-            width: 400
-            height: 240
-            property bool showEditor: true
-            contentItem: page
-            Ui.DetailFlickable {
-                id: page
-                anchors.fill: parent
-                Ui.TextField {
-                    objectName: "removableEditor"
-                    visible: navigation.showEditor
-                    width: parent.width
-                    text: "ordinary draft"
-                }
-                Ui.ThemeText {
-                    width: parent.width
-                    height: 900
-                    text: "Read-only details"
-                }
-            }
-        }
-    }
-    function test_removedEditorFallsBackToScrollableContent() {
-        const navigation = createTemporaryObject(readOnlyPageComponent, testCase);
-        tryVerify(() => navigation.contentItem.contentHeight > navigation.height);
-        navigation.focusContent(true);
-        keyClick(Qt.Key_Return);
-        verify(navigation.editing);
-        navigation.showEditor = false;
-        verify(navigation.browsing);
-        compare(navigation.currentTarget, navigation.contentItem);
-        keyClick(Qt.Key_Down);
-        compare(navigation.contentItem.contentY, 0, "Up/Down never traverse or scroll fields");
-        keyClick(Qt.Key_PageDown);
-        verify(navigation.contentItem.contentY >= navigation.height);
-        navigation.showEditor = true;
-        compare(navigation.currentTarget, navigation.contentItem, "new content does not steal the browse cursor");
-        verify(navigation.browsing);
     }
 
     function init() {

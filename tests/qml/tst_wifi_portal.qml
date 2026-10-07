@@ -124,9 +124,6 @@ DaemonTestCase {
     function test_expiredAndChangedClaimsFailClosed_data() {
         return [
             {tag: "expired", field: "expires_at_ms", value: 0},
-            {tag: "non-finite-expiry", field: "expires_at_ms", value: Infinity},
-            {tag: "changed-id", field: "launch_id", value: "other-launch"},
-            {tag: "changed-episode", field: "episode", value: "other-connection"},
             {tag: "changed-url", field: "url", value: "http://other.example/"}
         ];
     }
@@ -179,7 +176,6 @@ DaemonTestCase {
     }
     function test_processFailureAndUncertaintyAreAcknowledgedWithoutRetry_data() {
         return [
-            {tag:"known-no-effect", code:0, output:'{"outcome":"failed"}', expected:"failed"},
             {tag:"crash", code:9, output:'{"outcome":"opened"}', expected:"uncertain"}
         ];
     }

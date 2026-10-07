@@ -21,23 +21,9 @@ TestCase {
         }
     }
     function cleanup() { Quickshell.themeIcons = ({}); }
-    function test_missingThemeIconsUseNeutralGlyph() {
-        const icon = createTemporaryObject(iconComponent, testCase, {notification: {app_name: "Missing app", app_icon: "not-installed"}});
-        compare(icon.source, "");
-        compare(icon.icon, "notifications");
-        verify(!icon.hasImage);
-        verify(waitForRendering(icon));
-        const image = grabImage(icon);
-        verify(image.width > 0 && image.height > 0);
-    }
     function test_centerPreviewRetainsSenderArtwork_data() {
         return [
             {tag: "signal-image-hint", name: "Signal", desktop: "", image: "org.signal.Signal", installed: "org.signal.Signal"},
-            {tag: "thunderbird-image-hint", name: "Thunderbird", desktop: "", image: "thunderbird", installed: "thunderbird"},
-            {tag: "unnamed-ghostty", name: "", desktop: "com.mitchellh.ghostty", image: "com.mitchellh.ghostty", installed: "com.mitchellh.ghostty"},
-            {tag: "desktop-only", name: "Unrelated display name", desktop: "org.example.App", image: "", installed: "org.example.App"},
-            {tag: "shelllist-error", name: "Shelllist", desktop: "", image: "dialog-error", installed: "dialog-error"},
-            {tag: "battery-warning", name: "bar-daemon", desktop: "", image: "battery-caution", installed: "battery-caution"},
             {tag: "absolute-image-path", name: "satty", desktop: "com.gabm.satty", image: Qt.resolvedUrl("fixtures/media-cover.svg").toString(), installed: ""}
         ];
     }

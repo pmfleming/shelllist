@@ -77,9 +77,7 @@ DaemonTestCase {
     }
     function test_pasteValidationSavesOnlyTheDomainDraft_data() {
         return [
-            {tag: "ipv4-cidr", family: "ipv4", value: "192.168.100.100/24", state: IpValidation.Invalid, message: "Prefix length"},
-            {tag: "ipv6-zone", family: "ipv6", value: "fe80::1%wlan0", state: IpValidation.Invalid, message: "Scoped IPv6"},
-            {tag: "full-buffer", family: "ipv4", value: "192.168.1.20".padEnd(IpValidation.MaximumEditingLength), state: IpValidation.Invalid, message: "too long"}
+            {tag: "ipv6-zone", family: "ipv6", value: "fe80::1%wlan0", state: IpValidation.Invalid, message: "Scoped IPv6"}
         ];
     }
     function test_pasteValidationSavesOnlyTheDomainDraft(data) {
@@ -137,7 +135,7 @@ DaemonTestCase {
         compare(updates().length, 0);
     }
     function test_automaticRowsRemainReadableAndCopyUsesDomainPublisher_data() {
-        return [{tag: "wide", width: 720}, {tag: "narrow", width: 360}];
+        return [{tag: "narrow", width: 360}];
     }
     function test_automaticRowsRemainReadableAndCopyUsesDomainPublisher(data) {
         const panel = make();

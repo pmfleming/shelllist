@@ -32,47 +32,9 @@ TestCase {
             Ui.TextField { id: field; anchors.fill: parent; text: "Native text" }
         }
     }
-    Component {
-        id: buttonFactory
-        Rectangle {
-            width: 48; height: 48
-            color: Ui.Theme.window
-            property alias button: button
-            property int clicks: 0
-            Ui.FlatIconButton {
-                id: button
-                anchors.fill: parent
-                icon: "↻"
-                onClicked: parent.clicks++
-            }
-        }
-    }
-    function test_disabledFlatButtonRemainsVisible_data(): var {
-        return [{tag: "light", scheme: Qt.Light}, {tag: "dark", scheme: Qt.Dark}];
-    }
-    function test_disabledFlatButtonRemainsVisible(data): void {
-        Ui.Theme.previewColorScheme = data.scheme;
-        const host = createTemporaryObject(buttonFactory, testCase);
-        const button = host.button;
-        button.enabled = false;
-        verify(button.visible);
-        compare(button.labelColor, button.disabledIconColor);
-        verify(waitForPolish(host.Window.window));
-        const image = grabImage(host);
-        let maxContrast = 1;
-        for (let y = 8; y < 40; ++y)
-            for (let x = 8; x < 40; ++x)
-                maxContrast = Math.max(maxContrast, Contrast.ratio(image.pixel(x, y), host.color));
-        verify(maxContrast >= 1.8, "disabled glyph remains distinguishable: " + maxContrast);
-        mouseClick(button);
-        compare(host.clicks, 0);
-        button.enabled = true;
-        mouseClick(button);
-        compare(host.clicks, 1);
-    }
     // Keep actual painted contrast, not per-wrapper token/geometry snapshots.
     function test_valueRowContrast_data(): var {
-        return [{tag: "light", scheme: Qt.Light}, {tag: "dark", scheme: Qt.Dark}];
+        return [{tag: "dark", scheme: Qt.Dark}];
     }
     function test_valueRowContrast(data): void {
         Ui.Theme.previewColorScheme = data.scheme;

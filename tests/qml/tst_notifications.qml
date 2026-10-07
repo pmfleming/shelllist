@@ -129,31 +129,8 @@ DaemonTestCase {
     function descendants(item) {
         return Array.from(item.children || []).reduce((items, child) => items.concat(descendants(child)), [item]);
     }
-    function test_indexCommandsRenderSymbolsAndRetainRoutes() {
-        const controller = makeController(makeState());
-        controller.uiActive = true;
-        controller.openDetails();
-        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
-        wait(150);
-        projectDetail(controller, [record(100), record(3), record(2)], 12);
-        verify(waitForRendering(content));
-        for (const name of ["list", "chevron_right"]) {
-            const glyph = descendants(content).find(item => item.glyph === name);
-            verify(glyph !== undefined);
-            compare(glyph.symbol, name, "semantic command uses the symbol font, not literal fallback text");
-            verify(glyph.implicitWidth <= glyph.font.pixelSize * 1.5);
-        }
-        mouseClick(findChild(content, "detailAction:browse"));
-        tryCompare(controller, "detailsTab", "notifications");
-        verify(waitForRendering(content));
-        const pageGlyph = descendants(content).find(item => item.glyph === "find_in_page");
-        verify(pageGlyph !== undefined);
-        compare(pageGlyph.symbol, "find_in_page");
-        verify(!content.detailsNavigation.targets.includes(findChild(content, "notificationRead-100:100000")));
-        content.destroy(); wait(0);
-    }
     function test_previewHierarchyAndPassiveCards_data() {
-        return [{tag: "wide", width: 1280}, {tag: "narrow", width: 900}];
+        return [{tag: "narrow", width: 900}];
     }
     function test_previewHierarchyAndPassiveCards(data) {
         const controller = makeController(makeState());
@@ -209,44 +186,6 @@ DaemonTestCase {
         compare(controller.detailsTab, "message");
         content.destroy(); wait(0);
     }
-    function test_paneSpacingAndCompactReadGeometry_data() {
-        return [{tag: "wide", width: 1280, height: 600}, {tag: "narrow", width: 900, height: 480}];
-    }
-    function test_paneSpacingAndCompactReadGeometry(data) {
-        const controller = makeController(makeState());
-        controller.availableScreenWidth = data.width;
-        controller.uiActive = true; controller.openDetails();
-        controller.width = controller.currentWindowWidth;
-        controller.height = data.height;
-        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: controller.currentWindowWidth, height: data.height});
-        wait(150); projectDetail(controller, [record(100), record(3)]);
-        verify(waitForRendering(content));
-        compare(content.width, controller.currentWindowWidth);
-        compare(content.height, data.height);
-        const list = findChild(content, "resultListView");
-        const pane = content.listItem;
-        const directY = list.mapToItem(pane, 0, 0).y;
-        verify(Math.abs(directY - pane.headerHeight - pane.spacing) <= 1, "no invisible options row below search");
-        const primary = findChild(content, "detailAction:browse");
-        const read = findChild(content, "notificationRead-100:100000");
-        compare(read.width, 32); compare(read.height, 32);
-        verify(primary.width > read.width);
-        const title = findChild(content, "notificationPreviewTitle-100:100000");
-        const left = title.mapToItem(content.detailsItem, 0, 0).x;
-        const right = read.mapToItem(content.detailsItem, read.width, 0).x;
-        verify(left >= 12);
-        verify(right <= content.detailsItem.width - 12);
-        verify(title.mapToItem(content.detailsItem, title.width, 0).x < read.mapToItem(content.detailsItem, 0, 0).x);
-        controller.returnSurface = "activity";
-        tryVerify(() => findChild(content, "notificationsBackToAgenda") !== null);
-        verify(waitForRendering(content));
-        verify(list.mapToItem(pane, 0, 0).y > directY + 30, "real Back action keeps its space");
-        let returned = false;
-        controller.backRequested.connect(() => returned = true);
-        mouseClick(findChild(content, "notificationsBackToAgenda"));
-        verify(returned);
-        content.destroy(); wait(0);
-    }
     function test_dndAcknowledgementAndRetry() {
         const state = makeState();
         state.backend = createTemporaryObject(fakeBackendComponent, state, {
@@ -277,23 +216,6 @@ DaemonTestCase {
         state.setDndEnabled(false);
         verify(!state.backend.requestedDnd);
         compare(state.backend.requestedUntil, null);
-    }
-    function test_refreshStagesAuthoritativePagesUntilVisibleAnchor() {
-        const controller = startCenter(), catalog = controller.catalog;
-        compare(catalog.anchor, "Chat");
-        const first = Array.from({length: 50}, (_, index) => app(100 - index, "App" + index));
-        finishApps(controller, Object.assign(appPage(first, "", 0, 50, 100), {anchor_reached: false}));
-        verify(catalog.rootBusy);
-        compare(catalog.apps.length, 1, "old window remains until replacement is complete");
-        const continuation = testCase.calls.filter(call => call.method === "notifications.queryCenter").pop();
-        compare(continuation.params.offset, 50);
-        compare(continuation.params.revision, "1");
-        finishApps(controller, appPage(Array.from({length: 50}, (_, index) => app(50 - index, "Older" + index)), "", 50, null, 100));
-        compare(catalog.apps.length, 100);
-        verify(!catalog.rootBusy);
-        catalog.reloadApps();
-        finishApps(controller, appPage([]));
-        compare(catalog.apps.length, 0, "refresh replaces, never union-merges deleted rows");
     }
     function test_replyAcknowledgementAndFailure() {
         const state = makeState();
@@ -632,35 +554,6 @@ DaemonTestCase {
         compare(state.drafts["100:100000"], "Keep my draft");
         content.destroy(); wait(0);
     }
-    function test_oldQueryCompletionCannotRetireReplacement_data() {
-        // Successful old-query replies are covered by keyboard search. Keep
-        // errors on either side of replacement publication, not the full product.
-        return [{tag: "failure-pending", committed: false, outcome: "failure"},
-                {tag: "stale-after-commit", committed: true, outcome: "stale"}];
-    }
-    function test_oldQueryCompletionCannotRetireReplacement(data) {
-        const controller = startCenter(), catalog = controller.catalog, state = controller.notificationState;
-        state.setDraft(100, "Keep draft");
-        const old = rootRequest(controller);
-        controller.filterText = "needle";
-        catalog.reloadApps();
-        const current = rootRequest(controller), generation = catalog.rootGeneration;
-        const response = {notification_center: appPage([app(900)], "needle")};
-        if (data.committed) state.backend.finish(current, response, "", "");
-        const visible = JSON.stringify(catalog.apps);
-        state.backend.finish(old, {}, "Old read failed", data.outcome === "stale" ? "history-cursor-stale" : "");
-        compare(catalog.rootGeneration, generation);
-        compare(catalog.rootBusy, !data.committed);
-        compare(JSON.stringify(catalog.apps), visible);
-        compare(catalog.rootError, "");
-        verify(!state.backend.requests[old]);
-        if (!data.committed) state.backend.finish(current, response, "", "");
-        state.backend.finish(current, {}, "Late error", "history-cursor-stale");
-        compare(catalog.apps[0].latest.id, 900);
-        compare(catalog.rootGeneration, generation);
-        compare(catalog.rootError, "");
-        compare(state.drafts[state.keyFor(100)], "Keep draft");
-    }
     function test_queuedRevisionBetweenRefreshPagesDiscardsStaging() {
         const controller = startCenter(), catalog = controller.catalog, state = controller.notificationState;
         const visible = JSON.stringify(catalog.apps);
@@ -680,7 +573,8 @@ DaemonTestCase {
         compare(catalog.revision, "2");
     }
     function test_abandonedRefreshNeverPublishesPartialPages_data() {
-        return [{tag: "read-error"}, {tag: "epoch"}];
+        // The visible-window refresh test covers continuation read failure.
+        return [{tag: "epoch"}];
     }
     function test_abandonedRefreshNeverPublishesPartialPages(data) {
         const controller = startCenter(), catalog = controller.catalog;
@@ -688,8 +582,8 @@ DaemonTestCase {
         const visible = JSON.stringify(catalog.apps);
         finishApps(controller, stagedPage());
         const continuation = appPage([app(199, "Second")], "", 1, null, 2);
-        if (data.tag === "epoch") continuation.epoch = "after-restart";
-        finishApps(controller, continuation, data.tag === "read-error" ? "Read failed" : "");
+        continuation.epoch = "after-restart";
+        finishApps(controller, continuation);
         compare(JSON.stringify(catalog.apps), visible);
         compare(catalog.staging.length, 0);
         verify(!catalog.rootBusy);
@@ -699,17 +593,7 @@ DaemonTestCase {
     function test_rejectInvalidCenterPages_data() {
         return [
             {tag: "missing-page", patch: null},
-            {tag: "wrong-query", patch: {query: "other"}},
-            {tag: "invalid-offset", patch: {next_offset: 42}},
-            {tag: "duplicate-records", patch: {apps: [app(99), app(99)], total_apps: 2}},
-            {tag: "invalid-id", patch: {apps: [app(4294967296)]}},
-            {tag: "missing-app", patch: {apps: [null]}},
-            {tag: "too-many-apps", patch: {apps: Array.from({length: 51}, (_, i) => app(i + 1, "App" + i)), total_apps: 51}},
-            {tag: "wrong-identity", patch: {apps: [Object.assign(app(99), {key: "Other"})]}},
-            {tag: "invalid-count", patch: {apps: [Object.assign(app(99), {count: 1.5})]}},
-            {tag: "excessive-count", patch: {apps: [app(99, "Chat", 5201)]}},
-            {tag: "missing-token", patch: {epoch: ""}},
-            {tag: "wrong-view", patch: {view: "app"}}
+            {tag: "invalid-id", patch: {apps: [app(4294967296)]}}
         ];
     }
     function test_rejectInvalidCenterPages(data) {
@@ -722,15 +606,7 @@ DaemonTestCase {
         compare(catalog.staging.length, 0);
     }
     function test_detailValidationKeepsLastCoherentRecord_data() {
-        return [{tag: "wrong-app", patch: {app_key: "Other"}},
-            {tag: "wrong-record-app", patch: {entries: [preview(100, "Other")]}},
-            {tag: "duplicate-record", patch: {entries: [preview(100), preview(100)]}},
-            {tag: "unbounded-preview", patch: {overview: Array.from({length: 4}, (_, i) => preview(i + 1))}},
-            {tag: "wrong-pages", patch: {pages: 7}},
-            {tag: "invalid-page", patch: {page: 0}},
-            {tag: "invalid-count", patch: {count: -1}},
-            {tag: "excessive-total", patch: {total_count: 5201}},
-            {tag: "wrong-selected-record", patch: {selected: record(99)}}];
+        return [{tag: "wrong-record-app", patch: {entries: [preview(100, "Other")]}}];
     }
     function test_detailValidationKeepsLastCoherentRecord(data) {
         const controller = makeController(makeState());

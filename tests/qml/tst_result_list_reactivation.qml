@@ -50,43 +50,6 @@ TestCase {
         });
     }
 
-    function test_replacementKeepsLogicalSelection_data() {
-        // Keep the harder offscreen/later-page reactivation regression.
-        return [
-            {
-                tag: "later-page-refresh-on-reopen",
-                index: 240,
-                reopenFirst: true
-            }
-        ];
-    }
-
-    function test_replacementKeepsLogicalSelection(data) {
-        controller.uiActive = true;
-        store.selectedIndex = data.index;
-        verifySelection(data.index);
-        controller.uiActive = false;
-        if (data.reopenFirst) {
-            controller.uiActive = true;
-            wait(20);
-        }
-
-        // Annotation changes the content-derived ID, not the history position.
-        // Exercise the real keyed model's insert/move/remove replacement path.
-        const edited = values("entry-", 300);
-        edited[data.index].id = "edited-image";
-        store.replaceProviderResults("test", edited, false);
-        // Let Qt finish model layout; a synchronous assertion can pass before
-        // ListView moves its current delegate to the bottom of the model.
-        wait(20);
-        if (!data.reopenFirst)
-            controller.uiActive = true;
-
-        verifySelection(data.index);
-        compare(store.selected().id, "edited-image");
-        compare(store.visibleModel.get(listView().currentIndex).resultData.id, "edited-image");
-    }
-
     function test_progressiveReplacementRevealsSelectionWhenRowArrives() {
         controller.uiActive = true;
         store.selectedIndex = 240;

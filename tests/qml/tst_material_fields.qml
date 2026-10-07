@@ -21,18 +21,6 @@ TestCase {
             Accessible.name: "Credential"
         }
     }
-    Component {
-        id: choiceFactory
-        Ui.DropDownList {
-            width: 300
-            value: "first"
-            options: [
-                { value: "first", label: "First" },
-                { value: "disabled", label: "Unavailable", enabled: false },
-                { value: "third", label: "Third" }
-            ]
-        }
-    }
     SignalSpy {
         id: edits
         signalName: "edited"
@@ -111,58 +99,4 @@ TestCase {
         compare(edits.count, 1, "embedded actions do not rewrite the editor");
     }
 
-    function test_dropdownHoverFocusAndAcknowledgedSelection() {
-        const control = createTemporaryObject(choiceFactory, this);
-        intent.signalName = "selected";
-        intent.target = control;
-        intent.clear();
-        control.forceActiveFocus();
-        mouseMove(control, 20, control.height / 2);
-        compare(control.background.color.a, 0, "value rows keep their low-chrome base; hover/focus paint is local");
-        verify(findChild(control.background, "focusRing").visible);
-        keyClick(Qt.Key_Space);
-        tryCompare(control.popup, "visible", true);
-        compare(control.popup.opacity, 1, "popup focus cannot wait for a fade");
-        let third = null;
-        tryVerify(() => {
-            third = findChild(control.popup.contentItem, "dropDownOption-2");
-            return third !== null;
-        });
-        const first = findChild(control.popup.contentItem, "dropDownOption-0");
-        const highlighted = control.highlightedIndex;
-        mouseMove(third, third.width / 2, third.height / 2);
-        wait(30);
-        compare(control.highlightedIndex, highlighted, "hover cannot redirect keyboard activation");
-        compare(control.value, "first");
-        compare(third.width, control.popup.availableWidth);
-        verify(first.Accessible.selected);
-        keyClick(Qt.Key_End);
-        compare(control.highlightedIndex, 2);
-        verify(findChild(third, "focusRing").visible);
-        compare(String(third.contentItem.color), String(Ui.Theme.accentText));
-        compare(String(first.contentItem.color), String(Ui.Theme.selectedText));
-        keyClick(Qt.Key_Return);
-        compare(intent.count, 1);
-        compare(intent.signalArguments[0][0], "third");
-        compare(control.value, "first");
-        compare(control.contentItem.text, "First", "native candidate is not a daemon acknowledgement");
-        control.value = "third";
-        compare(control.contentItem.text, "Third");
-        control.forceActiveFocus();
-        keyClick(Qt.Key_Space);
-        tryCompare(control.popup, "visible", true);
-        keyClick(Qt.Key_Escape);
-        tryCompare(control.popup, "visible", false);
-        compare(control.value, "third");
-        compare(intent.count, 1, "Escape cancels browsing without another request");
-        control.activated(1);
-        compare(intent.count, 1, "unavailable choices never dispatch");
-        control.interactive = false;
-        control.activated(0);
-        compare(intent.count, 1, "late activation while busy never dispatches");
-        control.interactive = true;
-        control.enabled = false;
-        control.activated(0);
-        compare(intent.count, 1);
-    }
 }

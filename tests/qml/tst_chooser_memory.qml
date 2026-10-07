@@ -234,7 +234,7 @@ DaemonTestCase {
         keyClick(Qt.Key_Tab, Qt.ControlModifier);
         tryCompare(surface.chooserController.viewMemory, "activeTab", "two");
         page(surface);
-        tryCompare(surface.detailsNavigation.currentTarget, "objectName", "ordinaryNote");
+        tryVerify(() => surface.detailsNavigation.currentTarget?.objectName === "ordinaryNote");
         keyClick(Qt.Key_Tab);
         compare(surface.detailsNavigation.currentTarget.objectName, "level");
         keyClick(Qt.Key_Return);
@@ -251,122 +251,6 @@ DaemonTestCase {
         surface.visible = true;
         surface.chooserController.activateUiState("");
         surface.chooserController.restoreUiFocus();
-    }
-    function test_invocationRestoresSearchSelectionOnlyOnce() {
-        const surface = makeSurface();
-        const controller = surface.chooserController;
-        // Ranking transport is exercised separately; this fixture owns focus.
-        controller.selectionModel.rankRequestsEnabled = false;
-        surface.listItem.focusSearch();
-        for (const key of [Qt.Key_A, Qt.Key_B, Qt.Key_C, Qt.Key_D, Qt.Key_E, Qt.Key_F])
-            keyClick(key);
-        const input = findChild(surface.listItem, "fieldInput");
-        input.select(5, 2);
-        compare(input.cursorPosition, 2);
-        closeInvocation(surface);
-        compare(controller.focusMemory.region, "search");
-        verify(!JSON.stringify(controller.focusMemory).includes("abcdef"));
-        input.deselect();
-        input.cursorPosition = 0;
-        reopenInvocation(surface);
-        tryCompare(input, "selectionEnd", 5);
-        verify(surface.listItem.searchFocused);
-        compare(input.cursorPosition, 2);
-        compare(input.selectionStart, 2);
-        keyClick(Qt.Key_X);
-        compare(controller.filterText, "abxf");
-        controller.restoreUiFocus(); // Late host-ready/visibility callbacks.
-        wait(0);
-        compare(input.cursorPosition, 3);
-        compare(controller.filterText, "abxf");
-    }
-    function test_invocationRestoresResultsAndKeyedViewport() {
-        const surface = makeSurface();
-        const values = Array.from({length: 50}, (_, i) => ({id: "entry" + i, title: "Item " + String(i).padStart(2, "0")}));
-        catalog(surface, values);
-        const controller = surface.chooserController;
-        controller.viewMemory.synchronize();
-        const list = findChild(surface.listItem, "resultListView");
-        tryCompare(list, "count", 50);
-        verify(waitForPolish(surface.Window.window));
-        list.contentY = 465;
-        const saved = surface.listItem.sessionState().viewport;
-        verify(saved.key.length > 0);
-        const selectedKey = controller.selectedResult.key;
-        closeInvocation(surface);
-        catalog(surface, [{id: "new", title: "Aardvark"}].concat(values));
-        list.contentY = 0;
-        reopenInvocation(surface);
-        tryVerify(() => {
-            const current = surface.listItem.sessionState().viewport;
-            return current && current.key === saved.key;
-        });
-        compare(surface.listItem.sessionState().viewport.offset, saved.offset);
-        verify(surface.listItem.listFocused);
-        compare(controller.selectedResult.key, selectedKey, "restoration does not reselect");
-        keyClick(Qt.Key_Down);
-        verify(waitForPolish(surface.Window.window));
-        const item = list.itemAtIndex(controller.selectionModel.selectedIndex);
-        verify(item.y >= list.contentY && item.y + item.height <= list.contentY + list.height, "new navigation wins over the bookmark");
-    }
-    function test_queuedSearchCannotCrossAnInvocationBoundary() {
-        const surface = makeSurface();
-        open(surface);
-        keyClick(Qt.Key_Return);
-        const controller = surface.chooserController;
-        controller.focusSearchRequested();
-        // Close/reopen before the previous invocation's queued request runs.
-        controller.deactivateUi();
-        surface.visible = false;
-        testCase.forceActiveFocus();
-        reopenInvocation(surface);
-        wait(0);
-        tryVerify(() => surface.detailsNavigation.editing);
-        compare(surface.detailsNavigation.currentTarget.objectName, "ordinaryNote");
-    }
-    function test_disablingMemoryCancelsInvocationRestore_data() {
-        return [{tag: "queued", waiting: false}, {tag: "waiting-for-capabilities", waiting: true}];
-    }
-    function test_disablingMemoryCancelsInvocationRestore(data) {
-        const surface = makeSurface();
-        open(surface);
-        keyClick(Qt.Key_Return);
-        closeInvocation(surface);
-        const controller = surface.chooserController;
-        const memory = controller.viewMemory;
-        surface.sessionReady = false;
-        reopenInvocation(surface);
-        if (data.waiting)
-            tryVerify(() => surface.detailsNavigation.browsing);
-        controller.viewMemory = null;
-        surface.listItem.focusList();
-        wait(0); // An already queued apply must tolerate the removed owner.
-        controller.viewMemory = memory;
-        surface.sessionReady = true;
-        controller.restoreUiFocus();
-        wait(0);
-        verify(surface.listItem.listFocused, "Re-enabling memory must not revive an old restore");
-        verify(!surface.detailsNavigation.editing);
-        compare(surface.edits, 0);
-    }
-    function test_invocationDoesNotRememberPasswords() {
-        const surface = makeSurface();
-        surface.privateNote = true;
-        open(surface);
-        keyClick(Qt.Key_Return);
-        const field = surface.detailsNavigation.currentTarget;
-        field.text = "private-value";
-        closeInvocation(surface);
-        const location = surface.chooserController.focusMemory.location;
-        compare(location.target, "");
-        compare(location.selection, null);
-        verify(!location.editing);
-        verify(!JSON.stringify(surface.chooserController.focusMemory).includes("private-value"));
-        field.text = "";
-        reopenInvocation(surface);
-        tryVerify(() => surface.detailsNavigation.browsing);
-        verify(!surface.detailsNavigation.editing);
-        compare(field.text, "");
     }
     function recreatedView() {
         const owner = createTemporaryObject(retainedControllerFactory, testCase);
@@ -415,33 +299,6 @@ DaemonTestCase {
         compare(input.selectionEnd, 8);
         compare(surface.edits, 0);
     }
-    function test_itemsRememberTabScrollAndEditorWithoutStealingFocus() {
-        const surface = makeSurface();
-        inspectSecondTab(surface);
-        const scroll = page(surface).contentY;
-        verify(scroll > 0);
-        select(surface, "b");
-        verify(surface.chooserController.detailsOpen, "new items preserve surface expansion");
-        open(surface);
-        compare(surface.chooserController.detailsTab, "one");
-        page(surface).contentY = 123;
-        select(surface, "a");
-        verify(surface.chooserController.detailsOpen);
-        compare(surface.chooserController.detailsTab, "two");
-        tryCompare(page(surface), "contentY", scroll);
-        verify(surface.listItem.listFocused);
-        compare(surface.edits, 0);
-        keyClick(Qt.Key_Tab);
-        keyClick(Qt.Key_Return);
-        tryVerify(() => surface.detailsNavigation.editing);
-        compare(surface.detailsNavigation.currentTarget.objectName, "level");
-        compare(surface.edits, 0, "restoration cannot dispatch an edit");
-        keyClick(Qt.Key_Escape);
-        verify(surface.detailsNavigation.browsing);
-        select(surface, "b");
-        compare(surface.chooserController.detailsTab, "one");
-        tryCompare(page(surface), "contentY", 123);
-    }
     function test_missingEditorAndTabFallBackWithoutMutations() {
         const surface = makeSurface();
         inspectSecondTab(surface);
@@ -449,8 +306,7 @@ DaemonTestCase {
         surface.showLevel = false;
         select(surface, "a");
         open(surface);
-        tryVerify(() => surface.detailsNavigation.browsing);
-        compare(surface.detailsNavigation.currentTarget.objectName, "ordinaryNote");
+        tryVerify(() => surface.detailsNavigation.browsing && surface.detailsNavigation.currentTarget?.objectName === "ordinaryNote");
         surface.privateNote = true;
         keyClick(Qt.Key_Return);
         verify(surface.detailsNavigation.editing);

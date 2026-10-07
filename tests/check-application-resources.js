@@ -12,8 +12,8 @@ vm.createContext(resources);
 vm.runInContext(fs.readFileSync(resourcesPath, "utf8").replace(/^\.pragma library\s*/, ""), resources);
 const {current, history_point: history} = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
-// Exercise the presentation the UI actually consumes, not the retired detail
-// table's catalogue of every wire field. Rust still owns the complete fixture.
+// Keep validation boundaries at the pure-model layer; native tests own display
+// formatting, field transactions, source replacement and canonical-total wiring.
 const cases = ["cpu_percent_of_machine", "memory_bytes", "gpu_busy_percent",
     "disk_read_bytes_per_second", "disk_write_bytes_per_second", "disk_space_total_bytes",
     "referenced_file_disk_bytes", "gpu_memory_allocated_bytes", "attributed_fraction"]
@@ -23,29 +23,26 @@ for (const metric of ["network_receive_bytes_per_second", "network_transmit_byte
 for (const [metric, point, available] of cases)
     assert.equal(resources.historicalMetricAvailable(point, metric), available, metric);
 for (const metric of ["memory_bytes", "gpu_memory_allocated_bytes", "cpu_percent_of_machine", "disk_space_total_bytes", "referenced_file_disk_bytes", "disk_read_bytes_per_second"]) {
-    assert.equal(resources.currentMetricAvailable(current, metric), true, metric);
-    for (const value of [null, undefined, NaN, Infinity, -1, "0"]) {
-        assert.equal(resources.currentMetricAvailable({...current, [metric]: value}, metric), false, metric + " rejects " + value);
-        assert.equal(resources.historicalMetricAvailable({...history, [metric]: value}, metric), false);
-    }
-    assert.equal(resources.currentMetricAvailable({...current, [metric]: 0}, metric), true, "measured zero " + metric);
+    for (const value of [current[metric], 0])
+        assert.equal(resources.currentMetricAvailable({...current, [metric]: value}, metric), true, metric + " measured " + value);
+    for (const value of [null, undefined, NaN, Infinity, -1, "0"])
+        assert.deepEqual({current: resources.currentMetricAvailable({...current, [metric]: value}, metric),
+            history: resources.historicalMetricAvailable({...history, [metric]: value}, metric)},
+        {current: false, history: false}, metric + " rejects " + value);
 }
-assert.equal(resources.currentMetricAvailable(current, "network_receive_bytes_per_second"), false, "connection support is not byte support");
-assert.equal(resources.currentValue({...current, estimated_app_power_watts: 0, power_watts: 99}, "average_power_watts"), 0);
-assert.equal(resources.currentMetricAvailable({...current, estimated_app_power_watts: null, power_watts: null}, "average_power_watts"), false);
-assert.equal(resources.historicalMetricAvailable({...history, energy_source: "battery"}, "average_power_watts"), false);
-assert.equal(resources.power(0), "0.00 W");
-assert.equal(resources.power(0.004), "<0.01 W");
-assert.equal(resources.energy(1500), "1.50 Wh");
-assert.equal(resources.formatted(null, "bytes"), "Unavailable");
-assert.equal(resources.rangeEnergyConfidence([]), "unknown");
-assert.equal(resources.rangeEnergyConfidence([{...history, energy_confidence: "high"}, {...history, energy_confidence: "low"}]), "low");
-assert.equal(resources.rangeEnergyConfidence([{...history, energy_confidence: "unknown"}]), "unknown");
-assert.equal(resources.rangeEnergyConfidence([{...history, energy_confidence: "high"}, {...history, energy_confidence: "low", availability: {energy: false}}]), "high");
+for (const [label, actual, expected] of [
+    ["connection support is not byte support", resources.currentMetricAvailable(current, "network_receive_bytes_per_second"), false],
+    ["zero power is not a fallback", resources.currentValue({...current, estimated_app_power_watts: 0, power_watts: 99}, "average_power_watts"), 0],
+    ["missing power", resources.currentMetricAvailable({...current, estimated_app_power_watts: null, power_watts: null}, "average_power_watts"), false],
+    ["battery discharge is not application power", resources.historicalMetricAvailable({...history, energy_source: "battery"}, "average_power_watts"), false],
+    ["empty confidence", resources.rangeEnergyConfidence([]), "unknown"],
+    ["lowest confidence wins", resources.rangeEnergyConfidence([{...history, energy_confidence: "high"}, {...history, energy_confidence: "low"}]), "low"],
+    ["unknown confidence", resources.rangeEnergyConfidence([{...history, energy_confidence: "unknown"}]), "unknown"],
+    ["unavailable samples do not lower confidence", resources.rangeEnergyConfidence([{...history, energy_confidence: "high"}, {...history, energy_confidence: "low", availability: {energy: false}}]), "high"]
+])
+    assert.equal(actual, expected, label);
 
-// Canonical means have already clipped buckets at the window edges. Integrating
-// them must not extend partial coverage, sum lifetime counters, or require that
-// all history pages happen to be present in a chart's current point array.
+// Integrate the daemon's observed duration, not missing time or lifetime counters.
 const summary = {
     window_start_ms: 1000, window_end_ms: 1801000, weighting: "observed-duration",
     metrics: {
@@ -56,23 +53,17 @@ const summary = {
     }
 };
 const validated = resources.windowSummary(summary, 1000, 1801000);
-assert.equal(resources.periodEstimate(validated, "average_power_watts"), 310);
-assert.equal(resources.periodEstimate(validated, "disk_read_bytes_per_second"), 90000);
-assert.equal(resources.periodEstimate(validated, "disk_write_bytes_per_second"), 0);
-assert.equal(resources.periodEstimate(validated, "network_receive_bytes_per_second"), null);
-assert.equal(resources.observationText(validated, "disk_read_bytes_per_second"), "15.0 min observed / 30.0 min");
-assert.equal(resources.compactObservation(validated, "disk_read_bytes_per_second"), "15m/30m");
-assert.equal(resources.compactObservation(validated, "network_receive_bytes_per_second"), "—");
-assert.equal(resources.periodText(validated, "average_power_watts"), "≈ 310.00 mWh");
-assert.equal(resources.periodText(null, "average_power_watts"), "Unavailable");
-assert.equal(resources.windowSummary(summary, 1000, 2000000), null, "stale range summary");
-assert.equal(resources.windowSummary({...summary, weighting: "sample-count"}, 1000, 1801000), null);
-for (const stats of [
-    {mean: null}, {mean: Infinity}, {mean: -2}, {observed_ms: 0},
-    {observed_ms: -1}, {observed_ms: 1800001}, {observed_ms: NaN}, {available: false}
-]) {
-    const changed = {...summary, metrics: {average_power_watts: {...summary.metrics.average_power_watts, ...stats}}};
-    assert.equal(resources.periodEstimate(changed, "average_power_watts"), null, JSON.stringify(stats));
-}
-assert.equal(resources.periodEstimate({...summary, metrics: {memory_bytes: {available: true, mean: 100, observed_ms: 10}}}, "memory_bytes"), null, "do not integrate space metrics");
-console.log("application resources: scoped metrics, availability, precision and observed-window estimates passed");
+for (const [metric, expected] of Object.entries({average_power_watts: 310,
+    disk_read_bytes_per_second: 90000, disk_write_bytes_per_second: 0, network_receive_bytes_per_second: null}))
+    assert.equal(resources.periodEstimate(validated, metric), expected, metric);
+const invalid = [
+    ["stale range", resources.windowSummary(summary, 1000, 2000000)],
+    ["unknown weighting", resources.windowSummary({...summary, weighting: "sample-count"}, 1000, 1801000)],
+    ["non-rate metric", {...summary, metrics: {memory_bytes: {available: true, mean: 100, observed_ms: 10}}}, "memory_bytes"]
+];
+for (const stats of [{mean: null}, {mean: Infinity}, {mean: -2}, {observed_ms: 0},
+    {observed_ms: -1}, {observed_ms: 1800001}, {observed_ms: NaN}, {available: false}])
+    invalid.push([JSON.stringify(stats), {...summary, metrics: {average_power_watts: {...summary.metrics.average_power_watts, ...stats}}}]);
+for (const [label, value, metric] of invalid)
+    assert.equal(resources.periodEstimate(value, metric || "average_power_watts"), null, label);
+console.log("application resources: availability, power attribution and observed-window estimates passed");

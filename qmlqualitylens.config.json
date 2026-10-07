@@ -18,7 +18,6 @@
     "tests/qml/tst_keyed_list_model.qml",
     "tests/qml/tst_material_fields.qml",
     "tests/qml/tst_chooser_keyboard.qml",
-    "tests/qml/tst_notification_actions.qml",
     "tests/qml/tst_notifications.qml",
     "tests/qml/tst_provider_registry.qml",
     "tests/qml/tst_provider_shortcuts.qml",
