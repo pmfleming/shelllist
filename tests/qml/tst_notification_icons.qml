@@ -10,7 +10,16 @@ TestCase {
     height: 100
     visible: true
     when: windowShown
-    Component { id: iconComponent; Ui.NotificationAppIcon { width: 40; height: 40 } }
+    Component {
+        id: iconComponent
+        Ui.IconTile {
+            required property var notification
+            readonly property string source: Ui.NotificationIconSource.resolve(notification)
+            iconSource: source
+            icon: "notifications"
+            width: 40; height: 40
+        }
+    }
     function cleanup() { Quickshell.themeIcons = ({}); }
     function test_missingThemeIconsUseNeutralGlyph() {
         const icon = createTemporaryObject(iconComponent, testCase, {notification: {app_name: "Missing app", app_icon: "not-installed"}});

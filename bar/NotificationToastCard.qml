@@ -56,12 +56,6 @@ Rectangle {
         z: -1
     }
 
-    Ui.NotificationAppIcon {
-        id: identity
-        visible: false
-        notification: card.notification
-    }
-
     // Beneath the content: a click activates the card, a swipe right dismisses it.
     MouseArea {
         id: swipe
@@ -101,7 +95,7 @@ Rectangle {
             subtitle: [card.notification.app_name, Ui.NotificationPresentation.timeLabel(card.notification.created_unix_ms, card.nowMs)].filter(Boolean).join(" · ")
             subtitleColor: card.urgency >= 2 ? Ui.Theme.danger : Ui.Theme.mutedText
             icon: "notifications"
-            iconSource: identity.source
+            iconSource: Ui.NotificationIconSource.resolve(card.notification)
             iconCount: card.groupCount
             tabFocusEnabled: true
             enabled: !card.removing

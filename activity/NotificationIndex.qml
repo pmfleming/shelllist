@@ -11,12 +11,11 @@ Ui.DetailFlickable {
     readonly property var entries: (overview ? snapshot.overview : snapshot.entries) || []
     viewMemory: controller.viewMemory
     memoryTab: overview ? "overview" : "notifications"
-    Ui.NotificationAppIcon { id: identity; visible: false; notification: page.controller.selectedApp?.latest || ({}) }
     Ui.DetailsHeader {
         uiScale: 1
         width: parent.width
         icon: "notifications"
-        iconSource: identity.source
+        iconSource: Ui.NotificationIconSource.resolve(page.controller.selectedApp?.latest)
         title: page.controller.selectedApp?.latest.app_name || qsTr("Notifications")
         subtitle: page.snapshot.count === undefined ? qsTr("Recent notifications") : page.controller.catalog.query ? qsTr("%1 matches of %2 recent notifications").arg(page.snapshot.count).arg(page.snapshot.total_count) : qsTr("%1 recent notifications").arg(page.snapshot.count)
         actions: page.overview ? [{id: "browse", label: qsTr("Browse notifications"), icon: "list", presentation: {group: "primary"}}] : []

@@ -23,9 +23,6 @@ Ui.ChooserController {
                 error: "Weather is not configured"
             }
         })
-    property NotificationState notificationState: NotificationState {}
-    readonly property var notifications: notificationState.notifications
-    property bool preserveNavigationOnDeactivate: false
     property var timezone: ({
             available: false,
             timezone: "",
@@ -89,11 +86,9 @@ Ui.ChooserController {
     }
 
     signal focusTodoInputRequested
-    signal timeWeatherRequested(string tab)
     signal notificationsRequested(string groupKey, string tab)
 
     function requestNotifications(groupKey: string, tab: string): void {
-        preserveNavigationOnDeactivate = true;
         notificationsRequested(groupKey, tab);
     }
 
@@ -121,8 +116,6 @@ Ui.ChooserController {
         snapshotLoaded = true;
         if (snapshot.activity)
             activity = snapshot.activity;
-        if (!notificationState.resident)
-            notificationState.applySnapshot(snapshot);
         if (snapshot.timezone)
             timezone = snapshot.timezone;
         scheduleRangeQuery();
@@ -138,28 +131,19 @@ Ui.ChooserController {
         rangeLoading = false;
     }
 
-    function applyDomainEvent(kind: string, data: var): void {
-        switch (kind) {
-        case "activity":
+    function handleEvent(event: var): void {
+        if (!["subscribed", "changed"].includes(event.event)) return;
+        const data = event.data || ({});
+        switch (event.stream) {
+        case ActivityApi.streams.activity:
             snapshotLoaded = true;
             activity = data;
             scheduleRangeQuery();
             break;
-        case "notifications":
-            if (!notificationState.resident) notificationState.applySummary(data);
-            break;
-        case "notificationActive":
-            if (!notificationState.resident) notificationState.applyActive(data);
-            break;
-        case "timezone":
+        case ActivityApi.streams.timezone:
             snapshotLoaded = true;
             timezone = data;
         }
-    }
-    function handleEvent(event: var): void {
-        const kind = Flow.eventKind(event, ActivityApi.streams);
-        if (kind)
-            applyDomainEvent(kind, event.data || ({}));
     }
 
     function scheduleRangeQuery(): void {
@@ -241,7 +225,6 @@ Ui.ChooserController {
 
     function deactivateUi() {
         deactivateUiState();
-        preserveNavigationOnDeactivate = false;
         screenshotStatus = "";
     }
 

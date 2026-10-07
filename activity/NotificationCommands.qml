@@ -29,13 +29,12 @@ Ui.CommandGroup {
         case "actions": commands.navigation.openCommandMenu(); break;
         }
     }
-    Ui.NotificationAppIcon { id: identity; visible: false; notification: commands.controller.selectedNotification }
     Ui.DetailsHeader {
         width: parent.width
         uiScale: 1
         compactSecondaryActions: true
         icon: "notifications"
-        iconSource: identity.source
+        iconSource: Ui.NotificationIconSource.resolve(commands.controller.selectedNotification)
         title: commands.controller.selectedNotification.app_name || qsTr("Notification")
         subtitle: new Date(commands.controller.selectedNotification.created_unix_ms || 0).toLocaleString()
         actions: commands.actions.map(action => Object.assign({}, action, {presentation: action.presentation || {group: "toolbar"}}))

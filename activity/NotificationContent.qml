@@ -67,9 +67,8 @@ Ui.ProviderChooserSurface {
             listPane: pane
             rowHeight: pane.delegateHeight
             leadingIcon: "󰂚"
-            leadingIconSource: identity.source
+            leadingIconSource: Ui.NotificationIconSource.resolve(row.app.latest)
             accessibleName: (app.latest.app_name || qsTr("Notification")) + qsTr(" · %1 matching of %2 recent notifications · ").arg(app.count).arg(app.total_count) + app.latest.summary
-            Ui.NotificationAppIcon { id: identity; visible: false; notification: row.app.latest }
             Ui.ResultLabel {
                 title: (row.app.latest.app_name || qsTr("Notification")) + " · " + row.app.count
                 subtitle: [Ui.NotificationPresentation.timeLabel(row.app.latest.created_unix_ms, content.controller.nowMs), Ui.NotificationPresentation.previewTitle(row.app.latest), Ui.NotificationPresentation.previewBody(row.app.latest)].filter(Boolean).join(" · ")

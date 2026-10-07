@@ -26,20 +26,6 @@ Io.DaemonBackend {
         if (!Object.keys(requests).some(id => id.startsWith("snapshot-")))
             request("snapshot", Api.methods.snapshot, {}, {snapshot: true});
     }
-    function loadHistory(cursor: var, refresh: bool): bool {
-        return request("history", Api.methods.notificationsQueryHistory, {
-            query: store.historyQuery,
-            cursor: cursor,
-            anchor: refresh ? store.historyAnchor : null,
-            limit: 50
-        }, {
-            history: true,
-            historyGeneration: store.historyGeneration,
-            historyRevision: store.observedHistoryRevision,
-            cursor: cursor,
-            refresh: refresh
-        });
-    }
     function queryCenter(params: var, context: var): bool {
         return request("center", Api.methods.notificationsQueryCenter, params, {center: context});
     }
@@ -84,17 +70,6 @@ Io.DaemonBackend {
             text: text
         });
     }
-    function finishHistory(context: var, data: var, error: string, errorCode: string): void {
-        if (error) {
-            if (errorCode === "history-cursor-stale") store.invalidateHistory();
-            else store.failHistory(error);
-            return;
-        }
-        if (context.historyRevision !== store.observedHistoryRevision)
-            store.invalidateHistory();
-        else
-            store.applyHistory(data.notification_page, context.refresh, context.cursor);
-    }
     function finish(id: string, data: var, error: string, errorCode: string): void {
         const context = requests[id];
         if (!context)
@@ -102,17 +77,12 @@ Io.DaemonBackend {
         const next = Object.assign({}, requests);
         delete next[id];
         requests = next;
-        // request()/loadHistory() always capture these generations. Consume the
-        // request once, then fence late reads before touching any current state.
-        if (context.generation !== store.dataGeneration || (context.history && context.historyGeneration !== store.historyGeneration))
+        // Consume once, then fence late completions before touching current state.
+        if (context.generation !== store.dataGeneration)
             return;
         store.flushEvents();
         if (context.center) {
             store.centerResponse(context.center, data.notification_center, error, errorCode);
-            return;
-        }
-        if (context.history) {
-            finishHistory(context, data, error, errorCode);
             return;
         }
         if (context.replyKey !== undefined)
@@ -150,13 +120,8 @@ Io.DaemonBackend {
     onTransportReady: {
         if (store.resident || store.uiActive)
             snapshot();
-        if (store.historyDirty || !store.historyLoaded)
-            store.scheduleHistory();
     }
-    onEventGapDetected: {
-        snapshot();
-        store.scheduleHistory();
-    }
+    onEventGapDetected: snapshot()
     Connections {
         target: backend.store
         function onUiActiveChanged(): void {

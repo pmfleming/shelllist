@@ -52,7 +52,8 @@ The rail contains only the calendar/schedule summary, starting at the top.
 Schedule expands its agenda/todo detail pane while preserving the rail.
 `Ctrl+2` expands Schedule; the former `Ctrl+1` and `Ctrl+3` cross-surface shortcuts
 are removed. Within Activity, `Escape` returns to the glance panel before closing
-the surface. Opening Activity does not activate notification-history loading.
+the surface. Activity and Time & Weather do not construct or update notification
+state; only the resident notification owner subscribes to its streams.
 
 Time & Weather follows the same list/detail interaction as Wi-Fi and Bluetooth. The list combines configured weather locations and world clocks by timezone, showing city, current weather, and local time. `Right` expands the selected city. The detail pane has **Time** and **Weather** tabs; Time renders a world map that highlights every region sharing the selected current UTC offset and marks configured location coordinates, plus sun position, day length, and moon phase. Weather reuses the existing hourly, daily, and weather-metric presentation. The bar clock/date group opens this chooser directly.
 
@@ -62,9 +63,9 @@ In native notification mode, `bar-daemon` owns `org.freedesktop.Notifications` a
 
 App identity prefers desktop entry, otherwise the trimmed, case-sensitive app name. Artwork never splits an app group; distinct desktop IDs remain separate even when names match. Unnamed or overlong identities conservatively remain separate records; these descriptive keys are never mutation-routing authority. App order follows its newest matching record. Search counts distinguish matches from the app's total in the recent scope. Conversation `group_key` remains independent; toast group links resolve to an app natively.
 
-The frontend requests up to 50 app summaries or one app snapshot containing three Overview previews, five index entries, count/page metadata and optionally one full selected message. It never downloads all bodies or groups loaded pages. Native responses are byte-bounded to 512 KiB. App-page continuation is fenced by epoch/content revision; a refresh stages through its previous app anchor and atomically replaces the visible window. Direct seeks are native, not frontend cursor replay. Same-page refresh uses a record anchor; an in-flight explicit seek takes precedence over an old anchor. Late reads cannot overwrite new queries/selections or retire newer reads. Failures retain coherent cached pages, without mutation replay. Unsupported APIs fail visibly without a JS catalog fallback. The older `notifications.queryHistory` API remains available to legacy clients but its frontend loader is disabled by default.
+The frontend requests up to 50 app summaries or one app snapshot containing three Overview previews, five index entries, count/page metadata and optionally one full selected message. It never downloads all bodies or groups loaded pages. Native responses are byte-bounded to 512 KiB. App-page continuation is fenced by epoch/content revision; a refresh stages through its previous app anchor and atomically replaces the visible window. Direct seeks are native, not frontend cursor replay. Same-page refresh uses a record anchor; an in-flight explicit seek takes precedence over an old anchor. Late reads cannot overwrite new queries/selections or retire newer reads. Failures retain coherent cached pages, without mutation replay. Unsupported APIs fail visibly without a JS catalog fallback. The older `notifications.queryHistory` daemon API remains available to legacy clients; Shelllist has no legacy history loader or fallback.
 
-One resident notification backend owns the shared state; the bar reads it rather than writing its own notification snapshots back. Equal snapshots, popup visibility and DND-only changes do not rebuild center rows or reload history. Reply drafts and operation acknowledgements remain keyed by notification ID plus creation time. Atomic replacements and page appends preserve stable selection, the top visible row/offset and active reply editor; the old window remains visible while a same-query replacement loads. Loading, unavailable, failed, empty and no-match states are distinct. See [history migration](reviews/notification-history-migration.md) for contract and validation details.
+One resident notification backend owns the shared state; the bar reads it rather than writing its own notification snapshots back. Equal snapshots, popup visibility and DND-only changes do not rebuild center rows or reload history. Reply drafts and operation acknowledgements remain keyed by notification ID plus creation time. Atomic replacements and page appends preserve stable selection, the top visible row/offset and active reply editor; the old window remains visible while a same-query replacement loads. Loading, unavailable, failed, empty and no-match states are distinct. Event gaps refresh the resident snapshot and schedule an active center refresh independently; hiding the center invalidates its read generations, not submitted mutations. See the [interaction contract](chooser-keyboard-workflow.md#notifications-app-groups-and-detail-tabs) and `tst_notifications.qml` for validation coverage.
 
 Toast stacks and legacy group links use the same grouping policy:
 
@@ -84,12 +85,13 @@ Removal animation is presentation-only. Dismiss, clear-group, clear-all, snooze,
 | `activity/ActivityApi.js` | Activity and notification method/stream registry |
 | `activity/ActivityBackend.qml` | Calendar/todo/weather transport adapter |
 | `activity/ActivityController.qml` | Ephemeral calendar range, selection, and presentation state |
-| `activity/NotificationState.qml` | Shared live/history data and reply drafts |
+| `activity/NotificationState.qml` | Shared live records, revision tracking, reply drafts and mutation state |
 | `activity/NotificationBackend.qml` | Notification requests, acknowledgements and stream adapter |
 | `activity/NotificationController.qml` | App selection, per-app tab/page/record memory and command guards |
 | `activity/NotificationCatalog.qml` | Bounded native app/detail reads, generations and atomic refresh |
 | `activity/NotificationDetails.qml` | Shared three-tab layout with active-page loading |
 | `activity/NotificationIndex.qml` | Bounded passive previews, Read commands and transactional page field |
+| `qml/Shelllist/Ui/NotificationIconSource.qml` | Shared icon-source resolution; existing IconTile consumers own rendering/fallback |
 | `activity/NotificationContent.qml` | Standalone notification surface and return navigation |
 | `activity/ActivityContent.qml` | Anchored calendar/agenda/todo composition |
 | `activity/ActivityGlancePane.qml` | Calendar and schedule summary |

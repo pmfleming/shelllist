@@ -28,17 +28,3 @@ function todoVisible(todo, selectedKey, todayKey) {
         return dateKey(new Date(todo.due_unix_ms)) === selectedKey;
     return selectedKey === todayKey && !todo.completed;
 }
-
-function eventKind(event, streams) {
-    if (event.event === "lagged")
-        return "lagged";
-    if (!["subscribed", "changed"].includes(event.event))
-        return "";
-    if (event.stream === streams.activity)
-        return "activity";
-    if (event.stream === streams.notifications)
-        return "notifications";
-    if (event.stream === streams.notificationActive)
-        return "notificationActive";
-    return event.stream === streams.timezone ? "timezone" : "";
-}

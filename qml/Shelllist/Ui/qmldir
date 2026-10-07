@@ -67,7 +67,7 @@ PercentageSlider 1.0 PercentageSlider.qml
 LiveClock 1.0 LiveClock.qml
 ModalFrame 1.0 ModalFrame.qml
 NotificationActionList 1.0 NotificationActionList.qml
-NotificationAppIcon 1.0 NotificationAppIcon.qml
+singleton NotificationIconSource 1.0 NotificationIconSource.qml
 NotificationReplyRow 1.0 NotificationReplyRow.qml
 NotificationPresentation 1.0 NotificationPresentation.js
 PopoverGeometry 1.0 PopoverGeometry.qml

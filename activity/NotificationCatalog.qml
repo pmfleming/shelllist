@@ -33,8 +33,6 @@ Item {
     property var anchor: null
     property bool loaded: false
     readonly property bool hasMore: nextOffset !== null
-    signal detailAccepted
-    signal invalidating
 
     function position(key: string): var {
         const parts = key.split(":");
@@ -104,44 +102,62 @@ Item {
         nextOffset = null;
         rootDirty = true;
         detailDirty = true;
-        invalidating();
     }
+    function integerIn(value: var, minimum: double, maximum: double): bool {
+        return Number.isSafeInteger(value) && value >= minimum && value <= maximum;
+    }
+    function token(value: var): bool { return typeof value === "string" && value.length > 0; }
     function validPreview(item: var): bool {
-        return Number.isSafeInteger(item?.id) && item.id > 0 && item.id <= 4294967295
-            && Number.isSafeInteger(item.created_unix_ms) && item.created_unix_ms > 0
-            && typeof item.app_key === "string" && item.app_key.length > 0
+        return integerIn(item?.id, 1, 4294967295) && integerIn(item.created_unix_ms, 1, Number.MAX_SAFE_INTEGER)
+            && token(item.app_key)
             && [item.app_name, item.app_icon, item.summary, item.body].every(text => typeof text === "string");
     }
     function validList(rows: var, max: int): bool {
-        return Array.isArray(rows) && rows.length <= max && rows.every(validPreview)
+        return Array.isArray(rows) && rows.length <= max
+            && rows.every(item => validPreview(item) && item.app_key === appKey)
             && new Set(rows.map(Ui.NotificationPresentation.recordKey)).size === rows.length;
     }
+    function ownsRead(context: var): bool {
+        if (context.resolve || context.query !== query) return false;
+        if (context.view === "apps") return context.generation === rootGeneration;
+        return context.view === "app" && context.generation === detailGeneration
+            && context.appKey === appKey && context.selectedKey === selectedKey;
+    }
+    function validEnvelope(value: var, view: string): bool {
+        return value?.query === query && value.view === view && token(value.epoch) && token(value.revision);
+    }
+    function failRead(root: bool, message: string): void {
+        if (root) { rootError = message; staging = []; }
+        else detailError = message;
+    }
     function receive(context: var, value: var, error: string, code: string): void {
-        if (context.resolve) return;
+        if (!ownsRead(context)) return;
         const root = context.view === "apps";
-        if (context.generation !== (root ? rootGeneration : detailGeneration) || context.query !== query)
-            return;
-        if (!root && (context.appKey !== appKey || context.selectedKey !== selectedKey)) return;
         if (root) rootBusy = false;
         else detailBusy = false;
         if (context.revision !== store.observedHistoryRevision || code === "history-cursor-stale") {
-            if (root) { staging = []; rootDirty = true; }
-            else detailDirty = true;
+            if (root) staging = [];
             refresh();
             return;
         }
-        if (!error && (value?.query !== query || value.view !== context.view
-                || typeof value.epoch !== "string" || !value.epoch.length
-                || typeof value.revision !== "string" || !value.revision.length))
-            error = qsTr("Invalid notification center response");
-        if (error) {
-            if (root) { rootError = error; staging = []; }
-            else detailError = error;
+        if (error || !validEnvelope(value, context.view)) {
+            failRead(root, error || qsTr("Invalid notification center response"));
             return;
         }
         if (root) acceptApps(context, value);
         else acceptDetail(value);
         if (active && store.backend.ready && (rootDirty || detailDirty)) debounce.restart();
+    }
+    function validSummary(app: var): bool {
+        return token(app?.key) && validPreview(app.latest) && app.latest.app_key === app.key
+            && integerIn(app.count, 1, 5200) && integerIn(app.total_count, app.count, 5200);
+    }
+    function validAppPage(value: var, offset: int): bool {
+        if (!Array.isArray(value.apps) || value.apps.length > 50 || !value.apps.every(validSummary)) return false;
+        if (value.offset !== offset || !integerIn(value.total_apps, 0, 5200) || typeof value.anchor_reached !== "boolean") return false;
+        const end = offset + value.apps.length;
+        if (value.next_offset === null) return end === value.total_apps;
+        return value.apps.length > 0 && value.next_offset === end && end < value.total_apps;
     }
     function acceptApps(context: var, value: var): void {
         const base = context.replacing ? staging : apps;
@@ -152,20 +168,12 @@ Item {
             refresh();
             return;
         }
-        if (!Array.isArray(value.apps) || value.apps.length > 50 || value.offset !== base.length
-                || !Number.isInteger(value.total_apps) || value.total_apps < 0 || value.total_apps > 5200
-                || typeof value.anchor_reached !== "boolean"
-                || !value.apps.every(a => typeof a.key === "string" && a.key.length && validPreview(a.latest)
-                    && a.latest.app_key === a.key && Number.isInteger(a.count) && a.count > 0
-                    && Number.isInteger(a.total_count) && a.total_count >= a.count)
-                || (value.next_offset !== null && (value.next_offset !== base.length + value.apps.length
-                    || !value.apps.length || value.next_offset >= value.total_apps))
-                || (value.next_offset === null && base.length + value.apps.length !== value.total_apps)) {
-            rootError = qsTr("Invalid notification app page"); staging = []; return;
+        if (!validAppPage(value, base.length)) {
+            failRead(true, qsTr("Invalid notification app page")); return;
         }
         const next = base.concat(value.apps);
         if (new Set(next.map(a => a.key)).size !== next.length || next.length > value.total_apps) {
-            rootError = qsTr("Notification app page did not advance"); staging = []; return;
+            failRead(true, qsTr("Notification app page did not advance")); return;
         }
         if (context.replacing && value.next_offset !== null && !value.anchor_reached) {
             staging = next; stagingEpoch = value.epoch; stagingRevision = value.revision;
@@ -181,11 +189,9 @@ Item {
     }
     function acceptDetail(value: var): void {
         if (value.app_key !== appKey || !validList(value.overview, 3) || !validList(value.entries, 5)
-                || !Number.isInteger(value.count) || value.count < 0 || value.count > 5200
-                || !Number.isInteger(value.total_count) || value.total_count < value.count
+                || !integerIn(value.count, 0, 5200) || !integerIn(value.total_count, value.count, 5200)
                 || value.pages !== Math.max(1, Math.ceil(value.count / 5))
-                || !Number.isInteger(value.page) || value.page < 1 || value.page > value.pages
-                || value.overview.some(n => n.app_key !== appKey) || value.entries.some(n => n.app_key !== appKey)
+                || !integerIn(value.page, 1, value.pages)
                 || (value.selected !== null && Ui.NotificationPresentation.recordKey(value.selected) !== selectedKey)) {
             detailError = qsTr("Invalid notification detail page"); return;
         }
@@ -193,7 +199,6 @@ Item {
         page = value.page;
         pagePending = false;
         if (!store.equal(detail, value)) detail = value;
-        detailAccepted();
     }
     onQueryChanged: {
         invalidate(); apps = []; detail = ({}); page = 1; loaded = false;
@@ -227,5 +232,6 @@ Item {
     Connections {
         target: catalog.store.backend
         function onReadyChanged(): void { if (catalog.store.backend.ready) catalog.refresh(); }
+        function onEventGapDetected(): void { catalog.refresh(); }
     }
 }

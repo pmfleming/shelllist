@@ -83,7 +83,6 @@ Item {
         id: sharedNotifications
         resident: true
         uiActive: registry.notificationController !== null && registry.notificationController.uiActive
-        historyEnabled: false
     }
 
     readonly property var currentDescriptor: descriptorFor(currentId)
@@ -346,10 +345,6 @@ Item {
                 }
                 Activity.ActivityController {
                     id: activityController
-                    notificationState: registry.notificationState
-                    onTimeWeatherRequested: function (tab) {
-                        registry.openTimeWeather(tab);
-                    }
                     onNotificationsRequested: function (groupKey, tab) {
                         registry.openNotifications(groupKey, tab, "activity");
                     }

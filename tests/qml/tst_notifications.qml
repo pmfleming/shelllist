@@ -24,8 +24,6 @@ DaemonTestCase {
     Component {
         id: fakeBackendComponent
         Activity.NotificationBackend {
-            property var requestedCursor: null
-            property bool requestedRefresh: false
             property bool requestedDnd: false
             property var requestedUntil: null
             property int dndCalls: 0
@@ -36,11 +34,6 @@ DaemonTestCase {
                 return true;
             }
             active: false
-            function loadHistory(cursor: var, refresh: bool): bool {
-                requestedCursor = cursor;
-                requestedRefresh = refresh;
-                return true;
-            }
         }
     }
 
@@ -73,16 +66,6 @@ DaemonTestCase {
             notification: notification(id, app)
         };
     }
-    function page(records, cursor, revision, query, anchorReached) {
-        return {records: records, next_cursor: cursor || null, epoch: "test-epoch", revision: revision || "1", query: query || "", anchor_reached: anchorReached !== false, scope_limit: 5000};
-    }
-    // Presentation tests supply authoritative pages, not a second native catalog.
-    function project(state, records, cursor) {
-        state.historyStaging = [];
-        state.stagingEpoch = "";
-        state.stagingRevision = "";
-        state.applyHistory(page(records, cursor, "1", state.historyQuery), true, null);
-    }
     function makeState() {
         const state = createTemporaryObject(stateComponent, testCase);
         verify(state !== null);
@@ -94,7 +77,6 @@ DaemonTestCase {
         state.notificationActive = {
             notifications: [notification(1), notification(100)]
         };
-        project(state, [record(100), record(3), record(2), record(1)]);
         return state;
     }
     function makeController(state) {
@@ -104,7 +86,7 @@ DaemonTestCase {
             height: testCase.height
         });
         verify(controller !== null);
-        projectApps(controller, [app(100, "Chat", state.history.length)]);
+        projectApps(controller, [app(100, "Chat", 4)]);
         return controller;
     }
     function preview(id, name) { return Object.assign(notification(id, name), {app_key: name || "Chat", app_icon: "", closed_unix_ms: null}); }
@@ -130,6 +112,20 @@ DaemonTestCase {
             entries: records.slice(0, 5).map(r => preview(r.notification.id, controller.selectedAppKey)),
             selected: records.find(r => r.notification.id + ":" + r.notification.created_unix_ms === controller.selectedKey) || null});
     }
+    function startCenter() {
+        const controller = makeController(makeState());
+        controller.uiActive = true;
+        controller.catalog.reloadApps();
+        return controller;
+    }
+    function rootRequest(controller) {
+        const requests = controller.notificationState.backend.requests;
+        return Object.keys(requests).find(key => requests[key].center?.view === "apps" && requests[key].center.generation === controller.catalog.rootGeneration);
+    }
+    function finishApps(controller, value, error, code) {
+        controller.notificationState.backend.finish(rootRequest(controller), {notification_center: value}, error || "", code || "");
+    }
+    function stagedPage() { return Object.assign(appPage([app(200, "First")], "", 0, 1, 2), {anchor_reached: false}); }
     function descendants(item) {
         return Array.from(item.children || []).reduce((items, child) => items.concat(descendants(child)), [item]);
     }
@@ -254,24 +250,21 @@ DaemonTestCase {
         compare(state.backend.requestedUntil, null);
     }
     function test_refreshStagesAuthoritativePagesUntilVisibleAnchor() {
-        const state = makeState();
-        state.backend = createTemporaryObject(fakeBackendComponent, state, {store: state});
-        state.historyEnabled = true;
-        state.reloadHistory();
-        compare(state.historyAnchor.id, 1);
-        const first = Array.from({length: 50}, (_, index) => record(100 - index));
-        state.applyHistory(page(first, "opaque-next", "2", "", false), true, null);
-        compare(state.backend.requestedCursor, "opaque-next");
-        verify(state.backend.requestedRefresh);
-        verify(state.historyLoading);
-        compare(state.history.length, 4, "old window remains until replacement is complete");
-        const rest = Array.from({length: 50}, (_, index) => record(50 - index));
-        state.applyHistory(page(rest, null, "2"), true, "opaque-next");
-        compare(state.history.length, 100);
-        verify(!state.historyLoading);
-        state.reloadHistory();
-        state.applyHistory(page([], null, "3"), true, null);
-        compare(state.history.length, 0, "refresh removes absent rows instead of union-merging them");
+        const controller = startCenter(), catalog = controller.catalog;
+        compare(catalog.anchor, "Chat");
+        const first = Array.from({length: 50}, (_, index) => app(100 - index, "App" + index));
+        finishApps(controller, Object.assign(appPage(first, "", 0, 50, 100), {anchor_reached: false}));
+        verify(catalog.rootBusy);
+        compare(catalog.apps.length, 1, "old window remains until replacement is complete");
+        const continuation = testCase.calls.filter(call => call.method === "notifications.queryCenter").pop();
+        compare(continuation.params.offset, 50);
+        compare(continuation.params.revision, "1");
+        finishApps(controller, appPage(Array.from({length: 50}, (_, index) => app(50 - index, "Older" + index)), "", 50, null, 100));
+        compare(catalog.apps.length, 100);
+        verify(!catalog.rootBusy);
+        catalog.reloadApps();
+        finishApps(controller, appPage([]));
+        compare(catalog.apps.length, 0, "refresh replaces, never union-merges deleted rows");
     }
     function test_replyAcknowledgementAndFailure() {
         const state = makeState();
@@ -281,11 +274,11 @@ DaemonTestCase {
         compare(state.drafts[key], "Hello");
         verify(state.replies[key].pending);
         verify(!state.replyNotification(key, "Hello"));
-        state.reloadHistory();
-        const history = Object.keys(state.backend.requests).find(id => id.startsWith("history-"));
-        state.backend.finish(history, {}, "Read failed");
-        verify(!state.historyLoading);
-        compare(state.historyError, "Read failed");
+        const controller = makeController(state);
+        controller.catalog.reloadApps();
+        finishApps(controller, null, "Read failed");
+        verify(!controller.catalog.rootBusy);
+        compare(controller.catalog.rootError, "Read failed");
         verify(state.replies[key].pending, "a read failure cannot retire the reply");
         const failed = Object.keys(state.backend.requests).find(id => id.startsWith("reply-"));
         state.backend.acceptSharedResponse(failed, null, "Connection lost");
@@ -530,12 +523,13 @@ DaemonTestCase {
         compare(state.drafts[newKey], "New draft", "old acknowledgement cannot clear another conversation");
         verify(!state.isLive(notification(100)));
         verify(!state.replyNotification(oldKey, "Stale"));
-        state.reloadHistory();
-        const pendingHistory = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        const controller = makeController(state);
+        controller.catalog.reloadApps();
+        const pending = rootRequest(controller);
         state.connectionLost();
         verify(!state.isLive(reused), "cached rows are not actionable while disconnected");
-        state.backend.finish(pendingHistory, {notification_page: page([record(987)])}, "");
-        verify(!state.history.some(record => record.history_id === 987));
+        state.backend.finish(pending, {notification_center: appPage([app(987)])}, "");
+        verify(!controller.catalog.apps.some(app => app.latest.id === 987));
         state.applySnapshot({notifications: {available: true, history_revision: 0}, notification_active: {available: true, revision: 0, notifications: [reused]}});
         verify(state.isLive(reused), "a new generation accepts reset revisions");
         compare(state.drafts[newKey], "New draft");
@@ -543,7 +537,7 @@ DaemonTestCase {
     function test_coalescedTransientReplacementThenClose() {
         const state = makeState();
         state.applySnapshot({notifications: {available: true, history_revision: 1}, notification_active: {available: true, revision: 1, notifications: [notification(1)]}});
-        project(state, [record(1)]);
+        const controller = makeController(state);
         state.backend.snapshot();
         const oldSnapshot = Object.keys(state.backend.requests).find(id => id.startsWith("snapshot-"));
         state.queueEvent(false, {available: true, revision: 2, notifications: [Object.assign({}, notification(1), {hints: {transient: true}})]});
@@ -552,10 +546,9 @@ DaemonTestCase {
         state.flushEvents();
         state.backend.finish(oldSnapshot, {snapshot: {notification_active: {available: true, revision: 1, notifications: [notification(1)]}}}, "");
         compare(state.notificationActive.revision, 3, "a stale snapshot cannot undo newer events");
-        state.reloadHistory();
-        const request = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        state.backend.finish(request, {notification_page: page([], null, "3")}, "", "");
-        compare(state.recentNotifications.length, 0, "coalescing cannot retain deleted persisted content");
+        controller.catalog.reloadApps();
+        finishApps(controller, Object.assign(appPage([]), {revision: "3"}));
+        compare(controller.catalog.apps.length, 0, "coalescing cannot retain deleted persisted content");
     }
     function test_appPrependAndPageAppendPreserveViewportAnchor() {
         const state = makeState();
@@ -617,130 +610,147 @@ DaemonTestCase {
                 {tag: "stale-after-commit", committed: true, outcome: "stale"}];
     }
     function test_oldQueryCompletionCannotRetireReplacement(data) {
-        const state = makeState();
+        const controller = startCenter(), catalog = controller.catalog, state = controller.notificationState;
         state.setDraft(100, "Keep draft");
-        state.reloadHistory();
-        const old = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        state.setHistoryQuery("needle");
-        state.reloadHistory();
-        const current = Object.keys(state.backend.requests).find(key => key !== old && key.startsWith("history-"));
-        const generation = state.historyGeneration;
-        const response = {notification_page: page([record(900)], null, "2", "needle")};
+        const old = rootRequest(controller);
+        controller.filterText = "needle";
+        catalog.reloadApps();
+        const current = rootRequest(controller), generation = catalog.rootGeneration;
+        const response = {notification_center: appPage([app(900)], "needle")};
         if (data.committed) state.backend.finish(current, response, "", "");
-        const visible = JSON.stringify(state.history);
-        state.backend.finish(old, {notification_page: page([record(888)])}, "Old read failed", data.outcome === "stale" ? "history-cursor-stale" : "");
-        compare(state.historyGeneration, generation);
-        compare(state.historyLoading, !data.committed, "an old error cannot retire the current read");
-        compare(JSON.stringify(state.history), visible);
-        compare(state.historyError, "");
+        const visible = JSON.stringify(catalog.apps);
+        state.backend.finish(old, {}, "Old read failed", data.outcome === "stale" ? "history-cursor-stale" : "");
+        compare(catalog.rootGeneration, generation);
+        compare(catalog.rootBusy, !data.committed);
+        compare(JSON.stringify(catalog.apps), visible);
+        compare(catalog.rootError, "");
         verify(!state.backend.requests[old]);
         if (!data.committed) state.backend.finish(current, response, "", "");
-        // Duplicate delivery is ignored after request ownership was consumed.
-        state.backend.finish(current, {notification_page: page([record(777)])}, "Late error", "history-cursor-stale");
-        compare(state.history[0].notification.id, 900);
-        compare(state.historyGeneration, generation);
-        compare(state.historyError, "");
+        state.backend.finish(current, {}, "Late error", "history-cursor-stale");
+        compare(catalog.apps[0].latest.id, 900);
+        compare(catalog.rootGeneration, generation);
+        compare(catalog.rootError, "");
         compare(state.drafts[state.keyFor(100)], "Keep draft");
     }
     function test_queuedRevisionBetweenRefreshPagesDiscardsStaging() {
-        const state = makeState();
-        state.applySummary({available: true, history_revision: 1});
-        state.historyEnabled = true;
-        state.reloadHistory();
-        const first = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        const visible = JSON.stringify(state.history);
-        state.backend.finish(first, {notification_page: page([record(200)], "tail", "1", "", false)}, "", "");
-        const tail = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        compare(state.historyStaging.length, 1);
-        compare(JSON.stringify(state.history), visible);
+        const controller = startCenter(), catalog = controller.catalog, state = controller.notificationState;
+        const visible = JSON.stringify(catalog.apps);
+        finishApps(controller, stagedPage());
+        compare(catalog.staging.length, 1);
+        compare(JSON.stringify(catalog.apps), visible);
         state.queueEvent(true, {available: true, history_revision: 2});
-        state.backend.finish(tail, {notification_page: page([record(199)], null, "1")}, "", "");
-        compare(state.observedHistoryRevision, 2, "queued events are flushed before accepting a page");
-        compare(JSON.stringify(state.history), visible, "stale staging is never published");
-        compare(state.historyStaging.length, 0);
-        verify(state.historyDirty);
-        verify(!state.historyLoading);
-        state.reloadHistory();
-        const replacement = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        state.backend.finish(replacement, {notification_page: page([record(201)], null, "2")}, "", "");
-        compare(state.history.map(item => item.notification.id), [201]);
-        compare(state.historyRevision, "2");
+        finishApps(controller, appPage([app(199, "Second")], "", 1, null, 2));
+        compare(state.observedHistoryRevision, 2, "flush queued events before accepting a page");
+        compare(JSON.stringify(catalog.apps), visible);
+        compare(catalog.staging.length, 0);
+        verify(catalog.rootDirty);
+        verify(!catalog.rootBusy);
+        catalog.reloadApps();
+        finishApps(controller, Object.assign(appPage([app(201)]), {revision: "2"}));
+        compare(catalog.apps.map(app => app.latest.id), [201]);
+        compare(catalog.revision, "2");
     }
     function test_abandonedRefreshNeverPublishesPartialPages_data() {
         return [{tag: "read-error"}, {tag: "epoch"}];
     }
     function test_abandonedRefreshNeverPublishesPartialPages(data) {
-        const state = makeState();
-        state.historyEnabled = true;
-        const visible = JSON.stringify(state.history);
+        const controller = startCenter(), catalog = controller.catalog;
         const callsBefore = testCase.calls.length;
-        state.reloadHistory();
-        const first = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        state.backend.finish(first, {notification_page: page([record(200)], "tail", "2", "", false)}, "", "");
-        const tail = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        const continuation = page([record(199)], "older", "2", "", false);
+        const visible = JSON.stringify(catalog.apps);
+        finishApps(controller, stagedPage());
+        const continuation = appPage([app(199, "Second")], "", 1, null, 2);
         if (data.tag === "epoch") continuation.epoch = "after-restart";
-        state.backend.finish(tail, {notification_page: continuation}, data.tag === "read-error" ? "Read failed" : "", "");
-        compare(JSON.stringify(state.history), visible);
-        compare(state.historyStaging.length, 0);
-        verify(!state.historyLoading);
-        compare(testCase.calls.length - callsBefore, 2, "no further continuation after abandonment");
-        verify(testCase.calls.slice(callsBefore).every(call => call.method === "notifications.queryHistory"), "recovery is read-only");
+        finishApps(controller, continuation, data.tag === "read-error" ? "Read failed" : "");
+        compare(JSON.stringify(catalog.apps), visible);
+        compare(catalog.staging.length, 0);
+        verify(!catalog.rootBusy);
+        compare(testCase.calls.length - callsBefore, 1, "only the initial continuation, none after abandonment");
+        verify(testCase.calls.slice(callsBefore).every(call => call.method === "notifications.queryCenter"));
     }
-    function test_rejectInvalidHistoryPages_data() {
+    function test_rejectInvalidCenterPages_data() {
         return [
             {tag: "missing-page", patch: null},
             {tag: "wrong-query", patch: {query: "other"}},
-            {tag: "invalid-cursor", patch: {next_cursor: 42}},
-            {tag: "duplicate-records", patch: {records: [record(99), record(99)]}},
-            {tag: "invalid-id", patch: {records: [record(4294967296)]}}
+            {tag: "invalid-offset", patch: {next_offset: 42}},
+            {tag: "duplicate-records", patch: {apps: [app(99), app(99)], total_apps: 2}},
+            {tag: "invalid-id", patch: {apps: [app(4294967296)]}},
+            {tag: "missing-app", patch: {apps: [null]}},
+            {tag: "too-many-apps", patch: {apps: Array.from({length: 51}, (_, i) => app(i + 1, "App" + i)), total_apps: 51}},
+            {tag: "wrong-identity", patch: {apps: [Object.assign(app(99), {key: "Other"})]}},
+            {tag: "invalid-count", patch: {apps: [Object.assign(app(99), {count: 1.5})]}},
+            {tag: "excessive-count", patch: {apps: [app(99, "Chat", 5201)]}},
+            {tag: "missing-token", patch: {epoch: ""}},
+            {tag: "wrong-view", patch: {view: "app"}}
         ];
     }
-    function test_rejectInvalidHistoryPages(data) {
-        const state = makeState();
-        const visible = JSON.stringify(state.history);
-        state.reloadHistory();
-        const request = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        state.backend.finish(request, {notification_page: data.patch === null ? null : Object.assign(page([record(99)]), data.patch)}, "", "");
-        compare(JSON.stringify(state.history), visible);
-        verify(state.historyError.length > 0);
-        verify(!state.historyLoading);
-        compare(state.historyStaging.length, 0);
+    function test_rejectInvalidCenterPages(data) {
+        const controller = startCenter(), catalog = controller.catalog;
+        const visible = JSON.stringify(catalog.apps);
+        finishApps(controller, data.patch === null ? null : Object.assign(appPage([app(99)]), data.patch));
+        compare(JSON.stringify(catalog.apps), visible);
+        verify(catalog.rootError.length > 0);
+        verify(!catalog.rootBusy);
+        compare(catalog.staging.length, 0);
     }
-    function test_cursorInvalidationAndMalformedPagesNeverMixVisibleRevisions() {
-        const state = makeState();
-        project(state, [record(100), record(3)], "old-cursor");
-        state.historyDirty = false;
-        state.loadMoreHistory();
-        const request = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        state.backend.finish(request, {}, "History changed", "history-cursor-stale");
-        verify(state.historyDirty);
-        compare(state.history.length, 2, "stale reads retain the current visible window until refresh");
-        verify(!state.historyHasMore);
-        state.reloadHistory();
-        const refresh = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        state.backend.finish(refresh, {notification_page: page([record(101), record(100)], "new-cursor", "2")}, "", "");
-        compare(state.historyRevision, "2");
-        verify(!state.history.some(item => item.history_id === 3), "refresh removes absent records");
-        state.applyHistory(page([record(99)], null, "3"), false, "new-cursor");
-        compare(state.history.length, 2, "a different page revision is never appended");
-        verify(state.historyDirty);
-        project(state, [record(100)], "cursor");
-        state.applyHistory(page([], "cursor"), false, "cursor");
-        verify(state.historyError.length > 0, "non-advancing pages fail instead of looping");
-        compare(state.history.length, 1);
-        state.applyHistory(page([record(100)], null), false, "cursor");
-        compare(state.history.length, 1, "duplicate pages are rejected, not silently deduplicated");
-        state.applyHistory(page([{notification: {id: 99}}]), false, "cursor");
-        compare(state.history.length, 1, "malformed identities cannot enter the keyed model");
-        // Reconnect can legitimately reset revision numbers and changes epoch.
-        state.connectionLost();
-        state.reloadHistory();
-        const reconnect = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
-        const replacement = page([], null, "0");
-        replacement.epoch = "new-daemon";
-        state.backend.finish(reconnect, {notification_page: replacement}, "", "");
-        compare(state.historyEpoch, "new-daemon");
-        compare(state.history.length, 0, "missed deletion events are repaired by authoritative replacement");
+    function test_detailValidationKeepsLastCoherentRecord_data() {
+        return [{tag: "wrong-app", patch: {app_key: "Other"}},
+            {tag: "wrong-record-app", patch: {entries: [preview(100, "Other")]}},
+            {tag: "duplicate-record", patch: {entries: [preview(100), preview(100)]}},
+            {tag: "unbounded-preview", patch: {overview: Array.from({length: 4}, (_, i) => preview(i + 1))}},
+            {tag: "wrong-pages", patch: {pages: 7}},
+            {tag: "invalid-page", patch: {page: 0}},
+            {tag: "invalid-count", patch: {count: -1}},
+            {tag: "excessive-total", patch: {total_count: 5201}},
+            {tag: "wrong-selected-record", patch: {selected: record(99)}}];
+    }
+    function test_detailValidationKeepsLastCoherentRecord(data) {
+        const controller = makeController(makeState());
+        controller.readRecord(preview(100)); projectDetail(controller, [record(100)]);
+        const before = JSON.stringify(controller.catalog.detail);
+        controller.catalog.acceptDetail(Object.assign({}, controller.catalog.detail, data.patch));
+        compare(JSON.stringify(controller.catalog.detail), before);
+        verify(controller.catalog.detailError.length > 0);
+        verify(!controller.messageCommandsEnabled);
+    }
+    function test_hidingCenterRetiresStagingWithoutReplayingReads() {
+        const controller = startCenter(), catalog = controller.catalog, state = controller.notificationState;
+        const visible = JSON.stringify(catalog.apps);
+        finishApps(controller, stagedPage());
+        const pending = rootRequest(controller), calls = testCase.calls.length;
+        controller.uiActive = false;
+        state.backend.finish(pending, {notification_center: appPage([app(199, "Second")], "", 1, null, 2)}, "", "");
+        compare(JSON.stringify(catalog.apps), visible);
+        compare(catalog.staging.length, 0);
+        verify(!catalog.rootBusy);
+        wait(150);
+        compare(testCase.calls.length, calls);
+    }
+    function test_stalePagesNeverMixVisibleRevisionsAndGapsRefreshReads() {
+        const controller = startCenter(), catalog = controller.catalog, state = controller.notificationState;
+        finishApps(controller, appPage([app(100), app(3, "Mail")], "", 0, 2, 3));
+        catalog.rootDirty = false; catalog.loadMore();
+        finishApps(controller, null, "History changed", "history-cursor-stale");
+        verify(catalog.rootDirty);
+        compare(catalog.apps.length, 2);
+        catalog.reloadApps();
+        finishApps(controller, Object.assign(appPage([app(101)]), {revision: "2"}));
+        compare(catalog.revision, "2");
+        compare(catalog.apps.length, 1, "refresh removes absent apps");
+        catalog.acceptApps({offset: 1, replacing: false}, Object.assign(appPage([app(99, "Other")], "", 1, null, 2), {revision: "3"}));
+        compare(catalog.apps.length, 1);
+        verify(catalog.rootDirty);
+        projectApps(controller, [app(100)]);
+        for (const page of [appPage([], "", 1, 1, 2), appPage([app(100)], "", 1, null, 2), appPage([app(0)], "", 1, null, 2)]) {
+            catalog.acceptApps({offset: 1, replacing: false}, page);
+            verify(catalog.rootError.length > 0);
+            compare(catalog.apps.length, 1);
+        }
+        state.connectionLost(); catalog.reloadApps();
+        finishApps(controller, Object.assign(appPage([]), {epoch: "new-daemon", revision: "0"}));
+        compare(catalog.epoch, "new-daemon");
+        compare(catalog.apps.length, 0);
+        catalog.rootDirty = false; catalog.detailDirty = false;
+        state.backend.eventGapDetected("notifications.changed", {event: "lagged"});
+        verify(catalog.rootDirty && catalog.detailDirty, "a gap refreshes the active reader even before the next revision");
     }
 }
