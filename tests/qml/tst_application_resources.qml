@@ -151,10 +151,9 @@ DaemonTestCase {
     function test_scopedValuesAndUnavailableAreNotZero() {
         const panel = make();
         compare(card(panel, "applicationPower").valueText, "<0.01 W");
-        verify(card(panel, "applicationPeriodEnergy").valueText.indexOf("≈ 5.00 mWh") >= 0);
+        verify(card(panel, "applicationPower").detailText.indexOf("≈ 5.00 mWh") >= 0, "Canonical energy remains accessible, not another card");
         verify(card(panel, "applicationDiskFootprint").detailText.indexOf("Installation and shared dependencies not measured") >= 0);
-        verify(card(panel, "applicationDiskFootprint").detailText.indexOf("Temporary:") >= 0);
-        verify(card(panel, "applicationReferencedFiles").text.indexOf("not added") >= 0);
+        verify(card(panel, "applicationDiskFootprint").detailText.indexOf("not added") >= 0);
         const disk = card(panel, "applicationIo_disk_read_bytes_per_second");
         compare(disk.valueText, "0 B/s");
         verify(disk.available);
@@ -163,17 +162,18 @@ DaemonTestCase {
         verify(!network.available);
         compare(findChild(network, "resourceValue").text, "—");
         const chart = card(panel, "applicationResourceTimeline");
-        compare(chart.lanes.length, 5, "Overview and history are combined, not duplicated");
+        compare(card(panel, "applicationResourceOverview").cards.length, 4);
         verify(chart.lanes[0].series[0].valueText.indexOf("0.0%") >= 0);
-        verify(chart.lanes[3].unavailableText.indexOf("unavailable; not zero") >= 0);
-        verify(!card(panel, "resourcePlot_network").visible, "Unsupported plots collapse instead of graphing zero");
-        compare(card(panel, "resourcePlot_memory").chartStyle, "steps");
-        compare(card(panel, "resourcePlot_storage").chartStyle, "columns");
-        compare(card(panel, "resourcePlot_activity").chartStyle, "lines");
-        compare(card(panel, "resourcePlot_energy").chartStyle, "area");
-        verify(card(panel, "resourceCoverage_storage").text.indexOf("↓ R 15m/30m") >= 0);
-        verify(card(panel, "resourceCoverage_storage").text.indexOf("↑ W 30m/30m") >= 0, "Different directional coverage is not collapsed");
-        verify(chart.timeLabel(4) !== "Now", "Retained window ends are timestamps, never fake live samples");
+        compare(card(panel, "resourceTransferValue_network_receive_bytes_per_second").text, "—");
+        compare(card(panel, "resourceTransferBar_network_receive_bytes_per_second").fraction, 0);
+        compare(card(panel, "resourcePlot_memory_bytes").chartStyle, "steps");
+        compare(card(panel, "resourcePlot_storage").chartStyle, "paired-columns");
+        compare(card(panel, "resourcePlot_cpu_percent_of_machine").chartStyle, "columns");
+        compare(card(panel, "resourcePlot_gpu_busy_percent").chartStyle, "columns");
+        compare(findChild(panel, "resourcePlot_energy"), null);
+        compare(findChild(panel, "resourcePlot_network"), null, "Network uses canonical transfer totals, not a duplicate rate plot");
+        verify(card(panel, "resourceCoverage_activity_storage").text.indexOf("↓ R 15m/30m") >= 0);
+        verify(card(panel, "resourceCoverage_activity_storage").text.indexOf("↑ W 30m/30m") >= 0, "Different directional coverage is not collapsed");
     }
     function test_retainedAndMissingMetricStates() {
         const panel = make();
@@ -182,7 +182,7 @@ DaemonTestCase {
         c.replaceProviderResults([c.provider.resultFor(stopped)], false);
         tryVerify(() => card(panel, "applicationResourceSnapshotStatus").text.indexOf("App stopped") >= 0);
         verify(card(panel, "applicationPower").accessibleLabel.indexOf("Last observed") >= 0);
-        verify(card(panel, "applicationMemoryDetails").text.indexOf("Source not recorded") >= 0, "Historical samples do not carry a PSS/RSS source");
+        verify(card(panel, "applicationRam").detailText.indexOf("Source not recorded") >= 0, "Historical samples do not carry a PSS/RSS source");
         c.resourceHistory = [];
         verify(card(panel, "applicationResourceSnapshotStatus").text.indexOf("no retained measurements") >= 0);
         verify(!card(panel, "applicationPower").available);
@@ -194,70 +194,134 @@ DaemonTestCase {
         verify(!card(panel, "applicationGpuMemory").available, "Capability alone cannot turn null into zero");
         verify(!card(panel, "applicationRam").available);
     }
-    function test_measurementCommandIsReadOnlyAndDoesNotRequestHistory() {
+    function test_passiveCardsAndScrollingWithoutDefinitionsPanel() {
         const panel = make();
         panel.detailsItem.width = 350;
         wait(0);
-        const range = field(panel);
-        const details = card(panel, "applicationMeasurementDetails");
-        const command = card(panel, "applicationMeasurementDetailsCommand");
         const before = historyCalls();
-        verify(!details.visible);
+        compare(findChild(panel, "applicationMeasurementDetails"), null);
+        compare(findChild(panel, "applicationMeasurementDetailsCommand"), null);
+        verify(!card(panel, "applicationResourceSnapshotStatus").visible, "No routine snapshot caption");
         keyClick(Qt.Key_Tab);
-        keyClick(Qt.Key_H, Qt.AltModifier);
-        tryVerify(() => details.visible);
-        wait(20);
-        compare(panel.detailsNavigation.availableFields().length, 1);
+        const range = field(panel);
         compare(panel.detailsNavigation.currentTarget, range);
-        tryVerify(() => {
-            const heading = details.revealTarget;
-            const y = heading.mapToItem(panel.detailsItem.contentItem, 0, 0).y;
-            return y >= panel.detailsItem.contentY && y + heading.height <= panel.detailsItem.contentY + panel.detailsItem.height;
-        }, 1000, "Disclosure heading is revealed, not the bottom of its long explanation");
+        const cpu = card(panel, "applicationCpuActivity");
+        panel.detailsItem.revealItem(cpu);
+        wait(0);
+        mouseClick(findChild(cpu, "resourceGlyph"));
+        compare(historyCalls(), before, "Glyphs are not actions");
+        compare(panel.detailsNavigation.availableFields().length, 1);
+        keyClick(Qt.Key_H, Qt.AltModifier);
+        compare(historyCalls(), before, "No definitions command or backend side effect");
+        panel.detailsNavigation.focusContent(false);
+        wait(0);
+        panel.detailsItem.contentY = 0;
         keyClick(Qt.Key_PageDown);
         tryVerify(() => panel.detailsItem.contentY > 0);
-        const previousScroll = panel.detailsItem.contentY;
+        const previous = panel.detailsItem.contentY;
         keyClick(Qt.Key_PageUp);
-        tryVerify(() => panel.detailsItem.contentY < previousScroll);
-        keyClick(Qt.Key_H, Qt.AltModifier);
-        tryVerify(() => !details.visible);
-        panel.detailsItem.revealItem(command);
-        wait(0);
-        mouseClick(command);
-        tryVerify(() => details.visible);
-        compare(historyCalls(), before, "Disclosure has no backend side effects");
-        keyClick(Qt.Key_Tab);
-        compare(panel.detailsNavigation.currentTarget, range);
+        tryVerify(() => panel.detailsItem.contentY < previous);
         keyClick(Qt.Key_Tab, Qt.ShiftModifier);
-        compare(panel.detailsNavigation.currentTarget, range);
-        keyClick(Qt.Key_J, Qt.AltModifier);
-        tryVerify(() => panel.detailsNavigation.commandMenuOpen);
-        keyClick(Qt.Key_H, Qt.AltModifier);
-        verify(details.visible, "The menu blocks underlying command chords");
-        keyClick(Qt.Key_Escape);
-        tryVerify(() => !panel.detailsNavigation.commandMenuOpen);
-        verify(details.visible, "Closing the shared menu does not hide details");
-        keyClick(Qt.Key_J, Qt.AltModifier);
-        tryVerify(() => panel.detailsNavigation.commandMenuOpen);
-        keyClick(Qt.Key_Return);
-        tryVerify(() => !panel.detailsNavigation.commandMenuOpen && !details.visible);
-        compare(historyCalls(), before, "Named disclosure is also read-only");
+        compare(panel.detailsNavigation.currentTarget, range, "Icons add no reverse traversal stops");
     }
     function test_loadingAndZeroComposition() {
         const panel = make();
         const c = panel.chooserController;
         const zero = Object.assign(fixture(), {disk_space_total_bytes: 0, disk_space_permanent_bytes: 0, disk_space_temporary_bytes: 0});
         c.replaceProviderResults([c.provider.resultFor(zero)], false);
-        compare(card(panel, "applicationDiskComposition").fraction, 0);
+        compare(card(panel, "resourceBar_persistent").fraction, 0);
+        compare(card(panel, "resourceBar_temporary").fraction, 0);
         compare(card(panel, "applicationDiskFootprint").valueText, "0 B");
         keyClick(Qt.Key_Tab);
         keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Right);
         keyClick(Qt.Key_Return);
         verify(c.historyInFlight);
-        verify(card(panel, "applicationPeriodEnergy").valueText.indexOf("Loading") >= 0);
-        verify(!card(panel, "resourcePlot_energy").visible, "No stale plot while requesting another range");
+        verify(card(panel, "resourceTransferValue_network_receive_bytes_per_second").text.indexOf("Loading") >= 0);
+        verify(!card(panel, "resourcePlot_cpu_percent_of_machine").visible, "No stale plot while requesting another range");
+        compare(card(panel, "resourceTransferBar_network_receive_bytes_per_second").fraction, 0);
         compare(card(panel, "applicationPower").valueText, "<0.01 W", "Latest snapshot remains separate");
+        compare(card(panel, "applicationDiskFootprint").valueText, "0 B", "Range changes do not replace the footprint");
+    }
+    function test_totalsRemainCanonicalAndIndependentFromSnapshot() {
+        const panel = make();
+        const c = panel.chooserController;
+        const active = fixture();
+        active.measurement.network_bytes_available = true;
+        active.network_receive_bytes_per_second = 19;
+        c.replaceProviderResults([c.provider.resultFor(active)], false);
+        const duration = c.historyWindowEndMs - c.historyWindowStartMs;
+        const metrics = Object.assign({}, c.resourceHistorySummary.metrics, {
+            network_receive_bytes_per_second: {available: true, mean: 1024, peak: 2048, observed_ms: duration / 2},
+            network_transmit_bytes_per_second: {available: true, mean: 0, peak: 0, observed_ms: duration}
+        });
+        const valid = Object.assign({}, c.resourceHistorySummary, {metrics: metrics});
+        c.resourceHistorySummary = valid;
+        const receiveText = () => card(panel, "resourceTransferValue_network_receive_bytes_per_second").text;
+        compare(receiveText(), "≈ 900 KiB", "Integrate observed time, not the full selected window");
+        compare(card(panel, "resourceTransferValue_network_transmit_bytes_per_second").text, "≈ 0 B");
+        verify(card(panel, "resourceTransferBar_network_receive_bytes_per_second").fraction > 0);
+        compare(card(panel, "resourceTransferBar_network_transmit_bytes_per_second").fraction, 0);
+        verify(card(panel, "resourceCoverage_network").text.indexOf("↓ 15m/30m") >= 0);
+        verify(card(panel, "resourceCoverage_network").text.indexOf("↑ 30m/30m") >= 0);
+        c.resourceHistorySummary = Object.assign({}, valid, {weighting: "sample-count"});
+        compare(receiveText(), "—", "Unknown weighting never creates a total");
+        c.resourceHistorySummary = Object.assign({}, valid, {window_end_ms: valid.window_end_ms - 1});
+        compare(receiveText(), "—", "Another window never supplies these bars");
+        c.resourceHistorySummary = valid;
+        const unavailable = Object.assign({}, active, {network_receive_bytes_per_second: null});
+        c.replaceProviderResults([c.provider.resultFor(unavailable)], false);
+        verify(!card(panel, "applicationIo_network_receive_bytes_per_second").available);
+        compare(receiveText(), "≈ 900 KiB", "A missing snapshot does not hide valid period evidence");
+        verify(card(panel, "applicationIo_network_transmit_bytes_per_second").available);
+    }
+    function test_arrivingSnapshotsKeepDraftAndPartialFootprint() {
+        const panel = make();
+        const c = panel.chooserController;
+        const before = historyCalls();
+        keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Right);
+        compare(field(panel).displayedValue, "2h");
+        const changed = fixture();
+        changed.disk_space_permanent_bytes = null;
+        changed.disk_read_bytes_per_second = null;
+        changed.memory_bytes = 1024 * 1024 * 1024 * 123.4;
+        c.replaceProviderResults([c.provider.resultFor(changed)], false);
+        verify(panel.detailsNavigation.editing);
+        compare(field(panel).displayedValue, "2h");
+        compare(c.historyRange, "30m");
+        compare(historyCalls(), before);
+        verify(card(panel, "applicationDiskFootprint").available, "Valid footprint survives a missing component and read rate");
+        compare(card(panel, "resourceBar_persistent").fraction, 0);
+        verify(card(panel, "resourceBar_temporary").fraction > 0);
+        verify(!card(panel, "applicationIo_disk_read_bytes_per_second").available);
+        verify(card(panel, "applicationIo_disk_write_bytes_per_second").available);
+        keyClick(Qt.Key_Escape);
+        compare(field(panel).displayedValue, "30m");
+        compare(card(panel, "applicationResourceOverview").cards.length, 4);
+    }
+    function test_pairedColumnPixelsAndMeasuredZero() {
+        const component = Qt.createComponent(Qt.resolvedUrl("../../launcher/ApplicationResourcePlot.qml"));
+        compare(component.status, Component.Ready, component.errorString());
+        const point = {timestamp_ms: 1000, duration_ms: 1000, disk_read_bytes_per_second: 0.5,
+            disk_write_bytes_per_second: 1, availability: {storage: true}};
+        const plot = createTemporaryObject(component, tests, {width: 200, height: 100, maximum: 1,
+            chartStyle: "paired-columns", rangeStartMilliseconds: 0, rangeEndMilliseconds: 1000,
+            points: [point], series: [{metric: "disk_read_bytes_per_second", color: "red", direction: 1},
+                {metric: "disk_write_bytes_per_second", color: "blue", direction: -1}]});
+        verify(plot !== null);
+        const pixel = (x, y) => grabImage(plot).pixel(Math.floor(x * plot.Screen.devicePixelRatio), Math.floor(y * plot.Screen.devicePixelRatio));
+        tryCompare(plot, "available", true);
+        tryVerify(() => pixel(25, 70).r > 0.9 && pixel(25, 70).b < 0.1);
+        verify(pixel(150, 20).b > 0.9, "Writes are positive bars on the right, not a negative half-plot");
+        plot.points = [Object.assign({}, point, {disk_write_bytes_per_second: null})];
+        tryVerify(() => pixel(150, 20).b < 0.9 || pixel(150, 20).r > 0.1, 1000);
+        verify(pixel(25, 70).r > 0.9, "One missing series cannot hatch over a valid bar");
+        plot.points = [Object.assign({}, point, {disk_read_bytes_per_second: 0, disk_write_bytes_per_second: 0})];
+        tryVerify(() => (pixel(25, 70).r < 0.9 || pixel(25, 70).b > 0.1)
+            && (pixel(150, 20).b < 0.9 || pixel(150, 20).r > 0.1));
+        component.destroy();
     }
     Component {
         id: drawingFactory
@@ -298,18 +362,30 @@ DaemonTestCase {
         const end = c.historyWindowEndMs;
         const point = c.resourceHistory[0];
         c.resourceHistory = [Object.assign({}, point, {timestamp_ms: end - 30000}),
-            Object.assign({}, point, {timestamp_ms: end - 15000, gpu_memory_resident_bytes: null, disk_write_bytes_per_second: null}),
+            Object.assign({}, point, {timestamp_ms: end - 15000, gpu_busy_percent: null, memory_bytes: null, disk_write_bytes_per_second: null}),
             Object.assign({}, point, {timestamp_ms: end})];
-        const memory = card(panel, "resourcePlot_memory");
-        compare(memory.segments[0].length, 1, "RAM remains measured");
-        compare(memory.segments[1].length, 2, "GPU resident trace breaks independently");
-        verify(memory.yFor(0, 0) < memory.height - memory.series.length * 4 * memory.uiScale, "Per-series gap bands cannot obscure a valid zero trace");
+        const cpu = card(panel, "resourcePlot_cpu_percent_of_machine");
+        const gpu = card(panel, "resourcePlot_gpu_busy_percent");
+        const memory = card(panel, "resourcePlot_memory_bytes");
+        compare(cpu.segments[0].length, 1, "CPU remains measured");
+        compare(gpu.segments[0].length, 2, "GPU lane breaks independently");
+        compare(memory.segments[0].length, 2);
+        compare(memory.series.length, 1, "RAM history is not overlaid with GPU bytes");
+        compare(cpu.maximum, gpu.maximum, "Activity lanes use the same percentage scale");
         const disk = card(panel, "resourcePlot_storage");
         compare(disk.segments[0].length, 1);
         compare(disk.segments[1].length, 2);
-        c.resourceHistory = c.resourceHistory.map(p => Object.assign({}, p, {gpu_memory_resident_bytes: undefined}));
-        compare(memory.segments[1].length, 0, "Legacy retained points need no new collector");
-        verify(card(panel, "applicationGpuMemory").available, "Snapshot survives missing GPU history");
+        verify(disk.yFor(0, 0) < disk.height - disk.series.length * 4 * disk.uiScale, "Gap bands cannot obscure valid zero bars");
+        const interval = {start: end - 15000, end: end, value: disk.maximum / 2};
+        const read = disk.columnRect(interval, 0);
+        const write = disk.columnRect(interval, 1);
+        verify(read.x + read.width <= write.x, "Read left, write right: no overlap");
+        verify(write.x + write.width <= disk.xFor(end));
+        compare(read.y, write.y, "Both directions have positive magnitude on one scale");
+        compare(disk.columnRect(Object.assign({}, interval, {value: 0}), 0).height, 0, "A measured zero has no decorative filled bar");
+        c.resourceHistory = c.resourceHistory.map(p => Object.assign({}, p, {gpu_busy_percent: undefined}));
+        compare(gpu.segments[0].length, 0);
+        verify(card(panel, "applicationGpuActivity").available, "Snapshot survives missing GPU history");
     }
     function test_compactGeometry() {
         const panel = make();
@@ -338,14 +414,23 @@ DaemonTestCase {
         wait(0);
         const chart = card(panel, "applicationResourceTimeline");
         verify(chart.wide);
-        verify(panel.detailsItem.contentHeight < 760, "Default resource body is compact: " + panel.detailsItem.contentHeight);
-        const memory = card(panel, "resourcePlot_memory");
-        const activity = card(panel, "resourcePlot_activity");
+        verify(panel.detailsItem.contentHeight < 1150, "Readable plots take priority over the old tiny-strip budget: " + panel.detailsItem.contentHeight);
+        const memory = card(panel, "resourcePlot_memory_bytes");
+        const activity = card(panel, "resourcePlot_cpu_percent_of_machine");
+        verify(memory.height >= 90 && activity.height >= 75);
+        compare(card(panel, "applicationResourceCards").columns, 4);
+        const cards = ["activity", "memory", "disk", "network"].map(id => card(panel, "resourceCard_" + id));
+        for (let i = 1; i < cards.length; i++) {
+            compare(cards[i].y, cards[0].y);
+            fuzzyCompare(cards[i].width, cards[0].width, 1);
+            verify(cards[i].x >= cards[i - 1].x + cards[i - 1].width);
+        }
         compare(memory.mapToItem(chart, 0, 0).x, activity.mapToItem(chart, 0, 0).x, "Shared time-axis alignment");
         compare(memory.width, activity.width);
         wait(20); // Canvas render smoke check; arithmetic/gap tests cover geometry.
         const pixels = grabImage(chart);
         verify(pixels.width > 0 && pixels.height > 0);
+
     }
     function test_responsiveGeometry_data() {
         return [{tag: "360", width: 360, scale: 1}, {tag: "540", width: 540, scale: 1},
@@ -358,30 +443,38 @@ DaemonTestCase {
         panel.detailsItem.uiScale = data.scale;
         wait(20);
         const chart = card(panel, "applicationResourceTimeline");
-        compare(chart.wide, data.width >= 480 * data.scale);
-        for (const id of ["activity", "memory", "storage", "network", "energy"]) {
+        compare(chart.wide, data.width >= 560 * data.scale);
+        compare(card(panel, "applicationResourceCards").columns, data.width >= 620 * data.scale ? 4 : 2);
+        for (const id of ["activity", "memory", "storage", "network"]) {
             const group = card(panel, "resourceGroup_" + id);
-            const plot = card(panel, "resourcePlot_" + id);
             verify(group.width <= chart.width && group.height > 0);
-            const position = plot.mapToItem(group, 0, 0);
+        }
+        for (const id of ["cpu_percent_of_machine", "gpu_busy_percent", "memory_bytes", "storage"]) {
+            const plot = card(panel, "resourcePlot_" + id);
+            const position = plot.mapToItem(chart, 0, 0);
             if (plot.visible) {
-                verify(position.x >= 0 && position.x + plot.width <= group.width + 1);
-                verify(position.y >= 0 && position.y + plot.height <= group.height + 1);
+                verify(position.x >= 0 && position.x + plot.width <= chart.width + 1);
+                verify(position.y >= 0 && position.y + plot.height <= chart.height + 1);
             }
         }
+        compare(card(panel, "applicationResourceOverview").cards.length, 4);
         keyClick(Qt.Key_Tab);
         compare(panel.detailsNavigation.availableFields().length, 1);
     }
     function test_narrowLayoutKeepsValuesAndChartStatisticsReadable() {
         const panel = make();
         panel.detailsItem.width = 350;
+        const large = Object.assign(fixture(), {memory_bytes: 123.4 * 1024 * 1024 * 1024,
+            disk_space_total_bytes: 987.6 * 1024 * 1024 * 1024 * 1024,
+            disk_read_bytes_per_second: 123.4 * 1024 * 1024 * 1024});
+        panel.chooserController.replaceProviderResults([panel.chooserController.provider.resultFor(large)], false);
         wait(0);
         const page = panel.detailsItem;
         const chart = card(panel, "applicationResourceTimeline");
         verify(!chart.wide);
         verify(chart.height > 0);
         verify(page.contentHeight >= chart.height, "The complete timeline contributes to scroll geometry; compact content may fit");
-        for (const name of ["applicationDiskFootprint", "applicationRam", "applicationGpuMemory", "applicationPeriodEnergy", "applicationIo_network_receive_bytes_per_second"]) {
+        for (const name of ["applicationDiskFootprint", "applicationRam", "applicationGpuMemory", "applicationPower", "applicationIo_disk_read_bytes_per_second", "applicationIo_network_receive_bytes_per_second"]) {
             const control = card(panel, name);
             verify(control.width > 0 && control.width <= page.width);
             const value = findChild(control, "resourceValue");

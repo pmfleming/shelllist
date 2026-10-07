@@ -3,108 +3,102 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
-import "ApplicationResources.js" as Resources
 
-// Read-only disclosure. The compact rows own the latest values; this section
-// retains statistics, attribution and safety qualifications without duplicating
-// the overview card stack or introducing new field stops.
+// Four equal snapshot cards. No card or reading joins editable traversal.
 Ui.DetailSection {
-    id: details
+    id: overview
     informationOnly: true
-    readonly property Item revealTarget: heading
-
-    required property var application
-    required property var latestPoint
     required property var lanes
     required property var footprint
-    required property string memorySource
-    required property string swapText
-    required property string allocatedText
-    required property string referencedText
     required property real uiScale
-    readonly property var metrics: lanes.reduce((result, lane) => result.concat(lane.series), [])
+    readonly property bool wide: width >= 620 * uiScale
+    readonly property var cards: [
+        {id: "activity", label: qsTr("Activity"), icon: "equalizer", color: Ui.Theme.resourceCpu, readings: lanes[0].series},
+        {id: "memory", label: qsTr("Memory"), icon: "memory_alt", color: Ui.Theme.resourceMemory, readings: lanes[1].series},
+        {id: "disk", label: qsTr("Disk"), icon: "hard_drive", color: Ui.Theme.resourceDisk, readings: [footprint.reading]},
+        {id: "network", label: qsTr("Network"), icon: "lan", color: Ui.Theme.resourceNetworkReceive, readings: lanes[3].series}
+    ]
 
-    Ui.ThemeText {
-        id: heading
-        Layout.fillWidth: true
-        text: qsTr("Measurement details")
-        font.pixelSize: Ui.Theme.fontSizeHeading
-        font.weight: Ui.Theme.fontWeightMedium
-        wrapMode: Text.Wrap
-    }
     GridLayout {
+        objectName: "applicationResourceCards"
         Layout.fillWidth: true
-        columns: 3
-        columnSpacing: Ui.Theme.spacingSm
-        rowSpacing: Ui.Theme.spacingSm
+        columns: overview.wide ? 4 : 2
+        columnSpacing: Math.round(8 * overview.uiScale)
+        rowSpacing: columnSpacing
         Repeater {
-            model: [qsTr("Metric"), qsTr("Average / peak"), qsTr("Observed time")]
-            delegate: Ui.ThemeText {
-                required property string modelData
+            model: overview.cards
+            delegate: Ui.DetailColumnCard {
+                id: card
+                required property var modelData
+                objectName: "resourceCard_" + modelData.id
                 Layout.fillWidth: true
+                Layout.fillHeight: true
                 Layout.preferredWidth: 1
                 Layout.minimumWidth: 0
-                text: modelData
-                wrapMode: Text.Wrap
-                font.pixelSize: Ui.Theme.fontSizeCaption
-                font.weight: Ui.Theme.fontWeightDemiBold
+                contentPadding: Math.round(12 * overview.uiScale)
+                verticalContentPadding: Math.round(14 * overview.uiScale)
+                contentSpacing: Math.round(12 * overview.uiScale)
+                color: Ui.Theme.surfaceRaised
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Math.round(6 * overview.uiScale)
+                    ApplicationResourceGlyph {
+                        glyph: card.modelData.icon
+                        color: card.modelData.color
+                        uiScale: overview.uiScale * 0.85
+                    }
+                    Ui.ThemeText {
+                        Layout.fillWidth: true
+                        text: card.modelData.label
+                        wrapMode: Text.Wrap
+                        font.pixelSize: Ui.Theme.fontSizeSmall
+                    }
+                }
+                Repeater {
+                    model: card.modelData.readings
+                    delegate: ApplicationResourceCapacity {
+                        required property var modelData
+                        required property int index
+                        objectName: modelData.objectName
+                        Layout.fillWidth: true
+                        glyph: (card.modelData.id === "memory" || card.modelData.id === "disk") && index === 0 ? "" : modelData.icon
+                        accessibleLabel: modelData.label
+                        valueText: modelData.valueText
+                        available: modelData.available
+                        detailText: modelData.detailText
+                        accentColor: modelData.color
+                        uiScale: overview.uiScale
+                        valueSize: (card.modelData.id === "disk" || card.modelData.id === "memory" && index === 0 ? 28
+                            : card.modelData.id === "memory" ? 16 : 23) * overview.uiScale
+                    }
+                }
+                GridLayout {
+                    visible: card.modelData.id === "disk"
+                    Layout.fillWidth: true
+                    columns: width >= 120 * overview.uiScale ? 2 : 1
+                    columnSpacing: Math.round(8 * overview.uiScale)
+                    rowSpacing: Math.round(6 * overview.uiScale)
+                    Repeater {
+                        model: card.modelData.id === "disk" ? overview.lanes[2].series : []
+                        delegate: ApplicationResourceCapacity {
+                            required property var modelData
+                            objectName: modelData.objectName
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            Layout.minimumWidth: 0
+                            glyph: modelData.icon
+                            accessibleLabel: modelData.label
+                            valueText: modelData.valueText
+                            available: modelData.available
+                            detailText: modelData.detailText
+                            accentColor: modelData.color
+                            uiScale: overview.uiScale * 0.8
+                            valueSize: 13 * overview.uiScale
+                        }
+                    }
+                }
             }
         }
-        Repeater {
-            model: details.metrics.reduce((result, metric) => result.concat([metric.label, Resources.formatted(metric.mean, metric.kind) + " / " + Resources.formatted(metric.peak, metric.kind), metric.observation]), [])
-            delegate: Ui.ThemeText {
-                required property string modelData
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                Layout.minimumWidth: 0
-                text: modelData
-                wrapMode: Text.Wrap
-                font.pixelSize: Ui.Theme.fontSizeCaption
-                color: Ui.Theme.mutedText
-            }
-        }
-    }
-    Ui.ThemeText {
-        Layout.fillWidth: true
-        text: details.footprint.detailText
-        wrapMode: Text.Wrap
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        color: Ui.Theme.mutedText
-    }
-    Ui.ThemeText {
-        objectName: "applicationReferencedFiles"
-        Layout.fillWidth: true
-        text: details.referencedText
-        wrapMode: Text.Wrap
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        color: Ui.Theme.mutedText
-    }
-    Ui.ThemeText {
-        objectName: "applicationMemoryDetails"
-        Layout.fillWidth: true
-        text: qsTr("RAM source: %1 · Swap: %2. GPU allocated: %3. GPU memory is not added to RAM. Retained samples do not record PSS/RSS source.").arg(details.memorySource).arg(details.swapText).arg(details.allocatedText)
-        wrapMode: Text.Wrap
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        color: Ui.Theme.mutedText
-    }
-    Ui.ThemeText {
-        Layout.fillWidth: true
-        text: qsTr("CPU is a percentage of total machine capacity; GPU is engine busy time. Each group has its own labeled scale. Solid/dashed memory traces are RAM/GPU resident, never stacked. Steps and columns describe retained bucket intervals, not exact event times. Read/receive are above centre; write/send below. Hatched regions are missing measurements; paired directions have separate halves, overlaid traces separate coverage bands (first series above second). ◷ denotes observed/selected time, not process coverage.")
-        wrapMode: Text.Wrap
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        color: Ui.Theme.mutedText
-    }
-    Ui.ThemeText {
-        Layout.fillWidth: true
-        text: qsTr("Disk I/O is storage-layer traffic, not disk space. Memory bandwidth is not measured. Averages and ≈ period totals use valid observed intervals only; missing time is not zero. Power and energy estimate a share of measured CPU-package energy, not whole-system electricity or battery drain. Period confidence is the weakest known confidence in valid retained energy samples, or unknown. No battery-life claim. Sampling interval is not snapshot age.")
-        wrapMode: Text.Wrap
-        font.pixelSize: Ui.Theme.fontSizeCaption
-        color: Ui.Theme.mutedText
-    }
-    ApplicationResourceMetadata {
-        Layout.fillWidth: true
-        application: details.application
-        latestPoint: details.latestPoint
-        uiScale: details.uiScale
     }
 }

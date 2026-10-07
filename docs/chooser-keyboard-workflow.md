@@ -394,16 +394,17 @@ steal focus or become new Tab stops; stale owner/content completions are rejecte
 by the daemon. Online enrichment is an explicit deployment setting, off by default.
 See [Media presentation and shortcut diagnosis](media.md).
 
-Applications' Resources page combines snapshot readings and history in five
-information-only groups. Its shared 30m / 2h / 24h segmented field is the sole
-editable stop and controls both period totals and history. Pointer choice remains
-a local draft; Enter/Tab saves and requests the new range, Escape or leaving the
-editor discards without a history request. Tab/Shift+Tab wrap on that field;
-charts, metadata and statistics never become additional stops. The shared
-icon-only information command **Alt+H** toggles read-only Measurement details,
-also available by name in the shared **Alt+J** content menu. Opening reveals the
-heading if needed; PageUp/PageDown scroll the page. Disclosure has no backend
-side effects and adds no chart-inspection key model. See
+Applications' Resources page has four passive snapshot cards (Activity, Memory,
+Disk, Network), icon-led disk breakdown and larger history/transfer evidence.
+Its shared 30m / 2h / 24h segmented field is the sole editable stop and controls
+period totals and history, not current snapshots. Pointer choice remains a local
+draft; Enter/Tab saves and requests the new range, Escape or leaving the editor
+discards without a history request. Tab/Shift+Tab wrap on that field; cards,
+glyphs, bars and statistics never become additional stops or click actions.
+PageUp/PageDown scroll the page while browsing. There is no definitions/caveats
+panel, Measurement details command, Alt+H disclosure or new chart-inspection key
+model. Accessible summaries retain full metric identities and observation data;
+unavailable/error/loading states and attribution exceptions stay explicit. See
 [resource measurement semantics](application-resources.md) and
 `tst_application_resources.qml` for actual key/pointer coverage.
 

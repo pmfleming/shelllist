@@ -26,6 +26,5 @@ Ui.DetailFlickable {
         controller: page.controller
         application: page.application
         uiScale: page.uiScale
-        onRevealDetails: item => page.revealItem(item)
     }
 }
