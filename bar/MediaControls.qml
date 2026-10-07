@@ -49,7 +49,7 @@ Row {
         highlightedIconColor: Ui.Theme.accentText
         icon: Presentation.playPauseActionIcon(controls.controller.activePlayer)
         enabled: Presentation.canPlayPause(controls.controller.activePlayer)
-        accessibleName: qsTr("Play/pause")
+        accessibleName: String(controls.controller.activePlayer?.playback_status || "").toLowerCase() === "playing" ? qsTr("Pause") : qsTr("Play")
         onClicked: controls.controller.mediaOperation("play-pause")
     }
     Button {

@@ -6,10 +6,8 @@ import Shelllist.Ui as Ui
 Item {
     id: root
     required property BarController controller
-    required property int layoutDensity
     readonly property var player: controller.activePlayer
-    readonly property bool compact: layoutDensity >= 3
-    implicitWidth: artworkButton.width + (mediaControls.visible ? mediaControls.implicitWidth + 4 : 0) + 8
+    implicitWidth: artworkButton.width + mediaControls.implicitWidth + 12
     implicitHeight: 38
 
     // A passive group, not a fifth action. Leave enough height for the existing
@@ -81,7 +79,6 @@ Item {
     MediaControls {
         id: mediaControls
         objectName: "mediaTransportControls"
-        visible: !!root.player && !root.compact
         controller: root.controller
         anchors.left: artworkButton.right
         anchors.leftMargin: 4

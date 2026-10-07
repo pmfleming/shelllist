@@ -21,7 +21,8 @@
   },
   {
     "source": "typescript/bar/BarWorkspacePresentation.ts",
-    "output": "bar/BarWorkspacePresentation.js"
+    "output": "bar/BarWorkspacePresentation.js",
+    "imports": [".import Shelllist.Core 1.0 as Core"]
   },
   {
     "source": "typescript/bar/BarIndicators.ts",

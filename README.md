@@ -6,9 +6,9 @@ Rust daemons own system integration, durable state and policy. Shelllist owns wi
 
 ## Top bar
 
-The adaptive 51 px bar contains **Workspaces, Media, Network, Bluetooth, Battery, Notifications, Tray, Clock/date**. It uses one continuous rounded surface, without floating pods or hover tooltips. Narrow bars compact groups and expose horizontal overflow without shrinking fonts or removing keyboard routes. Battery and notification indicators are pictorial; accessible metadata and choosers retain detailed values.
+The adaptive 51 px bar uses a balanced, icon-only layout: fixed **Shell, Browser, Code, Media, Text** workspace tiles at the left, independently centered **Media**, and **Network, Bluetooth, Battery, Notifications, Tray, Clock/date** at the right. One continuous rounded surface has no floating pods, workspace labels or hover tooltips. Narrow bars reduce spacing/date content and expose horizontal overflow, never hiding transport. Battery charge fills an upright icon continuously; charging/power-state marks remain outside its outline. The numeric clock/date is one direct action. Accessible metadata and choosers retain detailed values.
 
-Media shows artwork and transport controls. Music uses Previous/Next; other content uses symmetric ±30-second seeking. Media details can override that mode. The daemon follows recently started playback unless pinned; pins and per-player overrides expire when the player exits. Opening or restoring a result never changes playback policy.
+Media always shows artwork and all three transport controls; missing players disable transport without removing it. Music uses Previous/Next; other content uses symmetric ±30-second seeking. Media details can override that mode. The daemon follows recently started playback unless pinned; pins and per-player overrides expire when the player exits. Opening or restoring a result never changes playback policy.
 
 Artwork opens Media; network opens Wi-Fi, with right-click portal fallback; Bluetooth/Battery open their choosers; the bell opens Notifications, with right-click Activity and middle-click DND; Tray opens its list; clock/date open Time & Weather. Update logs use `shelllist:update-logs`, default Super+Shift+U in Home Manager.
 

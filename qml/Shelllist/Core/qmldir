@@ -1,4 +1,5 @@
 module Shelllist.Core
+WorkspaceCategories 1.0 WorkspaceCategories.js
 singleton ApiEnvelope 1.0 ApiEnvelope.qml
 singleton Model 1.0 ModelApi.qml
 singleton SearchService 1.0 SearchService.qml

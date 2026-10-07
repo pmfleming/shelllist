@@ -2,6 +2,8 @@ module Shelllist.Bar
 SystemChooserController 1.0 SystemChooserController.qml
 SystemChooserContent 1.0 SystemChooserContent.qml
 BarAction 1.0 BarAction.qml
+internal BarBatteryGauge BarBatteryGauge.qml
+internal BarClockButton BarClockButton.qml
 BarBackend 1.0 BarBackend.qml
 BarContent 1.0 BarContent.qml
 BarController 1.0 BarController.qml

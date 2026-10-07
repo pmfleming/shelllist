@@ -109,11 +109,14 @@ DaemonTestCase {
         compare(calls.length, 0);
     }
     function test_openerAndTransportHaveSeparateRoutes_data(): var {
-        return [{tag: "tracks", mode: "tracks"}, {tag: "seek", mode: "seek"}];
+        return [{tag: "tracks", mode: "tracks", width: 1200}, {tag: "seek", mode: "seek", width: 1200},
+            {tag: "compact-tracks", mode: "tracks", width: 760}, {tag: "compact-seek", mode: "seek", width: 600}];
     }
     function test_openerAndTransportHaveSeparateRoutes(data): void {
         const bar = fixture();
         setPlayer(bar, player({control_mode: data.mode}));
+        bar.width = data.width;
+        verify(waitForPolish(bar.Window.window));
         const opener = findChild(bar, "mediaArtworkButton");
         compare(opener.Accessible.name, "Open Media. Current track");
         click(opener);
@@ -147,7 +150,7 @@ DaemonTestCase {
         click(opener);
         compare(bar.registry.opened, ["media"], "panel access does not require transport capability");
     }
-    function test_fallbackAndCompactModeKeepPanelAccess(): void {
+    function test_fallbackAndPlayerRemovalKeepDirectControls(): void {
         const bar = fixture();
         const chip = findChild(bar, "barMedia");
         const opener = findChild(chip, "mediaArtworkButton");
@@ -166,14 +169,21 @@ DaemonTestCase {
         verify(!backdrop.visible && opener.icon.length > 0);
         click(opener);
         bar.width = 600;
-        tryCompare(chip, "compact", true);
-        tryCompare(transport, "visible", false);
-        compare(chip.implicitWidth, 42);
+        compare(bar.layoutDensity, 3);
+        verify(transport.visible, "compact density keeps transport directly available");
+        compare(chip.implicitWidth, expandedWidth);
         verify(waitForRendering(opener));
         click(opener);
         setPlayer(bar, null);
         tryCompare(image, "status", Image.Null);
         compare(opener.Accessible.name, "Open Media");
+        compare(chip.implicitWidth, expandedWidth, "player removal keeps the control geometry");
+        for (const name of ["mediaRewindButton", "mediaPlayPauseButton", "mediaForwardButton"]) {
+            const button = findChild(chip, name);
+            verify(button.visible && !button.enabled);
+            click(button);
+            button.Accessible.pressAction();
+        }
         click(opener);
         compare(bar.registry.opened, ["media", "media", "media", "media"]);
         compare(calls.length, 0, "fallback and density changes never invoke transport");
@@ -188,8 +198,7 @@ DaemonTestCase {
         if (bar.GraphicsInfo.api === GraphicsInfo.Software)
             skip("Qt Quick effects require an RHI renderer; run this pixel check with QT_QUICK_BACKEND=rhi");
         Ui.Theme.previewColorScheme = Qt.Dark;
-        // Compact mode avoids text fallback glyphs from an environment without
-        // the symbol font painting over the cover being sampled.
+        // Artwork geometry stays unchanged even in the narrow layout.
         bar.width = 600;
         const backdrop = findChild(bar, "mediaArtworkBackdrop");
         verify(waitForPolish(bar.Window.window));

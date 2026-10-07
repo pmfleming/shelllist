@@ -3,21 +3,44 @@
 .import "BarIndicators.js" as Indicators
 
 "use strict";
-function batteryIcon(battery) {
-    if (!battery?.available)
-        return "󰂑";
-    const level = Math.round(Indicators.percent(battery.percentage) / 10);
-    const discharging = ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"];
-    const charging = ["󰢟", "󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"];
-    return (battery.charging ? charging : discharging)[level];
+function batteryKnown(battery) {
+    return !!battery?.available && typeof battery.percentage === "number" && Number.isFinite(battery.percentage);
+}
+function batteryFraction(battery) {
+    return batteryKnown(battery) ? Math.max(0, Math.min(100, battery.percentage)) / 100 : 0;
+}
+function batteryStateMark(battery) {
+    if (!batteryKnown(battery))
+        return "help_outline";
+    if (battery.charging)
+        return "bolt";
+    if (battery.state === "fully-charged" || (battery.plugged && batteryFraction(battery) === 1))
+        return "check";
+    if (battery.plugged)
+        return "power";
+    return battery.critical || battery.warning ? "priority_high" : "";
+}
+function batteryStateLabel(battery) {
+    if (battery.charging)
+        return "Charging";
+    if (battery.state === "fully-charged" || (battery.plugged && batteryFraction(battery) === 1))
+        return "Fully charged";
+    if (battery.state === "charge-paused")
+        return "Charging paused at limit";
+    if (battery.state === "charging-inhibited")
+        return "Charging inhibited";
+    return battery.plugged ? "Plugged in, not charging" : "On battery";
 }
 function batteryTooltip(battery) {
-    if (!battery?.available)
-        return "Battery unavailable";
-    const seconds = battery.charging ? battery.time_to_full_seconds : battery.time_to_empty_seconds;
-    return battery.percentage + "% · " + Duration.estimate(seconds)
-        + "\n" + Number(battery.power_watts || 0).toFixed(1) + " W"
-        + "\nHealth " + (battery.health_percent ?? "—") + "% · " + (battery.cycles ?? "—") + " cycles";
+    if (!batteryKnown(battery))
+        return "Battery reading unavailable";
+    const value = battery;
+    const seconds = value.charging ? value.time_to_full_seconds : value.time_to_empty_seconds;
+    const estimate = value.plugged && !value.charging ? "" : " · " + Duration.estimate(seconds);
+    return Math.round(batteryFraction(value) * 100) + "% · " + batteryStateLabel(value) + estimate
+        + (value.critical ? ". Critical" : value.warning ? ". Low battery" : "")
+        + "\n" + Number(value.power_watts || 0).toFixed(1) + " W"
+        + "\nHealth " + (value.health_percent ?? "—") + "% · " + (value.cycles ?? "—") + " cycles";
 }
 function orderedPowerProfiles(profile) {
     const preferred = ["power-saver", "balanced", "performance"];
@@ -82,13 +105,13 @@ function nextMinuteDelay(nowMilliseconds) {
     return Math.max(1, 60000 - Math.max(0, Number(nowMilliseconds) || 0) % 60000);
 }
 function batteryTone(battery) {
-    if (!battery?.available)
+    if (!batteryKnown(battery))
         return "muted";
     if (battery.critical)
         return "danger";
-    if (battery.charging || battery.plugged)
-        return "success";
-    return battery.warning ? "warning" : "text";
+    if (battery.warning)
+        return "warning";
+    return "text";
 }
 function notificationsModule(state) {
     const dnd = !!state.notifications?.dnd, count = state.notifications?.count || 0;
@@ -111,7 +134,7 @@ function statusModules(state, now) {
         statusModule("bluetooth", "", bluetoothTooltip(state.bluetooth), {
             tone: state.bluetooth?.powered ? "text" : "muted", primary: "bluetooth"
         }),
-        statusModule("battery", batteryIcon(state.battery), batteryTooltip(state.battery), {
+        statusModule("battery", "battery_full", batteryTooltip(state.battery), {
             primary: "battery", tone: batteryTone(state.battery)
         }),
         notificationsModule(state), clockModule(now, state.timezone)

@@ -34,6 +34,11 @@ development shell after changing `flake.nix`.
   secret clearing, uncertain outcomes and destructive-operation guards. System
   choosers retain explicit media targets, capability checks, acknowledged settings
   and native tray-menu lifetime. Incoming media icon/artwork regressions remain.
+- `tst_balanced_dashboard.qml` covers stable category icons and acknowledged
+  workspace activation, centered/collision-free groups, real narrow overflow and
+  combined-clock routes, and continuous battery fill with external state marks.
+  `tst_media_chip.qml` retains direct tracks/seek transport at every density and
+  keeps missing-player controls visible but disabled.
 - Daemon/session and model suites retain protocol/generation boundaries,
   cancellation ownership, request churn, stable identities, queued-update
   cancellation and progressive/native list updates. Notifications retain atomic

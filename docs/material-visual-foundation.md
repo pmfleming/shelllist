@@ -27,7 +27,7 @@ with a Surface keyline. The marker/keyline pair supplies at least 3:1 contrast;
 the tint alone does not. Horizontal sliders put the marker above their track.
 Editing uses the stronger 22% tint and accent edge from the current interaction
 contract. Controls reuse this paint rather than stacking overlays; workspace
-focus follows the circular disc, not its tall hit area. Top-bar controls omit the
+focus follows its fixed rounded category tile, not its tall hit area. Top-bar controls omit the
 panel browsing caret while retaining tonal focus and hover/press feedback. Hover remains
 non-selecting, and native caret/control editing, error borders and semantic
 selection remain distinct. See the [gap-fix record](reviews/material-gap-fixes-2026-10-05.md)

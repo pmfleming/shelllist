@@ -132,10 +132,33 @@ The bar's Media opener and transport share a passive tonal pill, not a combined
 hit target or focus stop. Artwork (or its missing/failed-image glyph) opens the
 existing Media panel without playback, seeking or pinning. The adjacent transport
 buttons retain independent capability-guarded actions and never open the panel;
-hover/pressed feedback stays local to each button. Compact density hides transport
-but retains the artwork opener. Group padding and gaps have no action. Native
-pointer/accessibility route and density coverage lives in `tst_media_chip.qml`;
-its rounded-artwork pixel check additionally requires an RHI renderer.
+hover/pressed feedback stays local to each button. Every density retains the
+artwork opener and all three transport controls. Unsupported actions and missing
+players disable transport without hiding it; artwork still opens Media directly.
+No hover, disclosure or secondary click is required to reach transport. Group
+padding and gaps have no action. Native pointer/accessibility route and density
+coverage lives in `tst_media_chip.qml`; its rounded-artwork pixel check additionally
+requires an RHI renderer.
+
+The balanced bar uses fixed-size icon-only category tiles (Shell, Browser, Code,
+Media, Text for workspaces 1–5), never active-workspace labels or focused-app icon
+substitution. Acknowledged selection paints immediately; occupancy and static
+urgency remain distinct.
+Workspaces stay left, system status right, and Media is centered when space permits,
+clamped between the measured edge groups otherwise. Narrow widths reduce gaps and
+omit the numerical date, not actions; below the full strip's minimum width the
+existing explicit overflow scrolls it. Workspace overflow still scrolls independently
+and reveals the active workspace. Neither layout nor reveal dispatches an action.
+
+Battery is one direct action with a continuous bottom-up fill and a reserved,
+non-overlapping external state-mark slot. Lightning, plug, check, warning and
+unknown marks never cover the fill and do not become independent targets. Invalid
+or absent telemetry stays unknown, not a false zero/full value; daemon warning and
+critical flags remain authoritative. Only new known fill readings may interpolate
+for 160ms, respecting reduced motion. Clock/date form one numerical action opening
+Time & Weather, with full date/timezone in its accessible name. The bar adds no
+field Tab stops. `tst_balanced_dashboard.qml` covers actual routes, acknowledged
+workspace selection, overflow, fill pixels and battery state boundaries.
 System tray application icons appear only in the Tray chooser, opened by the
 bar's ellipsis button; no bar density exposes inline tray application icons.
 Horizontal sliders place the marker above

@@ -1,133 +1,124 @@
-# Material bar and desktop chooser slice
+# Balanced icon-only bar
 
-Implementation of the accepted group/media direction; the detailed overflow,
-clock and artwork gesture choices below are an explicit prototype for review,
-not newly attributed interview requirements. Nothing is deployed by this work.
+The accepted balanced-dashboard revision keeps one continuous rounded surface
+inside the existing **51px exclusive zone**. It does not introduce floating pods,
+hover tooltips, new backend operations or a different panel-navigation model.
+The [interaction contract](chooser-keyboard-workflow.md) remains normative.
 
-## Presentation
+## Composition and responsive geometry
 
-One rounded, 94%-opaque surface occupies the existing 51px exclusive zone.
-Groups, in order: **Workspaces, Media, Network, Bluetooth, Battery,
-Notifications, Tray, Clock/date**. Group backgrounds are transparent. Focused
-application, Audio, Displays, Power profile, Activity, Updates and separate
-Timezone pods are gone; their destinations remain accessible independently.
-There are no hover tooltips or persistent battery/notification numbers.
-Accessible metadata retains detailed values. The top bar does not display the
-panel selection caret: status actions, workspaces, media, tray-list and overflow
-buttons opt out through `ActionControl.browseIndicatorVisible`. Tonal focus,
-hover/press feedback, active-workspace styling and urgency indicators remain;
-controls do not gain Tab traversal. Panel selection indicators are unchanged.
+- **Workspaces left:** fixed 32px category targets, with a quiet rounded selected
+  tile. Shell, Browser, Code, Media and Text map to workspaces 1–5. The shared
+  `Core/WorkspaceCategories.js` also supplies Applications' category setting;
+  labels, icons and routing cannot drift between the two consumers. The bar
+  renders only category glyphs, not names or the focused application's icon.
+  Higher workspace IDs retain numeric fallback.
+- **Media centered:** artwork plus Back, Play/Pause and Forward in a passive tonal
+  pill. Media uses the screen center while it fits; otherwise its position is
+  clamped between the measured workspace and status edges. It never overlaps
+  either edge group, including during metadata or clock changes.
+- **Status right:** Network, Bluetooth, Battery, Notifications, Tray, Clock/date.
+  Passive separators distinguish radios from power and the clock. Healthy
+  status uses theme foregrounds; daemon warning/critical and notification urgency
+  remain visible. Only the numeric time/date appears as text in the bar.
 
-- Workspaces retain their established icon assignments and show the focused
-  application's actual icon when available. Missing theme icons fall back to
-  workspace glyphs/numbers, not broken-image placeholders. Occupancy and active
-  state remain distinct. Urgent workspaces have a static outline and an aggregate
-  indicator even when horizontally clipped; they never grab keyboard focus.
-- Workspace allocation is capped at 27% of bar width and scrolls independently,
-  revealing the active workspace. Tray shows at most three inline items on wide
-  outputs, one at the next tier, and its list button otherwise. Media collapses
-  to its list/artwork button below 700px. Below the full group's minimum width,
-  the continuous strip scrolls horizontally with an explicit forward/back
-  overflow button. No group or font is silently shrunk away.
-- Notification urgency is a static danger color, including under DND. The bell
-  opens Notifications; right click opens Activity; middle click toggles DND.
-  Tray needs-attention state gets a static outline. No urgency animation or
-  automatic activation is introduced.
-- Clock/date use local 24-hour numerical `yyyy-MM-dd HH:mm`, compacting to
-  `MM-dd HH:mm`; full date and timezone remain nonvisual metadata.
-- Lua Hyprland blur/no-animation rules are namespace-scoped, reapplied after
-  compositor config reload, and ignore alpha below 0.01. Transparent outer bar
-  margins are excluded from its input region. Offscreen captures do **not**
-  validate either compositor blur or native input masks.
+There are no workspace/category/track labels or persistent battery/notification
+numbers. Full descriptions remain in accessible names and the existing choosers.
+All colors use shared theme roles; no proposal palette is hard-coded.
 
-## Media policy and actions
+Selection, occupancy dots and urgency outlines/marks are distinct and immediate.
+Workspaces remain independently scrollable, reveal the active workspace, and
+retain an aggregate urgency indicator when a workspace is clipped. Selection
+changes only on compositor snapshots, never on request admission or restoration.
+Workspace allocation is capped at 27% of the output width.
 
-`bar-daemon` owns selection and per-player mode preferences. It tracks observed
-transitions into playing, independently of the player-list order. In automatic
-mode it chooses the most recently started currently playing player, then the most
-recent retained player when none are playing. Initial discovery cannot recover
-historical start times: its fallback is deterministic. An explicit **Pin this
-player** action wins until Automatic is requested or the player exits. Merely
-browsing or restoring an inspected player does not pin it.
+Smaller widths reduce decorative spacing and omit the numerical date. They do
+**not** hide media transport. Below the complete strip's minimum width, the existing
+forward/back overflow button and horizontal scrolling reveal the unchanged
+controls. No target or font is silently shrunk to fit. Missing players and
+unsupported transport actions retain their geometry but cannot activate.
 
-Mode overrides are **daemon-session-local, per MPRIS player ID**, surviving
-frontend recreation but removed when that player exits. They are not disk
-preferences. Explicit music/video/podcast content metadata and Spotify track or
-episode URLs support conservative classification; audio MIME types and player
-identity alone do not establish music. Media details can override Automatic with
-Tracks or Seek. Unknown, video and podcast content seek **−30/+30 seconds**;
-music uses Previous/Next. Icons and accessible names distinguish the operations.
-Every control respects its actual capability; no unsupported seek is replaced
-with a misleading track action. Old daemons without preference fields leave the
-new preference controls disabled.
+## Direct media actions
 
-The bar is artwork (or its music fallback) plus three transport icons, without
-track/artist/player text, a cycle button or a progress strip/timer. Artwork opens
-Media as this prototype's explicit detail route. Pin/mode changes wait for daemon
-state; neither those changes nor presentation restoration invokes playback.
+Artwork (or its missing/failed-image music fallback) opens the existing Media
+panel in one click. It cannot play, seek or pin a player. Back, Play/Pause and
+Forward invoke independent capability-guarded operations and never open the
+panel. There is no disclosure step, hover reveal or compact artwork-only mode.
+Group padding and gaps have no action; hover/press feedback stays local to each
+button. Controls do not acquire panel field Tab stops or browsing markers.
 
-The Media detail's **Now playing** card is at least 260px tall (about 2.6 times
-its previous compact height), growing for wrapped text. It displays the inspected
-player's `art_url` behind the track/book/episode labels, cropped inside the card's
-rounded outer frame. A dark text backing keeps white labels readable even over
-white artwork in either theme. Artwork and titles always come from the same
-player, never from a different globally active player.
+`bar-daemon` still owns player selection, acknowledged playback and per-player
+mode preferences. Automatic selection follows recently started playback; an
+explicit pin wins until removed or the player exits. Inspecting/restoring a
+player does not pin it. Music uses Previous/Next; unknown/video/podcast content
+uses −30/+30 second seeking, with existing per-player overrides and independent
+capability checks. No unavailable seek is replaced with a misleading track action.
+See [Media](media.md) for panel presentation, metadata and routing policy.
 
-This uses the common MPRIS artwork path for Zen, Chrome, Audible, Spotify and
-Pocket Casts, including browser Media Session artwork exposed through MPRIS.
-There is no app-name whitelist or external cover-search service. If the player
-supplies no artwork, or loading fails, the card uses a neutral music fallback;
-it cannot invent a cover that the application does not expose. Hidden cards stop
-requesting artwork. Application icons remain separate in the list and header.
-The card is information-only and adds no field stop or playback effect.
+## Battery: charge inside, state outside
 
-Native tests cover metadata replacement, file/inline images, missing/failed
-covers, painted text contrast in both themes and unchanged settings traversal.
-Offscreen wide/narrow captures are in `target/media-playback-card/`; these are
-synthetic artwork fixtures, not live acceptance of the five applications.
+Battery remains one action opening the existing Battery chooser. Its upright
+silhouette has an inset, clipped continuous bottom-up fill. Charge never fills
+the terminal, border or reserved external mark slot.
 
-## Routes and menu safety
+- A static **bolt** means charging.
+- A **plug** means connected but not charging; 80% holding stays 80%, not full.
+- A **check** means reported fully charged (or plugged at 100%, not charging).
+- A **warning mark** accompanies daemon warning/critical state on battery.
+- An external **unknown mark** and dashed body identify unavailable or malformed
+  readings. Missing/null/non-finite percentages are not coerced to zero.
 
-Audio/Media/Tray retain independent CLI, global shortcut and Home Manager routes.
-Audio contains current default devices, mute controls, an acknowledged output
-volume value with ±5% body actions, and the full mixer; device routing still belongs to that mixer, not a fabricated daemon
-API. Displays, Battery power profiles, Applications, Activity and Time & Weather
-retain their chooser routes. Workspace switching retains compositor shortcuts.
-Update journals have `shelllist:update-logs`, with configurable Super+Shift+U in
-Home Manager; no status pod is required to reach them.
+Marks sit outside the body with a real gap, clipped to their own slot so even a
+fallback font cannot paint over the fill. They are passive children of the same
+42px Battery action. The slot remains reserved when empty; status targets do not
+shift with charging state. Known percentages are clamped to 0–100, but low and
+critical states come from the daemon, not frontend thresholds. The accessible
+name retains percentage, charging/holding state, warnings and detailed readings.
 
-Media puts now-playing/transport ahead of always-visible player preferences. Play/Pause
-names and icons reflect acknowledged playback. Tray uses supplied application icons
-and labelled activation/menu actions, with secondary activation/scrolling shown below. Duplicate IDs disable effects instead of choosing an arbitrary instance.
-Native menus hold the chooser's focus-loss guard before opening, block competing
-chooser navigation, and restore an ordinary focus target only in the same live
-invocation. Missing/slow menus time out, deactivation cancels them, and late open
-signals cannot restore an old invocation. Menu handles and open state are never
-serialized into presentation memory.
+Only known fill updates may interpolate for **160ms** through shared
+`InteractiveBehavior`; reduced motion removes interpolation. Glyphs, warning
+colors and unknown state update immediately. No looping charge sweep, pulse or
+animation invents telemetry. Rendering/inspection never writes a power setting.
 
-## Validation and remaining acceptance
+## Clock, routes and compositor boundaries
 
-Native Qt tests cover group order at 1200/700/300px, pictorial versus nonvisual
-values, urgent color, overflow access, transport modes/capabilities, explicit
-player targeting, acknowledged settings, no restoration replay, and native-menu
-lifecycle through a recording platform boundary. Rust tests cover conservative
-classification, recency/order independence, pin/automatic/exit behavior and
-mode lifetime; backend and frontend contract fixtures are regenerated and validated.
-The original bar-implementation sibling-aware gates passed: **280 Qt passes / 198 behavioral cases** in
-Shelllist, **141 Rust unit tests plus two integration tests** in bar-daemon.
-Strict QML lint, TypeScript generation checks, runtime/gallery smoke and all
-sibling/contract gates pass. Logs: `/tmp/material-item5-shelllist-final-gate.log`
-and `/tmp/material-item5-bar-gate.log`.
+Time and date are one direct Time & Weather action: `HH:mm` with quieter `MM-dd`
+at comfortable density, time only at compact density. The separate trailing
+clock icon is removed. The full date and timezone remain in the accessible name.
+Updates remain aligned to minute boundaries.
 
-Reviewed light/dark offscreen bar captures at 1200/700/300px and production-font
-control galleries. This caught missing workspace theme icons and led to the
-explicit glyph fallback. The gallery verifies packaged Roboto Flex, Noto Sans
-and Material Symbols Rounded. Evidence lives under `/tmp/material-bar-*.png`,
-`/tmp/material-production-*.png` and `/tmp/material-production-captures.log`.
+Network opens Wi-Fi, with right-click portal fallback through the existing
+owned portal transaction. Bluetooth and Battery open their choosers. The bell
+opens Notifications; right click opens Activity; middle click toggles DND.
+Urgency remains visible under DND. Tray's ellipsis opens its chooser at every
+density; tray application icons are never placed inline in the bar.
 
-Still separate: owner review of prototype decisions, live layer-shell/menu
-focus/input masks, blur/GPU performance, final spring feel, larger-text/hardware
-IME and screen-reader acceptance. Legacy compositor blur and automatic reduced
-motion outside Hyprland are not claimed. The independently reproduced baseline
-Displays teardown warning also remains unresolved; it reappeared in a direct
-Qt-suite run, without failed cases or a new suppression.
+Audio, Displays, power profiles, Applications, Activity, updates and other
+existing surfaces retain their independent CLI/global-shortcut routes. There are
+no invented quick-setting backend APIs. Submitted operation, retry, safety and
+acknowledgement behavior is unchanged.
+
+The continuous surface remains 94%-opaque. Transparent outer margins stay
+outside the bar input mask. Hyprland blur/no-animation rules remain namespace
+scoped and are reapplied after config reload. Neither the reserved zone nor native
+layer-shell focus behavior changes in this revision.
+
+## Validation
+
+- `tst_balanced_dashboard.qml`: real workspace pointer/key routes and snapshot
+  acknowledgement, stable category identity, numeric fallback, workspace reveal,
+  urgency, center/collision bounds at 3440/1200/760/600/300px, actual overflow and
+  combined-clock activation, battery state/unknown boundaries, external-mark
+  pointer/accessibility activation, light/dark fill pixels and snapshot bindings.
+- `tst_media_chip.qml`: direct artwork and tracks/seek routes at comfortable and
+  compact widths, unchanged geometry on artwork/player loss, disabled actions,
+  passive padding, local feedback and rounded-artwork rendering. The last pixel
+  check additionally needs an RHI renderer.
+- `tst_bar_material.qml`: no panel browsing caret or new Tab traversal, tray
+  inventory isolation and native action routes. Applications' settings tests
+  continue checking the shared category mapping, save/discard and acknowledgement.
+
+Run `tests/run-qml-tests.sh`, `tests/run-qmllint.sh`, generated-source freshness and
+TypeScript checks in the development environment. Native offscreen tests do not
+claim live compositor blur/input-mask behavior, real hardware operations,
+fractional-output acceptance or screen-reader acceptance; those remain separate.

@@ -10,7 +10,7 @@ Item {
     required property int layoutDensity
     readonly property var workspaceIds: Presentation.workspaceIds(controller.workspaces, screenName)
     readonly property int activeWorkspaceIndex: Presentation.activeWorkspaceIndex(controller.workspaces, screenName)
-    readonly property int workspaceButtonWidth: layoutDensity >= 2 ? 27 : 31
+    readonly property int workspaceButtonWidth: 32
     readonly property bool urgent: workspaceIds.some(id => !!Presentation.workspaceFor(controller.workspaces, id)?.urgent)
     implicitWidth: workspaceRow.implicitWidth
     implicitHeight: 37
@@ -25,6 +25,7 @@ Item {
     onWidthChanged: Qt.callLater(revealActive)
     Flickable {
         id: viewport
+        objectName: "workspaceViewport"
         anchors.fill: parent
         contentWidth: workspaceRow.implicitWidth
         contentHeight: height
@@ -35,7 +36,7 @@ Item {
         Row {
             id: workspaceRow
             height: viewport.height
-            spacing: root.layoutDensity === 0 ? 6 : 2
+            spacing: root.layoutDensity >= 2 ? 2 : 4
             Repeater {
                 model: root.workspaceIds
                 delegate: WorkspaceButton {
@@ -45,13 +46,13 @@ Item {
                     workspaceId: modelData
                     width: root.workspaceButtonWidth
                     height: viewport.height
-                    compact: root.layoutDensity >= 2
                 }
             }
         }
     }
     // Aggregate urgency stays visible even if its workspace is scrolled out.
     Rectangle {
+        objectName: "workspaceUrgencyAggregate"
         anchors.right: parent.right
         anchors.top: parent.top
         width: 5

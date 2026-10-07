@@ -1,4 +1,5 @@
 .pragma library
+.import Shelllist.Core 1.0 as Core
 
 "use strict";
 function workspaceIds(state, monitorName) {
@@ -25,28 +26,6 @@ function activeWorkspaceId(state, monitorName) {
 function activeWorkspaceIndex(state, monitorName) {
     return workspaceIds(state, monitorName).indexOf(activeWorkspaceId(state, monitorName));
 }
-function workspaceGlyph(workspaceId) {
-    return workspaceId === 1 ? "󰊠" : workspaceId > 5 ? String(workspaceId) : "";
-}
-function workspaceIconName(workspaceId) {
-    const icons = {
-        2: "zen",
-        3: "vscode",
-        4: "spotify-client",
-        5: "scratchpad"
-    };
-    return icons[workspaceId] || "";
-}
-function activeWindowFor(state, monitorName) {
-    if (!state || !state.active_window)
-        return null;
-    const focusedMonitor = String(state.focused_monitor || "");
-    return focusedMonitor.length === 0 || focusedMonitor === monitorName
-        ? state.active_window : null;
-}
-function windowIconName(window) {
-    if (!window)
-        return "application-x-executable";
-    const value = String(window.initial_class || window.class_name || "").trim();
-    return value.length > 0 ? value : "application-x-executable";
+function workspaceCategory(workspaceId) {
+    return Core.WorkspaceCategories.categories.find(category => Number(category.workspace) === workspaceId) || null;
 }

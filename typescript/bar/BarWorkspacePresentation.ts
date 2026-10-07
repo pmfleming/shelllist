@@ -6,15 +6,13 @@ interface Monitor {
     name?: string;
     active_workspace_id: number;
 }
-interface ActiveWindow {
-    initial_class?: string;
-    class_name?: string;
+interface WorkspaceCategory {
+    value: string; label: string; icon: string; workspace: string;
 }
+declare const Core: {WorkspaceCategories: {categories: WorkspaceCategory[]}};
 interface WorkspaceState {
     workspaces?: Workspace[];
     monitors?: Monitor[];
-    focused_monitor?: string;
-    active_window?: ActiveWindow | null;
 }
 type Maybe<T> = T | null | undefined;
 
@@ -46,31 +44,6 @@ function activeWorkspaceIndex(state: Maybe<WorkspaceState>, monitorName: string)
     return workspaceIds(state, monitorName).indexOf(activeWorkspaceId(state, monitorName));
 }
 
-function workspaceGlyph(workspaceId: number) {
-    return workspaceId === 1 ? "󰊠" : workspaceId > 5 ? String(workspaceId) : "";
-}
-
-function workspaceIconName(workspaceId: number) {
-    const icons: Record<number, string> = {
-        2: "zen",
-        3: "vscode",
-        4: "spotify-client",
-        5: "scratchpad"
-    };
-    return icons[workspaceId] || "";
-}
-
-function activeWindowFor(state: Maybe<WorkspaceState>, monitorName: string) {
-    if (!state || !state.active_window)
-        return null;
-    const focusedMonitor = String(state.focused_monitor || "");
-    return focusedMonitor.length === 0 || focusedMonitor === monitorName
-        ? state.active_window : null;
-}
-
-function windowIconName(window: Maybe<ActiveWindow>) {
-    if (!window)
-        return "application-x-executable";
-    const value = String(window.initial_class || window.class_name || "").trim();
-    return value.length > 0 ? value : "application-x-executable";
+function workspaceCategory(workspaceId: number): WorkspaceCategory | null {
+    return Core.WorkspaceCategories.categories.find(category => Number(category.workspace) === workspaceId) || null;
 }
