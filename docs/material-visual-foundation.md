@@ -140,18 +140,23 @@ Shared `ActionButton` (including `FlatIconButton`) is icon-only and circular in
 rest, hover, focus, press and disabled states. Commands use M3 semantic fill/icon
 pairs and state-colour feedback, not a pressed corner morph. Header primaries are
 56px with 28px icons. Expanded-panel header secondaries (including More) are
-32px with 16px icons, two-thirds of their former 48/24px sizes; the 8px gap
-and right alignment remain. `DetailsHeader.compactSecondaryActions` applies the
+normally 32px with 16px icons, two-thirds of their former 48/24px sizes, with
+8px gaps and right alignment. `DetailsHeader.compactSecondaryActions` applies the
 shared scale only in expanded inspectors, Notifications details and expanded
 Activity. Collapsed headers, modals, toasts, contextual buttons and named menu
-entries retain their existing sizing.
+entries retain their existing nominal sizing.
 Compact bar/list commands retain smaller square geometry. Width, height and hit
 regions never animate. Selection controls and switches retain their own paint.
 
 `DetailsHeader` places the larger primary beside the title/icon, reserving its
 width plus a 16px text gap; title and subtitle elide. Secondary circles occupy a
 separate right-aligned lower row. `SurfaceActionRow` fits that row independently
-and preserves Alt+M overflow, popup ownership and live command discovery. Activity
+by reducing gaps to 2px first, then circles/icons to 28/14px, then omitting only
+necessary disabled commands. Enabled toolbar commands never move into More;
+extreme widths wrap them into right-aligned rows. Widening restores the original
+geometry and disabled commands. The primary stays unchanged. All dimensions scale
+with `uiScale`; full-size menu rows are not shrunk. Explicit named menus retain
+Alt+M, popup ownership and live command discovery. Activity
 and selected Notifications now share this geometry; no-action headers do not
 reserve an empty action row. Wi-Fi no longer shrinks commands with viewport height.
 

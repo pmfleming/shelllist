@@ -32,6 +32,8 @@ TestCase {
         compare(Media.heading(data.player), data.heading);
         compare(Media.trackControls(data.player), data.kind === "music");
         compare(Media.actionGroup(data.player, "play-pause"), "primary");
+        for (const id of ["previous", "next", "rewind", "forward"])
+            compare(Media.actionGroup(data.player, id), "toolbar");
     }
     function test_labelsAndOverrides() {
         compare(Media.subtitle({title: "Title", album: "Show", artist: "show"}), "show");
@@ -39,7 +41,7 @@ TestCase {
         compare(Media.stateIcon({playback_status: "Playing"}), "equalizer");
         compare(Media.stateIcon({playback_status: "Paused"}), "pause");
         compare(Media.stateIcon({playback_status: "Stopped"}), "stop");
-        compare(Media.actionGroup({content_type: "music", control_mode: "seek"}, "next"), "overflow");
+        compare(Media.actionGroup({content_type: "music", control_mode: "seek"}, "next"), "toolbar");
         compare(Media.actionGroup({content_type: "unknown", control_mode: "tracks"}, "next"), "toolbar");
         compare(Media.actionGroup({content_type: "podcast"}, "rewind"), "toolbar");
         compare(Media.identityLabel({id: "org.mpris.MediaPlayer2.chromium.instance42", identity: "Audible"}), "Audible · via Chrome");

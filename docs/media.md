@@ -39,8 +39,12 @@ editable controls and daemon acknowledgement/capability guards.
   paused snapshots never advance. Timers stop when hidden, inactive or disconnected.
   A static expressive wave is shown only while playing with motion enabled; the
   reduced-motion/paused presentation is straight. It is not an audio waveform.
-- Music uses previous/next; spoken/unknown content uses ±30s seek, respecting saved
-  per-player overrides and all capability guards. The other pair is in shared More.
+- The compact bar uses previous/next for music and ±30s seek for spoken/unknown
+  content, respecting saved per-player overrides. The panel always exposes both
+  pairs directly below the separate Play/Pause primary, with all capability and
+  acknowledgement guards intact. No transport commands live in More. Shared header
+  layout reduces gaps, then circle/icon sizes, then omits disabled commands only
+  as needed; enabled commands remain direct (wrapping at extreme widths).
   Read-only rate is not a speed menu; there are no invented chapters, device routes
   or whole-book totals. Audiobook timing refers to the reported MPRIS segment.
 - Pin to bar remains immediate and acknowledged. Bar controls remains a deferred
@@ -106,7 +110,10 @@ has configurable Super+Shift+M; this desktop's Lua config deliberately uses Supe
   service search, original-player command routing and disabled capability guards.
 - `tst_system_choosers.qml`: actual rendered icons (theme and bundled fallbacks),
   contained artwork, theme contrast, numeric values, selected-session isolation,
-  native key delivery for field drafts/save/discard, More modality, capability and
-  acknowledgement guards, inactive/hidden cleanup and no implicit playback writes.
-- `tst_surface_actions.qml`: explicit overflow at wide/narrow widths, overflow-only
-  geometry, native More navigation, disabled entries, chord isolation and restore.
+  native key delivery for field drafts/save/discard and direct transport, pointer
+  seeking, capability and acknowledgement guards, inactive/hidden cleanup and no
+  implicit playback writes. Saving Bar controls does not hide panel commands.
+- `tst_surface_actions.qml`: ordered spacing/size/disabled omission, restoration and
+  enabled-command wrapping at normal/fractional/HiDPI scales, actual pointer/chord
+  activation and guards, plus explicit menu geometry, native More navigation,
+  disabled entries, chord isolation and focus restore.

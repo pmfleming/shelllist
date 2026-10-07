@@ -170,12 +170,14 @@ TestCase {
         navigation.headerButtons[1].enabled = false;
         keyClick(Qt.Key_F, Qt.AltModifier);
         compare(navigation.calls, 1);
-        navigation.actions = navigation.actions.concat([{id: "share", label: "Share", icon: "share", accessKey: "H", presentation: {group: "toolbar"}}]);
+        navigation.actions = navigation.actions.map(action => Object.assign({}, action, {
+            presentation: {group: action.id === "connect" ? "primary" : "overflow"}
+        })).concat([{id: "share", label: "Share", icon: "share", accessKey: "H", presentation: {group: "overflow"}}]);
         navigation.width = 60;
         tryCompare(navigation.row, "shownSecondaryCount", 0);
         tryVerify(() => navigation.headerButtons[1].surfaceShortcut === "Alt+M");
         keyClick(Qt.Key_F, Qt.AltModifier);
-        compare(navigation.calls, 1, "overflowed actions have no header chord");
+        compare(navigation.calls, 1, "explicit menu actions have no header chord");
         keyClick(Qt.Key_M, Qt.AltModifier);
         tryCompare(navigation, "popupOpen", true);
         keyClick(Qt.Key_C, Qt.AltModifier);
@@ -191,6 +193,106 @@ TestCase {
         tryCompare(navigation.headerButtons[0], "surfaceShortcut", "");
         keyClick(Qt.Key_C, Qt.AltModifier);
         compare(navigation.calls, 1, "duplicate letters fail closed");
+    }
+    function test_directCommandsAdaptInOrder_data() {
+        return [
+            {tag: "expanded", scale: 1, compact: true},
+            {tag: "fractional", scale: 1.25, compact: true},
+            {tag: "hidpi", scale: 2, compact: true},
+            {tag: "standard", scale: 1, compact: false}
+        ];
+    }
+    function test_directCommandsAdaptInOrder(data) {
+        const navigation = createTemporaryObject(navigationComponent, testCase);
+        const row = navigation.row;
+        row.uiScale = data.scale;
+        row.compactSecondaryActions = data.compact;
+        navigation.actions = [
+            {id: "play", label: "Play", accessKey: "P", presentation: {group: "primary"}},
+            {id: "back", label: "Previous", accessKey: "B", presentation: {group: "toolbar"}},
+            {id: "unavailable", label: "Unavailable", accessKey: "U", enabled: false, presentation: {group: "toolbar"}},
+            {id: "forward", label: "Next", accessKey: "N", presentation: {group: "toolbar"}},
+            {id: "disabled", label: "Disabled", accessKey: "D", enabled: false, presentation: {group: "toolbar"}}
+        ];
+        navigation.focusContent(true);
+        const normal = row.nominalControlHeight;
+        const minimum = row.minimumControlHeight;
+        const gap = row.minimumGap;
+        const primarySize = findChild(row, "detailAction:play").width;
+        const stages = [
+            {width: 4 * normal + 3 * row.gap, size: normal, gap: row.gap, count: 4},
+            {width: 4 * normal + 3 * (gap + 1), size: normal, gap: gap + 1, count: 4},
+            {width: 4 * (minimum + 1) + 3 * gap, size: minimum + 1, gap: gap, count: 4},
+            {width: 4 * minimum + 3 * gap, size: minimum, gap: gap, count: 4},
+            {width: 3 * minimum + 2 * gap, size: minimum, gap: gap, count: 3},
+            {width: 2 * minimum + gap, size: minimum, gap: gap, count: 2},
+            {width: minimum, size: minimum, gap: gap, count: 2}
+        ];
+        for (const stage of stages) {
+            navigation.width = stage.width;
+            tryCompare(row, "shownSecondaryCount", stage.count);
+            compare(row.controlHeight, stage.size);
+            compare(row.secondaryGap, stage.gap);
+            compare(row.overflowActions.length, 0);
+            verify(!findChild(row, "surfaceActionMore").visible);
+            tryCompare(navigation.headerButtons, "length", stage.count + 1);
+            compare(findChild(row, "detailAction:play").width, primarySize);
+            for (const button of row.secondaryButtons) {
+                compare(button.width, stage.size);
+                compare(button.height, stage.size);
+                compare(button.iconSize, Math.round(stage.size / 2));
+                const position = button.mapToItem(row, 0, 0);
+                verify(position.x >= 0 && position.x + button.width <= row.width);
+                verify(position.y + button.height <= row.height);
+                verify(!button.activeFocusOnTab);
+            }
+            const before = navigation.calls;
+            keyClick(Qt.Key_N, Qt.AltModifier);
+            compare(navigation.calls, before + 1);
+            compare(navigation.lastAction, "forward");
+            const back = findChild(row, "detailAction:back");
+            mouseClick(back, back.width / 2, back.height / 2);
+            compare(navigation.calls, before + 2);
+            compare(navigation.lastAction, "back");
+            const disabled = findChild(row, "detailAction:unavailable");
+            if (disabled)
+                mouseClick(disabled, disabled.width / 2, disabled.height / 2);
+            keyClick(Qt.Key_U, Qt.AltModifier);
+            compare(navigation.calls, before + 2, "disabled or omitted commands never activate");
+        }
+        compare(row.secondaryRows, 2, "enabled commands wrap only after spacing, sizing and disabled omission");
+        navigation.width = 4 * normal + 3 * row.gap;
+        tryCompare(row, "shownSecondaryCount", 4, 5000, "widening restores disabled commands and normal geometry");
+        compare(row.controlHeight, normal);
+        compare(row.secondaryGap, row.gap);
+        navigation.width = 2 * minimum + gap;
+        tryCompare(row, "shownSecondaryCount", 2);
+        navigation.actions = navigation.actions.map(action => Object.assign({}, action, {enabled: true}));
+        tryCompare(row, "shownSecondaryCount", 4, 5000, "newly enabled commands reappear without a width change");
+        tryCompare(navigation.headerButtons, "length", 5);
+        keyClick(Qt.Key_U, Qt.AltModifier);
+        compare(navigation.lastAction, "unavailable");
+    }
+    function test_disabledOnlyAndEmptyRowsReleaseGeometry() {
+        const navigation = createTemporaryObject(navigationComponent, testCase);
+        const row = navigation.row;
+        navigation.actions = [{id: "disabled", label: "Disabled", enabled: false, accessKey: "D", presentation: {group: "toolbar"}}];
+        navigation.width = row.nominalControlHeight;
+        tryCompare(row, "shownSecondaryCount", 1);
+        compare(row.height, row.nominalControlHeight);
+        navigation.width = row.minimumControlHeight - 1;
+        tryCompare(row, "shownSecondaryCount", 0);
+        compare(row.height, 0);
+        tryCompare(navigation.headerButtons, "length", 0);
+        navigation.width = row.nominalControlHeight;
+        tryCompare(row, "shownSecondaryCount", 1);
+        compare(row.height, row.nominalControlHeight);
+        row.secondaryVisible = false;
+        tryCompare(row, "height", 0);
+        navigation.actions = [];
+        row.secondaryVisible = true;
+        compare(row.height, 0);
+        tryCompare(navigation.headerButtons, "length", 0);
     }
     function test_explicitOverflowReservesMoreAndRetainsGuards() {
         const navigation = createTemporaryObject(navigationComponent, testCase);
@@ -212,8 +314,9 @@ TestCase {
         keyClick(Qt.Key_Return);
         compare(navigation.lastAction, "next", "opening skips disabled overflow action");
         navigation.width = 72;
-        tryCompare(navigation.row, "shownSecondaryCount", 1, 5000, "reserve a real slot for More");
-        compare(navigation.row.overflowActions.length, 3);
+        tryCompare(navigation.row, "shownSecondaryCount", 2, 5000, "enabled toolbar commands stay direct even beside More");
+        compare(navigation.row.overflowActions.length, 2);
+        compare(navigation.row.secondaryRows, 2);
         navigation.actions = [{id: "only", label: "Only in More", presentation: {group: "overflow"}}];
         tryCompare(navigation.headerButtons, "length", 1);
         verify(navigation.row.height > 0, "overflow-only rows still have geometry");
@@ -224,9 +327,9 @@ TestCase {
         const navigation = createTemporaryObject(navigationComponent, testCase, {width: 60});
         navigation.actions = [
             {id: "connect", label: "Connect", accessKey: "C", presentation: {group: "primary"}},
-            {id: "disabled", label: "Disabled", enabled: false, accessKey: "D", presentation: {group: "toolbar"}},
-            {id: "first", label: "First", accessKey: "F", presentation: {group: "toolbar"}},
-            {id: "other", label: "Other", accessKey: "O", presentation: {group: "toolbar"}}
+            {id: "disabled", label: "Disabled", enabled: false, accessKey: "D", presentation: {group: "overflow"}},
+            {id: "first", label: "First", accessKey: "F", presentation: {group: "overflow"}},
+            {id: "other", label: "Other", accessKey: "O", presentation: {group: "overflow"}}
         ];
         navigation.focusContent(true);
         tryVerify(() => navigation.headerButtons.some(button => button.surfaceShortcut === "Alt+M"));

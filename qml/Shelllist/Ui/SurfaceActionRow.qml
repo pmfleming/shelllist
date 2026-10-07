@@ -10,7 +10,7 @@ Item {
     property real uiScale: 1
     property bool secondaryVisible: true
     property bool compactSecondaryActions: false
-    readonly property real secondaryUiScale: uiScale * (compactSecondaryActions ? Theme.expandedSecondaryActionScale : 1)
+    readonly property real secondaryUiScale: controlHeight / Theme.secondaryActionHeight
     property real identityHeight: Math.round(Theme.primaryActionHeight * uiScale)
     property bool reserveIdentity: false
     property bool tabFocusEnabled: false
@@ -18,30 +18,53 @@ Item {
     readonly property var secondaryActions: secondaryVisible ? Core.Model.visibleActions(actions, "toolbar") : []
     readonly property var menuActions: secondaryVisible ? Core.Model.visibleActions(actions, "overflow") : []
     readonly property var primaryAction: primaryActions.length ? primaryActions[0] : null
-    readonly property int controlHeight: Math.round(Theme.secondaryActionHeight * secondaryUiScale)
+    readonly property int nominalControlHeight: Math.round(Theme.secondaryActionHeight * uiScale * (compactSecondaryActions ? Theme.expandedSecondaryActionScale : 1))
+    readonly property int minimumControlHeight: Math.round(Theme.minimumSecondaryActionHeight * uiScale)
     readonly property int gap: Math.round(Theme.spacingSm * uiScale)
+    readonly property int minimumGap: Math.round(Theme.minimumActionGap * uiScale)
+    readonly property int requestedSlots: secondaryActions.length + (menuActions.length ? 1 : 0)
+    // Exhaust spacing before shrinking circles; only then omit disabled commands.
+    readonly property int secondaryGap: requestedSlots > 1 ? Math.max(minimumGap, Math.min(gap, Math.floor((width - requestedSlots * nominalControlHeight) / (requestedSlots - 1)))) : gap
+    readonly property int controlHeight: requestedSlots ? Math.max(minimumControlHeight, Math.min(nominalControlHeight, Math.floor((width - (requestedSlots - 1) * secondaryGap) / requestedSlots))) : nominalControlHeight
     readonly property int primaryWidth: primaryAction ? Math.round(Theme.primaryActionHeight * uiScale) : 0
     readonly property real topHeight: primaryAction || reserveIdentity ? Math.max(identityHeight, primaryWidth) : 0
-    readonly property int shownSecondaryCount: fittingSecondaryCount()
-    readonly property var shownSecondary: secondaryActions.slice(0, shownSecondaryCount)
-    readonly property var overflowActions: secondaryActions.slice(shownSecondaryCount).concat(menuActions)
+    readonly property var shownSecondary: fittingSecondaryActions()
+    readonly property int shownSecondaryCount: shownSecondary.length
+    // Only explicitly named menu commands belong in More, never width overflow.
+    readonly property var overflowActions: menuActions
+    readonly property int visibleSlots: shownSecondaryCount + (menuActions.length ? 1 : 0)
+    readonly property int columns: Math.max(1, Math.floor((width + secondaryGap) / (controlHeight + secondaryGap)))
+    readonly property int secondaryRows: Math.ceil(visibleSlots / columns)
+    readonly property real secondaryHeight: secondaryRows ? secondaryRows * controlHeight + (secondaryRows - 1) * secondaryGap : 0
     readonly property bool popupOpen: overflowMenu.visible
     // Repeater.count may change before delegates exist. Track actual lifetime
     // so command discovery never caches missing or destroyed buttons.
     property list<ActionControl> secondaryButtons: []
     readonly property list<ActionControl> buttons: (primaryAction ? [primaryButton] : []).concat(Array.from(secondaryButtons), overflowActions.length ? [moreButton] : [])
     signal triggered(string actionId)
-    implicitHeight: topHeight + (secondaryActions.length || menuActions.length ? (topHeight ? gap : 0) + controlHeight : 0)
+    implicitHeight: topHeight + (visibleSlots ? (topHeight ? gap : 0) + secondaryHeight : 0)
     height: implicitHeight
 
     function actionTone(action, primary): string {
         const tone = (action.presentation || {}).tone || (action.role === "destructive" ? "danger" : "normal");
         return tone === "danger" || tone === "warning" ? tone : primary ? "accent" : "normal";
     }
-    function fittingSecondaryCount(): int {
-        const slots = Math.max(1, Math.floor((width + gap) / (controlHeight + gap)));
-        const available = Math.max(0, slots - (menuActions.length ? 1 : 0));
-        return secondaryActions.length <= available ? secondaryActions.length : Math.max(0, slots - 1);
+    function fittingSecondaryActions(): var {
+        const slots = Math.max(0, Math.floor((width + minimumGap) / (minimumControlHeight + minimumGap)));
+        if (requestedSlots <= slots)
+            return secondaryActions;
+        const enabledCount = secondaryActions.filter(action => action.enabled !== false).length;
+        let disabledSlots = Math.max(0, slots - enabledCount - (menuActions.length ? 1 : 0));
+        return secondaryActions.filter(action => action.enabled !== false || disabledSlots-- > 0);
+    }
+    // Pathological widths wrap enabled commands instead of hiding them or
+    // shrinking below the shared minimum. Every line remains right-aligned.
+    function secondaryX(index: int): real {
+        const lineCount = Math.min(columns, visibleSlots - Math.floor(index / columns) * columns);
+        return Math.max(0, width - lineCount * controlHeight - (lineCount - 1) * secondaryGap) + (index % columns) * (controlHeight + secondaryGap);
+    }
+    function secondaryY(index: int): real {
+        return Math.floor(index / columns) * (controlHeight + secondaryGap);
     }
     function keyFor(action): string {
         const key = String(action.accessKey || "").trim().toUpperCase();
@@ -74,10 +97,10 @@ Item {
         tone: row.primaryAction ? row.actionTone(row.primaryAction, true) : "normal"
         onClicked: row.triggered(row.primaryAction.id)
     }
-    Row {
-        anchors.right: parent.right
+    Item {
+        width: parent.width
+        height: row.secondaryHeight
         y: row.topHeight + (row.topHeight ? row.gap : 0)
-        spacing: row.gap
         Repeater {
             model: row.shownSecondary
             onItemAdded: function(index, item) {
@@ -90,6 +113,9 @@ Item {
             }
             delegate: ActionButton {
                 required property var modelData
+                required property int index
+                x: row.secondaryX(index)
+                y: row.secondaryY(index)
                 objectName: "detailAction:" + modelData.id
                 sizeRole: "secondary"
                 uiScale: row.secondaryUiScale
@@ -106,6 +132,8 @@ Item {
         ActionButton {
             id: moreButton
             objectName: "surfaceActionMore"
+            x: row.secondaryX(row.shownSecondaryCount)
+            y: row.secondaryY(row.shownSecondaryCount)
             visible: row.overflowActions.length > 0
             activeFocusOnTab: row.tabFocusEnabled && enabled
             accessKey: "M"

@@ -101,7 +101,7 @@ function stateIcon(player) {
 function actionGroup(player, id) {
     if (id === "play-pause")
         return "primary";
-    return (trackControls(player) ? ["previous", "next"] : ["rewind", "forward"]).includes(id) ? "toolbar" : "overflow";
+    return "toolbar";
 }
 function durationText(microseconds) {
     const seconds = Math.max(0, Math.floor(microseconds / 1000000));

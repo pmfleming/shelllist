@@ -8,10 +8,16 @@ retained below for traceability; they are not descriptions of the current UI.
 - Shared `DetailsHeader`/`SurfaceActionRow` now align the primary circle with the
   title and identity icon, with a separate right-aligned secondary row. Titles
   and subtitles elide after reserving the primary and a 16px gap. Secondary
-  overflow fits independently and retains the existing popup/key model.
+  layout fits independently. The follow-up direct-command policy reduces gaps,
+  then circle/icon sizes, then omits disabled commands only as necessary; enabled
+  toolbar actions wrap at extreme widths rather than moving into More. Explicit
+  named menus retain the existing popup/key model. See the current
+  [interaction contract](../chooser-keyboard-workflow.md) for sizing and guards.
 - Commands have fixed circular geometry and no rendered labels, including press
   states. Header primary diameter/icon remain 56/28px. Expanded-panel secondaries
-  now use 32/16px (two-thirds of the original 48/24px); other contexts are unchanged.
+  normally use 32/16px (two-thirds of the original 48/24px); shared header width
+  pressure can reduce secondaries to 28/14px after reducing gaps to 2px. Other
+  contexts retain their nominal sizes.
   Existing semantic colours and disabled guards remain. Wi-Fi no longer applies
   viewport-dependent header scaling; per-panel header height variants are gone.
 - All 12 surfaces are migrated or inherit the shared header. Activity uses the

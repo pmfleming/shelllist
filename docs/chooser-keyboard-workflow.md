@@ -148,9 +148,10 @@ editable-field highlight and does not change content or input geometry.
 
 ## Commands, tabs and exceptions
 
-Disabled commands retain their geometry and visible icons; unfilled buttons use
-surface-appropriate foregrounds, not accent-fill foregrounds on transparent
-backgrounds. Disabled commands never activate or join field traversal.
+Disabled commands normally retain their geometry and visible icons; only the
+shared header's last-resort narrow-width policy below may omit them. Unfilled
+buttons use surface-appropriate foregrounds, not accent-fill foregrounds on
+transparent backgrounds. Disabled commands never activate or join field traversal.
 
 Command buttons are icon-only Material 3 circles. The shared `DetailsHeader`
 centres its larger filled primary beside the title and identity icon; secondary
@@ -160,14 +161,23 @@ pages. `LabeledAction` supplies passive explanatory text beside contextual
 commands; that text/row is neither a hit target nor a field stop. Full labels
 remain in accessible names and named command menus. Press feedback keeps the
 circle and hit geometry fixed. Expanded-panel secondary circles, including More,
-use 32px diameters and 16px icons (two-thirds of 48/24px); primary circles stay
-56/28px. Collapsed headers, modal/toast/contextual buttons and named menu rows
-retain their existing sizes. Modifier hints remain separate overlays.
+normally use 32px diameters and 16px icons (two-thirds of 48/24px); primary circles
+stay 56/28px. Collapsed headers, modal/toast/contextual buttons and named menu rows
+retain their existing nominal sizes. Modifier hints remain separate overlays.
 
-`SurfaceActionRow` owns both header tiers and overflow commands. Explicit
-`presentation.group: "overflow"` actions stay in More even when the header has
-room, reserving one secondary-circle slot; width-overflowed toolbar actions join
-that same menu. Hidden menu actions do not register parallel header chords.
+`SurfaceActionRow` owns both header tiers and explicit menu commands. Toolbar
+commands remain directly visible: as width tightens, first reduce their horizontal
+gaps from 8px to 2px, then shrink secondary circles/icons to a shared minimum of
+28/14px, then omit only as many disabled commands as necessary (retaining earlier
+ones first). All dimensions scale with `uiScale`. Widening restores the commands,
+sizes and spacing; newly enabled commands reappear immediately. The primary never
+shrinks. If enabled commands alone still cannot fit, wrap them into right-aligned
+rows at the minimum size rather than hiding them or creating More. Header height
+includes every row. Command buttons remain outside field Tab traversal and retain
+their Alt+letter shortcuts and capability guards at every size.
+Explicit `presentation.group: "overflow"` actions still use More for intentional
+named menus, reserving a secondary-circle slot; width pressure never moves toolbar
+actions there. Hidden menu actions do not register parallel header chords.
 A command-only
 `CommandGroup` can move between a selected-result host and details without
 joining editable traversal or field-page readiness. Shared navigation deduplicates
@@ -302,9 +312,11 @@ The Media playback card is information-only: contained square artwork, content
 labels, read-only progress and numeric elapsed/remaining/rate follow the inspected
 player without gaining focus, pinning a player or invoking transport. Tab continues
 directly to the shared Pin to bar switch and Bar controls dropdown. Only explicit
-Enter/Tab saves the control-mode draft; acknowledged mode and capability guards
-choose track/seek header commands, with the alternative pair in More. Playback
-state uses icons and timing uses numbers, with full accessible descriptions;
+Enter/Tab saves the control-mode draft; acknowledged mode chooses track/seek
+controls on the compact bar only. The panel exposes Previous, Next, Rewind 30s
+and Forward 30s directly, with independent capability guards and no transport
+More menu. Shared header sizing may omit disabled commands only as a last resort.
+Playback state uses icons and timing uses numbers, with full accessible descriptions;
 there is no persistent shortcut legend or instructional footer. Errors remain text.
 Recognition changes presentation/search only, never the MPRIS routing or pin ID.
 See [Media presentation and shortcut diagnosis](media.md).
@@ -408,9 +420,10 @@ valid drop; Escape cancels the gesture without also closing details. Preview sta
 the explicit backend boundary. Native tests retain representative command/drop
 routes, reference save/discard, guards and cancellation; JavaScript checks cover
 all four directional calculations and fractional/rotated placement. Shared
-header/bar tests cover overflow revelation rather than repeating a per-panel size
-matrix. The [2026-10-06 test review](reviews/test-pruning-2026-10-06.md) records
-reduced coverage, including native End/RTL/vertical matrices, outside-drop and
+header/bar tests cover responsive direct-command sizing and explicit menus rather
+than repeating a per-panel size matrix. The
+[2026-10-06 test review](reviews/test-pruning-2026-10-06.md) records reduced coverage,
+including native End/RTL/vertical matrices, outside-drop and
 some restoration/consumer paths. Shared transactions, actual command keys and
 domain safety guards remain tested; these reductions do not change or relax the
 interaction contract.

@@ -171,21 +171,26 @@ DaemonTestCase {
         compare(findChild(details, "mediaPlaybackRate").text, "1×");
         compare(findChild(root, "mediaSessionState").glyph, "pause");
         verify(!root.chooser.selectedResult.subtitle.toLowerCase().includes("paused"));
-        verify(findChild(details, "detailAction:rewind") !== null);
-        verify(findChild(details, "detailAction:previous") === null, "extra transport lives only in More");
+        for (const id of ["previous", "next", "rewind", "forward"])
+            verify(findChild(details, "detailAction:" + id).visible, "all transport commands are directly visible");
+        verify(!findChild(details, "surfaceActionMore").visible);
         root.content.listItem.focusList();
         keyClick(Qt.Key_Tab);
         compare(root.content.detailsNavigation.currentTarget.objectName, "mediaPlayerPin");
         keyClick(Qt.Key_M, Qt.AltModifier);
-        tryCompare(root.content.detailsNavigation, "popupOpen", true);
-        keyClick(Qt.Key_P, Qt.AltModifier);
-        compare(calls.length, 0, "More blocks underlying play/pause");
-        keyClick(Qt.Key_Return);
-        tryCompare(root.content.detailsNavigation, "popupOpen", false);
+        compare(root.content.detailsNavigation.popupOpen, false, "no transport overflow menu");
+        keyClick(Qt.Key_B, Qt.AltModifier);
         compare(calls.length, 1);
         compare(calls[0].params.player_id, p.id);
         compare(calls[0].params.operation, "previous");
         acknowledge(root, calls[0], {});
+        const forward = findChild(details, "detailAction:forward");
+        tryCompare(forward, "enabled", true);
+        mouseClick(forward, forward.width / 2, forward.height / 2);
+        compare(calls.length, 2);
+        compare(calls[1].params.player_id, p.id);
+        compare(calls[1].params.offset_seconds, 30);
+        acknowledge(root, calls[1], {});
         root.chooser.filterText = "pocket casts";
         tryCompare(root.chooser.filteredResultsModel, "count", 1);
         compare(root.chooser.selectedResult.id, p.id);
@@ -221,7 +226,7 @@ DaemonTestCase {
         acknowledge(root, calls[0], {media: {available: true, active_player: "one", pinned_player: null, players: [Object.assign({}, p, {control_mode: "seek"})]}});
         tryCompare(mode, "value", "seek");
         verify(findChild(root.content.detailsItem, "detailAction:rewind") !== null);
-        verify(findChild(root.content.detailsItem, "detailAction:previous") === null);
+        verify(findChild(root.content.detailsItem, "detailAction:previous").visible, "bar mode never hides panel transport");
         compare(calls.length, 1);
     }
     function test_mediaListEnterPrimary_data() {

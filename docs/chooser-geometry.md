@@ -66,10 +66,14 @@ keyboard models still await their own migration.
 ## Detail content sizing
 
 Expanded command headers use a shared title/icon band with a right-aligned 56px
-primary circle, and a separate right-aligned row of 48px secondary circles when
-present. Text reserves the primary diameter plus a 16px gap and elides. The
-secondary row fits independently, overflowing to More rather than shrinking or
-stretching buttons. Header natural height is subtracted from the scrolling body;
+primary circle, and a separate right-aligned row of normally 32px secondary circles
+when present. Text reserves the primary diameter plus a 16px gap and elides.
+The secondary row fits independently: reduce gaps from 8px to 2px, then reduce
+circles/icons to 28/14px, then omit disabled commands only as needed. Enabled
+commands remain direct, wrapping into right-aligned rows at extreme widths rather
+than entering More. Explicit named menus retain their own More button. Dimensions
+scale with `uiScale`; the primary is unchanged. Header natural height includes all
+secondary rows and is subtracted from the scrolling body;
 result-list anchoring and the supported split envelope are unchanged. Empty
 command rows take no height. Wi-Fi uses the same unscaled header/control geometry
 rather than reducing targets with viewport height.
@@ -96,8 +100,8 @@ individually checked.
 [2026-10-06 pruning](reviews/test-pruning-2026-10-06.md). Its broad geometry/input
 fixture overlapped native-window smoke, work-area recovery, chooser keyboard and
 keyed list/restoration tests. Header/bar tests retain narrow command reachability
-and overflow revelation. `tst_list_alignment.qml` checks real Wi-Fi, Bluetooth
-and Time & Weather surfaces at normal/short heights: aligned search/list/status
+with ordered spacing/size/disabled omission, enabled wrapping and explicit menus.
+`tst_list_alignment.qml` checks real Wi-Fi, Bluetooth and Time & Weather surfaces at normal/short heights: aligned search/list/status
 edges, retained outer margins, pointer access to the reclaimed strip and native
 Up/Down navigation with an unclipped focus marker. Displays retains numeric validation, topology,
 preview/revert and disconnect checks. Fractional anchoring, negative-origin
