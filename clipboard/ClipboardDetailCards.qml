@@ -10,7 +10,9 @@ Ui.DetailFlickable {
 
     required property ClipboardController controller
     readonly property ClipboardDetailsController detailState: controller.detailState
-    readonly property var entry: detailState.value ? detailState.value.entry : ({})
+    readonly property var entry: detailState.value ? detailState.value.entry : (controller.selectedEntry || ({}))
+    readonly property bool previewLoading: detailState.loading || detailState.thumbnailRequestId.length > 0 || (!!detailState.thumbnail && thumbnailImage.status !== Image.Ready && thumbnailImage.status !== Image.Error)
+    readonly property string previewMessage: detailState.error || (previewLoading ? qsTr("Loading preview…") : (entry.kind === "image" ? qsTr("Image preview is unavailable") : qsTr("Binary preview is unavailable")))
     readonly property var files: detailState.value ? detailState.value.files : []
     readonly property var imageFacts: detailState.value ? detailState.value.image : null
     readonly property bool directTextEdit: entry.kind === "text"
@@ -46,7 +48,9 @@ Ui.DetailFlickable {
         height: Math.max(220, cards.height)
 
         Image {
-            visible: !!cards.detailState.thumbnail
+            id: thumbnailImage
+            objectName: "clipboardThumbnail"
+            visible: !cards.detailState.loading && cards.detailState.error.length === 0 && !!cards.detailState.thumbnail && status === Image.Ready
             anchors.fill: parent
             fillMode: Image.PreserveAspectFit
             asynchronous: true
@@ -58,7 +62,7 @@ Ui.DetailFlickable {
         Ui.TextEditor {
             objectName: "clipboardTextEditor"
             editingAllowed: cards.directTextEdit && !cards.detailState.saveInFlight && !cards.detailState.editBeginPending
-            visible: !cards.detailState.thumbnail && cards.detailState.value && cards.detailState.value.text !== null
+            visible: !cards.previewLoading && cards.detailState.error.length === 0 && !cards.detailState.thumbnail && cards.detailState.value && cards.detailState.value.text !== null
             anchors.fill: parent
             text: cards.detailState.editing ? cards.detailState.editDraft : (cards.detailState.value ? (cards.detailState.value.text || "") : "")
             Accessible.name: qsTr("Clipboard text")
@@ -87,9 +91,11 @@ Ui.DetailFlickable {
             wrapMode: TextEdit.Wrap
         }
         Ui.CenteredMessage {
+            objectName: "clipboardPreviewMessage"
             anchors.fill: parent
-            visible: !cards.detailState.thumbnail && (!cards.detailState.value || cards.detailState.value.text === null)
-            text: qsTr("Binary preview is unavailable")
+            visible: cards.detailState.error.length > 0 || cards.previewLoading || (!!cards.detailState.thumbnail ? thumbnailImage.status === Image.Error : (!cards.detailState.value || cards.detailState.value.text === null))
+            text: cards.previewMessage
+            color: cards.detailState.error.length > 0 ? Ui.Theme.danger : Ui.Theme.mutedText
             font.pixelSize: Ui.Theme.fontSizeBody
         }
     }
@@ -119,7 +125,15 @@ Ui.DetailFlickable {
                     label: "Dimensions",
                     value: cards.imageFacts ? cards.imageFacts.width + " × " + cards.imageFacts.height : "—"
                 }
-            ].filter((row, index) => index < 3 || !!cards.imageFacts)
+            ].filter((row, index) => index < 3 || cards.entry.kind === "image")
+        }
+
+        Ui.ThemeText {
+            Layout.fillWidth: true
+            visible: cards.detailState.loading || cards.detailState.error.length > 0
+            text: cards.detailState.error || qsTr("Loading entry details…")
+            color: cards.detailState.error.length > 0 ? Ui.Theme.danger : Ui.Theme.mutedText
+            wrapMode: Text.WordWrap
         }
 
         Rectangle {

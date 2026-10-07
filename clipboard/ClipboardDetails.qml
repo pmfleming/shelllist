@@ -9,7 +9,8 @@ Ui.ActionDetailsPane {
     required property ClipboardController controller
     readonly property var selected: controller.selectedResult || ({})
     readonly property ClipboardDetailsController detailState: controller.detailState
-    readonly property var entry: detailState.value ? detailState.value.entry : ({})
+    readonly property var entry: controller.selectedEntry || ({})
+    readonly property bool actionsReady: !!detailState.value && !detailState.loading && !controller.actionInFlight
     readonly property int toolbarHeight: Math.max(36, Math.round(Ui.Theme.controlHeight * uiScale))
     readonly property bool image: entry.kind === "image"
     readonly property bool link: entry.kind === "link"
@@ -21,7 +22,7 @@ Ui.ActionDetailsPane {
             label: binary ? "Copy" : "Paste",
             icon: binary ? "󰆏" : "󰆒",
             shortcut: "Enter",
-            enabled: !!entry.id && !controller.actionInFlight,
+            enabled: !!entry.id && actionsReady,
             presentation: {
                 group: "primary",
                 tone: "active",
@@ -37,7 +38,7 @@ Ui.ActionDetailsPane {
             icon: "󰆏",
             shortcut: "Ctrl+↵",
             visible: !binary,
-            enabled: !!entry.id && !controller.actionInFlight,
+            enabled: !!entry.id && actionsReady,
             presentation: {
                 group: "toolbar",
                 tone: "normal",
@@ -51,7 +52,7 @@ Ui.ActionDetailsPane {
             icon: "󰈔",
             shortcut: "Shift+↵",
             visible: image,
-            enabled: !controller.actionInFlight,
+            enabled: actionsReady,
             presentation: {
                 group: "toolbar",
                 tone: "normal",
@@ -65,7 +66,7 @@ Ui.ActionDetailsPane {
             icon: link ? "󰌷" : "󰏫",
             shortcut: "",
             visible: image || link,
-            enabled: !controller.actionInFlight,
+            enabled: actionsReady,
             presentation: {
                 group: "toolbar",
                 tone: "normal",
@@ -105,49 +106,31 @@ Ui.ActionDetailsPane {
     subtitle: selected.subtitle || ""
     actions: primaryActions.concat(secondaryActions)
 
-    Item {
+    Ui.TabbedDetailsStack {
+        objectName: "clipboardDetailsTabs"
         anchors.fill: parent
-
-        Ui.CenteredMessage {
-            anchors.fill: parent
-            visible: pane.detailState.loading
-            text: qsTr("Loading entry details…")
-            font.pixelSize: Ui.Theme.fontSizeTitle
-        }
-        Ui.CenteredMessage {
-            anchors.fill: parent
-            visible: !pane.detailState.loading && pane.detailState.error.length > 0
-            text: pane.detailState.error
-            font.pixelSize: Ui.Theme.fontSizeBody
-        }
-
-        Ui.TabbedDetailsStack {
-            objectName: "clipboardDetailsTabs"
-            anchors.fill: parent
-            visible: !pane.detailState.loading && pane.detailState.error.length === 0 && !!pane.detailState.value
-            footerHeight: pane.controlHeight
-            sectionSpacing: pane.sectionSpacing
-            selectedValue: pane.controller.detailsTab
-            tabs: [
-                {
-                    value: "data",
-                    label: qsTr("Data"),
-                    icon: "󰆏"
-                },
-                {
-                    value: "info",
-                    label: qsTr("Info"),
-                    icon: "󰋼"
-                }
-            ]
-            onSelected: function (value) {
-                pane.controller.detailsTab = value;
+        footerHeight: pane.controlHeight
+        sectionSpacing: pane.sectionSpacing
+        selectedValue: pane.controller.detailsTab
+        tabs: [
+            {
+                value: "data",
+                label: qsTr("Data"),
+                icon: "󰆏"
+            },
+            {
+                value: "info",
+                label: qsTr("Info"),
+                icon: "󰋼"
             }
+        ]
+        onSelected: function (value) {
+            pane.controller.detailsTab = value;
+        }
 
-            ClipboardDetailCards {
-                anchors.fill: parent
-                controller: pane.controller
-            }
+        ClipboardDetailCards {
+            anchors.fill: parent
+            controller: pane.controller
         }
     }
 }

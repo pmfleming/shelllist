@@ -134,6 +134,7 @@ Ui.ProviderChooserController {
         bulkDeleteConfirmationOpen = false;
         leaveMultiSelect();
         detailsOpen = false;
+        detailState.clearCache();
         detailState.clear();
     }
     function dismissEditor(): bool {
@@ -228,6 +229,7 @@ Ui.ProviderChooserController {
             return;
         revisionRequestId = "";
         if (revision !== historyRevision) {
+            detailState.clearCache();
             selectCurrentAfterRefresh = true;
             refresh();
             return;
@@ -239,6 +241,8 @@ Ui.ProviderChooserController {
             return;
         if (typeof history.snapshot_revision !== "string")
             return handleFailure(id, "Rebuild clip-daemon for revision-bound history search");
+        if (historyRevision !== history.snapshot_revision)
+            detailState.clearCache();
         historyRevision = history.snapshot_revision;
         historyReadError = "";
         historyCursor = history.next_cursor || "";
@@ -269,6 +273,8 @@ Ui.ProviderChooserController {
             hideRequested();
     }
     function handleHistoryChanged(revision: var): void {
+        if (revision !== historyRevision)
+            detailState.clearCache();
         if (revisionRequestId.length > 0)
             return;
         scheduleRefresh();
@@ -426,22 +432,33 @@ Ui.ProviderChooserController {
         status = "Clipboard operation cancelled";
     }
     function applySettings(value) {
+        if (value.private_mode !== settings.private_mode)
+            detailState.clearCache();
         settings = value;
         status = value.private_mode ? "Private mode · capture paused" : (value.capture_paused ? "Clipboard capture paused" : status);
     }
     function applyCapture(value) {
+        detailState.clearCache();
+        if (typeof value.private_mode === "boolean")
+            settings = Object.assign({}, settings, {private_mode: value.private_mode});
         status = value.private_mode ? "Private mode enabled" : (value.paused ? "Clipboard capture paused" : "Clipboard capture resumed");
     }
     function finishWipe() {
+        detailState.clearCache();
+        detailState.clearPreview();
         wipeChallenge = null;
         closeDetails();
         scheduleRefresh();
     }
     function finishDelete() {
+        detailState.clearCache();
+        detailState.clearPreview();
         closeDetails();
         scheduleRefresh();
     }
     function finishBulkDelete() {
+        detailState.clearCache();
+        detailState.clearPreview();
         cancelBulkDelete();
         leaveMultiSelect();
         closeDetails();
@@ -453,6 +470,7 @@ Ui.ProviderChooserController {
         scheduleRefresh();
     }
     function finishAnnotate() {
+        detailState.clearCache();
         // Annotation changes the entry's content-derived ID, so stable-key
         // retention cannot find it. The daemon preserves its history position;
         // restore that position instead of selecting an unrelated current item.
@@ -565,6 +583,7 @@ Ui.ProviderChooserController {
         }
     }
     function handleEventGap(stream: string): void {
+        detailState.clearCache();
         if (stream === "clipboard.operation") {
             actionInFlight = false;
             activeAction = "";
@@ -590,6 +609,7 @@ Ui.ProviderChooserController {
     function handleTransportFailure(message) {
         historyReadError = message;
         detailState.preserveDraftOnDisconnect(message);
+        detailState.clearCache();
         detailState.clear();
         clearProviderResults();
         sessionId = "";
@@ -613,7 +633,6 @@ Ui.ProviderChooserController {
     }
     onSelectedResultChanged: {
         deleteConfirmationOpen = false;
-        detailState.selectionChanged();
         Qt.callLater(maybeLoadMoreHistory);
     }
     ClipboardBackend {

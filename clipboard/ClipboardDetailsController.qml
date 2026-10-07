@@ -32,6 +32,13 @@ Item {
     property double entryRevision: -1
     property string requestId
     property string thumbnailRequestId
+    // Payload-only, invocation-local LRU. Never store edit leases or drafts.
+    readonly property int previewCacheLimit: 12
+    readonly property int previewCacheByteLimit: 2 * 1024 * 1024
+    property var previewCache: []
+    property int cacheGeneration: 0
+    property int requestCacheGeneration: -1
+    readonly property int previewCacheBytes: previewCache.reduce((total, cached) => total + cached.bytes, 0)
     readonly property var selectedEntry: controller.selectedEntry
     readonly property string selectedEntryId: selectedEntry ? selectedEntry.id : ""
     readonly property bool directTextEdit: !!selectedEntry && selectedEntry.kind === "text"
@@ -247,6 +254,7 @@ Item {
             });
     }
     function applyEditCommit(nextValue: var): void {
+        clearCache();
         const sent = pendingCommit;
         pendingCommit = null;
         if (sent && sent.target && (!editTarget || editTarget.id !== sent.target.id)) {
@@ -285,6 +293,7 @@ Item {
         thumbnailRequestId = "";
     }
     function clearPreview(): void {
+        loadTimer.stop();
         cancelPreviewRequests();
         value = null;
         thumbnail = null;
@@ -330,10 +339,50 @@ Item {
         replacedSourceIds = [];
         entryRevision = -1;
     }
+    function clearCache(): void {
+        previewCache = [];
+        // A read started before invalidation may still finish, but cannot
+        // repopulate the cache (history/privacy changes can race replies).
+        cacheGeneration += 1;
+    }
+    function cachedPreview(entry: var): var {
+        if (!entry || !controller.uiActive || controller.settings.private_mode)
+            return null;
+        return previewCache.find(cached => cached.value.entry.id === entry.id && cached.value.entry.revision === entry.revision) || null;
+    }
+    function cachePreview(): void {
+        if (!value || !controller.uiActive || controller.settings.private_mode || requestCacheGeneration !== cacheGeneration)
+            return;
+        // Cache images only once both independent replies have arrived.
+        if (value.entry.kind === "image" && !thumbnail)
+            return;
+        const next = previewCache.filter(cached => cached.value.entry.id !== value.entry.id);
+        // Avoid serializing a multi-megabyte text merely to reject it.
+        const textBytes = typeof value.text === "string" ? value.text.length * 2 : 0;
+        const bytes = textBytes > previewCacheByteLimit ? textBytes : JSON.stringify({value: value, thumbnail: thumbnail}).length * 2;
+        if (bytes <= previewCacheByteLimit)
+            next.push({value: value, thumbnail: thumbnail, bytes: bytes});
+        let total = next.reduce((sum, cached) => sum + cached.bytes, 0);
+        while (next.length > previewCacheLimit || total > previewCacheByteLimit)
+            total -= next.shift().bytes;
+        previewCache = next;
+    }
+    function restoreCachedPreview(entry: var): bool {
+        const cached = cachedPreview(entry);
+        if (!cached)
+            return false;
+        previewCache = previewCache.filter(item => item !== cached).concat([cached]);
+        entryId = entry.id;
+        entryRevision = entry.revision;
+        value = cached.value;
+        thumbnail = cached.thumbnail;
+        return true;
+    }
     function alreadyLoaded(entry: var): bool {
         return (loading && entryId === entry.id && entryRevision === entry.revision) || (value && value.entry.id === entry.id && value.entry.revision === entry.revision);
     }
     function request(entry: var, suffix: string): void {
+        requestCacheGeneration = cacheGeneration;
         requestId = "details" + suffix;
         if (!daemonBackend.details(requestId, entry)) {
             requestId = "";
@@ -356,7 +405,7 @@ Item {
         if (alreadyLoaded(entry))
             return;
         clear();
-        if (restoreFailedDraft(entry))
+        if (restoreFailedDraft(entry) || restoreCachedPreview(entry))
             return;
         entryId = entry.id;
         entryRevision = entry.revision;
@@ -365,11 +414,21 @@ Item {
         request(entry, "-" + sequence);
     }
     function scheduleLoad(): void {
-        if (controller.detailsOpen)
-            loadTimer.restart();
+        if (!controller.detailsOpen)
+            return;
+        if (cachedPreview(selectedEntry) || (selectedEntry && failedDrafts[selectedEntry.id])) {
+            load();
+            return;
+        }
+        // The debounce is part of loading, not a transient empty state.
+        if (selectedEntry && !alreadyLoaded(selectedEntry))
+            loading = true;
+        loadTimer.restart();
     }
     function selectionChanged(): void {
-        if (editOperationActive && selectedEntryId === entryId)
+        if (editOperationActive && selectedEntry && selectedEntry.id === entryId)
+            return;
+        if (selectedEntry && alreadyLoaded(selectedEntry))
             return;
         if (editing && editError.length > 0) {
             clear();
@@ -409,13 +468,16 @@ Item {
         }
         value = nextValue;
         error = "";
+        cachePreview();
     }
     function applyThumbnail(id: string, nextValue: var): void {
         if (id !== thumbnailRequestId)
             return;
         thumbnailRequestId = "";
-        if (selectedEntryMatches(entryId, entryRevision) && nextValue.entry_id === entryId && nextValue.revision === entryRevision)
+        if (selectedEntryMatches(entryId, entryRevision) && nextValue.entry_id === entryId && nextValue.revision === entryRevision) {
             thumbnail = nextValue;
+            cachePreview();
+        }
     }
     function failEditBegin(message: string): void {
         editBeginPending = false;
@@ -475,6 +537,10 @@ Item {
         }
         return id.indexOf("details-") === 0 || id.indexOf("thumbnail-") === 0;
     }
+    // Observe the payload binding itself, not its upstream selectedResult
+    // signal: synchronous cache lookup must see the NEW selection.
+    onSelectedEntryChanged: selectionChanged()
+
     Timer {
         id: loadTimer
         interval: 65

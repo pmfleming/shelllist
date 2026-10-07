@@ -427,6 +427,21 @@ show a centered mark. Shared navigation retains focus as rows arrive and safely
 closes unavailable details when the selected result disappears. State changes
 must not submit, commit, discard or replay domain writes or active editor drafts.
 
+Clipboard keeps its expanded header, selected-kind actions, tabs and preview
+frame mounted during result navigation, including the 65ms read debounce. Loading
+and errors belong inside the preview; a pending thumbnail/decode must not be
+reported as unavailable. Uncached selections never display the previous entry's
+editable content. A revision-keyed, invocation-local LRU serves repeat visits
+synchronously, bounded to 12 entries and a 2 MiB serialized UTF-16 payload budget
+(not an exact heap/decoded-image limit). It stores acknowledged previews only,
+never leases or drafts; failed drafts retain precedence. History changes/gaps,
+edits, deletion/wipe, annotation, privacy changes, disconnect and hide invalidate
+the cache, and pre-invalidation replies cannot refill it. Private mode disables
+cache reads/writes. Nothing is persisted or added to chooser presentation memory.
+`tst_clipboard_preview.qml` exercises actual result keys, stable geometry, command
+targets, image reply ordering, stale reads, eviction, revision and lifecycle guards;
+`tst_clipboard_recovery.qml` retains explicit-save and failed-draft coverage.
+
 `ContentState` is static information, not a result, field, command, pointer target
 or Tab stop. It uses semantic `GlyphLabel` rendering with legacy glyph fallback,
 an accessible text name, and decorative child glyphs. Its reason uses the status
