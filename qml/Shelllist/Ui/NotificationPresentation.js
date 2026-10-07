@@ -4,18 +4,20 @@ function notificationFor(record) {
     return record && record.notification ? record.notification : (record || ({}));
 }
 
-// Preview hierarchy is presentation only; never change the stored message or
-// use its text as an action target. Avoid repeating the app name as a headline.
-function previewTitle(record) {
+// Presentation only: neither text nor artwork is an action target. A missing
+// or repeated app-name summary must not turn a long body/path into a headline.
+function previewHeading(record) {
     const n = notificationFor(record);
     const summary = String(n.summary || "").replace(/\s+/g, " ").trim();
-    const body = String(n.body || "").replace(/\s+/g, " ").trim();
-    const app = String(n.app_name || "").trim();
-    return body && (!summary || summary.toLowerCase() === app.toLowerCase()) ? body : summary;
+    return summary.toLowerCase() === String(n.app_name || "").trim().toLowerCase() ? "" : summary;
+}
+function previewTitle(record) {
+    const n = notificationFor(record);
+    return previewHeading(record) || String(n.body || n.summary || "").replace(/\s+/g, " ").trim();
 }
 function previewBody(record) {
     const body = String(notificationFor(record).body || "").replace(/\s+/g, " ").trim();
-    return body === previewTitle(record) ? "" : body;
+    return body === previewHeading(record) ? "" : body;
 }
 
 // Live snapshots and persisted wrappers share identity, including after close.

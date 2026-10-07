@@ -137,7 +137,7 @@ DaemonTestCase {
         wait(150);
         projectDetail(controller, [record(100), record(3), record(2)], 12);
         verify(waitForRendering(content));
-        for (const name of ["list", "article"]) {
+        for (const name of ["list", "chevron_right"]) {
             const glyph = descendants(content).find(item => item.glyph === name);
             verify(glyph !== undefined);
             compare(glyph.symbol, name, "semantic command uses the symbol font, not literal fallback text");
@@ -152,30 +152,59 @@ DaemonTestCase {
         verify(!content.detailsNavigation.targets.includes(findChild(content, "notificationRead-100:100000")));
         content.destroy(); wait(0);
     }
-    function test_previewsPromoteMessageContentWithoutChangingIdentity() {
+    function test_previewHierarchyAndPassiveCards_data() {
+        return [{tag: "wide", width: 1280}, {tag: "narrow", width: 900}];
+    }
+    function test_previewHierarchyAndPassiveCards(data) {
         const controller = makeController(makeState());
+        controller.availableScreenWidth = data.width;
         controller.uiActive = true; controller.openDetails();
-        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
+        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: controller.currentWindowWidth, height: 600});
         wait(150);
-        projectDetail(controller, [record(100), record(3)]);
-        const entries = [Object.assign(preview(100), {summary: "Chat", body: "Payment received", closed_unix_ms: 100001}),
-            Object.assign(preview(3), {summary: "Unique subject", body: "<b>Plain message</b> ".repeat(30)})];
+        projectDetail(controller, [record(100), record(3), record(2)]);
+        const savedFile = "File saved to '/run/user/1000/clip-daemon/edits/clipboard-45423e6b-447c-4813-8366-3a5e7c545b95.png'.";
+        const entries = [Object.assign(preview(100), {summary: "Chat", body: savedFile, closed_unix_ms: 100001}),
+            Object.assign(preview(3), {summary: "Unique subject", body: "<b>Plain message</b> ".repeat(12)}),
+            Object.assign(preview(2), {summary: "", body: "Copied to clipboard."})];
         controller.catalog.acceptDetail(Object.assign({}, controller.catalog.detail, {overview: entries, entries: entries}));
-        verify(waitForRendering(content));
-        const title = findChild(content, "notificationPreviewTitle-100:100000");
-        const meta = findChild(content, "notificationPreviewMeta-100:100000");
-        compare(title.text, "Payment received");
-        verify(title.font.pixelSize > meta.font.pixelSize);
-        verify(!findChild(content, "notificationPreviewBody-100:100000").visible);
-        const body = findChild(content, "notificationPreviewBody-3:3000");
-        compare(body.textFormat, Text.PlainText);
-        verify(body.lineCount <= 2);
-        verify(body.height > 0);
-        controller.setDetailsTab("notifications");
-        verify(waitForRendering(content));
-        compare(findChild(content, "notificationPreviewTitle-100:100000").text, "Payment received");
-        verify(!body.visible);
-        mouseClick(findChild(content, "notificationRead-100:100000"));
+        projectApps(controller, [{key: "Chat", count: 3, total_count: 3, latest: entries[0]}]);
+        for (const tab of ["overview", "notifications"]) {
+            controller.setDetailsTab(tab);
+            verify(waitForRendering(content));
+            const label = descendants(content.listItem).find(item => typeof item.subtitle === "string" && item.subtitle.includes(savedFile));
+            verify(label !== undefined);
+            compare(label.subtitle.split(savedFile).length, 2, "the body-only app preview must not duplicate its content");
+            const first = findChild(content, "notificationPreview-100:100000");
+            const next = findChild(content, "notificationPreview-3:3000");
+            const title = findChild(content, "notificationPreviewTitle-3:3000");
+            const body = findChild(content, "notificationPreviewBody-3:3000");
+            const meta = findChild(content, "notificationPreviewMeta-3:3000");
+            verify(!findChild(content, "notificationPreviewTitle-100:100000").visible, "do not promote a file path into a bold headline");
+            compare(findChild(content, "notificationPreviewBody-100:100000").text, savedFile);
+            verify(!findChild(content, "notificationPreviewTitle-2:2000").visible);
+            verify(title.font.pixelSize > body.font.pixelSize && body.font.pixelSize > meta.font.pixelSize);
+            verify(title.font.weight > body.font.weight);
+            verify(body.color !== meta.color);
+            compare(body.textFormat, Text.PlainText);
+            verify(body.lineCount <= 2 && body.height > 0);
+            verify(title.mapToItem(next, 0, 0).x >= 12, "card padding separates content from its edge");
+            verify(next.y - first.y - first.height >= 12, "notifications have separate surfaces and breathing room");
+            verify(first.color.a > 0);
+            verify(!content.detailsNavigation.targets.includes(first));
+            const read = findChild(content, "notificationRead-100:100000");
+            compare(read.borderColor.a, 0, "Read is a low-emphasis chevron, not another outlined badge");
+            verify(!content.detailsNavigation.targets.includes(read));
+            mouseClick(first, 6, 6);
+            compare(controller.selectedKey, "", "the passive card does not read or invoke a message");
+        }
+        if (data.tag === "narrow") {
+            content.listItem.focusList();
+            keyClick(Qt.Key_J, Qt.AltModifier);
+            tryVerify(() => content.detailsNavigation.commandMenuOpen);
+            keyClick(Qt.Key_Return);
+        } else {
+            mouseClick(findChild(content, "notificationRead-100:100000"));
+        }
         tryCompare(controller, "selectedKey", "100:100000");
         compare(controller.detailsTab, "message");
         content.destroy(); wait(0);
