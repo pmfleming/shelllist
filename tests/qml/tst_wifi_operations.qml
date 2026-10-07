@@ -53,6 +53,51 @@ DaemonTestCase {
         verify(findChild(panel, "fieldTrailingAction").enabled);
         verify(findChild(panel, "chooserRefreshButton").enabled);
     }
+    function statusReply(c, result, id) {
+        c.backend.acceptSharedResponse(id || c.connection.recoveryId, {protocol: "nm-api", version: 1, ok: true, data: {result: result}}, "");
+    }
+    function test_missedCompletionIsRecoveredWithoutReplayingMutation() {
+        const c = makePanel().controller;
+        c.connection.requestId = "connect-owned";
+        c.handleDaemonEventGap("wifi.connect");
+        const read = calls.filter(function (call) { return call.method === "operation.status"; });
+        compare(read.length, 1);
+        compare(read[0].params.request_id, "connect-owned");
+        statusReply(c, {request_id: "connect-owned", status: "finished", stream: "wifi.connect", event: {request_id: "connect-owned", event: "succeeded", result: {status: "connected", message: "Link connected; internet unknown"}}});
+        compare(c.connection.requestId, "");
+        verify(!c.actionInFlight);
+        compare(c.status, "Link connected; internet unknown");
+        compare(calls.filter(function (call) { return call.method === "wifi.connectTarget"; }).length, 0);
+    }
+    function test_slowOperationKeepsGuardUntilCancellationAcknowledgement() {
+        const c = makePanel().controller;
+        c.connection.requestId = "connect-owned";
+        c.connection.checkStatus(true);
+        statusReply(c, {request_id: "connect-owned", status: "running", stream: "wifi.connect", timed_out: true, cancellation_requested: true});
+        verify(c.actionInFlight);
+        verify(c.status.indexOf("timed out") >= 0);
+        c.connection.handleEvent({request_id: "other", event: "cancelled"});
+        verify(c.actionInFlight);
+        c.connection.handleEvent({request_id: "connect-owned", event: "cancelled"});
+        verify(!c.actionInFlight);
+    }
+    function test_statusFailuresAndLateRepliesCannotUnlockOrRetireNewRead() {
+        const c = makePanel().controller;
+        c.connection.requestId = "connect-owned";
+        c.connection.checkStatus(true);
+        const oldId = c.connection.recoveryId;
+        c.connection.recoveryFailed("Read timed out.");
+        verify(c.actionInFlight);
+        verify(!c.backend.isPending(oldId));
+        c.connection.checkStatus(true);
+        const newId = c.connection.recoveryId;
+        statusReply(c, {request_id: "connect-owned", status: "finished", stream: "wifi.connect", event: {request_id: "connect-owned", event: "cancelled"}}, oldId);
+        compare(c.connection.recoveryId, newId);
+        statusReply(c, {request_id: "different", status: "unknown"});
+        verify(c.actionInFlight);
+        compare(c.connection.recoveryId, "");
+        verify(c.connection.checkStatus(true), "manual read retry stays available");
+    }
     function test_screenshotAndConnectionAreIndependent() {
         const panel = makePanel();
         const c = panel.controller;

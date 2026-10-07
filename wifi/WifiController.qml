@@ -353,6 +353,8 @@ ProviderChooserController {
             vpn.refresh();
             return;
         }
+        if (stream === NmApi.streams.wifi_connect)
+            connection.checkStatus(true);
         backend.recoverStatus();
         backend.refreshNetworks(true);
     }
@@ -365,7 +367,7 @@ ProviderChooserController {
     }
 
     function failCall(id, message, details) {
-        if (id === "connect-start")
+        if (id === "connect-start" || id === "qr-connect")
             connection.resetProgress();
         advanced.failCall(id, message, details);
         if (id === "share")

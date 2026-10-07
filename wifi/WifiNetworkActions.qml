@@ -120,6 +120,8 @@ Item {
                 return controller.connection.connect(ap);
             },
             "cancel-connect": controller.connection.cancel,
+            "cancel-pending-connection": controller.connection.cancel,
+            "check-connection": function () { return controller.connection.checkStatus(true); },
             disconnect: function () {
                 return disconnect(ap);
             },

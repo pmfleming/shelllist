@@ -31,7 +31,7 @@ Core.Provider {
                 accessKey: "X",
                 icon: "󰜺",
                 role: "destructive",
-                enabled: controller.connection.requestId.length > 0,
+                enabled: controller.connection.requestId.length > 0 && !controller.connection.cancellationRequested,
                 visible: connecting,
                 presentation: {
                     group: "primary"
@@ -48,7 +48,19 @@ Core.Provider {
             })];
     }
     function toolbarActions(ap) {
-        return [Core.Model.keepOpenAction("forget", "Forget", {
+        return [Core.Model.keepOpenAction("check-connection", "Check status", {
+                accessKey: "K",
+                icon: "󰑐",
+                enabled: controller.connection.recoveryId.length === 0,
+                visible: controller.connection.requestId.length > 0,
+                presentation: { group: "toolbar" }
+            }), Core.Model.keepOpenAction("cancel-pending-connection", "Cancel connection", {
+                accessKey: "X",
+                icon: "󰜺",
+                visible: controller.connection.requestId.length > 0 && !controller.connection.isConnecting(ap),
+                enabled: !controller.connection.cancellationRequested,
+                presentation: { group: "toolbar" }
+            }), Core.Model.keepOpenAction("forget", "Forget", {
                 accessKey: "F",
                 icon: "󰆴",
                 role: "destructive",

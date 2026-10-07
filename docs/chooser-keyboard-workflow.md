@@ -377,7 +377,15 @@ blocks remain). Link completion does not await an internet probe: the daemon
 publishes NetworkManager's passive connectivity verdict separately. Unknown
 reachability is not a failed Wi-Fi connection or permission to launch a portal.
 Power/profile/connect/disconnect commands retain acknowledgement guards. These
-commands do not join Tab traversal. `tst_wifi_operations.qml` covers the guards.
+commands do not join Tab traversal. **Alt+K** checks a pending connection using
+the daemon's owner-scoped `operation.status`; **Alt+X** requests cancellation,
+including after the link becomes active or for a QR-originated operation.
+Neither command declares completion before the owned terminal event. Missed
+events trigger status recovery; failed reads retire only their own read and stop
+automatic retries after three failures. Manual Check status remains available.
+The daemon's overall connection deadline requests cancellation without releasing
+the mutation guard before the worker acknowledges. `tst_wifi_operations.qml`
+covers these guards, recovery and shared commands.
 
 Wi-Fi Sign in remains **Alt+I**, never a field Tab stop. It requests and claims a
 daemon-owned portal intent before the frontend executes browser/workspace focus;

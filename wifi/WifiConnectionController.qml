@@ -2,6 +2,7 @@ import QtQuick
 import "WifiPresentation.js" as Presentation
 import "WifiFlow.js" as Flow
 import "NmApiClient.js" as Api
+import "NmApi.js" as NmApi
 
 Item {
     id: connection
@@ -17,6 +18,10 @@ Item {
     property string workspaceId: ""
     property string requestId: ""
     property var lastConnectAp: null
+    property string recoveryId: ""
+    property string recoveryRequestId: ""
+    property int recoveryFailures: 0
+    property bool cancellationRequested: false
     readonly property bool running: backend.connectStarting || requestId.length > 0
 
     function activate() {
@@ -43,7 +48,7 @@ Item {
         return ap && ap.key ? ap.key : "";
     }
     function isConnecting(ap) {
-        return running && networkKey.length > 0 && keyFor(ap) === networkKey && !controller.isActive(ap);
+        return running && networkKey.length > 0 && keyFor(ap) === networkKey;
     }
     function networkIsActive() {
         return networkKey.length > 0 && controller.activeNetworkKey() === networkKey;
@@ -61,6 +66,7 @@ Item {
         progressTimer.stop();
     }
     function handleTransportFailure() {
+        retireRecovery();
         const lostRequestId = requestId;
         requestId = "";
         resetProgress();
@@ -90,7 +96,7 @@ Item {
         }
         const state = Api.connectEventState(event);
         if (state === "progress") {
-            controller.setBackgroundStatus(event.message || "Connecting to " + networkName + "…");
+            controller.setHeldStatus(event.message || "Connecting to " + networkName + "…", 15000);
             return;
         }
         finishEvent(event, state === "succeeded");
@@ -215,10 +221,91 @@ Item {
             return;
         }
         controller.status = "Cancelling connection to " + networkName + "…";
-        if (!backend.cancel(requestId))
+        cancellationRequested = true;
+        if (!backend.cancel(requestId)) {
+            cancellationRequested = false;
             controller.status = "Could not cancel the connection to " + networkName + ".";
+        }
+        recoveryTimer.restart();
     }
 
+    function retireRecovery() {
+        if (recoveryId.length > 0)
+            backend.setPending(recoveryId, false);
+        recoveryId = "";
+        recoveryRequestId = "";
+        recoveryReplyTimer.stop();
+    }
+    function checkStatus(manual) {
+        if (!requestId || recoveryId)
+            return false;
+        if (manual)
+            recoveryFailures = 0;
+        recoveryTimer.stop();
+        recoveryRequestId = requestId;
+        recoveryId = backend.nextRequestId("connection-status");
+        recoveryReplyTimer.restart();
+        return backend.call(recoveryId, NmApi.methods.operation_status, {request_id: requestId});
+    }
+    function recoveryFailed(message) {
+        retireRecovery();
+        recoveryFailures += 1;
+        controller.setHeldStatus(message + " Connection outcome is unconfirmed; use Check status or Cancel.", 15000);
+        if (requestId && recoveryFailures < 3)
+            recoveryTimer.restart();
+    }
+    function receiveStatus(id, envelope, transportError) {
+        if (!recoveryId || id !== recoveryId || recoveryRequestId !== requestId)
+            return;
+        const error = backend.responseError(envelope, transportError, "Could not check connection status.");
+        if (error) {
+            recoveryFailed(error);
+            return;
+        }
+        const result = (envelope.data || ({})).result;
+        if (!result || result.request_id !== requestId || result.stream !== NmApi.streams.wifi_connect || !["running", "finished"].includes(result.status)) {
+            recoveryFailed("The daemon could not confirm this connection operation.");
+            return;
+        }
+        const event = result.event;
+        if (result.status === "finished" && (!event || event.request_id !== requestId || !["succeeded", "failed", "cancelled"].includes(event.event))) {
+            recoveryFailed("The daemon returned an invalid connection result.");
+            return;
+        }
+        retireRecovery();
+        recoveryFailures = 0;
+        if (result.status === "finished") {
+            handleEvent(event);
+            return;
+        }
+        // A progress snapshot is not completion, even if wifi.status is active.
+        if (event && event.request_id === requestId && ["started", "progress"].includes(event.event))
+            handleEvent(event);
+        if (result.cancellation_requested) {
+            cancellationRequested = true;
+            controller.setHeldStatus(result.timed_out ? "Connection timed out; waiting for cancellation acknowledgement…" : "Waiting for connection cancellation acknowledgement…", 15000);
+        }
+        recoveryTimer.restart();
+    }
+    onRequestIdChanged: {
+        retireRecovery();
+        recoveryFailures = 0;
+        cancellationRequested = false;
+        if (requestId.length > 0)
+            recoveryTimer.restart();
+        else
+            recoveryTimer.stop();
+    }
+    Timer {
+        id: recoveryTimer
+        interval: 15000
+        onTriggered: connection.checkStatus(false)
+    }
+    Timer {
+        id: recoveryReplyTimer
+        interval: 10000
+        onTriggered: connection.recoveryFailed("Connection status check timed out.")
+    }
     Timer {
         id: progressTimer
         interval: 120

@@ -21,7 +21,7 @@ Io.DaemonBackend {
     // request kinds remain conservatively exclusive; new mutations fail closed.
     readonly property bool nonConnectRunning: Object.keys(pending).some(function (id) {
         const reads = ["networks", "scan-start", "connect-start", "qr-connect", "share", "qr-parse", "status-recovery", "connection-status", "band-status", "advanced-load", "advanced-secret", "hotspot-capabilities", "hotspot-status", "vpn-list", "vpn-status", "inventory", "network-status", "statistics-watch"];
-        return !reads.includes(id) && !id.startsWith("portal-") && !isTransportControl(id);
+        return !reads.includes(id) && !id.startsWith("portal-") && !id.startsWith("connection-status-") && !isTransportControl(id);
     })
     readonly property bool running: connectStarting || nonConnectRunning || controller.connection.requestId.length > 0
     property var portalExecutor: portalProcess
@@ -327,6 +327,10 @@ Io.DaemonBackend {
     }
 
     function finish(id, envelope, transportError) {
+        if (id.startsWith("connection-status-")) {
+            controller.connection.receiveStatus(id, envelope, transportError);
+            return;
+        }
         if (id.startsWith("portal-")) {
             controller.portal.receive(id, envelope, transportError);
             return;
@@ -396,7 +400,9 @@ Io.DaemonBackend {
         controller.handleDaemonEvent(event);
     }
     onSendFailed: function (id, message) {
-        if (id.startsWith("portal-"))
+        if (id.startsWith("connection-status-"))
+            controller.connection.receiveStatus(id, null, message);
+        else if (id.startsWith("portal-"))
             controller.portal.receive(id, null, message);
         else
             controller.failCall(id, message);
