@@ -36,6 +36,7 @@ FieldFrame {
     property int maximumLength: 32767
     property int fontPixelSize: Theme.formValueSize
     property string fontFamily: Theme.fontFamily
+    readonly property alias trailingAction: trailingActionButton
     property string trailingActionIcon: ""
     property string trailingActionToolTip: ""
     property bool trailingActionEnabled: true
@@ -202,7 +203,7 @@ FieldFrame {
         commandScope: field.readOnly ? null : field
         accessKey: field.readOnly ? "" : "V"
         visible: field.showPasswordButton
-        anchors.right: trailingAction.visible ? trailingAction.left : parent.right
+        anchors.right: trailingActionButton.visible ? trailingActionButton.left : parent.right
         anchors.rightMargin: Theme.spacingXs
         anchors.verticalCenter: parent.verticalCenter
         width: field.embeddedActionWidth
@@ -215,7 +216,7 @@ FieldFrame {
     }
 
     FlatIconButton {
-        id: trailingAction
+        id: trailingActionButton
         objectName: "fieldTrailingAction"
         commandScope: field.readOnly ? null : field
 

@@ -175,6 +175,15 @@ editors retain their size and single-field transaction. See the
 [implementation record](reviews/compact-text-fields.md) and
 `tst_compact_fields.qml`, `tst_ip_fields.qml`, `tst_material_feedback.qml`.
 
+Bluetooth’s **Restore original name** is an icon-only trailing action inside the
+shared Name text field, not a separate labeled/explanatory row. Its accessible
+name and Alt+O command remain available through shared command navigation, never
+Tab traversal. The icon retains its geometry when disabled; dirty-name, busy,
+missing-original and already-original guards and authoritative acknowledgement
+are unchanged. `TextField.trailingAction` exposes the shared embedded command for
+identity/access-key configuration. `tst_bluetooth_recovery.qml` covers its actual
+pointer/key routes, native save/discard, placement and disabled guards.
+
 ## Commands, tabs and exceptions
 
 Disabled commands normally retain their geometry and visible icons; only the

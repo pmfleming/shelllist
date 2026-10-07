@@ -90,17 +90,14 @@ ColumnLayout {
             onEdited: section.queueRename()
             onEditingFinished: section.saveRename()
             onAccepted: section.saveRename()
+            trailingActionIcon: "restore"
+            trailingActionToolTip: qsTr("Restore original name")
+            trailingActionEnabled: !section.renameDirty && !section.controller.actionInFlight && !!section.controller.selectedDevice.remote_name && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
+            trailingAction.objectName: "restoreDeviceName"
+            trailingAction.accessKey: "O"
+            trailingAction.commandScope: null
+            onTrailingActionRequested: section.controller.resetSelectedName()
         }
-    }
-
-    Ui.LabeledAction {
-        icon: "restore"
-        objectName: "restoreDeviceName"
-        accessKey: "O"
-        Layout.fillWidth: true
-        label: qsTr("Restore original name")
-        enabled: !section.renameDirty && !section.controller.actionInFlight && !!section.controller.selectedDevice.remote_name && section.controller.selectedDevice.alias !== section.controller.selectedDevice.remote_name
-        onClicked: section.controller.resetSelectedName()
     }
     Ui.RecoveryActions {
         Layout.fillWidth: true
