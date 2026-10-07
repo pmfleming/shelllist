@@ -83,6 +83,9 @@
 (.notification_apps.apps[0].count == .notification_app.count) and
 (.notification_apps.apps[0].total_count == .notification_app.total_count) and
 (.notification_apps.apps[0].latest.id == .notification_app.selected.notification.id) and
+(.notification_app.selected.notification.hints as $hints |
+  [.notification_apps.apps[0].latest, .notification_app.overview[], .notification_app.entries[]] |
+  all(.hints.desktop_entry == $hints.desktop_entry and .hints.image_path == $hints.image_path)) and
 (.notification_app.view == "app") and
 (.notification_app.pages == 1 and .notification_app.page == 1) and
 (.notification_app.overview | length <= 3) and

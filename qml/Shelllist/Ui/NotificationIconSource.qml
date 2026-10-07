@@ -14,7 +14,10 @@ QtObject {
             const candidate = String(value || "").trim();
             if (candidate.startsWith("/")) return "file://" + candidate;
             if (candidate.startsWith("file://")) return candidate;
-            if (candidate && Quickshell.hasThemeIcon(candidate)) return Quickshell.iconPath(candidate);
+            if (!candidate) continue;
+            // Adwaita ships many status/action icons only in symbolic form.
+            for (const name of [candidate, candidate.endsWith("-symbolic") ? "" : candidate + "-symbolic"])
+                if (name && Quickshell.hasThemeIcon(name)) return Quickshell.iconPath(name);
         }
         return "";
     }

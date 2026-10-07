@@ -30,6 +30,39 @@ TestCase {
         const image = grabImage(icon);
         verify(image.width > 0 && image.height > 0);
     }
+    function test_centerPreviewRetainsSenderArtwork_data() {
+        return [
+            {tag: "signal-image-hint", name: "Signal", desktop: "", image: "org.signal.Signal", installed: "org.signal.Signal"},
+            {tag: "thunderbird-image-hint", name: "Thunderbird", desktop: "", image: "thunderbird", installed: "thunderbird"},
+            {tag: "unnamed-ghostty", name: "", desktop: "com.mitchellh.ghostty", image: "com.mitchellh.ghostty", installed: "com.mitchellh.ghostty"},
+            {tag: "desktop-only", name: "Unrelated display name", desktop: "org.example.App", image: "", installed: "org.example.App"},
+            {tag: "shelllist-error", name: "Shelllist", desktop: "", image: "dialog-error", installed: "dialog-error"},
+            {tag: "battery-warning", name: "bar-daemon", desktop: "", image: "battery-caution", installed: "battery-caution"},
+            {tag: "absolute-image-path", name: "satty", desktop: "com.gabm.satty", image: Qt.resolvedUrl("fixtures/media-cover.svg").toString(), installed: ""}
+        ];
+    }
+    function test_centerPreviewRetainsSenderArtwork(data) {
+        const source = Qt.resolvedUrl("fixtures/media-cover.svg").toString();
+        Quickshell.themeIcons = data.installed ? {[data.installed]: source} : ({});
+        const preview = {id: 1, created_unix_ms: 1000, app_key: "test", app_name: data.name,
+            app_icon: "", hints: {desktop_entry: data.desktop, image_path: data.image}, summary: "Test", body: ""};
+        const icon = createTemporaryObject(iconComponent, testCase, {notification: preview});
+        compare(icon.source, source, "compact previews use sender hints just like full messages/toasts");
+        tryCompare(icon, "hasImage", true);
+        const pixels = grabImage(icon);
+        compare(pixels.pixel(12, 12), Qt.color("#197d87"), "the supplied artwork is painted, not the fallback bell");
+    }
+    function test_symbolicThemeFallbackPreservesSenderPriority() {
+        const source = Qt.resolvedUrl("fixtures/media-cover.svg").toString();
+        const other = "image://icon/exact";
+        Quickshell.themeIcons = {"battery-caution-symbolic": source, "dialog-error-symbolic": source, "some-app": other};
+        const warning = {app_icon: "battery-caution", app_name: "some-app"};
+        compare(Ui.NotificationIconSource.resolve(warning), source, "symbolic sender artwork precedes an app-name guess");
+        compare(Ui.NotificationIconSource.resolve({hints: {image_path: "dialog-error"}}), source);
+        compare(Ui.NotificationIconSource.resolve({app_icon: "battery-caution-symbolic"}), source);
+        Quickshell.themeIcons = {"battery-caution": other, "battery-caution-symbolic": source};
+        compare(Ui.NotificationIconSource.resolve(warning), other, "prefer an installed exact icon over its symbolic variant");
+    }
     function test_installedAppFallbackAndFailedFileRecover() {
         const source = Qt.resolvedUrl("fixtures/media-cover.svg").toString();
         Quickshell.themeIcons = {signal: source};
