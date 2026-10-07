@@ -148,6 +148,10 @@ editable-field highlight and does not change content or input geometry.
 
 ## Commands, tabs and exceptions
 
+Disabled commands retain their geometry and visible icons; unfilled buttons use
+surface-appropriate foregrounds, not accent-fill foregrounds on transparent
+backgrounds. Disabled commands never activate or join field traversal.
+
 Command buttons are icon-only Material 3 circles. The shared `DetailsHeader`
 centres its larger filled primary beside the title and identity icon; secondary
 circles sit below, right-aligned to the same edge. Title and subtitle elide with
