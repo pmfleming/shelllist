@@ -50,17 +50,35 @@ Ui.DetailFlickable {
                 width: parent.width
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: Ui.Theme.spacingXs
                     Ui.ThemeText {
+                        objectName: "notificationPreviewTitle-" + Ui.NotificationPresentation.recordKey(entry.modelData)
                         Layout.fillWidth: true
-                        text: entry.modelData.summary || qsTr("Notification")
+                        Layout.minimumWidth: 0
+                        text: Ui.NotificationPresentation.previewTitle(entry.modelData) || qsTr("Notification")
                         textFormat: Text.PlainText
                         elide: Text.ElideRight
-                        maximumLineCount: 1
+                        wrapMode: Text.Wrap
+                        maximumLineCount: page.overview ? 2 : 1
                         font.weight: Ui.Theme.fontWeightDemiBold
                     }
                     Ui.ThemeText {
+                        objectName: "notificationPreviewBody-" + Ui.NotificationPresentation.recordKey(entry.modelData)
                         Layout.fillWidth: true
-                        text: [Ui.NotificationPresentation.timeLabel(entry.modelData.created_unix_ms, page.controller.nowMs), entry.modelData.snoozed_until_unix_ms ? qsTr("Snoozed until %1").arg(new Date(entry.modelData.snoozed_until_unix_ms).toLocaleTimeString()) : entry.modelData.closed_unix_ms ? qsTr("Closed") : "", page.overview ? entry.modelData.body.replace(/\s+/g, " ") : ""].filter(Boolean).join(" · ")
+                        Layout.minimumWidth: 0
+                        visible: page.overview && text.length > 0
+                        text: Ui.NotificationPresentation.previewBody(entry.modelData)
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                        elide: Text.ElideRight
+                        maximumLineCount: 2
+                    }
+                    Ui.ThemeText {
+                        objectName: "notificationPreviewMeta-" + Ui.NotificationPresentation.recordKey(entry.modelData)
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        text: [Ui.NotificationPresentation.timeLabel(entry.modelData.created_unix_ms, page.controller.nowMs), entry.modelData.snoozed_until_unix_ms ? qsTr("Snoozed until %1").arg(new Date(entry.modelData.snoozed_until_unix_ms).toLocaleTimeString()) : entry.modelData.closed_unix_ms ? qsTr("Closed") : ""].filter(Boolean).join(" · ")
                         textFormat: Text.PlainText
                         color: Ui.Theme.mutedText
                         elide: Text.ElideRight
@@ -72,7 +90,7 @@ Ui.DetailFlickable {
                     objectName: "notificationRead-" + Ui.NotificationPresentation.recordKey(entry.modelData)
                     sizeRole: "secondary"
                     icon: "article"
-                    accessibleName: qsTr("Read %1 · %2").arg(entry.modelData.summary || qsTr("Notification")).arg(new Date(entry.modelData.created_unix_ms).toLocaleString())
+                    accessibleName: qsTr("Read %1 · %2").arg(Ui.NotificationPresentation.previewTitle(entry.modelData) || qsTr("Notification")).arg(new Date(entry.modelData.created_unix_ms).toLocaleString())
                     onClicked: page.controller.readRecord(entry.modelData)
                 }
             }

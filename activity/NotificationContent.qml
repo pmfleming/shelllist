@@ -66,7 +66,7 @@ Ui.ProviderChooserSurface {
             Ui.NotificationAppIcon { id: identity; visible: false; notification: row.app.latest }
             Ui.ResultLabel {
                 title: (row.app.latest.app_name || qsTr("Notification")) + " · " + row.app.count
-                subtitle: [Ui.NotificationPresentation.timeLabel(row.app.latest.created_unix_ms, content.controller.nowMs), row.app.latest.summary, row.app.latest.body.replace(/\s+/g, " ")].filter(Boolean).join(" · ")
+                subtitle: [Ui.NotificationPresentation.timeLabel(row.app.latest.created_unix_ms, content.controller.nowMs), Ui.NotificationPresentation.previewTitle(row.app.latest), Ui.NotificationPresentation.previewBody(row.app.latest)].filter(Boolean).join(" · ")
             }
         }
     }

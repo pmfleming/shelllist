@@ -113,6 +113,11 @@ Notification icons use supplied local images or positively resolved installed
 icons (including desktop/name fallbacks), otherwise a neutral bell. Missing theme
 assets must never be represented by Quickshell's checkerboard placeholder;
 failed local images use the same shared glyph fallback.
+Previews promote the body when the summary only repeats the app name. Distinct
+subjects remain headlines; Overview body excerpts use normal text size and at
+most two lines, with date/lifecycle metadata on a separate caption. Index titles
+stay single-line. Text remains plain, passive and bounded, and Read still targets
+the original record identity, not its presentation text.
 
 ## Validation
 

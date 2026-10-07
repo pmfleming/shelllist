@@ -156,6 +156,34 @@ DaemonTestCase {
         verify(!content.detailsNavigation.targets.includes(findChild(content, "notificationRead-100:100000")));
         content.destroy(); wait(0);
     }
+    function test_previewsPromoteMessageContentWithoutChangingIdentity() {
+        const controller = makeController(makeState());
+        controller.uiActive = true; controller.openDetails();
+        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
+        wait(150);
+        projectDetail(controller, [record(100), record(3)]);
+        const entries = [Object.assign(preview(100), {summary: "Chat", body: "Payment received", closed_unix_ms: 100001}),
+            Object.assign(preview(3), {summary: "Unique subject", body: "<b>Plain message</b> ".repeat(30)})];
+        controller.catalog.acceptDetail(Object.assign({}, controller.catalog.detail, {overview: entries, entries: entries}));
+        verify(waitForRendering(content));
+        const title = findChild(content, "notificationPreviewTitle-100:100000");
+        const meta = findChild(content, "notificationPreviewMeta-100:100000");
+        compare(title.text, "Payment received");
+        verify(title.font.pixelSize > meta.font.pixelSize);
+        verify(!findChild(content, "notificationPreviewBody-100:100000").visible);
+        const body = findChild(content, "notificationPreviewBody-3:3000");
+        compare(body.textFormat, Text.PlainText);
+        verify(body.lineCount <= 2);
+        verify(body.height > 0);
+        controller.setDetailsTab("notifications");
+        verify(waitForRendering(content));
+        compare(findChild(content, "notificationPreviewTitle-100:100000").text, "Payment received");
+        verify(!body.visible);
+        mouseClick(findChild(content, "notificationRead-100:100000"));
+        tryCompare(controller, "selectedKey", "100:100000");
+        compare(controller.detailsTab, "message");
+        content.destroy(); wait(0);
+    }
     function test_dndAcknowledgementAndRetry() {
         const state = makeState();
         state.backend = createTemporaryObject(fakeBackendComponent, state, {
