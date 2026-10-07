@@ -83,7 +83,7 @@ Item {
         id: sharedNotifications
         resident: true
         uiActive: registry.notificationController !== null && registry.notificationController.uiActive
-        historyEnabled: uiActive
+        historyEnabled: false
     }
 
     readonly property var currentDescriptor: descriptorFor(currentId)

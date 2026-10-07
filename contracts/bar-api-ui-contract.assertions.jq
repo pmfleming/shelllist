@@ -76,6 +76,18 @@
 (.notification_page.records[0].history_id == null) and
 (.notification_page.records[0].notification.id == .snapshot.notification_active.notifications[0].id) and
 (.notification_page.records[0].notification.toast_visible == false) and
+(any(.registry.methods[]; .name == "notifications.queryCenter" and (.params | has("view") and has("page") and has("selected") and has("app_anchor")))) and
+(.notification_apps.view == "apps") and
+(.notification_apps.total_apps == 1) and
+(.notification_apps.apps[0].key == .notification_app.app_key) and
+(.notification_apps.apps[0].count == .notification_app.count) and
+(.notification_apps.apps[0].total_count == .notification_app.total_count) and
+(.notification_apps.apps[0].latest.id == .notification_app.selected.notification.id) and
+(.notification_app.view == "app") and
+(.notification_app.pages == 1 and .notification_app.page == 1) and
+(.notification_app.overview | length <= 3) and
+(.notification_app.entries | length <= 5) and
+(.notification_app.selected.notification == .notification_page.records[0].notification) and
 (.snapshot.notification_active.notifications | type == "array") and
 (.snapshot.notification_active.notifications[0].group_key | type == "string") and
 (.snapshot.notification_active.notifications[0].source_monitor | type == "string") and

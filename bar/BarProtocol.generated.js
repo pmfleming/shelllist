@@ -47,6 +47,7 @@ var methods = ({
     "notifications.toggleDnd": "notifications.toggleDnd",
     "notifications.setDnd": "notifications.setDnd",
     "notifications.list": "notifications.list",
+    "notifications.queryCenter": "notifications.queryCenter",
     "notifications.queryHistory": "notifications.queryHistory",
     "notifications.dismiss": "notifications.dismiss",
     "notifications.clear": "notifications.clear",

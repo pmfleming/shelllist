@@ -7,11 +7,9 @@ Ui.ProviderChooserSurface {
     id: content
     required property NotificationController controller
     chooserController: controller
-    detailsTabEnabled: false
-    property Item messageCommands: null
-    property Item messageHeaderHost: null
-    additionalCommandItem: messageCommands
-    commandsWithoutDetails: controller.hasSelection && !controller.settingsOpen
+    detailsTabEnabled: controller.detailsOpen && controller.hasSelection && !controller.settingsOpen
+    // No command host in the collapsed list. Only the active detail page
+    // participates in shared command discovery.
     Binding {
         target: content.controller
         property: "replyEditorFocused"
@@ -20,10 +18,15 @@ Ui.ProviderChooserSurface {
     Connections {
         target: content.controller
         function onSelectedKeyChanged(): void { content.detailsNavigation.closeCommandMenu(); }
+        function onSelectedAppKeyChanged(): void { content.detailsNavigation.closeCommandMenu(); }
+        function onDetailsTabChanged(): void { content.detailsNavigation.closeCommandMenu(); }
         function onSettingsOpenChanged(): void { content.detailsNavigation.closeCommandMenu(); }
         function onSelectedLiveChanged(): void { if (!content.controller.selectedLive) content.detailsNavigation.closeCommandMenu(); }
     }
-
+    Connections {
+        target: content.controller.catalog
+        function onDetailChanged(): void { content.detailsNavigation.closeCommandMenu(); }
+    }
     listComponent: Ui.ChooserListPane {
         id: pane
         chooserController: content.controller
@@ -35,65 +38,40 @@ Ui.ProviderChooserSurface {
         searchActionIcon: "󰒓"
         searchActionToolTip: qsTr("Notification settings")
         onSearchActionRequested: content.controller.openSettings()
-        refreshing: content.controller.notificationState.historyLoading
-        status: content.controller.notificationState.lastError || content.controller.notificationState.historyError || content.controller.screenshotStatus || content.controller.copyStatus || (content.controller.notificationState.draftCount ? content.controller.notificationState.draftCount + qsTr(" unsent reply drafts") : "")
-        emptyState: content.controller.notificationState.historyError ? "unavailable" : refreshing ? "loading" : !content.controller.notificationState.notifications.available ? "unavailable" : filterText.trim() ? "filtered" : "empty"
-        emptyText: content.controller.notificationState.historyError || (emptyState === "loading" ? qsTr("Loading notifications…") : emptyState === "unavailable" ? qsTr("Notifications unavailable") : content.controller.notificationState.historyQuery !== filterText ? qsTr("Waiting for search…") : emptyState === "filtered" ? qsTr("No matching notifications") : qsTr("No notifications"))
+        refreshing: content.controller.catalog.rootBusy
+        status: content.controller.notificationState.lastError || content.controller.catalog.rootError || content.controller.screenshotStatus || content.controller.copyStatus || (content.controller.notificationState.draftCount ? content.controller.notificationState.draftCount + qsTr(" unsent reply drafts") : "")
+        emptyState: content.controller.catalog.rootError ? "unavailable" : refreshing ? "loading" : !content.controller.notificationState.notifications.available ? "unavailable" : filterText.trim() ? "filtered" : "empty"
+        emptyText: content.controller.catalog.rootError || (emptyState === "loading" ? qsTr("Loading notifications…") : emptyState === "unavailable" ? qsTr("Notifications unavailable") : emptyState === "filtered" ? qsTr("No matching notifications") : qsTr("No notifications"))
         emptyIcon: "notifications_none"
         preserveViewportOnAppend: true
-        readonly property bool loadMore: listNearEnd && content.controller.notificationState.historyHasMore && !refreshing && !content.controller.notificationState.historyError
-        onLoadMoreChanged: if (loadMore) Qt.callLater(content.controller.notificationState.loadMoreHistory)
-        listOptionsComponent: Column {
-            id: listOptions
-            width: parent.width
-            spacing: Ui.Theme.spacingSm
-            Ui.FlatIconButton {
-                width: height
-                height: Ui.Theme.controlHeight
-                visible: content.controller.returnSurface === "activity"
-                icon: "󰁍"
-                accessibleName: qsTr("Back to agenda")
-                onClicked: content.controller.goBack()
-            }
-            NotificationCommands {
-                id: commands
-                controller: content.controller
-                navigation: content.detailsNavigation
-                listHost: listOptions
-                detailHost: content.messageHeaderHost
-                Component.onCompleted: content.messageCommands = commands
-                Component.onDestruction: if (content && content.messageCommands === commands) content.messageCommands = null
-            }
+        readonly property bool loadMore: listNearEnd && content.controller.catalog.hasMore && !refreshing && !content.controller.catalog.rootError
+        onLoadMoreChanged: if (loadMore) Qt.callLater(content.controller.catalog.loadMore)
+        listOptionsComponent: Ui.FlatIconButton {
+            width: height
+            height: visible ? Ui.Theme.controlHeight : 0
+            visible: content.controller.returnSurface === "activity"
+            icon: "󰁍"
+            accessibleName: qsTr("Back to agenda")
+            onClicked: content.controller.goBack()
         }
         rowDelegate: Ui.ResultRow {
             id: row
             required property var resultData
-            readonly property var notification: Ui.NotificationPresentation.notificationFor(JSON.parse(resultData.payload))
+            readonly property var app: JSON.parse(resultData.payload)
             listPane: pane
             rowHeight: pane.delegateHeight
             leadingIcon: "󰂚"
-            accessibleName: (row.notification.app_name || qsTr("Notification")) + ". " + row.notification.summary
+            leadingIconSource: identity.source
+            accessibleName: (app.latest.app_name || qsTr("Notification")) + qsTr(" · %1 matching of %2 recent notifications · ").arg(app.count).arg(app.total_count) + app.latest.summary
+            Ui.NotificationAppIcon { id: identity; visible: false; notification: row.app.latest }
             Ui.ResultLabel {
-                title: row.notification.summary || row.notification.app_name || qsTr("Notification")
-                subtitle: [row.notification.app_name, Ui.NotificationPresentation.timeLabel(row.notification.created_unix_ms, content.controller.nowMs), row.notification.body].filter(part => !!part).join(" · ")
+                title: (row.app.latest.app_name || qsTr("Notification")) + " · " + row.app.count
+                subtitle: [Ui.NotificationPresentation.timeLabel(row.app.latest.created_unix_ms, content.controller.nowMs), row.app.latest.summary, row.app.latest.body.replace(/\s+/g, " ")].filter(Boolean).join(" · ")
             }
         }
     }
-    detailsComponent: Ui.DetailFlickable {
-        viewMemory: content.controller.viewMemory
-        memoryTab: content.controller.settingsOpen ? "settings" : "message"
-        NotificationSettings {
-            visible: content.controller.settingsOpen
-            notificationState: content.controller.notificationState
-        }
-        NotificationHistoryRow {
-            width: parent.width
-            commandItem: content.messageCommands
-            Component.onCompleted: content.messageHeaderHost = headerHost
-            Component.onDestruction: if (content) content.messageHeaderHost = null
-            visible: !content.controller.settingsOpen && content.controller.hasSelection
-            controller: content.controller
-            record: content.controller.selectedRecord || ({})
-        }
+    detailsComponent: NotificationDetails {
+        controller: content.controller
+        navigation: content.detailsNavigation
     }
 }

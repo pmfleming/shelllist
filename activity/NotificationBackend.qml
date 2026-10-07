@@ -40,6 +40,9 @@ Io.DaemonBackend {
             refresh: refresh
         });
     }
+    function queryCenter(params: var, context: var): bool {
+        return request("center", Api.methods.notificationsQueryCenter, params, {center: context});
+    }
     function setDnd(enabled: bool, until: var): bool {
         return request("dnd", Api.methods.notificationsSetDnd, {
             enabled: enabled,
@@ -104,6 +107,10 @@ Io.DaemonBackend {
         if (context.generation !== store.dataGeneration || (context.history && context.historyGeneration !== store.historyGeneration))
             return;
         store.flushEvents();
+        if (context.center) {
+            store.centerResponse(context.center, data.notification_center, error, errorCode);
+            return;
+        }
         if (context.history) {
             finishHistory(context, data, error, errorCode);
             return;

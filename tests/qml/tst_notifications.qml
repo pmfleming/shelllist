@@ -104,8 +104,31 @@ DaemonTestCase {
             height: testCase.height
         });
         verify(controller !== null);
-        controller.rebuildRecords();
+        projectApps(controller, [app(100, "Chat", state.history.length)]);
         return controller;
+    }
+    function preview(id, name) { return Object.assign(notification(id, name), {app_key: name || "Chat", app_icon: "", closed_unix_ms: null}); }
+    function app(id, name, count) { return {key: name || "Chat", count: count || 1, total_count: count || 1, latest: preview(id, name)}; }
+    function appPage(apps, query, offset, next, total) {
+        return {view: "apps", epoch: "test-epoch", revision: "1", query: query || "", apps: apps,
+            offset: offset || 0, next_offset: next === undefined ? null : next, total_apps: total || apps.length, anchor_reached: true};
+    }
+    function projectApps(controller, apps) {
+        controller.catalog.staging = [];
+        controller.catalog.stagingEpoch = "";
+        controller.catalog.stagingRevision = "";
+        controller.catalog.acceptApps({offset: 0, replacing: true}, appPage(apps, controller.catalog.query));
+        compare(controller.catalog.rootError, "");
+        controller.rebuildRecords();
+    }
+    function projectDetail(controller, records, count, number) {
+        controller.catalog.detailBusy = false;
+        controller.catalog.acceptDetail({view: "app", epoch: "test-epoch", revision: "1", query: controller.catalog.query,
+            app_key: controller.selectedAppKey, count: count || records.length, total_count: count || records.length,
+            page: number || 1, pages: Math.max(1, Math.ceil((count || records.length) / 5)),
+            overview: records.slice(0, 3).map(r => preview(r.notification.id, controller.selectedAppKey)),
+            entries: records.slice(0, 5).map(r => preview(r.notification.id, controller.selectedAppKey)),
+            selected: records.find(r => r.notification.id + ":" + r.notification.created_unix_ms === controller.selectedKey) || null});
     }
     function test_dndAcknowledgementAndRetry() {
         const state = makeState();
@@ -189,132 +212,215 @@ DaemonTestCase {
         const state = makeState();
         const controller = makeController(state);
         controller.uiActive = true;
-        controller.openDetails();
+        controller.readRecord(preview(100));
+        projectDetail(controller, [record(100), record(1)]);
         state.setDraft(100, "Draft");
-        const content = createTemporaryObject(contentComponent, controller, {
-            controller: controller,
-            width: 453,
-            height: 600
-        });
-        verify(content !== null);
+        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
         wait(50);
         const row = findChild(content, "notificationHistoryRow-100");
         verify(row !== null);
         const field = findChild(row, "notificationReplyInput");
-        verify(field !== null);
         field.focusInput(false);
         keyClick(Qt.Key_End);
         keyClick(Qt.Key_T);
-        compare(state.drafts[state.keyFor(100)], "Draft", "reply typing is local until save");
-        state.notificationActive = {
-            notifications: [notification(101), notification(100), notification(1)]
-        };
-        project(state, [record(101), record(100), record(3), record(2), record(1)]);
+        compare(state.drafts[state.keyFor(100)], "Draft", "typing stays local");
+        projectApps(controller, [app(101, "Chat", 500)]);
+        projectDetail(controller, [record(101), record(100), record(1)], 500);
         wait(50);
         compare(findChild(content, "notificationHistoryRow-100"), row);
         verify(field.inputActiveFocus);
         compare(field.text, "Draftt");
-        // More than the generic model's reorder/chunk thresholds: live reply
-        // editors still move with their stable identity, never a reset.
-        const burst = Array.from({
-            length: 205
-        }, (_, index) => notification(index + 1000));
-        state.notificationActive = {
-            notifications: burst.concat([notification(100), notification(1)])
-        };
-        state.history = burst.map(n => ({history_id: null, notification: n})).concat([record(100), record(3), record(2), record(1)]);
-        wait(50);
-        compare(findChild(content, "notificationHistoryRow-100"), row);
-        verify(field.inputActiveFocus);
-        compare(field.text, "Draftt");
+        compare(controller.notificationModel.count, 1, "a 500-message app is still one result");
         keyClick(Qt.Key_Return);
         compare(state.drafts[state.keyFor(100)], "Draftt");
-        content.destroy();
-        wait(50);
+        field.focusInput(false);
+        keyClick(Qt.Key_End);
+        keyClick(Qt.Key_X);
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        tryCompare(controller, "detailsTab", "overview");
+        compare(state.drafts[state.keyFor(100)], "Draftt", "tab switch discards only the unsaved edit");
+        keyClick(Qt.Key_Tab, Qt.ControlModifier | Qt.ShiftModifier);
+        tryCompare(controller, "detailsTab", "message");
+        tryVerify(() => findChild(content, "notificationReplyInput") !== null);
+        compare(findChild(content, "notificationReplyInput").text, "Draftt");
+        content.destroy(); wait(0);
     }
-    function test_selectedCommandsWorkWithoutOpeningDetails() {
+    function test_actionsOnlyBelongToExpandedMessage() {
         const state = makeState();
         const live = notification(100);
         live.actions = [{key: "default", label: "Open"}, {key: "mail-reply-sender", label: "Reply in app"}, {key: "inline-reply", label: "Reply here"}];
         state.notificationActive = {notifications: [live]};
-        project(state, [{history_id: null, notification: live}, record(3), record(2), record(1)]);
         const controller = makeController(state);
         controller.uiActive = true;
         const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
+        projectDetail(controller, [{notification: live}, record(3)]);
         content.listItem.focusList();
         const sent = () => testCase.calls.filter(call => call.method === "notifications.invokeAction");
-        let before = sent().length;
-        keyClick(Qt.Key_Return);
-        compare(sent().length, before + 1);
-        compare(sent()[before].params.action_key, "default");
-        verify(!controller.detailsOpen);
+        const before = sent().length;
         keyClick(Qt.Key_O, Qt.AltModifier);
-        compare(sent().length, before + 1, "pending invocation cannot repeat");
+        keyClick(Qt.Key_R, Qt.AltModifier);
+        compare(sent().length, before);
+        verify(!controller.detailsOpen);
+        verify(!findChild(content, "detailAction:open"));
+        keyClick(Qt.Key_Return);
+        tryCompare(controller, "detailsTab", "notifications");
+        verify(controller.detailsOpen);
+        compare(sent().length, before, "app Enter only reviews, never invokes a hidden message");
+        tryVerify(() => findChild(content, "notificationRead-100:100000") !== null);
+        keyClick(Qt.Key_J, Qt.AltModifier);
+        tryVerify(() => content.detailsNavigation.commandMenuOpen);
+        projectDetail(controller, [{notification: live}, record(2)]);
+        tryVerify(() => !content.detailsNavigation.commandMenuOpen, 1000, "changed Read targets close the menu before Enter can retarget");
+        verify(waitForRendering(content));
+        mouseClick(findChild(content, "notificationRead-100:100000"));
+        tryCompare(controller, "detailsTab", "message");
+        projectDetail(controller, [{notification: live}, record(3)]);
+        compare(controller.selectedKey, "100:100000");
+        compare(controller.catalog.detailError, "");
+        verify(controller.messageCommandsEnabled);
+        tryVerify(() => findChild(content, "detailAction:open") !== null);
+        keyClick(Qt.Key_O, Qt.AltModifier);
+        compare(sent().length, before + 1);
+        keyClick(Qt.Key_O, Qt.AltModifier);
+        compare(sent().length, before + 1, "pending action cannot repeat");
         state.backend.finish(Object.keys(state.backend.requests).find(key => key.startsWith("action-")), {}, "App unavailable");
         compare(state.lastError, "App unavailable");
         keyClick(Qt.Key_J, Qt.AltModifier);
         tryVerify(() => content.detailsNavigation.commandMenuOpen);
-        const menu = findChild(content, "detailsCommandMenu");
-        verify(menu.width > 0 && menu.height > 0, "menu is visible even with collapsed details");
         const dismissCount = testCase.calls.filter(call => call.method === "notifications.dismiss").length;
         keyClick(Qt.Key_D, Qt.AltModifier);
-        compare(testCase.calls.filter(call => call.method === "notifications.dismiss").length, dismissCount, "menu owns command chords");
+        compare(testCase.calls.filter(call => call.method === "notifications.dismiss").length, dismissCount);
         keyClick(Qt.Key_Return);
         compare(sent().length, before + 2);
-        compare(sent()[before + 1].params.action_key, "mail-reply-sender", "ordinary reply is an app action");
+        compare(sent()[before + 1].params.action_key, "mail-reply-sender");
         state.backend.finish(Object.keys(state.backend.requests).find(key => key.startsWith("action-")), {}, "");
         keyClick(Qt.Key_R, Qt.AltModifier);
-        tryVerify(() => controller.detailsOpen);
-        tryVerify(() => findChild(content, "notificationReplyInput") !== null);
+        tryVerify(() => findChild(content, "notificationReplyInput") !== null && findChild(content, "notificationReplyInput").inputActiveFocus);
         const field = findChild(content, "notificationReplyInput");
-        tryVerify(() => field.inputActiveFocus);
-        verify(waitForRendering(field));
-        const primary = findChild(content, "detailAction:open");
-        verify(primary !== null && primary.visible);
-        compare(primary.width, primary.height);
-        const navigation = content.detailsNavigation;
-        compare(navigation.commandButtons.filter(button => button.accessKey === "O").length, 1, "reparented header has one command owner");
-        verify(navigation.headerButtons.includes(primary));
-        verify(!navigation.targets.includes(primary), "commands never join field traversal");
-        keyClick(Qt.Key_H);
-        keyClick(Qt.Key_I);
-        compare(field.text, "hi");
+        keyClick(Qt.Key_H); keyClick(Qt.Key_I);
         const repliesBefore = testCase.calls.filter(call => call.method === "notifications.reply").length;
         keyClick(Qt.Key_Return);
-        compare(testCase.calls.filter(call => call.method === "notifications.reply").length, repliesBefore, "field save is not send");
         compare(state.drafts[controller.selectedKey], "hi");
+        compare(testCase.calls.filter(call => call.method === "notifications.reply").length, repliesBefore);
         keyClick(Qt.Key_R, Qt.AltModifier);
         compare(testCase.calls.filter(call => call.method === "notifications.reply").length, repliesBefore + 1);
-        const reply = testCase.calls.filter(call => call.method === "notifications.reply").pop();
-        compare(reply.params.id, 100);
-        compare(reply.params.text, "hi");
         state.backend.finish(Object.keys(state.backend.requests).find(key => key.startsWith("reply-")), {}, "");
-        state.setDraft(controller.selectedKey, "Saved draft");
-        controller.closeDetails();
-        content.listItem.focusList();
-        tryCompare(primary, "visible", false);
-        compare(navigation.commandButtons.filter(button => button.accessKey === "O").length, 1, "collapsed commands remain unique");
-        keyClick(Qt.Key_R, Qt.AltModifier);
-        tryVerify(() => controller.detailsOpen);
-        tryVerify(() => findChild(content, "notificationReplyInput") !== null && findChild(content, "notificationReplyInput").inputActiveFocus);
-        compare(testCase.calls.filter(call => call.method === "notifications.reply").length, repliesBefore + 1, "Alt+R from results opens the saved draft, not sends it");
-        keyClick(Qt.Key_End);
-        keyClick(Qt.Key_X);
-        keyClick(Qt.Key_R, Qt.AltModifier);
-        compare(testCase.calls.filter(call => call.method === "notifications.reply").pop().params.text, "Saved draftx");
-        state.backend.finish(Object.keys(state.backend.requests).find(key => key.startsWith("reply-")), {}, "");
-        compare(findChild(content, "notificationReplyInput").text, "", "acknowledgement clears the saved editor binding");
-        verify(!content.detailsNavigation.editing);
-        controller.closeDetails();
-        controller.select(1); // closed historical notification
+        compare(field.text, "");
+        controller.closeDetails(); content.listItem.focusList(); wait(20);
+        compare(content.detailsNavigation.commandButtons.filter(button => button.accessKey === "O").length, 0);
+        keyClick(Qt.Key_R, Qt.AltModifier); keyClick(Qt.Key_D, Qt.AltModifier);
+        verify(!controller.detailsOpen);
+        compare(testCase.calls.filter(call => call.method === "notifications.reply").length, repliesBefore + 1);
+        controller.openDetails(); controller.readRecord(preview(3));
+        projectDetail(controller, [record(3)]); wait(20);
         verify(!controller.selectedLive);
-        content.listItem.focusList();
-        keyClick(Qt.Key_Return);
-        verify(controller.detailsOpen, "no default action means inspect, never dismiss");
-        tryVerify(() => !findChild(content, "surfaceActionRow").primaryAction);
+        verify(!controller.openSelected());
         compare(sent().length, before + 2);
-        content.destroy();
-        wait(0);
+        content.destroy(); wait(0);
+    }
+    function test_pageFieldUsesSharedTransactionsAndKeepsAppListFixed() {
+        const state = makeState();
+        const controller = makeController(state);
+        projectApps(controller, [app(100, "Chat", 500), app(1, "Mail", 1)]);
+        controller.uiActive = true;
+        controller.primarySelected();
+        const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
+        wait(150);
+        projectDetail(controller, [record(100), record(99), record(98), record(97), record(96)], 500);
+        const pageField = findChild(content, "notificationPage");
+        verify(pageField !== null);
+        content.listItem.focusList(); keyClick(Qt.Key_Tab); keyClick(Qt.Key_Return);
+        tryVerify(() => pageField.inputActiveFocus);
+        const reads = () => testCase.calls.filter(call => call.method === "notifications.queryCenter" && call.params.view === "app");
+        let before = reads().length;
+        keyClick(Qt.Key_A, Qt.ControlModifier); keyClick(Qt.Key_2);
+        compare(reads().length, before, "typing a page never queries");
+        keyClick(Qt.Key_Escape);
+        compare(reads().length, before);
+        compare(pageField.text, "1");
+        pageField.focusInput(true);
+        keyClick(Qt.Key_9); keyClick(Qt.Key_9); keyClick(Qt.Key_9); keyClick(Qt.Key_Return);
+        compare(reads().length, before);
+        verify(controller.catalog.pageError.length > 0);
+        pageField.focusInput(true); keyClick(Qt.Key_2); keyClick(Qt.Key_Tab);
+        compare(reads().length, before + 1, "Tab saves the page");
+        compare(reads().pop().params.page, 2);
+        compare(reads().pop().params.page_anchor, null);
+        controller.catalog.requestDetail(true);
+        compare(reads().pop().params.page, 2);
+        compare(reads().pop().params.page_anchor, null, "refresh cannot replace an in-flight explicit seek with an old anchor");
+        projectDetail(controller, [record(95), record(94), record(93), record(92), record(91)], 500, 2);
+        compare(controller.notificationModel.count, 2);
+        compare(controller.catalog.detail.entries.length, 5);
+        compare(controller.catalog.detail.overview.length, 3);
+        keyClick(Qt.Key_Tab, Qt.ControlModifier);
+        tryCompare(controller, "detailsTab", "overview");
+        compare(controller.notificationModel.count, 2);
+        controller.readRecord(preview(95));
+        projectDetail(controller, [record(95)], 500, 2);
+        keyClick(Qt.Key_J, Qt.AltModifier);
+        verify(!content.detailsNavigation.commandMenuOpen, "hidden index Read commands cannot leak into Message's menu");
+        content.listItem.focusList(); keyClick(Qt.Key_Down);
+        compare(controller.selectedAppKey, "Mail");
+        keyClick(Qt.Key_Up);
+        compare(controller.selectedAppKey, "Chat");
+        compare(controller.detailsTab, "message");
+        compare(controller.catalog.page, 2);
+        controller.closeDetails(); content.listItem.focusList(); keyClick(Qt.Key_Return);
+        compare(controller.detailsTab, "notifications", "app primary always reviews the index, not remembered Message");
+        content.destroy(); wait(0);
+    }
+    function test_centerRefreshNeverPublishesPartialAppPages() {
+        const state = makeState();
+        const controller = makeController(state);
+        controller.uiActive = true;
+        tryCompare(controller.catalog, "rootBusy", true);
+        const requestFor = () => Object.keys(state.backend.requests).find(key => state.backend.requests[key].center?.view === "apps" && state.backend.requests[key].center.generation === controller.catalog.rootGeneration);
+        const first = appPage(Array.from({length: 50}, (_, index) => app(1000 - index, "App" + index)), "", 0, 50, 51);
+        first.anchor_reached = false;
+        state.backend.finish(requestFor(), {notification_center: first}, "", "");
+        compare(controller.visibleApps.length, 1, "incomplete refresh stays private");
+        tryVerify(() => requestFor() !== undefined);
+        state.backend.finish(requestFor(), {}, "Cannot read history", "unavailable");
+        compare(controller.visibleApps.length, 1);
+        compare(controller.selectedAppKey, "Chat");
+        compare(controller.catalog.staging.length, 0);
+        verify(controller.catalog.rootError.length > 0);
+        controller.refresh();
+        tryVerify(() => requestFor() !== undefined);
+        state.backend.finish(requestFor(), {notification_center: appPage([app(99, "Mail")])}, "", "");
+        tryCompare(controller, "selectedAppKey", "Mail");
+    }
+    function test_emptyCenterSettlesAndMalformedSnapshotsFailClosed() {
+        const state = makeState();
+        const controller = makeController(state);
+        controller.uiActive = true;
+        const catalog = controller.catalog;
+        tryCompare(catalog, "rootBusy", true);
+        const request = Object.keys(state.backend.requests).find(key => state.backend.requests[key].center?.view === "apps");
+        state.backend.finish(request, {notification_center: appPage([])}, "", "");
+        tryCompare(controller.notificationModel, "count", 0);
+        wait(180);
+        compare(catalog.detailDirty, false);
+        compare(catalog.rootDirty, false);
+        verify(!catalog.rootBusy && !catalog.detailBusy);
+        const before = testCase.calls.filter(call => call.method === "notifications.queryCenter").length;
+        wait(180);
+        compare(testCase.calls.filter(call => call.method === "notifications.queryCenter").length, before, "empty results do not poll continuously");
+        catalog.acceptApps({offset: 0, replacing: true}, appPage([app(100), app(100)]));
+        verify(catalog.rootError.length > 0);
+        compare(catalog.apps.length, 0);
+        projectApps(controller, [app(100, "Chat", 2)]);
+        controller.readRecord(preview(100));
+        projectDetail(controller, [record(100)], 2);
+        verify(controller.selectedNotification !== null);
+        catalog.acceptDetail(Object.assign({}, catalog.detail, {selected: record(1)}));
+        verify(catalog.detailError.length > 0);
+        verify(!controller.messageCommandsEnabled);
+        controller.readRecord(preview(1));
+        catalog.acceptDetail(Object.assign({}, catalog.detail, {selected: null}));
+        compare(controller.selectedKey, "1:1000", "missing records retain an explicit unavailable Message, never retarget");
+        verify(controller.selectedRecord === null);
     }
     function test_recordIdentityAndConnectionGenerationFenceDraftsAndHistory() {
         const state = makeState();
@@ -359,73 +465,58 @@ DaemonTestCase {
         state.backend.finish(request, {notification_page: page([], null, "3")}, "", "");
         compare(state.recentNotifications.length, 0, "coalescing cannot retain deleted persisted content");
     }
-    function test_prependAndHistoryAppendPreserveViewportAnchor() {
+    function test_appPrependAndPageAppendPreserveViewportAnchor() {
         const state = makeState();
-        const records = Array.from({length: 45}, (_, index) => notification(1000 - index));
-        state.notificationActive = {available: true, notifications: records};
-        project(state, records.map(n => ({history_id: null, notification: n})), "next-older");
         const controller = makeController(state);
+        const apps = Array.from({length: 45}, (_, index) => app(1000 - index, "App" + index, 500));
+        projectApps(controller, apps);
         controller.uiActive = true;
         const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
         const list = findChild(content, "resultListView");
         tryCompare(list, "count", 45);
-        controller.select(12);
-        wait(30);
+        controller.select(12); wait(30);
         list.positionViewAtIndex(10, ListView.Beginning);
         const anchor = content.listItem.sessionState().viewport;
         verify(anchor !== null);
-        const selected = controller.selectedKey;
-        state.notificationActive = {available: true, notifications: [notification(2000)].concat(records)};
-        project(state, [notification(2000)].concat(records).map(n => ({history_id: null, notification: n})), "next-older");
+        const selected = controller.selectedAppKey;
+        projectApps(controller, [app(2000, "New app")].concat(apps));
         wait(40);
-        compare(controller.selectedKey, selected);
+        compare(controller.selectedAppKey, selected);
         compare(content.listItem.sessionState().viewport.key, anchor.key);
         verify(Math.abs(content.listItem.sessionState().viewport.offset - anchor.offset) < 1);
-        state.applyHistory(page(Array.from({length: 50}, (_, index) => record(900 - index))), false, "next-older");
+        controller.catalog.acceptApps({offset: 46, replacing: false}, appPage(Array.from({length: 50}, (_, index) => app(900 - index, "Older" + index)), "", 46, null, 96));
         wait(40);
         compare(content.listItem.sessionState().viewport.key, anchor.key);
-        compare(list.count, 96, "single-app history uses notification rows, not eager group expansion");
-        content.destroy();
-        wait(0);
+        compare(list.count, 96);
+        content.destroy(); wait(0);
     }
     function test_keyboardSearchUsesNativeCatalogAndRejectsSupersededReplies() {
         const state = makeState();
         const controller = makeController(state);
         controller.uiActive = true;
-        state.historyEnabled = true;
+        const catalog = controller.catalog;
         const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
-        tryCompare(state, "historyLoading", true);
-        const initial = Object.keys(state.backend.requests).find(key => key.startsWith("history-"));
+        tryCompare(catalog, "rootBusy", true);
+        const initial = Object.keys(state.backend.requests).find(key => state.backend.requests[key].center?.view === "apps");
         state.setDraft(100, "Keep my draft");
         content.listItem.focusSearch();
-        keyClick(Qt.Key_N);
-        keyClick(Qt.Key_E);
-        keyClick(Qt.Key_E);
-        keyClick(Qt.Key_D);
-        keyClick(Qt.Key_L);
-        keyClick(Qt.Key_E);
+        for (const key of [Qt.Key_N, Qt.Key_E, Qt.Key_E, Qt.Key_D, Qt.Key_L, Qt.Key_E]) keyClick(key);
         compare(controller.filterText, "needle");
-        compare(state.historyQuery, "needle");
-        state.backend.finish(initial, {notification_page: page([record(888)])}, "", "");
-        compare(state.history.length, 0, "an old query cannot repopulate new search results");
-        tryCompare(state, "historyLoading", true);
-        const request = Object.keys(state.backend.requests).find(key => key.startsWith("history-") && state.backend.requests[key].historyGeneration === state.historyGeneration);
-        const call = testCase.calls.filter(call => call.method === "notifications.queryHistory").pop();
+        compare(catalog.query, "needle");
+        state.backend.finish(initial, {notification_center: appPage([app(888)])}, "", "");
+        compare(catalog.apps.length, 0);
+        tryCompare(catalog, "rootBusy", true);
+        const request = Object.keys(state.backend.requests).find(key => state.backend.requests[key].center?.view === "apps" && state.backend.requests[key].center.generation === catalog.rootGeneration);
+        const call = testCase.calls.filter(call => call.method === "notifications.queryCenter" && call.params.view === "apps").pop();
         compare(call.params.query, "needle");
-        compare(call.params.cursor, null);
-        const found = record(900);
-        found.notification.summary = "Needle from previously unloaded history";
-        state.backend.finish(request, {notification_page: page([found], "query-page-2", "9", "needle")}, "", "");
+        compare(call.params.offset, 0);
+        const found = app(900, "Unloaded app", 1);
+        found.latest.summary = "Needle from previously unloaded history";
+        state.backend.finish(request, {notification_center: appPage([found], "needle")}, "", "");
         tryCompare(controller.notificationModel, "count", 1);
-        compare(controller.selectedNotification.id, 900);
+        compare(controller.selectedAppKey, "Unloaded app");
         compare(state.drafts["100:100000"], "Keep my draft");
-        // Pagination remains enabled for search, and consumes the opaque cursor.
-        state.loadMoreHistory();
-        const next = testCase.calls.filter(call => call.method === "notifications.queryHistory").pop();
-        compare(next.params.cursor, "query-page-2");
-        compare(next.params.query, "needle");
-        content.destroy();
-        wait(0);
+        content.destroy(); wait(0);
     }
     function test_oldQueryCompletionCannotRetireReplacement_data() {
         // Successful old-query replies are covered by keyboard search. Keep

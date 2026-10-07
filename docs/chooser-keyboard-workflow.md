@@ -262,10 +262,9 @@ existing contained native modal traversal. See the
 - Selected-result commands can use `ProviderChooserSurface.additionalCommandItem`
   with `commandsWithoutDetails`. They share `DetailsNavigation`'s access keys,
   command menu, modifier hints and modal guards even while details are collapsed;
-  they do not create another field-navigation region. Notifications uses this
-  for a single selected message: Enter invokes its live default action, otherwise
-  opens details without dismissing it. Alt+O opens, Alt+D dismisses, Alt+Z snoozes,
-  Alt+C copies text and Alt+R opens inline reply (or sends from its editor).
+  they do not create another field-navigation region. Notifications deliberately
+  does **not** opt in: its app results expose no notification commands while
+  collapsed. Only expanded Message owns the selected record's actions.
 - Alt+J opens the content-action menu for unassigned/repeated commands, such as
   arbitrary application desktop actions and per-window commands. This keeps
   unbounded action lists keyboard-accessible without putting them in field Tab
@@ -284,6 +283,40 @@ existing contained native modal traversal. See the
 Header modifier-held hints remain: holding Alt shows command badges after
 250ms; holding Ctrl shows the detail-tab chord. AltGr does not show hints.
 There is no F1 overlay, hover tooltip or plain-letter action shortcut.
+
+## Notifications app groups and detail tabs
+
+The left results remain app groups in every state; Up/Down never browses an
+embedded message list. Enter always opens **Notifications**, including singleton
+apps, without invoking a sender action or selecting an implicit newest message.
+Right/Left expand/collapse as usual. Three fixed shared detail tabs are
+**Overview / Notifications / Message**. Ctrl+Tab cycles enabled tabs, skipping
+Message until a record has been explicitly chosen. App changes preserve surface
+expansion and restore app/query-local page, tab and selected record identity.
+
+Overview exposes at most three passive previews; Notifications at most five
+compact entries per native page. Read is a circle command (also in Alt+J), not a
+field or a row-wide action. It selects `(id, created_unix_ms)` and opens Message;
+it never invokes a sender, marks read, dismisses or sends. The shared Page text
+field is the only index field: Enter/Tab validates and seeks, Escape discards,
+and typing issues no read. Alt+P/N changes pages; arrows retain shared browsing
+or native editing behavior. Page numbers and counts come from one native snapshot.
+
+Only expanded Message registers Open (Alt+O), Reply (Alt+R), Dismiss (Alt+D),
+Snooze (Alt+Z), Copy (Alt+C) and sender actions (Alt+J). Inactive/collapsed pages
+must not leak commands or menus. Only exact `inline-reply` opens the editor;
+ordinary sender reply actions stay ordinary actions. Enter/Tab saves a reply
+draft without sending; Alt+R sends explicitly with existing acknowledgement,
+retry and live-record guards. Tab changes discard only uncommitted field edits.
+Arrivals preserve the chosen record and active reply editor. A removed selected
+record leaves an unavailable Message, never silently targets another record.
+
+Aggregation, full-scope search, ordering, counts, page seeks and record lookup
+belong to `notifications.queryCenter`, not frontend grouping of loaded history.
+Atomic app-window refresh and read generations fence partial/stale replies.
+`tst_notifications.qml` exercises actual primary/Read/action/menu routes, tab
+switching, page transactions, search races, bounded rendering and draft/viewport
+preservation; the daemon tests cover grouping and direct deep seeks.
 
 ## Applications action outcomes
 
@@ -491,8 +524,8 @@ scoped to the originating application; a mismatched saved mapping is not shown
 as unassigned. `tst_application_settings.qml` covers actual keyboard/pointer
 transactions, saved checks versus drafts, failure/retry and acknowledgement.
 
-Notifications search uses the daemon catalog, including unloaded retained rows
-within its documented recent-history scope. Typing issues debounced reads only;
+Notifications search uses the native grouped center catalog, including unloaded
+retained rows within its documented recent-history scope. Typing issues debounced reads only;
 query changes supersede old pages, and F5 refreshes without replaying any
 command. Page append and atomic same-query refresh preserve keyed selection,
 viewport and reply-editor transactions. Stale cursors retry reads; they must not

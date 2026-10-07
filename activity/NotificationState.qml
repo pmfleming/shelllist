@@ -8,7 +8,9 @@ Item {
     id: notificationState
     property bool resident: false
     property bool uiActive: false
-    property bool historyEnabled: uiActive
+    // Legacy message-window reader remains available for protocol consumers;
+    // the panel uses bounded native app/detail projections instead.
+    property bool historyEnabled: false
     property int dataGeneration: 0
     property int eventVersion: 0
     property double acceptedHistoryRevision: -1
@@ -48,6 +50,7 @@ Item {
     readonly property var recentNotifications: history
     readonly property int draftCount: Object.keys(drafts).filter(key => String(drafts[key] || "").length > 0).length
     property NotificationBackend backend: notificationBackend
+    signal centerResponse(var context, var value, string error, string code)
 
     function equal(left: var, right: var): bool { return JSON.stringify(left) === JSON.stringify(right); }
     function applySummary(value: var): void {
