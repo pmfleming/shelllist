@@ -13,9 +13,9 @@ const plain = value => JSON.parse(JSON.stringify(value));
 // Interval arithmetic belongs here, rather than repeated Canvas-style fixtures.
 const idle = {timestamp_ms: 15000, duration_ms: 15000, gpu_busy_percent: 0,
     disk_read_bytes_per_second: 0, disk_write_bytes_per_second: 4,
-    availability: {gpu: true, storage: true}};
+    metric_availability: {gpu_busy_percent: true, disk_read_bytes_per_second: true, disk_write_bytes_per_second: true}};
 const unavailable = {...idle, timestamp_ms: 30000, gpu_busy_percent: 80,
-    availability: {gpu: false, storage: true}};
+    metric_availability: {...idle.metric_availability, gpu_busy_percent: false}};
 const resumed = {...idle, timestamp_ms: 45000, gpu_busy_percent: 70};
 const cases = [
     {label: "unsupported buckets break traces; zero is measured", points: [idle, unavailable, resumed],
