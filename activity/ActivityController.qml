@@ -34,6 +34,8 @@ Ui.ChooserController {
     property var events: []
     property var todos: []
     property var busyDates: []
+    property var days: ({})
+    property string rangeLocalDate: ""
     property date selectedDate: startOfDay(new Date())
     property date viewDate: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
     property string lastError: ""
@@ -63,12 +65,9 @@ Ui.ChooserController {
     navigationPrimaryEnabled: false
     readonly property ActivityBackend backend: activityBackend
     readonly property string selectedDateKey: dateKey(selectedDate)
-    readonly property var selectedEvents: events.filter(function (event) {
-        return eventOverlapsDate(event, selectedDate);
-    })
-    readonly property var selectedTodos: todos.filter(function (todo) {
-        return Flow.todoVisible(todo, selectedDateKey, dateKey(new Date()));
-    })
+    readonly property var selectedDay: days[selectedDateKey] || ({event_ids: [], todo_ids: []})
+    readonly property var selectedEvents: events.filter(event => selectedDay.event_ids.includes(event.id))
+    readonly property var selectedTodos: todos.filter(todo => selectedDay.todo_ids.includes(todo.id))
     readonly property var weatherLocations: {
         const locations = activity.weather_locations || [];
         return locations.length > 0 ? locations : activity.weather ? [activity.weather] : [];
@@ -98,10 +97,6 @@ Ui.ChooserController {
     function startOfDay(value: date): date {
         return Flow.startOfDay(value);
     }
-    function eventOverlapsDate(event: var, value: date): bool {
-        return Flow.eventOverlapsDate(event, value);
-    }
-
     function monthRange(): var {
         const from = new Date(viewDate.getFullYear(), viewDate.getMonth(), -6);
         const to = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 8);
@@ -126,6 +121,8 @@ Ui.ChooserController {
         events = range.events || [];
         todos = range.todos || [];
         busyDates = range.busy_dates || [];
+        days = range.days || ({});
+        rangeLocalDate = range.local_date || "";
         loadedFrom = new Date(range.from_unix_ms);
         loadedTo = new Date(range.to_unix_ms);
         rangeLoading = false;
@@ -143,6 +140,7 @@ Ui.ChooserController {
         case ActivityApi.streams.timezone:
             snapshotLoaded = true;
             timezone = data;
+            scheduleRangeQuery();
         }
     }
 
@@ -231,6 +229,12 @@ Ui.ChooserController {
     onFocusSearchRequested: if (detailsOpen && detailSection === "schedule")
         focusTodoInputRequested()
 
+    Timer {
+        interval: 60000
+        repeat: true
+        running: controller.uiActive && controller.rangeQueriesEnabled
+        onTriggered: if (controller.rangeLocalDate !== controller.dateKey(new Date())) controller.scheduleRangeQuery()
+    }
     Timer {
         id: rangeQueryDebounce
         interval: 120

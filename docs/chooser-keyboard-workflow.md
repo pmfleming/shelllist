@@ -639,6 +639,13 @@ reading adapter: replacements update values, availability and accessible names
 without adding fields or interrupting the range draft. Native Wi-Fi tab and
 resource-arrival tests cover these shared-layout/data paths.
 
+## Native domain projections
+
+Activity day membership and busy-day markers come from the daemon's calendar
+projection, including DST and undated todos. Day commands change only selection;
+no frontend timestamp classification or extra editable stop is introduced.
+`tst_activity_days.qml` covers actual day commands against native membership.
+
 ## Battery & Power compact presentation
 
 Overview begins with one deferred Power mode field, displayed as three circular
