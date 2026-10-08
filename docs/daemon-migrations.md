@@ -26,3 +26,16 @@ claimed. Shelllist sends one captured device/profile request and renders its
 outcome; it no longer chains a separate policy write.
 
 Validation: native partial-outcome/parameter tests and Qt profile recovery tests.
+
+## Native display baseline checks
+
+Display snapshots include a process-scoped opaque baseline over policy,
+identities, geometry, mirroring and mode catalogs. Preview requires this token
+and compares it with freshly observed compositor state under the shared policy
+write lock, before writing a durable trial or changing outputs. Confirmation and
+rollback keep their original token, eligibility and timeout guards. Frontend
+fingerprints remain conservative early hints; they are no longer the sole guard.
+
+Validation: stale previews make zero writes; catalog/policy changes invalidate
+tokens, mode ordering/focus do not. Native rollback/mirroring tests and Qt display
+interaction tests remain in the gate. Deploy the daemon and consumer together.

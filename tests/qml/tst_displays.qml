@@ -39,7 +39,7 @@ DaemonTestCase {
         }
     }
     function displayState() {
-        return { available: true, policy: { prefer_external: true }, status: "external", layout: { saved: { outputs: [] }, trial: null },
+        return { available: true, baseline: "opaque-native-baseline", policy: { prefer_external: true }, status: "external", layout: { saved: { outputs: [] }, trial: null },
             outputs: [{ id: 0, name: "eDP-1", width: 1920, height: 1200, refreshRate: 60, x: 0, y: 0, scale: 1.25, transform: 0, disabled: true, supported: true, internal: true, mirror_of: "", current_mode: "1920x1200@60.00Hz", modes: [{id: "1920x1200@60.00Hz", width: 1920, height: 1200, rate: 60, size: "1920x1200"}] },
                 { id: 1, name: "DP-1", width: 3840, height: 2160, refreshRate: 60, x: 1536, y: 0, scale: 1.5, transform: 0, disabled: false, supported: true, internal: false, mirror_of: "", current_mode: "3840x2160@60.00Hz", modes: [{id: "3840x2160@60.00Hz", width: 3840, height: 2160, rate: 60, size: "3840x2160"}] }] };
     }
@@ -469,6 +469,7 @@ DaemonTestCase {
         verify(c.preview());
         compare(calls[0].method, "displayLayout.preview");
         compare(calls[0].params.outputs[1].scale, 2);
+        compare(calls[0].params.baseline, "opaque-native-baseline");
         verify(!("modes" in calls[0].params.outputs[1]));
         verify(!("internal" in calls[0].params.outputs[1]));
         const pending = displayState();

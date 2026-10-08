@@ -639,6 +639,14 @@ reading adapter: replacements update values, availability and accessible names
 without adding fields or interrupting the range draft. Native Wi-Fi tab and
 resource-arrival tests cover these shared-layout/data paths.
 
+## Display preview baselines
+
+A display draft captures the daemon's opaque baseline. Preview submits that
+baseline with the draft; the daemon rejects stale geometry, modes, topology or
+policy before any persistent trial or compositor write. Missing baseline support
+disables editing. Local stale hints remain conservative presentation guards, not
+authority. Rejection preserves the draft for explicit reload; no automatic replay.
+
 ## Submitted Bluetooth profile changes
 
 Saving an audio profile submits one native apply-and-remember request. Selection

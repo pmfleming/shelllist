@@ -439,6 +439,7 @@
       {
         "name": "displayLayout.preview",
         "params": {
+          "baseline": "snapshot-baseline-token",
           "outputs": [
             {
               "enabled": true,
@@ -1061,6 +1062,7 @@
     },
     "display_policy": {
       "available": true,
+      "baseline": "",
       "error": null,
       "focus": {
         "available": true,

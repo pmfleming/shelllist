@@ -31,6 +31,7 @@ Ui.ProviderChooserController {
     property var draft: []
     property var baselineDraft: []
     property string baselineFingerprint: ""
+    property string baselineToken: ""
     property string baselineTopology: ""
     property bool baselinePreference: false
     property bool stale: false
@@ -53,7 +54,7 @@ Ui.ProviderChooserController {
     readonly property DisplayBackend backend: displayBackend
     readonly property bool dirty: JSON.stringify(draft) !== JSON.stringify(baselineDraft)
     readonly property bool canChange: stateReady && displayPolicyState.available && backend.ready && !actionInFlight && !trial
-    readonly property bool canEdit: canChange && !stale
+    readonly property bool canEdit: canChange && !stale && baselineToken.length > 0
     readonly property bool canSetPolicy: canChange && !dirty
     readonly property var focusState: displayPolicyState.focus || ({available: false})
     readonly property bool canSetFocus: canSetPolicy && !!focusState.available
@@ -93,6 +94,7 @@ Ui.ProviderChooserController {
         baselineDraft = Model.draft(outputs);
         draft = Model.draft(outputs);
         baselineFingerprint = Model.fingerprint(outputs);
+        baselineToken = displayPolicyState.baseline || "";
         baselineTopology = Model.topology(outputs);
         baselinePreference = !!(displayPolicyState.policy || {}).prefer_external;
         stale = false;
@@ -110,7 +112,7 @@ Ui.ProviderChooserController {
             revertOnArrival = false;
         stateReady = true;
         clock = Date.now();
-        const layoutChanged = Model.fingerprint(outputs) !== baselineFingerprint || !!(displayPolicyState.policy || {}).prefer_external !== baselinePreference;
+        const layoutChanged = (displayPolicyState.baseline || "") !== baselineToken || Model.fingerprint(outputs) !== baselineFingerprint || !!(displayPolicyState.policy || {}).prefer_external !== baselinePreference;
         const changedOutsidePreview = pendingAction !== "preview" && layoutChanged;
         if (trial) {
             if (baselineTopology && Model.topology(outputs) !== baselineTopology)
@@ -167,6 +169,7 @@ Ui.ProviderChooserController {
     }
     function preview(): bool {
         return displayLayoutAction("preview", {
+            baseline: baselineToken,
             outputs: Model.payload(draft)
         });
     }
