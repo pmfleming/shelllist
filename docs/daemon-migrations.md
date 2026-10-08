@@ -120,12 +120,14 @@ conditional requirements, F6/Escape, and native-only recovery prompt coverage.
 | Wi-Fi descriptors | nm `a38dfbe` | `f042f7e` |
 
 Test follow-ups: `7b77bd2` waits for calendar expansion before pointer input;
-`a9e5d99` updates chart-geometry fixtures to native availability flags.
+`a9e5d99` updates chart-geometry fixtures to native availability flags. Native
+bar follow-up `e752dae` preserves valid zero-duration events, including at the
+inclusive range start, without including events at the exclusive range end.
 
 Final local working-tree validation:
 
 - Qt: **322 passed, 0 failed, 1 existing RHI-only skip**.
-- Native libraries: bar 227 passed/1 ignored; bt 66 passed; app 64 passed;
+- Native libraries: bar 228 passed/1 ignored; bt 66 passed; app 64 passed;
   clip 42 passed; nm 154 passed/3 ignored. Additional app/clip integration tests
   passed (14 and 7 respectively); three app manual tests remain ignored.
 - Freshly built binaries passed all five daemon/consumer fixture and registry
