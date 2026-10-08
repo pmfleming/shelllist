@@ -405,8 +405,12 @@ ProviderChooserController {
     }
 
     function openHiddenNetworkPrompt() {
-        if (connection.beginAny())
-            prompt.openHiddenNetworkPrompt();
+        if (!connection.beginAny())
+            return;
+        if (!activeStatus?.hidden_prompt)
+            status = "Hidden-network options are unavailable; refresh network status first.";
+        else
+            prompt.openHiddenNetworkPrompt(activeStatus.hidden_prompt);
     }
 
     // A scanned Wi-Fi QR payload. The payload carries a passphrase, so it is

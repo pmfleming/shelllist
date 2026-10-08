@@ -1,12 +1,6 @@
 .pragma library
 
 "use strict";
-const hiddenSecurityModes = ["open", "owe", "wpa-psk", "sae", "wep-key", "wep-phrase", "wpa-eap"];
-const passwordSecurityModes = ["wpa-psk", "sae", "wep-key", "wep-phrase"];
-const keyManagement = {
-    "open": "open", "owe": "owe", "wpa-psk": "wpa-psk", "sae": "sae",
-    "wep-key": "wep", "wep-phrase": "wep", "wpa-eap": "wpa-eap"
-};
 const enterpriseLabels = {
     "enterprise.eap": "EAP methods (comma-separated)",
     "enterprise.identity": "Identity",
@@ -27,17 +21,10 @@ const secretLabels = {
 function field(key, label, required, password, value) {
     return { key: key, label: label, required: required, password: password, value: value || "" };
 }
-function hiddenFields() {
-    return [
-        field("ssid", "Network name (SSID)", true, false, ""),
-        field("security", "Security: open, owe, wpa-psk, sae, wep-key, wep-phrase, or wpa-eap", true, false, "wpa-psk"),
-        field("password", "Password / key", false, true, ""),
-        field("enterprise.eap", "EAP methods (comma-separated)", false, false, "peap"),
-        field("enterprise.identity", "Enterprise identity", false, false, ""),
-        field("enterprise.anonymous_identity", "Anonymous identity", false, false, ""),
-        field("enterprise.phase2_auth", "Inner authentication", false, false, "mschapv2"),
-        field("enterprise.ca_cert", "CA certificate path", false, false, "")
-    ];
+function hiddenFields(descriptor) {
+    return descriptor.fields.map(item => field(item.key, item.key === "ssid" ? "Network name (SSID)" : item.key === "security"
+        ? "Security: " + descriptor.security_modes.map(mode => mode.id).join(", ")
+        : enterpriseLabel(item.key), item.required, item.password, item.value));
 }
 function initialValues(fields) {
     const values = ({});
@@ -98,42 +85,35 @@ function enterpriseObject(values) {
     });
     return enterprise;
 }
-function hiddenValidationError(values) {
-    const security = String(values.security || "").toLowerCase();
-    if (!hiddenSecurityModes.includes(security))
-        return "Choose a supported hidden-network security value.";
-    if (passwordSecurityModes.includes(security) && !String(values.password || "").length)
-        return "Enter the password or key required by this hidden network.";
-    if (security === "wpa-eap" && !String(values["enterprise.identity"] || "").length)
-        return "Enter the identity required by this hidden enterprise network.";
-    return "";
+function hiddenChoice(values, descriptor) {
+    return descriptor?.security_modes.find(mode => mode.id === String(values.security || "").toLowerCase());
 }
-function validationError(mode, fields, values) {
+function validationError(mode, fields, values, descriptor) {
     const missing = fields.find(function (item) {
         return item.required && !String(values[item.key] || "").trim();
     });
     if (missing)
         return "Complete required field: " + missing.label;
-    return mode === "hidden" ? hiddenValidationError(values) : "";
+    if (mode !== "hidden")
+        return "";
+    const choice = hiddenChoice(values, descriptor);
+    if (!choice)
+        return "Choose a supported hidden-network security value.";
+    const required = choice.required_fields.find(key => !String(values[key] || "").trim());
+    return required ? "Complete required field: " + enterpriseLabel(required) : "";
 }
-function hiddenSecurityLabel(security) {
-    return security === "open" ? "--" : (security === "owe" ? "OWE" : "WPA2/3");
-}
-function wepKeyType(security) {
-    return security === "wep-phrase" ? "phrase" : (security === "wep-key" ? "key" : null);
-}
-function connectionRequest(mode, network, values) {
-    const security = String(values.security || "").toLowerCase();
-    const enterprise = mode === "enterprise" || security === "wpa-eap" ? enterpriseObject(values) : null;
+function connectionRequest(mode, network, values, descriptor) {
+    const choice = hiddenChoice(values, descriptor);
+    const enterprise = mode === "enterprise" || choice?.enterprise ? enterpriseObject(values) : null;
     if (mode === "enterprise")
         return { target: network, password: values.password || null, enterprise: enterprise, wepKeyType: null };
     return {
         target: {
             ssid: String(values.ssid || ""), ssid_bytes: [], hidden: true,
-            security: hiddenSecurityLabel(security), key_mgmt: keyManagement[security], enterprise: enterprise
+            security: choice?.security, key_mgmt: choice?.key_mgmt, enterprise: enterprise
         },
         password: values.password || null,
         enterprise: enterprise,
-        wepKeyType: wepKeyType(security)
+        wepKeyType: choice?.wep_key_type || null
     };
 }

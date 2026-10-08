@@ -23,6 +23,7 @@ Item {
     property var credentialFields: []
     property var credentialValues: ({})
     property var credentialNetwork: null
+    property var hiddenDescriptor: null
 
     readonly property var submitHandlerByMode: ({
             "confirm-forget": function (controller, value) {
@@ -63,8 +64,11 @@ Item {
         credentialOpen = true;
     }
 
-    function openHiddenNetworkPrompt() {
-        openCredentials("hidden", "Connect hidden network", "Choose security explicitly. Optional enterprise fields may be left blank.", Policy.hiddenFields(), null);
+    function openHiddenNetworkPrompt(descriptor) {
+        if (!descriptor || !Array.isArray(descriptor.fields) || !Array.isArray(descriptor.security_modes))
+            return;
+        hiddenDescriptor = descriptor;
+        openCredentials("hidden", "Connect hidden network", "Choose security explicitly. Optional enterprise fields may be left blank.", Policy.hiddenFields(descriptor), null);
     }
 
     function openEnterpriseIdentityPrompt(ap) {
@@ -90,6 +94,7 @@ Item {
         credentialFields = [];
         credentialValues = ({});
         credentialNetwork = null;
+        hiddenDescriptor = null;
         text = "";
         mode = "";
         network = null;
@@ -112,7 +117,7 @@ Item {
     }
 
     function submitCredentials(controller, values) {
-        const validationError = Policy.validationError(credentialMode, credentialFields, values);
+        const validationError = Policy.validationError(credentialMode, credentialFields, values, hiddenDescriptor);
         if (validationError.length > 0) {
             controller.status = validationError;
             return false;
@@ -124,11 +129,12 @@ Item {
         const ap = credentialNetwork;
         const requestId = secretRequestId;
         const save = saveSecret;
+        const descriptor = hiddenDescriptor;
         cancel();
         if (nextMode === "daemon-secret")
             return controller.connection.provideSecrets(requestId, values, save);
 
-        const request = Policy.connectionRequest(nextMode, ap, values);
+        const request = Policy.connectionRequest(nextMode, ap, values, descriptor);
         const name = nextMode === "hidden" ? String(values.ssid || "") : Presentation.networkName(ap);
         return controller.connection.runTarget(request.target, name, request.password, null, request.enterprise, request.wepKeyType);
     }

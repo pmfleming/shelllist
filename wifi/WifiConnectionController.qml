@@ -194,10 +194,11 @@ Item {
         controller.maybeRunPendingRefresh();
     }
     function handleConnectError(result) {
-        if (!Flow.isSecretFailureReason(result.reason))
-            return;
-        if (lastConnectAp)
-            prompt.openPasswordPrompt(lastConnectAp, Flow.isWrongPasswordReason(result.reason) ? "Wrong password. Enter a new Wi-Fi password." : "Saved password failed. Enter a new Wi-Fi password.");
+        const recovery = result.recovery_prompt;
+        if (lastConnectAp && recovery?.kind === "password")
+            prompt.openPasswordPrompt(lastConnectAp, recovery.message);
+        else if (lastConnectAp && recovery?.kind === "enterprise")
+            prompt.openEnterpriseIdentityPrompt(Object.assign({}, lastConnectAp, {connect_prompt: recovery}));
     }
     function provideSecrets(id, values, save) {
         controller.status = "Sending requested Wi-Fi credentials to NetworkManager…";

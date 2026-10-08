@@ -55,6 +55,7 @@ function connectEventResult(event) {
     return event.result || ({
             status: "error",
             reason: event.reason || "unknown",
+            recovery_prompt: event.recovery_prompt || null,
             message: event.message || "Connection failed"
         });
 }

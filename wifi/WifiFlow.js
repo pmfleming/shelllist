@@ -92,10 +92,3 @@ function canShareQr(ap) {
 function wifiQrPayload(ap) {
     return canShareQr(ap) ? (shareHint(ap).qr_payload || "") : "";
 }
-
-function isWrongPasswordReason(reason) {
-    return reason === "wrong-password";
-}
-function isSecretFailureReason(reason) {
-    return isWrongPasswordReason(reason) || reason === "password-unavailable" || reason === "secret-required";
-}

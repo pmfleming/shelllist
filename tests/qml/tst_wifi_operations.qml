@@ -51,6 +51,34 @@ DaemonTestCase {
         tryVerify(function () { return panel.page.detailsNavigation.commandButtons.some(function (button) { return button.accessKey === (active ? "D" : "C") && button.enabled; }); });
         panel.page.listItem.focusList();
     }
+    function test_hiddenKeyboardCommandConsumesNativeFieldsAndRecoveryHint() {
+        const panel = makePanel();
+        openNetwork(panel, false);
+        const c = panel.controller;
+        keyClick(Qt.Key_F6);
+        verify(!c.prompt.credentialOpen, "do not invent unsupported hidden-network options");
+        c.activeStatus = {enabled: true, hidden_prompt: {
+            fields: [{key: "ssid", required: true, password: false, value: "Native default"}],
+            security_modes: [{id: "open", security: "--", key_mgmt: "open", required_fields: [], enterprise: false}]
+        }};
+        keyClick(Qt.Key_F6);
+        verify(c.prompt.credentialOpen);
+        compare(c.prompt.credentialValues.ssid, "Native default");
+        compare(c.prompt.credentialFields.length, 1);
+        const dialog = panel.page.children.find(item => item.visible && item.prompt === c.prompt && item.maximumCardWidth === 620);
+        verify(!!dialog);
+        dialog.forceActiveFocus();
+        keyClick(Qt.Key_Escape);
+        verify(!c.prompt.credentialOpen);
+        c.connection.lastConnectAp = {key: "cafe", ssid: "Cafe"};
+        c.connection.handleConnectError({reason: "wrong-password"});
+        verify(!c.prompt.open, "raw reason strings cannot synthesize recovery policy");
+        c.connection.handleConnectError({recovery_prompt: {kind: "password", message: "Native recovery"}});
+        verify(c.prompt.open);
+        compare(c.prompt.detail, "Native recovery");
+        c.prompt.cancel();
+        verify(!calls.some(call => call.method === "wifi.connectTarget"), "opening/discarding prompts never connects");
+    }
     function test_keyboardRecoveryAndCancellationSurviveLinkBecomingActive() {
         const panel = makePanel();
         openNetwork(panel, true);

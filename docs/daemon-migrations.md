@@ -92,3 +92,15 @@ The frontend retains locale sorting/filtering and restores selection by native I
 
 Validation: native duplicate/order/same-timezone tests, a generated native fixture,
 and actual Qt list browsing/detail entry with reorder-safe selection.
+
+## Hidden-network and recovery descriptors
+
+nm-daemon status publishes hidden-network fields, defaults, supported security
+choices, key-management/WEP mappings and conditional requirements. Connection
+failures publish credential-recovery prompts (including early failure events).
+Shelllist retains generic descriptor rendering/validation, localization and
+request encoding, but removes its hidden-mode mapping tables and reason-based
+recovery policy. Existing native target/credential validation is unchanged.
+
+Validation: native descriptor policy and contract tests; Qt missing-descriptor,
+conditional requirements, F6/Escape, and native-only recovery prompt coverage.

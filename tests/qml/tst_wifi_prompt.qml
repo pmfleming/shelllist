@@ -73,7 +73,15 @@ TestCase {
     }
 
     function test_validatesHiddenAndEnterpriseSchema() {
-        prompt.openHiddenNetworkPrompt();
+        prompt.openHiddenNetworkPrompt(null);
+        verify(!prompt.credentialOpen, "missing native descriptors must fail closed");
+        prompt.openHiddenNetworkPrompt({
+            fields: [{key: "ssid", required: true, password: false, value: ""},
+                {key: "security", required: true, password: false, value: "wep-phrase"},
+                {key: "password", required: false, password: true, value: ""}],
+            security_modes: [{id: "wep-phrase", security: "WEP", key_mgmt: "wep", wep_key_type: "phrase",
+                enterprise: false, required_fields: ["password"]}]
+        });
         verify(!prompt.submitCredentials(fakeController, {
             ssid: "Hidden Cafe",
             security: "automatic",

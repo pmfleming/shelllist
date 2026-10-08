@@ -680,6 +680,15 @@ availability; formatting and graph layout remain local. Missing projections fail
 closed. Range identity and finite/nonnegative-value checks still reject stale or
 malformed results. Resource cards introduce no additional field stops.
 
+## Native Wi-Fi prompt descriptors
+
+Hidden-network fields, defaults, security mappings and conditional required fields
+come from nm-daemon's status descriptor. Missing descriptors disable opening that
+form rather than inventing choices. Credential recovery uses the native recovery
+prompt, not frontend interpretation of failure-reason strings. Labels, focus,
+shared field drafts and cancel/save behavior remain frontend-owned; backend
+credential and connection validation remains authoritative.
+
 ## Native time/weather locations
 
 Location IDs and cross-source merging come from bar-daemon. The client retains
