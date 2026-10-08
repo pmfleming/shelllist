@@ -8,6 +8,8 @@ Ui.DetailColumnCard {
     id: pane
 
     required property BatteryController controller
+    signal criticalEnableRequested()
+    property bool errorDetailsOpen: false
     readonly property bool interactive: controller.suspendPolicyState.available && !controller.suspendPolicySaving && !controller.actionInFlight
     readonly property bool criticalInteractive: controller.backend.ready && !controller.suspendPolicySaving && !controller.actionInFlight
     readonly property var criticalPolicy: controller.suspendPolicyDraft.critical_battery || ({
@@ -17,7 +19,12 @@ Ui.DetailColumnCard {
         })
     readonly property var criticalState: controller.suspendPolicyState.critical_battery || ({})
     objectName: "automaticSuspendCard"
-    title: qsTr("Sleep policies")
+
+    BatterySectionHeading {
+        Layout.fillWidth: true
+        title: qsTr("Sleep policies")
+        helpText: qsTr("Battery–link–plug shares settings between power sources. The lid action is ignored while docked or using an external display; System default delegates to the system. The profile action uses this power source’s hibernate delay, even with inactivity set to Never, and is ignored while docked. Waking cancels delayed hibernation; low battery may hibernate sooner. Critical-battery hibernation warns first. Use only one automatic power manager and verify working hibernation before enabling it.")
+    }
 
     function delayOptions(current: int): var {
         const minutes = [0, 5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240, 360, 480, 720, 1440];
@@ -36,13 +43,20 @@ Ui.DetailColumnCard {
     }
 
     Ui.SettingRow {
-        title: qsTr("When the lid is closed")
-        subtitle: (pane.controller.suspendPolicyState.lid || {}).error || (pane.controller.suspendPolicyDraft.lid_action === "system" ? qsTr("Uses the system lid policy.") : pane.controller.suspendPolicyDraft.lid_action === "profile" ? qsTr("Uses this power source’s hibernate delay, even with inactivity set to Never. Ignored while docked.") : qsTr("Ignored while docked or using an external display."))
+        title: qsTr("Lid closed")
+        icon: "laptop"
+        compact: true
+        subtitle: (pane.controller.suspendPolicyState.lid || {}).error || ""
         subtitleColor: (pane.controller.suspendPolicyState.lid || {}).error ? Ui.Theme.warning : Ui.Theme.mutedText
 
+        BatteryIconValue {
+            visible: pane.controller.suspendPolicyDraft.lid_action !== "system"
+            icons: ["monitor", "skip_next"]
+            description: qsTr("Lid action bypassed while docked or using an external display")
+        }
         Ui.DropDownList {
             objectName: "lidCloseAction"
-            Layout.preferredWidth: 200
+            Layout.preferredWidth: Math.min(160, pane.width * 0.38)
             options: [
                 {
                     value: "system",
@@ -87,8 +101,9 @@ Ui.DetailColumnCard {
         objectName: "suspendSameProfile"
         Layout.fillWidth: true
         Layout.preferredHeight: implicitHeight
-        title: qsTr("Use the same settings")
-        subtitle: qsTr("On battery and plugged in")
+        compact: true
+        icons: ["battery_full", "link", "power"]
+        accessibleName: qsTr("Use the same sleep settings on battery and plugged in")
         checked: pane.controller.suspendPolicyDraft.same_profile
         interactive: pane.interactive
         onClicked: pane.controller.updateSuspendPolicy("", "same_profile", !checked)
@@ -104,19 +119,21 @@ Ui.DetailColumnCard {
             Layout.fillWidth: true
             spacing: Ui.Theme.spacingSm
 
-            Ui.ThemeText {
+            BatteryIconValue {
                 Layout.fillWidth: true
-                text: pane.controller.suspendPolicyDraft.same_profile ? qsTr("Battery & plugged in") : (profile.modelData === "battery" ? qsTr("On battery") : qsTr("Plugged in"))
-                font.weight: Ui.Theme.fontWeightDemiBold
+                icons: pane.controller.suspendPolicyDraft.same_profile ? ["battery_full", "power"] : [profile.modelData === "battery" ? "battery_full" : "power"]
+                description: pane.controller.suspendPolicyDraft.same_profile ? qsTr("Battery & plugged in") : (profile.modelData === "battery" ? qsTr("On battery") : qsTr("Plugged in"))
                 color: pane.controller.suspendPolicyState.active_profile === profile.modelData ? Ui.Theme.accent : Ui.Theme.text
             }
 
             Ui.SettingRow {
-                title: qsTr("Suspend after inactivity")
+                title: qsTr("Suspend after idle")
+                icon: "schedule"
+                compact: true
 
                 Ui.DropDownList {
                     objectName: "suspendDelay-" + profile.modelData
-                    Layout.preferredWidth: 160
+                    Layout.preferredWidth: Math.min(140, pane.width * 0.38)
                     options: pane.delayOptions(profile.settings.sleep_minutes)
                     value: String(profile.settings.sleep_minutes)
                     interactive: pane.interactive
@@ -128,11 +145,13 @@ Ui.DetailColumnCard {
             }
 
             Ui.SettingRow {
-                title: qsTr("Time suspended before hibernating")
+                title: qsTr("Hibernate after suspend")
+                icon: "snooze"
+                compact: true
 
                 Ui.DropDownList {
                     objectName: "hibernateDelay-" + profile.modelData
-                    Layout.preferredWidth: 160
+                    Layout.preferredWidth: Math.min(140, pane.width * 0.38)
                     options: pane.delayOptions(profile.settings.hibernate_minutes).map(function (option) {
                         return Object.assign({}, option, {
                             enabled: option.value === "0" || !!pane.controller.suspendPolicyState.hibernate_available
@@ -149,11 +168,17 @@ Ui.DetailColumnCard {
         }
     }
 
-    Ui.FieldLabel {
+    RowLayout {
         Layout.fillWidth: true
-        text: qsTr("Waking cancels delayed hibernation. Low battery may hibernate sooner.")
-        wrapMode: Text.Wrap
-        elide: Text.ElideNone
+        Item { Layout.fillWidth: true }
+        BatteryIconValue {
+            icons: ["wb_sunny", "cancel", "schedule"]
+            description: qsTr("Waking cancels delayed hibernation")
+        }
+        BatteryIconValue {
+            icons: ["battery_alert", "snooze"]
+            description: qsTr("Low battery may hibernate sooner")
+        }
     }
 
     Ui.FieldLabel {
@@ -168,24 +193,23 @@ Ui.DetailColumnCard {
     Ui.ToggleRow {
         objectName: "criticalBatteryEnabled"
         Layout.fillWidth: true
-        Layout.preferredHeight: 64
+        compact: true
+        wrapTitle: true
+        icons: ["shield"]
         title: qsTr("Critical-battery hibernation")
-        subtitle: qsTr("Warn before hibernating")
+        Accessible.description: qsTr("Warn before hibernating. Use only one automatic power manager. Requires working hibernation.")
         checked: pane.criticalPolicy.enabled
         interactive: pane.criticalInteractive
-        onClicked: pane.controller.updateSuspendPolicy("critical_battery", "enabled", !checked)
-    }
-
-    Ui.FieldLabel {
-        objectName: "criticalBatterySafety"
-        Layout.fillWidth: true
-        text: qsTr("Use only one automatic power manager. Requires working hibernation.")
-        wrapMode: Text.Wrap
-        elide: Text.ElideNone
+        onClicked: {
+            if (checked) pane.controller.updateSuspendPolicy("critical_battery", "enabled", false);
+            else pane.criticalEnableRequested();
+        }
     }
 
     Ui.SettingRow {
         title: qsTr("Hibernate at or below")
+        compact: true
+        icon: "battery_alert"
         visible: pane.criticalPolicy.enabled
         Ui.DropDownList {
             objectName: "criticalBatteryPercent"
@@ -209,6 +233,8 @@ Ui.DetailColumnCard {
 
     Ui.SettingRow {
         title: qsTr("Warning period")
+        compact: true
+        icon: "schedule"
         visible: pane.criticalPolicy.enabled
         Ui.DropDownList {
             objectName: "criticalBatteryGrace"
@@ -256,8 +282,26 @@ Ui.DetailColumnCard {
         objectName: "suspendPolicyStatus"
         Layout.fillWidth: true
         visible: text.length > 0
-        text: pane.controller.suspendPolicyError || pane.controller.suspendPolicyState.error || pane.controller.suspendPolicyState.last_error || (!pane.controller.suspendPolicyState.available ? qsTr("Automatic suspend requires the managed hypridle integration.") : (pane.controller.suspendPolicySaving ? qsTr("Saving…") : ""))
+        text: pane.controller.suspendPolicyError || (pane.controller.suspendPolicyState.error || pane.controller.suspendPolicyState.last_error || !pane.controller.suspendPolicyState.available ? qsTr("Automatic sleep unavailable") : (pane.controller.suspendPolicySaving ? qsTr("Saving…") : ""))
         color: pane.controller.suspendPolicyError.length > 0 || pane.controller.suspendPolicyState.error || pane.controller.suspendPolicyState.last_error ? Ui.Theme.warning : Ui.Theme.mutedText
+        wrapMode: Text.Wrap
+        elide: Text.ElideNone
+    }
+
+    Ui.FlatIconButton {
+        objectName: "suspendPolicyDetails"
+        Layout.alignment: Qt.AlignRight
+        visible: !!pane.controller.suspendPolicyState.error || !!pane.controller.suspendPolicyState.last_error || !pane.controller.suspendPolicyState.available
+        icon: pane.errorDetailsOpen ? "expand_less" : "info"
+        accessibleName: qsTr("Automatic sleep diagnostic details")
+        onClicked: pane.errorDetailsOpen = !pane.errorDetailsOpen
+    }
+    Ui.FieldLabel {
+        objectName: "suspendPolicyDiagnostic"
+        Layout.fillWidth: true
+        visible: pane.errorDetailsOpen && (!!pane.controller.suspendPolicyState.error || !!pane.controller.suspendPolicyState.last_error || !pane.controller.suspendPolicyState.available)
+        text: pane.controller.suspendPolicyState.error || pane.controller.suspendPolicyState.last_error || qsTr("Automatic suspend requires the managed hypridle integration.")
+        color: Ui.Theme.warning
         wrapMode: Text.Wrap
         elide: Text.ElideNone
     }

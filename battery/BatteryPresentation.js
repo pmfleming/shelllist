@@ -39,6 +39,10 @@ function timeLabel(battery) {
     return duration(seconds) + suffix;
 }
 
+function profileIcon(profile) {
+    return ({"power-saver": "eco", "balanced": "tune", "performance": "bolt"})[profile] || "";
+}
+
 function profileName(profile) {
     const labels = {
         "power-saver": "Power saver",

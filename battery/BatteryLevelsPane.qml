@@ -9,7 +9,12 @@ Ui.DetailColumnCard {
 
     required property BatteryController controller
     objectName: "batteryLevelsCard"
-    title: qsTr("Battery levels & actions")
+
+    BatterySectionHeading {
+        Layout.fillWidth: true
+        title: qsTr("Battery levels & actions")
+        helpText: qsTr("Each enabled level notifies and can select an automatic power profile: leaf is Power saver, sliders are Balanced, lightning is Performance. These notification thresholds are separate from critical-battery hibernation.")
+    }
 
     Repeater {
         model: ["low", "critical"]

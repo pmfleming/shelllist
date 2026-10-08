@@ -37,7 +37,8 @@ const commandSymbols = [
     "lock", "block", "text_fields", "lan", "route", "dns", "language", "key", "category",
     "aspect_ratio", "rotate_90_degrees_cw", "format_size",
     "memory_alt", "developer_board", "hard_drive", "inventory_2", "folder",
-    "list", "article", "find_in_page"
+    "list", "article", "find_in_page", "eco", "tune", "shield", "link", "link_off",
+    "bedtime", "coffee", "laptop", "battery_alert", "battery_0_bar", "battery_6_bar", "wb_sunny"
 ];
 function name(glyph) {
     return Object.prototype.hasOwnProperty.call(symbols, glyph) ? symbols[glyph]

@@ -92,17 +92,17 @@ Ui.ChooserController {
         {
             value: "overview",
             icon: "󰋜",
-            label: "Power"
+            label: "Overview"
         },
         {
             value: "care",
             icon: "󰂂",
-            label: "Battery"
+            label: "Care"
         },
         {
             value: "power",
             icon: "󰐥",
-            label: "Suspend"
+            label: "Power"
         }
     ]
     viewMemory: Ui.ChooserMemory {
@@ -193,13 +193,15 @@ Ui.ChooserController {
         };
         return {
             value: profile.name,
-            label: labels[profile.name] || profile.name
+            label: labels[profile.name] || profile.name,
+            icon: Presentation.profileIcon(profile.name)
         };
     })
     readonly property var levelProfileOptions: ["power-saver", "balanced", "performance"].map(function (name) {
         return {
             value: name,
             label: Presentation.profileName(name),
+            icon: Presentation.profileIcon(name),
             enabled: powerProfile.available && profileOptions.some(function (option) {
                 return option.value === name;
             })

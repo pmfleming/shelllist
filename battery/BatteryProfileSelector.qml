@@ -3,6 +3,7 @@ import Shelllist.Ui as Ui
 
 Ui.SegmentedControl {
     property string accessibleName: qsTr("Power profile")
-    implicitWidth: 300
+    circular: true
+    iconOnly: true
     Accessible.name: accessibleName
 }

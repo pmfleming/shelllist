@@ -638,3 +638,35 @@ still discards unsaved edits. Resource snapshot descriptors feed one passive
 reading adapter: replacements update values, availability and accessible names
 without adding fields or interrupting the range draft. Native Wi-Fi tab and
 resource-arrival tests cover these shared-layout/data paths.
+
+## Battery & Power compact presentation
+
+Overview begins with one deferred Power mode field, displayed as three circular
+icon choices (saver / balanced / performance). The shared `SegmentedControl`
+retains its session, arrow editing and Enter/Tab save / Escape discard behavior;
+its circles are not independent commands or switches. The saved selection dot
+is distinct from the draft's tonal highlight. Bottom pages retain shared
+icon-only tabs and full accessible names.
+
+Battery care combines charge notification with protection. The bell's numerical
+target follows acknowledged protection / one-time-full-charge state. Resume/stop
+thresholds remain deferred; separate alert and threshold pending/error state is
+retained. One-time charge, pause/resume and calibration use a compact shared
+content action row (Alt+O/P/C), outside field traversal. Ordinary success copy
+is hidden, not validation, firmware mismatch or operation progress.
+
+Calibration starts only after a shared confirmation; cancelling an active
+calibration remains direct. Enabling critical-battery hibernation reviews the
+single-manager / working-hibernation requirements; disabling remains direct.
+These dialogs block underlying field, command, refresh and tab shortcuts, keep
+native modal traversal, and restore prior focus on dismissal. Closing the panel
+or changing tabs discards the review; replacing the calibration battery cancels
+rather than retargets it. Confirmation rechecks capabilities and busy state.
+
+Routine caveats and source/health/power readings use passive semantic icons with
+accessible descriptions. Section Help is a named Alt+J command, not a field stop
+or hover tooltip. Automatic-sleep integration failures keep a visible warning,
+with the original diagnostic behind Details; independent critical protection
+retains its own availability guards. Profile holds, degraded performance,
+countdowns and recovery commands remain visible. See [Battery & Power](battery-power.md)
+and `tst_battery_presentation.qml` / `tst_battery_suspend.qml`.

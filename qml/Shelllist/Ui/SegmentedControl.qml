@@ -9,6 +9,10 @@ Rectangle {
     property var options: []
     property string value: ""
     property bool interactive: true
+    // Presentation only: circular icon choices retain one deferred field/session.
+    property bool circular: false
+    property bool iconOnly: false
+    readonly property real optionGap: circular ? Theme.spacingSm : 0
     property bool browseFocused: false
     property string draftValue: value
     readonly property string displayedValue: editSession.active ? draftValue : value
@@ -25,7 +29,7 @@ Rectangle {
     signal selected(string value)
 
     readonly property int contentPadding: 1
-    readonly property real segmentWidth: options.length > 0 ? Math.max(0, width - 2 * contentPadding) / options.length : 0
+    readonly property real segmentWidth: options.length > 0 ? Math.max(0, width - 2 * contentPadding - optionGap * (options.length - 1)) / options.length : 0
     readonly property int currentIndex: {
         for (let index = 0; index < options.length; ++index)
             if (options[index].value === displayedValue)
@@ -33,11 +37,12 @@ Rectangle {
         return -1;
     }
 
-    implicitHeight: Theme.controlHeight
+    implicitHeight: circular ? Theme.formActionSize + 2 * contentPadding : Theme.controlHeight
+    implicitWidth: circular ? options.length * Theme.formActionSize + Math.max(0, options.length - 1) * optionGap + 2 * contentPadding : 0
     radius: height / 2
-    color: Theme.surface
+    color: circular ? "transparent" : Theme.surface
     border.color: Theme.controlBorder
-    border.width: 1
+    border.width: circular ? 0 : 1
     opacity: enabled && (interactive || activeFocus) ? 1.0 : Theme.disabledOpacity
     activeFocusOnTab: enabled && (interactive || activeFocus)
     LayoutMirroring.childrenInherit: true
@@ -77,6 +82,7 @@ Rectangle {
         y: control.contentPadding
         width: control.width - 2 * control.contentPadding
         height: Math.max(0, control.height - 2 * control.contentPadding)
+        spacing: control.optionGap
 
         Repeater {
             model: control.options
@@ -93,13 +99,13 @@ Rectangle {
                 width: control.segmentWidth
                 // Delegates may temporarily have no parent during model replacement.
                 height: Math.max(0, control.height - 2 * control.contentPadding)
-                topLeftRadius: first ? height / 2 : 0
+                topLeftRadius: control.circular || first ? height / 2 : 0
                 bottomLeftRadius: topLeftRadius
-                topRightRadius: last ? height / 2 : 0
+                topRightRadius: control.circular || last ? height / 2 : 0
                 bottomRightRadius: topRightRadius
                 // Foreground, fill, selection and focus move together. A sliding
                 // fill would briefly leave the new foreground on the old surface.
-                color: selected ? Theme.selected : Theme.surface
+                color: selected ? Theme.selected : (control.circular ? Theme.surfaceRaised : Theme.surface)
                 enabled: control.enabled && control.interactive && control.optionEnabled(index)
                 opacity: control.optionEnabled(index) ? 1.0 : Theme.disabledOpacity
                 Accessible.role: Accessible.RadioButton
@@ -119,20 +125,33 @@ Rectangle {
                     color: segment.selected ? Theme.selectedText : Theme.text
                     opacity: segmentMouse.pressed ? 0.12 : (segmentMouse.containsMouse && !control.activeFocus && !control.browseFocused ? 0.08 : 0)
                 }
-                ThemeText {
-                    anchors.fill: parent
-                    leftPadding: 8
-                    rightPadding: 8
-                    text: segment.Accessible.name
-                    color: segment.selected ? Theme.selectedText : Theme.text
-                    font.pixelSize: Theme.fontSizeLabel
-                    font.weight: segment.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
+                ControlLabel {
+                    anchors.centerIn: parent
+                    maximumWidth: Math.max(0, segment.width - (control.circular ? 8 : 16))
+                    label: control.iconOnly && segment.modelData.icon ? "" : (segment.modelData.shortLabel ?? segment.Accessible.name)
+                    icon: segment.modelData.icon || ""
+                    hotkey: ""
+                    iconSize: Theme.formActionIconSize
+                    iconColor: segment.selected ? Theme.selectedText : Theme.text
+                    labelColor: iconColor
+                    labelPixelSize: Theme.fontSizeLabel
+                    labelWeight: segment.selected ? Theme.fontWeightDemiBold : Theme.fontWeightRegular
+                    Accessible.ignored: true
                 }
                 Rectangle {
-                    visible: !segment.last
+                    objectName: "segmentSelectionMark"
+                    visible: control.circular && segment.modelData.value === control.value
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 2
+                    width: 3
+                    height: 3
+                    radius: 2
+                    color: Theme.accent
+                    Accessible.ignored: true
+                }
+                Rectangle {
+                    visible: !control.circular && !segment.last
                     x: parent.width - width
                     width: 1
                     height: parent.height

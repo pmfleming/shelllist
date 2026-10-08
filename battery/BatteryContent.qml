@@ -14,22 +14,63 @@ Ui.PanelSurface {
     readonly property var protection: controller.protection
     readonly property var device: controller.primaryDevice || ({})
     readonly property string policyError: protection.error || ""
+    property string pendingReview: ""
+    property string reviewDeviceId: ""
+
+    function review(kind: string): void {
+        detailsNavigation.finishEditor(false);
+        reviewDeviceId = String(device.id || "");
+        pendingReview = kind;
+    }
+    Binding {
+        target: content.controller
+        property: "navigationBlocked"
+        value: content.pendingReview.length > 0
+    }
+    Connections {
+        target: content.controller
+        function onViewTabChanged(): void { content.pendingReview = ""; }
+        function onUiActiveChanged(): void { content.pendingReview = ""; }
+        function onSelectedDeviceChanged(): void {
+            if (content.pendingReview === "calibration" && content.reviewDeviceId !== String(content.device.id || ""))
+                content.pendingReview = "";
+        }
+    }
+    onVisibleChanged: if (!visible) pendingReview = ""
     readonly property string errorMessage: controller.lastError.length > 0 ? controller.lastError : (controller.transportError.length > 0 ? controller.transportError : (controller.refreshError.length > 0 ? controller.refreshError : policyError))
 
     Shortcut {
         sequence: "F5"
-        enabled: content.controller.uiActive && !content.controller.actionInFlight
+        enabled: content.controller.uiActive && !content.controller.actionInFlight && !content.controller.navigationBlocked
         onActivated: content.controller.refreshAll()
     }
     Shortcut {
         sequence: "Ctrl+Tab"
-        enabled: content.controller.uiActive && !content.detailsNavigation.popupOpen
+        enabled: content.controller.uiActive && !content.controller.navigationBlocked && !content.detailsNavigation.popupOpen
         onActivated: content.changeTab(false)
     }
     Shortcut {
         sequence: "Ctrl+Shift+Tab"
-        enabled: content.controller.uiActive && !content.detailsNavigation.popupOpen
+        enabled: content.controller.uiActive && !content.controller.navigationBlocked && !content.detailsNavigation.popupOpen
         onActivated: content.changeTab(true)
+    }
+
+    Ui.ConfirmationDialog {
+        objectName: "batterySafetyReview"
+        visible: content.pendingReview.length > 0
+        title: content.pendingReview === "critical" ? qsTr("Enable critical-battery hibernation?") : qsTr("Calibrate battery?")
+        detail: content.pendingReview === "critical" ? qsTr("Use only one automatic power manager and verify that hibernation works on this device. A warning period precedes hibernation; locking and inhibitors remain enforced.") : qsTr("Calibration may discharge and recharge the battery and take several hours. Keep the power supply connected. You can cancel calibration from Charging actions.")
+        acceptLabel: content.pendingReview === "critical" ? qsTr("Enable") : qsTr("Calibrate")
+        acceptTone: "accent"
+        acceptEnabled: !content.controller.actionInFlight && (content.pendingReview === "critical" ? content.controller.backend.ready && !content.controller.suspendPolicySaving : content.reviewDeviceId === String(content.device.id || "") && content.controller.calibrationSupported && !!content.battery.plugged && !content.controller.calibrating && !content.controller.batteryOperationActive && !content.controller.thresholdOperationActive)
+        onAccepted: {
+            if (!acceptEnabled) return;
+            const kind = content.pendingReview;
+            content.pendingReview = "";
+            if (kind === "critical") content.controller.updateSuspendPolicy("critical_battery", "enabled", true);
+            else if (kind === "calibration") content.controller.toggleCalibration();
+        }
+        onCancelled: content.pendingReview = ""
     }
 
     ColumnLayout {
@@ -100,12 +141,14 @@ Ui.PanelSurface {
                 battery: content.battery
                 device: content.device
                 protection: content.protection
+                onCalibrationRequested: content.review("calibration")
             }
 
             PowerControlsPane {
                 objectName: "batteryPowerPane"
                 visible: content.controller.viewTab === "power"
                 controller: content.controller
+                onCriticalEnableRequested: content.review("critical")
             }
         }
 

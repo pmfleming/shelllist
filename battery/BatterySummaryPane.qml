@@ -15,28 +15,24 @@ Column {
     width: parent.width
     spacing: Ui.Theme.verticalSpacing(Ui.Theme.spacingMd, Ui.Theme.densityScale(height, 0))
 
-    BatteryHistoryCard {
-        history: pane.controller.batteryHistory
-        battery: pane.battery
-    }
-
     Ui.DetailColumnCard {
         objectName: "powerModeCard"
 
-        ColumnLayout {
+        RowLayout {
             Layout.fillWidth: true
             spacing: Ui.Theme.spacingMd
 
             Ui.ThemeText {
                 Layout.fillWidth: true
                 text: qsTr("Power mode")
-                font.pixelSize: Ui.Theme.fontSizeHeading
-                font.weight: Ui.Theme.fontWeightBold
+                font.pixelSize: Ui.Theme.fontSizeLabel
+                font.weight: Ui.Theme.fontWeightDemiBold
+                wrapMode: Text.Wrap
             }
 
             BatteryProfileSelector {
                 objectName: "batteryPowerModeProfile"
-                Layout.fillWidth: true
+                Layout.preferredWidth: implicitWidth
                 Layout.preferredHeight: implicitHeight
                 accessibleName: qsTr("Power mode")
                 options: pane.controller.profileOptions
@@ -75,20 +71,35 @@ Column {
         }
     }
 
+    BatteryHistoryCard {
+        objectName: "batteryHistoryCard"
+        history: pane.controller.batteryHistory
+        battery: pane.battery
+    }
+
     Ui.DetailColumnCard {
-        title: qsTr("Application energy")
+        BatterySectionHeading {
+            Layout.fillWidth: true
+            title: qsTr("Application energy")
+            helpText: qsTr("Plug: since last charge. 7d: last seven days. ≈ marks estimated attributed energy, not direct per-application measurement. Confidence: %1.").arg(pane.controller.energyOverview.energy_confidence || "low")
+        }
 
         Ui.SegmentedControl {
+            objectName: "batteryEnergyPeriod"
+            iconOnly: true
+            Accessible.name: qsTr("Application energy period")
             Layout.fillWidth: true
             Layout.preferredHeight: Ui.Theme.compactControlHeight
             options: [
                 {
                     value: "last-charge",
-                    label: "Since last charge"
+                    label: qsTr("Since last charge"),
+                    icon: "battery_charging_full"
                 },
                 {
                     value: "week",
-                    label: "Last 7 days"
+                    label: qsTr("Last 7 days"),
+                    shortLabel: "7d"
                 }
             ]
             value: pane.controller.energyPeriod
@@ -99,8 +110,9 @@ Column {
 
         Ui.FieldLabel {
             Layout.fillWidth: true
-            text: pane.controller.energyLoading ? "Updating estimated energy…" : (pane.controller.energyError.length > 0 ? pane.controller.energyError : Presentation.energy(pane.controller.energyOverview.total_energy_mwh) + " attributed · " + (pane.controller.energyOverview.energy_confidence || "low") + " confidence")
+            text: pane.controller.energyLoading ? "Updating estimated energy…" : (pane.controller.energyError.length > 0 ? pane.controller.energyError : "≈ " + Presentation.energy(pane.controller.energyOverview.total_energy_mwh))
             color: pane.controller.energyError.length > 0 ? Ui.Theme.warning : Ui.Theme.mutedText
+            Accessible.name: pane.controller.energyError || (qsTr("Estimated attributed energy: %1. Confidence: %2").arg(Presentation.energy(pane.controller.energyOverview.total_energy_mwh)).arg(pane.controller.energyOverview.energy_confidence || "low"))
         }
 
         Repeater {

@@ -18,17 +18,18 @@ Ui.DetailColumnCard {
         Ui.ThemeText {
             Layout.fillWidth: true
             text: qsTr("Lock & suspend")
-            font.pixelSize: Ui.Theme.fontSizeHeading
-            font.weight: Ui.Theme.fontWeightBold
+            font.pixelSize: Ui.Theme.fontSizeLabel
+            font.weight: Ui.Theme.fontWeightDemiBold
+            wrapMode: Text.Wrap
         }
 
         Ui.ActionButton {
             objectName: "keepAwakeButton"
             accessKey: "K"
-            Layout.preferredWidth: 42
-            Layout.preferredHeight: 42
-            icon: "󰅶"
-            iconSize: Ui.Theme.iconSizeLarge
+            Layout.preferredWidth: Ui.Theme.formActionSize
+            Layout.preferredHeight: Ui.Theme.formActionSize
+            icon: "coffee"
+            iconSize: Ui.Theme.formActionIconSize
             tone: pane.controller.keepAwake ? "accent" : "normal"
             accessibleName: qsTr("Keep awake")
             Accessible.role: Accessible.CheckBox
@@ -48,10 +49,10 @@ Ui.DetailColumnCard {
                 required property string modelData
                 objectName: "suspendAction-" + modelData
                 accessKey: ({lock: "L", suspend: "U", hibernate: "H"})[modelData]
-                Layout.preferredWidth: 42
-                Layout.preferredHeight: 42
-                icon: modelData === "lock" ? "󰌾" : (modelData === "suspend" ? "󰖔" : "󰒲")
-                iconSize: Ui.Theme.iconSizeLarge
+                Layout.preferredWidth: Ui.Theme.formActionSize
+                Layout.preferredHeight: Ui.Theme.formActionSize
+                icon: modelData === "lock" ? "lock" : (modelData === "suspend" ? "bedtime" : "snooze")
+                iconSize: Ui.Theme.formActionIconSize
                 labelColor: modelData === "lock" ? Ui.Theme.accent : (modelData === "suspend" ? Ui.Theme.accent : Ui.Theme.warning)
                 backgroundColor: Ui.Theme.input
                 borderColor: "transparent"

@@ -8,16 +8,25 @@ Item {
     property string subtitle: ""
     property color subtitleColor: Theme.mutedText
     property bool separatorVisible: true
+    property bool compact: false
+    property string icon: ""
     default property alias controls: trailing.data
 
     Layout.fillWidth: true
-    implicitHeight: Math.max(56, Math.max(labels.implicitHeight, trailing.implicitHeight) + 2 * Theme.spacingSm)
+    implicitHeight: Math.max(compact ? Theme.formHeight : 56, Math.max(labels.implicitHeight, trailing.implicitHeight) + 2 * Theme.spacingSm)
 
     RowLayout {
         anchors.fill: parent
         anchors.topMargin: Theme.spacingSm
         anchors.bottomMargin: Theme.spacingSm
-        spacing: Theme.spacingLg
+        spacing: row.compact ? Theme.spacingSm : Theme.spacingLg
+        GlyphLabel {
+            visible: row.icon.length > 0
+            glyph: row.icon
+            Layout.preferredWidth: Theme.iconSize
+            font.pixelSize: Theme.iconSize
+            Accessible.ignored: true
+        }
         Column {
             id: labels
             Layout.fillWidth: true
@@ -25,7 +34,7 @@ Item {
             ThemeText {
                 width: parent.width
                 text: row.title
-                font.pixelSize: Theme.fontSizeHeading
+                font.pixelSize: row.compact ? Theme.fontSizeLabel : Theme.fontSizeHeading
                 wrapMode: Text.WordWrap
             }
             ThemeText {
