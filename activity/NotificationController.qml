@@ -9,13 +9,9 @@ Ui.ChooserController {
     property alias filterText: appSelection.queryText
     property string returnSurface: ""
     property string selectedAppKey: ""
-    property string selectedKey: ""
     property string detailsTab: "notifications"
     property bool settingsOpen: false
-    property bool messageWasOpen: false
-    property string replyKey: ""
-    property bool replyEditorFocused: false
-    property string copyStatus: ""
+    property bool detailsWereOpen: false
     property double nowMs: Date.now()
     property var appViews: ({})
     property string presentedQuery: ""
@@ -38,24 +34,17 @@ Ui.ChooserController {
     navigationBlocked: !!notificationState.deleteConfirmation
     property var visibleApps: []
     readonly property var selectedApp: visibleApps.find(app => app.key === selectedAppKey) || null
-    readonly property var selectedRecord: catalog.detail.selected && Ui.NotificationPresentation.recordKey(catalog.detail.selected) === selectedKey ? catalog.detail.selected : null
-    readonly property var selectedNotification: Ui.NotificationPresentation.notificationFor(selectedRecord)
-    readonly property bool selectedLive: !!selectedRecord && notificationState.isLive(selectedRecord)
-    readonly property bool selectedBusy: notificationState.deletePending || !!notificationState.operations[selectedKey]
-    readonly property bool messageCommandsEnabled: detailsOpen && !settingsOpen && detailsTab === "message" && !!selectedRecord && !catalog.detailError
-    readonly property var selectedAppActions: messageCommandsEnabled && selectedLive ? Ui.NotificationPresentation.standardActions(selectedNotification) : []
-    readonly property bool replyVisible: messageCommandsEnabled && (replyKey === selectedKey || !!notificationState.drafts[selectedKey] || !!notificationState.replies[selectedKey])
     readonly property var tabs: [
-        {value: "notifications", label: qsTr("Notifications")},
-        {value: "controls", label: qsTr("App controls")}
-    ].concat(selectedKey.length > 0 ? [{value: "message", label: qsTr("Message")}] : [])
+        {value: "notifications", label: qsTr("Notifications"), icon: "notifications"},
+        {value: "controls", label: qsTr("App controls"), icon: "settings"}
+    ]
     hasSelection: selectedApp !== null
     selectionModel: appSelection
     viewMemory: Ui.ChooserMemory {
         controller: controller
         key: controller.settingsOpen ? "notifications::settings" : "notifications::app::" + controller.selectedAppKey + "::periods"
-        tab: controller.settingsOpen ? "settings" : controller.detailsTab + (controller.detailsTab === "message" ? "::" + controller.selectedKey : "")
-        tabs: ["notifications", "controls", "message", "settings"]
+        tab: controller.settingsOpen ? "settings" : controller.detailsTab
+        tabs: ["notifications", "controls", "settings"]
         onRestoreRequested: function (open, tab) { controller.detailsOpen = open && (controller.settingsOpen || controller.hasSelection); }
     }
     QtObject {
@@ -80,19 +69,13 @@ Ui.ChooserController {
         active: controller.uiActive
         query: controller.filterText.trim().toLowerCase()
         appKey: controller.selectedAppKey
-        selectedKey: controller.selectedKey
         onAppsChanged: Qt.callLater(controller.rebuildRecords)
-        onQueryChanged: {
-            controller.entryGeneration++;
-            controller.selectedKey = "";
-            controller.replyKey = "";
-            if (controller.detailsTab === "message") controller.detailsTab = "notifications";
-        }
+        onQueryChanged: controller.entryGeneration++
     }
     function memoryKey(): string { return JSON.stringify([catalog.query, selectedAppKey]); }
     function rememberApp(): void {
         if (!selectedAppKey) return;
-        appViews = Object.assign({}, appViews, {[memoryKey()]: {tab: detailsTab, key: selectedKey, date: timeline.requestedDate, collapsed: timeline.collapsed}});
+        appViews = Object.assign({}, appViews, {[memoryKey()]: {tab: detailsTab, date: timeline.requestedDate, collapsed: timeline.collapsed}});
     }
     function select(index: int): void {
         const app = visibleApps[Math.max(0, Math.min(visibleApps.length - 1, index))];
@@ -104,11 +87,9 @@ Ui.ChooserController {
         rememberApp();
         selectedAppKey = app.key;
         const memory = appViews[memoryKey()] || ({});
-        selectedKey = memory.key || "";
-        detailsTab = memory.tab === "message" && !selectedKey ? "notifications" : memory.tab || "notifications";
+        detailsTab = tabs.some(tab => tab.value === memory.tab) ? memory.tab : "notifications";
         timeline.requestedDate = timeline.periods.includes(memory.date) ? memory.date : "";
         timeline.collapsed = !timeline.requestedDate || memory.collapsed !== false;
-        replyKey = "";
     }
     function resultKeyAt(index: int): string { return visibleApps[index] ? "notification-app::" + visibleApps[index].key : ""; }
     function resultIndexForKey(key: string): int { return visibleApps.findIndex(app => "notification-app::" + app.key === key); }
@@ -124,7 +105,7 @@ Ui.ChooserController {
         if (!selectedApp) {
             if (visibleApps.length) select(Math.max(0, Math.min(visibleApps.length - 1, oldIndex)));
             else {
-                detailsClosing(); selectedAppKey = ""; selectedKey = "";
+                detailsClosing(); selectedAppKey = "";
                 if (!settingsOpen) detailsOpen = false;
             }
         }
@@ -147,16 +128,6 @@ Ui.ChooserController {
     function cycleDetailsTab(backwards: bool): void {
         setDetailsTab(tabAfter(tabs.filter(tab => tab.enabled !== false).map(tab => tab.value), detailsTab, backwards));
     }
-    function readRecord(preview: var): void {
-        if (!hasSelection || preview.app_key !== selectedAppKey || !catalog.validPreview(preview)) return;
-        detailsClosing();
-        viewMemory.synchronize();
-        selectedKey = Ui.NotificationPresentation.recordKey(preview);
-        replyKey = "";
-        detailsTab = "message";
-        openDetails();
-        rememberApp();
-    }
     function triggerAppAction(action: string, key: string): void {
         if (!key) return;
         const app = visibleApps.find(item => item.key === key);
@@ -174,25 +145,9 @@ Ui.ChooserController {
         openDetails();
         return true;
     }
-    function openSelected(): bool {
-        const action = selectedLive ? Ui.NotificationPresentation.defaultAction(selectedNotification) : null;
-        return !!action && invokeAction(action.key);
-    }
-    function invokeAction(key: string): bool {
-        return messageCommandsEnabled && selectedLive && notificationState.invokeNotificationAction(selectedNotification.id, key);
-    }
-    function requestReply(): void {
-        if (!messageCommandsEnabled || !selectedLive || !Ui.NotificationPresentation.replyAction(selectedNotification)) return;
-        replyKey = selectedKey;
-        focusDetailsRequested();
-        replyFocusRequested();
-    }
-    function copySelected(): bool {
-        return messageCommandsEnabled && clipboard.publishText([selectedNotification.summary, selectedNotification.body].filter(Boolean).join("\n\n"), qsTr("Notification copied"));
-    }
     function openSettings(): void {
         navigationInteracted(); detailsClosing(); viewMemory.synchronize();
-        if (!settingsOpen) messageWasOpen = detailsOpen;
+        if (!settingsOpen) detailsWereOpen = detailsOpen;
         settingsOpen = true; detailsOpen = true;
         focusDetailsRequested();
     }
@@ -200,7 +155,7 @@ Ui.ChooserController {
         detailsClosing(); viewMemory.synchronize();
         if (settingsOpen) {
             settingsOpen = false;
-            detailsOpen = messageWasOpen && hasSelection;
+            detailsOpen = detailsWereOpen && hasSelection;
             focusSearchRequested();
         } else detailsOpen = false;
     }
@@ -220,14 +175,13 @@ Ui.ChooserController {
     function captureScreenshot(x: real, y: real, width: real, height: real): bool { return screenshotCapture.captureRegion(x, y, width, height); }
     function activateUi(workspaceId): void { activateUiState(workspaceId); nowMs = Date.now(); Qt.callLater(resolveGroup); }
     function deactivateUi(): void { rememberApp(); deactivateUiState(); entryGeneration++; returnSurface = ""; }
-    signal replyFocusRequested
     signal backRequested
     Connections {
         target: controller.notificationState
         function onCenterResponse(context: var, value: var, error: string, code: string): void {
             if (!context.resolve || context.entryGeneration !== controller.entryGeneration || context.group !== controller.pendingGroupKey) return;
             controller.pendingGroupKey = "";
-            if (error || !value?.app_key) { controller.catalog.detailError = error || qsTr("Notification group unavailable"); return; }
+            if (error || !value?.app_key) { controller.notificationState.lastError = error || qsTr("Notification group unavailable"); return; }
             controller.pendingAppKey = value.app_key;
             controller.catalog.revealKey = value.app_key;
             controller.catalog.reloadApps();
@@ -237,7 +191,6 @@ Ui.ChooserController {
         target: controller.notificationState.backend
         function onReadyChanged(): void { if (controller.notificationState.backend.ready) controller.resolveGroup(); }
     }
-    Io.ClipboardPublisher { id: clipboard; onFinished: function (succeeded, message) { controller.copyStatus = message; } }
     Io.ClipboardScreenshotCapture { id: screenshotCapture; active: controller.uiActive; startMessage: "Capturing Notifications panel…" }
     Core.SerializedListModel { id: records }
     Timer { interval: 30000; repeat: true; running: controller.uiActive; onTriggered: controller.nowMs = Date.now() }

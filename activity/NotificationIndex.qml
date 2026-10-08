@@ -66,6 +66,7 @@ Item {
     function rows(): var {
         const result = (timeline.snapshot.recent || []).map(preview => ({kind: "message", key: Ui.NotificationPresentation.recordKey(preview), preview: preview, count: 1, stack: false}));
         for (const date of timeline.snapshot.dates || []) {
+            if (!date.count) continue;
             result.push({kind: "date", key: date.key, count: date.count});
             if (date.key !== timeline.requestedDate || date.key !== timeline.snapshot.date || timeline.collapsed) continue;
             for (const entry of timeline.entries) {
@@ -192,20 +193,28 @@ Item {
                         text: Ui.NotificationPresentation.timeLabel(card.preview.created_unix_ms, page.controller.nowMs) + (row.modelData.stack ? qsTr(" · %1 similar notifications").arg(row.modelData.count) : "")
                         color: Ui.Theme.mutedText; font.pixelSize: Ui.Theme.fontSizeCaption
                     }
-                    Ui.SurfaceActionRow {
+                    RowLayout {
                         Layout.fillWidth: true
-                        headerCommands: false
-                        compactSecondaryActions: true
-                        actionObjectNamePrefix: "notificationCard-" + row.modelData.key + ":"
-                        actions: [
-                            {id: "expand", label: row.modelData.expanded ? qsTr("Collapse similar notifications") : qsTr("Expand similar notifications"), icon: row.modelData.expanded ? "expand_less" : "expand_more", visible: row.modelData.stack, presentation: {group: "toolbar"}},
-                            {id: "read", label: qsTr("Read %1").arg(card.preview.summary || qsTr("notification")), icon: "chevron_right", presentation: {group: "toolbar"}},
-                            {id: "delete", label: qsTr("Delete this notification"), icon: "delete", visible: !row.modelData.stack, enabled: page.controller.notificationState.nativeAvailable && !page.controller.deleting, presentation: {group: "toolbar"}}
-                        ]
-                        onTriggered: function (id) {
-                            if (id === "read") page.controller.readRecord(card.preview);
-                            else if (id === "delete") page.controller.deleteRecord(card.preview);
-                            else page.timeline.expandedStacks = Object.assign({}, page.timeline.expandedStacks, {[row.modelData.key]: !row.modelData.expanded});
+                        spacing: Ui.Theme.spacingSm
+                        Item { Layout.fillWidth: true }
+                        Ui.FlatIconButton {
+                            objectName: "notificationCard-" + row.modelData.key + ":expand"
+                            visible: row.modelData.stack
+                            sizeRole: "secondary"
+                            uiScale: Ui.Theme.expandedSecondaryActionScale
+                            icon: row.modelData.expanded ? "expand_less" : "expand_more"
+                            accessibleName: row.modelData.expanded ? qsTr("Collapse similar notifications") : qsTr("Expand similar notifications")
+                            onClicked: page.timeline.expandedStacks = Object.assign({}, page.timeline.expandedStacks, {[row.modelData.key]: !row.modelData.expanded})
+                        }
+                        Ui.FlatIconButton {
+                            objectName: "notificationCard-" + row.modelData.key + ":delete"
+                            visible: !row.modelData.stack
+                            sizeRole: "secondary"
+                            uiScale: Ui.Theme.expandedSecondaryActionScale
+                            icon: "delete"
+                            accessibleName: qsTr("Delete this notification")
+                            enabled: page.controller.notificationState.nativeAvailable && !page.controller.deleting
+                            onClicked: page.controller.deleteRecord(card.preview)
                         }
                     }
                 }

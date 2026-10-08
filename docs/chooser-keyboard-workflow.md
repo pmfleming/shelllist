@@ -217,7 +217,9 @@ shared action row's last-resort narrow-width policy below may omit them. Unfille
 buttons use surface-appropriate foregrounds, not accent-fill foregrounds on
 transparent backgrounds. Disabled commands never activate or join field traversal.
 
-Command buttons are icon-only Material 3 circles. The shared `DetailsHeader`
+Command buttons are icon-only Material 3 circles. Result-list actions use shared
+borderless `FlatIconButton` styling without changing hit geometry or key routing.
+The shared `DetailsHeader`
 centres its larger filled primary beside the title and identity icon; secondary
 circles sit below, right-aligned to the same edge. Title and subtitle elide with
 an explicit gap before the primary. No primary is invented on information-only
@@ -267,7 +269,8 @@ existing contained native modal traversal. See the
   command menu, modifier hints and modal guards even while details are collapsed;
   they do not create another field-navigation region. Notifications uses this
   host for selected-app Silence (Alt+Q) and Delete (Alt+D) while collapsed.
-  Expanded app pages own those commands instead; only Message owns sender actions.
+  Expanded app pages own those commands instead. The center has no Message page
+  or sender-action commands; notification popups retain their own guarded actions.
 - Alt+J opens the content-action menu for unassigned/repeated commands, such as
   arbitrary application desktop actions and per-window commands. This keeps
   unbounded action lists keyboard-accessible without putting them in field Tab
@@ -292,10 +295,10 @@ There is no F1 overlay, hover tooltip or plain-letter action shortcut.
 The left results remain app groups in every state; Up/Down never browses an
 embedded message list. Enter always opens **Notifications**, including singleton
 apps, without invoking a sender action or selecting an implicit newest message.
-Right/Left expand/collapse as usual. Shared detail tabs are **Notifications /
-App controls / Message**; Ctrl+Tab skips Message until a record has been explicitly
-chosen. App changes preserve surface expansion and restore app/query-local date,
-tab and selected record identity. No lifecycle filter, status badge, or separate
+Right/Left expand/collapse as usual. Shared detail tabs are icon-only
+**Notifications / App controls**, with accessible names retained. Ctrl+Tab cycles
+only those two pages. App changes preserve surface expansion and restore
+app/query-local period and tab. No lifecycle filter, status badge, or separate
 archive is presented: counts always describe notifications.
 
 App rows lead with the latest notification's content. Time, application name and
@@ -304,7 +307,8 @@ Duplicate app-name summaries/body text are suppressed; full content and matching
 counts remain accessible even when the row elides. Identity, selection and command
 scope still belong to the application, not the previewed record.
 
-App rows expose Silence and Delete as separate shared circular commands. Their
+App rows expose Silence and Delete as separate shared borderless icon commands,
+matching other panels' list actions. Their
 pointer scope is that row, not an implicit newest message or a selection change.
 Alt+Q / Alt+D target the selected app in collapsed results and expanded app pages.
 Expanded app headers have one filled primary, Silence/Unsilence (Alt+Q), beside
@@ -319,14 +323,15 @@ Notifications starts with up to three newest matching records, individually
 visible, followed by **Today / This week / This month / Older**, initially closed.
 These four native periods exclude the three previews and are mutually exclusive:
 local today first, then the calendar week beginning Monday, then the calendar
-month, then everything older. Empty groups stay visible but disabled. One period
+month, then everything older. Empty groups have neither a title nor a disclosure
+control, and return when their native count becomes nonzero. One period
 opens at a time; exact action-free repetitions on the same local date become
 bounded stacks with individually addressable records. Counts, grouping and search
 belong to the native catalog, not the loaded transport slice. Windows append on scroll;
-there is no Page field or next/previous-page command. Date/stack expansion, Read
-and individual Delete are commands (also in Alt+J), never field Tab stops or
-row-wide sender actions. Read selects `(id, created_unix_ms)` and opens Message
-without launching, marking read, deleting or sending. `DetailListView` shares
+there is no Page field or next/previous-page command. Period/stack expansion and
+individual Delete are commands (also in Alt+J), never field Tab stops or row-wide
+sender actions. Notification cards have no Read/right-arrow navigation; their
+Delete and stack-expansion buttons are borderless. `DetailListView` shares
 `DetailFlickable`'s non-highlighted Tab fallback and PageUp/PageDown scrolling;
 Up/Down still select application results.
 
@@ -338,19 +343,18 @@ late preparation replies. No optimistic removal, automatic mutation retry, or
 claimed undo. Only acknowledged deletion refreshes the collection; app preferences
 survive. Modal input suspends underlying navigation and commands.
 
-Only expanded Message registers Open (Alt+O), Reply (Alt+R), Copy (Alt+C) and
-sender actions (Alt+J); Alt+D deletes that specific record. Only exact
-`inline-reply` opens the editor. Enter/Tab saves a draft without sending; Alt+R
-sends explicitly with existing acknowledgement, retry and live-record guards.
-Lifecycle still guards callbacks internally but is not a user-facing list mode.
-Tab changes discard only uncommitted edits. Removed selected records remain an
-unavailable Message, never silently retarget another notification.
+The Message tab, its detail reader, reply editor and sender commands are removed
+from this center; there is no hidden tab to restore or navigate to. Alt+D remains
+selected-app deletion, while a card's Delete targets only its stable record ID.
+Popup sender actions/replies retain their existing acknowledgement and lifecycle
+guards. Tab changes still discard only uncommitted app-control edits.
 
 Native windows stage refreshes atomically and fence stale revisions, epochs,
 queries, period changes and local-midnight rollover. Recent previews and period
 windows publish atomically, without duplicated records. `tst_notifications.qml` and `tst_notification_center.qml`
-cover actual primary/Read/menu routes, shared scrolling, policy transactions,
-confirmation/cancel, stale responses, bounded rendering and draft preservation.
+cover actual app/card commands and menus, icon tabs, empty-period visibility,
+shared scrolling, policy transactions, confirmation/cancel, stale responses,
+bounded rendering and app-control draft preservation.
 Daemon tests cover persistence, grouped dates/stacks, exact deletion scope,
 restart, policy enforcement and new arrivals during confirmation. See
 [notification center](notifications.md) for implementation and capability limits.
@@ -569,7 +573,7 @@ Notifications search uses the native grouped center catalog, including unloaded
 retained rows within its documented recent-history scope. Typing issues debounced reads only;
 query changes supersede old pages, and F5 refreshes without replaying any
 command. Page append and atomic same-query refresh preserve keyed selection,
-viewport and reply-editor transactions. Stale cursors retry reads; they must not
+viewport and app-control editing transactions. Stale cursors retry reads; they must not
 merge revisions or resurrect deleted rows. A superseded read's success or error
 must not retire a newer read or clear a reply draft. Incomplete refresh pages stay
 unpublished on read failure, epoch/revision changes, or loss of permission to

@@ -4,7 +4,6 @@ internal ActivityGlancePane ActivityGlancePane.qml
 internal GlanceScheduleCard GlanceScheduleCard.qml
 internal ActivityHeaderButton ActivityHeaderButton.qml
 internal NotificationSettings NotificationSettings.qml
-internal NotificationCommands NotificationCommands.qml
 internal NotificationDetails NotificationDetails.qml
 internal NotificationIndex NotificationIndex.qml
 internal NotificationAppHeader NotificationAppHeader.qml
@@ -36,4 +35,3 @@ NotificationState 1.0 NotificationState.qml
 NotificationBackend 1.0 NotificationBackend.qml
 NotificationController 1.0 NotificationController.qml
 NotificationContent 1.0 NotificationContent.qml
-NotificationHistoryRow 1.0 NotificationHistoryRow.qml

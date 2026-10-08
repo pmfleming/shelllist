@@ -1,7 +1,9 @@
 # Notification center
 
-The notification center uses the shared chooser, identity header, circular actions,
-compact settings fields and bottom tabs. The left list always contains applications.
+The notification center uses the shared chooser, identity header, compact settings
+fields and two icon-only bottom tabs: Notifications and App controls. List and
+notification-card actions use the same borderless buttons as other panels; header
+primary/secondary styling is unchanged. The left list always contains applications.
 There is one notification collection, not separate All/Live modes. Each app row
 leads with the newest notification's content (subject/body without duplicate text).
 Its secondary line is time · app · total notifications, with Silent appended when
@@ -38,8 +40,9 @@ Notifications shows the **three newest matching notifications** individually,
 then **Today**, **This week**, **This month**, and **Older**, initially closed.
 The previews are excluded from these four mutually exclusive groups. The daemon
 uses local calendar dates: today first, then the week beginning Monday, then the
-remaining month, then older records. Empty groups retain disabled headers. Only
-one period opens at a time; opening it seeks directly to that period.
+remaining month, then older records. Empty groups have no title or disclosure
+control; they reappear when their authoritative count becomes nonzero. Only one
+period opens at a time; opening it seeks directly to that period.
 
 Counts and previews come from `notifications.queryCenter` with `period_groups:
 true` over its documented recent search scope, not from the loaded slice. Windows
@@ -49,13 +52,16 @@ Only exact, fully represented, action-free summary/body/category/urgency matches
 within an application and date stack, in groups of at most 50 records. Long or
 actionable messages remain separate. This deliberately avoids guessing conversation
 identity from similar text or exposing hidden bulk sender actions. Stack members
-retain their own timestamps, Read and Delete commands.
+retain their own timestamps and individually confirmed Delete commands.
 
 Shared `DetailListView` gives virtualized read-only detail content the same Tab
 fallback and PageUp/PageDown behavior as `DetailFlickable`. Up/Down remain app
-navigation. Read opens Message without invoking an app or changing read state.
-Message alone owns guarded sender actions and explicit reply sending. App controls
-use ordinary Enter/Tab save and Escape discard transactions.
+navigation. The Message page and Read/right-arrow card navigation are removed;
+there is no hidden full-message reader or sender-command route in the center.
+Sender actions and replies on notification popups remain unchanged. Ctrl+Tab
+cycles only Notifications and App controls, with accessible names retained for
+the icon-only tabs. App controls use ordinary Enter/Tab save and Escape discard
+transactions.
 
 Native continuation reads are revision/epoch/local-calendar-day fenced. Midnight
 refreshes the period counts even without arrivals. Replacements stage through

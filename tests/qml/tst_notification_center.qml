@@ -74,6 +74,8 @@ DaemonTestCase {
         const {state, controller, content} = make();
         tryVerify(() => findChild(content, "notificationDelete-named:Mail") !== null);
         const button = findChild(content, "notificationDelete-named:Mail");
+        compare(button.border.width, 0);
+        compare(findChild(content, "notificationSilence-named:Mail").border.width, 0);
         mouseClick(button);
         compare(controller.selectedAppKey, "named:Chat", "row deletion does not select an implicit target");
         const prepare = calls.filter(c => c.method === "notifications.prepareDelete").pop();
@@ -97,6 +99,25 @@ DaemonTestCase {
         state.backend.finish(request(state, "delete"), {}, "Connection lost; refresh before retrying", "");
         verify(!state.deletePending); verify(state.lastError.length > 0);
         compare(controller.visibleApps.length, 2, "failure cannot optimistically remove notifications");
+        content.destroy();
+    }
+    function test_cardDeleteIsBorderlessAndRecordScopedWithoutMessageNavigation() {
+        const {state, controller, content} = make();
+        controller.openDetails();
+        controller.timeline.snapshot = {recent: [preview(1000, "named:Chat")], dates: [], date: "", next_offset: null};
+        tryVerify(() => findChild(content, "notificationCard-1000:1000000:delete") !== null);
+        tryCompare(controller, "detailsExpansionProgress", 1);
+        const list = findChild(content, "notificationTimelineList");
+        showRow(list, 0, ListView.Contain);
+        const button = findChild(content, "notificationCard-1000:1000000:delete");
+        compare(button.border.width, 0);
+        verify(!findChild(content, "notificationCard-1000:1000000:read"));
+        mouseClick(button);
+        const prepare = calls.filter(c => c.method === "notifications.prepareDelete").pop();
+        compare(prepare.params, {app_key: "named:Chat", selected: {id: 1000, created: 1000000}});
+        compare(controller.detailsTab, "notifications");
+        compare(controller.tabs.length, 2);
+        state.cancelDelete();
         content.destroy();
     }
     function test_latePrepareAfterClosureIsCancelledWithoutOpeningModal() {
@@ -124,10 +145,10 @@ DaemonTestCase {
         compare(timeline.error, "");
         tryVerify(() => findChild(content, "notificationTimelineList") !== null);
         const list = findChild(content, "notificationTimelineList");
-        tryCompare(list, "count", 7);
+        tryCompare(list, "count", 4);
         verify(list.height > 300, "exercise a real clipped detail viewport");
-        compare(list.rows.map(row => row.kind), ["message", "message", "message", "date", "date", "date", "date"]);
-        compare(list.rows.slice(3).map(row => row.key), ["today", "week", "month", "older"]);
+        compare(list.rows.map(row => row.kind), ["message", "message", "message", "date"]);
+        compare(list.rows.slice(3).map(row => row.key), ["older"], "empty periods have neither title nor control");
         verify(timeline.collapsed);
         const actions = findChild(content, "surfaceActionRow");
         compare(actions.primaryActions.map(action => action.id), ["silence"]);
@@ -138,7 +159,7 @@ DaemonTestCase {
         verify(primary.mapToItem(content, 0, 0).y < reset.mapToItem(content, 0, 0).y);
         verify(!content.detailsNavigation.targets.includes(primary) && !content.detailsNavigation.targets.includes(reset));
         tryCompare(controller, "detailsExpansionProgress", 1);
-        showRow(list, 6, ListView.Contain);
+        showRow(list, 3, ListView.Contain);
         const older = findChild(content, "notificationDate-older");
         verify(older !== null);
         mouseClick(older.button);
@@ -148,10 +169,19 @@ DaemonTestCase {
         period.count = 2; period.total_rows = 2; period.dates[3].count = 2;
         timeline.receive(context(), period, "", "");
         compare(timeline.error, "");
-        tryCompare(list, "count", 9);
-        showRow(list, 6, ListView.Contain);
+        tryCompare(list, "count", 6);
+        showRow(list, 3, ListView.Contain);
         mouseClick(findChild(content, "notificationDate-older").button);
-        tryCompare(list, "count", 7);
+        tryCompare(list, "count", 4);
+        const empty = timelinePage(0, [], null);
+        empty.count = 0; empty.total_rows = 0; empty.dates[3].count = 0;
+        timeline.receive(context(), empty, "", "");
+        tryCompare(list, "count", 3);
+        tryVerify(() => !findChild(content, "notificationDate-older"));
+        const arrival = Object.assign({}, empty, {dates: empty.dates.map(d => ({key: d.key, count: d.key === "today" ? 1 : 0}))});
+        timeline.receive(context(), arrival, "", "");
+        tryCompare(list, "count", 4);
+        compare(list.rows[3].key, "today", "nonempty periods return on acknowledged arrival");
         controller.setDetailsTab("controls");
         tryVerify(() => findChild(content, "notificationAppDelivery") !== null);
         compare(findChild(content, "surfaceActionRow").primaryActions[0].id, "silence");

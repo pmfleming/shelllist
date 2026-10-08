@@ -71,7 +71,9 @@ Item {
     function requestDetail(preserveAnchor: bool): void {
         detailGeneration++;
         detailDirty = false;
-        if (!appKey) { detailBusy = false; detail = ({}); return; }
+        // The center only consumes app rows and the timeline. Full-record reads
+        // are explicit; an app selection alone must not start an unused reader.
+        if (!appKey || !selectedKey) { detailBusy = false; detail = ({}); return; }
         detailError = "";
         detailBusy = true;
         const first = preserveAnchor && !pagePending && detail.entries?.length ? detail.entries[0] : null;

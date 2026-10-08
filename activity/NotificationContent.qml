@@ -27,27 +27,16 @@ Ui.ProviderChooserSurface {
             }
         }
     }
-    Binding {
-        target: content.controller
-        property: "replyEditorFocused"
-        value: content.detailsNavigation.activeFocus && content.detailsNavigation.currentTarget?.objectName === "notificationReplyInput"
-    }
     Connections {
         target: content.controller
-        function onSelectedKeyChanged(): void { content.detailsNavigation.closeCommandMenu(); }
         function onSelectedAppKeyChanged(): void { content.detailsNavigation.closeCommandMenu(); }
         function onDetailsTabChanged(): void { content.detailsNavigation.closeCommandMenu(); }
         function onSettingsOpenChanged(): void { content.detailsNavigation.closeCommandMenu(); }
-        function onSelectedLiveChanged(): void { if (!content.controller.selectedLive) content.detailsNavigation.closeCommandMenu(); }
     }
     Connections {
         target: content.controller.timeline
         function onEntriesChanged(): void { content.detailsNavigation.closeCommandMenu(); }
         function onSnapshotChanged(): void { content.detailsNavigation.closeCommandMenu(); }
-    }
-    Connections {
-        target: content.controller.catalog
-        function onDetailChanged(): void { content.detailsNavigation.closeCommandMenu(); }
     }
     listComponent: Ui.ChooserListPane {
         id: pane
@@ -61,7 +50,7 @@ Ui.ProviderChooserSurface {
         searchActionToolTip: qsTr("Notification settings")
         onSearchActionRequested: content.controller.openSettings()
         refreshing: content.controller.catalog.rootBusy
-        status: content.controller.notificationState.lastError || content.controller.catalog.rootError || content.controller.screenshotStatus || content.controller.copyStatus || (content.controller.notificationState.draftCount ? content.controller.notificationState.draftCount + qsTr(" unsent reply drafts") : "")
+        status: content.controller.notificationState.lastError || content.controller.catalog.rootError || content.controller.screenshotStatus
         emptyState: content.controller.catalog.rootError ? "unavailable" : refreshing ? "loading" : !content.controller.notificationState.notifications.available ? "unavailable" : filterText.trim() ? "filtered" : "empty"
         emptyText: content.controller.catalog.rootError || (emptyState === "loading" ? qsTr("Loading notifications…") : emptyState === "unavailable" ? qsTr("Notifications unavailable") : emptyState === "filtered" ? qsTr("No matching notifications") : qsTr("No notifications"))
         emptyIcon: "notifications_none"
@@ -101,7 +90,7 @@ Ui.ProviderChooserSurface {
             }
             RowLayout {
                 spacing: 2
-                Ui.ActionButton {
+                Ui.FlatIconButton {
                     objectName: "notificationSilence-" + row.app.key
                     sizeRole: "secondary"
                     uiScale: Ui.Theme.expandedSecondaryActionScale
@@ -110,7 +99,7 @@ Ui.ProviderChooserSurface {
                     enabled: content.controller.notificationState.nativeAvailable && !content.controller.notificationState.policyPending[row.app.key]
                     onClicked: content.controller.triggerAppAction("silence", row.app.key)
                 }
-                Ui.ActionButton {
+                Ui.FlatIconButton {
                     objectName: "notificationDelete-" + row.app.key
                     sizeRole: "secondary"
                     uiScale: Ui.Theme.expandedSecondaryActionScale
@@ -134,6 +123,5 @@ Ui.ProviderChooserSurface {
     }
     detailsComponent: NotificationDetails {
         controller: content.controller
-        navigation: content.detailsNavigation
     }
 }
