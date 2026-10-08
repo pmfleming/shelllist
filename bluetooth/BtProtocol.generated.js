@@ -9,6 +9,7 @@ var methods = ({
     "bluetooth.setPowered": "bluetooth.setPowered",
     "bluetooth.scan": "bluetooth.scan",
     "bluetooth.adapter.operation": "bluetooth.adapter.operation",
+    "bluetooth.adapter.update": "bluetooth.adapter.update",
     "bluetooth.management.update": "bluetooth.management.update",
     "bluetooth.device.policy.update": "bluetooth.device.policy.update",
     "bluetooth.obex.snapshot": "bluetooth.obex.snapshot",

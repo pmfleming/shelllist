@@ -63,6 +63,7 @@ var methods = {
     setPowered: Protocol.methods["bluetooth.setPowered"],
     scan: Protocol.methods["bluetooth.scan"],
     adapterOperation: Protocol.methods["bluetooth.adapter.operation"],
+    adapterUpdate: Protocol.methods["bluetooth.adapter.update"],
     managementUpdate: Protocol.methods["bluetooth.management.update"],
     devicePolicyUpdate: Protocol.methods["bluetooth.device.policy.update"],
     audioSetDefault: Protocol.methods["bluetooth.audio.setDefault"],

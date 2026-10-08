@@ -52,12 +52,12 @@ ColumnLayout {
 
     function saveDirtyFields(): void {
         autoSaveTimer.stop();
-        controller.adapterEdits.saveNext(displayedAdapterKey);
+        controller.adapterEdits.saveBatch(displayedAdapterKey);
     }
 
     Component.onCompleted: Qt.callLater(section.syncAdapterFields)
     onDraftChanged: Qt.callLater(section.syncAdapterFields)
-    Component.onDestruction: if (hasDirtyFields && !draft.pendingField && !draft.error)
+    Component.onDestruction: if (hasDirtyFields && !draft.pending && !draft.error)
         section.saveDirtyFields()
 
     Timer {
@@ -95,7 +95,7 @@ ColumnLayout {
             retryAction.enabled: !section.controller.globalRequestInFlight
             discardAction.objectName: "discardAdapterSettings"
             discardAction.label: qsTr("Discard drafts")
-            discardAction.enabled: !section.draft.pendingField
+            discardAction.enabled: !section.draft.pending
             onRetryRequested: section.controller.adapterEdits.retry(section.displayedAdapterKey)
             onDiscardRequested: section.controller.adapterEdits.discard(section.displayedAdapterKey)
         }

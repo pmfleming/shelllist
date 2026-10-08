@@ -106,7 +106,7 @@ recovery policy. Existing native target/credential validation is unchanged.
 Validation: native descriptor policy and contract tests; Qt missing-descriptor,
 conditional requirements, F6/Escape, and native-only recovery prompt coverage.
 
-## Commits and final validation
+## Initial eight-migration commits and validation
 
 | Migration | Owning daemon commit | Shelllist commit |
 | --- | --- | --- |
@@ -124,7 +124,7 @@ Test follow-ups: `7b77bd2` waits for calendar expansion before pointer input;
 bar follow-up `e752dae` preserves valid zero-duration events, including at the
 inclusive range start, without including events at the exclusive range end.
 
-Final local working-tree validation:
+Local working-tree validation at completion of the initial eight migrations:
 
 - Qt: **322 passed, 0 failed, 1 existing RHI-only skip**.
 - Native libraries: bar 228 passed/1 ignored; bt 66 passed; app 64 passed;
@@ -143,11 +143,38 @@ Local logs and initial-worktree snapshots are under
 changes are committed separately from unrelated work; existing Shelllist and
 nm-daemon changes remain outside these commits.
 
-The separately conditional **adapter-setting batch API was not implemented**.
-The review marked it "only if needed"; the existing shared field-save model and
-submitted adapter-setting sequence are unchanged. This is not claimed as a ninth
-completed migration.
+The initially deferred conditional adapter-setting batch API is now implemented
+as the follow-up below.
 
 No services were restarted and no pins or deployment configuration were updated.
 The full pinned/Nix release gate and live hardware/compositor/focus acceptance
 remain unverified. Deploy matching daemon and frontend revisions together.
+
+## Adapter-setting batch follow-up
+
+`bt-daemon` commit **`37b2cca`** adds `bluetooth.adapter.update`. A nonempty patch
+contains saved alias/discoverable-timeout/pairable-timeout values for one captured
+adapter. The daemon validates every supplied value before any setter, then owns
+the ordered sequence under the same gate as legacy single-setting requests.
+Dropping the caller's waiter does not abort that worker. The first error stops
+execution, retaining per-field applied/unknown/not-attempted outcomes and a
+separate snapshot error. No atomicity, rollback, restart replay or durable job
+recovery is claimed.
+
+Shelllist's corresponding `refactor(bluetooth): submit adapter settings as one
+native batch` commit removes `saveNext` and the frontend continuation. Only
+acknowledged applied fields clear; uncertain and unattempted values retain
+explicit retry/discard state. Editing another field cannot silently retry a
+failed patch. Malformed or late replies cannot fabricate acknowledgement, and
+selection/view changes never retarget submitted values. Field-local drafts,
+Enter/Tab saves, Escape discard and action-command traversal are unchanged.
+
+Validation: **70 native tests passed**; full Qt suite **332 passed, 0 failed,
+1 existing RHI-only skip**, including actual name/timeout keys, partial outcomes,
+retry, unloaded editors, malformed replies and disconnects. Native cases cover
+whole-patch rejection, every failure position, snapshot failure, separate adapters,
+legacy serialization and waiter abort. Generated protocol bindings and the native
+partial-outcome fixture are checked with the consumer contract; lint, runtime
+smoke, TypeScript generation, daemon-boundary and Bluetooth lifecycle checks pass.
+No deployment or live hardware acceptance was performed. Incoming staged work
+remains unchanged; batch logs are in `/tmp/shelllist-daemon-migrations/batch-*`.

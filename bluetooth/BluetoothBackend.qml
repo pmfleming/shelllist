@@ -9,7 +9,7 @@ Io.DaemonBackend {
     property var operations: ({})
     property var finishedOperations: ({})
     property string nameRequestKey: ""
-    property var adapterRequestKeys: ({})
+    property string adapterBatchKey: ""
 
     daemonName: "bt-daemon"
     expectedProtocol: BtApi.protocol
@@ -47,7 +47,7 @@ Io.DaemonBackend {
 
     function resetTransportState() {
         nameRequestKey = "";
-        adapterRequestKeys = ({});
+        adapterBatchKey = "";
         pending = ({});
         operations = ({});
         finishedOperations = ({});
@@ -80,10 +80,28 @@ Io.DaemonBackend {
     function finish(id: string, envelope: var, transportError: string): void {
         const error = responseError(envelope, transportError, "Bluetooth operation failed");
         finishDeviceRequest(id, error);
+        if (id === "adapter-batch") {
+            const key = adapterBatchKey;
+            adapterBatchKey = "";
+            if (!key)
+                return;
+            const data = (envelope && envelope.data) || ({});
+            let message = controller.adapterEdits.finish(key, data.adapter_batch, error);
+            // Apply observations separately: a bad snapshot cannot undo an acknowledged write.
+            if (!error && data.snapshot) {
+                try {
+                    controller.applySnapshot(data.snapshot);
+                } catch (snapshotError) {
+                    message += "; could not read adapter snapshot: " + snapshotError;
+                }
+            }
+            if (message)
+                controller.status = message;
+            return;
+        }
         if (error.length > 0) {
             if (id === "snapshot" || id === "scan-start")
                 controller.listError = error;
-            finishAdapterRequest(id, error);
             console.error("shelllist bluetooth request failed id=" + id + " stage=response error=" + error);
             controller.status = error;
             return;
@@ -103,10 +121,8 @@ Io.DaemonBackend {
                         ? "Audio profile applied, but could not remember it: " + (outcome.persistence_error || "Persistence unconfirmed")
                         : "Audio profile outcome unconfirmed; refresh before retrying";
             }
-            finishAdapterRequest(id, "");
             console.info("shelllist bluetooth request completed id=" + id);
         } catch (applyError) {
-            finishAdapterRequest(id, "Could not read the saved adapter settings: " + applyError);
             console.error("shelllist bluetooth request failed id=" + id + " stage=parse error=" + applyError);
             controller.status = "Could not parse bt-daemon " + id + " response: " + applyError;
             if (id === "snapshot" || id === "scan-start")
@@ -251,18 +267,19 @@ Io.DaemonBackend {
             timeout_ms: 15000
         });
     }
-    function finishAdapterRequest(id, error) {
-        const key = adapterRequestKeys[id];
-        if (!key)
-            return;
-        adapterRequestKeys = BtApi.copyWithout(adapterRequestKeys, id);
-        controller.adapterEdits.finish(key, id.slice("adapter-".length), error);
+    function updateAdapter(key, changes) {
+        if (isPending("adapter-batch"))
+            return false;
+        adapterBatchKey = key;
+        if (call("adapter-batch", BtApi.methods.adapterUpdate, { key: key, changes: changes }))
+            return true;
+        adapterBatchKey = "";
+        return false;
     }
     function adapterOperation(operation, adapter, values) {
         const id = "adapter-" + operation;
         if (isPending(id))
             return false;
-        adapterRequestKeys = BtApi.copyWith(adapterRequestKeys, id, adapter.key);
         return call(id, BtApi.methods.adapterOperation, Object.assign({
             key: adapter.key,
             operation: operation

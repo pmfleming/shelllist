@@ -654,6 +654,21 @@ changes do not retarget it. Partial persistence failure is reported without
 replaying the applied hardware change; disconnects never trigger automatic
 retries. The shared choice control still owns its local save/discard transaction.
 
+## Submitted Bluetooth adapter settings
+
+Saving adapter fields submits one native patch containing only already-saved name
+and timeout values. Field-local buffers never enter that patch before Enter/Tab;
+Escape remains discard. The captured adapter identity and submitted values survive
+selection changes or editor unload without a frontend continuation loop. Native
+per-field acknowledgements clear only applied values; unknown/not-attempted fields
+remain with explicit recovery feedback. A failed snapshot cannot erase a known
+write acknowledgement. No automatic replay after disconnect, malformed reply or
+partial failure; saving another field cannot silently retry uncertain fields.
+Explicit Retry resubmits retained saved values, while Discard only removes local
+drafts, never claiming native rollback. Recovery commands stay outside Tab order.
+`tst_bluetooth_recovery.qml` covers actual Enter/Tab/Escape, captured identity,
+unloaded editors, partial outcomes, malformed replies and transport loss.
+
 ## Submitted clipboard save-and-paste
 
 When Paste submits a dirty edit, the commit includes the captured paste session.

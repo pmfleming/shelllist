@@ -6,6 +6,14 @@
   and .params_schema.properties.fast_pair_controls_enabled.type == ["boolean", "null"])) and
 (.audio_snapshot.data.audio_devices[0].sink.key | type == "string") and
 (.registry.methods | any(.name == "bluetooth.requests.snapshot")) and
+(.registry.methods | any(.name == "bluetooth.adapter.update"
+  and .response_key == "adapter_batch" and .cancellable == false
+  and .params_schema.properties.changes.additionalProperties == false)) and
+(.adapter_update.ok == true) and
+(.adapter_update.data.adapter_batch.key == "adapter-opaque") and
+(.adapter_update.data.adapter_batch.outcomes | map(.state) == ["applied", "unknown", "not-attempted"]) and
+(.adapter_update.data.adapter_batch.outcomes | map(.field) == ["alias", "discoverable_timeout", "pairable_timeout"]) and
+(.adapter_update.data.adapter_batch.snapshot_error.message | type == "string") and
 (.snapshot.data.snapshot.devices
 | all(.[]; (.signal_live | type == "boolean")
     and ((.signal_strength == null) or (.signal_strength | type == "number"))

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Shelllist.Ui as Ui
 import "../../bluetooth" as Bt
 
 DaemonTestCase {
@@ -430,77 +431,195 @@ DaemonTestCase {
         id: devicePageComponent
         Bt.BluetoothDevicePage {}
     }
-    function test_adapterDraftsOnlyClearAfterAcknowledgement() {
+    function adapterCalls() {
+        return calls.filter(call => call.method === "bluetooth.adapter.update");
+    }
+    function batchReply(key, changes, states) {
+        return { protocol: "bt-api", version: 1, ok: true, data: { adapter_batch: {
+            key: key, outcomes: Object.keys(changes).map(field => ({
+                field: field, value: changes[field], state: (states || {})[field] || "applied",
+                error: {message: "Acknowledgement lost"}
+            }))
+        } } };
+    }
+    function test_adapterBatchPartialOutcomeAndExplicitRetry() {
         const panel = makePanel();
         const controller = panel.controller;
         const edits = controller.adapterEdits;
         const backend = findChild(controller, "bluetoothBackend");
         edits.edit("adapter", "alias", "My adapter");
         edits.edit("adapter", "discoverableTimeout", 120);
-        verify(edits.saveNext("adapter"));
+        edits.edit("adapter", "pairableTimeout", 0);
+        verify(edits.saveBatch("adapter"));
+        compare(adapterCalls().length, 1);
+        const submitted = adapterCalls()[0].params;
+        compare(submitted, {key: "adapter", changes: {alias: "My adapter", discoverable_timeout: 120, pairable_timeout: 0}});
+        edits.edit("adapter", "alias", "Cannot retarget a submitted value");
+        edits.discard("adapter");
         compare(edits.draft("adapter").fields.alias, "My adapter");
-        backend.acceptSharedResponse("adapter-set-alias", {
-            protocol: "bt-api",
-            version: 1,
-            ok: false,
-            error: {
-                message: "Permission denied"
-            }
-        }, "");
-        const previousCalls = calls.length;
+        const partial = batchReply("adapter", submitted.changes,
+            {discoverable_timeout: "unknown", pairable_timeout: "not-attempted"});
+        partial.data.snapshot = {radio: controller.radio, devices: controller.allDevices,
+            adapters: [{key: "adapter", alias: "My adapter", powered: true}]};
+        backend.acceptSharedResponse("adapter-batch", partial, "");
+        verify(controller.status.includes("not fully confirmed"), "snapshot status must not hide a partial outcome");
+        compare(edits.draft("adapter").fields.alias, undefined);
+        compare(edits.draft("adapter").fields.discoverableTimeout, 120);
+        compare(edits.draft("adapter").fields.pairableTimeout, 0);
+        verify(edits.draft("adapter").error.length > 0);
+        // Saving another field must not silently retry the uncertain earlier write.
+        edits.edit("adapter", "alias", "Another name");
+        verify(!edits.saveBatch("adapter"));
         wait(750);
-        compare(calls.length, previousCalls);
+        compare(adapterCalls().length, 1);
         const page = createTemporaryObject(adapterPageComponent, panel, {
-            controller: controller,
-            width: 600,
-            height: 900
+            controller: controller, width: 600, height: 900
         });
         wait(0);
-        compare(findChild(page, "adapterNameInput").text, "My adapter");
         findChild(page, "retryAdapterSettings").clicked();
-        compare(calls[calls.length - 1].params.alias, "My adapter");
-        backend.acceptSharedResponse("adapter-set-alias", {
-            protocol: "bt-api",
-            version: 1,
-            ok: true,
-            data: {
-                snapshot: {
-                    radio: controller.radio,
-                    devices: controller.allDevices,
-                    adapters: [
-                        {
-                            key: "adapter",
-                            alias: "My adapter",
-                            powered: true
-                        }
-                    ]
-                }
-            }
-        }, "");
+        compare(adapterCalls().length, 2);
+        const retry = adapterCalls()[1].params.changes;
+        compare(retry, {alias: "Another name", discoverable_timeout: 120, pairable_timeout: 0});
+        page.destroy();
         wait(0);
-        compare(edits.draft("adapter").fields.alias, undefined);
-        compare(calls[calls.length - 1].params.operation, "set-discoverable-timeout");
-        compare(calls[calls.length - 1].params.timeout, 120);
-        backend.acceptSharedResponse("adapter-set-discoverable-timeout", {
-            protocol: "bt-api",
-            version: 1,
-            ok: true,
-            data: {
-                snapshot: {
-                    radio: controller.radio,
-                    devices: controller.allDevices,
-                    adapters: [
-                        {
-                            key: "adapter",
-                            alias: "My adapter",
-                            powered: true,
-                            discoverable_timeout: 120
-                        }
-                    ]
-                }
-            }
-        }, "");
+        const response = batchReply("adapter", retry);
+        response.data.adapter_batch.snapshot_error = {message: "Read unavailable"};
+        backend.acceptSharedResponse("adapter-batch", response, "");
         compare(Object.keys(edits.draft("adapter").fields).length, 0);
+        verify(controller.status.includes("snapshot unavailable"));
+        wait(750);
+        compare(adapterCalls().length, 2, "no frontend continuation, even after editor unload");
+    }
+    function test_adapterBatchRejectsMalformedAndLostOutcomes_data() {
+        return [ {tag: "missing"}, {tag: "wrong-key"}, {tag: "wrong-value"},
+            {tag: "duplicate"}, {tag: "unknown-state"}, {tag: "disconnect"} ];
+    }
+    function test_adapterBatchRejectsMalformedAndLostOutcomes(data) {
+        const panel = makePanel();
+        const edits = panel.controller.adapterEdits;
+        const backend = findChild(panel.controller, "bluetoothBackend");
+        edits.edit("adapter", "alias", "Saved name");
+        edits.edit("adapter", "pairableTimeout", 120);
+        verify(edits.saveBatch("adapter"));
+        const response = batchReply("adapter", adapterCalls()[0].params.changes);
+        const batch = response.data.adapter_batch;
+        if (data.tag === "missing") delete response.data.adapter_batch;
+        if (data.tag === "wrong-key") batch.key = "another-adapter";
+        if (data.tag === "wrong-value") batch.outcomes[0].value = "Other name";
+        if (data.tag === "duplicate") batch.outcomes[1] = batch.outcomes[0];
+        if (data.tag === "unknown-state") batch.outcomes[0].state = "accepted";
+        if (data.tag === "disconnect") {
+            backend.resetTransportState();
+            panel.controller.handleTransportFailure("Disconnected");
+        } else {
+            backend.acceptSharedResponse("adapter-batch", response, "");
+        }
+        verify(!edits.draft("adapter").pending);
+        compare(edits.draft("adapter").fields.alias, "Saved name");
+        compare(edits.draft("adapter").fields.pairableTimeout, 120);
+        verify(edits.draft("adapter").error.length > 0);
+        backend.finish("adapter-batch", batchReply("adapter", {alias: "Saved name", pairable_timeout: 120}), "");
+        wait(750);
+        compare(adapterCalls().length, 1);
+        compare(edits.draft("adapter").fields.alias, "Saved name", "late/unowned replies cannot clear failed drafts");
+    }
+    Component {
+        id: adapterSurfaceComponent
+        Ui.ProviderChooserSurface {
+            id: surface
+            required property Bt.BluetoothController controller
+            width: testCase.width
+            height: testCase.height
+            chooserController: controller
+            listComponent: Ui.ChooserListPane {
+                chooserController: surface.controller
+                powerVisible: false
+                resultModel: surface.controller.filteredResults
+                rowDelegate: Rectangle { implicitWidth: 300; implicitHeight: 48 }
+            }
+            detailsComponent: Bt.BluetoothAdapterPage { controller: surface.controller }
+        }
+    }
+    function test_adapterFieldTransactionsSubmitOnlySavedFieldsAndKeepCapturedKey_data() {
+        return [{tag: "Enter", saveKey: Qt.Key_Return}, {tag: "Tab", saveKey: Qt.Key_Tab}];
+    }
+    function test_adapterFieldTransactionsSubmitOnlySavedFieldsAndKeepCapturedKey(data) {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const backend = findChild(controller, "bluetoothBackend");
+        controller.uiActive = true;
+        const surface = createTemporaryObject(adapterSurfaceComponent, testCase, {controller: controller});
+        wait(0);
+        backend.pending = ({});
+        calls = [];
+        controller.adapterSettingsTab = "pairing";
+        surface.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => surface.detailsItem !== null);
+        keyClick(Qt.Key_Tab);
+        const name = findChild(surface.detailsItem, "adapterNameInput");
+        tryCompare(surface.detailsNavigation, "currentTarget", name);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_A, Qt.ControlModifier);
+        keyClick(Qt.Key_X);
+        wait(750);
+        compare(adapterCalls().length, 0, "typing is not a submission");
+        keyClick(Qt.Key_Escape);
+        compare(name.text, "Adapter");
+        compare(adapterCalls().length, 0);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_A, Qt.ControlModifier);
+        keyClick(Qt.Key_B);
+        keyClick(data.saveKey);
+        compare(adapterCalls().length, 1);
+        compare(adapterCalls()[0].params, {key: "adapter", changes: {alias: "b"}});
+        controller.adapters = [{key: "other", alias: "Other radio", powered: true}];
+        surface.destroy();
+        wait(0);
+        backend.acceptSharedResponse("adapter-batch", batchReply("adapter", {alias: "b"}), "");
+        compare(Object.keys(controller.adapterEdits.draft("adapter").fields).length, 0);
+        compare(Object.keys(controller.adapterEdits.draft("other").fields).length, 0);
+        wait(750);
+        compare(adapterCalls().length, 1);
+    }
+    function test_adapterTimeoutSaveAndDiscard_data() {
+        return [{tag: "discoverable", field: "discoverable_timeout"},
+            {tag: "pairable", field: "pairable_timeout"}];
+    }
+    function test_adapterTimeoutSaveAndDiscard(data) {
+        const panel = makePanel();
+        const controller = panel.controller;
+        const backend = findChild(controller, "bluetoothBackend");
+        controller.uiActive = true;
+        const surface = createTemporaryObject(adapterSurfaceComponent, testCase, {controller: controller});
+        wait(0);
+        backend.pending = ({});
+        calls = [];
+        controller.adapterSettingsTab = "pairing";
+        surface.listItem.focusList();
+        keyClick(Qt.Key_Right);
+        tryVerify(() => surface.detailsItem !== null);
+        const slider = findChild(surface.detailsItem, data.tag + "Timeout");
+        for (let i = 0; i < 8 && surface.detailsNavigation.currentTarget !== slider; ++i)
+            keyClick(Qt.Key_Tab);
+        compare(surface.detailsNavigation.currentTarget, slider);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Right);
+        compare(slider.value, 30);
+        wait(750);
+        compare(adapterCalls().length, 0);
+        keyClick(Qt.Key_Escape);
+        compare(slider.value, 0);
+        compare(adapterCalls().length, 0);
+        keyClick(Qt.Key_Return);
+        keyClick(Qt.Key_Right);
+        keyClick(Qt.Key_Return);
+        compare(adapterCalls().length, 1);
+        const changes = {[data.field]: 30};
+        compare(adapterCalls()[0].params, {key: "adapter", changes: changes});
+        backend.acceptSharedResponse("adapter-batch", batchReply("adapter", changes), "");
+        surface.destroy();
+        wait(0);
     }
     function test_renameAcknowledgementAndDisconnectKeepCorrectState() {
         const panel = makePanel();
