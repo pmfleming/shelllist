@@ -49,7 +49,7 @@ Column {
         sendAccessKey: row.controller.replyEditorFocused ? "R" : ""
         draftText: row.draft
         sending: row.replyStatus.pending === true
-        canReply: row.controller.messageCommandsEnabled && row.active && Ui.NotificationPresentation.replyAction(row.notification) !== null
+        canReply: row.controller.messageCommandsEnabled && !row.controller.selectedBusy && row.active && Ui.NotificationPresentation.replyAction(row.notification) !== null
         errorText: row.replyStatus.error || ""
         onDraftEdited: function (text) { row.notificationState.setDraft(notificationKey, text); }
         onReplyRequested: function (key, text) { row.notificationState.replyNotification(key, text); }

@@ -3,146 +3,180 @@ import QtQuick
 import QtQuick.Layouts
 import Shelllist.Ui as Ui
 
-Ui.DetailFlickable {
+Item {
     id: page
     required property NotificationController controller
-    required property bool overview
-    readonly property var snapshot: controller.catalog.detail
-    readonly property var entries: (overview ? snapshot.overview : snapshot.entries) || []
-    viewMemory: controller.viewMemory
-    memoryTab: overview ? "overview" : "notifications"
-    Ui.DetailsHeader {
-        uiScale: 1
-        width: parent.width
-        icon: "notifications"
-        iconSource: Ui.NotificationIconSource.resolve(page.controller.selectedApp?.latest)
-        title: page.controller.selectedApp?.latest.app_name || qsTr("Notifications")
-        subtitle: page.snapshot.count === undefined ? qsTr("Recent notifications") : page.controller.catalog.query ? qsTr("%1 matches of %2 recent notifications").arg(page.snapshot.count).arg(page.snapshot.total_count) : qsTr("%1 recent notifications").arg(page.snapshot.count)
-        actions: page.overview ? [{id: "browse", label: qsTr("Browse notifications"), icon: "list", presentation: {group: "primary"}}] : []
-        onActionTriggered: page.controller.setDetailsTab("notifications")
+    readonly property NotificationTimeline timeline: controller.timeline
+    property string anchorKey: ""
+    property real anchorOffset: 0
+    property bool restoring: false
+    property bool tearingDown: false
+    Component.onDestruction: tearingDown = true
+    function captureAnchor(): void {
+        const index = history.indexAt(1, Math.max(history.originY, history.contentY) + history.spacing + 1);
+        const row = index >= 0 ? history.itemAtIndex(index) : null;
+        anchorKey = index >= 0 ? history.model[index]?.key || "" : "";
+        anchorOffset = row ? row.y - history.contentY : 0;
+        restoring = true;
     }
-    Ui.ThemeText {
-        width: parent.width
-        text: page.controller.catalog.detailError
-        visible: text.length > 0
-        color: Ui.Theme.danger
-        textFormat: Text.PlainText
-        wrapMode: Text.Wrap
+    function restoreAnchor(): void {
+        if (tearingDown || !history || !page.visible) { restoring = false; return; }
+        const index = history.model.findIndex(row => row.key === anchorKey);
+        if (index >= 0) {
+            history.positionViewAtIndex(index, ListView.Beginning);
+            const item = history.itemAtIndex(index);
+            if (item) history.contentY = Math.max(history.originY, Math.min(history.originY + Math.max(0, history.contentHeight - history.height), item.y - anchorOffset));
+        }
+        restoring = false;
+        history.rememberScroll();
     }
-    Ui.ContentState {
-        width: parent.width
-        visible: page.entries.length === 0
-        icon: "notifications_none"
-        kind: page.controller.catalog.detailError ? "unavailable" : page.controller.catalog.detailBusy ? "loading" : page.controller.catalog.query ? "filtered" : "empty"
-        text: page.controller.catalog.detailError || (kind === "loading" ? qsTr("Loading notifications…") : kind === "filtered" ? qsTr("No matching notifications") : qsTr("No notifications"))
+    Connections {
+        target: page.timeline
+        function onViewAboutToChange(): void { page.captureAnchor(); }
+        function onViewChanged(): void { Qt.callLater(page.restoreAnchor); }
     }
-    Ui.CommandGroup {
-        objectName: "notificationIndexCommands"
+    function dateLabel(key: string): string {
+        const today = new Date(page.controller.nowMs);
+        const yesterday = new Date(page.controller.nowMs); yesterday.setDate(yesterday.getDate() - 1);
+        const value = new Date(key + "T12:00:00");
+        return value.toDateString() === today.toDateString() ? qsTr("Today") : value.toDateString() === yesterday.toDateString() ? qsTr("Yesterday") : value.toLocaleDateString();
+    }
+    function rows(): var {
+        const result = [];
+        for (const date of timeline.snapshot.dates || []) {
+            result.push({kind: "date", key: date.key, count: date.count});
+            if (date.key !== timeline.snapshot.date || timeline.collapsed) continue;
+            for (const entry of timeline.entries) {
+                const expanded = timeline.expandedStacks[entry.key] === true;
+                result.push({kind: "message", key: entry.key, preview: entry.preview, count: entry.members.length, stack: entry.members.length > 1, expanded: expanded});
+                if (expanded) for (const member of entry.members) {
+                    result.push({kind: "message", key: "member:" + member.id + ":" + member.created,
+                        preview: Object.assign({}, entry.preview, {id: member.id, created_unix_ms: member.created}), count: 1, stack: false});
+                }
+            }
+            if (timeline.hasMore || timeline.busy) result.push({kind: "more", key: "more"});
+        }
+        return result;
+    }
+    Column {
+        id: header
         width: parent.width
-        spacing: Ui.Theme.spacingMd
-        Repeater {
-            model: page.entries
-            Ui.DetailColumnCard {
-                id: entry
-                required property var modelData
-                objectName: "notificationPreview-" + Ui.NotificationPresentation.recordKey(modelData)
+        spacing: Ui.Theme.spacingSm
+        NotificationAppHeader { width: parent.width; controller: page.controller }
+        Ui.ThemeText {
+            width: parent.width; text: page.timeline.error; visible: text.length > 0
+            color: Ui.Theme.danger; wrapMode: Text.WordWrap
+        }
+        Ui.LabeledAction {
+            width: parent.width; visible: !!page.timeline.error
+            icon: "refresh"; label: qsTr("Retry notification history"); accessKey: "T"
+            uiScale: Ui.Theme.expandedSecondaryActionScale
+            onClicked: page.timeline.refresh()
+        }
+        Ui.ContentState {
+            width: parent.width
+            visible: !(page.timeline.snapshot.dates || []).length
+            icon: "notifications_none"
+            kind: page.timeline.error ? "unavailable" : page.timeline.busy ? "loading" : page.controller.catalog.query ? "filtered" : "empty"
+            text: page.timeline.error || (kind === "loading" ? qsTr("Loading notifications…") : kind === "filtered" ? qsTr("No matching notifications") : qsTr("No notifications"))
+        }
+    }
+    Ui.DetailListView {
+        id: history
+        objectName: "notificationTimelineList"
+        anchors.top: header.bottom; anchors.topMargin: Ui.Theme.spacingMd
+        anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+        viewMemory: page.controller.viewMemory
+        memoryTab: "notifications"
+        scrollSuspended: page.restoring
+        spacing: Ui.Theme.spacingSm
+        cacheBuffer: 200
+        model: page.rows()
+        delegate: Ui.CommandGroup {
+            id: row
+            required property var modelData
+            width: history.width
+            Loader {
                 width: parent.width
-                color: Ui.Theme.surfaceContainer
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Ui.Theme.spacingMd
-                    ColumnLayout {
+                sourceComponent: row.modelData.kind === "date" ? dateHeader : row.modelData.kind === "more" ? more : message
+            }
+            Component {
+                id: dateHeader
+                Ui.LabeledAction {
+                    width: row.width
+                    uiScale: Ui.Theme.expandedSecondaryActionScale
+                    objectName: "notificationDate-" + row.modelData.key
+                    label: page.dateLabel(row.modelData.key) + " · " + row.modelData.count
+                    icon: page.timeline.snapshot.date === row.modelData.key && !page.timeline.collapsed ? "expand_less" : "expand_more"
+                    onClicked: page.timeline.chooseDate(row.modelData.key)
+                }
+            }
+            Component {
+                id: more
+                Ui.LabeledAction {
+                    width: row.width
+                    uiScale: Ui.Theme.expandedSecondaryActionScale
+                    label: page.timeline.busy ? qsTr("Loading…") : qsTr("More notifications")
+                    icon: "expand_more"
+                    enabled: !page.timeline.busy && !page.timeline.error
+                    onClicked: page.timeline.loadMore()
+                    // This is a transport boundary, not a page control. Load
+                    // when it enters the viewport; keep an explicit retry route.
+                    readonly property bool inViewport: row.y < history.contentY + history.height + 80
+                    onInViewportChanged: if (inViewport) Qt.callLater(page.timeline.loadMore)
+                    Component.onCompleted: if (inViewport) Qt.callLater(page.timeline.loadMore)
+                }
+            }
+            Component {
+                id: message
+                Ui.DetailColumnCard {
+                    id: card
+                    width: row.width
+                    objectName: "notificationPreview-" + row.modelData.key
+                    readonly property var preview: row.modelData.preview
+                    color: Ui.Theme.surfaceContainer
+                    Ui.ThemeText {
+                        objectName: "notificationPreviewTitle-" + row.modelData.key
                         Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        spacing: Ui.Theme.spacingSm
-                        Ui.ThemeText {
-                            objectName: "notificationPreviewTitle-" + Ui.NotificationPresentation.recordKey(entry.modelData)
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            text: Ui.NotificationPresentation.previewHeading(entry.modelData) || (Ui.NotificationPresentation.previewBody(entry.modelData) ? "" : qsTr("Notification"))
-                            visible: text.length > 0
-                            textFormat: Text.PlainText
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
-                            font.pixelSize: Ui.Theme.fontSizeHeading
-                            font.weight: Ui.Theme.fontWeightDemiBold
-                        }
-                        Ui.ThemeText {
-                            objectName: "notificationPreviewBody-" + Ui.NotificationPresentation.recordKey(entry.modelData)
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            visible: text.length > 0
-                            text: Ui.NotificationPresentation.previewBody(entry.modelData)
-                            textFormat: Text.PlainText
-                            wrapMode: Text.Wrap
-                            elide: Text.ElideRight
-                            maximumLineCount: 2
-                            lineHeight: 1.15
-                            font.pixelSize: Ui.Theme.fontSizeBody
-                        }
-                        Ui.ThemeText {
-                            objectName: "notificationPreviewMeta-" + Ui.NotificationPresentation.recordKey(entry.modelData)
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            text: [Ui.NotificationPresentation.timeLabel(entry.modelData.created_unix_ms, page.controller.nowMs), entry.modelData.snoozed_until_unix_ms ? qsTr("Snoozed until %1").arg(new Date(entry.modelData.snoozed_until_unix_ms).toLocaleTimeString()) : entry.modelData.closed_unix_ms ? qsTr("Closed") : ""].filter(Boolean).join(" · ")
-                            textFormat: Text.PlainText
-                            color: Ui.Theme.mutedText
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
-                            font.pixelSize: Ui.Theme.fontSizeCaption
-                        }
+                        text: Ui.NotificationPresentation.previewHeading(card.preview)
+                        visible: text.length > 0
+                        textFormat: Text.PlainText
+                        elide: Text.ElideRight; maximumLineCount: 1
+                        font.pixelSize: Ui.Theme.fontSizeHeading
+                        font.weight: Ui.Theme.fontWeightDemiBold
                     }
-                    Ui.ActionButton {
-                        objectName: "notificationRead-" + Ui.NotificationPresentation.recordKey(entry.modelData)
-                        sizeRole: "secondary"
-                        uiScale: Ui.Theme.expandedSecondaryActionScale
-                        icon: "chevron_right"
-                        backgroundColor: "transparent"
-                        borderColor: "transparent"
-                        accessibleName: qsTr("Read %1 · %2").arg(Ui.NotificationPresentation.previewTitle(entry.modelData) || qsTr("Notification")).arg(new Date(entry.modelData.created_unix_ms).toLocaleString())
-                        onClicked: page.controller.readRecord(entry.modelData)
+                    Ui.ThemeText {
+                        objectName: "notificationPreviewBody-" + row.modelData.key
+                        Layout.fillWidth: true
+                        text: Ui.NotificationPresentation.previewBody(card.preview)
+                        visible: text.length > 0
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap; elide: Text.ElideRight; maximumLineCount: 2
+                    }
+                    Ui.ThemeText {
+                        objectName: "notificationPreviewMeta-" + row.modelData.key
+                        Layout.fillWidth: true
+                        text: Ui.NotificationPresentation.timeLabel(card.preview.created_unix_ms, page.controller.nowMs) + (row.modelData.stack ? qsTr(" · %1 similar notifications").arg(row.modelData.count) : "")
+                        color: Ui.Theme.mutedText; font.pixelSize: Ui.Theme.fontSizeCaption
+                    }
+                    Ui.SurfaceActionRow {
+                        Layout.fillWidth: true
+                        headerCommands: false
+                        compactSecondaryActions: true
+                        actionObjectNamePrefix: "notificationCard-" + row.modelData.key + ":"
+                        actions: [
+                            {id: "expand", label: row.modelData.expanded ? qsTr("Collapse similar notifications") : qsTr("Expand similar notifications"), icon: row.modelData.expanded ? "expand_less" : "expand_more", visible: row.modelData.stack, presentation: {group: "toolbar"}},
+                            {id: "read", label: qsTr("Read %1").arg(card.preview.summary || qsTr("notification")), icon: "chevron_right", presentation: {group: "toolbar"}},
+                            {id: "delete", label: qsTr("Delete this notification"), icon: "delete", visible: !row.modelData.stack, enabled: page.controller.notificationState.nativeAvailable && !page.controller.deleting, presentation: {group: "toolbar"}}
+                        ]
+                        onTriggered: function (id) {
+                            if (id === "read") page.controller.readRecord(card.preview);
+                            else if (id === "delete") page.controller.deleteRecord(card.preview);
+                            else page.timeline.expandedStacks = Object.assign({}, page.timeline.expandedStacks, {[row.modelData.key]: !row.modelData.expanded});
+                        }
                     }
                 }
             }
         }
-    }
-    Ui.ThemeText {
-        width: parent.width
-        visible: page.overview && page.entries.length > 0
-        text: qsTr("%1 of %2 shown").arg(page.entries.length).arg(page.snapshot.count || 0)
-        color: Ui.Theme.mutedText
-        font.pixelSize: Ui.Theme.fontSizeCaption
-    }
-    Ui.FormField {
-        width: parent.width
-        visible: !page.overview && (page.snapshot.pages || 1) > 1
-        label: qsTr("Page")
-        icon: "find_in_page"
-        errorText: page.controller.catalog.pageError
-        Ui.TextField {
-            objectName: "notificationPage"
-            Layout.fillWidth: true
-            text: String(page.snapshot.page || 1)
-            suffix: qsTr("of %1").arg(page.snapshot.pages || 1)
-            Accessible.name: qsTr("Notification page, 1 to %1").arg(page.snapshot.pages || 1)
-            inputMethodHints: Qt.ImhDigitsOnly
-            onEdited: function (value) { page.controller.catalog.setPage(value); }
-        }
-    }
-    Ui.SurfaceActionRow {
-        width: parent.width
-        visible: !page.overview && (page.snapshot.pages || 1) > 1
-        headerCommands: false
-        actions: [
-            {id: "previous", label: qsTr("Previous notification page"), icon: "chevron_left", accessKey: "P", enabled: !page.controller.catalog.detailBusy && (page.snapshot.page || 1) > 1, presentation: {group: "toolbar"}},
-            {id: "next", label: qsTr("Next notification page"), icon: "chevron_right", accessKey: "N", enabled: !page.controller.catalog.detailBusy && (page.snapshot.page || 1) < (page.snapshot.pages || 1), presentation: {group: "toolbar"}}
-        ]
-        onTriggered: function (actionId) { page.controller.catalog.setPage(String((page.snapshot.page || 1) + (actionId === "next" ? 1 : -1))); }
-    }
-    Ui.ThemeText {
-        width: parent.width
-        visible: page.controller.catalog.detailBusy && page.entries.length > 0
-        text: qsTr("Loading…")
-        color: Ui.Theme.mutedText
     }
 }

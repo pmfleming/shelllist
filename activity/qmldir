@@ -7,6 +7,9 @@ internal NotificationSettings NotificationSettings.qml
 internal NotificationCommands NotificationCommands.qml
 internal NotificationDetails NotificationDetails.qml
 internal NotificationIndex NotificationIndex.qml
+internal NotificationAppHeader NotificationAppHeader.qml
+internal NotificationAppSettings NotificationAppSettings.qml
+NotificationTimeline 1.0 NotificationTimeline.qml
 NotificationCatalog 1.0 NotificationCatalog.qml
 internal ActivitySchedulePane ActivitySchedulePane.qml
 internal ActivityWeatherPane ActivityWeatherPane.qml

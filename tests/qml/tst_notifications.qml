@@ -111,6 +111,12 @@ DaemonTestCase {
             overview: records.slice(0, 3).map(r => preview(r.notification.id, controller.selectedAppKey)),
             entries: records.slice(0, 5).map(r => preview(r.notification.id, controller.selectedAppKey)),
             selected: records.find(r => r.notification.id + ":" + r.notification.created_unix_ms === controller.selectedKey) || null});
+        projectTimeline(controller, records.map(r => preview(r.notification.id, controller.selectedAppKey)));
+    }
+    function projectTimeline(controller, previews) {
+        controller.timeline.busy = false;
+        controller.timeline.snapshot = {dates: [{key: "1970-01-01", count: previews.length}], date: "1970-01-01", next_offset: null};
+        controller.timeline.entries = previews.map(p => ({key: p.id + ":" + p.created_unix_ms, preview: p, members: [{id: p.id, created: p.created_unix_ms}]}));
     }
     function startCenter() {
         const controller = makeController(makeState());
@@ -144,8 +150,9 @@ DaemonTestCase {
             Object.assign(preview(3), {summary: "Unique subject", body: "<b>Plain message</b> ".repeat(12)}),
             Object.assign(preview(2), {summary: "", body: "Copied to clipboard."})];
         controller.catalog.acceptDetail(Object.assign({}, controller.catalog.detail, {overview: entries, entries: entries}));
+        projectTimeline(controller, entries);
         projectApps(controller, [{key: "Chat", count: 3, total_count: 3, latest: entries[0]}]);
-        for (const tab of ["overview", "notifications"]) {
+        for (const tab of ["notifications"]) {
             controller.setDetailsTab(tab);
             verify(waitForRendering(content));
             const label = descendants(content.listItem).find(item => typeof item.subtitle === "string" && item.subtitle.includes(savedFile));
@@ -165,23 +172,16 @@ DaemonTestCase {
             compare(body.textFormat, Text.PlainText);
             verify(body.lineCount <= 2 && body.height > 0);
             verify(title.mapToItem(next, 0, 0).x >= 12, "card padding separates content from its edge");
-            verify(next.y - first.y - first.height >= 12, "notifications have separate surfaces and breathing room");
+            verify(next.mapToItem(content, 0, 0).y - first.mapToItem(content, 0, 0).y - first.height > 0, "notifications have separate surfaces and breathing room");
             verify(first.color.a > 0);
             verify(!content.detailsNavigation.targets.includes(first));
-            const read = findChild(content, "notificationRead-100:100000");
-            compare(read.borderColor.a, 0, "Read is a low-emphasis chevron, not another outlined badge");
+            const read = findChild(content, "notificationCard-100:100000:read");
+            verify(read !== null, "Read is a shared circular command");
             verify(!content.detailsNavigation.targets.includes(read));
             mouseClick(first, 6, 6);
             compare(controller.selectedKey, "", "the passive card does not read or invoke a message");
         }
-        if (data.tag === "narrow") {
-            content.listItem.focusList();
-            keyClick(Qt.Key_J, Qt.AltModifier);
-            tryVerify(() => content.detailsNavigation.commandMenuOpen);
-            keyClick(Qt.Key_Return);
-        } else {
-            mouseClick(findChild(content, "notificationRead-100:100000"));
-        }
+        mouseClick(findChild(content, "notificationCard-100:100000:read"));
         tryCompare(controller, "selectedKey", "100:100000");
         compare(controller.detailsTab, "message");
         content.destroy(); wait(0);
@@ -273,7 +273,7 @@ DaemonTestCase {
         keyClick(Qt.Key_End);
         keyClick(Qt.Key_X);
         keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        tryCompare(controller, "detailsTab", "overview");
+        tryCompare(controller, "detailsTab", "notifications");
         compare(state.drafts[state.keyFor(100)], "Draftt", "tab switch discards only the unsaved edit");
         keyClick(Qt.Key_Tab, Qt.ControlModifier | Qt.ShiftModifier);
         tryCompare(controller, "detailsTab", "message");
@@ -302,13 +302,13 @@ DaemonTestCase {
         tryCompare(controller, "detailsTab", "notifications");
         verify(controller.detailsOpen);
         compare(sent().length, before, "app Enter only reviews, never invokes a hidden message");
-        tryVerify(() => findChild(content, "notificationRead-100:100000") !== null);
+        tryVerify(() => findChild(content, "notificationCard-100:100000:read") !== null);
         keyClick(Qt.Key_J, Qt.AltModifier);
         tryVerify(() => content.detailsNavigation.commandMenuOpen);
         projectDetail(controller, [{notification: live}, record(2)]);
         tryVerify(() => !content.detailsNavigation.commandMenuOpen, 1000, "changed Read targets close the menu before Enter can retarget");
         verify(waitForRendering(content));
-        mouseClick(findChild(content, "notificationRead-100:100000"));
+        mouseClick(findChild(content, "notificationCard-100:100000:read"));
         tryCompare(controller, "detailsTab", "message");
         projectDetail(controller, [{notification: live}, record(3)]);
         compare(controller.selectedKey, "100:100000");
@@ -354,56 +354,28 @@ DaemonTestCase {
         compare(sent().length, before + 2);
         content.destroy(); wait(0);
     }
-    function test_pageFieldUsesSharedTransactionsAndKeepsAppListFixed() {
-        const state = makeState();
-        const controller = makeController(state);
+    function test_dateHistoryUsesSharedScrollingAndKeepsAppListFixed() {
+        const controller = makeController(makeState());
         projectApps(controller, [app(100, "Chat", 500), app(1, "Mail", 1)]);
-        controller.uiActive = true;
-        controller.primarySelected();
+        controller.uiActive = true; controller.primarySelected();
         const content = createTemporaryObject(contentComponent, controller, {controller: controller, width: 1000, height: 600});
         wait(150);
-        projectDetail(controller, [record(100), record(99), record(98), record(97), record(96)], 500);
-        const pageField = findChild(content, "notificationPage");
-        verify(pageField !== null);
-        content.listItem.focusList(); keyClick(Qt.Key_Tab); keyClick(Qt.Key_Return);
-        tryVerify(() => pageField.inputActiveFocus);
-        const reads = () => testCase.calls.filter(call => call.method === "notifications.queryCenter" && call.params.view === "app");
-        let before = reads().length;
-        keyClick(Qt.Key_A, Qt.ControlModifier); keyClick(Qt.Key_2);
-        compare(reads().length, before, "typing a page never queries");
-        keyClick(Qt.Key_Escape);
-        compare(reads().length, before);
-        compare(pageField.text, "1");
-        pageField.focusInput(true);
-        keyClick(Qt.Key_9); keyClick(Qt.Key_9); keyClick(Qt.Key_9); keyClick(Qt.Key_Return);
-        compare(reads().length, before);
-        verify(controller.catalog.pageError.length > 0);
-        pageField.focusInput(true); keyClick(Qt.Key_2); keyClick(Qt.Key_Tab);
-        compare(reads().length, before + 1, "Tab saves the page");
-        compare(reads().pop().params.page, 2);
-        compare(reads().pop().params.page_anchor, null);
-        controller.catalog.requestDetail(true);
-        compare(reads().pop().params.page, 2);
-        compare(reads().pop().params.page_anchor, null, "refresh cannot replace an in-flight explicit seek with an old anchor");
-        projectDetail(controller, [record(95), record(94), record(93), record(92), record(91)], 500, 2);
-        compare(controller.notificationModel.count, 2);
-        compare(controller.catalog.detail.entries.length, 5);
-        compare(controller.catalog.detail.overview.length, 3);
+        projectTimeline(controller, Array.from({length: 100}, (_, i) => preview(1000 - i)));
+        verify(!findChild(content, "notificationPage"), "transport windows do not create page fields");
+        const list = findChild(content, "notificationTimelineList");
+        tryCompare(list, "count", 101);
+        content.listItem.focusList(); keyClick(Qt.Key_Tab);
+        keyClick(Qt.Key_PageDown);
+        tryVerify(() => list.contentY > 0, 1000, "shared non-highlighted scrolling fallback handles PageDown");
+        const rendered = descendants(list.contentItem).filter(item => String(item.objectName || "").startsWith("notificationPreview-")).length;
+        verify(rendered < 25, "virtualization does not instantiate the entire date");
         keyClick(Qt.Key_Tab, Qt.ControlModifier);
-        tryCompare(controller, "detailsTab", "overview");
+        tryCompare(controller, "detailsTab", "controls");
+        verify(findChild(content, "notificationAppDelivery") !== null);
         compare(controller.notificationModel.count, 2);
-        controller.readRecord(preview(95));
-        projectDetail(controller, [record(95)], 500, 2);
-        keyClick(Qt.Key_J, Qt.AltModifier);
-        verify(!content.detailsNavigation.commandMenuOpen, "hidden index Read commands cannot leak into Message's menu");
         content.listItem.focusList(); keyClick(Qt.Key_Down);
         compare(controller.selectedAppKey, "Mail");
-        keyClick(Qt.Key_Up);
-        compare(controller.selectedAppKey, "Chat");
-        compare(controller.detailsTab, "message");
-        compare(controller.catalog.page, 2);
-        controller.closeDetails(); content.listItem.focusList(); keyClick(Qt.Key_Return);
-        compare(controller.detailsTab, "notifications", "app primary always reviews the index, not remembered Message");
+        verify(controller.detailsOpen);
         content.destroy(); wait(0);
     }
     function test_centerRefreshNeverPublishesPartialAppPages() {

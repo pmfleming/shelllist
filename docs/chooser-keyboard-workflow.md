@@ -265,9 +265,9 @@ existing contained native modal traversal. See the
 - Selected-result commands can use `ProviderChooserSurface.additionalCommandItem`
   with `commandsWithoutDetails`. They share `DetailsNavigation`'s access keys,
   command menu, modifier hints and modal guards even while details are collapsed;
-  they do not create another field-navigation region. Notifications deliberately
-  does **not** opt in: its app results expose no notification commands while
-  collapsed. Only expanded Message owns the selected record's actions.
+  they do not create another field-navigation region. Notifications uses this
+  host for selected-app Silence (Alt+Q) and Delete (Alt+D) while collapsed.
+  Expanded app pages own those commands instead; only Message owns sender actions.
 - Alt+J opens the content-action menu for unassigned/repeated commands, such as
   arbitrary application desktop actions and per-window commands. This keeps
   unbounded action lists keyboard-accessible without putting them in field Tab
@@ -292,34 +292,54 @@ There is no F1 overlay, hover tooltip or plain-letter action shortcut.
 The left results remain app groups in every state; Up/Down never browses an
 embedded message list. Enter always opens **Notifications**, including singleton
 apps, without invoking a sender action or selecting an implicit newest message.
-Right/Left expand/collapse as usual. Three fixed shared detail tabs are
-**Overview / Notifications / Message**. Ctrl+Tab cycles enabled tabs, skipping
-Message until a record has been explicitly chosen. App changes preserve surface
-expansion and restore app/query-local page, tab and selected record identity.
+Right/Left expand/collapse as usual. Shared detail tabs are **Notifications /
+App controls / Message**; Ctrl+Tab skips Message until a record has been explicitly
+chosen. App changes preserve surface expansion and restore app/query-local date,
+tab and selected record identity. No lifecycle filter, status badge, or separate
+archive is presented: counts always describe notifications.
 
-Overview exposes at most three passive previews; Notifications at most five
-compact entries per native page. Read is a circle command (also in Alt+J), not a
-field or a row-wide action. It selects `(id, created_unix_ms)` and opens Message;
-it never invokes a sender, marks read, dismisses or sends. The shared Page text
-field is the only index field: Enter/Tab validates and seeks, Escape discards,
-and typing issues no read. Alt+P/N changes pages; arrows retain shared browsing
-or native editing behavior. Page numbers and counts come from one native snapshot.
+App rows expose Silence and Delete as separate shared circular commands. Their
+pointer scope is that row, not an implicit newest message or a selection change.
+Alt+Q / Alt+D target the selected app in collapsed results and expanded app pages.
+Silence suppresses interruptions, not collection. App controls use shared deferred
+popup/duration dropdowns and immediate grouping/DND-bypass switches; acknowledged
+policies persist across daemon restarts. Sound playback and retention-policy
+editors are not exposed without supporting backend capabilities.
 
-Only expanded Message registers Open (Alt+O), Reply (Alt+R), Dismiss (Alt+D),
-Snooze (Alt+Z), Copy (Alt+C) and sender actions (Alt+J). Inactive/collapsed pages
-must not leak commands or menus. Only exact `inline-reply` opens the editor;
-ordinary sender reply actions stay ordinary actions. Enter/Tab saves a reply
-draft without sending; Alt+R sends explicitly with existing acknowledgement,
-retry and live-record guards. Tab changes discard only uncommitted field edits.
-Arrivals preserve the chosen record and active reply editor. A removed selected
-record leaves an unavailable Message, never silently targets another record.
+Notifications is a virtualized date accordion, opening the newest date by default.
+One date is expanded at a time; exact action-free repetitions become bounded
+stacks with individually addressable records. Counts, grouping and search belong
+to the native catalog, not the loaded transport slice. Windows append on scroll;
+there is no Page field or next/previous-page command. Date/stack expansion, Read
+and individual Delete are commands (also in Alt+J), never field Tab stops or
+row-wide sender actions. Read selects `(id, created_unix_ms)` and opens Message
+without launching, marking read, deleting or sending. `DetailListView` shares
+`DetailFlickable`'s non-highlighted Tab fallback and PageUp/PageDown scrolling;
+Up/Down still select application results.
 
-Aggregation, full-scope search, ordering, counts, page seeks and record lookup
-belong to `notifications.queryCenter`, not frontend grouping of loaded history.
-Atomic app-window refresh and read generations fence partial/stale replies.
-`tst_notifications.qml` exercises actual primary/Read/action/menu routes, tab
-switching, page transactions, search races, bounded rendering and draft/viewport
-preservation; the daemon tests cover grouping and direct deep seeks.
+Delete prepares a native snapshot and opens a shared confirmation modal with its
+actual count. App/global deletion includes retained records outside search and
+older than the recent search window. Confirmation targets stable record identities,
+so later arrivals survive. Cancelling releases the token; closing the panel rejects
+late preparation replies. No optimistic removal, automatic mutation retry, or
+claimed undo. Only acknowledged deletion refreshes the collection; app preferences
+survive. Modal input suspends underlying navigation and commands.
+
+Only expanded Message registers Open (Alt+O), Reply (Alt+R), Copy (Alt+C) and
+sender actions (Alt+J); Alt+D deletes that specific record. Only exact
+`inline-reply` opens the editor. Enter/Tab saves a draft without sending; Alt+R
+sends explicitly with existing acknowledgement, retry and live-record guards.
+Lifecycle still guards callbacks internally but is not a user-facing list mode.
+Tab changes discard only uncommitted edits. Removed selected records remain an
+unavailable Message, never silently retarget another notification.
+
+Native windows stage refreshes atomically and fence stale revisions, epochs,
+queries and date changes. `tst_notifications.qml` and `tst_notification_center.qml`
+cover actual primary/Read/menu routes, shared scrolling, policy transactions,
+confirmation/cancel, stale responses, bounded rendering and draft preservation.
+Daemon tests cover persistence, grouped dates/stacks, exact deletion scope,
+restart, policy enforcement and new arrivals during confirmation. See
+[notification center](notifications.md) for implementation and capability limits.
 
 ## Applications action outcomes
 

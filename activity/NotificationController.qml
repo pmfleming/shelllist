@@ -10,7 +10,7 @@ Ui.ChooserController {
     property string returnSurface: ""
     property string selectedAppKey: ""
     property string selectedKey: ""
-    property string detailsTab: "overview"
+    property string detailsTab: "notifications"
     property bool settingsOpen: false
     property bool messageWasOpen: false
     property string replyKey: ""
@@ -26,27 +26,35 @@ Ui.ChooserController {
     readonly property bool screenshotInFlight: screenshotCapture.inFlight
     readonly property alias notificationModel: records
     readonly property alias catalog: nativeCatalog
+    readonly property alias timeline: nativeTimeline
+    readonly property bool appBusy: notificationState.policyPending[selectedAppKey] === true
+    readonly property bool deleting: notificationState.deletePending || notificationState.deletePreparing
+    readonly property var appPolicy: notificationState.appPolicy(selectedAppKey)
+    readonly property var appCommands: [
+        {id: "silence", label: appPolicy.silent ? qsTr("Unsilence application") : qsTr("Silence application"), icon: appPolicy.silent ? "notifications" : "notifications_off", accessKey: "Q", enabled: notificationState.nativeAvailable && !appBusy, presentation: {group: "toolbar"}},
+        {id: "delete", label: qsTr("Delete application notifications"), icon: "delete", accessKey: "D", enabled: notificationState.nativeAvailable && !deleting && !!selectedApp, presentation: {group: "toolbar"}}
+    ]
+    navigationBlocked: !!notificationState.deleteConfirmation
     property var visibleApps: []
     readonly property var selectedApp: visibleApps.find(app => app.key === selectedAppKey) || null
     readonly property var selectedRecord: catalog.detail.selected && Ui.NotificationPresentation.recordKey(catalog.detail.selected) === selectedKey ? catalog.detail.selected : null
     readonly property var selectedNotification: Ui.NotificationPresentation.notificationFor(selectedRecord)
     readonly property bool selectedLive: !!selectedRecord && notificationState.isLive(selectedRecord)
-    readonly property bool selectedBusy: !!notificationState.operations[selectedKey]
+    readonly property bool selectedBusy: notificationState.deletePending || !!notificationState.operations[selectedKey]
     readonly property bool messageCommandsEnabled: detailsOpen && !settingsOpen && detailsTab === "message" && !!selectedRecord && !catalog.detailError
     readonly property var selectedAppActions: messageCommandsEnabled && selectedLive ? Ui.NotificationPresentation.standardActions(selectedNotification) : []
     readonly property bool replyVisible: messageCommandsEnabled && (replyKey === selectedKey || !!notificationState.drafts[selectedKey] || !!notificationState.replies[selectedKey])
     readonly property var tabs: [
-        {value: "overview", label: qsTr("Overview")},
         {value: "notifications", label: qsTr("Notifications")},
-        {value: "message", label: qsTr("Message"), enabled: selectedKey.length > 0}
-    ]
+        {value: "controls", label: qsTr("App controls")}
+    ].concat(selectedKey.length > 0 ? [{value: "message", label: qsTr("Message")}] : [])
     hasSelection: selectedApp !== null
     selectionModel: appSelection
     viewMemory: Ui.ChooserMemory {
         controller: controller
         key: controller.settingsOpen ? "notifications::settings" : "notifications::app::" + controller.selectedAppKey
         tab: controller.settingsOpen ? "settings" : controller.detailsTab + (controller.detailsTab === "message" ? "::" + controller.selectedKey : "")
-        tabs: ["overview", "notifications", "message", "settings"]
+        tabs: ["notifications", "controls", "message", "settings"]
         onRestoreRequested: function (open, tab) { controller.detailsOpen = open && (controller.settingsOpen || controller.hasSelection); }
     }
     QtObject {
@@ -55,6 +63,14 @@ Ui.ChooserController {
         readonly property int selectedIndex: Math.max(0, controller.visibleApps.findIndex(app => app.key === controller.selectedAppKey))
         function move(delta: int): void { controller.select(selectedIndex + delta); }
         function selectFirst(): void { controller.select(0); }
+    }
+    NotificationTimeline {
+        id: nativeTimeline
+        store: controller.notificationState
+        active: controller.uiActive && controller.detailsOpen && !controller.settingsOpen && controller.detailsTab === "notifications"
+        appKey: controller.selectedAppKey
+        query: controller.catalog.query
+        grouping: controller.appPolicy.group_similar
     }
     NotificationCatalog {
         id: nativeCatalog
@@ -68,13 +84,13 @@ Ui.ChooserController {
             controller.entryGeneration++;
             controller.selectedKey = "";
             controller.replyKey = "";
-            if (controller.detailsTab === "message") controller.detailsTab = "overview";
+            if (controller.detailsTab === "message") controller.detailsTab = "notifications";
         }
     }
     function memoryKey(): string { return JSON.stringify([catalog.query, selectedAppKey]); }
     function rememberApp(): void {
         if (!selectedAppKey) return;
-        appViews = Object.assign({}, appViews, {[memoryKey()]: {tab: detailsTab, key: selectedKey, page: catalog.page}});
+        appViews = Object.assign({}, appViews, {[memoryKey()]: {tab: detailsTab, key: selectedKey, date: timeline.snapshot.date || timeline.requestedDate, collapsed: timeline.collapsed}});
     }
     function select(index: int): void {
         const app = visibleApps[Math.max(0, Math.min(visibleApps.length - 1, index))];
@@ -87,8 +103,9 @@ Ui.ChooserController {
         selectedAppKey = app.key;
         const memory = appViews[memoryKey()] || ({});
         selectedKey = memory.key || "";
-        detailsTab = memory.tab === "message" && !selectedKey ? "overview" : memory.tab || "overview";
-        catalog.page = memory.page || 1;
+        detailsTab = memory.tab === "message" && !selectedKey ? "notifications" : memory.tab || "notifications";
+        timeline.requestedDate = memory.date || "";
+        timeline.collapsed = memory.collapsed === true;
         replyKey = "";
     }
     function resultKeyAt(index: int): string { return visibleApps[index] ? "notification-app::" + visibleApps[index].key : ""; }
@@ -138,6 +155,16 @@ Ui.ChooserController {
         openDetails();
         rememberApp();
     }
+    function triggerAppAction(action: string, key: string): void {
+        if (!key) return;
+        const app = visibleApps.find(item => item.key === key);
+        if (action === "silence") notificationState.setAppPolicy(key, {silent: !notificationState.appPolicy(key).silent, until_unix_ms: null});
+        else if (action === "delete" && app) notificationState.prepareDelete(key, null, app.latest.app_name || qsTr("Application"));
+    }
+    function deleteRecord(record: var): void {
+        if (!record || !catalog.validPreview(record)) return;
+        notificationState.prepareDelete(record.app_key, record, record.summary || qsTr("Notification"));
+    }
     function primarySelected(): bool {
         if (!hasSelection || settingsOpen) return false;
         setDetailsTab("notifications");
@@ -186,7 +213,7 @@ Ui.ChooserController {
     }
     function goBack(): void { if (returnSurface === "activity") backRequested(); else closeWindowRequested(); }
     function dismissNavigation(): bool { if (detailsOpen) closeDetails(); else goBack(); return true; }
-    function refresh(): void { notificationState.backend.snapshot(); catalog.refresh(); }
+    function refresh(): void { notificationState.backend.snapshot(); catalog.refresh(); timeline.refresh(); }
     function captureScreenshot(x: real, y: real, width: real, height: real): bool { return screenshotCapture.captureRegion(x, y, width, height); }
     function activateUi(workspaceId): void { activateUiState(workspaceId); nowMs = Date.now(); Qt.callLater(resolveGroup); }
     function deactivateUi(): void { rememberApp(); deactivateUiState(); entryGeneration++; returnSurface = ""; }

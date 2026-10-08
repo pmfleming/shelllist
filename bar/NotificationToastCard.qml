@@ -94,7 +94,7 @@ Rectangle {
             title: card.notification.summary || card.notification.app_name || qsTr("Notification")
             subtitle: [card.notification.app_name, Ui.NotificationPresentation.timeLabel(card.notification.created_unix_ms, card.nowMs)].filter(Boolean).join(" · ")
             subtitleColor: card.urgency >= 2 ? Ui.Theme.danger : Ui.Theme.mutedText
-            icon: "notifications"
+            icon: Ui.NotificationIconSource.fallback(card.notification)
             iconSource: Ui.NotificationIconSource.resolve(card.notification)
             iconCount: card.groupCount
             tabFocusEnabled: true

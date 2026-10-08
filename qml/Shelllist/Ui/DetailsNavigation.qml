@@ -29,7 +29,7 @@ FocusScope {
     property bool awaitingContent: false
     property Item editorTarget: null
     property bool finishingEditor: false
-    readonly property DetailFlickable currentPage: pageForTarget(currentTarget)
+    readonly property Flickable currentPage: pageForTarget(currentTarget)
     readonly property Item focusedTarget: targetForFocus(Window.window ? Window.window.activeFocusItem : null)
     readonly property bool popupOpen: ((currentTarget as DropDownList)?.popup.visible ?? false) || commandMenuOpen
     readonly property bool editing: editorTarget !== null && (activeFocus || popupOpen)
@@ -191,7 +191,8 @@ FocusScope {
         if (editable(item) || fieldBoundary(item))
             return true;
         const page = item as DetailFlickable;
-        const children = page ? page.navigationContent.children : item.children;
+        const list = item as DetailListView;
+        const children = page ? page.navigationContent.children : list ? list.contentItem.children : item.children;
         for (const child of children) {
             if (!loadersReady(child))
                 return false;
@@ -208,12 +209,13 @@ FocusScope {
             return [];
         let result = [];
         const page = item as DetailFlickable;
-        const children = page ? page.navigationContent.children : item.children;
+        const list = item as DetailListView;
+        const children = page ? page.navigationContent.children : list ? list.contentItem.children : item.children;
         for (const child of children)
             result = result.concat(collectTargets(child));
         // Page keys scroll read-only pages; Tab prefers editable controls.
-        if (page)
-            result.push(page);
+        if (page || list)
+            result.push(item);
         return result;
     }
     function targetForFocus(item: Item): Item {
@@ -336,7 +338,7 @@ FocusScope {
         const candidates = order.slice(start).concat(order.slice(0, start));
         finishEditor(true);
         const fields = availableFields();
-        const stops = fields.length ? fields : targets.filter(item => item.enabled && item instanceof DetailFlickable);
+        const stops = fields.length ? fields : targets.filter(item => item.enabled && (item instanceof DetailFlickable || item instanceof DetailListView));
         currentTarget = candidates.find(item => fields.indexOf(item) >= 0)
             || stops[backwards ? stops.length - 1 : 0] || null;
         browseCursor.forceActiveFocus(Qt.TabFocusReason);
@@ -346,7 +348,7 @@ FocusScope {
         revealTarget();
     }
     function selectContent(): void {
-        currentTarget = availableFields()[0] || targets.find(item => item instanceof DetailFlickable && item.enabled) || null;
+        currentTarget = availableFields()[0] || targets.find(item => (item instanceof DetailFlickable || item instanceof DetailListView) && item.enabled) || null;
         awaitingContent = !currentTarget;
     }
     function focusContent(reset: bool): void {
@@ -374,16 +376,17 @@ FocusScope {
         const page = currentPage;
         if (!page)
             return false;
-        const next = Math.max(0, Math.min(Math.max(0, page.contentHeight - page.height), page.contentY + distance));
+        const origin = (page as DetailListView)?.originY || 0;
+        const next = Math.max(origin, Math.min(origin + Math.max(0, page.contentHeight - page.height), page.contentY + distance));
         if (next === page.contentY)
             return false;
         page.contentY = next;
         return true;
     }
-    function pageForTarget(item: Item): DetailFlickable {
-        while (item && !(item instanceof DetailFlickable))
+    function pageForTarget(item: Item): Flickable {
+        while (item && !(item instanceof DetailFlickable) && !(item instanceof DetailListView))
             item = item.parent;
-        return item as DetailFlickable;
+        return item as Flickable;
     }
     Connections {
         target: navigation.currentPage

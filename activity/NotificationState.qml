@@ -23,6 +23,15 @@ Item {
     property var notificationActive: ({available: false, notifications: []})
     property var activeRecords: []
     property string lastError: ""
+    readonly property bool nativeAvailable: notifications.available && notifications.backend !== "swaync"
+    property var policyPending: ({})
+    property var policyErrors: ({})
+    property var deleteConfirmation: null
+    property string deleteLabel: ""
+    property var deleteScope: ({app_key: null, selected: null})
+    property bool deletePreparing: false
+    property bool deletePending: false
+    property int deleteGeneration: 0
     readonly property alias drafts: replyDrafts.drafts
     property var replies: ({})
     property var operations: ({})
@@ -30,6 +39,7 @@ Item {
     readonly property int draftCount: Object.keys(drafts).filter(key => String(drafts[key] || "").length > 0).length
     property NotificationBackend backend: notificationBackend
     signal centerResponse(var context, var value, string error, string code)
+    signal collectionChanged
 
     function equal(left: var, right: var): bool { return JSON.stringify(left) === JSON.stringify(right); }
     function applySummary(value: var): void {
@@ -109,7 +119,7 @@ Item {
     function replyNotification(key: var, text: string): bool {
         const identity = keyFor(key);
         const value = text.trim();
-        if (!value || replies[identity]?.pending)
+        if (!value || deletePending || replies[identity]?.pending)
             return false;
         const record = activeRecords.find(item => keyFor(item) === identity);
         if (!record || !isLive(record) || !Ui.NotificationPresentation.replyAction(record)) {
@@ -145,7 +155,7 @@ Item {
     }
     function beginOperation(id: int): bool {
         const key = keyFor(id);
-        if (!isActive(id) || operations[key]) return false;
+        if (deletePending || !isActive(id) || operations[key]) return false;
         operations = Object.assign({}, operations, {[key]: true});
         lastError = "";
         return true;
@@ -155,6 +165,62 @@ Item {
         delete next[key];
         operations = next;
     }
+    function appPolicy(key: string): var {
+        const value = notifications.app_policies?.[key] || ({});
+        return Object.assign({silent: false, until_unix_ms: null, group_similar: true, bypass_dnd: false}, value);
+    }
+    function setAppPolicy(key: string, changes: var): bool {
+        if (!nativeAvailable || !key || policyPending[key]) return false;
+        const next = Object.assign({}, appPolicy(key), changes);
+        if (!next.silent) next.until_unix_ms = null;
+        if (equal(next, appPolicy(key))) return true;
+        policyPending = Object.assign({}, policyPending, {[key]: true});
+        policyErrors = Object.assign({}, policyErrors, {[key]: ""});
+        return backend.setAppPolicy(key, next);
+    }
+    function finishAppPolicy(key: string, value: var, error: string): void {
+        const next = Object.assign({}, policyPending); delete next[key]; policyPending = next;
+        policyErrors = Object.assign({}, policyErrors, {[key]: error});
+        if (!error) applySummary(value);
+    }
+    function prepareDelete(appKey: string, record: var, label: string): bool {
+        if (!nativeAvailable || deletePreparing || deletePending || deleteConfirmation) return false;
+        deleteLabel = label;
+        deleteScope = {app_key: appKey || null, selected: record ? {id: record.id, created: record.created_unix_ms} : null};
+        deletePreparing = true; lastError = ""; deleteGeneration++;
+        return backend.prepareDelete(deleteScope.app_key, deleteScope.selected, deleteGeneration);
+    }
+    function finishPrepareDelete(generation: int, value: var, error: string): void {
+        if (generation !== deleteGeneration || !uiActive) {
+            if (value?.token) backend.deleteConfirmed(value.token, true);
+            return;
+        }
+        deletePreparing = false;
+        if (error || typeof value?.token !== "string" || !Number.isSafeInteger(value.count) || value.count < 1 || value.count > 100200 || !Number.isSafeInteger(value.expires_unix_ms) || value.expires_unix_ms <= Date.now() || (value.app_key ?? null) !== deleteScope.app_key || (deleteScope.selected ? value.selected?.id !== deleteScope.selected.id || value.selected?.created !== deleteScope.selected.created : (value.selected ?? null) !== null)) {
+            if (value?.token) backend.deleteConfirmed(value.token, true);
+            lastError = error || qsTr("Invalid delete confirmation"); return;
+        }
+        deleteConfirmation = value;
+    }
+    function cancelDelete(): void {
+        deleteGeneration++; deletePreparing = false;
+        const confirmation = deleteConfirmation; deleteConfirmation = null;
+        if (confirmation?.token) backend.deleteConfirmed(confirmation.token, true);
+    }
+    function confirmDelete(): void {
+        const confirmation = deleteConfirmation;
+        if (!confirmation || deletePending) return;
+        deleteConfirmation = null;
+        if (confirmation.expires_unix_ms <= Date.now()) { lastError = qsTr("Delete confirmation expired. Please try again."); return; }
+        deletePending = true;
+        backend.deleteConfirmed(confirmation.token, false);
+    }
+    function finishDelete(error: string): void {
+        deletePending = false; lastError = error;
+        if (!error) { collectionChanged(); backend.snapshot(); }
+    }
+    onUiActiveChanged: if (!uiActive) cancelDelete()
+
     function dismissNotification(id: int): bool { return beginOperation(id) && backend.dismiss(id); }
     function clearNotifications(): bool { return backend.clear(); }
     function clearNotificationGroup(key: string): bool { return backend.clearGroup(key); }

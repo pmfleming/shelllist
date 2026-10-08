@@ -30,15 +30,18 @@ Item {
             anchors.leftMargin: Ui.Theme.spacingMd
             anchors.rightMargin: Ui.Theme.spacingMd
             active: pane.controller.detailsOpen && !pane.controller.settingsOpen
-            sourceComponent: pane.controller.detailsTab === "message" ? message : index
+            sourceComponent: pane.controller.detailsTab === "message" ? message : pane.controller.detailsTab === "controls" ? controls : index
         }
     }
     Component {
         id: index
         NotificationIndex {
             controller: pane.controller
-            overview: pane.controller.detailsTab === "overview"
         }
+    }
+    Component {
+        id: controls
+        NotificationAppSettings { controller: pane.controller }
     }
     Component {
         id: message

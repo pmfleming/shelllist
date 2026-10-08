@@ -35,6 +35,15 @@ Io.DaemonBackend {
             until_unix_ms: until
         }, {dnd: true});
     }
+    function setAppPolicy(key: string, policy: var): bool {
+        return request("app-policy", Api.methods.notificationsSetAppPolicy, {app_key: key, policy: policy}, {policyKey: key});
+    }
+    function prepareDelete(key: var, selected: var, generation: int): bool {
+        return request("prepare-delete", Api.methods.notificationsPrepareDelete, {app_key: key, selected: selected}, {deleteGeneration: generation});
+    }
+    function deleteConfirmed(token: string, cancel: bool): bool {
+        return request("delete", Api.methods.notificationsDelete, {token: token, cancel: cancel}, {deleteOperation: !cancel, cancelDelete: cancel});
+    }
     function dismiss(id: int): bool {
         return request("dismiss", Api.methods.notificationsDismiss, {
             id: id
@@ -85,6 +94,15 @@ Io.DaemonBackend {
             store.centerResponse(context.center, data.notification_center, error, errorCode);
             return;
         }
+        if (context.policyKey !== undefined) {
+            const policyError = error || (!data.notifications?.app_policies?.[context.policyKey] ? qsTr("Invalid application policy acknowledgement") : "");
+            store.finishAppPolicy(context.policyKey, data.notifications, policyError);
+            store.lastError = policyError;
+            return;
+        }
+        if (context.deleteGeneration !== undefined) { store.finishPrepareDelete(context.deleteGeneration, data.delete_confirmation, error); return; }
+        if (context.cancelDelete) return;
+        if (context.deleteOperation) { store.finishDelete(error || (!Number.isSafeInteger(data.deleted) || data.deleted < 0 || data.deleted > 100200 ? qsTr("Invalid deletion acknowledgement. Refresh before retrying.") : "")); return; }
         if (context.replyKey !== undefined)
             store.finishReply(context.replyKey, context.text, error);
         if (context.dnd)

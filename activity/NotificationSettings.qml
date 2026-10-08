@@ -5,15 +5,20 @@ import Shelllist.Ui as Ui
 Column {
     id: settings
     required property NotificationState notificationState
-    readonly property bool nativeAvailable: notificationState.notifications.available && notificationState.notifications.backend !== "swaync"
+    readonly property bool nativeAvailable: notificationState.nativeAvailable
+    readonly property var overrides: Object.keys(notificationState.notifications.app_policies || ({})).filter(function (key) {
+        const policy = settings.notificationState.appPolicy(key);
+        return policy.silent || policy.bypass_dnd || !policy.group_similar;
+    })
     width: parent.width
     spacing: Ui.Theme.spacingMd
 
-    Ui.ThemeText {
+    Ui.DetailsHeader {
         width: parent.width
-        text: qsTr("Notification settings")
-        font.pixelSize: Ui.Theme.fontSizeHeading
-        font.weight: Ui.Theme.fontWeightDemiBold
+        uiScale: 1
+        icon: "settings"
+        title: qsTr("Notification settings")
+        subtitle: qsTr("Applies to all applications")
     }
     Ui.ThemeText {
         width: parent.width
@@ -69,6 +74,7 @@ Column {
     }
     Ui.LabeledAction {
         icon: "refresh"
+        uiScale: Ui.Theme.expandedSecondaryActionScale
         objectName: "notificationDndRetry"
         accessKey: "T"
         visible: settings.notificationState.dndError.length > 0
@@ -77,13 +83,33 @@ Column {
         label: qsTr("Retry Do Not Disturb change")
         onClicked: settings.notificationState.retryDnd()
     }
-    Ui.LabeledAction {
-        icon: "clear_all"
-        objectName: "notificationClearAll"
-        visible: settings.notificationState.activeNotifications.length > 0
+    Ui.ThemeText {
         width: parent.width
-        label: qsTr("Dismiss all live notifications")
-        accessibleName: qsTr("Dismiss all live notifications; retain history")
-        onClicked: settings.notificationState.clearNotifications()
+        visible: settings.overrides.length > 0
+        text: qsTr("App overrides")
+        font.weight: Ui.Theme.fontWeightDemiBold
+    }
+    Repeater {
+        model: settings.overrides
+        Ui.LabeledAction {
+            required property string modelData
+            width: settings.width
+            uiScale: Ui.Theme.expandedSecondaryActionScale
+            icon: "refresh"
+            label: qsTr("Reset %1 to defaults").arg(modelData.replace(/^(desktop|named):/, ""))
+            enabled: settings.nativeAvailable && !settings.notificationState.policyPending[modelData]
+            onClicked: settings.notificationState.setAppPolicy(modelData, {silent: false, until_unix_ms: null, group_similar: true, bypass_dnd: false})
+        }
+    }
+    Ui.LabeledAction {
+        icon: "delete"
+        uiScale: Ui.Theme.expandedSecondaryActionScale
+        objectName: "notificationDeleteAll"
+        width: parent.width
+        label: qsTr("Delete all notifications…")
+        accessibleName: qsTr("Delete all notifications with confirmation")
+        accessKey: "D"
+        enabled: settings.nativeAvailable && !settings.notificationState.deletePreparing && !settings.notificationState.deletePending
+        onClicked: settings.notificationState.prepareDelete("", null, qsTr("All applications"))
     }
 }

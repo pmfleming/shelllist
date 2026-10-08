@@ -24,7 +24,7 @@ TestCase {
     function test_centerPreviewRetainsSenderArtwork_data() {
         return [
             {tag: "signal-image-hint", name: "Signal", desktop: "", image: "org.signal.Signal", installed: "org.signal.Signal"},
-            {tag: "absolute-image-path", name: "satty", desktop: "com.gabm.satty", image: Qt.resolvedUrl("fixtures/media-cover.svg").toString(), installed: ""}
+            {tag: "desktop-over-content-image", name: "satty", desktop: "com.gabm.satty", image: "file:///not-an-app-icon.png", installed: "com.gabm.satty"}
         ];
     }
     function test_centerPreviewRetainsSenderArtwork(data) {
@@ -33,7 +33,7 @@ TestCase {
         const preview = {id: 1, created_unix_ms: 1000, app_key: "test", app_name: data.name,
             app_icon: "", hints: {desktop_entry: data.desktop, image_path: data.image}, summary: "Test", body: ""};
         const icon = createTemporaryObject(iconComponent, testCase, {notification: preview});
-        compare(icon.source, source, "compact previews use sender hints just like full messages/toasts");
+        compare(icon.source, source, "compact previews resolve app identity independently of content imagery");
         tryCompare(icon, "hasImage", true);
         const pixels = grabImage(icon);
         compare(pixels.pixel(12, 12), Qt.color("#197d87"), "the supplied artwork is painted, not the fallback bell");
@@ -44,7 +44,11 @@ TestCase {
         Quickshell.themeIcons = {"battery-caution-symbolic": source, "dialog-error-symbolic": source, "some-app": other};
         const warning = {app_icon: "battery-caution", app_name: "some-app"};
         compare(Ui.NotificationIconSource.resolve(warning), source, "symbolic sender artwork precedes an app-name guess");
-        compare(Ui.NotificationIconSource.resolve({hints: {image_path: "dialog-error"}}), source);
+        compare(Ui.NotificationIconSource.resolve({hints: {image_path: "dialog-error"}}), "", "content images cannot become app identities");
+        compare(Ui.NotificationIconSource.resolve({identity_icon: "dialog-error", app_icon: "some-app"}), source);
+        compare(Ui.NotificationIconSource.fallback({app_name: "Missing app"}), "M");
+        compare(Ui.NotificationIconSource.resolve({app_name: "bar-daemon", app_icon: "battery-caution"}), "", "internal event/urgency icons do not represent the application");
+        compare(Ui.NotificationIconSource.fallback({app_name: "bar-daemon"}), "B");
         compare(Ui.NotificationIconSource.resolve({app_icon: "battery-caution-symbolic"}), source);
         Quickshell.themeIcons = {"battery-caution": other, "battery-caution-symbolic": source};
         compare(Ui.NotificationIconSource.resolve(warning), other, "prefer an installed exact icon over its symbolic variant");
